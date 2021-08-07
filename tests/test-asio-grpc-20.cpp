@@ -12,7 +12,9 @@ namespace test_asio_grpc_cpp20
 {
 using namespace agrpc;
 
-TEST_CASE("GrpcExecutor fulfills Executor TS concept")
+TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION);
+
+TEST_CASE("GrpcExecutor fulfills Executor TS concept" )
 {
     CHECK(asio::can_require<agrpc::GrpcExecutor, asio::execution::blocking_t::never_t>::value);
     CHECK(asio::can_prefer<agrpc::GrpcExecutor, asio::execution::blocking_t::possibly_t>::value);
@@ -33,7 +35,7 @@ TEST_CASE("GrpcExecutor fulfills Executor TS concept")
     CHECK(std::is_constructible_v<asio::any_io_executor, agrpc::GrpcExecutor>);
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "co_spawn two Alarms and await their ok")
+TEST_CASE_FIXTURE(test::GrpcContextTest, "co_spawn two Alarms and await their ok" )
 {
     bool ok1 = false;
     bool ok2 = false;
@@ -57,7 +59,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "co_spawn two Alarms and await their ok
     CHECK(ok2);
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "wait for Alarm with allocator")
+TEST_CASE_FIXTURE(test::GrpcContextTest, "wait for Alarm with allocator" )
 {
     test::co_spawn(get_pmr_executor(),
                    [&]() -> agrpc::pmr::GrpcAwaitable<void>
@@ -73,7 +75,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "wait for Alarm with allocator")
                               }));
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "wait for Alarm with asio::awaitable<>")
+TEST_CASE_FIXTURE(test::GrpcContextTest, "wait for Alarm with asio::awaitable<>" )
 {
     test::co_spawn(asio::prefer(grpc_context.get_executor(), asio::execution::outstanding_work.tracked),
                    [&]() -> asio::awaitable<void>
@@ -84,7 +86,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "wait for Alarm with asio::awaitable<>"
     grpc_context.run();
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextClientServerTest, "server streaming")
+TEST_CASE_FIXTURE(test::GrpcContextClientServerTest, "server streaming" )
 {
     test::co_spawn(grpc_context,
                    [&]() -> asio::awaitable<void>
@@ -120,7 +122,7 @@ TEST_CASE_FIXTURE(test::GrpcContextClientServerTest, "server streaming")
     grpc_context.run();
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextClientServerTest, "client streaming")
+TEST_CASE_FIXTURE(test::GrpcContextClientServerTest, "client streaming" )
 {
     test::co_spawn(grpc_context,
                    [&]() -> asio::awaitable<void>
@@ -156,7 +158,7 @@ TEST_CASE_FIXTURE(test::GrpcContextClientServerTest, "client streaming")
     grpc_context.run();
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextClientServerTest, "unary")
+TEST_CASE_FIXTURE(test::GrpcContextClientServerTest, "unary" )
 {
     bool use_finish_with_error;
     SUBCASE("server finish_with_error") { use_finish_with_error = true; }
@@ -206,7 +208,7 @@ TEST_CASE_FIXTURE(test::GrpcContextClientServerTest, "unary")
     grpc_context.run();
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextClientServerTest, "bidirectional streaming")
+TEST_CASE_FIXTURE(test::GrpcContextClientServerTest, "bidirectional streaming" )
 {
     bool use_write_and_finish;
     SUBCASE("server write_and_finish") { use_write_and_finish = true; }
@@ -255,4 +257,6 @@ TEST_CASE_FIXTURE(test::GrpcContextClientServerTest, "bidirectional streaming")
         });
     grpc_context.run();
 }
-}  // namespace test_asio_grpc
+
+TEST_SUITE_END();
+}  // namespace test_asio_grpc_cpp20

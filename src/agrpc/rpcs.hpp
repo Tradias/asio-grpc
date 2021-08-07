@@ -199,54 +199,22 @@ Client
 #ifdef __cpp_impl_coroutine
 template <class RPC, class Stub, class Request, class Reader, class Executor = asio::any_io_executor>
 auto request(detail::ClientUnaryRequest<RPC, Request, Reader>, Stub& stub, grpc::ClientContext& client_context,
-             const Request& request, asio::use_awaitable_t<Executor> = {})
+             const Request& request, asio::use_awaitable_t<Executor> token = {})
     -> asio::async_result<asio::use_awaitable_t<Executor>, void(Reader)>::return_type
 {
-    const auto executor = co_await asio::this_coro::executor;
-    co_return stub.AsyncUnary(&client_context, request,
-                              static_cast<agrpc::GrpcContext&>(executor.context()).get_completion_queue());
-}
-#endif
-
-template <class RPC, class Stub, class Request, class Reader,
-          class CompletionToken
-#ifndef __cpp_impl_coroutine
-          = agrpc::DefaultCompletionToken
-#endif
-          >
-auto request(detail::ClientUnaryRequest<RPC, Request, Reader> rpc, Stub& stub, grpc::ClientContext& client_context,
-             const Request& request, CompletionToken token = {})
-{
-    const auto executor = asio::get_associated_executor(token);
-    return stub.AsyncUnary(&client_context, request,
-                           static_cast<agrpc::GrpcContext&>(executor.context()).get_completion_queue());
+    auto* completion_queue = co_await agrpc::get_completion_queue(token);
+    co_return stub.AsyncUnary(&client_context, request, completion_queue);
 }
 
-#ifdef __cpp_impl_coroutine
 template <class RPC, class Stub, class Request, class Reader, class Executor = asio::any_io_executor>
 auto request(detail::ClientUnaryRequest<RPC, Request, Reader>, Stub& stub, grpc::ClientContext& client_context,
-             const Request& request, Reader& reader, asio::use_awaitable_t<Executor> = {})
+             const Request& request, Reader& reader, asio::use_awaitable_t<Executor> token = {})
     -> asio::async_result<asio::use_awaitable_t<Executor>, void()>::return_type
 {
-    const auto executor = co_await asio::this_coro::executor;
-    reader = stub.AsyncUnary(&client_context, request,
-                             static_cast<agrpc::GrpcContext&>(executor.context()).get_completion_queue());
+    auto* completion_queue = co_await agrpc::get_completion_queue(token);
+    reader = stub.AsyncUnary(&client_context, request, completion_queue);
 }
 #endif
-
-template <class RPC, class Stub, class Request, class Reader,
-          class CompletionToken
-#ifndef __cpp_impl_coroutine
-          = agrpc::DefaultCompletionToken
-#endif
-          >
-void request(detail::ClientUnaryRequest<RPC, Request, Reader> rpc, Stub& stub, grpc::ClientContext& client_context,
-             const Request& request, Reader& reader, CompletionToken token = {})
-{
-    const auto executor = asio::get_associated_executor(token);
-    reader = stub.AsyncUnary(&client_context, request,
-                             static_cast<agrpc::GrpcContext&>(executor.context()).get_completion_queue());
-}
 
 template <class RPC, class Stub, class Request, class Reader, class CompletionToken = agrpc::DefaultCompletionToken>
 auto request(detail::ClientServerStreamingRequest<RPC, Request, Reader> rpc, Stub& stub,

@@ -56,6 +56,23 @@ auto grpc_initiate(Function function, CompletionToken token = {})
         },
         token);
 }
+
+template <class CompletionToken>
+auto get_completion_queue(CompletionToken token) noexcept
+{
+    const auto executor = asio::get_associated_executor(token);
+    return static_cast<agrpc::GrpcContext&>(executor.context()).get_completion_queue();
+}
+
+#ifdef __cpp_impl_coroutine
+template <class Executor = asio::any_io_executor>
+auto get_completion_queue(asio::use_awaitable_t<Executor> = {})
+    -> asio::async_result<asio::use_awaitable_t<Executor>, void(grpc::CompletionQueue*)>::return_type
+{
+    const auto executor = co_await asio::this_coro::executor;
+    co_return static_cast<agrpc::GrpcContext&>(executor.context()).get_completion_queue();
+}
+#endif
 }  // namespace agrpc
 
 #endif  // AGRPC_AGRPC_INITIATE_HPP

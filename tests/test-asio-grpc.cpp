@@ -17,6 +17,8 @@ namespace test_asio_grpc
 {
 using namespace agrpc;
 
+TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION);
+
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcExecutor fulfills Boost.Asio executor concept")
 {
     CHECK(asio::is_executor<agrpc::GrpcExecutor>::value);
@@ -156,7 +158,7 @@ TEST_CASE_FIXTURE(test::GrpcContextClientServerTest, "unary stackless coroutine"
     {
         BOOST_ASIO_CORO_REENTER(*coro)
         {
-            reader = stub->AsyncUnary(&client_context, client_request, grpc_context.get_completion_queue());
+            reader = stub->AsyncUnary(&client_context, client_request, agrpc::get_completion_queue(*coro));
             BOOST_ASIO_CORO_YIELD agrpc::finish(*reader, client_response, status, *coro);
             CHECK(ok);
             CHECK(status.ok());
@@ -171,4 +173,6 @@ TEST_CASE_FIXTURE(test::GrpcContextClientServerTest, "unary stackless coroutine"
 
     grpc_context.run();
 }
+
+TEST_SUITE_END();
 }  // namespace test_asio_grpc

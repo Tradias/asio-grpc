@@ -58,8 +58,10 @@ endfunction()
 set(ASIO_GRPC_TEST_SOURCE_FILES "test-asio-grpc.cpp")
 
 asio_grpc_add_test(asio-grpc-test-cpp17 ${ASIO_GRPC_TEST_SOURCE_FILES})
+target_compile_definitions(asio-grpc-test-cpp17 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"C++17\"")
 
 asio_grpc_add_test(asio-grpc-test-cpp20 ${ASIO_GRPC_TEST_SOURCE_FILES} "test-asio-grpc-20.cpp")
+target_compile_definitions(asio-grpc-test-cpp20 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"C++20\"")
 target_compile_features(asio-grpc-test-cpp20 PRIVATE cxx_std_20)
 target_compile_options(asio-grpc-test-cpp20 PRIVATE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fcoroutines>)
 
