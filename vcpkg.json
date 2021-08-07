@@ -1,0 +1,20 @@
+{
+    "name": "asio-grpc",
+    "version-string": "0.1.0",
+    "dependencies": [
+        "doctest",
+        {
+            "name": "grpc",
+            "features": [
+                "codegen"
+            ]
+        },
+        "boost-coroutine",
+        "boost-core",
+        "boost-intrusive",
+        "boost-lockfree",
+        "boost-utility",
+        "boost-asio",
+        "boost-interprocess"
+    ]
+}

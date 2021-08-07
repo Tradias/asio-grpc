@@ -1,0 +1,72 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Visual Studio
+*.db
+/project/msvc/
+/tests/project/msvc/
+.vs
+CMakeSettings.json
+
+# Visual Studio Code
+.vscode
+cmake-variants.yaml
+
+# Codeblocks
+*.layout
+*.depend
+
+# QT Creator
+*.user
+*.autosave
+
+# Clion
+.idea/
+.clion.source.upload.marker
+
+# Gedit backup files
+*.txt~
+*.cmake~
+*.cpp~
+*.h~
+*.hpp~
+
+# Build folders
+/*build*/
+
+# SonarQube
+sonar-cfamily-reproducer.zip
+.scannerwork
+
+# https://github.com/aras-p/ClangBuildAnalyzer
+ClangBuildAnalyzer.ini
