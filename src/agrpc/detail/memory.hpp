@@ -54,7 +54,7 @@ struct AllocatorDeleter
     void operator()(T* ptr) const noexcept
     {
         using Traits = typename std::allocator_traits<allocator_type>::template rebind_traits<T>;
-        typename Traits::allocator_type rebound_allocator{allocator};
+        typename Traits::allocator_type rebound_allocator{this->allocator};
         Traits::destroy(rebound_allocator, ptr);
         Traits::deallocate(rebound_allocator, ptr, 1);
     }
@@ -64,10 +64,10 @@ template <class T, class Allocator, class... Args>
 auto allocate_unique(Allocator allocator, Args&&... args)
 {
     using Traits = typename std::allocator_traits<Allocator>::template rebind_traits<T>;
-    typename Traits::allocator_type alloc{allocator};
-    auto* ptr = Traits::allocate(alloc, 1);
-    AllocationGuard guard{ptr, alloc};
-    Traits::construct(alloc, ptr, std::forward<Args>(args)...);
+    typename Traits::allocator_type rebound_allocator{allocator};
+    auto* ptr = Traits::allocate(rebound_allocator, 1);
+    AllocationGuard guard{ptr, rebound_allocator};
+    Traits::construct(rebound_allocator, ptr, std::forward<Args>(args)...);
     guard.release();
     return std::unique_ptr<T, detail::AllocatorDeleter<Allocator>>{
         ptr, detail::AllocatorDeleter<Allocator>{std::move(allocator)}};
@@ -88,9 +88,12 @@ struct MemoryResourceAllocator
     {
     }
 
-    [[nodiscard]] T* allocate(std::size_t n) { return static_cast<T*>(resource->allocate(n * sizeof(T), alignof(T))); }
+    [[nodiscard]] T* allocate(std::size_t n)
+    {
+        return static_cast<T*>(this->resource->allocate(n * sizeof(T), alignof(T)));
+    }
 
-    void deallocate(T* p, std::size_t n) noexcept { resource->deallocate(p, n * sizeof(T), alignof(T)); }
+    void deallocate(T* p, std::size_t n) noexcept { this->resource->deallocate(p, n * sizeof(T), alignof(T)); }
 };
 
 template <class T, class U, class Resource>

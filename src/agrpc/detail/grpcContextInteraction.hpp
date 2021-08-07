@@ -25,7 +25,7 @@
 namespace agrpc::detail
 {
 template <class Allocator>
-[[nodiscard]] constexpr decltype(auto) get_local_allocator(agrpc::GrpcContext&, const Allocator& allocator) noexcept
+[[nodiscard]] constexpr const auto& get_local_allocator(agrpc::GrpcContext&, const Allocator& allocator) noexcept
 {
     return allocator;
 }

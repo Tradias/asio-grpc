@@ -24,11 +24,9 @@
 namespace agrpc::detail
 {
 template <class Handler, class Allocator>
-struct GrpcExecutorOperation : detail::GrpcContextOperation
+class GrpcExecutorOperation : public detail::GrpcContextOperation
 {
   public:
-    detail::CompressedPair<Handler, Allocator> impl;
-
     template <class H>
     GrpcExecutorOperation(H&& handler, Allocator allocator)
         : detail::GrpcContextOperation(&GrpcExecutorOperation::do_complete),
@@ -54,6 +52,9 @@ struct GrpcExecutorOperation : detail::GrpcContextOperation
     [[nodiscard]] decltype(auto) handler() noexcept { return impl.first(); }
 
     [[nodiscard]] decltype(auto) handler() const noexcept { return impl.first(); }
+
+  private:
+    detail::CompressedPair<Handler, Allocator> impl;
 };
 }  // namespace agrpc::detail
 

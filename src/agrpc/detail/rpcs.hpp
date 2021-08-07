@@ -32,20 +32,17 @@ using ServerSingleArgRequest = void (RPC::*)(grpc::ServerContext*, Responder*, g
                                              grpc::ServerCompletionQueue*, void*);
 
 template <class RPC, class Request, class Reader>
-using ClientUnaryRequest = Reader (RPC::*)(grpc::ClientContext* context, const Request& request,
-                                           grpc::CompletionQueue* cq);
+using ClientUnaryRequest = Reader (RPC::*)(grpc::ClientContext*, const Request&, grpc::CompletionQueue*);
 
 template <class RPC, class Request, class Reader>
-using ClientServerStreamingRequest = Reader (RPC::*)(grpc::ClientContext* context, const Request& request,
-                                                     grpc::CompletionQueue* cq, void* tag);
+using ClientServerStreamingRequest = Reader (RPC::*)(grpc::ClientContext*, const Request&, grpc::CompletionQueue*,
+                                                     void*);
 
 template <class RPC, class Writer, class Response>
-using ClientSideStreamingRequest = Writer (RPC::*)(grpc::ClientContext* context, Response* response,
-                                                   grpc::CompletionQueue* cq, void* tag);
+using ClientSideStreamingRequest = Writer (RPC::*)(grpc::ClientContext*, Response*, grpc::CompletionQueue*, void*);
 
 template <class RPC, class ReaderWriter>
-using ClientBidirectionalStreamingRequest = ReaderWriter (RPC::*)(grpc::ClientContext* context,
-                                                                  grpc::CompletionQueue* cq, void* tag);
+using ClientBidirectionalStreamingRequest = ReaderWriter (RPC::*)(grpc::ClientContext*, grpc::CompletionQueue*, void*);
 
 template <class Responder, class CompletionHandler>
 struct CompletionHandlerWithResponder
@@ -61,16 +58,16 @@ struct CompletionHandlerWithResponder
     {
     }
 
-    void operator()(bool ok) { completion_handler(std::pair{std::move(responder), ok}); }
+    void operator()(bool ok) { this->completion_handler(std::pair{std::move(this->responder), ok}); }
 
-    [[nodiscard]] auto get_executor() const noexcept { return asio::get_associated_executor(completion_handler); }
+    [[nodiscard]] auto get_executor() const noexcept { return asio::get_associated_executor(this->completion_handler); }
 };
 
 template <class Responder, class CompletionHandler, class... Args>
 auto make_completion_handler_with_responder(CompletionHandler completion_handler, Args&&... args)
 {
-    return CompletionHandlerWithResponder<Responder, CompletionHandler>{std::move(completion_handler),
-                                                                        std::forward<Args>(args)...};
+    return detail::CompletionHandlerWithResponder<Responder, CompletionHandler>{std::move(completion_handler),
+                                                                                std::forward<Args>(args)...};
 }
 }  // namespace agrpc::detail
 

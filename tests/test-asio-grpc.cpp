@@ -6,6 +6,7 @@
 
 #include <boost/asio/spawn.hpp>
 #include <doctest/doctest.h>
+#include <grpcpp/alarm.h>
 #include <grpcpp/grpcpp.h>
 
 #include <memory_resource>

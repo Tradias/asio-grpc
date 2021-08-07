@@ -39,32 +39,12 @@ class GrpcContext : public asio::execution_context
 {
   private:
     using MemoryResource = std::pmr::unsynchronized_pool_resource;
-    using RemoteWorkQueue = boost::lockfree::queue<detail::GrpcContextOperation*>;
-    using LocalWorkQueue =
-        boost::intrusive::slist<detail::GrpcContextOperation, boost::intrusive::constant_time_size<false>,
-                                boost::intrusive::cache_last<true>>;
-
-    grpc::Alarm work_alarm;
-    std::atomic_long outstanding_work;
-    std::atomic<std::thread::id> thread_id{std::this_thread::get_id()};
-    std::atomic_bool stopped;
-    std::atomic_bool has_work;
-    std::unique_ptr<grpc::CompletionQueue> completion_queue;
-    MemoryResource local_resource;
-    LocalWorkQueue local_work_queue;
-    bool is_processing_local_work{false};
-    RemoteWorkQueue remote_work_queue{32};
-
-    friend detail::GrpcContextImplementation;
 
   public:
     using executor_type = agrpc::BasicGrpcExecutor<std::allocator<void>, detail::GrpcExecutorOptions::DEFAULT>;
     using allocator_type = detail::MemoryResourceAllocator<std::byte, MemoryResource>;
 
     explicit GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue,
-                         std::pmr::memory_resource* local_upstream_resource = std::pmr::new_delete_resource());
-
-    explicit GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue> completion_queue,
                          std::pmr::memory_resource* local_upstream_resource = std::pmr::new_delete_resource());
 
     ~GrpcContext();
@@ -88,6 +68,25 @@ class GrpcContext : public asio::execution_context
     [[nodiscard]] grpc::CompletionQueue* get_completion_queue() noexcept;
 
     [[nodiscard]] grpc::ServerCompletionQueue* get_server_completion_queue() noexcept;
+
+  private:
+    using RemoteWorkQueue = boost::lockfree::queue<detail::GrpcContextOperation*>;
+    using LocalWorkQueue =
+        boost::intrusive::slist<detail::GrpcContextOperation, boost::intrusive::constant_time_size<false>,
+                                boost::intrusive::cache_last<true>>;
+
+    grpc::Alarm work_alarm;
+    std::atomic_long outstanding_work;
+    std::atomic<std::thread::id> thread_id;
+    std::atomic_bool stopped;
+    std::atomic_bool has_work;
+    std::unique_ptr<grpc::CompletionQueue> completion_queue;
+    MemoryResource local_resource;
+    LocalWorkQueue local_work_queue;
+    bool is_processing_local_work;
+    RemoteWorkQueue remote_work_queue;
+
+    friend detail::GrpcContextImplementation;
 };
 }  // namespace agrpc
 

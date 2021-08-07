@@ -30,14 +30,15 @@ class GrpcContextOperation : public boost::intrusive::slist_base_hook<
         NO
     };
 
-    constexpr void complete(bool ok, InvokeHandler invoke_handler) { on_complete(this, ok, invoke_handler); }
+    constexpr void complete(bool ok, InvokeHandler invoke_handler) { this->on_complete(this, ok, invoke_handler); }
 
   protected:
     using OnCompleteFunction = void (*)(GrpcContextOperation*, bool, InvokeHandler);
 
-    OnCompleteFunction on_complete;
-
     explicit GrpcContextOperation(OnCompleteFunction on_complete) noexcept : on_complete(on_complete) {}
+
+  private:
+    OnCompleteFunction on_complete;
 };
 }  // namespace agrpc::detail
 

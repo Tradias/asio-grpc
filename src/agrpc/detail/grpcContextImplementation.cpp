@@ -19,6 +19,8 @@
 #include "agrpc/grpcContext.hpp"
 
 #include <atomic>
+#include <cstdint>
+#include <limits>
 
 namespace agrpc::detail
 {
@@ -35,7 +37,7 @@ void GrpcContextImplementation::trigger_work_alarm(agrpc::GrpcContext& grpc_cont
 void GrpcContextImplementation::add_remote_work(agrpc::GrpcContext& grpc_context, detail::GrpcContextOperation* op)
 {
     grpc_context.remote_work_queue.push(op);
-    trigger_work_alarm(grpc_context);
+    GrpcContextImplementation::trigger_work_alarm(grpc_context);
 }
 
 void GrpcContextImplementation::add_local_work(agrpc::GrpcContext& grpc_context, detail::GrpcContextOperation* op)
@@ -43,7 +45,7 @@ void GrpcContextImplementation::add_local_work(agrpc::GrpcContext& grpc_context,
     grpc_context.local_work_queue.push_back(*op);
     if (!grpc_context.is_processing_local_work)
     {
-        trigger_work_alarm(grpc_context);
+        GrpcContextImplementation::trigger_work_alarm(grpc_context);
     }
 }
 
@@ -86,7 +88,7 @@ void GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context,
     }
     else
     {
-        auto operation = static_cast<detail::GrpcContextOperation*>(event.tag);
+        auto* operation = static_cast<detail::GrpcContextOperation*>(event.tag);
         operation->complete(event.ok, Invoke);
     }
 }

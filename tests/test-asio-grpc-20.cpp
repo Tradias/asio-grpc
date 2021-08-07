@@ -8,7 +8,7 @@
 #include <grpcpp/alarm.h>
 #include <grpcpp/grpcpp.h>
 
-namespace test_asio_grpc
+namespace test_asio_grpc_cpp20
 {
 using namespace agrpc;
 

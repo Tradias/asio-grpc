@@ -23,9 +23,6 @@ namespace agrpc::detail
 template <class First, class Second, bool = std::is_empty_v<Second> && !std::is_final_v<Second>>
 class CompressedPair : private Second
 {
-  private:
-    First first_;
-
   public:
     template <class T, class U>
     constexpr CompressedPair(T&& first, U&& second) noexcept(
@@ -41,15 +38,14 @@ class CompressedPair : private Second
     constexpr Second& second() noexcept { return *this; }
 
     constexpr const Second& second() const noexcept { return *this; }
+
+  private:
+    First first_;
 };
 
 template <class First, class Second>
 class CompressedPair<First, Second, false> final
 {
-  private:
-    First first_;
-    Second second_;
-
   public:
     template <class T, class U>
     constexpr CompressedPair(T&& first, U&& second) noexcept(
@@ -65,6 +61,10 @@ class CompressedPair<First, Second, false> final
     constexpr auto& second() noexcept { return this->second_; }
 
     constexpr const auto& second() const noexcept { return this->second_; }
+
+  private:
+    First first_;
+    Second second_;
 };
 }  // namespace agrpc::detail
 
