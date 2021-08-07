@@ -22,13 +22,14 @@ jobs:
 
     - name: Install vcpkg
       uses: lukka/run-vcpkg@v7
+      working-directory: ${{github.workspace}}/vcpkg
       with:
         vcpkgDirectory: ${{github.workspace}}/vcpkg
         vcpkgArguments: "install doctest grpc boost-coroutine boost-core boost-intrusive boost-lockfree boost-asio boost-interprocess boost-thread"
         vcpkgGitCommitId: 57bd7102d9fd880daa1b0958692294c4a125f6d8 # Aug 7, 2021
 
-    - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_C_COMPILER=/usr/bin/gcc-10 -DCMAKE_CXX_COMPILER=/usr/bin/g++-10 -DCMAKE_TOOLCHAIN_FILE=${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on
+    # - name: Configure CMake
+    #   run: cmake -B ${{github.workspace}}/build -DCMAKE_C_COMPILER=/usr/bin/gcc-10 -DCMAKE_CXX_COMPILER=/usr/bin/g++-10 -DCMAKE_TOOLCHAIN_FILE=${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on
 
     # - name: Build
     #   run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel 2
