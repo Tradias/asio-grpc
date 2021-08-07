@@ -47,7 +47,7 @@ function(asio_grpc_add_test _asio-grpc_name)
     endif()
 
     target_link_libraries(${_asio-grpc_name} PRIVATE asio-grpc-objects doctest::doctest asio-grpc-test-utils
-                                                     Boost::coroutine)
+                                                     Boost::coroutine Boost::thread)
 
     target_include_directories(${_asio-grpc_name} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
                                                          $<INSTALL_INTERFACE:include>)
@@ -61,6 +61,7 @@ asio_grpc_add_test(asio-grpc-test-cpp17 ${ASIO_GRPC_TEST_SOURCE_FILES})
 
 asio_grpc_add_test(asio-grpc-test-cpp20 ${ASIO_GRPC_TEST_SOURCE_FILES} "test-asio-grpc-20.cpp")
 target_compile_features(asio-grpc-test-cpp20 PRIVATE cxx_std_20)
+target_compile_options(asio-grpc-test-cpp20 PRIVATE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fcoroutines>)
 
 unset(ASIO_GRPC_TEST_SOURCE_FILES)
 

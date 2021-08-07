@@ -17,7 +17,7 @@ option(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS off)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
 find_package(gRPC REQUIRED)
-find_package(Boost REQUIRED COMPONENTS coroutine)
+find_package(Boost REQUIRED COMPONENTS coroutine thread)
 
 add_subdirectory(src)
 

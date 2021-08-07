@@ -14,6 +14,7 @@
         "boost-intrusive",
         "boost-lockfree",
         "boost-asio",
-        "boost-interprocess"
+        "boost-interprocess",
+        "boost-thread"
     ]
 }

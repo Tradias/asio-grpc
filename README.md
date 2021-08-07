@@ -40,7 +40,7 @@ builder.AddListeningPort("0.0.0.0:50051", grpc::InsecureServerCredentials());
 builder.RegisterService(&service);
 server = builder.BuildAndStart();
 
-boost::asio::co_spawn(grpc_context, [&] {
+boost::asio::co_spawn(grpc_context, [&]() -> boost::asio::awaitable<void> {
     grpc::ServerContext server_context;
     test::v1::Request request;
     grpc::ServerAsyncResponseWriter<test::v1::Response> writer{&server_context};
@@ -58,7 +58,7 @@ Client side:
 auto stub = test::v1::Test::NewStub(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
 agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
-boost::asio::co_spawn(grpc_context, [&] {
+boost::asio::co_spawn(grpc_context, [&]() -> boost::asio::awaitable<void> {
     test::v1::Request request;
     std::unique_ptr<grpc::ClientAsyncResponseReader<test::v1::Response>> reader = 
         co_await agrpc::request(&test::v1::Test::Stub::AsyncUnary, *stub, client_context, request);
