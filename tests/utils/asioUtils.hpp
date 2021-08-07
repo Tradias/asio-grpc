@@ -1,8 +1,10 @@
 #ifndef AGRPC_UTILS_ASIOUTILS_HPP
 #define AGRPC_UTILS_ASIOUTILS_HPP
 
-#include <boost/asio/co_spawn.hpp>
 #include <boost/type_traits/remove_cv_ref.hpp>
+#ifdef __cpp_lib_coroutine
+#include <boost/asio/co_spawn.hpp>
+#endif
 
 #include <type_traits>
 
@@ -25,6 +27,7 @@ template <class Function, class Allocator>
 HandlerWithAssociatedAllocator(Function&&, Allocator&&)
     -> HandlerWithAssociatedAllocator<boost::remove_cv_ref_t<Function>, Allocator>;
 
+#ifdef __cpp_lib_coroutine
 template <class Executor, class Function>
 auto co_spawn(Executor&& executor, Function function)
 {
@@ -37,6 +40,7 @@ auto co_spawn(Executor&& executor, Function function)
                                      }
                                  });
 }
+#endif
 }  // namespace agrpc::test
 
 #endif  // AGRPC_UTILS_ASIOUTILS_HPP

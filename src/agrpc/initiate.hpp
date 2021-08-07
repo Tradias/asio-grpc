@@ -19,6 +19,10 @@
 #include "agrpc/detail/initiate.hpp"
 #include "agrpc/grpcExecutor.hpp"
 
+#ifdef __cpp_lib_coroutine
+#include <boost/asio/use_awaitable.hpp>
+#endif
+
 namespace agrpc
 {
 #ifdef __cpp_lib_coroutine
