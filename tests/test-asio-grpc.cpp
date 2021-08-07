@@ -17,7 +17,7 @@ namespace test_asio_grpc
 {
 using namespace agrpc;
 
-TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION);
+TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION * doctest::timeout(180.0));
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcExecutor fulfills Boost.Asio executor concept")
 {
