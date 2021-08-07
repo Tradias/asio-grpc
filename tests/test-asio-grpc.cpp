@@ -17,7 +17,7 @@ namespace test_asio_grpc
 {
 using namespace agrpc;
 
-TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION * doctest::timeout(180.0));
+TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0));
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcExecutor fulfills Boost.Asio executor concept")
 {
@@ -53,7 +53,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wai
 TEST_CASE_FIXTURE(test::GrpcContextTest, "post from multiple threads")
 {
     static constexpr auto THREAD_COUNT = 32;
-    std::atomic_int counter;
+    std::atomic_int counter{};
     asio::thread_pool pool{THREAD_COUNT};
     auto guard = asio::make_work_guard(grpc_context);
     for (size_t i = 0; i < THREAD_COUNT; ++i)
