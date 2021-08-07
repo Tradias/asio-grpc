@@ -14,8 +14,23 @@ using namespace agrpc;
 
 TEST_CASE("GrpcExecutor fulfills Executor TS concept")
 {
+    CHECK(asio::can_require<agrpc::GrpcExecutor, asio::execution::blocking_t::never_t>::value);
+    CHECK(asio::can_prefer<agrpc::GrpcExecutor, asio::execution::blocking_t::possibly_t>::value);
+    CHECK(asio::can_prefer<agrpc::GrpcExecutor, asio::execution::relationship_t::fork_t>::value);
+    CHECK(asio::can_prefer<agrpc::GrpcExecutor, asio::execution::relationship_t::continuation_t>::value);
+    CHECK(asio::can_prefer<agrpc::GrpcExecutor, asio::execution::outstanding_work_t::tracked_t>::value);
+    CHECK(asio::can_prefer<agrpc::GrpcExecutor, asio::execution::outstanding_work_t::untracked_t>::value);
+    CHECK(asio::can_prefer<agrpc::GrpcExecutor, asio::execution::allocator_t<void>>::value);
+    CHECK(asio::can_query<agrpc::GrpcExecutor, asio::execution::blocking_t::never_t>::value);
+    CHECK(asio::can_query<agrpc::GrpcExecutor, asio::execution::blocking_t::possibly_t>::value);
+    CHECK(asio::can_query<agrpc::GrpcExecutor, asio::execution::relationship_t::fork_t>::value);
+    CHECK(asio::can_query<agrpc::GrpcExecutor, asio::execution::relationship_t::continuation_t>::value);
+    CHECK(asio::can_query<agrpc::GrpcExecutor, asio::execution::outstanding_work_t::tracked_t>::value);
+    CHECK(asio::can_query<agrpc::GrpcExecutor, asio::execution::outstanding_work_t::untracked_t>::value);
+    CHECK(asio::can_query<agrpc::GrpcExecutor, asio::execution::allocator_t<void>>::value);
     CHECK(asio::execution::executor<agrpc::GrpcExecutor>);
     CHECK(asio::execution::executor_of<agrpc::GrpcExecutor, asio::execution::invocable_archetype>);
+    CHECK(std::is_constructible_v<asio::any_io_executor, agrpc::GrpcExecutor>);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "co_spawn two Alarms and await their ok")

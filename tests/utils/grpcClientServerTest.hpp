@@ -24,7 +24,6 @@ struct GrpcContextClientServerTest : test::GrpcContextTest
 
     ~GrpcContextClientServerTest();
 };
-
 }  // namespace agrpc::test
 
 #endif  // AGRPC_UTILS_GRPCCLIENTSERVERTEST_HPP

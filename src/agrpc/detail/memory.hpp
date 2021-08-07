@@ -1,11 +1,11 @@
 // Copyright 2021 Dennis Hezel
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,26 @@
 
 namespace agrpc::detail
 {
+template <class Pointer, class Allocator>
+struct AllocationGuard
+{
+    Pointer* ptr;
+    Allocator& allocator;
+
+    ~AllocationGuard() noexcept
+    {
+        if (this->ptr)
+        {
+            std::allocator_traits<Allocator>::deallocate(allocator, ptr, 1);
+        }
+    }
+
+    void release() noexcept { this->ptr = nullptr; }
+};
+
+template <class Pointer, class Allocator>
+AllocationGuard(Pointer*, Allocator&) -> AllocationGuard<Pointer, Allocator>;
+
 template <class Allocator>
 struct AllocatorDeleter
 {
@@ -31,20 +51,12 @@ struct AllocatorDeleter
     allocator_type allocator;
 
     template <class T>
-    void operator()(T* ptr)
+    void operator()(T* ptr) const noexcept
     {
         using Traits = typename std::allocator_traits<allocator_type>::template rebind_traits<T>;
-        typename Traits::allocator_type rebound_allocator{std::move(allocator)};
-        try
-        {
-            Traits::destroy(rebound_allocator, ptr);
-            Traits::deallocate(rebound_allocator, ptr, 1);
-        }
-        catch (...)
-        {
-            Traits::deallocate(rebound_allocator, ptr, 1);
-            throw;
-        }
+        typename Traits::allocator_type rebound_allocator{allocator};
+        Traits::destroy(rebound_allocator, ptr);
+        Traits::deallocate(rebound_allocator, ptr, 1);
     }
 };
 
@@ -54,15 +66,9 @@ auto allocate_unique(Allocator allocator, Args&&... args)
     using Traits = typename std::allocator_traits<Allocator>::template rebind_traits<T>;
     typename Traits::allocator_type alloc{allocator};
     auto* ptr = Traits::allocate(alloc, 1);
-    try
-    {
-        Traits::construct(alloc, ptr, std::forward<Args>(args)...);
-    }
-    catch (...)
-    {
-        Traits::deallocate(alloc, ptr, 1);
-        throw;
-    }
+    AllocationGuard guard{ptr, alloc};
+    Traits::construct(alloc, ptr, std::forward<Args>(args)...);
+    guard.release();
     return std::unique_ptr<T, detail::AllocatorDeleter<Allocator>>{
         ptr, detail::AllocatorDeleter<Allocator>{std::move(allocator)}};
 }

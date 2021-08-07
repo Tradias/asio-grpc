@@ -16,27 +16,12 @@ namespace test_asio_grpc
 {
 using namespace agrpc;
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcExecutor fulfills Executor TS concept")
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcExecutor fulfills Boost.Asio executor concept")
 {
     CHECK(asio::is_executor<agrpc::GrpcExecutor>::value);
-    CHECK(asio::can_require<agrpc::GrpcExecutor, asio::execution::blocking_t::never_t>::value);
-    CHECK(asio::can_prefer<agrpc::GrpcExecutor, asio::execution::blocking_t::possibly_t>::value);
-    CHECK(asio::can_prefer<agrpc::GrpcExecutor, asio::execution::relationship_t::fork_t>::value);
-    CHECK(asio::can_prefer<agrpc::GrpcExecutor, asio::execution::relationship_t::continuation_t>::value);
-    CHECK(asio::can_prefer<agrpc::GrpcExecutor, asio::execution::outstanding_work_t::tracked_t>::value);
-    CHECK(asio::can_prefer<agrpc::GrpcExecutor, asio::execution::outstanding_work_t::untracked_t>::value);
-    CHECK(asio::can_prefer<agrpc::GrpcExecutor, asio::execution::allocator_t<void>>::value);
-    CHECK(asio::can_query<agrpc::GrpcExecutor, asio::execution::blocking_t::never_t>::value);
-    CHECK(asio::can_query<agrpc::GrpcExecutor, asio::execution::blocking_t::possibly_t>::value);
-    CHECK(asio::can_query<agrpc::GrpcExecutor, asio::execution::relationship_t::fork_t>::value);
-    CHECK(asio::can_query<agrpc::GrpcExecutor, asio::execution::relationship_t::continuation_t>::value);
-    CHECK(asio::can_query<agrpc::GrpcExecutor, asio::execution::outstanding_work_t::tracked_t>::value);
-    CHECK(asio::can_query<agrpc::GrpcExecutor, asio::execution::outstanding_work_t::untracked_t>::value);
-    CHECK(asio::can_query<agrpc::GrpcExecutor, asio::execution::allocator_t<void>>::value);
-    CHECK(std::is_constructible_v<asio::any_io_executor, agrpc::GrpcExecutor>);
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcExecutor is almost trivial")
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcExecutor is mostly trivial")
 {
     CHECK(std::is_trivially_copy_constructible_v<agrpc::GrpcExecutor>);
     CHECK(std::is_trivially_move_constructible_v<agrpc::GrpcExecutor>);

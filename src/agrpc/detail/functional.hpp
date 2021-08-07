@@ -1,11 +1,11 @@
 // Copyright 2021 Dennis Hezel
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,17 +39,22 @@ struct Always
 template <class T>
 Always(T&&) -> Always<boost::remove_cv_ref_t<T>>;
 
-template <class F, class Args, std::size_t... I>
-constexpr decltype(auto) invoke_front_impl(F&& f, Args&& args, std::index_sequence<I...>)
+template <class F, class... Args, std::size_t... I>
+constexpr decltype(auto) invoke_front_impl(F&& f, std::tuple<Args...>&& args, std::index_sequence<I...>)
 {
-    if constexpr (std::is_invocable_v<F&&, std::tuple_element_t<I, Args>...>)
+    if constexpr (std::is_invocable_v<F&&, std::tuple_element_t<I, std::tuple<Args...>>...>)
     {
-        return std::invoke(std::forward<F>(f), std::get<I>(args)...);
+        return std::invoke(std::forward<F>(f), std::get<I>(std::move(args))...);
     }
-    else
+    else if constexpr (sizeof...(I) > 0)
     {
         return detail::invoke_front_impl(std::forward<F>(f), std::move(args),
                                          std::make_index_sequence<sizeof...(I) - 1>());
+    }
+    else
+    {
+        static_assert(std::add_pointer_t<std::void_t<F>>{},
+                      "Function cannot not be invoked with any leading subset of the provided arguments.");
     }
 }
 
