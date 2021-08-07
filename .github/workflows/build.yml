@@ -20,8 +20,8 @@ jobs:
     steps:
     - name: Install gcc
       run: |
-        apt update
-        apt install gcc-10
+        sudo apt-get update
+        sudo apt-get install gcc-10
 
     - name: Install vcpkg
       uses: lukka/run-vcpkg@v7
