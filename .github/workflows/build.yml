@@ -23,9 +23,8 @@ jobs:
     - name: Install vcpkg
       uses: lukka/run-vcpkg@v7
       with:
-        setupOnly: true
         vcpkgDirectory: ${{github.workspace}}/vcpkg
-        vcpkgArguments: " " # workaround for: run-vcpkg action execution failed: Error: Input required and not supplied: vcpkgArguments
+        vcpkgArguments: "install doctest grpc boost-coroutine boost-core boost-intrusive boost-lockfree boost-asio boost-interprocess boost-thread"
         vcpkgGitCommitId: 57bd7102d9fd880daa1b0958692294c4a125f6d8 # Aug 7, 2021
 
     - name: Configure CMake
