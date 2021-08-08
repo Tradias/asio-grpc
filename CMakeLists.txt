@@ -25,7 +25,7 @@ if(ASIO_GRPC_BUILD_TESTS)
     find_package(doctest REQUIRED)
     enable_testing()
     include(doctest)
-    add_subdirectory(tests)
+    add_subdirectory(test)
 endif()
 
 # if(ASIO_GRPC_BUILD_DOCUMENTATION) add_subdirectory(doc) endif()
