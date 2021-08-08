@@ -24,10 +24,6 @@ struct GrpcContextTest
     {
         return grpc_context.get_executor().require(
             boost::asio::execution::allocator(std::pmr::polymorphic_allocator<std::byte>(&resource)));
-        // TODO C++17
-        // return boost::asio::require(
-        //     grpc_context.get_executor(),
-        //     boost::asio::execution::allocator(std::pmr::polymorphic_allocator<std::byte>(&resource)));
     }
 };
 

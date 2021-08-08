@@ -23,16 +23,40 @@ namespace asio = boost::asio;
 
 namespace detail
 {
+template <class Executor, class Property, bool = asio::can_query_v<Executor, Property>, class = void>
+struct CanQuery : std::false_type
+{
+};
+
+template <class Executor, class Property>
+struct CanQuery<Executor, Property, true, void> : std::true_type
+{
+    static constexpr decltype(auto) query(const Executor& executor, Property property)
+    {
+        return asio::query(executor, property);
+    }
+};
+
+template <class Executor, class Property>
+struct CanQuery<Executor, Property, false,
+                std::void_t<decltype(std::declval<const Executor&>().query(std::declval<Property>()))>> : std::true_type
+{
+    static constexpr decltype(auto) query(const Executor& executor, Property property)
+    {
+        return executor.query(property);
+    }
+};
+
 template <class Object>
 auto get_associated_executor_and_allocator(const Object& object)
 {
     auto executor = asio::get_associated_executor(object);
     auto allocator = [&]
     {
-        // TODO C++17
-        if constexpr (asio::can_query_v<decltype(executor), asio::execution::allocator_t<std::allocator<void>>>)
+        using Querier = detail::CanQuery<decltype(executor), asio::execution::allocator_t<void>>;
+        if constexpr (Querier::value)
         {
-            return asio::get_associated_allocator(object, asio::query(executor, asio::execution::allocator));
+            return asio::get_associated_allocator(object, Querier::query(executor, asio::execution::allocator));
         }
         else
         {
