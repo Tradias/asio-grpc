@@ -77,13 +77,15 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "wait for Alarm with allocator")
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "wait for Alarm with asio::awaitable<>")
 {
-    test::co_spawn(asio::prefer(grpc_context.get_executor(), asio::execution::outstanding_work.tracked),
+    bool ok = false;
+    test::co_spawn(grpc_context.get_executor(),
                    [&]() -> asio::awaitable<void>
                    {
                        grpc::Alarm alarm;
-                       co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), asio::use_awaitable);
+                       ok = co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), asio::use_awaitable);
                    });
     grpc_context.run();
+    CHECK(ok);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextClientServerTest, "server streaming")

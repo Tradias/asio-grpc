@@ -10,28 +10,6 @@ asio_grpc_protobuf_generate(
     PROTOS
     "${CMAKE_CURRENT_LIST_DIR}/protos/test.proto")
 
-# test utils
-add_library(asio-grpc-test-utils OBJECT)
-
-target_sources(
-    asio-grpc-test-utils
-    PRIVATE "utils/asioUtils.hpp"
-            "utils/grpcContextTest.hpp"
-            "utils/grpcClientServerTest.cpp"
-            "utils/grpcClientServerTest.hpp"
-            "utils/freePort.cpp"
-            "utils/freePort.hpp"
-            "${ASIO_GRPC_GENERATED_SOURCES}")
-
-target_compile_options(asio-grpc-test-utils PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/W4>
-                                                    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic-errors>)
-
-target_link_libraries(asio-grpc-test-utils PRIVATE asio-grpc)
-
-target_include_directories(
-    asio-grpc-test-utils PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-                                $<BUILD_INTERFACE:${ASIO_GRPC_GENERATED_PROTOS_OUT_DIR}> $<INSTALL_INTERFACE:include>)
-
 # tests
 if(ASIO_GRPC_TEST_COVERAGE)
     include(AsioGrpcCoverage)
@@ -40,17 +18,31 @@ endif()
 function(asio_grpc_add_test _asio-grpc_name)
     add_executable(${_asio-grpc_name})
 
-    target_sources(${_asio-grpc_name} PRIVATE main.cpp $<TARGET_PROPERTY:asio-grpc,ASIO_GRPC_HEADER_FILES> ${ARGN})
+    target_sources(
+        ${_asio-grpc_name}
+        PRIVATE main.cpp
+                $<TARGET_PROPERTY:asio-grpc,ASIO_GRPC_HEADER_FILES>
+                "utils/asioUtils.hpp"
+                "utils/grpcContextTest.hpp"
+                "utils/grpcClientServerTest.cpp"
+                "utils/grpcClientServerTest.hpp"
+                "utils/freePort.cpp"
+                "utils/freePort.hpp"
+                "${ASIO_GRPC_GENERATED_SOURCES}"
+                ${ARGN})
 
     if(ASIO_GRPC_TEST_COVERAGE)
         asio_grpc_add_coverage_flags(${_asio-grpc_name})
     endif()
 
-    target_link_libraries(${_asio-grpc_name} PRIVATE asio-grpc-objects doctest::doctest asio-grpc-test-utils
-                                                     Boost::coroutine Boost::thread)
+    target_compile_options(${_asio-grpc_name} PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/W4>
+                                                      $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic-errors>)
 
-    target_include_directories(${_asio-grpc_name} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-                                                         $<INSTALL_INTERFACE:include>)
+    target_link_libraries(${_asio-grpc_name} PRIVATE asio-grpc-objects doctest::doctest Boost::coroutine Boost::thread)
+
+    target_include_directories(
+        ${_asio-grpc_name} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+                                  $<BUILD_INTERFACE:${ASIO_GRPC_GENERATED_PROTOS_OUT_DIR}> $<INSTALL_INTERFACE:include>)
 
     target_precompile_headers(${_asio-grpc_name} PRIVATE "utils/precompiledHeader.hpp")
 endfunction()

@@ -1,8 +1,7 @@
 #ifndef AGRPC_UTILS_GRPCTEST_HPP
 #define AGRPC_UTILS_GRPCTEST_HPP
 
-#include "agrpc/grpcContext.hpp"
-#include "agrpc/grpcExecutor.hpp"
+#include "agrpc/asioGrpc.hpp"
 
 #include <boost/asio.hpp>
 #include <grpcpp/grpcpp.h>

@@ -162,7 +162,7 @@ auto write_and_finish(grpc::ServerAsyncReaderWriter<Response, Request>& reader_w
                       grpc::WriteOptions options, const grpc::Status& status, CompletionToken token = {})
 {
     return agrpc::grpc_initiate(
-        [&](agrpc::GrpcContext&, void* tag)
+        [&, options](agrpc::GrpcContext&, void* tag)
         {
             reader_writer.WriteAndFinish(response, options, status, tag);
         },
