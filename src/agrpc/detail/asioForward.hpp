@@ -15,7 +15,11 @@
 #ifndef AGRPC_DETAIL_ASIOFORWARD_HPP
 #define AGRPC_DETAIL_ASIOFORWARD_HPP
 
-#include <boost/asio.hpp>
+#include <boost/asio/associated_allocator.hpp>
+#include <boost/asio/associated_executor.hpp>
+#include <boost/asio/async_result.hpp>
+#include <boost/asio/execution.hpp>
+#include <boost/asio/execution_context.hpp>
 
 namespace agrpc
 {

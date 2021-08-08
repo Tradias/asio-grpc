@@ -4,10 +4,12 @@
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/grpcContextTest.hpp"
 
+#include <boost/asio/coroutine.hpp>
+#include <boost/asio/post.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/thread_pool.hpp>
 #include <doctest/doctest.h>
 #include <grpcpp/alarm.h>
-#include <grpcpp/grpcpp.h>
 
 #include <memory_resource>
 #include <string_view>
@@ -125,7 +127,7 @@ struct Coro : asio::coroutine
     executor_type get_executor() const noexcept { return executor; }
 };
 
-TEST_CASE_FIXTURE(test::GrpcContextClientServerTest, "unary stackless coroutine")
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unary stackless coroutine")
 {
     grpc::ServerAsyncResponseWriter<test::v1::Response> writer{&server_context};
     test::v1::Request server_request;

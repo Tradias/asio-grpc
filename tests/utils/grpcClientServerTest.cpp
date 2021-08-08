@@ -4,6 +4,10 @@
 #include "utils/freePort.hpp"
 #include "utils/grpcContextTest.hpp"
 
+#include <grpcpp/client_context.h>
+#include <grpcpp/create_channel.h>
+#include <grpcpp/server_context.h>
+
 #include <chrono>
 #include <cstdint>
 #include <string>
@@ -11,7 +15,7 @@
 
 namespace agrpc::test
 {
-GrpcContextClientServerTest::GrpcContextClientServerTest()
+GrpcClientServerTest::GrpcClientServerTest()
     : port(agrpc::test::get_free_port()), address(std::string{"0.0.0.0:"} + std::to_string(port))
 {
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());
@@ -22,7 +26,7 @@ GrpcContextClientServerTest::GrpcContextClientServerTest()
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
 }
 
-GrpcContextClientServerTest::~GrpcContextClientServerTest()
+GrpcClientServerTest::~GrpcClientServerTest()
 {
     stub.reset();
     server->Shutdown();

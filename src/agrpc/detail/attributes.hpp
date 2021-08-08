@@ -19,7 +19,9 @@
 
 #ifdef __has_cpp_attribute
 #if __has_cpp_attribute(unlikely)
+#if ((defined(_MSVC_LANG) && _MSVC_LANG > 201703L) || __cplusplus > 201703L)
 #define AGRPC_UNLIKELY [[unlikely]]
+#endif
 #endif
 #endif
 #ifndef AGRPC_UNLIKELY

@@ -4,6 +4,9 @@
 #include "protos/test.grpc.pb.h"
 #include "utils/grpcContextTest.hpp"
 
+#include <grpcpp/client_context.h>
+#include <grpcpp/server_context.h>
+
 #include <chrono>
 #include <cstdint>
 #include <string>
@@ -11,7 +14,7 @@
 
 namespace agrpc::test
 {
-struct GrpcContextClientServerTest : test::GrpcContextTest
+struct GrpcClientServerTest : test::GrpcContextTest
 {
     uint16_t port;
     std::string address;
@@ -20,9 +23,9 @@ struct GrpcContextClientServerTest : test::GrpcContextTest
     grpc::ServerContext server_context;
     grpc::ClientContext client_context;
 
-    GrpcContextClientServerTest();
+    GrpcClientServerTest();
 
-    ~GrpcContextClientServerTest();
+    ~GrpcClientServerTest();
 };
 }  // namespace agrpc::test
 

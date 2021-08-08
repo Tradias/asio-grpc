@@ -6,7 +6,6 @@
 
 #include <doctest/doctest.h>
 #include <grpcpp/alarm.h>
-#include <grpcpp/grpcpp.h>
 
 namespace test_asio_grpc_cpp20
 {
@@ -88,7 +87,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "wait for Alarm with asio::awaitable<>"
     CHECK(ok);
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextClientServerTest, "server streaming")
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "server streaming")
 {
     test::co_spawn(grpc_context,
                    [&]() -> asio::awaitable<void>
@@ -124,7 +123,7 @@ TEST_CASE_FIXTURE(test::GrpcContextClientServerTest, "server streaming")
     grpc_context.run();
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextClientServerTest, "client streaming")
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "client streaming")
 {
     test::co_spawn(grpc_context,
                    [&]() -> asio::awaitable<void>
@@ -160,7 +159,7 @@ TEST_CASE_FIXTURE(test::GrpcContextClientServerTest, "client streaming")
     grpc_context.run();
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextClientServerTest, "unary")
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unary")
 {
     bool use_finish_with_error;
     SUBCASE("server finish_with_error") { use_finish_with_error = true; }
@@ -210,7 +209,7 @@ TEST_CASE_FIXTURE(test::GrpcContextClientServerTest, "unary")
     grpc_context.run();
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextClientServerTest, "bidirectional streaming")
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "bidirectional streaming")
 {
     bool use_write_and_finish{};
     SUBCASE("server write_and_finish") { use_write_and_finish = true; }

@@ -43,7 +43,7 @@ static constexpr asio::use_awaitable_t<agrpc::pmr::GrpcExecutor> GRPC_USE_AWAITA
 
 using DefaultCompletionToken = asio::use_awaitable_t<>;
 #else
-using DefaultCompletionToken = asio::use_future_t<>;
+using DefaultCompletionToken = int;
 #endif
 
 template <class Function, class CompletionToken = agrpc::DefaultCompletionToken>

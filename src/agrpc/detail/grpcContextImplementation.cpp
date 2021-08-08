@@ -18,7 +18,6 @@
 #include "agrpc/detail/grpcExecutorOperation.hpp"
 #include "agrpc/grpcContext.hpp"
 
-#include <atomic>
 #include <cstdint>
 #include <limits>
 

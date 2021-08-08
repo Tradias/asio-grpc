@@ -53,8 +53,6 @@ constexpr decltype(auto) invoke_front_impl(F&& f, std::tuple<Args...>&& args, st
     }
     else
     {
-        static_assert(std::add_pointer_t<std::void_t<F>>{},
-                      "Function cannot not be invoked with any leading subset of the provided arguments.");
     }
 }
 
