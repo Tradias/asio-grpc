@@ -23,25 +23,27 @@
 
 namespace agrpc::detail
 {
-template <class Pointer, class Allocator>
+template <class Allocator>
 struct AllocationGuard
 {
-    Pointer* ptr;
+    using Traits = std::allocator_traits<Allocator>;
+
+    typename Traits::pointer ptr;
     Allocator& allocator;
 
     ~AllocationGuard() noexcept
     {
         if (this->ptr)
         {
-            std::allocator_traits<Allocator>::deallocate(allocator, ptr, 1);
+            Traits::deallocate(allocator, ptr, 1);
         }
     }
 
     void release() noexcept { this->ptr = nullptr; }
 };
 
-template <class Pointer, class Allocator>
-AllocationGuard(Pointer*, Allocator&) -> AllocationGuard<Pointer, Allocator>;
+template <class Allocator>
+AllocationGuard(typename std::allocator_traits<Allocator>::pointer, Allocator&) -> AllocationGuard<Allocator>;
 
 template <class Allocator>
 struct AllocatorDeleter

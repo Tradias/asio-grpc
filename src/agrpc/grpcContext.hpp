@@ -38,11 +38,11 @@ class BasicGrpcExecutor;
 class GrpcContext : public asio::execution_context
 {
   private:
-    using MemoryResource = std::pmr::unsynchronized_pool_resource;
+    using LocalMemoryResource = std::pmr::unsynchronized_pool_resource;
 
   public:
     using executor_type = agrpc::BasicGrpcExecutor<std::allocator<void>, detail::GrpcExecutorOptions::DEFAULT>;
-    using allocator_type = detail::MemoryResourceAllocator<std::byte, MemoryResource>;
+    using allocator_type = detail::MemoryResourceAllocator<std::byte, LocalMemoryResource>;
 
     explicit GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue,
                          std::pmr::memory_resource* local_upstream_resource = std::pmr::new_delete_resource());
@@ -81,7 +81,7 @@ class GrpcContext : public asio::execution_context
     std::atomic_bool stopped;
     std::atomic_bool has_work;
     std::unique_ptr<grpc::CompletionQueue> completion_queue;
-    MemoryResource local_resource;
+    LocalMemoryResource local_resource;
     LocalWorkQueue local_work_queue;
     bool is_processing_local_work;
     RemoteWorkQueue remote_work_queue;

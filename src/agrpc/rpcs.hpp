@@ -225,7 +225,7 @@ auto request(detail::ClientServerStreamingRequest<RPC, Request, Reader> rpc, Stu
         {
             detail::create_work_and_invoke(
                 detail::make_completion_handler_with_responder<Reader>(std::move(completion_handler)),
-                [&](auto&& grpc_context, auto* tag)
+                [&](agrpc::GrpcContext& grpc_context, auto* tag)
                 {
                     tag->handler().responder =
                         (stub.*rpc)(&client_context, request, grpc_context.get_completion_queue(), tag);
@@ -255,7 +255,7 @@ auto request(detail::ClientSideStreamingRequest<RPC, Writer, Response> rpc, Stub
         {
             detail::create_work_and_invoke(
                 detail::make_completion_handler_with_responder<Writer>(std::move(completion_handler)),
-                [&](auto&& grpc_context, auto* tag)
+                [&](agrpc::GrpcContext& grpc_context, auto* tag)
                 {
                     tag->handler().responder =
                         (stub.*rpc)(&client_context, &response, grpc_context.get_completion_queue(), tag);
@@ -285,7 +285,7 @@ auto request(detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter> rpc,
         {
             detail::create_work_and_invoke(
                 detail::make_completion_handler_with_responder<ReaderWriter>(std::move(completion_handler)),
-                [&](auto&& grpc_context, auto* tag)
+                [&](agrpc::GrpcContext& grpc_context, auto* tag)
                 {
                     tag->handler().responder = (stub.*rpc)(&client_context, grpc_context.get_completion_queue(), tag);
                 });

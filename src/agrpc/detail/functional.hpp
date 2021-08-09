@@ -51,9 +51,6 @@ constexpr decltype(auto) invoke_front_impl(F&& f, std::tuple<Args...>&& args, st
         return detail::invoke_front_impl(std::forward<F>(f), std::move(args),
                                          std::make_index_sequence<sizeof...(I) - 1>());
     }
-    else
-    {
-    }
 }
 
 template <class F, class... Args>

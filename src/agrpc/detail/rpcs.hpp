@@ -62,7 +62,10 @@ struct CompletionHandlerWithResponder
 
     void operator()(bool ok) { this->completion_handler(std::pair{std::move(this->responder), ok}); }
 
-    [[nodiscard]] auto get_executor() const noexcept { return asio::get_associated_executor(this->completion_handler); }
+    [[nodiscard]] executor_type get_executor() const noexcept
+    {
+        return asio::get_associated_executor(this->completion_handler);
+    }
 };
 
 template <class Responder, class CompletionHandler, class... Args>

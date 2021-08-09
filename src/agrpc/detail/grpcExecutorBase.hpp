@@ -23,7 +23,7 @@
 
 namespace agrpc::detail
 {
-template <class Allocator = std::allocator<void>>
+template <class Allocator>
 class GrpcExecutorBase
 {
   public:
@@ -51,7 +51,7 @@ class GrpcExecutorBase
     detail::CompressedPair<agrpc::GrpcContext*, allocator_type> impl;
 };
 
-template <class Allocator = std::allocator<void>>
+template <class Allocator>
 class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
 {
   private:

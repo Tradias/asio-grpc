@@ -8,6 +8,7 @@
 #include <grpcpp/server_builder.h>
 
 #include <array>
+#include <chrono>
 #include <memory>
 #include <memory_resource>
 
@@ -21,7 +22,7 @@ struct GrpcContextTest
     std::array<std::byte, 1024> buffer{};
     std::pmr::monotonic_buffer_resource resource{buffer.data(), buffer.size()};
 
-    auto get_pmr_executor()
+    agrpc::pmr::GrpcExecutor get_pmr_executor()
     {
         return grpc_context.get_executor().require(
             boost::asio::execution::allocator(std::pmr::polymorphic_allocator<std::byte>(&resource)));

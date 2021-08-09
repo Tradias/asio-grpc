@@ -25,7 +25,7 @@ struct HandlerWithAssociatedAllocator
 
 template <class Function, class Allocator>
 HandlerWithAssociatedAllocator(Function&&, Allocator&&)
-    -> HandlerWithAssociatedAllocator<boost::remove_cv_ref_t<Function>, Allocator>;
+    -> HandlerWithAssociatedAllocator<boost::remove_cv_ref_t<Function>, boost::remove_cv_ref_t<Allocator>>;
 
 #ifdef __cpp_lib_coroutine
 template <class Executor, class Function>
