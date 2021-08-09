@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "agrpc/grpcContext.hpp"
+#ifndef AGRPC_AGRPC_GRPCCONTEXT_IPP
+#define AGRPC_AGRPC_GRPCCONTEXT_IPP
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/attributes.hpp"
@@ -20,6 +21,7 @@
 #include "agrpc/detail/grpcContextOperation.hpp"
 #include "agrpc/detail/grpcExecutorOptions.hpp"
 #include "agrpc/detail/memory.hpp"
+#include "agrpc/grpcContext.hpp"
 #include "agrpc/grpcExecutor.hpp"
 
 #include <boost/intrusive/slist.hpp>
@@ -34,7 +36,7 @@
 
 namespace agrpc
 {
-namespace
+namespace detail
 {
 struct GrpcContextThreadInfo : asio::detail::thread_info_base
 {
@@ -47,7 +49,7 @@ struct GrpcContextThreadContext : asio::detail::thread_context
     thread_call_stack::context ctx{this, this_thread};
 };
 
-bool get_next_event(agrpc::GrpcContext& grpc_context, detail::GrpcCompletionQueueEvent& event)
+inline bool get_next_event(agrpc::GrpcContext& grpc_context, detail::GrpcCompletionQueueEvent& event)
 {
     static constexpr ::gpr_timespec INFINITE_FUTURE{std::numeric_limits<std::int64_t>::max(), 0, ::GPR_CLOCK_MONOTONIC};
     return grpc_context.get_completion_queue()->AsyncNext(&event.tag, &event.ok, INFINITE_FUTURE) !=
@@ -58,7 +60,7 @@ template <class LoopPredicate>
 void run_event_loop(agrpc::GrpcContext& grpc_context, LoopPredicate&& loop_predicate)
 {
     detail::GrpcCompletionQueueEvent event;
-    while (loop_predicate() && get_next_event(grpc_context, event))
+    while (loop_predicate() && detail::get_next_event(grpc_context, event))
     {
         if (grpc_context.is_stopped()) AGRPC_UNLIKELY
             {
@@ -72,10 +74,10 @@ void run_event_loop(agrpc::GrpcContext& grpc_context, LoopPredicate&& loop_predi
         }
     }
 }
-}  // namespace
+}  // namespace detail
 
-GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue,
-                         std::pmr::memory_resource* local_upstream_resource)
+inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue,
+                                std::pmr::memory_resource* local_upstream_resource)
     : work_alarm(),
       outstanding_work(),
       thread_id(std::this_thread::get_id()),
@@ -89,32 +91,32 @@ GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue
 {
 }
 
-GrpcContext::~GrpcContext()
+inline GrpcContext::~GrpcContext()
 {
     this->stop();
     this->completion_queue->Shutdown();
-    run_event_loop(*this, detail::Always{true});
+    detail::run_event_loop(*this, detail::Always{true});
     asio::execution_context::shutdown();
     asio::execution_context::destroy();
 }
 
-void GrpcContext::run()
+inline void GrpcContext::run()
 {
     if (this->outstanding_work.load(std::memory_order_relaxed) == 0)
     {
         return;
     }
     this->reset();
-    GrpcContextThreadContext thread_context;
+    detail::GrpcContextThreadContext thread_context;
     this->thread_id.store(std::this_thread::get_id(), std::memory_order_relaxed);
-    run_event_loop(*this,
-                   [&]()
-                   {
-                       return !this->is_stopped();
-                   });
+    detail::run_event_loop(*this,
+                           [&]()
+                           {
+                               return !this->is_stopped();
+                           });
 }
 
-void GrpcContext::stop()
+inline void GrpcContext::stop()
 {
     if (!this->stopped.exchange(true, std::memory_order_relaxed))
     {
@@ -122,20 +124,20 @@ void GrpcContext::stop()
     }
 }
 
-void GrpcContext::reset() noexcept { this->stopped.store(false, std::memory_order_relaxed); }
+inline void GrpcContext::reset() noexcept { this->stopped.store(false, std::memory_order_relaxed); }
 
-bool GrpcContext::is_stopped() const noexcept { return this->stopped.load(std::memory_order_relaxed); }
+inline bool GrpcContext::is_stopped() const noexcept { return this->stopped.load(std::memory_order_relaxed); }
 
-GrpcContext::executor_type GrpcContext::get_executor() noexcept { return GrpcContext::executor_type{*this}; }
+inline GrpcContext::executor_type GrpcContext::get_executor() noexcept { return GrpcContext::executor_type{*this}; }
 
-GrpcContext::allocator_type GrpcContext::get_allocator() noexcept
+inline GrpcContext::allocator_type GrpcContext::get_allocator() noexcept
 {
     return GrpcContext::allocator_type{&this->local_resource};
 }
 
-void GrpcContext::work_started() noexcept { this->outstanding_work.fetch_add(1, std::memory_order_relaxed); }
+inline void GrpcContext::work_started() noexcept { this->outstanding_work.fetch_add(1, std::memory_order_relaxed); }
 
-void GrpcContext::work_finished() noexcept
+inline void GrpcContext::work_finished() noexcept
 {
     if (this->outstanding_work.fetch_sub(1, std::memory_order_relaxed) == 1) AGRPC_UNLIKELY
         {
@@ -143,10 +145,12 @@ void GrpcContext::work_finished() noexcept
         }
 }
 
-grpc::CompletionQueue* GrpcContext::get_completion_queue() noexcept { return this->completion_queue.get(); }
+inline grpc::CompletionQueue* GrpcContext::get_completion_queue() noexcept { return this->completion_queue.get(); }
 
-grpc::ServerCompletionQueue* GrpcContext::get_server_completion_queue() noexcept
+inline grpc::ServerCompletionQueue* GrpcContext::get_server_completion_queue() noexcept
 {
     return static_cast<grpc::ServerCompletionQueue*>(this->completion_queue.get());
 }
 }  // namespace agrpc
+
+#endif  // AGRPC_AGRPC_GRPCCONTEXT_IPP

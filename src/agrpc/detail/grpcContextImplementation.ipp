@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "agrpc/detail/grpcContextImplementation.hpp"
+#ifndef AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_IPP
+#define AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_IPP
 
+#include "agrpc/detail/grpcContextImplementation.hpp"
 #include "agrpc/detail/grpcContextOperation.hpp"
 #include "agrpc/detail/grpcExecutorOperation.hpp"
 #include "agrpc/grpcContext.hpp"
@@ -23,7 +25,7 @@
 
 namespace agrpc::detail
 {
-void GrpcContextImplementation::trigger_work_alarm(agrpc::GrpcContext& grpc_context)
+inline void GrpcContextImplementation::trigger_work_alarm(agrpc::GrpcContext& grpc_context)
 {
     static constexpr ::gpr_timespec TIME_ZERO{std::numeric_limits<std::int64_t>::min(), 0, ::GPR_CLOCK_MONOTONIC};
     if (!grpc_context.has_work.exchange(true, std::memory_order_acquire))
@@ -33,13 +35,15 @@ void GrpcContextImplementation::trigger_work_alarm(agrpc::GrpcContext& grpc_cont
     }
 }
 
-void GrpcContextImplementation::add_remote_work(agrpc::GrpcContext& grpc_context, detail::GrpcContextOperation* op)
+inline void GrpcContextImplementation::add_remote_work(agrpc::GrpcContext& grpc_context,
+                                                       detail::GrpcContextOperation* op)
 {
     grpc_context.remote_work_queue.push(op);
     GrpcContextImplementation::trigger_work_alarm(grpc_context);
 }
 
-void GrpcContextImplementation::add_local_work(agrpc::GrpcContext& grpc_context, detail::GrpcContextOperation* op)
+inline void GrpcContextImplementation::add_local_work(agrpc::GrpcContext& grpc_context,
+                                                      detail::GrpcContextOperation* op)
 {
     grpc_context.local_work_queue.push_back(*op);
     if (!grpc_context.is_processing_local_work)
@@ -48,7 +52,8 @@ void GrpcContextImplementation::add_local_work(agrpc::GrpcContext& grpc_context,
     }
 }
 
-[[nodiscard]] bool GrpcContextImplementation::running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept
+[[nodiscard]] inline bool GrpcContextImplementation::running_in_this_thread(
+    const agrpc::GrpcContext& grpc_context) noexcept
 {
     return grpc_context.thread_id.load(std::memory_order_relaxed) == std::this_thread::get_id();
 }
@@ -96,3 +101,5 @@ template void GrpcContextImplementation::process_work<detail::GrpcContextOperati
 template void GrpcContextImplementation::process_work<detail::GrpcContextOperation::InvokeHandler::NO>(
     agrpc::GrpcContext& grpc_context, const detail::GrpcCompletionQueueEvent& event);
 }  // namespace agrpc::detail
+
+#endif  // AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_IPP

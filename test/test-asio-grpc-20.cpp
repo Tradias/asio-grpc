@@ -4,6 +4,7 @@
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/grpcContextTest.hpp"
 
+#include <boost/asio/spawn.hpp>
 #include <doctest/doctest.h>
 #include <grpcpp/alarm.h>
 
@@ -32,6 +33,19 @@ TEST_CASE("GrpcExecutor fulfills Executor TS concept")
     CHECK(asio::execution::executor<agrpc::GrpcExecutor>);
     CHECK(asio::execution::executor_of<agrpc::GrpcExecutor, asio::execution::invocable_archetype>);
     CHECK(std::is_constructible_v<asio::any_io_executor, agrpc::GrpcExecutor>);
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn with yield_context")
+{
+    bool ok = false;
+    asio::spawn(asio::require(grpc_context.get_executor(), asio::execution::outstanding_work.tracked),
+                [&](asio::yield_context&& yield)
+                {
+                    grpc::Alarm alarm;
+                    ok = agrpc::wait(alarm, test::ten_milliseconds_from_now(), yield);
+                });
+    grpc_context.run();
+    CHECK(ok);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "co_spawn two Alarms and await their ok")

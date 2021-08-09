@@ -1,6 +1,6 @@
 # asio-grpc
 
-This library provides an implementation of Boost.Asio's [execution_context](https://www.boost.org/doc/libs/develop/doc/html/boost_asio/reference/execution_context.html) which dispatches work to a gRPC [CompletionQueue](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html). Making it possible to write 
+This library provides an implementation of Boost.Asio's [execution_context](https://www.boost.org/doc/libs/develop/doc/html/boost_asio/reference/execution_context.html) that dispatches work to a gRPC [CompletionQueue](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html). Making it possible to write 
 asynchronous gRPC servers and clients using C++20 coroutines, Boost.Coroutines, Boost.Asio's stackless coroutines, std::futures and callbacks.
 
 # Usage
@@ -15,13 +15,7 @@ add_subdirectory(/path/to/repository/root)
 target_link_libraries(your_library PUBLIC asio-grpc::asio-grpc)
 ```
 
-To exactly one of your `.cpp` files add the include:
-
-```c++
-#include <agrpc/asioGrpcSrc.hpp>
-```
-
-When using the library in other files use:
+To use the library include:
 
 ```c++
 #include <agrpc/asioGrpc.hpp>

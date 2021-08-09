@@ -7,8 +7,8 @@ list(
     APPEND
     ASIO_GRPC_HEADER_FILES
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/asioGrpc.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/asioGrpcSrc.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/grpcContext.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/agrpc/grpcContext.ipp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/grpcExecutor.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/initiate.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/rpcs.hpp"
@@ -17,6 +17,7 @@ list(
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/functional.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcCompletionQueueEvent.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcContextImplementation.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcContextImplementation.ipp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcContextInteraction.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcContextOperation.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcExecutorBase.hpp"

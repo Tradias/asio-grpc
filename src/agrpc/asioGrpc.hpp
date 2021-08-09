@@ -15,7 +15,9 @@
 #ifndef AGRPC_AGRPC_ASIOGRPC_HPP
 #define AGRPC_AGRPC_ASIOGRPC_HPP
 
+#include "agrpc/detail/grpcContextImplementation.ipp"
 #include "agrpc/grpcContext.hpp"
+#include "agrpc/grpcContext.ipp"
 #include "agrpc/grpcExecutor.hpp"
 #include "agrpc/initiate.hpp"
 #include "agrpc/rpcs.hpp"
