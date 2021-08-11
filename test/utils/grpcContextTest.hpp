@@ -22,9 +22,11 @@ struct GrpcContextTest
     std::array<std::byte, 1024> buffer{};
     std::pmr::monotonic_buffer_resource resource{buffer.data(), buffer.size()};
 
-    agrpc::pmr::GrpcExecutor get_pmr_executor()
+    agrpc::GrpcExecutor get_executor() noexcept { return grpc_context.get_executor(); }
+
+    agrpc::pmr::GrpcExecutor get_pmr_executor() noexcept
     {
-        return grpc_context.get_executor().require(
+        return this->get_executor().require(
             boost::asio::execution::allocator(std::pmr::polymorphic_allocator<std::byte>(&resource)));
     }
 };

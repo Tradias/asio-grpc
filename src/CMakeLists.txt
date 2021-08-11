@@ -47,8 +47,14 @@ if(ASIO_GRPC_BUILD_TESTS)
 
     target_compile_definitions(
         asio-grpc-objects
-        INTERFACE $<$<CXX_COMPILER_ID:MSVC>:BOOST_ASIO_HAS_WORKING_EXPRESSION_SFINAE _WIN32_WINNT=0x0A00 # Windows 10
-                  WINVER=0x0A00> BOOST_ASIO_NO_DEPRECATED)
+        INTERFACE $<$<CXX_COMPILER_ID:MSVC>:
+                  BOOST_ASIO_HAS_DEDUCED_REQUIRE_MEMBER_TRAIT
+                  BOOST_ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT
+                  BOOST_ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT
+                  BOOST_ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT
+                  _WIN32_WINNT=0x0A00 # Windows 10
+                  WINVER=0x0A00>
+                  BOOST_ASIO_NO_DEPRECATED)
 
     if(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS)
         target_compile_options(asio-grpc-objects INTERFACE -fsanitize=address,undefined -fno-omit-frame-pointer)

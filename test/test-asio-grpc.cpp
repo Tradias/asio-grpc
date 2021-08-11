@@ -21,9 +21,26 @@ using namespace agrpc;
 
 TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0));
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcExecutor fulfills Boost.Asio executor concept")
+TEST_CASE("GrpcExecutor fulfills Executor TS traits")
 {
-    CHECK(asio::is_executor<agrpc::GrpcExecutor>::value);
+    CHECK(asio::execution::can_execute_v<std::add_const_t<agrpc::GrpcContext::executor_type>,
+                                         asio::execution::invocable_archetype>);
+    CHECK(asio::execution::is_executor_v<agrpc::GrpcContext::executor_type>);
+    CHECK(asio::can_require<agrpc::GrpcContext::executor_type, asio::execution::blocking_t::never_t>::value);
+    CHECK(asio::can_prefer<agrpc::GrpcContext::executor_type, asio::execution::blocking_t::possibly_t>::value);
+    CHECK(asio::can_prefer<agrpc::GrpcContext::executor_type, asio::execution::relationship_t::fork_t>::value);
+    CHECK(asio::can_prefer<agrpc::GrpcContext::executor_type, asio::execution::relationship_t::continuation_t>::value);
+    CHECK(asio::can_prefer<agrpc::GrpcContext::executor_type, asio::execution::outstanding_work_t::tracked_t>::value);
+    CHECK(asio::can_prefer<agrpc::GrpcContext::executor_type, asio::execution::outstanding_work_t::untracked_t>::value);
+    CHECK(asio::can_prefer<agrpc::GrpcContext::executor_type,
+                           asio::execution::allocator_t<std::pmr::polymorphic_allocator<std::byte>>>::value);
+    CHECK(asio::can_query<agrpc::GrpcContext::executor_type, asio::execution::blocking_t>::value);
+    CHECK(asio::can_query<agrpc::GrpcContext::executor_type, asio::execution::relationship_t>::value);
+    CHECK(asio::can_query<agrpc::GrpcContext::executor_type, asio::execution::outstanding_work_t>::value);
+    CHECK(asio::can_query<agrpc::GrpcContext::executor_type, asio::execution::mapping_t>::value);
+    CHECK(asio::can_query<agrpc::GrpcContext::executor_type, asio::execution::allocator_t<void>>::value);
+    CHECK(asio::can_query<agrpc::GrpcContext::executor_type, asio::execution::context_t>::value);
+    CHECK(std::is_constructible_v<asio::any_io_executor, agrpc::GrpcContext::executor_type>);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcExecutor is mostly trivial")
@@ -39,8 +56,22 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcExecutor is mostly trivial")
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wait")
 {
     bool ok = false;
-    asio::spawn(asio::bind_executor(get_pmr_executor().require(asio::execution::outstanding_work.tracked), [] {}),
-                [&](auto&& yield)
+    asio::spawn(
+        asio::bind_executor(asio::require(get_pmr_executor(), asio::execution::outstanding_work.tracked), [] {}),
+        [&](auto&& yield)
+        {
+            grpc::Alarm alarm;
+            ok = agrpc::wait(alarm, test::ten_milliseconds_from_now(), yield);
+        });
+    grpc_context.run();
+    CHECK(ok);
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn with yield_context")
+{
+    bool ok = false;
+    asio::spawn(asio::require(get_executor(), asio::execution::outstanding_work.tracked),
+                [&](asio::yield_context&& yield)
                 {
                     grpc::Alarm alarm;
                     ok = agrpc::wait(alarm, test::ten_milliseconds_from_now(), yield);
@@ -92,8 +123,9 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post/execute with allocator")
     }
     SUBCASE("agrpc::wait")
     {
-        grpc_context.get_executor().execute(
-            [&, executor = get_pmr_executor().require(asio::execution::outstanding_work.tracked)]
+        asio::execution::execute(
+            get_executor(),
+            [&, executor = asio::require(get_pmr_executor(), asio::execution::outstanding_work.tracked)]
             {
                 grpc::Alarm alarm;
                 agrpc::wait(alarm, test::ten_milliseconds_from_now(), asio::bind_executor(executor, [] {}));
@@ -111,13 +143,13 @@ template <class Function>
 struct Coro : asio::coroutine
 {
     using executor_type =
-        decltype(std::declval<agrpc::GrpcContext::executor_type&>().require(asio::execution::outstanding_work.tracked));
+        asio::require_result<agrpc::GrpcContext::executor_type, asio::execution::outstanding_work_t::tracked_t>::type;
 
     executor_type executor;
     Function function;
 
     Coro(agrpc::GrpcContext& grpc_context, Function&& f)
-        : executor(grpc_context.get_executor().require(asio::execution::outstanding_work.tracked)),
+        : executor(asio::require(grpc_context.get_executor(), asio::execution::outstanding_work.tracked)),
           function(std::forward<Function>(f))
     {
     }

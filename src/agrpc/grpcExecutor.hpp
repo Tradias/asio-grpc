@@ -60,9 +60,18 @@ class BasicGrpcExecutor
         return this->allocator();
     }
 
-    [[nodiscard]] constexpr bool operator==(const BasicGrpcExecutor& other) const noexcept
+    template <class OtherAllocator, std::uint32_t OtherOptions>
+    [[nodiscard]] constexpr bool operator==(
+        const agrpc::BasicGrpcExecutor<OtherAllocator, OtherOptions>& rhs) const noexcept
     {
-        return this->grpc_context() == other.grpc_context() && this->allocator() == other.allocator();
+        return this->grpc_context() == rhs.grpc_context() && this->allocator() == rhs.allocator();
+    }
+
+    template <class OtherAllocator, std::uint32_t OtherOptions>
+    [[nodiscard]] constexpr bool operator!=(
+        const agrpc::BasicGrpcExecutor<OtherAllocator, OtherOptions>& rhs) const noexcept
+    {
+        return !(*this == rhs);
     }
 
     [[nodiscard]] bool running_in_this_thread() const noexcept
@@ -192,12 +201,6 @@ class BasicGrpcExecutor
 
     template <class OtherAllocator>
     [[nodiscard]] constexpr auto query(asio::execution::allocator_t<OtherAllocator>) const noexcept
-    {
-        return this->get_allocator();
-    }
-
-    template <class OtherAllocator>
-    [[nodiscard]] constexpr auto query(asio::execution::allocator_t<void>) const noexcept
     {
         return this->get_allocator();
     }

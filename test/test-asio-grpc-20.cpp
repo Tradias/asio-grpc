@@ -14,38 +14,10 @@ using namespace agrpc;
 
 TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0));
 
-TEST_CASE("GrpcExecutor fulfills Executor TS concept")
+TEST_CASE("GrpcExecutor fulfills Executor TS concepts")
 {
-    CHECK(asio::can_require<agrpc::GrpcExecutor, asio::execution::blocking_t::never_t>::value);
-    CHECK(asio::can_prefer<agrpc::GrpcExecutor, asio::execution::blocking_t::possibly_t>::value);
-    CHECK(asio::can_prefer<agrpc::GrpcExecutor, asio::execution::relationship_t::fork_t>::value);
-    CHECK(asio::can_prefer<agrpc::GrpcExecutor, asio::execution::relationship_t::continuation_t>::value);
-    CHECK(asio::can_prefer<agrpc::GrpcExecutor, asio::execution::outstanding_work_t::tracked_t>::value);
-    CHECK(asio::can_prefer<agrpc::GrpcExecutor, asio::execution::outstanding_work_t::untracked_t>::value);
-    CHECK(asio::can_prefer<agrpc::GrpcExecutor, asio::execution::allocator_t<void>>::value);
-    CHECK(asio::can_query<agrpc::GrpcExecutor, asio::execution::blocking_t::never_t>::value);
-    CHECK(asio::can_query<agrpc::GrpcExecutor, asio::execution::blocking_t::possibly_t>::value);
-    CHECK(asio::can_query<agrpc::GrpcExecutor, asio::execution::relationship_t::fork_t>::value);
-    CHECK(asio::can_query<agrpc::GrpcExecutor, asio::execution::relationship_t::continuation_t>::value);
-    CHECK(asio::can_query<agrpc::GrpcExecutor, asio::execution::outstanding_work_t::tracked_t>::value);
-    CHECK(asio::can_query<agrpc::GrpcExecutor, asio::execution::outstanding_work_t::untracked_t>::value);
-    CHECK(asio::can_query<agrpc::GrpcExecutor, asio::execution::allocator_t<void>>::value);
     CHECK(asio::execution::executor<agrpc::GrpcExecutor>);
     CHECK(asio::execution::executor_of<agrpc::GrpcExecutor, asio::execution::invocable_archetype>);
-    CHECK(std::is_constructible_v<asio::any_io_executor, agrpc::GrpcExecutor>);
-}
-
-TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn with yield_context")
-{
-    bool ok = false;
-    asio::spawn(asio::require(grpc_context.get_executor(), asio::execution::outstanding_work.tracked),
-                [&](asio::yield_context&& yield)
-                {
-                    grpc::Alarm alarm;
-                    ok = agrpc::wait(alarm, test::ten_milliseconds_from_now(), yield);
-                });
-    grpc_context.run();
-    CHECK(ok);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "co_spawn two Alarms and await their ok")
@@ -91,7 +63,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "wait for Alarm with allocator")
 TEST_CASE_FIXTURE(test::GrpcContextTest, "wait for Alarm with asio::awaitable<>")
 {
     bool ok = false;
-    test::co_spawn(grpc_context.get_executor(),
+    test::co_spawn(get_executor(),
                    [&]() -> asio::awaitable<void>
                    {
                        grpc::Alarm alarm;
