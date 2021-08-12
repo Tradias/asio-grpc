@@ -56,13 +56,12 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcExecutor is mostly trivial")
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wait")
 {
     bool ok = false;
-    asio::spawn(
-        asio::bind_executor(asio::require(get_pmr_executor(), asio::execution::outstanding_work.tracked), [] {}),
-        [&](auto&& yield)
-        {
-            grpc::Alarm alarm;
-            ok = agrpc::wait(alarm, test::ten_milliseconds_from_now(), yield);
-        });
+    asio::spawn(asio::bind_executor(get_work_tracking_executor(), [] {}),
+                [&](auto&& yield)
+                {
+                    grpc::Alarm alarm;
+                    ok = agrpc::wait(alarm, test::ten_milliseconds_from_now(), yield);
+                });
     grpc_context.run();
     CHECK(ok);
 }
@@ -70,8 +69,8 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wai
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn with yield_context")
 {
     bool ok = false;
-    asio::spawn(asio::require(get_executor(), asio::execution::outstanding_work.tracked),
-                [&](asio::yield_context&& yield)
+    asio::spawn(get_work_tracking_executor(),
+                [&](asio::yield_context yield)
                 {
                     grpc::Alarm alarm;
                     ok = agrpc::wait(alarm, test::ten_milliseconds_from_now(), yield);
@@ -125,10 +124,16 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post/execute with allocator")
     {
         asio::execution::execute(
             get_executor(),
-            [&, executor = asio::require(get_pmr_executor(), asio::execution::outstanding_work.tracked)]
+            [&, executor = asio::require(get_pmr_executor(), asio::execution::outstanding_work.tracked)]() mutable
             {
-                grpc::Alarm alarm;
-                agrpc::wait(alarm, test::ten_milliseconds_from_now(), asio::bind_executor(executor, [] {}));
+                auto alarm = std::make_shared<grpc::Alarm>();
+                auto& alarm_ref = *alarm;
+                agrpc::wait(alarm_ref, test::ten_milliseconds_from_now(),
+                            asio::bind_executor(std::move(executor),
+                                                [a = std::move(alarm)](bool ok)
+                                                {
+                                                    CHECK(ok);
+                                                }));
             });
     }
     grpc_context.run();
@@ -206,6 +211,173 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unary stackless coroutine")
                    client_coro(true);
                });
 
+    grpc_context.run();
+}
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context server streaming")
+{
+    asio::spawn(get_work_tracking_executor(),
+                [&](asio::yield_context yield)
+                {
+                    test::v1::Request request;
+                    grpc::ServerAsyncWriter<test::v1::Response> writer{&server_context};
+                    CHECK(agrpc::request(&test::v1::Test::AsyncService::RequestServerStreaming, service, server_context,
+                                         request, writer, yield));
+                    CHECK_EQ(42, request.integer());
+                    test::v1::Response response;
+                    response.set_integer(21);
+                    CHECK(agrpc::write(writer, response, yield));
+                    CHECK(agrpc::finish(writer, grpc::Status::OK, yield));
+                });
+    asio::spawn(get_work_tracking_executor(),
+                [&](asio::yield_context yield)
+                {
+                    test::v1::Request request;
+                    request.set_integer(42);
+                    std::unique_ptr<grpc::ClientAsyncReader<test::v1::Response>> reader;
+                    CHECK(agrpc::request(&test::v1::Test::Stub::AsyncServerStreaming, *stub, client_context, request,
+                                         reader, yield));
+                    CHECK(std::is_same_v<std::pair<decltype(reader), bool>,
+                                         decltype(agrpc::request(&test::v1::Test::Stub::AsyncServerStreaming, *stub,
+                                                                 client_context, request, yield))>);
+                    test::v1::Response response;
+                    CHECK(agrpc::read(*reader, response, yield));
+                    grpc::Status status;
+                    CHECK(agrpc::finish(*reader, status, yield));
+                    CHECK(status.ok());
+                    CHECK_EQ(21, response.integer());
+                });
+    grpc_context.run();
+}
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context client streaming")
+{
+    asio::spawn(get_work_tracking_executor(),
+                [&](asio::yield_context yield)
+                {
+                    grpc::ServerAsyncReader<test::v1::Response, test::v1::Request> reader{&server_context};
+                    CHECK(agrpc::request(&test::v1::Test::AsyncService::RequestClientStreaming, service, server_context,
+                                         reader, yield));
+                    test::v1::Request request;
+                    CHECK(agrpc::read(reader, request, yield));
+                    CHECK_EQ(42, request.integer());
+                    test::v1::Response response;
+                    response.set_integer(21);
+                    CHECK(agrpc::finish(reader, response, grpc::Status::OK, yield));
+                });
+    asio::spawn(get_work_tracking_executor(),
+                [&](asio::yield_context yield)
+                {
+                    test::v1::Response response;
+                    std::unique_ptr<grpc::ClientAsyncWriter<test::v1::Request>> writer;
+                    CHECK(agrpc::request(&test::v1::Test::Stub::AsyncClientStreaming, *stub, client_context, writer,
+                                         response, yield));
+                    CHECK(std::is_same_v<std::pair<decltype(writer), bool>,
+                                         decltype(agrpc::request(&test::v1::Test::Stub::AsyncClientStreaming, *stub,
+                                                                 client_context, response, yield))>);
+                    test::v1::Request request;
+                    request.set_integer(42);
+                    CHECK(agrpc::write(*writer, request, yield));
+                    grpc::Status status;
+                    CHECK(agrpc::finish(*writer, status, yield));
+                    CHECK(status.ok());
+                    CHECK_EQ(21, response.integer());
+                });
+    grpc_context.run();
+}
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context unary")
+{
+    bool use_finish_with_error;
+    SUBCASE("server finish_with_error") { use_finish_with_error = true; }
+    SUBCASE("server finish with OK") { use_finish_with_error = false; }
+    asio::spawn(get_work_tracking_executor(),
+                [&](asio::yield_context yield)
+                {
+                    test::v1::Request request;
+                    grpc::ServerAsyncResponseWriter<test::v1::Response> writer{&server_context};
+                    CHECK(agrpc::request(&test::v1::Test::AsyncService::RequestUnary, service, server_context, request,
+                                         writer, yield));
+                    CHECK_EQ(42, request.integer());
+                    test::v1::Response response;
+                    response.set_integer(21);
+                    if (use_finish_with_error)
+                    {
+                        CHECK(agrpc::finish_with_error(writer, grpc::Status::CANCELLED, yield));
+                    }
+                    else
+                    {
+                        CHECK(agrpc::finish(writer, response, grpc::Status::OK, yield));
+                    }
+                });
+    asio::spawn(get_work_tracking_executor(),
+                [&](asio::yield_context yield)
+                {
+                    test::v1::Request request;
+                    request.set_integer(42);
+                    auto reader =
+                        stub->AsyncUnary(&client_context, request, agrpc::get_completion_queue(get_executor()));
+                    test::v1::Response response;
+                    grpc::Status status;
+                    CHECK(agrpc::finish(*reader, response, status, yield));
+                    if (use_finish_with_error)
+                    {
+                        CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
+                    }
+                    else
+                    {
+                        CHECK(status.ok());
+                        CHECK_EQ(21, response.integer());
+                    }
+                });
+    grpc_context.run();
+}
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context bidirectional streaming")
+{
+    bool use_write_and_finish{};
+    SUBCASE("server write_and_finish") { use_write_and_finish = true; }
+    SUBCASE("server write then finish") { use_write_and_finish = false; }
+    asio::spawn(get_work_tracking_executor(),
+                [&](asio::yield_context yield)
+                {
+                    grpc::ServerAsyncReaderWriter<test::v1::Response, test::v1::Request> reader_writer{&server_context};
+                    CHECK(agrpc::request(&test::v1::Test::AsyncService::RequestBidirectionalStreaming, service,
+                                         server_context, reader_writer, yield));
+                    test::v1::Request request;
+                    CHECK(agrpc::read(reader_writer, request, yield));
+                    CHECK_EQ(42, request.integer());
+                    test::v1::Response response;
+                    response.set_integer(21);
+                    if (use_write_and_finish)
+                    {
+                        CHECK(agrpc::write_and_finish(reader_writer, response, {}, grpc::Status::OK, yield));
+                    }
+                    else
+                    {
+                        CHECK(agrpc::write(reader_writer, response, yield));
+                        CHECK(agrpc::finish(reader_writer, grpc::Status::OK, yield));
+                    }
+                });
+    asio::spawn(get_work_tracking_executor(),
+                [&](asio::yield_context yield)
+                {
+                    std::unique_ptr<grpc::ClientAsyncReaderWriter<test::v1::Request, test::v1::Response>> reader_writer;
+                    CHECK(agrpc::request(&test::v1::Test::Stub::AsyncBidirectionalStreaming, *stub, client_context,
+                                         reader_writer, yield));
+                    CHECK(std::is_same_v<std::pair<decltype(reader_writer), bool>,
+                                         decltype(agrpc::request(&test::v1::Test::Stub::AsyncBidirectionalStreaming,
+                                                                 *stub, client_context, yield))>);
+                    test::v1::Request request;
+                    request.set_integer(42);
+                    CHECK(agrpc::write(*reader_writer, request, yield));
+                    test::v1::Response response;
+                    CHECK(agrpc::read(*reader_writer, response, yield));
+                    grpc::Status status;
+                    CHECK(agrpc::finish(*reader_writer, status, yield));
+                    CHECK(status.ok());
+                    CHECK_EQ(21, response.integer());
+                });
     grpc_context.run();
 }
 

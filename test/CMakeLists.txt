@@ -35,8 +35,17 @@ function(asio_grpc_add_test _asio-grpc_name)
         asio_grpc_add_coverage_flags(${_asio-grpc_name})
     endif()
 
-    target_compile_options(${_asio-grpc_name} PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/W4>
-                                                      $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic-errors>)
+    target_compile_options(
+        ${_asio-grpc_name}
+        PRIVATE $<$<CXX_COMPILER_ID:MSVC>:
+                /external:I
+                $<TARGET_PROPERTY:gRPC::grpc++,INTERFACE_INCLUDE_DIRECTORIES>
+                /external:W1
+                /external:templates-
+                /W4>
+                $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall
+                -Wextra
+                -pedantic-errors>)
 
     target_link_libraries(${_asio-grpc_name} PRIVATE asio-grpc-objects doctest::doctest Boost::coroutine Boost::thread)
 

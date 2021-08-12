@@ -57,11 +57,22 @@ auto grpc_initiate(Function function, CompletionToken token = {})
         token);
 }
 
+template <class Allocator, std::uint32_t Options>
+inline auto get_completion_queue(const agrpc::BasicGrpcExecutor<Allocator, Options>& executor) noexcept
+{
+    return executor.context().get_completion_queue();
+}
+
+inline auto get_completion_queue(const asio::any_io_executor& executor) noexcept
+{
+    return static_cast<agrpc::GrpcContext&>(asio::query(executor, asio::execution::context)).get_completion_queue();
+}
+
 template <class CompletionToken>
-auto get_completion_queue(CompletionToken token) noexcept
+auto get_completion_queue(const CompletionToken& token) noexcept
 {
     const auto executor = asio::get_associated_executor(token);
-    return static_cast<agrpc::GrpcContext&>(executor.context()).get_completion_queue();
+    return agrpc::get_completion_queue(executor);
 }
 
 #ifdef __cpp_impl_coroutine
@@ -70,7 +81,7 @@ auto get_completion_queue(asio::use_awaitable_t<Executor> = {})
     -> asio::async_result<asio::use_awaitable_t<Executor>, void(grpc::CompletionQueue*)>::return_type
 {
     const auto executor = co_await asio::this_coro::executor;
-    co_return static_cast<agrpc::GrpcContext&>(executor.context()).get_completion_queue();
+    co_return static_cast<agrpc::GrpcContext&>(asio::query(executor, asio::execution::context)).get_completion_queue();
 }
 #endif
 }  // namespace agrpc

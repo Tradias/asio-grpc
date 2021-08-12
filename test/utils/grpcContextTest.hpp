@@ -29,6 +29,11 @@ struct GrpcContextTest
         return this->get_executor().require(
             boost::asio::execution::allocator(std::pmr::polymorphic_allocator<std::byte>(&resource)));
     }
+
+    auto get_work_tracking_executor() noexcept
+    {
+        return asio::require(get_executor(), asio::execution::outstanding_work.tracked);
+    }
 };
 
 inline auto ten_milliseconds_from_now() { return std::chrono::system_clock::now() + std::chrono::milliseconds(10); }

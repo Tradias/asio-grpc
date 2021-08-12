@@ -73,7 +73,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "wait for Alarm with asio::awaitable<>"
     CHECK(ok);
 }
 
-TEST_CASE_FIXTURE(test::GrpcClientServerTest, "server streaming")
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable server streaming")
 {
     test::co_spawn(grpc_context,
                    [&]() -> asio::awaitable<void>
@@ -109,7 +109,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "server streaming")
     grpc_context.run();
 }
 
-TEST_CASE_FIXTURE(test::GrpcClientServerTest, "client streaming")
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable client streaming")
 {
     test::co_spawn(grpc_context,
                    [&]() -> asio::awaitable<void>
@@ -145,7 +145,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "client streaming")
     grpc_context.run();
 }
 
-TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unary")
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable unary")
 {
     bool use_finish_with_error;
     SUBCASE("server finish_with_error") { use_finish_with_error = true; }
@@ -195,7 +195,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unary")
     grpc_context.run();
 }
 
-TEST_CASE_FIXTURE(test::GrpcClientServerTest, "bidirectional streaming")
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable bidirectional streaming")
 {
     bool use_write_and_finish{};
     SUBCASE("server write_and_finish") { use_write_and_finish = true; }

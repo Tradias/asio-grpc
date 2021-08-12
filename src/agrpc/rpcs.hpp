@@ -32,7 +32,7 @@ auto wait(grpc::Alarm& alarm, const Deadline& deadline, CompletionToken token = 
         {
             alarm.Set(grpc_context.get_completion_queue(), deadline, tag);
         },
-        token);
+        std::move(token));
 }
 
 /*
@@ -49,7 +49,7 @@ auto request(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service
             auto* cq = grpc_context.get_server_completion_queue();
             (service.*rpc)(&server_context, &request, &responder, cq, cq, tag);
         },
-        token);
+        std::move(token));
 }
 
 template <class RPC, class Service, class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -62,7 +62,7 @@ auto request(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& servic
             auto* cq = grpc_context.get_server_completion_queue();
             (service.*rpc)(&server_context, &responder, cq, cq, tag);
         },
-        token);
+        std::move(token));
 }
 
 template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -73,7 +73,7 @@ auto read(grpc::ServerAsyncReader<Response, Request>& reader, Request& request, 
         {
             reader.Read(&request, tag);
         },
-        token);
+        std::move(token));
 }
 
 template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -84,7 +84,7 @@ auto read(grpc::ServerAsyncReaderWriter<Response, Request>& reader_writer, Reque
         {
             reader_writer.Read(&request, tag);
         },
-        token);
+        std::move(token));
 }
 
 template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -95,7 +95,7 @@ auto write(grpc::ServerAsyncWriter<Response>& writer, const Response& response, 
         {
             writer.Write(response, tag);
         },
-        token);
+        std::move(token));
 }
 
 template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -107,7 +107,7 @@ auto write(grpc::ServerAsyncReaderWriter<Response, Request>& reader_writer, cons
         {
             reader_writer.Write(response, tag);
         },
-        token);
+        std::move(token));
 }
 
 template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -118,7 +118,7 @@ auto finish(grpc::ServerAsyncWriter<Response>& writer, const grpc::Status& statu
         {
             writer.Finish(status, tag);
         },
-        token);
+        std::move(token));
 }
 
 template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -130,7 +130,7 @@ auto finish(grpc::ServerAsyncReader<Response, Request>& reader, const Response& 
         {
             reader.Finish(response, status, tag);
         },
-        token);
+        std::move(token));
 }
 
 template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -142,7 +142,7 @@ auto finish(grpc::ServerAsyncResponseWriter<Response>& writer, const Response& r
         {
             writer.Finish(response, status, tag);
         },
-        token);
+        std::move(token));
 }
 
 template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -154,7 +154,7 @@ auto finish(grpc::ServerAsyncReaderWriter<Response, Request>& reader_writer, con
         {
             reader_writer.Finish(status, tag);
         },
-        token);
+        std::move(token));
 }
 
 template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -166,7 +166,7 @@ auto write_and_finish(grpc::ServerAsyncReaderWriter<Response, Request>& reader_w
         {
             reader_writer.WriteAndFinish(response, options, status, tag);
         },
-        token);
+        std::move(token));
 }
 
 template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -178,7 +178,7 @@ auto finish_with_error(grpc::ServerAsyncReader<Response, Request>& reader, const
         {
             reader.FinishWithError(status, tag);
         },
-        token);
+        std::move(token));
 }
 
 template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -190,7 +190,7 @@ auto finish_with_error(grpc::ServerAsyncResponseWriter<Response>& writer, const 
         {
             writer.FinishWithError(status, tag);
         },
-        token);
+        std::move(token));
 }
 
 /*
@@ -243,7 +243,7 @@ auto request(detail::ClientServerStreamingRequest<RPC, Request, Reader> rpc, Stu
         {
             reader = (stub.*rpc)(&client_context, request, grpc_context.get_completion_queue(), tag);
         },
-        token);
+        std::move(token));
 }
 
 template <class RPC, class Stub, class Writer, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -273,7 +273,7 @@ auto request(detail::ClientSideStreamingRequest<RPC, Writer, Response> rpc, Stub
         {
             writer = (stub.*rpc)(&client_context, &response, grpc_context.get_completion_queue(), tag);
         },
-        token);
+        std::move(token));
 }
 
 template <class RPC, class Stub, class ReaderWriter, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -302,7 +302,7 @@ auto request(detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter> rpc,
         {
             reader_writer = (stub.*rpc)(&client_context, grpc_context.get_completion_queue(), tag);
         },
-        token);
+        std::move(token));
 }
 
 template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -313,7 +313,7 @@ auto read(grpc::ClientAsyncReader<Response>& reader, Response& response, Complet
         {
             reader.Read(&response, tag);
         },
-        token);
+        std::move(token));
 }
 
 template <class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -325,7 +325,7 @@ auto read(grpc::ClientAsyncReaderWriter<Request, Response>& reader_writer, Respo
         {
             reader_writer.Read(&response, tag);
         },
-        token);
+        std::move(token));
 }
 
 template <class Request, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -336,7 +336,7 @@ auto write(grpc::ClientAsyncWriter<Request>& writer, const Request& request, Com
         {
             writer.Write(request, tag);
         },
-        token);
+        std::move(token));
 }
 
 template <class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -348,7 +348,7 @@ auto write(grpc::ClientAsyncReaderWriter<Request, Response>& reader_writer, cons
         {
             reader_writer.Write(request, tag);
         },
-        token);
+        std::move(token));
 }
 
 template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -359,7 +359,7 @@ auto finish(grpc::ClientAsyncReader<Response>& reader, grpc::Status& status, Com
         {
             reader.Finish(&status, tag);
         },
-        token);
+        std::move(token));
 }
 
 template <class Request, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -370,7 +370,7 @@ auto finish(grpc::ClientAsyncWriter<Request>& writer, grpc::Status& status, Comp
         {
             writer.Finish(&status, tag);
         },
-        token);
+        std::move(token));
 }
 
 template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -382,7 +382,7 @@ auto finish(grpc::ClientAsyncResponseReader<Response>& reader, Response& respons
         {
             reader.Finish(&response, &status, tag);
         },
-        token);
+        std::move(token));
 }
 
 template <class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -394,7 +394,7 @@ auto finish(grpc::ClientAsyncReaderWriter<Request, Response>& reader_writer, grp
         {
             reader_writer.Finish(&status, tag);
         },
-        token);
+        std::move(token));
 }
 }  // namespace agrpc
 
