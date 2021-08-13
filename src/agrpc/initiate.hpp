@@ -49,12 +49,7 @@ using DefaultCompletionToken = int;
 template <class Function, class CompletionToken = agrpc::DefaultCompletionToken>
 auto grpc_initiate(Function function, CompletionToken token = {})
 {
-    return asio::async_initiate<CompletionToken, void(bool)>(
-        [function = std::move(function)](auto completion_handler) mutable
-        {
-            detail::create_work_and_invoke(std::move(completion_handler), std::move(function));
-        },
-        token);
+    return asio::async_initiate<CompletionToken, void(bool)>(detail::GrpcInitiator{std::move(function)}, token);
 }
 
 template <class Allocator, std::uint32_t Options>

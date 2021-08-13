@@ -85,20 +85,31 @@ void create_work(agrpc::GrpcContext& grpc_context, Function&& function, OnWork&&
                                          work_allocator);
 }
 
+struct AddToLocalWork
+{
+    agrpc::GrpcContext& grpc_context;
+
+    void operator()(detail::GrpcContextOperation* work)
+    {
+        detail::GrpcContextImplementation::add_local_work(grpc_context, work);
+    }
+};
+
+struct AddToRemoteWork
+{
+    agrpc::GrpcContext& grpc_context;
+
+    void operator()(detail::GrpcContextOperation* work)
+    {
+        detail::GrpcContextImplementation::add_remote_work(grpc_context, work);
+    }
+};
+
 template <bool IsBlockingNever, class Function, class WorkAllocator>
 void create_work(agrpc::GrpcContext& grpc_context, Function&& function, const WorkAllocator& work_allocator)
 {
-    detail::create_work<IsBlockingNever>(
-        grpc_context, std::forward<Function>(function),
-        [&](detail::GrpcContextOperation* work)
-        {
-            detail::GrpcContextImplementation::add_local_work(grpc_context, work);
-        },
-        [&](detail::GrpcContextOperation* work)
-        {
-            detail::GrpcContextImplementation::add_remote_work(grpc_context, work);
-        },
-        work_allocator);
+    detail::create_work<IsBlockingNever>(grpc_context, std::forward<Function>(function), AddToLocalWork{grpc_context},
+                                         AddToRemoteWork{grpc_context}, work_allocator);
 }
 }  // namespace agrpc::detail
 

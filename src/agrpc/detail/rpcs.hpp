@@ -46,6 +46,46 @@ using ClientSideStreamingRequest = Writer (RPC::*)(grpc::ClientContext*, Respons
 template <class RPC, class ReaderWriter>
 using ClientBidirectionalStreamingRequest = ReaderWriter (RPC::*)(grpc::ClientContext*, grpc::CompletionQueue*, void*);
 
+template <class Response, class Request>
+struct ServerAsyncReaderWriterFunctions
+{
+    using Responder = grpc::ServerAsyncReaderWriter<Response, Request>;
+
+    struct Read
+    {
+        Responder& responder;
+        Request& request;
+
+        void operator()(agrpc::GrpcContext&, void* tag) { responder.Read(&request, tag); }
+    };
+
+    struct Write
+    {
+        Responder& responder;
+        const Response& response;
+
+        void operator()(agrpc::GrpcContext&, void* tag) { responder.Write(response, tag); }
+    };
+
+    struct WriteAndFinish
+    {
+        Responder& responder;
+        const Response& response;
+        grpc::WriteOptions options;
+        const grpc::Status& status;
+
+        void operator()(agrpc::GrpcContext&, void* tag) { responder.WriteAndFinish(response, options, status, tag); }
+    };
+
+    struct Finish
+    {
+        Responder& responder;
+        const grpc::Status& status;
+
+        void operator()(agrpc::GrpcContext&, void* tag) { responder.Finish(status, tag); }
+    };
+};
+
 template <class Responder, class CompletionHandler>
 struct CompletionHandlerWithResponder
 {
