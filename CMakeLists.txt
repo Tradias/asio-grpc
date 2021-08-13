@@ -26,6 +26,7 @@ if(ASIO_GRPC_BUILD_TESTS)
     enable_testing()
     include(doctest)
     add_subdirectory(test)
+    add_subdirectory(example)
 endif()
 
 # if(ASIO_GRPC_BUILD_DOCUMENTATION) add_subdirectory(doc) endif()

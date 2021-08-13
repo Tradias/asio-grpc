@@ -41,7 +41,7 @@ class BasicGrpcExecutor
   public:
     using allocator_type = Allocator;
 
-    explicit constexpr BasicGrpcExecutor(agrpc::GrpcContext& grpc_context) noexcept(
+    constexpr explicit BasicGrpcExecutor(agrpc::GrpcContext& grpc_context) noexcept(
         std::is_nothrow_default_constructible_v<allocator_type>)
         : BasicGrpcExecutor(grpc_context, allocator_type{})
     {

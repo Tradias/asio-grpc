@@ -82,7 +82,7 @@ struct MemoryResourceAllocator
 
     Resource* resource;
 
-    explicit constexpr MemoryResourceAllocator(Resource* resource) noexcept : resource(resource) {}
+    constexpr explicit MemoryResourceAllocator(Resource* resource) noexcept : resource(resource) {}
 
     template <class U>
     constexpr MemoryResourceAllocator(const MemoryResourceAllocator<U, Resource>& other) noexcept

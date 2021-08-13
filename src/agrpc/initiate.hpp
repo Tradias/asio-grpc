@@ -58,7 +58,7 @@ auto grpc_initiate(Function function, CompletionToken token = {})
 }
 
 template <class Allocator, std::uint32_t Options>
-inline auto get_completion_queue(const agrpc::BasicGrpcExecutor<Allocator, Options>& executor) noexcept
+auto get_completion_queue(const agrpc::BasicGrpcExecutor<Allocator, Options>& executor) noexcept
 {
     return executor.context().get_completion_queue();
 }
