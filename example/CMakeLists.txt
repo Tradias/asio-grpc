@@ -31,7 +31,7 @@ function(asio_grpc_add_example _asio_grpc_name)
                 WINVER=0x0A00>
                 BOOST_ASIO_NO_DEPRECATED)
 
-    add_test(NAME asio-grpc-example-${_asio_grpc_name} COMMAND asio-grpc-example-${_asio_grpc_name})
+    # add_test(NAME asio-grpc-example-${_asio_grpc_name} COMMAND asio-grpc-example-${_asio_grpc_name})
 endfunction()
 
 asio_grpc_add_example(hello-world-server)

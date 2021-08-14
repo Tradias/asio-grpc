@@ -71,11 +71,6 @@ void GrpcContextImplementation::process_local_queue(agrpc::GrpcContext& grpc_con
     grpc_context.is_processing_local_work = false;
 }
 
-template void GrpcContextImplementation::process_local_queue<detail::GrpcContextOperation::InvokeHandler::YES>(
-    agrpc::GrpcContext& grpc_context, bool ok);
-template void GrpcContextImplementation::process_local_queue<detail::GrpcContextOperation::InvokeHandler::NO>(
-    agrpc::GrpcContext& grpc_context, bool ok);
-
 template <detail::GrpcContextOperation::InvokeHandler Invoke>
 void GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context,
                                              const detail::GrpcCompletionQueueEvent& event)
@@ -96,10 +91,6 @@ void GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context,
         operation->complete(event.ok, Invoke);
     }
 }
-template void GrpcContextImplementation::process_work<detail::GrpcContextOperation::InvokeHandler::YES>(
-    agrpc::GrpcContext& grpc_context, const detail::GrpcCompletionQueueEvent& event);
-template void GrpcContextImplementation::process_work<detail::GrpcContextOperation::InvokeHandler::NO>(
-    agrpc::GrpcContext& grpc_context, const detail::GrpcCompletionQueueEvent& event);
 }  // namespace agrpc::detail
 
 #endif  // AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_IPP
