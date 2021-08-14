@@ -193,6 +193,17 @@ auto finish_with_error(grpc::ServerAsyncResponseWriter<Response>& writer, const 
         token);
 }
 
+template <class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
+auto send_initial_metadata(Responder& responder, CompletionToken token = {})
+{
+    return agrpc::grpc_initiate(
+        [&](agrpc::GrpcContext&, void* tag)
+        {
+            responder.SendInitialMetadata(tag);
+        },
+        token);
+}
+
 /*
 Client
 */
@@ -338,6 +349,17 @@ auto write(grpc::ClientAsyncWriter<Request>& writer, const Request& request, Com
         std::move(token));
 }
 
+template <class Request, class CompletionToken = agrpc::DefaultCompletionToken>
+auto writes_done(grpc::ClientAsyncWriter<Request>& writer, CompletionToken token = {})
+{
+    return agrpc::grpc_initiate(
+        [&](agrpc::GrpcContext&, void* tag)
+        {
+            writer.WritesDone(tag);
+        },
+        std::move(token));
+}
+
 template <class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
 auto write(grpc::ClientAsyncReaderWriter<Request, Response>& reader_writer, const Request& request,
            CompletionToken token = {})
@@ -346,6 +368,17 @@ auto write(grpc::ClientAsyncReaderWriter<Request, Response>& reader_writer, cons
         [&](agrpc::GrpcContext&, void* tag)
         {
             reader_writer.Write(request, tag);
+        },
+        std::move(token));
+}
+
+template <class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
+auto writes_done(grpc::ClientAsyncReaderWriter<Request, Response>& reader_writer, CompletionToken token = {})
+{
+    return agrpc::grpc_initiate(
+        [&](agrpc::GrpcContext&, void* tag)
+        {
+            reader_writer.WritesDone(tag);
         },
         std::move(token));
 }
@@ -392,6 +425,17 @@ auto finish(grpc::ClientAsyncReaderWriter<Request, Response>& reader_writer, grp
         [&](agrpc::GrpcContext&, void* tag)
         {
             reader_writer.Finish(&status, tag);
+        },
+        std::move(token));
+}
+
+template <class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
+auto read_initial_metadata(Responder& responder, CompletionToken token = {})
+{
+    return agrpc::grpc_initiate(
+        [&](agrpc::GrpcContext&, void* tag)
+        {
+            responder.ReadInitialMetadata(tag);
         },
         std::move(token));
 }
