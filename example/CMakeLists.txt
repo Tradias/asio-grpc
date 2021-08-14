@@ -39,3 +39,5 @@ target_link_libraries(asio-grpc-example-hello-world-server PRIVATE Boost::corout
 
 asio_grpc_add_example(hello-world-server-cpp20)
 target_compile_features(asio-grpc-example-hello-world-server-cpp20 PRIVATE cxx_std_20)
+target_compile_options(asio-grpc-example-hello-world-server-cpp20
+                       PRIVATE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fcoroutines>)

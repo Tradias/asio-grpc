@@ -39,7 +39,7 @@ struct AllocationGuard
     }
 
     constexpr AllocationGuard(AllocationGuard&& other) noexcept
-        : ptr(std::exchange(other.ptr, nullptr)), is_constructed(is_constructed), allocator(other.allocator)
+        : ptr(std::exchange(other.ptr, nullptr)), is_constructed(other.is_constructed), allocator(other.allocator)
     {
     }
 
