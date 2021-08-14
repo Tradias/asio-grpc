@@ -41,8 +41,7 @@ auto allocate_work(Function&& function, const Allocator& allocator)
 {
     using DecayedFunction = std::decay_t<Function>;
     using Operation = detail::GrpcExecutorOperation<DecayedFunction, Allocator>;
-    auto ptr = detail::allocate_unique<Operation>(allocator, std::forward<Function>(function), allocator);
-    return ptr;
+    return detail::allocate_unique<Operation>(allocator, std::forward<Function>(function), allocator);
 }
 
 template <bool IsBlockingNever, class Function, class OnLocalWork, class OnRemoteWork, class WorkAllocator>

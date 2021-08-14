@@ -35,7 +35,7 @@ function(asio_grpc_add_example _asio_grpc_name)
 endfunction()
 
 asio_grpc_add_example(hello-world-server)
-target_link_libraries(asio-grpc-example-hello-world-server PRIVATE Boost::coroutine)
+target_link_libraries(asio-grpc-example-hello-world-server PRIVATE Boost::coroutine Boost::thread)
 
 asio_grpc_add_example(hello-world-server-cpp20)
 target_compile_features(asio-grpc-example-hello-world-server-cpp20 PRIVATE cxx_std_20)

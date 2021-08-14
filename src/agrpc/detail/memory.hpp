@@ -27,52 +27,66 @@ template <class Allocator>
 struct AllocationGuard
 {
     using Traits = std::allocator_traits<Allocator>;
+    using allocator_type = Allocator;
 
     typename Traits::pointer ptr;
-    Allocator& allocator;
+    bool is_constructed;
+    allocator_type allocator;
 
-    ~AllocationGuard() noexcept
+    AllocationGuard(typename Traits::pointer ptr, bool is_constructed, const allocator_type& allocator) noexcept
+        : ptr(ptr), is_constructed(is_constructed), allocator(allocator)
+    {
+    }
+
+    constexpr AllocationGuard(AllocationGuard&& other) noexcept
+        : ptr(std::exchange(other.ptr, nullptr)), is_constructed(is_constructed), allocator(other.allocator)
+    {
+    }
+
+    constexpr AllocationGuard& operator=(AllocationGuard&& other) noexcept
+    {
+        if (this != std::addressof(other))
+        {
+            this->ptr = std::exchange(other.ptr, nullptr);
+        }
+        return *this;
+    }
+
+    ~AllocationGuard() noexcept { this->destroy(); }
+
+    auto get() const noexcept { return this->ptr; }
+
+    void release() noexcept { this->ptr = nullptr; }
+
+    void reset() noexcept
+    {
+        this->destroy();
+        this->release();
+    }
+
+    void destroy() noexcept
     {
         if (this->ptr)
         {
+            if (this->is_constructed)
+            {
+                Traits::destroy(allocator, ptr);
+            }
             Traits::deallocate(allocator, ptr, 1);
         }
-    }
-
-    void release() noexcept { this->ptr = nullptr; }
-};
-
-template <class Allocator>
-AllocationGuard(typename std::allocator_traits<Allocator>::pointer, Allocator&) -> AllocationGuard<Allocator>;
-
-template <class Allocator>
-struct AllocatorDeleter
-{
-    using allocator_type = boost::remove_cv_ref_t<Allocator>;
-
-    allocator_type allocator;
-
-    template <class T>
-    void operator()(T* ptr) const noexcept
-    {
-        using Traits = typename std::allocator_traits<allocator_type>::template rebind_traits<T>;
-        typename Traits::allocator_type rebound_allocator{this->allocator};
-        Traits::destroy(rebound_allocator, ptr);
-        Traits::deallocate(rebound_allocator, ptr, 1);
     }
 };
 
 template <class T, class Allocator, class... Args>
-auto allocate_unique(Allocator allocator, Args&&... args)
+auto allocate_unique(const Allocator& allocator, Args&&... args)
 {
     using Traits = typename std::allocator_traits<Allocator>::template rebind_traits<T>;
     typename Traits::allocator_type rebound_allocator{allocator};
     auto* ptr = Traits::allocate(rebound_allocator, 1);
-    AllocationGuard guard{ptr, rebound_allocator};
+    AllocationGuard guard{ptr, false, rebound_allocator};
     Traits::construct(rebound_allocator, ptr, std::forward<Args>(args)...);
-    guard.release();
-    return std::unique_ptr<T, detail::AllocatorDeleter<Allocator>>{
-        ptr, detail::AllocatorDeleter<Allocator>{std::move(allocator)}};
+    guard.is_constructed = true;
+    return guard;
 }
 
 template <class T, class Resource>
