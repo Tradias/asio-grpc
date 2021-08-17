@@ -63,6 +63,11 @@ inline auto get_completion_queue(const asio::any_io_executor& executor) noexcept
     return static_cast<agrpc::GrpcContext&>(asio::query(executor, asio::execution::context)).get_completion_queue();
 }
 
+inline auto get_completion_queue(agrpc::GrpcContext& grpc_context) noexcept
+{
+    return grpc_context.get_completion_queue();
+}
+
 template <class CompletionToken>
 auto get_completion_queue(const CompletionToken& token) noexcept
 {
