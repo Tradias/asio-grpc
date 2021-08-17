@@ -19,48 +19,37 @@
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
-static void spawn(agrpc::GrpcContext& grpc_context, helloworld::Greeter::AsyncService& service)
-{
-    boost::asio::spawn(grpc_context,
-                       [&](auto yield)
-                       {
-                           while (true)
-                           {
-                               grpc::ServerContext server_context;
-                               helloworld::HelloRequest request;
-                               grpc::ServerAsyncResponseWriter<helloworld::HelloReply> writer{&server_context};
-                               bool request_ok = agrpc::request(&helloworld::Greeter::AsyncService::RequestSayHello,
-                                                                service, server_context, request, writer, yield);
-                               helloworld::HelloReply response;
-                               std::string prefix("Hello ");
-                               response.set_message(prefix + request.name());
-                               bool finish_ok = agrpc::finish(writer, response, grpc::Status::OK, yield);
-                           }
-                       });
-}
-
 int main()
 {
-    grpc::ServerBuilder builder;
     std::unique_ptr<grpc::Server> server;
     helloworld::Greeter::AsyncService service;
+
+    // begin-snippet: create-grpc_context-server-side
+    grpc::ServerBuilder builder;
     agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
-    agrpc::GrpcContext grpc_context2{builder.AddCompletionQueue()};
+    // end-snippet
+
     builder.AddListeningPort("0.0.0.0:50051", grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
     server = builder.BuildAndStart();
 
     auto guard = boost::asio::make_work_guard(grpc_context);
-    auto guard2 = boost::asio::make_work_guard(grpc_context2);
+    boost::asio::spawn(grpc_context,
+                       [&](auto yield)
+                       {
+                           grpc::ServerContext server_context;
+                           helloworld::HelloRequest request;
+                           grpc::ServerAsyncResponseWriter<helloworld::HelloReply> writer{&server_context};
+                           bool request_ok = agrpc::request(&helloworld::Greeter::AsyncService::RequestSayHello,
+                                                            service, server_context, request, writer, yield);
+                           helloworld::HelloReply response;
+                           std::string prefix("Hello ");
+                           response.set_message(prefix + request.name());
+                           bool finish_ok = agrpc::finish(writer, response, grpc::Status::OK, yield);
+                       });
 
-    spawn(grpc_context, service);
-    spawn(grpc_context2, service);
-
-    std::thread t{[&]
-                  {
-                      grpc_context2.run();
-                  }};
+    // begin-snippet: run-grpc_context-server-side
     grpc_context.run();
     server->Shutdown();
-    t.join();
-}
+}  // grpc_context is destructed here
+   // end-snippet

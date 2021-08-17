@@ -17,37 +17,31 @@
 #include <agrpc/asioGrpc.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/detached.hpp>
-#include <grpcpp/server.h>
-#include <grpcpp/server_builder.h>
+#include <grpcpp/client_context.h>
+#include <grpcpp/create_channel.h>
 
 int main()
 {
-    // begin-snippet: server-side-helloworld
-    grpc::ServerBuilder builder;
-    std::unique_ptr<grpc::Server> server;
-    helloworld::Greeter::AsyncService service;
-    agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
-    builder.AddListeningPort("0.0.0.0:50051", grpc::InsecureServerCredentials());
-    builder.RegisterService(&service);
-    server = builder.BuildAndStart();
+    // begin-snippet: client-side-helloworld
+    auto stub =
+        helloworld::Greeter::NewStub(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
+    agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
     boost::asio::co_spawn(
         grpc_context,
         [&]() -> boost::asio::awaitable<void>
         {
-            grpc::ServerContext server_context;
+            grpc::ClientContext client_context;
             helloworld::HelloRequest request;
-            grpc::ServerAsyncResponseWriter<helloworld::HelloReply> writer{&server_context};
-            bool request_ok = co_await agrpc::request(&helloworld::Greeter::AsyncService::RequestSayHello, service,
-                                                      server_context, request, writer);
+            request.set_name("world");
+            std::unique_ptr<grpc::ClientAsyncResponseReader<helloworld::HelloReply>> reader =
+                stub->AsyncSayHello(&client_context, request, agrpc::get_completion_queue(grpc_context));
             helloworld::HelloReply response;
-            std::string prefix("Hello ");
-            response.set_message(prefix + request.name());
-            bool finish_ok = co_await agrpc::finish(writer, response, grpc::Status::OK);
+            grpc::Status status;
+            bool ok = co_await agrpc::finish(*reader, response, status);
         },
         boost::asio::detached);
 
     grpc_context.run();
-    server->Shutdown();
     // end-snippet
 }

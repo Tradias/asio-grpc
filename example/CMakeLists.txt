@@ -30,14 +30,20 @@ function(asio_grpc_add_example _asio_grpc_name)
                 _WIN32_WINNT=0x0A00 # Windows 10
                 WINVER=0x0A00>
                 BOOST_ASIO_NO_DEPRECATED)
-
-    # add_test(NAME asio-grpc-example-${_asio_grpc_name} COMMAND asio-grpc-example-${_asio_grpc_name})
 endfunction()
 
 asio_grpc_add_example(hello-world-server)
 target_link_libraries(asio-grpc-example-hello-world-server PRIVATE Boost::coroutine Boost::thread)
 
+asio_grpc_add_example(hello-world-client)
+target_link_libraries(asio-grpc-example-hello-world-client PRIVATE Boost::coroutine Boost::thread)
+
 asio_grpc_add_example(hello-world-server-cpp20)
 target_compile_features(asio-grpc-example-hello-world-server-cpp20 PRIVATE cxx_std_20)
 target_compile_options(asio-grpc-example-hello-world-server-cpp20
+                       PRIVATE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fcoroutines>)
+
+asio_grpc_add_example(hello-world-client-cpp20)
+target_compile_features(asio-grpc-example-hello-world-client-cpp20 PRIVATE cxx_std_20)
+target_compile_options(asio-grpc-example-hello-world-client-cpp20
                        PRIVATE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fcoroutines>)
