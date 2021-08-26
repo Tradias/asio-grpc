@@ -19,6 +19,22 @@
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
+void send_initial_metadata(grpc::ServerAsyncResponseWriter<helloworld::HelloReply>& writer,
+                           boost::asio::yield_context& yield)
+{
+    // begin-snippet: send_initial_metadata-server-side
+    bool send_ok = agrpc::send_initial_metadata(writer, yield);
+    // end-snippet
+}
+
+void finish_with_error(grpc::ServerAsyncResponseWriter<helloworld::HelloReply>& writer,
+                       boost::asio::yield_context& yield)
+{
+    // begin-snippet: finish_with_error-server-side
+    bool finish_ok = agrpc::finish_with_error(writer, grpc::Status::CANCELLED, yield);
+    // end-snippet
+}
+
 int main()
 {
     std::unique_ptr<grpc::Server> server;
@@ -37,15 +53,19 @@ int main()
     boost::asio::spawn(grpc_context,
                        [&](auto yield)
                        {
+                           // begin-snippet: request-unary-server-side
                            grpc::ServerContext server_context;
                            helloworld::HelloRequest request;
                            grpc::ServerAsyncResponseWriter<helloworld::HelloReply> writer{&server_context};
                            bool request_ok = agrpc::request(&helloworld::Greeter::AsyncService::RequestSayHello,
                                                             service, server_context, request, writer, yield);
+                           // end-snippet
+                           // begin-snippet: finish-server-side
                            helloworld::HelloReply response;
                            std::string prefix("Hello ");
                            response.set_message(prefix + request.name());
                            bool finish_ok = agrpc::finish(writer, response, grpc::Status::OK, yield);
+                           // end-snippet
                        });
 
     // begin-snippet: run-grpc_context-server-side

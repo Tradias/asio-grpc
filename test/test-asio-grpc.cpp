@@ -12,6 +12,7 @@
 #include <grpcpp/alarm.h>
 
 #include <memory_resource>
+#include <optional>
 #include <string_view>
 #include <thread>
 
@@ -69,12 +70,15 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wai
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn with yield_context")
 {
     bool ok = false;
-    asio::spawn(get_work_tracking_executor(),
+    std::optional<asio::executor_work_guard<agrpc::GrpcExecutor>> guard;
+    asio::spawn(get_executor(),
                 [&](asio::yield_context yield)
                 {
                     grpc::Alarm alarm;
                     ok = agrpc::wait(alarm, test::ten_milliseconds_from_now(), yield);
+                    guard.reset();
                 });
+    guard.emplace(asio::make_work_guard(grpc_context));
     grpc_context.run();
     CHECK(ok);
 }
