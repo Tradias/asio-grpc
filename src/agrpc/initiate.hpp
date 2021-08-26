@@ -19,6 +19,8 @@
 #include "agrpc/detail/initiate.hpp"
 #include "agrpc/grpcExecutor.hpp"
 
+#include <version>
+
 #ifdef __cpp_lib_coroutine
 #include <boost/asio/use_awaitable.hpp>
 #endif

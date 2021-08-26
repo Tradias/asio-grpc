@@ -2,6 +2,9 @@
 #define AGRPC_UTILS_ASIOUTILS_HPP
 
 #include <boost/type_traits/remove_cv_ref.hpp>
+
+#include <version>
+
 #ifdef __cpp_lib_coroutine
 #include <boost/asio/co_spawn.hpp>
 #endif
