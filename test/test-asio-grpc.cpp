@@ -220,6 +220,9 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unary stackless coroutine")
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context server streaming")
 {
+    bool use_write_and_finish{};
+    SUBCASE("server write_and_finish") { use_write_and_finish = true; }
+    SUBCASE("server write then finish") { use_write_and_finish = false; }
     asio::spawn(get_work_tracking_executor(),
                 [&](asio::yield_context yield)
                 {
@@ -231,8 +234,15 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context server streaming")
                     CHECK_EQ(42, request.integer());
                     test::v1::Response response;
                     response.set_integer(21);
-                    CHECK(agrpc::write(writer, response, yield));
-                    CHECK(agrpc::finish(writer, grpc::Status::OK, yield));
+                    if (use_write_and_finish)
+                    {
+                        CHECK(agrpc::write_and_finish(writer, response, {}, grpc::Status::OK, yield));
+                    }
+                    else
+                    {
+                        CHECK(agrpc::write(writer, response, yield));
+                        CHECK(agrpc::finish(writer, grpc::Status::OK, yield));
+                    }
                 });
     asio::spawn(get_work_tracking_executor(),
                 [&](asio::yield_context yield)

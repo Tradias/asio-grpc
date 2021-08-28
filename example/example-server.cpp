@@ -85,6 +85,8 @@ void server_streaming(example::v1::Example::AsyncService& service, boost::asio::
     example::v1::Response response;
     bool write_ok = agrpc::write(writer, response, yield);
 
+    bool write_and_finish_ok = agrpc::write_and_finish(writer, response, grpc::WriteOptions{}, grpc::Status::OK, yield);
+
     bool finish_ok = agrpc::finish(writer, grpc::Status::OK, yield);
     // end-snippet
 }

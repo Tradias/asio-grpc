@@ -144,7 +144,7 @@ For servers and clients:
 grpc::ServerBuilder builder;
 agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
 ```
-<sup><a href='/example/example-server.cpp#L122-L125' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/example-server.cpp#L124-L127' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 For clients only:
@@ -166,7 +166,7 @@ grpc_context.run();
 server->Shutdown();
 }  // grpc_context is destructed here
 ```
-<sup><a href='/example/example-server.cpp#L138-L142' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/example-server.cpp#L140-L144' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 It might also be helpful to create a work guard before running the `agrpc::GrpcContext` to prevent `grpc_context.run()` from returning early.
@@ -362,12 +362,14 @@ bool send_ok = agrpc::send_initial_metadata(writer, yield);
 example::v1::Response response;
 bool write_ok = agrpc::write(writer, response, yield);
 
+bool write_and_finish_ok = agrpc::write_and_finish(writer, response, grpc::WriteOptions{}, grpc::Status::OK, yield);
+
 bool finish_ok = agrpc::finish(writer, grpc::Status::OK, yield);
 ```
-<sup><a href='/example/example-server.cpp#L82-L89' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-streaming-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/example-server.cpp#L82-L91' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-streaming-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
-For the meaning of `send_ok`, `write_ok` and `finish_ok` see [CompletionQueue::Next](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html#a86d9810ced694e50f7987ac90b9f8c1a).
+For the meaning of `send_ok`, `write_ok`, `write_and_finish` and `finish_ok` see [CompletionQueue::Next](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html#a86d9810ced694e50f7987ac90b9f8c1a).
 
 ## Server-Streaming RPC Client-Side
 
@@ -426,7 +428,7 @@ grpc::ServerAsyncReaderWriter<example::v1::Response, example::v1::Request> reade
 bool request_ok = agrpc::request(&example::v1::Example::AsyncService::RequestBidirectionalStreaming, service,
                                  server_context, reader_writer, yield);
 ```
-<sup><a href='/example/example-server.cpp#L94-L99' title='Snippet source file'>snippet source</a> | <a href='#snippet-request-bidirectional-streaming-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/example-server.cpp#L96-L101' title='Snippet source file'>snippet source</a> | <a href='#snippet-request-bidirectional-streaming-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 With the `grpc::ServerAsyncReaderWriter` the following actions can be performed to drive the RPC.
@@ -447,7 +449,7 @@ bool write_ok = agrpc::write(reader_writer, response, yield);
 
 bool finish_ok = agrpc::finish(reader_writer, grpc::Status::OK, yield);
 ```
-<sup><a href='/example/example-server.cpp#L101-L114' title='Snippet source file'>snippet source</a> | <a href='#snippet-bidirectional-streaming-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/example-server.cpp#L103-L116' title='Snippet source file'>snippet source</a> | <a href='#snippet-bidirectional-streaming-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 For the meaning of `send_ok`, `read_ok`, `write_and_finish_ok`, `write_ok` and `finish_ok` see [CompletionQueue::Next](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html#a86d9810ced694e50f7987ac90b9f8c1a).
