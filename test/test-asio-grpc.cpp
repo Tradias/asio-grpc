@@ -227,7 +227,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context server streaming")
                     grpc::ServerAsyncWriter<test::v1::Response> writer{&server_context};
                     CHECK(agrpc::request(&test::v1::Test::AsyncService::RequestServerStreaming, service, server_context,
                                          request, writer, yield));
-                    agrpc::send_initial_metadata(writer, yield);
+                    CHECK(agrpc::send_initial_metadata(writer, yield));
                     CHECK_EQ(42, request.integer());
                     test::v1::Response response;
                     response.set_integer(21);
@@ -245,7 +245,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context server streaming")
                     CHECK(std::is_same_v<std::pair<decltype(reader), bool>,
                                          decltype(agrpc::request(&test::v1::Test::Stub::AsyncServerStreaming, *stub,
                                                                  client_context, request, yield))>);
-                    agrpc::read_initial_metadata(*reader, yield);
+                    CHECK(agrpc::read_initial_metadata(*reader, yield));
                     test::v1::Response response;
                     CHECK(agrpc::read(*reader, response, yield));
                     grpc::Status status;
@@ -264,7 +264,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context client streaming")
                     grpc::ServerAsyncReader<test::v1::Response, test::v1::Request> reader{&server_context};
                     CHECK(agrpc::request(&test::v1::Test::AsyncService::RequestClientStreaming, service, server_context,
                                          reader, yield));
-                    agrpc::send_initial_metadata(reader, yield);
+                    CHECK(agrpc::send_initial_metadata(reader, yield));
                     test::v1::Request request;
                     CHECK(agrpc::read(reader, request, yield));
                     CHECK_EQ(42, request.integer());
@@ -282,7 +282,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context client streaming")
                     CHECK(std::is_same_v<std::pair<decltype(writer), bool>,
                                          decltype(agrpc::request(&test::v1::Test::Stub::AsyncClientStreaming, *stub,
                                                                  client_context, response, yield))>);
-                    agrpc::read_initial_metadata(*writer, yield);
+                    CHECK(agrpc::read_initial_metadata(*writer, yield));
                     test::v1::Request request;
                     request.set_integer(42);
                     CHECK(agrpc::write(*writer, request, yield));
@@ -307,7 +307,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context unary")
                     grpc::ServerAsyncResponseWriter<test::v1::Response> writer{&server_context};
                     CHECK(agrpc::request(&test::v1::Test::AsyncService::RequestUnary, service, server_context, request,
                                          writer, yield));
-                    agrpc::send_initial_metadata(writer, yield);
+                    CHECK(agrpc::send_initial_metadata(writer, yield));
                     CHECK_EQ(42, request.integer());
                     test::v1::Response response;
                     response.set_integer(21);
@@ -327,7 +327,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context unary")
                     request.set_integer(42);
                     auto reader =
                         stub->AsyncUnary(&client_context, request, agrpc::get_completion_queue(get_executor()));
-                    agrpc::read_initial_metadata(*reader, yield);
+                    CHECK(agrpc::read_initial_metadata(*reader, yield));
                     test::v1::Response response;
                     grpc::Status status;
                     CHECK(agrpc::finish(*reader, response, status, yield));
@@ -355,7 +355,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context bidirectional strea
                     grpc::ServerAsyncReaderWriter<test::v1::Response, test::v1::Request> reader_writer{&server_context};
                     CHECK(agrpc::request(&test::v1::Test::AsyncService::RequestBidirectionalStreaming, service,
                                          server_context, reader_writer, yield));
-                    agrpc::send_initial_metadata(reader_writer, yield);
+                    CHECK(agrpc::send_initial_metadata(reader_writer, yield));
                     test::v1::Request request;
                     CHECK(agrpc::read(reader_writer, request, yield));
                     CHECK_EQ(42, request.integer());
@@ -380,7 +380,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context bidirectional strea
                     CHECK(std::is_same_v<std::pair<decltype(reader_writer), bool>,
                                          decltype(agrpc::request(&test::v1::Test::Stub::AsyncBidirectionalStreaming,
                                                                  *stub, client_context, yield))>);
-                    agrpc::read_initial_metadata(*reader_writer, yield);
+                    CHECK(agrpc::read_initial_metadata(*reader_writer, yield));
                     test::v1::Request request;
                     request.set_integer(42);
                     CHECK(agrpc::write(*reader_writer, request, yield));

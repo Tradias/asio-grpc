@@ -7,21 +7,24 @@ asio_grpc_protobuf_generate(
     PROTOC_OUT_DIR
     "${ASIO_GRPC_GENERATED_EXAMPLE_PROTOS_OUT_DIR}"
     PROTOS
-    "${CMAKE_CURRENT_LIST_DIR}/protos/helloworld.proto")
+    "${CMAKE_CURRENT_LIST_DIR}/protos/helloworld.proto"
+    "${CMAKE_CURRENT_LIST_DIR}/protos/example.proto")
 
 function(asio_grpc_add_example _asio_grpc_name)
-    add_executable(asio-grpc-example-${_asio_grpc_name})
+    add_executable(asio-grpc-${_asio_grpc_name})
 
-    target_sources(asio-grpc-example-${_asio_grpc_name} PRIVATE ${_asio_grpc_name}.cpp
-                                                                ${ASIO_GRPC_GENERATED_EXAMPLE_SOURCES})
+    target_sources(asio-grpc-${_asio_grpc_name} PRIVATE ${_asio_grpc_name}.cpp ${ASIO_GRPC_GENERATED_EXAMPLE_SOURCES})
 
-    target_link_libraries(asio-grpc-example-${_asio_grpc_name} PRIVATE asio-grpc::asio-grpc)
+    target_link_libraries(asio-grpc-${_asio_grpc_name} PRIVATE asio-grpc::asio-grpc)
 
-    target_include_directories(asio-grpc-example-${_asio_grpc_name}
-                               PRIVATE ${ASIO_GRPC_GENERATED_EXAMPLE_PROTOS_OUT_DIR})
+    target_include_directories(asio-grpc-${_asio_grpc_name} PRIVATE ${ASIO_GRPC_GENERATED_EXAMPLE_PROTOS_OUT_DIR})
+
+    target_compile_options(
+        asio-grpc-${_asio_grpc_name} PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/W2> $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall
+                                             -pedantic-errors>)
 
     target_compile_definitions(
-        asio-grpc-example-${_asio_grpc_name}
+        asio-grpc-${_asio_grpc_name}
         PRIVATE $<$<CXX_COMPILER_ID:MSVC>:
                 BOOST_ASIO_HAS_DEDUCED_REQUIRE_MEMBER_TRAIT
                 BOOST_ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT
@@ -32,18 +35,16 @@ function(asio_grpc_add_example _asio_grpc_name)
                 BOOST_ASIO_NO_DEPRECATED)
 endfunction()
 
-asio_grpc_add_example(hello-world-server)
-target_link_libraries(asio-grpc-example-hello-world-server PRIVATE Boost::coroutine Boost::thread)
+asio_grpc_add_example(example-server)
+target_link_libraries(asio-grpc-example-server PRIVATE Boost::coroutine Boost::thread)
 
-asio_grpc_add_example(hello-world-client)
-target_link_libraries(asio-grpc-example-hello-world-client PRIVATE Boost::coroutine Boost::thread)
+asio_grpc_add_example(example-client)
+target_link_libraries(asio-grpc-example-client PRIVATE Boost::coroutine Boost::thread)
 
 asio_grpc_add_example(hello-world-server-cpp20)
-target_compile_features(asio-grpc-example-hello-world-server-cpp20 PRIVATE cxx_std_20)
-target_compile_options(asio-grpc-example-hello-world-server-cpp20
-                       PRIVATE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fcoroutines>)
+target_compile_features(asio-grpc-hello-world-server-cpp20 PRIVATE cxx_std_20)
+target_compile_options(asio-grpc-hello-world-server-cpp20 PRIVATE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fcoroutines>)
 
 asio_grpc_add_example(hello-world-client-cpp20)
-target_compile_features(asio-grpc-example-hello-world-client-cpp20 PRIVATE cxx_std_20)
-target_compile_options(asio-grpc-example-hello-world-client-cpp20
-                       PRIVATE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fcoroutines>)
+target_compile_features(asio-grpc-hello-world-client-cpp20 PRIVATE cxx_std_20)
+target_compile_options(asio-grpc-hello-world-client-cpp20 PRIVATE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fcoroutines>)
