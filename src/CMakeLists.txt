@@ -28,6 +28,7 @@ list(
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/rpcs.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/utility.hpp")
 set_target_properties(asio-grpc PROPERTIES ASIO_GRPC_HEADER_FILES "${ASIO_GRPC_HEADER_FILES}")
+unset(ASIO_GRPC_HEADER_FILES)
 
 target_compile_features(asio-grpc INTERFACE cxx_std_17)
 
@@ -65,18 +66,18 @@ if(ASIO_GRPC_BUILD_TESTS)
     endif()
 endif()
 
-unset(ASIO_GRPC_HEADER_FILES)
-
 # installation
 if(ASIO_GRPC_INSTALL)
+    include(GNUInstallDirs)
+
     include(CMakePackageConfigHelpers)
     write_basic_package_version_file(
         "${CMAKE_CURRENT_BINARY_DIR}/generated/asio-grpcConfigVersion.cmake" ARCH_INDEPENDENT
         VERSION ${PROJECT_VERSION}
         COMPATIBILITY SameMajorVersion)
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/asio-grpcConfigVersion.cmake" DESTINATION share/asio-grpc)
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/asio-grpcConfigVersion.cmake"
+            DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/asio-grpc")
 
-    include(GNUInstallDirs)
     install(
         TARGETS asio-grpc
         EXPORT asio-grpc_EXPORT_TARGETS
@@ -86,11 +87,11 @@ if(ASIO_GRPC_INSTALL)
         EXPORT asio-grpc_EXPORT_TARGETS
         NAMESPACE asio-grpc::
         FILE asio-grpcConfig.cmake
-        DESTINATION share/asio-grpc)
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/asio-grpc")
 
     install(
         DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/agrpc"
         TYPE INCLUDE
         FILES_MATCHING
-        REGEX "[.hpp|.cpp]$")
+        REGEX "[.hpp|.ipp]$")
 endif()
