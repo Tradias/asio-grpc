@@ -157,14 +157,14 @@ agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 <sup><a href='/example/example-client.cpp#L142-L144' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-client-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
-Add some work to the context (shown further below) and run it. Make sure to shutdown the server before destructing the context.
+Add some work to the `grpc_context` (shown further below) and run it. Make sure to shutdown the `server` before destructing the `grpc_context`. Also destruct the `grpc_context` before destructing the `server`.
 
 <!-- snippet: run-grpc_context-server-side -->
 <a id='snippet-run-grpc_context-server-side'></a>
 ```cpp
 grpc_context.run();
 server->Shutdown();
-}  // grpc_context is destructed here
+}  // grpc_context is destructed here before the server
 ```
 <sup><a href='/example/example-server.cpp#L140-L144' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->

@@ -140,5 +140,5 @@ int main()
     // begin-snippet: run-grpc_context-server-side
     grpc_context.run();
     server->Shutdown();
-}  // grpc_context is destructed here
+}  // grpc_context is destructed here before the server
    // end-snippet
