@@ -24,6 +24,9 @@ namespace agrpc::detail
 template <class Function>
 struct GrpcInitiator
 {
+    using executor_type = asio::associated_executor_t<Function>;
+    using allocator_type = asio::associated_allocator_t<Function>;
+
     struct OnWork
     {
         agrpc::GrpcContext& grpc_context;
@@ -46,6 +49,10 @@ struct GrpcInitiator
         detail::create_work<true>(grpc_context, std::move(completion_handler), OnWork{grpc_context, function},
                                   allocator);
     }
+
+    executor_type get_executor() const noexcept { return asio::get_associated_executor(function); }
+
+    allocator_type get_allocator() const noexcept { return asio::get_associated_allocator(function); }
 };
 
 template <class Function>
