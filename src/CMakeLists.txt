@@ -39,30 +39,32 @@ target_link_libraries(asio-grpc INTERFACE gRPC::grpc++ Boost::headers)
 
 # asio-grpc objects
 if(ASIO_GRPC_BUILD_TESTS)
-    add_library(asio-grpc-objects INTERFACE)
+    add_library(asio-grpc-objects OBJECT)
 
-    target_link_libraries(asio-grpc-objects INTERFACE asio-grpc Boost::disable_autolinking)
+    target_sources(asio-grpc-objects PRIVATE asioGrpc.cpp)
 
-    target_compile_options(asio-grpc-objects INTERFACE $<$<CXX_COMPILER_ID:MSVC>:/W4>
-                                                       $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic-errors>)
+    target_link_libraries(asio-grpc-objects PUBLIC asio-grpc Boost::disable_autolinking)
+
+    target_compile_options(asio-grpc-objects PUBLIC $<$<CXX_COMPILER_ID:MSVC>:/W4>
+                                                    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic-errors>)
 
     target_compile_definitions(
         asio-grpc-objects
-        INTERFACE $<$<CXX_COMPILER_ID:MSVC>:
-                  BOOST_ASIO_HAS_DEDUCED_REQUIRE_MEMBER_TRAIT
-                  BOOST_ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT
-                  BOOST_ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT
-                  BOOST_ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT
-                  _WIN32_WINNT=0x0A00 # Windows 10
-                  WINVER=0x0A00>
-                  BOOST_ASIO_NO_DEPRECATED)
+        PUBLIC $<$<CXX_COMPILER_ID:MSVC>:
+               BOOST_ASIO_HAS_DEDUCED_REQUIRE_MEMBER_TRAIT
+               BOOST_ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT
+               BOOST_ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT
+               BOOST_ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT
+               _WIN32_WINNT=0x0A00 # Windows 10
+               WINVER=0x0A00>
+               BOOST_ASIO_NO_DEPRECATED)
 
     if(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS)
-        target_compile_options(asio-grpc-objects INTERFACE -fsanitize=address,undefined -fno-omit-frame-pointer)
+        target_compile_options(asio-grpc-objects PUBLIC -fsanitize=address,undefined -fno-omit-frame-pointer)
 
-        target_link_libraries(asio-grpc-objects INTERFACE asan ubsan)
+        target_link_libraries(asio-grpc-objects PUBLIC asan ubsan)
 
-        target_compile_definitions(asio-grpc-objects INTERFACE GRPC_ASAN_SUPPRESSED GRPC_TSAN_SUPPRESSED)
+        target_compile_definitions(asio-grpc-objects PUBLIC GRPC_ASAN_SUPPRESSED GRPC_TSAN_SUPPRESSED)
     endif()
 endif()
 
