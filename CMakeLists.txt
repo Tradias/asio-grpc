@@ -10,12 +10,14 @@ project(
 option(ASIO_GRPC_INSTALL "Create the install target" on)
 option(ASIO_GRPC_BUILD_TESTS "Build tests" off)
 option(ASIO_GRPC_BUILD_EXAMPLES "Build examples" off)
+option(ASIO_GRPC_BUILD_BENCHMARK "Build benchmark" off)
 option(ASIO_GRPC_DISCOVER_TESTS "Discover tests for ctest" off)
 option(ASIO_GRPC_TEST_COVERAGE "Compile tests with --coverage (GCC only)" off)
 option(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS "Compile tests with -fsanitize=address,undefined" off)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
+find_package(protobuf CONFIG)
 find_package(gRPC)
 find_package(Boost)
 
@@ -34,4 +36,8 @@ endif()
 
 if(ASIO_GRPC_BUILD_EXAMPLES)
     add_subdirectory(example)
+endif()
+
+if(ASIO_GRPC_BUILD_BENCHMARK)
+    add_subdirectory(benchmark)
 endif()

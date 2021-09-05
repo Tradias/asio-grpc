@@ -39,7 +39,7 @@ function(asio_grpc_add_test _asio-grpc_name)
         ${_asio-grpc_name}
         PRIVATE $<$<CXX_COMPILER_ID:MSVC>:
                 /external:I
-                $<TARGET_PROPERTY:gRPC::grpc++,INTERFACE_INCLUDE_DIRECTORIES>
+                $<TARGET_PROPERTY:protobuf::libprotobuf,INTERFACE_INCLUDE_DIRECTORIES>
                 /external:W1
                 /external:templates-
                 /W4>
