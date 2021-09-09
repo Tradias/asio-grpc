@@ -43,21 +43,7 @@ if(ASIO_GRPC_BUILD_TESTS)
 
     target_sources(asio-grpc-objects PRIVATE asioGrpc.cpp)
 
-    target_link_libraries(asio-grpc-objects PUBLIC asio-grpc Boost::disable_autolinking)
-
-    target_compile_options(asio-grpc-objects PUBLIC $<$<CXX_COMPILER_ID:MSVC>:/W4>
-                                                    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic-errors>)
-
-    target_compile_definitions(
-        asio-grpc-objects
-        PUBLIC $<$<CXX_COMPILER_ID:MSVC>:
-               BOOST_ASIO_HAS_DEDUCED_REQUIRE_MEMBER_TRAIT
-               BOOST_ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT
-               BOOST_ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT
-               BOOST_ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT
-               _WIN32_WINNT=0x0A00 # Windows 10
-               WINVER=0x0A00>
-               BOOST_ASIO_NO_DEPRECATED)
+    target_link_libraries(asio-grpc-objects PUBLIC asio-grpc-common-compile-options)
 
     if(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS)
         target_compile_options(asio-grpc-objects PUBLIC -fsanitize=address,undefined -fno-omit-frame-pointer)

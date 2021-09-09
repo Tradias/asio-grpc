@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "helper.hpp"
 #include "protos/example.grpc.pb.h"
 
 #include <agrpc/asioGrpc.hpp>
@@ -34,6 +35,8 @@ void unary(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub, b
     grpc::Status status;
     bool finish_ok = agrpc::finish(*reader, response, status, yield);
     // end-snippet
+
+    silence_unused(read_ok, finish_ok);
 }
 
 void request_client_streaming_alt(example::v1::Example::Stub& stub, boost::asio::yield_context& yield)
@@ -44,6 +47,8 @@ void request_client_streaming_alt(example::v1::Example::Stub& stub, boost::asio:
     auto [writer, request_ok] =
         agrpc::request(&example::v1::Example::Stub::AsyncClientStreaming, stub, client_context, response, yield);
     // end-snippet
+
+    silence_unused(writer, request_ok);
 }
 
 void client_streaming(example::v1::Example::Stub& stub, boost::asio::yield_context& yield)
@@ -67,6 +72,8 @@ void client_streaming(example::v1::Example::Stub& stub, boost::asio::yield_conte
     grpc::Status status;
     bool finish_ok = agrpc::finish(*writer, status, yield);
     // end-snippet
+
+    silence_unused(request_ok, read_ok, write_ok, writes_done_ok, finish_ok);
 }
 
 void request_server_streaming_alt(example::v1::Example::Stub& stub, boost::asio::yield_context& yield)
@@ -77,6 +84,8 @@ void request_server_streaming_alt(example::v1::Example::Stub& stub, boost::asio:
     auto [reader, request_ok] =
         agrpc::request(&example::v1::Example::Stub::AsyncServerStreaming, stub, client_context, request, yield);
     // end-snippet
+
+    silence_unused(reader, request_ok);
 }
 
 void server_streaming(example::v1::Example::Stub& stub, boost::asio::yield_context& yield)
@@ -98,6 +107,8 @@ void server_streaming(example::v1::Example::Stub& stub, boost::asio::yield_conte
     grpc::Status status;
     bool finish_ok = agrpc::finish(*reader, status, yield);
     // end-snippet
+
+    silence_unused(request_ok, read_metadata_ok, read_ok, finish_ok);
 }
 
 void request_bidirectional_alt(example::v1::Example::Stub& stub, boost::asio::yield_context& yield)
@@ -107,6 +118,8 @@ void request_bidirectional_alt(example::v1::Example::Stub& stub, boost::asio::yi
     auto [reader_writer, request_ok] =
         agrpc::request(&example::v1::Example::Stub::AsyncBidirectionalStreaming, stub, client_context, yield);
     // end-snippet
+
+    silence_unused(reader_writer, request_ok);
 }
 
 void bidirectional_streaming(example::v1::Example::Stub& stub, boost::asio::yield_context& yield)
@@ -132,6 +145,8 @@ void bidirectional_streaming(example::v1::Example::Stub& stub, boost::asio::yiel
     grpc::Status status;
     bool finish_ok = agrpc::finish(*reader_writer, status, yield);
     // end-snippet
+
+    silence_unused(request_ok, read_metadata_ok, write_ok, writes_done_ok, read_ok, finish_ok);
 }
 
 int main()

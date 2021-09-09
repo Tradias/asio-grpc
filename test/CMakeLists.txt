@@ -35,18 +35,6 @@ function(asio_grpc_add_test _asio-grpc_name)
         asio_grpc_add_coverage_flags(${_asio-grpc_name})
     endif()
 
-    target_compile_options(
-        ${_asio-grpc_name}
-        PRIVATE $<$<CXX_COMPILER_ID:MSVC>:
-                /external:I
-                $<TARGET_PROPERTY:protobuf::libprotobuf,INTERFACE_INCLUDE_DIRECTORIES>
-                /external:W1
-                /external:templates-
-                /W4>
-                $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall
-                -Wextra
-                -pedantic-errors>)
-
     target_link_libraries(${_asio-grpc_name} PRIVATE asio-grpc-objects doctest::doctest Boost::coroutine Boost::thread)
 
     target_include_directories(
@@ -63,8 +51,7 @@ target_compile_definitions(asio-grpc-test-cpp17 PRIVATE "ASIO_GRPC_TEST_CPP_VERS
 
 asio_grpc_add_test(asio-grpc-test-cpp20 ${ASIO_GRPC_TEST_SOURCE_FILES} "test-asio-grpc-20.cpp")
 target_compile_definitions(asio-grpc-test-cpp20 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"C++20\"")
-target_compile_features(asio-grpc-test-cpp20 PRIVATE cxx_std_20)
-target_compile_options(asio-grpc-test-cpp20 PRIVATE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fcoroutines>)
+target_link_libraries(asio-grpc-test-cpp20 PRIVATE asio-grpc-cpp20-compile-options)
 
 unset(ASIO_GRPC_TEST_SOURCE_FILES)
 

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "helper.hpp"
 #include "protos/example.grpc.pb.h"
 
 #include <agrpc/asioGrpc.hpp>
@@ -27,6 +28,8 @@ void timer(boost::asio::yield_context& yield)
     grpc::Alarm alarm;
     bool wait_ok = agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::seconds(1), yield);
     // end-snippet
+
+    silence_unused(wait_ok);
 }
 
 void unary(example::v1::Example::AsyncService& service, boost::asio::yield_context& yield)
@@ -47,6 +50,8 @@ void unary(example::v1::Example::AsyncService& service, boost::asio::yield_conte
 
     bool finish_with_error_ok = agrpc::finish_with_error(writer, grpc::Status::CANCELLED, yield);
     // end-snippet
+
+    silence_unused(request_ok, send_ok, finish_ok, finish_with_error_ok);
 }
 
 void client_streaming(example::v1::Example::AsyncService& service, boost::asio::yield_context& yield)
@@ -67,6 +72,8 @@ void client_streaming(example::v1::Example::AsyncService& service, boost::asio::
     example::v1::Response response;
     bool finish_ok = agrpc::finish(reader, response, grpc::Status::OK, yield);
     // end-snippet
+
+    silence_unused(request_ok, send_ok, read_ok, finish_ok);
 }
 
 void server_streaming(example::v1::Example::AsyncService& service, boost::asio::yield_context& yield)
@@ -89,6 +96,8 @@ void server_streaming(example::v1::Example::AsyncService& service, boost::asio::
 
     bool finish_ok = agrpc::finish(writer, grpc::Status::OK, yield);
     // end-snippet
+
+    silence_unused(request_ok, send_ok, write_ok, write_and_finish_ok, finish_ok);
 }
 
 void bidirectional_streaming(example::v1::Example::AsyncService& service, boost::asio::yield_context& yield)
@@ -114,6 +123,8 @@ void bidirectional_streaming(example::v1::Example::AsyncService& service, boost:
 
     bool finish_ok = agrpc::finish(reader_writer, grpc::Status::OK, yield);
     // end-snippet
+
+    silence_unused(request_ok, send_ok, read_ok, write_and_finish_ok, write_ok, finish_ok);
 }
 
 int main()

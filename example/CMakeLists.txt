@@ -15,24 +15,9 @@ function(asio_grpc_add_example _asio_grpc_name)
 
     target_sources(asio-grpc-${_asio_grpc_name} PRIVATE ${_asio_grpc_name}.cpp ${ASIO_GRPC_GENERATED_EXAMPLE_SOURCES})
 
-    target_link_libraries(asio-grpc-${_asio_grpc_name} PRIVATE asio-grpc::asio-grpc)
+    target_link_libraries(asio-grpc-${_asio_grpc_name} PRIVATE asio-grpc-common-compile-options)
 
     target_include_directories(asio-grpc-${_asio_grpc_name} PRIVATE ${ASIO_GRPC_GENERATED_EXAMPLE_PROTOS_OUT_DIR})
-
-    target_compile_options(
-        asio-grpc-${_asio_grpc_name} PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/W2> $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall
-                                             -pedantic-errors>)
-
-    target_compile_definitions(
-        asio-grpc-${_asio_grpc_name}
-        PRIVATE $<$<CXX_COMPILER_ID:MSVC>:
-                BOOST_ASIO_HAS_DEDUCED_REQUIRE_MEMBER_TRAIT
-                BOOST_ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT
-                BOOST_ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT
-                BOOST_ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT
-                _WIN32_WINNT=0x0A00 # Windows 10
-                WINVER=0x0A00>
-                BOOST_ASIO_NO_DEPRECATED)
 endfunction()
 
 asio_grpc_add_example(example-server)
@@ -42,9 +27,7 @@ asio_grpc_add_example(example-client)
 target_link_libraries(asio-grpc-example-client PRIVATE Boost::coroutine Boost::thread)
 
 asio_grpc_add_example(hello-world-server-cpp20)
-target_compile_features(asio-grpc-hello-world-server-cpp20 PRIVATE cxx_std_20)
-target_compile_options(asio-grpc-hello-world-server-cpp20 PRIVATE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fcoroutines>)
+target_link_libraries(asio-grpc-hello-world-server-cpp20 PRIVATE asio-grpc-cpp20-compile-options)
 
 asio_grpc_add_example(hello-world-client-cpp20)
-target_compile_features(asio-grpc-hello-world-client-cpp20 PRIVATE cxx_std_20)
-target_compile_options(asio-grpc-hello-world-client-cpp20 PRIVATE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fcoroutines>)
+target_link_libraries(asio-grpc-hello-world-client-cpp20 PRIVATE asio-grpc-cpp20-compile-options)
