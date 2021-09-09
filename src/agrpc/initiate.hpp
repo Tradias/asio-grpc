@@ -55,23 +55,23 @@ auto grpc_initiate(Function function, CompletionToken token = {})
 }
 
 template <class Allocator, std::uint32_t Options>
-auto get_completion_queue(const agrpc::BasicGrpcExecutor<Allocator, Options>& executor) noexcept
+[[nodiscard]] auto get_completion_queue(const agrpc::BasicGrpcExecutor<Allocator, Options>& executor) noexcept
 {
     return executor.context().get_completion_queue();
 }
 
-inline auto get_completion_queue(const asio::any_io_executor& executor) noexcept
+[[nodiscard]] inline auto get_completion_queue(const asio::any_io_executor& executor) noexcept
 {
     return static_cast<agrpc::GrpcContext&>(asio::query(executor, asio::execution::context)).get_completion_queue();
 }
 
-inline auto get_completion_queue(agrpc::GrpcContext& grpc_context) noexcept
+[[nodiscard]] inline auto get_completion_queue(agrpc::GrpcContext& grpc_context) noexcept
 {
     return grpc_context.get_completion_queue();
 }
 
 template <class CompletionToken>
-auto get_completion_queue(const CompletionToken& token) noexcept
+[[nodiscard]] auto get_completion_queue(const CompletionToken& token) noexcept
 {
     const auto executor = asio::get_associated_executor(token);
     return agrpc::get_completion_queue(executor);
@@ -79,7 +79,7 @@ auto get_completion_queue(const CompletionToken& token) noexcept
 
 #ifdef __cpp_impl_coroutine
 template <class Executor = asio::any_io_executor>
-auto get_completion_queue(asio::use_awaitable_t<Executor> = {})
+[[nodiscard]] auto get_completion_queue(asio::use_awaitable_t<Executor> = {})
     -> asio::async_result<asio::use_awaitable_t<Executor>, void(grpc::CompletionQueue*)>::return_type
 {
     const auto executor = co_await asio::this_coro::executor;

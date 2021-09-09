@@ -10,7 +10,7 @@ asynchronous gRPC servers and clients using C++20 coroutines, Boost.Coroutines, 
 Tested:
 
  * gRPC 1.37
- * Boost 1.76
+ * Boost 1.74
  * MSVC VS 2019 16.11
  * GCC 10.3
  * C++17 or C++20
