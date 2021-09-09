@@ -14,7 +14,7 @@ dangle_parens: false
 enable_markup: true
 enum_char: .
 fence_pattern: ^\s*([`~]{3}[`~]*)(.*)$
-first_comment_is_literal: false
+first_comment_is_literal: true
 keyword_case: unchanged
 line_ending: unix
 line_width: 120
