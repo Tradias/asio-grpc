@@ -2,8 +2,8 @@
 
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=Tradias_asio-grpc&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=Tradias_asio-grpc)
 
-This library provides an implementation of Boost.Asio's [execution_context](https://www.boost.org/doc/libs/develop/doc/html/boost_asio/reference/execution_context.html) that dispatches work to a gRPC [CompletionQueue](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html). Making it possible to write 
-asynchronous gRPC servers and clients using C++20 coroutines, Boost.Coroutines, Boost.Asio's stackless coroutines, std::futures and callbacks.
+This library provides an implementation of [boost::asio::execution_context](https://www.boost.org/doc/libs/develop/doc/html/boost_asio/reference/execution_context.html) that dispatches work to a [grpc::CompletionQueue](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html). Making it possible to write 
+asynchronous gRPC servers and clients using C++20 coroutines, Boost.Coroutines, Boost.Asio's stackless coroutines, std::futures and callbacks. Also enables other Boost.Asio non-blocking IO operations like HTTP requests - all on the same CompletionQueue.
 
 # Requirements
 
@@ -126,13 +126,41 @@ grpc_context.run();
 <sup><a href='/example/hello-world-client-cpp20.cpp#L25-L46' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-helloworld' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
+# Performance
+
+asio-grpc is part of [grpc_bench](https://github.com/LesnyRumcajs/grpc_bench). Head over there to compare its performance against other libraries and languages.
+
+Results from the helloworld unary RPC. Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz, Linux, Boost 1.74, gRPC 1.30.2, asio-grpc v1.0.0
+
+### 1 CPU server
+
+| name                        |   req/s |   avg. latency |        90 % in |        95 % in |        99 % in | avg. cpu |   avg. memory |
+|-----------------------------|--------:|---------------:|---------------:|---------------:|---------------:|---------:|--------------:|
+| rust_tonic_mt               |   44639 |       22.27 ms |        9.63 ms |       10.55 ms |      572.53 ms |  101.12% |     16.06 MiB |
+| rust_grpcio                 |   39826 |       24.95 ms |       26.31 ms |       27.19 ms |       28.45 ms |   101.5% |     30.46 MiB |
+| rust_thruster_mt            |   38038 |       26.17 ms |       11.39 ms |       12.33 ms |      673.02 ms |  100.16% |     13.17 MiB |
+| cpp_grpc_mt                 |   34954 |       28.53 ms |       31.28 ms |       31.75 ms |       33.55 ms |  101.93% |      8.36 MiB |
+| cpp_asio_grpc               |   34015 |       29.32 ms |       32.05 ms |       32.56 ms |       34.41 ms |  101.35% |      7.72 MiB |
+| go_grpc                     |    6772 |      141.75 ms |      287.57 ms |      330.45 ms |      499.47 ms |    97.8% |     28.07 MiB |
+
+### 2 CPU server
+
+| name                        |   req/s |   avg. latency |        90 % in |        95 % in |        99 % in | avg. cpu |   avg. memory |
+|-----------------------------|--------:|---------------:|---------------:|---------------:|---------------:|---------:|--------------:|
+| rust_tonic_mt               |   66253 |       14.33 ms |       39.24 ms |       59.11 ms |       91.03 ms |   201.2% |     16.09 MiB |
+| rust_grpcio                 |   62678 |       15.38 ms |       22.38 ms |       24.81 ms |       29.00 ms |  201.38% |     45.07 MiB |
+| cpp_grpc_mt                 |   62488 |       14.78 ms |       31.76 ms |       40.60 ms |       60.79 ms |  199.84% |      24.9 MiB |
+| cpp_asio_grpc               |   62040 |       14.91 ms |       30.17 ms |       37.77 ms |       60.10 ms |   199.6% |     26.65 MiB |
+| rust_thruster_mt            |   59204 |       16.22 ms |       43.04 ms |       71.87 ms |      110.07 ms |  199.31% |     13.87 MiB |
+| go_grpc                     |   13978 |       63.48 ms |      110.86 ms |      160.62 ms |      205.85 ms |  198.23% |     29.48 MiB |
+
 # Documentation
 
 The main workhorses of this library are the `agrpc::GrpcContext` and its `executor_type` - `agrpc::GrpcExecutor`. 
 
-The `agrpc::GrpcContext` implements [asio::execution_context](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/execution_context.html) and can be used as an argument to Boost.Asio functions that expect an `ExecutionContext` like [asio::spawn](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/spawn/overload7.html).
+The `agrpc::GrpcContext` implements [boost::asio::execution_context](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/execution_context.html) and can be used as an argument to Boost.Asio functions that expect an `ExecutionContext` like [boost::asio::spawn](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/spawn/overload7.html).
 
-Likewise, the `agrpc::GrpcExecutor` models the Executor and Networking TS requirements described [here](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/Executor1.html#boost_asio.reference.Executor1.standard_executors) and can therefore be used in places where Boost.Asio expects an `Executor`.
+Likewise, the `agrpc::GrpcExecutor` models the [Executor and Networking TS requirements](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/Executor1.html#boost_asio.reference.Executor1.standard_executors) and can therefore be used in places where Boost.Asio expects an `Executor`.
 
 ## Getting started
 
@@ -159,7 +187,7 @@ agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 <sup><a href='/example/example-client.cpp#L142-L144' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-client-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
-Add some work to the `grpc_context` (shown further below) and run it. Make sure to shutdown the `server` before destructing the `grpc_context`. Also destruct the `grpc_context` before destructing the `server`.
+Add some work to the `grpc_context` (shown further below) and run it. Make sure to shutdown the `server` before destructing the `grpc_context`. Also destruct the `grpc_context` before destructing the `server`. A `grpc_context` can only be run on one thread at a time.
 
 <!-- snippet: run-grpc_context-server-side -->
 <a id='snippet-run-grpc_context-server-side'></a>
@@ -183,7 +211,7 @@ auto guard = boost::asio::make_work_guard(grpc_context);
 
 ## Alarm
 
-gRPC provides a [grpc::Alarm](https://grpc.github.io/grpc/cpp/classgrpc_1_1_alarm.html) similar to to Boost.Asio's [steady_timer](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/steady_timer.html). Simply construct it and pass to it `agrpc::wait` with the desired deadline to wait for the specified amount of time without blocking the event loop.
+gRPC provides a [grpc::Alarm](https://grpc.github.io/grpc/cpp/classgrpc_1_1_alarm.html) which similar to [boost::asio::steady_timer](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/steady_timer.html). Simply construct it and pass to it `agrpc::wait` with the desired deadline to wait for the specified amount of time without blocking the event loop.
 
 <!-- snippet: alarm -->
 <a id='snippet-alarm'></a>
@@ -198,7 +226,7 @@ bool wait_ok = agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono
 
 ## Unary RPC Server-Side
 
-Start by requesting a RPC. In this example `yield` is a [boost::asio::yield_context](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/yield_context.html), other `CompletionToken`s are supported as well, i.e. [boost::asio::use_awaitable](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/use_awaitable.html). The `example` namespace has been generated from [example.proto](/example/protos/example.proto).
+Start by requesting a RPC. In this example `yield` is a [boost::asio::yield_context](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/yield_context.html), other [CompletionToken](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers)s are supported as well, e.g. [boost::asio::use_awaitable](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/use_awaitable.html). The `example` namespace has been generated from [example.proto](/example/protos/example.proto).
 
 <!-- snippet: request-unary-server-side -->
 <a id='snippet-request-unary-server-side'></a>
