@@ -15,8 +15,6 @@
 #ifndef AGRPC_DETAIL_FUNCTIONAL_HPP
 #define AGRPC_DETAIL_FUNCTIONAL_HPP
 
-#include <boost/type_traits/remove_cv_ref.hpp>
-
 #include <cstddef>
 #include <tuple>
 #include <type_traits>
@@ -29,15 +27,14 @@ struct Always
 {
     T t;
 
+    constexpr explicit Always(T t) : t(std::move(t)) {}
+
     template <class... Args>
     constexpr auto operator()(Args&&...) const noexcept(std::is_nothrow_copy_constructible_v<T>)
     {
         return t;
     }
 };
-
-template <class T>
-Always(T&&) -> Always<boost::remove_cv_ref_t<T>>;
 
 template <class F, class... Args, std::size_t... I>
 constexpr decltype(auto) invoke_front_impl(F&& f, std::tuple<Args...>&& args, std::index_sequence<I...>)
@@ -50,6 +47,10 @@ constexpr decltype(auto) invoke_front_impl(F&& f, std::tuple<Args...>&& args, st
     {
         return detail::invoke_front_impl(std::forward<F>(f), std::move(args),
                                          std::make_index_sequence<sizeof...(I) - 1>());
+    }
+    else
+    {
+        return std::invoke(std::forward<F>(f));
     }
 }
 
