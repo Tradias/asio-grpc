@@ -14,12 +14,15 @@ using namespace agrpc;
 
 TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0));
 
+#ifdef BOOST_ASIO_HAS_CONCEPTS
 TEST_CASE("GrpcExecutor fulfills Executor TS concepts")
 {
     CHECK(asio::execution::executor<agrpc::GrpcExecutor>);
     CHECK(asio::execution::executor_of<agrpc::GrpcExecutor, asio::execution::invocable_archetype>);
 }
+#endif
 
+#ifdef BOOST_ASIO_HAS_CO_AWAIT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "co_spawn two Alarms and await their ok")
 {
     bool ok1 = false;
@@ -244,6 +247,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable bidirectional streaming
         });
     grpc_context.run();
 }
+#endif
 
 TEST_SUITE_END();
 }  // namespace test_asio_grpc_cpp20

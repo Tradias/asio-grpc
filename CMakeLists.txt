@@ -26,6 +26,7 @@ add_subdirectory(src)
 if(ASIO_GRPC_BUILD_TESTS OR ASIO_GRPC_BUILD_EXAMPLES OR ASIO_GRPC_BUILD_BENCHMARK)
     find_package(Boost REQUIRED COMPONENTS coroutine thread)
     include(AsioGrpcCompileOptions)
+    include(AsioGrpcCheckBoostVersion)
 endif()
 
 if(ASIO_GRPC_BUILD_TESTS)

@@ -3,13 +3,12 @@
 
 #include <boost/type_traits/remove_cv_ref.hpp>
 
+#include <type_traits>
 #include <version>
 
-#ifdef __cpp_lib_coroutine
+#ifdef BOOST_ASIO_HAS_CO_AWAIT
 #include <boost/asio/co_spawn.hpp>
 #endif
-
-#include <type_traits>
 
 namespace agrpc::test
 {
@@ -30,7 +29,7 @@ template <class Function, class Allocator>
 HandlerWithAssociatedAllocator(Function&&, Allocator&&)
     -> HandlerWithAssociatedAllocator<boost::remove_cv_ref_t<Function>, boost::remove_cv_ref_t<Allocator>>;
 
-#ifdef __cpp_lib_coroutine
+#ifdef BOOST_ASIO_HAS_CO_AWAIT
 template <class Executor, class Function>
 auto co_spawn(Executor&& executor, Function function)
 {

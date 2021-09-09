@@ -26,8 +26,10 @@ target_link_libraries(asio-grpc-example-server PRIVATE Boost::coroutine Boost::t
 asio_grpc_add_example(example-client)
 target_link_libraries(asio-grpc-example-client PRIVATE Boost::coroutine Boost::thread)
 
-asio_grpc_add_example(hello-world-server-cpp20)
-target_link_libraries(asio-grpc-hello-world-server-cpp20 PRIVATE asio-grpc-cpp20-compile-options)
+if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT)
+    asio_grpc_add_example(hello-world-server-cpp20)
+    target_link_libraries(asio-grpc-hello-world-server-cpp20 PRIVATE asio-grpc-cpp20-compile-options)
 
-asio_grpc_add_example(hello-world-client-cpp20)
-target_link_libraries(asio-grpc-hello-world-client-cpp20 PRIVATE asio-grpc-cpp20-compile-options)
+    asio_grpc_add_example(hello-world-client-cpp20)
+    target_link_libraries(asio-grpc-hello-world-client-cpp20 PRIVATE asio-grpc-cpp20-compile-options)
+endif()

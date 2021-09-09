@@ -19,15 +19,13 @@
 #include "agrpc/detail/initiate.hpp"
 #include "agrpc/grpcExecutor.hpp"
 
-#include <version>
-
-#ifdef __cpp_lib_coroutine
+#ifdef BOOST_ASIO_HAS_CO_AWAIT
 #include <boost/asio/use_awaitable.hpp>
 #endif
 
 namespace agrpc
 {
-#ifdef __cpp_lib_coroutine
+#ifdef BOOST_ASIO_HAS_CO_AWAIT
 template <class T>
 using GrpcAwaitable = asio::awaitable<T, agrpc::GrpcExecutor>;
 
@@ -77,7 +75,7 @@ template <class CompletionToken>
     return agrpc::get_completion_queue(executor);
 }
 
-#ifdef __cpp_impl_coroutine
+#ifdef BOOST_ASIO_HAS_CO_AWAIT
 template <class Executor = asio::any_io_executor>
 [[nodiscard]] auto get_completion_queue(asio::use_awaitable_t<Executor> = {})
     -> asio::async_result<asio::use_awaitable_t<Executor>, void(grpc::CompletionQueue*)>::return_type

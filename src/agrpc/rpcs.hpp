@@ -22,8 +22,6 @@
 
 #include <grpcpp/alarm.h>
 
-#include <version>
-
 namespace agrpc
 {
 template <class Deadline, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -222,7 +220,7 @@ auto send_initial_metadata(Responder& responder, CompletionToken token = {})
 /*
 Client
 */
-#ifdef __cpp_impl_coroutine
+#ifdef BOOST_ASIO_HAS_CO_AWAIT
 template <class RPC, class Stub, class Request, class Reader, class Executor = asio::any_io_executor>
 [[nodiscard]] auto request(detail::ClientUnaryRequest<RPC, Request, Reader> rpc, Stub& stub,
                            grpc::ClientContext& client_context, const Request& request,
