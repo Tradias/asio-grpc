@@ -15,7 +15,7 @@
 #ifndef AGRPC_DETAIL_MEMORY_HPP
 #define AGRPC_DETAIL_MEMORY_HPP
 
-#include <boost/type_traits/remove_cv_ref.hpp>
+#include "agrpc/detail/utility.hpp"
 
 #include <cstddef>
 #include <memory>
@@ -24,56 +24,82 @@
 namespace agrpc::detail
 {
 template <class Allocator>
+struct AllocatedPointer
+{
+    using Traits = std::allocator_traits<Allocator>;
+    using allocator_type = Allocator;
+
+    detail::CompressedPair<typename Traits::pointer, allocator_type> impl;
+
+    constexpr AllocatedPointer(typename Traits::pointer ptr, const allocator_type& allocator) noexcept
+        : impl(ptr, allocator)
+    {
+    }
+
+    constexpr AllocatedPointer(AllocatedPointer&& other) noexcept
+        : impl(std::exchange(other.get(), nullptr), other.get_allocator())
+    {
+    }
+
+    constexpr AllocatedPointer& operator=(AllocatedPointer&& other) noexcept
+    {
+        if (this != std::addressof(other))
+        {
+            this->get() = std::exchange(other.get(), nullptr);
+        }
+        return *this;
+    }
+
+    ~AllocatedPointer() noexcept { this->destroy(); }
+
+    constexpr decltype(auto) get() noexcept { return this->impl.first(); }
+
+    constexpr decltype(auto) get() const noexcept { return this->impl.first(); }
+
+    constexpr decltype(auto) get_allocator() noexcept { return this->impl.second(); }
+
+    constexpr decltype(auto) get_allocator() const noexcept { return this->impl.second(); }
+
+    constexpr void release() noexcept { this->get() = nullptr; }
+
+    constexpr void reset() noexcept
+    {
+        this->destroy();
+        this->release();
+    }
+
+    constexpr void destroy() noexcept
+    {
+        if (this->get())
+        {
+            Traits::destroy(this->get_allocator(), this->get());
+            Traits::deallocate(this->get_allocator(), this->get(), 1);
+        }
+    }
+};
+
+template <class Allocator>
 struct AllocationGuard
 {
     using Traits = std::allocator_traits<Allocator>;
     using allocator_type = Allocator;
 
     typename Traits::pointer ptr;
-    bool is_constructed;
     allocator_type allocator;
+    bool is_allocated{true};
 
-    AllocationGuard(typename Traits::pointer ptr, bool is_constructed, const allocator_type& allocator) noexcept
-        : ptr(ptr), is_constructed(is_constructed), allocator(allocator)
+    ~AllocationGuard() noexcept
     {
-    }
-
-    constexpr AllocationGuard(AllocationGuard&& other) noexcept
-        : ptr(std::exchange(other.ptr, nullptr)), is_constructed(other.is_constructed), allocator(other.allocator)
-    {
-    }
-
-    constexpr AllocationGuard& operator=(AllocationGuard&& other) noexcept
-    {
-        if (this != std::addressof(other))
+        if (this->is_allocated)
         {
-            this->ptr = std::exchange(other.ptr, nullptr);
-        }
-        return *this;
-    }
-
-    ~AllocationGuard() noexcept { this->destroy(); }
-
-    auto get() const noexcept { return this->ptr; }
-
-    void release() noexcept { this->ptr = nullptr; }
-
-    void reset() noexcept
-    {
-        this->destroy();
-        this->release();
-    }
-
-    void destroy() noexcept
-    {
-        if (this->ptr)
-        {
-            if (this->is_constructed)
-            {
-                Traits::destroy(allocator, ptr);
-            }
             Traits::deallocate(allocator, ptr, 1);
         }
+    }
+
+    constexpr AllocatedPointer<Allocator> release() noexcept
+    {
+        this->is_allocated = false;
+        return {this->ptr, this->allocator};
     }
 };
 
@@ -81,12 +107,12 @@ template <class T, class Allocator, class... Args>
 auto allocate_unique(const Allocator& allocator, Args&&... args)
 {
     using Traits = typename std::allocator_traits<Allocator>::template rebind_traits<T>;
-    typename Traits::allocator_type rebound_allocator{allocator};
+    using ReboundAllocator = typename Traits::allocator_type;
+    ReboundAllocator rebound_allocator{allocator};
     auto* ptr = Traits::allocate(rebound_allocator, 1);
-    AllocationGuard guard{ptr, false, rebound_allocator};
-    Traits::construct(rebound_allocator, ptr, std::forward<Args>(args)...);
-    guard.is_constructed = true;
-    return guard;
+    AllocationGuard<ReboundAllocator> guard{ptr, rebound_allocator};
+    Traits::construct(guard.allocator, ptr, std::forward<Args>(args)...);
+    return guard.release();
 }
 
 template <class T, class Resource>

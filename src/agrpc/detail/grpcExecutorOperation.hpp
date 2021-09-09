@@ -40,7 +40,7 @@ class GrpcExecutorOperation : public detail::GrpcContextOperation
         using ReboundAllocator =
             typename std::allocator_traits<Allocator>::template rebind_alloc<GrpcExecutorOperation>;
         auto* self = static_cast<GrpcExecutorOperation*>(base);
-        detail::AllocationGuard<ReboundAllocator> ptr{self, true, self->get_allocator()};
+        detail::AllocatedPointer<ReboundAllocator> ptr{self, self->get_allocator()};
         if (invoke_handler == detail::GrpcContextOperation::InvokeHandler::YES)
         {
             // Make a copy of the handler so that the memory can be deallocated before the upcall is made.
