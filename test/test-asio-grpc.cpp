@@ -21,6 +21,7 @@
 #include <boost/asio/coroutine.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/asio/thread_pool.hpp>
 #include <doctest/doctest.h>
 #include <grpcpp/alarm.h>
@@ -79,6 +80,26 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wai
                 });
     grpc_context.run();
     CHECK(ok);
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post a asio::steady_timer")
+{
+    std::optional<boost::system::error_code> error_code;
+    auto guard = asio::make_work_guard(grpc_context);
+    asio::steady_timer timer{get_executor()};
+    asio::post(get_executor(),
+               [&]
+               {
+                   timer.expires_after(std::chrono::milliseconds(10));
+                   timer.async_wait(
+                       [&](const boost::system::error_code& ec)
+                       {
+                           error_code.emplace(ec);
+                           guard.reset();
+                       });
+               });
+    grpc_context.run();
+    CHECK_EQ(boost::system::error_code{}, error_code);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn with yield_context")
