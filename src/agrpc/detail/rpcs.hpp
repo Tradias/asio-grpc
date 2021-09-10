@@ -17,6 +17,7 @@
 
 #include "agrpc/detail/asioForward.hpp"
 
+#include <grpcpp/alarm.h>
 #include <grpcpp/client_context.h>
 #include <grpcpp/completion_queue.h>
 #include <grpcpp/server_context.h>
@@ -74,6 +75,23 @@ auto make_completion_handler_with_responder(CompletionHandler completion_handler
     return detail::CompletionHandlerWithResponder<Responder, CompletionHandler>{std::move(completion_handler),
                                                                                 std::forward<Args>(args)...};
 }
+
+#if (BOOST_VERSION >= 107700)
+struct AlarmCancellationHandler
+{
+    grpc::Alarm& alarm;
+
+    constexpr explicit AlarmCancellationHandler(grpc::Alarm& alarm) noexcept : alarm(alarm) {}
+
+    void operator()(asio::cancellation_type type)
+    {
+        if (static_cast<bool>(type & asio::cancellation_type::all))
+        {
+            alarm.Cancel();
+        }
+    }
+};
+#endif
 }  // namespace agrpc::detail
 
 #endif  // AGRPC_DETAIL_RPCS_HPP
