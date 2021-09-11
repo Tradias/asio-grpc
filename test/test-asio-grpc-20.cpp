@@ -47,19 +47,19 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "co_spawn two Alarms and await their ok
     bool ok1 = false;
     bool ok2 = false;
     test::co_spawn(grpc_context,
-                   [&]() -> agrpc::Awaitable<void>
+                   [&]() -> agrpc::GrpcAwaitable<void>
                    {
                        grpc::Alarm alarm;
-                       ok1 = co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::USE_AWAITABLE);
-                       co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::USE_AWAITABLE);
+                       ok1 = co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::GRPC_USE_AWAITABLE);
+                       co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::GRPC_USE_AWAITABLE);
                        grpc_context.stop();
                    });
     test::co_spawn(grpc_context,
-                   [&]() -> agrpc::Awaitable<void>
+                   [&]() -> agrpc::GrpcAwaitable<void>
                    {
                        grpc::Alarm alarm;
-                       ok2 = co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::USE_AWAITABLE);
-                       co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::USE_AWAITABLE);
+                       ok2 = co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::GRPC_USE_AWAITABLE);
+                       co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::GRPC_USE_AWAITABLE);
                    });
     grpc_context.run();
     CHECK(ok1);
@@ -69,10 +69,10 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "co_spawn two Alarms and await their ok
 TEST_CASE_FIXTURE(test::GrpcContextTest, "wait for Alarm with allocator")
 {
     test::co_spawn(get_pmr_executor(),
-                   [&]() -> agrpc::pmr::Awaitable<void>
+                   [&]() -> agrpc::pmr::GrpcAwaitable<void>
                    {
                        grpc::Alarm alarm;
-                       co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::pmr::USE_AWAITABLE);
+                       co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::pmr::GRPC_USE_AWAITABLE);
                    });
     grpc_context.run();
     CHECK(std::ranges::any_of(buffer,
