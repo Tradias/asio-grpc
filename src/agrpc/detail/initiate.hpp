@@ -66,8 +66,8 @@ struct DefaultCompletionTokenNotAvailable
 
 namespace boost::asio
 {
-template <typename... Signatures>
-class async_result<agrpc::detail::DefaultCompletionTokenNotAvailable, Signatures...>
+template <class Signature>
+class async_result<agrpc::detail::DefaultCompletionTokenNotAvailable, Signature>
 {
 };
 }  // namespace boost::asio
