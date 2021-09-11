@@ -27,20 +27,20 @@ namespace agrpc
 {
 #ifdef BOOST_ASIO_HAS_CO_AWAIT
 template <class T>
-using GrpcAwaitable = asio::awaitable<T, agrpc::GrpcExecutor>;
+using Awaitable = asio::awaitable<T, agrpc::GrpcExecutor>;
 
-using GrpcUseAwaitable = asio::use_awaitable_t<agrpc::GrpcExecutor>;
+using UseAwaitable = asio::use_awaitable_t<agrpc::GrpcExecutor>;
 
-static constexpr agrpc::GrpcUseAwaitable GRPC_USE_AWAITABLE{};
+static constexpr agrpc::UseAwaitable USE_AWAITABLE{};
 
 namespace pmr
 {
 template <class T>
-using GrpcAwaitable = asio::awaitable<T, agrpc::pmr::GrpcExecutor>;
+using Awaitable = asio::awaitable<T, agrpc::pmr::GrpcExecutor>;
 
-using GrpcUseAwaitable = asio::use_awaitable_t<agrpc::pmr::GrpcExecutor>;
+using UseAwaitable = asio::use_awaitable_t<agrpc::pmr::GrpcExecutor>;
 
-static constexpr agrpc::pmr::GrpcUseAwaitable GRPC_USE_AWAITABLE{};
+static constexpr agrpc::pmr::UseAwaitable USE_AWAITABLE{};
 }  // namespace pmr
 
 using DefaultCompletionToken = asio::use_awaitable_t<>;
