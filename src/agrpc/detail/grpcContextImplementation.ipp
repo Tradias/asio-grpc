@@ -59,14 +59,14 @@ inline void GrpcContextImplementation::add_local_work(agrpc::GrpcContext& grpc_c
 }
 
 template <detail::GrpcContextOperation::InvokeHandler Invoke>
-void GrpcContextImplementation::process_local_queue(agrpc::GrpcContext& grpc_context, bool ok)
+void GrpcContextImplementation::process_local_queue(agrpc::GrpcContext& grpc_context)
 {
     while (!grpc_context.local_work_queue.empty())
     {
         grpc_context.is_processing_local_work = true;
         auto& operation = grpc_context.local_work_queue.front();
         grpc_context.local_work_queue.pop_front();
-        operation.complete(ok, Invoke);
+        operation.complete({}, Invoke);
     }
     grpc_context.is_processing_local_work = false;
 }
@@ -78,11 +78,11 @@ void GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context,
     if (event.tag == detail::GrpcContextImplementation::HAS_WORK_TAG)
     {
         grpc_context.has_work.store(false, std::memory_order_release);
-        process_local_queue<Invoke>(grpc_context, event.ok);
+        process_local_queue<Invoke>(grpc_context);
         grpc_context.remote_work_queue.consume_all(
             [&](auto* operation)
             {
-                operation->complete(event.ok, Invoke);
+                operation->complete({}, Invoke);
             });
     }
     else

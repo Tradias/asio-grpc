@@ -38,7 +38,7 @@ struct GrpcContextImplementation
     [[nodiscard]] static bool running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept;
 
     template <detail::GrpcContextOperation::InvokeHandler Invoke>
-    static void process_local_queue(agrpc::GrpcContext& grpc_context, bool ok);
+    static void process_local_queue(agrpc::GrpcContext& grpc_context);
 
     template <detail::GrpcContextOperation::InvokeHandler Invoke>
     static void process_work(agrpc::GrpcContext& grpc_context, const detail::GrpcCompletionQueueEvent& event);

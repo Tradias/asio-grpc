@@ -50,7 +50,7 @@ using ClientBidirectionalStreamingRequest = ReaderWriter (RPC::*)(grpc::ClientCo
 template <class Responder, class CompletionHandler>
 struct CompletionHandlerWithResponder
 {
-    using executor_type = typename asio::associated_executor<CompletionHandler>::type;
+    using executor_type = asio::associated_executor_t<CompletionHandler>;
 
     CompletionHandler completion_handler;
     Responder responder;

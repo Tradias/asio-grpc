@@ -50,9 +50,9 @@ struct GrpcInitiator
                                   allocator);
     }
 
-    executor_type get_executor() const noexcept { return asio::get_associated_executor(function); }
+    [[nodiscard]] executor_type get_executor() const noexcept { return asio::get_associated_executor(function); }
 
-    allocator_type get_allocator() const noexcept { return asio::get_associated_allocator(function); }
+    [[nodiscard]] allocator_type get_allocator() const noexcept { return asio::get_associated_allocator(function); }
 };
 
 template <class Function>
