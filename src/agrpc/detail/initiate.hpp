@@ -57,6 +57,19 @@ struct GrpcInitiator
 
 template <class Function>
 GrpcInitiator(Function&&) -> GrpcInitiator<Function>;
+
+struct DefaultCompletionTokenNotAvailable
+{
+    DefaultCompletionTokenNotAvailable() = delete;
+};
 }  // namespace agrpc::detail
+
+namespace boost::asio
+{
+template <typename... Signatures>
+class async_result<agrpc::detail::DefaultCompletionTokenNotAvailable, Signatures...>
+{
+};
+}  // namespace boost::asio
 
 #endif  // AGRPC_DETAIL_INITIATE_HPP

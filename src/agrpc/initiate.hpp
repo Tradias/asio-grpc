@@ -31,19 +31,21 @@ using GrpcAwaitable = asio::awaitable<T, agrpc::GrpcExecutor>;
 
 using GrpcUseAwaitable = asio::use_awaitable_t<agrpc::GrpcExecutor>;
 
-static constexpr GrpcUseAwaitable GRPC_USE_AWAITABLE{};
+static constexpr agrpc::GrpcUseAwaitable GRPC_USE_AWAITABLE{};
 
 namespace pmr
 {
 template <class T>
 using GrpcAwaitable = asio::awaitable<T, agrpc::pmr::GrpcExecutor>;
 
-static constexpr asio::use_awaitable_t<agrpc::pmr::GrpcExecutor> GRPC_USE_AWAITABLE{};
+using GrpcUseAwaitable = asio::use_awaitable_t<agrpc::pmr::GrpcExecutor>;
+
+static constexpr agrpc::pmr::GrpcUseAwaitable GRPC_USE_AWAITABLE{};
 }  // namespace pmr
 
 using DefaultCompletionToken = asio::use_awaitable_t<>;
 #else
-using DefaultCompletionToken = int;
+using DefaultCompletionToken = detail::DefaultCompletionTokenNotAvailable;
 #endif
 
 template <class Function, class CompletionToken = agrpc::DefaultCompletionToken>
