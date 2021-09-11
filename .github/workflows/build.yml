@@ -23,7 +23,6 @@ jobs:
     - name: Install vcpkg
       uses: lukka/run-vcpkg@v7
       with:
-        setupOnly: true
         vcpkgDirectory: ${{github.workspace}}/vcpkg
         vcpkgArguments: 'doctest grpc[codegen] boost-coroutine boost-core boost-intrusive boost-lockfree boost-asio boost-interprocess boost-thread'
         vcpkgGitCommitId: 1909fbc4eb8ef30017a79dce50c0f232d149a051 # Sep 11, 2021
