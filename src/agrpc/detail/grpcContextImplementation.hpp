@@ -41,7 +41,7 @@ struct GrpcContextImplementation
     static void process_local_queue(agrpc::GrpcContext& grpc_context);
 
     template <detail::GrpcContextOperation::InvokeHandler Invoke>
-    static void process_work(agrpc::GrpcContext& grpc_context, const detail::GrpcCompletionQueueEvent& event);
+    static void process_work(agrpc::GrpcContext& grpc_context, detail::GrpcCompletionQueueEvent event);
 };
 }  // namespace detail
 }  // namespace agrpc

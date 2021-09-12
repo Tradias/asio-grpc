@@ -72,15 +72,14 @@ void GrpcContextImplementation::process_local_queue(agrpc::GrpcContext& grpc_con
 }
 
 template <detail::GrpcContextOperation::InvokeHandler Invoke>
-void GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context,
-                                             const detail::GrpcCompletionQueueEvent& event)
+void GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, detail::GrpcCompletionQueueEvent event)
 {
     if (event.tag == detail::GrpcContextImplementation::HAS_WORK_TAG)
     {
-        grpc_context.has_work.store(false, std::memory_order_release);
         process_local_queue<Invoke>(grpc_context);
+        grpc_context.has_work.store(false, std::memory_order_release);
         grpc_context.remote_work_queue.consume_all(
-            [&](auto* operation)
+            [&](detail::GrpcContextOperation* operation)
             {
                 operation->complete({}, Invoke);
             });

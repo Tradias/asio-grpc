@@ -57,7 +57,7 @@ inline bool get_next_event(agrpc::GrpcContext& grpc_context, detail::GrpcComplet
 }
 
 template <class LoopPredicate>
-void run_event_loop(agrpc::GrpcContext& grpc_context, LoopPredicate&& loop_predicate)
+void run_event_loop(agrpc::GrpcContext& grpc_context, LoopPredicate loop_predicate)
 {
     detail::GrpcCompletionQueueEvent event;
     while (loop_predicate() && detail::get_next_event(grpc_context, event))
