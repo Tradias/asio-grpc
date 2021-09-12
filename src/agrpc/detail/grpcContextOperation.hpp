@@ -15,31 +15,43 @@
 #ifndef AGRPC_DETAIL_GRPCCONTEXTOPERATION_HPP
 #define AGRPC_DETAIL_GRPCCONTEXTOPERATION_HPP
 
+#include "agrpc/detail/utility.hpp"
+
 #include <boost/intrusive/slist_hook.hpp>
 
 namespace agrpc::detail
 {
-class GrpcContextOperation : public boost::intrusive::slist_base_hook<
-                                 boost::intrusive::link_mode<boost::intrusive::link_mode_type::normal_link>>
+enum class InvokeHandler
+{
+    YES,
+    NO
+};
+
+template <bool IsIntrusivelyListable = true>
+class BasicGrpcContextOperation
+    : public std::conditional_t<
+          IsIntrusivelyListable,
+          boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::link_mode_type::normal_link>>,
+          detail::Empty>
 
 {
   public:
-    enum class InvokeHandler
+    constexpr void complete(bool ok, detail::InvokeHandler invoke_handler)
     {
-        YES,
-        NO
-    };
-
-    constexpr void complete(bool ok, InvokeHandler invoke_handler) { this->on_complete(this, ok, invoke_handler); }
+        this->on_complete(this, ok, invoke_handler);
+    }
 
   protected:
-    using OnCompleteFunction = void (*)(GrpcContextOperation*, bool, InvokeHandler);
+    using OnCompleteFunction = void (*)(BasicGrpcContextOperation*, bool, detail::InvokeHandler);
 
-    explicit GrpcContextOperation(OnCompleteFunction on_complete) noexcept : on_complete(on_complete) {}
+    explicit BasicGrpcContextOperation(OnCompleteFunction on_complete) noexcept : on_complete(on_complete) {}
 
   private:
     OnCompleteFunction on_complete;
 };
+
+using IntrusivelyListableGrpcContextOperation = detail::BasicGrpcContextOperation<true>;
+using GrpcContextOperation = detail::BasicGrpcContextOperation<false>;
 }  // namespace agrpc::detail
 
 #endif  // AGRPC_DETAIL_GRPCCONTEXTOPERATION_HPP

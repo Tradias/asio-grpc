@@ -33,7 +33,7 @@ struct GrpcInitiator
         Function& function;
 
         template <class Handler, class Allocator>
-        void operator()(detail::GrpcExecutorOperation<Handler, Allocator>* work)
+        void operator()(detail::GrpcExecutorOperation<false, Handler, Allocator>* work)
         {
             function(grpc_context, work);
         }
@@ -46,8 +46,7 @@ struct GrpcInitiator
     {
         const auto [executor, allocator] = detail::get_associated_executor_and_allocator(completion_handler);
         auto& grpc_context = static_cast<agrpc::GrpcContext&>(asio::query(executor, asio::execution::context));
-        detail::create_work<true>(grpc_context, std::move(completion_handler), OnWork{grpc_context, function},
-                                  allocator);
+        detail::create_work(grpc_context, std::move(completion_handler), OnWork{grpc_context, function}, allocator);
     }
 
     [[nodiscard]] executor_type get_executor() const noexcept { return asio::get_associated_executor(function); }

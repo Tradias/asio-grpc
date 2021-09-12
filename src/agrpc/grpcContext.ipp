@@ -64,13 +64,11 @@ void run_event_loop(agrpc::GrpcContext& grpc_context, LoopPredicate loop_predica
     {
         if (grpc_context.is_stopped()) AGRPC_UNLIKELY
             {
-                detail::GrpcContextImplementation::process_work<detail::GrpcContextOperation::InvokeHandler::NO>(
-                    grpc_context, event);
+                detail::GrpcContextImplementation::process_work<detail::InvokeHandler::NO>(grpc_context, event);
             }
         else
         {
-            detail::GrpcContextImplementation::process_work<detail::GrpcContextOperation::InvokeHandler::YES>(
-                grpc_context, event);
+            detail::GrpcContextImplementation::process_work<detail::InvokeHandler::YES>(grpc_context, event);
         }
     }
 }

@@ -72,7 +72,7 @@ class GrpcContext : public asio::execution_context
   private:
     using RemoteWorkQueue = boost::lockfree::queue<detail::GrpcContextOperation*>;
     using LocalWorkQueue =
-        boost::intrusive::slist<detail::GrpcContextOperation, boost::intrusive::constant_time_size<false>,
+        boost::intrusive::slist<detail::IntrusivelyListableGrpcContextOperation, boost::intrusive::constant_time_size<false>,
                                 boost::intrusive::cache_last<true>>;
 
     grpc::Alarm work_alarm;

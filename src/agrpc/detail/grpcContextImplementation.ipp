@@ -43,7 +43,7 @@ inline void GrpcContextImplementation::add_remote_work(agrpc::GrpcContext& grpc_
 }
 
 inline void GrpcContextImplementation::add_local_work(agrpc::GrpcContext& grpc_context,
-                                                      detail::GrpcContextOperation* op)
+                                                      detail::IntrusivelyListableGrpcContextOperation* op)
 {
     grpc_context.local_work_queue.push_back(*op);
     if (!grpc_context.is_processing_local_work)
@@ -58,7 +58,7 @@ inline void GrpcContextImplementation::add_local_work(agrpc::GrpcContext& grpc_c
     return grpc_context.thread_id.load(std::memory_order_relaxed) == std::this_thread::get_id();
 }
 
-template <detail::GrpcContextOperation::InvokeHandler Invoke>
+template <detail::InvokeHandler Invoke>
 void GrpcContextImplementation::process_local_queue(agrpc::GrpcContext& grpc_context)
 {
     while (!grpc_context.local_work_queue.empty())
@@ -71,7 +71,7 @@ void GrpcContextImplementation::process_local_queue(agrpc::GrpcContext& grpc_con
     grpc_context.is_processing_local_work = false;
 }
 
-template <detail::GrpcContextOperation::InvokeHandler Invoke>
+template <detail::InvokeHandler Invoke>
 void GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, detail::GrpcCompletionQueueEvent event)
 {
     if (event.tag == detail::GrpcContextImplementation::HAS_WORK_TAG)

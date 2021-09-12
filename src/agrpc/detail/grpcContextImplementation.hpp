@@ -33,14 +33,14 @@ struct GrpcContextImplementation
 
     static void add_remote_work(agrpc::GrpcContext& grpc_context, detail::GrpcContextOperation* op);
 
-    static void add_local_work(agrpc::GrpcContext& grpc_context, detail::GrpcContextOperation* op);
+    static void add_local_work(agrpc::GrpcContext& grpc_context, detail::IntrusivelyListableGrpcContextOperation* op);
 
     [[nodiscard]] static bool running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept;
 
-    template <detail::GrpcContextOperation::InvokeHandler Invoke>
+    template <detail::InvokeHandler Invoke>
     static void process_local_queue(agrpc::GrpcContext& grpc_context);
 
-    template <detail::GrpcContextOperation::InvokeHandler Invoke>
+    template <detail::InvokeHandler Invoke>
     static void process_work(agrpc::GrpcContext& grpc_context, detail::GrpcCompletionQueueEvent event);
 };
 }  // namespace detail

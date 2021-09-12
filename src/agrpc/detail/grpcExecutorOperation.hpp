@@ -23,25 +23,26 @@
 
 namespace agrpc::detail
 {
-template <class Handler, class Allocator>
-class GrpcExecutorOperation : public detail::GrpcContextOperation
+template <bool IsIntrusivelyListable, class Handler, class Allocator>
+class GrpcExecutorOperation : public detail::BasicGrpcContextOperation<IsIntrusivelyListable>
 {
+  private:
+    using Base = detail::BasicGrpcContextOperation<IsIntrusivelyListable>;
+
   public:
     template <class H>
     GrpcExecutorOperation(H&& handler, Allocator allocator)
-        : detail::GrpcContextOperation(&GrpcExecutorOperation::do_complete),
-          impl(std::forward<H>(handler), std::move(allocator))
+        : Base(&GrpcExecutorOperation::do_complete), impl(std::forward<H>(handler), std::move(allocator))
     {
     }
 
-    static void do_complete(detail::GrpcContextOperation* base, bool ok,
-                            detail::GrpcContextOperation::InvokeHandler invoke_handler)
+    static void do_complete(Base* base, bool ok, detail::InvokeHandler invoke_handler)
     {
         using ReboundAllocator =
             typename std::allocator_traits<Allocator>::template rebind_alloc<GrpcExecutorOperation>;
         auto* self = static_cast<GrpcExecutorOperation*>(base);
         detail::AllocatedPointer<ReboundAllocator> ptr{self, self->get_allocator()};
-        if (invoke_handler == detail::GrpcContextOperation::InvokeHandler::YES)
+        if (invoke_handler == detail::InvokeHandler::YES)
         {
             // Make a copy of the handler so that the memory can be deallocated before the upcall is made.
             auto handler{std::move(self->handler())};

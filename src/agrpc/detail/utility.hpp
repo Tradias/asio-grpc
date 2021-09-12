@@ -20,6 +20,10 @@
 
 namespace agrpc::detail
 {
+struct Empty
+{
+};
+
 template <class First, class Second, bool = std::is_empty_v<Second> && !std::is_final_v<Second>>
 class CompressedPair : private Second
 {
