@@ -36,17 +36,26 @@ template <class T>
     return grpc_context.get_allocator();
 }
 
-template <bool IsIntrusivelyListable, class Function, class Allocator>
-auto allocate_work(Function&& function, const Allocator& allocator)
+template <bool IsIntrusivelyListable, class... Signature>
+struct AllocateOperationAndInvoke
 {
-    using DecayedFunction = std::decay_t<Function>;
-    using Operation = detail::GrpcExecutorOperation<IsIntrusivelyListable, DecayedFunction, Allocator>;
-    return detail::allocate_unique<Operation>(allocator, std::forward<Function>(function), allocator);
-}
+    template <class Function, class OnOperation, class Allocator>
+    void operator()(Function&& function, OnOperation&& on_operation, const Allocator& allocator) const
+    {
+        using DecayedFunction = std::decay_t<Function>;
+        using Operation = detail::Operation<IsIntrusivelyListable, DecayedFunction, Allocator, Signature...>;
+        auto ptr = detail::allocate_unique<Operation>(allocator, std::forward<Function>(function), allocator);
+        on_operation(ptr.get());
+        ptr.release();
+    }
+};
 
-template <class Function, class OnWork, class WorkAllocator>
-void create_work(agrpc::GrpcContext& grpc_context, Function&& function, OnWork&& on_work,
-                 const WorkAllocator& work_allocator)
+template <bool IsIntrusivelyListable, class... Signature>
+inline constexpr AllocateOperationAndInvoke<IsIntrusivelyListable, Signature...> allocate_operation_and_invoke{};
+
+template <class Function, class OnOperation, class WorkAllocator>
+void create_operation(agrpc::GrpcContext& grpc_context, Function&& function, OnOperation&& on_operation,
+                      const WorkAllocator& work_allocator)
 {
     if (grpc_context.is_stopped()) AGRPC_UNLIKELY
         {
@@ -55,20 +64,38 @@ void create_work(agrpc::GrpcContext& grpc_context, Function&& function, OnWork&&
     if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
     {
         auto&& local_allocator = detail::get_local_allocator(grpc_context, work_allocator);
-        auto ptr = detail::allocate_work<false>(std::forward<Function>(function), local_allocator);
-        on_work(ptr.get());
-        ptr.release();
+        detail::allocate_operation_and_invoke<false, bool>(std::forward<Function>(function),
+                                                           std::forward<OnOperation>(on_operation), local_allocator);
     }
     else
     {
-        auto ptr = detail::allocate_work<false>(std::forward<Function>(function), work_allocator);
-        on_work(ptr.get());
-        ptr.release();
+        detail::allocate_operation_and_invoke<false, bool>(std::forward<Function>(function),
+                                                           std::forward<OnOperation>(on_operation), work_allocator);
     }
 }
 
+struct AddToLocalOperations
+{
+    agrpc::GrpcContext& grpc_context;
+
+    void operator()(detail::ListableTypeErasedNoArgOperation* op)
+    {
+        detail::GrpcContextImplementation::add_local_operation(grpc_context, op);
+    }
+};
+
+struct AddToRemoteOperations
+{
+    agrpc::GrpcContext& grpc_context;
+
+    void operator()(detail::TypeErasedNoArgOperation* op)
+    {
+        detail::GrpcContextImplementation::add_remote_operation(grpc_context, op);
+    }
+};
+
 template <bool IsBlockingNever, class Function, class WorkAllocator>
-void create_work(agrpc::GrpcContext& grpc_context, Function&& function, const WorkAllocator& work_allocator)
+void create_operation(agrpc::GrpcContext& grpc_context, Function&& function, const WorkAllocator& work_allocator)
 {
     if (grpc_context.is_stopped()) AGRPC_UNLIKELY
         {
@@ -79,9 +106,8 @@ void create_work(agrpc::GrpcContext& grpc_context, Function&& function, const Wo
         if constexpr (IsBlockingNever)
         {
             auto&& local_allocator = detail::get_local_allocator(grpc_context, work_allocator);
-            auto ptr = detail::allocate_work<true>(std::forward<Function>(function), local_allocator);
-            detail::GrpcContextImplementation::add_local_work(grpc_context, ptr.get());
-            ptr.release();
+            detail::allocate_operation_and_invoke<true>(std::forward<Function>(function),
+                                                        AddToLocalOperations{grpc_context}, local_allocator);
         }
         else
         {
@@ -92,9 +118,8 @@ void create_work(agrpc::GrpcContext& grpc_context, Function&& function, const Wo
     }
     else
     {
-        auto ptr = detail::allocate_work<false>(std::forward<Function>(function), work_allocator);
-        detail::GrpcContextImplementation::add_remote_work(grpc_context, ptr.get());
-        ptr.release();
+        detail::allocate_operation_and_invoke<false>(std::forward<Function>(function),
+                                                     AddToRemoteOperations{grpc_context}, work_allocator);
     }
 }
 }  // namespace agrpc::detail

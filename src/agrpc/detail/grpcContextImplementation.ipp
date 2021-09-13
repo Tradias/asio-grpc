@@ -35,15 +35,15 @@ inline void GrpcContextImplementation::trigger_work_alarm(agrpc::GrpcContext& gr
     }
 }
 
-inline void GrpcContextImplementation::add_remote_work(agrpc::GrpcContext& grpc_context,
-                                                       detail::GrpcContextOperation* op)
+inline void GrpcContextImplementation::add_remote_operation(agrpc::GrpcContext& grpc_context,
+                                                            detail::TypeErasedNoArgOperation* op)
 {
     grpc_context.remote_work_queue.push(op);
     GrpcContextImplementation::trigger_work_alarm(grpc_context);
 }
 
-inline void GrpcContextImplementation::add_local_work(agrpc::GrpcContext& grpc_context,
-                                                      detail::IntrusivelyListableGrpcContextOperation* op)
+inline void GrpcContextImplementation::add_local_operation(agrpc::GrpcContext& grpc_context,
+                                                           detail::ListableTypeErasedNoArgOperation* op)
 {
     grpc_context.local_work_queue.push_back(*op);
     if (!grpc_context.is_processing_local_work)
@@ -52,8 +52,7 @@ inline void GrpcContextImplementation::add_local_work(agrpc::GrpcContext& grpc_c
     }
 }
 
-[[nodiscard]] inline bool GrpcContextImplementation::running_in_this_thread(
-    const agrpc::GrpcContext& grpc_context) noexcept
+inline bool GrpcContextImplementation::running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept
 {
     return grpc_context.thread_id.load(std::memory_order_relaxed) == std::this_thread::get_id();
 }
@@ -66,7 +65,7 @@ void GrpcContextImplementation::process_local_queue(agrpc::GrpcContext& grpc_con
         grpc_context.is_processing_local_work = true;
         auto& operation = grpc_context.local_work_queue.front();
         grpc_context.local_work_queue.pop_front();
-        operation.complete({}, Invoke);
+        operation.complete(Invoke);
     }
     grpc_context.is_processing_local_work = false;
 }
@@ -79,15 +78,15 @@ void GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, d
         process_local_queue<Invoke>(grpc_context);
         grpc_context.has_work.store(false, std::memory_order_release);
         grpc_context.remote_work_queue.consume_all(
-            [&](detail::GrpcContextOperation* operation)
+            [&](detail::TypeErasedNoArgOperation* operation)
             {
-                operation->complete({}, Invoke);
+                operation->complete(Invoke);
             });
     }
     else
     {
-        auto* operation = static_cast<detail::GrpcContextOperation*>(event.tag);
-        operation->complete(event.ok, Invoke);
+        auto* operation = static_cast<detail::TypeErasedGrpcTagOperation*>(event.tag);
+        operation->complete(Invoke, event.ok);
     }
 }
 }  // namespace agrpc::detail

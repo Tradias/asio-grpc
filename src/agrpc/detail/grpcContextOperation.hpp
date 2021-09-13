@@ -27,8 +27,8 @@ enum class InvokeHandler
     NO
 };
 
-template <bool IsIntrusivelyListable = true>
-class BasicGrpcContextOperation
+template <bool IsIntrusivelyListable, class... Signature>
+class TypeErasedOperation
     : public std::conditional_t<
           IsIntrusivelyListable,
           boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::link_mode_type::normal_link>>,
@@ -36,22 +36,23 @@ class BasicGrpcContextOperation
 
 {
   public:
-    constexpr void complete(bool ok, detail::InvokeHandler invoke_handler)
+    constexpr void complete(detail::InvokeHandler invoke_handler, Signature... args)
     {
-        this->on_complete(this, ok, invoke_handler);
+        this->on_complete(this, invoke_handler, std::forward<Signature>(args)...);
     }
 
   protected:
-    using OnCompleteFunction = void (*)(BasicGrpcContextOperation*, bool, detail::InvokeHandler);
+    using OnCompleteFunction = void (*)(TypeErasedOperation*, detail::InvokeHandler, Signature...);
 
-    explicit BasicGrpcContextOperation(OnCompleteFunction on_complete) noexcept : on_complete(on_complete) {}
+    explicit TypeErasedOperation(OnCompleteFunction on_complete) noexcept : on_complete(on_complete) {}
 
   private:
     OnCompleteFunction on_complete;
 };
 
-using IntrusivelyListableGrpcContextOperation = detail::BasicGrpcContextOperation<true>;
-using GrpcContextOperation = detail::BasicGrpcContextOperation<false>;
+using ListableTypeErasedNoArgOperation = detail::TypeErasedOperation<true>;
+using TypeErasedNoArgOperation = detail::TypeErasedOperation<false>;
+using TypeErasedGrpcTagOperation = detail::TypeErasedOperation<false, bool>;
 }  // namespace agrpc::detail
 
 #endif  // AGRPC_DETAIL_GRPCCONTEXTOPERATION_HPP

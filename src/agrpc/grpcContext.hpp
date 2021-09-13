@@ -70,9 +70,9 @@ class GrpcContext : public asio::execution_context
     [[nodiscard]] grpc::ServerCompletionQueue* get_server_completion_queue() noexcept;
 
   private:
-    using RemoteWorkQueue = boost::lockfree::queue<detail::GrpcContextOperation*>;
+    using RemoteWorkQueue = boost::lockfree::queue<detail::TypeErasedNoArgOperation*>;
     using LocalWorkQueue =
-        boost::intrusive::slist<detail::IntrusivelyListableGrpcContextOperation, boost::intrusive::constant_time_size<false>,
+        boost::intrusive::slist<detail::ListableTypeErasedNoArgOperation, boost::intrusive::constant_time_size<false>,
                                 boost::intrusive::cache_last<true>>;
 
     grpc::Alarm work_alarm;

@@ -82,29 +82,29 @@ class BasicGrpcExecutor
     template <class Function, class OtherAllocator>
     void dispatch(Function&& function, const OtherAllocator& other_allocator) const
     {
-        detail::create_work<detail::is_blocking_never(Options)>(this->context(), std::forward<Function>(function),
-                                                                other_allocator);
+        detail::create_operation<detail::is_blocking_never(Options)>(this->context(), std::forward<Function>(function),
+                                                                     other_allocator);
     }
 
     template <class Function, class OtherAllocator>
     void post(Function&& function, const OtherAllocator& other_allocator) const
     {
-        detail::create_work<detail::is_blocking_never(Options)>(this->context(), std::forward<Function>(function),
-                                                                other_allocator);
+        detail::create_operation<detail::is_blocking_never(Options)>(this->context(), std::forward<Function>(function),
+                                                                     other_allocator);
     }
 
     template <class Function, class OtherAllocator>
     void defer(Function&& function, const OtherAllocator& other_allocator) const
     {
-        detail::create_work<detail::is_blocking_never(Options)>(this->context(), std::forward<Function>(function),
-                                                                other_allocator);
+        detail::create_operation<detail::is_blocking_never(Options)>(this->context(), std::forward<Function>(function),
+                                                                     other_allocator);
     }
 
     template <class Function>
     void execute(Function&& function) const
     {
-        detail::create_work<detail::is_blocking_never(Options)>(this->context(), std::forward<Function>(function),
-                                                                this->allocator());
+        detail::create_operation<detail::is_blocking_never(Options)>(this->context(), std::forward<Function>(function),
+                                                                     this->allocator());
     }
 
     [[nodiscard]] constexpr auto require(asio::execution::blocking_t::possibly_t) const noexcept

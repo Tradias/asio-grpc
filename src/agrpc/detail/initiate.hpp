@@ -27,13 +27,13 @@ struct GrpcInitiator
     using executor_type = asio::associated_executor_t<Function>;
     using allocator_type = asio::associated_allocator_t<Function>;
 
-    struct OnWork
+    struct OnOperation
     {
         agrpc::GrpcContext& grpc_context;
         Function& function;
 
         template <class Handler, class Allocator>
-        void operator()(detail::GrpcExecutorOperation<false, Handler, Allocator>* work)
+        void operator()(detail::GrpcTagOperation<Handler, Allocator>* work)
         {
             function(grpc_context, work);
         }
@@ -46,7 +46,8 @@ struct GrpcInitiator
     {
         const auto [executor, allocator] = detail::get_associated_executor_and_allocator(completion_handler);
         auto& grpc_context = static_cast<agrpc::GrpcContext&>(asio::query(executor, asio::execution::context));
-        detail::create_work(grpc_context, std::move(completion_handler), OnWork{grpc_context, function}, allocator);
+        detail::create_operation(grpc_context, std::move(completion_handler), OnOperation{grpc_context, function},
+                                 allocator);
     }
 
     [[nodiscard]] executor_type get_executor() const noexcept { return asio::get_associated_executor(function); }
@@ -66,7 +67,7 @@ struct DefaultCompletionTokenNotAvailable
 namespace boost::asio
 {
 template <class Signature>
-class async_result<agrpc::detail::DefaultCompletionTokenNotAvailable, Signature>
+class async_result<::agrpc::detail::DefaultCompletionTokenNotAvailable, Signature>
 {
 };
 }  // namespace boost::asio

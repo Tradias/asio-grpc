@@ -50,7 +50,13 @@ struct AllocatedPointer
         return *this;
     }
 
-    ~AllocatedPointer() noexcept { this->destroy(); }
+    ~AllocatedPointer() noexcept
+    {
+        if (this->get())
+        {
+            this->destroy();
+        }
+    }
 
     constexpr decltype(auto) get() noexcept { return this->impl.first(); }
 
@@ -70,11 +76,8 @@ struct AllocatedPointer
 
     constexpr void destroy() noexcept
     {
-        if (this->get())
-        {
-            Traits::destroy(this->get_allocator(), this->get());
-            Traits::deallocate(this->get_allocator(), this->get(), 1);
-        }
+        Traits::destroy(this->get_allocator(), this->get());
+        Traits::deallocate(this->get_allocator(), this->get(), 1);
     }
 };
 
