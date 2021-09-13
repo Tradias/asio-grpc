@@ -17,9 +17,9 @@
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/grpcContextImplementation.hpp"
-#include "agrpc/detail/grpcContextOperation.hpp"
 #include "agrpc/detail/grpcExecutorOptions.hpp"
 #include "agrpc/detail/memory.hpp"
+#include "agrpc/detail/typeErasedOperation.hpp"
 
 #include <boost/intrusive/slist.hpp>
 #include <boost/lockfree/queue.hpp>

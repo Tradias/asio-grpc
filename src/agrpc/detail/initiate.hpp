@@ -16,7 +16,7 @@
 #define AGRPC_DETAIL_INITIATE_HPP
 
 #include "agrpc/detail/asioForward.hpp"
-#include "agrpc/detail/grpcExecutorOperation.hpp"
+#include "agrpc/detail/operation.hpp"
 #include "agrpc/grpcContext.hpp"
 
 namespace agrpc::detail
@@ -46,8 +46,8 @@ struct GrpcInitiator
     {
         const auto [executor, allocator] = detail::get_associated_executor_and_allocator(completion_handler);
         auto& grpc_context = static_cast<agrpc::GrpcContext&>(asio::query(executor, asio::execution::context));
-        detail::create_operation(grpc_context, std::move(completion_handler), OnOperation{grpc_context, function},
-                                 allocator);
+        detail::create_grpc_tag_operation(grpc_context, std::move(completion_handler),
+                                          OnOperation{grpc_context, function}, allocator);
     }
 
     [[nodiscard]] executor_type get_executor() const noexcept { return asio::get_associated_executor(function); }

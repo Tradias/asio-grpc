@@ -17,8 +17,8 @@
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/functional.hpp"
-#include "agrpc/detail/grpcContextOperation.hpp"
 #include "agrpc/detail/memory.hpp"
+#include "agrpc/detail/typeErasedOperation.hpp"
 #include "agrpc/detail/utility.hpp"
 
 namespace agrpc::detail

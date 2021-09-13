@@ -18,8 +18,8 @@
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/attributes.hpp"
 #include "agrpc/detail/grpcContextImplementation.hpp"
-#include "agrpc/detail/grpcExecutorOperation.hpp"
 #include "agrpc/detail/memory.hpp"
+#include "agrpc/detail/operation.hpp"
 #include "agrpc/grpcContext.hpp"
 
 namespace agrpc::detail
@@ -54,8 +54,8 @@ template <bool IsIntrusivelyListable, class... Signature>
 inline constexpr AllocateOperationAndInvoke<IsIntrusivelyListable, Signature...> allocate_operation_and_invoke{};
 
 template <class Function, class OnOperation, class WorkAllocator>
-void create_operation(agrpc::GrpcContext& grpc_context, Function&& function, OnOperation&& on_operation,
-                      const WorkAllocator& work_allocator)
+void create_grpc_tag_operation(agrpc::GrpcContext& grpc_context, Function&& function, OnOperation&& on_operation,
+                               const WorkAllocator& work_allocator)
 {
     if (grpc_context.is_stopped()) AGRPC_UNLIKELY
         {
@@ -95,7 +95,7 @@ struct AddToRemoteOperations
 };
 
 template <bool IsBlockingNever, class Function, class WorkAllocator>
-void create_operation(agrpc::GrpcContext& grpc_context, Function&& function, const WorkAllocator& work_allocator)
+void create_no_arg_operation(agrpc::GrpcContext& grpc_context, Function&& function, const WorkAllocator& work_allocator)
 {
     if (grpc_context.is_stopped()) AGRPC_UNLIKELY
         {

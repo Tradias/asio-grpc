@@ -16,8 +16,8 @@
 #define AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_HPP
 
 #include "agrpc/detail/grpcCompletionQueueEvent.hpp"
-#include "agrpc/detail/grpcContextOperation.hpp"
-#include "agrpc/detail/grpcExecutorOperation.hpp"
+#include "agrpc/detail/operation.hpp"
+#include "agrpc/detail/typeErasedOperation.hpp"
 
 namespace agrpc
 {

@@ -16,8 +16,8 @@
 #define AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_IPP
 
 #include "agrpc/detail/grpcContextImplementation.hpp"
-#include "agrpc/detail/grpcContextOperation.hpp"
-#include "agrpc/detail/grpcExecutorOperation.hpp"
+#include "agrpc/detail/operation.hpp"
+#include "agrpc/detail/typeErasedOperation.hpp"
 #include "agrpc/grpcContext.hpp"
 
 #include <cstdint>

@@ -18,7 +18,6 @@
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/attributes.hpp"
 #include "agrpc/detail/grpcCompletionQueueEvent.hpp"
-#include "agrpc/detail/grpcContextOperation.hpp"
 #include "agrpc/detail/grpcExecutorOptions.hpp"
 #include "agrpc/detail/memory.hpp"
 #include "agrpc/grpcContext.hpp"

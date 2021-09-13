@@ -33,13 +33,13 @@ list(
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcContextImplementation.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcContextImplementation.ipp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcContextInteraction.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcContextOperation.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcExecutorBase.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcExecutorOperation.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcExecutorOptions.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/initiate.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/memory.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/operation.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/rpcs.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/typeErasedOperation.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/utility.hpp")
 set_target_properties(asio-grpc PROPERTIES ASIO_GRPC_HEADER_FILES "${ASIO_GRPC_HEADER_FILES}")
 unset(ASIO_GRPC_HEADER_FILES)
