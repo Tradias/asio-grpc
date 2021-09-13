@@ -39,24 +39,33 @@ TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0));
 
 TEST_CASE("GrpcExecutor fulfills Executor TS traits")
 {
-    CHECK(asio::execution::can_execute_v<std::add_const_t<agrpc::GrpcContext::executor_type>,
-                                         asio::execution::invocable_archetype>);
-    CHECK(asio::execution::is_executor_v<agrpc::GrpcContext::executor_type>);
-    CHECK(asio::can_require<agrpc::GrpcContext::executor_type, asio::execution::blocking_t::never_t>::value);
-    CHECK(asio::can_prefer<agrpc::GrpcContext::executor_type, asio::execution::blocking_t::possibly_t>::value);
-    CHECK(asio::can_prefer<agrpc::GrpcContext::executor_type, asio::execution::relationship_t::fork_t>::value);
-    CHECK(asio::can_prefer<agrpc::GrpcContext::executor_type, asio::execution::relationship_t::continuation_t>::value);
-    CHECK(asio::can_prefer<agrpc::GrpcContext::executor_type, asio::execution::outstanding_work_t::tracked_t>::value);
-    CHECK(asio::can_prefer<agrpc::GrpcContext::executor_type, asio::execution::outstanding_work_t::untracked_t>::value);
-    CHECK(asio::can_prefer<agrpc::GrpcContext::executor_type,
-                           asio::execution::allocator_t<std::pmr::polymorphic_allocator<std::byte>>>::value);
-    CHECK(asio::can_query<agrpc::GrpcContext::executor_type, asio::execution::blocking_t>::value);
-    CHECK(asio::can_query<agrpc::GrpcContext::executor_type, asio::execution::relationship_t>::value);
-    CHECK(asio::can_query<agrpc::GrpcContext::executor_type, asio::execution::outstanding_work_t>::value);
-    CHECK(asio::can_query<agrpc::GrpcContext::executor_type, asio::execution::mapping_t>::value);
-    CHECK(asio::can_query<agrpc::GrpcContext::executor_type, asio::execution::allocator_t<void>>::value);
-    CHECK(asio::can_query<agrpc::GrpcContext::executor_type, asio::execution::context_t>::value);
-    CHECK(std::is_constructible_v<asio::any_io_executor, agrpc::GrpcContext::executor_type>);
+    using Exec = agrpc::GrpcContext::executor_type;
+    CHECK(asio::execution::can_execute_v<std::add_const_t<Exec>, asio::execution::invocable_archetype>);
+    CHECK(asio::execution::is_executor_v<Exec>);
+    CHECK(asio::can_require_v<Exec, asio::execution::blocking_t::never_t>);
+    CHECK(asio::can_prefer_v<Exec, asio::execution::blocking_t::possibly_t>);
+    CHECK(asio::can_prefer_v<Exec, asio::execution::relationship_t::fork_t>);
+    CHECK(asio::can_prefer_v<Exec, asio::execution::relationship_t::continuation_t>);
+    CHECK(asio::can_prefer_v<Exec, asio::execution::outstanding_work_t::tracked_t>);
+    CHECK(asio::can_prefer_v<Exec, asio::execution::outstanding_work_t::untracked_t>);
+    CHECK(asio::can_prefer_v<Exec, asio::execution::allocator_t<std::pmr::polymorphic_allocator<std::byte>>>);
+    CHECK(asio::can_query_v<Exec, asio::execution::blocking_t>);
+    CHECK(asio::can_query_v<Exec, asio::execution::relationship_t>);
+    CHECK(asio::can_query_v<Exec, asio::execution::outstanding_work_t>);
+    CHECK(asio::can_query_v<Exec, asio::execution::mapping_t>);
+    CHECK(asio::can_query_v<Exec, asio::execution::allocator_t<void>>);
+    CHECK(asio::can_query_v<Exec, asio::execution::context_t>);
+    CHECK(std::is_constructible_v<asio::any_io_executor, Exec>);
+    agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+    auto executor = grpc_context.get_executor();
+    CHECK_EQ(asio::execution::blocking.possibly,
+             asio::query(asio::require(executor, asio::execution::blocking.possibly), asio::execution::blocking));
+    CHECK_EQ(
+        asio::execution::relationship.continuation,
+        asio::query(asio::prefer(executor, asio::execution::relationship.continuation), asio::execution::relationship));
+    CHECK_EQ(asio::execution::outstanding_work.tracked,
+             asio::query(asio::prefer(executor, asio::execution::outstanding_work.tracked),
+                         asio::execution::outstanding_work));
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcExecutor is mostly trivial")
