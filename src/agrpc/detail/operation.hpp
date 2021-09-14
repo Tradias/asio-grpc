@@ -46,7 +46,7 @@ class Operation : public detail::TypeErasedOperation<IsIntrusivelyListable, Sign
             // Make a copy of the handler so that the memory can be deallocated before the upcall is made.
             auto handler{std::move(self->handler())};
             ptr.reset();
-            std::move(handler)(std::forward<Signature>(args)...);
+            std::move(handler)(detail::forward_as<Signature>(args)...);
         }
     }
 

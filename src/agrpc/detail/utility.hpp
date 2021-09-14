@@ -70,6 +70,20 @@ class CompressedPair<First, Second, false> final
     First first_;
     Second second_;
 };
+
+template <class T>
+auto forward_as(std::add_lvalue_reference_t<std::remove_reference_t<T>> u)
+    -> std::conditional_t<std::is_rvalue_reference_v<T>, std::remove_reference_t<T>, T>
+{
+    if constexpr (std::is_rvalue_reference_v<T> || !std::is_reference_v<T>)
+    {
+        return std::move(u);
+    }
+    else
+    {
+        return u;
+    }
+}
 }  // namespace agrpc::detail
 
 #endif  // AGRPC_DETAIL_UTILITY_HPP

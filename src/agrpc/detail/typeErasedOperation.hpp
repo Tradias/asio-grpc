@@ -38,7 +38,7 @@ class TypeErasedOperation
   public:
     constexpr void complete(detail::InvokeHandler invoke_handler, Signature... args)
     {
-        this->on_complete(this, invoke_handler, std::forward<Signature>(args)...);
+        this->on_complete(this, invoke_handler, detail::forward_as<Signature>(args)...);
     }
 
   protected:
