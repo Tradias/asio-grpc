@@ -31,7 +31,7 @@ auto wait(grpc::Alarm& alarm, const Deadline& deadline, CompletionToken token = 
     auto slot = asio::get_associated_cancellation_slot(token);
     if (slot.is_connected())
     {
-        slot.emplace<detail::AlarmCancellationHandler>(alarm);
+        slot.template emplace<detail::AlarmCancellationHandler>(alarm);
     }
 #endif
     return agrpc::grpc_initiate(
