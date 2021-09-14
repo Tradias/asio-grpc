@@ -18,7 +18,7 @@
 template <class... Args>
 void silence_unused(Args&&... args)
 {
-    (void)(args, ...);
+    ((void)args, ...);
 }
 
 #endif  // AGRPC_EXAMPLE_HELPER_H

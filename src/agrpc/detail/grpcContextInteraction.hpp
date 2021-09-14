@@ -51,28 +51,8 @@ struct AllocateOperationAndInvoke
 };
 
 template <bool IsIntrusivelyListable, class... Signature>
-inline constexpr AllocateOperationAndInvoke<IsIntrusivelyListable, Signature...> allocate_operation_and_invoke{};
-
-template <class Function, class OnOperation, class WorkAllocator>
-void create_grpc_tag_operation(agrpc::GrpcContext& grpc_context, Function&& function, OnOperation&& on_operation,
-                               const WorkAllocator& work_allocator)
-{
-    if (grpc_context.is_stopped()) AGRPC_UNLIKELY
-        {
-            return;
-        }
-    if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
-    {
-        auto&& local_allocator = detail::get_local_allocator(grpc_context, work_allocator);
-        detail::allocate_operation_and_invoke<false, bool>(std::forward<Function>(function),
-                                                           std::forward<OnOperation>(on_operation), local_allocator);
-    }
-    else
-    {
-        detail::allocate_operation_and_invoke<false, bool>(std::forward<Function>(function),
-                                                           std::forward<OnOperation>(on_operation), work_allocator);
-    }
-}
+inline constexpr detail::AllocateOperationAndInvoke<IsIntrusivelyListable, Signature...>
+    allocate_operation_and_invoke{};
 
 struct AddToLocalOperations
 {

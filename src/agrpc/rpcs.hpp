@@ -28,8 +28,7 @@ template <class Deadline, class CompletionToken = agrpc::DefaultCompletionToken>
 auto wait(grpc::Alarm& alarm, const Deadline& deadline, CompletionToken token = {})
 {
 #if (BOOST_VERSION >= 107700)
-    auto slot = asio::get_associated_cancellation_slot(token);
-    if (slot.is_connected())
+    if (auto slot = asio::get_associated_cancellation_slot(token); slot.is_connected())
     {
         slot.template emplace<detail::AlarmCancellationHandler>(alarm);
     }
