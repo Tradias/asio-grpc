@@ -200,6 +200,21 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post/execute with allocator")
                       }));
 }
 
+TEST_CASE_FIXTURE(test::GrpcContextTest, "dispatch with allocator")
+{
+    asio::post(grpc_context,
+               [&, exec = get_work_tracking_executor()]
+               {
+                   asio::dispatch(get_pmr_executor(), [this] {});
+               });
+    grpc_context.run();
+    CHECK(std::all_of(buffer.begin(), buffer.end(),
+                      [](auto&& value)
+                      {
+                          return value == std::byte{};
+                      }));
+}
+
 template <class Function>
 struct Coro : asio::coroutine
 {
@@ -239,11 +254,11 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unary stackless coroutine")
             CHECK(ok);
         }
     };
-    asio::post(grpc_context,
-               [&, server_coro = Coro{grpc_context, std::move(server_loop)}]() mutable
-               {
-                   server_coro(true);
-               });
+    std::thread server_thread(
+        [&, server_coro = Coro{grpc_context, std::move(server_loop)}]() mutable
+        {
+            server_coro(true);
+        });
 
     test::v1::Request client_request;
     client_request.set_integer(42);
@@ -261,13 +276,15 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unary stackless coroutine")
             CHECK_EQ(21, client_response.integer());
         }
     };
-    asio::post(grpc_context,
-               [&, client_coro = Coro{grpc_context, std::move(client_loop)}]() mutable
-               {
-                   client_coro(true);
-               });
+    std::thread client_thread(
+        [&, client_coro = Coro{grpc_context, std::move(client_loop)}]() mutable
+        {
+            client_coro(true);
+        });
 
     grpc_context.run();
+    server_thread.join();
+    client_thread.join();
 }
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context server streaming")
