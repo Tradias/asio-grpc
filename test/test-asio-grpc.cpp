@@ -164,9 +164,17 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post/execute with allocator")
         asio::post(grpc_context,
                    test::HandlerWithAssociatedAllocator{[] {}, std::pmr::polymorphic_allocator<std::byte>(&resource)});
     }
-    SUBCASE("asio::execute")
+    SUBCASE("asio::execute before grpc_context.run()")
     {
         get_pmr_executor().execute([] {});
+    }
+    SUBCASE("asio::execute after grpc_context.run() from same thread")
+    {
+        asio::post(grpc_context,
+                   [&, exec = asio::require(get_pmr_executor(), asio::execution::outstanding_work.tracked)]
+                   {
+                       exec.execute([] {});
+                   });
     }
     SUBCASE("agrpc::wait")
     {

@@ -80,21 +80,21 @@ class BasicGrpcExecutor
     }
 
     template <class Function, class OtherAllocator>
-    void dispatch(Function&& function, const OtherAllocator& other_allocator) const
+    void dispatch(Function&& function, OtherAllocator other_allocator) const
     {
         detail::create_no_arg_operation<detail::is_blocking_never(Options)>(
             this->context(), std::forward<Function>(function), other_allocator);
     }
 
     template <class Function, class OtherAllocator>
-    void post(Function&& function, const OtherAllocator& other_allocator) const
+    void post(Function&& function, OtherAllocator other_allocator) const
     {
         detail::create_no_arg_operation<detail::is_blocking_never(Options)>(
             this->context(), std::forward<Function>(function), other_allocator);
     }
 
     template <class Function, class OtherAllocator>
-    void defer(Function&& function, const OtherAllocator& other_allocator) const
+    void defer(Function&& function, OtherAllocator other_allocator) const
     {
         detail::create_no_arg_operation<detail::is_blocking_never(Options)>(
             this->context(), std::forward<Function>(function), other_allocator);

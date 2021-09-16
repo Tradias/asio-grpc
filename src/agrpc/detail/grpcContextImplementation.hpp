@@ -31,9 +31,9 @@ struct GrpcContextImplementation
 
     static void trigger_work_alarm(agrpc::GrpcContext& grpc_context);
 
-    static void add_remote_operation(agrpc::GrpcContext& grpc_context, detail::TypeErasedNoArgOperation* op);
+    static void add_remote_operation(agrpc::GrpcContext& grpc_context, detail::TypeErasedNoArgRemoteOperation* op);
 
-    static void add_local_operation(agrpc::GrpcContext& grpc_context, detail::ListableTypeErasedNoArgOperation* op);
+    static void add_local_operation(agrpc::GrpcContext& grpc_context, detail::TypeErasedNoArgLocalOperation* op);
 
     [[nodiscard]] static bool running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept;
 

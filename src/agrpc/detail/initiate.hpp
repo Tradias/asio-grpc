@@ -33,10 +33,10 @@ struct GrpcInitiator
         agrpc::GrpcContext& grpc_context;
         Function& function;
 
-        template <class Handler, class Allocator>
-        void operator()(detail::GrpcTagOperation<Handler, Allocator>* work)
+        template <class Operation>
+        void operator()(Operation* op)
         {
-            function(grpc_context, work);
+            function(grpc_context, op);
         }
     };
 
@@ -53,14 +53,13 @@ struct GrpcInitiator
             }
         if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
         {
-            auto&& local_allocator = detail::get_local_allocator(grpc_context, allocator);
-            detail::allocate_operation_and_invoke<false, bool>(std::move(completion_handler),
-                                                               OnOperation{grpc_context, function}, local_allocator);
+            detail::allocate_operation_and_invoke<false, bool>(grpc_context, std::move(completion_handler),
+                                                               OnOperation{grpc_context, function}, allocator);
         }
         else
         {
-            detail::allocate_operation_and_invoke<false, bool>(std::move(completion_handler),
-                                                               OnOperation{grpc_context, function}, allocator);
+            detail::allocate_operation_and_invoke<false, bool, detail::GrpcContextLocalAllocator>(
+                std::move(completion_handler), OnOperation{grpc_context, function}, allocator);
         }
     }
 

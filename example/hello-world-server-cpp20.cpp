@@ -41,8 +41,7 @@ int main()
             bool request_ok = co_await agrpc::request(&helloworld::Greeter::AsyncService::RequestSayHello, service,
                                                       server_context, request, writer);
             helloworld::HelloReply response;
-            std::string prefix("Hello ");
-            response.set_message(prefix + request.name());
+            response.set_message("Hello " + request.name());
             bool finish_ok = co_await agrpc::finish(writer, response, grpc::Status::OK);
         },
         boost::asio::detached);

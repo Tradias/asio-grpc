@@ -16,6 +16,7 @@
 #define AGRPC_AGRPC_GRPCCONTEXT_HPP
 
 #include "agrpc/detail/asioForward.hpp"
+#include "agrpc/detail/grpcContext.hpp"
 #include "agrpc/detail/grpcContextImplementation.hpp"
 #include "agrpc/detail/grpcExecutorOptions.hpp"
 #include "agrpc/detail/memory.hpp"
@@ -37,12 +38,9 @@ class BasicGrpcExecutor;
 
 class GrpcContext : public asio::execution_context
 {
-  private:
-    using LocalMemoryResource = std::pmr::unsynchronized_pool_resource;
-
   public:
     using executor_type = agrpc::BasicGrpcExecutor<std::allocator<void>, detail::GrpcExecutorOptions::DEFAULT>;
-    using allocator_type = detail::MemoryResourceAllocator<std::byte, LocalMemoryResource>;
+    using allocator_type = detail::GrpcContextLocalAllocator;
 
     explicit GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue,
                          std::pmr::memory_resource* local_upstream_resource = std::pmr::new_delete_resource());
@@ -70,9 +68,9 @@ class GrpcContext : public asio::execution_context
     [[nodiscard]] grpc::ServerCompletionQueue* get_server_completion_queue() noexcept;
 
   private:
-    using RemoteWorkQueue = boost::lockfree::queue<detail::TypeErasedNoArgOperation*>;
+    using RemoteWorkQueue = boost::lockfree::queue<detail::TypeErasedNoArgRemoteOperation*>;
     using LocalWorkQueue =
-        boost::intrusive::slist<detail::ListableTypeErasedNoArgOperation, boost::intrusive::constant_time_size<false>,
+        boost::intrusive::slist<detail::TypeErasedNoArgLocalOperation, boost::intrusive::constant_time_size<false>,
                                 boost::intrusive::cache_last<true>>;
 
     grpc::Alarm work_alarm;
@@ -81,7 +79,7 @@ class GrpcContext : public asio::execution_context
     std::atomic_bool stopped;
     std::atomic_bool has_work;
     std::unique_ptr<grpc::CompletionQueue> completion_queue;
-    LocalMemoryResource local_resource;
+    detail::GrpcContextLocalMemoryResource local_resource;
     LocalWorkQueue local_work_queue;
     bool is_processing_local_work;
     RemoteWorkQueue remote_work_queue;

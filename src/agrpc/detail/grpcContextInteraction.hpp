@@ -24,29 +24,36 @@
 
 namespace agrpc::detail
 {
-template <class Allocator>
-[[nodiscard]] constexpr const auto& get_local_allocator(const agrpc::GrpcContext&, const Allocator& allocator) noexcept
-{
-    return allocator;
-}
-
-template <class T>
-[[nodiscard]] auto get_local_allocator(agrpc::GrpcContext& grpc_context, const std::allocator<T>&) noexcept
-{
-    return grpc_context.get_allocator();
-}
-
 template <bool IsIntrusivelyListable, class... Signature>
 struct AllocateOperationAndInvoke
 {
     template <class Function, class OnOperation, class Allocator>
-    void operator()(Function&& function, OnOperation&& on_operation, const Allocator& allocator) const
+    void operator()(Function&& function, OnOperation&& on_operation, Allocator allocator) const
     {
-        using DecayedFunction = std::decay_t<Function>;
-        using Operation = detail::Operation<IsIntrusivelyListable, DecayedFunction, Allocator, Signature...>;
+        using Operation = detail::Operation<IsIntrusivelyListable, std::decay_t<Function>, Allocator, Signature...>;
         auto ptr = detail::allocate_unique<Operation>(allocator, std::forward<Function>(function), allocator);
         on_operation(ptr.get());
         ptr.release();
+    }
+
+    template <class Function, class OnOperation, class Allocator>
+    void operator()(agrpc::GrpcContext& grpc_context, Function&& function, OnOperation&& on_operation,
+                    [[maybe_unused]] Allocator allocator) const
+    {
+        if constexpr (detail::IS_STD_ALLOCATOR<Allocator>)
+        {
+            using Operation = detail::LocalOperation<IsIntrusivelyListable, std::decay_t<Function>, Signature...>;
+            auto ptr =
+                detail::allocate_unique<Operation>(grpc_context.get_allocator(), std::forward<Function>(function));
+            on_operation(ptr.get());
+            ptr.release();
+        }
+        else
+        {
+            detail::AllocateOperationAndInvoke<IsIntrusivelyListable, Signature...,
+                                               detail::GrpcContextLocalAllocator>{}(
+                std::forward<Function>(function), std::forward<OnOperation>(on_operation), allocator);
+        }
     }
 };
 
@@ -58,7 +65,7 @@ struct AddToLocalOperations
 {
     agrpc::GrpcContext& grpc_context;
 
-    void operator()(detail::ListableTypeErasedNoArgOperation* op)
+    void operator()(detail::TypeErasedNoArgLocalOperation* op)
     {
         detail::GrpcContextImplementation::add_local_operation(grpc_context, op);
     }
@@ -68,14 +75,14 @@ struct AddToRemoteOperations
 {
     agrpc::GrpcContext& grpc_context;
 
-    void operator()(detail::TypeErasedNoArgOperation* op)
+    void operator()(detail::TypeErasedNoArgRemoteOperation* op)
     {
         detail::GrpcContextImplementation::add_remote_operation(grpc_context, op);
     }
 };
 
 template <bool IsBlockingNever, class Function, class WorkAllocator>
-void create_no_arg_operation(agrpc::GrpcContext& grpc_context, Function&& function, const WorkAllocator& work_allocator)
+void create_no_arg_operation(agrpc::GrpcContext& grpc_context, Function&& function, WorkAllocator work_allocator)
 {
     if (grpc_context.is_stopped()) AGRPC_UNLIKELY
         {
@@ -85,9 +92,8 @@ void create_no_arg_operation(agrpc::GrpcContext& grpc_context, Function&& functi
     {
         if constexpr (IsBlockingNever)
         {
-            auto&& local_allocator = detail::get_local_allocator(grpc_context, work_allocator);
-            detail::allocate_operation_and_invoke<true>(std::forward<Function>(function),
-                                                        AddToLocalOperations{grpc_context}, local_allocator);
+            detail::allocate_operation_and_invoke<true>(grpc_context, std::forward<Function>(function),
+                                                        detail::AddToLocalOperations{grpc_context}, work_allocator);
         }
         else
         {
@@ -99,7 +105,7 @@ void create_no_arg_operation(agrpc::GrpcContext& grpc_context, Function&& functi
     else
     {
         detail::allocate_operation_and_invoke<false>(std::forward<Function>(function),
-                                                     AddToRemoteOperations{grpc_context}, work_allocator);
+                                                     detail::AddToRemoteOperations{grpc_context}, work_allocator);
     }
 }
 }  // namespace agrpc::detail

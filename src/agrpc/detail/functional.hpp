@@ -15,6 +15,7 @@
 #ifndef AGRPC_DETAIL_FUNCTIONAL_HPP
 #define AGRPC_DETAIL_FUNCTIONAL_HPP
 
+#include <functional>
 #include <type_traits>
 #include <utility>
 
@@ -33,6 +34,30 @@ struct Always
         return t;
     }
 };
+
+template <class F, class... Args, std::size_t... I>
+constexpr decltype(auto) invoke_front_impl(F&& f, std::tuple<Args...>&& args, std::index_sequence<I...>)
+{
+    if constexpr (std::is_invocable_v<F&&, std::tuple_element_t<I, std::tuple<Args...>>...>)
+    {
+        return std::invoke(std::forward<F>(f), std::get<I>(std::move(args))...);
+    }
+    else if constexpr (sizeof...(I) > 1)
+    {
+        return invoke_front_impl(std::forward<F>(f), std::move(args), std::make_index_sequence<sizeof...(I) - 1>());
+    }
+    else
+    {
+        return std::invoke(std::forward<F>(f));
+    }
+}
+
+template <class F, class... Args>
+constexpr decltype(auto) invoke_front(F&& f, Args&&... args)
+{
+    return invoke_front_impl(std::forward<F>(f), std::forward_as_tuple(std::forward<Args>(args)...),
+                             std::make_index_sequence<sizeof...(Args)>());
+}
 }  // namespace agrpc::detail
 
 #endif  // AGRPC_DETAIL_FUNCTIONAL_HPP

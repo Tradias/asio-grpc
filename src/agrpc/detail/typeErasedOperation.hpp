@@ -15,6 +15,7 @@
 #ifndef AGRPC_DETAIL_GRPCCONTEXTOPERATION_HPP
 #define AGRPC_DETAIL_GRPCCONTEXTOPERATION_HPP
 
+#include "agrpc/detail/grpcContext.hpp"
 #include "agrpc/detail/utility.hpp"
 
 #include <boost/intrusive/slist_hook.hpp>
@@ -50,9 +51,9 @@ class TypeErasedOperation
     OnCompleteFunction on_complete;
 };
 
-using ListableTypeErasedNoArgOperation = detail::TypeErasedOperation<true>;
-using TypeErasedNoArgOperation = detail::TypeErasedOperation<false>;
-using TypeErasedGrpcTagOperation = detail::TypeErasedOperation<false, bool>;
+using TypeErasedNoArgLocalOperation = detail::TypeErasedOperation<true, detail::GrpcContextLocalAllocator>;
+using TypeErasedNoArgRemoteOperation = detail::TypeErasedOperation<false>;
+using TypeErasedGrpcTagOperation = detail::TypeErasedOperation<false, bool, detail::GrpcContextLocalAllocator>;
 }  // namespace agrpc::detail
 
 #endif  // AGRPC_DETAIL_GRPCCONTEXTOPERATION_HPP

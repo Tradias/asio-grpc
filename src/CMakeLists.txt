@@ -30,6 +30,7 @@ list(
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/attributes.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/functional.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcCompletionQueueEvent.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcContext.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcContextImplementation.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcContextImplementation.ipp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcContextInteraction.hpp"

@@ -38,15 +38,13 @@ class Operation : public detail::TypeErasedOperation<IsIntrusivelyListable, Sign
 
     static void do_complete(Base* op, detail::InvokeHandler invoke_handler, Signature... args)
     {
-        using ReboundAllocator = typename std::allocator_traits<Allocator>::template rebind_alloc<Operation>;
         auto* self = static_cast<Operation*>(op);
-        detail::AllocatedPointer<ReboundAllocator> ptr{self, self->get_allocator()};
+        detail::RebindAllocatedPointer<Operation, Allocator> ptr{self, self->get_allocator()};
         if (invoke_handler == detail::InvokeHandler::YES)
         {
-            // Make a copy of the handler so that the memory can be deallocated before the upcall is made.
             auto handler{std::move(self->handler())};
             ptr.reset();
-            std::move(handler)(detail::forward_as<Signature>(args)...);
+            detail::invoke_front(std::move(handler), detail::forward_as<Signature>(args)...);
         }
     }
 
@@ -62,11 +60,42 @@ class Operation : public detail::TypeErasedOperation<IsIntrusivelyListable, Sign
     detail::CompressedPair<Handler, Allocator> impl;
 };
 
-template <bool IsIntrusivelyListable, class Handler, class Allocator>
-using NoArgOperation = detail::Operation<IsIntrusivelyListable, Handler, Allocator>;
-
 template <class Handler, class Allocator>
-using GrpcTagOperation = detail::Operation<false, Handler, Allocator, bool>;
+using GrpcTagOperation = detail::Operation<false, Handler, Allocator, bool, detail::GrpcContextLocalAllocator>;
+
+template <bool IsIntrusivelyListable, class Handler, class... Signature>
+class LocalOperation
+    : public detail::TypeErasedOperation<IsIntrusivelyListable, Signature..., detail::GrpcContextLocalAllocator>
+{
+  private:
+    using Base = detail::TypeErasedOperation<IsIntrusivelyListable, Signature..., detail::GrpcContextLocalAllocator>;
+
+  public:
+    template <class H>
+    LocalOperation(H&& handler) : Base(&LocalOperation::do_complete), handler_(std::forward<H>(handler))
+    {
+    }
+
+    static void do_complete(Base* op, detail::InvokeHandler invoke_handler, Signature... args,
+                            detail::GrpcContextLocalAllocator allocator)
+    {
+        auto* self = static_cast<LocalOperation*>(op);
+        detail::RebindAllocatedPointer<LocalOperation, detail::GrpcContextLocalAllocator> ptr{self, allocator};
+        if (invoke_handler == detail::InvokeHandler::YES)
+        {
+            auto handler{std::move(self->handler_)};
+            ptr.reset();
+            std::move(handler)(detail::forward_as<Signature>(args)...);
+        }
+    }
+
+    [[nodiscard]] constexpr auto& handler() noexcept { return handler_; }
+
+    [[nodiscard]] constexpr const auto& handler() const noexcept { return handler_; }
+
+  private:
+    Handler handler_;
+};
 }  // namespace agrpc::detail
 
 #endif  // AGRPC_DETAIL_GRPCEXECUTOROPERATION_HPP
