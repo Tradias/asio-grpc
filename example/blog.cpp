@@ -45,6 +45,22 @@ struct TypeErasedOperation : boost::intrusive::slist_base_hook<>
 
 using QueuedOperations = boost::intrusive::slist<TypeErasedOperation>;
 
+template <class Function>
+struct Operation : TypeErasedOperation
+{
+    Function function;
+
+    Operation(Function function) : TypeErasedOperation{&Operation::do_complete}, function(std::move(function)) {}
+
+    static void do_complete(TypeErasedOperation* base, bool ok)
+    {
+        auto* self = static_cast<Operation*>(base);
+        auto func = std::move(self->function);
+        deallocate(self);
+        func(ok);
+    }
+};
+
 struct GrpcContext : boost::asio::execution_context
 {
     struct executor_type;
@@ -97,22 +113,6 @@ struct GrpcContext::executor_type
         auto* op = allocate<Operation<Function>>(function);
         grpc_context->queued_operations.push_front(*op);
         grpc_context->alarm.Set(grpc_context->queue.get(), gpr_time_0(GPR_CLOCK_REALTIME), GrpcContext::MARKER_TAG);
-    }
-};
-
-template <class Function>
-struct Operation : TypeErasedOperation
-{
-    Function function;
-
-    Operation(Function function) : TypeErasedOperation{&Operation::do_complete}, function(std::move(function)) {}
-
-    static void do_complete(TypeErasedOperation* base, bool ok)
-    {
-        auto* self = static_cast<Operation*>(base);
-        auto func = std::move(self->function);
-        deallocate(self);
-        func(ok);
     }
 };
 
