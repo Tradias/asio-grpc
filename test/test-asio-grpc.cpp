@@ -205,7 +205,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "dispatch with allocator")
     asio::post(grpc_context,
                [&, exec = get_work_tracking_executor()]
                {
-                   asio::dispatch(get_pmr_executor(), [this] {});
+                   asio::dispatch(get_pmr_executor(), [] {});
                });
     grpc_context.run();
     CHECK(std::all_of(buffer.begin(), buffer.end(),
