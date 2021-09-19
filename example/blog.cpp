@@ -66,6 +66,8 @@ struct GrpcContext : boost::asio::execution_context
     struct executor_type;
 
     std::unique_ptr<grpc::CompletionQueue> queue;
+    QueuedOperations queued_operations;
+    grpc::Alarm alarm;
 
     ~GrpcContext()
     {
@@ -76,9 +78,6 @@ struct GrpcContext : boost::asio::execution_context
     }
 
     executor_type get_executor() const noexcept;
-
-    QueuedOperations queued_operations;
-    grpc::Alarm alarm;
 
     static constexpr void* MARKER_TAG = nullptr;
 
