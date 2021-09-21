@@ -1,11 +1,11 @@
 # Copyright 2021 Dennis Hezel
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,9 +16,9 @@ cmake_minimum_required(VERSION 3.19)
 
 project(
     asio-grpc
-    VERSION 1.0.0
+    VERSION 1.1.0
     DESCRIPTION "Asynchronous gRPC using Boost.Asio's executor model"
-    HOMEPAGE_URL https://github.com/Tradias/asio-grpc
+    HOMEPAGE_URL "https://github.com/Tradias/asio-grpc"
     LANGUAGES CXX)
 
 option(ASIO_GRPC_INSTALL "Create the install target" on)
@@ -31,13 +31,15 @@ option(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS "Compile tests with -fsanitize=address,
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
-find_package(protobuf CONFIG)
+find_package(protobuf)
 find_package(gRPC)
 find_package(Boost)
 
 add_subdirectory(src)
 
-if(ASIO_GRPC_BUILD_TESTS OR ASIO_GRPC_BUILD_EXAMPLES OR ASIO_GRPC_BUILD_BENCHMARK)
+if(ASIO_GRPC_BUILD_TESTS
+   OR ASIO_GRPC_BUILD_EXAMPLES
+   OR ASIO_GRPC_BUILD_BENCHMARK)
     find_package(Boost REQUIRED COMPONENTS coroutine thread)
     include(AsioGrpcCompileOptions)
     include(AsioGrpcCheckBoostVersion)

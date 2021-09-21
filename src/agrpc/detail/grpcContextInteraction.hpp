@@ -31,29 +31,26 @@ struct AllocateOperationAndInvoke
     void operator()(Function&& function, OnOperation&& on_operation, Allocator allocator) const
     {
         using Operation = detail::Operation<IsIntrusivelyListable, std::decay_t<Function>, Allocator, Signature...>;
-        auto ptr = detail::allocate_unique<Operation>(allocator, std::forward<Function>(function), allocator);
+        auto ptr = detail::allocate<Operation>(allocator, std::forward<Function>(function), allocator);
         on_operation(ptr.get());
         ptr.release();
     }
 
     template <class Function, class OnOperation, class Allocator>
-    void operator()(agrpc::GrpcContext& grpc_context, Function&& function, OnOperation&& on_operation,
-                    [[maybe_unused]] Allocator allocator) const
+    void operator()(agrpc::GrpcContext&, Function&& function, OnOperation&& on_operation, Allocator allocator) const
     {
-        if constexpr (detail::IS_STD_ALLOCATOR<Allocator>)
-        {
-            using Operation = detail::LocalOperation<IsIntrusivelyListable, std::decay_t<Function>, Signature...>;
-            auto ptr =
-                detail::allocate_unique<Operation>(grpc_context.get_allocator(), std::forward<Function>(function));
-            on_operation(ptr.get());
-            ptr.release();
-        }
-        else
-        {
-            detail::AllocateOperationAndInvoke<IsIntrusivelyListable, Signature...,
-                                               detail::GrpcContextLocalAllocator>{}(
-                std::forward<Function>(function), std::forward<OnOperation>(on_operation), allocator);
-        }
+        detail::AllocateOperationAndInvoke<IsIntrusivelyListable, Signature..., detail::GrpcContextLocalAllocator>{}(
+            std::forward<Function>(function), std::forward<OnOperation>(on_operation), allocator);
+    }
+
+    template <class Function, class OnOperation, class T>
+    void operator()(agrpc::GrpcContext& grpc_context, Function&& function, OnOperation&& on_operation,
+                    std::allocator<T>) const
+    {
+        using Operation = detail::LocalOperation<IsIntrusivelyListable, std::decay_t<Function>, Signature...>;
+        auto ptr = detail::allocate<Operation>(grpc_context.get_allocator(), std::forward<Function>(function));
+        on_operation(ptr.get());
+        ptr.release();
     }
 };
 

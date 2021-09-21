@@ -40,7 +40,7 @@ class Operation : public detail::TypeErasedOperation<IsIntrusivelyListable, Sign
     {
         auto* self = static_cast<Operation*>(op);
         detail::RebindAllocatedPointer<Operation, Allocator> ptr{self, self->get_allocator()};
-        if (invoke_handler == detail::InvokeHandler::YES)
+        if (detail::InvokeHandler::YES == invoke_handler)
         {
             auto handler{std::move(self->handler())};
             ptr.reset();
@@ -60,9 +60,6 @@ class Operation : public detail::TypeErasedOperation<IsIntrusivelyListable, Sign
     detail::CompressedPair<Handler, Allocator> impl;
 };
 
-template <class Handler, class Allocator>
-using GrpcTagOperation = detail::Operation<false, Handler, Allocator, bool, detail::GrpcContextLocalAllocator>;
-
 template <bool IsIntrusivelyListable, class Handler, class... Signature>
 class LocalOperation
     : public detail::TypeErasedOperation<IsIntrusivelyListable, Signature..., detail::GrpcContextLocalAllocator>
@@ -81,7 +78,7 @@ class LocalOperation
     {
         auto* self = static_cast<LocalOperation*>(op);
         detail::RebindAllocatedPointer<LocalOperation, detail::GrpcContextLocalAllocator> ptr{self, allocator};
-        if (invoke_handler == detail::InvokeHandler::YES)
+        if (detail::InvokeHandler::YES == invoke_handler)
         {
             auto handler{std::move(self->handler_)};
             ptr.reset();

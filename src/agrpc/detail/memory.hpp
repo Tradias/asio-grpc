@@ -111,7 +111,7 @@ struct AllocationGuard
 };
 
 template <class T, class Allocator, class... Args>
-auto allocate_unique(Allocator allocator, Args&&... args)
+auto allocate(Allocator allocator, Args&&... args)
 {
     using Traits = typename std::allocator_traits<Allocator>::template rebind_traits<T>;
     using ReboundAllocator = typename Traits::allocator_type;
@@ -158,12 +158,6 @@ constexpr bool operator!=(const detail::MemoryResourceAllocator<T, Resource>& lh
 {
     return lhs.resource != rhs.resource;
 }
-
-template <class Allocator>
-inline constexpr bool IS_STD_ALLOCATOR = false;
-
-template <class T>
-inline constexpr bool IS_STD_ALLOCATOR<std::allocator<T>> = true;
 }  // namespace agrpc::detail
 
 #endif  // AGRPC_DETAIL_MEMORY_HPP
