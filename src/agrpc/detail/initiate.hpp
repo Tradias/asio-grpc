@@ -21,6 +21,9 @@
 #include "agrpc/detail/operation.hpp"
 #include "agrpc/grpcContext.hpp"
 
+#include <boost/asio/async_result.hpp>
+#include <boost/asio/execution/context.hpp>
+
 namespace agrpc::detail
 {
 template <class Executor>

@@ -19,6 +19,9 @@
 #include "agrpc/detail/initiate.hpp"
 #include "agrpc/grpcExecutor.hpp"
 
+#include <boost/asio/any_io_executor.hpp>
+#include <boost/asio/async_result.hpp>
+
 #ifdef BOOST_ASIO_HAS_CO_AWAIT
 #include <boost/asio/use_awaitable.hpp>
 #endif

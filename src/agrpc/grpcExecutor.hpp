@@ -23,6 +23,12 @@
 #include "agrpc/detail/operation.hpp"
 #include "agrpc/grpcContext.hpp"
 
+#include <boost/asio/execution/allocator.hpp>
+#include <boost/asio/execution/blocking.hpp>
+#include <boost/asio/execution/context.hpp>
+#include <boost/asio/execution/outstanding_work.hpp>
+#include <boost/asio/execution/relationship.hpp>
+
 #include <memory_resource>
 #include <utility>
 

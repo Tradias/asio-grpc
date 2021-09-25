@@ -23,6 +23,10 @@
 #include <grpcpp/completion_queue.h>
 #include <grpcpp/server_context.h>
 
+#if (BOOST_VERSION >= 107700)
+#include <boost/asio/associated_cancellation_slot.hpp>
+#endif
+
 #include <utility>
 
 namespace agrpc::detail

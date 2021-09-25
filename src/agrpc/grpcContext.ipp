@@ -23,6 +23,7 @@
 #include "agrpc/grpcContext.hpp"
 #include "agrpc/grpcExecutor.hpp"
 
+#include <boost/asio/execution_context.hpp>
 #include <boost/intrusive/slist.hpp>
 #include <boost/lockfree/queue.hpp>
 #include <grpcpp/alarm.h>

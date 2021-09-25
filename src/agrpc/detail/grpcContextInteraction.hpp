@@ -15,7 +15,6 @@
 #ifndef AGRPC_DETAIL_GRPCCONTEXTINTERACTION_HPP
 #define AGRPC_DETAIL_GRPCCONTEXTINTERACTION_HPP
 
-#include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/attributes.hpp"
 #include "agrpc/detail/grpcContextImplementation.hpp"
 #include "agrpc/detail/memory.hpp"

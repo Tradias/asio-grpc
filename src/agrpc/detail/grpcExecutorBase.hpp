@@ -15,7 +15,6 @@
 #ifndef AGRPC_DETAIL_GRPCEXECUTORBASE_HPP
 #define AGRPC_DETAIL_GRPCEXECUTORBASE_HPP
 
-#include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/utility.hpp"
 #include "agrpc/grpcContext.hpp"
 

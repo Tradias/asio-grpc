@@ -22,6 +22,7 @@
 #include "agrpc/detail/memory.hpp"
 #include "agrpc/detail/typeErasedOperation.hpp"
 
+#include <boost/asio/execution_context.hpp>
 #include <boost/intrusive/slist.hpp>
 #include <boost/lockfree/queue.hpp>
 #include <grpcpp/alarm.h>

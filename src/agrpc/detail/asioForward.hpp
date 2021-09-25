@@ -15,19 +15,11 @@
 #ifndef AGRPC_DETAIL_ASIOFORWARD_HPP
 #define AGRPC_DETAIL_ASIOFORWARD_HPP
 
-#include <version>
-//
-#include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/associated_allocator.hpp>
 #include <boost/asio/associated_executor.hpp>
-#include <boost/asio/async_result.hpp>
-#include <boost/asio/execution.hpp>
-#include <boost/asio/execution_context.hpp>
+#include <boost/asio/execution/allocator.hpp>
+#include <boost/asio/query.hpp>
 #include <boost/version.hpp>
-
-#if (BOOST_VERSION >= 107700)
-#include <boost/asio/associated_cancellation_slot.hpp>
-#endif
 
 namespace agrpc
 {

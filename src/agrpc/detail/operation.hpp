@@ -15,7 +15,6 @@
 #ifndef AGRPC_DETAIL_GRPCEXECUTOROPERATION_HPP
 #define AGRPC_DETAIL_GRPCEXECUTOROPERATION_HPP
 
-#include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/functional.hpp"
 #include "agrpc/detail/memory.hpp"
 #include "agrpc/detail/typeErasedOperation.hpp"
