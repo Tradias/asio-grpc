@@ -85,7 +85,7 @@ struct RPCHandlerBase
 };
 
 template <class Request, class Responder>
-struct UnaryRPCHandler : detail::RPCHandlerBase
+struct MultiArgRPCHandler : detail::RPCHandlerBase
 {
     Responder responder{&this->context};
     Request request{};
@@ -99,7 +99,7 @@ struct UnaryRPCHandler : detail::RPCHandlerBase
 };
 
 template <class Responder>
-struct StreamingRPCHandler : detail::RPCHandlerBase
+struct SingleArgRPCHandler : detail::RPCHandlerBase
 {
     Responder responder{&this->context};
 
@@ -138,7 +138,7 @@ template <class RPC, class Service, class Request, class Responder, class Handle
 void repeatedly_request(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service, Handler handler)
 {
     const auto [executor, allocator] = detail::get_associated_executor_and_allocator(handler);
-    auto rpc_handler = detail::allocate<detail::UnaryRPCHandler<Request, Responder>>(allocator);
+    auto rpc_handler = detail::allocate<detail::MultiArgRPCHandler<Request, Responder>>(allocator);
     auto& context = rpc_handler->context;
     auto& request = rpc_handler->request;
     auto& responder = rpc_handler->responder;
@@ -150,7 +150,7 @@ template <class RPC, class Service, class Responder, class Handler>
 void repeatedly_request(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service, Handler handler)
 {
     const auto [executor, allocator] = detail::get_associated_executor_and_allocator(handler);
-    auto rpc_handler = detail::allocate<detail::StreamingRPCHandler<Responder>>(allocator);
+    auto rpc_handler = detail::allocate<detail::SingleArgRPCHandler<Responder>>(allocator);
     auto& context = rpc_handler->context;
     auto& responder = rpc_handler->responder;
     agrpc::request(rpc, service, context, responder,

@@ -26,22 +26,25 @@
 
 namespace agrpc::test
 {
-template <class Function, class Allocator>
+template <class Handler, class Allocator>
 struct HandlerWithAssociatedAllocator
 {
+    using executor_type = asio::associated_executor_t<Handler>;
     using allocator_type = Allocator;
 
-    Function function;
+    Handler handler;
     Allocator allocator;
 
-    HandlerWithAssociatedAllocator(Function function, Allocator allocator)
-        : function(std::move(function)), allocator(allocator)
+    HandlerWithAssociatedAllocator(Handler handler, Allocator allocator)
+        : handler(std::move(handler)), allocator(allocator)
     {
     }
 
-    allocator_type get_allocator() const noexcept { return allocator; }
+    decltype(auto) operator()() { return handler(); }
 
-    decltype(auto) operator()() { return function(); }
+    [[nodiscard]] executor_type get_executor() const noexcept { return asio::get_associated_executor(handler); }
+
+    [[nodiscard]] allocator_type get_allocator() const noexcept { return allocator; }
 };
 
 template <class Handler>
