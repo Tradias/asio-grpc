@@ -15,7 +15,7 @@
 #ifndef AGRPC_UTILS_ASIOUTILS_HPP
 #define AGRPC_UTILS_ASIOUTILS_HPP
 
-#include <boost/type_traits/remove_cv_ref.hpp>
+#include <boost/asio/spawn.hpp>
 
 #include <type_traits>
 #include <version>
@@ -34,14 +34,41 @@ struct HandlerWithAssociatedAllocator
     Function function;
     Allocator allocator;
 
-    auto get_allocator() const noexcept { return allocator; }
+    HandlerWithAssociatedAllocator(Function function, Allocator allocator)
+        : function(std::move(function)), allocator(allocator)
+    {
+    }
 
-    auto operator()() { return function(); }
+    allocator_type get_allocator() const noexcept { return allocator; }
+
+    decltype(auto) operator()() { return function(); }
 };
 
-template <class Function, class Allocator>
-HandlerWithAssociatedAllocator(Function&&, Allocator&&)
-    -> HandlerWithAssociatedAllocator<boost::remove_cv_ref_t<Function>, boost::remove_cv_ref_t<Allocator>>;
+template <class Handler>
+struct RpcSpawner
+{
+    using executor_type = asio::associated_executor_t<Handler>;
+    using allocator_type = asio::associated_allocator_t<Handler>;
+
+    Handler handler;
+
+    explicit RpcSpawner(Handler handler) : handler(std::move(handler)) {}
+
+    template <class RPCHandler>
+    void operator()(RPCHandler&& rpc_handler, bool) &&
+    {
+        auto executor = this->get_executor();
+        asio::spawn(std::move(executor),
+                    [handler = std::move(handler), rpc_handler = std::move(rpc_handler)](auto&& yield_context) mutable
+                    {
+                        std::move(rpc_handler)(std::move(handler), std::move(yield_context));
+                    });
+    }
+
+    [[nodiscard]] executor_type get_executor() const noexcept { return asio::get_associated_executor(handler); }
+
+    [[nodiscard]] allocator_type get_allocator() const noexcept { return asio::get_associated_allocator(handler); }
+};
 
 #ifdef BOOST_ASIO_HAS_CO_AWAIT
 template <class Executor, class Function>

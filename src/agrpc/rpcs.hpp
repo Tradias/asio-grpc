@@ -44,11 +44,9 @@ auto wait(grpc::Alarm& alarm, const Deadline& deadline, CompletionToken token = 
 /*
 Server
 */
-template <class RPC, class Service, class Request, class Responder,
-          class CompletionToken = agrpc::DefaultCompletionToken>
-[[nodiscard]] auto request(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
-                           grpc::ServerContext& server_context, Request& request, Responder& responder,
-                           CompletionToken token = {})
+template <class RPC, class Service, class Request, class Responder, class CompletionToken>
+auto request(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
+             grpc::ServerContext& server_context, Request& request, Responder& responder, CompletionToken token)
 {
     return agrpc::grpc_initiate(
         [&, rpc](agrpc::GrpcContext& grpc_context, void* tag)
@@ -59,9 +57,9 @@ template <class RPC, class Service, class Request, class Responder,
         std::move(token));
 }
 
-template <class RPC, class Service, class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
-[[nodiscard]] auto request(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service,
-                           grpc::ServerContext& server_context, Responder& responder, CompletionToken token = {})
+template <class RPC, class Service, class Responder, class CompletionToken>
+auto request(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service, grpc::ServerContext& server_context,
+             Responder& responder, CompletionToken token)
 {
     return agrpc::grpc_initiate(
         [&, rpc](agrpc::GrpcContext& grpc_context, void* tag)
@@ -70,6 +68,18 @@ template <class RPC, class Service, class Responder, class CompletionToken = agr
             (service.*rpc)(&server_context, &responder, cq, cq, tag);
         },
         std::move(token));
+}
+
+template <class RPC, class Service, class Request, class Responder, class Handler>
+auto repeatedly_request(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service, Handler handler)
+{
+    return detail::repeatedly_request(rpc, service, std::move(handler));
+}
+
+template <class RPC, class Service, class Responder, class Handler>
+auto repeatedly_request(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service, Handler handler)
+{
+    return detail::repeatedly_request(rpc, service, std::move(handler));
 }
 
 template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
@@ -228,9 +238,8 @@ Client
 */
 #ifdef BOOST_ASIO_HAS_CO_AWAIT
 template <class RPC, class Stub, class Request, class Reader, class Executor = asio::any_io_executor>
-[[nodiscard]] auto request(detail::ClientUnaryRequest<RPC, Request, Reader> rpc, Stub& stub,
-                           grpc::ClientContext& client_context, const Request& request,
-                           asio::use_awaitable_t<Executor> token = {})
+auto request(detail::ClientUnaryRequest<RPC, Request, Reader> rpc, Stub& stub, grpc::ClientContext& client_context,
+             const Request& request, asio::use_awaitable_t<Executor> token = {})
     -> asio::async_result<asio::use_awaitable_t<Executor>, void(Reader)>::return_type
 {
     auto* completion_queue = co_await agrpc::get_completion_queue(token);
@@ -238,9 +247,8 @@ template <class RPC, class Stub, class Request, class Reader, class Executor = a
 }
 
 template <class RPC, class Stub, class Request, class Reader, class Executor = asio::any_io_executor>
-[[nodiscard]] auto request(detail::ClientUnaryRequest<RPC, Request, Reader> rpc, Stub& stub,
-                           grpc::ClientContext& client_context, const Request& request, Reader& reader,
-                           asio::use_awaitable_t<Executor> token = {})
+auto request(detail::ClientUnaryRequest<RPC, Request, Reader> rpc, Stub& stub, grpc::ClientContext& client_context,
+             const Request& request, Reader& reader, asio::use_awaitable_t<Executor> token = {})
     -> asio::async_result<asio::use_awaitable_t<Executor>, void()>::return_type
 {
     auto* completion_queue = co_await agrpc::get_completion_queue(token);
@@ -249,26 +257,20 @@ template <class RPC, class Stub, class Request, class Reader, class Executor = a
 #endif
 
 template <class RPC, class Stub, class Request, class Reader, class CompletionToken = agrpc::DefaultCompletionToken>
-[[nodiscard]] auto request(detail::ClientServerStreamingRequest<RPC, Request, Reader> rpc, Stub& stub,
-                           grpc::ClientContext& client_context, const Request& request, CompletionToken token = {})
+auto request(detail::ClientServerStreamingRequest<RPC, Request, Reader> rpc, Stub& stub,
+             grpc::ClientContext& client_context, const Request& request, CompletionToken token = {})
 {
-    return asio::async_initiate<CompletionToken, void(std::pair<Reader, bool>)>(
-        [&, rpc](auto completion_handler) mutable
+    return detail::grpc_initiate_with_payload<Reader>(
+        [&, rpc](agrpc::GrpcContext& grpc_context, auto* tag)
         {
-            detail::GrpcInitiator initiator{[&](agrpc::GrpcContext& grpc_context, auto* tag)
-                                            {
-                                                tag->handler().responder = (stub.*rpc)(
-                                                    &client_context, request, grpc_context.get_completion_queue(), tag);
-                                            }};
-            initiator(detail::make_completion_handler_with_responder<Reader>(std::move(completion_handler)));
+            tag->handler().payload = (stub.*rpc)(&client_context, request, grpc_context.get_completion_queue(), tag);
         },
-        token);
+        std::move(token));
 }
 
 template <class RPC, class Stub, class Request, class Reader, class CompletionToken = agrpc::DefaultCompletionToken>
-[[nodiscard]] auto request(detail::ClientServerStreamingRequest<RPC, Request, Reader> rpc, Stub& stub,
-                           grpc::ClientContext& client_context, const Request& request, Reader& reader,
-                           CompletionToken token = {})
+auto request(detail::ClientServerStreamingRequest<RPC, Request, Reader> rpc, Stub& stub,
+             grpc::ClientContext& client_context, const Request& request, Reader& reader, CompletionToken token = {})
 {
     return agrpc::grpc_initiate(
         [&, rpc](agrpc::GrpcContext& grpc_context, void* tag) mutable
@@ -279,27 +281,26 @@ template <class RPC, class Stub, class Request, class Reader, class CompletionTo
 }
 
 template <class RPC, class Stub, class Writer, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
-[[nodiscard]] auto request(detail::ClientSideStreamingRequest<RPC, Writer, Response> rpc, Stub& stub,
-                           grpc::ClientContext& client_context, Response& response, CompletionToken token = {})
+auto request(detail::ClientSideStreamingRequest<RPC, Writer, Response> rpc, Stub& stub,
+             grpc::ClientContext& client_context, Response& response, CompletionToken token = {})
 {
     return asio::async_initiate<CompletionToken, void(std::pair<Writer, bool>)>(
         [&, rpc](auto completion_handler) mutable
         {
             detail::GrpcInitiator initiator{[&](agrpc::GrpcContext& grpc_context, auto* tag)
                                             {
-                                                tag->handler().responder =
+                                                tag->handler().payload =
                                                     (stub.*rpc)(&client_context, &response,
                                                                 grpc_context.get_completion_queue(), tag);
                                             }};
-            initiator(detail::make_completion_handler_with_responder<Writer>(std::move(completion_handler)));
+            initiator(detail::make_completion_handler_with_payload<Writer>(std::move(completion_handler)));
         },
         token);
 }
 
 template <class RPC, class Stub, class Writer, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
-[[nodiscard]] auto request(detail::ClientSideStreamingRequest<RPC, Writer, Response> rpc, Stub& stub,
-                           grpc::ClientContext& client_context, Writer& writer, Response& response,
-                           CompletionToken token = {})
+auto request(detail::ClientSideStreamingRequest<RPC, Writer, Response> rpc, Stub& stub,
+             grpc::ClientContext& client_context, Writer& writer, Response& response, CompletionToken token = {})
 {
     return agrpc::grpc_initiate(
         [&, rpc](agrpc::GrpcContext& grpc_context, void* tag) mutable
@@ -310,25 +311,25 @@ template <class RPC, class Stub, class Writer, class Response, class CompletionT
 }
 
 template <class RPC, class Stub, class ReaderWriter, class CompletionToken = agrpc::DefaultCompletionToken>
-[[nodiscard]] auto request(detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter> rpc, Stub& stub,
-                           grpc::ClientContext& client_context, CompletionToken token = {})
+auto request(detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter> rpc, Stub& stub,
+             grpc::ClientContext& client_context, CompletionToken token = {})
 {
     return asio::async_initiate<CompletionToken, void(std::pair<ReaderWriter, bool>)>(
         [&, rpc](auto completion_handler) mutable
         {
             detail::GrpcInitiator initiator{[&](agrpc::GrpcContext& grpc_context, auto* tag)
                                             {
-                                                tag->handler().responder = (stub.*rpc)(
+                                                tag->handler().payload = (stub.*rpc)(
                                                     &client_context, grpc_context.get_completion_queue(), tag);
                                             }};
-            initiator(detail::make_completion_handler_with_responder<ReaderWriter>(std::move(completion_handler)));
+            initiator(detail::make_completion_handler_with_payload<ReaderWriter>(std::move(completion_handler)));
         },
         token);
 }
 
 template <class RPC, class Stub, class ReaderWriter, class CompletionToken = agrpc::DefaultCompletionToken>
-[[nodiscard]] auto request(detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter> rpc, Stub& stub,
-                           grpc::ClientContext& client_context, ReaderWriter& reader_writer, CompletionToken token = {})
+auto request(detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter> rpc, Stub& stub,
+             grpc::ClientContext& client_context, ReaderWriter& reader_writer, CompletionToken token = {})
 {
     return agrpc::grpc_initiate(
         [&, rpc](agrpc::GrpcContext& grpc_context, void* tag) mutable

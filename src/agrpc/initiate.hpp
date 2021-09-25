@@ -62,7 +62,7 @@ template <class Allocator, std::uint32_t Options>
 
 [[nodiscard]] inline auto get_completion_queue(const asio::any_io_executor& executor) noexcept
 {
-    return static_cast<agrpc::GrpcContext&>(asio::query(executor, asio::execution::context)).get_completion_queue();
+    return detail::query_grpc_context(executor).get_completion_queue();
 }
 
 [[nodiscard]] inline auto get_completion_queue(agrpc::GrpcContext& grpc_context) noexcept
@@ -83,7 +83,7 @@ template <class Executor = asio::any_io_executor>
     -> asio::async_result<asio::use_awaitable_t<Executor>, void(grpc::CompletionQueue*)>::return_type
 {
     const auto executor = co_await asio::this_coro::executor;
-    co_return static_cast<agrpc::GrpcContext&>(asio::query(executor, asio::execution::context)).get_completion_queue();
+    co_return detail::query_grpc_context(executor).get_completion_queue();
 }
 #endif
 }  // namespace agrpc

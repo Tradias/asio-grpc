@@ -69,7 +69,7 @@ class LocalOperation
 
   public:
     template <class H>
-    LocalOperation(H&& handler) : Base(&LocalOperation::do_complete), handler_(std::forward<H>(handler))
+    explicit LocalOperation(H&& handler) : Base(&LocalOperation::do_complete), handler_(std::forward<H>(handler))
     {
     }
 

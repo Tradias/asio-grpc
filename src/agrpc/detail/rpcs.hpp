@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_RPCS_HPP
 
 #include "agrpc/detail/asioForward.hpp"
+#include "agrpc/initiate.hpp"
 
 #include <grpcpp/alarm.h>
 #include <grpcpp/client_context.h>
@@ -47,35 +48,6 @@ using ClientSideStreamingRequest = Writer (RPC::*)(grpc::ClientContext*, Respons
 template <class RPC, class ReaderWriter>
 using ClientBidirectionalStreamingRequest = ReaderWriter (RPC::*)(grpc::ClientContext*, grpc::CompletionQueue*, void*);
 
-template <class Responder, class CompletionHandler>
-struct CompletionHandlerWithResponder
-{
-    using executor_type = asio::associated_executor_t<CompletionHandler>;
-
-    CompletionHandler completion_handler;
-    Responder responder;
-
-    template <class... Args>
-    CompletionHandlerWithResponder(CompletionHandler completion_handler, Args&&... args)
-        : completion_handler(std::move(completion_handler)), responder(std::forward<Args>(args)...)
-    {
-    }
-
-    void operator()(bool ok) { this->completion_handler(std::pair{std::move(this->responder), ok}); }
-
-    [[nodiscard]] executor_type get_executor() const noexcept
-    {
-        return asio::get_associated_executor(this->completion_handler);
-    }
-};
-
-template <class Responder, class CompletionHandler, class... Args>
-auto make_completion_handler_with_responder(CompletionHandler completion_handler, Args&&... args)
-{
-    return detail::CompletionHandlerWithResponder<Responder, CompletionHandler>{std::move(completion_handler),
-                                                                                std::forward<Args>(args)...};
-}
-
 #if (BOOST_VERSION >= 107700)
 struct AlarmCancellationHandler
 {
@@ -93,5 +65,126 @@ struct AlarmCancellationHandler
 };
 #endif
 }  // namespace agrpc::detail
+
+namespace agrpc
+{
+template <class RPC, class Service, class Request, class Responder,
+          class CompletionToken = agrpc::DefaultCompletionToken>
+auto request(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
+             grpc::ServerContext& server_context, Request& request, Responder& responder, CompletionToken token = {});
+
+template <class RPC, class Service, class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
+auto request(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service, grpc::ServerContext& server_context,
+             Responder& responder, CompletionToken token = {});
+
+namespace detail
+{
+struct RPCHandlerBase
+{
+    grpc::ServerContext context{};
+};
+
+template <class Request, class Responder>
+struct UnaryRPCHandler : detail::RPCHandlerBase
+{
+    Responder responder{&this->context};
+    Request request{};
+
+    template <class Handler, class... Args>
+    decltype(auto) operator()(Handler&& handler, Args&&... args)
+    {
+        return std::forward<Handler>(handler)(this->context, this->request, std::move(this->responder),
+                                              std::forward<Args>(args)...);
+    }
+};
+
+template <class Responder>
+struct StreamingRPCHandler : detail::RPCHandlerBase
+{
+    Responder responder{&this->context};
+
+    template <class Handler, class... Args>
+    decltype(auto) operator()(Handler&& handler, Args&&... args)
+    {
+        return std::forward<Handler>(handler)(this->context, this->responder, std::forward<Args>(args)...);
+    }
+};
+
+template <class RPC, class Service, class RPCHandlerAllocator, class Handler>
+struct RequestRepeater
+{
+    using executor_type = asio::associated_executor_t<Handler>;
+    using allocator_type = asio::associated_allocator_t<Handler>;
+
+    RPC rpc;
+    Service& service;
+    detail::AllocatedPointer<RPCHandlerAllocator> rpc_handler;
+    Handler handler;
+
+    RequestRepeater(RPC rpc, Service& service, detail::AllocatedPointer<RPCHandlerAllocator> rpc_handler,
+                    Handler handler)
+        : rpc(rpc), service(service), rpc_handler(std::move(rpc_handler)), handler(std::move(handler))
+    {
+    }
+
+    void operator()(bool ok);
+
+    executor_type get_executor() const noexcept { return asio::get_associated_executor(handler); }
+
+    allocator_type get_allocator() const noexcept { return asio::get_associated_allocator(handler); }
+};
+
+template <class RPC, class Service, class Request, class Responder, class Handler>
+void repeatedly_request(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service, Handler handler)
+{
+    const auto [executor, allocator] = detail::get_associated_executor_and_allocator(handler);
+    auto rpc_handler = detail::allocate<detail::UnaryRPCHandler<Request, Responder>>(allocator);
+    auto& context = rpc_handler->context;
+    auto& request = rpc_handler->request;
+    auto& responder = rpc_handler->responder;
+    agrpc::request(rpc, service, context, request, responder,
+                   detail::RequestRepeater{rpc, service, std::move(rpc_handler), std::move(handler)});
+}
+
+template <class RPC, class Service, class Responder, class Handler>
+void repeatedly_request(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service, Handler handler)
+{
+    const auto [executor, allocator] = detail::get_associated_executor_and_allocator(handler);
+    auto rpc_handler = detail::allocate<detail::StreamingRPCHandler<Responder>>(allocator);
+    auto& context = rpc_handler->context;
+    auto& responder = rpc_handler->responder;
+    agrpc::request(rpc, service, context, responder,
+                   detail::RequestRepeater{rpc, service, std::move(rpc_handler), std::move(handler)});
+}
+
+template <class RPCHandlerAllocator>
+struct RPCHandlerInvoker
+{
+    detail::AllocatedPointer<RPCHandlerAllocator> rpc_handler;
+
+    explicit RPCHandlerInvoker(detail::AllocatedPointer<RPCHandlerAllocator> rpc_handler)
+        : rpc_handler(std::move(rpc_handler))
+    {
+    }
+
+    template <class Handler, class... Args>
+    decltype(auto) operator()(Handler&& handler, Args&&... args)
+    {
+        return (*rpc_handler)(std::forward<Handler>(handler), std::forward<Args>(args)...);
+    }
+};
+
+template <class RPC, class Service, class RPCHandler, class Handler>
+void RequestRepeater<RPC, Service, RPCHandler, Handler>::operator()(bool ok)
+{
+    if (ok)
+    {
+        auto next_handler{this->handler};
+        detail::repeatedly_request(this->rpc, this->service, std::move(next_handler));
+    }
+    std::move(this->handler)(detail::RPCHandlerInvoker{std::move(this->rpc_handler)}, ok);
+}
+}  // namespace detail
+}  // namespace agrpc
 
 #endif  // AGRPC_DETAIL_RPCS_HPP

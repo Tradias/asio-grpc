@@ -66,6 +66,14 @@ struct AllocatedPointer
 
     constexpr decltype(auto) get_allocator() const noexcept { return this->impl.second(); }
 
+    constexpr decltype(auto) operator->() noexcept { return this->get(); }
+
+    constexpr decltype(auto) operator->() const noexcept { return this->get(); }
+
+    constexpr decltype(auto) operator*() noexcept { return *this->get(); }
+
+    constexpr decltype(auto) operator*() const noexcept { return *this->get(); }
+
     constexpr void release() noexcept { this->get() = nullptr; }
 
     constexpr void reset() noexcept

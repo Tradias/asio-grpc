@@ -474,5 +474,47 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context bidirectional strea
     grpc_context.run();
 }
 
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context repeatedly_request unary")
+{
+    bool is_shutdown{false};
+    auto request_count{0};
+    agrpc::repeatedly_request(
+        &test::v1::Test::AsyncService::RequestUnary, service,
+        test::RpcSpawner{asio::bind_executor(
+            get_executor(),
+            [&](grpc::ServerContext&, test::v1::Request& request,
+                grpc::ServerAsyncResponseWriter<test::v1::Response> writer, asio::yield_context yield)
+            {
+                CHECK_EQ(42, request.integer());
+                test::v1::Response response;
+                response.set_integer(21);
+                ++request_count;
+                if (request_count > 3)
+                {
+                    is_shutdown = true;
+                }
+                CHECK(agrpc::finish(writer, response, grpc::Status::OK, yield));
+            })});
+    asio::spawn(get_work_tracking_executor(),
+                [&](asio::yield_context yield)
+                {
+                    while (!is_shutdown)
+                    {
+                        test::v1::Request request;
+                        request.set_integer(42);
+                        grpc::ClientContext client_context2;
+                        auto reader =
+                            stub->AsyncUnary(&client_context2, request, agrpc::get_completion_queue(get_executor()));
+                        test::v1::Response response;
+                        grpc::Status status;
+                        CHECK(agrpc::finish(*reader, response, status, yield));
+                        CHECK(status.ok());
+                        CHECK_EQ(21, response.integer());
+                    }
+                });
+    grpc_context.run();
+    CHECK_EQ(4, request_count);
+}
+
 TEST_SUITE_END();
 }  // namespace test_asio_grpc
