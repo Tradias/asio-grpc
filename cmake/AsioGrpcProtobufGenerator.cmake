@@ -93,6 +93,8 @@ function(asio_grpc_protobuf_generate)
             VERBATIM)
     endforeach()
 
+    set_source_files_properties(${_generated_srcs_all} PROPERTIES SKIP_UNITY_BUILD_INCLUSION on)
+
     set(${asio_grpc_protobuf_generate_OUT_VAR}
         ${_generated_srcs_all}
         PARENT_SCOPE)
