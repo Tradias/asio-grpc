@@ -84,5 +84,5 @@ if(ASIO_GRPC_DISCOVER_TESTS)
 endif()
 
 if(ASIO_GRPC_TEST_COVERAGE)
-    asio_grpc_coverage_report_for_target(asio-grpc-test-cpp20 "${CMAKE_CURRENT_SOURCE_DIR}/test-asio-grpc.cpp")
+    asio_grpc_coverage_report_for_target(asio-grpc-test-cpp17 "${CMAKE_CURRENT_SOURCE_DIR}/test-asio-grpc.cpp")
 endif()

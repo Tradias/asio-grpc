@@ -19,6 +19,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        # Disabling shallow clone is recommended for improving relevancy of sonarsource reporting
+        fetch-depth: 0
 
     - name: Install vcpkg
       uses: lukka/run-vcpkg@v7
@@ -51,7 +54,7 @@ jobs:
       run: ctest -C ${{env.BUILD_TYPE}} -T test -j 2 --output-on-failure --timeout 200
 
     - name: Coverage
-      run: cmake --build ${{ github.workspace }}/build --config ${{env.BUILD_TYPE}} --target asio-grpc-test-cpp20-coverage
+      run: cmake --build ${{ github.workspace }}/build --config ${{env.BUILD_TYPE}} --target asio-grpc-test-cpp17-coverage
 
     - name: Re-generate compile_commands.json
       run: |
