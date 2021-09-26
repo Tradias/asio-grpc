@@ -23,8 +23,15 @@
 
 #include <array>
 #include <chrono>
+#include <cstddef>
 #include <memory>
+
+#ifdef AGRPC_USE_BOOST_CONTAINER
+#include <boost/container/pmr/monotonic_buffer_resource.hpp>
+#include <boost/container/pmr/polymorphic_allocator.hpp>
+#else
 #include <memory_resource>
+#endif
 
 namespace agrpc::test
 {
@@ -34,14 +41,14 @@ struct GrpcContextTest
     std::unique_ptr<grpc::Server> server;
     agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
     std::array<std::byte, 1024> buffer{};
-    std::pmr::monotonic_buffer_resource resource{buffer.data(), buffer.size()};
+    agrpc::detail::pmr::monotonic_buffer_resource resource{buffer.data(), buffer.size()};
 
     agrpc::GrpcExecutor get_executor() noexcept { return grpc_context.get_executor(); }
 
     agrpc::pmr::GrpcExecutor get_pmr_executor() noexcept
     {
         return this->get_executor().require(
-            boost::asio::execution::allocator(std::pmr::polymorphic_allocator<std::byte>(&resource)));
+            boost::asio::execution::allocator(agrpc::detail::pmr::polymorphic_allocator<std::byte>(&resource)));
     }
 
     auto get_work_tracking_executor() noexcept

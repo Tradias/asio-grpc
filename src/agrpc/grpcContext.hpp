@@ -20,6 +20,7 @@
 #include "agrpc/detail/grpcContextImplementation.hpp"
 #include "agrpc/detail/grpcExecutorOptions.hpp"
 #include "agrpc/detail/memory.hpp"
+#include "agrpc/detail/memoryResource.hpp"
 #include "agrpc/detail/typeErasedOperation.hpp"
 
 #include <boost/asio/execution_context.hpp>
@@ -29,7 +30,6 @@
 #include <grpcpp/completion_queue.h>
 
 #include <atomic>
-#include <memory_resource>
 #include <thread>
 
 namespace agrpc
@@ -44,7 +44,7 @@ class GrpcContext : public asio::execution_context
     using allocator_type = detail::GrpcContextLocalAllocator;
 
     explicit GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue,
-                         std::pmr::memory_resource* local_upstream_resource = std::pmr::new_delete_resource());
+                         detail::pmr::memory_resource* local_upstream_resource = detail::pmr::new_delete_resource());
 
     ~GrpcContext();
 

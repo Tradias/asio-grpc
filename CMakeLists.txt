@@ -28,6 +28,7 @@ option(ASIO_GRPC_BUILD_BENCHMARK "Build benchmark" off)
 option(ASIO_GRPC_DISCOVER_TESTS "Discover tests for ctest" off)
 option(ASIO_GRPC_TEST_COVERAGE "Compile tests with --coverage (GCC only)" off)
 option(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS "Compile tests with -fsanitize=address,undefined" off)
+option(ASIO_GRPC_USE_BOOST_CONTAINER "Use Boost.Container instead of <memory_resource>" off)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
@@ -40,7 +41,11 @@ add_subdirectory(src)
 if(ASIO_GRPC_BUILD_TESTS
    OR ASIO_GRPC_BUILD_EXAMPLES
    OR ASIO_GRPC_BUILD_BENCHMARK)
-    find_package(Boost REQUIRED COMPONENTS coroutine thread)
+    if(ASIO_GRPC_USE_BOOST_CONTAINER)
+        find_package(Boost REQUIRED COMPONENTS coroutine thread container)
+    else()
+        find_package(Boost REQUIRED COMPONENTS coroutine thread)
+    endif()
     include(AsioGrpcCompileOptions)
     include(AsioGrpcCheckBoostVersion)
 endif()

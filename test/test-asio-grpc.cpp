@@ -26,7 +26,7 @@
 #include <doctest/doctest.h>
 #include <grpcpp/alarm.h>
 
-#include <memory_resource>
+#include <cstddef>
 #include <optional>
 #include <string_view>
 #include <thread>
@@ -48,7 +48,7 @@ TEST_CASE("GrpcExecutor fulfills Executor TS traits")
     CHECK(asio::can_prefer_v<Exec, asio::execution::relationship_t::continuation_t>);
     CHECK(asio::can_prefer_v<Exec, asio::execution::outstanding_work_t::tracked_t>);
     CHECK(asio::can_prefer_v<Exec, asio::execution::outstanding_work_t::untracked_t>);
-    CHECK(asio::can_prefer_v<Exec, asio::execution::allocator_t<std::pmr::polymorphic_allocator<std::byte>>>);
+    CHECK(asio::can_prefer_v<Exec, asio::execution::allocator_t<agrpc::detail::pmr::polymorphic_allocator<std::byte>>>);
     CHECK(asio::can_query_v<Exec, asio::execution::blocking_t>);
     CHECK(asio::can_query_v<Exec, asio::execution::relationship_t>);
     CHECK(asio::can_query_v<Exec, asio::execution::outstanding_work_t>);
@@ -162,7 +162,8 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post/execute with allocator")
     SUBCASE("asio::post")
     {
         asio::post(grpc_context,
-                   test::HandlerWithAssociatedAllocator{[] {}, std::pmr::polymorphic_allocator<std::byte>(&resource)});
+                   test::HandlerWithAssociatedAllocator{
+                       [] {}, agrpc::detail::pmr::polymorphic_allocator<std::byte>(&resource)});
     }
     SUBCASE("asio::execute before grpc_context.run()")
     {

@@ -20,6 +20,7 @@
 #include "agrpc/detail/grpcExecutorBase.hpp"
 #include "agrpc/detail/grpcExecutorOptions.hpp"
 #include "agrpc/detail/memory.hpp"
+#include "agrpc/detail/memoryResource.hpp"
 #include "agrpc/detail/operation.hpp"
 #include "agrpc/grpcContext.hpp"
 
@@ -29,7 +30,7 @@
 #include <boost/asio/execution/outstanding_work.hpp>
 #include <boost/asio/execution/relationship.hpp>
 
-#include <memory_resource>
+#include <cstddef>
 #include <utility>
 
 namespace agrpc
@@ -213,7 +214,7 @@ using GrpcExecutor = agrpc::BasicGrpcExecutor<>;
 
 namespace pmr
 {
-using GrpcExecutor = agrpc::BasicGrpcExecutor<std::pmr::polymorphic_allocator<std::byte>>;
+using GrpcExecutor = agrpc::BasicGrpcExecutor<agrpc::detail::pmr::polymorphic_allocator<std::byte>>;
 }
 }  // namespace agrpc
 

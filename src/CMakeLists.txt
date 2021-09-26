@@ -52,6 +52,10 @@ target_include_directories(asio-grpc INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT
 
 target_link_libraries(asio-grpc INTERFACE gRPC::grpc++ Boost::headers)
 
+if(ASIO_GRPC_USE_BOOST_CONTAINER)
+    target_compile_definitions(asio-grpc INTERFACE AGRPC_USE_BOOST_CONTAINER)
+endif()
+
 # asio-grpc objects
 if(ASIO_GRPC_BUILD_TESTS)
     add_library(asio-grpc-objects OBJECT)

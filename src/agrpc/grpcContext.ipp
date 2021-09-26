@@ -20,6 +20,7 @@
 #include "agrpc/detail/grpcCompletionQueueEvent.hpp"
 #include "agrpc/detail/grpcExecutorOptions.hpp"
 #include "agrpc/detail/memory.hpp"
+#include "agrpc/detail/memoryResource.hpp"
 #include "agrpc/grpcContext.hpp"
 #include "agrpc/grpcExecutor.hpp"
 
@@ -30,7 +31,6 @@
 #include <grpcpp/completion_queue.h>
 
 #include <atomic>
-#include <memory_resource>
 #include <thread>
 #include <utility>
 
@@ -75,7 +75,7 @@ void run_event_loop(agrpc::GrpcContext& grpc_context, LoopPredicate loop_predica
 }  // namespace detail
 
 inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue,
-                                std::pmr::memory_resource* local_upstream_resource)
+                                detail::pmr::memory_resource* local_upstream_resource)
     : outstanding_work(),
       thread_id(std::this_thread::get_id()),
       stopped(),

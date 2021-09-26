@@ -41,6 +41,11 @@ target_compile_definitions(
 
 target_link_libraries(asio-grpc-common-compile-options INTERFACE asio-grpc Boost::disable_autolinking)
 
+if(ASIO_GRPC_USE_BOOST_CONTAINER)
+    # No imported target for Boost::container in CMake 3.21
+    target_link_libraries(asio-grpc-common-compile-options INTERFACE ${Boost_CONTAINER_LIBRARY})
+endif()
+
 # C++20 compile options
 add_library(asio-grpc-cpp20-compile-options INTERFACE)
 

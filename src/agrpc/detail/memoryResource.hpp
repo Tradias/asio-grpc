@@ -12,22 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <boost/asio.hpp>
-#include <boost/intrusive/slist.hpp>
-#include <boost/intrusive/slist_hook.hpp>
-#include <boost/lockfree/queue.hpp>
-#include <grpcpp/alarm.h>
-#include <grpcpp/grpcpp.h>
+#ifndef AGRPC_DETAIL_MEMORYRESOURCE_HPP
+#define AGRPC_DETAIL_MEMORYRESOURCE_HPP
 
-#include <array>
-#include <atomic>
-#include <chrono>
-#include <cstddef>
-#include <cstdint>
-#include <iterator>
-#include <limits>
-#include <memory>
-#include <thread>
-#include <tuple>
-#include <type_traits>
-#include <utility>
+#ifdef AGRPC_USE_BOOST_CONTAINER
+#include <boost/container/pmr/memory_resource.hpp>
+#include <boost/container/pmr/polymorphic_allocator.hpp>
+#include <boost/container/pmr/unsynchronized_pool_resource.hpp>
+#else
+#include <memory_resource>
+#endif
+
+namespace agrpc::detail
+{
+#ifdef AGRPC_USE_BOOST_CONTAINER
+namespace pmr = boost::container::pmr;
+#else
+namespace pmr = std::pmr;
+#endif
+}  // namespace agrpc::detail
+
+#endif  // AGRPC_DETAIL_MEMORYRESOURCE_HPP

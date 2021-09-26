@@ -22,6 +22,8 @@
 #include <doctest/doctest.h>
 #include <grpcpp/alarm.h>
 
+#include <cstddef>
+
 #if (BOOST_VERSION >= 107700)
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/cancellation_signal.hpp>
