@@ -76,14 +76,12 @@ void run_event_loop(agrpc::GrpcContext& grpc_context, LoopPredicate loop_predica
 
 inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue,
                                 std::pmr::memory_resource* local_upstream_resource)
-    : work_alarm(),
-      outstanding_work(),
+    : outstanding_work(),
       thread_id(std::this_thread::get_id()),
       stopped(),
       has_work(),
       completion_queue(std::move(completion_queue)),
       local_resource(local_upstream_resource),
-      local_work_queue(),
       is_processing_local_work(false),
       remote_work_queue(32)
 {

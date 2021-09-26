@@ -54,7 +54,9 @@ jobs:
       run: ctest -C ${{env.BUILD_TYPE}} -T test -j 2 --output-on-failure --timeout 200
 
     - name: Coverage
-      run: cmake --build ${{ github.workspace }}/build --config ${{env.BUILD_TYPE}} --target asio-grpc-test-cpp17-coverage
+      run: |
+        ${{ github.workspace }}/build/test/asio-grpc-test-cpp20 \
+        && cmake --build ${{ github.workspace }}/build --config ${{env.BUILD_TYPE}} --target asio-grpc-test-cpp20-coverage
 
     - name: Re-generate compile_commands.json
       run: |
