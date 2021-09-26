@@ -30,8 +30,7 @@ boost::asio::co_spawn(
         bool request_ok = co_await agrpc::request(&helloworld::Greeter::AsyncService::RequestSayHello, service,
                                                   server_context, request, writer);
         helloworld::HelloReply response;
-        std::string prefix("Hello ");
-        response.set_message(prefix + request.name());
+        response.set_message("Hello " + request.name());
         bool finish_ok = co_await agrpc::finish(writer, response, grpc::Status::OK);
     },
     boost::asio::detached);
@@ -39,7 +38,7 @@ boost::asio::co_spawn(
 grpc_context.run();
 server->Shutdown();
 ```
-<sup><a href='/example/hello-world-server-cpp20.cpp#L25-L52' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/hello-world-server-cpp20.cpp#L25-L51' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Client side:
