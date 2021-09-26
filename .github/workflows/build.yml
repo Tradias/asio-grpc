@@ -47,21 +47,21 @@ jobs:
         vcpkgArguments: 'doctest grpc[codegen] boost-coroutine boost-core boost-intrusive boost-lockfree boost-asio boost-interprocess boost-thread'
         vcpkgGitCommitId: 1909fbc4eb8ef30017a79dce50c0f232d149a051 # Sep 11, 2021
 
-    - name: Configure CMake
-      run: |
-        cmake -B ${{ github.workspace }}/build \
-          -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
-          -DVCPKG_MANIFEST_MODE=off \
-          -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} \
-          -DASIO_GRPC_BUILD_TESTS=on \
-          -DASIO_GRPC_DISCOVER_TESTS=on \
-          -DASIO_GRPC_BUILD_EXAMPLES=on \
-          -DASIO_GRPC_BUILD_BENCHMARK=on \
-          -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
+    # - name: Configure CMake
+    #   run: |
+    #     cmake -B ${{ github.workspace }}/build \
+    #       -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
+    #       -DVCPKG_MANIFEST_MODE=off \
+    #       -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} \
+    #       -DASIO_GRPC_BUILD_TESTS=on \
+    #       -DASIO_GRPC_DISCOVER_TESTS=on \
+    #       -DASIO_GRPC_BUILD_EXAMPLES=on \
+    #       -DASIO_GRPC_BUILD_BENCHMARK=on \
+    #       -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
 
-    - name: Build
-      run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.config.config }} --parallel 2
+    # - name: Build
+    #   run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.config.config }} --parallel 2
 
-    - name: Test
-      working-directory: ${{ github.workspace }}/build
-      run: ctest -C ${{ matrix.config.config }} -T test -j 2 --output-on-failure --timeout 200
+    # - name: Test
+    #   working-directory: ${{ github.workspace }}/build
+    #   run: ctest -C ${{ matrix.config.config }} -T test -j 2 --output-on-failure --timeout 200

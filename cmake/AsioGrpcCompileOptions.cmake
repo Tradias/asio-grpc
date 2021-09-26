@@ -46,4 +46,4 @@ add_library(asio-grpc-cpp20-compile-options INTERFACE)
 
 target_compile_features(asio-grpc-cpp20-compile-options INTERFACE cxx_std_20)
 
-target_compile_options(asio-grpc-cpp20-compile-options INTERFACE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fcoroutines>)
+target_compile_options(asio-grpc-cpp20-compile-options INTERFACE $<$<CXX_COMPILER_ID:GNU>:-fcoroutines>)

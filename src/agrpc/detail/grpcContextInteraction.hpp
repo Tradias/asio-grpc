@@ -36,7 +36,8 @@ struct AllocateOperationAndInvoke
     }
 
     template <class Function, class OnOperation, class Allocator>
-    void operator()(agrpc::GrpcContext&, Function&& function, OnOperation&& on_operation, Allocator allocator) const
+    void operator()(const agrpc::GrpcContext&, Function&& function, OnOperation&& on_operation,
+                    Allocator allocator) const
     {
         detail::AllocateOperationAndInvoke<IsIntrusivelyListable, Signature..., detail::GrpcContextLocalAllocator>{}(
             std::forward<Function>(function), std::forward<OnOperation>(on_operation), allocator);
