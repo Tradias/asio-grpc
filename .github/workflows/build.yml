@@ -30,14 +30,14 @@ jobs:
             name: "Windows-MSVC/2019/x64/Release",
             os: windows-2019,
             config: Release,
-            triplet: x64-windows-rel,
+            triplet: x64-windows,
             use-boost-container: off,
           }
           - {
             name: "MacOSX/10.15/x64/Release",
             os: macos-10.15,
             config: Release,
-            triplet: x64-osx-rel,
+            triplet: x64-osx,
             use-boost-container: on,
           }
 
@@ -49,7 +49,7 @@ jobs:
       with:
         vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
         vcpkgArguments: 'doctest grpc[codegen] boost-coroutine boost-core boost-intrusive boost-lockfree boost-asio boost-interprocess boost-thread boost-container'
-        vcpkgGitCommitId: 1909fbc4eb8ef30017a79dce50c0f232d149a051 # Sep 11, 2021
+        vcpkgGitCommitId: 59a3f35e7e5a3281e59863a4a0123c325899f8f9 # Sep 26, 2021
         vcpkgTriplet: ${{ matrix.config.triplet }}
 
     - name: Configure CMake
