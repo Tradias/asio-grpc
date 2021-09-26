@@ -68,7 +68,7 @@ TEST_CASE("GrpcExecutor fulfills Executor TS traits")
                          asio::execution::outstanding_work));
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcExecutor is mostly trivial")
+TEST_CASE("GrpcExecutor is mostly trivial")
 {
     CHECK(std::is_trivially_copy_constructible_v<agrpc::GrpcExecutor>);
     CHECK(std::is_trivially_move_constructible_v<agrpc::GrpcExecutor>);
@@ -76,6 +76,17 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcExecutor is mostly trivial")
     CHECK(std::is_trivially_copy_assignable_v<agrpc::GrpcExecutor>);
     CHECK(std::is_trivially_move_assignable_v<agrpc::GrpcExecutor>);
     CHECK_EQ(sizeof(void*), sizeof(agrpc::GrpcExecutor));
+}
+
+TEST_CASE("Work tracking GrpcExecutor constructor and assignment")
+{
+    agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+    auto ex = asio::require(grpc_context.get_executor(), asio::execution::outstanding_work.tracked,
+                            asio::execution::allocator(agrpc::detail::pmr::polymorphic_allocator<std::byte>()));
+    auto ex2{ex};
+    auto ex3{std::move(ex)};
+    ex2 = ex;
+    ex2 = std::move(ex3);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wait")
@@ -172,26 +183,25 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post/execute with allocator")
     SUBCASE("asio::execute after grpc_context.run() from same thread")
     {
         asio::post(grpc_context,
-                   [&, exec = asio::require(get_pmr_executor(), asio::execution::outstanding_work.tracked)]
+                   [&, exec = get_work_tracking_pmr_executor()]
                    {
                        exec.execute([] {});
                    });
     }
     SUBCASE("agrpc::wait")
     {
-        asio::execution::execute(
-            get_executor(),
-            [&, executor = asio::require(get_pmr_executor(), asio::execution::outstanding_work.tracked)]() mutable
-            {
-                auto alarm = std::make_shared<grpc::Alarm>();
-                auto& alarm_ref = *alarm;
-                agrpc::wait(alarm_ref, test::ten_milliseconds_from_now(),
-                            asio::bind_executor(std::move(executor),
-                                                [a = std::move(alarm)](bool ok)
-                                                {
-                                                    CHECK(ok);
-                                                }));
-            });
+        asio::execution::execute(get_executor(),
+                                 [&, executor = get_work_tracking_pmr_executor()]() mutable
+                                 {
+                                     auto alarm = std::make_shared<grpc::Alarm>();
+                                     auto& alarm_ref = *alarm;
+                                     agrpc::wait(alarm_ref, test::ten_milliseconds_from_now(),
+                                                 asio::bind_executor(std::move(executor),
+                                                                     [a = std::move(alarm)](bool ok)
+                                                                     {
+                                                                         CHECK(ok);
+                                                                     }));
+                                 });
     }
     grpc_context.run();
     CHECK(std::any_of(buffer.begin(), buffer.end(),

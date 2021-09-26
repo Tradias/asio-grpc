@@ -39,21 +39,27 @@ struct GrpcContextTest
 {
     grpc::ServerBuilder builder;
     std::unique_ptr<grpc::Server> server;
-    agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
     std::array<std::byte, 1024> buffer{};
     agrpc::detail::pmr::monotonic_buffer_resource resource{buffer.data(), buffer.size()};
+    agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
 
     agrpc::GrpcExecutor get_executor() noexcept { return grpc_context.get_executor(); }
 
+    auto get_allocator() noexcept { return agrpc::detail::pmr::polymorphic_allocator<std::byte>(&resource); }
+
     agrpc::pmr::GrpcExecutor get_pmr_executor() noexcept
     {
-        return this->get_executor().require(
-            boost::asio::execution::allocator(agrpc::detail::pmr::polymorphic_allocator<std::byte>(&resource)));
+        return this->get_executor().require(asio::execution::allocator(get_allocator()));
     }
 
     auto get_work_tracking_executor() noexcept
     {
         return asio::require(get_executor(), asio::execution::outstanding_work.tracked);
+    }
+
+    auto get_work_tracking_pmr_executor() noexcept
+    {
+        return asio::require(get_work_tracking_executor(), asio::execution::allocator(get_allocator()));
     }
 };
 
