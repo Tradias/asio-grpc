@@ -18,6 +18,7 @@
 #include "agrpc/detail/utility.hpp"
 #include "agrpc/grpcContext.hpp"
 
+#include <type_traits>
 #include <utility>
 
 namespace agrpc::detail
@@ -86,7 +87,10 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
         {
             auto* old_grpc_context = this->grpc_context();
             this->grpc_context() = other.grpc_context();
-            this->allocator() = other.allocator();
+            if constexpr (std::is_assignable_v<Allocator&, const Allocator&>)
+            {
+                this->allocator() = other.allocator();
+            }
             if (this->grpc_context())
             {
                 this->grpc_context()->work_started();
@@ -105,7 +109,10 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
         {
             auto* old_grpc_context = this->grpc_context();
             this->grpc_context() = other.grpc_context();
-            this->allocator() = std::move(other.allocator());
+            if constexpr (std::is_assignable_v<Allocator&, Allocator&&>)
+            {
+                this->allocator() = std::move(other.allocator());
+            }
             other.grpc_context() = nullptr;
             if (old_grpc_context)
             {

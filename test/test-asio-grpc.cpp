@@ -83,9 +83,10 @@ TEST_CASE("Work tracking GrpcExecutor constructor and assignment")
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
     auto ex = asio::require(grpc_context.get_executor(), asio::execution::outstanding_work.tracked,
                             asio::execution::allocator(agrpc::detail::pmr::polymorphic_allocator<std::byte>()));
+    const auto ex1{ex};
     auto ex2{ex};
     auto ex3{std::move(ex)};
-    ex2 = ex;
+    ex2 = ex1;
     ex2 = std::move(ex3);
 }
 
