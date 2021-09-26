@@ -39,7 +39,9 @@ jobs:
           -DASIO_GRPC_DISCOVER_TESTS=on \
           -DASIO_GRPC_BUILD_EXAMPLES=on \
           -DASIO_GRPC_BUILD_BENCHMARK=on \
-          -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
+          -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on \
+          -DASIO_GRPC_TEST_COVERAGE=on \
+          -DCMAKE_UNITY_BUILD=on
 
     - name: Build
       run: cmake --build ${{ github.workspace }}/build --config ${{env.BUILD_TYPE}} --parallel 2
@@ -47,3 +49,23 @@ jobs:
     - name: Test
       working-directory: ${{ github.workspace }}/build
       run: ctest -C ${{env.BUILD_TYPE}} -T test -j 2 --output-on-failure --timeout 200
+
+    - name: Coverage
+      run: cmake --build ${{ github.workspace }}/build --config ${{env.BUILD_TYPE}} --target asio-grpc-test-cpp20-coverage
+
+    - name: Re-generate compile_commands.json
+      run: |
+        cmake -B ${{ github.workspace }}/build \
+          -DCMAKE_UNITY_BUILD=off
+    
+    - name: Download sonar-scanner
+      uses: warchant/setup-sonar-scanner@v3
+      with:
+        version: 4.6.2.2472
+
+    - name: Run sonar-scanner
+      run: |
+        sonar-scanner \
+          -Dsonar.cfamily.compile-commands=${{ github.workspace }}/build/compile_commands.json \
+          -Dsonar.cfamily.gcov.reportsPath=${{ github.workspace }}/build \
+          -Dsonar.login=${{ secrets.SONAR_TOKEN }}
