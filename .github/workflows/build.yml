@@ -2,26 +2,43 @@ name: Build
 
 on:
   push:
-    branches: [master]
+    paths:
+      - '**.cpp'
+      - '**.hpp'
+      - '**.ipp'
+      - '**.cmake'
+      - '**/CMakeLists.txt'
+      - '.github/workflows/build.yml'
   pull_request:
-    types: [opened, synchronize, reopened]
-
-env:
-  BUILD_TYPE: Release
+    paths:
+      - '**.cpp'
+      - '**.hpp'
+      - '**.ipp'
+      - '**.cmake'
+      - '**/CMakeLists.txt'
+      - '.github/workflows/build.yml'
 
 jobs:
-  build:
-    # The CMake configure and build commands are platform agnostic and should work equally
-    # well on Windows or Mac.  You can convert this to a matrix build if you need
-    # cross-platform coverage.
-    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on: ubuntu-latest
+  Build:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {
+            name: "Windows-MSVC/2019/x64/Release",
+            os: windows-2019,
+            config: Release,
+          }
+          - {
+            name: "MacOSX/10.15/x64/Release",
+            os: macos-10.15,
+            config: Release,
+          }
 
     steps:
     - uses: actions/checkout@v2
-      with:
-        # Disabling shallow clone is recommended for improving relevancy of sonarsource reporting
-        fetch-depth: 0
 
     - name: Install vcpkg
       uses: lukka/run-vcpkg@v7
@@ -33,38 +50,18 @@ jobs:
     - name: Configure CMake
       run: |
         cmake -B ${{ github.workspace }}/build \
-          -DCMAKE_CXX_COMPILER=/usr/bin/g++-10 \
           -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
           -DVCPKG_MANIFEST_MODE=off \
-          -DCMAKE_EXPORT_COMPILE_COMMANDS=on \
-          -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
+          -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} \
           -DASIO_GRPC_BUILD_TESTS=on \
           -DASIO_GRPC_DISCOVER_TESTS=on \
           -DASIO_GRPC_BUILD_EXAMPLES=on \
           -DASIO_GRPC_BUILD_BENCHMARK=on \
-          -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on \
-          -DASIO_GRPC_TEST_COVERAGE=on
+          -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
 
     - name: Build
-      run: cmake --build ${{ github.workspace }}/build --config ${{env.BUILD_TYPE}} --parallel 2
+      run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.config.config }} --parallel 2
 
     - name: Test
       working-directory: ${{ github.workspace }}/build
-      run: ctest -C ${{env.BUILD_TYPE}} -T test -j 2 --output-on-failure --timeout 200
-
-    - name: Coverage
-      run: cmake --build ${{ github.workspace }}/build --config ${{env.BUILD_TYPE}} --target asio-grpc-test-cpp20-coverage
-
-    - name: Download sonar-scanner
-      uses: warchant/setup-sonar-scanner@v3
-      with:
-        version: 4.6.2.2472
-
-    - name: Run sonar-scanner
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        sonar-scanner \
-          -Dsonar.cfamily.compile-commands=${{ github.workspace }}/build/compile_commands.json \
-          -Dsonar.cfamily.gcov.reportsPath=${{ github.workspace }}/build \
-          -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+      run: ctest -C ${{ matrix.config.config }} -T test -j 2 --output-on-failure --timeout 200
