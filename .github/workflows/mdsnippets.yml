@@ -13,8 +13,8 @@ jobs:
     - name: Run MarkdownSnippets
       run: |
         dotnet tool install --global MarkdownSnippets.Tool
-        mdsnippets ${{ github.workspace }}
-      shell: bash
+        mdsnippets
+      working-directory: ${{ github.workspace }}
 
     - name: Push changes
       run: |
