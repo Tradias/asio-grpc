@@ -163,17 +163,17 @@ class BasicGrpcExecutor
     {
         if constexpr (detail::is_blocking_never(Options))
         {
-            return asio::execution::blocking.never;
+            return asio::execution::blocking_t::never;
         }
         else
         {
-            return asio::execution::blocking.possibly;
+            return asio::execution::blocking_t::possibly;
         }
     }
 
     [[nodiscard]] static constexpr auto query(asio::execution::mapping_t) noexcept
     {
-        return asio::execution::mapping.thread;
+        return asio::execution::mapping_t::thread;
     }
 
     [[nodiscard]] constexpr auto& query(asio::execution::context_t) const noexcept { return this->context(); }
@@ -182,11 +182,11 @@ class BasicGrpcExecutor
     {
         if constexpr (detail::is_relationship_continuation(Options))
         {
-            return asio::execution::relationship.continuation;
+            return asio::execution::relationship_t::continuation;
         }
         else
         {
-            return asio::execution::relationship.fork;
+            return asio::execution::relationship_t::fork;
         }
     }
 
@@ -194,11 +194,11 @@ class BasicGrpcExecutor
     {
         if constexpr (detail::is_outstanding_work_tracked(Options))
         {
-            return asio::execution::outstanding_work.tracked;
+            return asio::execution::outstanding_work_t::tracked;
         }
         else
         {
-            return asio::execution::outstanding_work.untracked;
+            return asio::execution::outstanding_work_t::untracked;
         }
     }
 

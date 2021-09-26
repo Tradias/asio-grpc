@@ -97,8 +97,8 @@ struct MultiArgRPCHandler : detail::RPCHandlerBase
     template <class Handler, class... Args>
     decltype(auto) operator()(Handler&& handler, Args&&... args)
     {
-        return std::forward<Handler>(handler)(this->context, this->request, std::move(this->responder),
-                                              std::forward<Args>(args)...);
+        return std::invoke(std::forward<Handler>(handler), this->context, this->request, std::move(this->responder),
+                           std::forward<Args>(args)...);
     }
 };
 
@@ -110,7 +110,7 @@ struct SingleArgRPCHandler : detail::RPCHandlerBase
     template <class Handler, class... Args>
     decltype(auto) operator()(Handler&& handler, Args&&... args)
     {
-        return std::forward<Handler>(handler)(this->context, this->responder, std::forward<Args>(args)...);
+        return std::invoke(std::forward<Handler>(handler), this->context, this->responder, std::forward<Args>(args)...);
     }
 };
 
