@@ -239,8 +239,8 @@ Client
 #ifdef BOOST_ASIO_HAS_CO_AWAIT
 template <class RPC, class Stub, class Request, class Reader, class Executor = asio::any_io_executor>
 auto request(detail::ClientUnaryRequest<RPC, Request, Reader> rpc, Stub& stub, grpc::ClientContext& client_context,
-             const Request& request, asio::use_awaitable_t<Executor> token = {})
-    -> asio::async_result<asio::use_awaitable_t<Executor>, void(Reader)>::return_type
+             const Request& request, asio::use_awaitable_t<Executor> token = {}) ->
+    typename asio::async_result<asio::use_awaitable_t<Executor>, void(Reader)>::return_type
 {
     auto* completion_queue = co_await agrpc::get_completion_queue(token);
     co_return(stub.*rpc)(&client_context, request, completion_queue);
@@ -248,8 +248,8 @@ auto request(detail::ClientUnaryRequest<RPC, Request, Reader> rpc, Stub& stub, g
 
 template <class RPC, class Stub, class Request, class Reader, class Executor = asio::any_io_executor>
 auto request(detail::ClientUnaryRequest<RPC, Request, Reader> rpc, Stub& stub, grpc::ClientContext& client_context,
-             const Request& request, Reader& reader, asio::use_awaitable_t<Executor> token = {})
-    -> asio::async_result<asio::use_awaitable_t<Executor>, void()>::return_type
+             const Request& request, Reader& reader, asio::use_awaitable_t<Executor> token = {}) ->
+    typename asio::async_result<asio::use_awaitable_t<Executor>, void()>::return_type
 {
     auto* completion_queue = co_await agrpc::get_completion_queue(token);
     reader = (stub.*rpc)(&client_context, request, completion_queue);

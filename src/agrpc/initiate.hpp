@@ -82,8 +82,8 @@ template <class CompletionToken>
 
 #ifdef BOOST_ASIO_HAS_CO_AWAIT
 template <class Executor = asio::any_io_executor>
-[[nodiscard]] auto get_completion_queue(asio::use_awaitable_t<Executor> = {})
-    -> asio::async_result<asio::use_awaitable_t<Executor>, void(grpc::CompletionQueue*)>::return_type
+[[nodiscard]] auto get_completion_queue(asio::use_awaitable_t<Executor> = {}) ->
+    typename asio::async_result<asio::use_awaitable_t<Executor>, void(grpc::CompletionQueue*)>::return_type
 {
     const auto executor = co_await asio::this_coro::executor;
     co_return detail::query_grpc_context(executor).get_completion_queue();
