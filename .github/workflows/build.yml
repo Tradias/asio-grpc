@@ -64,6 +64,8 @@ jobs:
         version: 4.6.2.2472
 
     - name: Run sonar-scanner
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         sonar-scanner \
           -Dsonar.cfamily.compile-commands=${{ github.workspace }}/build/compile_commands.json \
