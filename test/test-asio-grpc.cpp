@@ -58,13 +58,13 @@ TEST_CASE("GrpcExecutor fulfills Executor TS traits")
     CHECK(std::is_constructible_v<asio::any_io_executor, Exec>);
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
     auto executor = grpc_context.get_executor();
-    CHECK_EQ(asio::execution::blocking.possibly,
-             asio::query(asio::require(executor, asio::execution::blocking.possibly), asio::execution::blocking));
-    CHECK_EQ(
-        asio::execution::relationship.continuation,
-        asio::query(asio::prefer(executor, asio::execution::relationship.continuation), asio::execution::relationship));
-    CHECK_EQ(asio::execution::outstanding_work.tracked,
-             asio::query(asio::prefer(executor, asio::execution::outstanding_work.tracked),
+    CHECK_EQ(asio::execution::blocking_t::possibly,
+             asio::query(asio::require(executor, asio::execution::blocking_t::possibly), asio::execution::blocking));
+    CHECK_EQ(asio::execution::relationship_t::continuation,
+             asio::query(asio::prefer(executor, asio::execution::relationship_t::continuation),
+                         asio::execution::relationship));
+    CHECK_EQ(asio::execution::outstanding_work_t::tracked,
+             asio::query(asio::prefer(executor, asio::execution::outstanding_work_t::tracked),
                          asio::execution::outstanding_work));
 }
 
@@ -81,7 +81,7 @@ TEST_CASE("GrpcExecutor is mostly trivial")
 TEST_CASE("Work tracking GrpcExecutor constructor and assignment")
 {
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
-    auto ex = asio::require(grpc_context.get_executor(), asio::execution::outstanding_work.tracked,
+    auto ex = asio::require(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked,
                             asio::execution::allocator(agrpc::detail::pmr::polymorphic_allocator<std::byte>()));
     const auto ex1{ex};
     auto ex2{ex};
@@ -237,7 +237,7 @@ struct Coro : asio::coroutine
     Function function;
 
     Coro(agrpc::GrpcContext& grpc_context, Function&& f)
-        : executor(asio::require(grpc_context.get_executor(), asio::execution::outstanding_work.tracked)),
+        : executor(asio::require(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked)),
           function(std::forward<Function>(f))
     {
     }

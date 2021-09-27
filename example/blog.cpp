@@ -104,7 +104,7 @@ struct GrpcContext : boost::asio::execution_context
 
 struct GrpcContext::executor_type
 {
-    GrpcContext* grpc_context;
+    GrpcContext* grpc_context{};
 
     template <class Function>
     void execute(Function function) const

@@ -77,11 +77,11 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "wait for Alarm with allocator")
                        co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::pmr::GRPC_USE_AWAITABLE);
                    });
     grpc_context.run();
-    CHECK(std::ranges::any_of(buffer,
-                              [](auto&& value)
-                              {
-                                  return value != std::byte{};
-                              }));
+    CHECK(std::any_of(buffer.begin(), buffer.end(),
+                      [](auto&& value)
+                      {
+                          return value != std::byte{};
+                      }));
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "wait for Alarm with asio::awaitable<>")

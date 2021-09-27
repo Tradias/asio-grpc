@@ -112,50 +112,50 @@ class BasicGrpcExecutor
     }
 
     [[nodiscard]] constexpr auto require(asio::execution::blocking_t::possibly_t) const noexcept
-        -> BasicGrpcExecutor<Allocator, detail::set_blocking_never(Options, false)>
+        -> agrpc::BasicGrpcExecutor<Allocator, detail::set_blocking_never(Options, false)>
     {
         return {this->context(), this->allocator()};
     }
 
     [[nodiscard]] constexpr auto require(asio::execution::blocking_t::never_t) const noexcept
-        -> BasicGrpcExecutor<Allocator, detail::set_blocking_never(Options, true)>
+        -> agrpc::BasicGrpcExecutor<Allocator, detail::set_blocking_never(Options, true)>
     {
         return {this->context(), this->allocator()};
     }
 
     [[nodiscard]] constexpr auto prefer(asio::execution::relationship_t::fork_t) const noexcept
-        -> BasicGrpcExecutor<Allocator, detail::set_relationship_continuation(Options, false)>
+        -> agrpc::BasicGrpcExecutor<Allocator, detail::set_relationship_continuation(Options, false)>
     {
         return {this->context(), this->allocator()};
     }
 
     [[nodiscard]] constexpr auto prefer(asio::execution::relationship_t::continuation_t) const noexcept
-        -> BasicGrpcExecutor<Allocator, detail::set_relationship_continuation(Options, true)>
+        -> agrpc::BasicGrpcExecutor<Allocator, detail::set_relationship_continuation(Options, true)>
     {
         return {this->context(), this->allocator()};
     }
 
     [[nodiscard]] constexpr auto require(asio::execution::outstanding_work_t::tracked_t) const noexcept
-        -> BasicGrpcExecutor<Allocator, detail::set_outstanding_work_tracked(Options, true)>
+        -> agrpc::BasicGrpcExecutor<Allocator, detail::set_outstanding_work_tracked(Options, true)>
     {
         return {this->context(), this->allocator()};
     }
 
     [[nodiscard]] constexpr auto require(asio::execution::outstanding_work_t::untracked_t) const noexcept
-        -> BasicGrpcExecutor<Allocator, detail::set_outstanding_work_tracked(Options, false)>
+        -> agrpc::BasicGrpcExecutor<Allocator, detail::set_outstanding_work_tracked(Options, false)>
     {
         return {this->context(), this->allocator()};
     }
 
     template <class OtherAllocator>
     [[nodiscard]] constexpr auto require(asio::execution::allocator_t<OtherAllocator> other_allocator) const noexcept
-        -> BasicGrpcExecutor<OtherAllocator, Options>
+        -> agrpc::BasicGrpcExecutor<OtherAllocator, Options>
     {
         return {this->context(), other_allocator.value()};
     }
 
     [[nodiscard]] constexpr auto require(asio::execution::allocator_t<void>) const noexcept
-        -> BasicGrpcExecutor<std::allocator<void>, Options>
+        -> agrpc::BasicGrpcExecutor<std::allocator<void>, Options>
     {
         return {this->context()};
     }

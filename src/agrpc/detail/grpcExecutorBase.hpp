@@ -27,14 +27,12 @@ template <class Allocator>
 class GrpcExecutorBase
 {
   public:
-    using allocator_type = Allocator;
-
     void on_work_started() const noexcept { this->grpc_context()->work_started(); }
 
     void on_work_finished() const noexcept { this->grpc_context()->work_finished(); }
 
   protected:
-    constexpr GrpcExecutorBase(agrpc::GrpcContext* grpc_context, allocator_type allocator) noexcept
+    constexpr GrpcExecutorBase(agrpc::GrpcContext* grpc_context, Allocator allocator) noexcept
         : impl(grpc_context, std::move(allocator))
     {
     }
@@ -48,7 +46,7 @@ class GrpcExecutorBase
     constexpr decltype(auto) allocator() const noexcept { return impl.second(); }
 
   private:
-    detail::CompressedPair<agrpc::GrpcContext*, allocator_type> impl;
+    detail::CompressedPair<agrpc::GrpcContext*, Allocator> impl;
 };
 
 template <class Allocator>
