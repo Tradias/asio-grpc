@@ -88,6 +88,8 @@ TEST_CASE("Work tracking GrpcExecutor constructor and assignment")
     auto ex3{std::move(ex)};
     ex2 = ex1;
     ex2 = std::move(ex3);
+    auto ex2a = asio::require(ex2, asio::execution::allocator);
+    CHECK_EQ(std::allocator<void>{}, asio::query(ex2a, asio::execution::allocator));
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wait")

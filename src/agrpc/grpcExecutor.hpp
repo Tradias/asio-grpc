@@ -21,7 +21,6 @@
 #include "agrpc/detail/grpcExecutorOptions.hpp"
 #include "agrpc/detail/memory.hpp"
 #include "agrpc/detail/memoryResource.hpp"
-#include "agrpc/detail/operation.hpp"
 #include "agrpc/grpcContext.hpp"
 
 #include <boost/asio/execution/allocator.hpp>
@@ -59,7 +58,7 @@ class BasicGrpcExecutor
     {
     }
 
-    [[nodiscard]] constexpr auto& context() const noexcept { return *this->grpc_context(); }
+    [[nodiscard]] constexpr agrpc::GrpcContext& context() const noexcept { return *this->grpc_context(); }
 
     [[nodiscard]] constexpr allocator_type get_allocator() const
         noexcept(std::is_nothrow_copy_constructible_v<allocator_type>)
@@ -69,16 +68,16 @@ class BasicGrpcExecutor
 
     template <class OtherAllocator, std::uint32_t OtherOptions>
     [[nodiscard]] constexpr bool operator==(
-        const agrpc::BasicGrpcExecutor<OtherAllocator, OtherOptions>& rhs) const noexcept
+        const agrpc::BasicGrpcExecutor<OtherAllocator, OtherOptions>& other) const noexcept
     {
-        return this->grpc_context() == rhs.grpc_context() && this->allocator() == rhs.allocator();
+        return this->grpc_context() == other.grpc_context() && this->allocator() == other.allocator();
     }
 
     template <class OtherAllocator, std::uint32_t OtherOptions>
     [[nodiscard]] constexpr bool operator!=(
-        const agrpc::BasicGrpcExecutor<OtherAllocator, OtherOptions>& rhs) const noexcept
+        const agrpc::BasicGrpcExecutor<OtherAllocator, OtherOptions>& other) const noexcept
     {
-        return !(*this == rhs);
+        return !(*this == other);
     }
 
     [[nodiscard]] bool running_in_this_thread() const noexcept
@@ -157,10 +156,10 @@ class BasicGrpcExecutor
     [[nodiscard]] constexpr auto require(asio::execution::allocator_t<void>) const noexcept
         -> agrpc::BasicGrpcExecutor<std::allocator<void>, Options>
     {
-        return {this->context()};
+        return agrpc::BasicGrpcExecutor<std::allocator<void>, Options>{this->context()};
     }
 
-    [[nodiscard]] static constexpr auto query(asio::execution::blocking_t) noexcept
+    [[nodiscard]] static constexpr asio::execution::blocking_t query(asio::execution::blocking_t) noexcept
     {
         if constexpr (detail::is_blocking_never(Options))
         {
@@ -172,14 +171,17 @@ class BasicGrpcExecutor
         }
     }
 
-    [[nodiscard]] static constexpr auto query(asio::execution::mapping_t) noexcept
+    [[nodiscard]] static constexpr asio::execution::mapping_t query(asio::execution::mapping_t) noexcept
     {
         return asio::execution::mapping_t::thread;
     }
 
-    [[nodiscard]] constexpr auto& query(asio::execution::context_t) const noexcept { return this->context(); }
+    [[nodiscard]] constexpr agrpc::GrpcContext& query(asio::execution::context_t) const noexcept
+    {
+        return this->context();
+    }
 
-    [[nodiscard]] static constexpr auto query(asio::execution::relationship_t) noexcept
+    [[nodiscard]] static constexpr asio::execution::relationship_t query(asio::execution::relationship_t) noexcept
     {
         if constexpr (detail::is_relationship_continuation(Options))
         {
@@ -191,7 +193,8 @@ class BasicGrpcExecutor
         }
     }
 
-    [[nodiscard]] static constexpr auto query(asio::execution::outstanding_work_t) noexcept
+    [[nodiscard]] static constexpr asio::execution::outstanding_work_t query(
+        asio::execution::outstanding_work_t) noexcept
     {
         if constexpr (detail::is_outstanding_work_tracked(Options))
         {
@@ -204,9 +207,9 @@ class BasicGrpcExecutor
     }
 
     template <class OtherAllocator>
-    [[nodiscard]] constexpr auto query(asio::execution::allocator_t<OtherAllocator>) const noexcept
+    [[nodiscard]] constexpr allocator_type query(asio::execution::allocator_t<OtherAllocator>) const noexcept
     {
-        return this->get_allocator();
+        return this->allocator();
     }
 };
 
