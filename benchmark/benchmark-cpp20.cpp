@@ -126,7 +126,7 @@ int main()
     builder.RegisterService(&service);
     server = builder.BuildAndStart();
 
-    std::vector<std::jthread> threads;
+    std::vector<std::thread> threads;
     for (size_t i = 0; i < cpu_count; ++i)
     {
         threads.emplace_back(
@@ -140,4 +140,8 @@ int main()
     }
 
     server->Shutdown();
+    for (auto&& thread : threads)
+    {
+        thread.join();
+    }
 }
