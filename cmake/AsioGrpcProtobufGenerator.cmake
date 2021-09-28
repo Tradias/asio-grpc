@@ -68,7 +68,6 @@ function(asio_grpc_protobuf_generate)
         get_filename_component(_abs_dir ${_abs_file} DIRECTORY)
         get_filename_component(_proto_dir ${_abs_dir} NAME)
         set(_out_dir "${asio_grpc_protobuf_generate_PROTOC_OUT_DIR}/${_proto_dir}")
-        file(MAKE_DIRECTORY ${_out_dir})
 
         set(_generated_srcs)
         foreach(_ext ${GENERATED_EXTENSIONS})
