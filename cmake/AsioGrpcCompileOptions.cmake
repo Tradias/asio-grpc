@@ -27,6 +27,10 @@ target_compile_options(
               -Wextra
               -pedantic-errors>)
 
+if(CMAKE_GENERATOR STRGREATER_EQUAL "Visual Studio")
+    target_compile_options(asio-grpc-common-compile-options INTERFACE /MP)
+endif()
+
 target_compile_definitions(
     asio-grpc-common-compile-options
     INTERFACE $<$<CXX_COMPILER_ID:MSVC>:
