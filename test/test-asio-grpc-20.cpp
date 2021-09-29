@@ -142,14 +142,12 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable client streaming")
                        grpc::ServerAsyncReader<test::v1::Response, test::v1::Request> reader{&server_context};
                        CHECK(co_await agrpc::request(&test::v1::Test::AsyncService::RequestClientStreaming, service,
                                                      server_context, reader));
-                       std::cerr << "post server request";
                        test::v1::Request request;
                        CHECK(co_await agrpc::read(reader, request));
                        CHECK_EQ(42, request.integer());
                        test::v1::Response response;
                        response.set_integer(21);
                        CHECK(co_await agrpc::finish(reader, response, grpc::Status::OK));
-                       std::cerr << "post server finish";
                    });
     test::co_spawn(grpc_context,
                    [&]() -> asio::awaitable<void>
@@ -158,7 +156,6 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable client streaming")
                        std::unique_ptr<grpc::ClientAsyncWriter<test::v1::Request>> writer;
                        CHECK(co_await agrpc::request(&test::v1::Test::Stub::AsyncClientStreaming, *stub, client_context,
                                                      writer, response));
-                       std::cerr << "post client request";
                        CHECK(std::is_same_v<std::pair<decltype(writer), bool>,
                                             decltype(agrpc::request(&test::v1::Test::Stub::AsyncClientStreaming, *stub,
                                                                     client_context, response))::value_type>);
@@ -169,10 +166,8 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable client streaming")
                        CHECK(co_await agrpc::finish(*writer, status));
                        CHECK(status.ok());
                        CHECK_EQ(21, response.integer());
-                       std::cerr << "post client finish";
                    });
     grpc_context.run();
-    std::cerr << "end of test";
 }
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable unary")

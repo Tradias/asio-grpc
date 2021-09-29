@@ -78,7 +78,7 @@ Tested by CI:
  * Boost 1.77 (min. 1.74)
  * MSVC VS 2019 16.11
  * GCC 10.3
- * AppleClang 12.0.0
+ * AppleClang 12.0.5.12050022
  * C++17 or C++20
 
 For MSVC compilers the following compile definitions might need to be set:
