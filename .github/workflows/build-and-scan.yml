@@ -61,9 +61,9 @@ jobs:
       run: cmake --build ${{ github.workspace }}/build --config ${{env.BUILD_TYPE}} --parallel 2
 
     - name: Coverage
-      run:
-        - ${{ github.workspace }}/build/test/asio-grpc-test-cpp20
-        - cmake --build ${{ github.workspace }}/build --config ${{env.BUILD_TYPE}} --target asio-grpc-test-cpp20-coverage
+      run: |
+        ${{ github.workspace }}/build/test/asio-grpc-test-cpp20 &&\
+        cmake --build ${{ github.workspace }}/build --config ${{env.BUILD_TYPE}} --target asio-grpc-test-cpp20-coverage
 
     - name: Test
       working-directory: ${{ github.workspace }}/build
