@@ -60,12 +60,14 @@ jobs:
     - name: Build
       run: cmake --build ${{ github.workspace }}/build --config ${{env.BUILD_TYPE}} --parallel 2
 
+    - name: Coverage
+      run:
+        - ${{ github.workspace }}/build/test/asio-grpc-test-cpp20
+        - cmake --build ${{ github.workspace }}/build --config ${{env.BUILD_TYPE}} --target asio-grpc-test-cpp20-coverage
+
     - name: Test
       working-directory: ${{ github.workspace }}/build
       run: ctest -C ${{env.BUILD_TYPE}} -T test -j 2 --output-on-failure --timeout 200
-
-    - name: Coverage
-      run: cmake --build ${{ github.workspace }}/build --config ${{env.BUILD_TYPE}} --target asio-grpc-test-cpp20-coverage
 
     - name: Download sonar-scanner
       uses: warchant/setup-sonar-scanner@v3

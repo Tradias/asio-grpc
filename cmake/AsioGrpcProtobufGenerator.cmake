@@ -68,6 +68,7 @@ function(asio_grpc_protobuf_generate)
         get_filename_component(_abs_dir ${_abs_file} DIRECTORY)
         get_filename_component(_proto_dir ${_abs_dir} NAME)
         set(_out_dir "${asio_grpc_protobuf_generate_PROTOC_OUT_DIR}/${_proto_dir}")
+        file(MAKE_DIRECTORY ${_out_dir})
 
         set(_generated_srcs)
         foreach(_ext ${GENERATED_EXTENSIONS})
@@ -85,7 +86,6 @@ function(asio_grpc_protobuf_generate)
         string(REPLACE ";" " " _pretty_command_arguments "${_command_arguments}")
         add_custom_command(
             OUTPUT ${_generated_srcs}
-            COMMAND ${CMAKE_COMMAND} "-E" "make_directory" "${_out_dir}"
             COMMAND protobuf::protoc ${_command_arguments}
             MAIN_DEPENDENCY "${_abs_file}"
             DEPENDS protobuf::protoc

@@ -31,25 +31,18 @@ jobs:
             os: windows-2019,
             config: Release,
             triplet: x64-windows,
-            use-boost-container: off,
-            cmake-extra-args: "-GNinja",
-            pre-vcpkg-step: "choco install ninja",
+            cmake-extra-args: "",
           }
           - {
             name: "MacOSX/11/x64/Release",
             os: macos-11,
             config: Release,
             triplet: x64-osx,
-            use-boost-container: on,
-            cmake-extra-args: "-DCMAKE_CXX_COMPILER=$(brew --prefix llvm)/bin/clang",
-            pre-vcpkg-step: "echo 'nothing to install for MacOS'",
+            cmake-extra-args: "-DCMAKE_CXX_COMPILER=$(brew --prefix llvm)/bin/clang -DASIO_GRPC_USE_BOOST_CONTAINER=on",
           }
 
     steps:
     - uses: actions/checkout@v2
-
-    - name: Install
-      run: ${{ matrix.config.pre-vcpkg-step }}
 
     - name: Install vcpkg
       uses: lukka/run-vcpkg@v7
@@ -60,7 +53,7 @@ jobs:
         vcpkgTriplet: ${{ matrix.config.triplet }}
 
     - name: Configure CMake
-      run: cmake -B ${{ github.workspace }}/build ${{ matrix.config.cmake-extra-args }} "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DASIO_GRPC_BUILD_BENCHMARK=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on -DASIO_GRPC_USE_BOOST_CONTAINER=${{ matrix.config.use-boost-container }}
+      run: cmake -B ${{ github.workspace }}/build ${{ matrix.config.cmake-extra-args }} "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DASIO_GRPC_BUILD_BENCHMARK=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
 
     - name: Build
       run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.config.config }} --parallel 2
