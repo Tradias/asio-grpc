@@ -72,12 +72,13 @@ grpc_context.run();
 
 # Requirements
 
-Tested:
+Tested by CI:
 
  * gRPC 1.37
- * Boost 1.74
+ * Boost 1.77 (min. 1.74)
  * MSVC VS 2019 16.11
  * GCC 10.3
+ * AppleClang 12.0.1
  * C++17 or C++20
 
 For MSVC compilers the following compile definitions might need to be set:
@@ -125,6 +126,10 @@ Locate it and link it to your target.
 find_package(asio-grpc)
 target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
 ```
+
+## CMake Options
+
+`ASIO_GRPC_USE_BOOST_CONTAINER` - Use Boost.Container instead of `<memory_resource>`.
 
 # Performance
 
