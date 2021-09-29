@@ -44,7 +44,8 @@ constexpr decltype(auto) invoke_front_impl(F&& f, std::tuple<Args...>&& args, st
     }
     else if constexpr (sizeof...(I) > 1)
     {
-        return invoke_front_impl(std::forward<F>(f), std::move(args), std::make_index_sequence<sizeof...(I) - 1>());
+        return detail::invoke_front_impl(std::forward<F>(f), std::move(args),
+                                         std::make_index_sequence<sizeof...(I) - 1>());
     }
     else
     {
@@ -55,8 +56,8 @@ constexpr decltype(auto) invoke_front_impl(F&& f, std::tuple<Args...>&& args, st
 template <class F, class... Args>
 constexpr decltype(auto) invoke_front(F&& f, Args&&... args)
 {
-    return invoke_front_impl(std::forward<F>(f), std::forward_as_tuple(std::forward<Args>(args)...),
-                             std::make_index_sequence<sizeof...(Args)>());
+    return detail::invoke_front_impl(std::forward<F>(f), std::forward_as_tuple(std::forward<Args>(args)...),
+                                     std::make_index_sequence<sizeof...(Args)>());
 }
 }  // namespace agrpc::detail
 

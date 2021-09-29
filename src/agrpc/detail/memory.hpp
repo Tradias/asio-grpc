@@ -103,6 +103,11 @@ struct AllocationGuard
     allocator_type allocator;
     bool is_allocated{true};
 
+    constexpr AllocationGuard(typename Traits::pointer ptr, allocator_type allocator) noexcept
+        : ptr(ptr), allocator(std::move(allocator))
+    {
+    }
+
     AllocationGuard(const AllocationGuard&) = delete;
     AllocationGuard(AllocationGuard&&) = delete;
     AllocationGuard& operator=(const AllocationGuard&) = delete;
@@ -112,7 +117,7 @@ struct AllocationGuard
     {
         if (this->is_allocated)
         {
-            Traits::deallocate(allocator, ptr, 1);
+            Traits::deallocate(this->allocator, this->ptr, 1);
         }
     }
 
