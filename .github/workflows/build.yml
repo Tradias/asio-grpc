@@ -33,18 +33,23 @@ jobs:
             triplet: x64-windows,
             use-boost-container: off,
             cmake-extra-args: "-GNinja",
+            pre-vcpkg-step: "choco install ninja",
           }
           - {
-            name: "MacOSX/10.15/x64/Release",
-            os: macos-10.15,
+            name: "MacOSX/11/x64/Release",
+            os: macos-11,
             config: Release,
             triplet: x64-osx,
             use-boost-container: on,
-            cmake-extra-args: "$(brew --prefix llvm)/bin/clang"
+            cmake-extra-args: "-DCMAKE_CXX_COMPILER=$(brew --prefix llvm)/bin/clang",
+            pre-vcpkg-step: "echo 'nothing to install for MacOS'",
           }
 
     steps:
     - uses: actions/checkout@v2
+
+    - name: Install
+      run: ${{ matrix.config.pre-vcpkg-step }}
 
     - name: Install vcpkg
       uses: lukka/run-vcpkg@v7
