@@ -38,7 +38,7 @@ jobs:
             os: macos-11,
             config: Release,
             triplet: x64-osx,
-            cmake-extra-args: "-DCMAKE_CXX_COMPILER=$(brew --prefix llvm)/bin/clang -DASIO_GRPC_USE_BOOST_CONTAINER=on",
+            cmake-extra-args: "-DASIO_GRPC_USE_BOOST_CONTAINER=on",
           }
 
     steps:
