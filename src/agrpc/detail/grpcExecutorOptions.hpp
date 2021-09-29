@@ -28,12 +28,12 @@ struct GrpcExecutorOptions
     static constexpr std::uint32_t DEFAULT = BLOCKING_NEVER;
 };
 
-constexpr bool is_blocking_never(std::uint32_t options) noexcept
+[[nodiscard]] constexpr bool is_blocking_never(std::uint32_t options) noexcept
 {
     return (options & detail::GrpcExecutorOptions::BLOCKING_NEVER) != 0u;
 }
 
-constexpr std::uint32_t set_blocking_never(std::uint32_t options, bool value) noexcept
+[[nodiscard]] constexpr std::uint32_t set_blocking_never(std::uint32_t options, bool value) noexcept
 {
     if (value)
     {
@@ -46,12 +46,12 @@ constexpr std::uint32_t set_blocking_never(std::uint32_t options, bool value) no
     return options;
 }
 
-constexpr bool is_relationship_continuation(std::uint32_t options) noexcept
+[[nodiscard]] constexpr bool is_relationship_continuation(std::uint32_t options) noexcept
 {
     return (options & detail::GrpcExecutorOptions::RELATIONSHIP_CONTINUATION) != 0u;
 }
 
-constexpr std::uint32_t set_relationship_continuation(std::uint32_t options, bool value) noexcept
+[[nodiscard]] constexpr std::uint32_t set_relationship_continuation(std::uint32_t options, bool value) noexcept
 {
     if (value)
     {
@@ -64,12 +64,12 @@ constexpr std::uint32_t set_relationship_continuation(std::uint32_t options, boo
     return options;
 }
 
-constexpr bool is_outstanding_work_tracked(std::uint32_t options) noexcept
+[[nodiscard]] constexpr bool is_outstanding_work_tracked(std::uint32_t options) noexcept
 {
     return (options & detail::GrpcExecutorOptions::OUTSTANDING_WORK_TRACKED) != 0u;
 }
 
-constexpr std::uint32_t set_outstanding_work_tracked(std::uint32_t options, bool value) noexcept
+[[nodiscard]] constexpr std::uint32_t set_outstanding_work_tracked(std::uint32_t options, bool value) noexcept
 {
     if (value)
     {

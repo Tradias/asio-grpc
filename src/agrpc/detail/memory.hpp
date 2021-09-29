@@ -103,6 +103,11 @@ struct AllocationGuard
     allocator_type allocator;
     bool is_allocated{true};
 
+    AllocationGuard(const AllocationGuard&) = delete;
+    AllocationGuard(AllocationGuard&&) = delete;
+    AllocationGuard& operator=(const AllocationGuard&) = delete;
+    AllocationGuard& operator=(AllocationGuard&&) = delete;
+
     ~AllocationGuard() noexcept
     {
         if (this->is_allocated)

@@ -106,7 +106,7 @@ inline void GrpcContext::run()
     detail::GrpcContextThreadContext thread_context;
     this->thread_id.store(std::this_thread::get_id(), std::memory_order_relaxed);
     detail::run_event_loop(*this,
-                           [&]()
+                           [this]()
                            {
                                return !this->is_stopped();
                            });
