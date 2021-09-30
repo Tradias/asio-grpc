@@ -185,7 +185,7 @@ For servers and clients:
 grpc::ServerBuilder builder;
 agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
 ```
-<sup><a href='/example/example-server.cpp#L135-L138' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/example-server.cpp#L188-L191' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 For clients only:
@@ -207,7 +207,7 @@ grpc_context.run();
 server->Shutdown();
 }  // grpc_context is destructed here before the server
 ```
-<sup><a href='/example/example-server.cpp#L151-L155' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/example-server.cpp#L204-L208' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 It might also be helpful to create a work guard before running the `agrpc::GrpcContext` to prevent `grpc_context.run()` from returning early.
@@ -543,3 +543,70 @@ bool finish_ok = agrpc::finish(*reader_writer, status, yield);
 <!-- endSnippet -->
 
 For the meaning of `read_metadata_ok`, `write_ok`, `writes_done_ok`, `read_ok` and `finish_ok` see [CompletionQueue::Next](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html#a86d9810ced694e50f7987ac90b9f8c1a).
+
+## Repeatedly request server-side
+
+(**experimental**) The function `agrpc::repeatedly_request` helps to ensure that there are enough outstanding calls to `request` to match incoming RPCs. 
+It takes the RPC, the Service and a copyable Handler as arguments and returns immediately. The Handler determines what to do with a client request, like spawning a new coroutine to process it. 
+The first argument passed to the Handler is a `agrpc::RPCRequestContext` - a move-only type that provides access to the `grpc::ServerContext`, the request (if any) 
+and the responder that were used when requesting the call. The second argument is the result of the request - `true` indicates that the RPC has indeed been started. If the result is `false`, the server has been shutdown before this particular call got matched to an incoming RPC ([source](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html#a86d9810ced694e50f7987ac90b9f8c1a)).
+
+The following example shows how to implement a generic Handler that spawns a new Boost.Coroutine for each incoming RPC and invokes 
+the provided handler to process it.
+
+<!-- snippet: repeatedly-request-spawner -->
+<a id='snippet-repeatedly-request-spawner'></a>
+```cpp
+template <class Handler>
+struct Spawner
+{
+    using executor_type = boost::asio::associated_executor_t<Handler>;
+    using allocator_type = boost::asio::associated_allocator_t<Handler>;
+
+    Handler handler;
+
+    explicit Spawner(Handler handler) : handler(std::move(handler)) {}
+
+    template <class T>
+    void operator()(agrpc::RPCRequestContext<T>&& request_context, bool request_ok) &&
+    {
+        if (!request_ok)
+        {
+            return;
+        }
+        auto executor = this->get_executor();
+        boost::asio::spawn(
+            std::move(executor),
+            [handler = std::move(handler),
+             request_context = std::move(request_context)](const boost::asio::yield_context& yield) mutable
+            {
+                std::apply(std::move(handler), std::tuple_cat(request_context.args(), std::forward_as_tuple(yield)));
+                // or
+                std::invoke(std::move(request_context), std::move(handler), yield);
+            });
+    }
+
+    [[nodiscard]] executor_type get_executor() const noexcept { return boost::asio::get_associated_executor(handler); }
+
+    [[nodiscard]] allocator_type get_allocator() const noexcept
+    {
+        return boost::asio::get_associated_allocator(handler);
+    }
+};
+
+void repeatedly_request_example(example::v1::Example::AsyncService& service, agrpc::GrpcContext& grpc_context)
+{
+    agrpc::repeatedly_request(
+        &example::v1::Example::AsyncService::RequestUnary, service,
+        Spawner{boost::asio::bind_executor(
+            grpc_context.get_executor(),
+            [&](grpc::ServerContext&, example::v1::Request&,
+                grpc::ServerAsyncResponseWriter<example::v1::Response>& writer, const boost::asio::yield_context& yield)
+            {
+                example::v1::Response response;
+                agrpc::finish(writer, response, grpc::Status::OK, yield);
+            })});
+}
+```
+<sup><a href='/example/example-server.cpp#L130-L181' title='Snippet source file'>snippet source</a> | <a href='#snippet-repeatedly-request-spawner' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->

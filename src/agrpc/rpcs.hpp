@@ -24,6 +24,29 @@
 
 namespace agrpc
 {
+template <class RPCContextImplementationAllocator>
+class RPCRequestContext
+{
+  public:
+    template <class Handler, class... Args>
+    constexpr decltype(auto) operator()(Handler&& handler, Args&&... args) const
+    {
+        return (*impl)(std::forward<Handler>(handler), std::forward<Args>(args)...);
+    }
+
+    constexpr auto args() const noexcept { return impl->args(); }
+
+  private:
+    friend detail::RPCContextImplementation;
+
+    detail::AllocatedPointer<RPCContextImplementationAllocator> impl;
+
+    constexpr explicit RPCRequestContext(detail::AllocatedPointer<RPCContextImplementationAllocator>&& impl) noexcept
+        : impl(std::move(impl))
+    {
+    }
+};
+
 template <class Deadline, class CompletionToken = agrpc::DefaultCompletionToken>
 auto wait(grpc::Alarm& alarm, const Deadline& deadline, CompletionToken token = {})
 {
@@ -71,15 +94,15 @@ auto request(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& servic
 }
 
 template <class RPC, class Service, class Request, class Responder, class Handler>
-auto repeatedly_request(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service, Handler handler)
+void repeatedly_request(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service, Handler handler)
 {
-    return detail::repeatedly_request(rpc, service, std::move(handler));
+    detail::repeatedly_request(rpc, service, std::move(handler));
 }
 
 template <class RPC, class Service, class Responder, class Handler>
-auto repeatedly_request(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service, Handler handler)
+void repeatedly_request(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service, Handler handler)
 {
-    return detail::repeatedly_request(rpc, service, std::move(handler));
+    detail::repeatedly_request(rpc, service, std::move(handler));
 }
 
 template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>

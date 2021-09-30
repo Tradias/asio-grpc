@@ -81,37 +81,53 @@ template <class RPC, class Service, class Responder, class CompletionToken = agr
 auto request(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service, grpc::ServerContext& server_context,
              Responder& responder, CompletionToken token = {});
 
+template <class RPCContextImplementationAllocator>
+class RPCRequestContext;
+
 namespace detail
 {
-struct RPCHandlerBase
+struct RPCContextImplementation
+{
+    template <class RPCContextImplementationAllocator>
+    static constexpr auto create(detail::AllocatedPointer<RPCContextImplementationAllocator>&& impl) noexcept
+    {
+        return agrpc::RPCRequestContext{std::move(impl)};
+    }
+};
+
+struct RPCContextBase
 {
     grpc::ServerContext context{};
 };
 
 template <class Request, class Responder>
-struct MultiArgRPCHandler : detail::RPCHandlerBase
+struct MultiArgRPCContext : detail::RPCContextBase
 {
     Responder responder{&this->context};
     Request request{};
 
     template <class Handler, class... Args>
-    decltype(auto) operator()(Handler&& handler, Args&&... args)
+    constexpr decltype(auto) operator()(Handler&& handler, Args&&... args)
     {
         return std::invoke(std::forward<Handler>(handler), this->context, this->request, std::move(this->responder),
                            std::forward<Args>(args)...);
     }
+
+    constexpr auto args() noexcept { return std::forward_as_tuple(this->context, this->request, this->responder); }
 };
 
 template <class Responder>
-struct SingleArgRPCHandler : detail::RPCHandlerBase
+struct SingleArgRPCContext : detail::RPCContextBase
 {
     Responder responder{&this->context};
 
     template <class Handler, class... Args>
-    decltype(auto) operator()(Handler&& handler, Args&&... args)
+    constexpr decltype(auto) operator()(Handler&& handler, Args&&... args)
     {
         return std::invoke(std::forward<Handler>(handler), this->context, this->responder, std::forward<Args>(args)...);
     }
+
+    constexpr auto args() noexcept { return std::forward_as_tuple(this->context, this->responder); }
 };
 
 template <class RPC, class Service, class RPCHandlerAllocator, class Handler>
@@ -142,7 +158,7 @@ template <class RPC, class Service, class Request, class Responder, class Handle
 void repeatedly_request(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service, Handler handler)
 {
     const auto [executor, allocator] = detail::get_associated_executor_and_allocator(handler);
-    auto rpc_handler = detail::allocate<detail::MultiArgRPCHandler<Request, Responder>>(allocator);
+    auto rpc_handler = detail::allocate<detail::MultiArgRPCContext<Request, Responder>>(allocator);
     auto& context = rpc_handler->context;
     auto& request = rpc_handler->request;
     auto& responder = rpc_handler->responder;
@@ -154,29 +170,12 @@ template <class RPC, class Service, class Responder, class Handler>
 void repeatedly_request(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service, Handler handler)
 {
     const auto [executor, allocator] = detail::get_associated_executor_and_allocator(handler);
-    auto rpc_handler = detail::allocate<detail::SingleArgRPCHandler<Responder>>(allocator);
+    auto rpc_handler = detail::allocate<detail::SingleArgRPCContext<Responder>>(allocator);
     auto& context = rpc_handler->context;
     auto& responder = rpc_handler->responder;
     agrpc::request(rpc, service, context, responder,
                    detail::RequestRepeater{rpc, service, std::move(rpc_handler), std::move(handler)});
 }
-
-template <class RPCHandlerAllocator>
-struct RPCHandlerInvoker
-{
-    detail::AllocatedPointer<RPCHandlerAllocator> rpc_handler;
-
-    explicit RPCHandlerInvoker(detail::AllocatedPointer<RPCHandlerAllocator> rpc_handler)
-        : rpc_handler(std::move(rpc_handler))
-    {
-    }
-
-    template <class Handler, class... Args>
-    decltype(auto) operator()(Handler&& handler, Args&&... args)
-    {
-        return (*rpc_handler)(std::forward<Handler>(handler), std::forward<Args>(args)...);
-    }
-};
 
 template <class RPC, class Service, class RPCHandler, class Handler>
 void RequestRepeater<RPC, Service, RPCHandler, Handler>::operator()(bool ok)
@@ -186,7 +185,7 @@ void RequestRepeater<RPC, Service, RPCHandler, Handler>::operator()(bool ok)
         auto next_handler{this->handler};
         detail::repeatedly_request(this->rpc, this->service, std::move(next_handler));
     }
-    std::move(this->handler)(detail::RPCHandlerInvoker{std::move(this->rpc_handler)}, ok);
+    std::move(this->handler)(detail::RPCContextImplementation::create(std::move(this->rpc_handler)), ok);
 }
 }  // namespace detail
 }  // namespace agrpc

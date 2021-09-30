@@ -127,6 +127,59 @@ void bidirectional_streaming(example::v1::Example::AsyncService& service, boost:
     silence_unused(request_ok, send_ok, read_ok, write_and_finish_ok, write_ok, finish_ok);
 }
 
+// begin-snippet: repeatedly-request-spawner
+template <class Handler>
+struct Spawner
+{
+    using executor_type = boost::asio::associated_executor_t<Handler>;
+    using allocator_type = boost::asio::associated_allocator_t<Handler>;
+
+    Handler handler;
+
+    explicit Spawner(Handler handler) : handler(std::move(handler)) {}
+
+    template <class T>
+    void operator()(agrpc::RPCRequestContext<T>&& request_context, bool request_ok) &&
+    {
+        if (!request_ok)
+        {
+            return;
+        }
+        auto executor = this->get_executor();
+        boost::asio::spawn(
+            std::move(executor),
+            [handler = std::move(handler),
+             request_context = std::move(request_context)](const boost::asio::yield_context& yield) mutable
+            {
+                std::apply(std::move(handler), std::tuple_cat(request_context.args(), std::forward_as_tuple(yield)));
+                // or
+                std::invoke(std::move(request_context), std::move(handler), yield);
+            });
+    }
+
+    [[nodiscard]] executor_type get_executor() const noexcept { return boost::asio::get_associated_executor(handler); }
+
+    [[nodiscard]] allocator_type get_allocator() const noexcept
+    {
+        return boost::asio::get_associated_allocator(handler);
+    }
+};
+
+void repeatedly_request_example(example::v1::Example::AsyncService& service, agrpc::GrpcContext& grpc_context)
+{
+    agrpc::repeatedly_request(
+        &example::v1::Example::AsyncService::RequestUnary, service,
+        Spawner{boost::asio::bind_executor(
+            grpc_context.get_executor(),
+            [&](grpc::ServerContext&, example::v1::Request&,
+                grpc::ServerAsyncResponseWriter<example::v1::Response>& writer, const boost::asio::yield_context& yield)
+            {
+                example::v1::Response response;
+                agrpc::finish(writer, response, grpc::Status::OK, yield);
+            })});
+}
+// end-snippet
+
 int main()
 {
     std::unique_ptr<grpc::Server> server;
