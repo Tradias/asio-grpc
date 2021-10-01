@@ -65,12 +65,12 @@ struct GrpcInitiator
             }
         if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
         {
-            detail::allocate_operation_and_invoke<false, bool>(grpc_context, std::move(completion_handler),
-                                                               OnOperation{grpc_context, this->function}, allocator);
+            detail::allocate_operation_and_invoke<false, void(bool)>(
+                grpc_context, std::move(completion_handler), OnOperation{grpc_context, this->function}, allocator);
         }
         else
         {
-            detail::allocate_operation_and_invoke<false, bool, detail::GrpcContextLocalAllocator>(
+            detail::allocate_operation_and_invoke<false, void(bool), detail::GrpcContextLocalAllocator>(
                 std::move(completion_handler), OnOperation{grpc_context, this->function}, allocator);
         }
     }

@@ -23,13 +23,14 @@
 
 namespace agrpc::detail
 {
-template <bool IsIntrusivelyListable, class... Signature>
+template <bool IsIntrusivelyListable, class Signature, class... ExtraArgs>
 struct AllocateOperationAndInvoke
 {
     template <class Function, class OnOperation, class Allocator>
     void operator()(Function&& function, OnOperation&& on_operation, Allocator allocator) const
     {
-        using Operation = detail::Operation<IsIntrusivelyListable, std::decay_t<Function>, Allocator, Signature...>;
+        using Operation =
+            detail::Operation<IsIntrusivelyListable, std::decay_t<Function>, Allocator, Signature, ExtraArgs...>;
         auto ptr = detail::allocate<Operation>(allocator, std::forward<Function>(function), allocator);
         std::forward<OnOperation>(on_operation)(ptr.get());
         ptr.release();
@@ -39,7 +40,7 @@ struct AllocateOperationAndInvoke
     void operator()(const agrpc::GrpcContext&, Function&& function, OnOperation&& on_operation,
                     Allocator allocator) const
     {
-        detail::AllocateOperationAndInvoke<IsIntrusivelyListable, Signature..., detail::GrpcContextLocalAllocator>{}(
+        detail::AllocateOperationAndInvoke<IsIntrusivelyListable, Signature, detail::GrpcContextLocalAllocator>{}(
             std::forward<Function>(function), std::forward<OnOperation>(on_operation), allocator);
     }
 
@@ -47,15 +48,15 @@ struct AllocateOperationAndInvoke
     void operator()(agrpc::GrpcContext& grpc_context, Function&& function, OnOperation&& on_operation,
                     std::allocator<T>) const
     {
-        using Operation = detail::LocalOperation<IsIntrusivelyListable, std::decay_t<Function>, Signature...>;
+        using Operation = detail::LocalOperation<IsIntrusivelyListable, std::decay_t<Function>, Signature>;
         auto ptr = detail::allocate<Operation>(grpc_context.get_allocator(), std::forward<Function>(function));
         std::forward<OnOperation>(on_operation)(ptr.get());
         ptr.release();
     }
 };
 
-template <bool IsIntrusivelyListable, class... Signature>
-inline constexpr detail::AllocateOperationAndInvoke<IsIntrusivelyListable, Signature...>
+template <bool IsIntrusivelyListable, class Signature, class... ExtraArgs>
+inline constexpr detail::AllocateOperationAndInvoke<IsIntrusivelyListable, Signature, ExtraArgs...>
     allocate_operation_and_invoke{};
 
 struct AddToLocalOperations
@@ -89,8 +90,9 @@ void create_no_arg_operation(agrpc::GrpcContext& grpc_context, Function&& functi
     {
         if constexpr (IsBlockingNever)
         {
-            detail::allocate_operation_and_invoke<true>(grpc_context, std::forward<Function>(function),
-                                                        detail::AddToLocalOperations{grpc_context}, work_allocator);
+            detail::allocate_operation_and_invoke<true, void()>(grpc_context, std::forward<Function>(function),
+                                                                detail::AddToLocalOperations{grpc_context},
+                                                                work_allocator);
         }
         else
         {
@@ -101,8 +103,8 @@ void create_no_arg_operation(agrpc::GrpcContext& grpc_context, Function&& functi
     }
     else
     {
-        detail::allocate_operation_and_invoke<false>(std::forward<Function>(function),
-                                                     detail::AddToRemoteOperations{grpc_context}, work_allocator);
+        detail::allocate_operation_and_invoke<false, void()>(
+            std::forward<Function>(function), detail::AddToRemoteOperations{grpc_context}, work_allocator);
     }
 }
 }  // namespace agrpc::detail

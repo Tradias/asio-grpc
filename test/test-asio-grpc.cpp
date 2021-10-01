@@ -609,5 +609,34 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request c
     CHECK_EQ(4, request_count);
 }
 
+struct VariadicCompletionToken
+{
+    using executor_type =
+        asio::require_result<agrpc::GrpcContext::executor_type, asio::execution::outstanding_work_t::tracked_t>::type;
+
+    executor_type executor;
+
+    template <class... Args>
+    void operator()(Args&&... args)
+    {
+        bool ok{std::forward<Args>(args)...};
+        CHECK(ok);
+    }
+
+    auto get_executor() const noexcept { return executor; }
+};
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wait")
+{
+    grpc::Alarm alarm;
+    asio::post(get_executor(),
+               [&]
+               {
+                   agrpc::wait(alarm, test::ten_milliseconds_from_now(),
+                               VariadicCompletionToken{get_work_tracking_executor()});
+               });
+    grpc_context.run();
+}
+
 TEST_SUITE_END();
 }  // namespace test_asio_grpc

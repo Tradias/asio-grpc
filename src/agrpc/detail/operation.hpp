@@ -22,11 +22,15 @@
 
 namespace agrpc::detail
 {
-template <bool IsIntrusivelyListable, class Handler, class Allocator, class... Signature>
-class Operation : public detail::TypeErasedOperation<IsIntrusivelyListable, Signature...>
+template <bool IsIntrusivelyListable, class Handler, class Allocator, class Signature, class... ExtraArgs>
+class Operation;
+
+template <bool IsIntrusivelyListable, class Handler, class Allocator, class R, class... Signature, class... ExtraArgs>
+class Operation<IsIntrusivelyListable, Handler, Allocator, R(Signature...), ExtraArgs...>
+    : public detail::TypeErasedOperation<IsIntrusivelyListable, Signature..., ExtraArgs...>
 {
   private:
-    using Base = detail::TypeErasedOperation<IsIntrusivelyListable, Signature...>;
+    using Base = detail::TypeErasedOperation<IsIntrusivelyListable, Signature..., ExtraArgs...>;
 
   public:
     template <class H>
@@ -35,7 +39,7 @@ class Operation : public detail::TypeErasedOperation<IsIntrusivelyListable, Sign
     {
     }
 
-    static void do_complete(Base* op, detail::InvokeHandler invoke_handler, Signature... args)
+    static void do_complete(Base* op, detail::InvokeHandler invoke_handler, Signature... args, ExtraArgs...)
     {
         auto* self = static_cast<Operation*>(op);
         detail::RebindAllocatedPointer<Operation, Allocator> ptr{self, self->get_allocator()};
@@ -43,7 +47,7 @@ class Operation : public detail::TypeErasedOperation<IsIntrusivelyListable, Sign
         {
             auto handler{std::move(self->handler())};
             ptr.reset();
-            detail::invoke_front(std::move(handler), detail::forward_as<Signature>(args)...);
+            std::move(handler)(detail::forward_as<Signature>(args)...);
         }
     }
 
@@ -59,8 +63,11 @@ class Operation : public detail::TypeErasedOperation<IsIntrusivelyListable, Sign
     detail::CompressedPair<Handler, Allocator> impl;
 };
 
-template <bool IsIntrusivelyListable, class Handler, class... Signature>
-class LocalOperation
+template <bool IsIntrusivelyListable, class Handler, class Signature>
+class LocalOperation;
+
+template <bool IsIntrusivelyListable, class Handler, class R, class... Signature>
+class LocalOperation<IsIntrusivelyListable, Handler, R(Signature...)>
     : public detail::TypeErasedOperation<IsIntrusivelyListable, Signature..., detail::GrpcContextLocalAllocator>
 {
   private:
