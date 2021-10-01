@@ -43,7 +43,8 @@ target_compile_definitions(
               WINVER=0x0A00>
               BOOST_ASIO_NO_DEPRECATED)
 
-target_link_libraries(asio-grpc-common-compile-options INTERFACE asio-grpc Boost::disable_autolinking)
+target_link_libraries(asio-grpc-common-compile-options INTERFACE asio-grpc gRPC::grpc++ Boost::headers
+                                                                 Boost::disable_autolinking)
 
 if(ASIO_GRPC_USE_BOOST_CONTAINER)
     # No imported target for Boost::container in CMake 3.21
@@ -56,3 +57,11 @@ add_library(asio-grpc-cpp20-compile-options INTERFACE)
 target_compile_features(asio-grpc-cpp20-compile-options INTERFACE cxx_std_20)
 
 target_compile_options(asio-grpc-cpp20-compile-options INTERFACE $<$<CXX_COMPILER_ID:GNU>:-fcoroutines>)
+
+if(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS)
+    target_compile_options(asio-grpc-common-compile-options PUBLIC -fsanitize=address,undefined -fno-omit-frame-pointer)
+
+    target_link_libraries(asio-grpc-common-compile-options PUBLIC asan ubsan)
+
+    target_compile_definitions(asio-grpc-common-compile-options PUBLIC GRPC_ASAN_SUPPRESSED GRPC_TSAN_SUPPRESSED)
+endif()

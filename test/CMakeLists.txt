@@ -12,6 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# asio-grpc objects
+add_library(asio-grpc-objects OBJECT)
+
+get_target_property(ASIO_GRPC_SOURCE_FILES asio-grpc ASIO_GRPC_SOURCE_FILES)
+target_sources(asio-grpc-objects PRIVATE ${ASIO_GRPC_SOURCE_FILES})
+
+target_link_libraries(asio-grpc-objects PUBLIC asio-grpc-common-compile-options)
+
 # grpc generate
 include(AsioGrpcProtobufGenerator)
 set(ASIO_GRPC_GENERATED_PROTOS_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")

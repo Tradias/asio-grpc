@@ -547,7 +547,7 @@ For the meaning of `read_metadata_ok`, `write_ok`, `writes_done_ok`, `read_ok` a
 ## Repeatedly request server-side
 
 (**experimental**) The function `agrpc::repeatedly_request` helps to ensure that there are enough outstanding calls to `request` to match incoming RPCs. 
-It takes the RPC, the Service and a copyable Handler as arguments and returns immediately. The Handler determines what to do with a client request, like spawning a new coroutine to process it. 
+It takes the RPC, the Service and a copyable Handler as arguments and returns immediately. The Handler determines what to do with a client request, it could e.g. spawn a new coroutine to process it. 
 The first argument passed to the Handler is a `agrpc::RPCRequestContext` - a move-only type that provides access to the `grpc::ServerContext`, the request (if any) 
 and the responder that were used when requesting the call. The second argument is the result of the request - `true` indicates that the RPC has indeed been started. If the result is `false`, the server has been shutdown before this particular call got matched to an incoming RPC ([source](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html#a86d9810ced694e50f7987ac90b9f8c1a)).
 

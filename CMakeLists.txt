@@ -32,15 +32,14 @@ option(ASIO_GRPC_USE_BOOST_CONTAINER "Use Boost.Container instead of <memory_res
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
-find_package(protobuf)
-find_package(gRPC)
-find_package(Boost)
-
 add_subdirectory(src)
 
 if(ASIO_GRPC_BUILD_TESTS
    OR ASIO_GRPC_BUILD_EXAMPLES
    OR ASIO_GRPC_BUILD_BENCHMARK)
+    find_package(protobuf)
+    find_package(gRPC)
+    find_package(Boost)
     if(ASIO_GRPC_USE_BOOST_CONTAINER)
         find_package(Boost REQUIRED COMPONENTS coroutine thread container)
     else()

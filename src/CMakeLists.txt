@@ -28,6 +28,7 @@ list(
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/rpcs.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/asioForward.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/attributes.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/completionHandlerWithPayload.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/functional.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcCompletionQueueEvent.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcContext.hpp"
@@ -38,11 +39,13 @@ list(
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcExecutorOptions.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/initiate.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/memory.hpp"
+    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/memoryResource.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/operation.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/rpcs.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/typeErasedOperation.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/utility.hpp")
 set_target_properties(asio-grpc PROPERTIES ASIO_GRPC_HEADER_FILES "${ASIO_GRPC_HEADER_FILES}")
+set_target_properties(asio-grpc PROPERTIES ASIO_GRPC_SOURCE_FILES "${CMAKE_CURRENT_LIST_DIR}/asioGrpc.cpp")
 unset(ASIO_GRPC_HEADER_FILES)
 
 target_compile_features(asio-grpc INTERFACE cxx_std_17)
@@ -50,27 +53,8 @@ target_compile_features(asio-grpc INTERFACE cxx_std_17)
 target_include_directories(asio-grpc INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
                                                $<INSTALL_INTERFACE:include>)
 
-target_link_libraries(asio-grpc INTERFACE gRPC::grpc++ Boost::headers)
-
 if(ASIO_GRPC_USE_BOOST_CONTAINER)
     target_compile_definitions(asio-grpc INTERFACE AGRPC_USE_BOOST_CONTAINER)
-endif()
-
-# asio-grpc objects
-if(ASIO_GRPC_BUILD_TESTS)
-    add_library(asio-grpc-objects OBJECT)
-
-    target_sources(asio-grpc-objects PRIVATE asioGrpc.cpp)
-
-    target_link_libraries(asio-grpc-objects PUBLIC asio-grpc-common-compile-options)
-
-    if(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS)
-        target_compile_options(asio-grpc-objects PUBLIC -fsanitize=address,undefined -fno-omit-frame-pointer)
-
-        target_link_libraries(asio-grpc-objects PUBLIC asan ubsan)
-
-        target_compile_definitions(asio-grpc-objects PUBLIC GRPC_ASAN_SUPPRESSED GRPC_TSAN_SUPPRESSED)
-    endif()
 endif()
 
 # installation
