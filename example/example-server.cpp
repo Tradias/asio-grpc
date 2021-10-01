@@ -172,7 +172,7 @@ void repeatedly_request_example(example::v1::Example::AsyncService& service, agr
         Spawner{boost::asio::bind_executor(
             grpc_context.get_executor(),
             [&](grpc::ServerContext&, example::v1::Request&,
-                grpc::ServerAsyncResponseWriter<example::v1::Response>& writer, const boost::asio::yield_context& yield)
+                grpc::ServerAsyncResponseWriter<example::v1::Response> writer, const boost::asio::yield_context& yield)
             {
                 example::v1::Response response;
                 agrpc::finish(writer, response, grpc::Status::OK, yield);

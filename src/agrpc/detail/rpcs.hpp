@@ -109,7 +109,7 @@ struct MultiArgRPCContext : detail::RPCContextBase
     template <class Handler, class... Args>
     constexpr decltype(auto) operator()(Handler&& handler, Args&&... args)
     {
-        return std::invoke(std::forward<Handler>(handler), this->context, this->request, std::move(this->responder),
+        return std::invoke(std::forward<Handler>(handler), this->context, this->request, this->responder,
                            std::forward<Args>(args)...);
     }
 
