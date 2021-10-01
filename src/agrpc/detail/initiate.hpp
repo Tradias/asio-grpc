@@ -38,18 +38,6 @@ struct GrpcInitiator
     using executor_type = asio::associated_executor_t<Function>;
     using allocator_type = asio::associated_allocator_t<Function>;
 
-    struct OnOperation
-    {
-        agrpc::GrpcContext& grpc_context;
-        Function& function;
-
-        template <class Operation>
-        void operator()(Operation* op) &&
-        {
-            std::move(this->function)(this->grpc_context, op);
-        }
-    };
-
     Function function;
 
     explicit GrpcInitiator(Function function) : function(std::move(function)) {}
@@ -65,13 +53,17 @@ struct GrpcInitiator
             }
         if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
         {
-            detail::allocate_operation_and_invoke<false, void(bool)>(
-                grpc_context, std::move(completion_handler), OnOperation{grpc_context, this->function}, allocator);
+            auto op =
+                detail::allocate_operation<false, void(bool)>(grpc_context, std::move(completion_handler), allocator);
+            std::move(this->function)(grpc_context, op.get());
+            op.release();
         }
         else
         {
-            detail::allocate_operation_and_invoke<false, void(bool), detail::GrpcContextLocalAllocator>(
-                std::move(completion_handler), OnOperation{grpc_context, this->function}, allocator);
+            auto op = detail::allocate_operation<false, void(bool), detail::GrpcContextLocalAllocator>(
+                std::move(completion_handler), allocator);
+            std::move(this->function)(grpc_context, op.get());
+            op.release();
         }
     }
 
