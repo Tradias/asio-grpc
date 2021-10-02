@@ -61,7 +61,7 @@ jobs:
         vcpkgTriplet: ${{ matrix.config.triplet }}
 
     - name: Configure CMake
-      run: cmake -B ${{ github.workspace }}/build ${{ matrix.config.cmake-extra-args }} "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DASIO_GRPC_BUILD_BENCHMARK=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
+      run: cmake -B ${{ github.workspace }}/build ${{ matrix.config.cmake-extra-args }} "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
 
     - name: Build
       run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.config.config }} --parallel ${{ matrix.config.parallel }}
@@ -110,7 +110,6 @@ jobs:
           -DASIO_GRPC_BUILD_TESTS=on \
           -DASIO_GRPC_DISCOVER_TESTS=on \
           -DASIO_GRPC_BUILD_EXAMPLES=on \
-          -DASIO_GRPC_BUILD_BENCHMARK=on \
           -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on \
           -DASIO_GRPC_TEST_COVERAGE=on \
           -DASIO_GRPC_GCOV_PROGRAM=/usr/bin/gcov-11 \
@@ -124,10 +123,7 @@ jobs:
       run: ctest -C Debug -T test -j 2 --output-on-failure --timeout 200
 
     - name: Coverage
-      working-directory: /
-      run: |
-        cmake --build ${{ github.workspace }}/build --config Debug --target asio-grpc-test-cpp20-coverage &&\
-        mv *.gcov ${{ github.workspace }}/build
+      run: cmake --build ${{ github.workspace }}/build --config Debug --target asio-grpc-test-cpp20-coverage
 
     - name: Download sonar-scanner
       uses: warchant/setup-sonar-scanner@v3

@@ -24,10 +24,11 @@ project(
 option(ASIO_GRPC_INSTALL "Create the install target" on)
 option(ASIO_GRPC_BUILD_TESTS "Build tests" off)
 option(ASIO_GRPC_BUILD_EXAMPLES "Build examples" off)
-option(ASIO_GRPC_BUILD_BENCHMARK "Build benchmark" off)
 option(ASIO_GRPC_DISCOVER_TESTS "Discover tests for ctest" off)
 option(ASIO_GRPC_TEST_COVERAGE "Compile tests with --coverage (GCC only)" off)
-set(ASIO_GRPC_COVERAGE_WORKING_DIR "${CMAKE_BINARY_DIR}" CACHE PATH "Working directory when running gcov")
+set(ASIO_GRPC_COVERAGE_WORKING_DIR
+    "${CMAKE_BINARY_DIR}"
+    CACHE PATH "Working directory when running gcov")
 option(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS "Compile tests with -fsanitize=address,undefined" off)
 option(ASIO_GRPC_USE_BOOST_CONTAINER "Use Boost.Container instead of <memory_resource>" off)
 
@@ -35,9 +36,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
 add_subdirectory(src)
 
-if(ASIO_GRPC_BUILD_TESTS
-   OR ASIO_GRPC_BUILD_EXAMPLES
-   OR ASIO_GRPC_BUILD_BENCHMARK)
+if(ASIO_GRPC_BUILD_TESTS OR ASIO_GRPC_BUILD_EXAMPLES)
     find_package(protobuf)
     find_package(gRPC)
     find_package(Boost)
@@ -59,8 +58,4 @@ endif()
 
 if(ASIO_GRPC_BUILD_EXAMPLES)
     add_subdirectory(example)
-endif()
-
-if(ASIO_GRPC_BUILD_BENCHMARK)
-    add_subdirectory(benchmark)
 endif()
