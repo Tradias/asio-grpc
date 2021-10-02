@@ -63,12 +63,22 @@ jobs:
     - name: Configure CMake
       run: cmake -B ${{ github.workspace }}/build ${{ matrix.config.cmake-extra-args }} "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
 
+    - if: matrix.os == 'macos-11' 
+      name: Initialize CodeQL
+      uses: github/codeql-action/init@v1
+      with:
+        languages: "cpp"
+
     - name: Build
       run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.config.config }} --parallel ${{ matrix.config.parallel }}
 
     - name: Test
       working-directory: ${{ github.workspace }}/build
       run: ctest -C ${{ matrix.config.config }} -T test -j 2 --output-on-failure --timeout 200
+
+    - if: matrix.os == 'macos-11' 
+      name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v1
 
   build-and-scan:
     name: Ubuntu/20.04/GCC-10.3.0/Debug
@@ -101,11 +111,6 @@ jobs:
         vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
         vcpkgTriplet: x64-linux
 
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v1
-      with:
-        languages: "cpp"
-
     - name: Configure CMake
       run: |
         cmake -B ${{ github.workspace }}/build \
@@ -126,14 +131,6 @@ jobs:
     - name: Test
       working-directory: ${{ github.workspace }}/build
       run: ctest -C Debug -T test -j 2 --output-on-failure --timeout 200
-
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v1
-
-    - uses: actions/upload-artifact@v2
-      with:
-        name: codeql-database
-        path: ../codeql-database
 
     - name: Coverage
       run: cmake --build ${{ github.workspace }}/build --config Debug --target asio-grpc-test-cpp20-coverage
