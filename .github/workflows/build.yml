@@ -33,7 +33,7 @@ jobs:
       matrix:
         config:
           - {
-            name: "Windows-MSVC/2022/x64/Release",
+            name: "Windows/2022/MSVC-19.30.30528.0/Release",
             os: windows-2022,
             config: Release,
             triplet: x64-windows,
@@ -41,7 +41,7 @@ jobs:
             parallel: 1,
           }
           - {
-            name: "MacOSX/11/x64/Release",
+            name: "MacOSX/11/AppleClang-12.0.5.12050022/Release",
             os: macos-11,
             config: Release,
             triplet: x64-osx,
@@ -71,7 +71,7 @@ jobs:
       run: ctest -C ${{ matrix.config.config }} -T test -j 2 --output-on-failure --timeout 200
 
   build-and-scan:
-    name: Ubuntu/20.04/x64/Release
+    name: Ubuntu/20.04/GCC-11.1.0/Debug
     runs-on: ubuntu-20.04
 
     steps:
@@ -102,10 +102,11 @@ jobs:
     - name: Configure CMake
       run: |
         cmake -B ${{ github.workspace }}/build \
+          -GNinja \
           -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
           -DVCPKG_MANIFEST_MODE=off \
           -DCMAKE_EXPORT_COMPILE_COMMANDS=on \
-          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_BUILD_TYPE=Debug \
           -DASIO_GRPC_BUILD_TESTS=on \
           -DASIO_GRPC_DISCOVER_TESTS=on \
           -DASIO_GRPC_BUILD_EXAMPLES=on \
@@ -116,17 +117,17 @@ jobs:
 
     - name: Build
       working-directory: ${{ github.workspace }}/build
-      run: cmake --build . --config Release --parallel 2
+      run: cmake --build . --config Debug --parallel 2
 
     - name: Coverage
       working-directory: ${{ github.workspace }}/build
       run: |
         ./test/asio-grpc-test-cpp20 &&\
-        cmake --build . --config Release --target asio-grpc-test-cpp20-coverage
+        cmake --build . --config Debug --target asio-grpc-test-cpp20-coverage
 
     - name: Test
       working-directory: ${{ github.workspace }}/build
-      run: ctest -C Release -T test -j 2 --output-on-failure --timeout 200
+      run: ctest -C Debug -T test -j 2 --output-on-failure --timeout 200
 
     - name: Download sonar-scanner
       uses: warchant/setup-sonar-scanner@v3

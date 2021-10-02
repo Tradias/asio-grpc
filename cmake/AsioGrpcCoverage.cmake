@@ -1,11 +1,11 @@
 # Copyright 2021 Dennis Hezel
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,5 +27,6 @@ function(asio_grpc_coverage_report_for_target _asio_grpc_target _asio_grpc_sourc
             "${ASIO_GRPC_GCOV_PROGRAM}" --relative-only --demangled-names --preserve-paths -o
             "$<TARGET_FILE_DIR:${_asio_grpc_target}>/CMakeFiles/${_asio_grpc_target}.dir/${_asio_grpc_source_name}.gcda"
             "${_asio_grpc_source}"
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+        VERBATIM)
 endfunction()

@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+if(ASIO_GRPC_TEST_COVERAGE)
+    include(AsioGrpcCoverage)
+endif()
+
 # asio-grpc objects
 add_library(asio-grpc-objects OBJECT)
 
@@ -19,6 +23,10 @@ get_target_property(ASIO_GRPC_SOURCE_FILES asio-grpc ASIO_GRPC_SOURCE_FILES)
 target_sources(asio-grpc-objects PRIVATE ${ASIO_GRPC_SOURCE_FILES})
 
 target_link_libraries(asio-grpc-objects PUBLIC asio-grpc-common-compile-options)
+
+if(ASIO_GRPC_TEST_COVERAGE)
+    asio_grpc_add_coverage_flags(asio-grpc-objects)
+endif()
 
 # grpc generate
 include(AsioGrpcProtobufGenerator)
@@ -33,10 +41,6 @@ asio_grpc_protobuf_generate(
     "${CMAKE_CURRENT_LIST_DIR}/protos/test.proto")
 
 # tests
-if(ASIO_GRPC_TEST_COVERAGE)
-    include(AsioGrpcCoverage)
-endif()
-
 function(asio_grpc_add_test _asio-grpc_name)
     add_executable(${_asio-grpc_name})
 
@@ -57,8 +61,7 @@ function(asio_grpc_add_test _asio-grpc_name)
         asio_grpc_add_coverage_flags(${_asio-grpc_name})
     endif()
 
-    target_link_libraries(${_asio-grpc_name} PRIVATE asio-grpc-common-compile-options doctest::doctest Boost::coroutine
-                                                     Boost::thread)
+    target_link_libraries(${_asio-grpc_name} PRIVATE asio-grpc-objects doctest::doctest Boost::coroutine Boost::thread)
 
     target_include_directories(
         ${_asio-grpc_name} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
