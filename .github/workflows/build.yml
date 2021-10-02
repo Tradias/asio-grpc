@@ -71,6 +71,15 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
+    - name: Install gcc-11
+      run: |
+        add-apt-repository -y ppa:ubuntu-toolchain-r/test &&\
+        apt-get install -y g++-11 &&\
+        update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-11 50 &&\
+        update-alternatives --set cc /usr/bin/gcc-11 &&\
+        update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-11 50 &&\
+        update-alternatives --set c++ /usr/bin/g++-11
+
     - uses: actions/checkout@v2
       with:
         # Disabling shallow clone is recommended for improving relevancy of sonarsource reporting
