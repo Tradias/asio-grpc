@@ -27,6 +27,6 @@ function(asio_grpc_coverage_report_for_target _asio_grpc_target _asio_grpc_sourc
             "${ASIO_GRPC_GCOV_PROGRAM}" --relative-only --demangled-names --preserve-paths -o
             "$<TARGET_FILE_DIR:${_asio_grpc_target}>/CMakeFiles/${_asio_grpc_target}.dir/${_asio_grpc_source_name}.gcda"
             "${_asio_grpc_source}"
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+        WORKING_DIRECTORY "${ASIO_GRPC_COVERAGE_WORKING_DIR}"
         VERBATIM)
 endfunction()

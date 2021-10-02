@@ -113,7 +113,8 @@ jobs:
           -DASIO_GRPC_BUILD_BENCHMARK=on \
           -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on \
           -DASIO_GRPC_TEST_COVERAGE=on \
-          -DASIO_GRPC_GCOV_PROGRAM=/usr/bin/gcov-11
+          -DASIO_GRPC_GCOV_PROGRAM=/usr/bin/gcov-11 \
+          -DASIO_GRPC_COVERAGE_WORKING_DIR=/
 
     - name: Build
       run: cmake --build ${{ github.workspace }}/build --config Debug --parallel 2
