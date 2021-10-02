@@ -116,14 +116,12 @@ jobs:
           -DASIO_GRPC_GCOV_PROGRAM=/usr/bin/gcov-11
 
     - name: Build
-      working-directory: ${{ github.workspace }}/build
-      run: cmake --build . --config Debug --parallel 2
+      run: cmake --build ${{ github.workspace }}/build --config Debug --parallel 2
 
     - name: Coverage
-      working-directory: ${{ github.workspace }}/build
       run: |
-        ./test/asio-grpc-test-cpp20 &&\
-        cmake --build . --config Debug --target asio-grpc-test-cpp20-coverage
+        ${{ github.workspace }}/build/test/asio-grpc-test-cpp20 &&\
+        cmake --build ${{ github.workspace }}/build --config Debug --target asio-grpc-test-cpp20-coverage
 
     - name: Test
       working-directory: ${{ github.workspace }}/build
