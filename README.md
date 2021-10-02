@@ -76,7 +76,7 @@ Tested by CI:
 
  * gRPC 1.37
  * Boost 1.77 (min. 1.74)
- * MSVC VS 2019 16.11
+ * MSVC 19.30.30528.0 (Visual Studio 17 2022)
  * GCC 10.3
  * AppleClang 12.0.5.12050022
  * C++17 or C++20
@@ -135,7 +135,8 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
 
 asio-grpc is part of [grpc_bench](https://github.com/LesnyRumcajs/grpc_bench). Head over there to compare its performance against other libraries and languages.
 
-Results from the helloworld unary RPC. Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz, Linux, Boost 1.74, gRPC 1.30.2, asio-grpc v1.0.0
+Results from the helloworld unary RPC   
+Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz, Linux, Boost 1.74, gRPC 1.30.2, asio-grpc v1.0.0
 
 ### 1 CPU server
 
