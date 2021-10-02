@@ -78,7 +78,7 @@ jobs:
     - name: Install gcc-11
       run: |
         sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test &&\
-        sudo apt-get install -y g++-11 &&\
+        sudo apt-get install -y g++-11 ninja-build &&\
         sudo update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-11 50 &&\
         sudo update-alternatives --set cc /usr/bin/gcc-11 &&\
         sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-11 50 &&\
