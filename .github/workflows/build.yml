@@ -116,15 +116,17 @@ jobs:
           -DASIO_GRPC_GCOV_PROGRAM=/usr/bin/gcov-11
 
     - name: Build
-      working-directory: ${{ github.workspace }}/build
-      run: cmake --build ${{ github.workspace }}/build --config Debug --parallel 2 -v
+      run: cmake --build ${{ github.workspace }}/build --config Debug --parallel 2
 
     - name: Test
       working-directory: ${{ github.workspace }}/build
       run: ctest -C Debug -T test -j 2 --output-on-failure --timeout 200
 
     - name: Coverage
-      run: cmake --build ${{ github.workspace }}/build --config Debug --target asio-grpc-test-cpp20-coverage -v
+      working-directory: /
+      run: |
+        cmake --build ${{ github.workspace }}/build --config Debug --target asio-grpc-test-cpp20-coverage &&\
+        mv *.gcov ${{ github.workspace }}/build
 
     - name: Download sonar-scanner
       uses: warchant/setup-sonar-scanner@v3

@@ -15,6 +15,15 @@
 # common compile options
 add_library(asio-grpc-common-compile-options INTERFACE)
 
+if(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS)
+    target_compile_options(asio-grpc-common-compile-options INTERFACE -fsanitize=undefined,leak
+                                                                      -fno-omit-frame-pointer)
+
+    target_link_libraries(asio-grpc-common-compile-options INTERFACE asan ubsan)
+
+    target_compile_definitions(asio-grpc-common-compile-options INTERFACE GRPC_ASAN_SUPPRESSED GRPC_TSAN_SUPPRESSED)
+endif()
+
 target_compile_options(
     asio-grpc-common-compile-options
     INTERFACE $<$<CXX_COMPILER_ID:MSVC>:
@@ -57,11 +66,3 @@ add_library(asio-grpc-cpp20-compile-options INTERFACE)
 target_compile_features(asio-grpc-cpp20-compile-options INTERFACE cxx_std_20)
 
 target_compile_options(asio-grpc-cpp20-compile-options INTERFACE $<$<CXX_COMPILER_ID:GNU>:-fcoroutines>)
-
-if(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS)
-    target_compile_options(asio-grpc-common-compile-options PUBLIC -fsanitize=address,undefined -fno-omit-frame-pointer)
-
-    target_link_libraries(asio-grpc-common-compile-options PUBLIC asan ubsan)
-
-    target_compile_definitions(asio-grpc-common-compile-options PUBLIC GRPC_ASAN_SUPPRESSED GRPC_TSAN_SUPPRESSED)
-endif()
