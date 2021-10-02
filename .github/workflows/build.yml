@@ -73,6 +73,10 @@ jobs:
   build-and-scan:
     name: Ubuntu/20.04/GCC-10.3.0/Debug
     runs-on: ubuntu-20.04
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
 
     steps:
     - name: Make gcc-10 default compiler
@@ -97,6 +101,11 @@ jobs:
         vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
         vcpkgTriplet: x64-linux
 
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v1
+      with:
+        languages: "cpp"
+
     - name: Configure CMake
       run: |
         cmake -B ${{ github.workspace }}/build \
@@ -120,6 +129,9 @@ jobs:
 
     - name: Coverage
       run: cmake --build ${{ github.workspace }}/build --config Debug --target asio-grpc-test-cpp20-coverage
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v1
 
     - name: Download sonar-scanner
       uses: warchant/setup-sonar-scanner@v3
