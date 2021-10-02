@@ -76,7 +76,7 @@ Tested by CI:
 
  * gRPC 1.37
  * Boost 1.77 (min. 1.74)
- * MSVC 19.30.30528.0 (Visual Studio 17 2022)
+ * MSVC 19.29.30133.0 (Visual Studio 16 2019)
  * GCC 10.3.0
  * AppleClang 12.0.5.12050022
  * C++17 or C++20
