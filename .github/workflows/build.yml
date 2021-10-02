@@ -22,7 +22,7 @@ on:
 
 env:
   VCPKG_ARGUMENTS: "doctest grpc[codegen] boost-coroutine boost-core boost-intrusive boost-lockfree boost-asio boost-interprocess boost-thread boost-container"
-  VCPKG_VERSION: "042e1db92d115819bba6bffd681a174543111139" # Sep 28, 2021
+  VCPKG_VERSION: "2a31089e777fc187f1cc05338250b8e1810cfb52" # Oct 02, 2021
 
 jobs:
   build:
@@ -71,20 +71,18 @@ jobs:
       run: ctest -C ${{ matrix.config.config }} -T test -j 2 --output-on-failure --timeout 200
 
   build-and-scan:
-    name: Ubuntu/20.04/GCC-11.1.0/Debug
+    name: Ubuntu/20.04/GCC-10.3.0/Debug
     runs-on: ubuntu-20.04
 
     steps:
-    - name: Install gcc-11
+    - name: Make gcc-10 default compiler
       run: |
-        sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test &&\
-        sudo apt-get install -y g++-11 ninja-build &&\
-        sudo update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-11 50 &&\
-        sudo update-alternatives --set cc /usr/bin/gcc-11 &&\
-        sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-11 50 &&\
-        sudo update-alternatives --set c++ /usr/bin/g++-11  &&\
-        sudo update-alternatives --install /usr/bin/cpp cpp /usr/bin/g++-11 50 &&\
-        sudo update-alternatives --set cpp /usr/bin/g++-11
+        sudo update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-10 50 &&\
+        sudo update-alternatives --set cc /usr/bin/gcc-10 &&\
+        sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-10 50 &&\
+        sudo update-alternatives --set c++ /usr/bin/g++-10  &&\
+        sudo update-alternatives --install /usr/bin/cpp cpp /usr/bin/g++-10 50 &&\
+        sudo update-alternatives --set cpp /usr/bin/g++-10
 
     - uses: actions/checkout@v2
       with:
@@ -112,8 +110,7 @@ jobs:
           -DASIO_GRPC_BUILD_EXAMPLES=on \
           -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on \
           -DASIO_GRPC_TEST_COVERAGE=on \
-          -DASIO_GRPC_GCOV_PROGRAM=/usr/bin/gcov-11 \
-          -DASIO_GRPC_COVERAGE_WORKING_DIR=/
+          -DASIO_GRPC_GCOV_PROGRAM=/usr/bin/gcov-10
 
     - name: Build
       run: cmake --build ${{ github.workspace }}/build --config Debug --parallel 2
