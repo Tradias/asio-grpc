@@ -47,6 +47,7 @@ if(ASIO_GRPC_BUILD_TESTS OR ASIO_GRPC_BUILD_EXAMPLES)
     endif()
     include(AsioGrpcCompileOptions)
     include(AsioGrpcCheckBoostVersion)
+    include(AsioGrpcInstallGitHooks)
 endif()
 
 if(ASIO_GRPC_BUILD_TESTS)

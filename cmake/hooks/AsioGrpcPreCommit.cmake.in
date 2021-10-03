@@ -1,0 +1,23 @@
+execute_process(
+    COMMAND "@GIT_EXECUTABLE@" "diff-index" "--cached" "--name-only" "--diff-filter=ACMRT" "HEAD"
+    OUTPUT_VARIABLE _git_output
+    WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@")
+
+# process CMake files
+string(REGEX MATCHALL "cmake.*\\.cmake.in|cmake.*\\.cmake|CMakeLists.txt" _git_output_only_cmake_files "${_git_output}")
+
+foreach(_file IN LISTS _git_output_only_cmake_files)
+    execute_process(COMMAND "@ASIO_GRPC_CMAKE_FORMAT_PROGRAM@" "-i" "${_file}" WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@")
+
+    execute_process(COMMAND "@GIT_EXECUTABLE@" "add" "${_file}" WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@")
+endforeach()
+
+# process cpp files
+string(REGEX MATCHALL ".*(\\.hpp|\\.ipp|\\.cpp|\\.proto)" _git_output_only_cpp_files "${_git_output}")
+
+foreach(_file IN LISTS _git_output_only_cpp_files)
+    execute_process(COMMAND "@ASIO_GRPC_CLANG_FORMAT_PROGRAM@" "-i" "-style=file" "${_file}"
+                    WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@")
+
+    execute_process(COMMAND "@GIT_EXECUTABLE@" "add" "${_file}" WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@")
+endforeach()

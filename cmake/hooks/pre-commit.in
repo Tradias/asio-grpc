@@ -1,0 +1,3 @@
+#!/bin/bash
+
+"@CMAKE_COMMAND@" -P "@ASIO_GRPC_GIT_HOOKS_TARGET_DIR@/AsioGrpcPreCommit.cmake"
