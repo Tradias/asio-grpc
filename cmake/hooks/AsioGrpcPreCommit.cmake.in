@@ -12,26 +12,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Do not ignore empty list items
+cmake_policy(SET CMP0007 NEW)
+
 execute_process(
     COMMAND "@GIT_EXECUTABLE@" "diff-index" "--cached" "--name-only" "--diff-filter=ACMRT" "HEAD"
     OUTPUT_VARIABLE _git_output
     WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@")
 
+string(REPLACE "\r" "" _git_output_no_carriage "${_git_output}")
+string(REPLACE "\n" ";" _git_output_list "${_git_output_no_carriage}")
+list(REMOVE_ITEM _git_output_list "")
+
 # process CMake files
-string(REGEX MATCHALL "cmake.*\\.cmake.in|cmake.*\\.cmake|CMakeLists.txt" _git_output_only_cmake_files "${_git_output}")
+foreach(_git_out IN LISTS _git_output_list)
+    string(REGEX MATCHALL ".*\\.cmake\\.in\$|.*\\.cmake\$|CMakeLists.txt" _file "${_git_out}")
 
-foreach(_file IN LISTS _git_output_only_cmake_files)
-    execute_process(COMMAND "@ASIO_GRPC_CMAKE_FORMAT_PROGRAM@" "-i" "${_file}" WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@")
+    if(NOT _file STREQUAL "")
+        execute_process(COMMAND "@ASIO_GRPC_CMAKE_FORMAT_PROGRAM@" "-i" "${_file}"
+                        WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@")
 
-    execute_process(COMMAND "@GIT_EXECUTABLE@" "add" "${_file}" WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@")
+        execute_process(COMMAND "@GIT_EXECUTABLE@" "add" "${_file}" WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@")
+    endif()
 endforeach()
 
 # process cpp files
-string(REGEX MATCHALL ".*(\\.hpp|\\.ipp|\\.cpp|\\.proto)" _git_output_only_cpp_files "${_git_output}")
+foreach(_git_out IN LISTS _git_output_list)
+    string(REGEX MATCHALL ".*\\.tpp\$|.*\\.hpp\$|.*\\.ipp\$|.*\\.cpp\$|.*\\.proto\$|.*\\.h\$|.*\\.c\$" _file
+                 "${_git_out}")
 
-foreach(_file IN LISTS _git_output_only_cpp_files)
-    execute_process(COMMAND "@ASIO_GRPC_CLANG_FORMAT_PROGRAM@" "-i" "-style=file" "${_file}"
-                    WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@")
+    if(NOT _file STREQUAL "")
+        execute_process(COMMAND "@ASIO_GRPC_CLANG_FORMAT_PROGRAM@" "-i" "-style=file" "${_file}"
+                        WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@")
 
-    execute_process(COMMAND "@GIT_EXECUTABLE@" "add" "${_file}" WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@")
+        execute_process(COMMAND "@GIT_EXECUTABLE@" "add" "${_file}" WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@")
+    endif()
 endforeach()
