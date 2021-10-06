@@ -17,7 +17,6 @@
 
 #include "agrpc/detail/grpcCompletionQueueEvent.hpp"
 #include "agrpc/detail/grpcContextImplementation.hpp"
-#include "agrpc/detail/operation.hpp"
 #include "agrpc/detail/typeErasedOperation.hpp"
 #include "agrpc/grpcContext.hpp"
 

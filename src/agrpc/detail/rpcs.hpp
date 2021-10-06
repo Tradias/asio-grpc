@@ -30,7 +30,9 @@
 
 #include <utility>
 
-namespace agrpc::detail
+namespace agrpc
+{
+namespace detail
 {
 template <class RPC, class Request, class Responder>
 using ServerMultiArgRequest = void (RPC::*)(grpc::ServerContext*, Request*, Responder*, grpc::CompletionQueue*,
@@ -69,10 +71,8 @@ struct AlarmCancellationHandler
     }
 };
 #endif
-}  // namespace agrpc::detail
+}  // namespace detail
 
-namespace agrpc
-{
 template <class RPC, class Service, class Request, class Responder,
           class CompletionToken = agrpc::DefaultCompletionToken>
 auto request(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,

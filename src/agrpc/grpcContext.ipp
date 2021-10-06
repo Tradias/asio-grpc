@@ -18,8 +18,8 @@
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/attributes.hpp"
 #include "agrpc/detail/grpcCompletionQueueEvent.hpp"
+#include "agrpc/detail/grpcContext.hpp"
 #include "agrpc/detail/grpcExecutorOptions.hpp"
-#include "agrpc/detail/memory.hpp"
 #include "agrpc/detail/memoryResource.hpp"
 #include "agrpc/grpcContext.hpp"
 #include "agrpc/grpcExecutor.hpp"
@@ -91,7 +91,11 @@ inline GrpcContext::~GrpcContext()
 {
     this->stop();
     this->completion_queue->Shutdown();
-    detail::run_event_loop(*this, detail::Always{true});
+    detail::run_event_loop(*this,
+                           []()
+                           {
+                               return true;
+                           });
     asio::execution_context::shutdown();
     asio::execution_context::destroy();
 }

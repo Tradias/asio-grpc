@@ -16,9 +16,9 @@
 #define AGRPC_DETAIL_INITIATE_HPP
 
 #include "agrpc/detail/asioForward.hpp"
+#include "agrpc/detail/attributes.hpp"
 #include "agrpc/detail/completionHandlerWithPayload.hpp"
 #include "agrpc/detail/grpcContextInteraction.hpp"
-#include "agrpc/detail/operation.hpp"
 #include "agrpc/grpcContext.hpp"
 
 #include <boost/asio/async_result.hpp>

@@ -29,7 +29,6 @@ list(
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/asioForward.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/attributes.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/completionHandlerWithPayload.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/functional.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcCompletionQueueEvent.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcContext.hpp"
     "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcContextImplementation.hpp"
