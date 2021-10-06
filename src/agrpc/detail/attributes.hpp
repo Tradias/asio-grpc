@@ -18,14 +18,23 @@
 #include <version>
 
 #ifdef __has_cpp_attribute
-#if __has_cpp_attribute(unlikely)
-#if ((defined(_MSVC_LANG) && _MSVC_LANG > 201703L) || __cplusplus > 201703L)
+#if __has_cpp_attribute(unlikely) && ((defined(_MSVC_LANG) && _MSVC_LANG > 201703L) || __cplusplus > 201703L)
 #define AGRPC_UNLIKELY [[unlikely]]
 #endif
 #endif
-#endif
+
 #ifndef AGRPC_UNLIKELY
 #define AGRPC_UNLIKELY
+#endif
+
+#ifdef __has_cpp_attribute
+#if __has_cpp_attribute(likely) && ((defined(_MSVC_LANG) && _MSVC_LANG > 201703L) || __cplusplus > 201703L)
+#define AGRPC_LIKELY [[likely]]
+#endif
+#endif
+
+#ifndef AGRPC_LIKELY
+#define AGRPC_LIKELY
 #endif
 
 #endif  // AGRPC_DETAIL_ATTRIBUTES_HPP

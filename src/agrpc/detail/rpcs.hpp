@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_RPCS_HPP
 
 #include "agrpc/detail/asioForward.hpp"
+#include "agrpc/detail/attributes.hpp"
 #include "agrpc/initiate.hpp"
 
 #include <grpcpp/alarm.h>
@@ -180,11 +181,11 @@ void repeatedly_request(detail::ServerSingleArgRequest<RPC, Responder> rpc, Serv
 template <class RPC, class Service, class RPCHandler, class Handler>
 void RequestRepeater<RPC, Service, RPCHandler, Handler>::operator()(bool ok)
 {
-    if (ok)
-    {
-        auto next_handler{this->handler};
-        detail::repeatedly_request(this->rpc, this->service, std::move(next_handler));
-    }
+    if (ok) AGRPC_LIKELY
+        {
+            auto next_handler{this->handler};
+            detail::repeatedly_request(this->rpc, this->service, std::move(next_handler));
+        }
     std::move(this->handler)(detail::RPCContextImplementation::create(std::move(this->rpc_handler)), ok);
 }
 }  // namespace detail
