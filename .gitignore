@@ -70,3 +70,7 @@ sonar-cfamily-reproducer.zip
 
 # https://github.com/aras-p/ClangBuildAnalyzer
 ClangBuildAnalyzer.ini
+
+# Generated files
+src/agrpc/detail/memoryResource.hpp
+test/utils/memoryResource.hpp

@@ -42,6 +42,12 @@ asio_grpc_protobuf_generate(
     "${CMAKE_CURRENT_LIST_DIR}/protos/test.proto")
 
 # tests
+if(ASIO_GRPC_USE_BOOST_CONTAINER)
+    set(ASIO_GRPC_MEMORY_RESOURCE_UTILS_INCLUDE "#include <boost/container/pmr/monotonic_buffer_resource.hpp>")
+endif()
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/utils/memoryResource.hpp.in"
+               "${CMAKE_CURRENT_SOURCE_DIR}/utils/memoryResource.hpp" @ONLY)
+
 function(asio_grpc_add_test _asio-grpc_name)
     add_executable(${_asio-grpc_name})
 
@@ -49,12 +55,12 @@ function(asio_grpc_add_test _asio-grpc_name)
         ${_asio-grpc_name}
         PRIVATE main.cpp
                 $<TARGET_PROPERTY:asio-grpc,ASIO_GRPC_HEADER_FILES>
-                "utils/asioUtils.hpp"
-                "utils/grpcContextTest.hpp"
-                "utils/grpcClientServerTest.cpp"
-                "utils/grpcClientServerTest.hpp"
-                "utils/freePort.cpp"
-                "utils/freePort.hpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/asioUtils.hpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/freePort.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/freePort.hpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcClientServerTest.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcClientServerTest.hpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcContextTest.hpp"
                 "${ASIO_GRPC_GENERATED_SOURCES}"
                 ${ARGN})
 
@@ -68,7 +74,7 @@ function(asio_grpc_add_test _asio-grpc_name)
         ${_asio-grpc_name} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
                                   $<BUILD_INTERFACE:${ASIO_GRPC_GENERATED_PROTOS_OUT_DIR}> $<INSTALL_INTERFACE:include>)
 
-    target_precompile_headers(${_asio-grpc_name} PRIVATE "utils/precompiledHeader.hpp")
+    target_precompile_headers(${_asio-grpc_name} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/utils/precompiledHeader.hpp")
 endfunction()
 
 set(ASIO_GRPC_TEST_SOURCE_FILES "test-asio-grpc.cpp")

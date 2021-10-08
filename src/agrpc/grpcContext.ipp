@@ -74,14 +74,13 @@ void run_event_loop(agrpc::GrpcContext& grpc_context, LoopPredicate loop_predica
 }
 }  // namespace detail
 
-inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue,
-                                detail::pmr::memory_resource* local_upstream_resource)
+inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue)
     : outstanding_work(),
       thread_id(std::this_thread::get_id()),
       stopped(),
       has_work(),
       completion_queue(std::move(completion_queue)),
-      local_resource(local_upstream_resource),
+      local_resource(detail::pmr::new_delete_resource()),
       is_processing_local_work(false),
       remote_work_queue(32)
 {

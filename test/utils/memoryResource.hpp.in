@@ -12,24 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_MEMORYRESOURCE_HPP
-#define AGRPC_DETAIL_MEMORYRESOURCE_HPP
+#ifndef AGRPC_UTILS_MEMORYRESOURCE_HPP
+#define AGRPC_UTILS_MEMORYRESOURCE_HPP
 
-#ifdef AGRPC_USE_BOOST_CONTAINER
-#include <boost/container/pmr/memory_resource.hpp>
-#include <boost/container/pmr/polymorphic_allocator.hpp>
-#include <boost/container/pmr/unsynchronized_pool_resource.hpp>
-#else
-#include <memory_resource>
-#endif
+@ASIO_GRPC_MEMORY_RESOURCE_UTILS_INCLUDE@
 
-namespace agrpc::detail
-{
-#ifdef AGRPC_USE_BOOST_CONTAINER
-namespace pmr = boost::container::pmr;
-#else
-namespace pmr = std::pmr;
-#endif
-}  // namespace agrpc::detail
+#endif  // AGRPC_UTILS_MEMORYRESOURCE_HPP
 
-#endif  // AGRPC_DETAIL_MEMORYRESOURCE_HPP

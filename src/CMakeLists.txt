@@ -53,8 +53,19 @@ target_include_directories(asio-grpc INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT
                                                $<INSTALL_INTERFACE:include>)
 
 if(ASIO_GRPC_USE_BOOST_CONTAINER)
-    target_compile_definitions(asio-grpc INTERFACE AGRPC_USE_BOOST_CONTAINER)
+    set(ASIO_GRPC_MEMORY_RESOURCE_INDLUCES
+        [[#include <boost/container/pmr/memory_resource.hpp>
+#include <boost/container/pmr/polymorphic_allocator.hpp>
+#include <boost/container/pmr/unsynchronized_pool_resource.hpp>]])
+    set(ASIO_GRPC_MEMORY_RESOURCE_NAMESPACE_ALIAS "namespace pmr = boost::container::pmr;")
+else()
+    set(ASIO_GRPC_MEMORY_RESOURCE_INDLUCES "#include <memory_resource>")
+    set(ASIO_GRPC_MEMORY_RESOURCE_NAMESPACE_ALIAS "namespace pmr = std::pmr;")
 endif()
+configure_file("${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/memoryResource.hpp.in"
+               "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/memoryResource.hpp" @ONLY)
+unset(ASIO_GRPC_MEMORY_RESOURCE_INDLUCES)
+unset(ASIO_GRPC_MEMORY_RESOURCE_NAMESPACE_ALIAS)
 
 # installation
 if(ASIO_GRPC_INSTALL)

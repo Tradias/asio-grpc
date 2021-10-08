@@ -16,6 +16,7 @@
 #define AGRPC_UTILS_GRPCTEST_HPP
 
 #include "agrpc/asioGrpc.hpp"
+#include "utils/memoryResource.hpp"
 
 #include <boost/asio/execution/allocator.hpp>
 #include <grpcpp/server.h>
@@ -25,13 +26,6 @@
 #include <chrono>
 #include <cstddef>
 #include <memory>
-
-#ifdef AGRPC_USE_BOOST_CONTAINER
-#include <boost/container/pmr/monotonic_buffer_resource.hpp>
-#include <boost/container/pmr/polymorphic_allocator.hpp>
-#else
-#include <memory_resource>
-#endif
 
 namespace agrpc::test
 {

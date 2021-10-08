@@ -42,8 +42,7 @@ class GrpcContext : public asio::execution_context
     using executor_type = agrpc::BasicGrpcExecutor<std::allocator<void>, detail::GrpcExecutorOptions::DEFAULT>;
     using allocator_type = detail::GrpcContextLocalAllocator;
 
-    explicit GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue,
-                         detail::pmr::memory_resource* local_upstream_resource = detail::pmr::new_delete_resource());
+    explicit GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue);
 
     ~GrpcContext();
 
