@@ -1,6 +1,6 @@
 {
     "name": "asio-grpc",
-    "version-string": "1.1.1",
+    "version-string": "1.1.2",
     "dependencies": [
         "doctest",
         {
