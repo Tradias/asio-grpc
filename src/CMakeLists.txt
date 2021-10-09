@@ -20,37 +20,38 @@ unset(ASIO_GRPC_HEADER_FILES)
 list(
     APPEND
     ASIO_GRPC_HEADER_FILES
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/asioGrpc.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/grpcContext.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/grpcContext.ipp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/grpcExecutor.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/initiate.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/rpcs.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/asioForward.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/attributes.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/completionHandlerWithPayload.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcCompletionQueueEvent.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcContext.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcContextImplementation.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcContextImplementation.ipp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcContextInteraction.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcExecutorBase.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/grpcExecutorOptions.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/initiate.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/memory.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/memoryResource.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/operation.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/rpcs.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/typeErasedOperation.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/utility.hpp")
+    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/asioGrpc.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcContext.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcContext.ipp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcExecutor.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/initiate.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/rpcs.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/asioForward.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/attributes.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/completionHandlerWithPayload.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcCompletionQueueEvent.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcContext.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcContextImplementation.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcContextImplementation.ipp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcContextInteraction.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcExecutorBase.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcExecutorOptions.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/initiate.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/memory.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/operation.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/rpcs.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/typeErasedOperation.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/utility.hpp"
+    "${CMAKE_CURRENT_BINARY_DIR}/generated/agrpc/detail/memoryResource.hpp")
 set_target_properties(asio-grpc PROPERTIES ASIO_GRPC_HEADER_FILES "${ASIO_GRPC_HEADER_FILES}")
-set_target_properties(asio-grpc PROPERTIES ASIO_GRPC_SOURCE_FILES "${CMAKE_CURRENT_LIST_DIR}/asioGrpc.cpp")
+set_target_properties(asio-grpc PROPERTIES ASIO_GRPC_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/asioGrpc.cpp")
 unset(ASIO_GRPC_HEADER_FILES)
 
 target_compile_features(asio-grpc INTERFACE cxx_std_17)
 
-target_include_directories(asio-grpc INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
-                                               $<INSTALL_INTERFACE:include>)
+target_include_directories(
+    asio-grpc INTERFACE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
+                        "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>" $<INSTALL_INTERFACE:include>)
 
 if(ASIO_GRPC_USE_BOOST_CONTAINER)
     set(ASIO_GRPC_MEMORY_RESOURCE_INDLUCES
@@ -62,8 +63,8 @@ else()
     set(ASIO_GRPC_MEMORY_RESOURCE_INDLUCES "#include <memory_resource>")
     set(ASIO_GRPC_MEMORY_RESOURCE_NAMESPACE_ALIAS "namespace pmr = std::pmr;")
 endif()
-configure_file("${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/memoryResource.hpp.in"
-               "${CMAKE_CURRENT_LIST_DIR}/agrpc/detail/memoryResource.hpp" @ONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/memoryResource.hpp.in"
+               "${CMAKE_CURRENT_BINARY_DIR}/generated/agrpc/detail/memoryResource.hpp" @ONLY)
 unset(ASIO_GRPC_MEMORY_RESOURCE_INDLUCES)
 unset(ASIO_GRPC_MEMORY_RESOURCE_NAMESPACE_ALIAS)
 
@@ -95,4 +96,7 @@ if(ASIO_GRPC_INSTALL)
         TYPE INCLUDE
         FILES_MATCHING
         REGEX "[.hpp|.ipp]$")
+
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/agrpc/detail/memoryResource.hpp"
+            DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/agrpc/detail")
 endif()
