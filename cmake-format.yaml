@@ -1,25 +1,21 @@
 additional_commands:
-  foo:
+  asio_grpc_protobuf_generate:
     flags:
-    - BAR
-    - BAZ
+    - GENERATE_GRPC
     kwargs:
-      DEPENDS: '*'
-      HEADERS: '*'
-      SOURCES: '*'
+      OUT_VAR: '1'
+      PROTOC_OUT_DIR: '1'
+      PROTOS: '*'
+      IMPORT_DIRS: '*'
 always_wrap: []
-bullet_char: '*'
 command_case: lower
 dangle_parens: false
 enable_markup: true
-enum_char: .
-fence_pattern: ^\s*([`~]{3}[`~]*)(.*)$
 first_comment_is_literal: true
-keyword_case: unchanged
+keyword_case: upper
 line_ending: unix
 line_width: 120
 literal_comment_pattern: null
-ruler_pattern: ^\s*[^\w\s]{3}.*[^\w\s]{3}$
 separate_ctrl_name_with_space: false
 separate_fn_name_with_space: false
 tab_size: 4
