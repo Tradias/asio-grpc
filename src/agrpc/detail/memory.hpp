@@ -121,7 +121,7 @@ struct AllocationGuard
         }
     }
 
-    constexpr AllocatedPointer<Allocator> release() noexcept
+    constexpr detail::AllocatedPointer<Allocator> release() noexcept
     {
         this->is_allocated = false;
         return {this->ptr, this->allocator};
@@ -135,7 +135,7 @@ auto allocate(Allocator allocator, Args&&... args)
     using ReboundAllocator = typename Traits::allocator_type;
     ReboundAllocator rebound_allocator{allocator};
     auto* ptr = Traits::allocate(rebound_allocator, 1);
-    AllocationGuard<ReboundAllocator> guard{ptr, rebound_allocator};
+    detail::AllocationGuard<ReboundAllocator> guard{ptr, rebound_allocator};
     Traits::construct(guard.allocator, ptr, std::forward<Args>(args)...);
     return guard.release();
 }

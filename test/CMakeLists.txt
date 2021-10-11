@@ -32,6 +32,7 @@ endif()
 # grpc generate
 include(AsioGrpcProtobufGenerator)
 set(ASIO_GRPC_GENERATED_PROTOS_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(ASIO_GRPC_TEST_PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/protos/test.proto")
 asio_grpc_protobuf_generate(
     GENERATE_GRPC
     OUT_VAR
@@ -39,7 +40,7 @@ asio_grpc_protobuf_generate(
     PROTOC_OUT_DIR
     "${ASIO_GRPC_GENERATED_PROTOS_OUT_DIR}"
     PROTOS
-    "${CMAKE_CURRENT_SOURCE_DIR}/protos/test.proto")
+    "${ASIO_GRPC_TEST_PROTOS}")
 
 # tests
 if(ASIO_GRPC_USE_BOOST_CONTAINER)
@@ -109,3 +110,15 @@ endif()
 if(ASIO_GRPC_TEST_COVERAGE)
     asio_grpc_coverage_report_for_target(asio-grpc-test-cpp20 "${CMAKE_CURRENT_SOURCE_DIR}/test-asio-grpc.cpp")
 endif()
+
+# cmake tests
+add_test(
+    NAME asio-grpc-cmake-protobuf-generate
+    COMMAND
+        "${CMAKE_COMMAND}" "-DCMAKE_GENERATOR=${CMAKE_GENERATOR}"
+        "-DCMAKE_MSVC_RUNTIME_LIBRARY=${CMAKE_MSVC_RUNTIME_LIBRARY}"
+        "-DPWD=${CMAKE_CURRENT_BINARY_DIR}/test-cmake-protobuf-generate" "-DSOURCE_DIR=${CMAKE_SOURCE_DIR}"
+        "-DTEST_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/cmake" "-DASIO_GRPC_TEST_PROTOS=${ASIO_GRPC_TEST_PROTOS}"
+        "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}" "-DVCPKG_INSTALLED_DIR=${CMAKE_BINARY_DIR}/vcpkg_installed"
+        "-DVCPKG_TARGET_TRIPLET=${VCPKG_TARGET_TRIPLET}" "-DProtobuf_PROTOC_EXECUTABLE=${Protobuf_PROTOC_EXECUTABLE}"
+        -P "${CMAKE_CURRENT_LIST_DIR}/cmake/Test.cmake")

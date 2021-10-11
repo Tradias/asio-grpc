@@ -66,9 +66,8 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
     }
 
     constexpr GrpcExecutorWorkTrackerBase(GrpcExecutorWorkTrackerBase&& other) noexcept
-        : Base(other.grpc_context(), std::move(other.allocator()))
+        : Base(std::exchange(other.grpc_context(), nullptr), std::move(other.allocator()))
     {
-        other.grpc_context() = nullptr;
     }
 
     ~GrpcExecutorWorkTrackerBase() noexcept
@@ -106,12 +105,11 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
         if (this != std::addressof(other))
         {
             auto* old_grpc_context = this->grpc_context();
-            this->grpc_context() = other.grpc_context();
+            this->grpc_context() = std::exchange(other.grpc_context(), nullptr);
             if constexpr (std::is_assignable_v<Allocator&, Allocator&&>)
             {
                 this->allocator() = std::move(other.allocator());
             }
-            other.grpc_context() = nullptr;
             if (old_grpc_context)
             {
                 old_grpc_context->work_finished();

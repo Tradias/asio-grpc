@@ -67,36 +67,3 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/memoryResource.hpp.in"
                "${CMAKE_CURRENT_BINARY_DIR}/generated/agrpc/detail/memoryResource.hpp" @ONLY)
 unset(ASIO_GRPC_MEMORY_RESOURCE_INDLUCES)
 unset(ASIO_GRPC_MEMORY_RESOURCE_NAMESPACE_ALIAS)
-
-# installation
-if(ASIO_GRPC_INSTALL)
-    include(GNUInstallDirs)
-
-    include(CMakePackageConfigHelpers)
-    write_basic_package_version_file(
-        "${CMAKE_CURRENT_BINARY_DIR}/generated/asio-grpcConfigVersion.cmake" ARCH_INDEPENDENT
-        VERSION ${PROJECT_VERSION}
-        COMPATIBILITY SameMajorVersion)
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/asio-grpcConfigVersion.cmake"
-            DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/asio-grpc")
-
-    install(
-        TARGETS asio-grpc
-        EXPORT asio-grpc_EXPORT_TARGETS
-        PUBLIC_HEADER)
-
-    install(
-        EXPORT asio-grpc_EXPORT_TARGETS
-        NAMESPACE asio-grpc::
-        FILE asio-grpcConfig.cmake
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/asio-grpc")
-
-    install(
-        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/agrpc"
-        TYPE INCLUDE
-        FILES_MATCHING
-        REGEX "[.hpp|.ipp]$")
-
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/agrpc/detail/memoryResource.hpp"
-            DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/agrpc/detail")
-endif()

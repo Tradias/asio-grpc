@@ -33,7 +33,7 @@ function(asio_grpc_protobuf_generate)
     endif()
 
     if(NOT asio_grpc_protobuf_generate_PROTOC_OUT_DIR)
-        set(asio_grpc_protobuf_generate_PROTOC_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
+        set(asio_grpc_protobuf_generate_PROTOC_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}")
     endif()
 
     set(GENERATED_EXTENSIONS .pb.cc .pb.h)
@@ -43,20 +43,20 @@ function(asio_grpc_protobuf_generate)
 
     # Create an include path for each file specified
     foreach(_file ${asio_grpc_protobuf_generate_PROTOS})
-        get_filename_component(_abs_file ${_file} ABSOLUTE)
-        get_filename_component(_abs_path ${_abs_file} PATH)
-        list(FIND _protobuf_include_path ${_abs_path} _contains_already)
+        get_filename_component(_abs_file "${_file}" ABSOLUTE)
+        get_filename_component(_abs_path "${_abs_file}" PATH)
+        list(FIND _protobuf_include_path "${_abs_path}" _contains_already)
         if(${_contains_already} EQUAL -1)
-            list(APPEND _protobuf_include_path -I ${_abs_path})
+            list(APPEND _protobuf_include_path -I "${_abs_path}")
         endif()
     endforeach()
 
     # Add all explicitly specified import directory to the include path
     foreach(DIR ${asio_grpc_protobuf_generate_IMPORT_DIRS})
-        get_filename_component(ABS_PATH ${DIR} ABSOLUTE)
-        list(FIND _protobuf_include_path ${ABS_PATH} _contains_already)
+        get_filename_component(ABS_PATH "${DIR}" ABSOLUTE)
+        list(FIND _protobuf_include_path "${ABS_PATH}" _contains_already)
         if(${_contains_already} EQUAL -1)
-            list(APPEND _protobuf_include_path -I ${ABS_PATH})
+            list(APPEND _protobuf_include_path -I "${ABS_PATH}")
         endif()
     endforeach()
 
@@ -85,7 +85,7 @@ function(asio_grpc_protobuf_generate)
         string(REPLACE ";" " " _pretty_command_arguments "${_command_arguments}")
         add_custom_command(
             OUTPUT ${_generated_srcs}
-            COMMAND ${CMAKE_COMMAND} "-E" "make_directory" "${_out_dir}"
+            COMMAND "${CMAKE_COMMAND}" "-E" "make_directory" "${_out_dir}"
             COMMAND protobuf::protoc ${_command_arguments}
             MAIN_DEPENDENCY "${_abs_file}"
             DEPENDS protobuf::protoc

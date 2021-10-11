@@ -32,7 +32,7 @@ set(ASIO_GRPC_COVERAGE_WORKING_DIR
 option(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS "Compile tests with -fsanitize=address,undefined" off)
 option(ASIO_GRPC_USE_BOOST_CONTAINER "Use Boost.Container instead of <memory_resource>" off)
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 add_subdirectory(src)
 
@@ -59,4 +59,8 @@ endif()
 
 if(ASIO_GRPC_BUILD_EXAMPLES)
     add_subdirectory(example)
+endif()
+
+if(ASIO_GRPC_INSTALL)
+    include(AsioGrpcInstallation)
 endif()
