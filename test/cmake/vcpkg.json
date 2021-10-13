@@ -1,0 +1,14 @@
+{
+    "name": "asio-grpc-cmake-test",
+    "version-string": "1.1.2",
+    "dependencies": [
+        {
+            "name": "grpc",
+            "features": [
+                "codegen"
+            ]
+        },
+        "boost-coroutine",
+        "boost-thread"
+    ]
+}

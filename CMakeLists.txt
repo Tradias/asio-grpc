@@ -37,6 +37,9 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 add_subdirectory(src)
 
 if(ASIO_GRPC_BUILD_TESTS OR ASIO_GRPC_BUILD_EXAMPLES)
+    # store value of Boost_USE_STATIC_RUNTIME because it gets cleared by find_package(Boost)
+    set(ASIO_GRPC_BOOST_USE_STATIC_RUNTIME ${Boost_USE_STATIC_RUNTIME})
+
     find_package(protobuf)
     find_package(gRPC)
     find_package(Boost)

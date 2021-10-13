@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-function(run_process _working_dir)
+function(run_process)
     execute_process(
         COMMAND ${ARGN}
-        WORKING_DIRECTORY "${_working_dir}"
+        WORKING_DIRECTORY "${PWD}"
         TIMEOUT 120
         RESULT_VARIABLE _result
         OUTPUT_VARIABLE _output
@@ -27,23 +27,39 @@ function(run_process _working_dir)
 endfunction()
 
 file(REMOVE_RECURSE "${PWD}/.")
-file(MAKE_DIRECTORY "${PWD}/build")
+file(MAKE_DIRECTORY "${PWD}")
 
 # configure asio-grpc
-run_process("${PWD}/build" "${CMAKE_COMMAND}" "-DCMAKE_INSTALL_PREFIX=${PWD}/install" "${SOURCE_DIR}")
+run_process(
+    "${CMAKE_COMMAND}"
+    "-B"
+    "${PWD}/build"
+    "-G${CMAKE_GENERATOR}"
+    "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
+    "-DCMAKE_INSTALL_PREFIX=${PWD}/install"
+    "${SOURCE_DIR}")
 
 # install asio-grpc
-run_process("${PWD}/build" "${CMAKE_COMMAND}" --build . --target install)
-
-file(MAKE_DIRECTORY "${PWD}/test-build")
+run_process(
+    "${CMAKE_COMMAND}"
+    --build
+    "${PWD}/build"
+    --config
+    ${CMAKE_BUILD_TYPE}
+    --target
+    install)
 
 # configure test project
 run_process(
-    "${PWD}/test-build"
     "${CMAKE_COMMAND}"
+    "-B"
+    "${PWD}/test-build"
     "-G${CMAKE_GENERATOR}"
+    "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
     "-DCMAKE_MSVC_RUNTIME_LIBRARY=${CMAKE_MSVC_RUNTIME_LIBRARY}"
-    "-DCMAKE_PREFIX_PATH=${PWD}/install\;${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}"
+    "-DBoost_USE_STATIC_RUNTIME=${Boost_USE_STATIC_RUNTIME}"
+    "-DCMAKE_PREFIX_PATH=${PWD}/install"
+    # \;${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}
     "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}"
     "-DVCPKG_TARGET_TRIPLET=${VCPKG_TARGET_TRIPLET}"
     "-DCMAKE_INSTALL_PREFIX=${PWD}/test-install"
@@ -52,7 +68,14 @@ run_process(
     "${TEST_SOURCE_DIR}")
 
 # build test project
-run_process("${PWD}/test-build" "${CMAKE_COMMAND}" --build . --target install)
+run_process(
+    "${CMAKE_COMMAND}"
+    --build
+    "${PWD}/test-build"
+    --config
+    ${CMAKE_BUILD_TYPE}
+    --target
+    install)
 
 # run test project
-run_process("${PWD}/test-install" "${PWD}/test-install/bin/asio-grpc-cmake-test${CMAKE_EXECUTABLE_SUFFIX}")
+run_process("${PWD}/test-install/bin/asio-grpc-cmake-test${CMAKE_EXECUTABLE_SUFFIX}")

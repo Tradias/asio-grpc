@@ -37,7 +37,7 @@ jobs:
             os: windows-2019,
             config: Release,
             triplet: x64-windows,
-            cmake-extra-args: "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug> -DBoost_USE_STATIC_RUNTIME=on",
+            cmake-extra-args: "",
             parallel: 1,
           }
           - {
