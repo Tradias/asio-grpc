@@ -41,26 +41,16 @@ jobs:
             parallel: 1,
           }
           - {
-            name: "Ubuntu/20.04/GCC-10.3.0/Release",
-            os: ubuntu-20.04,
+            name: "MacOSX/11/AppleClang-12.0.5.12050022/Release",
+            os: macos-11,
             config: Release,
-            triplet: x64-linux,
-            cmake-extra-args: "",
+            triplet: x64-osx,
+            cmake-extra-args: "-DASIO_GRPC_USE_BOOST_CONTAINER=on",
             parallel: 2,
           }
 
     steps:
     - uses: actions/checkout@v2
-
-    - if: matrix.config.os == 'ubuntu-20.04' 
-      name: Make gcc-10 default compiler
-      run: |
-        sudo update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-10 50 &&\
-        sudo update-alternatives --set cc /usr/bin/gcc-10 &&\
-        sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-10 50 &&\
-        sudo update-alternatives --set c++ /usr/bin/g++-10  &&\
-        sudo update-alternatives --install /usr/bin/cpp cpp /usr/bin/g++-10 50 &&\
-        sudo update-alternatives --set cpp /usr/bin/g++-10
 
     - name: Install vcpkg
       uses: lukka/run-vcpkg@v7
@@ -91,14 +81,23 @@ jobs:
       uses: github/codeql-action/analyze@v1
 
   build-and-scan:
-    name: "MacOSX/11/AppleClang-12.0.5.12050022/Debug"
-    runs-on: macos-11
+    name: Ubuntu/20.04/GCC-10.3.0/Debug
+    runs-on: ubuntu-20.04
     permissions:
       actions: read
       contents: read
       security-events: write
 
     steps:
+    - name: Make gcc-10 default compiler
+      run: |
+        sudo update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-10 50 &&\
+        sudo update-alternatives --set cc /usr/bin/gcc-10 &&\
+        sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-10 50 &&\
+        sudo update-alternatives --set c++ /usr/bin/g++-10  &&\
+        sudo update-alternatives --install /usr/bin/cpp cpp /usr/bin/g++-10 50 &&\
+        sudo update-alternatives --set cpp /usr/bin/g++-10
+
     - uses: actions/checkout@v2
       with:
         # Disabling shallow clone is recommended for improving relevancy of sonarsource reporting
@@ -110,7 +109,7 @@ jobs:
         vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
         vcpkgArguments: ${{ env.VCPKG_ARGUMENTS }}
         vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
-        vcpkgTriplet: x64-osx
+        vcpkgTriplet: x64-linux
 
     - name: Configure CMake
       run: |
@@ -124,11 +123,10 @@ jobs:
           -DASIO_GRPC_BUILD_EXAMPLES=on \
           -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on \
           -DASIO_GRPC_TEST_COVERAGE=on \
-          -DASIO_GRPC_USE_BOOST_CONTAINER=on \
-          -DASIO_GRPC_LLVM_COV_PROGRAM=/Applications/Xcode_12.5.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/llvm-cov
+          -DASIO_GRPC_GCOV_PROGRAM=/usr/bin/gcov-10
 
     - name: Build
-      run: cmake --build ${{ github.workspace }}/build --config Debug --parallel
+      run: cmake --build ${{ github.workspace }}/build --config Debug --parallel 2
 
     - name: Test
       working-directory: ${{ github.workspace }}/build
