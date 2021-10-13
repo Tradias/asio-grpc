@@ -124,7 +124,8 @@ jobs:
           -DASIO_GRPC_BUILD_EXAMPLES=on \
           -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on \
           -DASIO_GRPC_TEST_COVERAGE=on \
-          -DASIO_GRPC_USE_BOOST_CONTAINER=on
+          -DASIO_GRPC_USE_BOOST_CONTAINER=on \
+          -DASIO_GRPC_LLVM_COV_PROGRAM=/Applications/Xcode_12.5.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/llvm-cov
 
     - name: Build
       run: cmake --build ${{ github.workspace }}/build --config Debug --parallel
