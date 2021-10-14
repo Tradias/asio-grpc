@@ -98,6 +98,11 @@ jobs:
         sudo update-alternatives --install /usr/bin/cpp cpp /usr/bin/g++-10 50 &&\
         sudo update-alternatives --set cpp /usr/bin/g++-10
 
+    - name: Install gcovr
+      run: |
+        sudo apt-get update &&\
+        sudo apt-get install gcovr
+
     - uses: actions/checkout@v2
       with:
         # Disabling shallow clone is recommended for improving relevancy of sonarsource reporting
@@ -123,7 +128,8 @@ jobs:
           -DASIO_GRPC_BUILD_EXAMPLES=on \
           -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on \
           -DASIO_GRPC_TEST_COVERAGE=on \
-          -DASIO_GRPC_GCOV_PROGRAM=/usr/bin/gcov-10
+          -DASIO_GRPC_GCOV_PROGRAM=/usr/bin/gcov-10 \
+          -DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build/sonarqube-coverage.xml
 
     - name: Build
       run: cmake --build ${{ github.workspace }}/build --config Debug --parallel 2
@@ -147,4 +153,5 @@ jobs:
         sonar-scanner \
           -Dsonar.cfamily.compile-commands=${{ github.workspace }}/build/compile_commands.json \
           -Dsonar.cfamily.gcov.reportsPath=${{ github.workspace }}/build \
-          -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+          -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
+          -Dsonar.coverageReportPaths=${{ github.workspace }}/build/sonarqube-coverage.xml

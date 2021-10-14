@@ -25,17 +25,16 @@ function(asio_grpc_coverage_report_for_target _asio_grpc_target _asio_grpc_sourc
     if(NOT ASIO_GRPC_GCOV_PROGRAM)
         find_program(ASIO_GRPC_LLVM_COV_PROGRAM NAMES llvm-cov llvm-cov-10 llvm-cov-11 llvm-cov-12 llvm-cov-13
                                                       llvm-cov-14)
-        set(_asio_grpc_coverage_command "${ASIO_GRPC_LLVM_COV_PROGRAM}" gcov)
+        set(_asio_grpc_gcov_command "${ASIO_GRPC_LLVM_COV_PROGRAM} gcov")
     else()
-        set(_asio_grpc_coverage_command "${ASIO_GRPC_GCOV_PROGRAM}")
+        set(_asio_grpc_gcov_command "${ASIO_GRPC_GCOV_PROGRAM}")
     endif()
+    find_program(ASIO_GRPC_GCOVR_PROGRAM gcovr REQUIRED)
     add_custom_target(
         ${_asio_grpc_target}-coverage
         DEPENDS ${_asio_grpc_target}
-        COMMAND
-            ${_asio_grpc_coverage_command} --relative-only --demangled-names --preserve-paths -o
-            "$<TARGET_FILE_DIR:${_asio_grpc_target}>/CMakeFiles/${_asio_grpc_target}.dir/${_asio_grpc_source_name}.gcda"
-            "${_asio_grpc_source}"
+        COMMAND "${ASIO_GRPC_GCOVR_PROGRAM}" --gcov-executable "${_asio_grpc_gcov_command}" --sonarqube --output
+                "${ASIO_GRPC_COVERAGE_OUTPUT_FILE}" --root "${ASIO_GRPC_COVERAGE_WORKING_DIR}"
         WORKING_DIRECTORY "${ASIO_GRPC_COVERAGE_WORKING_DIR}"
         VERBATIM)
 endfunction()

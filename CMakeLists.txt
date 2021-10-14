@@ -26,9 +26,9 @@ option(ASIO_GRPC_BUILD_TESTS "Build tests" off)
 option(ASIO_GRPC_BUILD_EXAMPLES "Build examples" off)
 option(ASIO_GRPC_DISCOVER_TESTS "Discover tests for ctest" off)
 option(ASIO_GRPC_TEST_COVERAGE "Compile tests with --coverage (GCC only)" off)
-set(ASIO_GRPC_COVERAGE_WORKING_DIR
-    "${CMAKE_CURRENT_BINARY_DIR}"
-    CACHE PATH "Working directory when running gcov")
+set(ASIO_GRPC_COVERAGE_OUTPUT_FILE
+    "${CMAKE_CURRENT_BINARY_DIR}/sonarqube-coverage.xml"
+    CACHE PATH "Output file for SonarQube XML coverage files")
 option(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS "Compile tests with -fsanitize=address,undefined" off)
 option(ASIO_GRPC_USE_BOOST_CONTAINER "Use Boost.Container instead of <memory_resource>" off)
 
@@ -57,6 +57,7 @@ if(ASIO_GRPC_BUILD_TESTS)
     find_package(doctest REQUIRED)
     enable_testing()
     include(doctest)
+    set(ASIO_GRPC_COVERAGE_WORKING_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
     add_subdirectory(test)
 endif()
 
