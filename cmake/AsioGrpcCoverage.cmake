@@ -13,12 +13,11 @@
 # limitations under the License.
 
 function(asio_grpc_add_coverage_flags _asio_grpc_target)
-    target_compile_options(${_asio_grpc_target} PRIVATE --coverage -fprofile-abs-path)
+    target_compile_options(${_asio_grpc_target} PRIVATE --coverage $<$<CXX_COMPILER_ID:GNU>:-fprofile-abs-path>)
     target_link_options(${_asio_grpc_target} PRIVATE --coverage)
 endfunction()
 
-function(asio_grpc_coverage_report_for_target _asio_grpc_target _asio_grpc_source)
-    get_filename_component(_asio_grpc_source_name "${_asio_grpc_source}" NAME)
+function(asio_grpc_coverage_report_for_target _asio_grpc_target)
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         find_program(ASIO_GRPC_GCOV_PROGRAM gcov)
     endif()

@@ -86,9 +86,11 @@ set(ASIO_GRPC_TEST_SOURCE_FILES "test-asio-grpc.cpp")
 asio_grpc_add_test(asio-grpc-test-cpp17 ${ASIO_GRPC_TEST_SOURCE_FILES})
 target_compile_definitions(asio-grpc-test-cpp17 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"C++17\"")
 
-asio_grpc_add_test(asio-grpc-test-cpp20 ${ASIO_GRPC_TEST_SOURCE_FILES} "test-asio-grpc-20.cpp")
-target_compile_definitions(asio-grpc-test-cpp20 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"C++20\"")
-target_link_libraries(asio-grpc-test-cpp20 PRIVATE asio-grpc-cpp20-compile-options)
+if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
+    asio_grpc_add_test(asio-grpc-test-cpp20 ${ASIO_GRPC_TEST_SOURCE_FILES} "test-asio-grpc-20.cpp")
+    target_compile_definitions(asio-grpc-test-cpp20 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"C++20\"")
+    target_link_libraries(asio-grpc-test-cpp20 PRIVATE asio-grpc-cpp20-compile-options)
+endif()
 
 unset(ASIO_GRPC_TEST_SOURCE_FILES)
 
@@ -103,11 +105,17 @@ if(ASIO_GRPC_DISCOVER_TESTS)
         # Unknown arguments specified
         ADD_LABELS
         0)
-    doctest_discover_tests(asio-grpc-test-cpp20 ADD_LABELS 0)
+    if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
+        doctest_discover_tests(asio-grpc-test-cpp20 ADD_LABELS 0)
+    endif()
 endif()
 
 if(ASIO_GRPC_TEST_COVERAGE)
-    asio_grpc_coverage_report_for_target(asio-grpc-test-cpp20 "${CMAKE_CURRENT_SOURCE_DIR}/test-asio-grpc.cpp")
+    if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
+        asio_grpc_coverage_report_for_target(asio-grpc-test-cpp20)
+    else()
+        asio_grpc_coverage_report_for_target(asio-grpc-test)
+    endif()
 endif()
 
 # cmake tests add_test( NAME asio-grpc-cmake-protobuf-generate COMMAND "${CMAKE_COMMAND}"

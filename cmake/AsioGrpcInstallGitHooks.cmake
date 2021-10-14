@@ -25,8 +25,8 @@ function(asio_grpc_create_init_git_hooks_target)
     if(NOT EXISTS "${ASIO_GRPC_GIT_HOOKS_TARGET_DIR}/pre-commit"
        OR NOT EXISTS "${ASIO_GRPC_GIT_HOOKS_TARGET_DIR}/AsioGrpcPreCommit.cmake")
         message(
-            STATUS
-                "Initialize clang-format and cmake-format pre-commit hooks by building CMake target asio-grpc-init-git-hooks."
+            AUTHOR_WARNING
+                "Initialize clang-format and cmake-format pre-commit hooks by building the CMake target asio-grpc-init-git-hooks."
         )
     endif()
 

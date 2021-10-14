@@ -25,6 +25,8 @@ option(ASIO_GRPC_INSTALL "Create the install target" on)
 option(ASIO_GRPC_BUILD_TESTS "Build tests" off)
 option(ASIO_GRPC_BUILD_EXAMPLES "Build examples" off)
 option(ASIO_GRPC_DISCOVER_TESTS "Discover tests for ctest" off)
+option(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES
+       "When tests and/or example builds are enabled then also create CMake targets for C++20" on)
 option(ASIO_GRPC_TEST_COVERAGE "Compile tests with --coverage (GCC only)" off)
 set(ASIO_GRPC_COVERAGE_OUTPUT_FILE
     "${CMAKE_CURRENT_BINARY_DIR}/sonarqube-coverage.xml"
