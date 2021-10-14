@@ -136,29 +136,31 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
 asio-grpc is part of [grpc_bench](https://github.com/LesnyRumcajs/grpc_bench). Head over there to compare its performance against other libraries and languages.
 
 Results from the helloworld unary RPC   
-Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz, Linux, Boost 1.74, gRPC 1.30.2, asio-grpc v1.0.0
+Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz, Linux, Boost 1.74, gRPC 1.41.0, asio-grpc v1.1.0, jemalloc 5.2.1
 
 ### 1 CPU server
 
 | name                        |   req/s |   avg. latency |        90 % in |        95 % in |        99 % in | avg. cpu |   avg. memory |
 |-----------------------------|--------:|---------------:|---------------:|---------------:|---------------:|---------:|--------------:|
-| rust_tonic_mt               |   44639 |       22.27 ms |        9.63 ms |       10.55 ms |      572.53 ms |  101.12% |     16.06 MiB |
-| rust_grpcio                 |   39826 |       24.95 ms |       26.31 ms |       27.19 ms |       28.45 ms |   101.5% |     30.46 MiB |
-| rust_thruster_mt            |   38038 |       26.17 ms |       11.39 ms |       12.33 ms |      673.02 ms |  100.16% |     13.17 MiB |
-| cpp_grpc_mt                 |   34954 |       28.53 ms |       31.28 ms |       31.75 ms |       33.55 ms |  101.93% |      8.36 MiB |
-| cpp_asio_grpc               |   34015 |       29.32 ms |       32.05 ms |       32.56 ms |       34.41 ms |  101.35% |      7.72 MiB |
-| go_grpc                     |    6772 |      141.75 ms |      287.57 ms |      330.45 ms |      499.47 ms |    97.8% |     28.07 MiB |
+| rust_tonic_mt               |   47736 |       20.79 ms |        9.21 ms |       10.04 ms |      543.11 ms |   102.1% |     15.92 MiB |
+| rust_grpcio                 |   42715 |       23.21 ms |       24.50 ms |       25.34 ms |       26.84 ms |   102.5% |     29.64 MiB |
+| rust_thruster_mt            |   42404 |       23.42 ms |       10.32 ms |       11.19 ms |      599.79 ms |  100.81% |     13.56 MiB |
+| cpp_grpc_mt                 |   41762 |       23.81 ms |       25.21 ms |       25.59 ms |       26.99 ms |  102.04% |     18.61 MiB |
+| cpp_grpc_st                 |   41336 |       24.05 ms |       25.55 ms |       25.89 ms |       27.24 ms |  101.66% |      21.3 MiB |
+| cpp_asio_grpc               |   38745 |       25.68 ms |       27.32 ms |       27.72 ms |       29.19 ms |  101.37% |     19.26 MiB |
+| go_grpc                     |    7420 |      128.04 ms |      271.95 ms |      304.62 ms |      468.69 ms |  100.74% |     31.96 MiB |
 
 ### 2 CPU server
 
 | name                        |   req/s |   avg. latency |        90 % in |        95 % in |        99 % in | avg. cpu |   avg. memory |
 |-----------------------------|--------:|---------------:|---------------:|---------------:|---------------:|---------:|--------------:|
-| rust_tonic_mt               |   66253 |       14.33 ms |       39.24 ms |       59.11 ms |       91.03 ms |   201.2% |     16.09 MiB |
-| rust_grpcio                 |   62678 |       15.38 ms |       22.38 ms |       24.81 ms |       29.00 ms |  201.38% |     45.07 MiB |
-| cpp_grpc_mt                 |   62488 |       14.78 ms |       31.76 ms |       40.60 ms |       60.79 ms |  199.84% |      24.9 MiB |
-| cpp_asio_grpc               |   62040 |       14.91 ms |       30.17 ms |       37.77 ms |       60.10 ms |   199.6% |     26.65 MiB |
-| rust_thruster_mt            |   59204 |       16.22 ms |       43.04 ms |       71.87 ms |      110.07 ms |  199.31% |     13.87 MiB |
-| go_grpc                     |   13978 |       63.48 ms |      110.86 ms |      160.62 ms |      205.85 ms |  198.23% |     29.48 MiB |
+| cpp_grpc_mt                 |   86099 |       10.04 ms |       17.88 ms |       21.87 ms |       29.62 ms |  204.02% |     55.54 MiB |
+| cpp_asio_grpc               |   82149 |       10.62 ms |       19.86 ms |       23.71 ms |       34.37 ms |  202.55% |     51.03 MiB |
+| rust_tonic_mt               |   75662 |       12.38 ms |       32.64 ms |       53.09 ms |       80.08 ms |  198.77% |     18.33 MiB |
+| rust_thruster_mt            |   68533 |       13.77 ms |       37.44 ms |       57.56 ms |       85.80 ms |  200.76% |     14.38 MiB |
+| rust_grpcio                 |   67688 |       14.19 ms |       21.56 ms |       24.30 ms |       28.24 ms |  203.04% |     36.89 MiB |
+| cpp_grpc_st                 |   42481 |       23.39 ms |       24.78 ms |       25.07 ms |       26.30 ms |  102.43% |     24.58 MiB |
+| go_grpc                     |   16270 |       53.21 ms |       98.04 ms |      112.21 ms |      182.18 ms |  153.74% |     29.48 MiB |
 
 # Documentation
 
