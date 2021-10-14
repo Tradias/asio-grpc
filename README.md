@@ -146,7 +146,6 @@ Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz, Linux, Boost 1.74, gRPC 1.41.0, asio-g
 | rust_grpcio                 |   42715 |       23.21 ms |       24.50 ms |       25.34 ms |       26.84 ms |   102.5% |     29.64 MiB |
 | rust_thruster_mt            |   42404 |       23.42 ms |       10.32 ms |       11.19 ms |      599.79 ms |  100.81% |     13.56 MiB |
 | cpp_grpc_mt                 |   41762 |       23.81 ms |       25.21 ms |       25.59 ms |       26.99 ms |  102.04% |     18.61 MiB |
-| cpp_grpc_st                 |   41336 |       24.05 ms |       25.55 ms |       25.89 ms |       27.24 ms |  101.66% |      21.3 MiB |
 | cpp_asio_grpc               |   38745 |       25.68 ms |       27.32 ms |       27.72 ms |       29.19 ms |  101.37% |     19.26 MiB |
 | go_grpc                     |    7420 |      128.04 ms |      271.95 ms |      304.62 ms |      468.69 ms |  100.74% |     31.96 MiB |
 
@@ -159,7 +158,6 @@ Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz, Linux, Boost 1.74, gRPC 1.41.0, asio-g
 | rust_tonic_mt               |   75662 |       12.38 ms |       32.64 ms |       53.09 ms |       80.08 ms |  198.77% |     18.33 MiB |
 | rust_thruster_mt            |   68533 |       13.77 ms |       37.44 ms |       57.56 ms |       85.80 ms |  200.76% |     14.38 MiB |
 | rust_grpcio                 |   67688 |       14.19 ms |       21.56 ms |       24.30 ms |       28.24 ms |  203.04% |     36.89 MiB |
-| cpp_grpc_st                 |   42481 |       23.39 ms |       24.78 ms |       25.07 ms |       26.30 ms |  102.43% |     24.58 MiB |
 | go_grpc                     |   16270 |       53.21 ms |       98.04 ms |      112.21 ms |      182.18 ms |  153.74% |     29.48 MiB |
 
 # Documentation
