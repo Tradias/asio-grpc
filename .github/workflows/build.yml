@@ -165,7 +165,8 @@ jobs:
       run: |
         sudo ln -s $(which gcc-9) /usr/local/bin/cc &&\
         sudo ln -s $(which g++-9) /usr/local/bin/c++ &&\
-        sudo ln -s $(which g++-9) /usr/local/bin/cpp
+        sudo ln -s $(which g++-9) /usr/local/bin/cpp &&\
+        echo "export PATH=/usr/local/bin:\$PATH" >> ~/.bash_profile
 
     - uses: actions/checkout@v2
 
