@@ -14,24 +14,26 @@
 
 include(GNUInstallDirs)
 
+set(ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/asio-grpc")
+
 include(CMakePackageConfigHelpers)
 configure_package_config_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/asio-grpcConfig.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/generated/asio-grpcConfig.cmake"
-    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/asio-grpc"
+    INSTALL_DESTINATION "${ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR}"
     NO_SET_AND_CHECK_MACRO NO_CHECK_REQUIRED_COMPONENTS_MACRO
-    PATH_VARS CMAKE_INSTALL_LIBDIR)
+    PATH_VARS ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR)
 
 write_basic_package_version_file(
     "${CMAKE_CURRENT_BINARY_DIR}/generated/asio-grpcConfigVersion.cmake" ARCH_INDEPENDENT
-    VERSION ${PROJECT_VERSION}
+    VERSION "${PROJECT_VERSION}"
     COMPATIBILITY SameMajorVersion)
 
 install(
     FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/asio-grpcConfig.cmake"
           "${CMAKE_CURRENT_BINARY_DIR}/generated/asio-grpcConfigVersion.cmake"
           "${CMAKE_CURRENT_SOURCE_DIR}/cmake/AsioGrpcProtobufGenerator.cmake"
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/asio-grpc")
+    DESTINATION "${ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR}")
 
 install(TARGETS asio-grpc EXPORT asio-grpc_EXPORT_TARGETS)
 
@@ -39,7 +41,7 @@ install(
     EXPORT asio-grpc_EXPORT_TARGETS
     NAMESPACE asio-grpc::
     FILE asio-grpcTargets.cmake
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/asio-grpc")
+    DESTINATION "${ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR}")
 
 install(
     DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src/agrpc"
@@ -49,3 +51,5 @@ install(
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/src/generated/agrpc/detail/memoryResource.hpp"
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/agrpc/detail")
+
+unset(ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR)

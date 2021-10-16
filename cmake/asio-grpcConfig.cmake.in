@@ -14,5 +14,5 @@
 
 @PACKAGE_INIT@
 
-include("@PACKAGE_CMAKE_INSTALL_LIBDIR@/cmake/asio-grpc/asio-grpcTargets.cmake")
-include("@PACKAGE_CMAKE_INSTALL_LIBDIR@/cmake/asio-grpc/AsioGrpcProtobufGenerator.cmake")
+include("@PACKAGE_ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR@/asio-grpcTargets.cmake")
+include("@PACKAGE_ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR@/AsioGrpcProtobufGenerator.cmake")
