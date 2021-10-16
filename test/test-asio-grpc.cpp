@@ -31,6 +31,11 @@
 #include <string_view>
 #include <thread>
 
+#if (BOOST_VERSION >= 107700)
+#include <boost/asio/bind_cancellation_slot.hpp>
+#include <boost/asio/cancellation_signal.hpp>
+#endif
+
 namespace test_asio_grpc
 {
 using namespace agrpc;
@@ -609,34 +614,73 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request c
     CHECK_EQ(4, request_count);
 }
 
-struct VariadicCompletionToken
+TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post an Alarm and use variadic-arg callback for its wait")
 {
-    using executor_type =
-        asio::require_result<agrpc::GrpcContext::executor_type, asio::execution::outstanding_work_t::tracked_t>::type;
-
-    executor_type executor;
-
-    template <class... Args>
-    void operator()(Args&&... args)
-    {
-        bool ok{std::forward<Args>(args)...};
-        CHECK(ok);
-    }
-
-    auto get_executor() const noexcept { return executor; }
-};
-
-TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wait")
-{
+    bool ok = false;
     grpc::Alarm alarm;
     asio::post(get_executor(),
-               [&]
+               [&, exec = get_work_tracking_executor()]
                {
                    agrpc::wait(alarm, test::ten_milliseconds_from_now(),
-                               VariadicCompletionToken{get_work_tracking_executor()});
+                               asio::bind_executor(exec,
+                                                   [&](auto&&... args)
+                                                   {
+                                                       ok = bool{args...};
+                                                   }));
                });
     grpc_context.run();
+    CHECK(ok);
 }
+
+#if (BOOST_VERSION >= 107700)
+TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with cancellation_type::total")
+{
+    bool ok = true;
+    asio::cancellation_signal signal{};
+    grpc::Alarm alarm;
+    asio::post(get_executor(),
+               [&, exec = get_work_tracking_executor()]
+               {
+                   agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::seconds(3),
+                               asio::bind_cancellation_slot(signal.slot(), asio::bind_executor(exec,
+                                                                                               [&](bool alarm_ok)
+                                                                                               {
+                                                                                                   ok = alarm_ok;
+                                                                                               })));
+                   asio::post(get_executor(),
+                              [&]
+                              {
+                                  signal.emit(asio::cancellation_type::total);
+                              });
+               });
+    grpc_context.run();
+    CHECK_FALSE(ok);
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with cancellation_type::none")
+{
+    bool ok = false;
+    asio::cancellation_signal signal{};
+    grpc::Alarm alarm;
+    asio::post(get_executor(),
+               [&, exec = get_work_tracking_executor()]
+               {
+                   agrpc::wait(alarm, test::hundred_milliseconds_from_now(),
+                               asio::bind_cancellation_slot(signal.slot(), asio::bind_executor(exec,
+                                                                                               [&](bool alarm_ok)
+                                                                                               {
+                                                                                                   ok = alarm_ok;
+                                                                                               })));
+                   asio::post(get_executor(),
+                              [&]
+                              {
+                                  signal.emit(asio::cancellation_type::none);
+                              });
+               });
+    grpc_context.run();
+    CHECK(ok);
+}
+#endif
 
 TEST_SUITE_END();
 }  // namespace test_asio_grpc

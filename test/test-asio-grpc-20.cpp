@@ -25,11 +25,6 @@
 #include <cstddef>
 #include <iostream>
 
-#if (BOOST_VERSION >= 107700)
-#include <boost/asio/bind_cancellation_slot.hpp>
-#include <boost/asio/cancellation_signal.hpp>
-#endif
-
 namespace test_asio_grpc_cpp20
 {
 using namespace agrpc;
@@ -269,24 +264,6 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable bidirectional streaming
         });
     grpc_context.run();
 }
-
-#if (BOOST_VERSION >= 107700)
-TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with cancellation_slot")
-{
-    bool ok = true;
-    asio::cancellation_signal signal{};
-    test::co_spawn(get_executor(),
-                   [&]() -> asio::awaitable<void>
-                   {
-                       grpc::Alarm alarm;
-                       ok = co_await agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::seconds(3),
-                                                 asio::bind_cancellation_slot(signal.slot(), asio::use_awaitable));
-                   });
-    signal.emit(asio::cancellation_type::total);
-    grpc_context.run();
-    CHECK_FALSE(ok);
-}
-#endif
 #endif
 
 TEST_SUITE_END();

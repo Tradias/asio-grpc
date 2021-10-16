@@ -58,6 +58,11 @@ struct GrpcContextTest
 };
 
 inline auto ten_milliseconds_from_now() { return std::chrono::system_clock::now() + std::chrono::milliseconds(10); }
+
+inline auto hundred_milliseconds_from_now()
+{
+    return std::chrono::system_clock::now() + std::chrono::milliseconds(100);
+}
 }  // namespace agrpc::test
 
 #endif  // AGRPC_UTILS_GRPCTEST_HPP
