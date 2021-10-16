@@ -115,10 +115,12 @@ jobs:
         vcpkgArguments: ${{ env.VCPKG_ARGUMENTS }}
         vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
         vcpkgTriplet: x64-linux
+        appendedCacheKey: ubuntu-gcc
 
     - name: Configure CMake
       run: |
         cmake -B ${{ github.workspace }}/build \
+          -DCMAKE_CXX_COMPILER=$(which g++-10) \
           -DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake \
           -DVCPKG_MANIFEST_MODE=off \
           -DCMAKE_EXPORT_COMPILE_COMMANDS=on \
@@ -128,7 +130,7 @@ jobs:
           -DASIO_GRPC_BUILD_EXAMPLES=on \
           -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on \
           -DASIO_GRPC_TEST_COVERAGE=on \
-          -DASIO_GRPC_GCOV_PROGRAM=/usr/bin/gcov-10 \
+          -DASIO_GRPC_GCOV_PROGRAM=$(which gcov-10) \
           -DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build/sonarqube-coverage.xml
 
     - name: Build
