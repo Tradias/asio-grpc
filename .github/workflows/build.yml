@@ -157,15 +157,15 @@ jobs:
           -Dsonar.coverageReportPaths=${{ github.workspace }}/build/sonarqube-coverage.xml
 
   multi-gcc-build:
-    name: 'MacOSX/11/GCC-9.4.0,10.3.0,11.2.0'
+    name: 'MacOSX/11/GCC-9.4.0,11.2.0'
     runs-on: macos-11
 
     steps:
     - name: Set default compiler
       run: |
-        sudo port select --set cc $(which gcc-9) &&\
-        sudo port select --set c++ $(which g++-9) &&\
-        sudo port select --set cpp $(which g++-9)
+        sudo ln -s $(which gcc-9) /usr/bin/cc &&\
+        sudo ln -s $(which g++-9) /usr/bin/c++ &&\
+        sudo ln -s $(which g++-9) /usr/bin/cpp
 
     - uses: actions/checkout@v2
 
@@ -185,6 +185,16 @@ jobs:
       run: cmake --build ${{ github.workspace }}/build-0 --config Release --parallel $(nproc)
 
     - name: GCC 9 Test
+      working-directory: ${{ github.workspace }}/build-0
+      run: ctest -C Release -T test -j $(nproc) --output-on-failure --timeout 200
+
+    - name: GCC 11 Configure CMake
+      run: cmake -B ${{ github.workspace }}/build-0 -DCMAKE_CXX_COMPILER=$(which g++-11) "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=Release -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
+
+    - name: GCC 11 Build
+      run: cmake --build ${{ github.workspace }}/build-0 --config Release --parallel $(nproc)
+
+    - name: GCC 11 Test
       working-directory: ${{ github.workspace }}/build-0
       run: ctest -C Release -T test -j $(nproc) --output-on-failure --timeout 200
 
@@ -221,6 +231,26 @@ jobs:
       run: cmake --build ${{ github.workspace }}/build-0 --config Release --parallel $(nproc)
 
     - name: Clang 10 Test
+      working-directory: ${{ github.workspace }}/build-0
+      run: ctest -C Release -T test --parallel $(nproc) --output-on-failure --timeout 200
+
+    - name: Clang 11 Configure CMake
+      run: cmake -B ${{ github.workspace }}/build-0 -DCMAKE_CXX_COMPILER=$(which clang++-11) -DASIO_GRPC_USE_BOOST_CONTAINER=on "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=Release -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
+
+    - name: Clang 11 Build
+      run: cmake --build ${{ github.workspace }}/build-0 --config Release --parallel $(nproc)
+
+    - name: Clang 11 Test
+      working-directory: ${{ github.workspace }}/build-0
+      run: ctest -C Release -T test --parallel $(nproc) --output-on-failure --timeout 200
+
+    - name: Clang 12 Configure CMake
+      run: cmake -B ${{ github.workspace }}/build-0 -DCMAKE_CXX_COMPILER=$(which clang++-12) -DASIO_GRPC_USE_BOOST_CONTAINER=on "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=Release -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
+
+    - name: Clang 12 Build
+      run: cmake --build ${{ github.workspace }}/build-0 --config Release --parallel $(nproc)
+
+    - name: Clang 12 Test
       working-directory: ${{ github.workspace }}/build-0
       run: ctest -C Release -T test --parallel $(nproc) --output-on-failure --timeout 200
 
