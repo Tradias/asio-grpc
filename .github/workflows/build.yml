@@ -168,7 +168,7 @@ jobs:
     - name: Install GCC 11
       run: |
         sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test &&
-        sudo apt-get install gcc-11
+        sudo apt-get install g++-11
 
     - name: Make gcc-9 default compiler
       run: |
