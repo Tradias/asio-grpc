@@ -16,8 +16,7 @@
 add_library(asio-grpc-common-compile-options INTERFACE)
 
 if(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS)
-    target_compile_options(asio-grpc-common-compile-options INTERFACE -fsanitize=undefined,leak
-                                                                      -fno-omit-frame-pointer)
+    target_compile_options(asio-grpc-common-compile-options INTERFACE -fsanitize=undefined,leak -fno-omit-frame-pointer)
 
     target_link_libraries(asio-grpc-common-compile-options INTERFACE asan ubsan)
 
@@ -65,4 +64,6 @@ add_library(asio-grpc-cpp20-compile-options INTERFACE)
 
 target_compile_features(asio-grpc-cpp20-compile-options INTERFACE cxx_std_20)
 
-target_compile_options(asio-grpc-cpp20-compile-options INTERFACE $<$<CXX_COMPILER_ID:GNU>:-fcoroutines>)
+target_compile_options(
+    asio-grpc-cpp20-compile-options
+    INTERFACE $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,10>>:-fcoroutines>)
