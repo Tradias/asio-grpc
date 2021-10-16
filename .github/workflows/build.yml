@@ -89,14 +89,14 @@ jobs:
       security-events: write
 
     steps:
-    - name: Make gcc-10 default compiler
+    - name: Make gcc-9 default compiler
       run: |
-        sudo update-alternatives --install /usr/bin/cc cc /usr/bin/gcc-10 50 &&\
-        sudo update-alternatives --set cc /usr/bin/gcc-10 &&\
-        sudo update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++-10 50 &&\
-        sudo update-alternatives --set c++ /usr/bin/g++-10  &&\
-        sudo update-alternatives --install /usr/bin/cpp cpp /usr/bin/g++-10 50 &&\
-        sudo update-alternatives --set cpp /usr/bin/g++-10
+        sudo update-alternatives --install /usr/bin/cc cc $(which gcc-9) 50 &&\
+        sudo update-alternatives --set cc $(which gcc-9) &&\
+        sudo update-alternatives --install /usr/bin/c++ c++ $(which g++-9) 50 &&\
+        sudo update-alternatives --set c++ $(which g++-9)  &&\
+        sudo update-alternatives --install /usr/bin/cpp cpp $(which g++-9) 50 &&\
+        sudo update-alternatives --set cpp $(which g++-9)
 
     - name: Install gcovr
       run: |
@@ -156,55 +156,54 @@ jobs:
           -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
           -Dsonar.coverageReportPaths=${{ github.workspace }}/build/sonarqube-coverage.xml
 
-  multi-gcc-build:
-    name: 'Ubuntu/20.04/GCC-9.3.0,11.1.0'
-    runs-on: ubuntu-20.04
+  # multi-gcc-build:
+  #   name: 'Ubuntu/20.04/GCC-9.3.0,11.1.0'
+  #   runs-on: ubuntu-20.04
 
-    steps:
-    - name: Install GCC 11
-      run: |
-        sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test &&
-        sudo apt-get install gcc-11
+  #   steps:
+  #   - name: Install GCC 11
+  #     run: |
+  #       sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test &&
+  #       sudo apt-get install gcc-11
 
-    - name: Set default compiler
-      run: |
-        sudo update-alternatives --install /usr/bin/cc cc $(which gcc-9) 50 &&\
-        sudo update-alternatives --set cc $(which gcc-9) &&\
-        sudo update-alternatives --install /usr/bin/c++ c++ $(which g++-9) 50 &&\
-        sudo update-alternatives --set c++ $(which g++-9)  &&\
-        sudo update-alternatives --install /usr/bin/cpp cpp $(which g++-9) 50 &&\
-        sudo update-alternatives --set cpp $(which g++-9)
+  #   - name: Make gcc-9 default compiler
+  #     run: |
+  #       sudo update-alternatives --install /usr/bin/cc cc $(which gcc-9) 50 &&\
+  #       sudo update-alternatives --set cc $(which gcc-9) &&\
+  #       sudo update-alternatives --install /usr/bin/c++ c++ $(which g++-9) 50 &&\
+  #       sudo update-alternatives --set c++ $(which g++-9)  &&\
+  #       sudo update-alternatives --install /usr/bin/cpp cpp $(which g++-9) 50 &&\
+  #       sudo update-alternatives --set cpp $(which g++-9)
 
-    - uses: actions/checkout@v2
+  #   - uses: actions/checkout@v2
 
-    - name: Install vcpkg
-      uses: lukka/run-vcpkg@v7
-      with:
-        vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
-        vcpkgArguments: ${{ env.VCPKG_ARGUMENTS }}
-        vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
-        vcpkgTriplet: x64-osx
-        appendedCacheKey: ubuntu-gcc
+  #   - name: Install vcpkg
+  #     uses: lukka/run-vcpkg@v7
+  #     with:
+  #       vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
+  #       vcpkgArguments: ${{ env.VCPKG_ARGUMENTS }}
+  #       vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
+  #       vcpkgTriplet: x64-linux
 
-    - name: GCC 9 Configure CMake
-      run: cmake -B ${{ github.workspace }}/build-9 -DCMAKE_CXX_COMPILER=$(which g++-9) "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=Release -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
+  #   - name: GCC 9 Configure CMake
+  #     run: cmake -B ${{ github.workspace }}/build-9 -DCMAKE_CXX_COMPILER=$(which g++-9) "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=Release -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
 
-    - name: GCC 9 Build
-      run: cmake --build ${{ github.workspace }}/build-9 --config Release --parallel $(nproc)
+  #   - name: GCC 9 Build
+  #     run: cmake --build ${{ github.workspace }}/build-9 --config Release --parallel $(nproc)
 
-    - name: GCC 9 Test
-      working-directory: ${{ github.workspace }}/build-9
-      run: ctest -C Release -T test -j $(nproc) --output-on-failure --timeout 200
+  #   - name: GCC 9 Test
+  #     working-directory: ${{ github.workspace }}/build-9
+  #     run: ctest -C Release -T test -j $(nproc) --output-on-failure --timeout 200
 
-    - name: GCC 11 Configure CMake
-      run: cmake -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which g++-11) "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=Release -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
+  #   - name: GCC 11 Configure CMake
+  #     run: cmake -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which g++-11) "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=Release -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
 
-    - name: GCC 11 Build
-      run: cmake --build ${{ github.workspace }}/build-11 --config Release --parallel $(nproc)
+  #   - name: GCC 11 Build
+  #     run: cmake --build ${{ github.workspace }}/build-11 --config Release --parallel $(nproc)
 
-    - name: GCC 11 Test
-      working-directory: ${{ github.workspace }}/build-11
-      run: ctest -C Release -T test -j $(nproc) --output-on-failure --timeout 200
+  #   - name: GCC 11 Test
+  #     working-directory: ${{ github.workspace }}/build-11
+  #     run: ctest -C Release -T test -j $(nproc) --output-on-failure --timeout 200
 
 
   multi-clang-build:
@@ -212,7 +211,7 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-    - name: Set default compiler
+    - name: Make clang-10 default compiler
       run: |
         sudo update-alternatives --install /usr/bin/cc cc $(which clang-10) 50 &&\
         sudo update-alternatives --set cc $(which clang-10) &&\
