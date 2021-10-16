@@ -16,6 +16,7 @@ grpc::ServerBuilder builder;
 std::unique_ptr<grpc::Server> server;
 helloworld::Greeter::AsyncService service;
 agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
+boost::asio::basic_signal_set signals{grpc_context, SIGINT, SIGTERM};
 builder.AddListeningPort("0.0.0.0:50051", grpc::InsecureServerCredentials());
 builder.RegisterService(&service);
 server = builder.BuildAndStart();
@@ -24,21 +25,25 @@ boost::asio::co_spawn(
     grpc_context,
     [&]() -> boost::asio::awaitable<void>
     {
-        grpc::ServerContext server_context;
-        helloworld::HelloRequest request;
-        grpc::ServerAsyncResponseWriter<helloworld::HelloReply> writer{&server_context};
-        bool request_ok = co_await agrpc::request(&helloworld::Greeter::AsyncService::RequestSayHello, service,
-                                                  server_context, request, writer);
-        helloworld::HelloReply response;
-        response.set_message("Hello " + request.name());
-        bool finish_ok = co_await agrpc::finish(writer, response, grpc::Status::OK);
+        while (true)
+        {
+            grpc::ServerContext server_context;
+            helloworld::HelloRequest request;
+            grpc::ServerAsyncResponseWriter<helloworld::HelloReply> writer{&server_context};
+            bool request_ok = co_await agrpc::request(&helloworld::Greeter::AsyncService::RequestSayHello, service,
+                                                      server_context, request, writer);
+            if (!request_ok)
+            {
+                co_return;
+            }
+            helloworld::HelloReply response;
+            response.set_message("Hello " + request.name());
+            bool finish_ok = co_await agrpc::finish(writer, response, grpc::Status::OK);
+        }
     },
     boost::asio::detached);
-
-grpc_context.run();
-server->Shutdown();
 ```
-<sup><a href='/example/hello-world-server-cpp20.cpp#L25-L51' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/hello-world-server-cpp20.cpp#L31-L62' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Client side:
