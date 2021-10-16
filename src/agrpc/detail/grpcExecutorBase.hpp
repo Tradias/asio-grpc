@@ -18,6 +18,7 @@
 #include "agrpc/detail/utility.hpp"
 #include "agrpc/grpcContext.hpp"
 
+#include <cassert>
 #include <type_traits>
 #include <utility>
 
@@ -59,10 +60,7 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
     GrpcExecutorWorkTrackerBase(const GrpcExecutorWorkTrackerBase& other) noexcept
         : Base(other.grpc_context(), other.allocator())
     {
-        if (this->grpc_context())
-        {
-            this->on_work_started();
-        }
+        this->on_work_started();
     }
 
     constexpr GrpcExecutorWorkTrackerBase(GrpcExecutorWorkTrackerBase&& other) noexcept
@@ -82,20 +80,16 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
     {
         if (this != std::addressof(other))
         {
-            auto* old_grpc_context = this->grpc_context();
+            if (this->grpc_context())
+            {
+                this->grpc_context()->work_finished();
+            }
             this->grpc_context() = other.grpc_context();
             if constexpr (std::is_assignable_v<Allocator&, const Allocator&>)
             {
                 this->allocator() = other.allocator();
             }
-            if (this->grpc_context())
-            {
-                this->grpc_context()->work_started();
-            }
-            if (old_grpc_context)
-            {
-                old_grpc_context->work_finished();
-            }
+            this->grpc_context()->work_started();
         }
         return *this;
     }
@@ -104,15 +98,14 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
     {
         if (this != std::addressof(other))
         {
-            auto* old_grpc_context = this->grpc_context();
+            if (this->grpc_context())
+            {
+                this->grpc_context()->work_finished();
+            }
             this->grpc_context() = std::exchange(other.grpc_context(), nullptr);
             if constexpr (std::is_assignable_v<Allocator&, Allocator&&>)
             {
                 this->allocator() = std::move(other.allocator());
-            }
-            if (old_grpc_context)
-            {
-                old_grpc_context->work_finished();
             }
         }
         return *this;
@@ -122,10 +115,7 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
     GrpcExecutorWorkTrackerBase(agrpc::GrpcContext* grpc_context, Allocator allocator) noexcept
         : Base(grpc_context, std::move(allocator))
     {
-        if (this->grpc_context())
-        {
-            this->on_work_started();
-        }
+        this->on_work_started();
     }
 };
 }  // namespace agrpc::detail
