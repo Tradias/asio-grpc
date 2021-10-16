@@ -172,7 +172,7 @@ jobs:
     - name: Install vcpkg
       uses: lukka/run-vcpkg@v7
       env:
-        PATH: /usr/local/bin
+        PATH: '/usr/local/bin:/bin:/usr/bin'
       with:
         vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
         vcpkgArguments: ${{ env.VCPKG_ARGUMENTS }}
