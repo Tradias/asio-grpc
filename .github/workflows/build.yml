@@ -21,8 +21,8 @@ on:
       - 'sonar-project.properties'
 
 env:
-  VCPKG_ARGUMENTS: "doctest grpc[codegen] boost-coroutine boost-core boost-intrusive boost-lockfree boost-asio boost-interprocess boost-thread boost-container"
-  VCPKG_VERSION: "2a31089e777fc187f1cc05338250b8e1810cfb52" # Oct 02, 2021
+  VCPKG_ARGUMENTS: 'doctest grpc[codegen] boost-coroutine boost-core boost-intrusive boost-lockfree boost-asio boost-interprocess boost-thread boost-container'
+  VCPKG_VERSION: '2a31089e777fc187f1cc05338250b8e1810cfb52' # Oct 02, 2021
 
 jobs:
   build:
@@ -33,20 +33,20 @@ jobs:
       matrix:
         config:
           - {
-            name: "Windows/2019/MSVC-19.30.30528.0/Release",
+            name: 'Windows/2019/MSVC-19.30.30528.0',
             os: windows-2019,
             config: Release,
             triplet: x64-windows,
-            cmake-extra-args: "",
+            cmake-extra-args: '',
             parallel: 1,
           }
           - {
-            name: "MacOSX/11/AppleClang-12.0.5.12050022/Release",
+            name: 'MacOSX/11/AppleClang-12.0.5.12050022',
             os: macos-11,
             config: Release,
             triplet: x64-osx,
-            cmake-extra-args: "-DASIO_GRPC_USE_BOOST_CONTAINER=on",
-            parallel: 2,
+            cmake-extra-args: '-DASIO_GRPC_USE_BOOST_CONTAINER=on',
+            parallel: 3,
           }
 
     steps:
@@ -64,7 +64,7 @@ jobs:
       name: Initialize CodeQL
       uses: github/codeql-action/init@v1
       with:
-        languages: "cpp"
+        languages: 'cpp'
 
     - name: Configure CMake
       run: cmake -B ${{ github.workspace }}/build ${{ matrix.config.cmake-extra-args }} "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
@@ -155,3 +155,82 @@ jobs:
           -Dsonar.cfamily.gcov.reportsPath=${{ github.workspace }}/build \
           -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
           -Dsonar.coverageReportPaths=${{ github.workspace }}/build/sonarqube-coverage.xml
+
+  multi-build:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+          - {
+            name: 'Ubuntu/20.04/Clang-10.0.0,11.0.0,12.0.0',
+            os: ubuntu-20.04,
+            config: Release,
+            triplet: x64-linux,
+            c-compiler: clang,
+            cxx-compiler: clang++,
+            compiler-versions: [10, 11, 12],
+            cmake-extra-args: '-DASIO_GRPC_USE_BOOST_CONTAINER=on "-DCMAKE_CXX_FLAGS=-stdlib=libc++"',
+            parallel: 2,
+          }
+          - {
+            name: 'MacOSX/11/GCC-9.4.0,10.3.0,11.2.0',
+            os: macos-11,
+            config: Release,
+            triplet: x64-osx,
+            c-compiler: gcc,
+            cxx-compiler: g++,
+            compiler-versions: [9, 10, 11],
+            cmake-extra-args: '',
+            parallel: 3,
+          }
+
+    steps:
+      name: Set default compiler
+      run: |
+        sudo update-alternatives --install /usr/bin/cc cc $(which ${{ matrix.config.c-compiler }}-${{ matrix.config.compiler-versions[0] }}) 50 &&\
+        sudo update-alternatives --set cc $(which ${{ matrix.config.c-compiler }}-${{ matrix.config.compiler-versions[0] }}) &&\
+        sudo update-alternatives --install /usr/bin/c++ c++ $(which ${{ matrix.config.cxx-compiler }}-${{ matrix.config.compiler-versions[0] }}) 50 &&\
+        sudo update-alternatives --set c++ $(which ${{ matrix.config.cxx-compiler }}-${{ matrix.config.compiler-versions[0] }})  &&\
+        sudo update-alternatives --install /usr/bin/cpp cpp $(which ${{ matrix.config.cxx-compiler }}-${{ matrix.config.compiler-versions[0] }}) 50 &&\
+        sudo update-alternatives --set cpp $(which ${{ matrix.config.cxx-compiler }}-${{ matrix.config.compiler-versions[0] }})
+
+    - uses: actions/checkout@v2
+
+    - name: Install vcpkg
+      uses: lukka/run-vcpkg@v7
+      with:
+        vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
+        vcpkgArguments: ${{ env.VCPKG_ARGUMENTS }}
+        vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
+        vcpkgTriplet: ${{ matrix.config.triplet }}
+
+    - name: 0 Configure CMake
+      run: cmake -B ${{ github.workspace }}/build -DCMAKE_CXX_COMPILER=$(which ${{ matrix.config.cxx-compiler }}-${{ matrix.config.compiler-versions[0] }}) ${{ matrix.config.cmake-extra-args }} "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
+
+    - name: 0 Build
+      run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.config.config }} --parallel ${{ matrix.config.parallel }}
+
+    - name: 0 Test
+      working-directory: ${{ github.workspace }}/build
+      run: ctest -C ${{ matrix.config.config }} -T test -j 2 --output-on-failure --timeout 200
+
+    - name: 1 Configure CMake
+      run: cmake -B ${{ github.workspace }}/build -DCMAKE_CXX_COMPILER=$(which ${{ matrix.config.cxx-compiler }}-${{ matrix.config.compiler-versions[1] }}) ${{ matrix.config.cmake-extra-args }} "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
+
+    - name: 1 Build
+      run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.config.config }} --parallel ${{ matrix.config.parallel }}
+
+    - name: 1 Test
+      working-directory: ${{ github.workspace }}/build
+      run: ctest -C ${{ matrix.config.config }} -T test -j 2 --output-on-failure --timeout 200
+
+    - name: 2 Configure CMake
+      run: cmake -B ${{ github.workspace }}/build -DCMAKE_CXX_COMPILER=$(which ${{ matrix.config.cxx-compiler }}-${{ matrix.config.compiler-versions[2] }}) ${{ matrix.config.cmake-extra-args }} "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
+
+    - name: 2 Build
+      run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.config.config }} --parallel ${{ matrix.config.parallel }}
+
+    - name: 2 Test
+      working-directory: ${{ github.workspace }}/build
+      run: ctest -C ${{ matrix.config.config }} -T test -j 2 --output-on-failure --timeout 200
