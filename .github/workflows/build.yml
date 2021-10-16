@@ -163,12 +163,9 @@ jobs:
     steps:
     - name: Set default compiler
       run: |
-        sudo update-alternatives --install /usr/bin/cc cc $(which gcc-9) 50 &&\
-        sudo update-alternatives --set cc $(which gcc-9) &&\
-        sudo update-alternatives --install /usr/bin/c++ c++ $(which g++-9) 50 &&\
-        sudo update-alternatives --set c++ $(which g++-9)  &&\
-        sudo update-alternatives --install /usr/bin/cpp cpp $(which g++-9) 50 &&\
-        sudo update-alternatives --set cpp $(which g++-9)
+        sudo port select --set cc $(which gcc-9) &&\
+        sudo port select --set c++ $(which g++-9) &&\
+        sudo port select --set cpp $(which g++-9)
 
     - uses: actions/checkout@v2
 
@@ -178,15 +175,16 @@ jobs:
         vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
         vcpkgArguments: ${{ env.VCPKG_ARGUMENTS }}
         vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
-        vcpkgTriplet: ${{ matrix.config.triplet }}
+        vcpkgTriplet: x64-osx
+        appendedCacheKey: macos-gcc
 
-    - name: 0 Configure CMake
+    - name: GCC 9 Configure CMake
       run: cmake -B ${{ github.workspace }}/build-0 -DCMAKE_CXX_COMPILER=$(which g++-9) "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=Release -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
 
-    - name: 0 Build
+    - name: GCC 9 Build
       run: cmake --build ${{ github.workspace }}/build-0 --config Release --parallel $(nproc)
 
-    - name: 0 Test
+    - name: GCC 9 Test
       working-directory: ${{ github.workspace }}/build-0
       run: ctest -C Release -T test -j $(nproc) --output-on-failure --timeout 200
 
@@ -213,15 +211,16 @@ jobs:
         vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
         vcpkgArguments: ${{ env.VCPKG_ARGUMENTS }}
         vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
-        vcpkgTriplet: ${{ matrix.config.triplet }}
+        vcpkgTriplet: x64-linux
+        appendedCacheKey: ubuntu-clang
 
-    - name: 0 Configure CMake
-      run: cmake -B ${{ github.workspace }}/build-0 -DCMAKE_CXX_COMPILER=$(which clang++-10) -DASIO_GRPC_USE_BOOST_CONTAINER=on "-DCMAKE_CXX_FLAGS=-stdlib=libc++" "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=Release -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
+    - name: Clang 10 Configure CMake
+      run: cmake -B ${{ github.workspace }}/build-0 -DCMAKE_CXX_COMPILER=$(which clang++-10) -DASIO_GRPC_USE_BOOST_CONTAINER=on "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=Release -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
 
-    - name: 0 Build
+    - name: Clang 10 Build
       run: cmake --build ${{ github.workspace }}/build-0 --config Release --parallel $(nproc)
 
-    - name: 0 Test
+    - name: Clang 10 Test
       working-directory: ${{ github.workspace }}/build-0
       run: ctest -C Release -T test --parallel $(nproc) --output-on-failure --timeout 200
 
