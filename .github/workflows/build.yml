@@ -163,9 +163,9 @@ jobs:
     steps:
     - name: Set default compiler
       run: |
-        sudo ln -s $(which gcc-9) /usr/bin/cc &&\
-        sudo ln -s $(which g++-9) /usr/bin/c++ &&\
-        sudo ln -s $(which g++-9) /usr/bin/cpp
+        sudo ln -s $(which gcc-9) /usr/local/bin/cc &&\
+        sudo ln -s $(which g++-9) /usr/local/bin/c++ &&\
+        sudo ln -s $(which g++-9) /usr/local/bin/cpp
 
     - uses: actions/checkout@v2
 
