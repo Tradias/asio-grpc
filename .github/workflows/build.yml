@@ -119,7 +119,7 @@ jobs:
     - name: Configure CMake
       run: |
         cmake -B ${{ github.workspace }}/build \
-          -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
+          -DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake \
           -DVCPKG_MANIFEST_MODE=off \
           -DCMAKE_EXPORT_COMPILE_COMMANDS=on \
           -DCMAKE_BUILD_TYPE=Debug \
@@ -186,7 +186,7 @@ jobs:
           }
 
     steps:
-      name: Set default compiler
+    - name: Set default compiler
       run: |
         sudo update-alternatives --install /usr/bin/cc cc $(which ${{ matrix.config.c-compiler }}-${{ matrix.config.compiler-versions[0] }}) 50 &&\
         sudo update-alternatives --set cc $(which ${{ matrix.config.c-compiler }}-${{ matrix.config.compiler-versions[0] }}) &&\
@@ -206,31 +206,31 @@ jobs:
         vcpkgTriplet: ${{ matrix.config.triplet }}
 
     - name: 0 Configure CMake
-      run: cmake -B ${{ github.workspace }}/build -DCMAKE_CXX_COMPILER=$(which ${{ matrix.config.cxx-compiler }}-${{ matrix.config.compiler-versions[0] }}) ${{ matrix.config.cmake-extra-args }} "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
+      run: cmake -B ${{ github.workspace }}/build-0 -DCMAKE_CXX_COMPILER=$(which ${{ matrix.config.cxx-compiler }}-${{ matrix.config.compiler-versions[0] }}) ${{ matrix.config.cmake-extra-args }} "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
 
     - name: 0 Build
-      run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.config.config }} --parallel ${{ matrix.config.parallel }}
+      run: cmake --build ${{ github.workspace }}/build-0 --config ${{ matrix.config.config }} --parallel ${{ matrix.config.parallel }}
 
     - name: 0 Test
-      working-directory: ${{ github.workspace }}/build
+      working-directory: ${{ github.workspace }}/build-0
       run: ctest -C ${{ matrix.config.config }} -T test -j 2 --output-on-failure --timeout 200
 
     - name: 1 Configure CMake
-      run: cmake -B ${{ github.workspace }}/build -DCMAKE_CXX_COMPILER=$(which ${{ matrix.config.cxx-compiler }}-${{ matrix.config.compiler-versions[1] }}) ${{ matrix.config.cmake-extra-args }} "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
+      run: cmake -B ${{ github.workspace }}/build-1 -DCMAKE_CXX_COMPILER=$(which ${{ matrix.config.cxx-compiler }}-${{ matrix.config.compiler-versions[1] }}) ${{ matrix.config.cmake-extra-args }} "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
 
     - name: 1 Build
-      run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.config.config }} --parallel ${{ matrix.config.parallel }}
+      run: cmake --build ${{ github.workspace }}/build-1 --config ${{ matrix.config.config }} --parallel ${{ matrix.config.parallel }}
 
     - name: 1 Test
-      working-directory: ${{ github.workspace }}/build
+      working-directory: ${{ github.workspace }}/build-1
       run: ctest -C ${{ matrix.config.config }} -T test -j 2 --output-on-failure --timeout 200
 
     - name: 2 Configure CMake
-      run: cmake -B ${{ github.workspace }}/build -DCMAKE_CXX_COMPILER=$(which ${{ matrix.config.cxx-compiler }}-${{ matrix.config.compiler-versions[2] }}) ${{ matrix.config.cmake-extra-args }} "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
+      run: cmake -B ${{ github.workspace }}/build-2 -DCMAKE_CXX_COMPILER=$(which ${{ matrix.config.cxx-compiler }}-${{ matrix.config.compiler-versions[2] }}) ${{ matrix.config.cmake-extra-args }} "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
 
     - name: 2 Build
-      run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.config.config }} --parallel ${{ matrix.config.parallel }}
+      run: cmake --build ${{ github.workspace }}/build-2 --config ${{ matrix.config.config }} --parallel ${{ matrix.config.parallel }}
 
     - name: 2 Test
-      working-directory: ${{ github.workspace }}/build
+      working-directory: ${{ github.workspace }}/build-2
       run: ctest -C ${{ matrix.config.config }} -T test -j 2 --output-on-failure --timeout 200
