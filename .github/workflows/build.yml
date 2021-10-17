@@ -22,7 +22,6 @@ on:
 
 env:
   VCPKG_VERSION: '699c8779f1b0feb4ed3564716d1ed31f69663ea6' # Oct 16, 2021
-  VCPKG_ROOT: ${{ runner.workspace }}/vcpkg
   CMAKE_ARGS: '-DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on'
   CTEST_ARGS: '-T test --output-on-failure --timeout 200'
 
@@ -30,6 +29,8 @@ jobs:
   build:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
+    env:
+      VCPKG_ROOT: ${{ runner.workspace }}/vcpkg
     strategy:
       fail-fast: false
       matrix:
@@ -87,6 +88,8 @@ jobs:
   multi-gcc-build:
     name: 'Ubuntu/20.04/GCC-9.3.0,10.3.0,11.1.0'
     runs-on: ubuntu-20.04
+    env:
+      VCPKG_ROOT: ${{ runner.workspace }}/vcpkg
     permissions:
       actions: read
       contents: read
@@ -173,6 +176,8 @@ jobs:
   multi-clang-build:
     name: 'Ubuntu/20.04/Clang-10.0.0,11.0.0,12.0.0'
     runs-on: ubuntu-20.04
+    env:
+      VCPKG_ROOT: ${{ runner.workspace }}/vcpkg
 
     steps:
     - name: Make clang-10 default compiler
