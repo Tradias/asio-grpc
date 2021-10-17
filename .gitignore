@@ -41,6 +41,7 @@ CMakeSettings.json
 # Visual Studio Code
 .vscode
 cmake-variants.yaml
+CMakeUserPresets.json
 
 # Codeblocks
 *.layout
