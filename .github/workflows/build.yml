@@ -59,7 +59,6 @@ jobs:
         vcpkgDirectory: ${{ runner.workspace }}/vcpkg
         vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
         appendedCacheKey: ${{ matrix.config.os }}-v1
-        vcpkgJsonGlob: '**/asio-grpc/vcpkg.json'
 
     - if: matrix.config.os == 'windows-2019' 
       name: Initialize CodeQL
@@ -117,7 +116,6 @@ jobs:
         vcpkgDirectory: ${{ runner.workspace }}/vcpkg
         vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
         appendedCacheKey: ubuntu-gcc-v1
-        vcpkgJsonGlob: '**/asio-grpc/vcpkg.json'
 
     - name: GCC 9 Configure CMake
       run: cmake -B ${{ github.workspace }}/build-9 -DCMAKE_CXX_COMPILER=$(which g++-9) "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release ${{ env.CMAKE_ARGS }}
@@ -189,7 +187,6 @@ jobs:
         vcpkgDirectory: ${{ runner.workspace }}/vcpkg
         vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
         appendedCacheKey: ubuntu-clang-v1
-        vcpkgJsonGlob: '**/asio-grpc/vcpkg.json'
 
     - name: Clang 10 Configure CMake
       run: cmake -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which clang++-10) -DASIO_GRPC_USE_BOOST_CONTAINER=on "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release ${{ env.CMAKE_ARGS }}
