@@ -21,8 +21,10 @@ on:
       - 'sonar-project.properties'
 
 env:
-  VCPKG_ARGUMENTS: 'doctest grpc[codegen] boost-coroutine boost-core boost-intrusive boost-lockfree boost-asio boost-interprocess boost-thread boost-container'
-  VCPKG_VERSION: '2a31089e777fc187f1cc05338250b8e1810cfb52' # Oct 02, 2021
+  VCPKG_VERSION: '699c8779f1b0feb4ed3564716d1ed31f69663ea6' # Oct 16, 2021
+  VCPKG_ROOT: ${{ runner.workspace }}/vcpkg
+  CMAKE_ARGS: '-DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on'
+  CTEST_ARGS: '-T test --output-on-failure --timeout 200'
 
 jobs:
   build:
@@ -53,12 +55,13 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Install vcpkg
-      uses: lukka/run-vcpkg@v7
+      uses: lukka/run-vcpkg@v10
       with:
-        vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
+        vcpkgDirectory: ${{ env.VCPKG_ROOT }}
         vcpkgArguments: ${{ env.VCPKG_ARGUMENTS }}
         vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
-        vcpkgTriplet: ${{ matrix.config.triplet }}
+        appendedCacheKey: ${{ matrix.config.os }}-v1
+        vcpkgJsonIgnores: '**/vcpkg.json'
 
     - if: matrix.config.os == 'windows-2019' 
       name: Initialize CodeQL
@@ -67,22 +70,22 @@ jobs:
         languages: 'cpp'
 
     - name: Configure CMake
-      run: cmake -B ${{ github.workspace }}/build ${{ matrix.config.cmake-extra-args }} "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
+      run: cmake -B ${{ github.workspace }}/build ${{ matrix.config.cmake-extra-args }} "-DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} ${{ env.CMAKE_ARGS }}
 
     - name: Build
       run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.config.config }} --parallel ${{ matrix.config.parallel }}
 
     - name: Test
       working-directory: ${{ github.workspace }}/build
-      run: ctest -C ${{ matrix.config.config }} -T test --parallel 2 --output-on-failure --timeout 200
+      run: ctest -C ${{ matrix.config.config }} --parallel 2 ${{ env.CTEST_ARGS }}
 
     - if: matrix.config.os == 'windows-2019' 
       name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
 
 
-  build-and-scan:
-    name: Ubuntu/20.04/GCC-10.3.0/Debug
+  multi-gcc-build:
+    name: 'Ubuntu/20.04/GCC-9.3.0,10.3.0,11.1.0'
     runs-on: ubuntu-20.04
     permissions:
       actions: read
@@ -90,6 +93,12 @@ jobs:
       security-events: write
 
     steps:
+    - name: Install GCC 11 and gcovr
+      run: |
+        sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test &&
+        sudo apt-get install g++-11 &&\
+        sudo apt-get install gcovr
+
     - name: Make gcc-9 default compiler
       run: |
         sudo update-alternatives --install /usr/bin/cc cc $(which gcc-9) 50 &&\
@@ -99,50 +108,42 @@ jobs:
         sudo update-alternatives --install /usr/bin/cpp cpp $(which g++-9) 50 &&\
         sudo update-alternatives --set cpp $(which g++-9)
 
-    - name: Install gcovr
-      run: |
-        sudo apt-get update &&\
-        sudo apt-get install gcovr
-
     - uses: actions/checkout@v2
       with:
         # Disabling shallow clone is recommended for improving relevancy of sonarsource reporting
         fetch-depth: 0
 
     - name: Install vcpkg
-      uses: lukka/run-vcpkg@v7
+      uses: lukka/run-vcpkg@v10
       with:
-        vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
+        vcpkgDirectory: ${{ env.VCPKG_ROOT }}
         vcpkgArguments: ${{ env.VCPKG_ARGUMENTS }}
         vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
-        vcpkgTriplet: x64-linux
-        appendedCacheKey: ubuntu-gcc
+        appendedCacheKey: ubuntu-gcc-v1
+        vcpkgJsonIgnores: '**/vcpkg.json'
 
-    - name: Configure CMake
-      run: |
-        cmake -B ${{ github.workspace }}/build \
-          -DCMAKE_CXX_COMPILER=$(which g++-10) \
-          -DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake \
-          -DVCPKG_MANIFEST_MODE=off \
-          -DCMAKE_EXPORT_COMPILE_COMMANDS=on \
-          -DCMAKE_BUILD_TYPE=Debug \
-          -DASIO_GRPC_BUILD_TESTS=on \
-          -DASIO_GRPC_DISCOVER_TESTS=on \
-          -DASIO_GRPC_BUILD_EXAMPLES=on \
-          -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on \
-          -DASIO_GRPC_TEST_COVERAGE=on \
-          -DASIO_GRPC_GCOV_PROGRAM=$(which gcov-10) \
-          -DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build/sonarqube-coverage.xml
+    - name: GCC 9 Configure CMake
+      run: cmake -B ${{ github.workspace }}/build-9 -DCMAKE_CXX_COMPILER=$(which g++-9) "-DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release ${{ env.CMAKE_ARGS }}
 
-    - name: Build
-      run: cmake --build ${{ github.workspace }}/build --config Debug --parallel $(nproc)
+    - name: GCC 9 Build
+      run: cmake --build ${{ github.workspace }}/build-9 --config Release --parallel $(nproc)
 
-    - name: Test
-      working-directory: ${{ github.workspace }}/build
-      run: ctest -C Debug -T test --parallel $(nproc) --output-on-failure --timeout 200
+    - name: GCC 9 Test
+      working-directory: ${{ github.workspace }}/build-9
+      run: ctest -C Release --parallel $(nproc) ${{ env.CTEST_ARGS }}
 
-    - name: Coverage
-      run: cmake --build ${{ github.workspace }}/build --config Debug --target asio-grpc-test-cpp20-coverage
+    - name: GCC 10 Configure CMake
+      run: cmake -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which g++-10) -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Debug ${{ env.CMAKE_ARGS }} -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DASIO_GRPC_TEST_COVERAGE=on -DASIO_GRPC_GCOV_PROGRAM=$(which gcov-10) -DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build-10/sonarqube-coverage.xml
+
+    - name: GCC 10 Build
+      run: cmake --build ${{ github.workspace }}/build-10 --config Debug --parallel $(nproc)
+
+    - name: GCC 10 Test
+      working-directory: ${{ github.workspace }}/build-10
+      run: ctest -C Debug --parallel $(nproc) ${{ env.CTEST_ARGS }}
+
+    - name: GCC 10 Coverage
+      run: cmake --build ${{ github.workspace }}/build-10 --config Debug --target asio-grpc-test-cpp20-coverage
 
     - name: Download sonar-scanner
       uses: warchant/setup-sonar-scanner@v3
@@ -154,61 +155,19 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         sonar-scanner \
-          -Dsonar.cfamily.compile-commands=${{ github.workspace }}/build/compile_commands.json \
-          -Dsonar.cfamily.gcov.reportsPath=${{ github.workspace }}/build \
+          -Dsonar.cfamily.compile-commands=${{ github.workspace }}/build-10/compile_commands.json \
           -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
-          -Dsonar.coverageReportPaths=${{ github.workspace }}/build/sonarqube-coverage.xml
-
-
-  multi-gcc-build:
-    name: 'Ubuntu/20.04/GCC-9.3.0,11.1.0'
-    runs-on: ubuntu-20.04
-
-    steps:
-    - name: Install GCC 11
-      run: |
-        sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test &&
-        sudo apt-get install g++-11
-
-    - name: Make gcc-9 default compiler
-      run: |
-        sudo update-alternatives --install /usr/bin/cc cc $(which gcc-9) 50 &&\
-        sudo update-alternatives --set cc $(which gcc-9) &&\
-        sudo update-alternatives --install /usr/bin/c++ c++ $(which g++-9) 50 &&\
-        sudo update-alternatives --set c++ $(which g++-9)  &&\
-        sudo update-alternatives --install /usr/bin/cpp cpp $(which g++-9) 50 &&\
-        sudo update-alternatives --set cpp $(which g++-9)
-
-    - uses: actions/checkout@v2
-
-    - name: Install vcpkg
-      uses: lukka/run-vcpkg@v7
-      with:
-        vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
-        vcpkgArguments: ${{ env.VCPKG_ARGUMENTS }}
-        vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
-        vcpkgTriplet: x64-linux
-        appendedCacheKey: ubuntu-gcc
-
-    - name: GCC 9 Configure CMake
-      run: cmake -B ${{ github.workspace }}/build-9 -DCMAKE_CXX_COMPILER=$(which g++-9) "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=Release -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
-
-    - name: GCC 9 Build
-      run: cmake --build ${{ github.workspace }}/build-9 --config Release --parallel $(nproc)
-
-    - name: GCC 9 Test
-      working-directory: ${{ github.workspace }}/build-9
-      run: ctest -C Release -T test -j $(nproc) --output-on-failure --timeout 200
+          -Dsonar.coverageReportPaths=${{ github.workspace }}/build-10/sonarqube-coverage.xml
 
     - name: GCC 11 Configure CMake
-      run: cmake -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which g++-11) "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=Release -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
+      run: cmake -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which g++-11) "-DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release ${{ env.CMAKE_ARGS }}
 
     - name: GCC 11 Build
       run: cmake --build ${{ github.workspace }}/build-11 --config Release --parallel $(nproc)
 
     - name: GCC 11 Test
       working-directory: ${{ github.workspace }}/build-11
-      run: ctest -C Release -T test -j $(nproc) --output-on-failure --timeout 200
+      run: ctest -C Release --parallel $(nproc) ${{ env.CTEST_ARGS }}
 
 
   multi-clang-build:
@@ -228,41 +187,41 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Install vcpkg
-      uses: lukka/run-vcpkg@v7
+      uses: lukka/run-vcpkg@v10
       with:
-        vcpkgDirectory: ${{ runner.workspace }}/vcpkg/
+        vcpkgDirectory: ${{ env.VCPKG_ROOT }}
         vcpkgArguments: ${{ env.VCPKG_ARGUMENTS }}
         vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
-        vcpkgTriplet: x64-linux
-        appendedCacheKey: ubuntu-clang
+        appendedCacheKey: ubuntu-clang-v1
+        vcpkgJsonIgnores: '**/vcpkg.json'
 
     - name: Clang 10 Configure CMake
-      run: cmake -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which clang++-10) -DASIO_GRPC_USE_BOOST_CONTAINER=on "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=Release -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
+      run: cmake -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which clang++-10) -DASIO_GRPC_USE_BOOST_CONTAINER=on "-DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release ${{ env.CMAKE_ARGS }}
 
     - name: Clang 10 Build
       run: cmake --build ${{ github.workspace }}/build-10 --config Release --parallel $(nproc)
 
     - name: Clang 10 Test
       working-directory: ${{ github.workspace }}/build-10
-      run: ctest -C Release -T test --parallel $(nproc) --output-on-failure --timeout 200
+      run: ctest -C Release --parallel $(nproc) ${{ env.CTEST_ARGS }}
 
     - name: Clang 11 Configure CMake
-      run: cmake -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which clang++-11) -DASIO_GRPC_USE_BOOST_CONTAINER=on "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=Release -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
+      run: cmake -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which clang++-11) -DASIO_GRPC_USE_BOOST_CONTAINER=on "-DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release ${{ env.CMAKE_ARGS }}
 
     - name: Clang 11 Build
       run: cmake --build ${{ github.workspace }}/build-11 --config Release --parallel $(nproc)
 
     - name: Clang 11 Test
       working-directory: ${{ github.workspace }}/build-11
-      run: ctest -C Release -T test --parallel $(nproc) --output-on-failure --timeout 200
+      run: ctest -C Release --parallel $(nproc) ${{ env.CTEST_ARGS }}
 
     - name: Clang 12 Configure CMake
-      run: cmake -B ${{ github.workspace }}/build-12 -DCMAKE_CXX_COMPILER=$(which clang++-12) -DASIO_GRPC_USE_BOOST_CONTAINER=on "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=off -DCMAKE_BUILD_TYPE=Release -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
+      run: cmake -B ${{ github.workspace }}/build-12 -DCMAKE_CXX_COMPILER=$(which clang++-12) -DASIO_GRPC_USE_BOOST_CONTAINER=on "-DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release ${{ env.CMAKE_ARGS }}
 
     - name: Clang 12 Build
       run: cmake --build ${{ github.workspace }}/build-12 --config Release --parallel $(nproc)
 
     - name: Clang 12 Test
       working-directory: ${{ github.workspace }}/build-12
-      run: ctest -C Release -T test --parallel $(nproc) --output-on-failure --timeout 200
+      run: ctest -C Release --parallel $(nproc) ${{ env.CTEST_ARGS }}
 
