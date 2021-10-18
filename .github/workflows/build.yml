@@ -65,6 +65,7 @@ jobs:
       uses: github/codeql-action/init@v1
       with:
         languages: 'cpp'
+        config-file: ./.github/codeql/codeql-config.yml
 
     - name: Configure CMake
       run: cmake -B ${{ github.workspace }}/build ${{ matrix.config.cmake-extra-args }} "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} ${{ env.CMAKE_ARGS }}
