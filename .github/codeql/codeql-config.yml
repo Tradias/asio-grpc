@@ -1,2 +1,2 @@
 paths-ignore:
-  - '**/vcpkg_installed
+  - '**/vcpkg_installed'

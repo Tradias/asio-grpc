@@ -21,6 +21,7 @@ on:
       - 'sonar-project.properties'
 
 env:
+  VCPKG_ARGUMENTS: 'doctest grpc[codegen] boost-coroutine boost-core boost-intrusive boost-lockfree boost-asio boost-interprocess boost-thread boost-container'
   VCPKG_VERSION: '699c8779f1b0feb4ed3564716d1ed31f69663ea6' # Oct 16, 2021
   CMAKE_ARGS: '-DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on'
   CTEST_ARGS: '-T test --output-on-failure --timeout 200'
@@ -54,11 +55,13 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Install vcpkg
-      uses: lukka/run-vcpkg@main
+      uses: lukka/run-vcpkg@v7
       with:
         vcpkgDirectory: ${{ runner.workspace }}/vcpkg
         vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
         appendedCacheKey: ${{ matrix.config.os }}-v1
+        vcpkgTriplet: ${{ matrix.config.triplet }}
+        vcpkgArguments: ${{ env.VCPKG_ARGUMENTS }}
 
     - if: matrix.config.os == 'windows-2019' 
       name: Initialize CodeQL
@@ -112,11 +115,13 @@ jobs:
         fetch-depth: 0
 
     - name: Install vcpkg
-      uses: lukka/run-vcpkg@main
+      uses: lukka/run-vcpkg@v7
       with:
         vcpkgDirectory: ${{ runner.workspace }}/vcpkg
         vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
         appendedCacheKey: ubuntu-gcc-v1
+        vcpkgTriplet: x64-linux
+        vcpkgArguments: ${{ env.VCPKG_ARGUMENTS }}
 
     - name: GCC 9 Configure CMake
       run: cmake -B ${{ github.workspace }}/build-9 -DCMAKE_CXX_COMPILER=$(which g++-9) "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release ${{ env.CMAKE_ARGS }}
@@ -183,11 +188,13 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Install vcpkg
-      uses: lukka/run-vcpkg@main
+      uses: lukka/run-vcpkg@v7
       with:
         vcpkgDirectory: ${{ runner.workspace }}/vcpkg
         vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
         appendedCacheKey: ubuntu-clang-v1
+        vcpkgTriplet: x64-osx
+        vcpkgArguments: ${{ env.VCPKG_ARGUMENTS }}
 
     - name: Clang 10 Configure CMake
       run: cmake -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which clang++-10) -DASIO_GRPC_USE_BOOST_CONTAINER=on "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release ${{ env.CMAKE_ARGS }}
