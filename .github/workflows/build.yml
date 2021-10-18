@@ -193,7 +193,7 @@ jobs:
         vcpkgDirectory: ${{ runner.workspace }}/vcpkg
         vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
         appendedCacheKey: ubuntu-clang-v1
-        vcpkgTriplet: x64-osx
+        vcpkgTriplet: x64-linux
         vcpkgArguments: ${{ env.VCPKG_ARGUMENTS }}
 
     - name: Clang 10 Configure CMake
