@@ -43,7 +43,8 @@ asio_grpc_protobuf_generate(
 
 # tests
 if(ASIO_GRPC_USE_BOOST_CONTAINER)
-    set(ASIO_GRPC_MEMORY_RESOURCE_UTILS_INCLUDE "#include <boost/container/pmr/monotonic_buffer_resource.hpp>")
+    set(ASIO_GRPC_MEMORY_RESOURCE_UTILS_INCLUDE [[#include <boost/container/pmr/monotonic_buffer_resource.hpp>
+    #include <boost/container/pmr/global_resource.hpp>]])
 endif()
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/utils/memoryResource.hpp.in"
                "${CMAKE_CURRENT_BINARY_DIR}/generated/utils/memoryResource.hpp" @ONLY)

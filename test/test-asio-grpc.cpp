@@ -65,11 +65,18 @@ TEST_CASE("GrpcExecutor fulfills Executor TS traits")
     auto executor = grpc_context.get_executor();
     CHECK_EQ(asio::execution::blocking_t::possibly,
              asio::query(asio::require(executor, asio::execution::blocking_t::possibly), asio::execution::blocking));
+    CHECK_EQ(asio::execution::blocking_t::never,
+             asio::query(asio::require(executor, asio::execution::blocking_t::never), asio::execution::blocking));
     CHECK_EQ(asio::execution::relationship_t::continuation,
              asio::query(asio::prefer(executor, asio::execution::relationship_t::continuation),
                          asio::execution::relationship));
+    CHECK_EQ(asio::execution::relationship_t::fork,
+             asio::query(asio::prefer(executor, asio::execution::relationship_t::fork), asio::execution::relationship));
     CHECK_EQ(asio::execution::outstanding_work_t::tracked,
              asio::query(asio::prefer(executor, asio::execution::outstanding_work_t::tracked),
+                         asio::execution::outstanding_work));
+    CHECK_EQ(asio::execution::outstanding_work_t::untracked,
+             asio::query(asio::prefer(executor, asio::execution::outstanding_work_t::untracked),
                          asio::execution::outstanding_work));
 }
 
@@ -86,15 +93,25 @@ TEST_CASE("GrpcExecutor is mostly trivial")
 TEST_CASE("Work tracking GrpcExecutor constructor and assignment")
 {
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+    agrpc::GrpcContext other_context{std::make_unique<grpc::CompletionQueue>()};
+
+    auto other_ex = asio::prefer(grpc_context.get_executor(), asio::execution::blocking_t::possibly);
     auto ex = asio::require(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked,
                             asio::execution::allocator(agrpc::detail::pmr::polymorphic_allocator<std::byte>()));
+    auto ex2a = asio::require(ex, asio::execution::allocator);
+    CHECK_EQ(std::allocator<void>{}, asio::query(ex2a, asio::execution::allocator));
+    CHECK_NE(other_ex, ex2a);
+    CHECK_NE(grpc_context.get_executor(), ex2a);
+    CHECK_NE(other_context.get_executor(), ex2a);
+
     const auto ex1{ex};
     auto ex2{ex};
     auto ex3{std::move(ex)};
     ex2 = ex1;
     ex2 = std::move(ex3);
-    auto ex2a = asio::require(ex2, asio::execution::allocator);
-    CHECK_EQ(std::allocator<void>{}, asio::query(ex2a, asio::execution::allocator));
+    ex3 = std::as_const(ex2);
+    ex3 = std::move(ex2);
+    CHECK_EQ(ex3, ex1);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wait")
@@ -232,6 +249,28 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "dispatch with allocator")
                       {
                           return value == std::byte{};
                       }));
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "execute with throwing allocator")
+{
+    const auto executor =
+        asio::require(get_executor(), asio::execution::allocator(agrpc::detail::pmr::polymorphic_allocator<std::byte>(
+                                          agrpc::detail::pmr::null_memory_resource())));
+    CHECK_THROWS(asio::execution::execute(executor, [] {}));
+}
+
+struct Exception : std::exception
+{
+};
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post with throwing completion handler")
+{
+    asio::post(get_work_tracking_executor(), asio::bind_executor(get_work_tracking_executor(),
+                                                                 []
+                                                                 {
+                                                                     throw Exception{};
+                                                                 }));
+    CHECK_THROWS_AS(grpc_context.run(), Exception);
 }
 
 template <class Function>
@@ -612,6 +651,22 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request c
         });
     grpc_context.run();
     CHECK_EQ(4, request_count);
+}
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "RPC step after grpc_context stop")
+{
+    std::optional<bool> ok;
+    asio::spawn(get_work_tracking_executor(),
+                [&](asio::yield_context yield)
+                {
+                    grpc_context.stop();
+                    test::v1::Request request;
+                    grpc::ServerAsyncResponseWriter<test::v1::Response> writer{&server_context};
+                    ok = agrpc::request(&test::v1::Test::AsyncService::RequestUnary, service, server_context, request,
+                                        writer, yield);
+                });
+    grpc_context.run();
+    CHECK_FALSE(ok);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post an Alarm and use variadic-arg callback for its wait")

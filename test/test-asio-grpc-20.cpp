@@ -40,6 +40,29 @@ TEST_CASE("GrpcExecutor fulfills Executor TS concepts")
 #endif
 
 #ifdef BOOST_ASIO_HAS_CO_AWAIT
+TEST_CASE_FIXTURE(test::GrpcContextTest, "get_completion_queue")
+{
+    grpc::CompletionQueue* queue{};
+    SUBCASE("GrpcAwaitable")
+    {
+        test::co_spawn(grpc_context,
+                       [&]() -> agrpc::GrpcAwaitable<void>
+                       {
+                           queue = co_await agrpc::get_completion_queue(agrpc::GRPC_USE_AWAITABLE);
+                       });
+    }
+    SUBCASE("asio::awaitable")
+    {
+        test::co_spawn(grpc_context,
+                       [&]() -> asio::awaitable<void>
+                       {
+                           queue = co_await agrpc::get_completion_queue();
+                       });
+    }
+    grpc_context.run();
+    CHECK_EQ(grpc_context.get_completion_queue(), queue);
+}
+
 TEST_CASE_FIXTURE(test::GrpcContextTest, "co_spawn two Alarms and await their ok")
 {
     bool ok1 = false;
@@ -167,9 +190,10 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable client streaming")
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable unary")
 {
-    bool use_finish_with_error;
+    bool use_finish_with_error{false};
     SUBCASE("server finish_with_error") { use_finish_with_error = true; }
-    SUBCASE("server finish with OK") { use_finish_with_error = false; }
+    bool use_client_convenience{false};
+    SUBCASE("client use convenience") { use_client_convenience = true; }
     test::co_spawn(grpc_context,
                    [&]() -> asio::awaitable<void>
                    {
@@ -195,10 +219,18 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable unary")
         {
             test::v1::Request request;
             request.set_integer(42);
-            std::unique_ptr<grpc::ClientAsyncResponseReader<test::v1::Response>> reader;
-            co_await agrpc::request(&test::v1::Test::Stub::AsyncUnary, *stub, client_context, request, reader);
-            CHECK(std::is_same_v<decltype(reader), decltype(agrpc::request(&test::v1::Test::Stub::AsyncUnary, *stub,
-                                                                           client_context, request))::value_type>);
+            auto reader =
+                co_await [&]() -> asio::awaitable<std::unique_ptr<grpc::ClientAsyncResponseReader<test::v1::Response>>>
+            {
+                if (use_client_convenience)
+                {
+                    co_return co_await agrpc::request(&test::v1::Test::Stub::AsyncUnary, *stub, client_context,
+                                                      request);
+                }
+                std::unique_ptr<grpc::ClientAsyncResponseReader<test::v1::Response>> reader;
+                co_await agrpc::request(&test::v1::Test::Stub::AsyncUnary, *stub, client_context, request, reader);
+                co_return reader;
+            }();
             test::v1::Response response;
             grpc::Status status;
             CHECK(co_await agrpc::finish(*reader, response, status));

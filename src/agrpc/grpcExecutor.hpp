@@ -66,16 +66,23 @@ class BasicGrpcExecutor
         return this->allocator();
     }
 
-    template <class OtherAllocator, std::uint32_t OtherOptions>
+    template <std::uint32_t OtherOptions>
     [[nodiscard]] constexpr bool operator==(
-        const agrpc::BasicGrpcExecutor<OtherAllocator, OtherOptions>& other) const noexcept
+        const agrpc::BasicGrpcExecutor<Allocator, OtherOptions>& other) const noexcept
     {
-        return this->grpc_context() == other.grpc_context() && this->allocator() == other.allocator();
+        if constexpr (Options != OtherOptions)
+        {
+            return false;
+        }
+        else
+        {
+            return this->grpc_context() == other.grpc_context() && this->allocator() == other.allocator();
+        }
     }
 
-    template <class OtherAllocator, std::uint32_t OtherOptions>
+    template <std::uint32_t OtherOptions>
     [[nodiscard]] constexpr bool operator!=(
-        const agrpc::BasicGrpcExecutor<OtherAllocator, OtherOptions>& other) const noexcept
+        const agrpc::BasicGrpcExecutor<Allocator, OtherOptions>& other) const noexcept
     {
         return !(*this == other);
     }
