@@ -20,8 +20,7 @@ set(ASIO_GRPC_TEST_PROTOS
     ""
     CACHE FILEPATH "Path to .proto files")
 
-find_package(Boost REQUIRED NO_CMAKE_PACKAGE_REGISTRY NO_CMAKE_SYSTEM_PACKAGE_REGISTRY NO_SYSTEM_ENVIRONMENT_PATH
-             NO_CMAKE_SYSTEM_PATH COMPONENTS coroutine thread)
+find_package(Boost REQUIRED coroutine thread)
 find_package(
     gRPC
     CONFIG
@@ -30,6 +29,7 @@ find_package(
     NO_CMAKE_SYSTEM_PACKAGE_REGISTRY
     NO_SYSTEM_ENVIRONMENT_PATH
     NO_CMAKE_SYSTEM_PATH)
+
 find_package(
     asio-grpc
     CONFIG
@@ -38,12 +38,6 @@ find_package(
     NO_CMAKE_SYSTEM_PACKAGE_REGISTRY
     NO_SYSTEM_ENVIRONMENT_PATH
     NO_CMAKE_SYSTEM_PATH)
-
-if(NOT TARGET protobuf::protoc)
-    add_executable(protobuf::protoc IMPORTED)
-
-    set_target_properties(protobuf::protoc PROPERTIES IMPORTED_LOCATION "${Protobuf_PROTOC_EXECUTABLE}")
-endif()
 
 set(ASIO_GRPC_CMAKE_TEST_GENERATED_PROTOS_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 

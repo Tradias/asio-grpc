@@ -35,6 +35,7 @@ run_process(
     "-B"
     "${PWD}/build"
     "-G${CMAKE_GENERATOR}"
+    "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
     "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
     "-DCMAKE_INSTALL_PREFIX=${PWD}/install"
     "${SOURCE_DIR}")
@@ -49,23 +50,25 @@ run_process(
     --target
     install)
 
+file(COPY "${TEST_SOURCE_DIR}/." DESTINATION "${PWD}")
+
 # configure test project
 run_process(
     "${CMAKE_COMMAND}"
     "-B"
     "${PWD}/test-build"
     "-G${CMAKE_GENERATOR}"
+    "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
     "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
     "-DCMAKE_MSVC_RUNTIME_LIBRARY=${CMAKE_MSVC_RUNTIME_LIBRARY}"
     "-DBoost_USE_STATIC_RUNTIME=${Boost_USE_STATIC_RUNTIME}"
     "-DCMAKE_PREFIX_PATH=${PWD}/install"
-    # \;${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}
+    "-DVCPKG_INSTALLED_DIR=${VCPKG_INSTALLED_DIR}"
     "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}"
     "-DVCPKG_TARGET_TRIPLET=${VCPKG_TARGET_TRIPLET}"
     "-DCMAKE_INSTALL_PREFIX=${PWD}/test-install"
-    "-DProtobuf_PROTOC_EXECUTABLE=${Protobuf_PROTOC_EXECUTABLE}"
     "-DASIO_GRPC_TEST_PROTOS=${ASIO_GRPC_TEST_PROTOS}"
-    "${TEST_SOURCE_DIR}")
+    "${PWD}")
 
 # build test project
 run_process(

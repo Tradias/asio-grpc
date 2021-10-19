@@ -1,6 +1,6 @@
 {
     "name": "asio-grpc-cmake-test",
-    "version-string": "1.1.2",
+    "version": "1",
     "dependencies": [
         {
             "name": "grpc",
@@ -9,6 +9,12 @@
             ]
         },
         "boost-coroutine",
-        "boost-thread"
+        "boost-core",
+        "boost-intrusive",
+        "boost-lockfree",
+        "boost-asio",
+        "boost-coroutine",
+        "boost-thread",
+        "boost-container"
     ]
 }
