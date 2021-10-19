@@ -16,7 +16,7 @@ function(run_process)
     execute_process(
         COMMAND ${ARGN}
         WORKING_DIRECTORY "${PWD}"
-        TIMEOUT 120
+        TIMEOUT 200
         RESULT_VARIABLE _result
         OUTPUT_VARIABLE _output
         ERROR_VARIABLE _output)
@@ -38,7 +38,7 @@ run_process(
     "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
     "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
     "-DCMAKE_INSTALL_PREFIX=${PWD}/install"
-    "-DASIO_GRPC_BOOST_USE_STATIC_RUNTIME=${ASIO_GRPC_BOOST_USE_STATIC_RUNTIME}"
+    "-DASIO_GRPC_USE_BOOST_CONTAINER=${ASIO_GRPC_USE_BOOST_CONTAINER}"
     "${SOURCE_DIR}")
 
 # install asio-grpc
