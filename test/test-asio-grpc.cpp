@@ -107,11 +107,17 @@ TEST_CASE("Work tracking GrpcExecutor constructor and assignment")
     const auto ex1{ex};
     auto ex2{ex};
     auto ex3{std::move(ex)};
+    CHECK_EQ(ex3, ex2);
     ex2 = ex1;
+    CHECK_EQ(ex2, ex1);
     ex2 = std::move(ex3);
-    ex3 = std::as_const(ex2);
+    ex2 = std::move(ex2);
+    CHECK_EQ(ex2, ex1);
     ex3 = std::move(ex2);
     CHECK_EQ(ex3, ex1);
+    ex2 = std::as_const(ex3);
+    ex2 = std::as_const(ex2);
+    CHECK_EQ(ex2, ex1);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wait")
