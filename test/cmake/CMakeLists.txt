@@ -20,7 +20,7 @@ set(ASIO_GRPC_TEST_PROTOS
     ""
     CACHE FILEPATH "Path to .proto files")
 
-find_package(Boost REQUIRED coroutine thread)
+find_package(Boost REQUIRED coroutine thread container)
 find_package(
     gRPC
     CONFIG
@@ -52,8 +52,15 @@ add_executable(${PROJECT_NAME})
 target_sources(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp"
                                        "${ASIO_GRPC_CMAKE_TEST_GENERATED_SOURCES}")
 
-target_link_libraries(${PROJECT_NAME} PUBLIC asio-grpc::asio-grpc gRPC::grpc++ Boost::headers Boost::coroutine
-                                             Boost::thread Boost::disable_autolinking)
+target_link_libraries(
+    ${PROJECT_NAME}
+    PUBLIC asio-grpc::asio-grpc
+           gRPC::grpc++
+           Boost::headers
+           Boost::coroutine
+           Boost::thread
+           ${Boost_CONTAINER_LIBRARY}
+           Boost::disable_autolinking)
 
 target_include_directories(${PROJECT_NAME} PRIVATE "${ASIO_GRPC_CMAKE_TEST_GENERATED_PROTOS_OUT_DIR}")
 
@@ -68,5 +75,3 @@ target_compile_definitions(
             _WIN32_WINNT=0x0A00 # Windows 10
             WINVER=0x0A00>
             BOOST_ASIO_NO_DEPRECATED)
-
-install(TARGETS ${PROJECT_NAME} RUNTIME)

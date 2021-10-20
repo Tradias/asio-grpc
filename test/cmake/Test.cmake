@@ -67,19 +67,13 @@ run_process(
     "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}"
     "-DVCPKG_TARGET_TRIPLET=${VCPKG_TARGET_TRIPLET}"
     "-DVCPKG_MANIFEST_MODE=${VCPKG_MANIFEST_MODE}"
-    "-DCMAKE_INSTALL_PREFIX=${PWD}/test-install"
     "-DASIO_GRPC_TEST_PROTOS=${ASIO_GRPC_TEST_PROTOS}"
+    # Use generator-expression to prevent multi-config generators from creating a subdirectory
+    "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${PWD}/test-install/\$<BOOL:on>"
     "${PWD}")
 
 # build test project
-run_process(
-    "${CMAKE_COMMAND}"
-    --build
-    "${PWD}/test-build"
-    --config
-    ${CMAKE_BUILD_TYPE}
-    --target
-    install)
+run_process("${CMAKE_COMMAND}" --build "${PWD}/test-build" --config ${CMAKE_BUILD_TYPE})
 
 # run test project
-run_process("${PWD}/test-install/bin/asio-grpc-cmake-test${CMAKE_EXECUTABLE_SUFFIX}")
+run_process("${PWD}/test-install/1/asio-grpc-cmake-test${CMAKE_EXECUTABLE_SUFFIX}")
