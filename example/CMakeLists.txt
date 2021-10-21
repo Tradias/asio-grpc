@@ -15,12 +15,13 @@
 function(asio_grpc_add_example_protos _asio_grpc_name)
     include(AsioGrpcProtobufGenerator)
 
-    set(ASIO_GRPC_GENERATED_EXAMPLE_PROTOS_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+    set(ASIO_GRPC_GENERATED_EXAMPLE_PROTOS_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+    set(ASIO_GRPC_GENERATED_EXAMPLE_PROTOS_OUT_DIR "${ASIO_GRPC_GENERATED_EXAMPLE_PROTOS_INCLUDE_DIR}/protos")
 
     asio_grpc_protobuf_generate(
         GENERATE_GRPC
         OUT_VAR ASIO_GRPC_GENERATED_EXAMPLE_SOURCES
-        PROTOC_OUT_DIR "${ASIO_GRPC_GENERATED_EXAMPLE_PROTOS_OUT_DIR}"
+        OUT_DIR "${ASIO_GRPC_GENERATED_EXAMPLE_PROTOS_OUT_DIR}"
         PROTOS "${CMAKE_CURRENT_LIST_DIR}/protos/helloworld.proto" "${CMAKE_CURRENT_LIST_DIR}/protos/example.proto")
 
     add_library(asio-grpc-${_asio_grpc_name} OBJECT)
@@ -28,7 +29,7 @@ function(asio_grpc_add_example_protos _asio_grpc_name)
     target_sources(asio-grpc-${_asio_grpc_name} PRIVATE ${ASIO_GRPC_GENERATED_EXAMPLE_SOURCES})
 
     target_include_directories(
-        asio-grpc-${_asio_grpc_name} PUBLIC $<BUILD_INTERFACE:${ASIO_GRPC_GENERATED_EXAMPLE_PROTOS_OUT_DIR}>
+        asio-grpc-${_asio_grpc_name} PUBLIC $<BUILD_INTERFACE:${ASIO_GRPC_GENERATED_EXAMPLE_PROTOS_INCLUDE_DIR}>
                                             $<INSTALL_INTERFACE:include>)
 
     target_link_libraries(asio-grpc-${_asio_grpc_name} PRIVATE asio-grpc-common-compile-options)

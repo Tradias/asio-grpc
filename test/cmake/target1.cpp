@@ -12,11 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-void run_target1();
-void run_target2();
+#include "target1.grpc.pb.h"
 
-int main()
+#include <agrpc/asioGrpc.hpp>
+#include <grpcpp/client_context.h>
+#include <grpcpp/completion_queue.h>
+#include <grpcpp/create_channel.h>
+
+void run_target1()
 {
-    run_target1();
-    run_target2();
+    auto stub = target1::Test::NewStub(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
+    agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+
+    target1::Request request;
+    request.set_integer(42);
+
+    target1::Request response;
+
+    grpc_context.run();
 }

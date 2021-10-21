@@ -4,7 +4,9 @@ additional_commands:
     - GENERATE_GRPC
     kwargs:
       OUT_VAR: '1'
-      PROTOC_OUT_DIR: '1'
+      OUT_DIR: '1'
+      TARGET: '1'
+      USAGE_REQUIREMENT: '1'
       PROTOS: '*'
       IMPORT_DIRS: '*'
 always_wrap: []

@@ -12,11 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-void run_target1();
-void run_target2();
+syntax = "proto3";
 
-int main()
-{
-    run_target1();
-    run_target2();
+package target1;
+
+service Test {
+  rpc Unary(Request) returns (Response) {}
+}
+
+message Request {
+  int32 integer = 1;
+}
+
+message Response {
+  int32 integer = 1;
 }
