@@ -21,7 +21,11 @@ project(
     HOMEPAGE_URL "https://github.com/Tradias/asio-grpc"
     LANGUAGES CXX)
 
+# user options
 option(ASIO_GRPC_INSTALL "Create the install target" on)
+option(ASIO_GRPC_USE_BOOST_CONTAINER "Use Boost.Container instead of <memory_resource>" off)
+
+# maintainer options
 option(ASIO_GRPC_BUILD_TESTS "Build tests" off)
 option(ASIO_GRPC_BUILD_EXAMPLES "Build examples" off)
 option(ASIO_GRPC_DISCOVER_TESTS "Discover tests for ctest" off)
@@ -32,7 +36,6 @@ set(ASIO_GRPC_COVERAGE_OUTPUT_FILE
     "${CMAKE_CURRENT_BINARY_DIR}/sonarqube-coverage.xml"
     CACHE PATH "Output file for SonarQube XML coverage files")
 option(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS "Compile tests with -fsanitize=address,undefined" off)
-option(ASIO_GRPC_USE_BOOST_CONTAINER "Use Boost.Container instead of <memory_resource>" off)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
