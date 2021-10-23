@@ -120,6 +120,38 @@ TEST_CASE("Work tracking GrpcExecutor constructor and assignment")
     CHECK_EQ(ex2, ex1);
 }
 
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::reset")
+{
+    bool ok = false;
+    std::optional<asio::executor_work_guard<agrpc::GrpcExecutor>> guard;
+    asio::post(grpc_context,
+               [&]
+               {
+                   ok = true;
+                   guard.reset();
+               });
+    guard.emplace(asio::make_work_guard(grpc_context));
+    grpc_context.run();
+    CHECK(ok);
+    asio::post(grpc_context,
+               [&]
+               {
+                   ok = false;
+               });
+    grpc_context.run();
+    CHECK(ok);
+    grpc_context.reset();
+    asio::post(grpc_context,
+               [&]
+               {
+                   ok = false;
+                   guard.reset();
+               });
+    guard.emplace(asio::make_work_guard(grpc_context));
+    grpc_context.run();
+    CHECK_FALSE(ok);
+}
+
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wait")
 {
     bool ok = false;

@@ -77,7 +77,7 @@ void run_event_loop(agrpc::GrpcContext& grpc_context, LoopPredicate loop_predica
 inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue)
     : outstanding_work(),
       thread_id(std::this_thread::get_id()),
-      stopped(),
+      stopped(false),
       has_work(),
       completion_queue(std::move(completion_queue)),
       local_resource(detail::pmr::new_delete_resource()),
@@ -103,6 +103,7 @@ inline void GrpcContext::run()
 {
     if (this->outstanding_work.load(std::memory_order_relaxed) == 0)
     {
+        this->stopped.exchange(true, std::memory_order_relaxed);
         return;
     }
     this->reset();
