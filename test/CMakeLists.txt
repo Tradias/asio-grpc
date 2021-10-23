@@ -104,8 +104,7 @@ if(ASIO_GRPC_DISCOVER_TESTS)
         # "EQUAL" "1"
         #
         # Unknown arguments specified
-        ADD_LABELS
-        0)
+        ADD_LABELS 0)
     if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
         doctest_discover_tests(asio-grpc-test-cpp20 ADD_LABELS 0)
     endif()
