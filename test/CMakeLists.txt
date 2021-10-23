@@ -71,8 +71,7 @@ function(asio_grpc_add_test _asio-grpc_name)
         asio_grpc_add_coverage_flags(${_asio-grpc_name})
     endif()
 
-    target_link_libraries(${_asio-grpc_name} PRIVATE asio-grpc-objects doctest::doctest Boost::coroutine
-                                                     Threads::Threads)
+    target_link_libraries(${_asio-grpc_name} PRIVATE asio-grpc-objects doctest::doctest Boost::coroutine Boost::thread)
 
     target_include_directories(
         ${_asio-grpc_name}

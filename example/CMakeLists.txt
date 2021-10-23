@@ -45,10 +45,10 @@ endfunction()
 
 asio_grpc_add_example_protos(example-protos)
 asio_grpc_add_example(example-server)
-target_link_libraries(asio-grpc-example-server PRIVATE Boost::coroutine Threads::Threads asio-grpc-example-protos)
+target_link_libraries(asio-grpc-example-server PRIVATE Boost::coroutine Boost::thread asio-grpc-example-protos)
 
 asio_grpc_add_example(example-client)
-target_link_libraries(asio-grpc-example-client PRIVATE Boost::coroutine Threads::Threads asio-grpc-example-protos)
+target_link_libraries(asio-grpc-example-client PRIVATE Boost::coroutine Boost::thread asio-grpc-example-protos)
 
 if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
     asio_grpc_add_example_protos(example-protos-cpp20)

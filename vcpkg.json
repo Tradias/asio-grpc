@@ -15,6 +15,7 @@
         "boost-lockfree",
         "boost-asio",
         "boost-interprocess",
+        "boost-thread",
         "boost-container"
     ]
 }
