@@ -110,8 +110,10 @@ The library can be added to a CMake project using either `add_subdirectory` or `
 Clone the repository into a subdirectory of your CMake project. Then add it and link it to your target.
 
 ```cmake
+find_package(Boost)
+find_package(gRPC)
 add_subdirectory(/path/to/repository/root)
-target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc gRPC::grpc++ Boost::headers)
 ```
 
 ## As a CMake package
@@ -128,9 +130,11 @@ cmake --build . --target install
 Locate it and link it to your target.
 
 ```cmake
+find_package(Boost)
+find_package(gRPC)
 # Make sure to set CMAKE_PREFIX_PATH to /desired/installation/directory
 find_package(asio-grpc)
-target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc gRPC::grpc++ Boost::headers)
 ```
 
 ## CMake Options
