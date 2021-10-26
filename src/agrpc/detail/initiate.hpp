@@ -18,6 +18,7 @@
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/attributes.hpp"
 #include "agrpc/detail/completionHandlerWithPayload.hpp"
+#include "agrpc/detail/grpcContextImplementation.hpp"
 #include "agrpc/detail/grpcContextInteraction.hpp"
 #include "agrpc/grpcContext.hpp"
 
@@ -51,6 +52,8 @@ struct GrpcInitiator
             {
                 return;
             }
+        grpc_context.work_started();
+        detail::WorkFinishedOnExit on_exit{grpc_context};
         if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
         {
             auto op =
@@ -65,6 +68,7 @@ struct GrpcInitiator
             std::move(this->function)(grpc_context, op.get());
             op.release();
         }
+        on_exit.release();
     }
 
     [[nodiscard]] executor_type get_executor() const noexcept { return asio::get_associated_executor(this->function); }

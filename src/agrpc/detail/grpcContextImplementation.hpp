@@ -24,6 +24,16 @@ class GrpcContext;
 
 namespace detail
 {
+struct WorkFinishedOnExit
+{
+    agrpc::GrpcContext& grpc_context;
+    bool is_armed{true};
+
+    ~WorkFinishedOnExit() noexcept;
+
+    constexpr void release() noexcept { is_armed = false; }
+};
+
 struct GrpcContextImplementation
 {
     static constexpr void* HAS_WORK_TAG = nullptr;

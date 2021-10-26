@@ -103,7 +103,7 @@ inline void GrpcContext::run()
 {
     if (this->outstanding_work.load(std::memory_order_relaxed) == 0)
     {
-        this->stopped.exchange(true, std::memory_order_relaxed);
+        this->stopped.store(true, std::memory_order_relaxed);
         return;
     }
     this->reset();

@@ -123,14 +123,11 @@ TEST_CASE("Work tracking GrpcExecutor constructor and assignment")
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::reset")
 {
     bool ok = false;
-    std::optional<asio::executor_work_guard<agrpc::GrpcExecutor>> guard;
     asio::post(grpc_context,
                [&]
                {
                    ok = true;
-                   guard.reset();
                });
-    guard.emplace(asio::make_work_guard(grpc_context));
     grpc_context.run();
     CHECK(ok);
     asio::post(grpc_context,
@@ -145,17 +142,32 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::reset")
                [&]
                {
                    ok = false;
-                   guard.reset();
                });
-    guard.emplace(asio::make_work_guard(grpc_context));
     grpc_context.run();
     CHECK_FALSE(ok);
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::stop completes pending operations")
+{
+    bool ok{false};
+    asio::post(grpc_context,
+               [&]
+               {
+                   asio::post(grpc_context,
+                              [&]
+                              {
+                                  ok = true;
+                              });
+                   grpc_context.stop();
+               });
+    grpc_context.run();
+    CHECK(ok);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wait")
 {
     bool ok = false;
-    asio::spawn(asio::bind_executor(get_work_tracking_executor(), [] {}),
+    asio::spawn(asio::bind_executor(get_executor(), [] {}),
                 [&](auto&& yield)
                 {
                     grpc::Alarm alarm;
@@ -168,7 +180,6 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wai
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post a asio::steady_timer")
 {
     std::optional<boost::system::error_code> error_code;
-    auto guard = asio::make_work_guard(grpc_context);
     asio::steady_timer timer{get_executor()};
     asio::post(get_executor(),
                [&]
@@ -178,7 +189,6 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post a asio::steady_timer")
                        [&](const boost::system::error_code& ec)
                        {
                            error_code.emplace(ec);
-                           guard.reset();
                        });
                });
     grpc_context.run();
@@ -188,15 +198,12 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post a asio::steady_timer")
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn with yield_context")
 {
     bool ok = false;
-    std::optional<asio::executor_work_guard<agrpc::GrpcExecutor>> guard;
     asio::spawn(get_executor(),
                 [&](asio::yield_context yield)
                 {
                     grpc::Alarm alarm;
                     ok = agrpc::wait(alarm, test::ten_milliseconds_from_now(), yield);
-                    guard.reset();
                 });
-    guard.emplace(asio::make_work_guard(grpc_context));
     grpc_context.run();
     CHECK(ok);
 }
@@ -246,7 +253,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post/execute with allocator")
     SUBCASE("asio::execute after grpc_context.run() from same thread")
     {
         asio::post(grpc_context,
-                   [&, exec = get_work_tracking_pmr_executor()]
+                   [&, exec = get_pmr_executor()]
                    {
                        exec.execute([] {});
                    });
@@ -254,7 +261,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post/execute with allocator")
     SUBCASE("agrpc::wait")
     {
         asio::execution::execute(get_executor(),
-                                 [&, executor = get_work_tracking_pmr_executor()]() mutable
+                                 [&, executor = get_pmr_executor()]() mutable
                                  {
                                      auto alarm = std::make_shared<grpc::Alarm>();
                                      auto& alarm_ref = *alarm;
@@ -277,7 +284,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post/execute with allocator")
 TEST_CASE_FIXTURE(test::GrpcContextTest, "dispatch with allocator")
 {
     asio::post(grpc_context,
-               [&, exec = get_work_tracking_executor()]
+               [&]
                {
                    asio::dispatch(get_pmr_executor(), [] {});
                });
@@ -303,11 +310,11 @@ struct Exception : std::exception
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post with throwing completion handler")
 {
-    asio::post(get_work_tracking_executor(), asio::bind_executor(get_work_tracking_executor(),
-                                                                 []
-                                                                 {
-                                                                     throw Exception{};
-                                                                 }));
+    asio::post(get_executor(), asio::bind_executor(get_executor(),
+                                                   []
+                                                   {
+                                                       throw Exception{};
+                                                   }));
     CHECK_THROWS_AS(grpc_context.run(), Exception);
 }
 
@@ -389,7 +396,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context server streaming")
     SUBCASE("server write_and_finish") { use_write_and_finish = true; }
     bool use_client_convenience{false};
     SUBCASE("client use convenience") { use_client_convenience = true; }
-    asio::spawn(get_work_tracking_executor(),
+    asio::spawn(get_executor(),
                 [&](asio::yield_context yield)
                 {
                     test::v1::Request request;
@@ -410,7 +417,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context server streaming")
                         CHECK(agrpc::finish(writer, grpc::Status::OK, yield));
                     }
                 });
-    asio::spawn(get_work_tracking_executor(),
+    asio::spawn(get_executor(),
                 [&](asio::yield_context yield)
                 {
                     test::v1::Request request;
@@ -444,7 +451,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context client streaming")
     bool use_client_convenience{};
     SUBCASE("client use convenience") { use_client_convenience = true; }
     SUBCASE("client do not use convenience") { use_client_convenience = false; }
-    asio::spawn(get_work_tracking_executor(),
+    asio::spawn(get_executor(),
                 [&](asio::yield_context yield)
                 {
                     grpc::ServerAsyncReader<test::v1::Response, test::v1::Request> reader{&server_context};
@@ -458,7 +465,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context client streaming")
                     response.set_integer(21);
                     CHECK(agrpc::finish(reader, response, grpc::Status::OK, yield));
                 });
-    asio::spawn(get_work_tracking_executor(),
+    asio::spawn(get_executor(),
                 [&](asio::yield_context yield)
                 {
                     test::v1::Response response;
@@ -493,7 +500,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context unary")
     bool use_finish_with_error;
     SUBCASE("server finish_with_error") { use_finish_with_error = true; }
     SUBCASE("server finish with OK") { use_finish_with_error = false; }
-    asio::spawn(get_work_tracking_executor(),
+    asio::spawn(get_executor(),
                 [&](asio::yield_context yield)
                 {
                     test::v1::Request request;
@@ -513,7 +520,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context unary")
                         CHECK(agrpc::finish(writer, response, grpc::Status::OK, yield));
                     }
                 });
-    asio::spawn(get_work_tracking_executor(),
+    asio::spawn(get_executor(),
                 [&](asio::yield_context yield)
                 {
                     test::v1::Request request;
@@ -543,7 +550,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context bidirectional strea
     SUBCASE("server write_and_finish") { use_write_and_finish = true; }
     bool use_client_convenience{false};
     SUBCASE("client use convenience") { use_client_convenience = true; }
-    asio::spawn(get_work_tracking_executor(),
+    asio::spawn(get_executor(),
                 [&](asio::yield_context yield)
                 {
                     grpc::ServerAsyncReaderWriter<test::v1::Response, test::v1::Request> reader_writer{&server_context};
@@ -566,7 +573,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context bidirectional strea
                     }
                 });
     asio::spawn(
-        get_work_tracking_executor(),
+        get_executor(),
         [&](asio::yield_context yield)
         {
             auto [reader_writer, ok] = [&]
@@ -604,7 +611,7 @@ struct GrpcRepeatedlyRequestTest : test::GrpcClientServerTest
     {
         agrpc::repeatedly_request(
             rpc, service, test::RpcSpawner{asio::bind_executor(this->get_executor(), std::move(server_function))});
-        asio::spawn(get_work_tracking_executor(), std::move(client_function));
+        asio::spawn(get_executor(), std::move(client_function));
     }
 };
 
@@ -642,6 +649,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request u
                 CHECK(status.ok());
                 CHECK_EQ(21, response.integer());
             }
+            grpc_context.stop();
         });
     grpc_context.run();
     CHECK_EQ(4, request_count);
@@ -686,6 +694,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request c
                 CHECK(status.ok());
                 CHECK_EQ(21, response.integer());
             }
+            grpc_context.stop();
         });
     grpc_context.run();
     CHECK_EQ(4, request_count);
@@ -694,7 +703,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request c
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "RPC step after grpc_context stop")
 {
     std::optional<bool> ok;
-    asio::spawn(get_work_tracking_executor(),
+    asio::spawn(get_executor(),
                 [&](asio::yield_context yield)
                 {
                     grpc_context.stop();
@@ -712,10 +721,10 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post an Alarm and use variadic-a
     bool ok = false;
     grpc::Alarm alarm;
     asio::post(get_executor(),
-               [&, exec = get_work_tracking_executor()]
+               [&]
                {
                    agrpc::wait(alarm, test::ten_milliseconds_from_now(),
-                               asio::bind_executor(exec,
+                               asio::bind_executor(get_executor(),
                                                    [&](auto&&... args)
                                                    {
                                                        ok = bool{args...};
@@ -732,10 +741,10 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with cancellation_t
     asio::cancellation_signal signal{};
     grpc::Alarm alarm;
     asio::post(get_executor(),
-               [&, exec = get_work_tracking_executor()]
+               [&]
                {
                    agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::seconds(3),
-                               asio::bind_cancellation_slot(signal.slot(), asio::bind_executor(exec,
+                               asio::bind_cancellation_slot(signal.slot(), asio::bind_executor(get_executor(),
                                                                                                [&](bool alarm_ok)
                                                                                                {
                                                                                                    ok = alarm_ok;
@@ -756,10 +765,10 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with cancellation_t
     asio::cancellation_signal signal{};
     grpc::Alarm alarm;
     asio::post(get_executor(),
-               [&, exec = get_work_tracking_executor()]
+               [&]
                {
                    agrpc::wait(alarm, test::hundred_milliseconds_from_now(),
-                               asio::bind_cancellation_slot(signal.slot(), asio::bind_executor(exec,
+                               asio::bind_cancellation_slot(signal.slot(), asio::bind_executor(get_executor(),
                                                                                                [&](bool alarm_ok)
                                                                                                {
                                                                                                    ok = alarm_ok;

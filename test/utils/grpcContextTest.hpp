@@ -45,16 +45,6 @@ struct GrpcContextTest
     {
         return this->get_executor().require(asio::execution::allocator(get_allocator()));
     }
-
-    auto get_work_tracking_executor() noexcept
-    {
-        return asio::require(get_executor(), asio::execution::outstanding_work.tracked);
-    }
-
-    auto get_work_tracking_pmr_executor() noexcept
-    {
-        return asio::require(get_work_tracking_executor(), asio::execution::allocator(get_allocator()));
-    }
 };
 
 inline auto ten_milliseconds_from_now() { return std::chrono::system_clock::now() + std::chrono::milliseconds(10); }
