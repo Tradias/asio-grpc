@@ -60,40 +60,60 @@ target_compile_definitions(
               WINVER=0x0A00>
               BOOST_ASIO_NO_DEPRECATED)
 
+function(create_object_library _name)
+    add_library(${_name} OBJECT)
+
+    target_sources(${_name} PRIVATE ${ARGN})
+
+    target_link_libraries(${_name} PRIVATE compile-options)
+endfunction()
+
 # TARGET option
-add_library(target1 OBJECT)
+create_object_library(target-option target.cpp)
 
-target_sources(target1 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/target1.cpp")
-
-target_link_libraries(target1 PRIVATE compile-options)
+set(TARGET_GENERATED_PROTOS_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/target")
 
 asio_grpc_protobuf_generate(
     GENERATE_GRPC
-    TARGET target1
-    USAGE_REQUIREMENT PRIVATE
-    PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/target1.proto")
+    TARGET target-option
+    OUT_DIR "${TARGET_GENERATED_PROTOS_OUT_DIR}"
+    PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/target.proto")
+
+target_include_directories(target-option PRIVATE "${TARGET_GENERATED_PROTOS_OUT_DIR}")
 
 # OUT_VAR option
-set(ASIO_GRPC_CMAKE_TEST_GENERATED_PROTOS_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
-set(ASIO_GRPC_CMAKE_TEST_GENERATED_PROTOS_OUT_DIR "${ASIO_GRPC_CMAKE_TEST_GENERATED_PROTOS_INCLUDE_DIR}/protos")
+set(OUT_VAR_GENERATED_PROTOS_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/outVar/")
+set(OUT_VAR_GENERATED_PROTOS_OUT_DIR "${OUT_VAR_GENERATED_PROTOS_INCLUDE_DIR}/protos")
 
 asio_grpc_protobuf_generate(
     GENERATE_GRPC
-    OUT_VAR ASIO_GRPC_CMAKE_TEST_GENERATED_SOURCES
-    OUT_DIR "${ASIO_GRPC_CMAKE_TEST_GENERATED_PROTOS_OUT_DIR}"
-    PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/target2.proto")
+    OUT_VAR OUT_VAR_GENERATED_SOURCES
+    OUT_DIR "${OUT_VAR_GENERATED_PROTOS_OUT_DIR}"
+    PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/outVar.proto")
 
-add_library(target2 OBJECT)
+create_object_library(out-var-option outVar.cpp ${OUT_VAR_GENERATED_SOURCES})
 
-target_sources(target2 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/target2.cpp" "${ASIO_GRPC_CMAKE_TEST_GENERATED_SOURCES}")
+target_include_directories(out-var-option PRIVATE "${OUT_VAR_GENERATED_PROTOS_INCLUDE_DIR}")
 
-target_link_libraries(target2 PRIVATE compile-options)
+# DESCRIPTOR option
+create_object_library(descriptor-option descriptor.cpp)
 
-target_include_directories(target2 PRIVATE "${ASIO_GRPC_CMAKE_TEST_GENERATED_PROTOS_INCLUDE_DIR}")
+set(DESCRIPTOR_GENERATED_PROTOS_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/descriptor")
+
+asio_grpc_protobuf_generate(
+    GENERATE_GRPC GENERATE_DESCRIPTORS
+    TARGET descriptor-option
+    OUT_DIR "${DESCRIPTOR_GENERATED_PROTOS_OUT_DIR}"
+    PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/descriptor.proto")
+
+target_include_directories(descriptor-option PRIVATE "${DESCRIPTOR_GENERATED_PROTOS_OUT_DIR}")
+
+target_compile_definitions(descriptor-option
+                           PRIVATE "DESCRIPTOR_FILE=R\"(${DESCRIPTOR_GENERATED_PROTOS_OUT_DIR}/descriptor.desc)\"")
 
 # main
 add_executable(${PROJECT_NAME})
 
 target_sources(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp")
 
-target_link_libraries(${PROJECT_NAME} PRIVATE target1 target2 compile-options)
+target_link_libraries(${PROJECT_NAME} PRIVATE target-option out-var-option descriptor-option compile-options)

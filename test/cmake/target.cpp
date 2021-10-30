@@ -12,18 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto3";
+#include "target.grpc.pb.h"
 
-package target1;
+#include <agrpc/asioGrpc.hpp>
+#include <grpcpp/completion_queue.h>
 
-service Test {
-  rpc Unary(Request) returns (Response) {}
-}
+void run_target()
+{
+    agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
-message Request {
-  int32 integer = 1;
-}
+    target::Request request;
+    request.set_integer(42);
 
-message Response {
-  int32 integer = 1;
+    target::Request response;
+
+    grpc_context.run();
 }

@@ -12,13 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-void run_target();
-void run_out_var();
-void run_descriptor();
+syntax = "proto3";
 
-int main()
-{
-    run_target();
-    run_out_var();
-    run_descriptor();
+package descriptor;
+
+service Test {
+  rpc Unary(Request) returns (Response) {}
+}
+
+message Request {
+  int32 integer = 1;
+}
+
+message Response {
+  int32 integer = 1;
 }

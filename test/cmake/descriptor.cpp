@@ -12,22 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "target1.grpc.pb.h"
+#include "descriptor.grpc.pb.h"
 
-#include <agrpc/asioGrpc.hpp>
-#include <grpcpp/client_context.h>
-#include <grpcpp/completion_queue.h>
-#include <grpcpp/create_channel.h>
+#include <google/protobuf/descriptor.pb.h>
 
-void run_target1()
+#include <fstream>
+
+void run_descriptor()
 {
-    auto stub = target1::Test::NewStub(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
-    agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
-
-    target1::Request request;
-    request.set_integer(42);
-
-    target1::Request response;
-
-    grpc_context.run();
+    const auto file = DESCRIPTOR_FILE;
+    std::ifstream istream{file, std::ios::binary};
+    google::protobuf::FileDescriptorProto file_descriptor;
+    if (!file_descriptor.ParseFromIstream(&istream))
+    {
+        std::exit(1);
+    }
 }

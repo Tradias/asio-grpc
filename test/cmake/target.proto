@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package target2;
+package target;
 
 service Test {
   rpc Unary(Request) returns (Response) {}
