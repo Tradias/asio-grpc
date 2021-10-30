@@ -12,7 +12,6 @@
         "boost-coroutine",
         "boost-core",
         "boost-intrusive",
-        "boost-lockfree",
         "boost-asio",
         "boost-interprocess",
         "boost-thread",

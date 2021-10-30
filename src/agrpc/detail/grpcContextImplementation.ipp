@@ -47,7 +47,7 @@ inline void GrpcContextImplementation::add_remote_operation(agrpc::GrpcContext& 
                                                             detail::TypeErasedNoArgRemoteOperation* op)
 {
     grpc_context.work_started();
-    grpc_context.remote_work_queue.push(op);
+    (void)grpc_context.remote_work_queue.enqueue(op);
     detail::GrpcContextImplementation::trigger_work_alarm(grpc_context);
 }
 
@@ -87,12 +87,13 @@ void GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, d
     {
         detail::GrpcContextImplementation::process_local_queue<Invoke>(grpc_context);
         grpc_context.has_work.store(false, std::memory_order_release);
-        grpc_context.remote_work_queue.consume_all(
-            [&](detail::TypeErasedNoArgRemoteOperation* operation)
-            {
-                detail::WorkFinishedOnExit on_exit{grpc_context};
-                operation->complete(Invoke);
-            });
+        auto remote_work_queue = grpc_context.remote_work_queue.dequeue_all();
+        while (!remote_work_queue.empty())
+        {
+            detail::WorkFinishedOnExit on_exit{grpc_context};
+            auto* operation = remote_work_queue.pop_front();
+            operation->complete(Invoke);
+        }
     }
     else
     {

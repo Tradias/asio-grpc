@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include <boost/asio.hpp>
-#include <boost/lockfree/queue.hpp>
 #include <grpcpp/alarm.h>
 #include <grpcpp/grpcpp.h>
 

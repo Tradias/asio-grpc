@@ -50,7 +50,7 @@ class TypeErasedOperation
 };
 
 using TypeErasedNoArgLocalOperation = detail::TypeErasedOperation<true, detail::GrpcContextLocalAllocator>;
-using TypeErasedNoArgRemoteOperation = detail::TypeErasedOperation<false>;
+using TypeErasedNoArgRemoteOperation = detail::TypeErasedOperation<true>;
 using TypeErasedGrpcTagOperation = detail::TypeErasedOperation<false, bool, detail::GrpcContextLocalAllocator>;
 }  // namespace agrpc::detail
 

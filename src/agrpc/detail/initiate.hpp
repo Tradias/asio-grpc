@@ -56,17 +56,17 @@ struct GrpcInitiator
         detail::WorkFinishedOnExit on_exit{grpc_context};
         if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
         {
-            auto op =
+            auto operation =
                 detail::allocate_operation<false, void(bool)>(grpc_context, std::move(completion_handler), allocator);
-            std::move(this->function)(grpc_context, op.get());
-            op.release();
+            std::move(this->function)(grpc_context, operation.get());
+            operation.release();
         }
         else
         {
-            auto op = detail::allocate_operation<false, void(bool), detail::GrpcContextLocalAllocator>(
+            auto operation = detail::allocate_operation<false, void(bool), detail::GrpcContextLocalAllocator>(
                 std::move(completion_handler), allocator);
-            std::move(this->function)(grpc_context, op.get());
-            op.release();
+            std::move(this->function)(grpc_context, operation.get());
+            operation.release();
         }
         on_exit.release();
     }

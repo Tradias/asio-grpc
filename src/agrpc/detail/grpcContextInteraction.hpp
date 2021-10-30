@@ -63,10 +63,10 @@ void create_no_arg_operation(agrpc::GrpcContext& grpc_context, Function&& functi
     {
         if constexpr (IsBlockingNever)
         {
-            auto op = detail::allocate_operation<true, void()>(grpc_context, std::forward<Function>(function),
-                                                               work_allocator);
-            detail::GrpcContextImplementation::add_local_operation(grpc_context, op.get());
-            op.release();
+            auto operation = detail::allocate_operation<true, void()>(grpc_context, std::forward<Function>(function),
+                                                                      work_allocator);
+            detail::GrpcContextImplementation::add_local_operation(grpc_context, operation.get());
+            operation.release();
         }
         else
         {
@@ -77,9 +77,9 @@ void create_no_arg_operation(agrpc::GrpcContext& grpc_context, Function&& functi
     }
     else
     {
-        auto op = detail::allocate_operation<false, void()>(std::forward<Function>(function), work_allocator);
-        detail::GrpcContextImplementation::add_remote_operation(grpc_context, op.get());
-        op.release();
+        auto operation = detail::allocate_operation<true, void()>(std::forward<Function>(function), work_allocator);
+        detail::GrpcContextImplementation::add_remote_operation(grpc_context, operation.get());
+        operation.release();
     }
 }
 }  // namespace agrpc::detail

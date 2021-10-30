@@ -26,7 +26,6 @@
 #include "agrpc/grpcExecutor.hpp"
 
 #include <boost/asio/execution_context.hpp>
-#include <boost/lockfree/queue.hpp>
 #include <grpcpp/alarm.h>
 #include <grpcpp/completion_queue.h>
 
@@ -82,7 +81,7 @@ inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue> completio
       completion_queue(std::move(completion_queue)),
       local_resource(detail::pmr::new_delete_resource()),
       is_processing_local_work(false),
-      remote_work_queue(32)
+      remote_work_queue()
 {
 }
 

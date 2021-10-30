@@ -16,6 +16,7 @@
 #define AGRPC_AGRPC_GRPCCONTEXT_HPP
 
 #include "agrpc/detail/asioForward.hpp"
+#include "agrpc/detail/atomicIntrusiveQueue.hpp"
 #include "agrpc/detail/grpcContext.hpp"
 #include "agrpc/detail/grpcContextImplementation.hpp"
 #include "agrpc/detail/grpcExecutorOptions.hpp"
@@ -24,7 +25,6 @@
 #include "agrpc/detail/typeErasedOperation.hpp"
 
 #include <boost/asio/execution_context.hpp>
-#include <boost/lockfree/queue.hpp>
 #include <grpcpp/alarm.h>
 #include <grpcpp/completion_queue.h>
 
@@ -67,7 +67,7 @@ class GrpcContext : public asio::execution_context
     [[nodiscard]] grpc::ServerCompletionQueue* get_server_completion_queue() noexcept;
 
   private:
-    using RemoteWorkQueue = boost::lockfree::queue<detail::TypeErasedNoArgRemoteOperation*>;
+    using RemoteWorkQueue = detail::AtomicIntrusiveQueue<detail::TypeErasedNoArgRemoteOperation>;
     using LocalWorkQueue = detail::IntrusiveQueue<detail::TypeErasedNoArgLocalOperation>;
 
     grpc::Alarm work_alarm;
