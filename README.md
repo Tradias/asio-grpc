@@ -137,9 +137,38 @@ find_package(asio-grpc)
 target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc gRPC::grpc++ Boost::headers)
 ```
 
-## CMake Options
+### CMake Options
 
-`ASIO_GRPC_USE_BOOST_CONTAINER` - Use Boost.Container instead of `<memory_resource>`.
+`ASIO_GRPC_USE_BOOST_CONTAINER` - Use Boost.Container instead of `<memory_resource>`
+
+## Using vcpkg
+
+Add [asio-grpc](https://github.com/microsoft/vcpkg/blob/master/ports/asio-grpc/vcpkg.json) to the dependencies inside your `vcpkg.json`: 
+
+```json
+{
+    "name": "example",
+    "version": "0.1.0",
+    "dependencies": [
+        "asio-grpc"
+    ]
+}
+```
+
+Locate asio-grpc and link it to your target in your `CMakeLists.txt`:
+
+```cmake
+find_package(Boost)
+find_package(gRPC)
+find_package(asio-grpc)
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc gRPC::grpc++ Boost::headers)
+```
+
+### Available features
+
+`boost-container` - Use Boost.Container instead of `<memory_resource>`
+
+See [selecting-library-features](https://vcpkg.io/en/docs/users/selecting-library-features.html) to learn how to select features with vcpkg.
 
 # Performance
 
