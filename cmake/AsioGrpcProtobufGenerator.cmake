@@ -13,12 +13,51 @@
 # limitations under the License.
 
 # Adapted from the original protobuf_generate provided by protobuf-config.cmake
+#[=======================================================================[.rst:
+asio_grpc_protobuf_generate
+------------
+
+Add custom commands to process ``.proto`` files to C++::
+
+asio_grpc_protobuf_generate(PROTOS <proto_file1> [<proto_file2>...]
+                            [OUT_DIR <output_directory>]
+                            [OUT_VAR <output_variable>]
+                            [TARGET <target>]
+                            [USAGE_REQUIREMENT PRIVATE|PUBLIC|INTERFACE]
+                            [IMPORT_DIRS <directories>...]
+                            [EXTRA_ARGS <arguments>...]
+                            [GENERATE_GRPC]
+                            [GENERATE_DESCRIPTORS])
+
+``PROTOS``
+    ``.proto`` files
+``OUT_DIR``
+    Generated files output directory. Default: CMAKE_CURRENT_BINARY_DIR
+``OUT_VAR``
+    Variable to define with generated source files
+``TARGET``
+    Add generated source files to target.
+``USAGE_REQUIREMENT``
+    How to add sources to ``<target>``: ``PRIVATE``, ``PUBLIC``, ``INTERFACE``
+    Default: ``PRIVATE``
+``IMPORT_DIRS``
+    Additional import directories to be added to the protoc command line
+``EXTRA_ARGS``
+    Additional protoc command line arguments
+``GENERATE_GRPC``
+    Generate grpc files
+``GENERATE_DESCRIPTORS``
+    Generate descriptor files named <proto_file_base_name>.desc
+
+#]=======================================================================]
+# // begin-snippet: asio_grpc_protobuf_generate
 function(asio_grpc_protobuf_generate)
+    # // end-snippet: asio_grpc_protobuf_generate
     include(CMakeParseArguments)
 
     set(_asio_grpc_options GENERATE_GRPC GENERATE_DESCRIPTORS)
     set(_asio_grpc_singleargs OUT_VAR OUT_DIR TARGET USAGE_REQUIREMENT)
-    set(_asio_grpc_multiargs PROTOS IMPORT_DIRS)
+    set(_asio_grpc_multiargs PROTOS IMPORT_DIRS EXTRA_ARGS)
 
     cmake_parse_arguments(asio_grpc_protobuf_generate "${_asio_grpc_options}" "${_asio_grpc_singleargs}"
                           "${_asio_grpc_multiargs}" "${ARGN}")
@@ -91,7 +130,7 @@ function(asio_grpc_protobuf_generate)
             list(APPEND _asio_grpc_command_arguments --grpc_out "${asio_grpc_protobuf_generate_OUT_DIR}"
                  "--plugin=protoc-gen-grpc=$<TARGET_FILE:gRPC::grpc_cpp_plugin>")
         endif()
-        list(APPEND _asio_grpc_command_arguments "${_asio_grpc_abs_file}")
+        list(APPEND _asio_grpc_command_arguments ${asio_grpc_protobuf_generate_EXTRA_ARGS} "${_asio_grpc_abs_file}")
         string(REPLACE ";" " " _asio_grpc_pretty_command_arguments "${_asio_grpc_command_arguments}")
         add_custom_command(
             OUTPUT ${_asio_grpc_generated_srcs}

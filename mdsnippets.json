@@ -6,7 +6,6 @@
     "LinkFormat": "GitHub",
     "ExcludeDirectories": [
         "build",
-        "test",
         "src"
     ],
     "MaxWidth": 150

@@ -650,3 +650,33 @@ void repeatedly_request_example(example::v1::Example::AsyncService& service, agr
 ```
 <sup><a href='/example/example-server.cpp#L130-L181' title='Snippet source file'>snippet source</a> | <a href='#snippet-repeatedly-request-spawner' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
+
+## CMake asio_grpc_protobuf_generate 
+
+In the same directory that called `find_package(asio-grpc)` a function called `asio_grpc_protobuf_generate` is made available. It can be to generate Protobuf/gRPC source files from `.proto` files:
+
+<!-- snippet: asio_grpc_protobuf_generate-target -->
+<a id='snippet-asio_grpc_protobuf_generate-target'></a>
+```cmake
+set(TARGET_GENERATED_PROTOS_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/target")
+
+asio_grpc_protobuf_generate(
+    GENERATE_GRPC
+    TARGET target-option
+    OUT_DIR "${TARGET_GENERATED_PROTOS_OUT_DIR}"
+    PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/target.proto")
+
+target_include_directories(target-option PRIVATE "${TARGET_GENERATED_PROTOS_OUT_DIR}")
+```
+<sup><a href='/test/cmake/Targets.cmake#L37-L47' title='Snippet source file'>snippet source</a> | <a href='#snippet-asio_grpc_protobuf_generate-target' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+See in-code documentation for more details:
+
+<!-- snippet: asio_grpc_protobuf_generate -->
+<a id='snippet-asio_grpc_protobuf_generate'></a>
+```cmake
+function(asio_grpc_protobuf_generate)
+```
+<sup><a href='/cmake/AsioGrpcProtobufGenerator.cmake#L53-L55' title='Snippet source file'>snippet source</a> | <a href='#snippet-asio_grpc_protobuf_generate' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
