@@ -16,6 +16,15 @@ if(ASIO_GRPC_TEST_COVERAGE)
     include(AsioGrpcCoverage)
 endif()
 
+# asio-grpc objects
+add_library(asio-grpc-objects OBJECT)
+
+get_target_property(ASIO_GRPC_SOURCE_FILES asio-grpc ASIO_GRPC_SOURCE_FILES)
+target_sources(asio-grpc-objects PRIVATE ${ASIO_GRPC_SOURCE_FILES})
+unset(ASIO_GRPC_SOURCE_FILES)
+
+target_link_libraries(asio-grpc-objects PUBLIC asio-grpc-common-compile-options asio-grpc Boost::headers)
+
 # grpc generate
 include(AsioGrpcProtobufGenerator)
 

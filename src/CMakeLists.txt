@@ -41,6 +41,8 @@ function(asio_grpc_create_interface_target _asio_grpc_name)
                    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/typeErasedOperation.hpp"
                    "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/utility.hpp"
                    "${CMAKE_CURRENT_BINARY_DIR}/generated/agrpc/detail/memoryResource.hpp")
+    set_target_properties(${_asio_grpc_name} PROPERTIES ASIO_GRPC_SOURCE_FILES
+                                                        "${CMAKE_CURRENT_SOURCE_DIR}/asioGrpc.cpp")
 
     target_compile_features(${_asio_grpc_name} INTERFACE cxx_std_17)
 
