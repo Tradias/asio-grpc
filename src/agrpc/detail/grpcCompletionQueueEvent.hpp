@@ -19,8 +19,8 @@ namespace agrpc::detail
 {
 struct GrpcCompletionQueueEvent
 {
-    void* tag{nullptr};
-    bool ok{false};
+    void* tag;
+    bool ok;
 };
 }  // namespace agrpc::detail
 
