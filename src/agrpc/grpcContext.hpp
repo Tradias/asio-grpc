@@ -19,11 +19,11 @@
 #include "agrpc/detail/grpcContext.hpp"
 #include "agrpc/detail/grpcContextImplementation.hpp"
 #include "agrpc/detail/grpcExecutorOptions.hpp"
+#include "agrpc/detail/intrusiveQueue.hpp"
 #include "agrpc/detail/memoryResource.hpp"
 #include "agrpc/detail/typeErasedOperation.hpp"
 
 #include <boost/asio/execution_context.hpp>
-#include <boost/intrusive/slist.hpp>
 #include <boost/lockfree/queue.hpp>
 #include <grpcpp/alarm.h>
 #include <grpcpp/completion_queue.h>
@@ -68,9 +68,7 @@ class GrpcContext : public asio::execution_context
 
   private:
     using RemoteWorkQueue = boost::lockfree::queue<detail::TypeErasedNoArgRemoteOperation*>;
-    using LocalWorkQueue =
-        boost::intrusive::slist<detail::TypeErasedNoArgLocalOperation, boost::intrusive::constant_time_size<false>,
-                                boost::intrusive::cache_last<true>>;
+    using LocalWorkQueue = detail::IntrusiveQueue<detail::TypeErasedNoArgLocalOperation>;
 
     grpc::Alarm work_alarm;
     std::atomic_long outstanding_work;

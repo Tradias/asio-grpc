@@ -16,9 +16,8 @@
 #define AGRPC_DETAIL_GRPCCONTEXTOPERATION_HPP
 
 #include "agrpc/detail/grpcContext.hpp"
+#include "agrpc/detail/intrusiveQueueHook.hpp"
 #include "agrpc/detail/utility.hpp"
-
-#include <boost/intrusive/slist_hook.hpp>
 
 namespace agrpc::detail
 {
@@ -30,10 +29,9 @@ enum class InvokeHandler
 
 template <bool IsIntrusivelyListable, class... Signature>
 class TypeErasedOperation
-    : public std::conditional_t<
-          IsIntrusivelyListable,
-          boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::link_mode_type::normal_link>>,
-          detail::Empty>
+    : public std::conditional_t<IsIntrusivelyListable,
+                                detail::IntrusiveQueueHook<TypeErasedOperation<IsIntrusivelyListable, Signature...>>,
+                                detail::Empty>
 
 {
   public:

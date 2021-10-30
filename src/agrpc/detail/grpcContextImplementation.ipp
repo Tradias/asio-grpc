@@ -55,7 +55,7 @@ inline void GrpcContextImplementation::add_local_operation(agrpc::GrpcContext& g
                                                            detail::TypeErasedNoArgLocalOperation* op)
 {
     grpc_context.work_started();
-    grpc_context.local_work_queue.push_back(*op);
+    grpc_context.local_work_queue.push_back(op);
     if (!grpc_context.is_processing_local_work)
     {
         detail::GrpcContextImplementation::trigger_work_alarm(grpc_context);
@@ -72,11 +72,10 @@ void GrpcContextImplementation::process_local_queue(agrpc::GrpcContext& grpc_con
 {
     while (!grpc_context.local_work_queue.empty())
     {
-        grpc_context.is_processing_local_work = true;
-        auto& operation = grpc_context.local_work_queue.front();
-        grpc_context.local_work_queue.pop_front();
         detail::WorkFinishedOnExit on_exit{grpc_context};
-        operation.complete(Invoke, grpc_context.get_allocator());
+        grpc_context.is_processing_local_work = true;
+        auto* operation = grpc_context.local_work_queue.pop_front();
+        operation->complete(Invoke, grpc_context.get_allocator());
     }
     grpc_context.is_processing_local_work = false;
 }

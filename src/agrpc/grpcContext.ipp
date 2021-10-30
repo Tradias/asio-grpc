@@ -20,12 +20,12 @@
 #include "agrpc/detail/grpcCompletionQueueEvent.hpp"
 #include "agrpc/detail/grpcContext.hpp"
 #include "agrpc/detail/grpcExecutorOptions.hpp"
+#include "agrpc/detail/intrusiveQueue.hpp"
 #include "agrpc/detail/memoryResource.hpp"
 #include "agrpc/grpcContext.hpp"
 #include "agrpc/grpcExecutor.hpp"
 
 #include <boost/asio/execution_context.hpp>
-#include <boost/intrusive/slist.hpp>
 #include <boost/lockfree/queue.hpp>
 #include <grpcpp/alarm.h>
 #include <grpcpp/completion_queue.h>

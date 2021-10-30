@@ -12,20 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <boost/asio.hpp>
-#include <boost/lockfree/queue.hpp>
-#include <grpcpp/alarm.h>
-#include <grpcpp/grpcpp.h>
+#ifndef AGRPC_DETAIL_INTRUSIVEQUEUEHOOK_HPP
+#define AGRPC_DETAIL_INTRUSIVEQUEUEHOOK_HPP
 
-#include <array>
-#include <atomic>
-#include <chrono>
-#include <cstddef>
-#include <cstdint>
-#include <iterator>
-#include <limits>
-#include <memory>
-#include <thread>
-#include <tuple>
-#include <type_traits>
 #include <utility>
+
+namespace agrpc::detail
+{
+template <class Derived>
+struct IntrusiveQueueHook
+{
+    Derived* next;
+};
+}  // namespace agrpc::detail
+
+#endif  // AGRPC_DETAIL_INTRUSIVEQUEUEHOOK_HPP
