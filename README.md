@@ -653,7 +653,7 @@ void repeatedly_request_example(example::v1::Example::AsyncService& service, agr
 
 ## CMake asio_grpc_protobuf_generate 
 
-In the same directory that called `find_package(asio-grpc)` a function called `asio_grpc_protobuf_generate` is made available. It can be to generate Protobuf/gRPC source files from `.proto` files:
+In the same directory that called `find_package(asio-grpc)` a function called `asio_grpc_protobuf_generate` is made available. It can be used to generate Protobuf/gRPC source files from `.proto` files:
 
 <!-- snippet: asio_grpc_protobuf_generate-target -->
 <a id='snippet-asio_grpc_protobuf_generate-target'></a>
