@@ -40,7 +40,7 @@ function(asio_grpc_add_example _asio_grpc_name)
 
     target_sources(asio-grpc-${_asio_grpc_name} PRIVATE ${_asio_grpc_name}.cpp ${ASIO_GRPC_GENERATED_EXAMPLE_SOURCES})
 
-    target_link_libraries(asio-grpc-${_asio_grpc_name} PRIVATE asio-grpc-common-compile-options)
+    target_link_libraries(asio-grpc-${_asio_grpc_name} PRIVATE asio-grpc-common-compile-options asio-grpc)
 endfunction()
 
 asio_grpc_add_example_protos(example-protos)

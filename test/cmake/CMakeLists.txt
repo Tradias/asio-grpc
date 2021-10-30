@@ -17,8 +17,18 @@ cmake_minimum_required(VERSION 3.19)
 project(asio-grpc-cmake-test LANGUAGES CXX)
 
 find_package(Boost REQUIRED coroutine thread container)
+
 find_package(
     gRPC
+    CONFIG
+    REQUIRED
+    NO_CMAKE_PACKAGE_REGISTRY
+    NO_CMAKE_SYSTEM_PACKAGE_REGISTRY
+    NO_SYSTEM_ENVIRONMENT_PATH
+    NO_CMAKE_SYSTEM_PATH)
+
+find_package(
+    asio
     CONFIG
     REQUIRED
     NO_CMAKE_PACKAGE_REGISTRY

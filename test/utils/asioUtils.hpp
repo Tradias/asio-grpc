@@ -15,14 +15,10 @@
 #ifndef AGRPC_UTILS_ASIOUTILS_HPP
 #define AGRPC_UTILS_ASIOUTILS_HPP
 
-#include <boost/asio/spawn.hpp>
+#include "utils/asioForward.hpp"
 
 #include <type_traits>
 #include <version>
-
-#ifdef BOOST_ASIO_HAS_CO_AWAIT
-#include <boost/asio/co_spawn.hpp>
-#endif
 
 namespace agrpc::test
 {
@@ -74,18 +70,18 @@ struct RpcSpawner
     [[nodiscard]] allocator_type get_allocator() const noexcept { return asio::get_associated_allocator(handler); }
 };
 
-#ifdef BOOST_ASIO_HAS_CO_AWAIT
+#ifdef AGRPC_ASIO_HAS_CO_AWAIT
 template <class Executor, class Function>
 auto co_spawn(Executor&& executor, Function function)
 {
-    return boost::asio::co_spawn(std::forward<Executor>(executor), std::move(function),
-                                 [](std::exception_ptr ep, auto&&...)
-                                 {
-                                     if (ep)
-                                     {
-                                         std::rethrow_exception(ep);
-                                     }
-                                 });
+    return asio::co_spawn(std::forward<Executor>(executor), std::move(function),
+                          [](std::exception_ptr ep, auto&&...)
+                          {
+                              if (ep)
+                              {
+                                  std::rethrow_exception(ep);
+                              }
+                          });
 }
 #endif
 }  // namespace agrpc::test

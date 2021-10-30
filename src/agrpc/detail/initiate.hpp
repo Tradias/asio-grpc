@@ -22,9 +22,6 @@
 #include "agrpc/detail/grpcContextInteraction.hpp"
 #include "agrpc/grpcContext.hpp"
 
-#include <boost/asio/async_result.hpp>
-#include <boost/asio/execution/context.hpp>
-
 namespace agrpc::detail
 {
 template <class Executor>
@@ -105,6 +102,15 @@ struct DefaultCompletionTokenNotAvailable
 };
 }  // namespace agrpc::detail
 
+#ifdef AGRPC_STANDALONE_ASIO
+namespace asio
+{
+template <class Signature>
+class async_result<::agrpc::detail::DefaultCompletionTokenNotAvailable, Signature>
+{
+};
+}  // namespace asio
+#else
 namespace boost::asio
 {
 template <class Signature>
@@ -112,5 +118,6 @@ class async_result<::agrpc::detail::DefaultCompletionTokenNotAvailable, Signatur
 {
 };
 }  // namespace boost::asio
+#endif
 
 #endif  // AGRPC_DETAIL_INITIATE_HPP

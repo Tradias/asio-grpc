@@ -13,6 +13,7 @@
         "boost-asio",
         "boost-coroutine",
         "boost-thread",
-        "boost-container"
+        "boost-container",
+        "asio"
     ]
 }

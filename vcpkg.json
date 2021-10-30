@@ -15,6 +15,12 @@
         "boost-asio",
         "boost-interprocess",
         "boost-thread",
-        "boost-container"
+        "boost-container",
+        {
+            "name": "asio",
+            "features": [
+                "coroutine"
+            ]
+        }
     ]
 }

@@ -47,12 +47,17 @@ target_compile_definitions(
               BOOST_ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT
               BOOST_ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT
               BOOST_ASIO_HAS_DEDUCED_PREFER_MEMBER_TRAIT
+              ASIO_HAS_DEDUCED_REQUIRE_MEMBER_TRAIT
+              ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT
+              ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT
+              ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT
+              ASIO_HAS_DEDUCED_PREFER_MEMBER_TRAIT
               _WIN32_WINNT=0x0A00 # Windows 10
               WINVER=0x0A00>
-              BOOST_ASIO_NO_DEPRECATED)
+              BOOST_ASIO_NO_DEPRECATED
+              ASIO_NO_DEPRECATED)
 
-target_link_libraries(asio-grpc-common-compile-options INTERFACE asio-grpc gRPC::grpc++ Boost::headers
-                                                                 Boost::disable_autolinking)
+target_link_libraries(asio-grpc-common-compile-options INTERFACE gRPC::grpc++ Boost::disable_autolinking)
 
 if(ASIO_GRPC_USE_BOOST_CONTAINER)
     # No imported target for Boost::container in CMake 3.21

@@ -25,7 +25,6 @@
 #include "agrpc/grpcContext.hpp"
 #include "agrpc/grpcExecutor.hpp"
 
-#include <boost/asio/execution_context.hpp>
 #include <grpcpp/alarm.h>
 #include <grpcpp/completion_queue.h>
 

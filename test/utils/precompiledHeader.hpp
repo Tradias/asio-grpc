@@ -12,9 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <boost/asio.hpp>
 #include <grpcpp/alarm.h>
 #include <grpcpp/grpcpp.h>
+
+#ifdef AGRPC_STANDALONE_ASIO
+#include <asio.hpp>
+#else
+#include <boost/asio.hpp>
+#endif
 
 #include <array>
 #include <atomic>

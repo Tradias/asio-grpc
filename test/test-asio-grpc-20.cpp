@@ -18,7 +18,6 @@
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/grpcContextTest.hpp"
 
-#include <boost/asio/spawn.hpp>
 #include <doctest/doctest.h>
 #include <grpcpp/alarm.h>
 
@@ -31,7 +30,7 @@ using namespace agrpc;
 
 TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0));
 
-#ifdef BOOST_ASIO_HAS_CONCEPTS
+#ifdef AGRPC_ASIO_HAS_CONCEPTS
 TEST_CASE("GrpcExecutor fulfills Executor TS concepts")
 {
     CHECK(asio::execution::executor<agrpc::GrpcExecutor>);
@@ -39,7 +38,7 @@ TEST_CASE("GrpcExecutor fulfills Executor TS concepts")
 }
 #endif
 
-#ifdef BOOST_ASIO_HAS_CO_AWAIT
+#ifdef AGRPC_ASIO_HAS_CO_AWAIT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "get_completion_queue")
 {
     grpc::CompletionQueue* queue{};

@@ -24,7 +24,6 @@
 #include "agrpc/detail/memoryResource.hpp"
 #include "agrpc/detail/typeErasedOperation.hpp"
 
-#include <boost/asio/execution_context.hpp>
 #include <grpcpp/alarm.h>
 #include <grpcpp/completion_queue.h>
 

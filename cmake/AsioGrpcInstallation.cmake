@@ -28,7 +28,7 @@ install(
           "${CMAKE_CURRENT_SOURCE_DIR}/cmake/AsioGrpcProtobufGenerator.cmake"
     DESTINATION "${ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR}")
 
-install(TARGETS asio-grpc EXPORT ASIO_GRPC_EXPORT_TARGETS)
+install(TARGETS asio-grpc asio-grpc-standalone-asio EXPORT ASIO_GRPC_EXPORT_TARGETS)
 
 install(
     EXPORT ASIO_GRPC_EXPORT_TARGETS

@@ -18,11 +18,6 @@
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/grpcContextTest.hpp"
 
-#include <boost/asio/coroutine.hpp>
-#include <boost/asio/post.hpp>
-#include <boost/asio/spawn.hpp>
-#include <boost/asio/steady_timer.hpp>
-#include <boost/asio/thread_pool.hpp>
 #include <doctest/doctest.h>
 #include <grpcpp/alarm.h>
 
@@ -30,11 +25,6 @@
 #include <optional>
 #include <string_view>
 #include <thread>
-
-#if (BOOST_VERSION >= 107700)
-#include <boost/asio/bind_cancellation_slot.hpp>
-#include <boost/asio/cancellation_signal.hpp>
-#endif
 
 namespace test_asio_grpc
 {
@@ -179,20 +169,20 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wai
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post a asio::steady_timer")
 {
-    std::optional<boost::system::error_code> error_code;
+    std::optional<test::ErrorCode> error_code;
     asio::steady_timer timer{get_executor()};
     asio::post(get_executor(),
                [&]
                {
                    timer.expires_after(std::chrono::milliseconds(10));
                    timer.async_wait(
-                       [&](const boost::system::error_code& ec)
+                       [&](const test::ErrorCode& ec)
                        {
                            error_code.emplace(ec);
                        });
                });
     grpc_context.run();
-    CHECK_EQ(boost::system::error_code{}, error_code);
+    CHECK_EQ(test::ErrorCode{}, error_code);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn with yield_context")
@@ -338,6 +328,12 @@ struct Coro : asio::coroutine
     executor_type get_executor() const noexcept { return executor; }
 };
 
+#ifdef AGRPC_STANDALONE_ASIO
+#include <asio/yield.hpp>
+#else
+#include <boost/asio/yield.hpp>
+#endif
+
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unary stackless coroutine")
 {
     grpc::ServerAsyncResponseWriter<test::v1::Response> writer{&server_context};
@@ -345,15 +341,14 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unary stackless coroutine")
     test::v1::Response server_response;
     auto server_loop = [&](bool ok, auto* coro) mutable
     {
-        BOOST_ASIO_CORO_REENTER(*coro)
+        reenter(*coro)
         {
-            BOOST_ASIO_CORO_YIELD
-            agrpc::request(&test::v1::Test::AsyncService::RequestUnary, service, server_context, server_request, writer,
-                           *coro);
+            yield agrpc::request(&test::v1::Test::AsyncService::RequestUnary, service, server_context, server_request,
+                                 writer, *coro);
             CHECK(ok);
             CHECK_EQ(42, server_request.integer());
             server_response.set_integer(21);
-            BOOST_ASIO_CORO_YIELD agrpc::finish(writer, server_response, grpc::Status::OK, *coro);
+            yield agrpc::finish(writer, server_response, grpc::Status::OK, *coro);
             CHECK(ok);
         }
     };
@@ -370,10 +365,10 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unary stackless coroutine")
     std::unique_ptr<grpc::ClientAsyncResponseReader<test::v1::Response>> reader;
     auto client_loop = [&](bool ok, auto* coro) mutable
     {
-        BOOST_ASIO_CORO_REENTER(*coro)
+        reenter(*coro)
         {
             reader = stub->AsyncUnary(&client_context, client_request, agrpc::get_completion_queue(*coro));
-            BOOST_ASIO_CORO_YIELD agrpc::finish(*reader, client_response, status, *coro);
+            yield agrpc::finish(*reader, client_response, status, *coro);
             CHECK(ok);
             CHECK(status.ok());
             CHECK_EQ(21, client_response.integer());
@@ -389,6 +384,12 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unary stackless coroutine")
     server_thread.join();
     client_thread.join();
 }
+
+#ifdef AGRPC_STANDALONE_ASIO
+#include <asio/unyield.hpp>
+#else
+#include <boost/asio/unyield.hpp>
+#endif
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context server streaming")
 {
@@ -734,7 +735,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post an Alarm and use variadic-a
     CHECK(ok);
 }
 
-#if (BOOST_VERSION >= 107700)
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with cancellation_type::total")
 {
     bool ok = true;

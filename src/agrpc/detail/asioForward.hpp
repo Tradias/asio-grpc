@@ -15,15 +15,73 @@
 #ifndef AGRPC_DETAIL_ASIOFORWARD_HPP
 #define AGRPC_DETAIL_ASIOFORWARD_HPP
 
+#ifdef AGRPC_STANDALONE_ASIO
+//
+#include <asio/version.hpp>
+//
+#include <asio/any_io_executor.hpp>
+#include <asio/associated_allocator.hpp>
+#include <asio/associated_executor.hpp>
+#include <asio/async_result.hpp>
+#include <asio/execution/allocator.hpp>
+#include <asio/execution/blocking.hpp>
+#include <asio/execution/context.hpp>
+#include <asio/execution/mapping.hpp>
+#include <asio/execution/outstanding_work.hpp>
+#include <asio/execution/relationship.hpp>
+#include <asio/execution_context.hpp>
+#include <asio/query.hpp>
+#include <asio/use_awaitable.hpp>
+
+#ifdef ASIO_HAS_CO_AWAIT
+#include <boost/asio/use_awaitable.hpp>
+
+#define AGRPC_ASIO_HAS_CO_AWAIT
+#endif
+
+#if (ASIO_VERSION >= 102000)
+#include <asio/associated_cancellation_slot.hpp>
+
+#define AGRPC_ASIO_HAS_CANCELLATION_SLOT
+#endif
+#else
+//
+#include <boost/version.hpp>
+//
+#include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/associated_allocator.hpp>
 #include <boost/asio/associated_executor.hpp>
+#include <boost/asio/async_result.hpp>
 #include <boost/asio/execution/allocator.hpp>
+#include <boost/asio/execution/blocking.hpp>
+#include <boost/asio/execution/context.hpp>
+#include <boost/asio/execution/mapping.hpp>
+#include <boost/asio/execution/outstanding_work.hpp>
+#include <boost/asio/execution/relationship.hpp>
+#include <boost/asio/execution_context.hpp>
 #include <boost/asio/query.hpp>
-#include <boost/version.hpp>
+#include <boost/asio/use_awaitable.hpp>
+
+#ifdef BOOST_ASIO_HAS_CO_AWAIT
+#include <boost/asio/use_awaitable.hpp>
+
+#define AGRPC_ASIO_HAS_CO_AWAIT
+#endif
+
+#if (BOOST_VERSION >= 107700)
+#include <boost/asio/associated_cancellation_slot.hpp>
+
+#define AGRPC_ASIO_HAS_CANCELLATION_SLOT
+#endif
+#endif
 
 namespace agrpc
 {
-namespace asio = boost::asio;
+#ifdef AGRPC_STANDALONE_ASIO
+namespace asio = ::asio;
+#else
+namespace asio = ::boost::asio;
+#endif
 
 namespace detail
 {

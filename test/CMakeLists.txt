@@ -16,19 +16,6 @@ if(ASIO_GRPC_TEST_COVERAGE)
     include(AsioGrpcCoverage)
 endif()
 
-# asio-grpc objects
-add_library(asio-grpc-objects OBJECT)
-
-get_target_property(ASIO_GRPC_SOURCE_FILES asio-grpc ASIO_GRPC_SOURCE_FILES)
-target_sources(asio-grpc-objects PRIVATE ${ASIO_GRPC_SOURCE_FILES})
-unset(ASIO_GRPC_SOURCE_FILES)
-
-target_link_libraries(asio-grpc-objects PUBLIC asio-grpc-common-compile-options)
-
-if(ASIO_GRPC_TEST_COVERAGE)
-    asio_grpc_add_coverage_flags(asio-grpc-objects)
-endif()
-
 # grpc generate
 include(AsioGrpcProtobufGenerator)
 
@@ -50,7 +37,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/utils/memoryResource.hpp.in"
                "${CMAKE_CURRENT_BINARY_DIR}/generated/utils/memoryResource.hpp" @ONLY)
 unset(ASIO_GRPC_MEMORY_RESOURCE_UTILS_INCLUDE)
 
-function(asio_grpc_add_test _asio-grpc_name)
+function(asio_grpc_add_test _asio-grpc_name _asio_grpc_standalone_asio)
     add_executable(${_asio-grpc_name})
 
     target_sources(
@@ -71,7 +58,13 @@ function(asio_grpc_add_test _asio-grpc_name)
         asio_grpc_add_coverage_flags(${_asio-grpc_name})
     endif()
 
-    target_link_libraries(${_asio-grpc_name} PRIVATE asio-grpc-objects doctest::doctest Boost::coroutine Boost::thread)
+    target_link_libraries(${_asio-grpc_name} PRIVATE asio-grpc-common-compile-options doctest::doctest Boost::coroutine
+                                                     Boost::thread)
+    if(_asio_grpc_standalone_asio)
+        target_link_libraries(${_asio-grpc_name} PRIVATE asio-grpc-standalone-asio asio::asio)
+    else()
+        target_link_libraries(${_asio-grpc_name} PRIVATE asio-grpc Boost::headers)
+    endif()
 
     target_include_directories(
         ${_asio-grpc_name}
@@ -84,12 +77,21 @@ endfunction()
 
 set(ASIO_GRPC_TEST_SOURCE_FILES "test-asio-grpc.cpp")
 
-asio_grpc_add_test(asio-grpc-test-cpp17 ${ASIO_GRPC_TEST_SOURCE_FILES})
-target_compile_definitions(asio-grpc-test-cpp17 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"C++17\"")
+asio_grpc_add_test(asio-grpc-test-boost-cpp17 off ${ASIO_GRPC_TEST_SOURCE_FILES})
+target_compile_definitions(asio-grpc-test-boost-cpp17 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"Boost.Asio C++17\"")
+
+asio_grpc_add_test(asio-grpc-test-cpp17 on ${ASIO_GRPC_TEST_SOURCE_FILES})
+target_compile_definitions(asio-grpc-test-cpp17 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"Standalone Asio C++17\""
+                                                        AGRPC_STANDALONE_ASIO)
 
 if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
-    asio_grpc_add_test(asio-grpc-test-cpp20 ${ASIO_GRPC_TEST_SOURCE_FILES} "test-asio-grpc-20.cpp")
-    target_compile_definitions(asio-grpc-test-cpp20 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"C++20\"")
+    asio_grpc_add_test(asio-grpc-test-boost-cpp20 off ${ASIO_GRPC_TEST_SOURCE_FILES} "test-asio-grpc-20.cpp")
+    target_compile_definitions(asio-grpc-test-boost-cpp20 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"Boost.Asio C++20\"")
+    target_link_libraries(asio-grpc-test-boost-cpp20 PRIVATE asio-grpc-cpp20-compile-options)
+
+    asio_grpc_add_test(asio-grpc-test-cpp20 on ${ASIO_GRPC_TEST_SOURCE_FILES} "test-asio-grpc-20.cpp")
+    target_compile_definitions(asio-grpc-test-cpp20 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"Standalone Asio C++20\""
+                                                            AGRPC_STANDALONE_ASIO)
     target_link_libraries(asio-grpc-test-cpp20 PRIVATE asio-grpc-cpp20-compile-options)
 endif()
 
@@ -97,7 +99,7 @@ unset(ASIO_GRPC_TEST_SOURCE_FILES)
 
 if(ASIO_GRPC_DISCOVER_TESTS)
     doctest_discover_tests(
-        asio-grpc-test-cpp17 # workaround for regression in doctest 2.4.6
+        asio-grpc-test-boost-cpp17 # workaround for regression in doctest 2.4.6
         #
         # if given arguments:
         #
@@ -105,7 +107,9 @@ if(ASIO_GRPC_DISCOVER_TESTS)
         #
         # Unknown arguments specified
         ADD_LABELS 0)
+    doctest_discover_tests(asio-grpc-test-cpp17 ADD_LABELS 0)
     if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
+        doctest_discover_tests(asio-grpc-test-boost-cpp20 ADD_LABELS 0)
         doctest_discover_tests(asio-grpc-test-cpp20 ADD_LABELS 0)
     endif()
 endif()
@@ -114,7 +118,7 @@ if(ASIO_GRPC_TEST_COVERAGE)
     if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
         asio_grpc_coverage_report_for_target(asio-grpc-test-cpp20)
     else()
-        asio_grpc_coverage_report_for_target(asio-grpc-test)
+        asio_grpc_coverage_report_for_target(asio-grpc-test-cpp17)
     endif()
 endif()
 

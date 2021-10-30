@@ -50,7 +50,7 @@ class RPCRequestContext
 template <class Deadline, class CompletionToken = agrpc::DefaultCompletionToken>
 auto wait(grpc::Alarm& alarm, const Deadline& deadline, CompletionToken token = {})
 {
-#if (BOOST_VERSION >= 107700)
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
     if (auto slot = asio::get_associated_cancellation_slot(token); slot.is_connected())
     {
         slot.template emplace<detail::AlarmCancellationHandler>(alarm);
@@ -259,7 +259,7 @@ auto send_initial_metadata(Responder& responder, CompletionToken token = {})
 /*
 Client
 */
-#ifdef BOOST_ASIO_HAS_CO_AWAIT
+#ifdef AGRPC_ASIO_HAS_CO_AWAIT
 template <class RPC, class Stub, class Request, class Reader, class Executor = asio::any_io_executor>
 auto request(detail::ClientUnaryRequest<RPC, Request, Reader> rpc, Stub& stub, grpc::ClientContext& client_context,
              const Request& request, asio::use_awaitable_t<Executor> token = {}) ->

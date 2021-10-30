@@ -1,15 +1,8 @@
 # common compile options
 add_library(compile-options INTERFACE)
 
-target_link_libraries(
-    compile-options
-    INTERFACE asio-grpc::asio-grpc
-              gRPC::grpc++
-              Boost::headers
-              Boost::coroutine
-              Boost::thread
-              ${Boost_CONTAINER_LIBRARY}
-              Boost::disable_autolinking)
+target_link_libraries(compile-options INTERFACE gRPC::grpc++ Boost::headers Boost::coroutine Boost::thread
+                                                ${Boost_CONTAINER_LIBRARY} Boost::disable_autolinking)
 
 target_compile_definitions(
     compile-options
@@ -19,9 +12,15 @@ target_compile_definitions(
               BOOST_ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT
               BOOST_ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT
               BOOST_ASIO_HAS_DEDUCED_PREFER_MEMBER_TRAIT
+              ASIO_HAS_DEDUCED_REQUIRE_MEMBER_TRAIT
+              ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT
+              ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT
+              ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT
+              ASIO_HAS_DEDUCED_PREFER_MEMBER_TRAIT
               _WIN32_WINNT=0x0A00 # Windows 10
               WINVER=0x0A00>
-              BOOST_ASIO_NO_DEPRECATED)
+              BOOST_ASIO_NO_DEPRECATED
+              ASIO_NO_DEPRECATED)
 
 function(create_object_library _name)
     add_library(${_name} OBJECT)
@@ -33,6 +32,8 @@ endfunction()
 
 # TARGET option
 create_object_library(target-option target.cpp)
+
+target_link_libraries(target-option PRIVATE asio-grpc::asio-grpc-standalone-asio asio::asio)
 
 # // begin-snippet: asio_grpc_protobuf_generate-target
 set(TARGET_GENERATED_PROTOS_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/target")
@@ -58,10 +59,14 @@ asio_grpc_protobuf_generate(
 
 create_object_library(out-var-option outVar.cpp ${OUT_VAR_GENERATED_SOURCES})
 
+target_link_libraries(out-var-option PRIVATE asio-grpc::asio-grpc)
+
 target_include_directories(out-var-option PRIVATE "${OUT_VAR_GENERATED_PROTOS_INCLUDE_DIR}")
 
 # DESCRIPTOR option
 create_object_library(descriptor-option descriptor.cpp)
+
+target_link_libraries(descriptor-option PRIVATE asio-grpc::asio-grpc)
 
 set(DESCRIPTOR_GENERATED_PROTOS_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/descriptor")
 

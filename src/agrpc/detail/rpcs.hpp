@@ -24,10 +24,6 @@
 #include <grpcpp/completion_queue.h>
 #include <grpcpp/server_context.h>
 
-#if (BOOST_VERSION >= 107700)
-#include <boost/asio/associated_cancellation_slot.hpp>
-#endif
-
 #include <utility>
 
 namespace agrpc
@@ -55,7 +51,7 @@ using ClientSideStreamingRequest = Writer (RPC::*)(grpc::ClientContext*, Respons
 template <class RPC, class ReaderWriter>
 using ClientBidirectionalStreamingRequest = ReaderWriter (RPC::*)(grpc::ClientContext*, grpc::CompletionQueue*, void*);
 
-#if (BOOST_VERSION >= 107700)
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 struct AlarmCancellationHandler
 {
     grpc::Alarm& alarm;
