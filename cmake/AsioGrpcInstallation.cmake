@@ -17,20 +17,14 @@ include(GNUInstallDirs)
 set(ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/asio-grpc")
 
 include(CMakePackageConfigHelpers)
-configure_package_config_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/asio-grpcConfig.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/generated/asio-grpcConfig.cmake"
-    INSTALL_DESTINATION "${ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR}"
-    NO_SET_AND_CHECK_MACRO NO_CHECK_REQUIRED_COMPONENTS_MACRO)
-
 write_basic_package_version_file(
     "${CMAKE_CURRENT_BINARY_DIR}/generated/asio-grpcConfigVersion.cmake" ARCH_INDEPENDENT
     VERSION "${PROJECT_VERSION}"
     COMPATIBILITY SameMajorVersion)
 
 install(
-    FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/asio-grpcConfig.cmake"
-          "${CMAKE_CURRENT_BINARY_DIR}/generated/asio-grpcConfigVersion.cmake"
+    FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/asio-grpcConfigVersion.cmake"
+          "${CMAKE_CURRENT_SOURCE_DIR}/cmake/asio-grpcConfig.cmake"
           "${CMAKE_CURRENT_SOURCE_DIR}/cmake/AsioGrpcProtobufGenerator.cmake"
     DESTINATION "${ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR}")
 
