@@ -680,3 +680,5 @@ function(asio_grpc_protobuf_generate)
 ```
 <sup><a href='/cmake/AsioGrpcProtobufGenerator.cmake#L53-L55' title='Snippet source file'>snippet source</a> | <a href='#snippet-asio_grpc_protobuf_generate' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
+
+If you are using [cmake-format](https://github.com/cheshirekow/cmake_format) then you can copy the `asio_grpc_protobuf_generate` section from [cmake-format.yaml](cmake-format.yaml#L1-L12) into your cmake-format.yaml to get proper formatting.

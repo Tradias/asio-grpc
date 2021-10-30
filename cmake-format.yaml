@@ -10,6 +10,7 @@ additional_commands:
       USAGE_REQUIREMENT: '1'
       PROTOS: '*'
       IMPORT_DIRS: '*'
+      EXTRA_ARGS: '*'
   doctest_discover_tests:
     kwargs:
       ADD_LABELS: '1'
