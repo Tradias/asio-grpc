@@ -18,7 +18,6 @@
 #include "agrpc/detail/utility.hpp"
 #include "agrpc/grpcContext.hpp"
 
-#include <cassert>
 #include <type_traits>
 #include <utility>
 
