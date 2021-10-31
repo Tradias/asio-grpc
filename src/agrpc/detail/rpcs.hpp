@@ -78,6 +78,7 @@ template <class RPC, class Service, class Responder, class CompletionToken = agr
 auto request(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service, grpc::ServerContext& server_context,
              Responder& responder, CompletionToken token = {});
 
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class RPCContextImplementationAllocator>
 class RPCRequestContext;
 
@@ -185,6 +186,7 @@ void RequestRepeater<RPC, Service, RPCHandler, Handler>::operator()(bool ok)
     std::move(this->handler)(detail::RPCContextImplementation::create(std::move(this->rpc_handler)), ok);
 }
 }  // namespace detail
+#endif
 }  // namespace agrpc
 
 #endif  // AGRPC_DETAIL_RPCS_HPP

@@ -35,7 +35,10 @@ namespace agrpc
 template <class Allocator, std::uint32_t Options>
 class BasicGrpcExecutor;
 
-class GrpcContext : public asio::execution_context
+class GrpcContext
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+    : public asio::execution_context
+#endif
 {
   public:
     using executor_type = agrpc::BasicGrpcExecutor<std::allocator<void>, detail::GrpcExecutorOptions::DEFAULT>;

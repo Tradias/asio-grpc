@@ -19,11 +19,8 @@ endif()
 # asio-grpc objects
 add_library(asio-grpc-objects OBJECT)
 
-get_target_property(ASIO_GRPC_SOURCE_FILES asio-grpc ASIO_GRPC_SOURCE_FILES)
-target_sources(asio-grpc-objects PRIVATE ${ASIO_GRPC_SOURCE_FILES})
-unset(ASIO_GRPC_SOURCE_FILES)
-
-target_link_libraries(asio-grpc-objects PUBLIC asio-grpc-common-compile-options asio-grpc Boost::headers)
+target_link_libraries(asio-grpc-objects PUBLIC asio-grpc-sources asio-grpc-common-compile-options asio-grpc
+                                               Boost::headers)
 
 # grpc generate
 include(AsioGrpcProtobufGenerator)
@@ -46,22 +43,22 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/utils/memoryResource.hpp.in"
                "${CMAKE_CURRENT_BINARY_DIR}/generated/utils/memoryResource.hpp" @ONLY)
 unset(ASIO_GRPC_MEMORY_RESOURCE_UTILS_INCLUDE)
 
-function(asio_grpc_add_test _asio-grpc_name _asio_grpc_standalone_asio)
+function(asio_grpc_add_test _asio-grpc_name _asio_grpc_type)
     add_executable(${_asio-grpc_name})
 
     target_sources(
         ${_asio-grpc_name}
-        PRIVATE main.cpp
-                $<TARGET_PROPERTY:asio-grpc,ASIO_GRPC_HEADER_FILES>
+        PRIVATE # cmake-format: sort
+                "${ASIO_GRPC_GENERATED_SOURCES}"
+                "${CMAKE_CURRENT_BINARY_DIR}/generated/utils/memoryResource.hpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/asioUtils.hpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/freePort.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/freePort.hpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcClientServerTest.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcClientServerTest.hpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcContextTest.hpp"
-                "${CMAKE_CURRENT_BINARY_DIR}/generated/utils/memoryResource.hpp"
-                "${ASIO_GRPC_GENERATED_SOURCES}"
-                ${ARGN})
+                ${ARGN}
+                main.cpp)
 
     if(ASIO_GRPC_TEST_COVERAGE)
         asio_grpc_add_coverage_flags(${_asio-grpc_name})
@@ -69,10 +66,12 @@ function(asio_grpc_add_test _asio-grpc_name _asio_grpc_standalone_asio)
 
     target_link_libraries(${_asio-grpc_name} PRIVATE asio-grpc-common-compile-options doctest::doctest Boost::coroutine
                                                      Boost::thread)
-    if(_asio_grpc_standalone_asio)
+    if(${_asio_grpc_type} STREQUAL "STANDALONE_ASIO")
         target_link_libraries(${_asio-grpc_name} PRIVATE asio-grpc-standalone-asio asio::asio)
-    else()
+    elseif(${_asio_grpc_type} STREQUAL "BOOST_ASIO")
         target_link_libraries(${_asio-grpc_name} PRIVATE asio-grpc Boost::headers)
+    elseif(${_asio_grpc_type} STREQUAL "UNIFEX")
+        target_link_libraries(${_asio-grpc_name} PRIVATE asio-grpc-unifex unofficial::unifex)
     endif()
 
     target_include_directories(
@@ -86,22 +85,26 @@ endfunction()
 
 set(ASIO_GRPC_TEST_SOURCE_FILES "test-asio-grpc.cpp")
 
-asio_grpc_add_test(asio-grpc-test-boost-cpp17 off ${ASIO_GRPC_TEST_SOURCE_FILES})
+asio_grpc_add_test(asio-grpc-test-boost-cpp17 "BOOST_ASIO" ${ASIO_GRPC_TEST_SOURCE_FILES})
 target_compile_definitions(asio-grpc-test-boost-cpp17 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"Boost.Asio C++17\"")
 
-asio_grpc_add_test(asio-grpc-test-cpp17 on ${ASIO_GRPC_TEST_SOURCE_FILES})
+asio_grpc_add_test(asio-grpc-test-cpp17 "STANDALONE_ASIO" ${ASIO_GRPC_TEST_SOURCE_FILES})
 target_compile_definitions(asio-grpc-test-cpp17 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"Standalone Asio C++17\""
                                                         AGRPC_STANDALONE_ASIO)
 
 if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
-    asio_grpc_add_test(asio-grpc-test-boost-cpp20 off ${ASIO_GRPC_TEST_SOURCE_FILES} "test-asio-grpc-20.cpp")
+    asio_grpc_add_test(asio-grpc-test-boost-cpp20 "BOOST_ASIO" ${ASIO_GRPC_TEST_SOURCE_FILES} "test-asio-grpc-20.cpp")
     target_compile_definitions(asio-grpc-test-boost-cpp20 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"Boost.Asio C++20\"")
     target_link_libraries(asio-grpc-test-boost-cpp20 PRIVATE asio-grpc-cpp20-compile-options)
 
-    asio_grpc_add_test(asio-grpc-test-cpp20 on ${ASIO_GRPC_TEST_SOURCE_FILES} "test-asio-grpc-20.cpp")
+    asio_grpc_add_test(asio-grpc-test-cpp20 "STANDALONE_ASIO" ${ASIO_GRPC_TEST_SOURCE_FILES} "test-asio-grpc-20.cpp")
     target_compile_definitions(asio-grpc-test-cpp20 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"Standalone Asio C++20\""
                                                             AGRPC_STANDALONE_ASIO)
     target_link_libraries(asio-grpc-test-cpp20 PRIVATE asio-grpc-cpp20-compile-options)
+
+    asio_grpc_add_test(asio-grpc-test-unifex "UNIFEX" "test-asio-grpc-unifex.cpp")
+    target_compile_definitions(asio-grpc-test-unifex PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"unifex C++20\"")
+    target_link_libraries(asio-grpc-test-unifex PRIVATE asio-grpc-cpp20-compile-options)
 endif()
 
 unset(ASIO_GRPC_TEST_SOURCE_FILES)
@@ -120,6 +123,7 @@ if(ASIO_GRPC_DISCOVER_TESTS)
     if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
         doctest_discover_tests(asio-grpc-test-boost-cpp20 ADD_LABELS 0)
         doctest_discover_tests(asio-grpc-test-cpp20 ADD_LABELS 0)
+        doctest_discover_tests(asio-grpc-test-unifex ADD_LABELS 0)
     endif()
 endif()
 

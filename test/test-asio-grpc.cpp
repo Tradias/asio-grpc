@@ -402,7 +402,7 @@ struct Coro : asio::coroutine
 
 #ifdef AGRPC_STANDALONE_ASIO
 #include <asio/yield.hpp>
-#else
+#elif defined(AGRPC_BOOST_ASIO)
 #include <boost/asio/yield.hpp>
 #endif
 
@@ -459,7 +459,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unary stackless coroutine")
 
 #ifdef AGRPC_STANDALONE_ASIO
 #include <asio/unyield.hpp>
-#else
+#elif defined(AGRPC_BOOST_ASIO)
 #include <boost/asio/unyield.hpp>
 #endif
 

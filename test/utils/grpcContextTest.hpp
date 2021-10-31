@@ -41,10 +41,12 @@ struct GrpcContextTest
 
     auto get_allocator() noexcept { return agrpc::detail::pmr::polymorphic_allocator<std::byte>(&resource); }
 
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     agrpc::pmr::GrpcExecutor get_pmr_executor() noexcept
     {
         return this->get_executor().require(asio::execution::allocator(get_allocator()));
     }
+#endif
 };
 
 inline auto ten_milliseconds_from_now() { return std::chrono::system_clock::now() + std::chrono::milliseconds(10); }

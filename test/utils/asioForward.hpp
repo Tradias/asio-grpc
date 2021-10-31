@@ -35,7 +35,7 @@
 #ifdef ASIO_HAS_CONCEPTS
 #define AGRPC_ASIO_HAS_CONCEPTS
 #endif
-#else
+#elif defined(AGRPC_BOOST_ASIO)
 //
 #include <boost/version.hpp>
 //
@@ -60,11 +60,17 @@
 #endif
 #endif
 
+#ifdef AGRPC_UNIFEX
+#include <unifex/sync_wait.hpp>
+#include <unifex/task.hpp>
+#include <unifex/when_all.hpp>
+#endif
+
 namespace agrpc::test
 {
-#ifdef AGRPC_STANDALONE_ASIO
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_UNIFEX)
 using ErrorCode = std::error_code;
-#else
+#elif defined(AGRPC_BOOST_ASIO)
 using ErrorCode = boost::system::error_code;
 #endif
 }  // namespace agrpc::test

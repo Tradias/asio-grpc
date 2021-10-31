@@ -17,7 +17,7 @@
 
 #ifdef AGRPC_STANDALONE_ASIO
 #include <asio.hpp>
-#else
+#elif defined(AGRPC_BOOST_ASIO)
 #include <boost/asio.hpp>
 #endif
 

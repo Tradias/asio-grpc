@@ -19,6 +19,7 @@
 #include "agrpc/grpcContext.hpp"
 #include "agrpc/grpcContext.ipp"
 #include "agrpc/grpcExecutor.hpp"
+#include "agrpc/grpcSender.hpp"
 #include "agrpc/initiate.hpp"
 #include "agrpc/rpcs.hpp"
 

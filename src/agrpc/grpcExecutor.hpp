@@ -111,6 +111,7 @@ class BasicGrpcExecutor
             this->context(), std::forward<Function>(function), this->allocator());
     }
 
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     [[nodiscard]] constexpr auto require(asio::execution::blocking_t::possibly_t) const noexcept
         -> agrpc::BasicGrpcExecutor<Allocator, detail::set_blocking_never(Options, false)>
     {
@@ -212,6 +213,7 @@ class BasicGrpcExecutor
     {
         return this->allocator();
     }
+#endif
 };
 
 using GrpcExecutor = agrpc::BasicGrpcExecutor<>;

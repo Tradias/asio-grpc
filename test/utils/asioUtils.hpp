@@ -20,6 +20,7 @@
 #include <type_traits>
 #include <version>
 
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 namespace agrpc::test
 {
 template <class Handler, class Allocator>
@@ -85,5 +86,6 @@ auto co_spawn(Executor&& executor, Function function)
 }
 #endif
 }  // namespace agrpc::test
+#endif
 
 #endif  // AGRPC_UTILS_ASIOUTILS_HPP

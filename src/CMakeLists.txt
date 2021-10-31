@@ -17,33 +17,6 @@ function(asio_grpc_create_interface_target _asio_grpc_name)
     add_library(${_asio_grpc_name} INTERFACE)
     add_library(asio-grpc::${_asio_grpc_name} ALIAS ${_asio_grpc_name})
 
-    set_target_properties(
-        ${_asio_grpc_name} # cmake-format: sort
-        PROPERTIES ASIO_GRPC_HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/asioGrpc.hpp"
-                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcContext.hpp"
-                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcContext.ipp"
-                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcExecutor.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/initiate.hpp"
-                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/rpcs.hpp"
-                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/asioForward.hpp"
-                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/attributes.hpp"
-                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/completionHandlerWithPayload.hpp"
-                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcCompletionQueueEvent.hpp"
-                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcContext.hpp"
-                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcContextImplementation.hpp"
-                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcContextImplementation.ipp"
-                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcContextInteraction.hpp"
-                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcExecutorBase.hpp"
-                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcExecutorOptions.hpp"
-                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/initiate.hpp"
-                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/memory.hpp"
-                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/operation.hpp"
-                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/rpcs.hpp"
-                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/typeErasedOperation.hpp"
-                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/utility.hpp"
-                   "${CMAKE_CURRENT_BINARY_DIR}/generated/agrpc/detail/memoryResource.hpp")
-    set_target_properties(${_asio_grpc_name} PROPERTIES ASIO_GRPC_SOURCE_FILES
-                                                        "${CMAKE_CURRENT_SOURCE_DIR}/asioGrpc.cpp")
-
     target_compile_features(${_asio_grpc_name} INTERFACE cxx_std_17)
 
     target_include_directories(
@@ -68,6 +41,44 @@ function(asio_grpc_create_interface_target _asio_grpc_name)
 endfunction()
 
 asio_grpc_create_interface_target(asio-grpc)
+target_compile_definitions(asio-grpc INTERFACE AGRPC_BOOST_ASIO)
 
 asio_grpc_create_interface_target(asio-grpc-standalone-asio)
 target_compile_definitions(asio-grpc-standalone-asio INTERFACE AGRPC_STANDALONE_ASIO)
+
+asio_grpc_create_interface_target(asio-grpc-unifex)
+target_compile_definitions(asio-grpc-unifex INTERFACE AGRPC_UNIFEX)
+
+# asio-grpc objects
+if(ASIO_GRPC_BUILD_TESTS)
+    add_library(asio-grpc-sources INTERFACE)
+
+    target_sources(
+        asio-grpc-sources
+        INTERFACE # cmake-format: sort
+                  "${CMAKE_CURRENT_BINARY_DIR}/generated/agrpc/detail/memoryResource.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/asioGrpc.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/asioForward.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/attributes.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/completionHandlerWithPayload.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcCompletionQueueEvent.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcContext.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcContextImplementation.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcContextImplementation.ipp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcContextInteraction.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcExecutorBase.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcExecutorOptions.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/initiate.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/memory.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/operation.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/rpcs.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/typeErasedOperation.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/utility.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcContext.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcContext.ipp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcExecutor.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcSender.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/initiate.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/rpcs.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/asioGrpc.cpp")
+endif()

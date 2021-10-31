@@ -19,6 +19,7 @@
 
 #include <utility>
 
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 namespace agrpc::detail
 {
 template <class Payload, class CompletionHandler>
@@ -59,5 +60,6 @@ auto make_completion_handler_with_payload(CompletionHandler completion_handler, 
                                                                             std::forward<Args>(args)...};
 }
 }  // namespace agrpc::detail
+#endif
 
 #endif  // AGRPC_DETAIL_COMPLETIONHANDLERWITHPAYLOAD_HPP

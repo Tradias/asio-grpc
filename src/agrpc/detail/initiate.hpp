@@ -22,6 +22,7 @@
 #include "agrpc/detail/grpcContextInteraction.hpp"
 #include "agrpc/grpcContext.hpp"
 
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 namespace agrpc::detail
 {
 template <class Executor>
@@ -110,7 +111,7 @@ class async_result<::agrpc::detail::DefaultCompletionTokenNotAvailable, Signatur
 {
 };
 }  // namespace asio
-#else
+#elif defined(AGRPC_BOOST_ASIO)
 namespace boost::asio
 {
 template <class Signature>
@@ -118,6 +119,7 @@ class async_result<::agrpc::detail::DefaultCompletionTokenNotAvailable, Signatur
 {
 };
 }  // namespace boost::asio
+#endif
 #endif
 
 #endif  // AGRPC_DETAIL_INITIATE_HPP

@@ -21,6 +21,18 @@
 
 namespace agrpc
 {
+template <class Allocator, std::uint32_t Options>
+[[nodiscard]] auto get_completion_queue(const agrpc::BasicGrpcExecutor<Allocator, Options>& executor) noexcept
+{
+    return executor.context().get_completion_queue();
+}
+
+[[nodiscard]] inline auto get_completion_queue(agrpc::GrpcContext& grpc_context) noexcept
+{
+    return grpc_context.get_completion_queue();
+}
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 template <class T>
 using GrpcAwaitable = asio::awaitable<T, agrpc::GrpcExecutor>;
@@ -50,20 +62,9 @@ auto grpc_initiate(Function function, CompletionToken token = {})
     return asio::async_initiate<CompletionToken, void(bool)>(detail::GrpcInitiator{std::move(function)}, token);
 }
 
-template <class Allocator, std::uint32_t Options>
-[[nodiscard]] auto get_completion_queue(const agrpc::BasicGrpcExecutor<Allocator, Options>& executor) noexcept
-{
-    return executor.context().get_completion_queue();
-}
-
 [[nodiscard]] inline auto get_completion_queue(const asio::any_io_executor& executor) noexcept
 {
     return detail::query_grpc_context(executor).get_completion_queue();
-}
-
-[[nodiscard]] inline auto get_completion_queue(agrpc::GrpcContext& grpc_context) noexcept
-{
-    return grpc_context.get_completion_queue();
 }
 
 template <class CompletionToken>
@@ -81,6 +82,7 @@ template <class Executor = asio::any_io_executor>
     const auto executor = co_await asio::this_coro::executor;
     co_return detail::query_grpc_context(executor).get_completion_queue();
 }
+#endif
 #endif
 }  // namespace agrpc
 

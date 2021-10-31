@@ -14,6 +14,12 @@
         "boost-coroutine",
         "boost-thread",
         "boost-container",
-        "asio"
+        {
+            "name": "asio",
+            "features": [
+                "coroutine"
+            ]
+        },
+        "libunifex"
     ]
 }

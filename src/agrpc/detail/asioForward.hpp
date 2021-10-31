@@ -44,7 +44,7 @@
 
 #define AGRPC_ASIO_HAS_CANCELLATION_SLOT
 #endif
-#else
+#elif defined(AGRPC_BOOST_ASIO)
 //
 #include <boost/version.hpp>
 //
@@ -75,14 +75,23 @@
 #endif
 #endif
 
+#ifdef AGRPC_UNIFEX
+#include <unifex/config.hpp>
+#include <unifex/receiver_concepts.hpp>
+#include <unifex/scheduler_concepts.hpp>
+#include <unifex/sender_concepts.hpp>
+#include <unifex/tag_invoke.hpp>
+#endif
+
 namespace agrpc
 {
 #ifdef AGRPC_STANDALONE_ASIO
 namespace asio = ::asio;
-#else
+#elif defined(AGRPC_BOOST_ASIO)
 namespace asio = ::boost::asio;
 #endif
 
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 namespace detail
 {
 template <class Object>
@@ -103,6 +112,7 @@ auto get_associated_executor_and_allocator(const Object& object)
     return std::pair{std::move(executor), std::move(allocator)};
 }
 }  // namespace detail
+#endif
 }  // namespace agrpc
 
 #endif  // AGRPC_DETAIL_ASIOFORWARD_HPP

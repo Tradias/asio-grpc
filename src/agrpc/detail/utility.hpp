@@ -20,6 +20,9 @@
 
 namespace agrpc::detail
 {
+template <class T>
+using RemoveCvrefT = std::remove_cv_t<std::remove_reference_t<T>>;
+
 struct Empty
 {
 };

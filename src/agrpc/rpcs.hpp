@@ -24,6 +24,7 @@
 
 namespace agrpc
 {
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class RPCContextImplementationAllocator>
 class RPCRequestContext
 {
@@ -475,6 +476,47 @@ auto read_initial_metadata(Responder& responder, CompletionToken token = {})
         },
         std::move(token));
 }
+#endif
+
+#ifdef AGRPC_UNIFEX
+inline constexpr struct AsyncRequestCPO
+{
+    template <class Executor, class RPC, class Service, class Request, class Responder>
+    auto operator()(Executor&& executor, detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
+                    grpc::ServerContext& server_context, Request& request, Responder& responder) const
+        noexcept(unifex::is_nothrow_tag_invocable_v<AsyncRequestCPO, Executor,
+                                                    detail::ServerMultiArgRequest<RPC, Request, Responder>, Service&,
+                                                    grpc::ServerContext&, Request&, Responder&>)
+            -> unifex::tag_invoke_result_t<AsyncRequestCPO, Executor,
+                                           detail::ServerMultiArgRequest<RPC, Request, Responder>, Service&,
+                                           grpc::ServerContext&, Request&, Responder&>
+    {
+        return unifex::tag_invoke(*this, std::forward<Executor>(executor), rpc, service, server_context, request,
+                                  responder);
+    }
+} async_request{};
+
+inline constexpr struct AsyncFinishCPO
+{
+    template <class Executor, class Response>
+    auto operator()(Executor&& executor, grpc::ServerAsyncResponseWriter<Response>& writer, const Response& response,
+                    const grpc::Status& status) const noexcept
+        -> unifex::tag_invoke_result_t<AsyncFinishCPO, Executor, grpc::ServerAsyncResponseWriter<Response>&,
+                                       const Response&, const grpc::Status&>
+    {
+        return unifex::tag_invoke(*this, std::forward<Executor>(executor), writer, response, status);
+    }
+
+    template <class Executor, class Response>
+    auto operator()(Executor&& executor, grpc::ClientAsyncResponseReader<Response>& reader, Response& response,
+                    grpc::Status& status) const noexcept
+        -> unifex::tag_invoke_result_t<AsyncFinishCPO, Executor, grpc::ClientAsyncResponseReader<Response>&, Response&,
+                                       grpc::Status&>
+    {
+        return unifex::tag_invoke(*this, std::forward<Executor>(executor), reader, response, status);
+    }
+} async_finish{};
+#endif
 }  // namespace agrpc
 
 #endif  // AGRPC_AGRPC_RPCS_HPP

@@ -36,6 +36,7 @@ namespace agrpc
 {
 namespace detail
 {
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 struct GrpcContextThreadInfo : asio::detail::thread_info_base
 {
 };
@@ -46,6 +47,7 @@ struct GrpcContextThreadContext : asio::detail::thread_context
     GrpcContextThreadInfo this_thread;
     thread_call_stack::context ctx{this, this_thread};
 };
+#endif
 
 inline void drain_completion_queue(agrpc::GrpcContext& grpc_context)
 {
@@ -69,8 +71,10 @@ inline GrpcContext::~GrpcContext()
     this->stop();
     this->completion_queue->Shutdown();
     detail::drain_completion_queue(*this);
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     asio::execution_context::shutdown();
     asio::execution_context::destroy();
+#endif
 }
 
 inline void GrpcContext::run()
@@ -81,7 +85,9 @@ inline void GrpcContext::run()
         return;
     }
     this->reset();
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     detail::GrpcContextThreadContext thread_context;
+#endif
     detail::ScopeGuard on_exit{[old_context = detail::GrpcContextImplementation::set_thread_local_grpc_context(this)]
                                {
                                    detail::GrpcContextImplementation::set_thread_local_grpc_context(old_context);
