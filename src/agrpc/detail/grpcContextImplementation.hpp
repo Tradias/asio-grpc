@@ -54,7 +54,7 @@ struct GrpcContextImplementation
 
     [[nodiscard]] static bool running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept;
 
-    static const agrpc::GrpcContext* set_thread_local_grpc_context(const agrpc::GrpcContext& grpc_context) noexcept;
+    static const agrpc::GrpcContext* set_thread_local_grpc_context(const agrpc::GrpcContext* grpc_context) noexcept;
 
     static void move_remote_work_to_local_queue(agrpc::GrpcContext& grpc_context) noexcept;
 

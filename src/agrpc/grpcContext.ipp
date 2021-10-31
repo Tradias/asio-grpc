@@ -82,9 +82,9 @@ inline void GrpcContext::run()
     }
     this->reset();
     detail::GrpcContextThreadContext thread_context;
-    detail::ScopeGuard on_exit{[old_context = detail::GrpcContextImplementation::set_thread_local_grpc_context(*this)]
+    detail::ScopeGuard on_exit{[old_context = detail::GrpcContextImplementation::set_thread_local_grpc_context(this)]
                                {
-                                   detail::GrpcContextImplementation::set_thread_local_grpc_context(*old_context);
+                                   detail::GrpcContextImplementation::set_thread_local_grpc_context(old_context);
                                }};
     while (detail::GrpcContextImplementation::process_work<detail::InvokeHandler::YES>(*this,
                                                                                        [this]
@@ -99,13 +99,10 @@ inline void GrpcContext::run()
 
 inline void GrpcContext::stop()
 {
-    if (!this->stopped.exchange(true, std::memory_order_relaxed))
+    if (!this->stopped.exchange(true, std::memory_order_relaxed) &&
+        !detail::GrpcContextImplementation::running_in_this_thread(*this) && this->remote_work_queue.try_mark_active())
     {
-        if (!detail::GrpcContextImplementation::running_in_this_thread(*this) &&
-            this->remote_work_queue.try_mark_active())
-        {
-            detail::GrpcContextImplementation::trigger_work_alarm(*this);
-        }
+        detail::GrpcContextImplementation::trigger_work_alarm(*this);
     }
 }
 

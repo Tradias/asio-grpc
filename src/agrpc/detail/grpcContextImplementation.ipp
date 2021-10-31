@@ -25,7 +25,7 @@
 
 namespace agrpc::detail
 {
-inline static thread_local const agrpc::GrpcContext* thread_local_grpc_context{};
+inline thread_local const agrpc::GrpcContext* thread_local_grpc_context{};
 
 inline void WorkFinishedOnExitFunctor::operator()() const noexcept { grpc_context.work_finished(); }
 
@@ -63,13 +63,13 @@ inline bool GrpcContextImplementation::get_next_event(agrpc::GrpcContext& grpc_c
 
 inline bool GrpcContextImplementation::running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept
 {
-    return std::addressof(grpc_context) == thread_local_grpc_context;
+    return std::addressof(grpc_context) == detail::thread_local_grpc_context;
 }
 
 inline const agrpc::GrpcContext* GrpcContextImplementation::set_thread_local_grpc_context(
-    const agrpc::GrpcContext& grpc_context) noexcept
+    const agrpc::GrpcContext* grpc_context) noexcept
 {
-    return std::exchange(thread_local_grpc_context, std::addressof(grpc_context));
+    return std::exchange(detail::thread_local_grpc_context, grpc_context);
 }
 
 inline void GrpcContextImplementation::move_remote_work_to_local_queue(agrpc::GrpcContext& grpc_context) noexcept
