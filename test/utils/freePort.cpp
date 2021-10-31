@@ -94,12 +94,12 @@ auto perform_under_mutex_lock(Function&& function)
 uint16_t get_free_port()
 {
     return perform_under_mutex_lock(
-        []()
+        []
         {
             static auto port_lock_file = get_port_lock_file();
             auto port_file = std::filesystem::temp_directory_path() / PORT_FILE_NAME;
             return perform_under_file_lock(
-                [&]()
+                [&]
                 {
                     recreate_if_old(port_file);
                     return read_and_increment_port(port_file);

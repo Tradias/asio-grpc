@@ -47,27 +47,14 @@ struct GrpcContextThreadContext : asio::detail::thread_context
     thread_call_stack::context ctx{this, this_thread};
 };
 
-inline bool get_next_event(agrpc::GrpcContext& grpc_context, detail::GrpcCompletionQueueEvent& event)
+inline void drain_completion_queue(agrpc::GrpcContext& grpc_context)
 {
-    static constexpr ::gpr_timespec INFINITE_FUTURE{std::numeric_limits<std::int64_t>::max(), 0, ::GPR_CLOCK_MONOTONIC};
-    return grpc_context.get_completion_queue()->AsyncNext(&event.tag, &event.ok, INFINITE_FUTURE) !=
-           grpc::CompletionQueue::SHUTDOWN;
-}
-
-template <class LoopPredicate>
-void run_event_loop(agrpc::GrpcContext& grpc_context, LoopPredicate loop_predicate)
-{
-    detail::GrpcCompletionQueueEvent event;
-    while (loop_predicate() && detail::get_next_event(grpc_context, event))
+    while (detail::GrpcContextImplementation::process_work<detail::InvokeHandler::NO>(grpc_context,
+                                                                                      []
+                                                                                      {
+                                                                                          return false;
+                                                                                      }))
     {
-        if (grpc_context.is_stopped()) AGRPC_UNLIKELY
-            {
-                detail::GrpcContextImplementation::process_work<detail::InvokeHandler::NO>(grpc_context, event);
-            }
-        else
-        {
-            detail::GrpcContextImplementation::process_work<detail::InvokeHandler::YES>(grpc_context, event);
-        }
     }
 }
 }  // namespace detail
@@ -76,11 +63,10 @@ inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue> completio
     : outstanding_work(),
       thread_id(std::this_thread::get_id()),
       stopped(false),
-      has_work(),
+      check_remote_work(false),
       completion_queue(std::move(completion_queue)),
       local_resource(detail::pmr::new_delete_resource()),
-      is_processing_local_work(false),
-      remote_work_queue()
+      remote_work_queue(false)
 {
 }
 
@@ -88,11 +74,7 @@ inline GrpcContext::~GrpcContext()
 {
     this->stop();
     this->completion_queue->Shutdown();
-    detail::run_event_loop(*this,
-                           []()
-                           {
-                               return true;
-                           });
+    detail::drain_completion_queue(*this);
     asio::execution_context::shutdown();
     asio::execution_context::destroy();
 }
@@ -107,18 +89,25 @@ inline void GrpcContext::run()
     this->reset();
     detail::GrpcContextThreadContext thread_context;
     this->thread_id.store(std::this_thread::get_id(), std::memory_order_relaxed);
-    detail::run_event_loop(*this,
-                           [this]()
-                           {
-                               return !this->is_stopped();
-                           });
+    while (detail::GrpcContextImplementation::process_work<detail::InvokeHandler::YES>(*this,
+                                                                                       [&]
+                                                                                       {
+                                                                                           return this->is_stopped();
+                                                                                       }))
+        AGRPC_LIKELY {}
 }
 
 inline void GrpcContext::stop()
 {
     if (!this->stopped.exchange(true, std::memory_order_relaxed))
     {
-        detail::GrpcContextImplementation::trigger_work_alarm(*this);
+        if (!detail::GrpcContextImplementation::running_in_this_thread(*this))
+        {
+            if (this->remote_work_queue.try_mark_active())
+            {
+                detail::GrpcContextImplementation::trigger_work_alarm(*this);
+            }
+        }
     }
 }
 

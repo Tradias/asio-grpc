@@ -66,18 +66,17 @@ class GrpcContext : public asio::execution_context
     [[nodiscard]] grpc::ServerCompletionQueue* get_server_completion_queue() noexcept;
 
   private:
-    using RemoteWorkQueue = detail::AtomicIntrusiveQueue<detail::TypeErasedNoArgRemoteOperation>;
-    using LocalWorkQueue = detail::IntrusiveQueue<detail::TypeErasedNoArgLocalOperation>;
+    using RemoteWorkQueue = detail::AtomicIntrusiveQueue<detail::TypeErasedNoArgOperation>;
+    using LocalWorkQueue = detail::IntrusiveQueue<detail::TypeErasedNoArgOperation>;
 
     grpc::Alarm work_alarm;
     std::atomic_long outstanding_work;
     std::atomic<std::thread::id> thread_id;
     std::atomic_bool stopped;
-    std::atomic_bool has_work;
+    bool check_remote_work;
     std::unique_ptr<grpc::CompletionQueue> completion_queue;
     detail::GrpcContextLocalMemoryResource local_resource;
     LocalWorkQueue local_work_queue;
-    bool is_processing_local_work;
     RemoteWorkQueue remote_work_queue;
 
     friend detail::GrpcContextImplementation;

@@ -40,6 +40,15 @@ class AtomicIntrusiveQueue
     AtomicIntrusiveQueue& operator=(const AtomicIntrusiveQueue&) = delete;
     AtomicIntrusiveQueue& operator=(AtomicIntrusiveQueue&&) = delete;
 
+    // Returns true if the previous state was inactive and this
+    // operation successfully marked it as active.
+    // Returns false if the previous state was active.
+    [[nodiscard]] bool try_mark_active() noexcept
+    {
+        void* old_value = producer_inactive_value();
+        return head.compare_exchange_strong(old_value, nullptr, std::memory_order_acquire, std::memory_order_relaxed);
+    }
+
     // Enqueue an item to the queue.
     //
     // Returns true if the producer is inactive and needs to be
@@ -56,32 +65,22 @@ class AtomicIntrusiveQueue
         return old_value == inactive;
     }
 
-    [[nodiscard]] detail::IntrusiveQueue<Item> dequeue_all() noexcept
-    {
-        void* value = head.load(std::memory_order_relaxed);
-        if (value == nullptr)
-        {
-            return {};
-        }
-        value = head.exchange(nullptr, std::memory_order_acquire);
-        return detail::IntrusiveQueue<Item>::make_reversed(static_cast<Item*>(value));
-    }
-
-    [[nodiscard]] bool try_mark_inactive() noexcept
+    bool try_mark_inactive() noexcept
     {
         void* const inactive = producer_inactive_value();
         void* old_value = head.load(std::memory_order_relaxed);
         if (old_value == nullptr)
         {
-            if (head.compare_exchange_strong(old_value, inactive, std::memory_order_release, std::memory_order_relaxed))
-            {
-                // Successfully marked as inactive
-                return true;
-            }
+            return head.compare_exchange_strong(old_value, inactive, std::memory_order_release,
+                                                std::memory_order_relaxed);
         }
         return false;
     }
 
+    // Atomically either mark the producer as inactive if the queue was empty
+    // or dequeue pending items from the queue.
+    //
+    // Not valid to call if the producer is already marked as inactive.
     [[nodiscard]] detail::IntrusiveQueue<Item> try_mark_inactive_or_dequeue_all() noexcept
     {
         if (try_mark_inactive())

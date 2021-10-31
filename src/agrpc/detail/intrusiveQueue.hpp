@@ -83,7 +83,10 @@ class IntrusiveQueue
 
     void append(IntrusiveQueue&& other) noexcept
     {
-        if (other.empty()) return;
+        if (other.empty())
+        {
+            return;
+        }
         auto* other_head = std::exchange(other.head, nullptr);
         if (empty())
         {
@@ -94,6 +97,33 @@ class IntrusiveQueue
             tail->next = other_head;
         }
         tail = std::exchange(other.tail, nullptr);
+    }
+
+    void erase(Item* item) noexcept
+    {
+        if (empty())
+        {
+            return;
+        }
+        if (head == item)
+        {
+            head = item->next;
+        }
+        else
+        {
+            Item* current = head;
+            Item* previous;
+            while (current->next)
+            {
+                previous = current;
+                current = current->next;
+                if (current == item)
+                {
+                    previous->next = item;
+                    break;
+                }
+            }
+        }
     }
 
   private:

@@ -113,12 +113,15 @@ TEST_CASE("Work tracking GrpcExecutor constructor and assignment")
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::reset")
 {
     bool ok = false;
+    CHECK_FALSE(grpc_context.is_stopped());
     asio::post(grpc_context,
                [&]
                {
                    ok = true;
+                   CHECK_FALSE(grpc_context.is_stopped());
                });
     grpc_context.run();
+    CHECK(grpc_context.is_stopped());
     CHECK(ok);
     asio::post(grpc_context,
                [&]
@@ -154,16 +157,85 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::stop completes pending op
     CHECK(ok);
 }
 
+TEST_CASE("GrpcContext::stop while waiting for Alarm will not invoke the Alarm's completion handler")
+{
+    bool is_stop_from_same_thread = true;
+    SUBCASE("stop from same thread") {}
+    SUBCASE("stop from other thread") { is_stop_from_same_thread = false; }
+    bool ok = false;
+    std::optional<std::thread> thread;
+    {
+        agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+        auto guard = asio::make_work_guard(grpc_context);
+        grpc::Alarm alarm;
+        asio::post(grpc_context,
+                   [&]
+                   {
+                       agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::milliseconds(5000),
+                                   asio::bind_executor(grpc_context,
+                                                       [&](bool)
+                                                       {
+                                                           ok = true;
+                                                       }));
+                       if (is_stop_from_same_thread)
+                       {
+                           grpc_context.stop();
+                           guard.reset();
+                       }
+                       else
+                       {
+                           thread.emplace(
+                               [&]
+                               {
+                                   grpc_context.stop();
+                                   guard.reset();
+                               });
+                       }
+                   });
+        grpc_context.run();
+        CHECK_FALSE(ok);
+    }
+    CHECK_FALSE(ok);
+    if (!is_stop_from_same_thread)
+    {
+        thread->join();
+    }
+}
+
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wait")
 {
     bool ok = false;
+    std::chrono::system_clock::time_point start;
     asio::spawn(asio::bind_executor(get_executor(), [] {}),
                 [&](auto&& yield)
                 {
                     grpc::Alarm alarm;
-                    ok = agrpc::wait(alarm, test::ten_milliseconds_from_now(), yield);
+                    start = std::chrono::system_clock::now();
+                    ok = agrpc::wait(alarm, test::hundred_milliseconds_from_now(), yield);
                 });
     grpc_context.run();
+    CHECK_LE(std::chrono::milliseconds(100), std::chrono::system_clock::now() - start);
+    CHECK(ok);
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post an Alarm and check time")
+{
+    bool ok = false;
+    std::chrono::system_clock::time_point start;
+    grpc::Alarm alarm;
+    asio::post(grpc_context,
+               [&]()
+               {
+                   start = std::chrono::system_clock::now();
+                   agrpc::wait(alarm, test::hundred_milliseconds_from_now(),
+                               asio::bind_executor(grpc_context,
+                                                   [&](bool)
+                                                   {
+                                                       ok = true;
+                                                   }));
+               });
+    grpc_context.run();
+    CHECK_LE(std::chrono::milliseconds(100), std::chrono::system_clock::now() - start);
     CHECK(ok);
 }
 
