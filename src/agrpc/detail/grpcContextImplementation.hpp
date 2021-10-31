@@ -17,6 +17,7 @@
 
 #include "agrpc/detail/grpcCompletionQueueEvent.hpp"
 #include "agrpc/detail/typeErasedOperation.hpp"
+#include "agrpc/detail/utility.hpp"
 
 namespace agrpc
 {
@@ -24,14 +25,19 @@ class GrpcContext;
 
 namespace detail
 {
-struct WorkFinishedOnExit
+struct WorkFinishedOnExitFunctor
 {
     agrpc::GrpcContext& grpc_context;
-    bool is_armed{true};
 
-    ~WorkFinishedOnExit() noexcept;
+    void operator()() const noexcept;
+};
 
-    constexpr void release() noexcept { is_armed = false; }
+struct WorkFinishedOnExit : detail::ScopeGuard<detail::WorkFinishedOnExitFunctor>
+{
+    constexpr explicit WorkFinishedOnExit(agrpc::GrpcContext& grpc_context) noexcept
+        : detail::ScopeGuard<detail::WorkFinishedOnExitFunctor>(detail::WorkFinishedOnExitFunctor{grpc_context})
+    {
+    }
 };
 
 struct GrpcContextImplementation
@@ -47,6 +53,8 @@ struct GrpcContextImplementation
     static bool get_next_event(agrpc::GrpcContext& grpc_context, detail::GrpcCompletionQueueEvent& event);
 
     [[nodiscard]] static bool running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept;
+
+    static const agrpc::GrpcContext* set_thread_local_grpc_context(const agrpc::GrpcContext& grpc_context) noexcept;
 
     static void move_remote_work_to_local_queue(agrpc::GrpcContext& grpc_context) noexcept;
 

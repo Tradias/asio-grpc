@@ -61,7 +61,6 @@ inline void drain_completion_queue(agrpc::GrpcContext& grpc_context)
 
 inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue)
     : outstanding_work(),
-      thread_id(std::this_thread::get_id()),
       stopped(false),
       check_remote_work(false),
       completion_queue(std::move(completion_queue)),
@@ -88,7 +87,10 @@ inline void GrpcContext::run()
     }
     this->reset();
     detail::GrpcContextThreadContext thread_context;
-    this->thread_id.store(std::this_thread::get_id(), std::memory_order_relaxed);
+    detail::ScopeGuard on_exit{[old_context = detail::GrpcContextImplementation::set_thread_local_grpc_context(*this)]
+                               {
+                                   detail::GrpcContextImplementation::set_thread_local_grpc_context(*old_context);
+                               }};
     while (detail::GrpcContextImplementation::process_work<detail::InvokeHandler::YES>(*this,
                                                                                        [&]
                                                                                        {

@@ -71,7 +71,6 @@ class GrpcContext : public asio::execution_context
 
     grpc::Alarm work_alarm;
     std::atomic_long outstanding_work;
-    std::atomic<std::thread::id> thread_id;
     std::atomic_bool stopped;
     bool check_remote_work;
     std::unique_ptr<grpc::CompletionQueue> completion_queue;

@@ -140,9 +140,9 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::reset")
     CHECK_FALSE(ok);
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::stop completes pending operations")
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::stop does not complete pending operations")
 {
-    bool ok{false};
+    bool ok = false;
     asio::post(grpc_context,
                [&]
                {
@@ -154,7 +154,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::stop completes pending op
                    grpc_context.stop();
                });
     grpc_context.run();
-    CHECK(ok);
+    CHECK_FALSE(ok);
 }
 
 TEST_CASE("GrpcContext::stop while waiting for Alarm will not invoke the Alarm's completion handler")
@@ -164,14 +164,14 @@ TEST_CASE("GrpcContext::stop while waiting for Alarm will not invoke the Alarm's
     SUBCASE("stop from other thread") { is_stop_from_same_thread = false; }
     bool ok = false;
     {
-        std::optional<std::thread> thread;
+        std::thread thread;
         agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
         auto guard = asio::make_work_guard(grpc_context);
         grpc::Alarm alarm;
         asio::post(grpc_context,
                    [&]
                    {
-                       agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::milliseconds(5000),
+                       agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::seconds(5),
                                    asio::bind_executor(grpc_context,
                                                        [&](bool)
                                                        {
@@ -184,7 +184,7 @@ TEST_CASE("GrpcContext::stop while waiting for Alarm will not invoke the Alarm's
                        }
                        else
                        {
-                           thread.emplace(
+                           thread = std::thread(
                                [&]
                                {
                                    grpc_context.stop();
@@ -196,7 +196,7 @@ TEST_CASE("GrpcContext::stop while waiting for Alarm will not invoke the Alarm's
         CHECK_FALSE(ok);
         if (!is_stop_from_same_thread)
         {
-            thread->join();
+            thread.join();
         }
     }
     CHECK_FALSE(ok);

@@ -71,6 +71,25 @@ class CompressedPair<First, Second, false> final
     Second second_;
 };
 
+template <class OnExit>
+struct ScopeGuard
+{
+    OnExit on_exit;
+    bool is_armed{true};
+
+    constexpr explicit ScopeGuard(OnExit on_exit) : on_exit(std::move(on_exit)) {}
+
+    ~ScopeGuard() noexcept
+    {
+        if (is_armed)
+        {
+            on_exit();
+        }
+    }
+
+    constexpr void release() noexcept { is_armed = false; }
+};
+
 template <class T>
 auto forward_as(std::add_lvalue_reference_t<std::remove_reference_t<T>> u)
     -> std::conditional_t<std::is_rvalue_reference_v<T>, std::remove_reference_t<T>, T>
