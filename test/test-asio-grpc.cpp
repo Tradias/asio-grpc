@@ -163,8 +163,8 @@ TEST_CASE("GrpcContext::stop while waiting for Alarm will not invoke the Alarm's
     SUBCASE("stop from same thread") {}
     SUBCASE("stop from other thread") { is_stop_from_same_thread = false; }
     bool ok = false;
-    std::optional<std::thread> thread;
     {
+        std::optional<std::thread> thread;
         agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
         auto guard = asio::make_work_guard(grpc_context);
         grpc::Alarm alarm;
@@ -194,12 +194,12 @@ TEST_CASE("GrpcContext::stop while waiting for Alarm will not invoke the Alarm's
                    });
         grpc_context.run();
         CHECK_FALSE(ok);
+        if (!is_stop_from_same_thread)
+        {
+            thread->join();
+        }
     }
     CHECK_FALSE(ok);
-    if (!is_stop_from_same_thread)
-    {
-        thread->join();
-    }
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wait")
