@@ -60,12 +60,7 @@ inline void drain_completion_queue(agrpc::GrpcContext& grpc_context)
 }  // namespace detail
 
 inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue)
-    : outstanding_work(),
-      stopped(false),
-      check_remote_work(false),
-      completion_queue(std::move(completion_queue)),
-      local_resource(detail::pmr::new_delete_resource()),
-      remote_work_queue(false)
+    : completion_queue(std::move(completion_queue))
 {
 }
 
@@ -92,23 +87,24 @@ inline void GrpcContext::run()
                                    detail::GrpcContextImplementation::set_thread_local_grpc_context(*old_context);
                                }};
     while (detail::GrpcContextImplementation::process_work<detail::InvokeHandler::YES>(*this,
-                                                                                       [&]
+                                                                                       [this]
                                                                                        {
                                                                                            return this->is_stopped();
                                                                                        }))
-        AGRPC_LIKELY {}
+        AGRPC_LIKELY
+        {
+            //
+        }
 }
 
 inline void GrpcContext::stop()
 {
     if (!this->stopped.exchange(true, std::memory_order_relaxed))
     {
-        if (!detail::GrpcContextImplementation::running_in_this_thread(*this))
+        if (!detail::GrpcContextImplementation::running_in_this_thread(*this) &&
+            this->remote_work_queue.try_mark_active())
         {
-            if (this->remote_work_queue.try_mark_active())
-            {
-                detail::GrpcContextImplementation::trigger_work_alarm(*this);
-            }
+            detail::GrpcContextImplementation::trigger_work_alarm(*this);
         }
     }
 }

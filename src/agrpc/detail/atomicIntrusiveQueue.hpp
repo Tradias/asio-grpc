@@ -36,8 +36,11 @@ class AtomicIntrusiveQueue
     }
 
     AtomicIntrusiveQueue(const AtomicIntrusiveQueue&) = delete;
+
     AtomicIntrusiveQueue(AtomicIntrusiveQueue&&) = delete;
+
     AtomicIntrusiveQueue& operator=(const AtomicIntrusiveQueue&) = delete;
+
     AtomicIntrusiveQueue& operator=(AtomicIntrusiveQueue&&) = delete;
 
     // Returns true if the previous state was inactive and this
@@ -56,7 +59,7 @@ class AtomicIntrusiveQueue
     // up the producer.
     [[nodiscard]] bool enqueue(Item* item) noexcept
     {
-        void* const inactive = producer_inactive_value();
+        const void* const inactive = producer_inactive_value();
         void* old_value = head.load(std::memory_order_relaxed);
         do
         {
@@ -68,8 +71,7 @@ class AtomicIntrusiveQueue
     bool try_mark_inactive() noexcept
     {
         void* const inactive = producer_inactive_value();
-        void* old_value = head.load(std::memory_order_relaxed);
-        if (old_value == nullptr)
+        if (void* old_value = head.load(std::memory_order_relaxed); old_value == nullptr)
         {
             return head.compare_exchange_strong(old_value, inactive, std::memory_order_release,
                                                 std::memory_order_relaxed);
@@ -87,12 +89,12 @@ class AtomicIntrusiveQueue
         {
             return {};
         }
-        void* old_value = head.exchange(nullptr, std::memory_order_acquire);
+        void* const old_value = head.exchange(nullptr, std::memory_order_acquire);
         return detail::IntrusiveQueue<Item>::make_reversed(static_cast<Item*>(old_value));
     }
 
   private:
-    void* producer_inactive_value() const noexcept
+    [[nodiscard]] void* producer_inactive_value() const noexcept
     {
         // Pick some pointer that is not nullptr and that is
         // guaranteed to not be the address of a valid item.

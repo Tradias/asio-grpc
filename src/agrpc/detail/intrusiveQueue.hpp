@@ -26,6 +26,10 @@ class IntrusiveQueue
   public:
     IntrusiveQueue() = default;
 
+    IntrusiveQueue(const IntrusiveQueue&) = delete;
+
+    IntrusiveQueue& operator=(const IntrusiveQueue&) = delete;
+
     IntrusiveQueue(IntrusiveQueue&& other) noexcept
         : head(std::exchange(other.head, nullptr)), tail(std::exchange(other.tail, nullptr))
     {

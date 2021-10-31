@@ -79,6 +79,14 @@ struct ScopeGuard
 
     constexpr explicit ScopeGuard(OnExit on_exit) : on_exit(std::move(on_exit)) {}
 
+    ScopeGuard(const ScopeGuard&) = delete;
+
+    ScopeGuard(ScopeGuard&&) = delete;
+
+    ScopeGuard& operator=(const ScopeGuard&) = delete;
+
+    ScopeGuard& operator=(ScopeGuard&&) = delete;
+
     ~ScopeGuard() noexcept
     {
         if (is_armed)

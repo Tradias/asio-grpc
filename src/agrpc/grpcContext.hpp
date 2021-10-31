@@ -70,13 +70,13 @@ class GrpcContext : public asio::execution_context
     using LocalWorkQueue = detail::IntrusiveQueue<detail::TypeErasedNoArgOperation>;
 
     grpc::Alarm work_alarm;
-    std::atomic_long outstanding_work;
-    std::atomic_bool stopped;
-    bool check_remote_work;
+    std::atomic_long outstanding_work{};
+    std::atomic_bool stopped{false};
+    bool check_remote_work{false};
     std::unique_ptr<grpc::CompletionQueue> completion_queue;
-    detail::GrpcContextLocalMemoryResource local_resource;
+    detail::GrpcContextLocalMemoryResource local_resource{detail::pmr::new_delete_resource()};
     LocalWorkQueue local_work_queue;
-    RemoteWorkQueue remote_work_queue;
+    RemoteWorkQueue remote_work_queue{false};
 
     friend detail::GrpcContextImplementation;
 };
