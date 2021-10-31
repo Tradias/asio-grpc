@@ -146,12 +146,12 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::stop does not complete pe
     asio::post(grpc_context,
                [&]
                {
+                   grpc_context.stop();
                    asio::post(grpc_context,
                               [&]
                               {
                                   ok = true;
                               });
-                   grpc_context.stop();
                });
     grpc_context.run();
     CHECK_FALSE(ok);
