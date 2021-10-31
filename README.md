@@ -193,7 +193,7 @@ See [selecting-library-features](https://vcpkg.io/en/docs/users/selecting-librar
 
 # Performance
 
-asio-grpc is part of [grpc_bench](https://github.com/LesnyRumcajs/grpc_bench). Head over there to compare its performance against other libraries and languages.
+asio-grpc is part of [grpc_bench](https://github.com/Tradias/grpc_bench). Head over there to compare its performance against other libraries and languages.
 
 Results from the helloworld unary RPC   
 Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz, Linux, Boost 1.74, gRPC 1.41.0, asio-grpc v1.2.0, jemalloc 5.2.1
