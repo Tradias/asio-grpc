@@ -67,6 +67,7 @@ run_process(
     "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}"
     "-DVCPKG_TARGET_TRIPLET=${VCPKG_TARGET_TRIPLET}"
     "-DVCPKG_MANIFEST_MODE=${VCPKG_MANIFEST_MODE}"
+    "-DVCPKG_OVERLAY_PORTS=${VCPKG_OVERLAY_PORTS}"
     # Use generator-expression to prevent multi-config generators from creating a subdirectory
     "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${PWD}/test-install/\$<BOOL:on>"
     "${PWD}")
