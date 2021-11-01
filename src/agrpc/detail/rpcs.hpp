@@ -69,6 +69,7 @@ struct AlarmCancellationHandler
 #endif
 }  // namespace detail
 
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class RPC, class Service, class Request, class Responder,
           class CompletionToken = agrpc::DefaultCompletionToken>
 auto request(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
@@ -78,7 +79,6 @@ template <class RPC, class Service, class Responder, class CompletionToken = agr
 auto request(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service, grpc::ServerContext& server_context,
              Responder& responder, CompletionToken token = {});
 
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class RPCContextImplementationAllocator>
 class RPCRequestContext;
 
