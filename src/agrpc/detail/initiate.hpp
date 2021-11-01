@@ -22,6 +22,14 @@
 #include "agrpc/detail/grpcContextInteraction.hpp"
 #include "agrpc/grpcContext.hpp"
 
+namespace agrpc::detail
+{
+struct DefaultCompletionTokenNotAvailable
+{
+    DefaultCompletionTokenNotAvailable() = delete;
+};
+}  // namespace agrpc::detail
+
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 namespace agrpc::detail
 {
@@ -96,11 +104,6 @@ auto grpc_initiate_with_payload(Function function, CompletionToken token)
     return asio::async_initiate<CompletionToken, void(std::pair<Payload, bool>)>(
         detail::GrpcWithPayloadInitiator<Payload, Function>{std::move(function)}, token);
 }
-
-struct DefaultCompletionTokenNotAvailable
-{
-    DefaultCompletionTokenNotAvailable() = delete;
-};
 }  // namespace agrpc::detail
 
 #ifdef AGRPC_STANDALONE_ASIO

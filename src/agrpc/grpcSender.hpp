@@ -20,12 +20,11 @@
 #include "agrpc/detail/typeErasedOperation.hpp"
 #include "agrpc/detail/utility.hpp"
 #include "agrpc/grpcContext.hpp"
-#include "agrpc/rpcs.hpp"
 
 #ifdef AGRPC_UNIFEX
 namespace agrpc
 {
-template <class InitiationFunction>
+template <class InitiatingFunction>
 class GrpcSender
 {
   private:
@@ -37,12 +36,12 @@ class GrpcSender
         explicit Operation(const GrpcSender& sender, Receiver2&& receiver)
             : detail::TypeErasedGrpcTagOperation(&Operation::on_complete),
               context(sender.context),
-              initiation_function(sender.initiation_function),
+              initiating_function(sender.initiating_function),
               receiver(std::forward<Receiver2>(receiver))
         {
         }
 
-        void start() & noexcept { initiation_function(context, this); }
+        void start() & noexcept { initiating_function(context, this); }
 
       private:
         static void on_complete(detail::TypeErasedGrpcTagOperation* op, detail::InvokeHandler, bool ok,
@@ -61,7 +60,7 @@ class GrpcSender
         }
 
         agrpc::GrpcContext& context;
-        InitiationFunction initiation_function;
+        InitiatingFunction initiating_function;
         Receiver receiver;
     };
 
@@ -74,10 +73,10 @@ class GrpcSender
     template <template <class...> class Variant>
     using error_types = Variant<std::error_code, std::exception_ptr>;
 
-    static constexpr bool sends_done = true;
+    static constexpr bool sends_done = false;
 
-    explicit GrpcSender(agrpc::GrpcContext& context, InitiationFunction initiation_function) noexcept
-        : context(context), initiation_function(std::move(initiation_function))
+    explicit GrpcSender(agrpc::GrpcContext& context, InitiatingFunction initiating_function) noexcept
+        : context(context), initiating_function(std::move(initiating_function))
     {
     }
 
@@ -89,44 +88,8 @@ class GrpcSender
 
   private:
     agrpc::GrpcContext& context;
-    InitiationFunction initiation_function;
+    InitiatingFunction initiating_function;
 };
-
-template <class Scheduler, class RPC, class Service, class Request, class Responder>
-auto tag_invoke(unifex::tag_t<agrpc::async_request>, Scheduler scheduler,
-                detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
-                grpc::ServerContext& server_context, Request& request, Responder& responder) noexcept
-{
-    return agrpc::GrpcSender(scheduler.context(),
-                             [&, rpc](agrpc::GrpcContext& grpc_context, void* tag)
-                             {
-                                 auto* cq = grpc_context.get_server_completion_queue();
-                                 (service.*rpc)(&server_context, &request, &responder, cq, cq, tag);
-                             });
-}
-
-template <class Scheduler, class Response>
-auto tag_invoke(unifex::tag_t<agrpc::async_finish>, Scheduler scheduler,
-                grpc::ServerAsyncResponseWriter<Response>& writer, const Response& response,
-                const grpc::Status& status) noexcept
-{
-    return agrpc::GrpcSender(scheduler.context(),
-                             [&](const agrpc::GrpcContext&, void* tag)
-                             {
-                                 writer.Finish(response, status, tag);
-                             });
-}
-
-template <class Scheduler, class Response>
-auto tag_invoke(unifex::tag_t<agrpc::async_finish>, Scheduler scheduler,
-                grpc::ClientAsyncResponseReader<Response>& reader, Response& response, grpc::Status& status) noexcept
-{
-    return agrpc::GrpcSender(scheduler.context(),
-                             [&](const agrpc::GrpcContext&, void* tag)
-                             {
-                                 reader.Finish(&response, &status, tag);
-                             });
-}
 }  // namespace agrpc
 #endif
 

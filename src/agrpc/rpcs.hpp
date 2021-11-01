@@ -24,7 +24,6 @@
 
 namespace agrpc
 {
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class RPCContextImplementationAllocator>
 class RPCRequestContext
 {
@@ -94,6 +93,7 @@ auto request(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& servic
         std::move(token));
 }
 
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class RPC, class Service, class Request, class Responder, class Handler>
 void repeatedly_request(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service, Handler handler)
 {
@@ -105,6 +105,7 @@ void repeatedly_request(detail::ServerSingleArgRequest<RPC, Responder> rpc, Serv
 {
     detail::repeatedly_request(rpc, service, std::move(handler));
 }
+#endif
 
 template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
 auto read(grpc::ServerAsyncReader<Response, Request>& reader, Request& request, CompletionToken token = {})
@@ -280,6 +281,7 @@ auto request(detail::ClientUnaryRequest<RPC, Request, Reader> rpc, Stub& stub, g
 }
 #endif
 
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class RPC, class Stub, class Request, class Reader, class CompletionToken = agrpc::DefaultCompletionToken>
 auto request(detail::ClientServerStreamingRequest<RPC, Request, Reader> rpc, Stub& stub,
              grpc::ClientContext& client_context, const Request& request, CompletionToken token = {})
@@ -291,6 +293,7 @@ auto request(detail::ClientServerStreamingRequest<RPC, Request, Reader> rpc, Stu
         },
         std::move(token));
 }
+#endif
 
 template <class RPC, class Stub, class Request, class Reader, class CompletionToken = agrpc::DefaultCompletionToken>
 auto request(detail::ClientServerStreamingRequest<RPC, Request, Reader> rpc, Stub& stub,
@@ -304,6 +307,7 @@ auto request(detail::ClientServerStreamingRequest<RPC, Request, Reader> rpc, Stu
         std::move(token));
 }
 
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class RPC, class Stub, class Writer, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
 auto request(detail::ClientSideStreamingRequest<RPC, Writer, Response> rpc, Stub& stub,
              grpc::ClientContext& client_context, Response& response, CompletionToken token = {})
@@ -315,6 +319,7 @@ auto request(detail::ClientSideStreamingRequest<RPC, Writer, Response> rpc, Stub
         },
         std::move(token));
 }
+#endif
 
 template <class RPC, class Stub, class Writer, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
 auto request(detail::ClientSideStreamingRequest<RPC, Writer, Response> rpc, Stub& stub,
@@ -328,6 +333,7 @@ auto request(detail::ClientSideStreamingRequest<RPC, Writer, Response> rpc, Stub
         std::move(token));
 }
 
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class RPC, class Stub, class ReaderWriter, class CompletionToken = agrpc::DefaultCompletionToken>
 auto request(detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter> rpc, Stub& stub,
              grpc::ClientContext& client_context, CompletionToken token = {})
@@ -339,6 +345,7 @@ auto request(detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter> rpc,
         },
         std::move(token));
 }
+#endif
 
 template <class RPC, class Stub, class ReaderWriter, class CompletionToken = agrpc::DefaultCompletionToken>
 auto request(detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter> rpc, Stub& stub,
@@ -476,47 +483,6 @@ auto read_initial_metadata(Responder& responder, CompletionToken token = {})
         },
         std::move(token));
 }
-#endif
-
-#ifdef AGRPC_UNIFEX
-inline constexpr struct AsyncRequestCPO
-{
-    template <class Executor, class RPC, class Service, class Request, class Responder>
-    auto operator()(Executor&& executor, detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
-                    grpc::ServerContext& server_context, Request& request, Responder& responder) const
-        noexcept(unifex::is_nothrow_tag_invocable_v<AsyncRequestCPO, Executor,
-                                                    detail::ServerMultiArgRequest<RPC, Request, Responder>, Service&,
-                                                    grpc::ServerContext&, Request&, Responder&>)
-            -> unifex::tag_invoke_result_t<AsyncRequestCPO, Executor,
-                                           detail::ServerMultiArgRequest<RPC, Request, Responder>, Service&,
-                                           grpc::ServerContext&, Request&, Responder&>
-    {
-        return unifex::tag_invoke(*this, std::forward<Executor>(executor), rpc, service, server_context, request,
-                                  responder);
-    }
-} async_request{};
-
-inline constexpr struct AsyncFinishCPO
-{
-    template <class Executor, class Response>
-    auto operator()(Executor&& executor, grpc::ServerAsyncResponseWriter<Response>& writer, const Response& response,
-                    const grpc::Status& status) const noexcept
-        -> unifex::tag_invoke_result_t<AsyncFinishCPO, Executor, grpc::ServerAsyncResponseWriter<Response>&,
-                                       const Response&, const grpc::Status&>
-    {
-        return unifex::tag_invoke(*this, std::forward<Executor>(executor), writer, response, status);
-    }
-
-    template <class Executor, class Response>
-    auto operator()(Executor&& executor, grpc::ClientAsyncResponseReader<Response>& reader, Response& response,
-                    grpc::Status& status) const noexcept
-        -> unifex::tag_invoke_result_t<AsyncFinishCPO, Executor, grpc::ClientAsyncResponseReader<Response>&, Response&,
-                                       grpc::Status&>
-    {
-        return unifex::tag_invoke(*this, std::forward<Executor>(executor), reader, response, status);
-    }
-} async_finish{};
-#endif
 }  // namespace agrpc
 
 #endif  // AGRPC_AGRPC_RPCS_HPP

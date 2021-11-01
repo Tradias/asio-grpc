@@ -44,11 +44,11 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex::task unary")
         {
             test::v1::Request request;
             grpc::ServerAsyncResponseWriter<test::v1::Response> writer{&server_context};
-            CHECK(co_await agrpc::async_request(get_executor(), &test::v1::Test::AsyncService::RequestUnary, service,
-                                                server_context, request, writer));
+            CHECK(co_await agrpc::request(&test::v1::Test::AsyncService::RequestUnary, service, server_context, request,
+                                          writer, use_scheduler()));
             test::v1::Response response;
             response.set_integer(42);
-            server_finish_ok = co_await agrpc::async_finish(get_executor(), writer, response, grpc::Status::OK);
+            server_finish_ok = co_await agrpc::finish(writer, response, grpc::Status::OK, use_scheduler());
         }(),
         [&]() -> unifex::task<void>
         {
@@ -57,7 +57,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex::task unary")
             auto reader = stub->AsyncUnary(&client_context, request, agrpc::get_completion_queue(get_executor()));
             test::v1::Response response;
             grpc::Status status;
-            client_finish_ok = co_await agrpc::async_finish(get_executor(), *reader, response, status);
+            client_finish_ok = co_await agrpc::finish(*reader, response, status, use_scheduler());
         }(),
         [&]() -> unifex::task<void>
         {
