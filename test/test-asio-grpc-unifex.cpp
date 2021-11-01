@@ -31,6 +31,7 @@ using namespace agrpc;
 
 TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0));
 
+#if !UNIFEX_NO_COROUTINES
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex::task unary")
 {
     grpc_context.work_started();
@@ -66,6 +67,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex::task unary")
     CHECK(server_finish_ok);
     CHECK(client_finish_ok);
 }
+#endif
 
 TEST_SUITE_END();
 }  // namespace test_asio_grpc

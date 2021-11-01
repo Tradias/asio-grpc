@@ -61,9 +61,13 @@
 #endif
 
 #ifdef AGRPC_UNIFEX
+#include <unifex/config.hpp>
 #include <unifex/sync_wait.hpp>
-#include <unifex/task.hpp>
 #include <unifex/when_all.hpp>
+
+#if !UNIFEX_NO_COROUTINES
+#include <unifex/task.hpp>
+#endif
 #endif
 
 namespace agrpc::test
