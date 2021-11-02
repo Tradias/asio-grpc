@@ -12,6 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/*
+These are code snippets from the blog article about some of the implementation details of asio-grpc:
+https://medium.com/3yourmind/c-20-coroutines-for-asynchronous-grpc-services-5b3dab1d1d61
+*/
+
 #include "protos/helloworld.grpc.pb.h"
 
 #include <boost/asio/execution_context.hpp>
@@ -69,6 +74,8 @@ struct GrpcContext : boost::asio::execution_context
     QueuedOperations queued_operations;
     grpc::Alarm alarm;
 
+    explicit GrpcContext(std::unique_ptr<grpc::CompletionQueue> queue) : queue(std::move(queue)) {}
+
     ~GrpcContext()
     {
         queue->Shutdown();
@@ -89,8 +96,10 @@ struct GrpcContext : boost::asio::execution_context
         {
             if (MARKER_TAG == tag)
             {
-                for (auto& op : queued_operations)
+                while (!queued_operations.empty())
                 {
+                    auto& op = queued_operations.front();
+                    queued_operations.pop_front();
                     op.complete(ok);
                 }
             }
@@ -136,6 +145,8 @@ boost::asio::awaitable<void> process_rpc()
 
 int main()
 {
-    GrpcContext::executor_type exec;
+    GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+    GrpcContext::executor_type exec{&grpc_context};
     exec.execute([](bool) {});
+    grpc_context.run();
 }
