@@ -23,7 +23,7 @@
 int main()
 {
     // begin-snippet: client-side-helloworld
-    auto stub =
+    const auto stub =
         helloworld::Greeter::NewStub(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 

@@ -71,9 +71,11 @@ void client_streaming(example::v1::Example::AsyncService& service, boost::asio::
 
     example::v1::Response response;
     bool finish_ok = agrpc::finish(reader, response, grpc::Status::OK, yield);
+
+    bool finish_with_error_ok = agrpc::finish_with_error(reader, grpc::Status::CANCELLED, yield);
     // end-snippet
 
-    silence_unused(request_ok, send_ok, read_ok, finish_ok);
+    silence_unused(request_ok, send_ok, read_ok, finish_with_error_ok, finish_ok);
 }
 
 void server_streaming(example::v1::Example::AsyncService& service, boost::asio::yield_context& yield)
@@ -170,7 +172,7 @@ void repeatedly_request_example(example::v1::Example::AsyncService& service, agr
     agrpc::repeatedly_request(
         &example::v1::Example::AsyncService::RequestUnary, service,
         Spawner{boost::asio::bind_executor(
-            grpc_context.get_executor(),
+            grpc_context,
             [&](grpc::ServerContext&, example::v1::Request&,
                 grpc::ServerAsyncResponseWriter<example::v1::Response> writer, const boost::asio::yield_context& yield)
             {

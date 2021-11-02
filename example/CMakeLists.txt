@@ -51,13 +51,21 @@ if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPL
     asio_grpc_add_example_protos(example-protos-cpp20)
     target_link_libraries(asio-grpc-example-protos-cpp20 PRIVATE asio-grpc-cpp20-compile-options)
 
+    asio_grpc_add_example(hello-world-client-cpp20)
+    target_link_libraries(asio-grpc-hello-world-client-cpp20 PRIVATE asio-grpc-example-protos-cpp20
+                                                                     asio-grpc-cpp20-compile-options)
+
     asio_grpc_add_example(hello-world-server-cpp20)
     target_link_libraries(asio-grpc-hello-world-server-cpp20 PRIVATE asio-grpc-example-protos-cpp20
                                                                      asio-grpc-cpp20-compile-options)
 
-    asio_grpc_add_example(hello-world-client-cpp20)
-    target_link_libraries(asio-grpc-hello-world-client-cpp20 PRIVATE asio-grpc-example-protos-cpp20
-                                                                     asio-grpc-cpp20-compile-options)
+    asio_grpc_add_example(example-client-cpp20)
+    target_link_libraries(asio-grpc-example-client-cpp20 PRIVATE asio-grpc-example-protos-cpp20
+                                                                 asio-grpc-cpp20-compile-options)
+
+    asio_grpc_add_example(example-server-cpp20)
+    target_link_libraries(asio-grpc-example-server-cpp20 PRIVATE asio-grpc-example-protos-cpp20
+                                                                 asio-grpc-cpp20-compile-options)
 endif()
 
 add_subdirectory(documentation)

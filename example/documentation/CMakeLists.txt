@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-asio_grpc_add_example(example-server)
-target_link_libraries(asio-grpc-example-server PRIVATE Boost::coroutine Boost::thread asio-grpc-example-protos)
+asio_grpc_add_example(server-documentation)
+target_link_libraries(asio-grpc-server-documentation PRIVATE Boost::coroutine Boost::thread asio-grpc-example-protos)
 
-asio_grpc_add_example(example-client)
-target_link_libraries(asio-grpc-example-client PRIVATE Boost::coroutine Boost::thread asio-grpc-example-protos)
+asio_grpc_add_example(client-documentation)
+target_link_libraries(asio-grpc-client-documentation PRIVATE Boost::coroutine Boost::thread asio-grpc-example-protos)
 
 if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
     asio_grpc_add_example(blog)
