@@ -63,8 +63,8 @@ void register_client_streaming_handler(example::v1::Example::AsyncService& servi
     // `agrpc::request(&example::v1::Example::AsyncService::RequestClientStreaming, services, server_context, request,
     // *reader)`
     //
-    // Note this is an experimental feature, which means that its
-    // API is still subject to breaking changing
+    // Note that this is an experimental feature which means that it works correctly but its
+    // API is still subject to breaking changes
     agrpc::repeatedly_request(
         &example::v1::Example::AsyncService::RequestClientStreaming, service,
         CoSpawner{boost::asio::bind_executor(grpc_context,

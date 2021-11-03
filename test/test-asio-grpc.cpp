@@ -559,6 +559,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context client streaming")
                     test::v1::Request request;
                     request.set_integer(42);
                     CHECK(agrpc::write(*writer, request, yield));
+                    CHECK(agrpc::write(*writer, request, grpc::WriteOptions{}, yield));
                     CHECK(agrpc::writes_done(*writer, yield));
                     grpc::Status status;
                     CHECK(agrpc::finish(*writer, status, yield));
