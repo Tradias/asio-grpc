@@ -282,6 +282,26 @@ ClientServerStreamingRequestFunction(detail::ClientServerStreamingRequest<RPC, R
                                      grpc::ClientContext&, const Request&, Reader&)
     -> ClientServerStreamingRequestFunction<RPC, Stub, Request, Reader>;
 
+template <class RPC, class Stub, class Request, class Reader>
+struct ClientServerStreamingRequestConvenienceFunction
+{
+    detail::ClientServerStreamingRequest<RPC, Request, Reader> rpc;
+    Stub& stub;
+    grpc::ClientContext& client_context;
+    const Request& request;
+
+    template <class T>
+    void operator()(agrpc::GrpcContext& grpc_context, T* tag)
+    {
+        tag->handler().payload = (stub.*rpc)(&client_context, request, grpc_context.get_completion_queue(), tag);
+    }
+};
+
+template <class RPC, class Stub, class Request, class Reader>
+ClientServerStreamingRequestConvenienceFunction(detail::ClientServerStreamingRequest<RPC, Request, Reader>, Stub&,
+                                                grpc::ClientContext&, const Request&)
+    -> ClientServerStreamingRequestConvenienceFunction<RPC, Stub, Request, Reader>;
+
 template <class RPC, class Stub, class Writer, class Response>
 struct ClientSideStreamingRequestFunction
 {
@@ -302,6 +322,26 @@ ClientSideStreamingRequestFunction(detail::ClientSideStreamingRequest<RPC, Write
                                    grpc::ClientContext&, Writer&, Response&)
     -> ClientSideStreamingRequestFunction<RPC, Stub, Writer, Response>;
 
+template <class RPC, class Stub, class Writer, class Response>
+struct ClientSideStreamingRequestConvenienceFunction
+{
+    detail::ClientSideStreamingRequest<RPC, Writer, Response> rpc;
+    Stub& stub;
+    grpc::ClientContext& client_context;
+    Response& response;
+
+    template <class T>
+    void operator()(agrpc::GrpcContext& grpc_context, T* tag)
+    {
+        tag->handler().payload = (stub.*rpc)(&client_context, &response, grpc_context.get_completion_queue(), tag);
+    }
+};
+
+template <class RPC, class Stub, class Writer, class Response>
+ClientSideStreamingRequestConvenienceFunction(detail::ClientSideStreamingRequest<RPC, Writer, Response>, Stub&,
+                                              grpc::ClientContext&, Response&)
+    -> ClientSideStreamingRequestConvenienceFunction<RPC, Stub, Writer, Response>;
+
 template <class RPC, class Stub, class ReaderWriter>
 struct ClientBidirectionalStreamingRequestFunction
 {
@@ -320,6 +360,25 @@ template <class RPC, class Stub, class ReaderWriter>
 ClientBidirectionalStreamingRequestFunction(detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter>, Stub&,
                                             grpc::ClientContext&, ReaderWriter&)
     -> ClientBidirectionalStreamingRequestFunction<RPC, Stub, ReaderWriter>;
+
+template <class RPC, class Stub, class ReaderWriter>
+struct ClientBidirectionalStreamingRequestConvencienceFunction
+{
+    detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter> rpc;
+    Stub& stub;
+    grpc::ClientContext& client_context;
+
+    template <class T>
+    void operator()(agrpc::GrpcContext& grpc_context, T* tag)
+    {
+        tag->handler().payload = (stub.*rpc)(&client_context, grpc_context.get_completion_queue(), tag);
+    }
+};
+
+template <class RPC, class Stub, class ReaderWriter>
+ClientBidirectionalStreamingRequestConvencienceFunction(detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter>,
+                                                        Stub&, grpc::ClientContext&)
+    -> ClientBidirectionalStreamingRequestConvencienceFunction<RPC, Stub, ReaderWriter>;
 
 template <class Request, class Response>
 struct ClientAsyncReaderWriterFunctions

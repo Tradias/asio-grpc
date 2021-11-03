@@ -229,11 +229,7 @@ auto request(detail::ClientServerStreamingRequest<RPC, Request, Reader> rpc, Stu
              grpc::ClientContext& client_context, const Request& request, CompletionToken token = {})
 {
     return detail::grpc_initiate_with_payload<Reader>(
-        [&, rpc](agrpc::GrpcContext& grpc_context, auto* tag)
-        {
-            tag->handler().payload = (stub.*rpc)(&client_context, request, grpc_context.get_completion_queue(), tag);
-        },
-        std::move(token));
+        detail::ClientServerStreamingRequestConvenienceFunction{rpc, stub, client_context, request}, std::move(token));
 }
 #endif
 
@@ -251,11 +247,7 @@ auto request(detail::ClientSideStreamingRequest<RPC, Writer, Response> rpc, Stub
              grpc::ClientContext& client_context, Response& response, CompletionToken token = {})
 {
     return detail::grpc_initiate_with_payload<Writer>(
-        [&, rpc](agrpc::GrpcContext& grpc_context, auto* tag)
-        {
-            tag->handler().payload = (stub.*rpc)(&client_context, &response, grpc_context.get_completion_queue(), tag);
-        },
-        std::move(token));
+        detail::ClientSideStreamingRequestConvenienceFunction{rpc, stub, client_context, response}, std::move(token));
 }
 #endif
 
@@ -273,11 +265,7 @@ auto request(detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter> rpc,
              grpc::ClientContext& client_context, CompletionToken token = {})
 {
     return detail::grpc_initiate_with_payload<ReaderWriter>(
-        [&, rpc](agrpc::GrpcContext& grpc_context, auto* tag)
-        {
-            tag->handler().payload = (stub.*rpc)(&client_context, grpc_context.get_completion_queue(), tag);
-        },
-        std::move(token));
+        detail::ClientBidirectionalStreamingRequestConvencienceFunction{rpc, stub, client_context}, std::move(token));
 }
 #endif
 
