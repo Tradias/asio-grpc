@@ -70,13 +70,17 @@
 #endif
 #endif
 
-namespace agrpc::test
+namespace test
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_UNIFEX)
 using ErrorCode = std::error_code;
 #elif defined(AGRPC_BOOST_ASIO)
 using ErrorCode = boost::system::error_code;
 #endif
-}  // namespace agrpc::test
+}  // namespace test
+
+#if defined(AGRPC_BOOST_ASIO)
+namespace asio = ::boost::asio;
+#endif
 
 #endif  // AGRPC_UTILS_ASIOFORWARD_HPP

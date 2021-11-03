@@ -21,7 +21,7 @@
 #include <version>
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-namespace agrpc::test
+namespace test
 {
 template <class Handler, class Allocator>
 struct HandlerWithAssociatedAllocator
@@ -85,7 +85,7 @@ auto co_spawn(Executor&& executor, Function function)
                           });
 }
 #endif
-}  // namespace agrpc::test
+}  // namespace test
 #endif
 
 #endif  // AGRPC_UTILS_ASIOUTILS_HPP

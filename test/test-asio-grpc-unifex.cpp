@@ -27,8 +27,6 @@
 
 namespace test_asio_grpc
 {
-using namespace agrpc;
-
 TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0));
 
 #if !UNIFEX_NO_COROUTINES

@@ -27,10 +27,10 @@
 #include <string>
 #include <thread>
 
-namespace agrpc::test
+namespace test
 {
 GrpcClientServerTest::GrpcClientServerTest()
-    : port(agrpc::test::get_free_port()), address(std::string{"0.0.0.0:"} + std::to_string(port))
+    : port(test::get_free_port()), address(std::string{"0.0.0.0:"} + std::to_string(port))
 {
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
@@ -45,4 +45,4 @@ GrpcClientServerTest::~GrpcClientServerTest()
     stub.reset();
     server->Shutdown();
 }
-}  // namespace agrpc::test
+}  // namespace test

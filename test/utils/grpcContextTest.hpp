@@ -27,7 +27,7 @@
 #include <cstddef>
 #include <memory>
 
-namespace agrpc::test
+namespace test
 {
 struct GrpcContextTest
 {
@@ -57,6 +57,6 @@ inline auto hundred_milliseconds_from_now()
 {
     return std::chrono::system_clock::now() + std::chrono::milliseconds(100);
 }
-}  // namespace agrpc::test
+}  // namespace test
 
 #endif  // AGRPC_UTILS_GRPCTEST_HPP

@@ -14,7 +14,7 @@
 
 syntax = "proto3";
 
-package agrpc.test.v1;
+package test.v1;
 
 service Test {
   rpc ServerStreaming(Request) returns (stream Response) {}

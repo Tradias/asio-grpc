@@ -26,8 +26,6 @@
 
 namespace test_asio_grpc_cpp20
 {
-using namespace agrpc;
-
 TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0));
 
 #ifdef AGRPC_ASIO_HAS_CONCEPTS

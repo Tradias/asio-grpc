@@ -26,7 +26,7 @@
 #include <string>
 #include <thread>
 
-namespace agrpc::test
+namespace test
 {
 struct GrpcClientServerTest : test::GrpcContextTest
 {
@@ -41,6 +41,6 @@ struct GrpcClientServerTest : test::GrpcContextTest
 
     ~GrpcClientServerTest();
 };
-}  // namespace agrpc::test
+}  // namespace test
 
 #endif  // AGRPC_UTILS_GRPCCLIENTSERVERTEST_HPP

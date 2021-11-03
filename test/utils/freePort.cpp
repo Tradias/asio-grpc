@@ -25,7 +25,7 @@
 #include <iostream>
 #include <mutex>
 
-namespace agrpc::test
+namespace test
 {
 namespace
 {
@@ -107,4 +107,4 @@ uint16_t get_free_port()
                 port_lock_file);
         });
 }
-}  // namespace agrpc::test
+}  // namespace test

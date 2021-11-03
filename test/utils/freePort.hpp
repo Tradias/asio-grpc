@@ -17,7 +17,7 @@
 
 #include <cstdint>
 
-namespace agrpc::test
+namespace test
 {
 uint16_t get_free_port();
 }
