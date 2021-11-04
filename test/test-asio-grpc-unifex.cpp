@@ -35,11 +35,10 @@ TEST_CASE("unifex asio-grpc fulfills unified executor concepts")
     using Sender =
         decltype(agrpc::wait(std::declval<grpc::Alarm&>(), std::declval<std::chrono::system_clock::time_point>(),
                              std::declval<agrpc::UseScheduler<agrpc::GrpcExecutor>>()));
-    using InvocableArchetype = decltype([](auto&&...) noexcept {});
     CHECK(unifex::sender<Sender>);
     CHECK(unifex::typed_sender<Sender>);
-    CHECK(unifex::sender_to<Sender, test::FunctionAsReciever<InvocableArchetype>>);
-    using OperationState = unifex::connect_result_t<Sender, test::FunctionAsReciever<InvocableArchetype>>;
+    CHECK(unifex::sender_to<Sender, test::FunctionAsReciever<test::InvocableArchetype>>);
+    using OperationState = unifex::connect_result_t<Sender, test::FunctionAsReciever<test::InvocableArchetype>>;
     CHECK(unifex::scheduler<agrpc::GrpcExecutor>);
 }
 

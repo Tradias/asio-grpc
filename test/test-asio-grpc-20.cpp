@@ -32,7 +32,7 @@ TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0));
 TEST_CASE("GrpcExecutor fulfills Executor TS concepts")
 {
     CHECK(asio::execution::executor<agrpc::GrpcExecutor>);
-    CHECK(asio::execution::executor_of<agrpc::GrpcExecutor, asio::execution::invocable_archetype>);
+    CHECK(asio::execution::executor_of<agrpc::GrpcExecutor, test::InvocableArchetype>);
 }
 
 TEST_CASE("asio-grpc fulfills unified executor concepts")
@@ -44,9 +44,9 @@ TEST_CASE("asio-grpc fulfills unified executor concepts")
     CHECK(asio::execution::is_sender_v<Sender>);
     CHECK(asio::execution::typed_sender<Sender>);
     CHECK(asio::execution::is_typed_sender_v<Sender>);
-    CHECK(asio::execution::sender_to<Sender, test::FunctionAsReciever<asio::execution::invocable_archetype>>);
-    CHECK(asio::execution::is_sender_to_v<Sender, test::FunctionAsReciever<asio::execution::invocable_archetype>>);
-    using OperationState = asio::execution::connect_result_t<Sender, asio::execution::invocable_archetype>;
+    CHECK(asio::execution::sender_to<Sender, test::FunctionAsReciever<test::InvocableArchetype>>);
+    CHECK(asio::execution::is_sender_to_v<Sender, test::FunctionAsReciever<test::InvocableArchetype>>);
+    using OperationState = asio::execution::connect_result_t<Sender, test::InvocableArchetype>;
     CHECK(asio::execution::operation_state<OperationState>);
     CHECK(asio::execution::is_operation_state_v<OperationState>);
     CHECK(asio::execution::scheduler<agrpc::GrpcExecutor>);

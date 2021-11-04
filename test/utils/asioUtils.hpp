@@ -22,6 +22,14 @@
 
 namespace test
 {
+struct InvocableArchetype
+{
+    template <class... Args>
+    void operator()(Args&&...)
+    {
+    }
+};
+
 template <class Function>
 struct FunctionAsReciever
 {
