@@ -19,7 +19,6 @@
 #include "utils/grpcContextTest.hpp"
 
 #include <doctest/doctest.h>
-#include <grpcpp/alarm.h>
 
 #include <cstddef>
 #include <iostream>
@@ -37,9 +36,10 @@ TEST_CASE("GrpcExecutor fulfills Executor TS concepts")
 
 TEST_CASE("asio-grpc fulfills unified executor concepts")
 {
+    using UseScheduler = decltype(agrpc::use_scheduler(std::declval<agrpc::GrpcExecutor>()));
     using Sender =
         decltype(agrpc::wait(std::declval<grpc::Alarm&>(), std::declval<std::chrono::system_clock::time_point>(),
-                             std::declval<agrpc::UseScheduler<agrpc::GrpcExecutor>>()));
+                             std::declval<UseScheduler>()));
     CHECK(asio::execution::sender<Sender>);
     CHECK(asio::execution::is_sender_v<Sender>);
     CHECK(asio::execution::typed_sender<Sender>);

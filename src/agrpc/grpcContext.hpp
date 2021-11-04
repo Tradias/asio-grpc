@@ -58,6 +58,8 @@ class GrpcContext
 
     [[nodiscard]] executor_type get_executor() noexcept;
 
+    [[nodiscard]] executor_type get_scheduler() noexcept;
+
     [[nodiscard]] allocator_type get_allocator() noexcept;
 
     void work_started() noexcept;

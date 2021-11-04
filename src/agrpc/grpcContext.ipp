@@ -118,6 +118,8 @@ inline bool GrpcContext::is_stopped() const noexcept { return this->stopped.load
 
 inline GrpcContext::executor_type GrpcContext::get_executor() noexcept { return GrpcContext::executor_type{*this}; }
 
+inline GrpcContext::executor_type GrpcContext::get_scheduler() noexcept { return GrpcContext::executor_type{*this}; }
+
 inline GrpcContext::allocator_type GrpcContext::get_allocator() noexcept
 {
     return GrpcContext::allocator_type{&this->local_resource};

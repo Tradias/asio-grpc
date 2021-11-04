@@ -19,7 +19,6 @@
 #include "utils/grpcContextTest.hpp"
 
 #include <doctest/doctest.h>
-#include <grpcpp/alarm.h>
 
 #include <cstddef>
 #include <optional>

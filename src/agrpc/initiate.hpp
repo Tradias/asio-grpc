@@ -18,22 +18,12 @@
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/initiate.hpp"
 #include "agrpc/detail/utility.hpp"
+#include "agrpc/grpcContext.hpp"
 #include "agrpc/grpcExecutor.hpp"
 #include "agrpc/grpcSender.hpp"
 
 namespace agrpc
 {
-template <class Allocator, std::uint32_t Options>
-[[nodiscard]] auto get_completion_queue(const agrpc::BasicGrpcExecutor<Allocator, Options>& executor) noexcept
-{
-    return executor.context().get_completion_queue();
-}
-
-[[nodiscard]] inline auto get_completion_queue(agrpc::GrpcContext& grpc_context) noexcept
-{
-    return grpc_context.get_completion_queue();
-}
-
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 template <class T>
 using GrpcAwaitable = asio::awaitable<T, agrpc::GrpcExecutor>;
@@ -57,6 +47,8 @@ using DefaultCompletionToken = asio::use_awaitable_t<>;
 using DefaultCompletionToken = detail::DefaultCompletionTokenNotAvailable;
 #endif
 
+namespace detail
+{
 template <class Scheduler>
 struct UseScheduler
 {
@@ -64,7 +56,42 @@ struct UseScheduler
 };
 
 template <class Scheduler>
-UseScheduler(Scheduler&&) -> UseScheduler<detail::RemoveCvrefT<Scheduler>>;
+UseScheduler(Scheduler&&) -> UseScheduler<Scheduler>;
+
+struct UseSchedulerFn
+{
+    template <class Scheduler>
+    auto operator()(Scheduler&& scheduler) const noexcept
+    {
+        return detail::UseScheduler{std::forward<Scheduler>(scheduler)};
+    }
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+    auto operator()(asio::execution_context& context) const noexcept
+    {
+        return detail::UseScheduler{static_cast<agrpc::GrpcContext&>(context).get_scheduler()};
+    }
+#endif
+
+    auto operator()(agrpc::GrpcContext& context) const noexcept
+    {
+        return detail::UseScheduler{context.get_scheduler()};
+    }
+};
+}  // namespace detail
+
+inline constexpr detail::UseSchedulerFn use_scheduler{};
+
+template <class Allocator, std::uint32_t Options>
+[[nodiscard]] auto get_completion_queue(const agrpc::BasicGrpcExecutor<Allocator, Options>& executor) noexcept
+{
+    return executor.context().get_completion_queue();
+}
+
+[[nodiscard]] inline auto get_completion_queue(agrpc::GrpcContext& grpc_context) noexcept
+{
+    return grpc_context.get_completion_queue();
+}
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 [[nodiscard]] inline auto get_completion_queue(const asio::any_io_executor& executor) noexcept
@@ -97,7 +124,7 @@ auto grpc_initiate(Function function, CompletionToken token = {})
 #endif
 
 template <class Function, class Scheduler>
-auto grpc_initiate(Function function, agrpc::UseScheduler<Scheduler> token)
+auto grpc_initiate(Function function, detail::UseScheduler<Scheduler> token)
 {
     return agrpc::GrpcSender{token.scheduler.context(), std::move(function)};
 }

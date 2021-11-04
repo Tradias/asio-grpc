@@ -48,7 +48,7 @@ struct GrpcContextTest
     }
 #endif
 
-    auto use_scheduler() noexcept { return agrpc::UseScheduler{get_executor()}; }
+    auto use_scheduler() noexcept { return agrpc::use_scheduler(get_executor()); }
 };
 
 inline auto ten_milliseconds_from_now() { return std::chrono::system_clock::now() + std::chrono::milliseconds(10); }
