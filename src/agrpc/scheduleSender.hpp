@@ -12,70 +12,71 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_AGRPC_GRPCSENDER_HPP
-#define AGRPC_AGRPC_GRPCSENDER_HPP
+#ifndef AGRPC_AGRPC_SCHEDULESENDER_HPP
+#define AGRPC_AGRPC_SCHEDULESENDER_HPP
 
-#include "agrpc/detail/asioForward.hpp"
-#include "agrpc/detail/grpcContext.hpp"
-#include "agrpc/detail/typeErasedOperation.hpp"
-#include "agrpc/detail/utility.hpp"
+#include "agrpc/detail/grpcContextImplementation.hpp"
 #include "agrpc/grpcContext.hpp"
 
 namespace agrpc
 {
-template <class InitiatingFunction>
-class GrpcSender
+struct ScheduleSender
 {
   private:
     template <class Receiver>
-    class Operation : private detail::TypeErasedGrpcTagOperation
+    class Operation : private detail::TypeErasedNoArgOperation
     {
       public:
         template <class Receiver2>
-        constexpr explicit Operation(const GrpcSender& sender, Receiver2&& receiver)
-            : detail::TypeErasedGrpcTagOperation(&Operation::on_complete),
+        constexpr explicit Operation(const ScheduleSender& sender, Receiver2&& receiver)
+            : detail::TypeErasedNoArgOperation(&Operation::on_complete),
               grpc_context(sender.grpc_context),
-              initiating_function(sender.initiating_function),
               receiver(std::forward<Receiver2>(receiver))
         {
         }
 
-        void start() & noexcept { initiating_function(grpc_context, this); }
-
-      private:
-        static void on_complete(detail::TypeErasedGrpcTagOperation* op, detail::InvokeHandler, bool ok,
-                                detail::GrpcContextLocalAllocator) noexcept
+        void start() & noexcept
         {
-            auto& self = *static_cast<Operation*>(op);
-            if constexpr (noexcept(detail::set_value(std::move(self.receiver), ok)))
+            if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
             {
-                detail::set_value(std::move(self.receiver), ok);
+                detail::GrpcContextImplementation::add_local_operation(grpc_context, this);
             }
             else
             {
-                AGRPC_TRY { detail::set_value(std::move(self.receiver), ok); }
+                detail::GrpcContextImplementation::add_remote_operation(grpc_context, this);
+            }
+        }
+
+      private:
+        static void on_complete(detail::TypeErasedNoArgOperation* op, detail::InvokeHandler,
+                                detail::GrpcContextLocalAllocator) noexcept
+        {
+            auto& self = *static_cast<Operation*>(op);
+            if constexpr (noexcept(detail::set_value(std::move(self.receiver))))
+            {
+                detail::set_value(std::move(self.receiver));
+            }
+            else
+            {
+                AGRPC_TRY { detail::set_value(std::move(self.receiver)); }
                 AGRPC_CATCH(...) { detail::set_error(std::move(self.receiver), std::current_exception()); }
             }
         }
 
         agrpc::GrpcContext& grpc_context;
-        InitiatingFunction initiating_function;
         Receiver receiver;
     };
 
   public:
     template <template <class...> class Variant, template <class...> class Tuple>
-    using value_types = Variant<Tuple<bool>>;
+    using value_types = Variant<Tuple<>>;
 
     template <template <class...> class Variant>
     using error_types = Variant<std::exception_ptr>;
 
     static constexpr bool sends_done = false;
 
-    constexpr explicit GrpcSender(agrpc::GrpcContext& grpc_context, InitiatingFunction initiating_function) noexcept
-        : grpc_context(grpc_context), initiating_function(std::move(initiating_function))
-    {
-    }
+    constexpr explicit ScheduleSender(agrpc::GrpcContext& grpc_context) noexcept : grpc_context(grpc_context) {}
 
     template <class Receiver>
     constexpr Operation<detail::RemoveCvrefT<Receiver>> connect(Receiver&& receiver)
@@ -85,8 +86,7 @@ class GrpcSender
 
   private:
     agrpc::GrpcContext& grpc_context;
-    InitiatingFunction initiating_function;
 };
 }  // namespace agrpc
 
-#endif  // AGRPC_AGRPC_GRPCSENDER_HPP
+#endif  // AGRPC_AGRPC_SCHEDULESENDER_HPP

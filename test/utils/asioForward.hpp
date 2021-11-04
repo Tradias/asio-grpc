@@ -17,7 +17,7 @@
 
 #ifdef AGRPC_STANDALONE_ASIO
 #include <asio/coroutine.hpp>
-#include <asio/execution/allocator.hpp>
+#include <asio/execution.hpp>
 #include <asio/post.hpp>
 #include <asio/spawn.hpp>
 #include <asio/steady_timer.hpp>
@@ -40,7 +40,7 @@
 #include <boost/version.hpp>
 //
 #include <boost/asio/coroutine.hpp>
-#include <boost/asio/execution/allocator.hpp>
+#include <boost/asio/execution.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/steady_timer.hpp>
@@ -62,6 +62,8 @@
 
 #ifdef AGRPC_UNIFEX
 #include <unifex/config.hpp>
+#include <unifex/scheduler_concepts.hpp>
+#include <unifex/sender_concepts.hpp>
 #include <unifex/sync_wait.hpp>
 #include <unifex/when_all.hpp>
 

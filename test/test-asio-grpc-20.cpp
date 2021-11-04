@@ -34,7 +34,41 @@ TEST_CASE("GrpcExecutor fulfills Executor TS concepts")
     CHECK(asio::execution::executor<agrpc::GrpcExecutor>);
     CHECK(asio::execution::executor_of<agrpc::GrpcExecutor, asio::execution::invocable_archetype>);
 }
+
+TEST_CASE("asio-grpc fulfills unified executor concepts")
+{
+    using Sender =
+        decltype(agrpc::wait(std::declval<grpc::Alarm&>(), std::declval<std::chrono::system_clock::time_point>(),
+                             std::declval<agrpc::UseScheduler<agrpc::GrpcExecutor>>()));
+    CHECK(asio::execution::sender<Sender>);
+    CHECK(asio::execution::is_sender_v<Sender>);
+    CHECK(asio::execution::typed_sender<Sender>);
+    CHECK(asio::execution::is_typed_sender_v<Sender>);
+    CHECK(asio::execution::sender_to<Sender, test::FunctionAsReciever<asio::execution::invocable_archetype>>);
+    CHECK(asio::execution::is_sender_to_v<Sender, test::FunctionAsReciever<asio::execution::invocable_archetype>>);
+    using OperationState = asio::execution::connect_result_t<Sender, asio::execution::invocable_archetype>;
+    CHECK(asio::execution::operation_state<OperationState>);
+    CHECK(asio::execution::is_operation_state_v<OperationState>);
+    CHECK(asio::execution::scheduler<agrpc::GrpcExecutor>);
+    CHECK(asio::execution::is_scheduler_v<agrpc::GrpcExecutor>);
+}
 #endif
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::schedule")
+{
+    bool is_invoked{};
+    auto sender = asio::execution::schedule(get_executor());
+    test::FunctionAsReciever reciever{[&]
+                                      {
+                                          is_invoked = true;
+                                      }};
+    auto operation_state = asio::execution::connect(std::move(sender), reciever);
+    operation_state.start();
+    CHECK_FALSE(is_invoked);
+    grpc_context.run();
+    CHECK(is_invoked);
+    CHECK_FALSE(reciever.was_done);
+}
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "get_completion_queue")

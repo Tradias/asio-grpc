@@ -57,13 +57,16 @@ using DefaultCompletionToken = asio::use_awaitable_t<>;
 using DefaultCompletionToken = detail::DefaultCompletionTokenNotAvailable;
 #endif
 
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-template <class Function, class CompletionToken = agrpc::DefaultCompletionToken>
-auto grpc_initiate(Function function, CompletionToken token = {})
+template <class Scheduler>
+struct UseScheduler
 {
-    return asio::async_initiate<CompletionToken, void(bool)>(detail::GrpcInitiator{std::move(function)}, token);
-}
+    Scheduler scheduler;
+};
 
+template <class Scheduler>
+UseScheduler(Scheduler&&) -> UseScheduler<detail::RemoveCvrefT<Scheduler>>;
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 [[nodiscard]] inline auto get_completion_queue(const asio::any_io_executor& executor) noexcept
 {
     return detail::query_grpc_context(executor).get_completion_queue();
@@ -85,24 +88,19 @@ template <class Executor = asio::any_io_executor>
     co_return detail::query_grpc_context(executor).get_completion_queue();
 }
 #endif
+
+template <class Function, class CompletionToken = agrpc::DefaultCompletionToken>
+auto grpc_initiate(Function function, CompletionToken token = {})
+{
+    return asio::async_initiate<CompletionToken, void(bool)>(detail::GrpcInitiator{std::move(function)}, token);
+}
 #endif
 
-template <class Scheduler>
-struct UseScheduler
-{
-    Scheduler scheduler;
-};
-
-template <class Scheduler>
-UseScheduler(Scheduler&&) -> UseScheduler<detail::RemoveCvrefT<Scheduler>>;
-
-#ifdef AGRPC_UNIFEX
 template <class Function, class Scheduler>
 auto grpc_initiate(Function function, agrpc::UseScheduler<Scheduler> token)
 {
     return agrpc::GrpcSender{token.scheduler.context(), std::move(function)};
 }
-#endif
 }  // namespace agrpc
 
 #endif  // AGRPC_AGRPC_INITIATE_HPP

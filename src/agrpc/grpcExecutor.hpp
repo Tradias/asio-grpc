@@ -22,6 +22,7 @@
 #include "agrpc/detail/memory.hpp"
 #include "agrpc/detail/memoryResource.hpp"
 #include "agrpc/grpcContext.hpp"
+#include "agrpc/scheduleSender.hpp"
 
 #include <cstddef>
 #include <utility>
@@ -110,6 +111,8 @@ class BasicGrpcExecutor
         detail::create_no_arg_operation<detail::is_blocking_never(Options)>(
             this->context(), std::forward<Function>(function), this->allocator());
     }
+
+    constexpr auto schedule() const noexcept { return agrpc::ScheduleSender{this->context()}; }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     [[nodiscard]] constexpr auto require(asio::execution::blocking_t::possibly_t) const noexcept

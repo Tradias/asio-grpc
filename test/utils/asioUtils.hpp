@@ -20,9 +20,29 @@
 #include <type_traits>
 #include <version>
 
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 namespace test
 {
+template <class Function>
+struct FunctionAsReciever
+{
+    Function function;
+    std::exception_ptr exception;
+    bool was_done{false};
+
+    explicit FunctionAsReciever(Function function) : function(std::move(function)) {}
+
+    void set_done() noexcept { was_done = true; }
+
+    template <class... Args>
+    void set_value(Args&&... args)
+    {
+        function(std::forward<Args>(args)...);
+    }
+
+    void set_error(std::exception_ptr ptr) noexcept { exception = ptr; }
+};
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class Handler, class Allocator>
 struct HandlerWithAssociatedAllocator
 {
@@ -85,7 +105,7 @@ auto co_spawn(Executor&& executor, Function function)
                           });
 }
 #endif
-}  // namespace test
 #endif
+}  // namespace test
 
 #endif  // AGRPC_UTILS_ASIOUTILS_HPP

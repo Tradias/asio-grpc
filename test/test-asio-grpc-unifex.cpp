@@ -15,6 +15,7 @@
 #include "agrpc/asioGrpc.hpp"
 #include "protos/test.grpc.pb.h"
 #include "utils/asioForward.hpp"
+#include "utils/asioUtils.hpp"
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/grpcContextTest.hpp"
 
@@ -28,6 +29,35 @@
 namespace test_asio_grpc
 {
 TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0));
+
+TEST_CASE("unifex asio-grpc fulfills unified executor concepts")
+{
+    using Sender =
+        decltype(agrpc::wait(std::declval<grpc::Alarm&>(), std::declval<std::chrono::system_clock::time_point>(),
+                             std::declval<agrpc::UseScheduler<agrpc::GrpcExecutor>>()));
+    using InvocableArchetype = decltype([](auto&&...) noexcept {});
+    CHECK(unifex::sender<Sender>);
+    CHECK(unifex::typed_sender<Sender>);
+    CHECK(unifex::sender_to<Sender, test::FunctionAsReciever<InvocableArchetype>>);
+    using OperationState = unifex::connect_result_t<Sender, test::FunctionAsReciever<InvocableArchetype>>;
+    CHECK(unifex::scheduler<agrpc::GrpcExecutor>);
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::schedule")
+{
+    bool is_invoked{};
+    auto sender = unifex::schedule(get_executor());
+    test::FunctionAsReciever reciever{[&]
+                                      {
+                                          is_invoked = true;
+                                      }};
+    auto operation_state = unifex::connect(std::move(sender), reciever);
+    operation_state.start();
+    CHECK_FALSE(is_invoked);
+    grpc_context.run();
+    CHECK(is_invoked);
+    CHECK_FALSE(reciever.was_done);
+}
 
 #if !UNIFEX_NO_COROUTINES
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex::task unary")

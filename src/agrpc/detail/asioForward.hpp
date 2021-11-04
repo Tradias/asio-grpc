@@ -78,9 +78,6 @@
 #ifdef AGRPC_UNIFEX
 #include <unifex/config.hpp>
 #include <unifex/receiver_concepts.hpp>
-#include <unifex/scheduler_concepts.hpp>
-#include <unifex/sender_concepts.hpp>
-#include <unifex/tag_invoke.hpp>
 #endif
 
 namespace agrpc
@@ -91,9 +88,9 @@ namespace asio = ::asio;
 namespace asio = ::boost::asio;
 #endif
 
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 namespace detail
 {
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class Object>
 auto get_associated_executor_and_allocator(const Object& object)
 {
@@ -111,8 +108,16 @@ auto get_associated_executor_and_allocator(const Object& object)
     }();
     return std::pair{std::move(executor), std::move(allocator)};
 }
-}  // namespace detail
+
+using asio::execution::set_done;
+using asio::execution::set_error;
+using asio::execution::set_value;
+#elif defined(AGRPC_UNIFEX)
+using unifex::set_done;
+using unifex::set_error;
+using unifex::set_value;
 #endif
+}  // namespace detail
 }  // namespace agrpc
 
 #endif  // AGRPC_DETAIL_ASIOFORWARD_HPP
