@@ -16,7 +16,7 @@
 #define AGRPC_AGRPC_GRPCCONTEXT_IPP
 
 #include "agrpc/detail/asioForward.hpp"
-#include "agrpc/detail/attributes.hpp"
+#include "agrpc/detail/config.hpp"
 #include "agrpc/detail/grpcCompletionQueueEvent.hpp"
 #include "agrpc/detail/grpcContext.hpp"
 #include "agrpc/detail/grpcExecutorOptions.hpp"

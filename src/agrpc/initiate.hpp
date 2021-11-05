@@ -126,7 +126,7 @@ auto grpc_initiate(Function function, CompletionToken token = {})
 template <class Function, class Scheduler>
 auto grpc_initiate(Function function, detail::UseScheduler<Scheduler> token)
 {
-    return agrpc::GrpcSender{token.scheduler.context(), std::move(function)};
+    return agrpc::GrpcSender{static_cast<agrpc::GrpcContext&>(token.scheduler.context()), std::move(function)};
 }
 }  // namespace agrpc
 

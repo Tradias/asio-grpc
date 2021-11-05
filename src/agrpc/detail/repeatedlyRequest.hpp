@@ -16,7 +16,7 @@
 #define AGRPC_DETAIL_REPEATEDLYREQUEST_HPP
 
 #include "agrpc/detail/asioForward.hpp"
-#include "agrpc/detail/attributes.hpp"
+#include "agrpc/detail/config.hpp"
 #include "agrpc/initiate.hpp"
 #include "agrpc/rpcs.hpp"
 
