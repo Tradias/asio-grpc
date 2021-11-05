@@ -71,6 +71,7 @@ if(ASIO_GRPC_BUILD_TESTS)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/initiate.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/memory.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/operation.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/receiver.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/rpcs.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/typeErasedOperation.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/utility.hpp"
@@ -80,5 +81,6 @@ if(ASIO_GRPC_BUILD_TESTS)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcSender.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/initiate.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/rpcs.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/scheduleSender.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/asioGrpc.cpp")
 endif()

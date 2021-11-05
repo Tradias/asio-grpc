@@ -22,5 +22,6 @@
 #include "agrpc/grpcSender.hpp"
 #include "agrpc/initiate.hpp"
 #include "agrpc/rpcs.hpp"
+#include "agrpc/scheduleSender.hpp"
 
 #endif  // AGRPC_AGRPC_ASIOGRPC_HPP

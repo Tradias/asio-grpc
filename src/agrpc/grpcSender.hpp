@@ -17,6 +17,7 @@
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/grpcContext.hpp"
+#include "agrpc/detail/receiver.hpp"
 #include "agrpc/detail/typeErasedOperation.hpp"
 #include "agrpc/detail/utility.hpp"
 #include "agrpc/grpcContext.hpp"
@@ -34,33 +35,27 @@ class GrpcSender
         template <class Receiver2>
         constexpr explicit Operation(const GrpcSender& sender, Receiver2&& receiver)
             : detail::TypeErasedGrpcTagOperation(&Operation::on_complete),
-              grpc_context(sender.grpc_context),
-              initiating_function(sender.initiating_function),
-              receiver(std::forward<Receiver2>(receiver))
+              impl(sender.grpc_context, std::forward<Receiver2>(receiver)),
+              initiating_function(sender.initiating_function)
         {
         }
 
-        void start() & noexcept { initiating_function(grpc_context, this); }
+        void start() & noexcept { initiating_function(grpc_context(), this); }
 
       private:
         static void on_complete(detail::TypeErasedGrpcTagOperation* op, detail::InvokeHandler, bool ok,
                                 detail::GrpcContextLocalAllocator) noexcept
         {
             auto& self = *static_cast<Operation*>(op);
-            if constexpr (noexcept(detail::set_value(std::move(self.receiver), ok)))
-            {
-                detail::set_value(std::move(self.receiver), ok);
-            }
-            else
-            {
-                AGRPC_TRY { detail::set_value(std::move(self.receiver), ok); }
-                AGRPC_CATCH(...) { detail::set_error(std::move(self.receiver), std::current_exception()); }
-            }
+            detail::satisfy_receiver(std::move(self.receiver()), ok);
         }
 
-        agrpc::GrpcContext& grpc_context;
+        constexpr decltype(auto) grpc_context() noexcept { return impl.first(); }
+
+        constexpr decltype(auto) receiver() noexcept { return impl.second(); }
+
+        detail::CompressedPair<agrpc::GrpcContext&, Receiver> impl;
         InitiatingFunction initiating_function;
-        Receiver receiver;
     };
 
   public:
@@ -78,7 +73,8 @@ class GrpcSender
     }
 
     template <class Receiver>
-    constexpr Operation<detail::RemoveCvrefT<Receiver>> connect(Receiver&& receiver)
+    constexpr Operation<detail::RemoveCvrefT<Receiver>> connect(Receiver&& receiver) const
+        noexcept(std::is_nothrow_constructible_v<Receiver, Receiver&&>)
     {
         return Operation<detail::RemoveCvrefT<Receiver>>{*this, std::forward<Receiver>(receiver)};
     }

@@ -16,6 +16,8 @@
 #define AGRPC_AGRPC_SCHEDULESENDER_HPP
 
 #include "agrpc/detail/grpcContextImplementation.hpp"
+#include "agrpc/detail/receiver.hpp"
+#include "agrpc/detail/utility.hpp"
 #include "agrpc/grpcContext.hpp"
 
 namespace agrpc
@@ -30,20 +32,19 @@ struct ScheduleSender
         template <class Receiver2>
         constexpr explicit Operation(const ScheduleSender& sender, Receiver2&& receiver)
             : detail::TypeErasedNoArgOperation(&Operation::on_complete),
-              grpc_context(sender.grpc_context),
-              receiver(std::forward<Receiver2>(receiver))
+              impl(sender.grpc_context, std::forward<Receiver2>(receiver))
         {
         }
 
         void start() & noexcept
         {
-            if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
+            if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context()))
             {
-                detail::GrpcContextImplementation::add_local_operation(grpc_context, this);
+                detail::GrpcContextImplementation::add_local_operation(grpc_context(), this);
             }
             else
             {
-                detail::GrpcContextImplementation::add_remote_operation(grpc_context, this);
+                detail::GrpcContextImplementation::add_remote_operation(grpc_context(), this);
             }
         }
 
@@ -52,19 +53,14 @@ struct ScheduleSender
                                 detail::GrpcContextLocalAllocator) noexcept
         {
             auto& self = *static_cast<Operation*>(op);
-            if constexpr (noexcept(detail::set_value(std::move(self.receiver))))
-            {
-                detail::set_value(std::move(self.receiver));
-            }
-            else
-            {
-                AGRPC_TRY { detail::set_value(std::move(self.receiver)); }
-                AGRPC_CATCH(...) { detail::set_error(std::move(self.receiver), std::current_exception()); }
-            }
+            detail::satisfy_receiver(std::move(self.receiver()));
         }
 
-        agrpc::GrpcContext& grpc_context;
-        Receiver receiver;
+        constexpr decltype(auto) grpc_context() noexcept { return impl.first(); }
+
+        constexpr decltype(auto) receiver() noexcept { return impl.second(); }
+
+        detail::CompressedPair<agrpc::GrpcContext&, Receiver> impl;
     };
 
   public:
@@ -79,7 +75,8 @@ struct ScheduleSender
     constexpr explicit ScheduleSender(agrpc::GrpcContext& grpc_context) noexcept : grpc_context(grpc_context) {}
 
     template <class Receiver>
-    constexpr Operation<detail::RemoveCvrefT<Receiver>> connect(Receiver&& receiver)
+    constexpr Operation<detail::RemoveCvrefT<Receiver>> connect(Receiver&& receiver) const
+        noexcept(std::is_nothrow_constructible_v<Receiver, Receiver&&>)
     {
         return Operation<detail::RemoveCvrefT<Receiver>>{*this, std::forward<Receiver>(receiver)};
     }
