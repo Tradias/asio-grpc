@@ -16,6 +16,8 @@ syntax = "proto3";
 
 package example.v1;
 
+import "google/protobuf/empty.proto";
+
 service Example {
   rpc ServerStreaming(Request) returns (stream Response) {}
 
@@ -24,6 +26,8 @@ service Example {
   rpc BidirectionalStreaming(stream Request) returns (stream Response) {}
 
   rpc Unary(Request) returns (Response) {}
+
+  rpc Shutdown(google.protobuf.Empty) returns (google.protobuf.Empty) {}
 }
 
 message Request {
