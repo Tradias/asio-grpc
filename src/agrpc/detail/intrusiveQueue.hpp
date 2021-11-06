@@ -35,6 +35,8 @@ class IntrusiveQueue
     {
     }
 
+    ~IntrusiveQueue() = default;
+
     IntrusiveQueue& operator=(IntrusiveQueue&& other) noexcept
     {
         std::swap(head, other.head);

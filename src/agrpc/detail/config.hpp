@@ -38,12 +38,10 @@
 #endif
 
 #if __cpp_exceptions >= 199711
-#define AGRPC_NO_EXCEPTIONS 0
 #define AGRPC_TRY try
 #define AGRPC_CATCH(...) catch (__VA_ARGS__)
 #define AGRPC_RETHROW() throw
 #else
-#define AGRPC_NO_EXCEPTIONS 1
 #define AGRPC_TRY
 #define AGRPC_CATCH(...) \
     if constexpr (true)  \

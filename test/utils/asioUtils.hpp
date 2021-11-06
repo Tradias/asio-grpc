@@ -30,14 +30,20 @@ struct InvocableArchetype
     }
 };
 
-template <class Function>
+template <class Function, class Allocator = std::allocator<std::byte>>
 struct FunctionAsReciever
 {
+    using allocator_type = Allocator;
+
     Function function;
     std::exception_ptr exception;
     bool was_done{false};
+    Allocator allocator;
 
-    explicit FunctionAsReciever(Function function) : function(std::move(function)) {}
+    explicit FunctionAsReciever(Function function, Allocator allocator = {})
+        : function(std::move(function)), allocator(allocator)
+    {
+    }
 
     void set_done() noexcept { was_done = true; }
 
@@ -48,6 +54,16 @@ struct FunctionAsReciever
     }
 
     void set_error(std::exception_ptr ptr) noexcept { exception = ptr; }
+
+    auto get_allocator() const noexcept { return allocator; }
+
+#ifdef AGRPC_UNIFEX
+    friend auto tag_invoke(unifex::tag_t<unifex::get_allocator>, const FunctionAsReciever& receiver) noexcept
+        -> Allocator
+    {
+        return receiver.allocator;
+    }
+#endif
 };
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)

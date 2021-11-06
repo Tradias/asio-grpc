@@ -70,6 +70,18 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::schedule")
     CHECK_FALSE(reciever.was_done);
 }
 
+TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::submit with allocator")
+{
+    asio::execution::submit(asio::execution::schedule(get_executor()),
+                            test::FunctionAsReciever{[] {}, get_allocator()});
+    grpc_context.run();
+    CHECK(std::any_of(buffer.begin(), buffer.end(),
+                      [](auto&& value)
+                      {
+                          return value != std::byte{};
+                      }));
+}
+
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "get_completion_queue")
 {

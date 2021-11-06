@@ -66,6 +66,35 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::schedule")
     CHECK_FALSE(receiver.was_done);
 }
 
+TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::submit from Grpc::Context::run")
+{
+    bool is_invoked{false};
+    test::FunctionAsReciever receiver{[&]
+                                      {
+                                          unifex::submit(unifex::schedule(get_executor()),
+                                                         test::FunctionAsReciever{[&]
+                                                                                  {
+                                                                                      is_invoked = true;
+                                                                                  }});
+                                      }};
+    unifex::submit(unifex::schedule(get_executor()), receiver);
+    CHECK_FALSE(is_invoked);
+    grpc_context.run();
+    CHECK(is_invoked);
+    CHECK_FALSE(receiver.was_done);
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::submit with allocator")
+{
+    unifex::submit(unifex::schedule(get_executor()), test::FunctionAsReciever{[] {}, get_allocator()});
+    grpc_context.run();
+    CHECK(std::any_of(buffer.begin(), buffer.end(),
+                      [](auto&& value)
+                      {
+                          return value != std::byte{};
+                      }));
+}
+
 TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::execute")
 {
     bool is_invoked{false};

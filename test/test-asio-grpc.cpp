@@ -50,20 +50,22 @@ TEST_CASE("GrpcExecutor fulfills Executor TS traits")
     CHECK(std::is_constructible_v<asio::any_io_executor, Exec>);
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
     auto executor = grpc_context.get_executor();
-    CHECK_EQ(asio::execution::blocking_t::possibly,
-             asio::query(asio::require(executor, asio::execution::blocking_t::possibly), asio::execution::blocking));
+    auto possibly_blocking_executor = asio::require(executor, asio::execution::blocking_t::possibly);
+    CHECK_EQ(asio::execution::blocking_t::possibly, asio::query(possibly_blocking_executor, asio::execution::blocking));
     CHECK_EQ(asio::execution::blocking_t::never,
-             asio::query(asio::require(executor, asio::execution::blocking_t::never), asio::execution::blocking));
+             asio::query(asio::require(possibly_blocking_executor, asio::execution::blocking_t::never),
+                         asio::execution::blocking));
+    auto continuation_executor = asio::prefer(executor, asio::execution::relationship_t::continuation);
     CHECK_EQ(asio::execution::relationship_t::continuation,
-             asio::query(asio::prefer(executor, asio::execution::relationship_t::continuation),
-                         asio::execution::relationship));
+             asio::query(continuation_executor, asio::execution::relationship));
     CHECK_EQ(asio::execution::relationship_t::fork,
-             asio::query(asio::prefer(executor, asio::execution::relationship_t::fork), asio::execution::relationship));
+             asio::query(asio::prefer(continuation_executor, asio::execution::relationship_t::fork),
+                         asio::execution::relationship));
+    auto tracked_executor = asio::prefer(executor, asio::execution::outstanding_work_t::tracked);
     CHECK_EQ(asio::execution::outstanding_work_t::tracked,
-             asio::query(asio::prefer(executor, asio::execution::outstanding_work_t::tracked),
-                         asio::execution::outstanding_work));
+             asio::query(tracked_executor, asio::execution::outstanding_work));
     CHECK_EQ(asio::execution::outstanding_work_t::untracked,
-             asio::query(asio::prefer(executor, asio::execution::outstanding_work_t::untracked),
+             asio::query(asio::prefer(tracked_executor, asio::execution::outstanding_work_t::untracked),
                          asio::execution::outstanding_work));
 }
 

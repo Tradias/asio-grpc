@@ -17,19 +17,21 @@
 
 #include "agrpc/detail/asioForward.hpp"
 
+#include <utility>
+
 namespace agrpc::detail
 {
 template <class Receiver, class... Args>
 void satisfy_receiver(Receiver&& receiver, Args&&... args) noexcept
 {
-    if constexpr (noexcept(detail::set_value(std::move(receiver), std::forward<Args>(args)...)))
+    if constexpr (noexcept(detail::set_value(std::forward<Receiver>(receiver), std::forward<Args>(args)...)))
     {
-        detail::set_value(std::move(receiver), std::forward<Args>(args)...);
+        detail::set_value(std::forward<Receiver>(receiver), std::forward<Args>(args)...);
     }
     else
     {
-        AGRPC_TRY { detail::set_value(std::move(receiver), std::forward<Args>(args)...); }
-        AGRPC_CATCH(...) { detail::set_error(std::move(receiver), std::current_exception()); }
+        AGRPC_TRY { detail::set_value(std::forward<Receiver>(receiver), std::forward<Args>(args)...); }
+        AGRPC_CATCH(...) { detail::set_error(std::forward<Receiver>(receiver), std::current_exception()); }
     }
 }
 }  // namespace agrpc::detail

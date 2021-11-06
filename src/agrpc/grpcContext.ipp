@@ -57,6 +57,7 @@ inline void drain_completion_queue(agrpc::GrpcContext& grpc_context)
                                                                                           return false;
                                                                                       }))
     {
+        //
     }
 }
 }  // namespace detail
