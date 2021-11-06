@@ -59,7 +59,7 @@ jobs:
       with:
         vcpkgDirectory: ${{ runner.workspace }}/vcpkg
         vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
-        appendedCacheKey: ${{ matrix.config.os }}-v1
+        appendedCacheKey: ${{ matrix.config.os }}-v2
         vcpkgTriplet: ${{ matrix.config.triplet }}
         vcpkgArguments: --overlay-ports=${{ github.workspace }}/deps ${{ env.VCPKG_ARGUMENTS }}
 
@@ -119,7 +119,7 @@ jobs:
       with:
         vcpkgDirectory: ${{ runner.workspace }}/vcpkg
         vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
-        appendedCacheKey: ubuntu-gcc-v1
+        appendedCacheKey: ubuntu-gcc-v2
         vcpkgTriplet: x64-linux
         vcpkgArguments: --overlay-ports=${{ github.workspace }}/deps ${{ env.VCPKG_ARGUMENTS }}
 
@@ -192,7 +192,7 @@ jobs:
       with:
         vcpkgDirectory: ${{ runner.workspace }}/vcpkg
         vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
-        appendedCacheKey: ubuntu-clang-v1
+        appendedCacheKey: ubuntu-clang-v2
         vcpkgTriplet: x64-linux
         vcpkgArguments: --overlay-ports=${{ github.workspace }}/deps ${{ env.VCPKG_ARGUMENTS }}
 
