@@ -7,7 +7,7 @@ asynchronous gRPC servers and clients using C++20 coroutines, Boost.Coroutines, 
 
 # Example
 
-Server side:
+Server side 'hello world':
 
 <!-- snippet: server-side-helloworld -->
 <a id='snippet-server-side-helloworld'></a>
@@ -46,7 +46,7 @@ boost::asio::co_spawn(
 <sup><a href='/example/hello-world-server-cpp20.cpp#L31-L62' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
-Client side:
+Client side 'hello world':
 
 <!-- snippet: client-side-helloworld -->
 <a id='snippet-client-side-helloworld'></a>
@@ -74,6 +74,8 @@ grpc_context.run();
 ```
 <sup><a href='/example/hello-world-client-cpp20.cpp#L25-L46' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-helloworld' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
+
+[Client](/example/streaming-client-cpp20) and [server](/example/streaming-server-cpp20) streaming RPCs
 
 # Requirements
 
@@ -198,6 +200,9 @@ asio-grpc is part of [grpc_bench](https://github.com/Tradias/grpc_bench). Head o
 Results from the helloworld unary RPC   
 Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz, Linux, Boost 1.74, gRPC 1.41.0, asio-grpc v1.2.0, jemalloc 5.2.1
 
+<details><summary><b>Results</b></summary>
+<p>
+
 ### 1 CPU server
 
 | name                        |   req/s |   avg. latency |        90 % in |        95 % in |        99 % in | avg. cpu |   avg. memory |
@@ -206,8 +211,8 @@ Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz, Linux, Boost 1.74, gRPC 1.41.0, asio-g
 | rust_thruster_mt            |   41832 |       23.75 ms |       10.34 ms |       11.17 ms |      629.53 ms |  101.63% |     13.17 MiB |
 | rust_grpcio                 |   40851 |       24.30 ms |       26.03 ms |       26.61 ms |       28.71 ms |  101.81% |     25.18 MiB |
 | cpp_grpc_mt                 |   40548 |       24.51 ms |       26.17 ms |       26.69 ms |       28.26 ms |  101.65% |     18.33 MiB |
-| cpp_asio_grpc_cpp20_coroutine |   39723 |       25.03 ms |       26.71 ms |       27.37 ms |       29.02 ms |  100.63% |     19.59 MiB |
-| cpp_asio_grpc_boost_coroutine |   39576 |       25.13 ms |       26.91 ms |       27.42 ms |       28.90 ms |  101.97% |     18.51 MiB |
+| cpp_asio_grpc C++20 coroutines |   39723 |       25.03 ms |       26.71 ms |       27.37 ms |       29.02 ms |  100.63% |     19.59 MiB |
+| cpp_asio_grpc Boost.Coroutine |   39576 |       25.13 ms |       26.91 ms |       27.42 ms |       28.90 ms |  101.97% |     18.51 MiB |
 | cpp_grpc_callback           |   12973 |       72.56 ms |      103.22 ms |      112.56 ms |      163.00 ms |  100.74% |    114.97 MiB |
 | go_grpc                     |    7620 |      125.06 ms |      240.80 ms |      299.47 ms |      415.92 ms |   97.74% |     30.61 MiB |
 
@@ -216,13 +221,16 @@ Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz, Linux, Boost 1.74, gRPC 1.41.0, asio-g
 | name                        |   req/s |   avg. latency |        90 % in |        95 % in |        99 % in | avg. cpu |   avg. memory |
 |-----------------------------|--------:|---------------:|---------------:|---------------:|---------------:|---------:|--------------:|
 | cpp_grpc_mt                 |   84703 |       10.17 ms |       17.85 ms |       21.57 ms |       29.94 ms |  200.52% |     47.79 MiB |
-| cpp_asio_grpc_cpp20_coroutine |   83113 |       10.45 ms |       18.67 ms |       22.72 ms |       31.67 ms |  202.32% |     50.11 MiB |
-| cpp_asio_grpc_boost_coroutine |   81467 |       10.62 ms |       19.58 ms |       23.90 ms |       34.23 ms |  202.08% |      47.8 MiB |
+| cpp_asio_grpc C++20 coroutines |   83113 |       10.45 ms |       18.67 ms |       22.72 ms |       31.67 ms |  202.32% |     50.11 MiB |
+| cpp_asio_grpc Boost.Coroutine |   81467 |       10.62 ms |       19.58 ms |       23.90 ms |       34.23 ms |  202.08% |      47.8 MiB |
 | cpp_grpc_callback           |   80773 |       10.81 ms |       17.80 ms |       21.70 ms |       31.67 ms |  205.33% |     152.6 MiB |
 | rust_tonic_mt               |   74919 |       12.48 ms |       33.14 ms |       52.57 ms |       79.41 ms |  202.98% |     19.24 MiB |
 | rust_thruster_mt            |   67405 |       13.97 ms |       37.71 ms |       57.20 ms |       86.26 ms |  200.35% |     14.36 MiB |
 | rust_grpcio                 |   66668 |       14.38 ms |       21.39 ms |       23.24 ms |       27.55 ms |  202.58% |     40.86 MiB |
 | go_grpc                     |   18354 |       47.54 ms |       96.26 ms |      111.33 ms |      177.97 ms |   152.5% |     30.54 MiB |
+
+</p>
+</details>
 
 # Documentation
 
@@ -237,6 +245,9 @@ This library's API for RPCs is modeled closely after the asynchronous, tag-based
 Instead of the `void*` tag in the gRPC API the functions in this library expect a [CompletionToken](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers). Asio comes with several CompletionTokens already: [C++20 coroutine](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/use_awaitable.html), [std::future](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/use_future.html), [stackless coroutine](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/coroutine.html), [callback](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/executor_binder.html) and [Boost.Coroutine](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/basic_yield_context.html).
 
 If you are interested in learning more about the implementation details of this library then check out [this blog article](https://medium.com/3yourmind/c-20-coroutines-for-asynchronous-grpc-services-5b3dab1d1d61).
+
+<details><summary><b>Click to see full documentation</b></summary>
+<p>
 
 ## Getting started
 
@@ -709,3 +720,6 @@ function(asio_grpc_protobuf_generate)
 <!-- endSnippet -->
 
 If you are using [cmake-format](https://github.com/cheshirekow/cmake_format) then you can copy the `asio_grpc_protobuf_generate` section from [cmake-format.yaml](cmake-format.yaml#L1-L12) into your cmake-format.yaml to get proper formatting.
+
+</p>
+</details>
