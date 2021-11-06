@@ -69,6 +69,7 @@ endif()
 
 if(ASIO_GRPC_BUILD_EXAMPLES)
     add_subdirectory(example)
+    add_subdirectory(doc)
 endif()
 
 if(ASIO_GRPC_INSTALL)
