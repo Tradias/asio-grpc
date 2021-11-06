@@ -92,7 +92,7 @@ class GrpcSender
         auto allocator = detail::get_allocator(receiver);
         detail::grpc_submit(
             this->grpc_context, this->initiating_function,
-            [receiver = Receiver{std::forward<Receiver>(receiver)}](bool ok) mutable
+            [receiver = detail::RemoveCvrefT<Receiver>{std::forward<Receiver>(receiver)}](bool ok) mutable
             {
                 detail::satisfy_receiver(std::move(receiver), ok);
             },

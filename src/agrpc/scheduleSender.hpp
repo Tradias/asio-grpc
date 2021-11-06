@@ -87,7 +87,7 @@ struct ScheduleSender
         auto allocator = detail::get_allocator(receiver);
         detail::create_no_arg_operation<true>(
             this->grpc_context,
-            [receiver = Receiver{std::forward<Receiver>(receiver)}]() mutable
+            [receiver = detail::RemoveCvrefT<Receiver>{std::forward<Receiver>(receiver)}]() mutable
             {
                 detail::satisfy_receiver(std::move(receiver));
             },
