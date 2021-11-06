@@ -62,6 +62,7 @@
 
 #ifdef AGRPC_UNIFEX
 #include <unifex/config.hpp>
+#include <unifex/execute.hpp>
 #include <unifex/scheduler_concepts.hpp>
 #include <unifex/sender_concepts.hpp>
 #include <unifex/sync_wait.hpp>

@@ -22,7 +22,7 @@ namespace agrpc::detail
 template <class Receiver, class... Args>
 void satisfy_receiver(Receiver&& receiver, Args&&... args) noexcept
 {
-    if constexpr (noexcept(detail::set_value(std::move(receiver))))
+    if constexpr (noexcept(detail::set_value(std::move(receiver), std::forward<Args>(args)...)))
     {
         detail::set_value(std::move(receiver), std::forward<Args>(args)...);
     }

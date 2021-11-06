@@ -77,6 +77,7 @@
 
 #ifdef AGRPC_UNIFEX
 #include <unifex/config.hpp>
+#include <unifex/get_allocator.hpp>
 #include <unifex/receiver_concepts.hpp>
 #endif
 
@@ -112,7 +113,21 @@ auto get_associated_executor_and_allocator(const Object& object)
 using asio::execution::set_done;
 using asio::execution::set_error;
 using asio::execution::set_value;
+
+template <class Object>
+auto get_allocator(const Object& object)
+{
+    if constexpr (asio::can_query_v<const Object&, asio::execution::allocator_t<void>>)
+    {
+        return asio::query(object, asio::execution::allocator);
+    }
+    else
+    {
+        return asio::get_associated_allocator(object);
+    }
+}
 #elif defined(AGRPC_UNIFEX)
+using unifex::get_allocator;
 using unifex::set_done;
 using unifex::set_error;
 using unifex::set_value;

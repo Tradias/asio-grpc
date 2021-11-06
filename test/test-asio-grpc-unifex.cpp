@@ -22,6 +22,7 @@
 #include <doctest/doctest.h>
 
 #include <cstddef>
+#include <optional>
 #include <string_view>
 #include <thread>
 
@@ -46,38 +47,75 @@ TEST_CASE("unifex asio-grpc fulfills unified executor concepts")
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::schedule")
 {
-    bool is_invoked{};
+    bool is_invoked{false};
     auto sender = unifex::schedule(get_executor());
-    test::FunctionAsReciever reciever{[&]
+    test::FunctionAsReciever receiver{[&]
                                       {
                                           is_invoked = true;
                                       }};
-    auto operation_state = unifex::connect(std::move(sender), reciever);
-    operation_state.start();
+    std::optional<unifex::connect_result_t<decltype(sender), decltype(receiver)>> operation_state;
+    SUBCASE("connect")
+    {
+        operation_state.emplace(unifex::connect(std::move(sender), receiver));
+        unifex::start(*operation_state);
+    }
+    SUBCASE("submit") { unifex::submit(std::move(sender), receiver); }
     CHECK_FALSE(is_invoked);
     grpc_context.run();
     CHECK(is_invoked);
-    CHECK_FALSE(reciever.was_done);
+    CHECK_FALSE(receiver.was_done);
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::execute")
+{
+    bool is_invoked{false};
+    unifex::execute(get_executor(),
+                    [&]
+                    {
+                        is_invoked = true;
+                    });
+    CHECK_FALSE(is_invoked);
+    grpc_context.run();
+    CHECK(is_invoked);
 }
 
 #if !UNIFEX_NO_COROUTINES
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex::task unary")
 {
-    grpc_context.work_started();
-    grpc_context.work_started();
-    grpc_context.work_started();
-    bool server_finish_ok = false;
-    bool client_finish_ok = false;
+    bool server_finish_ok{false};
+    bool client_finish_ok{false};
+    bool use_submit{false};
+    SUBCASE("use submit") { use_submit = true; }
+    SUBCASE("use co_await") {}
     unifex::sync_wait(unifex::when_all(
         [&]() -> unifex::task<void>
         {
-            test::v1::Request request;
-            grpc::ServerAsyncResponseWriter<test::v1::Response> writer{&server_context};
-            CHECK(co_await agrpc::request(&test::v1::Test::AsyncService::RequestUnary, service, server_context, request,
-                                          writer, use_scheduler()));
-            test::v1::Response response;
-            response.set_integer(42);
-            server_finish_ok = co_await agrpc::finish(writer, response, grpc::Status::OK, use_scheduler());
+            struct Context
+            {
+                grpc::ServerAsyncResponseWriter<test::v1::Response> writer;
+                test::v1::Request request;
+                test::v1::Response response;
+
+                explicit Context(grpc::ServerContext& context) : writer(&context) {}
+            };
+            auto context = std::make_shared<Context>(server_context);
+            CHECK(co_await agrpc::request(&test::v1::Test::AsyncService::RequestUnary, service, server_context,
+                                          context->request, context->writer, use_scheduler()));
+            context->response.set_integer(42);
+            if (use_submit)
+            {
+                test::FunctionAsReciever receiver{[&, context = context](bool ok)
+                                                  {
+                                                      server_finish_ok = ok;
+                                                  }};
+                unifex::submit(agrpc::finish(context->writer, context->response, grpc::Status::OK, use_scheduler()),
+                               std::move(receiver));
+            }
+            else
+            {
+                server_finish_ok =
+                    co_await agrpc::finish(context->writer, context->response, grpc::Status::OK, use_scheduler());
+            }
         }(),
         [&]() -> unifex::task<void>
         {

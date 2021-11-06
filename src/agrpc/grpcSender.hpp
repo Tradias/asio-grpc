@@ -17,6 +17,7 @@
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/grpcContext.hpp"
+#include "agrpc/detail/initiate.hpp"
 #include "agrpc/detail/receiver.hpp"
 #include "agrpc/detail/typeErasedOperation.hpp"
 #include "agrpc/detail/utility.hpp"
@@ -33,14 +34,20 @@ class GrpcSender
     {
       public:
         template <class Receiver2>
-        constexpr explicit Operation(const GrpcSender& sender, Receiver2&& receiver)
+        constexpr Operation(const GrpcSender& sender, Receiver2&& receiver)
             : detail::TypeErasedGrpcTagOperation(&Operation::on_complete),
               impl(sender.grpc_context, std::forward<Receiver2>(receiver)),
               initiating_function(sender.initiating_function)
         {
         }
 
-        void start() & noexcept { initiating_function(grpc_context(), this); }
+        void start() & noexcept
+        {
+            this->grpc_context().work_started();
+            detail::WorkFinishedOnExit on_exit{this->grpc_context()};
+            initiating_function(this->grpc_context(), this);
+            on_exit.release();
+        }
 
       private:
         static void on_complete(detail::TypeErasedGrpcTagOperation* op, detail::InvokeHandler, bool ok,
@@ -73,10 +80,23 @@ class GrpcSender
     }
 
     template <class Receiver>
-    constexpr Operation<detail::RemoveCvrefT<Receiver>> connect(Receiver&& receiver) const
-        noexcept(std::is_nothrow_constructible_v<Receiver, Receiver&&>)
+    constexpr auto connect(Receiver&& receiver) const noexcept(std::is_nothrow_constructible_v<Receiver, Receiver&&>)
+        -> Operation<detail::RemoveCvrefT<Receiver>>
     {
-        return Operation<detail::RemoveCvrefT<Receiver>>{*this, std::forward<Receiver>(receiver)};
+        return {*this, std::forward<Receiver>(receiver)};
+    }
+
+    template <class Receiver>
+    void submit(Receiver&& receiver) const
+    {
+        auto allocator = detail::get_allocator(receiver);
+        detail::grpc_submit(
+            this->grpc_context, this->initiating_function,
+            [receiver = Receiver{std::forward<Receiver>(receiver)}](bool ok) mutable
+            {
+                detail::satisfy_receiver(std::move(receiver), ok);
+            },
+            allocator);
     }
 
   private:

@@ -30,7 +30,7 @@ struct ScheduleSender
     {
       public:
         template <class Receiver2>
-        constexpr explicit Operation(const ScheduleSender& sender, Receiver2&& receiver)
+        constexpr Operation(const ScheduleSender& sender, Receiver2&& receiver)
             : detail::TypeErasedNoArgOperation(&Operation::on_complete),
               impl(sender.grpc_context, std::forward<Receiver2>(receiver))
         {
@@ -75,10 +75,23 @@ struct ScheduleSender
     constexpr explicit ScheduleSender(agrpc::GrpcContext& grpc_context) noexcept : grpc_context(grpc_context) {}
 
     template <class Receiver>
-    constexpr Operation<detail::RemoveCvrefT<Receiver>> connect(Receiver&& receiver) const
-        noexcept(std::is_nothrow_constructible_v<Receiver, Receiver&&>)
+    constexpr auto connect(Receiver&& receiver) const noexcept(std::is_nothrow_constructible_v<Receiver, Receiver&&>)
+        -> Operation<detail::RemoveCvrefT<Receiver>>
     {
-        return Operation<detail::RemoveCvrefT<Receiver>>{*this, std::forward<Receiver>(receiver)};
+        return {*this, std::forward<Receiver>(receiver)};
+    }
+
+    template <class Receiver>
+    void submit(Receiver&& receiver) const
+    {
+        auto allocator = detail::get_allocator(receiver);
+        detail::create_no_arg_operation<true>(
+            this->grpc_context,
+            [receiver = Receiver{std::forward<Receiver>(receiver)}]() mutable
+            {
+                detail::satisfy_receiver(std::move(receiver));
+            },
+            allocator);
     }
 
   private:

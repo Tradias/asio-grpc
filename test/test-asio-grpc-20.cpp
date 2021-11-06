@@ -56,7 +56,7 @@ TEST_CASE("asio-grpc fulfills unified executor concepts")
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::schedule")
 {
-    bool is_invoked{};
+    bool is_invoked{false};
     auto sender = asio::execution::schedule(get_executor());
     test::FunctionAsReciever reciever{[&]
                                       {
@@ -96,8 +96,8 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "get_completion_queue")
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "co_spawn two Alarms and await their ok")
 {
-    bool ok1 = false;
-    bool ok2 = false;
+    bool ok1{false};
+    bool ok2{false};
     test::co_spawn(grpc_context,
                    [&]() -> agrpc::GrpcAwaitable<void>
                    {
@@ -136,7 +136,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "wait for Alarm with allocator")
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "wait for Alarm with asio::awaitable<>")
 {
-    bool ok = false;
+    bool ok{false};
     test::co_spawn(get_executor(),
                    [&]() -> asio::awaitable<void>
                    {
@@ -280,9 +280,9 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable unary")
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable bidirectional streaming")
 {
-    bool use_write_and_finish{};
+    bool use_write_and_finish{false};
     SUBCASE("server write_and_finish") { use_write_and_finish = true; }
-    SUBCASE("server write then finish") { use_write_and_finish = false; }
+    SUBCASE("server write then finish") {}
     test::co_spawn(
         grpc_context,
         [&]() -> asio::awaitable<void>

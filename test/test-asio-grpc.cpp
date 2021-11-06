@@ -109,7 +109,7 @@ TEST_CASE("Work tracking GrpcExecutor constructor and assignment")
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::reset")
 {
-    bool ok = false;
+    bool ok{false};
     CHECK_FALSE(grpc_context.is_stopped());
     asio::post(grpc_context,
                [&]
@@ -139,7 +139,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::reset")
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::stop does not complete pending operations")
 {
-    bool ok = false;
+    bool ok{false};
     asio::post(grpc_context,
                [&]
                {
@@ -156,10 +156,10 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::stop does not complete pe
 
 TEST_CASE("GrpcContext::stop while waiting for Alarm will not invoke the Alarm's completion handler")
 {
-    bool is_stop_from_same_thread = true;
+    bool is_stop_from_same_thread{true};
     SUBCASE("stop from same thread") {}
     SUBCASE("stop from other thread") { is_stop_from_same_thread = false; }
-    bool ok = false;
+    bool ok{false};
     {
         std::thread thread;
         agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
@@ -201,7 +201,7 @@ TEST_CASE("GrpcContext::stop while waiting for Alarm will not invoke the Alarm's
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wait")
 {
-    bool ok = false;
+    bool ok{false};
     std::chrono::system_clock::time_point start;
     asio::spawn(asio::bind_executor(get_executor(), [] {}),
                 [&](auto&& yield)
@@ -217,7 +217,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wai
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post an Alarm and check time")
 {
-    bool ok = false;
+    bool ok{false};
     std::chrono::system_clock::time_point start;
     grpc::Alarm alarm;
     asio::post(grpc_context,
@@ -256,7 +256,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post a asio::steady_timer")
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn with yield_context")
 {
-    bool ok = false;
+    bool ok{false};
     asio::spawn(get_executor(),
                 [&](asio::yield_context yield)
                 {
@@ -518,9 +518,9 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context server streaming")
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context client streaming")
 {
-    bool use_client_convenience{};
+    bool use_client_convenience{false};
     SUBCASE("client use convenience") { use_client_convenience = true; }
-    SUBCASE("client do not use convenience") { use_client_convenience = false; }
+    SUBCASE("client do not use convenience") {}
     asio::spawn(get_executor(),
                 [&](asio::yield_context yield)
                 {
@@ -568,9 +568,9 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context client streaming")
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context unary")
 {
-    bool use_finish_with_error;
+    bool use_finish_with_error{false};
     SUBCASE("server finish_with_error") { use_finish_with_error = true; }
-    SUBCASE("server finish with OK") { use_finish_with_error = false; }
+    SUBCASE("server finish with OK") {}
     asio::spawn(get_executor(),
                 [&](asio::yield_context yield)
                 {
@@ -693,7 +693,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request u
     this->test(
         &test::v1::Test::AsyncService::RequestUnary, service,
         [&](grpc::ServerContext&, test::v1::Request& request,
-            grpc::ServerAsyncResponseWriter<test::v1::Response> writer, asio::yield_context yield)
+            grpc::ServerAsyncResponseWriter<test::v1::Response> writer, bool, asio::yield_context yield)
         {
             CHECK_EQ(42, request.integer());
             test::v1::Response response;
@@ -732,7 +732,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request c
     auto request_count{0};
     this->test(
         &test::v1::Test::AsyncService::RequestClientStreaming, service,
-        [&](grpc::ServerContext&, grpc::ServerAsyncReader<test::v1::Response, test::v1::Request> reader,
+        [&](grpc::ServerContext&, grpc::ServerAsyncReader<test::v1::Response, test::v1::Request> reader, bool,
             asio::yield_context yield)
         {
             test::v1::Request request;
@@ -789,7 +789,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "RPC step after grpc_context stop"
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post an Alarm and use variadic-arg callback for its wait")
 {
-    bool ok = false;
+    bool ok{false};
     grpc::Alarm alarm;
     asio::post(get_executor(),
                [&]
@@ -808,7 +808,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post an Alarm and use variadic-a
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with cancellation_type::total")
 {
-    bool ok = true;
+    bool ok{true};
     asio::cancellation_signal signal{};
     grpc::Alarm alarm;
     asio::post(get_executor(),
@@ -832,7 +832,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with cancellation_t
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with cancellation_type::none")
 {
-    bool ok = false;
+    bool ok{false};
     asio::cancellation_signal signal{};
     grpc::Alarm alarm;
     asio::post(get_executor(),

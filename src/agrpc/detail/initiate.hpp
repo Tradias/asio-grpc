@@ -28,6 +28,29 @@ struct DefaultCompletionTokenNotAvailable
 {
     DefaultCompletionTokenNotAvailable() = delete;
 };
+
+template <class InitiatingFunction, class CompletionHandler, class Allocator>
+void grpc_submit(agrpc::GrpcContext& grpc_context, InitiatingFunction initiating_function,
+                 CompletionHandler completion_handler, Allocator allocator)
+{
+    grpc_context.work_started();
+    detail::WorkFinishedOnExit on_exit{grpc_context};
+    if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
+    {
+        auto operation =
+            detail::allocate_operation<false, void(bool)>(grpc_context, std::move(completion_handler), allocator);
+        std::move(initiating_function)(grpc_context, operation.get());
+        operation.release();
+    }
+    else
+    {
+        auto operation = detail::allocate_operation<false, void(bool), detail::GrpcContextLocalAllocator>(
+            std::move(completion_handler), allocator);
+        std::move(initiating_function)(grpc_context, operation.get());
+        operation.release();
+    }
+    on_exit.release();
+}
 }  // namespace agrpc::detail
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
@@ -58,23 +81,7 @@ struct GrpcInitiator
             {
                 return;
             }
-        grpc_context.work_started();
-        detail::WorkFinishedOnExit on_exit{grpc_context};
-        if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
-        {
-            auto operation =
-                detail::allocate_operation<false, void(bool)>(grpc_context, std::move(completion_handler), allocator);
-            std::move(this->function)(grpc_context, operation.get());
-            operation.release();
-        }
-        else
-        {
-            auto operation = detail::allocate_operation<false, void(bool), detail::GrpcContextLocalAllocator>(
-                std::move(completion_handler), allocator);
-            std::move(this->function)(grpc_context, operation.get());
-            operation.release();
-        }
-        on_exit.release();
+        detail::grpc_submit(grpc_context, std::move(this->function), std::move(completion_handler), allocator);
     }
 
     [[nodiscard]] executor_type get_executor() const noexcept { return asio::get_associated_executor(this->function); }

@@ -1,0 +1,25 @@
+From 0d36723a4f587f7eae5f7bee223d1f83b8c5b72c Mon Sep 17 00:00:00 2001
+From: Dennis Hezel <dh@3yourmind.com>
+Date: Sat, 6 Nov 2021 11:59:50 +0100
+Subject: [PATCH] fix execute forward declaration
+
+---
+ include/unifex/execute.hpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/unifex/execute.hpp b/include/unifex/execute.hpp
+index 1ac9051..ca087ec 100644
+--- a/include/unifex/execute.hpp
++++ b/include/unifex/execute.hpp
+@@ -72,7 +72,7 @@ namespace _cpo {
+ } // namespace _cpo
+ } // namespace _execute
+ 
+-inline constexpr _execute::_cpo::_fn execute {};
++inline const _execute::_cpo::_fn execute {};
+ } // namespace unifex
+ 
+ #include <unifex/detail/epilogue.hpp>
+-- 
+2.32.0.windows.2
+

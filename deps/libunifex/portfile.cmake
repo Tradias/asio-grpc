@@ -6,14 +6,15 @@ vcpkg_from_github(
     REPO
     facebookexperimental/libunifex
     REF
-    d77033422c938c79d5e35b346d354f35468e3193
+    e9e6dd5250477dd4c8502862cdb3238175302405
     SHA512
-    a40f4a1a82f5b69bfab7cb806ef30d54dd1ada5154c6968b88b72d96b92d787871fca0f8c6eb9570c430dde7837eb957747683702708df3419299a67dbf41ae0
+    5c3b0412e1cc83641d1594ab532d86a6599c3664f8c8b2a334ac3b22f2c7dd6c2f9d3281012805bfe1c0bff0f46e1e1f4a15ebf2dd973c5b7a14a255a528bf46
     HEAD_REF
     master
     PATCHES
     fix-install.patch
-    allow-warnings.patch)
+    allow-warnings.patch
+    fix-execute-forward-declaration.patch)
 
 vcpkg_check_features(
     OUT_FEATURE_OPTIONS

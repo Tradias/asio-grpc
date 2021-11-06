@@ -55,9 +55,9 @@ struct WaitFn
     auto operator()(grpc::Alarm& alarm, const Deadline& deadline, CompletionToken token = {}) const
     {
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-        if (auto slot = asio::get_associated_cancellation_slot(token); slot.is_connected())
+        if (auto cancellation_slot = asio::get_associated_cancellation_slot(token); cancellation_slot.is_connected())
         {
-            slot.template emplace<detail::AlarmCancellationHandler>(alarm);
+            cancellation_slot.template emplace<detail::AlarmCancellationHandler>(alarm);
         }
 #endif
         return agrpc::grpc_initiate(detail::AlarmFunction{alarm, deadline}, std::move(token));
