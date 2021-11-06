@@ -47,12 +47,20 @@ struct ServerShutdown
     {
         if (!shutdown_thread)
         {
+            // This will cause all coroutines to run to completion normally
+            // while returning `false` from RPC related steps, cancelling the signal
+            // so that the GrpcContext will eventually run out of work and return
+            // from `run()`.
             shutdown_thread.emplace(
                 [&]
                 {
                     signals.cancel();
                     server.Shutdown();
                 });
+            // Alternatively call `grpc_context.stop()` here instead which causes all coroutines
+            // to end at their next suspension point.
+            // Then call `server->Shutdown()` after the call to `grpc_context.run()` returns
+            // or `.reset()` the grpc_context and go into another `grpc_context.run()`
         }
     }
 
@@ -175,12 +183,13 @@ boost::asio::awaitable<void> handle_shutdown_request(example::v1::Example::Async
 int main(int argc, const char** argv)
 {
     const auto port = argc >= 2 ? argv[1] : "50051";
+    const auto host = std::string("0.0.0.0:") + port;
 
     grpc::ServerBuilder builder;
     std::unique_ptr<grpc::Server> server;
     example::v1::Example::AsyncService service;
     agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
-    builder.AddListeningPort(std::string("0.0.0.0:") + port, grpc::InsecureServerCredentials());
+    builder.AddListeningPort(host, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
     server = builder.BuildAndStart();
     ServerShutdown server_shutdown{*server, grpc_context};

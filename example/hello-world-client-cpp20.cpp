@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "helper.hpp"
 #include "protos/helloworld.grpc.pb.h"
 
 #include <agrpc/asioGrpc.hpp>
@@ -20,11 +21,15 @@
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 
-int main()
+int main(int argc, const char** argv)
 {
+    const auto port = argc >= 2 ? argv[1] : "50051";
+    const auto host = std::string("localhost:") + port;
+
+    grpc::Status status;
+
     // begin-snippet: client-side-helloworld
-    const auto stub =
-        helloworld::Greeter::NewStub(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
+    const auto stub = helloworld::Greeter::NewStub(grpc::CreateChannel(host, grpc::InsecureChannelCredentials()));
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
     boost::asio::co_spawn(
@@ -37,11 +42,12 @@ int main()
             std::unique_ptr<grpc::ClientAsyncResponseReader<helloworld::HelloReply>> reader =
                 stub->AsyncSayHello(&client_context, request, agrpc::get_completion_queue(grpc_context));
             helloworld::HelloReply response;
-            grpc::Status status;
-            bool ok = co_await agrpc::finish(*reader, response, status);
+            co_await agrpc::finish(*reader, response, status);
         },
         boost::asio::detached);
 
     grpc_context.run();
     // end-snippet
+
+    abort_if_not(status.ok());
 }

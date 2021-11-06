@@ -56,7 +56,7 @@ boost::asio::awaitable<void> make_client_streaming_request(example::v1::Example:
     // for the meaning of the bool values
 
     abort_if_not(status.ok());
-    silence_unused(request_ok, read_ok, write_ok, finish_ok);
+    silence_unused(request_ok, read_ok, write_ok, writes_done_ok, finish_ok);
 }
 
 boost::asio::awaitable<void> make_bidirectional_streaming_request(example::v1::Example::Stub& stub)
@@ -130,9 +130,9 @@ boost::asio::awaitable<void> make_shutdown_request(example::v1::Example::Stub& s
 int main(int argc, const char** argv)
 {
     const auto port = argc >= 2 ? argv[1] : "50051";
+    const auto host = std::string("localhost:") + port;
 
-    const auto stub = example::v1::Example::NewStub(
-        grpc::CreateChannel(std::string("localhost:") + port, grpc::InsecureChannelCredentials()));
+    const auto stub = example::v1::Example::NewStub(grpc::CreateChannel(host, grpc::InsecureChannelCredentials()));
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
     boost::asio::co_spawn(

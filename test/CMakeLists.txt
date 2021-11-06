@@ -125,13 +125,16 @@ if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPL
     target_link_libraries(asio-grpc-test-examples PRIVATE asio-grpc-common-compile-options doctest::doctest
                                                           Boost::headers Boost::filesystem)
 
-    add_dependencies(asio-grpc-test-examples asio-grpc-example-streaming-client-cpp20
-                     asio-grpc-example-streaming-server-cpp20)
+    add_dependencies(
+        asio-grpc-test-examples asio-grpc-example-streaming-client-cpp20 asio-grpc-example-streaming-server-cpp20
+        asio-grpc-example-hello-world-client-cpp20 asio-grpc-example-hello-world-server-cpp20)
 
     target_compile_definitions(
         asio-grpc-test-examples
         PRIVATE "ASIO_GRPC_EXAMPLE_STREAMING_CLIENT=\"$<TARGET_FILE:asio-grpc-example-streaming-client-cpp20>\""
-                "ASIO_GRPC_EXAMPLE_STREAMING_SERVER=\"$<TARGET_FILE:asio-grpc-example-streaming-server-cpp20>\"")
+                "ASIO_GRPC_EXAMPLE_STREAMING_SERVER=\"$<TARGET_FILE:asio-grpc-example-streaming-server-cpp20>\""
+                "ASIO_GRPC_EXAMPLE_HELLO_WORLD_CLIENT=\"$<TARGET_FILE:asio-grpc-example-hello-world-client-cpp20>\""
+                "ASIO_GRPC_EXAMPLE_HELLO_WORLD_SERVER=\"$<TARGET_FILE:asio-grpc-example-hello-world-server-cpp20>\"")
 endif()
 
 if(ASIO_GRPC_DISCOVER_TESTS)

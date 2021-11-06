@@ -24,13 +24,25 @@ namespace test_asio_grpc_examples
 {
 TEST_SUITE_BEGIN("Examples" * doctest::timeout(180.0));
 
-TEST_CASE("example: streaming client + server")
+TEST_CASE("examples")
 {
-    auto port = std::to_string(test::get_free_port());
-    boost::process::child server(ASIO_GRPC_EXAMPLE_STREAMING_SERVER, port);
+    const auto port = std::to_string(test::get_free_port());
+    const char* server_program{};
+    const char* client_program{};
+    SUBCASE("hello world")
+    {
+        client_program = ASIO_GRPC_EXAMPLE_HELLO_WORLD_CLIENT;
+        server_program = ASIO_GRPC_EXAMPLE_HELLO_WORLD_SERVER;
+    }
+    SUBCASE("streaming client + server")
+    {
+        client_program = ASIO_GRPC_EXAMPLE_STREAMING_CLIENT;
+        server_program = ASIO_GRPC_EXAMPLE_STREAMING_SERVER;
+    }
+    boost::process::child server(server_program, port);
     REQUIRE(server.valid());
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    boost::process::child client(ASIO_GRPC_EXAMPLE_STREAMING_CLIENT, port);
+    boost::process::child client(client_program, port);
     REQUIRE(client.valid());
     server.join();
     client.join();
