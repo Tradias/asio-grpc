@@ -17,7 +17,6 @@
                 "CMAKE_INSTALL_PREFIX": "out",
                 "ASIO_GRPC_INSTALL": "TRUE",
                 "ASIO_GRPC_BUILD_TESTS": "TRUE",
-                "ASIO_GRPC_BUILD_EXAMPLES": "TRUE",
                 "ASIO_GRPC_DISCOVER_TESTS": "TRUE",
                 "ASIO_GRPC_USE_BOOST_CONTAINER": "FALSE"
             }

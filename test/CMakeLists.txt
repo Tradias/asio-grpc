@@ -51,14 +51,14 @@ function(asio_grpc_add_test _asio-grpc_name _asio_grpc_type)
         PRIVATE # cmake-format: sort
                 "${ASIO_GRPC_GENERATED_SOURCES}"
                 "${CMAKE_CURRENT_BINARY_DIR}/generated/utils/memoryResource.hpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/asioUtils.hpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/freePort.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/freePort.hpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcClientServerTest.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcClientServerTest.hpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcContextTest.hpp"
-                ${ARGN}
-                main.cpp)
+                ${ARGN})
 
     if(ASIO_GRPC_TEST_COVERAGE)
         asio_grpc_add_coverage_flags(${_asio-grpc_name})
@@ -109,6 +109,29 @@ endif()
 
 unset(ASIO_GRPC_TEST_SOURCE_FILES)
 
+# tests for examples
+add_executable(asio-grpc-test-examples)
+
+target_sources(
+    asio-grpc-test-examples
+    PRIVATE # cmake-format: sort
+            "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/test-asio-grpc-examples.cpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/utils/freePort.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/utils/freePort.hpp")
+
+target_include_directories(asio-grpc-test-examples PRIVATE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
+                                                           $<INSTALL_INTERFACE:include>)
+
+target_link_libraries(asio-grpc-test-examples PRIVATE asio-grpc-common-compile-options doctest::doctest Boost::headers
+                                                      Boost::filesystem)
+
+add_dependencies(asio-grpc-test-examples asio-grpc-example-streaming-client-cpp20
+                 asio-grpc-example-streaming-server-cpp20)
+
+target_compile_definitions(
+    asio-grpc-test-examples
+    PRIVATE "ASIO_GRPC_EXAMPLE_STREAMING_CLIENT=\"$<TARGET_FILE:asio-grpc-example-streaming-client-cpp20>\""
+            "ASIO_GRPC_EXAMPLE_STREAMING_SERVER=\"$<TARGET_FILE:asio-grpc-example-streaming-server-cpp20>\"")
+
 if(ASIO_GRPC_DISCOVER_TESTS)
     doctest_discover_tests(
         asio-grpc-test-boost-cpp17 # workaround for regression in doctest 2.4.6
@@ -120,6 +143,7 @@ if(ASIO_GRPC_DISCOVER_TESTS)
         # Unknown arguments specified
         ADD_LABELS 0)
     doctest_discover_tests(asio-grpc-test-cpp17 ADD_LABELS 0)
+    doctest_discover_tests(asio-grpc-test-examples ADD_LABELS 0)
     if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
         doctest_discover_tests(asio-grpc-test-boost-cpp20 ADD_LABELS 0)
         doctest_discover_tests(asio-grpc-test-cpp20 ADD_LABELS 0)

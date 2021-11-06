@@ -172,13 +172,15 @@ boost::asio::awaitable<void> handle_shutdown_request(example::v1::Example::Async
     }
 }
 
-int main()
+int main(int argc, const char** argv)
 {
+    const auto port = argc >= 2 ? argv[1] : "50051";
+
     grpc::ServerBuilder builder;
     std::unique_ptr<grpc::Server> server;
     example::v1::Example::AsyncService service;
     agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
-    builder.AddListeningPort("0.0.0.0:50051", grpc::InsecureServerCredentials());
+    builder.AddListeningPort(std::string("0.0.0.0:") + port, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
     server = builder.BuildAndStart();
     ServerShutdown server_shutdown{*server, grpc_context};

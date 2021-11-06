@@ -19,6 +19,13 @@
 #include <asio.hpp>
 #elif defined(AGRPC_BOOST_ASIO)
 #include <boost/asio.hpp>
+#elif defined(AGRPC_UNIFEX)
+#include <unifex/config.hpp>
+#include <unifex/execute.hpp>
+#include <unifex/scheduler_concepts.hpp>
+#include <unifex/sender_concepts.hpp>
+#include <unifex/sync_wait.hpp>
+#include <unifex/when_all.hpp>
 #endif
 
 #include <array>

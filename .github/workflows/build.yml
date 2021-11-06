@@ -23,7 +23,7 @@ on:
 env:
   VCPKG_ARGUMENTS: 'doctest grpc[codegen] boost-coroutine boost-core boost-intrusive boost-asio boost-interprocess boost-thread boost-container asio libunifex'
   VCPKG_VERSION: '699c8779f1b0feb4ed3564716d1ed31f69663ea6' # Oct 16, 2021
-  CMAKE_ARGS: '-DVCPKG_MANIFEST_MODE=off -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_BUILD_EXAMPLES=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on'
+  CMAKE_ARGS: '-DVCPKG_MANIFEST_MODE=off -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on'
   CTEST_ARGS: '-T test --output-on-failure --timeout 200'
 
 jobs:

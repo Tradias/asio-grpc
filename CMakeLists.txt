@@ -26,8 +26,7 @@ option(ASIO_GRPC_INSTALL "Create the install target" on)
 option(ASIO_GRPC_USE_BOOST_CONTAINER "Use Boost.Container instead of <memory_resource>" off)
 
 # maintainer options
-option(ASIO_GRPC_BUILD_TESTS "Build tests" off)
-option(ASIO_GRPC_BUILD_EXAMPLES "Build examples" off)
+option(ASIO_GRPC_BUILD_TESTS "Build tests and examples" off)
 option(ASIO_GRPC_DISCOVER_TESTS "Discover tests for ctest" off)
 option(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES
        "When tests and/or example builds are enabled then also create CMake targets for C++20" on)
@@ -41,16 +40,16 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 add_subdirectory(src)
 
-if(ASIO_GRPC_BUILD_TESTS OR ASIO_GRPC_BUILD_EXAMPLES)
+if(ASIO_GRPC_BUILD_TESTS)
     # store value of Boost_USE_STATIC_RUNTIME because it gets cleared by find_package(Boost)
     set(ASIO_GRPC_BOOST_USE_STATIC_RUNTIME ${Boost_USE_STATIC_RUNTIME})
 
     find_package(protobuf)
     find_package(gRPC)
     if(ASIO_GRPC_USE_BOOST_CONTAINER)
-        find_package(Boost REQUIRED COMPONENTS coroutine thread container)
+        find_package(Boost REQUIRED COMPONENTS coroutine thread filesystem container)
     else()
-        find_package(Boost REQUIRED COMPONENTS coroutine thread)
+        find_package(Boost REQUIRED COMPONENTS coroutine thread filesystem)
     endif()
     find_package(asio)
     find_package(unifex)
@@ -60,16 +59,14 @@ if(ASIO_GRPC_BUILD_TESTS OR ASIO_GRPC_BUILD_EXAMPLES)
 endif()
 
 if(ASIO_GRPC_BUILD_TESTS)
+    add_subdirectory(example)
+    add_subdirectory(doc)
+
     find_package(doctest REQUIRED)
     enable_testing()
     include(doctest)
     set(ASIO_GRPC_COVERAGE_WORKING_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
     add_subdirectory(test)
-endif()
-
-if(ASIO_GRPC_BUILD_EXAMPLES)
-    add_subdirectory(example)
-    add_subdirectory(doc)
 endif()
 
 if(ASIO_GRPC_INSTALL)

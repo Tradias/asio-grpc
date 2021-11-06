@@ -16,6 +16,7 @@
         "boost-interprocess",
         "boost-thread",
         "boost-container",
+        "boost-process",
         {
             "name": "asio",
             "features": [

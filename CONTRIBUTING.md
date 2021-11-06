@@ -25,7 +25,6 @@ cmake -B build \
   -DCMAKE_BUILD_TYPE=Debug \
   -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake \
   -DASIO_GRPC_BUILD_TESTS=on \
-  -DASIO_GRPC_BUILD_EXAMPLES=on \
   -DASIO_GRPC_DISCOVER_TESTS=on \
   -DASIO_GRPC_USE_BOOST_CONTAINER=on  # if you are using a C++ compiler without <memory_resource>
 ```

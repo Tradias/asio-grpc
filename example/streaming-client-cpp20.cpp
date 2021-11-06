@@ -43,7 +43,7 @@ boost::asio::awaitable<void> make_client_streaming_request(example::v1::Example:
     example::v1::Request request;
     bool write_ok = co_await agrpc::write(*writer, request);
 
-    // Optionally signal that we are done writing
+    // Signal that we are done writing
     // https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_async_writer.html#ab9fd5cd7dedd73d878a86de84c58e8ff
     bool writes_done_ok = co_await agrpc::writes_done(*writer);
 
@@ -55,7 +55,8 @@ boost::asio::awaitable<void> make_client_streaming_request(example::v1::Example:
     // See https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html#a86d9810ced694e50f7987ac90b9f8c1a
     // for the meaning of the bool values
 
-    silence_unused(request_ok, read_ok, write_ok, writes_done_ok, finish_ok);
+    abort_if_not(status.ok());
+    silence_unused(request_ok, read_ok, write_ok, finish_ok);
 }
 
 boost::asio::awaitable<void> make_bidirectional_streaming_request(example::v1::Example::Stub& stub)
@@ -94,11 +95,13 @@ boost::asio::awaitable<void> make_bidirectional_streaming_request(example::v1::E
         request.set_integer(response.integer());
         ++count;
     }
+    co_await agrpc::writes_done(*reader_writer);
 
     // https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_async_reader_writer.html#a953d61a2b25473bb76c7038b940b87aa
     grpc::Status status;
     bool finish_ok = co_await agrpc::finish(*reader_writer, status);
 
+    abort_if_not(status.ok());
     silence_unused(finish_ok);
 }
 
@@ -121,12 +124,15 @@ boost::asio::awaitable<void> make_shutdown_request(example::v1::Example::Stub& s
     {
         std::cout << "Failed to send shutdown request to server: " << status.error_message() << '\n';
     }
+    abort_if_not(status.ok());
 }
 
-int main()
+int main(int argc, const char** argv)
 {
-    const auto stub =
-        example::v1::Example::NewStub(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
+    const auto port = argc >= 2 ? argv[1] : "50051";
+
+    const auto stub = example::v1::Example::NewStub(
+        grpc::CreateChannel(std::string("localhost:") + port, grpc::InsecureChannelCredentials()));
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
     boost::asio::co_spawn(

@@ -13,8 +13,8 @@
 # limitations under the License.
 
 function(asio_grpc_add_coverage_flags _asio_grpc_target)
-    target_compile_options(${_asio_grpc_target} PRIVATE --coverage $<$<CXX_COMPILER_ID:GNU>:-fprofile-abs-path>)
-    target_link_options(${_asio_grpc_target} PRIVATE --coverage)
+    target_compile_options(${_asio_grpc_target} PUBLIC --coverage $<$<CXX_COMPILER_ID:GNU>:-fprofile-abs-path>)
+    target_link_options(${_asio_grpc_target} PUBLIC --coverage)
 endfunction()
 
 function(asio_grpc_coverage_report_for_target _asio_grpc_target)

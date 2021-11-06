@@ -15,6 +15,15 @@
 #ifndef AGRPC_EXAMPLE_HELPER_H
 #define AGRPC_EXAMPLE_HELPER_H
 
+#include <cstdlib>
+
+void abort_if_not(bool condition)
+{
+    if (!condition)
+    {
+        std::abort();
+    }
+}
 template <class... Args>
 void silence_unused(Args&&... args)
 {

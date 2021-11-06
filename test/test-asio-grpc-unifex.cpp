@@ -26,7 +26,7 @@
 #include <string_view>
 #include <thread>
 
-namespace test_asio_grpc
+namespace test_asio_grpc_unifex
 {
 TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0));
 
@@ -166,4 +166,4 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex::task unary")
 #endif
 
 TEST_SUITE_END();
-}  // namespace test_asio_grpc
+}  // namespace test_asio_grpc_unifex
