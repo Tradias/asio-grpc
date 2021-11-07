@@ -769,7 +769,7 @@ asio_grpc_protobuf_generate(
 
 target_include_directories(target-option PRIVATE "${TARGET_GENERATED_PROTOS_OUT_DIR}")
 ```
-<sup><a href='/test/cmake/Targets.cmake#L38-L48' title='Snippet source file'>snippet source</a> | <a href='#snippet-asio_grpc_protobuf_generate-target' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/test/cmake/Targets.cmake#L37-L47' title='Snippet source file'>snippet source</a> | <a href='#snippet-asio_grpc_protobuf_generate-target' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 See in-code documentation for more details:
