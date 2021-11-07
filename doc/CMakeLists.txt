@@ -13,23 +13,29 @@
 # limitations under the License.
 
 function(asio_grpc_add_documentation _asio_grpc_name)
-    add_executable(asio-grpc-documentation-${_asio_grpc_name})
+    add_library(asio-grpc-documentation-${_asio_grpc_name} OBJECT)
 
-    target_sources(asio-grpc-documentation-${_asio_grpc_name} PRIVATE ${_asio_grpc_name}.cpp
-                                                                      ${ASIO_GRPC_GENERATED_EXAMPLE_SOURCES})
+    target_sources(asio-grpc-documentation-${_asio_grpc_name} PRIVATE ${_asio_grpc_name}.cpp)
 
-    target_link_libraries(asio-grpc-documentation-${_asio_grpc_name} PRIVATE asio-grpc-example-helper
-                                                                             asio-grpc::asio-grpc)
+    target_link_libraries(asio-grpc-documentation-${_asio_grpc_name} PRIVATE asio-grpc-example-helper)
 endfunction()
 
-asio_grpc_add_documentation(server OBJECT)
-target_link_libraries(asio-grpc-documentation-server PRIVATE Boost::coroutine Boost::thread asio-grpc-example-protos)
+asio_grpc_add_documentation(server)
+target_link_libraries(asio-grpc-documentation-server PRIVATE asio-grpc::asio-grpc Boost::coroutine Boost::thread
+                                                             asio-grpc-example-protos)
 
-asio_grpc_add_documentation(client OBJECT)
-target_link_libraries(asio-grpc-documentation-client PRIVATE Boost::coroutine Boost::thread asio-grpc-example-protos)
+asio_grpc_add_documentation(client)
+target_link_libraries(asio-grpc-documentation-client PRIVATE asio-grpc::asio-grpc Boost::coroutine Boost::thread
+                                                             asio-grpc-example-protos)
 
-if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
-    asio_grpc_add_documentation(blog OBJECT)
-    target_link_libraries(asio-grpc-documentation-blog PRIVATE asio-grpc-example-protos-cpp20
-                                                               asio-grpc-cpp20-compile-options)
+if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
+    if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT)
+        asio_grpc_add_documentation(blog)
+        target_link_libraries(asio-grpc-documentation-blog PRIVATE asio-grpc-example-protos-cpp20
+                                                                   asio-grpc-cpp20-compile-options)
+    endif()
+
+    asio_grpc_add_documentation(unifex-client OBJECT)
+    target_link_libraries(asio-grpc-documentation-unifex-client PRIVATE asio-grpc::asio-grpc-unifex unofficial::unifex
+                                                                        asio-grpc-example-protos)
 endif()

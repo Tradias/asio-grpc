@@ -21,6 +21,14 @@ Upcoming features for v1.4.0:
 
 * [CancellationSlot](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/CancellationSlot.html) and [StopToken](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#stoptoken-concept) support for individual RPC steps
 * [AsyncStream](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#streams) for streaming RPCs
+* Classes that wrap Stub or AsyncService as IO-Object, constructible from any [asio::execution_context](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/execution_context.html). Making it possible to write asynchronous gRPC clients and servers without explicit use of a `agrpc::GrpcContext`. Roughly as follows:
+
+```c++
+const auto stub = test::v1::Test::NewStub(grpc::CreateChannel(host, grpc::InsecureChannelCredentials()));
+boost::asio::io_context io_context;
+agrpc::GrpcStub grpc_stub{*stub, io_context};
+co_await agrpc::request(..., grpc_stub, ...);
+```
 
 # Example
 
@@ -664,6 +672,30 @@ bool finish_ok = agrpc::finish(*reader_writer, status, yield);
 <!-- endSnippet -->
 
 For the meaning of `read_metadata_ok`, `write_ok`, `writes_done_ok`, `read_ok` and `finish_ok` see [CompletionQueue::Next](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html#a86d9810ced694e50f7987ac90b9f8c1a).
+
+## use_scheduler
+
+A special completion token created with `agrpc::use_scheduler(scheduler)` where `scheduler` is a `agrpc::GrpcContext` or `agrpc::GrpcExecutor`, that causes any 
+RPC step function return a [TypedSender](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/Sender.html#boost_asio.reference.Sender.typed_sender). The sender can e.g. be connected to a [unifex::task<>](https://github.com/facebookexperimental/libunifex/blob/main/doc/api_reference.md#task) to await completion of the RPC step:
+
+<!-- snippet: unifex-server-streaming-client-side -->
+<a id='snippet-unifex-server-streaming-client-side'></a>
+```cpp
+unifex::task<void> unified_executors(example::v1::Example::Stub& stub, agrpc::GrpcContext& grpc_context)
+{
+    grpc::ClientContext client_context;
+    test::v1::Request request;
+    std::unique_ptr<grpc::ClientAsyncReader<test::v1::Response>> reader;
+    co_await agrpc::request(&test::v1::Test::Stub::AsyncServerStreaming, stub, client_context, request, reader,
+                            agrpc::use_scheduler(grpc_context));
+    test::v1::Response response;
+    co_await agrpc::read(*reader, response, agrpc::use_scheduler(grpc_context));
+    grpc::Status status;
+    co_await agrpc::finish(*reader, status, agrpc::use_scheduler(grpc_context));
+}
+```
+<sup><a href='/doc/unifex-client.cpp#L25-L38' title='Snippet source file'>snippet source</a> | <a href='#snippet-unifex-server-streaming-client-side' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
 
 ## Repeatedly request server-side
 
