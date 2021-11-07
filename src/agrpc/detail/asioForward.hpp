@@ -34,7 +34,7 @@
 #include <asio/use_awaitable.hpp>
 
 #ifdef ASIO_HAS_CO_AWAIT
-#include <boost/asio/use_awaitable.hpp>
+#include <asio/use_awaitable.hpp>
 
 #define AGRPC_ASIO_HAS_CO_AWAIT
 #endif

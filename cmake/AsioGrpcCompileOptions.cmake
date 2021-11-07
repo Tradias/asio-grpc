@@ -62,8 +62,7 @@ target_link_libraries(asio-grpc-common-compile-options INTERFACE gRPC::grpc++ Bo
 target_compile_features(asio-grpc-common-compile-options INTERFACE cxx_std_17)
 
 if(ASIO_GRPC_USE_BOOST_CONTAINER)
-    # No imported target for Boost::container in CMake 3.21
-    target_link_libraries(asio-grpc-common-compile-options INTERFACE ${Boost_CONTAINER_LIBRARY})
+    target_link_libraries(asio-grpc-common-compile-options INTERFACE Boost::container)
 endif()
 
 # C++20 compile options
