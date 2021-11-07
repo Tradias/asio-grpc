@@ -16,8 +16,7 @@ grpc::ServerBuilder builder;
 std::unique_ptr<grpc::Server> server;
 helloworld::Greeter::AsyncService service;
 agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
-boost::asio::basic_signal_set signals{grpc_context, SIGINT, SIGTERM};
-builder.AddListeningPort("0.0.0.0:50051", grpc::InsecureServerCredentials());
+builder.AddListeningPort(host, grpc::InsecureServerCredentials());
 builder.RegisterService(&service);
 server = builder.BuildAndStart();
 
@@ -25,25 +24,22 @@ boost::asio::co_spawn(
     grpc_context,
     [&]() -> boost::asio::awaitable<void>
     {
-        while (true)
+        grpc::ServerContext server_context;
+        helloworld::HelloRequest request;
+        grpc::ServerAsyncResponseWriter<helloworld::HelloReply> writer{&server_context};
+        bool request_ok = co_await agrpc::request(&helloworld::Greeter::AsyncService::RequestSayHello, service,
+                                                  server_context, request, writer);
+        if (!request_ok)
         {
-            grpc::ServerContext server_context;
-            helloworld::HelloRequest request;
-            grpc::ServerAsyncResponseWriter<helloworld::HelloReply> writer{&server_context};
-            bool request_ok = co_await agrpc::request(&helloworld::Greeter::AsyncService::RequestSayHello, service,
-                                                      server_context, request, writer);
-            if (!request_ok)
-            {
-                co_return;
-            }
-            helloworld::HelloReply response;
-            response.set_message("Hello " + request.name());
-            bool finish_ok = co_await agrpc::finish(writer, response, grpc::Status::OK);
+            co_return;
         }
+        helloworld::HelloReply response;
+        response.set_message("Hello " + request.name());
+        co_await agrpc::finish(writer, response, grpc::Status::OK);
     },
     boost::asio::detached);
 ```
-<sup><a href='/example/hello-world-server-cpp20.cpp#L31-L62' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/hello-world-server-cpp20.cpp#L32-L59' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 * Client side 'hello world':
@@ -51,8 +47,7 @@ boost::asio::co_spawn(
 <!-- snippet: client-side-helloworld -->
 <a id='snippet-client-side-helloworld'></a>
 ```cpp
-const auto stub =
-    helloworld::Greeter::NewStub(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
+const auto stub = helloworld::Greeter::NewStub(grpc::CreateChannel(host, grpc::InsecureChannelCredentials()));
 agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
 boost::asio::co_spawn(
@@ -65,14 +60,13 @@ boost::asio::co_spawn(
         std::unique_ptr<grpc::ClientAsyncResponseReader<helloworld::HelloReply>> reader =
             stub->AsyncSayHello(&client_context, request, agrpc::get_completion_queue(grpc_context));
         helloworld::HelloReply response;
-        grpc::Status status;
-        bool ok = co_await agrpc::finish(*reader, response, status);
+        co_await agrpc::finish(*reader, response, status);
     },
     boost::asio::detached);
 
 grpc_context.run();
 ```
-<sup><a href='/example/hello-world-client-cpp20.cpp#L25-L46' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-helloworld' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/hello-world-client-cpp20.cpp#L31-L50' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-helloworld' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 * Boost.Asio [client](/example/streaming-client.cpp) and [server](/example/streaming-server.cpp) streaming RPCs
