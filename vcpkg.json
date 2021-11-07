@@ -10,8 +10,6 @@
             ]
         },
         "boost-coroutine",
-        "boost-core",
-        "boost-intrusive",
         "boost-asio",
         "boost-interprocess",
         "boost-thread",
