@@ -24,6 +24,7 @@ void abort_if_not(bool condition)
         std::abort();
     }
 }
+
 template <class... Args>
 void silence_unused(Args&&... args)
 {

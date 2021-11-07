@@ -192,6 +192,8 @@ int main(int argc, const char** argv)
     builder.AddListeningPort(host, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
     server = builder.BuildAndStart();
+    abort_if_not(bool{server});
+
     ServerShutdown server_shutdown{*server, grpc_context};
 
     register_client_streaming_handler(service, grpc_context);

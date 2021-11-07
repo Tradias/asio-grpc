@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# example protos
 function(asio_grpc_add_example_protos _asio_grpc_name)
     include(AsioGrpcProtobufGenerator)
 
@@ -35,19 +36,22 @@ function(asio_grpc_add_example_protos _asio_grpc_name)
     target_link_libraries(asio-grpc-${_asio_grpc_name} PRIVATE asio-grpc-common-compile-options)
 endfunction()
 
+# example helper
 add_library(asio-grpc-example-helper INTERFACE)
 
-target_link_libraries(asio-grpc-example-helper INTERFACE asio-grpc-common-compile-options asio-grpc)
+target_link_libraries(asio-grpc-example-helper INTERFACE asio-grpc-common-compile-options)
 
 target_include_directories(asio-grpc-example-helper INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/helper")
 
+# examples
 function(asio_grpc_add_example _asio_grpc_name)
     add_executable(asio-grpc-example-${_asio_grpc_name})
 
-    target_sources(asio-grpc-example-${_asio_grpc_name} PRIVATE ${_asio_grpc_name}.cpp
-                                                                ${ASIO_GRPC_GENERATED_EXAMPLE_SOURCES})
+    target_sources(asio-grpc-example-${_asio_grpc_name} PRIVATE ${_asio_grpc_name}.cpp)
 
-    target_link_libraries(asio-grpc-example-${_asio_grpc_name} PRIVATE asio-grpc-example-helper)
+    target_link_libraries(
+        asio-grpc-example-${_asio_grpc_name} PRIVATE asio-grpc-example-helper asio-grpc-example-protos-cpp20
+                                                     asio-grpc-cpp20-compile-options)
 endfunction()
 
 asio_grpc_add_example_protos(example-protos)
@@ -56,19 +60,21 @@ if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPL
     asio_grpc_add_example_protos(example-protos-cpp20)
     target_link_libraries(asio-grpc-example-protos-cpp20 PRIVATE asio-grpc-cpp20-compile-options)
 
-    asio_grpc_add_example(hello-world-client-cpp20)
-    target_link_libraries(asio-grpc-example-hello-world-client-cpp20 PRIVATE asio-grpc-example-protos-cpp20
-                                                                             asio-grpc-cpp20-compile-options)
+    asio_grpc_add_example(hello-world-client)
+    target_link_libraries(asio-grpc-example-hello-world-client PRIVATE asio-grpc::asio-grpc)
 
-    asio_grpc_add_example(hello-world-server-cpp20)
-    target_link_libraries(asio-grpc-example-hello-world-server-cpp20 PRIVATE asio-grpc-example-protos-cpp20
-                                                                             asio-grpc-cpp20-compile-options)
+    asio_grpc_add_example(hello-world-server)
+    target_link_libraries(asio-grpc-example-hello-world-server PRIVATE asio-grpc::asio-grpc)
 
-    asio_grpc_add_example(streaming-client-cpp20)
-    target_link_libraries(asio-grpc-example-streaming-client-cpp20 PRIVATE asio-grpc-example-protos-cpp20
-                                                                           asio-grpc-cpp20-compile-options)
+    asio_grpc_add_example(streaming-client)
+    target_link_libraries(asio-grpc-example-streaming-client PRIVATE asio-grpc::asio-grpc)
 
-    asio_grpc_add_example(streaming-server-cpp20)
-    target_link_libraries(asio-grpc-example-streaming-server-cpp20 PRIVATE asio-grpc-example-protos-cpp20
-                                                                           asio-grpc-cpp20-compile-options)
+    asio_grpc_add_example(streaming-server)
+    target_link_libraries(asio-grpc-example-streaming-server PRIVATE asio-grpc::asio-grpc)
+
+    asio_grpc_add_example(unifex-server)
+    target_link_libraries(asio-grpc-example-unifex-server PRIVATE asio-grpc::asio-grpc-unifex unofficial::unifex)
+
+    asio_grpc_add_example(unifex-client)
+    target_link_libraries(asio-grpc-example-unifex-client PRIVATE asio-grpc::asio-grpc-unifex unofficial::unifex)
 endif()

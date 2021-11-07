@@ -18,7 +18,8 @@ function(asio_grpc_add_documentation _asio_grpc_name)
     target_sources(asio-grpc-documentation-${_asio_grpc_name} PRIVATE ${_asio_grpc_name}.cpp
                                                                       ${ASIO_GRPC_GENERATED_EXAMPLE_SOURCES})
 
-    target_link_libraries(asio-grpc-documentation-${_asio_grpc_name} PRIVATE asio-grpc-example-helper)
+    target_link_libraries(asio-grpc-documentation-${_asio_grpc_name} PRIVATE asio-grpc-example-helper
+                                                                             asio-grpc::asio-grpc)
 endfunction()
 
 asio_grpc_add_documentation(server OBJECT)

@@ -29,15 +29,20 @@ TEST_CASE("examples")
     const auto port = std::to_string(test::get_free_port());
     const char* server_program{};
     const char* client_program{};
-    SUBCASE("hello world")
+    SUBCASE("Boost.Asio hello world")
     {
         client_program = ASIO_GRPC_EXAMPLE_HELLO_WORLD_CLIENT;
         server_program = ASIO_GRPC_EXAMPLE_HELLO_WORLD_SERVER;
     }
-    SUBCASE("streaming client + server")
+    SUBCASE("Boost.Asio streaming")
     {
         client_program = ASIO_GRPC_EXAMPLE_STREAMING_CLIENT;
         server_program = ASIO_GRPC_EXAMPLE_STREAMING_SERVER;
+    }
+    SUBCASE("unifex")
+    {
+        client_program = ASIO_GRPC_EXAMPLE_UNIFEX_CLIENT;
+        server_program = ASIO_GRPC_EXAMPLE_UNIFEX_SERVER;
     }
     boost::process::child server(server_program, port);
     REQUIRE(server.valid());

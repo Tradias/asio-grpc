@@ -12,52 +12,52 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "protos/helloworld.grpc.pb.h"
+#include "helper.hpp"
+#include "protos/example.grpc.pb.h"
 
 #include <agrpc/asioGrpc.hpp>
-#include <boost/asio/co_spawn.hpp>
-#include <boost/asio/detached.hpp>
-#include <boost/asio/signal_set.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
-
-#include <optional>
-#include <thread>
+#include <unifex/sync_wait.hpp>
+#include <unifex/task.hpp>
+#include <unifex/when_all.hpp>
 
 int main(int argc, const char** argv)
 {
     const auto port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("0.0.0.0:") + port;
 
-    // begin-snippet: server-side-helloworld
     grpc::ServerBuilder builder;
     std::unique_ptr<grpc::Server> server;
-    helloworld::Greeter::AsyncService service;
+    example::v1::Example::AsyncService service;
     agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
     builder.AddListeningPort(host, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
     server = builder.BuildAndStart();
+    abort_if_not(bool{server});
 
-    boost::asio::co_spawn(
-        grpc_context,
-        [&]() -> boost::asio::awaitable<void>
+    unifex::sync_wait(unifex::when_all(
+        [&]() -> unifex::task<void>
         {
             grpc::ServerContext server_context;
-            helloworld::HelloRequest request;
-            grpc::ServerAsyncResponseWriter<helloworld::HelloReply> writer{&server_context};
-            bool request_ok = co_await agrpc::request(&helloworld::Greeter::AsyncService::RequestSayHello, service,
-                                                      server_context, request, writer);
+            grpc::ServerAsyncResponseWriter<example::v1::Response> writer{&server_context};
+            example::v1::Request request;
+            bool request_ok =
+                co_await agrpc::request(&example::v1::Example::AsyncService::RequestUnary, service, server_context,
+                                        request, writer, agrpc::use_scheduler(grpc_context));
             if (!request_ok)
             {
                 co_return;
             }
-            helloworld::HelloReply response;
-            response.set_message("Hello " + request.name());
-            co_await agrpc::finish(writer, response, grpc::Status::OK);
-        },
-        boost::asio::detached);
-    // end-snippet
+            example::v1::Response response;
+            response.set_integer(request.integer());
+            co_await agrpc::finish(writer, response, grpc::Status::OK, agrpc::use_scheduler(grpc_context));
+        }(),
+        [&]() -> unifex::task<void>
+        {
+            grpc_context.run();
+            co_return;
+        }()));
 
-    grpc_context.run();
     server->Shutdown();
 }
