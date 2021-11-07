@@ -26,23 +26,29 @@
 #include <string_view>
 #include <thread>
 
-namespace test_asio_grpc_unifex
+namespace test_asio_grpc_unifex_cpp20
 {
 TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0));
 
 TEST_CASE("unifex asio-grpc fulfills unified executor concepts")
 {
+    CHECK(unifex::scheduler<agrpc::GrpcExecutor>);
     using UseScheduler = decltype(agrpc::use_scheduler(std::declval<agrpc::GrpcExecutor>()));
     using UseSchedulerFromGrpcContext = decltype(agrpc::use_scheduler(std::declval<agrpc::GrpcContext&>()));
     CHECK(std::is_same_v<UseScheduler, UseSchedulerFromGrpcContext>);
-    using Sender =
+    using GrpcSender =
         decltype(agrpc::wait(std::declval<grpc::Alarm&>(), std::declval<std::chrono::system_clock::time_point>(),
                              std::declval<UseScheduler>()));
-    CHECK(unifex::sender<Sender>);
-    CHECK(unifex::typed_sender<Sender>);
-    CHECK(unifex::sender_to<Sender, test::FunctionAsReciever<test::InvocableArchetype>>);
-    using OperationState = unifex::connect_result_t<Sender, test::FunctionAsReciever<test::InvocableArchetype>>;
-    CHECK(unifex::scheduler<agrpc::GrpcExecutor>);
+    CHECK(unifex::sender<GrpcSender>);
+    CHECK(unifex::typed_sender<GrpcSender>);
+    CHECK(unifex::sender_to<GrpcSender, test::FunctionAsReciever<test::InvocableArchetype>>);
+    CHECK(unifex::is_nothrow_connectable_v<GrpcSender, test::FunctionAsReciever<test::InvocableArchetype>>);
+
+    using ScheduleSender = decltype(unifex::schedule(std::declval<agrpc::GrpcExecutor>()));
+    CHECK(unifex::sender<ScheduleSender>);
+    CHECK(unifex::typed_sender<ScheduleSender>);
+    CHECK(unifex::sender_to<ScheduleSender, test::FunctionAsReciever<test::InvocableArchetype>>);
+    CHECK(unifex::is_nothrow_connectable_v<ScheduleSender, test::FunctionAsReciever<test::InvocableArchetype>>);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::schedule")
@@ -236,4 +242,4 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex::task unary")
 #endif
 
 TEST_SUITE_END();
-}  // namespace test_asio_grpc_unifex
+}  // namespace test_asio_grpc_unifex_cpp20

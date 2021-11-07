@@ -36,21 +36,35 @@ TEST_CASE("GrpcExecutor fulfills Executor TS concepts")
 
 TEST_CASE("asio-grpc fulfills unified executor concepts")
 {
+    CHECK(asio::execution::is_scheduler_v<agrpc::GrpcExecutor>);
     using UseScheduler = decltype(agrpc::use_scheduler(std::declval<agrpc::GrpcExecutor>()));
-    using Sender =
+    using UseSchedulerFromGrpcContext = decltype(agrpc::use_scheduler(std::declval<agrpc::GrpcContext&>()));
+    CHECK(std::is_same_v<UseScheduler, UseSchedulerFromGrpcContext>);
+    using GrpcSender =
         decltype(agrpc::wait(std::declval<grpc::Alarm&>(), std::declval<std::chrono::system_clock::time_point>(),
                              std::declval<UseScheduler>()));
-    CHECK(asio::execution::sender<Sender>);
-    CHECK(asio::execution::is_sender_v<Sender>);
-    CHECK(asio::execution::typed_sender<Sender>);
-    CHECK(asio::execution::is_typed_sender_v<Sender>);
-    CHECK(asio::execution::sender_to<Sender, test::FunctionAsReciever<test::InvocableArchetype>>);
-    CHECK(asio::execution::is_sender_to_v<Sender, test::FunctionAsReciever<test::InvocableArchetype>>);
-    using OperationState = asio::execution::connect_result_t<Sender, test::InvocableArchetype>;
+    CHECK(asio::execution::sender<GrpcSender>);
+    CHECK(asio::execution::is_sender_v<GrpcSender>);
+    CHECK(asio::execution::typed_sender<GrpcSender>);
+    CHECK(asio::execution::is_typed_sender_v<GrpcSender>);
+    CHECK(asio::execution::sender_to<GrpcSender, test::FunctionAsReciever<test::InvocableArchetype>>);
+    CHECK(asio::execution::is_sender_to_v<GrpcSender, test::FunctionAsReciever<test::InvocableArchetype>>);
+    CHECK(asio::execution::is_nothrow_connect_v<GrpcSender, test::FunctionAsReciever<test::InvocableArchetype>>);
+    using OperationState = asio::execution::connect_result_t<GrpcSender, test::InvocableArchetype>;
     CHECK(asio::execution::operation_state<OperationState>);
     CHECK(asio::execution::is_operation_state_v<OperationState>);
-    CHECK(asio::execution::scheduler<agrpc::GrpcExecutor>);
-    CHECK(asio::execution::is_scheduler_v<agrpc::GrpcExecutor>);
+
+    using ScheduleSender = decltype(asio::execution::schedule(std::declval<agrpc::GrpcExecutor>()));
+    CHECK(asio::execution::sender<ScheduleSender>);
+    CHECK(asio::execution::is_sender_v<ScheduleSender>);
+    CHECK(asio::execution::typed_sender<ScheduleSender>);
+    CHECK(asio::execution::is_typed_sender_v<ScheduleSender>);
+    CHECK(asio::execution::sender_to<ScheduleSender, test::FunctionAsReciever<test::InvocableArchetype>>);
+    CHECK(asio::execution::is_sender_to_v<ScheduleSender, test::FunctionAsReciever<test::InvocableArchetype>>);
+    CHECK(asio::execution::is_nothrow_connect_v<ScheduleSender, test::FunctionAsReciever<test::InvocableArchetype>>);
+    using ScheduleSenderOperationState = asio::execution::connect_result_t<ScheduleSender, test::InvocableArchetype>;
+    CHECK(asio::execution::operation_state<ScheduleSenderOperationState>);
+    CHECK(asio::execution::is_operation_state_v<ScheduleSenderOperationState>);
 }
 #endif
 

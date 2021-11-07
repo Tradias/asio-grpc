@@ -89,8 +89,7 @@ asio_grpc_add_test(asio-grpc-test-boost-cpp17 "BOOST_ASIO" ${ASIO_GRPC_TEST_SOUR
 target_compile_definitions(asio-grpc-test-boost-cpp17 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"Boost.Asio C++17\"")
 
 asio_grpc_add_test(asio-grpc-test-cpp17 "STANDALONE_ASIO" ${ASIO_GRPC_TEST_SOURCE_FILES})
-target_compile_definitions(asio-grpc-test-cpp17 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"Standalone Asio C++17\""
-                                                        AGRPC_STANDALONE_ASIO)
+target_compile_definitions(asio-grpc-test-cpp17 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"Standalone Asio C++17\"")
 
 if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
     asio_grpc_add_test(asio-grpc-test-boost-cpp20 "BOOST_ASIO" ${ASIO_GRPC_TEST_SOURCE_FILES} "test-asio-grpc-20.cpp")
@@ -102,9 +101,9 @@ if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
                                                             AGRPC_STANDALONE_ASIO)
     target_link_libraries(asio-grpc-test-cpp20 PRIVATE asio-grpc-cpp20-compile-options)
 
-    asio_grpc_add_test(asio-grpc-test-unifex "UNIFEX" "test-asio-grpc-unifex.cpp")
-    target_compile_definitions(asio-grpc-test-unifex PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"unifex C++20\"")
-    target_link_libraries(asio-grpc-test-unifex PRIVATE asio-grpc-cpp20-compile-options)
+    asio_grpc_add_test(asio-grpc-test-unifex-cpp20 "UNIFEX" "test-asio-grpc-unifex-20.cpp")
+    target_compile_definitions(asio-grpc-test-unifex-cpp20 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"unifex C++20\"")
+    target_link_libraries(asio-grpc-test-unifex-cpp20 PRIVATE asio-grpc-cpp20-compile-options)
 endif()
 
 unset(ASIO_GRPC_TEST_SOURCE_FILES)
@@ -158,7 +157,7 @@ if(ASIO_GRPC_DISCOVER_TESTS)
     if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
         doctest_discover_tests(asio-grpc-test-boost-cpp20 ADD_LABELS 0)
         doctest_discover_tests(asio-grpc-test-cpp20 ADD_LABELS 0)
-        doctest_discover_tests(asio-grpc-test-unifex ADD_LABELS 0)
+        doctest_discover_tests(asio-grpc-test-unifex-cpp20 ADD_LABELS 0)
         if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT)
             doctest_discover_tests(asio-grpc-test-examples ADD_LABELS 0)
         endif()
