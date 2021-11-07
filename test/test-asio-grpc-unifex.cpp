@@ -108,6 +108,76 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::execute")
     CHECK(is_invoked);
 }
 
+TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex submit to stopped GrpcContext")
+{
+    bool is_invoked{false};
+    unifex::new_thread_context ctx;
+    unifex::sync_wait(unifex::let_value(unifex::schedule(ctx.get_scheduler()),
+                                        [&]
+                                        {
+                                            grpc_context.stop();
+                                            return unifex::then(unifex::schedule(get_executor()),
+                                                                [&]
+                                                                {
+                                                                    is_invoked = true;
+                                                                });
+                                        }));
+    grpc_context.run();
+    CHECK_FALSE(is_invoked);
+}
+
+TEST_CASE("unifex GrpcContext.stop() with pending ScheduleSender operation")
+{
+    bool is_invoked{false};
+    unifex::new_thread_context ctx;
+    std::optional<agrpc::GrpcContext> grpc_context{std::make_unique<grpc::CompletionQueue>()};
+    auto receiver = test::FunctionAsReciever{[&]
+                                             {
+                                                 is_invoked = true;
+                                             }};
+    auto op = unifex::connect(unifex::schedule(grpc_context->get_scheduler()), receiver);
+    unifex::start(op);
+    grpc_context.reset();
+    CHECK_FALSE(is_invoked);
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex agrpc::wait with stopped GrpcContext")
+{
+    bool is_invoked{false};
+    unifex::new_thread_context ctx;
+    grpc::Alarm alarm;
+    unifex::sync_wait(unifex::let_value(unifex::schedule(ctx.get_scheduler()),
+                                        [&]
+                                        {
+                                            grpc_context.stop();
+                                            return unifex::then(
+                                                agrpc::wait(alarm, test::ten_milliseconds_from_now(), use_scheduler()),
+                                                [&](bool)
+                                                {
+                                                    is_invoked = true;
+                                                });
+                                        }));
+    grpc_context.run();
+    CHECK_FALSE(is_invoked);
+}
+
+TEST_CASE("unifex GrpcContext.stop() with pending GrpcSender operation")
+{
+    bool is_invoked{false};
+    unifex::new_thread_context ctx;
+    std::optional<agrpc::GrpcContext> grpc_context{std::make_unique<grpc::CompletionQueue>()};
+    auto receiver = test::FunctionAsReciever{[&](bool)
+                                             {
+                                                 is_invoked = true;
+                                             }};
+    grpc::Alarm alarm;
+    auto op = unifex::connect(
+        agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::use_scheduler(*grpc_context)), receiver);
+    unifex::start(op);
+    grpc_context.reset();
+    CHECK_FALSE(is_invoked);
+}
+
 #if !UNIFEX_NO_COROUTINES
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex::task unary")
 {

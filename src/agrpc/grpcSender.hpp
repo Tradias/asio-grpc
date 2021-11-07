@@ -16,6 +16,7 @@
 #define AGRPC_AGRPC_GRPCSENDER_HPP
 
 #include "agrpc/detail/asioForward.hpp"
+#include "agrpc/detail/config.hpp"
 #include "agrpc/detail/grpcContext.hpp"
 #include "agrpc/detail/initiate.hpp"
 #include "agrpc/detail/receiver.hpp"
@@ -43,6 +44,11 @@ class GrpcSender
 
         void start() & noexcept
         {
+            if (this->grpc_context().is_stopped()) AGRPC_UNLIKELY
+                {
+                    detail::set_done(std::move(this->receiver()));
+                    return;
+                }
             this->grpc_context().work_started();
             detail::WorkFinishedOnExit on_exit{this->grpc_context()};
             initiating_function(this->grpc_context(), this);
@@ -50,11 +56,18 @@ class GrpcSender
         }
 
       private:
-        static void on_complete(detail::TypeErasedGrpcTagOperation* op, detail::InvokeHandler, bool ok,
+        static void on_complete(detail::TypeErasedGrpcTagOperation* op, detail::InvokeHandler invoke_handler, bool ok,
                                 detail::GrpcContextLocalAllocator) noexcept
         {
             auto& self = *static_cast<Operation*>(op);
-            detail::satisfy_receiver(std::move(self.receiver()), ok);
+            if (detail::InvokeHandler::YES == invoke_handler) AGRPC_LIKELY
+                {
+                    detail::satisfy_receiver(std::move(self.receiver()), ok);
+                }
+            else
+            {
+                detail::set_done(std::move(self.receiver()));
+            }
         }
 
         constexpr decltype(auto) grpc_context() noexcept { return impl.first(); }
@@ -72,7 +85,7 @@ class GrpcSender
     template <template <class...> class Variant>
     using error_types = Variant<std::exception_ptr>;
 
-    static constexpr bool sends_done = false;
+    static constexpr bool sends_done = true;
 
     constexpr explicit GrpcSender(agrpc::GrpcContext& grpc_context, InitiatingFunction initiating_function) noexcept
         : grpc_context(grpc_context), initiating_function(std::move(initiating_function))

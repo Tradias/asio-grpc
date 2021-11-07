@@ -15,6 +15,7 @@
 #ifndef AGRPC_AGRPC_SCHEDULESENDER_HPP
 #define AGRPC_AGRPC_SCHEDULESENDER_HPP
 
+#include "agrpc/detail/config.hpp"
 #include "agrpc/detail/grpcContextImplementation.hpp"
 #include "agrpc/detail/receiver.hpp"
 #include "agrpc/detail/utility.hpp"
@@ -38,22 +39,34 @@ struct ScheduleSender
 
         void start() & noexcept
         {
-            if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context()))
+            if (this->grpc_context().is_stopped()) AGRPC_UNLIKELY
+                {
+                    detail::set_done(std::move(this->receiver()));
+                    return;
+                }
+            if (detail::GrpcContextImplementation::running_in_this_thread(this->grpc_context()))
             {
-                detail::GrpcContextImplementation::add_local_operation(grpc_context(), this);
+                detail::GrpcContextImplementation::add_local_operation(this->grpc_context(), this);
             }
             else
             {
-                detail::GrpcContextImplementation::add_remote_operation(grpc_context(), this);
+                detail::GrpcContextImplementation::add_remote_operation(this->grpc_context(), this);
             }
         }
 
       private:
-        static void on_complete(detail::TypeErasedNoArgOperation* op, detail::InvokeHandler,
+        static void on_complete(detail::TypeErasedNoArgOperation* op, detail::InvokeHandler invoke_handler,
                                 detail::GrpcContextLocalAllocator) noexcept
         {
             auto& self = *static_cast<Operation*>(op);
-            detail::satisfy_receiver(std::move(self.receiver()));
+            if (detail::InvokeHandler::YES == invoke_handler) AGRPC_LIKELY
+                {
+                    detail::satisfy_receiver(std::move(self.receiver()));
+                }
+            else
+            {
+                detail::set_done(std::move(self.receiver()));
+            }
         }
 
         constexpr decltype(auto) grpc_context() noexcept { return impl.first(); }
@@ -70,7 +83,7 @@ struct ScheduleSender
     template <template <class...> class Variant>
     using error_types = Variant<std::exception_ptr>;
 
-    static constexpr bool sends_done = false;
+    static constexpr bool sends_done = true;
 
     constexpr explicit ScheduleSender(agrpc::GrpcContext& grpc_context) noexcept : grpc_context(grpc_context) {}
 

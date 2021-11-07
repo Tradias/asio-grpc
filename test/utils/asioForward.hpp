@@ -63,9 +63,13 @@
 #ifdef AGRPC_UNIFEX
 #include <unifex/config.hpp>
 #include <unifex/execute.hpp>
+#include <unifex/just.hpp>
+#include <unifex/let_value.hpp>
+#include <unifex/new_thread_context.hpp>
 #include <unifex/scheduler_concepts.hpp>
 #include <unifex/sender_concepts.hpp>
 #include <unifex/sync_wait.hpp>
+#include <unifex/then.hpp>
 #include <unifex/when_all.hpp>
 
 #if !UNIFEX_NO_COROUTINES
