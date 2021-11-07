@@ -27,19 +27,17 @@ boost::asio::co_spawn(
         grpc::ServerContext server_context;
         helloworld::HelloRequest request;
         grpc::ServerAsyncResponseWriter<helloworld::HelloReply> writer{&server_context};
-        bool request_ok = co_await agrpc::request(&helloworld::Greeter::AsyncService::RequestSayHello, service,
-                                                  server_context, request, writer);
-        if (!request_ok)
-        {
-            co_return;
-        }
+        co_await agrpc::request(&helloworld::Greeter::AsyncService::RequestSayHello, service, server_context,
+                                request, writer);
         helloworld::HelloReply response;
         response.set_message("Hello " + request.name());
         co_await agrpc::finish(writer, response, grpc::Status::OK);
     },
     boost::asio::detached);
+
+grpc_context.run();
 ```
-<sup><a href='/example/hello-world-server-cpp20.cpp#L32-L59' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/hello-world-server.cpp#L32-L57' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 * Client side 'hello world':
@@ -66,7 +64,7 @@ boost::asio::co_spawn(
 
 grpc_context.run();
 ```
-<sup><a href='/example/hello-world-client-cpp20.cpp#L31-L50' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-helloworld' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/hello-world-client.cpp#L31-L50' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-helloworld' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 * Boost.Asio [client](/example/streaming-client.cpp) and [server](/example/streaming-server.cpp) streaming RPCs
