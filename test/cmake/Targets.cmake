@@ -1,8 +1,7 @@
 # common compile options
 add_library(compile-options INTERFACE)
 
-target_link_libraries(compile-options INTERFACE gRPC::grpc++ Boost::headers Boost::coroutine Boost::thread
-                                                ${Boost_CONTAINER_LIBRARY} Boost::disable_autolinking)
+target_link_libraries(compile-options INTERFACE Boost::coroutine Boost::thread Boost::disable_autolinking)
 
 target_compile_definitions(
     compile-options
@@ -33,7 +32,7 @@ endfunction()
 # TARGET option
 create_object_library(target-option target.cpp)
 
-target_link_libraries(target-option PRIVATE asio-grpc::asio-grpc-standalone-asio asio::asio)
+target_link_libraries(target-option PRIVATE asio-grpc::asio-grpc-standalone-asio)
 
 # // begin-snippet: asio_grpc_protobuf_generate-target
 set(TARGET_GENERATED_PROTOS_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/target")
