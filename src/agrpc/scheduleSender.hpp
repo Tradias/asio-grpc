@@ -109,7 +109,8 @@ struct ScheduleSender
   private:
     constexpr explicit ScheduleSender(agrpc::GrpcContext& grpc_context) noexcept : grpc_context(grpc_context) {}
 
-    friend agrpc::BasicGrpcExecutor;
+    template <class Allocator, std::uint32_t Options>
+    friend class agrpc::BasicGrpcExecutor;
 
     agrpc::GrpcContext& grpc_context;
 };
