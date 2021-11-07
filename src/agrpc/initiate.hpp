@@ -115,19 +115,29 @@ template <class Executor = asio::any_io_executor>
     co_return detail::query_grpc_context(executor).get_completion_queue();
 }
 #endif
-
-template <class Function, class CompletionToken = agrpc::DefaultCompletionToken>
-auto grpc_initiate(Function function, CompletionToken token = {})
-{
-    return asio::async_initiate<CompletionToken, void(bool)>(detail::GrpcInitiator{std::move(function)}, token);
-}
 #endif
 
-template <class Function, class Scheduler>
-auto grpc_initiate(Function function, detail::UseScheduler<Scheduler> token)
+namespace detail
 {
-    return agrpc::GrpcSender{static_cast<agrpc::GrpcContext&>(token.scheduler.context()), std::move(function)};
-}
+struct GrpcInitiateFn
+{
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+    template <class Function, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(Function function, CompletionToken token = {}) const
+    {
+        return asio::async_initiate<CompletionToken, void(bool)>(detail::GrpcInitiator{std::move(function)}, token);
+    }
+#endif
+
+    template <class Function, class Scheduler>
+    auto operator()(Function function, detail::UseScheduler<Scheduler> token) const
+    {
+        return agrpc::GrpcSender{static_cast<agrpc::GrpcContext&>(token.scheduler.context()), std::move(function)};
+    }
+};
+}  // namespace detail
+
+inline constexpr detail::GrpcInitiateFn grpc_initiate{};
 }  // namespace agrpc
 
 #endif  // AGRPC_AGRPC_INITIATE_HPP

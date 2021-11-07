@@ -17,6 +17,7 @@
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
+#include "agrpc/detail/forward.hpp"
 #include "agrpc/detail/grpcContext.hpp"
 #include "agrpc/detail/initiate.hpp"
 #include "agrpc/detail/receiver.hpp"
@@ -87,11 +88,6 @@ class GrpcSender
 
     static constexpr bool sends_done = true;
 
-    constexpr explicit GrpcSender(agrpc::GrpcContext& grpc_context, InitiatingFunction initiating_function) noexcept
-        : grpc_context(grpc_context), initiating_function(std::move(initiating_function))
-    {
-    }
-
     template <class Receiver>
     constexpr auto connect(Receiver&& receiver) const noexcept(std::is_nothrow_constructible_v<Receiver, Receiver&&>)
         -> Operation<detail::RemoveCvrefT<Receiver>>
@@ -113,6 +109,13 @@ class GrpcSender
     }
 
   private:
+    constexpr explicit GrpcSender(agrpc::GrpcContext& grpc_context, InitiatingFunction initiating_function) noexcept
+        : grpc_context(grpc_context), initiating_function(std::move(initiating_function))
+    {
+    }
+
+    friend agrpc::detail::GrpcInitiateFn;
+
     agrpc::GrpcContext& grpc_context;
     InitiatingFunction initiating_function;
 };

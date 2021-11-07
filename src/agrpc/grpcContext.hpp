@@ -74,6 +74,8 @@ class GrpcContext
     using RemoteWorkQueue = detail::AtomicIntrusiveQueue<detail::TypeErasedNoArgOperation>;
     using LocalWorkQueue = detail::IntrusiveQueue<detail::TypeErasedNoArgOperation>;
 
+    friend detail::GrpcContextImplementation;
+
     grpc::Alarm work_alarm;
     std::atomic_long outstanding_work{};
     std::atomic_bool stopped{false};
@@ -82,8 +84,6 @@ class GrpcContext
     detail::GrpcContextLocalMemoryResource local_resource{detail::pmr::new_delete_resource()};
     LocalWorkQueue local_work_queue;
     RemoteWorkQueue remote_work_queue{false};
-
-    friend detail::GrpcContextImplementation;
 };
 }  // namespace agrpc
 

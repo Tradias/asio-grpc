@@ -16,6 +16,7 @@
 #define AGRPC_AGRPC_SCHEDULESENDER_HPP
 
 #include "agrpc/detail/config.hpp"
+#include "agrpc/detail/forward.hpp"
 #include "agrpc/detail/grpcContextImplementation.hpp"
 #include "agrpc/detail/receiver.hpp"
 #include "agrpc/detail/utility.hpp"
@@ -85,8 +86,6 @@ struct ScheduleSender
 
     static constexpr bool sends_done = true;
 
-    constexpr explicit ScheduleSender(agrpc::GrpcContext& grpc_context) noexcept : grpc_context(grpc_context) {}
-
     template <class Receiver>
     constexpr auto connect(Receiver&& receiver) const noexcept(std::is_nothrow_constructible_v<Receiver, Receiver&&>)
         -> Operation<detail::RemoveCvrefT<Receiver>>
@@ -108,6 +107,10 @@ struct ScheduleSender
     }
 
   private:
+    constexpr explicit ScheduleSender(agrpc::GrpcContext& grpc_context) noexcept : grpc_context(grpc_context) {}
+
+    friend agrpc::BasicGrpcExecutor;
+
     agrpc::GrpcContext& grpc_context;
 };
 }  // namespace agrpc

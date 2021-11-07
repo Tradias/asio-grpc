@@ -16,6 +16,7 @@
 #define AGRPC_AGRPC_GRPCEXECUTOR_HPP
 
 #include "agrpc/detail/asioForward.hpp"
+#include "agrpc/detail/forward.hpp"
 #include "agrpc/detail/grpcContextInteraction.hpp"
 #include "agrpc/detail/grpcExecutorBase.hpp"
 #include "agrpc/detail/grpcExecutorOptions.hpp"
@@ -29,7 +30,7 @@
 
 namespace agrpc
 {
-template <class Allocator = std::allocator<void>, std::uint32_t Options = detail::GrpcExecutorOptions::DEFAULT>
+template <class Allocator, std::uint32_t Options>
 class BasicGrpcExecutor
     : public std::conditional_t<detail::is_outstanding_work_tracked(Options),
                                 detail::GrpcExecutorWorkTrackerBase<Allocator>, detail::GrpcExecutorBase<Allocator>>
