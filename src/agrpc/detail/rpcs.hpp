@@ -50,7 +50,7 @@ template <class RPC, class ReaderWriter>
 using ClientBidirectionalStreamingRequest = ReaderWriter (RPC::*)(grpc::ClientContext*, grpc::CompletionQueue*, void*);
 
 template <class Deadline>
-struct AlarmFunction
+struct AlarmInitFunction
 {
     grpc::Alarm& alarm;
     Deadline deadline;
@@ -62,7 +62,7 @@ struct AlarmFunction
 };
 
 template <class Deadline>
-AlarmFunction(grpc::Alarm&, const Deadline&) -> AlarmFunction<Deadline>;
+AlarmInitFunction(grpc::Alarm&, const Deadline&) -> AlarmInitFunction<Deadline>;
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 struct AlarmCancellationHandler
@@ -82,7 +82,7 @@ struct AlarmCancellationHandler
 #endif
 
 template <class RPC, class Service, class Request, class Responder>
-struct ServerMultiArgRequestFunction
+struct ServerMultiArgRequestInitFunction
 {
     detail::ServerMultiArgRequest<RPC, Request, Responder> rpc;
     Service& service;
@@ -98,11 +98,12 @@ struct ServerMultiArgRequestFunction
 };
 
 template <class RPC, class Service, class Request, class Responder>
-ServerMultiArgRequestFunction(detail::ServerMultiArgRequest<RPC, Request, Responder>, Service&, grpc::ServerContext&,
-                              Request&, Responder&) -> ServerMultiArgRequestFunction<RPC, Service, Request, Responder>;
+ServerMultiArgRequestInitFunction(detail::ServerMultiArgRequest<RPC, Request, Responder>, Service&,
+                                  grpc::ServerContext&, Request&, Responder&)
+    -> ServerMultiArgRequestInitFunction<RPC, Service, Request, Responder>;
 
 template <class RPC, class Service, class Responder>
-struct ServerSingleArgRequestFunction
+struct ServerSingleArgRequestInitFunction
 {
     detail::ServerSingleArgRequest<RPC, Responder> rpc;
     Service& service;
@@ -117,11 +118,11 @@ struct ServerSingleArgRequestFunction
 };
 
 template <class RPC, class Service, class Responder>
-ServerSingleArgRequestFunction(detail::ServerSingleArgRequest<RPC, Responder>, Service&, grpc::ServerContext&,
-                               Responder&) -> ServerSingleArgRequestFunction<RPC, Service, Responder>;
+ServerSingleArgRequestInitFunction(detail::ServerSingleArgRequest<RPC, Responder>, Service&, grpc::ServerContext&,
+                                   Responder&) -> ServerSingleArgRequestInitFunction<RPC, Service, Responder>;
 
 template <class Response, class Request>
-struct ServerAsyncReaderWriterFunctions
+struct ServerAsyncReaderWriterInitFunctions
 {
     using Responder = grpc::ServerAsyncReaderWriter<Response, Request>;
 
@@ -164,7 +165,7 @@ struct ServerAsyncReaderWriterFunctions
 };
 
 template <class Response, class Request>
-struct ServerAsyncReaderFunctions
+struct ServerAsyncReaderInitFunctions
 {
     using Responder = grpc::ServerAsyncReader<Response, Request>;
 
@@ -195,7 +196,7 @@ struct ServerAsyncReaderFunctions
 };
 
 template <class Response>
-struct ServerAsyncWriterFunctions
+struct ServerAsyncWriterInitFunctions
 {
     using Responder = grpc::ServerAsyncWriter<Response>;
 
@@ -230,7 +231,7 @@ struct ServerAsyncWriterFunctions
 };
 
 template <class Response>
-struct ServerAsyncResponseWriterFunctions
+struct ServerAsyncResponseWriterInitFunctions
 {
     using Responder = grpc::ServerAsyncResponseWriter<Response>;
 
@@ -253,7 +254,7 @@ struct ServerAsyncResponseWriterFunctions
 };
 
 template <class Responder>
-struct SendInitialMetadataFunction
+struct SendInitialMetadataInitFunction
 {
     Responder& responder;
 
@@ -261,7 +262,7 @@ struct SendInitialMetadataFunction
 };
 
 template <class RPC, class Stub, class Request, class Reader>
-struct ClientServerStreamingRequestFunction
+struct ClientServerStreamingRequestInitFunction
 {
     detail::ClientServerStreamingRequest<RPC, Request, Reader> rpc;
     Stub& stub;
@@ -276,12 +277,12 @@ struct ClientServerStreamingRequestFunction
 };
 
 template <class RPC, class Stub, class Request, class Reader>
-ClientServerStreamingRequestFunction(detail::ClientServerStreamingRequest<RPC, Request, Reader>, Stub&,
-                                     grpc::ClientContext&, const Request&, Reader&)
-    -> ClientServerStreamingRequestFunction<RPC, Stub, Request, Reader>;
+ClientServerStreamingRequestInitFunction(detail::ClientServerStreamingRequest<RPC, Request, Reader>, Stub&,
+                                         grpc::ClientContext&, const Request&, Reader&)
+    -> ClientServerStreamingRequestInitFunction<RPC, Stub, Request, Reader>;
 
 template <class RPC, class Stub, class Request, class Reader>
-struct ClientServerStreamingRequestConvenienceFunction
+struct ClientServerStreamingRequestConvenienceInitFunction
 {
     detail::ClientServerStreamingRequest<RPC, Request, Reader> rpc;
     Stub& stub;
@@ -296,12 +297,12 @@ struct ClientServerStreamingRequestConvenienceFunction
 };
 
 template <class RPC, class Stub, class Request, class Reader>
-ClientServerStreamingRequestConvenienceFunction(detail::ClientServerStreamingRequest<RPC, Request, Reader>, Stub&,
-                                                grpc::ClientContext&, const Request&)
-    -> ClientServerStreamingRequestConvenienceFunction<RPC, Stub, Request, Reader>;
+ClientServerStreamingRequestConvenienceInitFunction(detail::ClientServerStreamingRequest<RPC, Request, Reader>, Stub&,
+                                                    grpc::ClientContext&, const Request&)
+    -> ClientServerStreamingRequestConvenienceInitFunction<RPC, Stub, Request, Reader>;
 
 template <class RPC, class Stub, class Writer, class Response>
-struct ClientSideStreamingRequestFunction
+struct ClientSideStreamingRequestInitFunction
 {
     detail::ClientSideStreamingRequest<RPC, Writer, Response> rpc;
     Stub& stub;
@@ -316,12 +317,12 @@ struct ClientSideStreamingRequestFunction
 };
 
 template <class RPC, class Stub, class Writer, class Response>
-ClientSideStreamingRequestFunction(detail::ClientSideStreamingRequest<RPC, Writer, Response>, Stub&,
-                                   grpc::ClientContext&, Writer&, Response&)
-    -> ClientSideStreamingRequestFunction<RPC, Stub, Writer, Response>;
+ClientSideStreamingRequestInitFunction(detail::ClientSideStreamingRequest<RPC, Writer, Response>, Stub&,
+                                       grpc::ClientContext&, Writer&, Response&)
+    -> ClientSideStreamingRequestInitFunction<RPC, Stub, Writer, Response>;
 
 template <class RPC, class Stub, class Writer, class Response>
-struct ClientSideStreamingRequestConvenienceFunction
+struct ClientSideStreamingRequestConvenienceInitFunction
 {
     detail::ClientSideStreamingRequest<RPC, Writer, Response> rpc;
     Stub& stub;
@@ -336,12 +337,12 @@ struct ClientSideStreamingRequestConvenienceFunction
 };
 
 template <class RPC, class Stub, class Writer, class Response>
-ClientSideStreamingRequestConvenienceFunction(detail::ClientSideStreamingRequest<RPC, Writer, Response>, Stub&,
-                                              grpc::ClientContext&, Response&)
-    -> ClientSideStreamingRequestConvenienceFunction<RPC, Stub, Writer, Response>;
+ClientSideStreamingRequestConvenienceInitFunction(detail::ClientSideStreamingRequest<RPC, Writer, Response>, Stub&,
+                                                  grpc::ClientContext&, Response&)
+    -> ClientSideStreamingRequestConvenienceInitFunction<RPC, Stub, Writer, Response>;
 
 template <class RPC, class Stub, class ReaderWriter>
-struct ClientBidirectionalStreamingRequestFunction
+struct ClientBidirectionalStreamingRequestInitFunction
 {
     detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter> rpc;
     Stub& stub;
@@ -355,12 +356,12 @@ struct ClientBidirectionalStreamingRequestFunction
 };
 
 template <class RPC, class Stub, class ReaderWriter>
-ClientBidirectionalStreamingRequestFunction(detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter>, Stub&,
-                                            grpc::ClientContext&, ReaderWriter&)
-    -> ClientBidirectionalStreamingRequestFunction<RPC, Stub, ReaderWriter>;
+ClientBidirectionalStreamingRequestInitFunction(detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter>, Stub&,
+                                                grpc::ClientContext&, ReaderWriter&)
+    -> ClientBidirectionalStreamingRequestInitFunction<RPC, Stub, ReaderWriter>;
 
 template <class RPC, class Stub, class ReaderWriter>
-struct ClientBidirectionalStreamingRequestConvencienceFunction
+struct ClientBidirectionalStreamingRequestConvenienceInitFunction
 {
     detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter> rpc;
     Stub& stub;
@@ -374,12 +375,12 @@ struct ClientBidirectionalStreamingRequestConvencienceFunction
 };
 
 template <class RPC, class Stub, class ReaderWriter>
-ClientBidirectionalStreamingRequestConvencienceFunction(detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter>,
-                                                        Stub&, grpc::ClientContext&)
-    -> ClientBidirectionalStreamingRequestConvencienceFunction<RPC, Stub, ReaderWriter>;
+ClientBidirectionalStreamingRequestConvenienceInitFunction(
+    detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter>, Stub&, grpc::ClientContext&)
+    -> ClientBidirectionalStreamingRequestConvenienceInitFunction<RPC, Stub, ReaderWriter>;
 
 template <class Request, class Response>
-struct ClientAsyncReaderWriterFunctions
+struct ClientAsyncReaderWriterInitFunctions
 {
     using Responder = grpc::ClientAsyncReaderWriter<Request, Response>;
 
@@ -416,7 +417,7 @@ struct ClientAsyncReaderWriterFunctions
 };
 
 template <class Request>
-struct ClientAsyncWriterFunctions
+struct ClientAsyncWriterInitFunctions
 {
     using Responder = grpc::ClientAsyncWriter<Request>;
 
@@ -454,7 +455,7 @@ struct ClientAsyncWriterFunctions
 };
 
 template <class Response>
-struct ClientAsyncReaderFunctions
+struct ClientAsyncReaderInitFunctions
 {
     using Responder = grpc::ClientAsyncReader<Response>;
 
@@ -476,7 +477,7 @@ struct ClientAsyncReaderFunctions
 };
 
 template <class Response>
-struct ClientAsyncResponseReaderFunctions
+struct ClientAsyncResponseReaderInitFunctions
 {
     using Responder = grpc::ClientAsyncResponseReader<Response>;
 
@@ -499,7 +500,7 @@ struct ClientAsyncResponseReaderFunctions
 };
 
 template <class Responder>
-struct ReadInitialMetadataFunction
+struct ReadInitialMetadataInitFunction
 {
     Responder& responder;
 
