@@ -2,8 +2,25 @@
 
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=Tradias_asio-grpc&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=Tradias_asio-grpc) [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=Tradias_asio-grpc&metric=coverage)](https://sonarcloud.io/dashboard?id=Tradias_asio-grpc)
 
-This library provides an implementation of [asio::execution_context](https://www.boost.org/doc/libs/develop/doc/html/boost_asio/reference/execution_context.html) that dispatches work to a [grpc::CompletionQueue](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html). Making it possible to write 
-asynchronous gRPC servers and clients using C++20 coroutines, Boost.Coroutines, Asio's stackless coroutines, std::futures and callbacks. Also enables other Asio non-blocking IO operations like HTTP requests - all on the same CompletionQueue.
+A [Executor, Networking TS](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/Executor1.html#boost_asio.reference.Executor1.standard_executors) and [Unified Executors](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2020/p0443r13.html) interface to [grpc::CompletionQueue](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html) for writing asynchronous gRPC clients and servers using C++20 coroutines, Boost.Coroutines, Asio's stackless coroutines, std::futures or callbacks.
+
+# Features and Roadmap
+
+Completed features:
+
+* Asio [ExecutionContext](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/ExecutionContext.html) compatible wrapper around [grpc::CompletionQueue](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html)
+* [Executor and Networking TS requirements](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/Executor1.html#boost_asio.reference.Executor1.standard_executors) fulfilling associated executor
+* Support for all RPC types: unary, client-streaming, server-streaming and bidirectional-streaming with any mix of Asio [CompletionToken](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers) as well as  [TypedSender](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#typedsender-concept)
+* Support for asynchronously waiting for [grpc::Alarm](https://grpc.github.io/grpc/cpp/classgrpc_1_1_alarm.html)s including cancellation through [cancellation_slot](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/cancellation_slot.html)s
+* Initial support for unified executor concepts through [libunifex](https://github.com/facebookexperimental/libunifex) and Asio: [schedule](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/execution__schedule.html), [connect](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/execution__connect.html), [submit](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/execution__submit.html), [scheduler](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/Scheduler.html), [typed_sender](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/Sender.html#boost_asio.reference.Sender.typed_sender) and more
+* No-Boost version with [standalone Asio](https://github.com/chriskohlhoff/asio)
+* No-Asio version with [libunifex](https://github.com/facebookexperimental/libunifex)
+* CMake function for easily running `protoc`: [asio_grpc_protobuf_generate](/cmake/AsioGrpcProtobufGenerator.cmake)
+
+Upcoming features for v1.4.0:
+
+* [CancellationSlot](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/CancellationSlot.html) and [StopToken](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#stoptoken-concept) support for individual RPC steps
+* [AsyncStream](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#streams) for streaming RPCs
 
 # Example
 
@@ -76,7 +93,7 @@ grpc_context.run();
 Tested by CI:
 
  * gRPC 1.37
- * Boost 1.77 (min. 1.74 or standalone Asio 1.17.0)
+ * [Boost](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio.html) 1.77 (min. 1.74 or [standalone Asio](https://github.com/chriskohlhoff/asio) 1.17.0)
  * MSVC 19.29.30133.0 (Visual Studio 16 2019)
  * GCC 9.3.0, 10.3.0, 11.1.0
  * Clang 10.0.0, 11.0.0, 12.0.0
@@ -93,17 +110,18 @@ BOOST_ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT
 BOOST_ASIO_HAS_DEDUCED_PREFER_MEMBER_TRAIT
 ```
 
-When using standalone Asio then omit the `BOOST_` prefix.
+When using [standalone Asio](https://github.com/chriskohlhoff/asio) then omit the `BOOST_` prefix.
 
 # Usage
 
-The library can be added to a CMake project using either `add_subdirectory` or `find_package` . Once set up, include the following header:
+The library can be added to a CMake project using either `add_subdirectory` or `find_package`. Once set up, include the following header:
 
 ```c++
 #include <agrpc/asioGrpc.hpp>
 ```
 
-## As a subdirectory
+<details><summary><b>As a subdirectory</b></summary>
+<p>
 
 Clone the repository into a subdirectory of your CMake project. Then add it and link it to your target.
 
@@ -114,7 +132,7 @@ add_subdirectory(/path/to/repository/root)
 target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc gRPC::grpc++ Boost::headers)
 ```
 
-Or using standalone Asio:
+Or using [standalone Asio](https://github.com/chriskohlhoff/asio):
 
 ```cmake
 find_package(asio)
@@ -123,7 +141,20 @@ add_subdirectory(/path/to/repository/root)
 target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-standalone-asio gRPC::grpc++ asio::asio)
 ```
 
-## As a CMake package
+Or using [libunifex](https://github.com/facebookexperimental/libunifex):
+
+```cmake
+find_package(unifex)
+find_package(gRPC)
+add_subdirectory(/path/to/repository/root)
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-unifex gRPC::grpc++ unofficial::unifex)
+```
+
+</p>
+</details>
+
+<details><summary><b>As a CMake package</b></summary>
+<p>
 
 Clone the repository and install it.
 
@@ -144,7 +175,7 @@ find_package(asio-grpc)
 target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc gRPC::grpc++ Boost::headers)
 ```
 
-Or using standalone Asio:
+Or using [standalone Asio](https://github.com/chriskohlhoff/asio):
 
 ```cmake
 find_package(asio)
@@ -154,11 +185,21 @@ find_package(asio-grpc)
 target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-standalone-asio gRPC::grpc++ asio::asio)
 ```
 
-### CMake Options
+Or using [libunifex](https://github.com/facebookexperimental/libunifex):
 
-`ASIO_GRPC_USE_BOOST_CONTAINER` - Use Boost.Container instead of `<memory_resource>`
+```cmake
+find_package(unifex)
+find_package(gRPC)
+# Make sure to set CMAKE_PREFIX_PATH to /desired/installation/directory
+find_package(asio-grpc)
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-unifex gRPC::grpc++ unofficial::unifex)
+```
 
-## Using vcpkg
+</p>
+</details>
+
+<details><summary><b>Using vcpkg</b></summary>
+<p>
 
 Add [asio-grpc](https://github.com/microsoft/vcpkg/blob/master/ports/asio-grpc/vcpkg.json) to the dependencies inside your `vcpkg.json`: 
 
@@ -186,6 +227,14 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc gRPC::grpc++ Boost::h
 `boost-container` - Use Boost.Container instead of `<memory_resource>`
 
 See [selecting-library-features](https://vcpkg.io/en/docs/users/selecting-library-features.html) to learn how to select features with vcpkg.
+
+</p>
+</details>
+</br>
+
+## CMake Options
+
+`ASIO_GRPC_USE_BOOST_CONTAINER` - Use Boost.Container instead of `<memory_resource>`
 
 # Performance
 
@@ -232,11 +281,11 @@ The main workhorses of this library are the `agrpc::GrpcContext` and its `execut
 
 The `agrpc::GrpcContext` implements [asio::execution_context](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/execution_context.html) and can be used as an argument to Asio functions that expect an `ExecutionContext` like [asio::spawn](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/spawn/overload7.html).
 
-Likewise, the `agrpc::GrpcExecutor` models the [Executor and Networking TS requirements](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/Executor1.html#boost_asio.reference.Executor1.standard_executors) and can therefore be used in places where Asio expects an `Executor`.
+Likewise, the `agrpc::GrpcExecutor` models the [Executor and Networking TS requirements](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/Executor1.html#boost_asio.reference.Executor1.standard_executors) and [Scheduler](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/Scheduler.html) and can therefore be used in places where Asio/libunifex expects an `Executor` or `Scheduler`.
 
-This library's API for RPCs is modeled closely after the asynchronous, tag-based API of gRPC. As an example, the equivalent for `grpc::ClientAsyncReader<helloworld::HelloReply>.Read(helloworld::HelloReply*, void*)` would be `agrpc::read(grpc::ClientAsyncReader<helloworld::HelloReply>&, helloworld::HelloReply&, CompletionToken)`. It can therefore be helpful to refer to [async_unary_call.h](https://github.com/grpc/grpc/blob/master/include/grpcpp/impl/codegen/async_unary_call.h) and [async_stream.h](https://github.com/grpc/grpc/blob/master/include/grpcpp/impl/codegen/async_stream.h) while working with this library.
+The API for RPCs is modeled closely after the asynchronous, tag-based API of gRPC. As an example, the equivalent for `grpc::ClientAsyncReader<helloworld::HelloReply>.Read(helloworld::HelloReply*, void*)` would be `agrpc::read(grpc::ClientAsyncReader<helloworld::HelloReply>&, helloworld::HelloReply&, CompletionToken)`. It can therefore be helpful to refer to [async_unary_call.h](https://github.com/grpc/grpc/blob/master/include/grpcpp/impl/codegen/async_unary_call.h) and [async_stream.h](https://github.com/grpc/grpc/blob/master/include/grpcpp/impl/codegen/async_stream.h) while working with this library.
 
-Instead of the `void*` tag in the gRPC API the functions in this library expect a [CompletionToken](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers). Asio comes with several CompletionTokens already: [C++20 coroutine](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/use_awaitable.html), [std::future](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/use_future.html), [stackless coroutine](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/coroutine.html), [callback](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/executor_binder.html) and [Boost.Coroutine](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/basic_yield_context.html).
+Instead of the `void*` tag in the gRPC API the functions in this library expect a [CompletionToken](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers). Asio comes with several CompletionTokens already: [C++20 coroutine](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/use_awaitable.html), [std::future](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/use_future.html), [stackless coroutine](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/coroutine.html), [callback](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/executor_binder.html) and [Boost.Coroutine](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/basic_yield_context.html). There is also a special token created with `agrpc::use_scheduler(scheduler)` that returns a [TypedSender](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/Sender.html#boost_asio.reference.Sender.typed_sender).
 
 If you are interested in learning more about the implementation details of this library then check out [this blog article](https://medium.com/3yourmind/c-20-coroutines-for-asynchronous-grpc-services-5b3dab1d1d61).
 
