@@ -142,6 +142,15 @@ struct ServerAsyncReaderWriterInitFunctions
         void operator()(const agrpc::GrpcContext&, void* tag) { responder.Write(response, tag); }
     };
 
+    struct WriteWithOptions
+    {
+        Responder& responder;
+        const Response& response;
+        grpc::WriteOptions options;
+
+        void operator()(const agrpc::GrpcContext&, void* tag) { responder.Write(response, options, tag); }
+    };
+
     struct WriteAndFinish
     {
         Responder& responder;
@@ -206,6 +215,15 @@ struct ServerAsyncWriterInitFunctions
         const Response& response;
 
         void operator()(const agrpc::GrpcContext&, void* tag) { responder.Write(response, tag); }
+    };
+
+    struct WriteWithOptions
+    {
+        Responder& responder;
+        const Response& response;
+        grpc::WriteOptions options;
+
+        void operator()(const agrpc::GrpcContext&, void* tag) { responder.Write(response, options, tag); }
     };
 
     struct Finish
@@ -398,6 +416,15 @@ struct ClientAsyncReaderWriterInitFunctions
         const Request& request;
 
         void operator()(const agrpc::GrpcContext&, void* tag) { responder.Write(request, tag); }
+    };
+
+    struct WriteWithOptions
+    {
+        Responder& responder;
+        const Request& request;
+        grpc::WriteOptions options;
+
+        void operator()(const agrpc::GrpcContext&, void* tag) { responder.Write(request, options, tag); }
     };
 
     struct WritesDone

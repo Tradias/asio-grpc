@@ -479,6 +479,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context server streaming")
                     CHECK_EQ(42, request.integer());
                     test::v1::Response response;
                     response.set_integer(21);
+                    CHECK(agrpc::write(writer, response, grpc::WriteOptions{}, yield));
                     if (use_write_and_finish)
                     {
                         CHECK(agrpc::write_and_finish(writer, response, {}, grpc::Status::OK, yield));
@@ -510,6 +511,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context server streaming")
                     CHECK(agrpc::read_initial_metadata(*reader, yield));
                     test::v1::Response response;
                     CHECK(agrpc::read(*reader, response, yield));
+                    CHECK(agrpc::read(*reader, response, yield));
                     grpc::Status status;
                     CHECK(agrpc::finish(*reader, status, yield));
                     CHECK(status.ok());
@@ -522,7 +524,8 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context client streaming")
 {
     bool use_client_convenience{false};
     SUBCASE("client use convenience") { use_client_convenience = true; }
-    SUBCASE("client do not use convenience") {}
+    bool use_finish_with_error{false};
+    SUBCASE("server finish_with_error") { use_finish_with_error = true; }
     asio::spawn(get_executor(),
                 [&](asio::yield_context yield)
                 {
@@ -535,7 +538,14 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context client streaming")
                     CHECK_EQ(42, request.integer());
                     test::v1::Response response;
                     response.set_integer(21);
-                    CHECK(agrpc::finish(reader, response, grpc::Status::OK, yield));
+                    if (use_finish_with_error)
+                    {
+                        CHECK(agrpc::finish_with_error(reader, grpc::Status::CANCELLED, yield));
+                    }
+                    else
+                    {
+                        CHECK(agrpc::finish(reader, response, grpc::Status::OK, yield));
+                    }
                 });
     asio::spawn(get_executor(),
                 [&](asio::yield_context yield)
@@ -562,8 +572,15 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context client streaming")
                     CHECK(agrpc::writes_done(*writer, yield));
                     grpc::Status status;
                     CHECK(agrpc::finish(*writer, status, yield));
-                    CHECK(status.ok());
-                    CHECK_EQ(21, response.integer());
+                    if (use_finish_with_error)
+                    {
+                        CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
+                    }
+                    else
+                    {
+                        CHECK(status.ok());
+                        CHECK_EQ(21, response.integer());
+                    }
                 });
     grpc_context.run();
 }
@@ -632,9 +649,11 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context bidirectional strea
                     CHECK(agrpc::send_initial_metadata(reader_writer, yield));
                     test::v1::Request request;
                     CHECK(agrpc::read(reader_writer, request, yield));
+                    CHECK(agrpc::read(reader_writer, request, yield));
                     CHECK_EQ(42, request.integer());
                     test::v1::Response response;
                     response.set_integer(21);
+                    CHECK(agrpc::write(reader_writer, response, grpc::WriteOptions{}, yield));
                     if (use_write_and_finish)
                     {
                         CHECK(agrpc::write_and_finish(reader_writer, response, {}, grpc::Status::OK, yield));
@@ -666,8 +685,10 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context bidirectional strea
             test::v1::Request request;
             request.set_integer(42);
             CHECK(agrpc::write(*reader_writer, request, yield));
+            CHECK(agrpc::write(*reader_writer, request, grpc::WriteOptions{}, yield));
             CHECK(agrpc::writes_done(*reader_writer, yield));
             test::v1::Response response;
+            CHECK(agrpc::read(*reader_writer, response, yield));
             CHECK(agrpc::read(*reader_writer, response, yield));
             grpc::Status status;
             CHECK(agrpc::finish(*reader_writer, status, yield));

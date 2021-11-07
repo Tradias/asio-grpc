@@ -236,12 +236,31 @@ struct WriteFn
                                     std::move(token));
     }
 
+    template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(grpc::ServerAsyncWriter<Response>& writer, const Response& response, grpc::WriteOptions options,
+                    CompletionToken token = {}) const
+    {
+        return agrpc::grpc_initiate(
+            typename detail::ServerAsyncWriterInitFunctions<Response>::WriteWithOptions{writer, response, options},
+            std::move(token));
+    }
+
     template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncReaderWriter<Response, Request>& reader_writer, const Response& response,
                     CompletionToken token = {}) const
     {
         return agrpc::grpc_initiate(
             typename detail::ServerAsyncReaderWriterInitFunctions<Response, Request>::Write{reader_writer, response},
+            std::move(token));
+    }
+
+    template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(grpc::ServerAsyncReaderWriter<Response, Request>& reader_writer, const Response& response,
+                    grpc::WriteOptions options, CompletionToken token = {}) const
+    {
+        return agrpc::grpc_initiate(
+            typename detail::ServerAsyncReaderWriterInitFunctions<Response, Request>::WriteWithOptions{
+                reader_writer, response, options},
             std::move(token));
     }
 
@@ -268,6 +287,16 @@ struct WriteFn
     {
         return agrpc::grpc_initiate(
             typename detail::ClientAsyncReaderWriterInitFunctions<Request, Response>::Write{reader_writer, request},
+            std::move(token));
+    }
+
+    template <class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(grpc::ClientAsyncReaderWriter<Request, Response>& reader_writer, const Request& request,
+                    grpc::WriteOptions options, CompletionToken token = {}) const
+    {
+        return agrpc::grpc_initiate(
+            typename detail::ClientAsyncReaderWriterInitFunctions<Request, Response>::WriteWithOptions{
+                reader_writer, request, options},
             std::move(token));
     }
 };
