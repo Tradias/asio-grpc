@@ -16,7 +16,7 @@ cmake_minimum_required(VERSION 3.14...3.22)
 
 project(
     asio-grpc
-    VERSION 1.2.0
+    VERSION 1.3.0
     DESCRIPTION "Asynchronous gRPC using Boost.Asio's executor model"
     HOMEPAGE_URL "https://github.com/Tradias/asio-grpc"
     LANGUAGES CXX)
