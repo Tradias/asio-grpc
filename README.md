@@ -230,6 +230,7 @@ See [selecting-library-features](https://vcpkg.io/en/docs/users/selecting-librar
 ## CMake Options
 
 `ASIO_GRPC_USE_BOOST_CONTAINER` - Use Boost.Container instead of `<memory_resource>`
+`ASIO_GRPC_DISABLE_AUTOLINK` - Set before using `find_package(asio-grpc)` to prevent `asio-grpcConfig.cmake` from finding and setting up interface link libraries
 
 # Performance
 
@@ -280,7 +281,7 @@ Likewise, the `agrpc::GrpcExecutor` models the [Executor and Networking TS requi
 
 The API for RPCs is modeled closely after the asynchronous, tag-based API of gRPC. As an example, the equivalent for `grpc::ClientAsyncReader<helloworld::HelloReply>.Read(helloworld::HelloReply*, void*)` would be `agrpc::read(grpc::ClientAsyncReader<helloworld::HelloReply>&, helloworld::HelloReply&, CompletionToken)`. It can therefore be helpful to refer to [async_unary_call.h](https://github.com/grpc/grpc/blob/master/include/grpcpp/impl/codegen/async_unary_call.h) and [async_stream.h](https://github.com/grpc/grpc/blob/master/include/grpcpp/impl/codegen/async_stream.h) while working with this library.
 
-Instead of the `void*` tag in the gRPC API the functions in this library expect a [CompletionToken](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers). Asio comes with several CompletionTokens already: [C++20 coroutine](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/use_awaitable.html), [std::future](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/use_future.html), [stackless coroutine](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/coroutine.html), [callback](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/executor_binder.html) and [Boost.Coroutine](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/basic_yield_context.html). There is also a special token created with `agrpc::use_scheduler(scheduler)` that returns a [TypedSender](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/Sender.html#boost_asio.reference.Sender.typed_sender).
+Instead of the `void*` tag in the gRPC API the functions in this library expect a [CompletionToken](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers). Asio comes with several CompletionTokens already: [C++20 coroutine](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/use_awaitable.html), [std::future](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/use_future.html), [stackless coroutine](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/coroutine.html), [callback](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/executor_binder.html) and [Boost.Coroutine](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/basic_yield_context.html). There is also a special token created by `agrpc::use_scheduler(scheduler)` that returns a [TypedSender](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/Sender.html#boost_asio.reference.Sender.typed_sender).
 
 If you are interested in learning more about the implementation details of this library then check out [this blog article](https://medium.com/3yourmind/c-20-coroutines-for-asynchronous-grpc-services-5b3dab1d1d61).
 
@@ -662,8 +663,7 @@ For the meaning of `read_metadata_ok`, `write_ok`, `writes_done_ok`, `read_ok` a
 
 ## use_scheduler
 
-A special completion token created with `agrpc::use_scheduler(scheduler)` where `scheduler` is a `agrpc::GrpcContext` or `agrpc::GrpcExecutor`, that causes any 
-RPC step function return a [TypedSender](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/Sender.html#boost_asio.reference.Sender.typed_sender). The sender can e.g. be connected to a [unifex::task<>](https://github.com/facebookexperimental/libunifex/blob/main/doc/api_reference.md#task) to await completion of the RPC step:
+A special completion token created by `agrpc::use_scheduler(scheduler)` where `scheduler` is a `agrpc::GrpcContext` or `agrpc::GrpcExecutor`. It causes any RPC step function return a [TypedSender](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/Sender.html#boost_asio.reference.Sender.typed_sender). The sender can e.g. be connected to a [unifex::task<>](https://github.com/facebookexperimental/libunifex/blob/main/doc/api_reference.md#task) to await completion of the RPC step:
 
 <!-- snippet: unifex-server-streaming-client-side -->
 <a id='snippet-unifex-server-streaming-client-side'></a>
