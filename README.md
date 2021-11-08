@@ -226,7 +226,6 @@ See [selecting-library-features](https://vcpkg.io/en/docs/users/selecting-librar
 
 </p>
 </details>
-</br>
 
 ## CMake Options
 

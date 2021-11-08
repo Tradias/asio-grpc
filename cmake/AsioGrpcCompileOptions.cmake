@@ -18,7 +18,7 @@ add_library(asio-grpc-common-compile-options INTERFACE)
 if(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS)
     target_compile_options(asio-grpc-common-compile-options INTERFACE -fsanitize=undefined,leak -fno-omit-frame-pointer)
 
-    target_link_libraries(asio-grpc-common-compile-options INTERFACE asan ubsan)
+    target_link_libraries(asio-grpc-common-compile-options INTERFACE -fsanitize=undefined,leak)
 
     target_compile_definitions(asio-grpc-common-compile-options INTERFACE GRPC_ASAN_SUPPRESSED GRPC_TSAN_SUPPRESSED)
 endif()
