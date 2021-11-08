@@ -253,7 +253,7 @@ struct ServerAsyncResponseWriterInitFunctions
 {
     using Responder = grpc::ServerAsyncResponseWriter<Response>;
 
-    struct Write
+    struct Finish
     {
         Responder& responder;
         const Response& response;
@@ -397,19 +397,9 @@ ClientBidirectionalStreamingRequestConvenienceInitFunction(
     detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter>, Stub&, grpc::ClientContext&)
     -> ClientBidirectionalStreamingRequestConvenienceInitFunction<RPC, Stub, ReaderWriter>;
 
-template <class Request, class Response>
-struct ClientAsyncReaderWriterInitFunctions
+template <class Request, class Responder>
+struct BaseClientAsyncWriterInitFunctions
 {
-    using Responder = grpc::ClientAsyncReaderWriter<Request, Response>;
-
-    struct Read
-    {
-        Responder& responder;
-        Response& response;
-
-        void operator()(const agrpc::GrpcContext&, void* tag) { responder.Read(&response, tag); }
-    };
-
     struct Write
     {
         Responder& responder;
@@ -443,42 +433,25 @@ struct ClientAsyncReaderWriterInitFunctions
     };
 };
 
+template <class Request, class Response>
+struct ClientAsyncReaderWriterInitFunctions
+    : detail::BaseClientAsyncWriterInitFunctions<Request, grpc::ClientAsyncReaderWriter<Request, Response>>
+{
+    using Responder = grpc::ClientAsyncReaderWriter<Request, Response>;
+
+    struct Read
+    {
+        Responder& responder;
+        Response& response;
+
+        void operator()(const agrpc::GrpcContext&, void* tag) { responder.Read(&response, tag); }
+    };
+};
+
 template <class Request>
 struct ClientAsyncWriterInitFunctions
+    : detail::BaseClientAsyncWriterInitFunctions<Request, grpc::ClientAsyncWriter<Request>>
 {
-    using Responder = grpc::ClientAsyncWriter<Request>;
-
-    struct Write
-    {
-        Responder& responder;
-        const Request& request;
-
-        void operator()(const agrpc::GrpcContext&, void* tag) { responder.Write(request, tag); }
-    };
-
-    struct WriteWithOptions
-    {
-        Responder& responder;
-        const Request& request;
-        grpc::WriteOptions options;
-
-        void operator()(const agrpc::GrpcContext&, void* tag) { responder.Write(request, options, tag); }
-    };
-
-    struct WritesDone
-    {
-        Responder& responder;
-
-        void operator()(const agrpc::GrpcContext&, void* tag) { responder.WritesDone(tag); }
-    };
-
-    struct Finish
-    {
-        Responder& responder;
-        grpc::Status& status;
-
-        void operator()(const agrpc::GrpcContext&, void* tag) { responder.Finish(&status, tag); }
-    };
 };
 
 template <class Response>

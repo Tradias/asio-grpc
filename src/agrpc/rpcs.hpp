@@ -345,7 +345,7 @@ struct FinishFn
                     const grpc::Status& status, CompletionToken token = {}) const
     {
         return agrpc::grpc_initiate(
-            typename detail::ServerAsyncResponseWriterInitFunctions<Response>::Write{writer, response, status},
+            typename detail::ServerAsyncResponseWriterInitFunctions<Response>::Finish{writer, response, status},
             std::move(token));
     }
 
