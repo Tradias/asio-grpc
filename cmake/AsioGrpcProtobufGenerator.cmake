@@ -132,9 +132,9 @@ function(asio_grpc_protobuf_generate)
         endif()
         list(APPEND _asio_grpc_command_arguments ${asio_grpc_protobuf_generate_EXTRA_ARGS} "${_asio_grpc_abs_file}")
         string(REPLACE ";" " " _asio_grpc_pretty_command_arguments "${_asio_grpc_command_arguments}")
+        file(MAKE_DIRECTORY "${asio_grpc_protobuf_generate_OUT_DIR}")
         add_custom_command(
             OUTPUT ${_asio_grpc_generated_srcs}
-            COMMAND "${CMAKE_COMMAND}" "-E" "make_directory" "${asio_grpc_protobuf_generate_OUT_DIR}"
             COMMAND protobuf::protoc ${_asio_grpc_command_arguments}
             MAIN_DEPENDENCY "${_asio_grpc_abs_file}"
             DEPENDS protobuf::protoc
