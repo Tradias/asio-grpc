@@ -54,6 +54,8 @@ target_compile_definitions(
               ASIO_HAS_DEDUCED_PREFER_MEMBER_TRAIT
               _WIN32_WINNT=0x0A00 # Windows 10
               WINVER=0x0A00>
+              $<$<CXX_COMPILER_ID:Clang>:BOOST_ASIO_HAS_STD_INVOKE_RESULT
+              ASIO_HAS_STD_INVOKE_RESULT>
               BOOST_ASIO_NO_DEPRECATED
               ASIO_NO_DEPRECATED)
 
@@ -72,4 +74,7 @@ target_compile_features(asio-grpc-cpp20-compile-options INTERFACE cxx_std_20)
 
 target_compile_options(
     asio-grpc-cpp20-compile-options
-    INTERFACE $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,10>>:-fcoroutines>)
+    INTERFACE
+        $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,10>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,12>>:-fcoroutines>
+        $<$<AND:$<CXX_COMPILER_ID:Clang>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,11>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,14>>:-fcoroutines-ts>
+)

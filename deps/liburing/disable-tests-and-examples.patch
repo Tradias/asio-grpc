@@ -1,0 +1,25 @@
+From 499f7f01d1bf4f6244ae272b904bb1f4abf3b154 Mon Sep 17 00:00:00 2001
+From: Dennis Hezel <dh@3yourmind.com>
+Date: Thu, 11 Nov 2021 19:36:48 +0100
+Subject: [PATCH] disable-tests-and-examples
+
+---
+ Makefile | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 5d9c4dc..66ee81e 100644
+--- a/Makefile
++++ b/Makefile
+@@ -10,8 +10,6 @@ default: all
+ 
+ all:
+ 	@$(MAKE) -C src
+-	@$(MAKE) -C test
+-	@$(MAKE) -C examples
+ 
+ .PHONY: all install default clean test
+ .PHONY: FORCE cscope
+-- 
+2.25.1
+
