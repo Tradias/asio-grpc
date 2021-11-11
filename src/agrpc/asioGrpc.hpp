@@ -19,9 +19,7 @@
 #include "agrpc/grpcContext.hpp"
 #include "agrpc/grpcContext.ipp"
 #include "agrpc/grpcExecutor.hpp"
-#include "agrpc/grpcSender.hpp"
 #include "agrpc/initiate.hpp"
 #include "agrpc/rpcs.hpp"
-#include "agrpc/scheduleSender.hpp"
 
 #endif  // AGRPC_AGRPC_ASIOGRPC_HPP

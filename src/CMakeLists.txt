@@ -70,6 +70,7 @@ if(ASIO_GRPC_BUILD_TESTS)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcContextInteraction.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcExecutorBase.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcExecutorOptions.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpcSender.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/initiate.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/intrusiveQueue.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/intrusiveQueueHook.hpp"
@@ -78,14 +79,13 @@ if(ASIO_GRPC_BUILD_TESTS)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/receiver.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/receiver.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/rpcs.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/scheduleSender.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/typeErasedOperation.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/utility.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcContext.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcContext.ipp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcExecutor.hpp"
-                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcSender.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/initiate.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/rpcs.hpp"
-                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/scheduleSender.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/asioGrpc.cpp")
 endif()

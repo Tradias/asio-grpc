@@ -54,13 +54,22 @@ void grpc_submit(agrpc::GrpcContext& grpc_context, InitiatingFunction initiating
     on_exit.release();
 }
 
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class Executor>
 decltype(auto) query_grpc_context(const Executor& executor)
 {
-    return static_cast<agrpc::GrpcContext&>(asio::query(executor, asio::execution::context));
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+    if constexpr (asio::can_query_v<Executor, asio::execution::context_t>)
+    {
+        return static_cast<agrpc::GrpcContext&>(asio::query(executor, asio::execution::context));
+    }
+    else
+#endif
+    {
+        return static_cast<agrpc::GrpcContext&>(executor.context());
+    }
 }
 
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class Function>
 struct GrpcInitiator
 {

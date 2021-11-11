@@ -23,8 +23,8 @@
 #include "agrpc/detail/grpcExecutorOptions.hpp"
 #include "agrpc/detail/memory.hpp"
 #include "agrpc/detail/memoryResource.hpp"
+#include "agrpc/detail/scheduleSender.hpp"
 #include "agrpc/grpcContext.hpp"
-#include "agrpc/scheduleSender.hpp"
 
 #include <cstddef>
 #include <utility>
@@ -114,7 +114,7 @@ class BasicGrpcExecutor
             this->context(), std::forward<Function>(function), this->allocator());
     }
 
-    constexpr auto schedule() const noexcept { return agrpc::ScheduleSender{this->context()}; }
+    constexpr auto schedule() const noexcept { return detail::ScheduleSender{this->context()}; }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     [[nodiscard]] constexpr auto require(asio::execution::blocking_t::possibly_t) const noexcept

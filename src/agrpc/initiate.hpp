@@ -17,11 +17,11 @@
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
+#include "agrpc/detail/grpcSender.hpp"
 #include "agrpc/detail/initiate.hpp"
 #include "agrpc/detail/utility.hpp"
 #include "agrpc/grpcContext.hpp"
 #include "agrpc/grpcExecutor.hpp"
-#include "agrpc/grpcSender.hpp"
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -50,34 +50,27 @@ using DefaultCompletionToken = detail::DefaultCompletionTokenNotAvailable;
 
 namespace detail
 {
-template <class Scheduler>
 struct UseScheduler
 {
-    Scheduler scheduler;
+    agrpc::GrpcContext& grpc_context;
 };
-
-template <class Scheduler>
-UseScheduler(Scheduler&&) -> UseScheduler<Scheduler>;
 
 struct UseSchedulerFn
 {
     template <class Scheduler>
-    auto operator()(Scheduler&& scheduler) const noexcept
+    auto operator()(const Scheduler& scheduler) const noexcept
     {
-        return detail::UseScheduler{std::forward<Scheduler>(scheduler)};
+        return detail::UseScheduler{detail::query_grpc_context(scheduler)};
     }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     auto operator()(asio::execution_context& context) const noexcept
     {
-        return detail::UseScheduler{static_cast<agrpc::GrpcContext&>(context).get_scheduler()};
+        return detail::UseScheduler{static_cast<agrpc::GrpcContext&>(context)};
     }
 #endif
 
-    auto operator()(agrpc::GrpcContext& context) const noexcept
-    {
-        return detail::UseScheduler{context.get_scheduler()};
-    }
+    auto operator()(agrpc::GrpcContext& context) const noexcept { return detail::UseScheduler{context}; }
 };
 }  // namespace detail
 
@@ -130,10 +123,10 @@ struct GrpcInitiateFn
     }
 #endif
 
-    template <class Function, class Scheduler>
-    auto operator()(Function function, detail::UseScheduler<Scheduler> token) const
+    template <class Function>
+    auto operator()(Function function, detail::UseScheduler token) const
     {
-        return agrpc::GrpcSender{static_cast<agrpc::GrpcContext&>(token.scheduler.context()), std::move(function)};
+        return detail::GrpcSender{static_cast<agrpc::GrpcContext&>(token.grpc_context), std::move(function)};
     }
 };
 }  // namespace detail

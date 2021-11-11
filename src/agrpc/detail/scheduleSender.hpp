@@ -12,34 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_AGRPC_GRPCSENDER_HPP
-#define AGRPC_AGRPC_GRPCSENDER_HPP
+#ifndef AGRPC_AGRPC_SCHEDULESENDER_HPP
+#define AGRPC_AGRPC_SCHEDULESENDER_HPP
 
-#include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/forward.hpp"
-#include "agrpc/detail/grpcContext.hpp"
-#include "agrpc/detail/initiate.hpp"
+#include "agrpc/detail/grpcContextImplementation.hpp"
 #include "agrpc/detail/receiver.hpp"
-#include "agrpc/detail/typeErasedOperation.hpp"
 #include "agrpc/detail/utility.hpp"
 #include "agrpc/grpcContext.hpp"
 
 AGRPC_NAMESPACE_BEGIN()
 
-template <class InitiatingFunction>
-class GrpcSender
+namespace detail
+{
+struct ScheduleSender
 {
   private:
     template <class Receiver>
-    class Operation : private detail::TypeErasedGrpcTagOperation
+    class Operation : private detail::TypeErasedNoArgOperation
     {
       public:
         template <class Receiver2>
-        constexpr Operation(const GrpcSender& sender, Receiver2&& receiver)
-            : detail::TypeErasedGrpcTagOperation(&Operation::on_complete),
-              impl(sender.grpc_context, std::forward<Receiver2>(receiver)),
-              initiating_function(sender.initiating_function)
+        constexpr Operation(const ScheduleSender& sender, Receiver2&& receiver)
+            : detail::TypeErasedNoArgOperation(&Operation::on_complete),
+              impl(sender.grpc_context, std::forward<Receiver2>(receiver))
         {
         }
 
@@ -50,20 +47,24 @@ class GrpcSender
                     detail::set_done(std::move(this->receiver()));
                     return;
                 }
-            this->grpc_context().work_started();
-            detail::WorkFinishedOnExit on_exit{this->grpc_context()};
-            initiating_function(this->grpc_context(), this);
-            on_exit.release();
+            if (detail::GrpcContextImplementation::running_in_this_thread(this->grpc_context()))
+            {
+                detail::GrpcContextImplementation::add_local_operation(this->grpc_context(), this);
+            }
+            else
+            {
+                detail::GrpcContextImplementation::add_remote_operation(this->grpc_context(), this);
+            }
         }
 
       private:
-        static void on_complete(detail::TypeErasedGrpcTagOperation* op, detail::InvokeHandler invoke_handler, bool ok,
+        static void on_complete(detail::TypeErasedNoArgOperation* op, detail::InvokeHandler invoke_handler,
                                 detail::GrpcContextLocalAllocator) noexcept
         {
             auto& self = *static_cast<Operation*>(op);
             if (detail::InvokeHandler::YES == invoke_handler) AGRPC_LIKELY
                 {
-                    detail::satisfy_receiver(std::move(self.receiver()), ok);
+                    detail::satisfy_receiver(std::move(self.receiver()));
                 }
             else
             {
@@ -76,12 +77,11 @@ class GrpcSender
         constexpr decltype(auto) receiver() noexcept { return impl.second(); }
 
         detail::CompressedPair<agrpc::GrpcContext&, Receiver> impl;
-        InitiatingFunction initiating_function;
     };
 
   public:
     template <template <class...> class Variant, template <class...> class Tuple>
-    using value_types = Variant<Tuple<bool>>;
+    using value_types = Variant<Tuple<>>;
 
     template <template <class...> class Variant>
     using error_types = Variant<std::exception_ptr>;
@@ -99,27 +99,25 @@ class GrpcSender
     void submit(Receiver&& receiver) const
     {
         auto allocator = detail::get_allocator(receiver);
-        detail::grpc_submit(
-            this->grpc_context, this->initiating_function,
-            [receiver = detail::RemoveCvrefT<Receiver>{std::forward<Receiver>(receiver)}](bool ok) mutable
+        detail::create_no_arg_operation<true>(
+            this->grpc_context,
+            [receiver = detail::RemoveCvrefT<Receiver>{std::forward<Receiver>(receiver)}]() mutable
             {
-                detail::satisfy_receiver(std::move(receiver), ok);
+                detail::satisfy_receiver(std::move(receiver));
             },
             allocator);
     }
 
   private:
-    constexpr explicit GrpcSender(agrpc::GrpcContext& grpc_context, InitiatingFunction initiating_function) noexcept
-        : grpc_context(grpc_context), initiating_function(std::move(initiating_function))
-    {
-    }
+    constexpr explicit ScheduleSender(agrpc::GrpcContext& grpc_context) noexcept : grpc_context(grpc_context) {}
 
-    friend agrpc::detail::GrpcInitiateFn;
+    template <class Allocator, std::uint32_t Options>
+    friend class agrpc::BasicGrpcExecutor;
 
     agrpc::GrpcContext& grpc_context;
-    InitiatingFunction initiating_function;
 };
+}
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_AGRPC_GRPCSENDER_HPP
+#endif  // AGRPC_AGRPC_SCHEDULESENDER_HPP
