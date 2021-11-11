@@ -187,6 +187,11 @@ jobs:
         sudo update-alternatives --install /usr/bin/cpp cpp $(which clang++-10) 50 &&\
         sudo update-alternatives --set cpp $(which clang++-10)
 
+    - name: Install libc++
+      run: |
+          sudo apt-get update
+          sudo apt-get install libc++-10-dev libc++-11-dev libc++-12-dev
+
     - uses: actions/checkout@v2
 
     - name: Install vcpkg
