@@ -15,12 +15,13 @@
 #ifndef AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_HPP
 #define AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_HPP
 
+#include "agrpc/detail/config.hpp"
 #include "agrpc/detail/grpcCompletionQueueEvent.hpp"
 #include "agrpc/detail/typeErasedOperation.hpp"
 #include "agrpc/detail/utility.hpp"
 
-namespace agrpc
-{
+AGRPC_NAMESPACE_BEGIN()
+
 class GrpcContext;
 
 namespace detail
@@ -64,7 +65,8 @@ struct GrpcContextImplementation
     template <detail::InvokeHandler Invoke, class IsStoppedPredicate>
     static bool process_work(agrpc::GrpcContext& grpc_context, IsStoppedPredicate is_stopped_predicate);
 };
-}  // namespace detail
-}  // namespace agrpc
+}
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_HPP

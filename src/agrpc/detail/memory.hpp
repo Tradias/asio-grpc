@@ -15,13 +15,16 @@
 #ifndef AGRPC_DETAIL_MEMORY_HPP
 #define AGRPC_DETAIL_MEMORY_HPP
 
+#include "agrpc/detail/config.hpp"
 #include "agrpc/detail/utility.hpp"
 
 #include <cstddef>
 #include <memory>
 #include <type_traits>
 
-namespace agrpc::detail
+AGRPC_NAMESPACE_BEGIN()
+
+namespace detail
 {
 template <class Allocator>
 struct AllocatedPointer
@@ -176,6 +179,8 @@ constexpr bool operator!=(const detail::MemoryResourceAllocator<T, Resource>& lh
 {
     return lhs.resource != rhs.resource;
 }
-}  // namespace agrpc::detail
+}
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_DETAIL_MEMORY_HPP

@@ -17,6 +17,7 @@
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/atomicIntrusiveQueue.hpp"
+#include "agrpc/detail/config.hpp"
 #include "agrpc/detail/grpcContext.hpp"
 #include "agrpc/detail/grpcContextImplementation.hpp"
 #include "agrpc/detail/grpcExecutorOptions.hpp"
@@ -30,8 +31,8 @@
 #include <atomic>
 #include <thread>
 
-namespace agrpc
-{
+AGRPC_NAMESPACE_BEGIN()
+
 template <class Allocator, std::uint32_t Options>
 class BasicGrpcExecutor;
 
@@ -85,6 +86,7 @@ class GrpcContext
     LocalWorkQueue local_work_queue;
     RemoteWorkQueue remote_work_queue{false};
 };
-}  // namespace agrpc
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_AGRPC_GRPCCONTEXT_HPP

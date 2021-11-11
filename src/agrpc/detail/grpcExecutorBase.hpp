@@ -21,7 +21,9 @@
 #include <type_traits>
 #include <utility>
 
-namespace agrpc::detail
+AGRPC_NAMESPACE_BEGIN()
+
+namespace detail
 {
 template <class Allocator>
 class GrpcExecutorBase
@@ -117,6 +119,8 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
         this->on_work_started();
     }
 };
-}  // namespace agrpc::detail
+}
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_DETAIL_GRPCEXECUTORBASE_HPP

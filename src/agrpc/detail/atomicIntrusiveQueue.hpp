@@ -15,12 +15,15 @@
 #ifndef AGRPC_DETAIL_ATOMICINTRUSIVEQUEUE_HPP
 #define AGRPC_DETAIL_ATOMICINTRUSIVEQUEUE_HPP
 
+#include "agrpc/detail/config.hpp"
 #include "agrpc/detail/intrusiveQueue.hpp"
 
 #include <atomic>
 #include <utility>
 
-namespace agrpc::detail
+AGRPC_NAMESPACE_BEGIN()
+
+namespace detail
 {
 // Adapted from
 // https://github.com/facebookexperimental/libunifex/blob/main/include/unifex/detail/atomic_intrusive_queue.hpp
@@ -103,6 +106,8 @@ class AtomicIntrusiveQueue
 
     std::atomic<void*> head = nullptr;
 };
-}  // namespace agrpc::detail
+}
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_DETAIL_ATOMICINTRUSIVEQUEUE_HPP

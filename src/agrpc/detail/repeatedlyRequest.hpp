@@ -22,7 +22,9 @@
 
 #include <tuple>
 
-namespace agrpc::detail
+AGRPC_NAMESPACE_BEGIN()
+
+namespace detail
 {
 struct RPCContextImplementation
 {
@@ -129,6 +131,8 @@ void RequestRepeater<RPC, Service, RPCHandler, Handler>::operator()(bool ok)
     std::move(this->handler)(detail::RPCContextImplementation::create(std::move(this->rpc_handler)), ok);
 }
 #endif
-}  // namespace agrpc::detail
+}
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_DETAIL_REPEATEDLYREQUEST_HPP

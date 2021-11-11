@@ -16,14 +16,15 @@
 #define AGRPC_AGRPC_RPCS_HPP
 
 #include "agrpc/detail/asioForward.hpp"
+#include "agrpc/detail/config.hpp"
 #include "agrpc/detail/initiate.hpp"
 #include "agrpc/detail/rpcs.hpp"
 #include "agrpc/initiate.hpp"
 
 #include <grpcpp/alarm.h>
 
-namespace agrpc
-{
+AGRPC_NAMESPACE_BEGIN()
+
 template <class RPCContextImplementationAllocator>
 class RPCRequestContext
 {
@@ -480,7 +481,8 @@ inline constexpr detail::FinishWithErrorFn finish_with_error{};
 inline constexpr detail::SendInitialMetadataFn send_initial_metadata{};
 
 inline constexpr detail::ReadInitialMetadataFn read_initial_metadata{};
-}  // namespace agrpc
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_AGRPC_RPCS_HPP
 

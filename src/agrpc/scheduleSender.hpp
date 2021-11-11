@@ -22,8 +22,8 @@
 #include "agrpc/detail/utility.hpp"
 #include "agrpc/grpcContext.hpp"
 
-namespace agrpc
-{
+AGRPC_NAMESPACE_BEGIN()
+
 struct ScheduleSender
 {
   private:
@@ -114,6 +114,7 @@ struct ScheduleSender
 
     agrpc::GrpcContext& grpc_context;
 };
-}  // namespace agrpc
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_AGRPC_SCHEDULESENDER_HPP

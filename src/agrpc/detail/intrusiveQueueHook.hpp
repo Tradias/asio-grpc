@@ -15,15 +15,21 @@
 #ifndef AGRPC_DETAIL_INTRUSIVEQUEUEHOOK_HPP
 #define AGRPC_DETAIL_INTRUSIVEQUEUEHOOK_HPP
 
+#include "agrpc/detail/config.hpp"
+
 #include <utility>
 
-namespace agrpc::detail
+AGRPC_NAMESPACE_BEGIN()
+
+namespace detail
 {
 template <class Derived>
 struct IntrusiveQueueHook
 {
     Derived* next;
 };
-}  // namespace agrpc::detail
+}
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_DETAIL_INTRUSIVEQUEUEHOOK_HPP

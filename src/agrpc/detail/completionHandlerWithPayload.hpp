@@ -16,12 +16,15 @@
 #define AGRPC_DETAIL_COMPLETIONHANDLERWITHPAYLOAD_HPP
 
 #include "agrpc/detail/asioForward.hpp"
+#include "agrpc/detail/config.hpp"
 
 #include <utility>
 
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-namespace agrpc::detail
+AGRPC_NAMESPACE_BEGIN()
+
+namespace detail
 {
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class Payload, class CompletionHandler>
 struct CompletionHandlerWithPayload
 {
@@ -59,7 +62,9 @@ auto make_completion_handler_with_payload(CompletionHandler completion_handler, 
     return detail::CompletionHandlerWithPayload<Payload, CompletionHandler>{std::move(completion_handler),
                                                                             std::forward<Args>(args)...};
 }
-}  // namespace agrpc::detail
 #endif
+}
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_DETAIL_COMPLETIONHANDLERWITHPAYLOAD_HPP

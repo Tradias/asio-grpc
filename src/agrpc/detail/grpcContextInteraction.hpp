@@ -21,7 +21,9 @@
 #include "agrpc/detail/operation.hpp"
 #include "agrpc/grpcContext.hpp"
 
-namespace agrpc::detail
+AGRPC_NAMESPACE_BEGIN()
+
+namespace detail
 {
 template <bool IsIntrusivelyListable, class Signature, class... ExtraArgs>
 struct AllocateOperationFunctor
@@ -83,6 +85,8 @@ void create_no_arg_operation(agrpc::GrpcContext& grpc_context, Function&& functi
         operation.release();
     }
 }
-}  // namespace agrpc::detail
+}
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_DETAIL_GRPCCONTEXTINTERACTION_HPP

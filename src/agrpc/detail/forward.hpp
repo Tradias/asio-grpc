@@ -15,12 +15,13 @@
 #ifndef AGRPC_DETAIL_FORWARD_HPP
 #define AGRPC_DETAIL_FORWARD_HPP
 
+#include "agrpc/detail/config.hpp"
 #include "agrpc/detail/grpcExecutorOptions.hpp"
 
 #include <memory>
 
-namespace agrpc
-{
+AGRPC_NAMESPACE_BEGIN()
+
 template <class Allocator = std::allocator<void>, std::uint32_t Options = detail::GrpcExecutorOptions::DEFAULT>
 class BasicGrpcExecutor;
 
@@ -28,6 +29,7 @@ namespace detail
 {
 struct GrpcInitiateFn;
 }
-}  // namespace agrpc
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_DETAIL_FORWARD_HPP

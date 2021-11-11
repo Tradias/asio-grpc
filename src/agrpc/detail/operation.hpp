@@ -15,11 +15,14 @@
 #ifndef AGRPC_DETAIL_GRPCEXECUTOROPERATION_HPP
 #define AGRPC_DETAIL_GRPCEXECUTOROPERATION_HPP
 
+#include "agrpc/detail/config.hpp"
 #include "agrpc/detail/memory.hpp"
 #include "agrpc/detail/typeErasedOperation.hpp"
 #include "agrpc/detail/utility.hpp"
 
-namespace agrpc::detail
+AGRPC_NAMESPACE_BEGIN()
+
+namespace detail
 {
 template <bool IsIntrusivelyListable, class Handler, class Allocator, class Signature, class... ExtraArgs>
 class Operation;
@@ -98,6 +101,8 @@ class LocalOperation<IsIntrusivelyListable, Handler, R(Signature...)>
   private:
     Handler handler_;
 };
-}  // namespace agrpc::detail
+}
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_DETAIL_GRPCEXECUTOROPERATION_HPP

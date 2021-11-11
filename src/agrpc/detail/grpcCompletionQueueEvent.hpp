@@ -15,13 +15,19 @@
 #ifndef AGRPC_DETAIL_GRPCCOMPLETIONQUEUEEVENT_HPP
 #define AGRPC_DETAIL_GRPCCOMPLETIONQUEUEEVENT_HPP
 
-namespace agrpc::detail
+#include "agrpc/detail/config.hpp"
+
+AGRPC_NAMESPACE_BEGIN()
+
+namespace detail
 {
 struct GrpcCompletionQueueEvent
 {
     void* tag;
     bool ok;
 };
-}  // namespace agrpc::detail
+}
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_DETAIL_GRPCCOMPLETIONQUEUEEVENT_HPP

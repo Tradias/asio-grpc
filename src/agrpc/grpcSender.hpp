@@ -25,8 +25,8 @@
 #include "agrpc/detail/utility.hpp"
 #include "agrpc/grpcContext.hpp"
 
-namespace agrpc
-{
+AGRPC_NAMESPACE_BEGIN()
+
 template <class InitiatingFunction>
 class GrpcSender
 {
@@ -119,6 +119,7 @@ class GrpcSender
     agrpc::GrpcContext& grpc_context;
     InitiatingFunction initiating_function;
 };
-}  // namespace agrpc
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_AGRPC_GRPCSENDER_HPP

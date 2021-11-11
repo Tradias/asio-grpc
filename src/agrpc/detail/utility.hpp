@@ -15,10 +15,14 @@
 #ifndef AGRPC_DETAIL_UTILITY_HPP
 #define AGRPC_DETAIL_UTILITY_HPP
 
+#include "agrpc/detail/config.hpp"
+
 #include <type_traits>
 #include <utility>
 
-namespace agrpc::detail
+AGRPC_NAMESPACE_BEGIN()
+
+namespace detail
 {
 template <class T>
 using RemoveCvrefT = std::remove_cv_t<std::remove_reference_t<T>>;
@@ -114,6 +118,8 @@ auto forward_as(std::add_lvalue_reference_t<std::remove_reference_t<T>> u)
         return u;
     }
 }
-}  // namespace agrpc::detail
+}
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_DETAIL_UTILITY_HPP

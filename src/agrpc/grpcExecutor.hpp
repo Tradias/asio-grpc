@@ -16,6 +16,7 @@
 #define AGRPC_AGRPC_GRPCEXECUTOR_HPP
 
 #include "agrpc/detail/asioForward.hpp"
+#include "agrpc/detail/config.hpp"
 #include "agrpc/detail/forward.hpp"
 #include "agrpc/detail/grpcContextInteraction.hpp"
 #include "agrpc/detail/grpcExecutorBase.hpp"
@@ -28,8 +29,8 @@
 #include <cstddef>
 #include <utility>
 
-namespace agrpc
-{
+AGRPC_NAMESPACE_BEGIN()
+
 template <class Allocator, std::uint32_t Options>
 class BasicGrpcExecutor
     : public std::conditional_t<detail::is_outstanding_work_tracked(Options),
@@ -226,6 +227,7 @@ namespace pmr
 {
 using GrpcExecutor = agrpc::BasicGrpcExecutor<agrpc::detail::pmr::polymorphic_allocator<std::byte>>;
 }
-}  // namespace agrpc
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_AGRPC_GRPCEXECUTOR_HPP

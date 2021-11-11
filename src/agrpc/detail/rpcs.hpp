@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_RPCS_HPP
 
 #include "agrpc/detail/asioForward.hpp"
+#include "agrpc/detail/config.hpp"
 
 #include <grpcpp/alarm.h>
 #include <grpcpp/client_context.h>
@@ -24,7 +25,9 @@
 
 #include <utility>
 
-namespace agrpc::detail
+AGRPC_NAMESPACE_BEGIN()
+
+namespace detail
 {
 struct RPCContextImplementation;
 
@@ -506,6 +509,8 @@ struct ReadInitialMetadataInitFunction
 
     void operator()(const agrpc::GrpcContext&, void* tag) { responder.ReadInitialMetadata(tag); }
 };
-}  // namespace agrpc::detail
+}
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_DETAIL_RPCS_HPP

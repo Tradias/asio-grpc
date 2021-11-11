@@ -16,10 +16,13 @@
 #define AGRPC_DETAIL_RECIEVER_HPP
 
 #include "agrpc/detail/asioForward.hpp"
+#include "agrpc/detail/config.hpp"
 
 #include <utility>
 
-namespace agrpc::detail
+AGRPC_NAMESPACE_BEGIN()
+
+namespace detail
 {
 template <class Receiver, class... Args>
 void satisfy_receiver(Receiver&& receiver, Args&&... args) noexcept
@@ -34,6 +37,8 @@ void satisfy_receiver(Receiver&& receiver, Args&&... args) noexcept
         AGRPC_CATCH(...) { detail::set_error(std::forward<Receiver>(receiver), std::current_exception()); }
     }
 }
-}  // namespace agrpc::detail
+}
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_DETAIL_RECIEVER_HPP

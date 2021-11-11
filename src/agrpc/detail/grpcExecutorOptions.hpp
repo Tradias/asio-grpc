@@ -15,9 +15,13 @@
 #ifndef AGRPC_DETAIL_GRPCEXECUTOROPTIONS_HPP
 #define AGRPC_DETAIL_GRPCEXECUTOROPTIONS_HPP
 
+#include "agrpc/detail/config.hpp"
+
 #include <cstdint>
 
-namespace agrpc::detail
+AGRPC_NAMESPACE_BEGIN()
+
+namespace detail
 {
 struct GrpcExecutorOptions
 {
@@ -81,6 +85,8 @@ struct GrpcExecutorOptions
     }
     return options;
 }
-}  // namespace agrpc::detail
+}
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_DETAIL_GRPCEXECUTOROPTIONS_HPP

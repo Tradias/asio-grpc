@@ -15,11 +15,17 @@
 #ifndef AGRPC_DETAIL_MEMORYRESOURCE_HPP
 #define AGRPC_DETAIL_MEMORYRESOURCE_HPP
 
+#include "agrpc/detail/config.hpp"
+
 @ASIO_GRPC_MEMORY_RESOURCE_INDLUCES@
 
-namespace agrpc::detail
+AGRPC_NAMESPACE_BEGIN()
+
+namespace detail
 {
 @ASIO_GRPC_MEMORY_RESOURCE_NAMESPACE_ALIAS@
-}  // namespace agrpc::detail
+}
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_DETAIL_MEMORYRESOURCE_HPP

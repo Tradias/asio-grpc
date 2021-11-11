@@ -22,7 +22,9 @@
 #include "agrpc/detail/grpcContextInteraction.hpp"
 #include "agrpc/grpcContext.hpp"
 
-namespace agrpc::detail
+AGRPC_NAMESPACE_BEGIN()
+
+namespace detail
 {
 struct DefaultCompletionTokenNotAvailable
 {
@@ -51,11 +53,8 @@ void grpc_submit(agrpc::GrpcContext& grpc_context, InitiatingFunction initiating
     }
     on_exit.release();
 }
-}  // namespace agrpc::detail
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-namespace agrpc::detail
-{
 template <class Executor>
 decltype(auto) query_grpc_context(const Executor& executor)
 {
@@ -111,7 +110,10 @@ auto grpc_initiate_with_payload(Function function, CompletionToken token)
     return asio::async_initiate<CompletionToken, void(std::pair<Payload, bool>)>(
         detail::GrpcWithPayloadInitiator<Payload, Function>{std::move(function)}, token);
 }
-}  // namespace agrpc::detail
+#endif
+}
+
+AGRPC_NAMESPACE_END
 
 #ifdef AGRPC_STANDALONE_ASIO
 namespace asio
@@ -129,7 +131,6 @@ class async_result<::agrpc::detail::DefaultCompletionTokenNotAvailable, Signatur
 {
 };
 }  // namespace boost::asio
-#endif
 #endif
 
 #endif  // AGRPC_DETAIL_INITIATE_HPP

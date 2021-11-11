@@ -15,9 +15,13 @@
 #ifndef AGRPC_DETAIL_INTRUSIVEQUEUE_HPP
 #define AGRPC_DETAIL_INTRUSIVEQUEUE_HPP
 
+#include "agrpc/detail/config.hpp"
+
 #include <utility>
 
-namespace agrpc::detail
+AGRPC_NAMESPACE_BEGIN()
+
+namespace detail
 {
 // Adapted from https://github.com/facebookexperimental/libunifex/blob/main/include/unifex/detail/intrusive_queue.hpp
 template <class Item>
@@ -136,6 +140,8 @@ class IntrusiveQueue
     Item* head = nullptr;
     Item* tail = nullptr;
 };
-}  // namespace agrpc::detail
+}
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_DETAIL_INTRUSIVEQUEUE_HPP

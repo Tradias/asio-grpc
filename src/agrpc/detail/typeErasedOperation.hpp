@@ -15,11 +15,14 @@
 #ifndef AGRPC_DETAIL_GRPCCONTEXTOPERATION_HPP
 #define AGRPC_DETAIL_GRPCCONTEXTOPERATION_HPP
 
+#include "agrpc/detail/config.hpp"
 #include "agrpc/detail/grpcContext.hpp"
 #include "agrpc/detail/intrusiveQueueHook.hpp"
 #include "agrpc/detail/utility.hpp"
 
-namespace agrpc::detail
+AGRPC_NAMESPACE_BEGIN()
+
+namespace detail
 {
 enum class InvokeHandler
 {
@@ -51,6 +54,8 @@ class TypeErasedOperation
 
 using TypeErasedNoArgOperation = detail::TypeErasedOperation<true, detail::GrpcContextLocalAllocator>;
 using TypeErasedGrpcTagOperation = detail::TypeErasedOperation<false, bool, detail::GrpcContextLocalAllocator>;
-}  // namespace agrpc::detail
+}
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_DETAIL_GRPCCONTEXTOPERATION_HPP

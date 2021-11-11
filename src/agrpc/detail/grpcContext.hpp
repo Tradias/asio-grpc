@@ -15,15 +15,20 @@
 #ifndef AGRPC_DETAIL_GRPCCONTEXT_HPP
 #define AGRPC_DETAIL_GRPCCONTEXT_HPP
 
+#include "agrpc/detail/config.hpp"
 #include "agrpc/detail/memory.hpp"
 #include "agrpc/detail/memoryResource.hpp"
 
 #include <cstddef>
 
-namespace agrpc::detail
+AGRPC_NAMESPACE_BEGIN()
+
+namespace detail
 {
 using GrpcContextLocalMemoryResource = detail::pmr::unsynchronized_pool_resource;
 using GrpcContextLocalAllocator = detail::MemoryResourceAllocator<std::byte, detail::GrpcContextLocalMemoryResource>;
-}  // namespace agrpc::detail
+}
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_DETAIL_GRPCCONTEXT_HPP

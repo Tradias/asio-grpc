@@ -32,8 +32,8 @@
 #include <thread>
 #include <utility>
 
-namespace agrpc
-{
+AGRPC_NAMESPACE_BEGIN()
+
 namespace detail
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
@@ -142,6 +142,7 @@ inline grpc::ServerCompletionQueue* GrpcContext::get_server_completion_queue() n
 {
     return static_cast<grpc::ServerCompletionQueue*>(this->completion_queue.get());
 }
-}  // namespace agrpc
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_AGRPC_GRPCCONTEXT_IPP

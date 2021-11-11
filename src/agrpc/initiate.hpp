@@ -16,14 +16,15 @@
 #define AGRPC_AGRPC_INITIATE_HPP
 
 #include "agrpc/detail/asioForward.hpp"
+#include "agrpc/detail/config.hpp"
 #include "agrpc/detail/initiate.hpp"
 #include "agrpc/detail/utility.hpp"
 #include "agrpc/grpcContext.hpp"
 #include "agrpc/grpcExecutor.hpp"
 #include "agrpc/grpcSender.hpp"
 
-namespace agrpc
-{
+AGRPC_NAMESPACE_BEGIN()
+
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 template <class T>
 using GrpcAwaitable = asio::awaitable<T, agrpc::GrpcExecutor>;
@@ -138,6 +139,7 @@ struct GrpcInitiateFn
 }  // namespace detail
 
 inline constexpr detail::GrpcInitiateFn grpc_initiate{};
-}  // namespace agrpc
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_AGRPC_INITIATE_HPP

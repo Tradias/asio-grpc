@@ -15,6 +15,8 @@
 #ifndef AGRPC_DETAIL_ASIOFORWARD_HPP
 #define AGRPC_DETAIL_ASIOFORWARD_HPP
 
+#include "agrpc/detail/config.hpp"
+
 #ifdef AGRPC_STANDALONE_ASIO
 //
 #include <asio/version.hpp>
@@ -81,8 +83,7 @@
 #include <unifex/receiver_concepts.hpp>
 #endif
 
-namespace agrpc
-{
+AGRPC_NAMESPACE_BEGIN()
 #ifdef AGRPC_STANDALONE_ASIO
 namespace asio = ::asio;
 #elif defined(AGRPC_BOOST_ASIO)
@@ -127,12 +128,13 @@ auto get_allocator(const Object& object)
     }
 }
 #elif defined(AGRPC_UNIFEX)
-using unifex::get_allocator;
-using unifex::set_done;
-using unifex::set_error;
-using unifex::set_value;
+using ::unifex::get_allocator;
+using ::unifex::set_done;
+using ::unifex::set_error;
+using ::unifex::set_value;
 #endif
 }  // namespace detail
-}  // namespace agrpc
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_DETAIL_ASIOFORWARD_HPP

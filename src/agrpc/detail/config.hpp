@@ -51,4 +51,27 @@
 #define AGRPC_RETHROW() ((void)0)
 #endif
 
+#ifdef AGRPC_BOOST_ASIO
+#define AGRPC_NAMESPACE_BEGIN() \
+    namespace agrpc             \
+    {                           \
+    inline namespace boost_asio \
+    {
+#elif defined(AGRPC_STANDALONE_ASIO)
+#define AGRPC_NAMESPACE_BEGIN()      \
+    namespace agrpc                  \
+    {                                \
+    inline namespace standalone_asio \
+    {
+#elif defined(AGRPC_UNIFEX)
+#define AGRPC_NAMESPACE_BEGIN() \
+    namespace agrpc             \
+    {                           \
+    inline namespace unifex     \
+    {
+#endif
+#define AGRPC_NAMESPACE_END \
+    }                       \
+    }
+
 #endif  // AGRPC_DETAIL_ATTRIBUTES_HPP

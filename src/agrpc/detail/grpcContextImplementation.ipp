@@ -23,7 +23,9 @@
 #include <cstdint>
 #include <limits>
 
-namespace agrpc::detail
+AGRPC_NAMESPACE_BEGIN()
+
+namespace detail
 {
 inline thread_local const agrpc::GrpcContext* thread_local_grpc_context{};
 
@@ -125,6 +127,8 @@ bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, I
     }
     return false;
 }
-}  // namespace agrpc::detail
+}
+
+AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_IPP
