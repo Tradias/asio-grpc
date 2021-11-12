@@ -57,7 +57,9 @@ if(NOT _VCPKG_LINUX_TOOLCHAIN)
     get_property(_CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE)
     if(NOT _CMAKE_IN_TRY_COMPILE)
         string(APPEND CMAKE_C_FLAGS_INIT " -fPIC ${VCPKG_C_FLAGS} ")
-        string(APPEND CMAKE_CXX_FLAGS_INIT " -fPIC ${VCPKG_CXX_FLAGS} -Wno-error -stdlib=libc++ ")
+        string(
+            APPEND CMAKE_CXX_FLAGS_INIT
+            " -fPIC ${VCPKG_CXX_FLAGS} -Wno-error -stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-10/include/c++/v1/ ")
         string(APPEND CMAKE_C_FLAGS_DEBUG_INIT " ${VCPKG_C_FLAGS_DEBUG} ")
         string(APPEND CMAKE_CXX_FLAGS_DEBUG_INIT " ${VCPKG_CXX_FLAGS_DEBUG}  ")
         string(APPEND CMAKE_C_FLAGS_RELEASE_INIT " ${VCPKG_C_FLAGS_RELEASE} ")

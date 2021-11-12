@@ -33,7 +33,8 @@ target_compile_options(
               /W4>
               $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall
               -Wextra
-              -pedantic-errors>)
+              -pedantic-errors>
+              $<$<CXX_COMPILER_ID:Clang>:-Wno-self-move>)
 
 if(CMAKE_GENERATOR STRGREATER_EQUAL "Visual Studio")
     target_compile_options(asio-grpc-common-compile-options INTERFACE /MP)
