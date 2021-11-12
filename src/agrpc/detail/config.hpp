@@ -55,19 +55,19 @@
 #define AGRPC_NAMESPACE_BEGIN() \
     namespace agrpc             \
     {                           \
-    inline namespace boost_asio \
+    inline namespace b          \
     {
 #elif defined(AGRPC_STANDALONE_ASIO)
-#define AGRPC_NAMESPACE_BEGIN()      \
-    namespace agrpc                  \
-    {                                \
-    inline namespace standalone_asio \
+#define AGRPC_NAMESPACE_BEGIN() \
+    namespace agrpc             \
+    {                           \
+    inline namespace s          \
     {
 #elif defined(AGRPC_UNIFEX)
 #define AGRPC_NAMESPACE_BEGIN() \
     namespace agrpc             \
     {                           \
-    inline namespace unifex     \
+    inline namespace u          \
     {
 #endif
 #define AGRPC_NAMESPACE_END \

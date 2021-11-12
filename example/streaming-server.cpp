@@ -122,8 +122,7 @@ void register_client_streaming_handler(example::v1::Example::AsyncService& servi
                                              })});
 }
 
-boost::asio::awaitable<void> handle_bidirectional_streaming_request(example::v1::Example::AsyncService& service,
-                                                                    agrpc::GrpcContext& grpc_context)
+boost::asio::awaitable<void> handle_bidirectional_streaming_request(example::v1::Example::AsyncService& service)
 {
     grpc::ServerContext server_context;
     grpc::ServerAsyncReaderWriter<example::v1::Response, example::v1::Request> reader_writer{&server_context};
@@ -161,7 +160,7 @@ boost::asio::awaitable<void> handle_bidirectional_streaming_request(example::v1:
 }
 
 boost::asio::awaitable<void> handle_shutdown_request(example::v1::Example::AsyncService& service,
-                                                     agrpc::GrpcContext& grpc_context, ServerShutdown& server_shutdown)
+                                                     ServerShutdown& server_shutdown)
 {
     grpc::ServerContext server_context;
     grpc::ServerAsyncResponseWriter<google::protobuf::Empty> writer{&server_context};
@@ -201,14 +200,14 @@ int main(int argc, const char** argv)
         grpc_context,
         [&]() -> boost::asio::awaitable<void>
         {
-            co_await handle_bidirectional_streaming_request(service, grpc_context);
+            co_await handle_bidirectional_streaming_request(service);
         },
         boost::asio::detached);
     boost::asio::co_spawn(
         grpc_context,
         [&]() -> boost::asio::awaitable<void>
         {
-            co_await handle_shutdown_request(service, grpc_context, server_shutdown);
+            co_await handle_shutdown_request(service, server_shutdown);
         },
         boost::asio::detached);
 
