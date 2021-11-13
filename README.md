@@ -100,7 +100,7 @@ grpc_context.run();
 
 Tested by CI:
 
- * gRPC 1.37
+ * gRPC 1.41.0 (older versions work as well)
  * [Boost](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio.html) 1.77 (min. 1.74 or [standalone Asio](https://github.com/chriskohlhoff/asio) 1.17.0)
  * MSVC 19.29.30137.0 (Visual Studio 16 2019)
  * GCC 9.3.0, 10.3.0, 11.1.0
@@ -201,10 +201,16 @@ Add [asio-grpc](https://github.com/microsoft/vcpkg/blob/master/ports/asio-grpc/v
 
 ```json
 {
-    "name": "example",
+    "name": "your_app",
     "version": "0.1.0",
     "dependencies": [
-        "asio-grpc"
+        "asio-grpc",
+        // To use the Boost.Asio backend add
+        // "boost-asio",
+        // To use the standalone Asio backend add
+        // "asio",
+        // To use the libunifex backend add
+        // "libunifex"
     ]
 }
 ```
@@ -212,10 +218,12 @@ Add [asio-grpc](https://github.com/microsoft/vcpkg/blob/master/ports/asio-grpc/v
 Locate asio-grpc and link it to your target in your `CMakeLists.txt`:
 
 ```cmake
-find_package(Boost)
-find_package(gRPC)
 find_package(asio-grpc)
-target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc gRPC::grpc++ Boost::headers)
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
+# Or use the standalone Asio backend
+#target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-standalone-asio)
+# Or use the libunifex backend
+#target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-unifex)
 ```
 
 ### Available features
