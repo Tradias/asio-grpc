@@ -22,9 +22,9 @@ on:
 
 env:
   VCPKG_ARGUMENTS: 'doctest grpc[codegen] boost-coroutine boost-asio boost-interprocess boost-thread boost-container boost-process asio libunifex'
-  VCPKG_VERSION: '699c8779f1b0feb4ed3564716d1ed31f69663ea6' # Oct 16, 2021
+  VCPKG_VERSION: '756f1845537a916ba706f6af544b2f490c30fbb1' # Nov 11, 2021
   CMAKE_ARGS: '-DVCPKG_MANIFEST_MODE=off -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on'
-  CTEST_ARGS: '-T test --output-on-failure --timeout 200'
+  CTEST_ARGS: '-T test --output-on-failure --timeout 200 --no-tests=error'
 
 jobs:
   build:
@@ -174,6 +174,8 @@ jobs:
   multi-clang-build:
     name: 'Ubuntu/20.04/Clang-10.0.0,11.0.0,12.0.0'
     runs-on: ubuntu-20.04
+    env:
+      CMAKE_EXTRA_ARGS: '-DASIO_GRPC_USE_BOOST_CONTAINER=on -DVCPKG_TARGET_TRIPLET=x64-linux-clang "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-10/include/c++/v1/"'
 
     steps:
     - name: Make clang-10 default compiler
@@ -193,11 +195,11 @@ jobs:
         vcpkgDirectory: ${{ runner.workspace }}/vcpkg
         vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
         appendedCacheKey: ubuntu-clang-v1
-        vcpkgTriplet: x64-linux
-        vcpkgArguments: --overlay-ports=${{ github.workspace }}/deps ${{ env.VCPKG_ARGUMENTS }}
+        vcpkgTriplet: x64-linux-clang
+        vcpkgArguments: --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg ${{ env.VCPKG_ARGUMENTS }}
 
     - name: Clang 10 Configure CMake
-      run: cmake -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which clang++-10) -DASIO_GRPC_USE_BOOST_CONTAINER=on "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release ${{ env.CMAKE_ARGS }}
+      run: cmake -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which clang++-10) "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release ${{ env.CMAKE_ARGS }} ${{ env.CMAKE_EXTRA_ARGS }}
 
     - name: Clang 10 Build
       run: cmake --build ${{ github.workspace }}/build-10 --config Release --parallel $(nproc)
@@ -207,7 +209,7 @@ jobs:
       run: ctest -C Release --parallel $(nproc) ${{ env.CTEST_ARGS }}
 
     - name: Clang 11 Configure CMake
-      run: cmake -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which clang++-11) -DASIO_GRPC_USE_BOOST_CONTAINER=on "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release ${{ env.CMAKE_ARGS }}
+      run: cmake -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which clang++-11) "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release ${{ env.CMAKE_ARGS }} ${{ env.CMAKE_EXTRA_ARGS }}
 
     - name: Clang 11 Build
       run: cmake --build ${{ github.workspace }}/build-11 --config Release --parallel $(nproc)
@@ -217,7 +219,7 @@ jobs:
       run: ctest -C Release --parallel $(nproc) ${{ env.CTEST_ARGS }}
 
     - name: Clang 12 Configure CMake
-      run: cmake -B ${{ github.workspace }}/build-12 -DCMAKE_CXX_COMPILER=$(which clang++-12) -DASIO_GRPC_USE_BOOST_CONTAINER=on "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release ${{ env.CMAKE_ARGS }}
+      run: cmake -B ${{ github.workspace }}/build-12 -DCMAKE_CXX_COMPILER=$(which clang++-12) "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release ${{ env.CMAKE_ARGS }} ${{ env.CMAKE_EXTRA_ARGS }}
 
     - name: Clang 12 Build
       run: cmake --build ${{ github.workspace }}/build-12 --config Release --parallel $(nproc)
