@@ -732,14 +732,14 @@ struct Spawner
             {
                 std::apply(std::move(handler), std::tuple_cat(request_context.args(), std::forward_as_tuple(yield)));
                 // Or
-                //std::invoke(std::move(request_context), std::move(handler), yield);
+                // std::invoke(std::move(request_context), std::move(handler), yield);
                 // The RepeatedlyRequestContext also provides access to:
                 // the grpc::ServerContext
-                //request_context.server_context();
+                // request_context.server_context();
                 // the grpc::ServerAsyncReader/Writer
-                //request_context.responder();
+                // request_context.responder();
                 // the protobuf request message (for unary and server-streaming requests)
-                //request_context.request();
+                // request_context.request();
             });
     }
 
