@@ -32,7 +32,7 @@ struct CoSpawner
     explicit CoSpawner(Handler handler) : handler(std::move(handler)) {}
 
     template <class T>
-    void operator()(agrpc::RPCRequestContext<T>&& request_context, bool request_ok) &&
+    void operator()(agrpc::RepeatedlyRequestContext<T>&& request_context, bool request_ok) &&
     {
         if (!request_ok)
         {

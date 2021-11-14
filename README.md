@@ -310,7 +310,7 @@ For servers and clients:
 grpc::ServerBuilder builder;
 agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
 ```
-<sup><a href='/doc/server.cpp#L190-L193' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L197-L200' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 For clients only:
@@ -332,7 +332,7 @@ grpc_context.run();
 server->Shutdown();
 }  // grpc_context is destructed here before the server
 ```
-<sup><a href='/doc/server.cpp#L206-L210' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L213-L217' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 It might also be helpful to create a work guard before running the `agrpc::GrpcContext` to prevent `grpc_context.run()` from returning early.
@@ -698,7 +698,7 @@ unifex::task<void> unified_executors(example::v1::Example::Stub& stub, agrpc::Gr
 
 (**experimental**) The function `agrpc::repeatedly_request` helps to ensure that there are enough outstanding calls to `request` to match incoming RPCs. 
 It takes the RPC, the Service and a copyable Handler as arguments and returns immediately. The Handler determines what to do with a client request, it could e.g. spawn a new coroutine to process it. 
-The first argument passed to the Handler is a `agrpc::RPCRequestContext` - a move-only type that provides access to the `grpc::ServerContext`, the request (if any) 
+The first argument passed to the Handler is a `agrpc::RepeatedlyRequestContext` - a move-only type that provides a stable address to the `grpc::ServerContext`, the request (if any) 
 and the responder that were used when requesting the call. The second argument is the result of the request - `true` indicates that the RPC has indeed been started. If the result is `false`, the server has been shutdown before this particular call got matched to an incoming RPC ([source](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html#a86d9810ced694e50f7987ac90b9f8c1a)).
 
 The following example shows how to implement a generic Handler that spawns a new Boost.Coroutine for each incoming RPC and invokes 
@@ -718,7 +718,7 @@ struct Spawner
     explicit Spawner(Handler handler) : handler(std::move(handler)) {}
 
     template <class T>
-    void operator()(agrpc::RPCRequestContext<T>&& request_context, bool request_ok) &&
+    void operator()(agrpc::RepeatedlyRequestContext<T>&& request_context, bool request_ok) &&
     {
         if (!request_ok)
         {
@@ -731,8 +731,15 @@ struct Spawner
              request_context = std::move(request_context)](const boost::asio::yield_context& yield) mutable
             {
                 std::apply(std::move(handler), std::tuple_cat(request_context.args(), std::forward_as_tuple(yield)));
-                // or
-                std::invoke(std::move(request_context), std::move(handler), yield);
+                // Or
+                //std::invoke(std::move(request_context), std::move(handler), yield);
+                // The RepeatedlyRequestContext also provides access to:
+                // the grpc::ServerContext
+                //request_context.server_context();
+                // the grpc::ServerAsyncReader/Writer
+                //request_context.responder();
+                // the protobuf request message (for unary and server-streaming requests)
+                //request_context.request();
             });
     }
 
@@ -758,7 +765,7 @@ void repeatedly_request_example(example::v1::Example::AsyncService& service, agr
             })});
 }
 ```
-<sup><a href='/doc/server.cpp#L132-L183' title='Snippet source file'>snippet source</a> | <a href='#snippet-repeatedly-request-spawner' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L132-L190' title='Snippet source file'>snippet source</a> | <a href='#snippet-repeatedly-request-spawner' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## CMake asio_grpc_protobuf_generate 

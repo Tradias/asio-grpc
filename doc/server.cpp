@@ -141,7 +141,7 @@ struct Spawner
     explicit Spawner(Handler handler) : handler(std::move(handler)) {}
 
     template <class T>
-    void operator()(agrpc::RPCRequestContext<T>&& request_context, bool request_ok) &&
+    void operator()(agrpc::RepeatedlyRequestContext<T>&& request_context, bool request_ok) &&
     {
         if (!request_ok)
         {
@@ -154,8 +154,15 @@ struct Spawner
              request_context = std::move(request_context)](const boost::asio::yield_context& yield) mutable
             {
                 std::apply(std::move(handler), std::tuple_cat(request_context.args(), std::forward_as_tuple(yield)));
-                // or
-                std::invoke(std::move(request_context), std::move(handler), yield);
+                // Or
+                // std::invoke(std::move(request_context), std::move(handler), yield);
+                // The RepeatedlyRequestContext also provides access to:
+                // the grpc::ServerContext
+                // request_context.server_context();
+                // the grpc::ServerAsyncReader/Writer
+                // request_context.responder();
+                // the protobuf request message (for unary and server-streaming requests)
+                // request_context.request();
             });
     }
 

@@ -27,48 +27,57 @@ AGRPC_NAMESPACE_BEGIN()
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 namespace detail
 {
-struct RPCContextImplementation
+struct RepeatedlyRequestContextAccess
 {
-    template <class RPCContextImplementationAllocator>
-    static constexpr auto create(detail::AllocatedPointer<RPCContextImplementationAllocator>&& impl) noexcept
+    template <class ImplementationAllocator>
+    static constexpr auto create(detail::AllocatedPointer<ImplementationAllocator>&& allocated_pointer) noexcept
     {
-        return agrpc::RPCRequestContext{std::move(impl)};
+        return agrpc::RepeatedlyRequestContext{std::move(allocated_pointer)};
     }
 };
 
 struct RPCContextBase
 {
     grpc::ServerContext context{};
+
+    constexpr auto& server_context() noexcept { return context; }
 };
 
 template <class Request, class Responder>
 struct MultiArgRPCContext : detail::RPCContextBase
 {
-    Responder responder{&this->context};
-    Request request{};
+    Responder responder_{&this->context};
+    Request request_{};
 
     template <class Handler, class... Args>
     constexpr decltype(auto) operator()(Handler&& handler, Args&&... args)
     {
-        return std::invoke(std::forward<Handler>(handler), this->context, this->request, this->responder,
+        return std::invoke(std::forward<Handler>(handler), this->context, this->request_, this->responder_,
                            std::forward<Args>(args)...);
     }
 
-    constexpr auto args() noexcept { return std::forward_as_tuple(this->context, this->request, this->responder); }
+    constexpr auto args() noexcept { return std::forward_as_tuple(this->context, this->request_, this->responder_); }
+
+    constexpr auto& request() noexcept { return this->request_; }
+
+    constexpr auto& responder() noexcept { return this->responder_; }
 };
 
 template <class Responder>
 struct SingleArgRPCContext : detail::RPCContextBase
 {
-    Responder responder{&this->context};
+    Responder responder_{&this->context};
 
     template <class Handler, class... Args>
     constexpr decltype(auto) operator()(Handler&& handler, Args&&... args)
     {
-        return std::invoke(std::forward<Handler>(handler), this->context, this->responder, std::forward<Args>(args)...);
+        return std::invoke(std::forward<Handler>(handler), this->context, this->responder_,
+                           std::forward<Args>(args)...);
     }
 
-    constexpr auto args() noexcept { return std::forward_as_tuple(this->context, this->responder); }
+    constexpr auto args() noexcept { return std::forward_as_tuple(this->context, this->responder_); }
+
+    constexpr auto& responder() noexcept { return this->responder_; }
 };
 
 template <class RPC, class Service, class RPCHandlerAllocator, class Handler>
@@ -101,9 +110,9 @@ void RepeatedlyRequestFn::operator()(detail::ServerMultiArgRequest<RPC, Request,
 {
     const auto [executor, allocator] = detail::get_associated_executor_and_allocator(handler);
     auto rpc_handler = detail::allocate<detail::MultiArgRPCContext<Request, Responder>>(allocator);
-    auto& rpc_context = rpc_handler->context;
-    auto& rpc_request = rpc_handler->request;
-    auto& rpc_responder = rpc_handler->responder;
+    auto& rpc_context = rpc_handler->server_context();
+    auto& rpc_request = rpc_handler->request();
+    auto& rpc_responder = rpc_handler->responder();
     agrpc::request(rpc, service, rpc_context, rpc_request, rpc_responder,
                    detail::RequestRepeater{rpc, service, std::move(rpc_handler), std::move(handler)});
 }
@@ -114,8 +123,8 @@ void RepeatedlyRequestFn::operator()(detail::ServerSingleArgRequest<RPC, Respond
 {
     const auto [executor, allocator] = detail::get_associated_executor_and_allocator(handler);
     auto rpc_handler = detail::allocate<detail::SingleArgRPCContext<Responder>>(allocator);
-    auto& rpc_context = rpc_handler->context;
-    auto& rpc_responder = rpc_handler->responder;
+    auto& rpc_context = rpc_handler->server_context();
+    auto& rpc_responder = rpc_handler->responder();
     agrpc::request(rpc, service, rpc_context, rpc_responder,
                    detail::RequestRepeater{rpc, service, std::move(rpc_handler), std::move(handler)});
 }
@@ -128,7 +137,7 @@ void RequestRepeater<RPC, Service, RPCHandler, Handler>::operator()(bool ok)
             auto next_handler{this->handler};
             agrpc::repeatedly_request(this->rpc, this->service, std::move(next_handler));
         }
-    std::move(this->handler)(detail::RPCContextImplementation::create(std::move(this->rpc_handler)), ok);
+    std::move(this->handler)(detail::RepeatedlyRequestContextAccess::create(std::move(this->rpc_handler)), ok);
 }
 }
 #endif

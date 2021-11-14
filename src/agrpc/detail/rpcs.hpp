@@ -29,7 +29,7 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-struct RPCContextImplementation;
+struct RepeatedlyRequestContextAccess;
 
 template <class RPC, class Request, class Responder>
 using ServerMultiArgRequest = void (RPC::*)(grpc::ServerContext*, Request*, Responder*, grpc::CompletionQueue*,

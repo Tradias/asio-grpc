@@ -24,8 +24,17 @@
 AGRPC_NAMESPACE_BEGIN()
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-template <class RPCContextImplementationAllocator>
-class RPCRequestContext
+namespace detail
+{
+template <class, class = void>
+inline constexpr bool HAS_REQUEST_MEMBER_FUNCTION = false;
+
+template <class T>
+inline constexpr bool HAS_REQUEST_MEMBER_FUNCTION<T, std::void_t<decltype(std::declval<T&>()->request())>> = true;
+}
+
+template <class ImplementationAllocator>
+class RepeatedlyRequestContext
 {
   public:
     template <class Handler, class... Args>
@@ -36,12 +45,24 @@ class RPCRequestContext
 
     constexpr auto args() const noexcept { return impl->args(); }
 
+    constexpr decltype(auto) server_context() const noexcept { return impl->server_context(); }
+
+    constexpr decltype(auto) request() const noexcept
+    {
+        static_assert(detail::HAS_REQUEST_MEMBER_FUNCTION<detail::AllocatedPointer<ImplementationAllocator>>,
+                      "Client-streaming and bidirectional-streaming requests are made without an initial request by "
+                      "the client. The .request() member function is therefore not available.");
+        return impl->request();
+    }
+
+    constexpr decltype(auto) responder() const noexcept { return impl->responder(); }
+
   private:
-    friend detail::RPCContextImplementation;
+    friend detail::RepeatedlyRequestContextAccess;
 
-    detail::AllocatedPointer<RPCContextImplementationAllocator> impl;
+    detail::AllocatedPointer<ImplementationAllocator> impl;
 
-    constexpr explicit RPCRequestContext(detail::AllocatedPointer<RPCContextImplementationAllocator>&& impl) noexcept
+    constexpr explicit RepeatedlyRequestContext(detail::AllocatedPointer<ImplementationAllocator>&& impl) noexcept
         : impl(std::move(impl))
     {
     }

@@ -29,7 +29,7 @@ namespace detail
 {
 struct GrpcInitiateFn;
 
-struct RPCContextImplementation;
+struct RepeatedlyRequestContextAccess;
 }
 
 AGRPC_NAMESPACE_END
