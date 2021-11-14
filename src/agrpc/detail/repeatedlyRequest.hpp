@@ -24,6 +24,7 @@
 
 AGRPC_NAMESPACE_BEGIN()
 
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 namespace detail
 {
 struct RPCContextImplementation
@@ -35,7 +36,6 @@ struct RPCContextImplementation
     }
 };
 
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 struct RPCContextBase
 {
     grpc::ServerContext context{};
@@ -130,8 +130,8 @@ void RequestRepeater<RPC, Service, RPCHandler, Handler>::operator()(bool ok)
         }
     std::move(this->handler)(detail::RPCContextImplementation::create(std::move(this->rpc_handler)), ok);
 }
-#endif
 }
+#endif
 
 AGRPC_NAMESPACE_END
 

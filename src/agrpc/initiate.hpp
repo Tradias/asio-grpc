@@ -58,19 +58,19 @@ struct UseScheduler
 struct UseSchedulerFn
 {
     template <class Scheduler>
-    auto operator()(const Scheduler& scheduler) const noexcept
+    [[nodiscard]] auto operator()(const Scheduler& scheduler) const noexcept
     {
         return detail::UseScheduler{detail::query_grpc_context(scheduler)};
     }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    auto operator()(asio::execution_context& context) const noexcept
+    [[nodiscard]] auto operator()(asio::execution_context& context) const noexcept
     {
         return detail::UseScheduler{static_cast<agrpc::GrpcContext&>(context)};
     }
 #endif
 
-    auto operator()(agrpc::GrpcContext& context) const noexcept { return detail::UseScheduler{context}; }
+    [[nodiscard]] auto operator()(agrpc::GrpcContext& context) const noexcept { return detail::UseScheduler{context}; }
 };
 }  // namespace detail
 

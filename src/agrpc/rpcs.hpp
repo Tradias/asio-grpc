@@ -25,29 +25,6 @@
 
 AGRPC_NAMESPACE_BEGIN()
 
-template <class RPCContextImplementationAllocator>
-class RPCRequestContext
-{
-  public:
-    template <class Handler, class... Args>
-    constexpr decltype(auto) operator()(Handler&& handler, Args&&... args) const
-    {
-        return (*impl)(std::forward<Handler>(handler), std::forward<Args>(args)...);
-    }
-
-    constexpr auto args() const noexcept { return impl->args(); }
-
-  private:
-    friend detail::RPCContextImplementation;
-
-    detail::AllocatedPointer<RPCContextImplementationAllocator> impl;
-
-    constexpr explicit RPCRequestContext(detail::AllocatedPointer<RPCContextImplementationAllocator>&& impl) noexcept
-        : impl(std::move(impl))
-    {
-    }
-};
-
 namespace detail
 {
 struct WaitFn
@@ -174,18 +151,6 @@ struct RequestFn
             std::move(token));
     }
 };
-
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-struct RepeatedlyRequestFn
-{
-    template <class RPC, class Service, class Request, class Responder, class Handler>
-    void operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
-                    Handler handler) const;
-
-    template <class RPC, class Service, class Responder, class Handler>
-    void operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service, Handler handler) const;
-};
-#endif
 
 struct ReadFn
 {
@@ -462,10 +427,6 @@ inline constexpr detail::WaitFn wait{};
 
 inline constexpr detail::RequestFn request{};
 
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-inline constexpr detail::RepeatedlyRequestFn repeatedly_request{};
-#endif
-
 inline constexpr detail::ReadFn read{};
 
 inline constexpr detail::WriteFn write{};
@@ -485,5 +446,3 @@ inline constexpr detail::ReadInitialMetadataFn read_initial_metadata{};
 AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_AGRPC_RPCS_HPP
-
-#include "agrpc/detail/repeatedlyRequest.hpp"

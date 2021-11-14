@@ -28,6 +28,8 @@ class BasicGrpcExecutor;
 namespace detail
 {
 struct GrpcInitiateFn;
+
+struct RPCContextImplementation;
 }
 
 AGRPC_NAMESPACE_END

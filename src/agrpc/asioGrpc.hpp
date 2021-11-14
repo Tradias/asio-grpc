@@ -20,6 +20,7 @@
 #include "agrpc/grpcContext.ipp"
 #include "agrpc/grpcExecutor.hpp"
 #include "agrpc/initiate.hpp"
+#include "agrpc/repeatedlyRequest.hpp"
 #include "agrpc/rpcs.hpp"
 
 #endif  // AGRPC_AGRPC_ASIOGRPC_HPP
