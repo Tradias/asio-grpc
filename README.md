@@ -310,7 +310,7 @@ For servers and clients:
 grpc::ServerBuilder builder;
 agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
 ```
-<sup><a href='/doc/server.cpp#L197-L200' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L247-L250' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 For clients only:
@@ -332,7 +332,7 @@ grpc_context.run();
 server->Shutdown();
 }  // grpc_context is destructed here before the server
 ```
-<sup><a href='/doc/server.cpp#L213-L217' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L263-L267' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 It might also be helpful to create a work guard before running the `agrpc::GrpcContext` to prevent `grpc_context.run()` from returning early.
@@ -355,7 +355,7 @@ gRPC provides a [grpc::Alarm](https://grpc.github.io/grpc/cpp/classgrpc_1_1_alar
 grpc::Alarm alarm;
 bool wait_ok = agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::seconds(1), yield);
 ```
-<sup><a href='/doc/server.cpp#L27-L30' title='Snippet source file'>snippet source</a> | <a href='#snippet-alarm' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L29-L32' title='Snippet source file'>snippet source</a> | <a href='#snippet-alarm' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 `wait_ok` is true if the Alarm expired, false if it was canceled. ([source](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html#a86d9810ced694e50f7987ac90b9f8c1a))
@@ -373,7 +373,7 @@ grpc::ServerAsyncResponseWriter<example::v1::Response> writer{&server_context};
 bool request_ok = agrpc::request(&example::v1::Example::AsyncService::RequestUnary, service, server_context,
                                  request, writer, yield);
 ```
-<sup><a href='/doc/server.cpp#L37-L43' title='Snippet source file'>snippet source</a> | <a href='#snippet-request-unary-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L87-L93' title='Snippet source file'>snippet source</a> | <a href='#snippet-request-unary-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 If `request_ok` is true then the RPC has indeed been started otherwise the server has been shutdown before this particular request got matched to an incoming RPC. For a full list of ok-values returned by gRPC see [CompletionQueue::Next](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html#a86d9810ced694e50f7987ac90b9f8c1a).
@@ -390,7 +390,7 @@ bool finish_ok = agrpc::finish(writer, response, grpc::Status::OK, yield);
 
 bool finish_with_error_ok = agrpc::finish_with_error(writer, grpc::Status::CANCELLED, yield);
 ```
-<sup><a href='/doc/server.cpp#L45-L52' title='Snippet source file'>snippet source</a> | <a href='#snippet-unary-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L95-L102' title='Snippet source file'>snippet source</a> | <a href='#snippet-unary-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Unary RPC Client-Side
@@ -436,7 +436,7 @@ grpc::ServerAsyncReader<example::v1::Response, example::v1::Request> reader{&ser
 bool request_ok = agrpc::request(&example::v1::Example::AsyncService::RequestClientStreaming, service,
                                  server_context, reader, yield);
 ```
-<sup><a href='/doc/server.cpp#L59-L64' title='Snippet source file'>snippet source</a> | <a href='#snippet-request-client-streaming-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L109-L114' title='Snippet source file'>snippet source</a> | <a href='#snippet-request-client-streaming-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Drive the RPC with the following functions.
@@ -454,7 +454,7 @@ bool finish_ok = agrpc::finish(reader, response, grpc::Status::OK, yield);
 
 bool finish_with_error_ok = agrpc::finish_with_error(reader, grpc::Status::CANCELLED, yield);
 ```
-<sup><a href='/doc/server.cpp#L66-L76' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-streaming-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L116-L126' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-streaming-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Client-Streaming RPC Client-Side
@@ -517,7 +517,7 @@ grpc::ServerAsyncWriter<example::v1::Response> writer{&server_context};
 bool request_ok = agrpc::request(&example::v1::Example::AsyncService::RequestServerStreaming, service,
                                  server_context, request, writer, yield);
 ```
-<sup><a href='/doc/server.cpp#L83-L89' title='Snippet source file'>snippet source</a> | <a href='#snippet-request-server-streaming-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L133-L139' title='Snippet source file'>snippet source</a> | <a href='#snippet-request-server-streaming-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 With the `grpc::ServerAsyncWriter` the following actions can be performed to drive the RPC.
@@ -534,7 +534,7 @@ bool write_and_finish_ok = agrpc::write_and_finish(writer, response, grpc::Write
 
 bool finish_ok = agrpc::finish(writer, grpc::Status::OK, yield);
 ```
-<sup><a href='/doc/server.cpp#L91-L100' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-streaming-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L141-L150' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-streaming-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 For the meaning of `send_ok`, `write_ok`, `write_and_finish` and `finish_ok` see [CompletionQueue::Next](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html#a86d9810ced694e50f7987ac90b9f8c1a).
@@ -596,7 +596,7 @@ grpc::ServerAsyncReaderWriter<example::v1::Response, example::v1::Request> reade
 bool request_ok = agrpc::request(&example::v1::Example::AsyncService::RequestBidirectionalStreaming, service,
                                  server_context, reader_writer, yield);
 ```
-<sup><a href='/doc/server.cpp#L107-L112' title='Snippet source file'>snippet source</a> | <a href='#snippet-request-bidirectional-streaming-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L157-L162' title='Snippet source file'>snippet source</a> | <a href='#snippet-request-bidirectional-streaming-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 With the `grpc::ServerAsyncReaderWriter` the following actions can be performed to drive the RPC.
@@ -617,7 +617,7 @@ bool write_ok = agrpc::write(reader_writer, response, yield);
 
 bool finish_ok = agrpc::finish(reader_writer, grpc::Status::OK, yield);
 ```
-<sup><a href='/doc/server.cpp#L114-L127' title='Snippet source file'>snippet source</a> | <a href='#snippet-bidirectional-streaming-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L164-L177' title='Snippet source file'>snippet source</a> | <a href='#snippet-bidirectional-streaming-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 For the meaning of `send_ok`, `read_ok`, `write_and_finish_ok`, `write_ok` and `finish_ok` see [CompletionQueue::Next](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html#a86d9810ced694e50f7987ac90b9f8c1a).
@@ -830,7 +830,7 @@ void repeatedly_request_example(example::v1::Example::AsyncService& service, agr
             })});
 }
 ```
-<sup><a href='/doc/server.cpp#L132-L190' title='Snippet source file'>snippet source</a> | <a href='#snippet-repeatedly-request-spawner' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L182-L240' title='Snippet source file'>snippet source</a> | <a href='#snippet-repeatedly-request-spawner' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## CMake asio_grpc_protobuf_generate 
