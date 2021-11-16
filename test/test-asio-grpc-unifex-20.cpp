@@ -220,8 +220,8 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request unary")
                                 [&](bool ok)
                                 {
                                     CHECK(ok);
-                                    CHECK(status.ok());
-                                    CHECK_EQ(24, response.integer());
+                                    CHECK(std::get<2>(tuple).ok());
+                                    CHECK_EQ(24, std::get<1>(tuple).integer());
                                     ++request_count;
                                     if (request_count == 4)
                                     {
