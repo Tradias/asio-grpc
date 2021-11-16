@@ -238,6 +238,29 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post an Alarm and check time")
     CHECK(ok);
 }
 
+TEST_CASE_FIXTURE(test::GrpcContextTest, "experimental::deferred with Alarm")
+{
+    bool ok1{false};
+    bool ok2{false};
+    grpc::Alarm alarm;
+    auto deferred_op =
+        agrpc::wait(alarm, test::ten_milliseconds_from_now(),
+                    asio::experimental::deferred(
+                        [&](bool wait_ok)
+                        {
+                            ok1 = wait_ok;
+                            return agrpc::wait(alarm, test::ten_milliseconds_from_now(), asio::experimental::deferred);
+                        }));
+    std::move(deferred_op)(asio::bind_executor(grpc_context,
+                                               [&](bool wait_ok)
+                                               {
+                                                   ok2 = wait_ok;
+                                               }));
+    grpc_context.run();
+    CHECK(ok1);
+    CHECK(ok2);
+}
+
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post a asio::steady_timer")
 {
     std::optional<test::ErrorCode> error_code;
@@ -400,6 +423,41 @@ struct Coro : asio::coroutine
 #elif defined(AGRPC_BOOST_ASIO)
 #include <boost/asio/yield.hpp>
 #endif
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::coroutine with Alarm")
+{
+    struct Coro : asio::coroutine
+    {
+        using executor_type = agrpc::GrpcContext::executor_type;
+
+        grpc::Alarm& alarm;
+        std::chrono::system_clock::time_point deadline;
+        agrpc::GrpcContext& grpc_context;
+        bool& ok;
+
+        Coro(grpc::Alarm& alarm, std::chrono::system_clock::time_point deadline, agrpc::GrpcContext& grpc_context,
+             bool& ok)
+            : alarm(alarm), deadline(deadline), grpc_context(grpc_context), ok(ok)
+        {
+        }
+
+        void operator()(bool wait_ok)
+        {
+            reenter(*this)
+            {
+                yield agrpc::wait(alarm, deadline, *this);
+                ok = wait_ok;
+            }
+        }
+
+        executor_type get_executor() const noexcept { return grpc_context.get_executor(); }
+    };
+    bool ok{false};
+    grpc::Alarm alarm;
+    Coro{alarm, test::ten_milliseconds_from_now(), grpc_context, ok}(false);
+    grpc_context.run();
+    CHECK(ok);
+}
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unary stackless coroutine")
 {

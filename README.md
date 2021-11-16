@@ -291,7 +291,7 @@ Likewise, the `agrpc::GrpcExecutor` models the [Executor and Networking TS requi
 
 The API for RPCs is modeled closely after the asynchronous, tag-based API of gRPC. As an example, the equivalent for `grpc::ClientAsyncReader<helloworld::HelloReply>.Read(helloworld::HelloReply*, void*)` would be `agrpc::read(grpc::ClientAsyncReader<helloworld::HelloReply>&, helloworld::HelloReply&, CompletionToken)`. It can therefore be helpful to refer to [async_unary_call.h](https://github.com/grpc/grpc/blob/master/include/grpcpp/impl/codegen/async_unary_call.h) and [async_stream.h](https://github.com/grpc/grpc/blob/master/include/grpcpp/impl/codegen/async_stream.h) while working with this library.
 
-Instead of the `void*` tag in the gRPC API the functions in this library expect a [CompletionToken](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers). Asio comes with several CompletionTokens already: [C++20 coroutine](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/use_awaitable.html), [std::future](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/use_future.html), [stackless coroutine](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/coroutine.html), [callback](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/executor_binder.html) and [Boost.Coroutine](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/basic_yield_context.html). There is also a special token created by `agrpc::use_scheduler(scheduler)` that returns a [TypedSender](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/Sender.html#boost_asio.reference.Sender.typed_sender).
+Instead of the `void*` tag in the gRPC API the functions in this library expect a [CompletionToken](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers). Asio comes with several CompletionTokens already: [C++20 coroutine](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/use_awaitable.html), [stackless coroutine](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/coroutine.html), [callback](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/executor_binder.html) and [Boost.Coroutine](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/basic_yield_context.html). There is also a special token created by `agrpc::use_scheduler(scheduler)` that returns a [TypedSender](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/Sender.html#boost_asio.reference.Sender.typed_sender).
 
 If you are interested in learning more about the implementation details of this library then check out [this blog article](https://medium.com/3yourmind/c-20-coroutines-for-asynchronous-grpc-services-5b3dab1d1d61).
 
@@ -692,6 +692,71 @@ unifex::task<void> unified_executors(example::v1::Example::Stub& stub, agrpc::Gr
 }
 ```
 <sup><a href='/doc/unifex-client.cpp#L25-L38' title='Snippet source file'>snippet source</a> | <a href='#snippet-unifex-server-streaming-client-side' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+## Different completion tokens
+
+The last argument to all async functions in this library is a [CompletionToken](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers). It can be used to customize how to receive notification of the completion of the asynchronous operation. Aside from the ones shown earlier (`asio::yield_context` and `agrpc::use_scheduler`) there are many more, some examples:
+
+### Callback
+
+<!-- snippet: alarm-with-callback -->
+<a id='snippet-alarm-with-callback'></a>
+```cpp
+agrpc::wait(alarm, deadline, boost::asio::bind_executor(grpc_context, [&](bool /*wait_ok*/) {}));
+```
+<sup><a href='/doc/server.cpp#L41-L43' title='Snippet source file'>snippet source</a> | <a href='#snippet-alarm-with-callback' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+### Stackless coroutine
+
+<!-- snippet: alarm-stackless-coroutine -->
+<a id='snippet-alarm-stackless-coroutine'></a>
+```cpp
+struct Coro : boost::asio::coroutine
+{
+    using executor_type = agrpc::GrpcContext::executor_type;
+
+    grpc::Alarm& alarm;
+    std::chrono::system_clock::time_point deadline;
+    agrpc::GrpcContext& grpc_context;
+
+    Coro(grpc::Alarm& alarm, std::chrono::system_clock::time_point deadline, agrpc::GrpcContext& grpc_context)
+        : alarm(alarm), deadline(deadline), grpc_context(grpc_context)
+    {
+    }
+
+    void operator()(bool wait_ok)
+    {
+        BOOST_ASIO_CORO_REENTER(*this)
+        {
+            BOOST_ASIO_CORO_YIELD agrpc::wait(alarm, deadline, *this);
+            (void)wait_ok;
+        }
+    }
+
+    executor_type get_executor() const noexcept { return grpc_context.get_executor(); }
+};
+Coro{alarm, deadline, grpc_context}(false);
+```
+<sup><a href='/doc/server.cpp#L45-L71' title='Snippet source file'>snippet source</a> | <a href='#snippet-alarm-stackless-coroutine' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+### Experimental deferred
+
+<!-- snippet: alarm-double-deferred -->
+<a id='snippet-alarm-double-deferred'></a>
+```cpp
+auto deferred_op = agrpc::wait(alarm, deadline,
+                               boost::asio::experimental::deferred(
+                                   [&](bool /*wait_ok*/)
+                                   {
+                                       return agrpc::wait(alarm, deadline + std::chrono::seconds(1),
+                                                          boost::asio::experimental::deferred);
+                                   }));
+std::move(deferred_op)(yield);
+```
+<sup><a href='/doc/server.cpp#L73-L82' title='Snippet source file'>snippet source</a> | <a href='#snippet-alarm-double-deferred' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Repeatedly request server-side

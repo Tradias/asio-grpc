@@ -16,6 +16,8 @@
 #include "protos/example.grpc.pb.h"
 
 #include <agrpc/asioGrpc.hpp>
+#include <boost/asio/coroutine.hpp>
+#include <boost/asio/experimental/deferred.hpp>
 #include <boost/asio/spawn.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
@@ -30,6 +32,54 @@ void timer(boost::asio::yield_context& yield)
     // end-snippet
 
     silence_unused(wait_ok);
+}
+
+void timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context, boost::asio::yield_context& yield)
+{
+    grpc::Alarm alarm;
+    const auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(1);
+    // begin-snippet: alarm-with-callback
+    agrpc::wait(alarm, deadline, boost::asio::bind_executor(grpc_context, [&](bool /*wait_ok*/) {}));
+    // end-snippet
+
+    // begin-snippet: alarm-stackless-coroutine
+    struct Coro : boost::asio::coroutine
+    {
+        using executor_type = agrpc::GrpcContext::executor_type;
+
+        grpc::Alarm& alarm;
+        std::chrono::system_clock::time_point deadline;
+        agrpc::GrpcContext& grpc_context;
+
+        Coro(grpc::Alarm& alarm, std::chrono::system_clock::time_point deadline, agrpc::GrpcContext& grpc_context)
+            : alarm(alarm), deadline(deadline), grpc_context(grpc_context)
+        {
+        }
+
+        void operator()(bool wait_ok)
+        {
+            BOOST_ASIO_CORO_REENTER(*this)
+            {
+                BOOST_ASIO_CORO_YIELD agrpc::wait(alarm, deadline, *this);
+                (void)wait_ok;
+            }
+        }
+
+        executor_type get_executor() const noexcept { return grpc_context.get_executor(); }
+    };
+    Coro{alarm, deadline, grpc_context}(false);
+    // end-snippet
+
+    // begin-snippet: alarm-double-deferred
+    auto deferred_op = agrpc::wait(alarm, deadline,
+                                   boost::asio::experimental::deferred(
+                                       [&](bool /*wait_ok*/)
+                                       {
+                                           return agrpc::wait(alarm, deadline + std::chrono::seconds(1),
+                                                              boost::asio::experimental::deferred);
+                                       }));
+    std::move(deferred_op)(yield);
+    // end-snippet
 }
 
 void unary(example::v1::Example::AsyncService& service, boost::asio::yield_context& yield)
