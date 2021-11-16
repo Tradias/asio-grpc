@@ -335,11 +335,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post/execute with allocator")
                                  });
     }
     grpc_context.run();
-    CHECK(std::any_of(buffer.begin(), buffer.end(),
-                      [](auto&& value)
-                      {
-                          return value != std::byte{};
-                      }));
+    CHECK(allocator_has_been_used());
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "dispatch with allocator")

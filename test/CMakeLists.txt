@@ -57,6 +57,7 @@ function(asio_grpc_add_test _asio-grpc_name _asio_grpc_type)
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/freePort.hpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcClientServerTest.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcClientServerTest.hpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcContextTest.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcContextTest.hpp"
                 ${ARGN})
 

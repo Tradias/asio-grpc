@@ -33,30 +33,26 @@ struct GrpcContextTest
 {
     grpc::ServerBuilder builder;
     std::unique_ptr<grpc::Server> server;
-    std::array<std::byte, 1024> buffer{};
+    std::array<std::byte, 4096> buffer{};
     agrpc::detail::pmr::monotonic_buffer_resource resource{buffer.data(), buffer.size()};
     agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
 
-    agrpc::GrpcExecutor get_executor() noexcept { return grpc_context.get_executor(); }
+    agrpc::GrpcExecutor get_executor() noexcept;
 
-    auto get_allocator() noexcept { return agrpc::detail::pmr::polymorphic_allocator<std::byte>(&resource); }
+    agrpc::detail::pmr::polymorphic_allocator<std::byte> get_allocator() noexcept;
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    agrpc::pmr::GrpcExecutor get_pmr_executor() noexcept
-    {
-        return this->get_executor().require(asio::execution::allocator(get_allocator()));
-    }
+    agrpc::pmr::GrpcExecutor get_pmr_executor() noexcept;
 #endif
 
     auto use_scheduler() noexcept { return agrpc::use_scheduler(get_executor()); }
+
+    bool allocator_has_been_used() noexcept;
 };
 
-inline auto ten_milliseconds_from_now() { return std::chrono::system_clock::now() + std::chrono::milliseconds(10); }
+std::chrono::system_clock::time_point ten_milliseconds_from_now();
 
-inline auto hundred_milliseconds_from_now()
-{
-    return std::chrono::system_clock::now() + std::chrono::milliseconds(100);
-}
+std::chrono::system_clock::time_point hundred_milliseconds_from_now();
 }  // namespace test
 
 #endif  // AGRPC_UTILS_GRPCTEST_HPP

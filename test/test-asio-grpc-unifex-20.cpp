@@ -184,6 +184,70 @@ TEST_CASE("unifex GrpcContext.stop() with pending GrpcSender operation")
     CHECK_FALSE(is_invoked);
 }
 
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request unary")
+{
+    agrpc::repeatedly_request(&test::v1::Test::AsyncService::RequestUnary, service,
+                              test::Submitter{grpc_context,
+                                              [&](grpc::ServerContext&, test::v1::Request& request,
+                                                  grpc::ServerAsyncResponseWriter<test::v1::Response>& writer)
+                                              {
+                                                  CHECK_EQ(42, request.integer());
+                                                  return unifex::let_value(unifex::just(test::v1::Response{}),
+                                                                           [&](auto& response)
+                                                                           {
+                                                                               response.set_integer(24);
+                                                                               return agrpc::finish(writer, response,
+                                                                                                    grpc::Status::OK,
+                                                                                                    use_scheduler());
+                                                                           });
+                                              },
+                                              get_allocator()});
+    auto request_count{0};
+    auto request_sender = unifex::let_value_with(
+        [&]
+        {
+            auto context = std::make_unique<grpc::ClientContext>();
+            test::v1::Request request;
+            request.set_integer(42);
+            auto* context_ptr = context.get();
+            return std::tuple{stub->AsyncUnary(context_ptr, request, agrpc::get_completion_queue(get_executor())),
+                              test::v1::Response{}, grpc::Status{}, std::move(context)};
+        },
+        [&](auto& tuple)
+        {
+            auto& [reader, response, status, _] = tuple;
+            return unifex::then(agrpc::finish(*reader, response, status, use_scheduler()),
+                                [&](bool ok)
+                                {
+                                    CHECK(ok);
+                                    CHECK(status.ok());
+                                    CHECK_EQ(24, response.integer());
+                                    ++request_count;
+                                    if (request_count == 4)
+                                    {
+                                        grpc_context.stop();
+                                    }
+                                });
+        });
+    unifex::sync_wait(unifex::when_all(unifex::sequence(request_sender, request_sender, request_sender, request_sender),
+                                       unifex::then(unifex::just(),
+                                                    [&]
+                                                    {
+                                                        grpc_context.run();
+                                                    })));
+    CHECK_EQ(4, request_count);
+    CHECK(allocator_has_been_used());
+}
+
+struct ServerUnaryRequestContext
+{
+    grpc::ServerAsyncResponseWriter<test::v1::Response> writer;
+    test::v1::Request request;
+    test::v1::Response response;
+
+    explicit ServerUnaryRequestContext(grpc::ServerContext& context) : writer(&context) {}
+};
+
 #if !UNIFEX_NO_COROUTINES
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex::task unary")
 {
@@ -195,15 +259,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex::task unary")
     unifex::sync_wait(unifex::when_all(
         [&]() -> unifex::task<void>
         {
-            struct Context
-            {
-                grpc::ServerAsyncResponseWriter<test::v1::Response> writer;
-                test::v1::Request request;
-                test::v1::Response response;
-
-                explicit Context(grpc::ServerContext& context) : writer(&context) {}
-            };
-            auto context = std::make_shared<Context>(server_context);
+            auto context = std::make_shared<ServerUnaryRequestContext>(server_context);
             CHECK(co_await agrpc::request(&test::v1::Test::AsyncService::RequestUnary, service, server_context,
                                           context->request, context->writer, use_scheduler()));
             context->response.set_integer(42);

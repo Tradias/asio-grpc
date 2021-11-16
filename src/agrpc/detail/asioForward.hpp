@@ -60,6 +60,7 @@
 #include <boost/asio/execution/mapping.hpp>
 #include <boost/asio/execution/outstanding_work.hpp>
 #include <boost/asio/execution/relationship.hpp>
+#include <boost/asio/execution/submit.hpp>
 #include <boost/asio/execution_context.hpp>
 #include <boost/asio/query.hpp>
 #include <boost/asio/use_awaitable.hpp>
@@ -81,6 +82,8 @@
 #include <unifex/config.hpp>
 #include <unifex/get_allocator.hpp>
 #include <unifex/receiver_concepts.hpp>
+#include <unifex/scheduler_concepts.hpp>
+#include <unifex/submit.hpp>
 #endif
 
 AGRPC_NAMESPACE_BEGIN()
@@ -93,6 +96,25 @@ namespace asio = ::boost::asio;
 namespace detail
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+template <class Object>
+auto get_scheduler(const Object& object)
+{
+    return asio::get_associated_executor(object);
+}
+
+template <class Object>
+auto get_allocator(const Object& object)
+{
+    if constexpr (asio::can_query_v<const Object&, asio::execution::allocator_t<void>>)
+    {
+        return asio::query(object, asio::execution::allocator);
+    }
+    else
+    {
+        return asio::get_associated_allocator(object);
+    }
+}
+
 template <class Object>
 auto get_associated_executor_and_allocator(const Object& object)
 {
@@ -114,24 +136,21 @@ auto get_associated_executor_and_allocator(const Object& object)
 using asio::execution::set_done;
 using asio::execution::set_error;
 using asio::execution::set_value;
-
-template <class Object>
-auto get_allocator(const Object& object)
-{
-    if constexpr (asio::can_query_v<const Object&, asio::execution::allocator_t<void>>)
-    {
-        return asio::query(object, asio::execution::allocator);
-    }
-    else
-    {
-        return asio::get_associated_allocator(object);
-    }
-}
+using asio::execution::submit;
 #elif defined(AGRPC_UNIFEX)
 using ::unifex::get_allocator;
+using ::unifex::get_scheduler;
+
+template <class Object>
+auto get_associated_executor_and_allocator(const Object& object)
+{
+    return std::pair{detail::get_scheduler(object), detail::get_allocator(object)};
+}
+
 using ::unifex::set_done;
 using ::unifex::set_error;
 using ::unifex::set_value;
+using ::unifex::submit;
 #endif
 }  // namespace detail
 

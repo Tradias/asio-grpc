@@ -23,7 +23,6 @@
 
 AGRPC_NAMESPACE_BEGIN()
 
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 namespace detail
 {
 template <class, class = void>
@@ -82,7 +81,6 @@ struct RepeatedlyRequestFn
 }  // namespace detail
 
 inline constexpr detail::RepeatedlyRequestFn repeatedly_request{};
-#endif
 
 AGRPC_NAMESPACE_END
 

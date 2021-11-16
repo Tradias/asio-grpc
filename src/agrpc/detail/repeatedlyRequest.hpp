@@ -24,7 +24,6 @@
 
 AGRPC_NAMESPACE_BEGIN()
 
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 namespace detail
 {
 struct RepeatedlyRequestContextAccess
@@ -83,8 +82,10 @@ struct SingleArgRPCContext : detail::RPCContextBase
 template <class RPC, class Service, class RPCHandlerAllocator, class Handler>
 struct RequestRepeater
 {
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     using executor_type = asio::associated_executor_t<Handler>;
     using allocator_type = asio::associated_allocator_t<Handler>;
+#endif
 
     RPC rpc;
     Service& service;
@@ -99,34 +100,59 @@ struct RequestRepeater
 
     void operator()(bool ok);
 
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     executor_type get_executor() const noexcept { return asio::get_associated_executor(handler); }
 
     allocator_type get_allocator() const noexcept { return asio::get_associated_allocator(handler); }
+#else
+    void set_done() noexcept {}
+
+    void set_value(bool ok) { (*this)(ok); }
+
+    void set_error(std::exception_ptr) noexcept {}
+
+    friend auto tag_invoke(unifex::tag_t<unifex::get_allocator>, const RequestRepeater& self) noexcept
+    {
+        return detail::get_allocator(self.handler);
+    }
+#endif
 };
 
 template <class RPC, class Service, class Request, class Responder, class Handler>
 void RepeatedlyRequestFn::operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
                                      Handler handler) const
 {
-    const auto [executor, allocator] = detail::get_associated_executor_and_allocator(handler);
-    auto rpc_handler = detail::allocate<detail::MultiArgRPCContext<Request, Responder>>(allocator);
+    auto rpc_handler = detail::allocate<detail::MultiArgRPCContext<Request, Responder>>(detail::get_allocator(handler));
     auto& rpc_context = rpc_handler->server_context();
     auto& rpc_request = rpc_handler->request();
     auto& rpc_responder = rpc_handler->responder();
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     agrpc::request(rpc, service, rpc_context, rpc_request, rpc_responder,
                    detail::RequestRepeater{rpc, service, std::move(rpc_handler), std::move(handler)});
+#else
+    auto scheduler = detail::get_scheduler(handler);
+    detail::submit(
+        agrpc::request(rpc, service, rpc_context, rpc_request, rpc_responder, agrpc::use_scheduler(scheduler)),
+        detail::RequestRepeater{rpc, service, std::move(rpc_handler), std::move(handler)});
+#endif
 }
 
 template <class RPC, class Service, class Responder, class Handler>
 void RepeatedlyRequestFn::operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service,
                                      Handler handler) const
 {
-    const auto [executor, allocator] = detail::get_associated_executor_and_allocator(handler);
-    auto rpc_handler = detail::allocate<detail::SingleArgRPCContext<Responder>>(allocator);
+    auto rpc_handler = detail::allocate<detail::SingleArgRPCContext<Responder>>(detail::get_allocator(handler));
     auto& rpc_context = rpc_handler->server_context();
     auto& rpc_responder = rpc_handler->responder();
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+
     agrpc::request(rpc, service, rpc_context, rpc_responder,
                    detail::RequestRepeater{rpc, service, std::move(rpc_handler), std::move(handler)});
+#else
+    auto scheduler = detail::get_scheduler(handler);
+    detail::submit(agrpc::request(rpc, service, rpc_context, rpc_responder, agrpc::use_scheduler(scheduler)),
+                   detail::RequestRepeater{rpc, service, std::move(rpc_handler), std::move(handler)});
+#endif
 }
 
 template <class RPC, class Service, class RPCHandler, class Handler>
@@ -140,7 +166,6 @@ void RequestRepeater<RPC, Service, RPCHandler, Handler>::operator()(bool ok)
     std::move(this->handler)(detail::RepeatedlyRequestContextAccess::create(std::move(this->rpc_handler)), ok);
 }
 }
-#endif
 
 AGRPC_NAMESPACE_END
 
