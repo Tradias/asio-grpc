@@ -64,8 +64,8 @@ class BasicGrpcExecutor
     }
 
     template <std::uint32_t OtherOptions>
-    [[nodiscard]] constexpr bool operator==(
-        const agrpc::BasicGrpcExecutor<Allocator, OtherOptions>& other) const noexcept
+    [[nodiscard]] friend constexpr bool operator==(
+        const BasicGrpcExecutor& lhs, const agrpc::BasicGrpcExecutor<Allocator, OtherOptions>& rhs) noexcept
     {
         if constexpr (Options != OtherOptions)
         {
@@ -73,15 +73,15 @@ class BasicGrpcExecutor
         }
         else
         {
-            return this->grpc_context() == other.grpc_context() && this->allocator() == other.allocator();
+            return lhs.grpc_context() == rhs.grpc_context() && lhs.allocator() == rhs.allocator();
         }
     }
 
     template <std::uint32_t OtherOptions>
-    [[nodiscard]] constexpr bool operator!=(
-        const agrpc::BasicGrpcExecutor<Allocator, OtherOptions>& other) const noexcept
+    [[nodiscard]] friend constexpr bool operator!=(
+        const BasicGrpcExecutor& lhs, const agrpc::BasicGrpcExecutor<Allocator, OtherOptions>& rhs) noexcept
     {
-        return !(*this == other);
+        return !(lhs == rhs);
     }
 
     [[nodiscard]] bool running_in_this_thread() const noexcept

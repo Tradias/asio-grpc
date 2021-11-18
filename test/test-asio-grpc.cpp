@@ -79,6 +79,31 @@ TEST_CASE("GrpcExecutor is mostly trivial")
     CHECK_EQ(sizeof(void*), sizeof(agrpc::GrpcExecutor));
 }
 
+TEST_CASE("GrpcExecutorOptions")
+{
+    CHECK(agrpc::detail::is_blocking_never(agrpc::detail::GrpcExecutorOptions::BLOCKING_NEVER));
+    CHECK_FALSE(agrpc::detail::is_blocking_never(agrpc::detail::GrpcExecutorOptions::OUTSTANDING_WORK_TRACKED));
+    CHECK(agrpc::detail::is_blocking_never(
+        agrpc::detail::set_blocking_never(agrpc::detail::GrpcExecutorOptions::OUTSTANDING_WORK_TRACKED, true)));
+    CHECK_FALSE(agrpc::detail::is_blocking_never(
+        agrpc::detail::set_blocking_never(agrpc::detail::GrpcExecutorOptions::BLOCKING_NEVER, false)));
+
+    CHECK(agrpc::detail::is_outstanding_work_tracked(agrpc::detail::GrpcExecutorOptions::OUTSTANDING_WORK_TRACKED));
+    CHECK_FALSE(agrpc::detail::is_outstanding_work_tracked(agrpc::detail::GrpcExecutorOptions::BLOCKING_NEVER));
+    CHECK(agrpc::detail::is_outstanding_work_tracked(
+        agrpc::detail::set_outstanding_work_tracked(agrpc::detail::GrpcExecutorOptions::BLOCKING_NEVER, true)));
+    CHECK_FALSE(agrpc::detail::is_outstanding_work_tracked(agrpc::detail::set_outstanding_work_tracked(
+        agrpc::detail::GrpcExecutorOptions::OUTSTANDING_WORK_TRACKED, false)));
+
+    CHECK(agrpc::detail::is_relationship_continuation(agrpc::detail::GrpcExecutorOptions::RELATIONSHIP_CONTINUATION));
+    CHECK_FALSE(
+        agrpc::detail::is_relationship_continuation(agrpc::detail::GrpcExecutorOptions::OUTSTANDING_WORK_TRACKED));
+    CHECK(agrpc::detail::is_relationship_continuation(
+        agrpc::detail::set_relationship_continuation(agrpc::detail::GrpcExecutorOptions::BLOCKING_NEVER, true)));
+    CHECK_FALSE(agrpc::detail::is_relationship_continuation(agrpc::detail::set_relationship_continuation(
+        agrpc::detail::GrpcExecutorOptions::RELATIONSHIP_CONTINUATION, false)));
+}
+
 TEST_CASE("Work tracking GrpcExecutor constructor and assignment")
 {
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};

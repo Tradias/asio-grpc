@@ -164,21 +164,21 @@ struct MemoryResourceAllocator
     }
 
     void deallocate(T* p, std::size_t n) noexcept { this->resource->deallocate(p, n * sizeof(T), alignof(T)); }
+
+    template <class U, class Resource>
+    friend constexpr bool operator==(const MemoryResourceAllocator& lhs,
+                                     const detail::MemoryResourceAllocator<U, Resource>& rhs) noexcept
+    {
+        return lhs.resource == rhs.resource;
+    }
+
+    template <class U, class Resource>
+    friend constexpr bool operator!=(const MemoryResourceAllocator& lhs,
+                                     const detail::MemoryResourceAllocator<U, Resource>& rhs) noexcept
+    {
+        return lhs.resource != rhs.resource;
+    }
 };
-
-template <class T, class U, class Resource>
-constexpr bool operator==(const detail::MemoryResourceAllocator<T, Resource>& lhs,
-                          const detail::MemoryResourceAllocator<U, Resource>& rhs) noexcept
-{
-    return lhs.resource == rhs.resource;
-}
-
-template <class T, class U, class Resource>
-constexpr bool operator!=(const detail::MemoryResourceAllocator<T, Resource>& lhs,
-                          const detail::MemoryResourceAllocator<U, Resource>& rhs) noexcept
-{
-    return lhs.resource != rhs.resource;
-}
 }
 
 AGRPC_NAMESPACE_END

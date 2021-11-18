@@ -91,7 +91,7 @@ class IntrusiveQueue
         tail = item;
     }
 
-    void append(IntrusiveQueue&& other) noexcept
+    void append(IntrusiveQueue other) noexcept
     {
         if (other.empty())
         {
