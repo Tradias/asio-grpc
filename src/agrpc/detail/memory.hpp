@@ -165,14 +165,14 @@ struct MemoryResourceAllocator
 
     void deallocate(T* p, std::size_t n) noexcept { this->resource->deallocate(p, n * sizeof(T), alignof(T)); }
 
-    template <class U, class Resource>
+    template <class U>
     friend constexpr bool operator==(const MemoryResourceAllocator& lhs,
                                      const detail::MemoryResourceAllocator<U, Resource>& rhs) noexcept
     {
         return lhs.resource == rhs.resource;
     }
 
-    template <class U, class Resource>
+    template <class U>
     friend constexpr bool operator!=(const MemoryResourceAllocator& lhs,
                                      const detail::MemoryResourceAllocator<U, Resource>& rhs) noexcept
     {
