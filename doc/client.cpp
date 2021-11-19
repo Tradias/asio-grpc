@@ -20,7 +20,7 @@
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 
-void unary(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub, boost::asio::yield_context& yield)
+void unary(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub, const boost::asio::yield_context& yield)
 {
     // begin-snippet: request-unary-client-side
     grpc::ClientContext client_context;
@@ -39,7 +39,7 @@ void unary(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub, b
     silence_unused(read_ok, finish_ok);
 }
 
-void request_client_streaming_alt(example::v1::Example::Stub& stub, boost::asio::yield_context& yield)
+void request_client_streaming_alt(example::v1::Example::Stub& stub, const boost::asio::yield_context& yield)
 {
     grpc::ClientContext client_context;
     example::v1::Response response;
@@ -51,7 +51,7 @@ void request_client_streaming_alt(example::v1::Example::Stub& stub, boost::asio:
     silence_unused(writer, request_ok);
 }
 
-void client_streaming(example::v1::Example::Stub& stub, boost::asio::yield_context& yield)
+void client_streaming(example::v1::Example::Stub& stub, const boost::asio::yield_context& yield)
 {
     // begin-snippet: request-client-streaming-client-side
     grpc::ClientContext client_context;
@@ -76,7 +76,7 @@ void client_streaming(example::v1::Example::Stub& stub, boost::asio::yield_conte
     silence_unused(request_ok, read_ok, write_ok, writes_done_ok, finish_ok);
 }
 
-void request_server_streaming_alt(example::v1::Example::Stub& stub, boost::asio::yield_context& yield)
+void request_server_streaming_alt(example::v1::Example::Stub& stub, const boost::asio::yield_context& yield)
 {
     grpc::ClientContext client_context;
     example::v1::Request request;
@@ -88,7 +88,7 @@ void request_server_streaming_alt(example::v1::Example::Stub& stub, boost::asio:
     silence_unused(reader, request_ok);
 }
 
-void server_streaming(example::v1::Example::Stub& stub, boost::asio::yield_context& yield)
+void server_streaming(example::v1::Example::Stub& stub, const boost::asio::yield_context& yield)
 {
     // begin-snippet: request-server-streaming-client-side
     grpc::ClientContext client_context;
@@ -111,7 +111,7 @@ void server_streaming(example::v1::Example::Stub& stub, boost::asio::yield_conte
     silence_unused(request_ok, read_metadata_ok, read_ok, finish_ok);
 }
 
-void request_bidirectional_alt(example::v1::Example::Stub& stub, boost::asio::yield_context& yield)
+void request_bidirectional_alt(example::v1::Example::Stub& stub, const boost::asio::yield_context& yield)
 {
     grpc::ClientContext client_context;
     // begin-snippet: request-bidirectional-client-side-alt
@@ -122,7 +122,7 @@ void request_bidirectional_alt(example::v1::Example::Stub& stub, boost::asio::yi
     silence_unused(reader_writer, request_ok);
 }
 
-void bidirectional_streaming(example::v1::Example::Stub& stub, boost::asio::yield_context& yield)
+void bidirectional_streaming(example::v1::Example::Stub& stub, const boost::asio::yield_context& yield)
 {
     // begin-snippet: request-bidirectional-client-side
     grpc::ClientContext client_context;

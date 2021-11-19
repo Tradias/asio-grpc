@@ -24,7 +24,7 @@
 
 #include <chrono>
 
-void timer(boost::asio::yield_context& yield)
+void timer(const boost::asio::yield_context& yield)
 {
     // begin-snippet: alarm
     grpc::Alarm alarm;
@@ -34,7 +34,7 @@ void timer(boost::asio::yield_context& yield)
     silence_unused(wait_ok);
 }
 
-void timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context, boost::asio::yield_context& yield)
+void timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context, const boost::asio::yield_context& yield)
 {
     grpc::Alarm alarm;
     const auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(1);
@@ -47,12 +47,22 @@ void timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context, bo
     {
         using executor_type = agrpc::GrpcContext::executor_type;
 
-        grpc::Alarm& alarm;
-        std::chrono::system_clock::time_point deadline;
-        agrpc::GrpcContext& grpc_context;
+        struct Context
+        {
+            std::chrono::system_clock::time_point deadline;
+            agrpc::GrpcContext& grpc_context;
+            grpc::Alarm alarm;
 
-        Coro(grpc::Alarm& alarm, std::chrono::system_clock::time_point deadline, agrpc::GrpcContext& grpc_context)
-            : alarm(alarm), deadline(deadline), grpc_context(grpc_context)
+            Context(std::chrono::system_clock::time_point deadline, agrpc::GrpcContext& grpc_context)
+                : deadline(deadline), grpc_context(grpc_context)
+            {
+            }
+        };
+
+        std::shared_ptr<Context> context;
+
+        Coro(std::chrono::system_clock::time_point deadline, agrpc::GrpcContext& grpc_context)
+            : context(std::make_shared<Context>(deadline, grpc_context))
         {
         }
 
@@ -60,14 +70,14 @@ void timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context, bo
         {
             BOOST_ASIO_CORO_REENTER(*this)
             {
-                BOOST_ASIO_CORO_YIELD agrpc::wait(alarm, deadline, *this);
+                BOOST_ASIO_CORO_YIELD agrpc::wait(context->alarm, context->deadline, *this);
                 (void)wait_ok;
             }
         }
 
-        executor_type get_executor() const noexcept { return grpc_context.get_executor(); }
+        executor_type get_executor() const noexcept { return context->grpc_context.get_executor(); }
     };
-    Coro{alarm, deadline, grpc_context}(false);
+    Coro{deadline, grpc_context}(false);
     // end-snippet
 
     // begin-snippet: alarm-double-deferred
@@ -82,7 +92,7 @@ void timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context, bo
     // end-snippet
 }
 
-void unary(example::v1::Example::AsyncService& service, boost::asio::yield_context& yield)
+void unary(example::v1::Example::AsyncService& service, const boost::asio::yield_context& yield)
 {
     // begin-snippet: request-unary-server-side
     grpc::ServerContext server_context;
@@ -104,7 +114,7 @@ void unary(example::v1::Example::AsyncService& service, boost::asio::yield_conte
     silence_unused(request_ok, send_ok, finish_ok, finish_with_error_ok);
 }
 
-void client_streaming(example::v1::Example::AsyncService& service, boost::asio::yield_context& yield)
+void client_streaming(example::v1::Example::AsyncService& service, const boost::asio::yield_context& yield)
 {
     // begin-snippet: request-client-streaming-server-side
     grpc::ServerContext server_context;
@@ -128,7 +138,7 @@ void client_streaming(example::v1::Example::AsyncService& service, boost::asio::
     silence_unused(request_ok, send_ok, read_ok, finish_with_error_ok, finish_ok);
 }
 
-void server_streaming(example::v1::Example::AsyncService& service, boost::asio::yield_context& yield)
+void server_streaming(example::v1::Example::AsyncService& service, const boost::asio::yield_context& yield)
 {
     // begin-snippet: request-server-streaming-server-side
     grpc::ServerContext server_context;
@@ -152,7 +162,7 @@ void server_streaming(example::v1::Example::AsyncService& service, boost::asio::
     silence_unused(request_ok, send_ok, write_ok, write_and_finish_ok, finish_ok);
 }
 
-void bidirectional_streaming(example::v1::Example::AsyncService& service, boost::asio::yield_context& yield)
+void bidirectional_streaming(example::v1::Example::AsyncService& service, const boost::asio::yield_context& yield)
 {
     // begin-snippet: request-bidirectional-streaming-server-side
     grpc::ServerContext server_context;
@@ -206,12 +216,13 @@ struct Spawner
                 std::apply(std::move(handler), std::tuple_cat(request_context.args(), std::forward_as_tuple(yield)));
                 // Or
                 // std::invoke(std::move(request_context), std::move(handler), yield);
+                //
                 // The RepeatedlyRequestContext also provides access to:
-                // the grpc::ServerContext
+                // * the grpc::ServerContext
                 // request_context.server_context();
-                // the grpc::ServerAsyncReader/Writer
+                // * the grpc::ServerAsyncReader/Writer
                 // request_context.responder();
-                // the protobuf request message (for unary and server-streaming requests)
+                // * the protobuf request message (for unary and server-streaming requests)
                 // request_context.request();
             });
     }
