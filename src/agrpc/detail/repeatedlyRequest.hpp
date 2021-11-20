@@ -158,11 +158,11 @@ void RepeatedlyRequestFn::operator()(detail::ServerSingleArgRequest<RPC, Respond
 template <class RPC, class Service, class RPCHandler, class Handler>
 void RequestRepeater<RPC, Service, RPCHandler, Handler>::operator()(bool ok)
 {
-    if (ok) AGRPC_LIKELY
-        {
-            auto next_handler{this->handler};
-            agrpc::repeatedly_request(this->rpc, this->service, std::move(next_handler));
-        }
+    if AGRPC_LIKELY (ok)
+    {
+        auto next_handler{this->handler};
+        agrpc::repeatedly_request(this->rpc, this->service, std::move(next_handler));
+    }
     std::move(this->handler)(detail::RepeatedlyRequestContextAccess::create(std::move(this->rpc_handler)), ok);
 }
 }

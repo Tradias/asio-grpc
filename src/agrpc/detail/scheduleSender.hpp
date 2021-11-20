@@ -42,11 +42,11 @@ struct ScheduleSender
 
         void start() & noexcept
         {
-            if (this->grpc_context().is_stopped()) AGRPC_UNLIKELY
-                {
-                    detail::set_done(std::move(this->receiver()));
-                    return;
-                }
+            if AGRPC_UNLIKELY (this->grpc_context().is_stopped())
+            {
+                detail::set_done(std::move(this->receiver()));
+                return;
+            }
             if (detail::GrpcContextImplementation::running_in_this_thread(this->grpc_context()))
             {
                 detail::GrpcContextImplementation::add_local_operation(this->grpc_context(), this);
@@ -62,10 +62,10 @@ struct ScheduleSender
                                 detail::GrpcContextLocalAllocator) noexcept
         {
             auto& self = *static_cast<Operation*>(op);
-            if (detail::InvokeHandler::YES == invoke_handler) AGRPC_LIKELY
-                {
-                    detail::satisfy_receiver(std::move(self.receiver()));
-                }
+            if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
+            {
+                detail::satisfy_receiver(std::move(self.receiver()));
+            }
             else
             {
                 detail::set_done(std::move(self.receiver()));

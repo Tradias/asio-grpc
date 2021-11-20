@@ -19,22 +19,34 @@
 
 #ifdef __has_cpp_attribute
 #if __has_cpp_attribute(unlikely) && ((defined(_MSVC_LANG) && _MSVC_LANG > 201703L) || __cplusplus > 201703L)
-#define AGRPC_UNLIKELY [[unlikely]]
+#if (defined(__GNUC__) && __GNUC__ > 9) || !defined(__GNUC__)
+#define AGRPC_UNLIKELY(...) (__VA_ARGS__) [[unlikely]]
+#endif
 #endif
 #endif
 
 #ifndef AGRPC_UNLIKELY
+#if defined(__clang__) || defined(__GNUC__)
+#define AGRPC_UNLIKELY(...) (__builtin_expect(!!(__VA_ARGS__), 0))
+#else
 #define AGRPC_UNLIKELY
+#endif
 #endif
 
 #ifdef __has_cpp_attribute
 #if __has_cpp_attribute(likely) && ((defined(_MSVC_LANG) && _MSVC_LANG > 201703L) || __cplusplus > 201703L)
-#define AGRPC_LIKELY [[likely]]
+#if (defined(__GNUC__) && __GNUC__ > 9) || !defined(__GNUC__)
+#define AGRPC_LIKELY(...) (__VA_ARGS__) [[likely]]
+#endif
 #endif
 #endif
 
 #ifndef AGRPC_LIKELY
+#if defined(__clang__) || defined(__GNUC__)
+#define AGRPC_LIKELY(...) (__builtin_expect(!!(__VA_ARGS__), 1))
+#else
 #define AGRPC_LIKELY
+#endif
 #endif
 
 #if __cpp_exceptions >= 199711

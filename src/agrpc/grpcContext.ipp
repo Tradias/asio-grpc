@@ -93,12 +93,14 @@ inline void GrpcContext::run()
                                {
                                    detail::GrpcContextImplementation::set_thread_local_grpc_context(old_context);
                                }};
-    while (detail::GrpcContextImplementation::process_work<detail::InvokeHandler::YES>(*this,
-                                                                                       [this]
-                                                                                       {
-                                                                                           return this->is_stopped();
-                                                                                       }))
-        AGRPC_LIKELY
+    while
+        AGRPC_LIKELY(
+            detail::GrpcContextImplementation::process_work<detail::InvokeHandler::YES>(*this,
+                                                                                        [this]
+                                                                                        {
+                                                                                            return this->is_stopped();
+                                                                                        }))
+
         {
             //
         }
@@ -130,10 +132,10 @@ inline void GrpcContext::work_started() noexcept { this->outstanding_work.fetch_
 
 inline void GrpcContext::work_finished() noexcept
 {
-    if (this->outstanding_work.fetch_sub(1, std::memory_order_relaxed) == 1) AGRPC_UNLIKELY
-        {
-            this->stop();
-        }
+    if AGRPC_UNLIKELY (this->outstanding_work.fetch_sub(1, std::memory_order_relaxed) == 1)
+    {
+        this->stop();
+    }
 }
 
 inline grpc::CompletionQueue* GrpcContext::get_completion_queue() noexcept { return this->completion_queue.get(); }

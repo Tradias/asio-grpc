@@ -85,10 +85,10 @@ struct GrpcInitiator
     {
         const auto [executor, allocator] = detail::get_associated_executor_and_allocator(completion_handler);
         auto& grpc_context = detail::query_grpc_context(executor);
-        if (grpc_context.is_stopped()) AGRPC_UNLIKELY
-            {
-                return;
-            }
+        if AGRPC_UNLIKELY (grpc_context.is_stopped())
+        {
+            return;
+        }
         detail::grpc_submit(grpc_context, std::move(this->function), std::move(completion_handler), allocator);
     }
 

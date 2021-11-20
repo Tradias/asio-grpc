@@ -47,11 +47,11 @@ class GrpcSender
 
         void start() & noexcept
         {
-            if (this->grpc_context().is_stopped()) AGRPC_UNLIKELY
-                {
-                    detail::set_done(std::move(this->receiver()));
-                    return;
-                }
+            if AGRPC_UNLIKELY (this->grpc_context().is_stopped())
+            {
+                detail::set_done(std::move(this->receiver()));
+                return;
+            }
             this->grpc_context().work_started();
             detail::WorkFinishedOnExit on_exit{this->grpc_context()};
             initiating_function(this->grpc_context(), this);
@@ -63,10 +63,10 @@ class GrpcSender
                                 detail::GrpcContextLocalAllocator) noexcept
         {
             auto& self = *static_cast<Operation*>(op);
-            if (detail::InvokeHandler::YES == invoke_handler) AGRPC_LIKELY
-                {
-                    detail::satisfy_receiver(std::move(self.receiver()), ok);
-                }
+            if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
+            {
+                detail::satisfy_receiver(std::move(self.receiver()), ok);
+            }
             else
             {
                 detail::set_done(std::move(self.receiver()));

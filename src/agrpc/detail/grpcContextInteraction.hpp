@@ -57,10 +57,10 @@ inline constexpr detail::AllocateOperationFunctor<IsIntrusivelyListable, Signatu
 template <bool IsBlockingNever, class Function, class WorkAllocator>
 void create_no_arg_operation(agrpc::GrpcContext& grpc_context, Function&& function, WorkAllocator work_allocator)
 {
-    if (grpc_context.is_stopped()) AGRPC_UNLIKELY
-        {
-            return;
-        }
+    if AGRPC_UNLIKELY (grpc_context.is_stopped())
+    {
+        return;
+    }
     if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
     {
         if constexpr (IsBlockingNever)
