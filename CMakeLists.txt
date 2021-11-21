@@ -30,7 +30,7 @@ option(ASIO_GRPC_BUILD_TESTS "Build tests and examples" off)
 option(ASIO_GRPC_DISCOVER_TESTS "Discover tests for ctest" off)
 option(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES
        "When tests and/or example builds are enabled then also create CMake targets for C++20" on)
-option(ASIO_GRPC_TEST_COVERAGE "Compile tests with --coverage (GCC only)" off)
+option(ASIO_GRPC_TEST_COVERAGE "Compile tests with --coverage" off)
 set(ASIO_GRPC_COVERAGE_OUTPUT_FILE
     "${CMAKE_CURRENT_BINARY_DIR}/sonarqube-coverage.xml"
     CACHE PATH "Output file for SonarQube XML coverage files")
@@ -54,6 +54,8 @@ if(ASIO_GRPC_BUILD_TESTS)
     include(AsioGrpcCompileOptions)
     include(AsioGrpcCheckBoostVersion)
     include(AsioGrpcInstallGitHooks)
+
+    set(ASIO_GRPC_COVERAGE_WORKING_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
     include(AsioGrpcCoverage)
 endif()
 
@@ -66,7 +68,6 @@ if(ASIO_GRPC_BUILD_TESTS)
     find_package(doctest REQUIRED)
     enable_testing()
     include(doctest)
-    set(ASIO_GRPC_COVERAGE_WORKING_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
     add_subdirectory(test)
 endif()
 
