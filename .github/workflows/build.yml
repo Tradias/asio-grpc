@@ -144,7 +144,7 @@ jobs:
       run: ctest -C Debug --parallel $(nproc) ${{ env.CTEST_ARGS }}
 
     - name: GCC 10 Coverage
-      run: cmake --build ${{ github.workspace }}/build-10 --config Debug --target asio-grpc-test-cpp20-coverage
+      run: cmake --build ${{ github.workspace }}/build-10 --config Debug --target asio-grpc-test-coverage
 
     - name: Download sonar-scanner
       uses: warchant/setup-sonar-scanner@v3
