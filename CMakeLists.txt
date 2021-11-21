@@ -38,8 +38,6 @@ option(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS "Compile tests with -fsanitize=address,
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
-add_subdirectory(src)
-
 if(ASIO_GRPC_BUILD_TESTS)
     # store value of Boost_USE_STATIC_RUNTIME because it gets cleared by find_package(Boost)
     set(ASIO_GRPC_BOOST_USE_STATIC_RUNTIME ${Boost_USE_STATIC_RUNTIME})
@@ -56,7 +54,10 @@ if(ASIO_GRPC_BUILD_TESTS)
     include(AsioGrpcCompileOptions)
     include(AsioGrpcCheckBoostVersion)
     include(AsioGrpcInstallGitHooks)
+    include(AsioGrpcCoverage)
 endif()
+
+add_subdirectory(src)
 
 if(ASIO_GRPC_BUILD_TESTS)
     add_subdirectory(example)

@@ -10,9 +10,9 @@
             "name": "default",
             "displayName": "Default Config",
             "binaryDir": "${sourceDir}/build",
+            "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
                 "VCPKG_OVERLAY_PORTS": "${sourceDir}/deps",
                 "CMAKE_INSTALL_PREFIX": "out",
                 "ASIO_GRPC_INSTALL": "TRUE",
@@ -33,6 +33,7 @@
         {
             "name": "default",
             "configurePreset": "default",
+            "configuration": "Debug",
             "output": {
                 "outputOnFailure": true
             },

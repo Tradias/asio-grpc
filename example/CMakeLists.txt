@@ -73,8 +73,8 @@ if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPL
     target_link_libraries(asio-grpc-example-streaming-server PRIVATE asio-grpc::asio-grpc)
 
     asio_grpc_add_example(unifex-server)
-    target_link_libraries(asio-grpc-example-unifex-server PRIVATE asio-grpc::asio-grpc-unifex unofficial::unifex)
+    target_link_libraries(asio-grpc-example-unifex-server PRIVATE asio-grpc::asio-grpc-unifex)
 
     asio_grpc_add_example(unifex-client)
-    target_link_libraries(asio-grpc-example-unifex-client PRIVATE asio-grpc::asio-grpc-unifex unofficial::unifex)
+    target_link_libraries(asio-grpc-example-unifex-client PRIVATE asio-grpc::asio-grpc-unifex)
 endif()

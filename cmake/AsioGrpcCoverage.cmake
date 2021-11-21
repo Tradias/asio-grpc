@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-function(asio_grpc_add_coverage_flags _asio_grpc_target)
-    target_compile_options(${_asio_grpc_target} PUBLIC --coverage $<$<CXX_COMPILER_ID:GNU>:-fprofile-abs-path>)
-    target_link_options(${_asio_grpc_target} PUBLIC --coverage)
-endfunction()
+add_library(asio-grpc-coverage-options INTERFACE)
 
-function(asio_grpc_coverage_report_for_target _asio_grpc_target)
+if(ASIO_GRPC_TEST_COVERAGE)
+    target_compile_options(asio-grpc-coverage-options PUBLIC --coverage $<$<CXX_COMPILER_ID:GNU>:-fprofile-abs-path>)
+
+    target_link_options(asio-grpc-coverage-options PUBLIC --coverage)
+
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         find_program(ASIO_GRPC_GCOV_PROGRAM gcov)
     endif()
@@ -30,10 +31,9 @@ function(asio_grpc_coverage_report_for_target _asio_grpc_target)
     endif()
     find_program(ASIO_GRPC_GCOVR_PROGRAM gcovr REQUIRED)
     add_custom_target(
-        ${_asio_grpc_target}-coverage
-        DEPENDS ${_asio_grpc_target}
+        asio-grpc-test-coverage
         COMMAND "${ASIO_GRPC_GCOVR_PROGRAM}" --gcov-executable "${_asio_grpc_gcov_command}" --sonarqube --output
                 "${ASIO_GRPC_COVERAGE_OUTPUT_FILE}" --root "${ASIO_GRPC_COVERAGE_WORKING_DIR}"
         WORKING_DIRECTORY "${ASIO_GRPC_COVERAGE_WORKING_DIR}"
         VERBATIM)
-endfunction()
+endif()

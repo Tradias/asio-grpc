@@ -49,7 +49,13 @@ target_compile_definitions(asio-grpc-standalone-asio INTERFACE AGRPC_STANDALONE_
 asio_grpc_create_interface_target(asio-grpc-unifex)
 target_compile_definitions(asio-grpc-unifex INTERFACE AGRPC_UNIFEX)
 
-# asio-grpc objects
+if(ASIO_GRPC_BUILD_TESTS)
+    target_link_libraries(asio-grpc INTERFACE Boost::headers)
+    target_link_libraries(asio-grpc-standalone-asio INTERFACE asio::asio)
+    target_link_libraries(asio-grpc-unifex INTERFACE unofficial::unifex)
+endif()
+
+# asio-grpc sources
 if(ASIO_GRPC_BUILD_TESTS)
     add_library(asio-grpc-sources INTERFACE)
 
