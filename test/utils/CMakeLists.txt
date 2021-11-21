@@ -51,6 +51,7 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
         ${_asio_grpc_name}
         PRIVATE # cmake-format: sort
                 "${CMAKE_CURRENT_BINARY_DIR}/generated/utils/memoryResource.hpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/asioSeparateCompilation.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/asioUtils.hpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcClientServerTest.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcClientServerTest.hpp"
@@ -61,8 +62,12 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
 
     if(${_asio_grpc_type} STREQUAL "BOOST_ASIO")
         target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc)
+
+        target_compile_definitions(${_asio_grpc_name} PUBLIC BOOST_ASIO_SEPARATE_COMPILATION)
     elseif(${_asio_grpc_type} STREQUAL "STANDALONE_ASIO")
         target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc-standalone-asio)
+
+        target_compile_definitions(${_asio_grpc_name} PUBLIC ASIO_SEPARATE_COMPILATION)
     elseif(${_asio_grpc_type} STREQUAL "UNIFEX")
         target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc-unifex)
     endif()
