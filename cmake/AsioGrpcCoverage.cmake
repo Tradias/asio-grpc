@@ -15,9 +15,9 @@
 add_library(asio-grpc-coverage-options INTERFACE)
 
 if(ASIO_GRPC_TEST_COVERAGE)
-    target_compile_options(asio-grpc-coverage-options PUBLIC --coverage $<$<CXX_COMPILER_ID:GNU>:-fprofile-abs-path>)
+    target_compile_options(asio-grpc-coverage-options INTERFACE --coverage $<$<CXX_COMPILER_ID:GNU>:-fprofile-abs-path>)
 
-    target_link_options(asio-grpc-coverage-options PUBLIC --coverage)
+    target_link_options(asio-grpc-coverage-options INTERFACE --coverage)
 
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         find_program(ASIO_GRPC_GCOV_PROGRAM gcov)
