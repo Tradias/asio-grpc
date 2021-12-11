@@ -18,7 +18,6 @@
 #include "utils/asioForward.hpp"
 
 #include <type_traits>
-#include <version>
 
 namespace test
 {

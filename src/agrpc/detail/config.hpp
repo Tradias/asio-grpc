@@ -15,7 +15,11 @@
 #ifndef AGRPC_DETAIL_ATTRIBUTES_HPP
 #define AGRPC_DETAIL_ATTRIBUTES_HPP
 
+#ifdef __has_include
+#if __has_include(<version>)
 #include <version>
+#endif
+#endif
 
 #ifdef __has_cpp_attribute
 #if __has_cpp_attribute(unlikely) && ((defined(_MSVC_LANG) && _MSVC_LANG > 201703L) || __cplusplus > 201703L)
@@ -81,7 +85,10 @@
     {                           \
     inline namespace u          \
     {
+#else
+#error asio-grpc backend macro is not defined. Did you forget to link with `asio-grpc::asio-grpc`, `asio-grpc::asio-grpc-standalone-asio` or `asio-grpc::asio-grpc-unifex` in your CMake file?
 #endif
+
 #define AGRPC_NAMESPACE_END \
     }                       \
     }
