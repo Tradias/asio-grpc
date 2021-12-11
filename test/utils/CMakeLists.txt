@@ -80,7 +80,9 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
     target_precompile_headers(${_asio_grpc_name} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/utils/precompiledHeader.hpp")
 
     if(${_asio_grpc_cxx_standard} STREQUAL "20")
-        target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc-cpp20-compile-options)
+        target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc-test-main-cpp20 asio-grpc-cpp20-compile-options)
+    else()
+        target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc-test-main)
     endif()
 endfunction()
 
