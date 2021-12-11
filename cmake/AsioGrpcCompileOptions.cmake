@@ -32,7 +32,7 @@ target_compile_options(
     INTERFACE $<$<CXX_COMPILER_ID:MSVC>:
               /external:I
               $<TARGET_PROPERTY:protobuf::libprotobuf,INTERFACE_INCLUDE_DIRECTORIES>
-              /external:W1
+              /external:W0
               /external:templates-
               /W4>
               $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall
