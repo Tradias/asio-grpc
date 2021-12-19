@@ -26,7 +26,7 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <bool IsIntrusivelyListable, class Signature, class... ExtraArgs>
-struct AllocateOperationFunctor
+struct AllocateOperationFn
 {
     template <class Function, class Allocator>
     auto operator()(Function&& function, Allocator allocator) const
@@ -39,7 +39,7 @@ struct AllocateOperationFunctor
     template <class Function, class Allocator>
     auto operator()(const agrpc::GrpcContext&, Function&& function, Allocator allocator) const
     {
-        return detail::AllocateOperationFunctor<IsIntrusivelyListable, Signature, detail::GrpcContextLocalAllocator>{}(
+        return detail::AllocateOperationFn<IsIntrusivelyListable, Signature, detail::GrpcContextLocalAllocator>{}(
             std::forward<Function>(function), allocator);
     }
 
@@ -52,7 +52,7 @@ struct AllocateOperationFunctor
 };
 
 template <bool IsIntrusivelyListable, class Signature, class... ExtraArgs>
-inline constexpr detail::AllocateOperationFunctor<IsIntrusivelyListable, Signature, ExtraArgs...> allocate_operation{};
+inline constexpr detail::AllocateOperationFn<IsIntrusivelyListable, Signature, ExtraArgs...> allocate_operation{};
 
 template <bool IsBlockingNever, class Function, class WorkAllocator>
 void create_no_arg_operation(agrpc::GrpcContext& grpc_context, Function&& function, WorkAllocator work_allocator)

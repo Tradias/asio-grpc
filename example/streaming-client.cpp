@@ -83,12 +83,12 @@ boost::asio::awaitable<void> make_bidirectional_streaming_request(example::v1::E
     while (read_ok && write_ok && count < 10)
     {
         example::v1::Response response;
-        using namespace boost::asio::experimental::awaitable_operators;
         // Reads and writes can be done simultaneously.
         // More information on reads:
         // https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_async_reader_writer.html#a2f2c91734a7de5affdd427fb88ee6167
         // More information on writes:
         // https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_async_reader_writer.html#a07bcc3a0737c3bee3ef50def89af5fc7
+        using namespace boost::asio::experimental::awaitable_operators;
         std::tie(read_ok, write_ok) =
             co_await(agrpc::read(*reader_writer, response) && agrpc::write(*reader_writer, request));
         std::cout << "Bidirectional streaming: " << response.integer() << '\n';
@@ -139,8 +139,8 @@ int main(int argc, const char** argv)
         grpc_context,
         [&]() -> boost::asio::awaitable<void>
         {
-            using namespace boost::asio::experimental::awaitable_operators;
             // Let's perform the client-streaming and bidirectional-streaming requests simultaneously
+            using namespace boost::asio::experimental::awaitable_operators;
             co_await(make_client_streaming_request(*stub) && make_bidirectional_streaming_request(*stub));
             co_await make_shutdown_request(*stub);
         },

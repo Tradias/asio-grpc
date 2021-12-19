@@ -144,12 +144,12 @@ boost::asio::awaitable<void> handle_bidirectional_streaming_request(example::v1:
     {
         example::v1::Response response;
         response.set_integer(request.integer() + 1);
-        using namespace boost::asio::experimental::awaitable_operators;
         // Reads and writes can be done simultaneously.
         // More information on reads:
         // https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_async_reader_writer.html#a911d41783f644e170c017bb3032ca5c8
         // More information on writes:
         // https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_async_reader_writer.html#a816fd9065473a24d4ab613ee2ecb19e1
+        using namespace boost::asio::experimental::awaitable_operators;
         std::tie(read_ok, write_ok) =
             co_await(agrpc::read(reader_writer, request) && agrpc::write(reader_writer, response));
     }

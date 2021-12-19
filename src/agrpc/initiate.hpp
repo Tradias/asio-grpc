@@ -126,7 +126,7 @@ struct GrpcInitiateFn
     template <class Function>
     auto operator()(Function function, detail::UseScheduler token) const
     {
-        return detail::GrpcSender{static_cast<agrpc::GrpcContext&>(token.grpc_context), std::move(function)};
+        return detail::GrpcSender{token.grpc_context, std::move(function)};
     }
 };
 }  // namespace detail

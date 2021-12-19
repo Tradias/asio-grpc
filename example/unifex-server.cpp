@@ -22,6 +22,41 @@
 #include <unifex/task.hpp>
 #include <unifex/when_all.hpp>
 
+unifex::task<void> handle_unary_request(example::v1::Example::AsyncService& service, agrpc::GrpcContext& grpc_context)
+{
+    grpc::ServerContext server_context;
+    grpc::ServerAsyncResponseWriter<example::v1::Response> writer{&server_context};
+    example::v1::Request request;
+    if (!co_await agrpc::request(&example::v1::Example::AsyncService::RequestUnary, service, server_context, request,
+                                 writer, agrpc::use_scheduler(grpc_context)))
+    {
+        co_return;
+    }
+    example::v1::Response response;
+    response.set_integer(request.integer());
+    co_await agrpc::finish(writer, response, grpc::Status::OK, agrpc::use_scheduler(grpc_context));
+}
+
+unifex::task<void> handle_server_streaming_request(example::v1::Example::AsyncService& service,
+                                                   agrpc::GrpcContext& grpc_context)
+{
+    grpc::ServerContext server_context;
+    grpc::ServerAsyncWriter<example::v1::Response> writer{&server_context};
+    example::v1::Request request;
+    if (!co_await agrpc::request(&example::v1::Example::AsyncService::RequestServerStreaming, service, server_context,
+                                 request, writer, agrpc::use_scheduler(grpc_context)))
+    {
+        co_return;
+    }
+    for (google::protobuf::int32 i = 0; i < request.integer(); ++i)
+    {
+        example::v1::Response response;
+        response.set_integer(i);
+        co_await agrpc::write(writer, response, agrpc::use_scheduler(grpc_context));
+    }
+    co_await agrpc::finish(writer, grpc::Status::OK, agrpc::use_scheduler(grpc_context));
+}
+
 int main(int argc, const char** argv)
 {
     const auto port = argc >= 2 ? argv[1] : "50051";
@@ -36,28 +71,13 @@ int main(int argc, const char** argv)
     server = builder.BuildAndStart();
     abort_if_not(bool{server});
 
-    unifex::sync_wait(unifex::when_all(
-        [&]() -> unifex::task<void>
-        {
-            grpc::ServerContext server_context;
-            grpc::ServerAsyncResponseWriter<example::v1::Response> writer{&server_context};
-            example::v1::Request request;
-            bool request_ok =
-                co_await agrpc::request(&example::v1::Example::AsyncService::RequestUnary, service, server_context,
-                                        request, writer, agrpc::use_scheduler(grpc_context));
-            if (!request_ok)
-            {
-                co_return;
-            }
-            example::v1::Response response;
-            response.set_integer(request.integer());
-            co_await agrpc::finish(writer, response, grpc::Status::OK, agrpc::use_scheduler(grpc_context));
-        }(),
-        [&]() -> unifex::task<void>
-        {
-            grpc_context.run();
-            co_return;
-        }()));
+    unifex::sync_wait(unifex::when_all(handle_unary_request(service, grpc_context),
+                                       handle_server_streaming_request(service, grpc_context),
+                                       [&]() -> unifex::task<void>
+                                       {
+                                           grpc_context.run();
+                                           co_return;
+                                       }()));
 
     server->Shutdown();
 }

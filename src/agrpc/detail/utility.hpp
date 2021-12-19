@@ -106,8 +106,7 @@ struct ScopeGuard
 };
 
 template <class T>
-auto forward_as(std::add_lvalue_reference_t<std::remove_reference_t<T>> u)
-    -> std::conditional_t<std::is_rvalue_reference_v<T>, std::remove_reference_t<T>, T>
+T forward_as(std::add_lvalue_reference_t<std::remove_reference_t<T>> u)
 {
     if constexpr (std::is_rvalue_reference_v<T> || !std::is_reference_v<T>)
     {

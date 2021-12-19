@@ -22,6 +22,43 @@
 #include <unifex/task.hpp>
 #include <unifex/when_all.hpp>
 
+unifex::task<void> make_unary_request(example::v1::Example::Stub& stub, agrpc::GrpcContext& grpc_context)
+{
+    grpc::ClientContext client_context;
+    client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
+    example::v1::Request request;
+    request.set_integer(42);
+    const auto reader = stub.AsyncUnary(&client_context, request, agrpc::get_completion_queue(grpc_context));
+    example::v1::Response response;
+    grpc::Status status;
+    co_await agrpc::finish(*reader, response, status, agrpc::use_scheduler(grpc_context));
+
+    abort_if_not(status.ok());
+}
+
+unifex::task<void> make_server_streaming_request(example::v1::Example::Stub& stub, agrpc::GrpcContext& grpc_context)
+{
+    grpc::ClientContext client_context;
+    client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
+    example::v1::Request request;
+    request.set_integer(10);
+    std::unique_ptr<grpc::ClientAsyncReader<example::v1::Response>> reader;
+    abort_if_not(co_await agrpc::request(&example::v1::Example::Stub::AsyncServerStreaming, stub, client_context,
+                                         request, reader, agrpc::use_scheduler(grpc_context)));
+
+    example::v1::Response response;
+    bool read_ok = co_await agrpc::read(*reader, response, agrpc::use_scheduler(grpc_context));
+    while (read_ok)
+    {
+        std::cout << "Server streaming: " << response.integer() << '\n';
+        read_ok = co_await agrpc::read(*reader, response, agrpc::use_scheduler(grpc_context));
+    }
+    grpc::Status status;
+    co_await agrpc::finish(*reader, status, agrpc::use_scheduler(grpc_context));
+
+    abort_if_not(status.ok());
+}
+
 int main(int argc, const char** argv)
 {
     const auto port = argc >= 2 ? argv[1] : "50051";
@@ -30,24 +67,11 @@ int main(int argc, const char** argv)
     const auto stub = example::v1::Example::NewStub(grpc::CreateChannel(host, grpc::InsecureChannelCredentials()));
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
-    grpc::Status status;
-
-    unifex::sync_wait(unifex::when_all(
-        [&]() -> unifex::task<void>
-        {
-            grpc::ClientContext client_context;
-            client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
-            example::v1::Request request;
-            request.set_integer(42);
-            const auto reader = stub->AsyncUnary(&client_context, request, agrpc::get_completion_queue(grpc_context));
-            example::v1::Response response;
-            co_await agrpc::finish(*reader, response, status, agrpc::use_scheduler(grpc_context));
-        }(),
-        [&]() -> unifex::task<void>
-        {
-            grpc_context.run();
-            co_return;
-        }()));
-
-    abort_if_not(status.ok());
+    unifex::sync_wait(unifex::when_all(make_unary_request(*stub, grpc_context),
+                                       make_server_streaming_request(*stub, grpc_context),
+                                       [&]() -> unifex::task<void>
+                                       {
+                                           grpc_context.run();
+                                           co_return;
+                                       }()));
 }
