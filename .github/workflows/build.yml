@@ -43,7 +43,7 @@ jobs:
             parallel: 1,
           }
           - {
-            name: 'MacOSX/11/AppleClang-12.0.5.12050022',
+            name: 'MacOSX/11/AppleClang-13.0.0.13000029',
             os: macos-11,
             config: Release,
             triplet: x64-osx,
