@@ -31,7 +31,7 @@ unifex::task<void> make_unary_request(example::v1::Example::Stub& stub, agrpc::G
     const auto reader = stub.AsyncUnary(&client_context, request, agrpc::get_completion_queue(grpc_context));
     example::v1::Response response;
     grpc::Status status;
-    co_await agrpc::finish(*reader, response, status, agrpc::use_scheduler(grpc_context));
+    co_await agrpc::finish(*reader, response, status, agrpc::use_sender(grpc_context));
 
     abort_if_not(status.ok());
 }
@@ -44,17 +44,17 @@ unifex::task<void> make_server_streaming_request(example::v1::Example::Stub& stu
     request.set_integer(10);
     std::unique_ptr<grpc::ClientAsyncReader<example::v1::Response>> reader;
     abort_if_not(co_await agrpc::request(&example::v1::Example::Stub::AsyncServerStreaming, stub, client_context,
-                                         request, reader, agrpc::use_scheduler(grpc_context)));
+                                         request, reader, agrpc::use_sender(grpc_context)));
 
     example::v1::Response response;
-    bool read_ok = co_await agrpc::read(*reader, response, agrpc::use_scheduler(grpc_context));
+    bool read_ok = co_await agrpc::read(*reader, response, agrpc::use_sender(grpc_context));
     while (read_ok)
     {
         std::cout << "Server streaming: " << response.integer() << '\n';
-        read_ok = co_await agrpc::read(*reader, response, agrpc::use_scheduler(grpc_context));
+        read_ok = co_await agrpc::read(*reader, response, agrpc::use_sender(grpc_context));
     }
     grpc::Status status;
-    co_await agrpc::finish(*reader, status, agrpc::use_scheduler(grpc_context));
+    co_await agrpc::finish(*reader, status, agrpc::use_sender(grpc_context));
 
     abort_if_not(status.ok());
 }

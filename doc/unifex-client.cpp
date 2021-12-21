@@ -29,11 +29,11 @@ unifex::task<void> unified_executors(example::v1::Example::Stub& stub, agrpc::Gr
     test::v1::Request request;
     std::unique_ptr<grpc::ClientAsyncReader<test::v1::Response>> reader;
     co_await agrpc::request(&test::v1::Test::Stub::AsyncServerStreaming, stub, client_context, request, reader,
-                            agrpc::use_scheduler(grpc_context));
+                            agrpc::use_sender(grpc_context));
     test::v1::Response response;
-    co_await agrpc::read(*reader, response, agrpc::use_scheduler(grpc_context));
+    co_await agrpc::read(*reader, response, agrpc::use_sender(grpc_context));
     grpc::Status status;
-    co_await agrpc::finish(*reader, status, agrpc::use_scheduler(grpc_context));
+    co_await agrpc::finish(*reader, status, agrpc::use_sender(grpc_context));
 }
 // end-snippet
 #endif

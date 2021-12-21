@@ -297,7 +297,7 @@ Likewise, the `agrpc::GrpcExecutor` models the [Executor and Networking TS requi
 
 The API for RPCs is modeled closely after the asynchronous, tag-based API of gRPC. As an example, the equivalent for `grpc::ClientAsyncReader<helloworld::HelloReply>.Read(helloworld::HelloReply*, void*)` would be `agrpc::read(grpc::ClientAsyncReader<helloworld::HelloReply>&, helloworld::HelloReply&, CompletionToken)`. It can therefore be helpful to refer to [async_unary_call.h](https://github.com/grpc/grpc/blob/master/include/grpcpp/impl/codegen/async_unary_call.h) and [async_stream.h](https://github.com/grpc/grpc/blob/master/include/grpcpp/impl/codegen/async_stream.h) while working with this library.
 
-Instead of the `void*` tag in the gRPC API the functions in this library expect a [CompletionToken](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers). Asio comes with several CompletionTokens already: [C++20 coroutine](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/use_awaitable.html), [stackless coroutine](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/coroutine.html), [callback](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/executor_binder.html) and [Boost.Coroutine](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/basic_yield_context.html). There is also a special token created by `agrpc::use_scheduler(scheduler)` that causes RPC functions to returns a [TypedSender](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/Sender.html#boost_asio.reference.Sender.typed_sender).
+Instead of the `void*` tag in the gRPC API the functions in this library expect a [CompletionToken](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers). Asio comes with several CompletionTokens already: [C++20 coroutine](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/use_awaitable.html), [stackless coroutine](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/coroutine.html), [callback](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/executor_binder.html) and [Boost.Coroutine](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/basic_yield_context.html). There is also a special token created by `agrpc::use_sender(scheduler)` that causes RPC functions to returns a [TypedSender](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/Sender.html#boost_asio.reference.Sender.typed_sender).
 
 If you are interested in learning more about the implementation details of this library then check out [this blog article](https://medium.com/3yourmind/c-20-coroutines-for-asynchronous-grpc-services-5b3dab1d1d61).
 
@@ -677,9 +677,9 @@ bool finish_ok = agrpc::finish(*reader_writer, status, yield);
 
 For the meaning of `read_metadata_ok`, `write_ok`, `writes_done_ok`, `read_ok` and `finish_ok` see [CompletionQueue::Next](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html#a86d9810ced694e50f7987ac90b9f8c1a).
 
-## use_scheduler
+## use_sender
 
-A special completion token created by `agrpc::use_scheduler(scheduler)` where `scheduler` is a `agrpc::GrpcContext` or `agrpc::GrpcExecutor`. It causes RPC step functions to return a [TypedSender](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/Sender.html#boost_asio.reference.Sender.typed_sender). The sender can e.g. be connected to a [unifex::task<>](https://github.com/facebookexperimental/libunifex/blob/main/doc/api_reference.md#task) to await completion of the RPC step:
+A special completion token created by `agrpc::use_sender(scheduler)` where `scheduler` is a `agrpc::GrpcContext` or `agrpc::GrpcExecutor`. It causes RPC step functions to return a [TypedSender](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/Sender.html#boost_asio.reference.Sender.typed_sender). The sender can e.g. be connected to a [unifex::task<>](https://github.com/facebookexperimental/libunifex/blob/main/doc/api_reference.md#task) to await completion of the RPC step:
 
 <!-- snippet: unifex-server-streaming-client-side -->
 <a id='snippet-unifex-server-streaming-client-side'></a>
@@ -690,11 +690,11 @@ unifex::task<void> unified_executors(example::v1::Example::Stub& stub, agrpc::Gr
     test::v1::Request request;
     std::unique_ptr<grpc::ClientAsyncReader<test::v1::Response>> reader;
     co_await agrpc::request(&test::v1::Test::Stub::AsyncServerStreaming, stub, client_context, request, reader,
-                            agrpc::use_scheduler(grpc_context));
+                            agrpc::use_sender(grpc_context));
     test::v1::Response response;
-    co_await agrpc::read(*reader, response, agrpc::use_scheduler(grpc_context));
+    co_await agrpc::read(*reader, response, agrpc::use_sender(grpc_context));
     grpc::Status status;
-    co_await agrpc::finish(*reader, status, agrpc::use_scheduler(grpc_context));
+    co_await agrpc::finish(*reader, status, agrpc::use_sender(grpc_context));
 }
 ```
 <sup><a href='/doc/unifex-client.cpp#L25-L38' title='Snippet source file'>snippet source</a> | <a href='#snippet-unifex-server-streaming-client-side' title='Start of snippet'>anchor</a></sup>
@@ -702,7 +702,7 @@ unifex::task<void> unified_executors(example::v1::Example::Stub& stub, agrpc::Gr
 
 ## Different completion tokens
 
-The last argument to all async functions in this library is a [CompletionToken](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers). It can be used to customize how to receive notification of the completion of the asynchronous operation. Aside from the ones shown earlier (`asio::yield_context` and `agrpc::use_scheduler`) there are many more, some examples:
+The last argument to all async functions in this library is a [CompletionToken](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers). It can be used to customize how to receive notification of the completion of the asynchronous operation. Aside from the ones shown earlier (`asio::yield_context` and `agrpc::use_sender`) there are many more, some examples:
 
 ### Callback
 

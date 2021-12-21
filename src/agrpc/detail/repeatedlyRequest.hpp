@@ -131,9 +131,8 @@ void RepeatedlyRequestFn::operator()(detail::ServerMultiArgRequest<RPC, Request,
                    detail::RequestRepeater{rpc, service, std::move(rpc_handler), std::move(handler)});
 #else
     auto scheduler = detail::get_scheduler(handler);
-    detail::submit(
-        agrpc::request(rpc, service, rpc_context, rpc_request, rpc_responder, agrpc::use_scheduler(scheduler)),
-        detail::RequestRepeater{rpc, service, std::move(rpc_handler), std::move(handler)});
+    detail::submit(agrpc::request(rpc, service, rpc_context, rpc_request, rpc_responder, agrpc::use_sender(scheduler)),
+                   detail::RequestRepeater{rpc, service, std::move(rpc_handler), std::move(handler)});
 #endif
 }
 
@@ -150,7 +149,7 @@ void RepeatedlyRequestFn::operator()(detail::ServerSingleArgRequest<RPC, Respond
                    detail::RequestRepeater{rpc, service, std::move(rpc_handler), std::move(handler)});
 #else
     auto scheduler = detail::get_scheduler(handler);
-    detail::submit(agrpc::request(rpc, service, rpc_context, rpc_responder, agrpc::use_scheduler(scheduler)),
+    detail::submit(agrpc::request(rpc, service, rpc_context, rpc_responder, agrpc::use_sender(scheduler)),
                    detail::RequestRepeater{rpc, service, std::move(rpc_handler), std::move(handler)});
 #endif
 }

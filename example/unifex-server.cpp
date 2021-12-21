@@ -28,13 +28,13 @@ unifex::task<void> handle_unary_request(example::v1::Example::AsyncService& serv
     grpc::ServerAsyncResponseWriter<example::v1::Response> writer{&server_context};
     example::v1::Request request;
     if (!co_await agrpc::request(&example::v1::Example::AsyncService::RequestUnary, service, server_context, request,
-                                 writer, agrpc::use_scheduler(grpc_context)))
+                                 writer, agrpc::use_sender(grpc_context)))
     {
         co_return;
     }
     example::v1::Response response;
     response.set_integer(request.integer());
-    co_await agrpc::finish(writer, response, grpc::Status::OK, agrpc::use_scheduler(grpc_context));
+    co_await agrpc::finish(writer, response, grpc::Status::OK, agrpc::use_sender(grpc_context));
 }
 
 unifex::task<void> handle_server_streaming_request(example::v1::Example::AsyncService& service,
@@ -44,7 +44,7 @@ unifex::task<void> handle_server_streaming_request(example::v1::Example::AsyncSe
     grpc::ServerAsyncWriter<example::v1::Response> writer{&server_context};
     example::v1::Request request;
     if (!co_await agrpc::request(&example::v1::Example::AsyncService::RequestServerStreaming, service, server_context,
-                                 request, writer, agrpc::use_scheduler(grpc_context)))
+                                 request, writer, agrpc::use_sender(grpc_context)))
     {
         co_return;
     }
@@ -52,9 +52,9 @@ unifex::task<void> handle_server_streaming_request(example::v1::Example::AsyncSe
     {
         example::v1::Response response;
         response.set_integer(i);
-        co_await agrpc::write(writer, response, agrpc::use_scheduler(grpc_context));
+        co_await agrpc::write(writer, response, agrpc::use_sender(grpc_context));
     }
-    co_await agrpc::finish(writer, grpc::Status::OK, agrpc::use_scheduler(grpc_context));
+    co_await agrpc::finish(writer, grpc::Status::OK, agrpc::use_sender(grpc_context));
 }
 
 int main(int argc, const char** argv)

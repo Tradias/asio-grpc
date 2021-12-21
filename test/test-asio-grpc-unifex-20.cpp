@@ -33,12 +33,12 @@ TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0));
 TEST_CASE("unifex asio-grpc fulfills unified executor concepts")
 {
     CHECK(unifex::scheduler<agrpc::GrpcExecutor>);
-    using UseScheduler = decltype(agrpc::use_scheduler(std::declval<agrpc::GrpcExecutor>()));
-    using UseSchedulerFromGrpcContext = decltype(agrpc::use_scheduler(std::declval<agrpc::GrpcContext&>()));
-    CHECK(std::is_same_v<UseScheduler, UseSchedulerFromGrpcContext>);
+    using UseSender = decltype(agrpc::use_sender(std::declval<agrpc::GrpcExecutor>()));
+    using UseSenderFromGrpcContext = decltype(agrpc::use_sender(std::declval<agrpc::GrpcContext&>()));
+    CHECK(std::is_same_v<UseSender, UseSenderFromGrpcContext>);
     using GrpcSender =
         decltype(agrpc::wait(std::declval<grpc::Alarm&>(), std::declval<std::chrono::system_clock::time_point>(),
-                             std::declval<UseScheduler>()));
+                             std::declval<UseSender>()));
     CHECK(unifex::sender<GrpcSender>);
     CHECK(unifex::typed_sender<GrpcSender>);
     CHECK(unifex::sender_to<GrpcSender, test::FunctionAsReciever<test::InvocableArchetype>>);
@@ -157,7 +157,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex agrpc::wait with stopped GrpcCo
                                         {
                                             grpc_context.stop();
                                             return unifex::then(
-                                                agrpc::wait(alarm, test::ten_milliseconds_from_now(), use_scheduler()),
+                                                agrpc::wait(alarm, test::ten_milliseconds_from_now(), use_sender()),
                                                 [&](bool)
                                                 {
                                                     is_invoked = true;
@@ -177,8 +177,8 @@ TEST_CASE("unifex GrpcContext.stop() with pending GrpcSender operation")
                                                  is_invoked = true;
                                              }};
     grpc::Alarm alarm;
-    auto op = unifex::connect(
-        agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::use_scheduler(*grpc_context)), receiver);
+    auto op = unifex::connect(agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::use_sender(*grpc_context)),
+                              receiver);
     unifex::start(op);
     grpc_context.reset();
     CHECK_FALSE(is_invoked);
@@ -198,7 +198,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request unary")
                                                                                response.set_integer(24);
                                                                                return agrpc::finish(writer, response,
                                                                                                     grpc::Status::OK,
-                                                                                                    use_scheduler());
+                                                                                                    use_sender());
                                                                            });
                                               },
                                               get_allocator()});
@@ -216,7 +216,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request unary")
         [&](auto& tuple)
         {
             auto& [reader, response, status, _] = tuple;
-            return unifex::then(agrpc::finish(*reader, response, status, use_scheduler()),
+            return unifex::then(agrpc::finish(*reader, response, status, use_sender()),
                                 [&](bool ok)
                                 {
                                     CHECK(ok);
@@ -261,7 +261,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex::task unary")
         {
             auto context = std::make_shared<ServerUnaryRequestContext>(server_context);
             CHECK(co_await agrpc::request(&test::v1::Test::AsyncService::RequestUnary, service, server_context,
-                                          context->request, context->writer, use_scheduler()));
+                                          context->request, context->writer, use_sender()));
             context->response.set_integer(42);
             if (use_submit)
             {
@@ -269,13 +269,13 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex::task unary")
                                                   {
                                                       server_finish_ok = ok;
                                                   }};
-                unifex::submit(agrpc::finish(context->writer, context->response, grpc::Status::OK, use_scheduler()),
+                unifex::submit(agrpc::finish(context->writer, context->response, grpc::Status::OK, use_sender()),
                                std::move(receiver));
             }
             else
             {
                 server_finish_ok =
-                    co_await agrpc::finish(context->writer, context->response, grpc::Status::OK, use_scheduler());
+                    co_await agrpc::finish(context->writer, context->response, grpc::Status::OK, use_sender());
             }
         }(),
         [&]() -> unifex::task<void>
@@ -285,7 +285,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex::task unary")
             auto reader = stub->AsyncUnary(&client_context, request, agrpc::get_completion_queue(get_executor()));
             test::v1::Response response;
             grpc::Status status;
-            client_finish_ok = co_await agrpc::finish(*reader, response, status, use_scheduler());
+            client_finish_ok = co_await agrpc::finish(*reader, response, status, use_sender());
         }(),
         [&]() -> unifex::task<void>
         {

@@ -50,7 +50,7 @@ using DefaultCompletionToken = detail::DefaultCompletionTokenNotAvailable;
 
 namespace detail
 {
-struct UseScheduler
+struct UseSender
 {
     agrpc::GrpcContext& grpc_context;
 };
@@ -58,23 +58,47 @@ struct UseScheduler
 struct UseSchedulerFn
 {
     template <class Scheduler>
+    [[deprecated("renamed to use_sender")]] [[nodiscard]] auto operator()(const Scheduler& scheduler) const noexcept
+    {
+        return detail::UseSender{detail::query_grpc_context(scheduler)};
+    }
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+    [[deprecated("renamed to use_sender")]] [[nodiscard]] auto operator()(
+        asio::execution_context& context) const noexcept
+    {
+        return detail::UseSender{static_cast<agrpc::GrpcContext&>(context)};
+    }
+#endif
+
+    [[deprecated("renamed to use_sender")]] [[nodiscard]] auto operator()(agrpc::GrpcContext& context) const noexcept
+    {
+        return detail::UseSender{context};
+    }
+};
+
+struct UseSenderFn
+{
+    template <class Scheduler>
     [[nodiscard]] auto operator()(const Scheduler& scheduler) const noexcept
     {
-        return detail::UseScheduler{detail::query_grpc_context(scheduler)};
+        return detail::UseSender{detail::query_grpc_context(scheduler)};
     }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     [[nodiscard]] auto operator()(asio::execution_context& context) const noexcept
     {
-        return detail::UseScheduler{static_cast<agrpc::GrpcContext&>(context)};
+        return detail::UseSender{static_cast<agrpc::GrpcContext&>(context)};
     }
 #endif
 
-    [[nodiscard]] auto operator()(agrpc::GrpcContext& context) const noexcept { return detail::UseScheduler{context}; }
+    [[nodiscard]] auto operator()(agrpc::GrpcContext& context) const noexcept { return detail::UseSender{context}; }
 };
 }  // namespace detail
 
-inline constexpr detail::UseSchedulerFn use_scheduler{};
+[[deprecated("renamed to use_sender")]] inline constexpr detail::UseSchedulerFn use_scheduler{};
+
+inline constexpr detail::UseSenderFn use_sender{};
 
 template <class Allocator, std::uint32_t Options>
 [[nodiscard]] auto get_completion_queue(const agrpc::BasicGrpcExecutor<Allocator, Options>& executor) noexcept
@@ -124,7 +148,7 @@ struct GrpcInitiateFn
 #endif
 
     template <class Function>
-    auto operator()(Function function, detail::UseScheduler token) const
+    auto operator()(Function function, detail::UseSender token) const
     {
         return detail::GrpcSender{token.grpc_context, std::move(function)};
     }

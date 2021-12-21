@@ -45,7 +45,7 @@ struct GrpcContextTest
     agrpc::pmr::GrpcExecutor get_pmr_executor() noexcept;
 #endif
 
-    auto use_scheduler() noexcept { return agrpc::use_scheduler(get_executor()); }
+    auto use_sender() noexcept { return agrpc::use_sender(get_executor()); }
 
     bool allocator_has_been_used() noexcept;
 };
