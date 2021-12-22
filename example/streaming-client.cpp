@@ -13,9 +13,11 @@
 // limitations under the License.
 
 #include "helper.hpp"
+#include "promise.hpp"
 #include "protos/example.grpc.pb.h"
 
 #include <agrpc/asioGrpc.hpp>
+#include <boost/asio/bind_executor.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/experimental/awaitable_operators.hpp>
@@ -105,6 +107,53 @@ boost::asio::awaitable<void> make_bidirectional_streaming_request(example::v1::E
     silence_unused(finish_ok);
 }
 
+template <class Function>
+boost::asio::awaitable<bool> run_with_deadline(grpc::Alarm& alarm, const boost::asio::any_io_executor& executor,
+                                               grpc::ClientContext& client_context,
+                                               std::chrono::system_clock::time_point deadline, Function&& function)
+{
+    BasicPromise<bool, agrpc::DefaultCompletionToken> promise;
+    bool finished{};
+    agrpc::wait(alarm, deadline,
+                boost::asio::bind_executor(executor,
+                                           [&](bool wait_ok)
+                                           {
+                                               if (wait_ok && !finished)
+                                               {
+                                                   client_context.TryCancel();
+                                               }
+                                               promise.fulfill(wait_ok);
+                                           }));
+    auto result = co_await function();
+    finished = true;
+    co_await promise.get();
+    co_return result;
+}
+
+boost::asio::awaitable<void> make_and_cancel_unary_request(example::v1::Example::Stub& stub)
+{
+    grpc::ClientContext client_context;
+    client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
+
+    const auto executor = co_await boost::asio::this_coro::executor;
+
+    example::v1::Request request;
+    request.set_integer(3000);  // tell server to delay response by 3000ms
+    auto reader = stub.AsyncSlowUnary(&client_context, request, agrpc::get_completion_queue(executor));
+
+    example::v1::Response response;
+    grpc::Status status;
+    grpc::Alarm alarm;
+    co_await run_with_deadline(alarm, executor, client_context,
+                               std::chrono::system_clock::now() + std::chrono::milliseconds(50),
+                               [&]
+                               {
+                                   return agrpc::finish(*reader, response, status);
+                               });
+
+    abort_if_not(grpc::StatusCode::CANCELLED == status.error_code());
+}
+
 boost::asio::awaitable<void> make_shutdown_request(example::v1::Example::Stub& stub)
 {
     grpc::ClientContext client_context;
@@ -142,6 +191,7 @@ int main(int argc, const char** argv)
             // Let's perform the client-streaming and bidirectional-streaming requests simultaneously
             using namespace boost::asio::experimental::awaitable_operators;
             co_await(make_client_streaming_request(*stub) && make_bidirectional_streaming_request(*stub));
+            co_await make_and_cancel_unary_request(*stub);
             co_await make_shutdown_request(*stub);
         },
         boost::asio::detached);

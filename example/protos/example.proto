@@ -27,6 +27,8 @@ service Example {
 
   rpc Unary(Request) returns (Response) {}
 
+  rpc SlowUnary(Request) returns (Response) {}
+
   rpc Shutdown(google.protobuf.Empty) returns (google.protobuf.Empty) {}
 }
 

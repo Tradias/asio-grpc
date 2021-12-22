@@ -159,6 +159,24 @@ boost::asio::awaitable<void> handle_bidirectional_streaming_request(example::v1:
     silence_unused(finish_ok);
 }
 
+boost::asio::awaitable<void> handle_slow_unary_request(example::v1::Example::AsyncService& service)
+{
+    grpc::ServerContext server_context;
+    example::v1::Request request;
+    grpc::ServerAsyncResponseWriter<example::v1::Response> writer{&server_context};
+    if (!co_await agrpc::request(&example::v1::Example::AsyncService::RequestSlowUnary, service, server_context,
+                                 request, writer))
+    {
+        co_return;
+    }
+
+    grpc::Alarm alarm;
+    co_await agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::milliseconds(request.integer()));
+
+    example::v1::Response response;
+    co_await agrpc::finish(writer, response, grpc::Status::OK);
+}
+
 boost::asio::awaitable<void> handle_shutdown_request(example::v1::Example::AsyncService& service,
                                                      ServerShutdown& server_shutdown)
 {
@@ -201,6 +219,13 @@ int main(int argc, const char** argv)
         [&]() -> boost::asio::awaitable<void>
         {
             co_await handle_bidirectional_streaming_request(service);
+        },
+        boost::asio::detached);
+    boost::asio::co_spawn(
+        grpc_context,
+        [&]() -> boost::asio::awaitable<void>
+        {
+            co_await handle_slow_unary_request(service);
         },
         boost::asio::detached);
     boost::asio::co_spawn(
