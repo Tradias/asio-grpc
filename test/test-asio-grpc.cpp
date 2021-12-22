@@ -1030,7 +1030,8 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with parallel_group
     std::optional<test::ErrorCode> error_code;
     bool ok{true};
     grpc::Alarm alarm;
-    asio::system_timer timer{get_executor(), test::hundred_milliseconds_from_now()};
+    asio::steady_timer timer{get_executor()};
+    timer.expires_after(std::chrono::milliseconds(100));
     asio::experimental::make_parallel_group(timer.async_wait(asio::experimental::deferred),
                                             [&](auto token)
                                             {
