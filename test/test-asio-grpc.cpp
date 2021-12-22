@@ -976,21 +976,26 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with cancellation_t
     bool ok{true};
     asio::cancellation_signal signal{};
     grpc::Alarm alarm;
+    agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::seconds(3),
+                asio::bind_cancellation_slot(signal.slot(), asio::bind_executor(get_executor(),
+                                                                                [&](bool alarm_ok)
+                                                                                {
+                                                                                    ok = alarm_ok;
+                                                                                })));
     asio::post(get_executor(),
                [&]
                {
-                   agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::seconds(3),
-                               asio::bind_cancellation_slot(signal.slot(), asio::bind_executor(get_executor(),
-                                                                                               [&](bool alarm_ok)
-                                                                                               {
-                                                                                                   ok = alarm_ok;
-                                                                                               })));
-                   asio::post(get_executor(),
-                              [&]
-                              {
-                                  signal.emit(asio::cancellation_type::total);
-                              });
+                   signal.emit(asio::cancellation_type::total);
                });
+    SUBCASE("cancel once") {}
+    SUBCASE("cancel twice has no effect")
+    {
+        asio::post(get_executor(),
+                   [&]
+                   {
+                       signal.emit(asio::cancellation_type::total);
+                   });
+    }
     grpc_context.run();
     CHECK_FALSE(ok);
 }
@@ -1017,6 +1022,34 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with cancellation_t
                });
     grpc_context.run();
     CHECK(ok);
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with parallel_group")
+{
+    std::array<std::size_t, 2> completion_order;
+    std::optional<test::ErrorCode> error_code;
+    bool ok{true};
+    grpc::Alarm alarm;
+    asio::system_timer timer{get_executor(), test::hundred_milliseconds_from_now()};
+    asio::experimental::make_parallel_group(timer.async_wait(asio::experimental::deferred),
+                                            [&](auto token)
+                                            {
+                                                return agrpc::wait(
+                                                    alarm, std::chrono::system_clock::now() + std::chrono::seconds(3),
+                                                    asio::bind_executor(get_executor(), token));
+                                            })
+        .async_wait(asio::experimental::wait_for_one(),
+                    [&](std::array<std::size_t, 2> actual_completion_order, test::ErrorCode timer_ec, bool wait_ok)
+                    {
+                        completion_order = actual_completion_order;
+                        error_code.emplace(timer_ec);
+                        ok = wait_ok;
+                    });
+    grpc_context.run();
+    CHECK_EQ(0, completion_order[0]);
+    CHECK_EQ(1, completion_order[1]);
+    CHECK_EQ(test::ErrorCode{}, error_code);
+    CHECK_FALSE(ok);
 }
 #endif
 

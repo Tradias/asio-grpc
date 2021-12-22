@@ -31,6 +31,8 @@
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 #include <asio/bind_cancellation_slot.hpp>
 #include <asio/cancellation_signal.hpp>
+#include <asio/experimental/deferred.hpp>
+#include <asio/experimental/parallel_group.hpp>
 #endif
 
 #ifdef ASIO_HAS_CONCEPTS
@@ -55,6 +57,8 @@
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/cancellation_signal.hpp>
+#include <boost/asio/experimental/deferred.hpp>
+#include <boost/asio/experimental/parallel_group.hpp>
 #endif
 
 #ifdef BOOST_ASIO_HAS_CONCEPTS
