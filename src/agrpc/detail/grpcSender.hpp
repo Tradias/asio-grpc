@@ -25,23 +25,33 @@
 #include "agrpc/detail/utility.hpp"
 #include "agrpc/grpcContext.hpp"
 
+#include <optional>
+
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class InitiatingFunction>
+template <class InitiatingFunction, class StopFunction = detail::Empty>
 class GrpcSender
 {
   private:
     template <class Receiver>
     class Operation : private detail::TypeErasedGrpcTagOperation
     {
+      private:
+        static constexpr bool HAS_STOP_CALLBACK = !std::is_same_v<detail::Empty, StopFunction> &&
+                                                  detail::IS_STOP_EVER_POSSIBLE_V<detail::stop_token_type_t<Receiver&>>;
+
+        using StopCallbackLifetime =
+            std::conditional_t<HAS_STOP_CALLBACK, std::optional<detail::StopCallbackTypeT<Receiver&, StopFunction>>,
+                               detail::Empty>;
+
       public:
         template <class Receiver2>
         constexpr Operation(const GrpcSender& sender, Receiver2&& receiver)
             : detail::TypeErasedGrpcTagOperation(&Operation::on_complete),
               impl(sender.grpc_context, std::forward<Receiver2>(receiver)),
-              initiating_function(sender.initiating_function)
+              functions(sender.initiating_function)
         {
         }
 
@@ -52,9 +62,19 @@ class GrpcSender
                 detail::set_done(std::move(this->receiver()));
                 return;
             }
+            auto stop_token = detail::get_stop_token(this->receiver());
+            if (stop_token.stop_requested())
+            {
+                detail::set_done(std::move(this->receiver()));
+                return;
+            }
+            if constexpr (HAS_STOP_CALLBACK)
+            {
+                this->stop_callback().emplace(std::move(stop_token), StopFunction{this->initiating_function()});
+            }
             this->grpc_context().work_started();
             detail::WorkFinishedOnExit on_exit{this->grpc_context()};
-            initiating_function(this->grpc_context(), this);
+            this->initiating_function()(this->grpc_context(), this);
             on_exit.release();
         }
 
@@ -63,6 +83,10 @@ class GrpcSender
                                 detail::GrpcContextLocalAllocator) noexcept
         {
             auto& self = *static_cast<Operation*>(op);
+            if constexpr (HAS_STOP_CALLBACK)
+            {
+                self.stop_callback().reset();
+            }
             if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
             {
                 detail::satisfy_receiver(std::move(self.receiver()), ok);
@@ -77,8 +101,12 @@ class GrpcSender
 
         constexpr decltype(auto) receiver() noexcept { return impl.second(); }
 
+        constexpr decltype(auto) initiating_function() noexcept { return functions.first(); }
+
+        constexpr decltype(auto) stop_callback() noexcept { return functions.second(); }
+
         detail::CompressedPair<agrpc::GrpcContext&, Receiver> impl;
-        InitiatingFunction initiating_function;
+        detail::CompressedPair<InitiatingFunction, StopCallbackLifetime> functions;
     };
 
   public:

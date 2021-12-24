@@ -47,9 +47,9 @@ TEST_CASE("asio-grpc fulfills unified executor concepts")
     CHECK(asio::execution::is_sender_v<GrpcSender>);
     CHECK(asio::execution::typed_sender<GrpcSender>);
     CHECK(asio::execution::is_typed_sender_v<GrpcSender>);
-    CHECK(asio::execution::sender_to<GrpcSender, test::FunctionAsReciever<test::InvocableArchetype>>);
-    CHECK(asio::execution::is_sender_to_v<GrpcSender, test::FunctionAsReciever<test::InvocableArchetype>>);
-    CHECK(asio::execution::is_nothrow_connect_v<GrpcSender, test::FunctionAsReciever<test::InvocableArchetype>>);
+    CHECK(asio::execution::sender_to<GrpcSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
+    CHECK(asio::execution::is_sender_to_v<GrpcSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
+    CHECK(asio::execution::is_nothrow_connect_v<GrpcSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
     using OperationState = asio::execution::connect_result_t<GrpcSender, test::InvocableArchetype>;
     CHECK(asio::execution::operation_state<OperationState>);
     CHECK(asio::execution::is_operation_state_v<OperationState>);
@@ -59,9 +59,9 @@ TEST_CASE("asio-grpc fulfills unified executor concepts")
     CHECK(asio::execution::is_sender_v<ScheduleSender>);
     CHECK(asio::execution::typed_sender<ScheduleSender>);
     CHECK(asio::execution::is_typed_sender_v<ScheduleSender>);
-    CHECK(asio::execution::sender_to<ScheduleSender, test::FunctionAsReciever<test::InvocableArchetype>>);
-    CHECK(asio::execution::is_sender_to_v<ScheduleSender, test::FunctionAsReciever<test::InvocableArchetype>>);
-    CHECK(asio::execution::is_nothrow_connect_v<ScheduleSender, test::FunctionAsReciever<test::InvocableArchetype>>);
+    CHECK(asio::execution::sender_to<ScheduleSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
+    CHECK(asio::execution::is_sender_to_v<ScheduleSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
+    CHECK(asio::execution::is_nothrow_connect_v<ScheduleSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
     using ScheduleSenderOperationState = asio::execution::connect_result_t<ScheduleSender, test::InvocableArchetype>;
     CHECK(asio::execution::operation_state<ScheduleSenderOperationState>);
     CHECK(asio::execution::is_operation_state_v<ScheduleSenderOperationState>);
@@ -72,28 +72,43 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::schedule")
 {
     bool is_invoked{false};
     auto sender = asio::execution::schedule(get_executor());
-    test::FunctionAsReciever reciever{[&]
+    test::FunctionAsReceiver receiver{[&]
                                       {
                                           is_invoked = true;
                                       }};
-    auto operation_state = asio::execution::connect(std::move(sender), reciever);
+    auto operation_state = asio::execution::connect(std::move(sender), std::move(receiver));
     asio::execution::start(operation_state);
     CHECK_FALSE(is_invoked);
     grpc_context.run();
     CHECK(is_invoked);
-    CHECK_FALSE(reciever.was_done);
+    CHECK_FALSE(receiver.was_done);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::submit with allocator")
 {
     asio::execution::submit(asio::execution::schedule(get_executor()),
-                            test::FunctionAsReciever{[] {}, get_allocator()});
+                            test::FunctionAsReceiver{[] {}, get_allocator()});
     grpc_context.run();
     CHECK(std::any_of(buffer.begin(), buffer.end(),
                       [](auto&& value)
                       {
                           return value != std::byte{};
                       }));
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::execution connect and start Alarm")
+{
+    bool ok{false};
+    grpc::Alarm alarm;
+    auto wait_sender = agrpc::wait(alarm, test::ten_milliseconds_from_now(), use_sender());
+    test::FunctionAsReceiver receiver{[&](bool wait_ok)
+                                      {
+                                          ok = wait_ok;
+                                      }};
+    auto operation_state = asio::execution::connect(std::move(wait_sender), std::move(receiver));
+    asio::execution::start(operation_state);
+    grpc_context.run();
+    CHECK(ok);
 }
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT

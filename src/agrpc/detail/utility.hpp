@@ -42,6 +42,13 @@ class CompressedPair : private Second
     {
     }
 
+    template <class T>
+    constexpr CompressedPair(T&& first) noexcept(
+        std::is_nothrow_constructible_v<First, T&&>&& std::is_nothrow_default_constructible_v<Second>)
+        : Second(), first_(std::forward<T>(first))
+    {
+    }
+
     constexpr auto& first() noexcept { return this->first_; }
 
     constexpr const auto& first() const noexcept { return this->first_; }
@@ -62,6 +69,13 @@ class CompressedPair<First, Second, false> final
     constexpr CompressedPair(T&& first, U&& second) noexcept(
         std::is_nothrow_constructible_v<First, T&&>&& std::is_nothrow_constructible_v<Second, U&&>)
         : first_(std::forward<T>(first)), second_(std::forward<U>(second))
+    {
+    }
+
+    template <class T>
+    constexpr CompressedPair(T&& first) noexcept(
+        std::is_nothrow_constructible_v<First, T&&>&& std::is_nothrow_default_constructible_v<Second>)
+        : second_(), first_(std::forward<T>(first))
     {
     }
 

@@ -81,8 +81,10 @@
 #ifdef AGRPC_UNIFEX
 #include <unifex/config.hpp>
 #include <unifex/get_allocator.hpp>
+#include <unifex/get_stop_token.hpp>
 #include <unifex/receiver_concepts.hpp>
 #include <unifex/scheduler_concepts.hpp>
+#include <unifex/stop_token_concepts.hpp>
 #include <unifex/submit.hpp>
 #endif
 
@@ -137,6 +139,26 @@ using asio::execution::set_done;
 using asio::execution::set_error;
 using asio::execution::set_value;
 using asio::execution::submit;
+
+struct unstoppable_token
+{
+    template <class F>
+    struct callback_type
+    {
+        constexpr explicit callback_type(unstoppable_token, F&&) noexcept {}
+    };
+    static constexpr bool stop_requested() noexcept { return false; }
+    static constexpr bool stop_possible() noexcept { return false; }
+};
+
+template <class Receiver>
+constexpr unstoppable_token get_stop_token(Receiver&&) noexcept
+{
+    return {};
+}
+
+template <class>
+using stop_token_type_t = detail::unstoppable_token;
 #elif defined(AGRPC_UNIFEX)
 using ::unifex::get_allocator;
 using ::unifex::get_scheduler;
@@ -147,11 +169,25 @@ auto get_associated_executor_and_allocator(const Object& object)
     return std::pair{detail::get_scheduler(object), detail::get_allocator(object)};
 }
 
+using ::unifex::get_stop_token;
 using ::unifex::set_done;
 using ::unifex::set_error;
 using ::unifex::set_value;
+using ::unifex::stop_token_type_t;
 using ::unifex::submit;
 #endif
+
+template <class Receiver, class Callback>
+using StopCallbackTypeT = typename detail::stop_token_type_t<Receiver>::template callback_type<Callback>;
+
+template <class T>
+constexpr auto is_stop_ever_possible_helper(int) -> std::bool_constant<(T{}.stop_possible())>;
+
+template <class>
+constexpr auto is_stop_ever_possible_helper(long) -> std::true_type;
+
+template <class T>
+inline constexpr bool IS_STOP_EVER_POSSIBLE_V = decltype(is_stop_ever_possible_helper<T>(0))::value;
 }  // namespace detail
 
 AGRPC_NAMESPACE_END

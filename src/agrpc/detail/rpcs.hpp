@@ -67,22 +67,30 @@ struct AlarmInitFunction
 template <class Deadline>
 AlarmInitFunction(grpc::Alarm&, const Deadline&) -> AlarmInitFunction<Deadline>;
 
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 struct AlarmCancellationHandler
 {
     grpc::Alarm& alarm;
 
     constexpr explicit AlarmCancellationHandler(grpc::Alarm& alarm) noexcept : alarm(alarm) {}
 
+    template <class Deadline>
+    constexpr explicit AlarmCancellationHandler(const detail::AlarmInitFunction<Deadline>& init_function) noexcept
+        : alarm(init_function.alarm)
+    {
+    }
+
+    void operator()() { alarm.Cancel(); }
+
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
     void operator()(asio::cancellation_type type)
     {
         if (static_cast<bool>(type & asio::cancellation_type::all))
         {
-            alarm.Cancel();
+            (*this)();
         }
     }
-};
 #endif
+};
 
 template <class RPC, class Service, class Request, class Responder>
 struct ServerMultiArgRequestInitFunction

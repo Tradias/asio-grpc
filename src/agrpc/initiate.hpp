@@ -140,17 +140,30 @@ namespace detail
 struct GrpcInitiateFn
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    template <class Function, class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(Function function, CompletionToken token = {}) const
+    template <class InitiatingFunction, class CompletionToken = agrpc::DefaultCompletionToken,
+              class StopFunction = detail::Empty>
+    auto operator()(InitiatingFunction initiating_function, CompletionToken token = {},
+                    StopFunction stop_function = {}) const
     {
-        return asio::async_initiate<CompletionToken, void(bool)>(detail::GrpcInitiator{std::move(function)}, token);
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+        if constexpr (!std::is_same_v<detail::Empty, StopFunction>)
+        {
+            if (auto cancellation_slot = asio::get_associated_cancellation_slot(token);
+                cancellation_slot.is_connected())
+            {
+                cancellation_slot.assign(std::move(stop_function));
+            }
+        }
+#endif
+        return asio::async_initiate<CompletionToken, void(bool)>(detail::GrpcInitiator{std::move(initiating_function)},
+                                                                 token);
     }
 #endif
 
-    template <class Function>
-    auto operator()(Function function, detail::UseSender token) const
+    template <class InitiatingFunction, class StopFunction = detail::Empty>
+    auto operator()(InitiatingFunction initiating_function, detail::UseSender token, StopFunction = {}) const
     {
-        return detail::GrpcSender{token.grpc_context, std::move(function)};
+        return detail::GrpcSender<InitiatingFunction, StopFunction>{token.grpc_context, std::move(initiating_function)};
     }
 };
 }  // namespace detail

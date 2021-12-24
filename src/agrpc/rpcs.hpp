@@ -32,13 +32,8 @@ struct WaitFn
     template <class Deadline, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::Alarm& alarm, const Deadline& deadline, CompletionToken token = {}) const
     {
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-        if (auto cancellation_slot = asio::get_associated_cancellation_slot(token); cancellation_slot.is_connected())
-        {
-            cancellation_slot.template emplace<detail::AlarmCancellationHandler>(alarm);
-        }
-#endif
-        return agrpc::grpc_initiate(detail::AlarmInitFunction{alarm, deadline}, std::move(token));
+        return agrpc::grpc_initiate(detail::AlarmInitFunction{alarm, deadline}, std::move(token),
+                                    detail::AlarmCancellationHandler{alarm});
     }
 };
 

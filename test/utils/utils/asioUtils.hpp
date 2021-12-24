@@ -30,7 +30,7 @@ struct InvocableArchetype
 };
 
 template <class Function, class Allocator = std::allocator<std::byte>>
-struct FunctionAsReciever
+struct FunctionAsReceiver
 {
     using allocator_type = Allocator;
 
@@ -39,7 +39,7 @@ struct FunctionAsReciever
     bool was_done{false};
     Allocator allocator;
 
-    explicit FunctionAsReciever(Function function, Allocator allocator = {})
+    explicit FunctionAsReceiver(Function function, Allocator allocator = {})
         : function(std::move(function)), allocator(allocator)
     {
     }
@@ -57,7 +57,7 @@ struct FunctionAsReciever
     auto get_allocator() const noexcept { return allocator; }
 
 #ifdef AGRPC_UNIFEX
-    friend auto tag_invoke(unifex::tag_t<unifex::get_allocator>, const FunctionAsReciever& receiver) noexcept
+    friend auto tag_invoke(unifex::tag_t<unifex::get_allocator>, const FunctionAsReceiver& receiver) noexcept
         -> Allocator
     {
         return receiver.allocator;
@@ -86,7 +86,7 @@ struct Submitter
         }
         auto args = context.args();
         agrpc::detail::submit(std::apply(sender_factory, args),
-                              test::FunctionAsReciever{[c = std::move(context)](auto&&...) {}});
+                              test::FunctionAsReceiver{[c = std::move(context)](auto&&...) {}});
     }
 
 #ifdef AGRPC_UNIFEX
