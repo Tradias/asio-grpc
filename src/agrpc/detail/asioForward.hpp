@@ -147,8 +147,10 @@ struct unstoppable_token
     {
         constexpr explicit callback_type(unstoppable_token, F&&) noexcept {}
     };
-    static constexpr bool stop_requested() noexcept { return false; }
-    static constexpr bool stop_possible() noexcept { return false; }
+
+    [[nodiscard]] static constexpr bool stop_requested() noexcept { return false; }
+
+    [[nodiscard]] static constexpr bool stop_possible() noexcept { return false; }
 };
 
 template <class Receiver>

@@ -19,6 +19,7 @@
 #include "agrpc/detail/forward.hpp"
 #include "agrpc/detail/grpcContextImplementation.hpp"
 #include "agrpc/detail/receiver.hpp"
+#include "agrpc/detail/senderOf.hpp"
 #include "agrpc/detail/utility.hpp"
 #include "agrpc/grpcContext.hpp"
 
@@ -26,7 +27,7 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-struct ScheduleSender
+class ScheduleSender : public detail::SenderOf<>
 {
   private:
     template <class Receiver>
@@ -80,14 +81,6 @@ struct ScheduleSender
     };
 
   public:
-    template <template <class...> class Variant, template <class...> class Tuple>
-    using value_types = Variant<Tuple<>>;
-
-    template <template <class...> class Variant>
-    using error_types = Variant<std::exception_ptr>;
-
-    static constexpr bool sends_done = true;
-
     template <class Receiver>
     constexpr auto connect(Receiver&& receiver) const noexcept(std::is_nothrow_constructible_v<Receiver, Receiver&&>)
         -> Operation<detail::RemoveCvrefT<Receiver>>

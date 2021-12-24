@@ -86,6 +86,7 @@ if(ASIO_GRPC_BUILD_TESTS)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/receiver.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/rpcs.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/scheduleSender.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/senderOf.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/typeErasedOperation.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/utility.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcContext.hpp"
