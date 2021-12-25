@@ -176,7 +176,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex cancel agrpc::wait")
                           [&]
                           {
                               return unifex::stop_when(
-                                  unifex::then(agrpc::wait(alarm, test::hundred_milliseconds_from_now(), use_sender()),
+                                  unifex::then(agrpc::wait(alarm, test::five_seconds_from_now(), use_sender()),
                                                [&](bool wait_ok)
                                                {
                                                    ok = wait_ok;

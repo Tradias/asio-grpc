@@ -37,7 +37,7 @@ GrpcClientServerTest::GrpcClientServerTest()
     server = builder.BuildAndStart();
     stub = test::v1::Test::NewStub(
         grpc::CreateChannel(std::string{"localhost:"} + std::to_string(port), grpc::InsecureChannelCredentials()));
-    client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
+    client_context.set_deadline(test::five_seconds_from_now());
 }
 
 GrpcClientServerTest::~GrpcClientServerTest()

@@ -195,7 +195,7 @@ TEST_CASE("GrpcContext::stop while waiting for Alarm will not invoke the Alarm's
         asio::post(grpc_context,
                    [&]
                    {
-                       agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::seconds(5),
+                       agrpc::wait(alarm, test::five_seconds_from_now(),
                                    asio::bind_executor(grpc_context,
                                                        [&](bool)
                                                        {
@@ -976,7 +976,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with cancellation_t
     bool ok{true};
     asio::cancellation_signal signal{};
     grpc::Alarm alarm;
-    agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::seconds(3),
+    agrpc::wait(alarm, test::five_seconds_from_now(),
                 asio::bind_cancellation_slot(signal.slot(), asio::bind_executor(get_executor(),
                                                                                 [&](bool alarm_ok)
                                                                                 {
@@ -1035,9 +1035,8 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with parallel_group
     asio::experimental::make_parallel_group(timer.async_wait(asio::experimental::deferred),
                                             [&](auto token)
                                             {
-                                                return agrpc::wait(
-                                                    alarm, std::chrono::system_clock::now() + std::chrono::seconds(3),
-                                                    asio::bind_executor(get_executor(), token));
+                                                return agrpc::wait(alarm, test::five_seconds_from_now(),
+                                                                   asio::bind_executor(get_executor(), token));
                                             })
         .async_wait(asio::experimental::wait_for_one(),
                     [&](std::array<std::size_t, 2> actual_completion_order, test::ErrorCode timer_ec, bool wait_ok)
