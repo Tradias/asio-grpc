@@ -20,6 +20,8 @@
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/grpcContextImplementation.hpp"
 #include "agrpc/detail/grpcContextInteraction.hpp"
+#include "agrpc/detail/grpcSender.hpp"
+#include "agrpc/detail/grpcSubmit.hpp"
 #include "agrpc/grpcContext.hpp"
 
 AGRPC_NAMESPACE_BEGIN()
@@ -31,28 +33,10 @@ struct DefaultCompletionTokenNotAvailable
     DefaultCompletionTokenNotAvailable() = delete;
 };
 
-template <class InitiatingFunction, class CompletionHandler, class Allocator>
-void grpc_submit(agrpc::GrpcContext& grpc_context, InitiatingFunction initiating_function,
-                 CompletionHandler completion_handler, Allocator allocator)
+struct UseSender
 {
-    grpc_context.work_started();
-    detail::WorkFinishedOnExit on_exit{grpc_context};
-    if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
-    {
-        auto operation =
-            detail::allocate_operation<false, void(bool)>(grpc_context, std::move(completion_handler), allocator);
-        std::move(initiating_function)(grpc_context, operation.get());
-        operation.release();
-    }
-    else
-    {
-        auto operation = detail::allocate_operation<false, void(bool), detail::GrpcContextLocalAllocator>(
-            std::move(completion_handler), allocator);
-        std::move(initiating_function)(grpc_context, operation.get());
-        operation.release();
-    }
-    on_exit.release();
-}
+    agrpc::GrpcContext& grpc_context;
+};
 
 template <class Executor>
 decltype(auto) query_grpc_context(const Executor& executor)
@@ -120,6 +104,38 @@ auto grpc_initiate_with_payload(Function function, CompletionToken token)
         detail::GrpcWithPayloadInitiator<Payload, Function>{std::move(function)}, token);
 }
 #endif
+
+struct GrpcInitiateImplFn
+{
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+    template <class InitiatingFunction, class CompletionToken = agrpc::DefaultCompletionToken,
+              class StopFunction = detail::Empty>
+    auto operator()(InitiatingFunction initiating_function, CompletionToken token = {},
+                    StopFunction stop_function = {}) const
+    {
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+        if constexpr (!std::is_same_v<detail::Empty, StopFunction>)
+        {
+            if (auto cancellation_slot = asio::get_associated_cancellation_slot(token);
+                cancellation_slot.is_connected())
+            {
+                cancellation_slot.assign(std::move(stop_function));
+            }
+        }
+#endif
+        return asio::async_initiate<CompletionToken, void(bool)>(detail::GrpcInitiator{std::move(initiating_function)},
+                                                                 token);
+    }
+#endif
+
+    template <class InitiatingFunction, class StopFunction = detail::Empty>
+    auto operator()(InitiatingFunction initiating_function, detail::UseSender token, StopFunction = {}) const
+    {
+        return detail::GrpcSender<InitiatingFunction, StopFunction>{token.grpc_context, std::move(initiating_function)};
+    }
+};
+
+inline constexpr detail::GrpcInitiateImplFn grpc_initiate{};
 }
 
 AGRPC_NAMESPACE_END

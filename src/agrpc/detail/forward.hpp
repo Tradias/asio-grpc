@@ -27,7 +27,7 @@ class BasicGrpcExecutor;
 
 namespace detail
 {
-struct GrpcInitiateFn;
+struct GrpcInitiateImplFn;
 
 struct RepeatedlyRequestContextAccess;
 }

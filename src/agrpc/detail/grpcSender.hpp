@@ -19,7 +19,7 @@
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/forward.hpp"
 #include "agrpc/detail/grpcContext.hpp"
-#include "agrpc/detail/initiate.hpp"
+#include "agrpc/detail/grpcSubmit.hpp"
 #include "agrpc/detail/receiver.hpp"
 #include "agrpc/detail/senderOf.hpp"
 #include "agrpc/detail/typeErasedOperation.hpp"
@@ -137,7 +137,7 @@ class GrpcSender : public detail::SenderOf<bool>
     {
     }
 
-    friend agrpc::detail::GrpcInitiateFn;
+    friend agrpc::detail::GrpcInitiateImplFn;
 
     agrpc::GrpcContext& grpc_context;
     InitiatingFunction initiating_function;
