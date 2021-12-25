@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "helper.hpp"
-#include "promise.hpp"
 #include "protos/example.grpc.pb.h"
 
 #include <agrpc/asioGrpc.hpp>
@@ -112,22 +111,26 @@ boost::asio::awaitable<bool> run_with_deadline(grpc::Alarm& alarm, const boost::
                                                grpc::ClientContext& client_context,
                                                std::chrono::system_clock::time_point deadline, Function&& function)
 {
-    BasicPromise<bool, agrpc::DefaultCompletionToken> promise;
     bool finished{};
-    agrpc::wait(alarm, deadline,
-                boost::asio::bind_executor(executor,
-                                           [&](bool wait_ok)
-                                           {
-                                               if (wait_ok && !finished)
-                                               {
-                                                   client_context.TryCancel();
-                                               }
-                                               promise.fulfill(wait_ok);
-                                           }));
-    auto result = co_await function();
-    finished = true;
-    co_await promise.get();
-    co_return result;
+    const auto set_alarm = [&]() -> boost::asio::awaitable<bool>
+    {
+        const auto wait_ok = co_await agrpc::wait(alarm, deadline);
+        if (wait_ok && !finished)
+        {
+            client_context.TryCancel();
+            co_return true;
+        }
+        co_return false;
+    };
+    const auto await_function = [&]() -> boost::asio::awaitable<typename decltype(function())::value_type>
+    {
+        auto result = co_await function();
+        finished = true;
+        co_return result;
+    };
+    using namespace boost::asio::experimental::awaitable_operators;
+    auto [was_cancelled, result] = co_await(set_alarm() && await_function());
+    co_return std::move(result);
 }
 
 boost::asio::awaitable<void> make_and_cancel_unary_request(example::v1::Example::Stub& stub)
@@ -138,7 +141,7 @@ boost::asio::awaitable<void> make_and_cancel_unary_request(example::v1::Example:
     const auto executor = co_await boost::asio::this_coro::executor;
 
     example::v1::Request request;
-    request.set_integer(3000);  // tell server to delay response by 3000ms
+    request.set_integer(2000);  // tell server to delay response by 2000ms
     auto reader = stub.AsyncSlowUnary(&client_context, request, agrpc::get_completion_queue(executor));
 
     example::v1::Response response;
