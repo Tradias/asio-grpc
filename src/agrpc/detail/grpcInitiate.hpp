@@ -29,7 +29,7 @@ namespace detail
 struct GrpcInitiateImplFn
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    template <class InitiatingFunction, class CompletionToken = agrpc::DefaultCompletionToken,
+    template <class InitiatingFunction, class CompletionToken = detail::DefaultCompletionToken,
               class StopFunction = detail::Empty>
     auto operator()(InitiatingFunction initiating_function, CompletionToken token = {},
                     StopFunction stop_function = {}) const
