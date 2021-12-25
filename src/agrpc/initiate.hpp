@@ -17,6 +17,7 @@
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
+#include "agrpc/detail/grpcInitiate.hpp"
 #include "agrpc/detail/initiate.hpp"
 #include "agrpc/detail/utility.hpp"
 #include "agrpc/grpcContext.hpp"

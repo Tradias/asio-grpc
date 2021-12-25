@@ -104,38 +104,6 @@ auto grpc_initiate_with_payload(Function function, CompletionToken token)
         detail::GrpcWithPayloadInitiator<Payload, Function>{std::move(function)}, token);
 }
 #endif
-
-struct GrpcInitiateImplFn
-{
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    template <class InitiatingFunction, class CompletionToken = agrpc::DefaultCompletionToken,
-              class StopFunction = detail::Empty>
-    auto operator()(InitiatingFunction initiating_function, CompletionToken token = {},
-                    StopFunction stop_function = {}) const
-    {
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-        if constexpr (!std::is_same_v<detail::Empty, StopFunction>)
-        {
-            if (auto cancellation_slot = asio::get_associated_cancellation_slot(token);
-                cancellation_slot.is_connected())
-            {
-                cancellation_slot.assign(std::move(stop_function));
-            }
-        }
-#endif
-        return asio::async_initiate<CompletionToken, void(bool)>(detail::GrpcInitiator{std::move(initiating_function)},
-                                                                 token);
-    }
-#endif
-
-    template <class InitiatingFunction, class StopFunction = detail::Empty>
-    auto operator()(InitiatingFunction initiating_function, detail::UseSender token, StopFunction = {}) const
-    {
-        return detail::GrpcSender<InitiatingFunction, StopFunction>{token.grpc_context, std::move(initiating_function)};
-    }
-};
-
-inline constexpr detail::GrpcInitiateImplFn grpc_initiate{};
 }
 
 AGRPC_NAMESPACE_END
