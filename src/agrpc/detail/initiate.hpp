@@ -28,11 +28,6 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-struct DefaultCompletionTokenNotAvailable
-{
-    DefaultCompletionTokenNotAvailable() = delete;
-};
-
 struct UseSender
 {
     agrpc::GrpcContext& grpc_context;
@@ -107,23 +102,5 @@ auto grpc_initiate_with_payload(Function function, CompletionToken token)
 }
 
 AGRPC_NAMESPACE_END
-
-#ifdef AGRPC_STANDALONE_ASIO
-namespace asio
-{
-template <class Signature>
-class async_result<::agrpc::detail::DefaultCompletionTokenNotAvailable, Signature>
-{
-};
-}  // namespace asio
-#elif defined(AGRPC_BOOST_ASIO)
-namespace boost::asio
-{
-template <class Signature>
-class async_result<::agrpc::detail::DefaultCompletionTokenNotAvailable, Signature>
-{
-};
-}  // namespace boost::asio
-#endif
 
 #endif  // AGRPC_DETAIL_INITIATE_HPP

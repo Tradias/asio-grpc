@@ -17,6 +17,7 @@
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
+#include "agrpc/detail/defaultCompletionToken.hpp"
 #include "agrpc/detail/grpcInitiate.hpp"
 #include "agrpc/detail/initiate.hpp"
 #include "agrpc/detail/utility.hpp"
@@ -42,11 +43,9 @@ using GrpcUseAwaitable = asio::use_awaitable_t<agrpc::pmr::GrpcExecutor>;
 
 static constexpr agrpc::pmr::GrpcUseAwaitable GRPC_USE_AWAITABLE{};
 }  // namespace pmr
-
-using DefaultCompletionToken = asio::use_awaitable_t<>;
-#else
-using DefaultCompletionToken = detail::DefaultCompletionTokenNotAvailable;
 #endif
+
+using DefaultCompletionToken = detail::DefaultCompletionToken;
 
 namespace detail
 {

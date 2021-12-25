@@ -17,8 +17,10 @@
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
+#include "agrpc/detail/defaultCompletionToken.hpp"
 #include "agrpc/detail/grpcSender.hpp"
 #include "agrpc/detail/initiate.hpp"
+#include "agrpc/detail/utility.hpp"
 
 AGRPC_NAMESPACE_BEGIN()
 
