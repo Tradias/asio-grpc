@@ -86,7 +86,9 @@
     inline namespace u          \
     {
 #else
-#error asio-grpc backend macro is not defined. Did you forget to link with `asio-grpc::asio-grpc`, `asio-grpc::asio-grpc-standalone-asio` or `asio-grpc::asio-grpc-unifex` in your CMake file?
+static_assert(false,
+              "asio-grpc backend macro is not defined. Did you forget to link with `asio-grpc::asio-grpc`, "
+              "`asio-grpc::asio-grpc-standalone-asio` or `asio-grpc::asio-grpc-unifex` in your CMake file?");
 #endif
 
 #define AGRPC_NAMESPACE_END \

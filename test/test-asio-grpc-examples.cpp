@@ -17,7 +17,6 @@
 #include <boost/process/child.hpp>
 #include <doctest/doctest.h>
 
-#include <iostream>
 #include <thread>
 
 namespace test_asio_grpc_examples

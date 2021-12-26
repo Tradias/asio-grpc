@@ -22,7 +22,6 @@
 
 #include <cstddef>
 #include <optional>
-#include <string_view>
 #include <thread>
 
 namespace test_asio_grpc

@@ -21,7 +21,6 @@
 #include <doctest/doctest.h>
 
 #include <cstddef>
-#include <iostream>
 
 namespace test_asio_grpc_cpp20
 {
