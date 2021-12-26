@@ -32,7 +32,7 @@ struct GrpcInitiateImplFn
     template <class InitiatingFunction, class CompletionToken = detail::DefaultCompletionToken,
               class StopFunction = detail::Empty>
     auto operator()(InitiatingFunction initiating_function, CompletionToken token = {},
-                    StopFunction stop_function = {}) const
+                    [[maybe_unused]] StopFunction stop_function = {}) const
     {
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
         if constexpr (!std::is_same_v<detail::Empty, StopFunction>)

@@ -138,7 +138,7 @@ struct NoOpReceiverWithAllocator
     {
     }
 
-    static constexpr void set_error(std::exception_ptr) noexcept {}
+    static void set_error(std::exception_ptr) noexcept {}
 
     constexpr auto get_allocator() const noexcept { return allocator; }
 
@@ -215,7 +215,7 @@ auto RepeatedlyRequestFn::operator()(detail::ServerSingleArgRequest<RPC, Respond
             const auto scheduler = detail::get_scheduler(handler);
             return unifex::let_value(agrpc::request(rpc, service, context.server_context(), context.responder(),
                                                     agrpc::use_sender(scheduler)),
-                                     [&service, rpc, handler = std::move(handler)](bool ok)
+                                     [&context, &service, rpc, handler = std::move(handler)](bool ok)
                                      {
                                          if AGRPC_LIKELY (ok)
                                          {
