@@ -107,30 +107,19 @@ boost::asio::awaitable<void> make_bidirectional_streaming_request(example::v1::E
 }
 
 template <class Function>
-boost::asio::awaitable<bool> run_with_deadline(grpc::Alarm& alarm, const boost::asio::any_io_executor& executor,
+boost::asio::awaitable<void> run_with_deadline(grpc::Alarm& alarm, const boost::asio::any_io_executor& executor,
                                                grpc::ClientContext& client_context,
                                                std::chrono::system_clock::time_point deadline, Function&& function)
 {
-    bool finished{};
-    const auto set_alarm = [&]() -> boost::asio::awaitable<bool>
+    const auto set_alarm = [&]() -> boost::asio::awaitable<void>
     {
-        const auto wait_ok = co_await agrpc::wait(alarm, deadline);
-        if (wait_ok && !finished)
+        if (co_await agrpc::wait(alarm, deadline))
         {
             client_context.TryCancel();
-            co_return true;
         }
-        co_return false;
-    };
-    const auto await_function = [&]() -> boost::asio::awaitable<typename decltype(function())::value_type>
-    {
-        auto result = co_await function();
-        finished = true;
-        co_return result;
     };
     using namespace boost::asio::experimental::awaitable_operators;
-    auto [was_cancelled, result] = co_await(set_alarm() && await_function());
-    co_return std::move(result);
+    co_await(set_alarm() || function());
 }
 
 boost::asio::awaitable<void> make_and_cancel_unary_request(example::v1::Example::Stub& stub)
