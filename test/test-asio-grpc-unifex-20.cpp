@@ -207,24 +207,52 @@ TEST_CASE("unifex GrpcContext.stop() with pending GrpcSender operation")
     CHECK_FALSE(is_invoked);
 }
 
+template <class Handler, class Scheduler, class Allocator = std::allocator<std::byte>>
+struct AssociatedHandler
+{
+    Handler handler;
+    Scheduler scheduler;
+    Allocator allocator;
+
+    explicit AssociatedHandler(Handler handler, Scheduler scheduler, Allocator allocator)
+        : handler(handler), scheduler(scheduler), allocator(allocator)
+    {
+    }
+
+    template <class... Args>
+    auto operator()(Args&&... args) const
+    {
+        return handler(std::forward<Args>(args)...);
+    }
+
+    friend auto tag_invoke(unifex::tag_t<unifex::get_scheduler>, const AssociatedHandler& receiver) noexcept
+    {
+        return receiver.scheduler;
+    }
+
+    friend auto tag_invoke(unifex::tag_t<unifex::get_allocator>, const AssociatedHandler& receiver) noexcept
+    {
+        return receiver.allocator;
+    }
+};
+
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request unary")
 {
-    agrpc::repeatedly_request(&test::v1::Test::AsyncService::RequestUnary, service,
-                              test::Submitter{grpc_context,
-                                              [&](grpc::ServerContext&, test::v1::Request& request,
-                                                  grpc::ServerAsyncResponseWriter<test::v1::Response>& writer)
-                                              {
-                                                  CHECK_EQ(42, request.integer());
-                                                  return unifex::let_value(unifex::just(test::v1::Response{}),
-                                                                           [&](auto& response)
-                                                                           {
-                                                                               response.set_integer(24);
-                                                                               return agrpc::finish(writer, response,
-                                                                                                    grpc::Status::OK,
-                                                                                                    use_sender());
-                                                                           });
-                                              },
-                                              get_allocator()});
+    auto server_request_repeater = agrpc::repeatedly_request(
+        &test::v1::Test::AsyncService::RequestUnary, service,
+        AssociatedHandler{[&](grpc::ServerContext&, test::v1::Request& request,
+                              grpc::ServerAsyncResponseWriter<test::v1::Response>& writer)
+                          {
+                              CHECK_EQ(42, request.integer());
+                              return unifex::let_value(unifex::just(test::v1::Response{}),
+                                                       [&](auto& response)
+                                                       {
+                                                           response.set_integer(24);
+                                                           return agrpc::finish(writer, response, grpc::Status::OK,
+                                                                                use_sender());
+                                                       });
+                          },
+                          get_executor(), get_allocator()});
     auto request_count{0};
     auto request_sender = unifex::let_value_with(
         [&]
@@ -253,6 +281,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request unary")
                                 });
         });
     unifex::sync_wait(unifex::when_all(unifex::sequence(request_sender, request_sender, request_sender, request_sender),
+                                       std::move(server_request_repeater),
                                        unifex::then(unifex::just(),
                                                     [&]
                                                     {

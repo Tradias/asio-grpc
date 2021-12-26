@@ -82,6 +82,8 @@
 #include <unifex/config.hpp>
 #include <unifex/get_allocator.hpp>
 #include <unifex/get_stop_token.hpp>
+#include <unifex/let_value.hpp>
+#include <unifex/let_value_with.hpp>
 #include <unifex/receiver_concepts.hpp>
 #include <unifex/scheduler_concepts.hpp>
 #include <unifex/stop_token_concepts.hpp>

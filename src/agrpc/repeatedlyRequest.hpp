@@ -72,11 +72,11 @@ namespace detail
 struct RepeatedlyRequestFn
 {
     template <class RPC, class Service, class Request, class Responder, class Handler>
-    void operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
+    auto operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
                     Handler handler) const;
 
     template <class RPC, class Service, class Responder, class Handler>
-    void operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service, Handler handler) const;
+    auto operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service, Handler handler) const;
 };
 }  // namespace detail
 
