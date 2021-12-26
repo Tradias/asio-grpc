@@ -18,8 +18,10 @@
 #include <agrpc/asioGrpc.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
+#include <unifex/just.hpp>
 #include <unifex/sync_wait.hpp>
 #include <unifex/task.hpp>
+#include <unifex/then.hpp>
 #include <unifex/when_all.hpp>
 
 unifex::task<void> handle_unary_request(example::v1::Example::AsyncService& service, agrpc::GrpcContext& grpc_context)
@@ -57,6 +59,26 @@ unifex::task<void> handle_server_streaming_request(example::v1::Example::AsyncSe
     co_await agrpc::finish(writer, grpc::Status::OK, agrpc::use_sender(grpc_context));
 }
 
+unifex::task<void> handle_slow_unary_request(example::v1::Example::AsyncService& service,
+                                             agrpc::GrpcContext& grpc_context)
+{
+    grpc::ServerContext server_context;
+    example::v1::Request request;
+    grpc::ServerAsyncResponseWriter<example::v1::Response> writer{&server_context};
+    if (!co_await agrpc::request(&example::v1::Example::AsyncService::RequestSlowUnary, service, server_context,
+                                 request, writer, agrpc::use_sender(grpc_context)))
+    {
+        co_return;
+    }
+
+    grpc::Alarm alarm;
+    co_await agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::milliseconds(request.integer()),
+                         agrpc::use_sender(grpc_context));
+
+    example::v1::Response response;
+    co_await agrpc::finish(writer, response, grpc::Status::OK, agrpc::use_sender(grpc_context));
+}
+
 int main(int argc, const char** argv)
 {
     const auto port = argc >= 2 ? argv[1] : "50051";
@@ -73,11 +95,11 @@ int main(int argc, const char** argv)
 
     unifex::sync_wait(unifex::when_all(handle_unary_request(service, grpc_context),
                                        handle_server_streaming_request(service, grpc_context),
-                                       [&]() -> unifex::task<void>
-                                       {
-                                           grpc_context.run();
-                                           co_return;
-                                       }()));
+                                       unifex::then(unifex::just(),
+                                                    [&]
+                                                    {
+                                                        grpc_context.run();
+                                                    })));
 
     server->Shutdown();
 }

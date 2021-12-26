@@ -311,11 +311,11 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex::task unary")
             grpc::Status status;
             client_finish_ok = co_await agrpc::finish(*reader, response, status, use_sender());
         }(),
-        [&]() -> unifex::task<void>
-        {
-            grpc_context.run();
-            co_return;
-        }()));
+        unifex::then(unifex::just(),
+                     [&]
+                     {
+                         grpc_context.run();
+                     })));
     CHECK(server_finish_ok);
     CHECK(client_finish_ok);
 }

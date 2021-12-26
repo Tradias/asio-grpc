@@ -18,17 +18,22 @@
 #include <agrpc/asioGrpc.hpp>
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
+#include <unifex/just.hpp>
+#include <unifex/stop_when.hpp>
 #include <unifex/sync_wait.hpp>
 #include <unifex/task.hpp>
+#include <unifex/then.hpp>
 #include <unifex/when_all.hpp>
 
 unifex::task<void> make_unary_request(example::v1::Example::Stub& stub, agrpc::GrpcContext& grpc_context)
 {
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
+
     example::v1::Request request;
     request.set_integer(42);
     const auto reader = stub.AsyncUnary(&client_context, request, agrpc::get_completion_queue(grpc_context));
+
     example::v1::Response response;
     grpc::Status status;
     co_await agrpc::finish(*reader, response, status, agrpc::use_sender(grpc_context));
@@ -40,6 +45,7 @@ unifex::task<void> make_server_streaming_request(example::v1::Example::Stub& stu
 {
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
+
     example::v1::Request request;
     request.set_integer(10);
     std::unique_ptr<grpc::ClientAsyncReader<example::v1::Response>> reader;
@@ -53,10 +59,45 @@ unifex::task<void> make_server_streaming_request(example::v1::Example::Stub& stu
         std::cout << "Server streaming: " << response.integer() << '\n';
         read_ok = co_await agrpc::read(*reader, response, agrpc::use_sender(grpc_context));
     }
+
     grpc::Status status;
     co_await agrpc::finish(*reader, status, agrpc::use_sender(grpc_context));
 
     abort_if_not(status.ok());
+}
+
+template <class Sender>
+auto run_with_deadline(grpc::Alarm& alarm, agrpc::GrpcContext& grpc_context, grpc::ClientContext& client_context,
+                       std::chrono::system_clock::time_point deadline, Sender sender)
+{
+    return unifex::stop_when(std::move(sender),
+                             unifex::then(agrpc::wait(alarm, deadline, agrpc::use_sender(grpc_context)),
+                                          [&](bool wait_ok)
+                                          {
+                                              if (wait_ok)
+                                              {
+                                                  client_context.TryCancel();
+                                              }
+                                          }));
+}
+
+unifex::task<void> make_and_cancel_unary_request(example::v1::Example::Stub& stub, agrpc::GrpcContext& grpc_context)
+{
+    grpc::ClientContext client_context;
+    client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
+
+    example::v1::Request request;
+    request.set_integer(2000);  // tell server to delay response by 2000ms
+    auto reader = stub.AsyncSlowUnary(&client_context, request, agrpc::get_completion_queue(grpc_context));
+
+    example::v1::Response response;
+    grpc::Status status;
+    grpc::Alarm alarm;
+    co_await run_with_deadline(alarm, grpc_context, client_context,
+                               std::chrono::system_clock::now() + std::chrono::milliseconds(50),
+                               agrpc::finish(*reader, response, status, agrpc::use_sender(grpc_context)));
+
+    abort_if_not(grpc::StatusCode::CANCELLED == status.error_code());
 }
 
 int main(int argc, const char** argv)
@@ -69,9 +110,10 @@ int main(int argc, const char** argv)
 
     unifex::sync_wait(unifex::when_all(make_unary_request(*stub, grpc_context),
                                        make_server_streaming_request(*stub, grpc_context),
-                                       [&]() -> unifex::task<void>
-                                       {
-                                           grpc_context.run();
-                                           co_return;
-                                       }()));
+                                       make_and_cancel_unary_request(*stub, grpc_context),
+                                       unifex::then(unifex::just(),
+                                                    [&]
+                                                    {
+                                                        grpc_context.run();
+                                                    })));
 }
