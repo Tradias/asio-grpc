@@ -262,6 +262,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request unary")
             return unifex::then(agrpc::finish(*reader, response, status, use_sender()),
                                 [&](bool ok)
                                 {
+                                    auto& [reader, response, status, _] = tuple;
                                     CHECK(ok);
                                     CHECK(status.ok());
                                     CHECK_EQ(24, response.integer());

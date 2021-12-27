@@ -189,6 +189,11 @@ auto RepeatedlyRequestFn::operator()(detail::ServerMultiArgRequest<RPC, Request,
                     return std::move(sender_factory)(context.server_context(), context.request(), context.responder());
                 });
         });
+#else
+    (void)rpc;
+    (void)service;
+    (void)sender_factory;
+    (void)use_sender;
 #endif
 }
 
@@ -226,6 +231,11 @@ auto RepeatedlyRequestFn::operator()(detail::ServerSingleArgRequest<RPC, Respond
                     return std::move(sender_factory)(context.server_context(), context.responder());
                 });
         });
+#else
+    (void)rpc;
+    (void)service;
+    (void)sender_factory;
+    (void)use_sender;
 #endif
 }
 
