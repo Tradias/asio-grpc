@@ -18,6 +18,7 @@
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/forward.hpp"
+#include "agrpc/detail/initiate.hpp"
 #include "agrpc/detail/memory.hpp"
 #include "agrpc/detail/rpcs.hpp"
 
@@ -72,11 +73,19 @@ namespace detail
 struct RepeatedlyRequestFn
 {
     template <class RPC, class Service, class Request, class Responder, class Handler>
-    auto operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
+    void operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
                     Handler handler) const;
 
+    template <class RPC, class Service, class Request, class Responder, class SenderFactory>
+    [[nodiscard]] auto operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
+                                  SenderFactory sender_factory, detail::UseSender) const;
+
     template <class RPC, class Service, class Responder, class Handler>
-    auto operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service, Handler handler) const;
+    void operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service, Handler handler) const;
+
+    template <class RPC, class Service, class Responder, class SenderFactory>
+    [[nodiscard]] auto operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service,
+                                  SenderFactory sender_factory, detail::UseSender) const;
 };
 }  // namespace detail
 

@@ -124,18 +124,19 @@ struct HandlerWithAssociatedAllocator
     [[nodiscard]] allocator_type get_allocator() const noexcept { return allocator; }
 };
 
-template <class Handler>
+template <class Handler, class Allocator = std::allocator<std::byte>>
 struct RpcSpawner
 {
     using executor_type = asio::associated_executor_t<Handler>;
-    using allocator_type = asio::associated_allocator_t<Handler>;
+    using allocator_type = Allocator;
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
     using cancellation_slot_type = asio::associated_cancellation_slot_t<Handler>;
 #endif
 
     Handler handler;
+    Allocator allocator;
 
-    explicit RpcSpawner(Handler handler) : handler(std::move(handler)) {}
+    explicit RpcSpawner(Handler handler, Allocator allocator) : handler(std::move(handler)), allocator(allocator) {}
 
     template <class RPCHandler>
     void operator()(RPCHandler&& rpc_handler, bool ok) &&
@@ -152,7 +153,7 @@ struct RpcSpawner
 
     [[nodiscard]] executor_type get_executor() const noexcept { return asio::get_associated_executor(handler); }
 
-    [[nodiscard]] allocator_type get_allocator() const noexcept { return asio::get_associated_allocator(handler); }
+    [[nodiscard]] allocator_type get_allocator() const noexcept { return allocator; }
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
     [[nodiscard]] cancellation_slot_type get_cancellation_slot() const noexcept

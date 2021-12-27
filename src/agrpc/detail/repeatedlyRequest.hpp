@@ -79,7 +79,7 @@ struct SingleArgRPCContext : detail::RPCContextBase
     constexpr auto& responder() noexcept { return this->responder_; }
 };
 
-template <class RPC, class Service, class RPCHandlerAllocator, class Handler>
+template <class RPC, class Service, class RPCContextAllocator, class Handler>
 struct RequestRepeater
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
@@ -89,12 +89,12 @@ struct RequestRepeater
 
     RPC rpc;
     Service& service;
-    detail::AllocatedPointer<RPCHandlerAllocator> rpc_handler;
+    detail::AllocatedPointer<RPCContextAllocator> rpc_context;
     Handler handler;
 
-    RequestRepeater(RPC rpc, Service& service, detail::AllocatedPointer<RPCHandlerAllocator> rpc_handler,
+    RequestRepeater(RPC rpc, Service& service, detail::AllocatedPointer<RPCContextAllocator> rpc_context,
                     Handler handler)
-        : rpc(rpc), service(service), rpc_handler(std::move(rpc_handler)), handler(std::move(handler))
+        : rpc(rpc), service(service), rpc_context(std::move(rpc_context)), handler(std::move(handler))
     {
     }
 
@@ -105,12 +105,6 @@ struct RequestRepeater
 
     allocator_type get_allocator() const noexcept { return asio::get_associated_allocator(handler); }
 #else
-    void set_done() noexcept {}
-
-    void set_value(bool ok) { (*this)(ok); }
-
-    void set_error(std::exception_ptr) noexcept {}
-
     friend auto tag_invoke(unifex::tag_t<unifex::get_allocator>, const RequestRepeater& self) noexcept
     {
         return detail::get_allocator(self.handler);
@@ -152,77 +146,85 @@ struct NoOpReceiverWithAllocator
 };
 
 template <class RPC, class Service, class Handler>
-void submit_request_repeat(RPC rpc, Service& service, Handler handler)
+void submit_request_repeat(RPC rpc, Service& service, Handler handler, detail::UseSender use_sender)
 {
     const auto allocator = detail::get_allocator(handler);
-    detail::submit(agrpc::repeatedly_request(rpc, service, std::move(handler)),
+    detail::submit(agrpc::repeatedly_request(rpc, service, std::move(handler), use_sender),
                    detail::NoOpReceiverWithAllocator{allocator});
 }
 
 template <class RPC, class Service, class Request, class Responder, class Handler>
-auto RepeatedlyRequestFn::operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
+void RepeatedlyRequestFn::operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
                                      Handler handler) const
 {
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    auto rpc_handler = detail::allocate<detail::MultiArgRPCContext<Request, Responder>>(detail::get_allocator(handler));
-    auto& rpc_context = rpc_handler->server_context();
-    auto& rpc_request = rpc_handler->request();
-    auto& rpc_responder = rpc_handler->responder();
-    agrpc::request(rpc, service, rpc_context, rpc_request, rpc_responder,
-                   detail::RequestRepeater{rpc, service, std::move(rpc_handler), std::move(handler)});
-#else
+    auto rpc_context = detail::allocate<detail::MultiArgRPCContext<Request, Responder>>(detail::get_allocator(handler));
+    auto& rpc_server_context = rpc_context->server_context();
+    auto& rpc_request = rpc_context->request();
+    auto& rpc_responder = rpc_context->responder();
+    agrpc::request(rpc, service, rpc_server_context, rpc_request, rpc_responder,
+                   detail::RequestRepeater{rpc, service, std::move(rpc_context), std::move(handler)});
+}
+
+template <class RPC, class Service, class Request, class Responder, class SenderFactory>
+auto RepeatedlyRequestFn::operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
+                                     SenderFactory sender_factory, detail::UseSender use_sender) const
+{
+#ifdef AGRPC_UNIFEX
     return unifex::let_value_with(
         [&]
         {
             return detail::MultiArgRPCContext<Request, Responder>();
         },
-        [&service, rpc, handler = std::move(handler)](auto& context) mutable
+        [&service, rpc, use_sender, sender_factory = std::move(sender_factory)](auto& context) mutable
         {
-            const auto scheduler = detail::get_scheduler(handler);
-            return unifex::let_value(agrpc::request(rpc, service, context.server_context(), context.request(),
-                                                    context.responder(), agrpc::use_sender(scheduler)),
-                                     [&context, &service, rpc, handler = std::move(handler)](bool ok) mutable
-                                     {
-                                         if AGRPC_LIKELY (ok)
-                                         {
-                                             detail::submit_request_repeat(rpc, service, handler);
-                                         }
-                                         return std::move(handler)(context.server_context(), context.request(),
-                                                                   context.responder());
-                                     });
+            return unifex::let_value(
+                agrpc::request(rpc, service, context.server_context(), context.request(), context.responder(),
+                               use_sender),
+                [&context, &service, rpc, use_sender, sender_factory = std::move(sender_factory)](bool ok) mutable
+                {
+                    if AGRPC_LIKELY (ok)
+                    {
+                        detail::submit_request_repeat(rpc, service, sender_factory, use_sender);
+                    }
+                    return std::move(sender_factory)(context.server_context(), context.request(), context.responder());
+                });
         });
 #endif
 }
 
 template <class RPC, class Service, class Responder, class Handler>
-auto RepeatedlyRequestFn::operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service,
+void RepeatedlyRequestFn::operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service,
                                      Handler handler) const
 {
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    auto rpc_handler = detail::allocate<detail::SingleArgRPCContext<Responder>>(detail::get_allocator(handler));
-    auto& rpc_context = rpc_handler->server_context();
-    auto& rpc_responder = rpc_handler->responder();
-    agrpc::request(rpc, service, rpc_context, rpc_responder,
-                   detail::RequestRepeater{rpc, service, std::move(rpc_handler), std::move(handler)});
-#else
+    auto rpc_context = detail::allocate<detail::SingleArgRPCContext<Responder>>(detail::get_allocator(handler));
+    auto& rpc_server_context = rpc_context->server_context();
+    auto& rpc_responder = rpc_context->responder();
+    agrpc::request(rpc, service, rpc_server_context, rpc_responder,
+                   detail::RequestRepeater{rpc, service, std::move(rpc_context), std::move(handler)});
+}
+
+template <class RPC, class Service, class Responder, class SenderFactory>
+auto RepeatedlyRequestFn::operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service,
+                                     SenderFactory sender_factory, detail::UseSender use_sender) const
+{
+#ifdef AGRPC_UNIFEX
     return unifex::let_value_with(
         [&]
         {
             return detail::SingleArgRPCContext<Responder>();
         },
-        [&service, rpc, handler = std::move(handler)](auto& context) mutable
+        [&service, rpc, use_sender, sender_factory = std::move(sender_factory)](auto& context) mutable
         {
-            const auto scheduler = detail::get_scheduler(handler);
-            return unifex::let_value(agrpc::request(rpc, service, context.server_context(), context.responder(),
-                                                    agrpc::use_sender(scheduler)),
-                                     [&context, &service, rpc, handler = std::move(handler)](bool ok)
-                                     {
-                                         if AGRPC_LIKELY (ok)
-                                         {
-                                             detail::submit_request_repeat(rpc, service, handler);
-                                         }
-                                         return std::move(handler)(context.server_context(), context.responder());
-                                     });
+            return unifex::let_value(
+                agrpc::request(rpc, service, context.server_context(), context.responder(), use_sender),
+                [&context, &service, rpc, use_sender, sender_factory = std::move(sender_factory)](bool ok) mutable
+                {
+                    if AGRPC_LIKELY (ok)
+                    {
+                        detail::submit_request_repeat(rpc, service, sender_factory, use_sender);
+                    }
+                    return std::move(sender_factory)(context.server_context(), context.responder());
+                });
         });
 #endif
 }
@@ -235,7 +237,7 @@ void RequestRepeater<RPC, Service, RPCHandler, Handler>::operator()(bool ok)
         auto next_handler{this->handler};
         agrpc::repeatedly_request(this->rpc, this->service, std::move(next_handler));
     }
-    std::move(this->handler)(detail::RepeatedlyRequestContextAccess::create(std::move(this->rpc_handler)), ok);
+    std::move(this->handler)(detail::RepeatedlyRequestContextAccess::create(std::move(this->rpc_context)), ok);
 }
 }
 

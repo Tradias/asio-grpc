@@ -207,27 +207,18 @@ TEST_CASE("unifex GrpcContext.stop() with pending GrpcSender operation")
     CHECK_FALSE(is_invoked);
 }
 
-template <class Handler, class Scheduler, class Allocator = std::allocator<std::byte>>
+template <class Handler, class Allocator = std::allocator<std::byte>>
 struct AssociatedHandler
 {
     Handler handler;
-    Scheduler scheduler;
     Allocator allocator;
 
-    explicit AssociatedHandler(Handler handler, Scheduler scheduler, Allocator allocator)
-        : handler(handler), scheduler(scheduler), allocator(allocator)
-    {
-    }
+    explicit AssociatedHandler(Handler handler, Allocator allocator) : handler(handler), allocator(allocator) {}
 
     template <class... Args>
     auto operator()(Args&&... args) const
     {
         return handler(std::forward<Args>(args)...);
-    }
-
-    friend auto tag_invoke(unifex::tag_t<unifex::get_scheduler>, const AssociatedHandler& receiver) noexcept
-    {
-        return receiver.scheduler;
     }
 
     friend auto tag_invoke(unifex::tag_t<unifex::get_allocator>, const AssociatedHandler& receiver) noexcept
@@ -252,7 +243,8 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request unary")
                                                                                 use_sender());
                                                        });
                           },
-                          get_executor(), get_allocator()});
+                          get_allocator()},
+        use_sender());
     auto request_count{0};
     auto request_sender = unifex::let_value_with(
         [&]
@@ -271,8 +263,8 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request unary")
                                 [&](bool ok)
                                 {
                                     CHECK(ok);
-                                    CHECK(std::get<2>(tuple).ok());
-                                    CHECK_EQ(24, std::get<1>(tuple).integer());
+                                    CHECK(status.ok());
+                                    CHECK_EQ(24, response.integer());
                                     ++request_count;
                                     if (request_count == 4)
                                     {
@@ -346,6 +338,77 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex::task unary")
                      })));
     CHECK(server_finish_ok);
     CHECK(client_finish_ok);
+}
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request client streaming")
+{
+    bool is_shutdown{false};
+    auto request_count{0};
+    unifex::sync_wait(unifex::when_all(
+        agrpc::repeatedly_request(
+            &test::v1::Test::AsyncService::RequestClientStreaming, service,
+            AssociatedHandler{
+                [&](grpc::ServerContext&, grpc::ServerAsyncReader<test::v1::Response, test::v1::Request>& reader)
+                {
+                    return unifex::let_value(
+                        unifex::just(test::v1::Request{}),
+                        [&](auto& request)
+                        {
+                            return unifex::let_value(
+                                agrpc::read(reader, request, use_sender()),
+                                [&](bool read_ok)
+                                {
+                                    CHECK(read_ok);
+                                    CHECK_EQ(42, request.integer());
+                                    return unifex::let_value(
+                                        unifex::just(test::v1::Response{}),
+                                        [&](auto& response)
+                                        {
+                                            response.set_integer(21);
+                                            ++request_count;
+                                            if (request_count > 3)
+                                            {
+                                                is_shutdown = true;
+                                            }
+                                            return unifex::then(
+                                                agrpc::finish(reader, response, grpc::Status::OK, use_sender()),
+                                                [](bool finish_ok)
+                                                {
+                                                    CHECK(finish_ok);
+                                                });
+                                        });
+                                });
+                        });
+                },
+                get_allocator()},
+            use_sender()),
+        [&]() -> unifex::task<void>
+        {
+            while (!is_shutdown)
+            {
+                test::v1::Response response;
+                grpc::ClientContext new_client_context;
+                std::unique_ptr<grpc::ClientAsyncWriter<test::v1::Request>> writer;
+                CHECK(co_await agrpc::request(&test::v1::Test::Stub::AsyncClientStreaming, *stub, new_client_context,
+                                              writer, response, use_sender()));
+                test::v1::Request request;
+                request.set_integer(42);
+                CHECK(co_await agrpc::write(*writer, request, use_sender()));
+                CHECK(co_await agrpc::writes_done(*writer, use_sender()));
+                grpc::Status status;
+                CHECK(co_await agrpc::finish(*writer, status, use_sender()));
+                CHECK(status.ok());
+                CHECK_EQ(21, response.integer());
+            }
+            grpc_context.stop();
+        }(),
+        unifex::then(unifex::just(),
+                     [&]
+                     {
+                         grpc_context.run();
+                     })));
+    CHECK_EQ(4, request_count);
+    CHECK(allocator_has_been_used());
 }
 #endif
 

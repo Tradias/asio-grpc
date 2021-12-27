@@ -778,11 +778,13 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context bidirectional strea
 
 struct GrpcRepeatedlyRequestTest : test::GrpcClientServerTest
 {
-    template <class RPC, class Service, class ServerFunction, class ClientFunction>
-    auto test(RPC rpc, Service& service, ServerFunction server_function, ClientFunction client_function)
+    template <class RPC, class Service, class ServerFunction, class ClientFunction, class Allocator>
+    auto test(RPC rpc, Service& service, ServerFunction server_function, ClientFunction client_function,
+              Allocator allocator)
     {
         agrpc::repeatedly_request(
-            rpc, service, test::RpcSpawner{asio::bind_executor(this->get_executor(), std::move(server_function))});
+            rpc, service,
+            test::RpcSpawner{asio::bind_executor(this->get_executor(), std::move(server_function)), allocator});
         asio::spawn(get_executor(), std::move(client_function));
     }
 };
@@ -794,7 +796,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request u
     this->test(
         &test::v1::Test::AsyncService::RequestUnary, service,
         [&](grpc::ServerContext&, test::v1::Request& request,
-            grpc::ServerAsyncResponseWriter<test::v1::Response> writer, bool, asio::yield_context yield)
+            grpc::ServerAsyncResponseWriter<test::v1::Response>& writer, bool, asio::yield_context yield)
         {
             CHECK_EQ(42, request.integer());
             test::v1::Response response;
@@ -822,9 +824,11 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request u
                 CHECK_EQ(21, response.integer());
             }
             grpc_context.stop();
-        });
+        },
+        get_allocator());
     grpc_context.run();
     CHECK_EQ(4, request_count);
+    CHECK(allocator_has_been_used());
 }
 
 TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request client streaming")
@@ -833,7 +837,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request c
     auto request_count{0};
     this->test(
         &test::v1::Test::AsyncService::RequestClientStreaming, service,
-        [&](grpc::ServerContext&, grpc::ServerAsyncReader<test::v1::Response, test::v1::Request> reader, bool,
+        [&](grpc::ServerContext&, grpc::ServerAsyncReader<test::v1::Response, test::v1::Request>& reader, bool,
             asio::yield_context yield)
         {
             test::v1::Request request;
@@ -867,9 +871,11 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request c
                 CHECK_EQ(21, response.integer());
             }
             grpc_context.stop();
-        });
+        },
+        get_allocator());
     grpc_context.run();
     CHECK_EQ(4, request_count);
+    CHECK(allocator_has_been_used());
 }
 
 TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "RepeatedlyRequestContext member functions for multi-arg requests")
