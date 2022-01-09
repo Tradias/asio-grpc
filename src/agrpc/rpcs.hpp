@@ -47,7 +47,7 @@ struct RequestFn
                     grpc::ServerContext& server_context, Request& request, Responder& responder,
                     CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             detail::ServerMultiArgRequestInitFunction{rpc, service, server_context, request, responder},
             std::move(token));
     }
@@ -56,7 +56,7 @@ struct RequestFn
     auto operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service,
                     grpc::ServerContext& server_context, Responder& responder, CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             detail::ServerSingleArgRequestInitFunction{rpc, service, server_context, responder}, std::move(token));
     }
 
@@ -99,7 +99,7 @@ struct RequestFn
                     grpc::ClientContext& client_context, const Request& request, Reader& reader,
                     CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             detail::ClientServerStreamingRequestInitFunction{rpc, stub, client_context, request, reader},
             std::move(token));
     }
@@ -122,7 +122,7 @@ struct RequestFn
                     grpc::ClientContext& client_context, Writer& writer, Response& response,
                     CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             detail::ClientSideStreamingRequestInitFunction{rpc, stub, client_context, writer, response},
             std::move(token));
     }
@@ -142,7 +142,7 @@ struct RequestFn
     auto operator()(detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter> rpc, Stub& stub,
                     grpc::ClientContext& client_context, ReaderWriter& reader_writer, CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             detail::ClientBidirectionalStreamingRequestInitFunction{rpc, stub, client_context, reader_writer},
             std::move(token));
     }
@@ -155,7 +155,7 @@ struct ReadFn
     auto operator()(grpc::ServerAsyncReader<Response, Request>& reader, Request& request,
                     CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             typename detail::ServerAsyncReaderInitFunctions<Response, Request>::Read{reader, request},
             std::move(token));
     }
@@ -164,7 +164,7 @@ struct ReadFn
     auto operator()(grpc::ServerAsyncReaderWriter<Response, Request>& reader_writer, Request& request,
                     CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             typename detail::ServerAsyncReaderWriterInitFunctions<Response, Request>::Read{reader_writer, request},
             std::move(token));
     }
@@ -173,15 +173,15 @@ struct ReadFn
     template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncReader<Response>& reader, Response& response, CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(typename detail::ClientAsyncReaderInitFunctions<Response>::Read{reader, response},
-                                     std::move(token));
+        return detail::grpc_initiate_type_erased(
+            typename detail::ClientAsyncReaderInitFunctions<Response>::Read{reader, response}, std::move(token));
     }
 
     template <class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncReaderWriter<Request, Response>& reader_writer, Response& response,
                     CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             typename detail::ClientAsyncReaderWriterInitFunctions<Request, Response>::Read{reader_writer, response},
             std::move(token));
     }
@@ -194,15 +194,15 @@ struct WriteFn
     auto operator()(grpc::ServerAsyncWriter<Response>& writer, const Response& response,
                     CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(typename detail::ServerAsyncWriterInitFunctions<Response>::Write{writer, response},
-                                     std::move(token));
+        return detail::grpc_initiate_type_erased(
+            typename detail::ServerAsyncWriterInitFunctions<Response>::Write{writer, response}, std::move(token));
     }
 
     template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncWriter<Response>& writer, const Response& response, grpc::WriteOptions options,
                     CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             typename detail::ServerAsyncWriterInitFunctions<Response>::WriteWithOptions{writer, response, options},
             std::move(token));
     }
@@ -211,7 +211,7 @@ struct WriteFn
     auto operator()(grpc::ServerAsyncReaderWriter<Response, Request>& reader_writer, const Response& response,
                     CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             typename detail::ServerAsyncReaderWriterInitFunctions<Response, Request>::Write{reader_writer, response},
             std::move(token));
     }
@@ -220,7 +220,7 @@ struct WriteFn
     auto operator()(grpc::ServerAsyncReaderWriter<Response, Request>& reader_writer, const Response& response,
                     grpc::WriteOptions options, CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             typename detail::ServerAsyncReaderWriterInitFunctions<Response, Request>::WriteWithOptions{
                 reader_writer, response, options},
             std::move(token));
@@ -230,15 +230,15 @@ struct WriteFn
     template <class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncWriter<Request>& writer, const Request& request, CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(typename detail::ClientAsyncWriterInitFunctions<Request>::Write{writer, request},
-                                     std::move(token));
+        return detail::grpc_initiate_type_erased(
+            typename detail::ClientAsyncWriterInitFunctions<Request>::Write{writer, request}, std::move(token));
     }
 
     template <class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncWriter<Request>& writer, const Request& request, grpc::WriteOptions options,
                     CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             typename detail::ClientAsyncWriterInitFunctions<Request>::WriteWithOptions{writer, request, options},
             std::move(token));
     }
@@ -247,7 +247,7 @@ struct WriteFn
     auto operator()(grpc::ClientAsyncReaderWriter<Request, Response>& reader_writer, const Request& request,
                     CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             typename detail::ClientAsyncReaderWriterInitFunctions<Request, Response>::Write{reader_writer, request},
             std::move(token));
     }
@@ -256,7 +256,7 @@ struct WriteFn
     auto operator()(grpc::ClientAsyncReaderWriter<Request, Response>& reader_writer, const Request& request,
                     grpc::WriteOptions options, CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             typename detail::ClientAsyncReaderWriterInitFunctions<Request, Response>::WriteWithOptions{
                 reader_writer, request, options},
             std::move(token));
@@ -269,14 +269,14 @@ struct WritesDoneFn
     template <class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncWriter<Request>& writer, CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(typename detail::ClientAsyncWriterInitFunctions<Request>::WritesDone{writer},
-                                     std::move(token));
+        return detail::grpc_initiate_type_erased(
+            typename detail::ClientAsyncWriterInitFunctions<Request>::WritesDone{writer}, std::move(token));
     }
 
     template <class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncReaderWriter<Request, Response>& reader_writer, CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             typename detail::ClientAsyncReaderWriterInitFunctions<Request, Response>::WritesDone{reader_writer},
             std::move(token));
     }
@@ -289,15 +289,15 @@ struct FinishFn
     auto operator()(grpc::ServerAsyncWriter<Response>& writer, const grpc::Status& status,
                     CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(typename detail::ServerAsyncWriterInitFunctions<Response>::Finish{writer, status},
-                                     std::move(token));
+        return detail::grpc_initiate_type_erased(
+            typename detail::ServerAsyncWriterInitFunctions<Response>::Finish{writer, status}, std::move(token));
     }
 
     template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncReader<Response, Request>& reader, const Response& response,
                     const grpc::Status& status, CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             typename detail::ServerAsyncReaderInitFunctions<Response, Request>::Finish{reader, response, status},
             std::move(token));
     }
@@ -306,7 +306,7 @@ struct FinishFn
     auto operator()(grpc::ServerAsyncResponseWriter<Response>& writer, const Response& response,
                     const grpc::Status& status, CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             typename detail::ServerAsyncResponseWriterInitFunctions<Response>::Finish{writer, response, status},
             std::move(token));
     }
@@ -315,7 +315,7 @@ struct FinishFn
     auto operator()(grpc::ServerAsyncReaderWriter<Response, Request>& reader_writer, const grpc::Status& status,
                     CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             typename detail::ServerAsyncReaderWriterInitFunctions<Response, Request>::Finish{reader_writer, status},
             std::move(token));
     }
@@ -324,22 +324,22 @@ struct FinishFn
     template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncReader<Response>& reader, grpc::Status& status, CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(typename detail::ClientAsyncReaderInitFunctions<Response>::Finish{reader, status},
-                                     std::move(token));
+        return detail::grpc_initiate_type_erased(
+            typename detail::ClientAsyncReaderInitFunctions<Response>::Finish{reader, status}, std::move(token));
     }
 
     template <class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncWriter<Request>& writer, grpc::Status& status, CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(typename detail::ClientAsyncWriterInitFunctions<Request>::Finish{writer, status},
-                                     std::move(token));
+        return detail::grpc_initiate_type_erased(
+            typename detail::ClientAsyncWriterInitFunctions<Request>::Finish{writer, status}, std::move(token));
     }
 
     template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncResponseReader<Response>& reader, Response& response, grpc::Status& status,
                     CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             typename detail::ClientAsyncResponseReaderInitFunctions<Response>::Finish{reader, response, status},
             std::move(token));
     }
@@ -348,7 +348,7 @@ struct FinishFn
     auto operator()(grpc::ClientAsyncReaderWriter<Request, Response>& reader_writer, grpc::Status& status,
                     CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             typename detail::ClientAsyncReaderWriterInitFunctions<Request, Response>::Finish{reader_writer, status},
             std::move(token));
     }
@@ -361,7 +361,7 @@ struct WriteAndFinishFn
     auto operator()(grpc::ServerAsyncReaderWriter<Response, Request>& reader_writer, const Response& response,
                     grpc::WriteOptions options, const grpc::Status& status, CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             typename detail::ServerAsyncReaderWriterInitFunctions<Response, Request>::WriteAndFinish{
                 reader_writer, response, options, status},
             std::move(token));
@@ -371,7 +371,7 @@ struct WriteAndFinishFn
     auto operator()(grpc::ServerAsyncWriter<Response>& reader_writer, const Response& response,
                     grpc::WriteOptions options, const grpc::Status& status, CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             typename detail::ServerAsyncWriterInitFunctions<Response>::WriteAndFinish{reader_writer, response, options,
                                                                                       status},
             std::move(token));
@@ -385,7 +385,7 @@ struct FinishWithErrorFn
     auto operator()(grpc::ServerAsyncReader<Response, Request>& reader, const grpc::Status& status,
                     CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             typename detail::ServerAsyncReaderInitFunctions<Response, Request>::FinishWithError{reader, status},
             std::move(token));
     }
@@ -394,7 +394,7 @@ struct FinishWithErrorFn
     auto operator()(grpc::ServerAsyncResponseWriter<Response>& writer, const grpc::Status& status,
                     CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(
+        return detail::grpc_initiate_type_erased(
             typename detail::ServerAsyncResponseWriterInitFunctions<Response>::FinishWithError{writer, status},
             std::move(token));
     }
@@ -405,7 +405,8 @@ struct SendInitialMetadataFn
     template <class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(Responder& responder, CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(detail::SendInitialMetadataInitFunction<Responder>{responder}, std::move(token));
+        return detail::grpc_initiate_type_erased(detail::SendInitialMetadataInitFunction<Responder>{responder},
+                                                 std::move(token));
     }
 };
 
@@ -414,7 +415,8 @@ struct ReadInitialMetadataFn
     template <class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(Responder& responder, CompletionToken token = {}) const
     {
-        return detail::grpc_initiate(detail::ReadInitialMetadataInitFunction<Responder>{responder}, std::move(token));
+        return detail::grpc_initiate_type_erased(detail::ReadInitialMetadataInitFunction<Responder>{responder},
+                                                 std::move(token));
     }
 };
 }  // namespace detail
