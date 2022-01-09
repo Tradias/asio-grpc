@@ -62,6 +62,19 @@ function(asio_grpc_protobuf_generate)
     cmake_parse_arguments(asio_grpc_protobuf_generate "${_asio_grpc_options}" "${_asio_grpc_singleargs}"
                           "${_asio_grpc_multiargs}" "${ARGN}")
 
+    if(asio_grpc_protobuf_generate_UNPARSED_ARGUMENTS)
+        message(
+            AUTHOR_WARNING
+                "asio_grpc_protobuf_generate unknown argument: ${asio_grpc_protobuf_generate_UNPARSED_ARGUMENTS}")
+    endif()
+
+    if(asio_grpc_protobuf_generate_KEYWORDS_MISSING_VALUES)
+        message(
+            AUTHOR_WARNING
+                "asio_grpc_protobuf_generate missing values for: ${asio_grpc_protobuf_generate_KEYWORDS_MISSING_VALUES}"
+        )
+    endif()
+
     if(NOT asio_grpc_protobuf_generate_PROTOS)
         message(SEND_ERROR "asio_grpc_protobuf_generate called without any proto files: PROTOS")
         return()
@@ -69,6 +82,14 @@ function(asio_grpc_protobuf_generate)
 
     if(NOT asio_grpc_protobuf_generate_OUT_VAR AND NOT asio_grpc_protobuf_generate_TARGET)
         message(SEND_ERROR "asio_grpc_protobuf_generate called without a target or output variable: TARGET or OUT_VAR")
+        return()
+    endif()
+
+    if(asio_grpc_protobuf_generate_TARGET AND NOT TARGET ${asio_grpc_protobuf_generate_TARGET})
+        message(
+            SEND_ERROR
+                "asio_grpc_protobuf_generate argument passed to TARGET is not a target: ${asio_grpc_protobuf_generate_TARGET}"
+        )
         return()
     endif()
 
