@@ -92,12 +92,6 @@ struct RPCContextForRPC<detail::ServerSingleArgRequest<RPC, Responder>>
 
 template <class RPC>
 using RPCContextForRPCT = typename detail::RPCContextForRPC<RPC>::Type;
-
-template <class RPC>
-auto make_rpc_context_for_rpc()
-{
-    return detail::RPCContextForRPCT<RPC>{};
-}
 }
 
 AGRPC_NAMESPACE_END

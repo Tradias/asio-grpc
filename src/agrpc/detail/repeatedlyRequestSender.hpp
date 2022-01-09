@@ -201,7 +201,10 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
             return detail::on(
                 this->grpc_context().get_scheduler(),
                 detail::let_value_with(
-                    &detail::make_rpc_context_for_rpc<RPC>,
+                    []
+                    {
+                        return detail::RPCContextForRPCT<RPC>{};
+                    },
                     [&](auto& context) mutable
                     {
                         return detail::let_value(
