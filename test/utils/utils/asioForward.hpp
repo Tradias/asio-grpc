@@ -70,6 +70,7 @@
 #include <unifex/just.hpp>
 #include <unifex/let_value.hpp>
 #include <unifex/let_value_with.hpp>
+#include <unifex/let_value_with_stop_source.hpp>
 #include <unifex/new_thread_context.hpp>
 #include <unifex/scheduler_concepts.hpp>
 #include <unifex/sender_concepts.hpp>

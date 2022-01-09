@@ -17,10 +17,10 @@
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
+#include "agrpc/detail/repeatedlyRequestSender.hpp"
+#include "agrpc/detail/rpcContext.hpp"
 #include "agrpc/initiate.hpp"
 #include "agrpc/rpcs.hpp"
-
-#include <tuple>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -33,50 +33,6 @@ struct RepeatedlyRequestContextAccess
     {
         return agrpc::RepeatedlyRequestContext{std::move(allocated_pointer)};
     }
-};
-
-struct RPCContextBase
-{
-    grpc::ServerContext context{};
-
-    constexpr auto& server_context() noexcept { return context; }
-};
-
-template <class Request, class Responder>
-struct MultiArgRPCContext : detail::RPCContextBase
-{
-    Responder responder_{&this->context};
-    Request request_{};
-
-    template <class Handler, class... Args>
-    constexpr decltype(auto) operator()(Handler&& handler, Args&&... args)
-    {
-        return std::invoke(std::forward<Handler>(handler), this->context, this->request_, this->responder_,
-                           std::forward<Args>(args)...);
-    }
-
-    constexpr auto args() noexcept { return std::forward_as_tuple(this->context, this->request_, this->responder_); }
-
-    constexpr auto& request() noexcept { return this->request_; }
-
-    constexpr auto& responder() noexcept { return this->responder_; }
-};
-
-template <class Responder>
-struct SingleArgRPCContext : detail::RPCContextBase
-{
-    Responder responder_{&this->context};
-
-    template <class Handler, class... Args>
-    constexpr decltype(auto) operator()(Handler&& handler, Args&&... args)
-    {
-        return std::invoke(std::forward<Handler>(handler), this->context, this->responder_,
-                           std::forward<Args>(args)...);
-    }
-
-    constexpr auto args() noexcept { return std::forward_as_tuple(this->context, this->responder_); }
-
-    constexpr auto& responder() noexcept { return this->responder_; }
 };
 
 template <class RPC, class Service, class RPCContextAllocator, class Handler>
@@ -112,47 +68,6 @@ struct RequestRepeater
 #endif
 };
 
-template <class Allocator>
-struct NoOpReceiverWithAllocator
-{
-    using allocator_type = Allocator;
-
-    Allocator allocator;
-
-    constexpr explicit NoOpReceiverWithAllocator(Allocator allocator) noexcept(
-        std::is_nothrow_copy_constructible_v<Allocator>)
-        : allocator(allocator)
-    {
-    }
-
-    static constexpr void set_done() noexcept {}
-
-    template <class... Args>
-    static constexpr void set_value(Args&&...) noexcept
-    {
-    }
-
-    static void set_error(std::exception_ptr) noexcept {}
-
-    constexpr auto get_allocator() const noexcept { return allocator; }
-
-#ifdef AGRPC_UNIFEX
-    friend constexpr auto tag_invoke(unifex::tag_t<unifex::get_allocator>,
-                                     const NoOpReceiverWithAllocator& receiver) noexcept
-    {
-        return receiver.allocator;
-    }
-#endif
-};
-
-template <class RPC, class Service, class Handler>
-void submit_request_repeat(RPC rpc, Service& service, Handler handler, detail::UseSender use_sender)
-{
-    const auto allocator = detail::get_allocator(handler);
-    detail::submit(agrpc::repeatedly_request(rpc, service, std::move(handler), use_sender),
-                   detail::NoOpReceiverWithAllocator{allocator});
-}
-
 template <class RPC, class Service, class Request, class Responder, class Handler>
 void RepeatedlyRequestFn::operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
                                      Handler handler) const
@@ -169,32 +84,7 @@ template <class RPC, class Service, class Request, class Responder, class Sender
 auto RepeatedlyRequestFn::operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
                                      SenderFactory sender_factory, detail::UseSender use_sender) const
 {
-#ifdef AGRPC_UNIFEX
-    return unifex::let_value_with(
-        [&]
-        {
-            return detail::MultiArgRPCContext<Request, Responder>();
-        },
-        [&service, rpc, use_sender, sender_factory = std::move(sender_factory)](auto& context) mutable
-        {
-            return unifex::let_value(
-                agrpc::request(rpc, service, context.server_context(), context.request(), context.responder(),
-                               use_sender),
-                [&context, &service, rpc, use_sender, sender_factory = std::move(sender_factory)](bool ok) mutable
-                {
-                    if AGRPC_LIKELY (ok)
-                    {
-                        detail::submit_request_repeat(rpc, service, sender_factory, use_sender);
-                    }
-                    return std::move(sender_factory)(context.server_context(), context.request(), context.responder());
-                });
-        });
-#else
-    (void)rpc;
-    (void)service;
-    (void)sender_factory;
-    (void)use_sender;
-#endif
+    return detail::RepeatedlyRequestSender{use_sender.grpc_context, rpc, service, std::move(sender_factory)};
 }
 
 template <class RPC, class Service, class Responder, class Handler>
@@ -212,31 +102,7 @@ template <class RPC, class Service, class Responder, class SenderFactory>
 auto RepeatedlyRequestFn::operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service,
                                      SenderFactory sender_factory, detail::UseSender use_sender) const
 {
-#ifdef AGRPC_UNIFEX
-    return unifex::let_value_with(
-        [&]
-        {
-            return detail::SingleArgRPCContext<Responder>();
-        },
-        [&service, rpc, use_sender, sender_factory = std::move(sender_factory)](auto& context) mutable
-        {
-            return unifex::let_value(
-                agrpc::request(rpc, service, context.server_context(), context.responder(), use_sender),
-                [&context, &service, rpc, use_sender, sender_factory = std::move(sender_factory)](bool ok) mutable
-                {
-                    if AGRPC_LIKELY (ok)
-                    {
-                        detail::submit_request_repeat(rpc, service, sender_factory, use_sender);
-                    }
-                    return std::move(sender_factory)(context.server_context(), context.responder());
-                });
-        });
-#else
-    (void)rpc;
-    (void)service;
-    (void)sender_factory;
-    (void)use_sender;
-#endif
+    return detail::RepeatedlyRequestSender{use_sender.grpc_context, rpc, service, std::move(sender_factory)};
 }
 
 template <class RPC, class Service, class RPCHandler, class Handler>

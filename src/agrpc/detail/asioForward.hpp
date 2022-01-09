@@ -84,6 +84,7 @@
 #include <unifex/get_stop_token.hpp>
 #include <unifex/let_value.hpp>
 #include <unifex/let_value_with.hpp>
+#include <unifex/on.hpp>
 #include <unifex/receiver_concepts.hpp>
 #include <unifex/scheduler_concepts.hpp>
 #include <unifex/stop_token_concepts.hpp>
@@ -142,6 +143,21 @@ using asio::execution::set_error;
 using asio::execution::set_value;
 using asio::execution::submit;
 
+template <class... Args>
+auto let_value(Args&&...)
+{
+}
+
+template <class... Args>
+auto let_value_with(Args&&...)
+{
+}
+
+template <class... Args>
+auto on(Args&&...)
+{
+}
+
 struct unstoppable_token
 {
     template <class F>
@@ -174,6 +190,9 @@ auto get_associated_executor_and_allocator(const Object& object)
 }
 
 using ::unifex::get_stop_token;
+using ::unifex::let_value;
+using ::unifex::let_value_with;
+using ::unifex::on;
 using ::unifex::set_done;
 using ::unifex::set_error;
 using ::unifex::set_value;

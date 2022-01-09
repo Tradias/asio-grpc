@@ -29,6 +29,17 @@ using RemoveCvrefT = std::remove_cv_t<std::remove_reference_t<T>>;
 
 struct Empty
 {
+    Empty() = default;
+    Empty(const Empty&) = default;
+    Empty(Empty&&) = default;
+    Empty& operator=(const Empty&) = default;
+    Empty& operator=(Empty&&) = default;
+    ~Empty() = default;
+
+    template <class Arg, class... Args>
+    constexpr explicit Empty(Arg&&, Args&&...) noexcept
+    {
+    }
 };
 
 template <class First, class Second, bool = std::is_empty_v<Second> && !std::is_final_v<Second>>
