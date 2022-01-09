@@ -40,6 +40,8 @@ struct MultiArgRPCContext : detail::RPCContextBase
     Responder responder_{&this->context};
     Request request_{};
 
+    MultiArgRPCContext() = default;
+
     template <class Handler, class... Args>
     constexpr decltype(auto) operator()(Handler&& handler, Args&&... args)
     {
@@ -58,6 +60,8 @@ template <class Responder>
 struct SingleArgRPCContext : detail::RPCContextBase
 {
     Responder responder_{&this->context};
+
+    SingleArgRPCContext() = default;
 
     template <class Handler, class... Args>
     constexpr decltype(auto) operator()(Handler&& handler, Args&&... args)

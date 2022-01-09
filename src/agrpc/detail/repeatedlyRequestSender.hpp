@@ -81,7 +81,7 @@ class RepeatedlyRequestStopContext
 {
   public:
     template <class StopToken>
-    void emplace(StopToken&& stop_token)
+    void emplace(StopToken&& stop_token) noexcept
     {
         stop_callback.emplace(std::forward<StopToken>(stop_token),
                               detail::RepeatedlyRequestStopFunction{this->stopped});

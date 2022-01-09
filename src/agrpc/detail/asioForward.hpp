@@ -143,48 +143,20 @@ using asio::execution::set_error;
 using asio::execution::set_value;
 using asio::execution::submit;
 
-// workaround until Asio implements sender algorithms
-struct JustDoneSender
-{
-    template <class Receiver>
-    struct Operation
-    {
-        Receiver receiver;
-
-        void start() & noexcept { detail::set_done(std::move(receiver)); }
-    };
-
-    template <template <typename...> class Variant, template <typename...> class Tuple>
-    using value_types = Variant<>;
-
-    template <template <typename...> class Variant>
-    using error_types = Variant<>;
-
-    static constexpr bool sends_done = true;
-
-    template <class Receiver>
-    auto connect(Receiver&& receiver) noexcept
-    {
-        return Operation<std::remove_const_t<std::remove_reference_t<Receiver>>>{std::forward<Receiver>(receiver)};
-    }
-};
-
+// disabled until Asio implements sender algorithms
 template <class... Args>
 auto let_value(Args&&...)
 {
-    return detail::JustDoneSender{};
 }
 
 template <class... Args>
 auto let_value_with(Args&&...)
 {
-    return detail::JustDoneSender{};
 }
 
 template <class... Args>
 auto on(Args&&...)
 {
-    return detail::JustDoneSender{};
 }
 
 struct unstoppable_token
