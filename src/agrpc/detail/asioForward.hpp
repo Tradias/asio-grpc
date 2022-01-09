@@ -143,22 +143,20 @@ using asio::execution::set_error;
 using asio::execution::set_value;
 using asio::execution::submit;
 
+// disabled until Asio implements sender algorithms
 template <class... Args>
 auto let_value(Args&&...)
 {
-    // disabled until Asio implements sender algorithms
 }
 
 template <class... Args>
 auto let_value_with(Args&&...)
 {
-    // disabled until Asio implements sender algorithms
 }
 
 template <class... Args>
 auto on(Args&&...)
 {
-    // disabled until Asio implements sender algorithms
 }
 
 struct unstoppable_token

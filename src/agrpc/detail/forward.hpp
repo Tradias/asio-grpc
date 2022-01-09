@@ -25,12 +25,9 @@ AGRPC_NAMESPACE_BEGIN()
 template <class Allocator = std::allocator<void>, std::uint32_t Options = detail::GrpcExecutorOptions::DEFAULT>
 class BasicGrpcExecutor;
 
-class GrpcContext;
-
 namespace detail
 {
 struct GrpcInitiateImplFn;
-struct GrpcInitiateTypeErasedImplFn;
 struct RepeatedlyRequestFn;
 
 struct RepeatedlyRequestContextAccess;

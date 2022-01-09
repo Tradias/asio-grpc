@@ -47,21 +47,14 @@ struct NoOpReceiverWithAllocator
     {
     }
 
-    static constexpr void set_done() noexcept
-    {
-        // no op
-    }
+    static constexpr void set_done() noexcept {}
 
     template <class... Args>
     static constexpr void set_value(Args&&...) noexcept
     {
-        // no op
     }
 
-    static void set_error(std::exception_ptr) noexcept
-    {
-        // no op
-    }
+    static void set_error(std::exception_ptr) noexcept {}
 
     constexpr auto get_allocator() const noexcept { return allocator; }
 
@@ -96,7 +89,7 @@ class RepeatedlyRequestStopContext
 
     void reset() noexcept { stop_callback.reset(); }
 
-    [[nodiscard]] bool is_stopped() const noexcept { return stopped.load(std::memory_order_relaxed); }
+    bool is_stopped() const noexcept { return stopped.load(std::memory_order_relaxed); }
 
   private:
     std::optional<detail::StopCallbackTypeT<Receiver&, detail::RepeatedlyRequestStopFunction>> stop_callback;
@@ -203,43 +196,40 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
             }
         }
 
-        auto make_request(detail::RPCContextForRPCT<RPC>& context)
-        {
-            auto request_args = std::tuple_cat(std::forward_as_tuple(this->rpc(), this->service()), context.args(),
-                                               std::tuple(agrpc::use_sender(this->grpc_context())));
-            return std::apply(agrpc::request, request_args);
-        }
-
         auto repeat()
         {
-            return detail::on(this->grpc_context().get_scheduler(),
-                              detail::let_value_with(
-                                  []
-                                  {
-                                      return detail::RPCContextForRPCT<RPC>{};
-                                  },
-                                  [&](auto& context) mutable
-                                  {
-                                      return detail::let_value(
-                                          detail::let_value(DoneIfSender{this->is_stopped(), *this},
-                                                            [&]()
-                                                            {
-                                                                return this->make_request(context);
-                                                            }),
-                                          [&](bool ok) mutable
-                                          {
-                                              if AGRPC_LIKELY (ok)
+            return detail::on(
+                this->grpc_context().get_scheduler(),
+                detail::let_value_with(
+                    []
+                    {
+                        return detail::RPCContextForRPCT<RPC>{};
+                    },
+                    [&](auto& context) mutable
+                    {
+                        return detail::let_value(
+                            detail::let_value(DoneIfSender{this->is_stopped(), *this},
+                                              [&]()
                                               {
-                                                  this->submit_request_repeat();
-                                              }
-                                              return detail::let_value(DoneIfSender{!ok, *this},
-                                                                       [&]()
-                                                                       {
-                                                                           return std::apply(this->sender_factory(),
-                                                                                             context.args());
-                                                                       });
-                                          });
-                                  }));
+                                                  auto request_args = std::tuple_cat(
+                                                      std::forward_as_tuple(this->rpc(), this->service()),
+                                                      context.args(),
+                                                      std::tuple(agrpc::use_sender(this->grpc_context())));
+                                                  return std::apply(agrpc::request, request_args);
+                                              }),
+                            [&](bool ok) mutable
+                            {
+                                if AGRPC_LIKELY (ok)
+                                {
+                                    this->submit_request_repeat();
+                                }
+                                return detail::let_value(DoneIfSender{!ok, *this},
+                                                         [&]()
+                                                         {
+                                                             return std::apply(this->sender_factory(), context.args());
+                                                         });
+                            });
+                    }));
         }
 
         constexpr decltype(auto) grpc_context() noexcept { return impl0.first(); }

@@ -18,7 +18,6 @@
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/defaultCompletionToken.hpp"
-#include "agrpc/detail/forward.hpp"
 #include "agrpc/detail/grpcSender.hpp"
 #include "agrpc/detail/initiate.hpp"
 #include "agrpc/detail/utility.hpp"
@@ -58,29 +57,6 @@ struct GrpcInitiateImplFn
 };
 
 inline constexpr detail::GrpcInitiateImplFn grpc_initiate{};
-
-struct GrpcInitiateTypeErasedImplFn
-{
-    using InitiationFunction =
-        detail::TrivialFunction<(5 * sizeof(void*)), alignof(void*), void(agrpc::GrpcContext&, void*)>;
-
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    template <class Function, class CompletionToken = detail::DefaultCompletionToken>
-    auto operator()(Function initiating_function, CompletionToken token = {}) const
-    {
-        return asio::async_initiate<CompletionToken, void(bool)>(
-            detail::GrpcInitiator{InitiationFunction{initiating_function}}, token);
-    }
-#endif
-
-    template <class Function>
-    auto operator()(Function initiating_function, detail::UseSender token) const
-    {
-        return detail::GrpcSender<InitiationFunction>{token.grpc_context, InitiationFunction{initiating_function}};
-    }
-};
-
-inline constexpr detail::GrpcInitiateTypeErasedImplFn grpc_initiate_type_erased{};
 }
 
 AGRPC_NAMESPACE_END

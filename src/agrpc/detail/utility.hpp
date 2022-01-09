@@ -104,9 +104,11 @@ class CompressedPair<First, Second, false> final
 };
 
 template <class OnExit>
-class ScopeGuard
+struct ScopeGuard
 {
-  public:
+    OnExit on_exit;
+    bool is_armed{true};
+
     constexpr explicit ScopeGuard(OnExit on_exit) : on_exit(std::move(on_exit)) {}
 
     ScopeGuard(const ScopeGuard&) = delete;
@@ -126,10 +128,6 @@ class ScopeGuard
     }
 
     constexpr void release() noexcept { is_armed = false; }
-
-  private:
-    OnExit on_exit;
-    bool is_armed{true};
 };
 
 template <class T>
@@ -144,45 +142,6 @@ T forward_as(std::add_lvalue_reference_t<std::remove_reference_t<T>> u)
         return u;
     }
 }
-
-template <class T, class... Args>
-constexpr T* construct_at(T* ptr, Args&&... args)
-{
-    return ::new (const_cast<void*>(static_cast<const volatile void*>(ptr))) T{std::forward<Args>(args)...};
-}
-
-template <std::size_t MaxSize, std::size_t MaxAlignment, class Signature>
-class TrivialFunction;
-
-template <std::size_t MaxSize, std::size_t MaxAlignment, class ReturnType, class... Args>
-class TrivialFunction<MaxSize, MaxAlignment, ReturnType(Args...)>
-{
-  public:
-    template <class Function>
-    explicit TrivialFunction(Function&& function)
-        : function(
-              [](void* self, Args... args)
-              {
-                  return std::invoke(*static_cast<detail::RemoveCvrefT<Function>*>(self),
-                                     detail::forward_as<Args>(args)...);
-              })
-    {
-        using DecayedFunction = detail::RemoveCvrefT<Function>;
-        static_assert(MaxSize >= sizeof(DecayedFunction), "Function size exceeds storage capacity");
-        static_assert(MaxAlignment >= alignof(DecayedFunction), "Function alignment exceeds storage capacity");
-        static_assert(std::is_trivially_copyable_v<DecayedFunction>, "Function must be trivially copyable");
-        detail::construct_at(reinterpret_cast<DecayedFunction*>(&storage), std::forward<Function>(function));
-    }
-
-    ReturnType operator()(Args... args) { return function(&storage, detail::forward_as<Args>(args)...); }
-
-  private:
-    using Storage = std::aligned_storage_t<MaxSize, MaxAlignment>;
-    using Function = ReturnType (*)(void*, Args...);
-
-    Storage storage;
-    Function function;
-};
 }
 
 AGRPC_NAMESPACE_END

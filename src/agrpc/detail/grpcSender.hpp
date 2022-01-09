@@ -138,7 +138,6 @@ class GrpcSender : public detail::SenderOf<bool>
     }
 
     friend agrpc::detail::GrpcInitiateImplFn;
-    friend agrpc::detail::GrpcInitiateTypeErasedImplFn;
 
     agrpc::GrpcContext& grpc_context;
     InitiatingFunction initiating_function;
