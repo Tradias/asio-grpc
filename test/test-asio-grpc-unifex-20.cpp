@@ -325,6 +325,22 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request unary -
     CHECK(allocator_has_been_used());
 }
 
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request unary - stop before start")
+{
+    auto repeater = unifex::let_value_with_stop_source(
+        [&](unifex::inplace_stop_source& stop)
+        {
+            stop.request_stop();
+            return make_unary_repeatedly_request_sender(*this);
+        });
+    unifex::sync_wait(unifex::when_all(std::move(repeater), unifex::then(unifex::just(),
+                                                                         [&]
+                                                                         {
+                                                                             grpc_context.run();
+                                                                         })));
+    CHECK_FALSE(allocator_has_been_used());
+}
+
 struct ServerUnaryRequestContext
 {
     grpc::ServerAsyncResponseWriter<test::v1::Response> writer;
