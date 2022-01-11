@@ -52,7 +52,7 @@ target_compile_definitions(asio-grpc-unifex INTERFACE AGRPC_UNIFEX)
 if(ASIO_GRPC_BUILD_TESTS)
     target_link_libraries(asio-grpc INTERFACE Boost::headers)
     target_link_libraries(asio-grpc-standalone-asio INTERFACE asio::asio)
-    target_link_libraries(asio-grpc-unifex INTERFACE unofficial::unifex)
+    target_link_libraries(asio-grpc-unifex INTERFACE unifex::unifex)
 endif()
 
 # asio-grpc sources

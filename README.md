@@ -101,7 +101,7 @@ grpc_context.run();
 Tested by CI:
 
  * gRPC 1.41.0 (older versions work as well)
- * [Boost](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio.html) 1.77 (min. 1.74 or [standalone Asio](https://github.com/chriskohlhoff/asio) 1.17.0)
+ * [Boost](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio.html) 1.78 (min. 1.74 or [standalone Asio](https://github.com/chriskohlhoff/asio) 1.17.0)
  * MSVC 19.30.30706.0 (Visual Studio 17 2022)
  * GCC 9.3.0, 10.3.0, 11.1.0
  * Clang 10.0.0, 11.0.0, 12.0.0

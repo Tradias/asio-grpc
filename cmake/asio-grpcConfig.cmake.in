@@ -55,7 +55,9 @@ if(TARGET "asio::asio")
 endif()
 
 find_package(unifex QUIET)
-if(TARGET "unofficial::unifex")
+if(TARGET "unifex::unifex")
+    list(APPEND ASIO_GRPC_UNIFEX_LINK_LIBRARIES "unifex::unifex")
+elseif(TARGET "unofficial::unifex")
     list(APPEND ASIO_GRPC_UNIFEX_LINK_LIBRARIES "unofficial::unifex")
 endif()
 

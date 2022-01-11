@@ -22,7 +22,7 @@ on:
 
 env:
   VCPKG_ARGUMENTS: 'doctest grpc[codegen] boost-coroutine boost-asio boost-interprocess boost-thread boost-container boost-process asio libunifex'
-  VCPKG_VERSION: '756f1845537a916ba706f6af544b2f490c30fbb1' # Nov 11, 2021
+  VCPKG_VERSION: '9f04533f307a8560cc1cc5c1fdee0d88d6d7d818' # Jan 11, 2021
   CMAKE_ARGS: '-DVCPKG_MANIFEST_MODE=off -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on'
   CTEST_ARGS: '-T test --output-on-failure --timeout 200 --no-tests=error'
 
@@ -35,7 +35,7 @@ jobs:
       matrix:
         config:
           - {
-            name: 'Windows/2022/MSVC-19.30.30528.0',
+            name: 'Windows/2022/MSVC-19.30.30706.0',
             os: windows-2022,
             config: Release,
             triplet: x64-windows,

@@ -6,15 +6,14 @@ vcpkg_from_github(
     REPO
     facebookexperimental/libunifex
     REF
-    e9e6dd5250477dd4c8502862cdb3238175302405
+    1277cdc0ad147b4d5d035ef48f720475c4ec12b4
     SHA512
-    5c3b0412e1cc83641d1594ab532d86a6599c3664f8c8b2a334ac3b22f2c7dd6c2f9d3281012805bfe1c0bff0f46e1e1f4a15ebf2dd973c5b7a14a255a528bf46
+    a85f7e248e2c9eb7d5011700d74225b1505d70964fb11b0e65d484391c11b1fdef95c4264833e3dc707e170062d59f0783b21dd21f04ca71264c0c180ae032d8
     HEAD_REF
     master
     PATCHES
-    fix-install.patch
-    allow-warnings.patch
-    fix-execute-forward-declaration.patch)
+    fix-execute-forward-declaration.patch
+    do-not-link-std-coroutines.patch)
 
 vcpkg_check_features(
     OUT_FEATURE_OPTIONS
@@ -25,10 +24,12 @@ vcpkg_check_features(
     test
     UNIFEX_BUILD_EXAMPLES)
 
-vcpkg_cmake_configure(SOURCE_PATH ${SOURCE_PATH} OPTIONS ${FEATURE_OPTIONS})
+vcpkg_cmake_configure(SOURCE_PATH ${SOURCE_PATH} OPTIONS ${FEATURE_OPTIONS} -DCMAKE_CXX_STANDARD:STRING=20)
+
 vcpkg_cmake_install()
 vcpkg_cmake_config_fixup(PACKAGE_NAME unifex CONFIG_PATH lib/cmake/unifex)
 vcpkg_copy_pdbs()
+vcpkg_fixup_pkgconfig()
 
 file(
     INSTALL "${SOURCE_PATH}/LICENSE.txt"
