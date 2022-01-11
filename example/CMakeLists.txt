@@ -13,27 +13,26 @@
 # limitations under the License.
 
 # example protos
+include(AsioGrpcProtobufGenerator)
+
 function(asio_grpc_add_example_protos _asio_grpc_name)
-    include(AsioGrpcProtobufGenerator)
+    add_library(asio-grpc-${_asio_grpc_name} OBJECT)
 
     set(ASIO_GRPC_GENERATED_EXAMPLE_PROTOS_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
     set(ASIO_GRPC_GENERATED_EXAMPLE_PROTOS_OUT_DIR "${ASIO_GRPC_GENERATED_EXAMPLE_PROTOS_INCLUDE_DIR}/protos")
 
     asio_grpc_protobuf_generate(
         GENERATE_GRPC
-        OUT_VAR ASIO_GRPC_GENERATED_EXAMPLE_SOURCES
+        TARGET asio-grpc-${_asio_grpc_name}
         OUT_DIR "${ASIO_GRPC_GENERATED_EXAMPLE_PROTOS_OUT_DIR}"
         PROTOS "${CMAKE_CURRENT_LIST_DIR}/protos/helloworld.proto" "${CMAKE_CURRENT_LIST_DIR}/protos/example.proto")
 
-    add_library(asio-grpc-${_asio_grpc_name} OBJECT)
+    target_include_directories(asio-grpc-${_asio_grpc_name}
+                               PUBLIC "$<BUILD_INTERFACE:${ASIO_GRPC_GENERATED_EXAMPLE_PROTOS_INCLUDE_DIR}>")
 
-    target_sources(asio-grpc-${_asio_grpc_name} PRIVATE ${ASIO_GRPC_GENERATED_EXAMPLE_SOURCES})
+    target_link_libraries(asio-grpc-${_asio_grpc_name} PUBLIC protobuf::libprotobuf)
 
-    target_include_directories(
-        asio-grpc-${_asio_grpc_name} PUBLIC $<BUILD_INTERFACE:${ASIO_GRPC_GENERATED_EXAMPLE_PROTOS_INCLUDE_DIR}>
-                                            $<INSTALL_INTERFACE:include>)
-
-    target_link_libraries(asio-grpc-${_asio_grpc_name} PRIVATE asio-grpc-common-compile-options)
+    target_compile_features(asio-grpc-${_asio_grpc_name} PUBLIC cxx_std_17)
 endfunction()
 
 # example helper
@@ -58,7 +57,7 @@ asio_grpc_add_example_protos(example-protos)
 
 if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
     asio_grpc_add_example_protos(example-protos-cpp20)
-    target_link_libraries(asio-grpc-example-protos-cpp20 PRIVATE asio-grpc-cpp20-compile-options)
+    target_compile_features(asio-grpc-example-protos-cpp20 PUBLIC cxx_std_20)
 
     asio_grpc_add_example(hello-world-client)
     target_link_libraries(asio-grpc-example-hello-world-client PRIVATE asio-grpc::asio-grpc)

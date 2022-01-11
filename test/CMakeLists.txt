@@ -31,21 +31,21 @@ function(asio_grpc_add_test _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_stand
         unset(_asio_grpc_cxx_standard)
     endif()
 
+    target_link_libraries(${_asio_grpc_name} PRIVATE "asio-grpc-test-main${_asio_grpc_cxx_standard}"
+                                                     "asio-grpc-test-protobuf${_asio_grpc_cxx_standard}")
     if(${_asio_grpc_type} STREQUAL "BOOST_ASIO")
-        target_link_libraries(${_asio_grpc_name} PRIVATE "asio-grpc-test-util-boost-asio${_asio_grpc_cxx_standard}"
-                                                         "asio-grpc-test-main${_asio_grpc_cxx_standard}")
+        target_link_libraries(${_asio_grpc_name} PRIVATE "asio-grpc-test-util-boost-asio${_asio_grpc_cxx_standard}")
 
         target_precompile_headers(${_asio_grpc_name} REUSE_FROM
                                   "asio-grpc-test-util-boost-asio${_asio_grpc_cxx_standard}")
     elseif(${_asio_grpc_type} STREQUAL "STANDALONE_ASIO")
-        target_link_libraries(${_asio_grpc_name} PRIVATE "asio-grpc-test-util-standalone-asio${_asio_grpc_cxx_standard}"
-                                                         "asio-grpc-test-main${_asio_grpc_cxx_standard}")
+        target_link_libraries(${_asio_grpc_name}
+                              PRIVATE "asio-grpc-test-util-standalone-asio${_asio_grpc_cxx_standard}")
 
         target_precompile_headers(${_asio_grpc_name} REUSE_FROM
                                   "asio-grpc-test-util-standalone-asio${_asio_grpc_cxx_standard}")
     elseif(${_asio_grpc_type} STREQUAL "UNIFEX")
-        target_link_libraries(${_asio_grpc_name} PRIVATE "asio-grpc-test-util-unifex${_asio_grpc_cxx_standard}"
-                                                         "asio-grpc-test-main${_asio_grpc_cxx_standard}")
+        target_link_libraries(${_asio_grpc_name} PRIVATE "asio-grpc-test-util-unifex${_asio_grpc_cxx_standard}")
 
         target_precompile_headers(${_asio_grpc_name} REUSE_FROM "asio-grpc-test-util-unifex${_asio_grpc_cxx_standard}")
     endif()
