@@ -12,6 +12,7 @@ vcpkg_from_github(
     HEAD_REF
     master
     PATCHES
+    fix-compile-error.patch
     fix-execute-forward-declaration.patch
     do-not-link-std-coroutines.patch)
 
