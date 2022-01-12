@@ -73,20 +73,16 @@ struct UseSchedulerFn
 
 struct UseSenderFn
 {
-    template <class Scheduler>
-    [[nodiscard]] auto operator()(const Scheduler& scheduler) const noexcept
+    template <class Allocator, std::uint32_t Options>
+    [[nodiscard]] constexpr auto operator()(const agrpc::BasicGrpcExecutor<Allocator, Options>& executor) const noexcept
     {
-        return detail::UseSender{detail::query_grpc_context(scheduler)};
+        return detail::UseSender{executor.context()};
     }
 
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    [[nodiscard]] auto operator()(asio::execution_context& context) const noexcept
+    [[nodiscard]] constexpr auto operator()(agrpc::GrpcContext& context) const noexcept
     {
-        return detail::UseSender{static_cast<agrpc::GrpcContext&>(context)};
+        return detail::UseSender{context};
     }
-#endif
-
-    [[nodiscard]] auto operator()(agrpc::GrpcContext& context) const noexcept { return detail::UseSender{context}; }
 };
 }  // namespace detail
 
