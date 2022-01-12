@@ -50,13 +50,19 @@ struct GrpcInitiateImplFn
 #endif
 
     template <class InitiatingFunction, class StopFunction = detail::Empty>
-    auto operator()(InitiatingFunction initiating_function, detail::UseSender token, StopFunction = {}) const
+    auto operator()(InitiatingFunction initiating_function, detail::UseSender token, StopFunction = {}) const noexcept
     {
         return detail::GrpcSender<InitiatingFunction, StopFunction>{token.grpc_context, std::move(initiating_function)};
     }
 };
 
 inline constexpr detail::GrpcInitiateImplFn grpc_initiate{};
+
+template <class CompletionToken>
+inline constexpr bool IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN = false;
+
+template <>
+inline constexpr bool IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<detail::UseSender> = true;
 }
 
 AGRPC_NAMESPACE_END

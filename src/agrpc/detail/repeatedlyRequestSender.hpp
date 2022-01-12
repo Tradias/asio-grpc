@@ -203,7 +203,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
             }
         }
 
-        auto make_request(detail::RPCContextForRPCT<RPC>& context)
+        auto make_request(detail::RPCContextForRPCT<RPC>& context) noexcept
         {
             auto request_args = std::tuple_cat(std::forward_as_tuple(this->rpc(), this->service()), context.args(),
                                                std::tuple(agrpc::use_sender(this->grpc_context())));
@@ -222,7 +222,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
                                   {
                                       return detail::let_value(
                                           detail::let_value(DoneIfSender{this->is_stopped(), *this},
-                                                            [&]()
+                                                            [&]() noexcept
                                                             {
                                                                 return this->make_request(context);
                                                             }),

@@ -32,6 +32,8 @@ struct WaitFn
 {
     template <class Deadline, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::Alarm& alarm, const Deadline& deadline, CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>&&
+                     std::is_nothrow_copy_constructible_v<Deadline>)
     {
         return detail::grpc_initiate(detail::AlarmInitFunction{alarm, deadline}, std::move(token),
                                      detail::AlarmCancellationHandler{alarm});
@@ -46,6 +48,7 @@ struct RequestFn
     auto operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
                     grpc::ServerContext& server_context, Request& request, Responder& responder,
                     CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             detail::ServerMultiArgRequestInitFunction{rpc, service, server_context, request, responder},
@@ -55,6 +58,7 @@ struct RequestFn
     template <class RPC, class Service, class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service,
                     grpc::ServerContext& server_context, Responder& responder, CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             detail::ServerSingleArgRequestInitFunction{rpc, service, server_context, responder}, std::move(token));
@@ -87,6 +91,7 @@ struct RequestFn
     template <class RPC, class Stub, class Request, class Reader, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(detail::ClientServerStreamingRequest<RPC, Request, Reader> rpc, Stub& stub,
                     grpc::ClientContext& client_context, const Request& request, CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate_with_payload<Reader>(
             detail::ClientServerStreamingRequestConvenienceInitFunction{rpc, stub, client_context, request},
@@ -98,6 +103,7 @@ struct RequestFn
     auto operator()(detail::ClientServerStreamingRequest<RPC, Request, Reader> rpc, Stub& stub,
                     grpc::ClientContext& client_context, const Request& request, Reader& reader,
                     CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             detail::ClientServerStreamingRequestInitFunction{rpc, stub, client_context, request, reader},
@@ -109,6 +115,7 @@ struct RequestFn
               class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(detail::ClientSideStreamingRequest<RPC, Writer, Response> rpc, Stub& stub,
                     grpc::ClientContext& client_context, Response& response, CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate_with_payload<Writer>(
             detail::ClientSideStreamingRequestConvenienceInitFunction{rpc, stub, client_context, response},
@@ -121,6 +128,7 @@ struct RequestFn
     auto operator()(detail::ClientSideStreamingRequest<RPC, Writer, Response> rpc, Stub& stub,
                     grpc::ClientContext& client_context, Writer& writer, Response& response,
                     CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             detail::ClientSideStreamingRequestInitFunction{rpc, stub, client_context, writer, response},
@@ -141,6 +149,7 @@ struct RequestFn
     template <class RPC, class Stub, class ReaderWriter, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter> rpc, Stub& stub,
                     grpc::ClientContext& client_context, ReaderWriter& reader_writer, CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             detail::ClientBidirectionalStreamingRequestInitFunction{rpc, stub, client_context, reader_writer},
@@ -154,6 +163,7 @@ struct ReadFn
     template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncReader<Response, Request>& reader, Request& request,
                     CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             typename detail::ServerAsyncReaderInitFunctions<Response, Request>::Read{reader, request},
@@ -163,6 +173,7 @@ struct ReadFn
     template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncReaderWriter<Response, Request>& reader_writer, Request& request,
                     CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             typename detail::ServerAsyncReaderWriterInitFunctions<Response, Request>::Read{reader_writer, request},
@@ -172,6 +183,7 @@ struct ReadFn
     // Client
     template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncReader<Response>& reader, Response& response, CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(typename detail::ClientAsyncReaderInitFunctions<Response>::Read{reader, response},
                                      std::move(token));
@@ -180,6 +192,7 @@ struct ReadFn
     template <class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncReaderWriter<Request, Response>& reader_writer, Response& response,
                     CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             typename detail::ClientAsyncReaderWriterInitFunctions<Request, Response>::Read{reader_writer, response},
@@ -193,6 +206,7 @@ struct WriteFn
     template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncWriter<Response>& writer, const Response& response,
                     CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(typename detail::ServerAsyncWriterInitFunctions<Response>::Write{writer, response},
                                      std::move(token));
@@ -201,6 +215,7 @@ struct WriteFn
     template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncWriter<Response>& writer, const Response& response, grpc::WriteOptions options,
                     CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             typename detail::ServerAsyncWriterInitFunctions<Response>::WriteWithOptions{writer, response, options},
@@ -210,6 +225,7 @@ struct WriteFn
     template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncReaderWriter<Response, Request>& reader_writer, const Response& response,
                     CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             typename detail::ServerAsyncReaderWriterInitFunctions<Response, Request>::Write{reader_writer, response},
@@ -219,6 +235,7 @@ struct WriteFn
     template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncReaderWriter<Response, Request>& reader_writer, const Response& response,
                     grpc::WriteOptions options, CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             typename detail::ServerAsyncReaderWriterInitFunctions<Response, Request>::WriteWithOptions{
@@ -229,6 +246,7 @@ struct WriteFn
     // Client
     template <class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncWriter<Request>& writer, const Request& request, CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(typename detail::ClientAsyncWriterInitFunctions<Request>::Write{writer, request},
                                      std::move(token));
@@ -237,6 +255,7 @@ struct WriteFn
     template <class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncWriter<Request>& writer, const Request& request, grpc::WriteOptions options,
                     CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             typename detail::ClientAsyncWriterInitFunctions<Request>::WriteWithOptions{writer, request, options},
@@ -246,6 +265,7 @@ struct WriteFn
     template <class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncReaderWriter<Request, Response>& reader_writer, const Request& request,
                     CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             typename detail::ClientAsyncReaderWriterInitFunctions<Request, Response>::Write{reader_writer, request},
@@ -255,6 +275,7 @@ struct WriteFn
     template <class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncReaderWriter<Request, Response>& reader_writer, const Request& request,
                     grpc::WriteOptions options, CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             typename detail::ClientAsyncReaderWriterInitFunctions<Request, Response>::WriteWithOptions{
@@ -268,6 +289,7 @@ struct WritesDoneFn
     // Client
     template <class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncWriter<Request>& writer, CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(typename detail::ClientAsyncWriterInitFunctions<Request>::WritesDone{writer},
                                      std::move(token));
@@ -275,6 +297,7 @@ struct WritesDoneFn
 
     template <class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncReaderWriter<Request, Response>& reader_writer, CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             typename detail::ClientAsyncReaderWriterInitFunctions<Request, Response>::WritesDone{reader_writer},
@@ -288,6 +311,7 @@ struct FinishFn
     template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncWriter<Response>& writer, const grpc::Status& status,
                     CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(typename detail::ServerAsyncWriterInitFunctions<Response>::Finish{writer, status},
                                      std::move(token));
@@ -296,6 +320,7 @@ struct FinishFn
     template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncReader<Response, Request>& reader, const Response& response,
                     const grpc::Status& status, CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             typename detail::ServerAsyncReaderInitFunctions<Response, Request>::Finish{reader, response, status},
@@ -305,6 +330,7 @@ struct FinishFn
     template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncResponseWriter<Response>& writer, const Response& response,
                     const grpc::Status& status, CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             typename detail::ServerAsyncResponseWriterInitFunctions<Response>::Finish{writer, response, status},
@@ -314,6 +340,7 @@ struct FinishFn
     template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncReaderWriter<Response, Request>& reader_writer, const grpc::Status& status,
                     CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             typename detail::ServerAsyncReaderWriterInitFunctions<Response, Request>::Finish{reader_writer, status},
@@ -323,6 +350,7 @@ struct FinishFn
     // Client
     template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncReader<Response>& reader, grpc::Status& status, CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(typename detail::ClientAsyncReaderInitFunctions<Response>::Finish{reader, status},
                                      std::move(token));
@@ -330,6 +358,7 @@ struct FinishFn
 
     template <class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncWriter<Request>& writer, grpc::Status& status, CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(typename detail::ClientAsyncWriterInitFunctions<Request>::Finish{writer, status},
                                      std::move(token));
@@ -338,6 +367,7 @@ struct FinishFn
     template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncResponseReader<Response>& reader, Response& response, grpc::Status& status,
                     CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             typename detail::ClientAsyncResponseReaderInitFunctions<Response>::Finish{reader, response, status},
@@ -347,6 +377,7 @@ struct FinishFn
     template <class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncReaderWriter<Request, Response>& reader_writer, grpc::Status& status,
                     CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             typename detail::ClientAsyncReaderWriterInitFunctions<Request, Response>::Finish{reader_writer, status},
@@ -360,6 +391,7 @@ struct WriteAndFinishFn
     template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncReaderWriter<Response, Request>& reader_writer, const Response& response,
                     grpc::WriteOptions options, const grpc::Status& status, CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             typename detail::ServerAsyncReaderWriterInitFunctions<Response, Request>::WriteAndFinish{
@@ -370,6 +402,7 @@ struct WriteAndFinishFn
     template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncWriter<Response>& reader_writer, const Response& response,
                     grpc::WriteOptions options, const grpc::Status& status, CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             typename detail::ServerAsyncWriterInitFunctions<Response>::WriteAndFinish{reader_writer, response, options,
@@ -384,6 +417,7 @@ struct FinishWithErrorFn
     template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncReader<Response, Request>& reader, const grpc::Status& status,
                     CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             typename detail::ServerAsyncReaderInitFunctions<Response, Request>::FinishWithError{reader, status},
@@ -393,6 +427,7 @@ struct FinishWithErrorFn
     template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncResponseWriter<Response>& writer, const grpc::Status& status,
                     CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             typename detail::ServerAsyncResponseWriterInitFunctions<Response>::FinishWithError{writer, status},
@@ -404,6 +439,7 @@ struct SendInitialMetadataFn
 {
     template <class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(Responder& responder, CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(detail::SendInitialMetadataInitFunction<Responder>{responder}, std::move(token));
     }
@@ -413,6 +449,7 @@ struct ReadInitialMetadataFn
 {
     template <class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(Responder& responder, CompletionToken token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(detail::ReadInitialMetadataInitFunction<Responder>{responder}, std::move(token));
     }

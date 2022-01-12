@@ -483,6 +483,25 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::coroutine with Alarm")
     CHECK(ok);
 }
 
+TEST_CASE("agrpc::request and agrpc::wait are noexcept for use_sender")
+{
+    using UseSender = decltype(agrpc::use_sender(std::declval<agrpc::GrpcContext&>()));
+    CHECK_FALSE(noexcept(agrpc::request(std::declval<decltype(&test::v1::Test::Stub::AsyncServerStreaming)>(),
+                                        std::declval<test::v1::Test::Stub&>(), std::declval<grpc::ClientContext&>(),
+                                        std::declval<test::v1::Request&>(),
+                                        std::declval<std::unique_ptr<grpc::ClientAsyncReader<test::v1::Response>>&>(),
+                                        std::declval<asio::yield_context>())));
+    CHECK(noexcept(agrpc::request(
+        std::declval<decltype(&test::v1::Test::Stub::AsyncServerStreaming)>(), std::declval<test::v1::Test::Stub&>(),
+        std::declval<grpc::ClientContext&>(), std::declval<test::v1::Request&>(),
+        std::declval<std::unique_ptr<grpc::ClientAsyncReader<test::v1::Response>>&>(), std::declval<UseSender>())));
+    CHECK_FALSE(
+        noexcept(agrpc::wait(std::declval<grpc::Alarm&>(), std::declval<std::chrono::system_clock::time_point>(),
+                             std::declval<asio::yield_context>())));
+    CHECK(noexcept(agrpc::wait(std::declval<grpc::Alarm&>(), std::declval<std::chrono::system_clock::time_point>(),
+                               std::declval<UseSender>())));
+}
+
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unary stackless coroutine")
 {
     grpc::ServerAsyncResponseWriter<test::v1::Response> writer{&server_context};
