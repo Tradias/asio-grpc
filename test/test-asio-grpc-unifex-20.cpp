@@ -406,6 +406,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request client 
         agrpc::repeatedly_request(
             &test::v1::Test::AsyncService::RequestClientStreaming, service,
             AssociatedHandler{
+#ifdef _MSC_VER
                 [&](grpc::ServerContext&, grpc::ServerAsyncReader<test::v1::Response, test::v1::Request>& reader)
                 {
                     return unifex::let_value(
@@ -438,6 +439,23 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request client 
                                 });
                         });
                 },
+#else
+                [&](grpc::ServerContext&,
+                    grpc::ServerAsyncReader<test::v1::Response, test::v1::Request>& reader) -> unifex::task<void>
+                {
+                    test::v1::Request request{};
+                    CHECK(co_await agrpc::read(reader, request, use_sender()));
+                    CHECK_EQ(42, request.integer());
+                    test::v1::Response response{};
+                    response.set_integer(21);
+                    ++request_count;
+                    if (request_count > 3)
+                    {
+                        is_shutdown = true;
+                    }
+                    CHECK(co_await agrpc::finish(reader, response, grpc::Status::OK, use_sender()));
+                },
+#endif
                 get_allocator()},
             use_sender()),
         [&]() -> unifex::task<void>
