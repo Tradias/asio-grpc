@@ -130,7 +130,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
                             local_repeat_operation.done();
                             return;
                         }
-                        local_repeat_operation.operation_state.emplace<2>(
+                        local_repeat_operation.operation_state.template emplace<2>(
                             detail::InplaceWithFunction{},
                             [&]
                             {
@@ -184,13 +184,13 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
                         this->done();
                         return;
                     }
-                    this->operation_state.emplace<1>(detail::InplaceWithFunction{},
-                                                     [&]
-                                                     {
-                                                         return detail::connect(
-                                                             make_request(this->self, this->rpc_context),
-                                                             AfterRequestReceiver<true>{*this});
-                                                     });
+                    this->operation_state.template emplace<1>(detail::InplaceWithFunction{},
+                                                              [&]
+                                                              {
+                                                                  return detail::connect(
+                                                                      make_request(this->self, this->rpc_context),
+                                                                      AfterRequestReceiver<true>{*this});
+                                                              });
                     detail::start(std::get<1>(this->operation_state).value);
                 }
             };
