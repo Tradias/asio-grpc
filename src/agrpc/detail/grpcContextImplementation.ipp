@@ -31,7 +31,7 @@ inline thread_local const agrpc::GrpcContext* thread_local_grpc_context{};
 
 inline void WorkFinishedOnExitFunctor::operator()() const noexcept { grpc_context.work_finished(); }
 
-inline void GrpcContextImplementation::trigger_work_alarm(agrpc::GrpcContext& grpc_context)
+inline void GrpcContextImplementation::trigger_work_alarm(agrpc::GrpcContext& grpc_context) noexcept
 {
     static constexpr ::gpr_timespec TIME_ZERO{std::numeric_limits<std::int64_t>::min(), 0, ::GPR_CLOCK_MONOTONIC};
     grpc_context.work_alarm.Set(grpc_context.completion_queue.get(), TIME_ZERO,
@@ -39,7 +39,7 @@ inline void GrpcContextImplementation::trigger_work_alarm(agrpc::GrpcContext& gr
 }
 
 inline void GrpcContextImplementation::add_remote_operation(agrpc::GrpcContext& grpc_context,
-                                                            detail::TypeErasedNoArgOperation* op)
+                                                            detail::TypeErasedNoArgOperation* op) noexcept
 {
     grpc_context.work_started();
     if (grpc_context.remote_work_queue.enqueue(op))
@@ -49,14 +49,14 @@ inline void GrpcContextImplementation::add_remote_operation(agrpc::GrpcContext& 
 }
 
 inline void GrpcContextImplementation::add_local_operation(agrpc::GrpcContext& grpc_context,
-                                                           detail::TypeErasedNoArgOperation* op)
+                                                           detail::TypeErasedNoArgOperation* op) noexcept
 {
     grpc_context.work_started();
     grpc_context.local_work_queue.push_back(op);
 }
 
 inline bool GrpcContextImplementation::get_next_event(agrpc::GrpcContext& grpc_context,
-                                                      detail::GrpcCompletionQueueEvent& event)
+                                                      detail::GrpcCompletionQueueEvent& event) noexcept
 {
     static constexpr ::gpr_timespec INFINITE_FUTURE{std::numeric_limits<std::int64_t>::max(), 0, ::GPR_CLOCK_MONOTONIC};
     return grpc_context.get_completion_queue()->AsyncNext(&event.tag, &event.ok, INFINITE_FUTURE) !=

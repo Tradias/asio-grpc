@@ -73,7 +73,7 @@ class CompressedPair : private Second
 };
 
 template <class First, class Second>
-class CompressedPair<First, Second, false> final
+class CompressedPair<First, Second, false>
 {
   public:
     template <class T, class U>
@@ -103,6 +103,37 @@ class CompressedPair<First, Second, false> final
     Second second_;
 };
 
+template <class T, bool = std::is_empty_v<T> && !std::is_final_v<T>>
+class EmptyBaseOptimization : private T
+{
+  public:
+    template <class... Args>
+    explicit EmptyBaseOptimization(Args&&... args) : T(std::forward<Args>(args)...)
+    {
+    }
+
+    constexpr auto& get() noexcept { return static_cast<T&>(*this); }
+
+    constexpr auto& get() const noexcept { return static_cast<const T&>(*this); }
+};
+
+template <class T>
+class EmptyBaseOptimization<T, false>
+{
+  public:
+    template <class... Args>
+    explicit EmptyBaseOptimization(Args&&... args) : value(std::forward<Args>(args)...)
+    {
+    }
+
+    constexpr auto& get() noexcept { return this->value; }
+
+    constexpr auto& get() const noexcept { return this->value; }
+
+  private:
+    T value;
+};
+
 template <class OnExit>
 struct ScopeGuard
 {
@@ -128,6 +159,27 @@ struct ScopeGuard
     }
 
     constexpr void release() noexcept { is_armed = false; }
+};
+
+struct InplaceWithFunction
+{
+};
+
+template <class T>
+struct InplaceWithFunctionWrapper
+{
+    T value;
+
+    template <class... Args>
+    explicit InplaceWithFunctionWrapper(Args&&... args) : value(std::forward<Args>(args)...)
+    {
+    }
+
+    template <class Function>
+    InplaceWithFunctionWrapper(detail::InplaceWithFunction, Function&& function)
+        : value(std::forward<Function>(function)())
+    {
+    }
 };
 
 template <class T>

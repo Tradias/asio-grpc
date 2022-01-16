@@ -59,7 +59,10 @@
 #include <boost/asio/execution/context.hpp>
 #include <boost/asio/execution/mapping.hpp>
 #include <boost/asio/execution/outstanding_work.hpp>
+#include <boost/asio/execution/receiver.hpp>
 #include <boost/asio/execution/relationship.hpp>
+#include <boost/asio/execution/sender.hpp>
+#include <boost/asio/execution/start.hpp>
 #include <boost/asio/execution/submit.hpp>
 #include <boost/asio/execution_context.hpp>
 #include <boost/asio/query.hpp>
@@ -82,11 +85,9 @@
 #include <unifex/config.hpp>
 #include <unifex/get_allocator.hpp>
 #include <unifex/get_stop_token.hpp>
-#include <unifex/let_value.hpp>
-#include <unifex/let_value_with.hpp>
-#include <unifex/on.hpp>
 #include <unifex/receiver_concepts.hpp>
 #include <unifex/scheduler_concepts.hpp>
+#include <unifex/sender_concepts.hpp>
 #include <unifex/stop_token_concepts.hpp>
 #include <unifex/submit.hpp>
 #endif
@@ -138,28 +139,13 @@ auto get_associated_executor_and_allocator(const Object& object)
     return std::pair{std::move(executor), std::move(allocator)};
 }
 
+using asio::execution::connect;
+using asio::execution::connect_result_t;
 using asio::execution::set_done;
 using asio::execution::set_error;
 using asio::execution::set_value;
+using asio::execution::start;
 using asio::execution::submit;
-
-template <class... Args>
-auto let_value(Args&&...)
-{
-    // disabled until Asio implements sender algorithms
-}
-
-template <class... Args>
-auto let_value_with(Args&&...)
-{
-    // disabled until Asio implements sender algorithms
-}
-
-template <class... Args>
-auto on(Args&&...)
-{
-    // disabled until Asio implements sender algorithms
-}
 
 struct unstoppable_token
 {
@@ -192,13 +178,13 @@ auto get_associated_executor_and_allocator(const Object& object)
     return std::pair{detail::get_scheduler(object), detail::get_allocator(object)};
 }
 
+using ::unifex::connect;
+using ::unifex::connect_result_t;
 using ::unifex::get_stop_token;
-using ::unifex::let_value;
-using ::unifex::let_value_with;
-using ::unifex::on;
 using ::unifex::set_done;
 using ::unifex::set_error;
 using ::unifex::set_value;
+using ::unifex::start;
 using ::unifex::stop_token_type_t;
 using ::unifex::submit;
 #endif

@@ -405,40 +405,39 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request client 
     unifex::sync_wait(unifex::when_all(
         agrpc::repeatedly_request(
             &test::v1::Test::AsyncService::RequestClientStreaming, service,
-            AssociatedHandler{
 #ifdef _MSC_VER
-                [&](grpc::ServerContext&, grpc::ServerAsyncReader<test::v1::Response, test::v1::Request>& reader)
-                {
-                    return unifex::let_value(
-                        unifex::just(test::v1::Request{}),
-                        [&](auto& request)
-                        {
-                            return unifex::let_value(
-                                agrpc::read(reader, request, use_sender()),
-                                [&](bool read_ok)
-                                {
-                                    CHECK(read_ok);
-                                    CHECK_EQ(42, request.integer());
-                                    return unifex::let_value(
-                                        unifex::just(test::v1::Response{}),
-                                        [&](auto& response)
+            [&](grpc::ServerContext&, grpc::ServerAsyncReader<test::v1::Response, test::v1::Request>& reader)
+            {
+                return unifex::let_value(
+                    unifex::just(test::v1::Request{}),
+                    [&](auto& request)
+                    {
+                        return unifex::let_value(
+                            agrpc::read(reader, request, use_sender()),
+                            [&](bool read_ok)
+                            {
+                                CHECK(read_ok);
+                                CHECK_EQ(42, request.integer());
+                                return unifex::let_value(
+                                    unifex::just(test::v1::Response{}),
+                                    [&](auto& response)
+                                    {
+                                        response.set_integer(21);
+                                        ++request_count;
+                                        if (request_count > 3)
                                         {
-                                            response.set_integer(21);
-                                            ++request_count;
-                                            if (request_count > 3)
+                                            is_shutdown = true;
+                                        }
+                                        return unifex::then(
+                                            agrpc::finish(reader, response, grpc::Status::OK, use_sender()),
+                                            [](bool finish_ok)
                                             {
-                                                is_shutdown = true;
-                                            }
-                                            return unifex::then(
-                                                agrpc::finish(reader, response, grpc::Status::OK, use_sender()),
-                                                [](bool finish_ok)
-                                                {
-                                                    CHECK(finish_ok);
-                                                });
-                                        });
-                                });
-                        });
-                },
+                                                CHECK(finish_ok);
+                                            });
+                                    });
+                            });
+                    });
+            },
 #else
                 [&](grpc::ServerContext&,
                     grpc::ServerAsyncReader<test::v1::Response, test::v1::Request>& reader) -> unifex::task<void>
@@ -456,7 +455,6 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request client 
                     CHECK(co_await agrpc::finish(reader, response, grpc::Status::OK, use_sender()));
                 },
 #endif
-                get_allocator()},
             use_sender()),
         [&]() -> unifex::task<void>
         {
@@ -484,7 +482,6 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request client 
                          grpc_context.run();
                      })));
     CHECK_EQ(4, request_count);
-    CHECK(allocator_has_been_used());
 }
 #endif
 
