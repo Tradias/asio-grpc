@@ -91,25 +91,35 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
                     return std::apply(self.sender_factory(), rpc_context.args());
                 }
 
-                void done() noexcept
+                static void destruct_stop_callback([[maybe_unused]] Operation& local_self) noexcept
                 {
-                    auto& local_self = this->self;
-                    detail::set_done(std::move(this->intermediate_receiver));
                     if constexpr (HAS_STOP_CALLBACK)
                     {
                         local_self.stop_context().reset();
                     }
+                }
+
+                void done() noexcept
+                {
+                    auto& local_self = this->self;
+                    detail::set_done(std::move(this->intermediate_receiver));
+                    destruct_stop_callback(local_self);
                     detail::set_done(std::move(local_self.receiver()));
+                }
+
+                void fulfill()
+                {
+                    auto& local_self = this->self;
+                    detail::set_value(std::move(this->intermediate_receiver));
+                    destruct_stop_callback(local_self);
+                    detail::set_value(std::move(local_self.receiver()));
                 }
 
                 void error(std::exception_ptr ep) noexcept
                 {
                     auto& local_self = this->self;
                     detail::set_done(std::move(this->intermediate_receiver));
-                    if constexpr (HAS_STOP_CALLBACK)
-                    {
-                        local_self.stop_context().reset();
-                    }
+                    destruct_stop_callback(local_self);
                     detail::set_error(std::move(local_self.receiver()), std::move(ep));
                 }
 
@@ -127,7 +137,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
                     {
                         if AGRPC_UNLIKELY (!ok)
                         {
-                            local_repeat_operation.done();
+                            local_repeat_operation.fulfill();
                             return;
                         }
                         local_repeat_operation.operation_state.template emplace<2>(

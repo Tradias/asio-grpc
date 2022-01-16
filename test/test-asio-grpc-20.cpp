@@ -388,9 +388,8 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "repeatedly_request with asio use_
                                     return agrpc::finish(writer, response, grpc::Status::OK, use_sender());
                                 },
                                 use_sender()),
-                            test::FunctionAsReceiver{[&](bool ok)
+                            test::FunctionAsReceiver{[&]()
                                                      {
-                                                         CHECK(ok);
                                                          CHECK_EQ(4, request_count);
                                                      }});
     test::co_spawn(grpc_context,
