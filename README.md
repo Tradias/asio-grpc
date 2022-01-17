@@ -20,7 +20,7 @@ Completed features:
 Upcoming features for v1.4.0:
 
 * [CancellationSlot](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/CancellationSlot.html) and [StopToken](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#stoptoken-concept) support for individual RPC steps
-* [AsyncStream](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#streams) for streaming RPCs
+* Add final completion handler and stop token support to `agrpc::repeatedly_request`
 * Classes that wrap Stub or AsyncService as IO-Object, constructible from any [asio::execution_context](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/execution_context.html). Making it possible to write asynchronous gRPC clients and servers without explicit use of a `agrpc::GrpcContext`. Roughly as follows:
 
 ```c++
@@ -884,3 +884,14 @@ If you are using [cmake-format](https://github.com/cheshirekow/cmake_format) the
 
 </p>
 </details>
+
+
+# What users are saying
+
+> Asio-grpc abstracts away the implementation details of asynchronous grpc handling: crafting working code is easier, faster, less prone to errors and considerably more fun. At 3YOURMIND we reliably use asio-grpc in production since its very first release, allowing our developers to effortlessly implement low-latency/high-throughput asynchronous data transfer in time critical applications.
+
+@3YOURMIND
+
+> Our project is a real-time distributed motion capture system that uses your framework to stream data back and forward between multiple machines. Previously I have tried to build a bidirectional streaming framework from scratch using only gRPC. However, it's not maintainable and error-prone due to a large amount of service and streaming code. As a developer whose experienced both raw grpc and asio-grpc, I can tell that your framework is a real a game-changer for writing grpc code in C++. It has made my life much easier. I really appreciate the effort you have put into this project and your superior skills in designing c++ template code.
+
+@khanhha
