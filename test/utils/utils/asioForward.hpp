@@ -67,7 +67,9 @@
 #ifdef AGRPC_UNIFEX
 #include <unifex/config.hpp>
 #include <unifex/execute.hpp>
+#include <unifex/finally.hpp>
 #include <unifex/just.hpp>
+#include <unifex/let_error.hpp>
 #include <unifex/let_value.hpp>
 #include <unifex/let_value_with.hpp>
 #include <unifex/let_value_with_stop_source.hpp>

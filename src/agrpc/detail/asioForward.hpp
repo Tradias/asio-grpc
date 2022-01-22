@@ -141,6 +141,7 @@ auto get_associated_executor_and_allocator(const Object& object)
 
 using asio::execution::connect;
 using asio::execution::connect_result_t;
+using asio::execution::is_sender_v;
 using asio::execution::set_done;
 using asio::execution::set_error;
 using asio::execution::set_value;
@@ -177,6 +178,9 @@ auto get_associated_executor_and_allocator(const Object& object)
 {
     return std::pair{detail::get_scheduler(object), detail::get_allocator(object)};
 }
+
+template <class T>
+inline constexpr bool is_sender_v = ::unifex::sender<T>;
 
 using ::unifex::connect;
 using ::unifex::connect_result_t;

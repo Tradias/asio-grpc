@@ -46,6 +46,8 @@ template <class First, class Second, bool = std::is_empty_v<Second> && !std::is_
 class CompressedPair : private Second
 {
   public:
+    CompressedPair() = default;
+
     template <class T, class U>
     constexpr CompressedPair(T&& first, U&& second) noexcept(
         std::is_nothrow_constructible_v<First, T&&>&& std::is_nothrow_constructible_v<Second, U&&>)
@@ -76,6 +78,8 @@ template <class First, class Second>
 class CompressedPair<First, Second, false>
 {
   public:
+    CompressedPair() = default;
+
     template <class T, class U>
     constexpr CompressedPair(T&& first, U&& second) noexcept(
         std::is_nothrow_constructible_v<First, T&&>&& std::is_nothrow_constructible_v<Second, U&&>)

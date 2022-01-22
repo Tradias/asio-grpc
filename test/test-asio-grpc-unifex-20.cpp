@@ -227,12 +227,15 @@ struct AssociatedHandler
     }
 };
 
-auto make_client_unary_request_sender(test::GrpcClientServerTest& self, int& request_count, int max_request_count)
+template <class OnRequestDone = test::InvocableArchetype>
+auto make_client_unary_request_sender(test::GrpcClientServerTest& self, std::chrono::system_clock::time_point deadline,
+                                      OnRequestDone on_request_done = {})
 {
     return unifex::let_value_with(
-        [&]
+        [&, deadline]
         {
             auto context = std::make_unique<grpc::ClientContext>();
+            context->set_deadline(deadline);
             test::v1::Request request;
             request.set_integer(42);
             auto* context_ptr = context.get();
@@ -240,27 +243,36 @@ auto make_client_unary_request_sender(test::GrpcClientServerTest& self, int& req
                 self.stub->AsyncUnary(context_ptr, request, agrpc::get_completion_queue(self.get_executor())),
                 test::v1::Response{}, grpc::Status{}, std::move(context)};
         },
-        [&, max_request_count](auto& tuple)
+        [&, on_request_done](auto& tuple)
         {
             auto& [reader, response, status, _] = tuple;
             return unifex::then(agrpc::finish(*reader, response, status, self.use_sender()),
-                                [&, max_request_count](bool ok)
+                                [&, on_request_done](bool ok) mutable
                                 {
                                     auto& [reader, response, status, _] = tuple;
-                                    CHECK(ok);
-                                    CHECK(status.ok());
-                                    CHECK_EQ(24, response.integer());
-                                    ++request_count;
-                                    if (request_count == max_request_count)
-                                    {
-                                        unifex::execute(self.get_executor(),
-                                                        [&]
-                                                        {
-                                                            self.server->Shutdown();
-                                                        });
-                                    }
+                                    std::move(on_request_done)(ok, response, status);
                                 });
         });
+}
+
+auto make_client_unary_request_sender(test::GrpcClientServerTest& self, int& request_count, int max_request_count)
+{
+    return make_client_unary_request_sender(self, test::five_seconds_from_now(),
+                                            [&, max_request_count](bool ok, auto&& response, auto&& status)
+                                            {
+                                                CHECK(ok);
+                                                CHECK(status.ok());
+                                                CHECK_EQ(24, response.integer());
+                                                ++request_count;
+                                                if (request_count == max_request_count)
+                                                {
+                                                    unifex::execute(self.get_executor(),
+                                                                    [&]
+                                                                    {
+                                                                        self.server->Shutdown();
+                                                                    });
+                                                }
+                                            });
 }
 
 auto make_unary_repeatedly_request_sender(test::GrpcClientServerTest& self)
@@ -339,6 +351,33 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request unary -
                                                                              grpc_context.run();
                                                                          })));
     CHECK_FALSE(allocator_has_been_used());
+}
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTest,
+                  "unifex repeatedly_request unary - throw exception from request handler factory")
+{
+    auto repeater = agrpc::repeatedly_request(
+        &test::v1::Test::AsyncService::RequestUnary, service,
+        [&](grpc::ServerContext&, test::v1::Request&, grpc::ServerAsyncResponseWriter<test::v1::Response>&)
+        {
+            throw std::logic_error{"excepted"};
+            return unifex::just();
+        },
+        use_sender());
+    std::exception_ptr actual_ep;
+    unifex::sync_wait(unifex::when_all(make_client_unary_request_sender(*this, test::ten_milliseconds_from_now()),
+                                       unifex::let_error(std::move(repeater),
+                                                         [&](std::exception_ptr ep)
+                                                         {
+                                                             actual_ep = std::move(ep);
+                                                             return unifex::just();
+                                                         }),
+                                       unifex::then(unifex::just(),
+                                                    [&]
+                                                    {
+                                                        grpc_context.run();
+                                                    })));
+    CHECK_THROWS_AS(std::rethrow_exception(actual_ep), std::logic_error);
 }
 
 struct ServerUnaryRequestContext
