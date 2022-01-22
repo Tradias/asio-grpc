@@ -67,7 +67,6 @@
 #ifdef AGRPC_UNIFEX
 #include <unifex/config.hpp>
 #include <unifex/execute.hpp>
-#include <unifex/finally.hpp>
 #include <unifex/just.hpp>
 #include <unifex/let_error.hpp>
 #include <unifex/let_value.hpp>
@@ -81,6 +80,7 @@
 #include <unifex/sync_wait.hpp>
 #include <unifex/then.hpp>
 #include <unifex/when_all.hpp>
+#include <unifex/with_query_value.hpp>
 
 #if !UNIFEX_NO_COROUTINES
 #include <unifex/task.hpp>
