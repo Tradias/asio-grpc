@@ -28,17 +28,8 @@ if(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS)
 endif()
 
 target_compile_options(
-    asio-grpc-common-compile-options
-    INTERFACE $<$<CXX_COMPILER_ID:MSVC>:
-              /external:I
-              $<TARGET_PROPERTY:protobuf::libprotobuf,INTERFACE_INCLUDE_DIRECTORIES>
-              /external:W0
-              /external:templates-
-              /W4>
-              $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall
-              -Wextra
-              -pedantic-errors>
-              $<$<CXX_COMPILER_ID:Clang>:-Wno-self-move>)
+    asio-grpc-common-compile-options INTERFACE $<$<CXX_COMPILER_ID:MSVC>:/W4> $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall
+                                               -Wextra -pedantic-errors> $<$<CXX_COMPILER_ID:Clang>:-Wno-self-move>)
 
 if(CMAKE_GENERATOR STRGREATER_EQUAL "Visual Studio")
     target_compile_options(asio-grpc-common-compile-options INTERFACE /MP)
