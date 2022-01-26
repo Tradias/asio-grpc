@@ -93,14 +93,12 @@ struct GrpcCompletionHandlerWithPayload : detail::AssociatedCompletionHandler<Co
 template <class Payload, class InitiatingFunction>
 struct GrpcWithPayloadInitiator : detail::GrpcInitiator<InitiatingFunction>
 {
-    using Base = detail::GrpcInitiator<InitiatingFunction>;
-
-    using Base::GrpcInitiator;
+    using detail::GrpcInitiator<InitiatingFunction>::GrpcInitiator;
 
     template <class CompletionHandler>
     void operator()(CompletionHandler completion_handler)
     {
-        Base::operator()(
+        detail::GrpcInitiator<InitiatingFunction>::operator()(
             detail::GrpcCompletionHandlerWithPayload<CompletionHandler, Payload>{std::move(completion_handler)});
     }
 };

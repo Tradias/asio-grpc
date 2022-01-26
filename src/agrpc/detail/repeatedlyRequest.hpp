@@ -178,13 +178,12 @@ struct RepeatedlyRequestInitiator
     {
         struct CompletionHandlerWithPayload : detail::AssociatedCompletionHandler<CompletionHandler>
         {
-            using Base = detail::AssociatedCompletionHandler<CompletionHandler>;
-
             detail::RepeatedlyRequestContext<RPC, Service, Handler> context;
 
             explicit CompletionHandlerWithPayload(CompletionHandler completion_handler, RPC rpc, Service& service,
                                                   Handler handler)
-                : Base(std::move(completion_handler)), context(rpc, service, std::move(handler))
+                : detail::AssociatedCompletionHandler<CompletionHandler>(std::move(completion_handler)),
+                  context(rpc, service, std::move(handler))
             {
             }
         };
@@ -210,8 +209,8 @@ struct RepeatedlyRequestInitiator
 template <class RPC, class Service, class Handler, class CompletionToken>
 auto RepeatedlyRequestFn::impl(RPC rpc, Service& service, Handler handler, CompletionToken token)
 {
-    using RPCContext = detail::RPCContextForRPCT<RPC>;
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+    using RPCContext = detail::RPCContextForRPCT<RPC>;
     if constexpr (detail::IS_REPEATEDLY_REQUEST_SENDER_FACTORY<Handler, typename RPCContext::Signature>)
     {
 #endif
