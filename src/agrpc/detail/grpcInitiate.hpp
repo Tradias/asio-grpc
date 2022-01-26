@@ -44,8 +44,8 @@ struct GrpcInitiateImplFn
             }
         }
 #endif
-        return asio::async_initiate<CompletionToken, void(bool)>(detail::GrpcInitiator{std::move(initiating_function)},
-                                                                 token);
+        return asio::async_initiate<CompletionToken, void(bool)>(
+            detail::GrpcInitiator<InitiatingFunction>{std::move(initiating_function)}, token);
     }
 #endif
 

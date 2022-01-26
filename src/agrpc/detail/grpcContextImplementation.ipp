@@ -55,6 +55,19 @@ inline void GrpcContextImplementation::add_local_operation(agrpc::GrpcContext& g
     grpc_context.local_work_queue.push_back(op);
 }
 
+inline void GrpcContextImplementation::add_operation(agrpc::GrpcContext& grpc_context,
+                                                     detail::TypeErasedNoArgOperation* op) noexcept
+{
+    if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
+    {
+        detail::GrpcContextImplementation::add_local_operation(grpc_context, op);
+    }
+    else
+    {
+        detail::GrpcContextImplementation::add_remote_operation(grpc_context, op);
+    }
+}
+
 inline bool GrpcContextImplementation::get_next_event(agrpc::GrpcContext& grpc_context,
                                                       detail::GrpcCompletionQueueEvent& event) noexcept
 {

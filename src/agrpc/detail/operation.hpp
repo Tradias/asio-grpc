@@ -44,7 +44,7 @@ class Operation<IsIntrusivelyListable, Handler, Allocator, R(Signature...), Extr
     static void do_complete(Base* op, detail::InvokeHandler invoke_handler, Signature... args, ExtraArgs...)
     {
         auto* self = static_cast<Operation*>(op);
-        detail::RebindAllocatedPointer<Operation, Allocator> ptr{self, self->get_allocator()};
+        detail::AllocatedPointer ptr{self, self->get_allocator()};
         if (detail::InvokeHandler::YES == invoke_handler)
         {
             auto handler{std::move(self->handler())};
@@ -85,7 +85,7 @@ class LocalOperation<IsIntrusivelyListable, Handler, R(Signature...)>
                             detail::GrpcContextLocalAllocator allocator)
     {
         auto* self = static_cast<LocalOperation*>(op);
-        detail::RebindAllocatedPointer<LocalOperation, detail::GrpcContextLocalAllocator> ptr{self, allocator};
+        detail::AllocatedPointer ptr{self, allocator};
         if (detail::InvokeHandler::YES == invoke_handler)
         {
             auto handler{std::move(self->handler_)};

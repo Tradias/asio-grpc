@@ -85,6 +85,26 @@ void create_no_arg_operation(agrpc::GrpcContext& grpc_context, Function&& functi
         operation.release();
     }
 }
+
+template <class CompletionHandler, class OnOperation, class WorkAllocator>
+void create_no_arg_operation(agrpc::GrpcContext& grpc_context, CompletionHandler&& completion_handler,
+                             OnOperation&& on_operation, WorkAllocator work_allocator)
+{
+    if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
+    {
+        auto operation = detail::allocate_operation<true, void()>(
+            grpc_context, std::forward<CompletionHandler>(completion_handler), work_allocator);
+        std::forward<OnOperation>(on_operation)(*operation);
+        operation.release();
+    }
+    else
+    {
+        auto operation = detail::allocate_operation<true, void(), detail::GrpcContextLocalAllocator>(
+            std::forward<CompletionHandler>(completion_handler), work_allocator);
+        std::forward<OnOperation>(on_operation)(*operation);
+        operation.release();
+    }
+}
 }
 
 AGRPC_NAMESPACE_END

@@ -37,8 +37,10 @@ struct RPCContextBase
 template <class Request, class Responder>
 struct MultiArgRPCContext : detail::RPCContextBase
 {
-    Responder responder_{&this->context};
+    using Signature = void(grpc::ServerContext&, Request&, Responder&);
+
     Request request_{};
+    Responder responder_{&this->context};
 
     MultiArgRPCContext() = default;
 
@@ -59,6 +61,8 @@ struct MultiArgRPCContext : detail::RPCContextBase
 template <class Responder>
 struct SingleArgRPCContext : detail::RPCContextBase
 {
+    using Signature = void(grpc::ServerContext&, Responder&);
+
     Responder responder_{&this->context};
 
     SingleArgRPCContext() = default;
@@ -91,7 +95,7 @@ struct RPCContextForRPC<detail::ServerSingleArgRequest<RPC, Responder>>
 };
 
 template <class RPC>
-using RPCContextForRPCT = typename detail::RPCContextForRPC<RPC>::Type;
+using RPCContextForRPCT = typename detail::RPCContextForRPC<detail::RemoveCvrefT<RPC>>::Type;
 }
 
 AGRPC_NAMESPACE_END

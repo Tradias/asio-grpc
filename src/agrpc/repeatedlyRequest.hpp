@@ -37,17 +37,13 @@ template <class ImplementationAllocator>
 class RepeatedlyRequestContext
 {
   public:
-    template <class Handler, class... Args>
-    constexpr decltype(auto) operator()(Handler&& handler, Args&&... args) const
-    {
-        return (*impl)(std::forward<Handler>(handler), std::forward<Args>(args)...);
-    }
+    using executor_type = typename std::allocator_traits<ImplementationAllocator>::value_type::executor_type;
 
-    constexpr auto args() const noexcept { return impl->args(); }
+    [[nodiscard]] decltype(auto) args() const noexcept { return impl->args(); }
 
-    constexpr decltype(auto) server_context() const noexcept { return impl->server_context(); }
+    [[nodiscard]] decltype(auto) server_context() const noexcept { return impl->server_context(); }
 
-    constexpr decltype(auto) request() const noexcept
+    [[nodiscard]] decltype(auto) request() const noexcept
     {
         static_assert(detail::HAS_REQUEST_MEMBER_FUNCTION<detail::AllocatedPointer<ImplementationAllocator>>,
                       "Client-streaming and bidirectional-streaming requests are made without an initial request by "
@@ -55,7 +51,9 @@ class RepeatedlyRequestContext
         return impl->request();
     }
 
-    constexpr decltype(auto) responder() const noexcept { return impl->responder(); }
+    [[nodiscard]] decltype(auto) responder() const noexcept { return impl->responder(); }
+
+    [[nodiscard]] executor_type get_executor() const noexcept { return impl->get_executor(); }
 
   private:
     friend detail::RepeatedlyRequestContextAccess;
@@ -70,22 +68,20 @@ class RepeatedlyRequestContext
 
 namespace detail
 {
-struct RepeatedlyRequestFn
+class RepeatedlyRequestFn
 {
-    template <class RPC, class Service, class Request, class Responder, class Handler>
-    void operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
-                    Handler handler) const;
+  private:
+    template <class RPC, class Service, class Handler, class CompletionToken>
+    static auto impl(RPC rpc, Service& service, Handler handler, CompletionToken token);
 
-    template <class RPC, class Service, class Request, class Responder, class SenderFactory>
-    [[nodiscard]] auto operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
-                                  SenderFactory sender_factory, detail::UseSender) const;
+  public:
+    template <class RPC, class Service, class Request, class Responder, class Handler, class CompletionToken>
+    auto operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service, Handler handler,
+                    CompletionToken token) const;
 
-    template <class RPC, class Service, class Responder, class Handler>
-    void operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service, Handler handler) const;
-
-    template <class RPC, class Service, class Responder, class SenderFactory>
-    [[nodiscard]] auto operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service,
-                                  SenderFactory sender_factory, detail::UseSender) const;
+    template <class RPC, class Service, class Responder, class Handler, class CompletionToken>
+    auto operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service, Handler handler,
+                    CompletionToken token) const;
 };
 }  // namespace detail
 

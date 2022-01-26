@@ -124,10 +124,9 @@ struct HandlerWithAssociatedAllocator
     [[nodiscard]] allocator_type get_allocator() const noexcept { return allocator; }
 };
 
-template <class Handler, class Allocator = std::allocator<std::byte>>
+template <class Handler, class Allocator>
 struct RpcSpawner
 {
-    using executor_type = asio::associated_executor_t<Handler>;
     using allocator_type = Allocator;
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
     using cancellation_slot_type = asio::associated_cancellation_slot_t<Handler>;
@@ -138,20 +137,17 @@ struct RpcSpawner
 
     explicit RpcSpawner(Handler handler, Allocator allocator) : handler(std::move(handler)), allocator(allocator) {}
 
-    template <class RPCHandler>
-    void operator()(RPCHandler&& rpc_handler, bool ok) &&
+    template <class T>
+    void operator()(agrpc::RepeatedlyRequestContext<T>&& context)
     {
-        auto executor = this->get_executor();
-        asio::spawn(
-            std::move(executor),
-            [handler = std::move(handler), rpc_handler = std::move(rpc_handler), ok](auto&& yield_context) mutable
-            {
-                std::apply(std::move(handler),
-                           std::tuple_cat(rpc_handler.args(), std::forward_as_tuple(ok, std::move(yield_context))));
-            });
+        auto executor = context.get_executor();
+        asio::spawn(executor,
+                    [handler = std::move(handler), context = std::move(context)](auto&& yield_context) mutable
+                    {
+                        std::apply(std::move(handler),
+                                   std::tuple_cat(context.args(), std::forward_as_tuple(std::move(yield_context))));
+                    });
     }
-
-    [[nodiscard]] executor_type get_executor() const noexcept { return asio::get_associated_executor(handler); }
 
     [[nodiscard]] allocator_type get_allocator() const noexcept { return allocator; }
 

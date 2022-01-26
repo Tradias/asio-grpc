@@ -16,7 +16,7 @@
 #define AGRPC_DETAIL_INITIATE_HPP
 
 #include "agrpc/detail/asioForward.hpp"
-#include "agrpc/detail/completionHandlerWithPayload.hpp"
+#include "agrpc/detail/associatedCompletionHandler.hpp"
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/grpcContextImplementation.hpp"
 #include "agrpc/detail/grpcContextInteraction.hpp"
@@ -48,16 +48,14 @@ decltype(auto) query_grpc_context(const Executor& executor)
     }
 }
 
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-template <class Function>
+template <class InitiatingFunction>
 struct GrpcInitiator
 {
-    using executor_type = asio::associated_executor_t<Function>;
-    using allocator_type = asio::associated_allocator_t<Function>;
+    InitiatingFunction initiating_function;
 
-    Function function;
-
-    explicit GrpcInitiator(Function function) : function(std::move(function)) {}
+    explicit GrpcInitiator(InitiatingFunction initiating_function) : initiating_function(std::move(initiating_function))
+    {
+    }
 
     template <class CompletionHandler>
     void operator()(CompletionHandler completion_handler)
@@ -68,35 +66,50 @@ struct GrpcInitiator
         {
             return;
         }
-        detail::grpc_submit(grpc_context, std::move(this->function), std::move(completion_handler), allocator);
-    }
-
-    [[nodiscard]] executor_type get_executor() const noexcept { return asio::get_associated_executor(this->function); }
-
-    [[nodiscard]] allocator_type get_allocator() const noexcept
-    {
-        return asio::get_associated_allocator(this->function);
+        detail::grpc_submit(grpc_context, std::move(this->initiating_function), std::move(completion_handler),
+                            allocator);
     }
 };
 
-template <class Payload, class Function>
-struct GrpcWithPayloadInitiator : detail::GrpcInitiator<Function>
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+template <class CompletionHandler, class Payload>
+struct GrpcCompletionHandlerWithPayload : detail::AssociatedCompletionHandler<CompletionHandler>
 {
-    using detail::GrpcInitiator<Function>::GrpcInitiator;
+    using Base = detail::AssociatedCompletionHandler<CompletionHandler>;
+
+    Payload payload;
+
+    explicit GrpcCompletionHandlerWithPayload(CompletionHandler completion_handler)
+        : Base(std::move(completion_handler))
+    {
+    }
+
+    decltype(auto) operator()(bool ok) &&
+    {
+        return static_cast<Base&&>(*this)(std::pair{std::move(this->payload), ok});
+    }
+};
+
+template <class Payload, class InitiatingFunction>
+struct GrpcWithPayloadInitiator : detail::GrpcInitiator<InitiatingFunction>
+{
+    using Base = detail::GrpcInitiator<InitiatingFunction>;
+
+    using Base::GrpcInitiator;
 
     template <class CompletionHandler>
     void operator()(CompletionHandler completion_handler)
     {
-        detail::GrpcInitiator<Function>::operator()(
-            detail::make_completion_handler_with_payload<Payload>(std::move(completion_handler)));
+        Base::operator()(
+            detail::GrpcCompletionHandlerWithPayload<CompletionHandler, Payload>{std::move(completion_handler)});
     }
 };
 
-template <class Payload, class Function, class CompletionToken>
-auto grpc_initiate_with_payload(Function function, CompletionToken token)
+template <class Payload, class InitiatingFunction, class CompletionToken>
+auto grpc_initiate_with_payload(InitiatingFunction initiating_function, CompletionToken token)
 {
     return asio::async_initiate<CompletionToken, void(std::pair<Payload, bool>)>(
-        detail::GrpcWithPayloadInitiator<Payload, Function>{std::move(function)}, token);
+        detail::GrpcWithPayloadInitiator<Payload, InitiatingFunction>{std::move(initiating_function)}, token);
 }
 #endif
 }

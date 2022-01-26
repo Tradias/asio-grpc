@@ -24,7 +24,6 @@
 template <class Handler>
 struct CoSpawner
 {
-    using executor_type = boost::asio::associated_executor_t<Handler>;
     using allocator_type = boost::asio::associated_allocator_t<Handler>;
 
     Handler handler;
@@ -32,14 +31,11 @@ struct CoSpawner
     explicit CoSpawner(Handler handler) : handler(std::move(handler)) {}
 
     template <class T>
-    void operator()(agrpc::RepeatedlyRequestContext<T>&& request_context, bool request_ok) &&
+    void operator()(agrpc::RepeatedlyRequestContext<T>&& request_context)
     {
-        if (!request_ok)
-        {
-            return;
-        }
+        auto executor = request_context.get_executor();  // the executor of the CompletionHandler
         boost::asio::co_spawn(
-            this->get_executor(),
+            std::move(executor),
             [handler = std::move(handler),
              request_context = std::move(request_context)]() mutable -> boost::asio::awaitable<void>
             {
@@ -47,8 +43,6 @@ struct CoSpawner
             },
             boost::asio::detached);
     }
-
-    [[nodiscard]] executor_type get_executor() const noexcept { return boost::asio::get_associated_executor(handler); }
 
     [[nodiscard]] allocator_type get_allocator() const noexcept
     {

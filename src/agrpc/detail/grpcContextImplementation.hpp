@@ -51,6 +51,8 @@ struct GrpcContextImplementation
 
     static void add_local_operation(agrpc::GrpcContext& grpc_context, detail::TypeErasedNoArgOperation* op) noexcept;
 
+    static void add_operation(agrpc::GrpcContext& grpc_context, detail::TypeErasedNoArgOperation* op) noexcept;
+
     static bool get_next_event(agrpc::GrpcContext& grpc_context, detail::GrpcCompletionQueueEvent& event) noexcept;
 
     [[nodiscard]] static bool running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept;

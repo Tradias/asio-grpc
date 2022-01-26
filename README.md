@@ -778,9 +778,13 @@ std::move(deferred_op)(yield);
 ## Repeatedly request server-side
 
 (**experimental**) The function `agrpc::repeatedly_request` helps to ensure that there are enough outstanding calls to `request` to match incoming RPCs. 
-It takes the RPC, the Service and a copyable Handler as arguments and returns immediately. The Handler determines what to do with a client request, it could e.g. spawn a new coroutine to process it. 
-The first argument passed to the Handler is a `agrpc::RepeatedlyRequestContext` - a move-only type that provides a stable address to the `grpc::ServerContext`, the request (if any) 
-and the responder that were used when requesting the call. The second argument is the result of the request - `true` indicates that the RPC has indeed been started. If the result is `false`, the server has been shutdown before this particular call got matched to an incoming RPC ([source](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html#a86d9810ced694e50f7987ac90b9f8c1a)).
+It takes the RPC, the Service, a move-able Handler and a CompletionToken. The Handler determines what to do with a client request, it could e.g. spawn a new coroutine to process it. The first argument passed to the Handler is a `agrpc::RepeatedlyRequestContext` - a move-only type that provides a stable address to the `grpc::ServerContext`, the request (if any) and the responder that were used when requesting the call. It should be kept alive until the RPC has been finished. The Handler may also be associated with an allocator to control the allocation needed for the `agrpc::RepeatedlyRequestContext`.
+
+When using the special CompletionToken created by `agrpc::use_sender` the Handler's signature must be:    
+`sender auto operator()(grpc::ServerContext&, Request&, Responder&)` for unary and server-streaming requests and   
+`sender auto operator()(grpc::ServerContext&, Responder&)` otherwise.
+
+`repeatedly_request` will complete when it was cancelled, the `agrpc::GrpcContext` was stopped or the `grpc::Server` been shutdown. It will not wait until all outstanding RPC that are being processed by the Handler have completed though.
 
 The following example shows how to implement a generic Handler that spawns a new Boost.Coroutine for each incoming RPC and invokes 
 the provided handler to process it.

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_COMPLETIONHANDLERWITHPAYLOAD_HPP
-#define AGRPC_DETAIL_COMPLETIONHANDLERWITHPAYLOAD_HPP
+#ifndef AGRPC_DETAIL_ASSOCIATEDCOMPLETIONHANDLER_HPP
+#define AGRPC_DETAIL_ASSOCIATEDCOMPLETIONHANDLER_HPP
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
@@ -24,27 +24,34 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-template <class Payload, class CompletionHandler>
-struct CompletionHandlerWithPayload
+template <class CompletionHandler>
+struct AssociatedCompletionHandler
 {
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     using executor_type = asio::associated_executor_t<CompletionHandler>;
     using allocator_type = asio::associated_allocator_t<CompletionHandler>;
+#endif
 
     CompletionHandler completion_handler;
-    Payload payload;
+
+    explicit AssociatedCompletionHandler(CompletionHandler completion_handler)
+        : completion_handler(std::move(completion_handler))
+    {
+    }
 
     template <class... Args>
-    CompletionHandlerWithPayload(CompletionHandler completion_handler, Args&&... args)
-        : completion_handler(std::move(completion_handler)), payload(std::forward<Args>(args)...)
+    decltype(auto) operator()(Args&&... args) &&
     {
+        return std::move(this->completion_handler)(std::forward<Args>(args)...);
     }
 
-    decltype(auto) operator()(bool ok) &&
+    template <class... Args>
+    decltype(auto) operator()(Args&&... args) const&
     {
-        return std::move(this->completion_handler)(std::pair{std::move(this->payload), ok});
+        return this->completion_handler(std::forward<Args>(args)...);
     }
 
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     [[nodiscard]] executor_type get_executor() const noexcept
     {
         return asio::get_associated_executor(this->completion_handler);
@@ -54,17 +61,10 @@ struct CompletionHandlerWithPayload
     {
         return asio::get_associated_allocator(this->completion_handler);
     }
-};
-
-template <class Payload, class CompletionHandler, class... Args>
-auto make_completion_handler_with_payload(CompletionHandler completion_handler, Args&&... args)
-{
-    return detail::CompletionHandlerWithPayload<Payload, CompletionHandler>{std::move(completion_handler),
-                                                                            std::forward<Args>(args)...};
-}
 #endif
+};
 }
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_COMPLETIONHANDLERWITHPAYLOAD_HPP
+#endif  // AGRPC_DETAIL_ASSOCIATEDCOMPLETIONHANDLER_HPP

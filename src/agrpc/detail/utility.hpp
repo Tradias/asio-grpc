@@ -17,6 +17,7 @@
 
 #include "agrpc/detail/config.hpp"
 
+#include <tuple>
 #include <type_traits>
 #include <utility>
 
@@ -197,6 +198,12 @@ T forward_as(std::add_lvalue_reference_t<std::remove_reference_t<T>> u)
     {
         return u;
     }
+}
+
+template <class... T>
+constexpr auto to_tuple_of_pointers(const std::tuple<T...>& tuple) noexcept
+{
+    return std::tuple<std::add_pointer_t<std::remove_reference_t<T>>...>(std::addressof(std::get<T>(tuple))...);
 }
 }
 

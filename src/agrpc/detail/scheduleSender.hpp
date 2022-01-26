@@ -48,14 +48,7 @@ class ScheduleSender : public detail::SenderOf<>
                 detail::set_done(std::move(this->receiver()));
                 return;
             }
-            if (detail::GrpcContextImplementation::running_in_this_thread(this->grpc_context()))
-            {
-                detail::GrpcContextImplementation::add_local_operation(this->grpc_context(), this);
-            }
-            else
-            {
-                detail::GrpcContextImplementation::add_remote_operation(this->grpc_context(), this);
-            }
+            detail::GrpcContextImplementation::add_operation(this->grpc_context(), this);
         }
 
       private:
