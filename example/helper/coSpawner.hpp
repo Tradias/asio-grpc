@@ -36,8 +36,7 @@ struct CoSpawner
         auto executor = request_context.get_executor();  // the executor of the CompletionHandler
         boost::asio::co_spawn(
             std::move(executor),
-            [handler = std::move(handler),
-             request_context = std::move(request_context)]() mutable -> boost::asio::awaitable<void>
+            [handler, request_context = std::move(request_context)]() mutable -> boost::asio::awaitable<void>
             {
                 co_await std::apply(std::move(handler), request_context.args());
             },

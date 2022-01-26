@@ -94,7 +94,7 @@ struct AllocatedPointer
 
 template <class T, class Allocator>
 AllocatedPointer(T*, const Allocator&)
-    ->detail::AllocatedPointer<typename std::allocator_traits<Allocator>::template rebind_alloc<T>>;
+    -> AllocatedPointer<typename std::allocator_traits<Allocator>::template rebind_alloc<T>>;
 
 template <class Allocator>
 struct AllocationGuard

@@ -106,13 +106,20 @@ struct RequestRepeater : detail::TypeErasedGrpcTagOperation
 };
 
 template <class Operation>
-void repeat(Operation& operation)
+void complete_repeatedly_request_operation(agrpc::GrpcContext& grpc_context, Operation& operation)
+{
+    detail::GrpcContextImplementation::add_operation(grpc_context, &operation);
+    grpc_context.work_finished();
+}
+
+template <class Operation>
+auto repeat(Operation& operation)
 {
     auto& context = operation.handler().context;
     auto& grpc_context = detail::query_grpc_context(detail::get_scheduler(operation.handler()));
     if (grpc_context.is_stopped())
     {
-        return;
+        return false;
     }
     grpc_context.work_started();
     detail::WorkFinishedOnExit on_exit{grpc_context};
@@ -123,6 +130,7 @@ void repeat(Operation& operation)
                                              std::forward_as_tuple(cq, cq, repeater.get())));
     repeater.release();
     on_exit.release();
+    return true;
 }
 
 template <class Operation>
@@ -138,14 +146,20 @@ void RequestRepeater<Operation>::do_complete(Base* op, detail::InvokeHandler inv
     {
         if (ok)
         {
-            detail::repeat(operation);
+            const auto is_repeated = detail::repeat(operation);
+            detail::ScopeGuard guard{[&]
+                                     {
+                                         if (!is_repeated)
+                                         {
+                                             detail::complete_repeatedly_request_operation(grpc_context, operation);
+                                         }
+                                     }};
             handler(detail::RepeatedlyRequestContextAccess::create(std::move(ptr)));
         }
         else
         {
             ptr.reset();
-            detail::GrpcContextImplementation::add_operation(grpc_context, &operation);
-            grpc_context.work_finished();
+            detail::complete_repeatedly_request_operation(grpc_context, operation);
         }
     }
     else
@@ -183,7 +197,10 @@ struct RepeatedlyRequestInitiator
             grpc_context, CompletionHandlerWithPayload{std::move(completion_handler), rpc, service, std::move(handler)},
             [&](auto& operation)
             {
-                repeat(operation);
+                if (!detail::repeat(operation))
+                {
+                    detail::complete_repeatedly_request_operation(grpc_context, operation);
+                }
             },
             allocator);
         on_exit.release();

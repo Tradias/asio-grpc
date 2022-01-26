@@ -208,8 +208,7 @@ struct Spawner
         auto executor = request_context.get_executor();
         boost::asio::spawn(
             std::move(executor),
-            [handler = std::move(handler),
-             request_context = std::move(request_context)](const boost::asio::yield_context& yield) mutable
+            [handler, request_context = std::move(request_context)](const boost::asio::yield_context& yield) mutable
             {
                 std::apply(std::move(handler), std::tuple_cat(request_context.args(), std::forward_as_tuple(yield)));
                 //
