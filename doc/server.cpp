@@ -206,20 +206,21 @@ struct Spawner
         // The executor of the CompletionHandler.
         // In this case the GrpcExecutor that was bound to boost::asio::detached.
         auto executor = request_context.get_executor();
-        boost::asio::spawn(
-            std::move(executor),
-            [handler, request_context = std::move(request_context)](const boost::asio::yield_context& yield) mutable
-            {
-                std::apply(std::move(handler), std::tuple_cat(request_context.args(), std::forward_as_tuple(yield)));
-                //
-                // The RepeatedlyRequestContext also provides access to:
-                // * the grpc::ServerContext
-                // request_context.server_context();
-                // * the grpc::ServerAsyncReader/Writer
-                // request_context.responder();
-                // * the protobuf request message (for unary and server-streaming requests)
-                // request_context.request();
-            });
+        boost::asio::spawn(std::move(executor),
+                           [captured_handler = handler, request_context = std::move(request_context)](
+                               const boost::asio::yield_context& yield) mutable
+                           {
+                               std::apply(std::move(captured_handler),
+                                          std::tuple_cat(request_context.args(), std::forward_as_tuple(yield)));
+                               //
+                               // The RepeatedlyRequestContext also provides access to:
+                               // * the grpc::ServerContext
+                               // request_context.server_context();
+                               // * the grpc::ServerAsyncReader/Writer
+                               // request_context.responder();
+                               // * the protobuf request message (for unary and server-streaming requests)
+                               // request_context.request();
+                           });
     }
 
     [[nodiscard]] allocator_type get_allocator() const noexcept
