@@ -345,7 +345,18 @@ TEST_CASE_FIXTURE(RepeatedlyRequestTest, "unifex repeatedly_request unary - stop
     CHECK(allocator_has_been_used());
 }
 
-TEST_CASE_FIXTURE(RepeatedlyRequestTest, "unifex repeatedly_request unary - stop before start")
+TEST_CASE_FIXTURE(RepeatedlyRequestTest, "unifex repeatedly_request unary - GrpcContext.stop() before start")
+{
+    grpc_context.stop();
+    unifex::sync_wait(unifex::when_all(make_unary_repeatedly_request_sender(), unifex::then(unifex::just(),
+                                                                                            [&]
+                                                                                            {
+                                                                                                grpc_context.run();
+                                                                                            })));
+    CHECK_FALSE(allocator_has_been_used());
+}
+
+TEST_CASE_FIXTURE(RepeatedlyRequestTest, "unifex repeatedly_request unary - stop with token before start")
 {
     auto repeater = unifex::let_value_with_stop_source(
         [&](unifex::inplace_stop_source& stop)

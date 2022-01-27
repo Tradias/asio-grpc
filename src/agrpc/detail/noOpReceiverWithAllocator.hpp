@@ -33,21 +33,14 @@ struct NoOpReceiverWithAllocator : detail::EmptyBaseOptimization<Allocator>
     {
     }
 
-    static constexpr void set_done() noexcept
-    {
-        // no op
-    }
+    static constexpr void set_done() noexcept {}
 
     template <class... Args>
     static constexpr void set_value(Args&&...) noexcept
     {
-        // no op
     }
 
-    static void set_error(std::exception_ptr) noexcept
-    {
-        // no op
-    }
+    static void set_error(std::exception_ptr) noexcept {}
 
     constexpr auto get_allocator() const noexcept { return this->get(); }
 

@@ -115,7 +115,6 @@ void complete_repeatedly_request_operation(agrpc::GrpcContext& grpc_context, Ope
 template <class Operation>
 auto repeat(Operation& operation)
 {
-    auto& context = operation.handler().context;
     auto& grpc_context = detail::query_grpc_context(detail::get_scheduler(operation.handler()));
     if (grpc_context.is_stopped())
     {
@@ -123,6 +122,7 @@ auto repeat(Operation& operation)
     }
     grpc_context.work_started();
     detail::WorkFinishedOnExit on_exit{grpc_context};
+    auto& context = operation.handler().context;
     auto repeater = detail::allocate<detail::RequestRepeater<Operation>>(context.get_allocator(), operation);
     auto args = detail::to_tuple_of_pointers(repeater->rpc_context.args());
     auto* cq = grpc_context.get_server_completion_queue();
@@ -174,7 +174,7 @@ template <class RPC, class Service, class Handler>
 struct RepeatedlyRequestInitiator
 {
     template <class CompletionHandler>
-    void operator()(CompletionHandler completion_handler, RPC rpc, Service& service, Handler handler)
+    void operator()(CompletionHandler completion_handler, RPC rpc, Service& service, Handler handler) const
     {
         struct CompletionHandlerWithPayload : detail::AssociatedCompletionHandler<CompletionHandler>
         {

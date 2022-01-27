@@ -853,6 +853,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request c
 {
     bool is_shutdown{false};
     auto request_count{0};
+    std::optional<std::thread> server_shutdown_thread;
     this->test(
         &test::v1::Test::AsyncService::RequestClientStreaming, service,
         [&](grpc::ServerContext&, grpc::ServerAsyncReader<test::v1::Response, test::v1::Request>& reader,
@@ -888,12 +889,32 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request c
                 CHECK(status.ok());
                 CHECK_EQ(21, response.integer());
             }
-            grpc_context.stop();
+            server_shutdown_thread.emplace(
+                [&]
+                {
+                    server->Shutdown();
+                });
         },
         get_allocator());
     grpc_context.run();
+    server_shutdown_thread->join();
     CHECK_EQ(4, request_count);
     CHECK(allocator_has_been_used());
+}
+
+TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "GrpcContext.stop() before repeatedly_request")
+{
+    bool done{};
+    grpc_context.stop();
+    agrpc::repeatedly_request(
+        &test::v1::Test::AsyncService::RequestUnary, service, [&](auto&&) {},
+        asio::bind_executor(get_executor(),
+                            [&]
+                            {
+                                done = true;
+                            }));
+    grpc_context.run();
+    CHECK(done);
 }
 
 TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "RepeatedlyRequestContext member functions for multi-arg requests")
