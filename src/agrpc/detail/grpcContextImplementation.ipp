@@ -41,7 +41,6 @@ inline void GrpcContextImplementation::trigger_work_alarm(agrpc::GrpcContext& gr
 inline void GrpcContextImplementation::add_remote_operation(agrpc::GrpcContext& grpc_context,
                                                             detail::TypeErasedNoArgOperation* op) noexcept
 {
-    grpc_context.work_started();
     if (grpc_context.remote_work_queue.enqueue(op))
     {
         detail::GrpcContextImplementation::trigger_work_alarm(grpc_context);
@@ -51,7 +50,6 @@ inline void GrpcContextImplementation::add_remote_operation(agrpc::GrpcContext& 
 inline void GrpcContextImplementation::add_local_operation(agrpc::GrpcContext& grpc_context,
                                                            detail::TypeErasedNoArgOperation* op) noexcept
 {
-    grpc_context.work_started();
     grpc_context.local_work_queue.push_back(op);
 }
 

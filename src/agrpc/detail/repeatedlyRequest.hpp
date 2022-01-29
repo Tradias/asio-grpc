@@ -100,17 +100,10 @@ struct RequestRepeater : detail::TypeErasedGrpcTagOperation
 #ifdef AGRPC_UNIFEX
     friend auto tag_invoke(unifex::tag_t<unifex::get_allocator>, const RequestRepeater& self) noexcept
     {
-        return detail::get_allocator(self.handler);
+        return self.get_allocator();
     }
 #endif
 };
-
-template <class Operation>
-void complete_repeatedly_request_operation(agrpc::GrpcContext& grpc_context, Operation& operation)
-{
-    detail::GrpcContextImplementation::add_operation(grpc_context, &operation);
-    grpc_context.work_finished();
-}
 
 template <class Operation>
 auto repeat(Operation& operation)
@@ -151,7 +144,7 @@ void RequestRepeater<Operation>::do_complete(Base* op, detail::InvokeHandler inv
                                      {
                                          if (!is_repeated)
                                          {
-                                             detail::complete_repeatedly_request_operation(grpc_context, operation);
+                                             detail::GrpcContextImplementation::add_operation(grpc_context, &operation);
                                          }
                                      }};
             handler(detail::RepeatedlyRequestContextAccess::create(std::move(ptr)));
@@ -159,7 +152,7 @@ void RequestRepeater<Operation>::do_complete(Base* op, detail::InvokeHandler inv
         else
         {
             ptr.reset();
-            detail::complete_repeatedly_request_operation(grpc_context, operation);
+            detail::GrpcContextImplementation::add_operation(grpc_context, &operation);
         }
     }
     else
@@ -198,7 +191,7 @@ struct RepeatedlyRequestInitiator
             {
                 if (!detail::repeat(operation))
                 {
-                    detail::complete_repeatedly_request_operation(grpc_context, operation);
+                    detail::GrpcContextImplementation::add_operation(grpc_context, &operation);
                 }
             },
             allocator);

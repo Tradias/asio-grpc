@@ -67,6 +67,7 @@ void create_no_arg_operation(agrpc::GrpcContext& grpc_context, Function&& functi
         {
             auto operation = detail::allocate_operation<true, void()>(grpc_context, std::forward<Function>(function),
                                                                       work_allocator);
+            grpc_context.work_started();
             detail::GrpcContextImplementation::add_local_operation(grpc_context, operation.get());
             operation.release();
         }
@@ -81,6 +82,7 @@ void create_no_arg_operation(agrpc::GrpcContext& grpc_context, Function&& functi
     {
         auto operation = detail::allocate_operation<true, void(), detail::GrpcContextLocalAllocator>(
             std::forward<Function>(function), work_allocator);
+        grpc_context.work_started();
         detail::GrpcContextImplementation::add_remote_operation(grpc_context, operation.get());
         operation.release();
     }
