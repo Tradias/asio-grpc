@@ -161,7 +161,7 @@ jobs:
           -Dsonar.coverageReportPaths=${{ github.workspace }}/build-10/sonarqube-coverage.xml
 
     - name: GCC 11 Configure CMake
-      run: cmake -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which g++-11) "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release -DASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS=on ${{ env.CMAKE_ARGS }}
+      run: cmake -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which g++-11) "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release ${{ env.CMAKE_ARGS }}
 
     - name: GCC 11 Build
       run: cmake --build ${{ github.workspace }}/build-11 --config Release --parallel $(nproc)
