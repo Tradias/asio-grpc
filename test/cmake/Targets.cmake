@@ -16,8 +16,7 @@ target_compile_definitions(
               ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT
               ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT
               ASIO_HAS_DEDUCED_PREFER_MEMBER_TRAIT
-              _WIN32_WINNT=0x0A00 # Windows 10
-              WINVER=0x0A00>
+              _WIN32_WINNT=0x0A00> # Windows 10
               BOOST_ASIO_NO_DEPRECATED
               ASIO_NO_DEPRECATED)
 

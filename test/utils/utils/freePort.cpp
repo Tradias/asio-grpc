@@ -29,7 +29,8 @@ namespace test
 {
 namespace
 {
-static constexpr auto PORT_FILE_NAME = "agrpcServerUsedTestPort";
+constexpr auto PORT_FILE_NAME = "agrpcServerUsedTestPort";
+constexpr uint16_t START_PORT = 49876u;
 
 void recreate_if_old(const std::filesystem::path& port_file)
 {
@@ -66,7 +67,7 @@ auto perform_under_file_lock(Function&& function, const std::filesystem::path& l
 
 auto read_and_increment_port(const std::filesystem::path& port_file)
 {
-    uint16_t port = 5050u;
+    uint16_t port = START_PORT;
     std::fstream file_stream{port_file, std::ios::in | std::ios::out};
     static constexpr auto MAX_DIGITS = std::numeric_limits<decltype(port)>::digits10 + 1;
     std::array<char, MAX_DIGITS> file_content{};

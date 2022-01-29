@@ -219,7 +219,7 @@ jobs:
       run: ctest -C Release --parallel $(nproc) ${{ env.CTEST_ARGS }}
 
     - name: Clang 12 Configure CMake
-      run: cmake -B ${{ github.workspace }}/build-12 -DCMAKE_CXX_COMPILER=$(which clang++-12) "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release ${{ env.CMAKE_ARGS }} ${{ env.CMAKE_EXTRA_ARGS }}
+      run: cmake -B ${{ github.workspace }}/build-12 -DCMAKE_CXX_COMPILER=$(which clang++-12) "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release -DASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS=on ${{ env.CMAKE_ARGS }} ${{ env.CMAKE_EXTRA_ARGS }}
 
     - name: Clang 12 Build
       run: cmake --build ${{ github.workspace }}/build-12 --config Release --parallel $(nproc)
