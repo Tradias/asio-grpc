@@ -30,7 +30,7 @@ namespace test
 namespace
 {
 constexpr auto PORT_FILE_NAME = "agrpcServerUsedTestPort";
-constexpr uint16_t START_PORT = 49876u;
+constexpr uint16_t START_PORT = 5050u;
 
 void recreate_if_old(const std::filesystem::path& port_file)
 {
