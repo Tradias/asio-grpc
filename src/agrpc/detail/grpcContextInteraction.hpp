@@ -54,13 +54,10 @@ struct AllocateOperationFn
 template <bool IsIntrusivelyListable, class Signature, class... ExtraArgs>
 inline constexpr detail::AllocateOperationFn<IsIntrusivelyListable, Signature, ExtraArgs...> allocate_operation{};
 
-template <bool IsBlockingNever, class Function, class WorkAllocator>
-void create_no_arg_operation(agrpc::GrpcContext& grpc_context, Function&& function, WorkAllocator work_allocator)
+template <bool IsBlockingNever, class Function, class OnLocalOperation, class OnRemoteOperation, class WorkAllocator>
+void create_no_arg_operation(agrpc::GrpcContext& grpc_context, Function&& function, OnLocalOperation on_local_operation,
+                             OnRemoteOperation on_remote_operation, WorkAllocator work_allocator)
 {
-    if AGRPC_UNLIKELY (grpc_context.is_stopped())
-    {
-        return;
-    }
     if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
     {
         if constexpr (IsBlockingNever)
@@ -68,8 +65,10 @@ void create_no_arg_operation(agrpc::GrpcContext& grpc_context, Function&& functi
             auto operation = detail::allocate_operation<true, void()>(grpc_context, std::forward<Function>(function),
                                                                       work_allocator);
             grpc_context.work_started();
-            detail::GrpcContextImplementation::add_local_operation(grpc_context, operation.get());
+            detail::WorkFinishedOnExit on_exit{grpc_context};
+            on_local_operation(grpc_context, operation.get());
             operation.release();
+            on_exit.release();
         }
         else
         {
@@ -83,29 +82,25 @@ void create_no_arg_operation(agrpc::GrpcContext& grpc_context, Function&& functi
         auto operation = detail::allocate_operation<true, void(), detail::GrpcContextLocalAllocator>(
             std::forward<Function>(function), work_allocator);
         grpc_context.work_started();
-        detail::GrpcContextImplementation::add_remote_operation(grpc_context, operation.get());
+        detail::WorkFinishedOnExit on_exit{grpc_context};
+        on_remote_operation(grpc_context, operation.get());
         operation.release();
+        on_exit.release();
     }
 }
 
-template <class CompletionHandler, class OnOperation, class WorkAllocator>
-void create_no_arg_operation(agrpc::GrpcContext& grpc_context, CompletionHandler&& completion_handler,
-                             OnOperation&& on_operation, WorkAllocator work_allocator)
+template <bool IsBlockingNever, class Function, class WorkAllocator>
+bool create_and_submit_no_arg_operation_if_not_stopped(agrpc::GrpcContext& grpc_context, Function&& function,
+                                                       WorkAllocator work_allocator)
 {
-    if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
+    if AGRPC_UNLIKELY (grpc_context.is_stopped())
     {
-        auto operation = detail::allocate_operation<true, void()>(
-            grpc_context, std::forward<CompletionHandler>(completion_handler), work_allocator);
-        std::forward<OnOperation>(on_operation)(*operation);
-        operation.release();
+        return false;
     }
-    else
-    {
-        auto operation = detail::allocate_operation<true, void(), detail::GrpcContextLocalAllocator>(
-            std::forward<CompletionHandler>(completion_handler), work_allocator);
-        std::forward<OnOperation>(on_operation)(*operation);
-        operation.release();
-    }
+    detail::create_no_arg_operation<IsBlockingNever>(
+        grpc_context, std::forward<Function>(function), &detail::GrpcContextImplementation::add_local_operation,
+        &detail::GrpcContextImplementation::add_remote_operation, work_allocator);
+    return true;
 }
 }
 

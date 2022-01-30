@@ -92,25 +92,28 @@ class BasicGrpcExecutor
     template <class Function, class OtherAllocator>
     void dispatch(Function&& function, OtherAllocator other_allocator) const
     {
-        detail::create_no_arg_operation<false>(this->context(), std::forward<Function>(function), other_allocator);
+        detail::create_and_submit_no_arg_operation_if_not_stopped<false>(
+            this->context(), std::forward<Function>(function), other_allocator);
     }
 
     template <class Function, class OtherAllocator>
     void post(Function&& function, OtherAllocator other_allocator) const
     {
-        detail::create_no_arg_operation<true>(this->context(), std::forward<Function>(function), other_allocator);
+        detail::create_and_submit_no_arg_operation_if_not_stopped<true>(
+            this->context(), std::forward<Function>(function), other_allocator);
     }
 
     template <class Function, class OtherAllocator>
     void defer(Function&& function, OtherAllocator other_allocator) const
     {
-        detail::create_no_arg_operation<true>(this->context(), std::forward<Function>(function), other_allocator);
+        detail::create_and_submit_no_arg_operation_if_not_stopped<true>(
+            this->context(), std::forward<Function>(function), other_allocator);
     }
 
     template <class Function>
     void execute(Function&& function) const
     {
-        detail::create_no_arg_operation<detail::is_blocking_never(Options)>(
+        detail::create_and_submit_no_arg_operation_if_not_stopped<detail::is_blocking_never(Options)>(
             this->context(), std::forward<Function>(function), this->allocator());
     }
 

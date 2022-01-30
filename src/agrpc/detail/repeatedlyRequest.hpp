@@ -108,24 +108,37 @@ struct RequestRepeater : detail::TypeErasedGrpcTagOperation
 #endif
 };
 
+template <class RPC, class Service, class Request, class Responder>
+void initiate_request_from_rpc_context(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
+                                       detail::MultiArgRPCContext<Request, Responder>& rpc_context,
+                                       grpc::ServerCompletionQueue* cq, void* tag)
+{
+    (service.*rpc)(&rpc_context.server_context(), &rpc_context.request(), &rpc_context.responder(), cq, cq, tag);
+}
+
+template <class RPC, class Service, class Responder>
+void initiate_request_from_rpc_context(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service,
+                                       detail::SingleArgRPCContext<Responder>& rpc_context,
+                                       grpc::ServerCompletionQueue* cq, void* tag)
+{
+    (service.*rpc)(&rpc_context.server_context(), &rpc_context.responder(), cq, cq, tag);
+}
+
 template <class Operation>
-auto repeat(Operation& operation)
+auto initiate_request_with_repeater(Operation& operation)
 {
     auto& grpc_context = detail::query_grpc_context(detail::get_scheduler(operation.handler()));
     if (grpc_context.is_stopped())
     {
         return false;
     }
-    grpc_context.work_started();
-    detail::WorkFinishedOnExit on_exit{grpc_context};
     auto& context = operation.handler().context;
     auto repeater = detail::allocate<detail::RequestRepeater<Operation>>(context.get_allocator(), operation);
-    const auto args = detail::to_tuple_of_pointers(repeater->rpc_context.args());
     auto* cq = grpc_context.get_server_completion_queue();
-    std::apply(context.rpc(), std::tuple_cat(std::forward_as_tuple(context.service()), args,
-                                             std::forward_as_tuple(cq, cq, repeater.get())));
+    grpc_context.work_started();
+    detail::initiate_request_from_rpc_context(context.rpc(), context.service(), repeater->rpc_context, cq,
+                                              repeater.get());
     repeater.release();
-    on_exit.release();
     return true;
 }
 
@@ -142,7 +155,7 @@ void RequestRepeater<Operation>::do_complete(Base* op, detail::InvokeHandler inv
     {
         if (ok)
         {
-            const auto is_repeated = detail::repeat(operation);
+            const auto is_repeated = detail::initiate_request_with_repeater(operation);
             detail::ScopeGuard guard{[&]
                                      {
                                          if (!is_repeated)
@@ -166,6 +179,18 @@ void RequestRepeater<Operation>::do_complete(Base* op, detail::InvokeHandler inv
     }
 }
 
+struct InitiateRepeatOperation
+{
+    template <class T>
+    void operator()(agrpc::GrpcContext& grpc_context, T* operation)
+    {
+        if (!detail::initiate_request_with_repeater(*operation))
+        {
+            detail::GrpcContextImplementation::add_operation(grpc_context, operation);
+        }
+    }
+};
+
 template <class RPC, class Service, class Handler>
 struct RepeatedlyRequestInitiator
 {
@@ -186,19 +211,9 @@ struct RepeatedlyRequestInitiator
         const auto executor = detail::get_scheduler(completion_handler);
         const auto allocator = detail::get_allocator(handler);
         auto& grpc_context = detail::query_grpc_context(executor);
-        grpc_context.work_started();
-        detail::WorkFinishedOnExit on_exit{grpc_context};
-        detail::create_no_arg_operation(
+        detail::create_no_arg_operation<true>(
             grpc_context, CompletionHandlerWithPayload{std::move(completion_handler), rpc, service, std::move(handler)},
-            [&](auto& operation)
-            {
-                if (!detail::repeat(operation))
-                {
-                    detail::GrpcContextImplementation::add_operation(grpc_context, &operation);
-                }
-            },
-            allocator);
-        on_exit.release();
+            detail::InitiateRepeatOperation{}, detail::InitiateRepeatOperation{}, allocator);
     }
 };
 
