@@ -52,15 +52,15 @@ class RepeatedlyRequestContext
     {
     }
 
-    decltype(auto) rpc() noexcept { return impl1.first(); }
+    [[nodiscard]] decltype(auto) rpc() noexcept { return impl1.first(); }
 
-    decltype(auto) stop_context() noexcept { return impl1.second(); }
+    [[nodiscard]] decltype(auto) stop_context() noexcept { return impl1.second(); }
 
-    decltype(auto) service() noexcept { return impl2.first(); }
+    [[nodiscard]] decltype(auto) service() noexcept { return impl2.first(); }
 
-    decltype(auto) handler() noexcept { return impl2.second(); }
+    [[nodiscard]] decltype(auto) handler() noexcept { return impl2.second(); }
 
-    auto get_allocator() noexcept { return detail::get_allocator(handler()); }
+    [[nodiscard]] auto get_allocator() noexcept { return detail::get_allocator(handler()); }
 
   private:
     detail::CompressedPair<RPC, detail::Empty> impl1;
@@ -81,21 +81,24 @@ struct RequestRepeater : detail::TypeErasedGrpcTagOperation
 
     static void do_complete(Base* op, detail::InvokeHandler invoke_handler, bool ok, detail::GrpcContextLocalAllocator);
 
-    decltype(auto) server_context() noexcept { return rpc_context.server_context(); }
+    [[nodiscard]] decltype(auto) server_context() noexcept { return rpc_context.server_context(); }
 
-    decltype(auto) args() noexcept { return rpc_context.args(); }
+    [[nodiscard]] decltype(auto) args() noexcept { return rpc_context.args(); }
 
-    decltype(auto) request() noexcept { return rpc_context.request(); }
+    [[nodiscard]] decltype(auto) request() noexcept { return rpc_context.request(); }
 
-    decltype(auto) responder() noexcept { return rpc_context.responder(); }
+    [[nodiscard]] decltype(auto) responder() noexcept { return rpc_context.responder(); }
 
-    auto& context() const noexcept { return operation.handler().context; }
+    [[nodiscard]] auto& context() const noexcept { return operation.handler().context; }
 
-    executor_type get_executor() const noexcept { return detail::get_scheduler(operation.handler()); }
+    [[nodiscard]] executor_type get_executor() const noexcept { return detail::get_scheduler(operation.handler()); }
 
-    agrpc::GrpcContext& grpc_context() const noexcept { return detail::query_grpc_context(get_executor()); }
+    [[nodiscard]] agrpc::GrpcContext& grpc_context() const noexcept
+    {
+        return detail::query_grpc_context(get_executor());
+    }
 
-    auto get_allocator() const noexcept { return context().get_allocator(); }
+    [[nodiscard]] auto get_allocator() const noexcept { return context().get_allocator(); }
 
 #ifdef AGRPC_UNIFEX
     friend auto tag_invoke(unifex::tag_t<unifex::get_allocator>, const RequestRepeater& self) noexcept
@@ -117,7 +120,7 @@ auto repeat(Operation& operation)
     detail::WorkFinishedOnExit on_exit{grpc_context};
     auto& context = operation.handler().context;
     auto repeater = detail::allocate<detail::RequestRepeater<Operation>>(context.get_allocator(), operation);
-    auto args = detail::to_tuple_of_pointers(repeater->rpc_context.args());
+    const auto args = detail::to_tuple_of_pointers(repeater->rpc_context.args());
     auto* cq = grpc_context.get_server_completion_queue();
     std::apply(context.rpc(), std::tuple_cat(std::forward_as_tuple(context.service()), args,
                                              std::forward_as_tuple(cq, cq, repeater.get())));

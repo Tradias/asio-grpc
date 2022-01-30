@@ -36,6 +36,6 @@ if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
     endif()
 
     asio_grpc_add_documentation(unifex-client OBJECT)
-    target_link_libraries(asio-grpc-documentation-unifex-client PRIVATE asio-grpc::asio-grpc-unifex unifex::unifex
+    target_link_libraries(asio-grpc-documentation-unifex-client PRIVATE asio-grpc::asio-grpc-unifex
                                                                         asio-grpc-example-protos)
 endif()

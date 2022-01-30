@@ -27,7 +27,9 @@ class BasicGrpcExecutor;
 
 namespace detail
 {
+template <class StopFunction>
 struct GrpcInitiateImplFn;
+
 class RepeatedlyRequestFn;
 
 struct RepeatedlyRequestContextAccess;

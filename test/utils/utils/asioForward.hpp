@@ -26,6 +26,10 @@
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 #include <asio/co_spawn.hpp>
+
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+#include <asio/experimental/awaitable_operators.hpp>
+#endif
 #endif
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
@@ -52,6 +56,10 @@
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 #include <boost/asio/co_spawn.hpp>
+
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+#include <boost/asio/experimental/awaitable_operators.hpp>
+#endif
 #endif
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT

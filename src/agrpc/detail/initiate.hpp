@@ -48,7 +48,7 @@ decltype(auto) query_grpc_context(const Executor& executor)
     }
 }
 
-template <class InitiatingFunction>
+template <class InitiatingFunction, class StopFunction = detail::Empty>
 struct GrpcInitiator
 {
     InitiatingFunction initiating_function;
@@ -66,6 +66,16 @@ struct GrpcInitiator
         {
             return;
         }
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+        if constexpr (!std::is_same_v<detail::Empty, StopFunction>)
+        {
+            if (auto cancellation_slot = asio::get_associated_cancellation_slot(completion_handler);
+                cancellation_slot.is_connected())
+            {
+                cancellation_slot.template emplace<StopFunction>(initiating_function);
+            }
+        }
+#endif
         detail::grpc_submit(grpc_context, std::move(this->initiating_function), std::move(completion_handler),
                             allocator);
     }

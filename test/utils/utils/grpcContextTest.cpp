@@ -62,6 +62,11 @@ std::chrono::system_clock::time_point hundred_milliseconds_from_now()
     return std::chrono::system_clock::now() + std::chrono::milliseconds(100);
 }
 
+std::chrono::system_clock::time_point one_seconds_from_now()
+{
+    return std::chrono::system_clock::now() + std::chrono::seconds(1);
+}
+
 std::chrono::system_clock::time_point five_seconds_from_now()
 {
     return std::chrono::system_clock::now() + std::chrono::seconds(5);

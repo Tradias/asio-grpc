@@ -135,12 +135,14 @@ boost::asio::awaitable<void> make_and_cancel_unary_request(example::v1::Example:
     example::v1::Response response;
     grpc::Status status;
     grpc::Alarm alarm;
+    const auto not_too_exceed = std::chrono::steady_clock::now() + std::chrono::milliseconds(1900);
     co_await run_with_deadline(alarm, client_context, std::chrono::system_clock::now() + std::chrono::milliseconds(50),
                                [&]
                                {
                                    return agrpc::finish(*reader, response, status);
                                });
 
+    abort_if_not(std::chrono::steady_clock::now() < not_too_exceed);
     abort_if_not(grpc::StatusCode::CANCELLED == status.error_code());
 }
 

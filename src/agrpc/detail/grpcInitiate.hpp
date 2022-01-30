@@ -26,37 +26,29 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+template <class StopFunction>
 struct GrpcInitiateImplFn
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    template <class InitiatingFunction, class CompletionToken = detail::DefaultCompletionToken,
-              class StopFunction = detail::Empty>
-    auto operator()(InitiatingFunction initiating_function, CompletionToken token = {},
-                    [[maybe_unused]] StopFunction stop_function = {}) const
+    template <class InitiatingFunction, class CompletionToken = detail::DefaultCompletionToken>
+    auto operator()(InitiatingFunction initiating_function, CompletionToken token = {}) const
     {
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-        if constexpr (!std::is_same_v<detail::Empty, StopFunction>)
-        {
-            if (auto cancellation_slot = asio::get_associated_cancellation_slot(token);
-                cancellation_slot.is_connected())
-            {
-                cancellation_slot.assign(std::move(stop_function));
-            }
-        }
-#endif
         return asio::async_initiate<CompletionToken, void(bool)>(
-            detail::GrpcInitiator<InitiatingFunction>{std::move(initiating_function)}, token);
+            detail::GrpcInitiator<InitiatingFunction, StopFunction>{std::move(initiating_function)}, token);
     }
 #endif
 
-    template <class InitiatingFunction, class StopFunction = detail::Empty>
-    auto operator()(InitiatingFunction initiating_function, detail::UseSender token, StopFunction = {}) const noexcept
+    template <class InitiatingFunction>
+    auto operator()(InitiatingFunction initiating_function, detail::UseSender token) const noexcept
     {
         return detail::GrpcSender<InitiatingFunction, StopFunction>{token.grpc_context, std::move(initiating_function)};
     }
 };
 
-inline constexpr detail::GrpcInitiateImplFn grpc_initiate{};
+template <class StopFunction>
+inline constexpr detail::GrpcInitiateImplFn<StopFunction> grpc_initiate_with_stop_function{};
+
+inline constexpr detail::GrpcInitiateImplFn<detail::Empty> grpc_initiate{};
 
 template <class CompletionToken>
 inline constexpr bool IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN = false;
