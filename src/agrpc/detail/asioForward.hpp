@@ -33,7 +33,7 @@
 #include <asio/execution/relationship.hpp>
 #include <asio/execution_context.hpp>
 #include <asio/query.hpp>
-#include <asio/use_awaitable.hpp>
+#include <asio/system_executor.hpp>
 
 #ifdef ASIO_HAS_CO_AWAIT
 #include <asio/use_awaitable.hpp>
@@ -66,7 +66,7 @@
 #include <boost/asio/execution/submit.hpp>
 #include <boost/asio/execution_context.hpp>
 #include <boost/asio/query.hpp>
-#include <boost/asio/use_awaitable.hpp>
+#include <boost/asio/system_executor.hpp>
 
 #ifdef BOOST_ASIO_HAS_CO_AWAIT
 #include <boost/asio/use_awaitable.hpp>

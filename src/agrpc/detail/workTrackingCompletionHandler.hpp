@@ -26,9 +26,24 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+template <class Executor>
+inline constexpr bool IS_INLINE_EXECUTOR = false;
+
+template <class Relationship, class Allocator>
+inline constexpr bool
+    IS_INLINE_EXECUTOR<asio::basic_system_executor<asio::execution::blocking_t::possibly_t, Relationship, Allocator>> =
+        true;
+
+template <class Relationship, class Allocator>
+inline constexpr bool
+    IS_INLINE_EXECUTOR<asio::basic_system_executor<asio::execution::blocking_t::always_t, Relationship, Allocator>> =
+        true;
+
 template <class T>
-using AssociatedWorkTrackingExecutor = std::decay_t<
-    typename asio::prefer_result<asio::associated_executor_t<T>, asio::execution::outstanding_work_t::tracked_t>::type>;
+using AssociatedWorkTrackingExecutor =
+    std::conditional_t<detail::IS_INLINE_EXECUTOR<asio::associated_executor_t<T>>, detail::Empty,
+                       std::decay_t<typename asio::prefer_result<
+                           asio::associated_executor_t<T>, asio::execution::outstanding_work_t::tracked_t>::type>>;
 
 template <class CompletionHandler>
 class WorkTrackingCompletionHandler
@@ -49,8 +64,7 @@ class WorkTrackingCompletionHandler
 
   public:
     explicit WorkTrackingCompletionHandler(CompletionHandler completion_handler)
-        : Base1(asio::prefer(asio::get_associated_executor(completion_handler),
-                             asio::execution::outstanding_work_t::tracked)),
+        : Base1(WorkTrackingCompletionHandler::create_work_tracker(completion_handler)),
           Base2(std::move(completion_handler))
     {
     }
@@ -88,6 +102,19 @@ class WorkTrackingCompletionHandler
 #endif
 
   private:
+    static constexpr decltype(auto) create_work_tracker(CompletionHandler& completion_handler) noexcept
+    {
+        if constexpr (std::is_same_v<detail::Empty, WorkTracker>)
+        {
+            return detail::Empty{};
+        }
+        else
+        {
+            return asio::prefer(asio::get_associated_executor(completion_handler),
+                                asio::execution::outstanding_work_t::tracked);
+        }
+    }
+
     template <class Ch, class... Args>
     static constexpr void complete(WorkTracker, Ch&& completion_handler, Args&&... args) noexcept
     {
