@@ -17,7 +17,6 @@
 
 #include <agrpc/asioGrpc.hpp>
 #include <boost/asio/coroutine.hpp>
-#include <boost/asio/detached.hpp>
 #include <boost/asio/experimental/deferred.hpp>
 #include <boost/asio/spawn.hpp>
 #include <grpcpp/server.h>
@@ -191,22 +190,21 @@ void bidirectional_streaming(example::v1::Example::AsyncService& service, const 
 }
 
 // begin-snippet: repeatedly-request-spawner
-template <class Handler>
+template <class Executor, class Handler>
 struct Spawner
 {
+    using executor_type = Executor;
     using allocator_type = boost::asio::associated_allocator_t<Handler>;
 
+    Executor executor;
     Handler handler;
 
-    explicit Spawner(Handler handler) : handler(std::move(handler)) {}
+    Spawner(Executor executor, Handler handler) : executor(std::move(executor)), handler(std::move(handler)) {}
 
     template <class T>
     void operator()(agrpc::RepeatedlyRequestContext<T>&& request_context)
     {
-        // The executor of the CompletionHandler.
-        // In this case the GrpcExecutor that was bound to boost::asio::detached.
-        auto executor = request_context.get_executor();
-        boost::asio::spawn(std::move(executor),
+        boost::asio::spawn(get_executor(),
                            [captured_handler = handler, request_context = std::move(request_context)](
                                const boost::asio::yield_context& yield) mutable
                            {
@@ -223,6 +221,8 @@ struct Spawner
                            });
     }
 
+    [[nodiscard]] executor_type get_executor() const noexcept { return executor; }
+
     [[nodiscard]] allocator_type get_allocator() const noexcept
     {
         return boost::asio::get_associated_allocator(handler);
@@ -231,15 +231,15 @@ struct Spawner
 
 void repeatedly_request_example(example::v1::Example::AsyncService& service, agrpc::GrpcContext& grpc_context)
 {
-    agrpc::repeatedly_request(&example::v1::Example::AsyncService::RequestUnary, service,
-                              Spawner{[&](grpc::ServerContext&, example::v1::Request&,
-                                          grpc::ServerAsyncResponseWriter<example::v1::Response> writer,
-                                          const boost::asio::yield_context& yield)
-                                      {
-                                          example::v1::Response response;
-                                          agrpc::finish(writer, response, grpc::Status::OK, yield);
-                                      }},
-                              boost::asio::bind_executor(grpc_context, boost::asio::detached));
+    agrpc::repeatedly_request(
+        &example::v1::Example::AsyncService::RequestUnary, service,
+        Spawner{grpc_context.get_executor(), [&](grpc::ServerContext&, example::v1::Request&,
+                                                 grpc::ServerAsyncResponseWriter<example::v1::Response> writer,
+                                                 const boost::asio::yield_context& yield)
+                {
+                    example::v1::Response response;
+                    agrpc::finish(writer, response, grpc::Status::OK, yield);
+                }});
 }
 // end-snippet
 

@@ -20,6 +20,7 @@
 #include "agrpc/detail/repeatedlyRequestSender.hpp"
 #include "agrpc/detail/rpcContext.hpp"
 #include "agrpc/detail/utility.hpp"
+#include "agrpc/detail/workTrackingCompletionHandler.hpp"
 #include "agrpc/initiate.hpp"
 #include "agrpc/rpcs.hpp"
 
@@ -27,13 +28,6 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class Handler, class Args, class = void>
-inline constexpr bool IS_REPEATEDLY_REQUEST_SENDER_FACTORY = false;
-
-template <class Handler, class... Args>
-inline constexpr bool IS_REPEATEDLY_REQUEST_SENDER_FACTORY<
-    Handler, void(Args...), std::enable_if_t<detail::is_sender_v<std::invoke_result_t<Handler&&, Args...>>>> = true;
-
 struct RepeatedlyRequestContextAccess
 {
     template <class ImplementationAllocator>
@@ -43,12 +37,20 @@ struct RepeatedlyRequestContextAccess
     }
 };
 
-template <class RPC, class Service, class Handler>
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+template <class Handler, class Args, class = void>
+inline constexpr bool IS_REPEATEDLY_REQUEST_SENDER_FACTORY = false;
+
+template <class Handler, class... Args>
+inline constexpr bool IS_REPEATEDLY_REQUEST_SENDER_FACTORY<
+    Handler, void(Args...), std::enable_if_t<detail::is_sender_v<std::invoke_result_t<Handler&&, Args...>>>> = true;
+
+template <class RPC, class Service, class RequestHandler>
 class RepeatedlyRequestContext
 {
   public:
-    RepeatedlyRequestContext(RPC rpc, Service& service, Handler handler)
-        : impl1(rpc), impl2(service, std::move(handler))
+    RepeatedlyRequestContext(RPC rpc, Service& service, RequestHandler request_handler)
+        : impl1(rpc), impl2(service, std::move(request_handler))
     {
     }
 
@@ -58,13 +60,15 @@ class RepeatedlyRequestContext
 
     [[nodiscard]] decltype(auto) service() noexcept { return impl2.first(); }
 
-    [[nodiscard]] decltype(auto) handler() noexcept { return impl2.second(); }
+    [[nodiscard]] decltype(auto) request_handler() noexcept { return impl2.second(); }
 
-    [[nodiscard]] auto get_allocator() noexcept { return detail::get_allocator(handler()); }
+    [[nodiscard]] decltype(auto) get_allocator() noexcept { return detail::get_allocator(request_handler()); }
+
+    [[nodiscard]] decltype(auto) get_executor() noexcept { return detail::get_scheduler(request_handler()); }
 
   private:
     detail::CompressedPair<RPC, detail::Empty> impl1;
-    detail::CompressedPair<Service&, Handler> impl2;
+    detail::CompressedPair<Service&, RequestHandler> impl2;
 };
 
 template <class Operation>
@@ -91,11 +95,11 @@ struct RequestRepeater : detail::TypeErasedGrpcTagOperation
 
     [[nodiscard]] auto& context() const noexcept { return operation.handler().context; }
 
-    [[nodiscard]] executor_type get_executor() const noexcept { return detail::get_scheduler(operation.handler()); }
+    [[nodiscard]] decltype(auto) get_executor() const noexcept { return detail::get_scheduler(operation.handler()); }
 
     [[nodiscard]] agrpc::GrpcContext& grpc_context() const noexcept
     {
-        return detail::query_grpc_context(get_executor());
+        return detail::query_grpc_context(context().get_executor());
     }
 
     [[nodiscard]] auto get_allocator() const noexcept { return context().get_allocator(); }
@@ -127,12 +131,12 @@ void initiate_request_from_rpc_context(detail::ServerSingleArgRequest<RPC, Respo
 template <class Operation>
 auto initiate_request_with_repeater(Operation& operation)
 {
-    auto& grpc_context = detail::query_grpc_context(detail::get_scheduler(operation.handler()));
+    auto& context = operation.handler().context;
+    auto& grpc_context = detail::query_grpc_context(context.get_executor());
     if (grpc_context.is_stopped())
     {
         return false;
     }
-    auto& context = operation.handler().context;
     auto repeater = detail::allocate<detail::RequestRepeater<Operation>>(context.get_allocator(), operation);
     auto* cq = grpc_context.get_server_completion_queue();
     grpc_context.work_started();
@@ -149,7 +153,7 @@ void RequestRepeater<Operation>::do_complete(Base* op, detail::InvokeHandler inv
     auto* self = static_cast<RequestRepeater*>(op);
     detail::AllocatedPointer ptr{self, self->get_allocator()};
     auto& grpc_context = self->grpc_context();
-    auto& handler = self->context().handler();
+    auto& request_handler = self->context().request_handler();
     auto& operation = self->operation;
     if (detail::InvokeHandler::YES == invoke_handler)
     {
@@ -163,7 +167,7 @@ void RequestRepeater<Operation>::do_complete(Base* op, detail::InvokeHandler inv
                                              detail::GrpcContextImplementation::add_operation(grpc_context, &operation);
                                          }
                                      }};
-            handler(detail::RepeatedlyRequestContextAccess::create(std::move(ptr)));
+            request_handler(detail::RepeatedlyRequestContextAccess::create(std::move(ptr)));
         }
         else
         {
@@ -191,63 +195,67 @@ struct InitiateRepeatOperation
     }
 };
 
-template <class RPC, class Service, class Handler>
+template <class RPC, class Service, class RequestHandler>
 struct RepeatedlyRequestInitiator
 {
     template <class CompletionHandler>
-    void operator()(CompletionHandler completion_handler, RPC rpc, Service& service, Handler handler) const
+    void operator()(CompletionHandler completion_handler, RPC rpc, Service& service,
+                    RequestHandler request_handler) const
     {
-        struct CompletionHandlerWithPayload : detail::AssociatedCompletionHandler<CompletionHandler>
+        struct CompletionHandlerWithPayload : detail::WorkTrackingCompletionHandler<CompletionHandler>
         {
-            detail::RepeatedlyRequestContext<RPC, Service, Handler> context;
+            detail::RepeatedlyRequestContext<RPC, Service, RequestHandler> context;
 
             explicit CompletionHandlerWithPayload(CompletionHandler completion_handler, RPC rpc, Service& service,
-                                                  Handler handler)
-                : detail::AssociatedCompletionHandler<CompletionHandler>(std::move(completion_handler)),
-                  context(rpc, service, std::move(handler))
+                                                  RequestHandler request_handler)
+                : detail::WorkTrackingCompletionHandler<CompletionHandler>(std::move(completion_handler)),
+                  context(rpc, service, std::move(request_handler))
             {
             }
         };
-        const auto executor = detail::get_scheduler(completion_handler);
-        const auto allocator = detail::get_allocator(handler);
+        const auto executor = detail::get_scheduler(request_handler);
+        const auto allocator = detail::get_allocator(request_handler);
         auto& grpc_context = detail::query_grpc_context(executor);
         detail::create_no_arg_operation<true>(
-            grpc_context, CompletionHandlerWithPayload{std::move(completion_handler), rpc, service, std::move(handler)},
+            grpc_context,
+            CompletionHandlerWithPayload{std::move(completion_handler), rpc, service, std::move(request_handler)},
             detail::InitiateRepeatOperation{}, detail::InitiateRepeatOperation{}, allocator);
     }
 };
+#endif
 
-template <class RPC, class Service, class Handler, class CompletionToken>
-auto RepeatedlyRequestFn::impl(RPC rpc, Service& service, Handler handler, CompletionToken token)
+template <class RPC, class Service, class RequestHandler, class CompletionToken>
+auto RepeatedlyRequestFn::impl(RPC rpc, Service& service, RequestHandler request_handler, CompletionToken token)
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     using RPCContext = detail::RPCContextForRPCT<RPC>;
-    if constexpr (detail::IS_REPEATEDLY_REQUEST_SENDER_FACTORY<Handler, typename RPCContext::Signature>)
+    if constexpr (detail::IS_REPEATEDLY_REQUEST_SENDER_FACTORY<RequestHandler, typename RPCContext::Signature>)
     {
 #endif
-        return detail::RepeatedlyRequestSender{token.grpc_context, rpc, service, std::move(handler)};
+        return detail::RepeatedlyRequestSender{token.grpc_context, rpc, service, std::move(request_handler)};
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     }
     else
     {
         return asio::async_initiate<CompletionToken, void()>(
-            detail::RepeatedlyRequestInitiator<RPC, Service, Handler>{}, token, rpc, service, std::move(handler));
+            detail::RepeatedlyRequestInitiator<RPC, Service, RequestHandler>{}, token, rpc, service,
+            std::move(request_handler));
     }
 #endif
 }
 
-template <class RPC, class Service, class Request, class Responder, class Handler, class CompletionToken>
+template <class RPC, class Service, class Request, class Responder, class RequestHandler, class CompletionToken>
 auto RepeatedlyRequestFn::operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
-                                     Handler handler, CompletionToken token) const
+                                     RequestHandler request_handler, CompletionToken token) const
 {
-    return impl(rpc, service, std::move(handler), std::move(token));
+    return impl(rpc, service, std::move(request_handler), std::move(token));
 }
 
-template <class RPC, class Service, class Responder, class Handler, class CompletionToken>
+template <class RPC, class Service, class Responder, class RequestHandler, class CompletionToken>
 auto RepeatedlyRequestFn::operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service,
-                                     Handler handler, CompletionToken token) const
+                                     RequestHandler request_handler, CompletionToken token) const
 {
-    return impl(rpc, service, std::move(handler), std::move(token));
+    return impl(rpc, service, std::move(request_handler), std::move(token));
 }
 }
 

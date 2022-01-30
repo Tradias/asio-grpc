@@ -115,11 +115,12 @@ void register_client_streaming_handler(example::v1::Example::AsyncService& servi
     // Note that this is an experimental feature which means that it works correctly but its
     // API is still subject to breaking changes
     agrpc::repeatedly_request(&example::v1::Example::AsyncService::RequestClientStreaming, service,
-                              CoSpawner{[&](auto& server_context, auto& reader) -> boost::asio::awaitable<void>
+                              CoSpawner{grpc_context.get_executor(),
+                                        [&](auto& server_context, auto& reader) -> boost::asio::awaitable<void>
                                         {
                                             co_await handle_client_streaming_request(server_context, reader);
                                         }},
-                              boost::asio::bind_executor(grpc_context, boost::asio::detached));
+                              boost::asio::detached);
 }
 
 boost::asio::awaitable<void> handle_bidirectional_streaming_request(example::v1::Example::AsyncService& service)

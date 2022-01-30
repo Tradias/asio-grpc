@@ -30,6 +30,9 @@ struct AssociatedCompletionHandler
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     using executor_type = asio::associated_executor_t<CompletionHandler>;
     using allocator_type = asio::associated_allocator_t<CompletionHandler>;
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+    using cancellation_slot = asio::associated_cancellation_slot_t<CompletionHandler>;
+#endif
 #endif
 
     CompletionHandler completion_handler;
@@ -61,6 +64,13 @@ struct AssociatedCompletionHandler
     {
         return asio::get_associated_allocator(this->completion_handler);
     }
+
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+    [[nodiscard]] cancellation_slot get_cancellation_slot() const noexcept
+    {
+        return asio::get_associated_cancellation_slot(this->completion_handler);
+    }
+#endif
 #endif
 };
 }

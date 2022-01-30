@@ -21,6 +21,7 @@
 #include "agrpc/detail/initiate.hpp"
 #include "agrpc/detail/memory.hpp"
 #include "agrpc/detail/rpcs.hpp"
+#include "agrpc/detail/utility.hpp"
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -71,17 +72,18 @@ namespace detail
 class RepeatedlyRequestFn
 {
   private:
-    template <class RPC, class Service, class Handler, class CompletionToken>
-    static auto impl(RPC rpc, Service& service, Handler handler, CompletionToken token);
+    template <class RPC, class Service, class RequestHandler, class CompletionToken>
+    static auto impl(RPC rpc, Service& service, RequestHandler request_handler, CompletionToken token);
 
   public:
-    template <class RPC, class Service, class Request, class Responder, class Handler, class CompletionToken>
-    auto operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service, Handler handler,
-                    CompletionToken token) const;
+    template <class RPC, class Service, class Request, class Responder, class RequestHandler,
+              class CompletionToken = detail::NoOp>
+    auto operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
+                    RequestHandler request_handler, CompletionToken token = {}) const;
 
-    template <class RPC, class Service, class Responder, class Handler, class CompletionToken>
-    auto operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service, Handler handler,
-                    CompletionToken token) const;
+    template <class RPC, class Service, class Responder, class RequestHandler, class CompletionToken = detail::NoOp>
+    auto operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service,
+                    RequestHandler request_handler, CompletionToken token = {}) const;
 };
 }  // namespace detail
 

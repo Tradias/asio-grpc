@@ -43,6 +43,14 @@ struct Empty
     }
 };
 
+struct NoOp
+{
+    template <class... Args>
+    constexpr void operator()(Args&&...) const noexcept
+    {
+    }
+};
+
 template <class First, class Second, bool = std::is_empty_v<Second> && !std::is_final_v<Second>>
 class CompressedPair : private Second
 {

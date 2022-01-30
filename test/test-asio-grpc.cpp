@@ -425,8 +425,8 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post with throwing completion ha
 template <class Function>
 struct Coro : asio::coroutine
 {
-    using executor_type =
-        asio::require_result<agrpc::GrpcContext::executor_type, asio::execution::outstanding_work_t::tracked_t>::type;
+    using executor_type = std::decay_t<
+        asio::require_result<agrpc::GrpcContext::executor_type, asio::execution::outstanding_work_t::tracked_t>::type>;
 
     executor_type executor;
     Function function;
@@ -801,8 +801,8 @@ struct GrpcRepeatedlyRequestTest : test::GrpcClientServerTest
     auto test(RPC rpc, Service& service, ServerFunction server_function, ClientFunction client_function,
               Allocator allocator)
     {
-        agrpc::repeatedly_request(rpc, service, test::RpcSpawner{std::move(server_function), allocator},
-                                  asio::bind_executor(this->get_executor(), asio::detached));
+        agrpc::repeatedly_request(rpc, service,
+                                  test::RpcSpawner{this->get_executor(), std::move(server_function), allocator});
         asio::spawn(get_executor(), std::move(client_function));
     }
 };
@@ -906,13 +906,12 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "GrpcContext.stop() before repeated
 {
     bool done{};
     grpc_context.stop();
-    agrpc::repeatedly_request(
-        &test::v1::Test::AsyncService::RequestUnary, service, [&](auto&&) {},
-        asio::bind_executor(get_executor(),
-                            [&]
-                            {
-                                done = true;
-                            }));
+    agrpc::repeatedly_request(&test::v1::Test::AsyncService::RequestUnary, service,
+                              asio::bind_executor(get_executor(), [&](auto&&) {}),
+                              [&]
+                              {
+                                  done = true;
+                              });
     grpc_context.run();
     CHECK(done);
 }
@@ -921,19 +920,20 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "RepeatedlyRequestContext member fu
 {
     agrpc::repeatedly_request(
         &test::v1::Test::AsyncService::RequestUnary, service,
-        [&](auto&& rpc_context)
-        {
-            auto&& request = rpc_context.request();
-            CHECK(std::is_same_v<test::v1::Request&, decltype(request)>);
-            auto&& responder = rpc_context.responder();
-            CHECK(std::is_same_v<grpc::ServerAsyncResponseWriter<test::v1::Response>&, decltype(responder)>);
-            auto&& context = rpc_context.server_context();
-            CHECK(std::is_same_v<grpc::ServerContext&, decltype(context)>);
-            test::v1::Response response;
-            agrpc::finish(responder, response, grpc::Status::OK,
-                          asio::bind_executor(get_executor(), [c = std::move(rpc_context)](bool) {}));
-        },
-        asio::bind_executor(get_executor(), asio::detached));
+        asio::bind_executor(
+            get_executor(),
+            [&](auto&& rpc_context)
+            {
+                auto&& request = rpc_context.request();
+                CHECK(std::is_same_v<test::v1::Request&, decltype(request)>);
+                auto&& responder = rpc_context.responder();
+                CHECK(std::is_same_v<grpc::ServerAsyncResponseWriter<test::v1::Response>&, decltype(responder)>);
+                auto&& context = rpc_context.server_context();
+                CHECK(std::is_same_v<grpc::ServerContext&, decltype(context)>);
+                test::v1::Response response;
+                agrpc::finish(responder, response, grpc::Status::OK,
+                              asio::bind_executor(get_executor(), [c = std::move(rpc_context)](bool) {}));
+            }));
     asio::spawn(get_executor(),
                 [&](asio::yield_context yield)
                 {
@@ -952,17 +952,19 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "RepeatedlyRequestContext member fu
 {
     agrpc::repeatedly_request(
         &test::v1::Test::AsyncService::RequestClientStreaming, service,
-        [&](auto&& rpc_context)
-        {
-            auto&& responder = rpc_context.responder();
-            CHECK(std::is_same_v<grpc::ServerAsyncReader<test::v1::Response, test::v1::Request>&, decltype(responder)>);
-            auto&& context = rpc_context.server_context();
-            CHECK(std::is_same_v<grpc::ServerContext&, decltype(context)>);
-            test::v1::Response response;
-            agrpc::finish(responder, response, grpc::Status::OK,
-                          asio::bind_executor(get_executor(), [c = std::move(rpc_context)](bool) {}));
-        },
-        asio::bind_executor(get_executor(), asio::detached));
+        asio::bind_executor(get_executor(),
+                            [&](auto&& rpc_context)
+                            {
+                                auto&& responder = rpc_context.responder();
+                                CHECK(std::is_same_v<grpc::ServerAsyncReader<test::v1::Response, test::v1::Request>&,
+                                                     decltype(responder)>);
+                                auto&& context = rpc_context.server_context();
+                                CHECK(std::is_same_v<grpc::ServerContext&, decltype(context)>);
+                                test::v1::Response response;
+                                agrpc::finish(
+                                    responder, response, grpc::Status::OK,
+                                    asio::bind_executor(get_executor(), [c = std::move(rpc_context)](bool) {}));
+                            }));
     asio::spawn(get_executor(),
                 [&](asio::yield_context yield)
                 {
@@ -975,6 +977,43 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "RepeatedlyRequestContext member fu
                     grpc_context.stop();
                 });
     grpc_context.run();
+}
+
+TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "repeatedly_request tracks work of completion_handler's executor")
+{
+    int order{};
+    std::thread::id expected_thread_id{};
+    std::thread::id actual_thread_id{};
+    asio::io_context io_context;
+    agrpc::repeatedly_request(&test::v1::Test::AsyncService::RequestUnary, service,
+                              asio::bind_executor(grpc_context, [&](auto&&) {}),
+                              asio::bind_executor(asio::any_io_executor(io_context.get_executor()),
+                                                  [&]
+                                                  {
+                                                      actual_thread_id = std::this_thread::get_id();
+                                                      ++order;
+                                                  }));
+    std::thread io_context_thread{[&]
+                                  {
+                                      expected_thread_id = std::this_thread::get_id();
+                                      io_context.run();
+                                      order = 1 == order ? 2 : 0;
+                                  }};
+    std::optional<std::thread> server_shutdown_thread;
+    asio::post(grpc_context,
+               [&]
+               {
+                   server_shutdown_thread.emplace(
+                       [&]
+                       {
+                           server->Shutdown();
+                       });
+               });
+    grpc_context.run();
+    io_context_thread.join();
+    server_shutdown_thread->join();
+    CHECK_EQ(2, order);
+    CHECK_EQ(expected_thread_id, actual_thread_id);
 }
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "RPC step after grpc_context stop")
