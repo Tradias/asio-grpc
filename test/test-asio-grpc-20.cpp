@@ -509,7 +509,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline and c
                        test::v1::Response response;
                        grpc::Alarm alarm;
                        const auto not_too_exceed = test::one_seconds_from_now();
-                       co_await run_with_deadline(alarm, client_context, std::chrono::system_clock::now(),
+                       co_await run_with_deadline(alarm, client_context, test::hundred_milliseconds_from_now(),
                                                   [&]() -> asio::awaitable<void>
                                                   {
                                                       CHECK(co_await agrpc::finish(*reader, response, status));
