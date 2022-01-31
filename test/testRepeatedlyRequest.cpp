@@ -34,8 +34,7 @@ struct GrpcRepeatedlyRequestTest : test::GrpcClientServerTest
     auto test(RPC rpc, Service& service, ServerFunction server_function, ClientFunction client_function,
               Allocator allocator)
     {
-        agrpc::repeatedly_request(rpc, service,
-                                  test::RpcSpawner{this->get_executor(), std::move(server_function), allocator});
+        agrpc::repeatedly_request(rpc, service, test::RpcSpawner{grpc_context, std::move(server_function), allocator});
         asio::spawn(get_executor(), std::move(client_function));
     }
 };
@@ -256,7 +255,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "repeatedly_request cancellation")
     asio::cancellation_signal signal;
     agrpc::repeatedly_request(
         &test::v1::Test::AsyncService::RequestUnary, service,
-        test::RpcSpawner{get_executor(),
+        test::RpcSpawner{grpc_context,
                          [&](grpc::ServerContext&, test::v1::Request&,
                              grpc::ServerAsyncResponseWriter<test::v1::Response>& writer, asio::yield_context yield)
                          {

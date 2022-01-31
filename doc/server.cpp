@@ -34,7 +34,7 @@ void timer(const boost::asio::yield_context& yield)
     silence_unused(wait_ok);
 }
 
-void timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context, const boost::asio::yield_context& yield)
+void timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context)
 {
     grpc::Alarm alarm;
     const auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(1);
@@ -78,17 +78,6 @@ void timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context, co
         executor_type get_executor() const noexcept { return context->grpc_context.get_executor(); }
     };
     Coro{deadline, grpc_context}(false);
-    // end-snippet
-
-    // begin-snippet: alarm-double-deferred
-    auto deferred_op = agrpc::wait(alarm, deadline,
-                                   boost::asio::experimental::deferred(
-                                       [&](bool /*wait_ok*/)
-                                       {
-                                           return agrpc::wait(alarm, deadline + std::chrono::seconds(1),
-                                                              boost::asio::experimental::deferred);
-                                       }));
-    std::move(deferred_op)(yield);
     // end-snippet
 }
 

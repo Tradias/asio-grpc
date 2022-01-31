@@ -761,33 +761,16 @@ Coro{deadline, grpc_context}(false);
 <sup><a href='/doc/server.cpp#L45-L81' title='Snippet source file'>snippet source</a> | <a href='#snippet-alarm-stackless-coroutine' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
-### Experimental deferred
-
-<!-- snippet: alarm-double-deferred -->
-<a id='snippet-alarm-double-deferred'></a>
-```cpp
-auto deferred_op = agrpc::wait(alarm, deadline,
-                               boost::asio::experimental::deferred(
-                                   [&](bool /*wait_ok*/)
-                                   {
-                                       return agrpc::wait(alarm, deadline + std::chrono::seconds(1),
-                                                          boost::asio::experimental::deferred);
-                                   }));
-std::move(deferred_op)(yield);
-```
-<sup><a href='/doc/server.cpp#L83-L92' title='Snippet source file'>snippet source</a> | <a href='#snippet-alarm-double-deferred' title='Start of snippet'>anchor</a></sup>
-<!-- endSnippet -->
-
 ## Repeatedly request server-side
 
 (**experimental**) The function `agrpc::repeatedly_request` helps to ensure that there are enough outstanding calls to `request` to match incoming RPCs. 
-It takes the RPC, the Service, a move-able Handler and a CompletionToken. The Handler determines what to do with a client request, it could e.g. spawn a new coroutine to process it. The first argument passed to the Handler is a `agrpc::RepeatedlyRequestContext` - a move-only type that provides a stable address to the `grpc::ServerContext`, the request (if any) and the responder that were used when requesting the call. It should be kept alive until the RPC has been finished. The Handler may also be associated with an allocator to control the allocation needed for the `agrpc::RepeatedlyRequestContext`.
+It takes the RPC, the Service, a move-able Handler and a CompletionToken. The Handler determines what to do with a client request, it could e.g. spawn a new coroutine to process it. It must also have an associated executor that refers to a `agrpc::GrpcContext`. When the client makes a request the Handler is invoked with a `agrpc::RepeatedlyRequestContext` - a move-only type that provides a stable address to the `grpc::ServerContext`, the request (if any) and the responder that were used when requesting the RPC. It should be kept alive until the RPC is finished. The Handler or its associated executor may also have an associated allocator to control the allocation needed for the `agrpc::RepeatedlyRequestContext` and each request.
 
 When using the special CompletionToken created by `agrpc::use_sender` the Handler's signature must be:    
 `sender auto operator()(grpc::ServerContext&, Request&, Responder&)` for unary and server-streaming requests and   
 `sender auto operator()(grpc::ServerContext&, Responder&)` otherwise.
 
-`repeatedly_request` will complete when it was cancelled, the `agrpc::GrpcContext` was stopped or the `grpc::Server` been shutdown. It will not wait until all outstanding RPC that are being processed by the Handler have completed though.
+`agrpc::repeatedly_request` will complete when it was cancelled, the `agrpc::GrpcContext` was stopped or the `grpc::Server` been shutdown. It will **not** wait until all outstanding RPCs that are being processed by the Handler have completed.
 
 The following example shows how to implement a generic Handler that spawns a new Boost.Coroutine for each incoming RPC and invokes 
 the provided handler to process it.

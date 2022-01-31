@@ -124,18 +124,18 @@ struct HandlerWithAssociatedAllocator
     [[nodiscard]] allocator_type get_allocator() const noexcept { return allocator; }
 };
 
-template <class Executor, class Handler, class Allocator = std::allocator<void>>
+template <class Handler, class Allocator = std::allocator<void>>
 struct RpcSpawner
 {
-    using executor_type = Executor;
+    using executor_type = agrpc::GrpcContext::executor_type;
     using allocator_type = Allocator;
 
-    Executor executor;
+    agrpc::GrpcContext& grpc_context;
     Handler handler;
     Allocator allocator;
 
-    RpcSpawner(Executor executor, Handler handler, Allocator allocator = {})
-        : executor(std::move(executor)), handler(std::move(handler)), allocator(allocator)
+    RpcSpawner(agrpc::GrpcContext& grpc_context, Handler handler, Allocator allocator = {})
+        : grpc_context(grpc_context), handler(std::move(handler)), allocator(allocator)
     {
     }
 
@@ -150,7 +150,7 @@ struct RpcSpawner
                     });
     }
 
-    [[nodiscard]] executor_type get_executor() const noexcept { return executor; }
+    [[nodiscard]] executor_type get_executor() const noexcept { return grpc_context.get_executor(); }
 
     [[nodiscard]] allocator_type get_allocator() const noexcept { return allocator; }
 };
