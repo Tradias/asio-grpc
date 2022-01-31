@@ -28,19 +28,21 @@ template <class InitiatingFunction, class CompletionHandler, class Allocator>
 void grpc_submit(agrpc::GrpcContext& grpc_context, InitiatingFunction initiating_function,
                  CompletionHandler completion_handler, Allocator allocator)
 {
+    using DecayedCompletionHandler = std::decay_t<CompletionHandler>;
     grpc_context.work_started();
     detail::WorkFinishedOnExit on_exit{grpc_context};
     if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
     {
-        auto operation =
-            detail::allocate_operation<false, void(bool)>(grpc_context, std::move(completion_handler), allocator);
+        auto operation = detail::allocate_operation<false, DecayedCompletionHandler, void(bool)>(
+            grpc_context, allocator, std::move(completion_handler));
         std::move(initiating_function)(grpc_context, operation.get());
         operation.release();
     }
     else
     {
-        auto operation = detail::allocate_operation<false, void(bool), detail::GrpcContextLocalAllocator>(
-            std::move(completion_handler), allocator);
+        auto operation =
+            detail::allocate_operation<false, DecayedCompletionHandler, void(bool), detail::GrpcContextLocalAllocator>(
+                allocator, std::move(completion_handler));
         std::move(initiating_function)(grpc_context, operation.get());
         operation.release();
     }

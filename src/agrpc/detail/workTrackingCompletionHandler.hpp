@@ -77,13 +77,6 @@ class WorkTrackingCompletionHandler
                                                 std::forward<Args>(args)...);
     }
 
-    template <class... Args>
-    void operator()(Args&&... args) const&
-    {
-        WorkTrackingCompletionHandler::complete(static_cast<const Base1*>(this)->get(),
-                                                static_cast<const Base2*>(this)->get(), std::forward<Args>(args)...);
-    }
-
     [[nodiscard]] executor_type get_executor() const noexcept
     {
         return asio::get_associated_executor(static_cast<const Base2*>(this)->get());

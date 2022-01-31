@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_GRPCEXECUTOROPERATION_HPP
 
 #include "agrpc/detail/config.hpp"
+#include "agrpc/detail/getCompletionHandler.hpp"
 #include "agrpc/detail/memory.hpp"
 #include "agrpc/detail/typeErasedOperation.hpp"
 #include "agrpc/detail/utility.hpp"
@@ -35,9 +36,9 @@ class Operation<IsIntrusivelyListable, Handler, Allocator, R(Signature...), Extr
     using Base = detail::TypeErasedOperation<IsIntrusivelyListable, Signature..., ExtraArgs...>;
 
   public:
-    template <class H>
-    Operation(H&& handler, Allocator allocator)
-        : Base(&Operation::do_complete), impl(std::forward<H>(handler), std::move(allocator))
+    template <class... Args>
+    explicit Operation(Allocator allocator, Args&&... args)
+        : Base(&Operation::do_complete), impl(detail::SecondThenVariadic{}, allocator, std::forward<Args>(args)...)
     {
     }
 
@@ -45,9 +46,9 @@ class Operation<IsIntrusivelyListable, Handler, Allocator, R(Signature...), Extr
     {
         auto* self = static_cast<Operation*>(op);
         detail::AllocatedPointer ptr{self, self->get_allocator()};
-        if (detail::InvokeHandler::YES == invoke_handler)
+        if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
         {
-            auto handler{std::move(self->handler())};
+            auto handler{detail::get_completion_handler(std::move(self->handler()))};
             ptr.reset();
             std::move(handler)(detail::forward_as<Signature>(args)...);
         }
@@ -76,8 +77,8 @@ class LocalOperation<IsIntrusivelyListable, Handler, R(Signature...)>
     using Base = detail::TypeErasedOperation<IsIntrusivelyListable, Signature..., detail::GrpcContextLocalAllocator>;
 
   public:
-    template <class H>
-    explicit LocalOperation(H&& handler) : Base(&LocalOperation::do_complete), handler_(std::forward<H>(handler))
+    template <class... Args>
+    explicit LocalOperation(Args&&... args) : Base(&LocalOperation::do_complete), handler_(std::forward<Args>(args)...)
     {
     }
 
@@ -86,9 +87,9 @@ class LocalOperation<IsIntrusivelyListable, Handler, R(Signature...)>
     {
         auto* self = static_cast<LocalOperation*>(op);
         detail::AllocatedPointer ptr{self, allocator};
-        if (detail::InvokeHandler::YES == invoke_handler)
+        if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
         {
-            auto handler{std::move(self->handler_)};
+            auto handler{detail::get_completion_handler(std::move(self->handler_))};
             ptr.reset();
             std::move(handler)(detail::forward_as<Signature>(args)...);
         }

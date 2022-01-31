@@ -51,6 +51,10 @@ struct NoOp
     }
 };
 
+struct SecondThenVariadic
+{
+};
+
 template <class First, class Second, bool = std::is_empty_v<Second> && !std::is_final_v<Second>>
 class CompressedPair : private Second
 {
@@ -68,6 +72,13 @@ class CompressedPair : private Second
     constexpr explicit CompressedPair(T&& first) noexcept(
         std::is_nothrow_constructible_v<First, T&&>&& std::is_nothrow_default_constructible_v<Second>)
         : Second(), first_(std::forward<T>(first))
+    {
+    }
+
+    template <class U, class... Args>
+    constexpr CompressedPair(detail::SecondThenVariadic, U&& second, Args&&... args) noexcept(
+        std::is_nothrow_constructible_v<First, Args&&...>&& std::is_nothrow_constructible_v<Second, U&&>)
+        : Second(std::forward<U>(second)), first_(std::forward<Args>(args)...)
     {
     }
 
@@ -100,6 +111,13 @@ class CompressedPair<First, Second, false>
     constexpr explicit CompressedPair(T&& first) noexcept(
         std::is_nothrow_constructible_v<First, T&&>&& std::is_nothrow_default_constructible_v<Second>)
         : first_(std::forward<T>(first)), second_()
+    {
+    }
+
+    template <class U, class... Args>
+    constexpr CompressedPair(detail::SecondThenVariadic, U&& second, Args&&... args) noexcept(
+        std::is_nothrow_constructible_v<First, Args&&...>&& std::is_nothrow_constructible_v<Second, U&&>)
+        : first_(std::forward<Args>(args)...), second_(std::forward<U>(second))
     {
     }
 

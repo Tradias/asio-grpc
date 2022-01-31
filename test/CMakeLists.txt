@@ -51,7 +51,7 @@ function(asio_grpc_add_test _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_stand
     endif()
 endfunction()
 
-set(ASIO_GRPC_TEST_SOURCE_FILES "test-asio-grpc.cpp")
+set(ASIO_GRPC_TEST_SOURCE_FILES "testAsioGrpc17.cpp" "testRepeatedlyRequest.cpp")
 
 asio_grpc_add_test(asio-grpc-test-boost-cpp17 "BOOST_ASIO" "17" ${ASIO_GRPC_TEST_SOURCE_FILES})
 target_compile_definitions(asio-grpc-test-boost-cpp17 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"Boost.Asio C++17\"")

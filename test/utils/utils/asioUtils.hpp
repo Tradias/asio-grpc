@@ -124,7 +124,7 @@ struct HandlerWithAssociatedAllocator
     [[nodiscard]] allocator_type get_allocator() const noexcept { return allocator; }
 };
 
-template <class Executor, class Handler, class Allocator>
+template <class Executor, class Handler, class Allocator = std::allocator<void>>
 struct RpcSpawner
 {
     using executor_type = Executor;
@@ -134,7 +134,7 @@ struct RpcSpawner
     Handler handler;
     Allocator allocator;
 
-    RpcSpawner(Executor executor, Handler handler, Allocator allocator)
+    RpcSpawner(Executor executor, Handler handler, Allocator allocator = {})
         : executor(std::move(executor)), handler(std::move(handler)), allocator(allocator)
     {
     }
@@ -143,9 +143,9 @@ struct RpcSpawner
     void operator()(agrpc::RepeatedlyRequestContext<T>&& context)
     {
         asio::spawn(get_executor(),
-                    [handler = std::move(handler), context = std::move(context)](auto&& yield_context) mutable
+                    [h = handler, context = std::move(context)](auto&& yield_context) mutable
                     {
-                        std::apply(std::move(handler),
+                        std::apply(std::move(h),
                                    std::tuple_cat(context.args(), std::forward_as_tuple(std::move(yield_context))));
                     });
     }

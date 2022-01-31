@@ -25,45 +25,47 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <bool IsIntrusivelyListable, class Signature, class... ExtraArgs>
+template <bool IsIntrusivelyListable, class Handler, class Signature, class... ExtraArgs>
 struct AllocateOperationFn
 {
-    template <class Function, class Allocator>
-    auto operator()(Function&& function, Allocator allocator) const
+    template <class Allocator, class... Args>
+    auto operator()(Allocator allocator, Args&&... args) const
     {
-        using Operation =
-            detail::Operation<IsIntrusivelyListable, std::decay_t<Function>, Allocator, Signature, ExtraArgs...>;
-        return detail::allocate<Operation>(allocator, std::forward<Function>(function), allocator);
+        using Operation = detail::Operation<IsIntrusivelyListable, Handler, Allocator, Signature, ExtraArgs...>;
+        return detail::allocate<Operation>(allocator, allocator, std::forward<Args>(args)...);
     }
 
-    template <class Function, class Allocator>
-    auto operator()(const agrpc::GrpcContext&, Function&& function, Allocator allocator) const
+    template <class Allocator, class... Args>
+    auto operator()(const agrpc::GrpcContext&, Allocator allocator, Args&&... args) const
     {
-        return detail::AllocateOperationFn<IsIntrusivelyListable, Signature, detail::GrpcContextLocalAllocator>{}(
-            std::forward<Function>(function), allocator);
+        return detail::AllocateOperationFn<IsIntrusivelyListable, Handler, Signature,
+                                           detail::GrpcContextLocalAllocator>{}(allocator, std::forward<Args>(args)...);
     }
 
-    template <class Function, class T>
-    auto operator()(agrpc::GrpcContext& grpc_context, Function&& function, std::allocator<T>) const
+    template <class T, class... Args>
+    auto operator()(agrpc::GrpcContext& grpc_context, std::allocator<T>, Args&&... args) const
     {
-        using Operation = detail::LocalOperation<IsIntrusivelyListable, std::decay_t<Function>, Signature>;
-        return detail::allocate<Operation>(grpc_context.get_allocator(), std::forward<Function>(function));
+        using Operation = detail::LocalOperation<IsIntrusivelyListable, Handler, Signature>;
+        return detail::allocate<Operation>(grpc_context.get_allocator(), std::forward<Args>(args)...);
     }
 };
 
-template <bool IsIntrusivelyListable, class Signature, class... ExtraArgs>
-inline constexpr detail::AllocateOperationFn<IsIntrusivelyListable, Signature, ExtraArgs...> allocate_operation{};
+template <bool IsIntrusivelyListable, class Handler, class Signature, class... ExtraArgs>
+inline constexpr detail::AllocateOperationFn<IsIntrusivelyListable, Handler, Signature, ExtraArgs...>
+    allocate_operation{};
 
-template <bool IsBlockingNever, class Function, class OnLocalOperation, class OnRemoteOperation, class WorkAllocator>
-void create_no_arg_operation(agrpc::GrpcContext& grpc_context, Function&& function, OnLocalOperation on_local_operation,
-                             OnRemoteOperation on_remote_operation, WorkAllocator work_allocator)
+template <bool IsBlockingNever, class Handler, class OnLocalOperation, class OnRemoteOperation, class WorkAllocator,
+          class... Args>
+void create_no_arg_operation(agrpc::GrpcContext& grpc_context, OnLocalOperation on_local_operation,
+                             OnRemoteOperation on_remote_operation, WorkAllocator work_allocator, Args&&... args)
 {
+    using DecayedHandler = std::decay_t<Handler>;
     if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
     {
         if constexpr (IsBlockingNever)
         {
-            auto operation = detail::allocate_operation<true, void()>(grpc_context, std::forward<Function>(function),
-                                                                      work_allocator);
+            auto operation = detail::allocate_operation<true, DecayedHandler, void()>(grpc_context, work_allocator,
+                                                                                      std::forward<Args>(args)...);
             grpc_context.work_started();
             detail::WorkFinishedOnExit on_exit{grpc_context};
             on_local_operation(grpc_context, operation.get());
@@ -72,15 +74,14 @@ void create_no_arg_operation(agrpc::GrpcContext& grpc_context, Function&& functi
         }
         else
         {
-            using DecayedFunction = std::decay_t<Function>;
-            DecayedFunction temp{std::forward<Function>(function)};
+            DecayedHandler temp{std::forward<Args>(args)...};
             temp();
         }
     }
     else
     {
-        auto operation = detail::allocate_operation<true, void(), detail::GrpcContextLocalAllocator>(
-            std::forward<Function>(function), work_allocator);
+        auto operation = detail::allocate_operation<true, DecayedHandler, void(), detail::GrpcContextLocalAllocator>(
+            work_allocator, std::forward<Args>(args)...);
         grpc_context.work_started();
         detail::WorkFinishedOnExit on_exit{grpc_context};
         on_remote_operation(grpc_context, operation.get());
@@ -89,17 +90,17 @@ void create_no_arg_operation(agrpc::GrpcContext& grpc_context, Function&& functi
     }
 }
 
-template <bool IsBlockingNever, class Function, class WorkAllocator>
-bool create_and_submit_no_arg_operation_if_not_stopped(agrpc::GrpcContext& grpc_context, Function&& function,
+template <bool IsBlockingNever, class Handler, class WorkAllocator>
+bool create_and_submit_no_arg_operation_if_not_stopped(agrpc::GrpcContext& grpc_context, Handler&& handler,
                                                        WorkAllocator work_allocator)
 {
     if AGRPC_UNLIKELY (grpc_context.is_stopped())
     {
         return false;
     }
-    detail::create_no_arg_operation<IsBlockingNever>(
-        grpc_context, std::forward<Function>(function), &detail::GrpcContextImplementation::add_local_operation,
-        &detail::GrpcContextImplementation::add_remote_operation, work_allocator);
+    detail::create_no_arg_operation<IsBlockingNever, Handler>(
+        grpc_context, &detail::GrpcContextImplementation::add_local_operation,
+        &detail::GrpcContextImplementation::add_remote_operation, work_allocator, std::forward<Handler>(handler));
     return true;
 }
 }
