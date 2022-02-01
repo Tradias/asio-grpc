@@ -17,55 +17,13 @@
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
-#include "agrpc/detail/forward.hpp"
-#include "agrpc/detail/initiate.hpp"
-#include "agrpc/detail/memory.hpp"
-#include "agrpc/detail/rpcs.hpp"
+#include "agrpc/detail/repeatedlyRequest.hpp"
+#include "agrpc/detail/repeatedlyRequestSender.hpp"
+#include "agrpc/detail/rpcContext.hpp"
 #include "agrpc/detail/utility.hpp"
+#include "agrpc/repeatedlyRequestContext.hpp"
 
 AGRPC_NAMESPACE_BEGIN()
-
-namespace detail
-{
-template <class, class = void>
-inline constexpr bool HAS_REQUEST_MEMBER_FUNCTION = false;
-
-template <class T>
-inline constexpr bool HAS_REQUEST_MEMBER_FUNCTION<T, std::void_t<decltype(std::declval<T&>()->request())>> = true;
-}
-
-template <class ImplementationAllocator>
-class RepeatedlyRequestContext
-{
-  public:
-    using executor_type = typename std::allocator_traits<ImplementationAllocator>::value_type::executor_type;
-
-    [[nodiscard]] decltype(auto) args() const noexcept { return impl->args(); }
-
-    [[nodiscard]] decltype(auto) server_context() const noexcept { return impl->server_context(); }
-
-    [[nodiscard]] decltype(auto) request() const noexcept
-    {
-        static_assert(detail::HAS_REQUEST_MEMBER_FUNCTION<detail::AllocatedPointer<ImplementationAllocator>>,
-                      "Client-streaming and bidirectional-streaming requests are made without an initial request by "
-                      "the client. The .request() member function is therefore not available.");
-        return impl->request();
-    }
-
-    [[nodiscard]] decltype(auto) responder() const noexcept { return impl->responder(); }
-
-    [[nodiscard]] executor_type get_executor() const noexcept { return impl->get_executor(); }
-
-  private:
-    friend detail::RepeatedlyRequestContextAccess;
-
-    detail::AllocatedPointer<ImplementationAllocator> impl;
-
-    constexpr explicit RepeatedlyRequestContext(detail::AllocatedPointer<ImplementationAllocator>&& impl) noexcept
-        : impl(std::move(impl))
-    {
-    }
-};
 
 namespace detail
 {
@@ -73,17 +31,40 @@ class RepeatedlyRequestFn
 {
   private:
     template <class RPC, class Service, class RequestHandler, class CompletionToken>
-    static auto impl(RPC rpc, Service& service, RequestHandler request_handler, CompletionToken token);
+    static auto impl(RPC rpc, Service& service, RequestHandler request_handler, CompletionToken token)
+    {
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+        using RPCContext = detail::RPCContextForRPCT<RPC>;
+        if constexpr (detail::IS_REPEATEDLY_REQUEST_SENDER_FACTORY<RequestHandler, typename RPCContext::Signature>)
+        {
+#endif
+            return detail::RepeatedlyRequestSender{token.grpc_context, rpc, service, std::move(request_handler)};
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+        }
+        else
+        {
+            return asio::async_initiate<CompletionToken, void()>(
+                detail::RepeatedlyRequestInitiator<RPC, Service, RequestHandler>{}, token, rpc, service,
+                std::move(request_handler));
+        }
+#endif
+    }
 
   public:
     template <class RPC, class Service, class Request, class Responder, class RequestHandler,
               class CompletionToken = detail::NoOp>
     auto operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
-                    RequestHandler request_handler, CompletionToken token = {}) const;
+                    RequestHandler request_handler, CompletionToken token = {}) const
+    {
+        return RepeatedlyRequestFn::impl(rpc, service, std::move(request_handler), std::move(token));
+    }
 
     template <class RPC, class Service, class Responder, class RequestHandler, class CompletionToken = detail::NoOp>
     auto operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service,
-                    RequestHandler request_handler, CompletionToken token = {}) const;
+                    RequestHandler request_handler, CompletionToken token = {}) const
+    {
+        return RepeatedlyRequestFn::impl(rpc, service, std::move(request_handler), std::move(token));
+    }
 };
 }  // namespace detail
 
@@ -92,5 +73,3 @@ inline constexpr detail::RepeatedlyRequestFn repeatedly_request{};
 AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_AGRPC_REPEATEDLYREQUEST_HPP
-
-#include "agrpc/detail/repeatedlyRequest.hpp"

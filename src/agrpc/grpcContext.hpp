@@ -90,3 +90,5 @@ class GrpcContext
 AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_AGRPC_GRPCCONTEXT_HPP
+
+#include "agrpc/detail/grpcContext.ipp"

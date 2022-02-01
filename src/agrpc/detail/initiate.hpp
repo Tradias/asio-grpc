@@ -22,17 +22,13 @@
 #include "agrpc/detail/grpcContextInteraction.hpp"
 #include "agrpc/detail/grpcSender.hpp"
 #include "agrpc/detail/grpcSubmit.hpp"
+#include "agrpc/detail/useSender.hpp"
 #include "agrpc/grpcContext.hpp"
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-struct UseSender
-{
-    agrpc::GrpcContext& grpc_context;
-};
-
 template <class Executor>
 decltype(auto) query_grpc_context(const Executor& executor)
 {

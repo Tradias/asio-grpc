@@ -14,10 +14,11 @@
 
 #include "utils/grpcContextTest.hpp"
 
-#include "agrpc/asioGrpc.hpp"
 #include "utils/asioForward.hpp"
 #include "utils/memoryResource.hpp"
 
+#include <agrpc/grpcContext.hpp>
+#include <agrpc/grpcExecutor.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 

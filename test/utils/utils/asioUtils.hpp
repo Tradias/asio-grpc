@@ -17,6 +17,9 @@
 
 #include "utils/asioForward.hpp"
 
+#include <agrpc/grpcContext.hpp>
+#include <agrpc/repeatedlyRequestContext.hpp>
+
 #include <type_traits>
 
 namespace test

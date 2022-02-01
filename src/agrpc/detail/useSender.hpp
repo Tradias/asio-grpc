@@ -12,14 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_AGRPC_ASIOGRPC_HPP
-#define AGRPC_AGRPC_ASIOGRPC_HPP
+#ifndef AGRPC_DETAIL_USESENDER_HPP
+#define AGRPC_DETAIL_USESENDER_HPP
 
-#include "agrpc/detail/grpcContextImplementation.ipp"
-#include "agrpc/grpcContext.hpp"
-#include "agrpc/grpcExecutor.hpp"
-#include "agrpc/initiate.hpp"
-#include "agrpc/repeatedlyRequest.hpp"
-#include "agrpc/rpcs.hpp"
+#include "agrpc/detail/config.hpp"
 
-#endif  // AGRPC_AGRPC_ASIOGRPC_HPP
+AGRPC_NAMESPACE_BEGIN()
+
+namespace detail
+{
+struct UseSender
+{
+    agrpc::GrpcContext& grpc_context;
+};
+}
+
+AGRPC_NAMESPACE_END
+
+#endif  // AGRPC_DETAIL_USESENDER_HPP

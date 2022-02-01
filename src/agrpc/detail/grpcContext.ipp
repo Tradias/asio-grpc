@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_AGRPC_GRPCCONTEXT_IPP
-#define AGRPC_AGRPC_GRPCCONTEXT_IPP
+#ifndef AGRPC_DETAIL_GRPCCONTEXT_IPP
+#define AGRPC_DETAIL_GRPCCONTEXT_IPP
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
@@ -147,4 +147,6 @@ inline grpc::ServerCompletionQueue* GrpcContext::get_server_completion_queue() n
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_AGRPC_GRPCCONTEXT_IPP
+#endif  // AGRPC_DETAIL_GRPCCONTEXT_IPP
+
+#include "agrpc/detail/grpcContextImplementation.ipp"

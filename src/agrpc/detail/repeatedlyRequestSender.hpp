@@ -25,6 +25,7 @@
 #include "agrpc/detail/utility.hpp"
 #include "agrpc/grpcContext.hpp"
 #include "agrpc/rpcs.hpp"
+#include "agrpc/useSender.hpp"
 
 #include <atomic>
 #include <optional>

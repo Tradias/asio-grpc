@@ -12,13 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_UTILS_GRPCTEST_HPP
-#define AGRPC_UTILS_GRPCTEST_HPP
+#ifndef AGRPC_UTILS_GRPCCONTEXTTEST_HPP
+#define AGRPC_UTILS_GRPCCONTEXTTEST_HPP
 
-#include "agrpc/asioGrpc.hpp"
 #include "utils/asioForward.hpp"
 #include "utils/memoryResource.hpp"
 
+#include <agrpc/grpcContext.hpp>
+#include <agrpc/grpcExecutor.hpp>
+#include <agrpc/useSender.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
@@ -59,4 +61,4 @@ std::chrono::system_clock::time_point one_seconds_from_now();
 std::chrono::system_clock::time_point five_seconds_from_now();
 }  // namespace test
 
-#endif  // AGRPC_UTILS_GRPCTEST_HPP
+#endif  // AGRPC_UTILS_GRPCCONTEXTTEST_HPP

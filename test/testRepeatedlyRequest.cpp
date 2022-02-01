@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "agrpc/asioGrpc.hpp"
 #include "protos/test.grpc.pb.h"
 #include "utils/asioUtils.hpp"
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/grpcContextTest.hpp"
 
+#include <agrpc/repeatedlyRequest.hpp>
+#include <agrpc/rpcs.hpp>
 #include <doctest/doctest.h>
 
 #include <cstddef>

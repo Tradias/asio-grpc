@@ -17,11 +17,11 @@
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
-#include "agrpc/detail/repeatedlyRequestSender.hpp"
 #include "agrpc/detail/rpcContext.hpp"
 #include "agrpc/detail/utility.hpp"
 #include "agrpc/detail/workTrackingCompletionHandler.hpp"
 #include "agrpc/initiate.hpp"
+#include "agrpc/repeatedlyRequestContext.hpp"
 #include "agrpc/rpcs.hpp"
 
 AGRPC_NAMESPACE_BEGIN()
@@ -314,40 +314,6 @@ struct RepeatedlyRequestInitiator
     }
 };
 #endif
-
-template <class RPC, class Service, class RequestHandler, class CompletionToken>
-auto RepeatedlyRequestFn::impl(RPC rpc, Service& service, RequestHandler request_handler, CompletionToken token)
-{
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    using RPCContext = detail::RPCContextForRPCT<RPC>;
-    if constexpr (detail::IS_REPEATEDLY_REQUEST_SENDER_FACTORY<RequestHandler, typename RPCContext::Signature>)
-    {
-#endif
-        return detail::RepeatedlyRequestSender{token.grpc_context, rpc, service, std::move(request_handler)};
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    }
-    else
-    {
-        return asio::async_initiate<CompletionToken, void()>(
-            detail::RepeatedlyRequestInitiator<RPC, Service, RequestHandler>{}, token, rpc, service,
-            std::move(request_handler));
-    }
-#endif
-}
-
-template <class RPC, class Service, class Request, class Responder, class RequestHandler, class CompletionToken>
-auto RepeatedlyRequestFn::operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
-                                     RequestHandler request_handler, CompletionToken token) const
-{
-    return impl(rpc, service, std::move(request_handler), std::move(token));
-}
-
-template <class RPC, class Service, class Responder, class RequestHandler, class CompletionToken>
-auto RepeatedlyRequestFn::operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service,
-                                     RequestHandler request_handler, CompletionToken token) const
-{
-    return impl(rpc, service, std::move(request_handler), std::move(token));
-}
 }
 
 AGRPC_NAMESPACE_END
