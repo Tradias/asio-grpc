@@ -15,6 +15,8 @@
 #ifndef AGRPC_UTILS_ASIOFORWARD_HPP
 #define AGRPC_UTILS_ASIOFORWARD_HPP
 
+#include <agrpc/detail/asioForward.hpp>
+
 #ifdef AGRPC_STANDALONE_ASIO
 #include <asio/coroutine.hpp>
 #include <asio/detached.hpp>

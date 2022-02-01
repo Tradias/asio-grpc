@@ -56,7 +56,7 @@ inline constexpr detail::AllocateOperationFn<IsIntrusivelyListable, Handler, Sig
 
 template <bool IsBlockingNever, class Handler, class OnLocalOperation, class OnRemoteOperation, class WorkAllocator,
           class... Args>
-void create_no_arg_operation(agrpc::GrpcContext& grpc_context, OnLocalOperation on_local_operation,
+void create_no_arg_operation(agrpc::GrpcContext& grpc_context, [[maybe_unused]] OnLocalOperation on_local_operation,
                              OnRemoteOperation on_remote_operation, WorkAllocator work_allocator, Args&&... args)
 {
     using DecayedHandler = std::decay_t<Handler>;
