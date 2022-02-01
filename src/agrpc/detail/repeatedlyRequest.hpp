@@ -136,13 +136,6 @@ struct RequestRepeater : detail::TypeErasedGrpcTagOperation
     }
 
     [[nodiscard]] auto get_allocator() const noexcept { return context().get_allocator(); }
-
-#ifdef AGRPC_UNIFEX
-    friend auto tag_invoke(unifex::tag_t<unifex::get_allocator>, const RequestRepeater& self) noexcept
-    {
-        return self.get_allocator();
-    }
-#endif
 };
 
 template <class RPC, class Service, class Request, class Responder>
@@ -297,19 +290,20 @@ struct RepeatedlyRequestInitiator
         auto cancellation_slot = asio::get_associated_cancellation_slot(completion_handler);
         if (cancellation_slot.is_connected())
         {
-            detail::create_no_arg_operation<true, detail::RepeatedlyRequestCompletionHandler<
-                                                      CompletionHandler, RPC, Service, RequestHandler, true>>(
-                grpc_context, detail::InitiateRepeatOperationWithCancellationSlot{cancellation_slot},
-                detail::InitiateRepeatOperationWithCancellationSlot{cancellation_slot}, allocator,
-                std::move(completion_handler), rpc, service, std::move(request_handler));
+            detail::allocate_operation_and_invoke<
+                true, detail::RepeatedlyRequestCompletionHandler<CompletionHandler, RPC, Service, RequestHandler, true>,
+                void()>(grpc_context, detail::InitiateRepeatOperationWithCancellationSlot{cancellation_slot},
+                        detail::InitiateRepeatOperationWithCancellationSlot{cancellation_slot}, allocator,
+                        std::move(completion_handler), rpc, service, std::move(request_handler));
         }
         else
 #endif
         {
-            detail::create_no_arg_operation<true, detail::RepeatedlyRequestCompletionHandler<
-                                                      CompletionHandler, RPC, Service, RequestHandler, false>>(
-                grpc_context, detail::InitiateRepeatOperation{}, detail::InitiateRepeatOperation{}, allocator,
-                std::move(completion_handler), rpc, service, std::move(request_handler));
+            detail::allocate_operation_and_invoke<
+                true,
+                detail::RepeatedlyRequestCompletionHandler<CompletionHandler, RPC, Service, RequestHandler, false>,
+                void()>(grpc_context, detail::InitiateRepeatOperation{}, detail::InitiateRepeatOperation{}, allocator,
+                        std::move(completion_handler), rpc, service, std::move(request_handler));
         }
     }
 };

@@ -25,15 +25,15 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <bool IsIntrusivelyListable, class Handler, class Allocator, class Signature, class... ExtraArgs>
+template <bool IsIntrusivelyListable, class Handler, class Allocator, class Signature>
 class Operation;
 
-template <bool IsIntrusivelyListable, class Handler, class Allocator, class R, class... Signature, class... ExtraArgs>
-class Operation<IsIntrusivelyListable, Handler, Allocator, R(Signature...), ExtraArgs...>
-    : public detail::TypeErasedOperation<IsIntrusivelyListable, Signature..., ExtraArgs...>
+template <bool IsIntrusivelyListable, class Handler, class Allocator, class... Signature>
+class Operation<IsIntrusivelyListable, Handler, Allocator, void(Signature...)>
+    : public detail::TypeErasedOperation<IsIntrusivelyListable, Signature..., detail::GrpcContextLocalAllocator>
 {
   private:
-    using Base = detail::TypeErasedOperation<IsIntrusivelyListable, Signature..., ExtraArgs...>;
+    using Base = detail::TypeErasedOperation<IsIntrusivelyListable, Signature..., detail::GrpcContextLocalAllocator>;
 
   public:
     template <class... Args>
@@ -42,7 +42,8 @@ class Operation<IsIntrusivelyListable, Handler, Allocator, R(Signature...), Extr
     {
     }
 
-    static void do_complete(Base* op, detail::InvokeHandler invoke_handler, Signature... args, ExtraArgs...)
+    static void do_complete(Base* op, detail::InvokeHandler invoke_handler, Signature... args,
+                            detail::GrpcContextLocalAllocator)
     {
         auto* self = static_cast<Operation*>(op);
         detail::AllocatedPointer ptr{self, self->get_allocator()};
