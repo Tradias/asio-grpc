@@ -47,8 +47,8 @@ using AssociatedWorkTrackingExecutor =
 
 template <class CompletionHandler>
 class WorkTrackingCompletionHandler
-    : detail::EmptyBaseOptimization<detail::AssociatedWorkTrackingExecutor<CompletionHandler>>,
-      detail::EmptyBaseOptimization<CompletionHandler>
+    : private detail::EmptyBaseOptimization<detail::AssociatedWorkTrackingExecutor<CompletionHandler>>,
+      private detail::EmptyBaseOptimization<CompletionHandler>
 {
   public:
     using executor_type = asio::associated_executor_t<CompletionHandler>;

@@ -29,8 +29,7 @@ void grpc_submit(agrpc::GrpcContext& grpc_context, InitiatingFunction initiating
                  CompletionHandler completion_handler, Allocator allocator)
 {
     detail::allocate_operation_and_invoke<false, CompletionHandler, void(bool)>(
-        grpc_context, initiating_function, initiating_function, allocator,
-        std::forward<CompletionHandler>(completion_handler));
+        grpc_context, initiating_function, initiating_function, allocator, std::move(completion_handler));
 }
 }
 
