@@ -62,17 +62,15 @@ target_compile_definitions(asio-grpc-test-cpp17 PRIVATE "ASIO_GRPC_TEST_CPP_VERS
 target_link_libraries(asio-grpc-test-cpp17 PRIVATE Boost::coroutine Boost::thread)
 
 if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
-    asio_grpc_add_test(asio-grpc-test-boost-cpp20 "BOOST_ASIO" "20" ${ASIO_GRPC_TEST_SOURCE_FILES}
-                       "test-asio-grpc-20.cpp")
+    asio_grpc_add_test(asio-grpc-test-boost-cpp20 "BOOST_ASIO" "20" ${ASIO_GRPC_TEST_SOURCE_FILES} "testAsioGrpc20.cpp")
     target_compile_definitions(asio-grpc-test-boost-cpp20 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"Boost.Asio C++20\"")
     target_link_libraries(asio-grpc-test-boost-cpp20 PRIVATE Boost::coroutine Boost::thread)
 
-    asio_grpc_add_test(asio-grpc-test-cpp20 "STANDALONE_ASIO" "20" ${ASIO_GRPC_TEST_SOURCE_FILES}
-                       "test-asio-grpc-20.cpp")
+    asio_grpc_add_test(asio-grpc-test-cpp20 "STANDALONE_ASIO" "20" ${ASIO_GRPC_TEST_SOURCE_FILES} "testAsioGrpc20.cpp")
     target_compile_definitions(asio-grpc-test-cpp20 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"Standalone Asio C++20\"")
     target_link_libraries(asio-grpc-test-cpp20 PRIVATE Boost::coroutine Boost::thread)
 
-    asio_grpc_add_test(asio-grpc-test-unifex-cpp20 "UNIFEX" "20" "test-asio-grpc-unifex-20.cpp")
+    asio_grpc_add_test(asio-grpc-test-unifex-cpp20 "UNIFEX" "20" "testUnifex20.cpp")
     target_compile_definitions(asio-grpc-test-unifex-cpp20 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"unifex C++20\"")
 endif()
 
@@ -82,7 +80,7 @@ unset(ASIO_GRPC_TEST_SOURCE_FILES)
 if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
     add_executable(asio-grpc-test-examples)
 
-    target_sources(asio-grpc-test-examples PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/test-asio-grpc-examples.cpp")
+    target_sources(asio-grpc-test-examples PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/testExamples.cpp")
 
     target_link_libraries(asio-grpc-test-examples PRIVATE asio-grpc-test-main Boost::filesystem)
 
