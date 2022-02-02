@@ -25,7 +25,7 @@
 #include <optional>
 #include <thread>
 
-namespace test_asio_grpc
+namespace test_repeatedly_request_17
 {
 TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0));
 

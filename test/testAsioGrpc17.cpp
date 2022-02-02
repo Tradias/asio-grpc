@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "agrpc/asioGrpc.hpp"
 #include "protos/test.grpc.pb.h"
 #include "utils/asioUtils.hpp"
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/grpcContextTest.hpp"
 
+#include <agrpc/rpcs.hpp>
 #include <doctest/doctest.h>
 
 #include <cstddef>
 #include <optional>
 #include <thread>
 
-namespace test_asio_grpc
+namespace test_asio_grpc_17
 {
 TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0));
 

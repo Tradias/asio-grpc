@@ -19,7 +19,7 @@
 
 #include <thread>
 
-namespace test_asio_grpc_examples
+namespace test_examples
 {
 TEST_SUITE_BEGIN("Examples" * doctest::timeout(180.0));
 

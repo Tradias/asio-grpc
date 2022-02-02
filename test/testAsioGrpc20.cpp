@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "agrpc/asioGrpc.hpp"
 #include "protos/test.grpc.pb.h"
 #include "utils/asioUtils.hpp"
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/grpcContextTest.hpp"
 
+#include <agrpc/rpcs.hpp>
 #include <doctest/doctest.h>
 
 #include <cstddef>
 
-namespace test_asio_grpc_cpp20
+namespace test_asio_grpc_20
 {
 TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0));
 
@@ -373,52 +373,6 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable bidirectional streaming
 }
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-TEST_CASE_FIXTURE(test::GrpcClientServerTest, "repeatedly_request with asio use_sender")
-{
-    bool is_shutdown{false};
-    auto request_count{0};
-    test::v1::Response response;
-    asio::execution::submit(agrpc::repeatedly_request(
-                                &test::v1::Test::AsyncService::RequestUnary, service,
-                                [&](grpc::ServerContext&, test::v1::Request& request,
-                                    grpc::ServerAsyncResponseWriter<test::v1::Response>& writer)
-                                {
-                                    CHECK_EQ(42, request.integer());
-                                    ++request_count;
-                                    if (request_count > 3)
-                                    {
-                                        is_shutdown = true;
-                                    }
-                                    response.set_integer(21);
-                                    return agrpc::finish(writer, response, grpc::Status::OK, use_sender());
-                                },
-                                use_sender()),
-                            test::FunctionAsReceiver{[&]()
-                                                     {
-                                                         CHECK_EQ(4, request_count);
-                                                     }});
-    test::co_spawn(grpc_context,
-                   [&]() -> asio::awaitable<void>
-                   {
-                       while (!is_shutdown)
-                       {
-                           grpc::ClientContext new_client_context;
-                           test::v1::Request request;
-                           request.set_integer(42);
-                           const auto reader =
-                               stub->AsyncUnary(&new_client_context, request, grpc_context.get_completion_queue());
-                           test::v1::Response response;
-                           grpc::Status status;
-                           CHECK(co_await agrpc::finish(*reader, response, status));
-                           CHECK(status.ok());
-                           CHECK_EQ(21, response.integer());
-                       }
-                       server->Shutdown();
-                   });
-    grpc_context.run();
-    CHECK_EQ(4, request_count);
-}
-
 TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with awaitable operators")
 {
     std::size_t result_index{};
