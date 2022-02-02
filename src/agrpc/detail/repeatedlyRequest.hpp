@@ -261,6 +261,7 @@ struct InitiateRepeatOperation
     }
 };
 
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 template <class CancellationSlot>
 struct InitiateRepeatOperationWithCancellationSlot
 {
@@ -275,6 +276,7 @@ struct InitiateRepeatOperationWithCancellationSlot
         detail::InitiateRepeatOperation{}(grpc_context, operation);
     }
 };
+#endif
 
 template <class RPC, class Service, class RequestHandler>
 struct RepeatedlyRequestInitiator

@@ -33,6 +33,7 @@ TEST_CASE("GrpcExecutor fulfills Executor TS concepts")
     CHECK(asio::execution::executor_of<agrpc::GrpcExecutor, test::InvocableArchetype>);
 }
 
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 TEST_CASE("asio-grpc fulfills unified executor concepts")
 {
     CHECK(asio::execution::is_scheduler_v<agrpc::GrpcExecutor>);
@@ -66,7 +67,9 @@ TEST_CASE("asio-grpc fulfills unified executor concepts")
     CHECK(asio::execution::is_operation_state_v<ScheduleSenderOperationState>);
 }
 #endif
+#endif
 
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::schedule")
 {
     bool is_invoked{false};
@@ -109,6 +112,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::execution connect and start Alar
     grpc_context.run();
     CHECK(ok);
 }
+#endif
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "get_completion_queue")
@@ -368,6 +372,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable bidirectional streaming
     grpc_context.run();
 }
 
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "repeatedly_request with asio use_sender")
 {
     bool is_shutdown{false};
@@ -414,7 +419,6 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "repeatedly_request with asio use_
     CHECK_EQ(4, request_count);
 }
 
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with awaitable operators")
 {
     std::size_t result_index{};

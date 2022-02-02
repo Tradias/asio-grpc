@@ -262,6 +262,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post an Alarm and check time")
     CHECK(ok);
 }
 
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "experimental::deferred with Alarm")
 {
     bool ok1{false};
@@ -284,6 +285,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "experimental::deferred with Alarm")
     CHECK(ok1);
     CHECK(ok2);
 }
+#endif
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post a asio::steady_timer")
 {

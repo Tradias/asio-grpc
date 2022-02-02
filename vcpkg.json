@@ -22,5 +22,12 @@
             ]
         },
         "libunifex"
+    ],
+    "builtin-baseline": "6ba505cf2c1752d8ea5abb21427e23ff89dc486f",
+    "overrides": [
+        {
+            "name": "asio",
+            "version": "1.18.2"
+        }
     ]
 }
