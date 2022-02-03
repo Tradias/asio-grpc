@@ -33,6 +33,14 @@ function(asio_grpc_create_init_git_hooks_target)
     find_program(ASIO_GRPC_CMAKE_FORMAT_PROGRAM cmake-format)
     find_program(ASIO_GRPC_CLANG_FORMAT_PROGRAM clang-format)
 
+    if(NOT ASIO_GRPC_CMAKE_FORMAT_PROGRAM OR NOT ASIO_GRPC_CLANG_FORMAT_PROGRAM)
+        message(
+            AUTHOR_WARNING
+                "Cannot create init-git-hooks target with\ncmake-format: ${ASIO_GRPC_CMAKE_FORMAT_PROGRAM}\nclang-format: ${ASIO_GRPC_CLANG_FORMAT_PROGRAM}"
+        )
+        return()
+    endif()
+
     set(ASIO_GRPC_INIT_GIT_HOOKS_SOURCES "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/hooks/pre-commit.in"
                                          "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/hooks/AsioGrpcPreCommit.cmake.in")
     configure_file("${CMAKE_CURRENT_FUNCTION_LIST_DIR}/hooks/pre-commit.in"
