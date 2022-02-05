@@ -45,10 +45,9 @@ decltype(auto) query_grpc_context(const Executor& executor)
 }
 
 template <class InitiatingFunction, class StopFunction = detail::Empty>
-struct GrpcInitiator
+class GrpcInitiator
 {
-    InitiatingFunction initiating_function;
-
+  public:
     explicit GrpcInitiator(InitiatingFunction initiating_function) : initiating_function(std::move(initiating_function))
     {
     }
@@ -75,16 +74,19 @@ struct GrpcInitiator
         detail::grpc_submit(grpc_context, std::move(this->initiating_function), std::move(completion_handler),
                             allocator);
     }
+
+  private:
+    InitiatingFunction initiating_function;
 };
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class CompletionHandler, class Payload>
-struct GrpcCompletionHandlerWithPayload : detail::AssociatedCompletionHandler<CompletionHandler>
+class GrpcCompletionHandlerWithPayload : public detail::AssociatedCompletionHandler<CompletionHandler>
 {
+  private:
     using Base = detail::AssociatedCompletionHandler<CompletionHandler>;
 
-    Payload payload;
-
+  public:
     explicit GrpcCompletionHandlerWithPayload(CompletionHandler completion_handler)
         : Base(std::move(completion_handler))
     {
@@ -92,13 +94,19 @@ struct GrpcCompletionHandlerWithPayload : detail::AssociatedCompletionHandler<Co
 
     decltype(auto) operator()(bool ok) &&
     {
-        return static_cast<Base&&>(*this)(std::pair{std::move(this->payload), ok});
+        return static_cast<Base&&>(*this)(std::pair{std::move(this->payload_), ok});
     }
+
+    [[nodiscard]] constexpr auto& payload() noexcept { return payload_; }
+
+  private:
+    Payload payload_;
 };
 
 template <class Payload, class InitiatingFunction>
-struct GrpcWithPayloadInitiator : detail::GrpcInitiator<InitiatingFunction>
+class GrpcWithPayloadInitiator : public detail::GrpcInitiator<InitiatingFunction>
 {
+  public:
     using detail::GrpcInitiator<InitiatingFunction>::GrpcInitiator;
 
     template <class CompletionHandler>

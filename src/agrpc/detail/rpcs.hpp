@@ -321,7 +321,7 @@ struct ClientServerStreamingRequestConvenienceInitFunction
     template <class T>
     void operator()(agrpc::GrpcContext& grpc_context, T* tag)
     {
-        tag->handler().payload = (stub.*rpc)(&client_context, request, grpc_context.get_completion_queue(), tag);
+        tag->handler().payload() = (stub.*rpc)(&client_context, request, grpc_context.get_completion_queue(), tag);
     }
 };
 
@@ -361,7 +361,7 @@ struct ClientSideStreamingRequestConvenienceInitFunction
     template <class T>
     void operator()(agrpc::GrpcContext& grpc_context, T* tag)
     {
-        tag->handler().payload = (stub.*rpc)(&client_context, &response, grpc_context.get_completion_queue(), tag);
+        tag->handler().payload() = (stub.*rpc)(&client_context, &response, grpc_context.get_completion_queue(), tag);
     }
 };
 
@@ -399,7 +399,7 @@ struct ClientBidirectionalStreamingRequestConvenienceInitFunction
     template <class T>
     void operator()(agrpc::GrpcContext& grpc_context, T* tag)
     {
-        tag->handler().payload = (stub.*rpc)(&client_context, grpc_context.get_completion_queue(), tag);
+        tag->handler().payload() = (stub.*rpc)(&client_context, grpc_context.get_completion_queue(), tag);
     }
 };
 

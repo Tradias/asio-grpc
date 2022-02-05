@@ -27,17 +27,21 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class Allocator>
-struct AllocatedPointer
+class AllocatedPointer
 {
+  private:
     using Traits = std::allocator_traits<Allocator>;
-    using allocator_type = Allocator;
 
-    detail::CompressedPair<typename Traits::pointer, allocator_type> impl;
+  public:
+    using allocator_type = Allocator;
 
     constexpr AllocatedPointer(typename Traits::pointer ptr, const allocator_type& allocator) noexcept
         : impl(ptr, allocator)
     {
     }
+
+    AllocatedPointer(const AllocatedPointer&) = delete;
+    AllocatedPointer& operator=(const AllocatedPointer&) = delete;
 
     constexpr AllocatedPointer(AllocatedPointer&& other) noexcept
         : impl(std::exchange(other.get(), nullptr), other.get_allocator())
@@ -85,11 +89,14 @@ struct AllocatedPointer
         this->release();
     }
 
+  private:
     constexpr void destroy() noexcept
     {
         Traits::destroy(this->get_allocator(), this->get());
         Traits::deallocate(this->get_allocator(), this->get(), 1);
     }
+
+    detail::CompressedPair<typename Traits::pointer, allocator_type> impl;
 };
 
 template <class T, class Allocator>
@@ -97,14 +104,13 @@ AllocatedPointer(T*, const Allocator&)
     -> AllocatedPointer<typename std::allocator_traits<Allocator>::template rebind_alloc<T>>;
 
 template <class Allocator>
-struct AllocationGuard
+class AllocationGuard
 {
+  private:
     using Traits = std::allocator_traits<Allocator>;
-    using allocator_type = Allocator;
 
-    typename Traits::pointer ptr;
-    allocator_type allocator;
-    bool is_allocated{true};
+  public:
+    using allocator_type = Allocator;
 
     constexpr AllocationGuard(typename Traits::pointer ptr, allocator_type allocator) noexcept
         : ptr(ptr), allocator(std::move(allocator))
@@ -129,6 +135,13 @@ struct AllocationGuard
         this->is_allocated = false;
         return {this->ptr, this->allocator};
     }
+
+    constexpr auto& get_allocator() noexcept { return allocator; }
+
+  private:
+    typename Traits::pointer ptr;
+    allocator_type allocator;
+    bool is_allocated{true};
 };
 
 template <class T, class Allocator, class... Args>
@@ -139,16 +152,15 @@ auto allocate(Allocator allocator, Args&&... args)
     ReboundAllocator rebound_allocator{allocator};
     auto* ptr = Traits::allocate(rebound_allocator, 1);
     detail::AllocationGuard<ReboundAllocator> guard{ptr, rebound_allocator};
-    Traits::construct(guard.allocator, ptr, std::forward<Args>(args)...);
+    Traits::construct(guard.get_allocator(), ptr, std::forward<Args>(args)...);
     return guard.release();
 }
 
 template <class T, class Resource>
-struct MemoryResourceAllocator
+class MemoryResourceAllocator
 {
+  public:
     using value_type = T;
-
-    Resource* resource;
 
     constexpr explicit MemoryResourceAllocator(Resource* resource) noexcept : resource(resource) {}
 
@@ -178,6 +190,12 @@ struct MemoryResourceAllocator
     {
         return lhs.resource != rhs.resource;
     }
+
+  private:
+    template <class, class>
+    friend class MemoryResourceAllocator;
+
+    Resource* resource;
 };
 }
 

@@ -25,8 +25,9 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class CompletionHandler>
-struct AssociatedCompletionHandler
+class AssociatedCompletionHandler
 {
+  public:
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     using executor_type = asio::associated_executor_t<CompletionHandler>;
     using allocator_type = asio::associated_allocator_t<CompletionHandler>;
@@ -34,8 +35,6 @@ struct AssociatedCompletionHandler
     using cancellation_slot = asio::associated_cancellation_slot_t<CompletionHandler>;
 #endif
 #endif
-
-    CompletionHandler completion_handler;
 
     explicit AssociatedCompletionHandler(CompletionHandler completion_handler)
         : completion_handler(std::move(completion_handler))
@@ -72,6 +71,9 @@ struct AssociatedCompletionHandler
     }
 #endif
 #endif
+
+  private:
+    CompletionHandler completion_handler;
 };
 }
 

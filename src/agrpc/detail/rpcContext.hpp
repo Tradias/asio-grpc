@@ -27,56 +27,65 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-struct RPCContextBase
+class RPCContextBase
 {
-    grpc::ServerContext context{};
-
+  public:
     constexpr auto& server_context() noexcept { return context; }
+
+  private:
+    grpc::ServerContext context{};
 };
 
 template <class Request, class Responder>
-struct MultiArgRPCContext : detail::RPCContextBase
+class MultiArgRPCContext : public detail::RPCContextBase
 {
+  public:
     using Signature = void(grpc::ServerContext&, Request&, Responder&);
-
-    Request request_{};
-    Responder responder_{&this->context};
 
     MultiArgRPCContext() = default;
 
     template <class Handler, class... Args>
     constexpr decltype(auto) operator()(Handler&& handler, Args&&... args)
     {
-        return std::invoke(std::forward<Handler>(handler), this->context, this->request_, this->responder_,
+        return std::invoke(std::forward<Handler>(handler), this->server_context(), this->request_, this->responder_,
                            std::forward<Args>(args)...);
     }
 
-    constexpr auto args() noexcept { return std::forward_as_tuple(this->context, this->request_, this->responder_); }
+    constexpr auto args() noexcept
+    {
+        return std::forward_as_tuple(this->server_context(), this->request_, this->responder_);
+    }
 
     constexpr auto& request() noexcept { return this->request_; }
 
     constexpr auto& responder() noexcept { return this->responder_; }
+
+  private:
+    Request request_{};
+    Responder responder_{&this->server_context()};
 };
 
 template <class Responder>
-struct SingleArgRPCContext : detail::RPCContextBase
+class SingleArgRPCContext : public detail::RPCContextBase
 {
+  public:
     using Signature = void(grpc::ServerContext&, Responder&);
-
-    Responder responder_{&this->context};
 
     SingleArgRPCContext() = default;
 
     template <class Handler, class... Args>
     constexpr decltype(auto) operator()(Handler&& handler, Args&&... args)
     {
-        return std::invoke(std::forward<Handler>(handler), this->context, this->responder_,
+        return std::invoke(std::forward<Handler>(handler), this->server_context(), this->responder_,
                            std::forward<Args>(args)...);
     }
 
-    constexpr auto args() noexcept { return std::forward_as_tuple(this->context, this->responder_); }
+    constexpr auto args() noexcept { return std::forward_as_tuple(this->server_context(), this->responder_); }
 
     constexpr auto& responder() noexcept { return this->responder_; }
+
+  private:
+    Responder responder_{&this->server_context()};
 };
 
 template <class>

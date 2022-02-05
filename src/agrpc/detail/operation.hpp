@@ -16,7 +16,6 @@
 #define AGRPC_DETAIL_GRPCEXECUTOROPERATION_HPP
 
 #include "agrpc/detail/config.hpp"
-#include "agrpc/detail/getCompletionHandler.hpp"
 #include "agrpc/detail/memory.hpp"
 #include "agrpc/detail/typeErasedOperation.hpp"
 #include "agrpc/detail/utility.hpp"
@@ -49,7 +48,7 @@ class Operation<IsIntrusivelyListable, Handler, Allocator, void(Signature...)>
         detail::AllocatedPointer ptr{self, self->get_allocator()};
         if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
         {
-            auto handler{detail::get_completion_handler(std::move(self->handler()))};
+            auto handler{std::move(self->handler())};
             ptr.reset();
             std::move(handler)(detail::forward_as<Signature>(args)...);
         }
@@ -90,7 +89,7 @@ class LocalOperation<IsIntrusivelyListable, Handler, R(Signature...)>
         detail::AllocatedPointer ptr{self, allocator};
         if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
         {
-            auto handler{detail::get_completion_handler(std::move(self->handler_))};
+            auto handler{std::move(self->handler_)};
             ptr.reset();
             std::move(handler)(detail::forward_as<Signature>(args)...);
         }

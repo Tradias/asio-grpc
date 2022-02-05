@@ -24,8 +24,9 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class Allocator>
-struct NoOpReceiverWithAllocator : detail::EmptyBaseOptimization<Allocator>
+class NoOpReceiverWithAllocator : detail::EmptyBaseOptimization<Allocator>
 {
+  public:
     using allocator_type = Allocator;
 
     constexpr explicit NoOpReceiverWithAllocator(Allocator allocator) noexcept
@@ -42,7 +43,7 @@ struct NoOpReceiverWithAllocator : detail::EmptyBaseOptimization<Allocator>
 
     static void set_error(std::exception_ptr) noexcept {}
 
-    constexpr auto get_allocator() const noexcept { return this->get(); }
+    constexpr auto& get_allocator() const noexcept { return this->get(); }
 
 #ifdef AGRPC_UNIFEX
     friend constexpr auto tag_invoke(unifex::tag_t<unifex::get_allocator>,

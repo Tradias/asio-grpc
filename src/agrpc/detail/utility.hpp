@@ -166,19 +166,14 @@ class EmptyBaseOptimization<T, false>
 };
 
 template <class OnExit>
-struct ScopeGuard
+class ScopeGuard
 {
-    OnExit on_exit;
-    bool is_armed{true};
-
+  public:
     constexpr explicit ScopeGuard(OnExit on_exit) : on_exit(std::move(on_exit)) {}
 
     ScopeGuard(const ScopeGuard&) = delete;
-
     ScopeGuard(ScopeGuard&&) = delete;
-
     ScopeGuard& operator=(const ScopeGuard&) = delete;
-
     ScopeGuard& operator=(ScopeGuard&&) = delete;
 
     ~ScopeGuard() noexcept
@@ -190,6 +185,10 @@ struct ScopeGuard
     }
 
     constexpr void release() noexcept { is_armed = false; }
+
+  private:
+    OnExit on_exit;
+    bool is_armed{true};
 };
 
 struct InplaceWithFunction
@@ -199,8 +198,6 @@ struct InplaceWithFunction
 template <class T>
 struct InplaceWithFunctionWrapper
 {
-    T value;
-
     template <class... Args>
     explicit InplaceWithFunctionWrapper(Args&&... args) : value(std::forward<Args>(args)...)
     {
@@ -211,6 +208,8 @@ struct InplaceWithFunctionWrapper
         : value(std::forward<Function>(function)())
     {
     }
+
+    T value;
 };
 
 template <class T>

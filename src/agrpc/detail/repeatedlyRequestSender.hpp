@@ -38,18 +38,6 @@ namespace detail
 template <class Receiver, bool = detail::IS_STOP_EVER_POSSIBLE_V<detail::stop_token_type_t<Receiver&>>>
 class RepeatedlyRequestStopContext
 {
-  public:
-    template <class StopToken>
-    static constexpr void emplace(StopToken&&) noexcept
-    {
-    }
-
-    [[nodiscard]] static constexpr bool is_stopped() noexcept { return false; }
-};
-
-template <class Receiver>
-class RepeatedlyRequestStopContext<Receiver, true>
-{
   private:
     class StopFunction
     {
@@ -80,6 +68,18 @@ class RepeatedlyRequestStopContext<Receiver, true>
 
     std::optional<detail::StopCallbackTypeT<Receiver&, StopFunction>> stop_callback;
     std::atomic<bool> stopped;
+};
+
+template <class Receiver>
+class RepeatedlyRequestStopContext<Receiver, false>
+{
+  public:
+    template <class StopToken>
+    static constexpr void emplace(StopToken&&) noexcept
+    {
+    }
+
+    [[nodiscard]] static constexpr bool is_stopped() noexcept { return false; }
 };
 
 template <class RPC, class Service, class SenderFactory>

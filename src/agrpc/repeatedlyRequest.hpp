@@ -20,7 +20,6 @@
 #include "agrpc/detail/repeatedlyRequest.hpp"
 #include "agrpc/detail/repeatedlyRequestSender.hpp"
 #include "agrpc/detail/rpcContext.hpp"
-#include "agrpc/detail/utility.hpp"
 #include "agrpc/repeatedlyRequestContext.hpp"
 
 AGRPC_NAMESPACE_BEGIN()
@@ -35,12 +34,20 @@ class RepeatedlyRequestFn
     {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
         using RPCContext = detail::RPCContextForRPCT<RPC>;
-        if constexpr (detail::IS_REPEATEDLY_REQUEST_SENDER_FACTORY<RequestHandler, typename RPCContext::Signature>)
+        if constexpr (detail::INVOKE_RESULT_IS_SENDER<RequestHandler, typename RPCContext::Signature>)
         {
 #endif
             return detail::RepeatedlyRequestSender{token.grpc_context, rpc, service, std::move(request_handler)};
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
         }
+#ifdef AGRPC_ASIO_HAS_CO_AWAIT
+        else if constexpr (detail::INVOKE_RESULT_IS_ASIO_AWAITABLE<RequestHandler, typename RPCContext::Signature>)
+        {
+            return asio::async_initiate<CompletionToken, void()>(
+                detail::RepeatedlyRequestInitiator<RPC, Service, RequestHandler>{}, token, rpc, service,
+                std::move(request_handler));
+        }
+#endif
         else
         {
             return asio::async_initiate<CompletionToken, void()>(
