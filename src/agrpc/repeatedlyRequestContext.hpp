@@ -34,8 +34,6 @@ template <class ImplementationAllocator>
 class RepeatedlyRequestContext
 {
   public:
-    using executor_type = typename std::allocator_traits<ImplementationAllocator>::value_type::executor_type;
-
     [[nodiscard]] decltype(auto) args() const noexcept { return impl->args(); }
 
     [[nodiscard]] decltype(auto) server_context() const noexcept { return impl->server_context(); }
@@ -49,8 +47,6 @@ class RepeatedlyRequestContext
     }
 
     [[nodiscard]] decltype(auto) responder() const noexcept { return impl->responder(); }
-
-    [[nodiscard]] executor_type get_executor() const noexcept { return impl->get_executor(); }
 
   private:
     friend detail::RepeatedlyRequestContextAccess;

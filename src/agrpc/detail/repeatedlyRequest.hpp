@@ -39,11 +39,27 @@ struct RepeatedlyRequestContextAccess
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class Handler, class Args, class = void>
-inline constexpr bool IS_REPEATEDLY_REQUEST_SENDER_FACTORY = false;
+inline constexpr bool INVOKE_RESULT_IS_SENDER = false;
 
 template <class Handler, class... Args>
-inline constexpr bool IS_REPEATEDLY_REQUEST_SENDER_FACTORY<
+inline constexpr bool INVOKE_RESULT_IS_SENDER<
     Handler, void(Args...), std::enable_if_t<detail::is_sender_v<std::invoke_result_t<Handler&&, Args...>>>> = true;
+
+#ifdef AGRPC_ASIO_HAS_CO_AWAIT
+template <class T>
+inline constexpr bool IS_ASIO_AWAITABLE = false;
+
+template <class T>
+inline constexpr bool IS_ASIO_AWAITABLE<asio::awaitable<T>> = true;
+
+template <class Handler, class Args, class = void>
+inline constexpr bool INVOKE_RESULT_IS_ASIO_AWAITABLE = false;
+
+template <class Handler, class... Args>
+inline constexpr bool INVOKE_RESULT_IS_ASIO_AWAITABLE<
+    Handler, void(Args...), std::enable_if_t<detail::IS_ASIO_AWAITABLE<std::invoke_result_t<Handler&&, Args...>>>> =
+    true;
+#endif
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 class RepeatedlyRequestStopFunction
@@ -64,26 +80,32 @@ class RepeatedlyRequestStopFunction
 };
 #endif
 
-template <class RPC, class Service, class RequestHandler, bool IsStoppable>
-class RepeatedlyRequestContext
+template <class CompletionHandler, class RPC, class Service, class RequestHandler, bool IsStoppable>
+class RepeatedlyRequestOperation : public detail::TypeErasedGrpcTagOperation, public detail::TypeErasedNoArgOperation
 {
+  private:
+    using GrpcBase = detail::TypeErasedGrpcTagOperation;
+    using NoArgBase = detail::TypeErasedNoArgOperation;
+    using RPCContext = detail::RPCContextForRPCT<RPC>;
+
   public:
-    RepeatedlyRequestContext(RPC rpc, Service& service, RequestHandler request_handler)
-        : impl1(rpc), impl2(service, std::move(request_handler))
+    template <class Ch>
+    RepeatedlyRequestOperation(Ch&& completion_handler, RPC rpc, Service& service, RequestHandler request_handler)
+        : GrpcBase(&RepeatedlyRequestOperation::on_request_complete),
+          NoArgBase(&RepeatedlyRequestOperation::on_stop_complete),
+          impl1(rpc),
+          impl2(service, std::forward<Ch>(completion_handler)),
+          request_handler_(std::move(request_handler))
     {
     }
 
-    [[nodiscard]] decltype(auto) rpc() noexcept { return impl1.first(); }
+    [[nodiscard]] auto& rpc() noexcept { return impl1.first(); }
 
-    [[nodiscard]] decltype(auto) stop_context() noexcept { return impl1.second(); }
+    [[nodiscard]] auto& stop_context() noexcept { return impl1.second(); }
 
-    [[nodiscard]] decltype(auto) service() noexcept { return impl2.first(); }
+    [[nodiscard]] auto& service() noexcept { return impl2.first(); }
 
-    [[nodiscard]] decltype(auto) request_handler() noexcept { return impl2.second(); }
-
-    [[nodiscard]] decltype(auto) get_allocator() noexcept { return detail::get_allocator(request_handler()); }
-
-    [[nodiscard]] decltype(auto) get_executor() noexcept { return detail::get_scheduler(request_handler()); }
+    [[nodiscard]] agrpc::GrpcContext& grpc_context() noexcept { return detail::query_grpc_context(get_executor()); }
 
     [[nodiscard]] constexpr bool is_stopped() const noexcept
     {
@@ -97,85 +119,34 @@ class RepeatedlyRequestContext
         }
     }
 
+    [[nodiscard]] auto allocate_rpc_context()
+    {
+        auto new_rpc_context = detail::allocate<RPCContext>(get_allocator());
+        this->rpc_context = new_rpc_context.get();
+        return new_rpc_context;
+    }
+
   private:
     using StopContext = std::conditional_t<IsStoppable, std::atomic_bool, detail::Empty>;
 
+    static void on_request_complete(GrpcBase* op, detail::InvokeHandler invoke_handler, bool ok,
+                                    detail::GrpcContextLocalAllocator);
+
+    static void on_stop_complete(NoArgBase* op, detail::InvokeHandler invoke_handler,
+                                 detail::GrpcContextLocalAllocator);
+
+    [[nodiscard]] auto& completion_handler() noexcept { return impl2.second(); }
+
+    [[nodiscard]] auto& request_handler() noexcept { return request_handler_; }
+
+    [[nodiscard]] decltype(auto) get_allocator() noexcept { return detail::get_allocator(request_handler()); }
+
+    [[nodiscard]] decltype(auto) get_executor() noexcept { return detail::get_scheduler(request_handler()); }
+
     detail::CompressedPair<RPC, StopContext> impl1;
-    detail::CompressedPair<Service&, RequestHandler> impl2;
-};
-
-template <class CompletionHandler, class RPC, class Service, class RequestHandler, bool IsStoppable>
-class RepeatedlyRequestCompletionHandler
-{
-  public:
-    using executor_type = asio::associated_executor_t<CompletionHandler>;
-    using allocator_type = asio::associated_allocator_t<CompletionHandler>;
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-    using cancellation_slot = asio::associated_cancellation_slot_t<CompletionHandler>;
-#endif
-
-    RepeatedlyRequestCompletionHandler(CompletionHandler completion_handler, RPC rpc, Service& service,
-                                       RequestHandler request_handler)
-        : impl(detail::SecondThenVariadic{}, std::move(completion_handler), rpc, service, std::move(request_handler))
-    {
-    }
-
-    [[nodiscard]] decltype(auto) context() noexcept { return impl.first(); }
-
-    [[nodiscard]] decltype(auto) get_completion_handler() && { return std::move(impl.second()); }
-
-    [[nodiscard]] executor_type get_executor() const noexcept { return asio::get_associated_executor(impl.second()); }
-
-    [[nodiscard]] allocator_type get_allocator() const noexcept
-    {
-        return asio::get_associated_allocator(impl.second());
-    }
-
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-    [[nodiscard]] cancellation_slot get_cancellation_slot() const noexcept
-    {
-        return asio::get_associated_cancellation_slot(impl.second());
-    }
-#endif
-
-  private:
-    detail::CompressedPair<detail::RepeatedlyRequestContext<RPC, Service, RequestHandler, IsStoppable>,
-                           detail::WorkTrackingCompletionHandler<CompletionHandler>>
-        impl;
-};
-
-template <class Operation>
-struct RequestRepeater : detail::TypeErasedGrpcTagOperation
-{
-    using Base = detail::TypeErasedGrpcTagOperation;
-    using executor_type = decltype(detail::get_scheduler(std::declval<Operation&>().handler()));
-    using RPCContext = detail::RPCContextForRPCT<decltype(std::declval<Operation>().handler().context().rpc())>;
-
-    Operation& operation;
-    RPCContext rpc_context;
-
-    explicit RequestRepeater(Operation& operation) : Base(&RequestRepeater::do_complete), operation(operation) {}
-
-    static void do_complete(Base* op, detail::InvokeHandler invoke_handler, bool ok, detail::GrpcContextLocalAllocator);
-
-    [[nodiscard]] decltype(auto) server_context() noexcept { return rpc_context.server_context(); }
-
-    [[nodiscard]] decltype(auto) args() noexcept { return rpc_context.args(); }
-
-    [[nodiscard]] decltype(auto) request() noexcept { return rpc_context.request(); }
-
-    [[nodiscard]] decltype(auto) responder() noexcept { return rpc_context.responder(); }
-
-    [[nodiscard]] auto& context() const noexcept { return operation.handler().context(); }
-
-    [[nodiscard]] decltype(auto) get_executor() const noexcept { return detail::get_scheduler(operation.handler()); }
-
-    [[nodiscard]] agrpc::GrpcContext& grpc_context() const noexcept
-    {
-        return detail::query_grpc_context(context().get_executor());
-    }
-
-    [[nodiscard]] auto get_allocator() const noexcept { return context().get_allocator(); }
+    detail::CompressedPair<Service&, CompletionHandler> impl2;
+    RequestHandler request_handler_;
+    RPCContext* rpc_context;
 };
 
 template <class RPC, class Service, class Request, class Responder>
@@ -197,40 +168,38 @@ void initiate_request_from_rpc_context(detail::ServerSingleArgRequest<RPC, Respo
 template <class Operation>
 auto initiate_request_with_repeater(Operation& operation)
 {
-    auto& context = operation.handler().context();
-    auto& grpc_context = detail::query_grpc_context(context.get_executor());
-    if AGRPC_UNLIKELY (context.is_stopped() || grpc_context.is_stopped())
+    auto& grpc_context = operation.grpc_context();
+    if AGRPC_UNLIKELY (operation.is_stopped() || grpc_context.is_stopped())
     {
         return false;
     }
-    auto repeater = detail::allocate<detail::RequestRepeater<Operation>>(context.get_allocator(), operation);
+    auto rpc_context = operation.allocate_rpc_context();
     auto* cq = grpc_context.get_server_completion_queue();
     grpc_context.work_started();
-    detail::initiate_request_from_rpc_context(context.rpc(), context.service(), repeater->rpc_context, cq,
-                                              repeater.get());
-    repeater.release();
+    detail::initiate_request_from_rpc_context(operation.rpc(), operation.service(), *rpc_context, cq,
+                                              std::addressof(operation));
+    rpc_context.release();
     return true;
 }
 
-template <class Operation>
-void RequestRepeater<Operation>::do_complete(Base* op, detail::InvokeHandler invoke_handler, bool ok,
-                                             detail::GrpcContextLocalAllocator local_allocator)
+template <class CompletionHandler, class RPC, class Service, class RequestHandler, bool IsStoppable>
+void RepeatedlyRequestOperation<CompletionHandler, RPC, Service, RequestHandler, IsStoppable>::on_request_complete(
+    GrpcBase* op, detail::InvokeHandler invoke_handler, bool ok, detail::GrpcContextLocalAllocator local_allocator)
 {
-    auto* self = static_cast<RequestRepeater*>(op);
-    detail::AllocatedPointer ptr{self, self->get_allocator()};
+    auto* self = static_cast<RepeatedlyRequestOperation*>(op);
+    detail::AllocatedPointer ptr{self->rpc_context, self->get_allocator()};
     auto& grpc_context = self->grpc_context();
-    auto& request_handler = self->context().request_handler();
-    auto& operation = self->operation;
+    auto& request_handler = self->request_handler();
     if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
     {
         if AGRPC_LIKELY (ok)
         {
-            const auto is_repeated = detail::initiate_request_with_repeater(operation);
+            const auto is_repeated = detail::initiate_request_with_repeater(*self);
             detail::ScopeGuard guard{[&]
                                      {
                                          if (!is_repeated)
                                          {
-                                             detail::GrpcContextImplementation::add_operation(grpc_context, &operation);
+                                             detail::GrpcContextImplementation::add_local_operation(grpc_context, self);
                                          }
                                      }};
             request_handler(detail::RepeatedlyRequestContextAccess::create(std::move(ptr)));
@@ -238,14 +207,28 @@ void RequestRepeater<Operation>::do_complete(Base* op, detail::InvokeHandler inv
         else
         {
             ptr.reset();
-            detail::GrpcContextImplementation::add_operation(grpc_context, &operation);
+            detail::GrpcContextImplementation::add_local_operation(grpc_context, self);
         }
     }
     else
     {
         ptr.reset();
         detail::WorkFinishedOnExit on_exit{grpc_context};
-        operation.complete(invoke_handler, local_allocator);
+        on_stop_complete(self, invoke_handler, local_allocator);
+    }
+}
+
+template <class CompletionHandler, class RPC, class Service, class RequestHandler, bool IsStoppable>
+void RepeatedlyRequestOperation<CompletionHandler, RPC, Service, RequestHandler, IsStoppable>::on_stop_complete(
+    NoArgBase* op, detail::InvokeHandler invoke_handler, detail::GrpcContextLocalAllocator)
+{
+    auto* self = static_cast<RepeatedlyRequestOperation*>(op);
+    detail::AllocatedPointer ptr{self, self->get_allocator()};
+    if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
+    {
+        auto handler{std::move(self->completion_handler())};
+        ptr.reset();
+        std::move(handler)();
     }
 }
 
@@ -262,9 +245,10 @@ template <class RPC, class Service, class RequestHandler>
 struct RepeatedlyRequestInitiator
 {
     template <class CompletionHandler>
-    void operator()(CompletionHandler completion_handler, RPC rpc, Service& service,
+    void operator()(CompletionHandler&& completion_handler, RPC rpc, Service& service,
                     RequestHandler request_handler) const
     {
+        using TrackingCompletionHandler = detail::WorkTrackingCompletionHandler<CompletionHandler>;
         const auto executor = detail::get_scheduler(request_handler);
         const auto allocator = detail::get_allocator(request_handler);
         auto& grpc_context = detail::query_grpc_context(executor);
@@ -274,21 +258,21 @@ struct RepeatedlyRequestInitiator
         auto cancellation_slot = asio::get_associated_cancellation_slot(completion_handler);
         if (cancellation_slot.is_connected())
         {
-            auto operation = detail::allocate_operation<
-                true, detail::RepeatedlyRequestCompletionHandler<CompletionHandler, RPC, Service, RequestHandler, true>,
-                void()>(allocator, std::move(completion_handler), rpc, service, std::move(request_handler));
-            cancellation_slot.template emplace<detail::RepeatedlyRequestStopFunction>(
-                operation->handler().context().stop_context());
+            auto operation = detail::allocate<
+                detail::RepeatedlyRequestOperation<TrackingCompletionHandler, RPC, Service, RequestHandler, true>>(
+                allocator, std::forward<CompletionHandler>(completion_handler), rpc, service,
+                std::move(request_handler));
+            cancellation_slot.template emplace<detail::RepeatedlyRequestStopFunction>(operation->stop_context());
             detail::initiate_repeat_operation(grpc_context, operation.get());
             operation.release();
         }
         else
 #endif
         {
-            auto operation = detail::allocate_operation<
-                true,
-                detail::RepeatedlyRequestCompletionHandler<CompletionHandler, RPC, Service, RequestHandler, false>,
-                void()>(allocator, std::move(completion_handler), rpc, service, std::move(request_handler));
+            auto operation = detail::allocate<
+                detail::RepeatedlyRequestOperation<TrackingCompletionHandler, RPC, Service, RequestHandler, false>>(
+                allocator, std::forward<CompletionHandler>(completion_handler), rpc, service,
+                std::move(request_handler));
             detail::initiate_repeat_operation(grpc_context, operation.get());
             operation.release();
         }
