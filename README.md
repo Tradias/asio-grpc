@@ -319,7 +319,7 @@ For servers and clients:
 grpc::ServerBuilder builder;
 agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
 ```
-<sup><a href='/doc/server.cpp#L240-L243' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L233-L236' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 For clients only:
@@ -341,7 +341,7 @@ grpc_context.run();
 server->Shutdown();
 }  // grpc_context is destructed here before the server
 ```
-<sup><a href='/doc/server.cpp#L256-L260' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L249-L253' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 It might also be helpful to create a work guard before running the `agrpc::GrpcContext` to prevent `grpc_context.run()` from returning early.
@@ -782,58 +782,51 @@ The following example shows how to implement a generic Handler with a custom all
 <a id='snippet-repeatedly-request-callback'></a>
 ```cpp
 template <class Executor, class Handler>
-struct Spawner
+struct AssociatedHandler
 {
     using executor_type = Executor;
-    using allocator_type = boost::asio::associated_allocator_t<Handler>;
 
     Executor executor;
-    Handler handler;
+    /*[[no_unique_address]]*/ Handler handler;
 
-    Spawner(Executor executor, Handler handler) : executor(std::move(executor)), handler(std::move(handler)) {}
+    AssociatedHandler(Executor executor, Handler handler) : executor(std::move(executor)), handler(std::move(handler))
+    {
+    }
 
     template <class T>
     void operator()(agrpc::RepeatedlyRequestContext<T>&& request_context)
     {
-        boost::asio::spawn(get_executor(),
-                           [captured_handler = handler, request_context = std::move(request_context)](
-                               const boost::asio::yield_context& yield) mutable
-                           {
-                               std::apply(std::move(captured_handler),
-                                          std::tuple_cat(request_context.args(), std::forward_as_tuple(yield)));
-                               //
-                               // The RepeatedlyRequestContext also provides access to:
-                               // * the grpc::ServerContext
-                               // request_context.server_context();
-                               // * the grpc::ServerAsyncReader/Writer
-                               // request_context.responder();
-                               // * the protobuf request message (for unary and server-streaming requests)
-                               // request_context.request();
-                           });
+        std::invoke(handler, std::move(request_context), executor);
+        //
+        // The RepeatedlyRequestContext also provides access to:
+        // * the grpc::ServerContext
+        // request_context.server_context();
+        // * the grpc::ServerAsyncReader/Writer
+        // request_context.responder();
+        // * the protobuf request message (for unary and server-streaming requests)
+        // request_context.request();
     }
 
     [[nodiscard]] executor_type get_executor() const noexcept { return executor; }
-
-    [[nodiscard]] allocator_type get_allocator() const noexcept
-    {
-        return boost::asio::get_associated_allocator(handler);
-    }
 };
 
 void repeatedly_request_example(example::v1::Example::AsyncService& service, agrpc::GrpcContext& grpc_context)
 {
     agrpc::repeatedly_request(
         &example::v1::Example::AsyncService::RequestUnary, service,
-        Spawner{grpc_context.get_executor(), [&](grpc::ServerContext&, example::v1::Request&,
-                                                 grpc::ServerAsyncResponseWriter<example::v1::Response> writer,
-                                                 const boost::asio::yield_context& yield)
-                {
-                    example::v1::Response response;
-                    agrpc::finish(writer, response, grpc::Status::OK, yield);
-                }});
+        AssociatedHandler{boost::asio::require(grpc_context.get_executor(),
+                                               boost::asio::execution::allocator(grpc_context.get_allocator())),
+                          [](auto&& request_context, auto&& executor)
+                          {
+                              auto& writer = request_context.responder();
+                              example::v1::Response response;
+                              agrpc::finish(
+                                  writer, response, grpc::Status::OK,
+                                  boost::asio::bind_executor(executor, [c = std::move(request_context)](bool) {}));
+                          }});
 }
 ```
-<sup><a href='/doc/server.cpp#L181-L233' title='Snippet source file'>snippet source</a> | <a href='#snippet-repeatedly-request-callback' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L181-L226' title='Snippet source file'>snippet source</a> | <a href='#snippet-repeatedly-request-callback' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## CMake asio_grpc_protobuf_generate 
