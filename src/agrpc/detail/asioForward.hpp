@@ -36,6 +36,7 @@
 #include <asio/system_executor.hpp>
 
 #ifdef ASIO_HAS_CO_AWAIT
+#include <asio/co_spawn.hpp>
 #include <asio/use_awaitable.hpp>
 
 #define AGRPC_ASIO_HAS_CO_AWAIT
@@ -69,6 +70,7 @@
 #include <boost/asio/system_executor.hpp>
 
 #ifdef BOOST_ASIO_HAS_CO_AWAIT
+#include <boost/asio/co_spawn.hpp>
 #include <boost/asio/use_awaitable.hpp>
 
 #define AGRPC_ASIO_HAS_CO_AWAIT
@@ -103,13 +105,13 @@ namespace detail
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class Object>
-auto get_scheduler(const Object& object)
+auto get_scheduler(Object& object)
 {
     return asio::get_associated_executor(object);
 }
 
 template <class Object>
-auto get_allocator(const Object& object)
+auto get_allocator(Object& object)
 {
     if constexpr (asio::can_query_v<const Object&, asio::execution::allocator_t<void>>)
     {
@@ -121,22 +123,19 @@ auto get_allocator(const Object& object)
     }
 }
 
-template <class Object>
-auto get_associated_executor_and_allocator(const Object& object)
+template <class Object, class Executor>
+auto query_allocator(Object& object, Executor&& executor)
 {
-    auto executor = asio::get_associated_executor(object);
-    auto allocator = [&]
+    if constexpr (asio::can_query_v<std::remove_cv_t<std::remove_reference_t<Executor>>,
+                                    asio::execution::allocator_t<void>>)
     {
-        if constexpr (asio::can_query_v<decltype(executor), asio::execution::allocator_t<void>>)
-        {
-            return asio::get_associated_allocator(object, asio::query(executor, asio::execution::allocator));
-        }
-        else
-        {
-            return asio::get_associated_allocator(object);
-        }
-    }();
-    return std::pair{std::move(executor), std::move(allocator)};
+        return asio::get_associated_allocator(
+            object, asio::query(std::forward<Executor>(executor), asio::execution::allocator));
+    }
+    else
+    {
+        return asio::get_associated_allocator(object);
+    }
 }
 
 using asio::execution::connect;
@@ -173,10 +172,10 @@ using stop_token_type_t = detail::unstoppable_token;
 using ::unifex::get_allocator;
 using ::unifex::get_scheduler;
 
-template <class Object>
-auto get_associated_executor_and_allocator(const Object& object)
+template <class Object, class Scheduler>
+auto query_allocator(Object& object, Scheduler&&)
 {
-    return std::pair{detail::get_scheduler(object), detail::get_allocator(object)};
+    return detail::get_allocator(object);
 }
 
 template <class T>
@@ -204,6 +203,14 @@ constexpr auto is_stop_ever_possible_helper(long) -> std::true_type;
 
 template <class T>
 inline constexpr bool IS_STOP_EVER_POSSIBLE_V = decltype(is_stop_ever_possible_helper<T>(0))::value;
+
+template <class Object>
+auto get_associated_executor_and_allocator(Object& object)
+{
+    auto executor = detail::get_scheduler(object);
+    auto allocator = detail::query_allocator(object, executor);
+    return std::pair{std::move(executor), std::move(allocator)};
+}
 }  // namespace detail
 
 AGRPC_NAMESPACE_END

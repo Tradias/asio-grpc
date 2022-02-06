@@ -178,57 +178,50 @@ void bidirectional_streaming(example::v1::Example::AsyncService& service, const 
     silence_unused(request_ok, send_ok, read_ok, write_and_finish_ok, write_ok, finish_ok);
 }
 
-// begin-snippet: repeatedly-request-spawner
+// begin-snippet: repeatedly-request-callback
 template <class Executor, class Handler>
-struct Spawner
+struct AssociatedHandler
 {
     using executor_type = Executor;
-    using allocator_type = boost::asio::associated_allocator_t<Handler>;
 
     Executor executor;
-    Handler handler;
+    /*[[no_unique_address]]*/ Handler handler;
 
-    Spawner(Executor executor, Handler handler) : executor(std::move(executor)), handler(std::move(handler)) {}
+    AssociatedHandler(Executor executor, Handler handler) : executor(std::move(executor)), handler(std::move(handler))
+    {
+    }
 
     template <class T>
     void operator()(agrpc::RepeatedlyRequestContext<T>&& request_context)
     {
-        boost::asio::spawn(get_executor(),
-                           [captured_handler = handler, request_context = std::move(request_context)](
-                               const boost::asio::yield_context& yield) mutable
-                           {
-                               std::apply(std::move(captured_handler),
-                                          std::tuple_cat(request_context.args(), std::forward_as_tuple(yield)));
-                               //
-                               // The RepeatedlyRequestContext also provides access to:
-                               // * the grpc::ServerContext
-                               // request_context.server_context();
-                               // * the grpc::ServerAsyncReader/Writer
-                               // request_context.responder();
-                               // * the protobuf request message (for unary and server-streaming requests)
-                               // request_context.request();
-                           });
+        std::invoke(handler, std::move(request_context), executor);
+        //
+        // The RepeatedlyRequestContext also provides access to:
+        // * the grpc::ServerContext
+        // request_context.server_context();
+        // * the grpc::ServerAsyncReader/Writer
+        // request_context.responder();
+        // * the protobuf request message (for unary and server-streaming requests)
+        // request_context.request();
     }
 
     [[nodiscard]] executor_type get_executor() const noexcept { return executor; }
-
-    [[nodiscard]] allocator_type get_allocator() const noexcept
-    {
-        return boost::asio::get_associated_allocator(handler);
-    }
 };
 
 void repeatedly_request_example(example::v1::Example::AsyncService& service, agrpc::GrpcContext& grpc_context)
 {
     agrpc::repeatedly_request(
         &example::v1::Example::AsyncService::RequestUnary, service,
-        Spawner{grpc_context.get_executor(), [&](grpc::ServerContext&, example::v1::Request&,
-                                                 grpc::ServerAsyncResponseWriter<example::v1::Response> writer,
-                                                 const boost::asio::yield_context& yield)
-                {
-                    example::v1::Response response;
-                    agrpc::finish(writer, response, grpc::Status::OK, yield);
-                }});
+        AssociatedHandler{boost::asio::require(grpc_context.get_executor(),
+                                               boost::asio::execution::allocator(grpc_context.get_allocator())),
+                          [](auto&& request_context, auto&& executor)
+                          {
+                              auto& writer = request_context.responder();
+                              example::v1::Response response;
+                              agrpc::finish(
+                                  writer, response, grpc::Status::OK,
+                                  boost::asio::bind_executor(executor, [c = std::move(request_context)](bool) {}));
+                          }});
 }
 // end-snippet
 

@@ -25,6 +25,62 @@ namespace test_repeatedly_request_20
 TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0));
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "repeatedly_request unary with awaitable")
+{
+    bool use_server_shutdown{false};
+    SUBCASE("shutdown server") { use_server_shutdown = true; }
+    SUBCASE("stop GrpcContext") {}
+    bool is_shutdown{false};
+    auto request_count{0};
+    test::v1::Response response;
+    auto executor = asio::require(get_executor(), asio::execution::allocator(get_allocator()));
+    using Executor = decltype(executor);
+    agrpc::repeatedly_request(
+        &test::v1::Test::AsyncService::RequestUnary, service,
+        asio::bind_executor(
+            executor,
+            [&](grpc::ServerContext&, test::v1::Request& request,
+                grpc::ServerAsyncResponseWriter<test::v1::Response>& writer) -> asio::awaitable<void, Executor>
+            {
+                CHECK_EQ(42, request.integer());
+                ++request_count;
+                if (request_count > 3)
+                {
+                    is_shutdown = true;
+                }
+                response.set_integer(21);
+                co_await agrpc::finish(writer, response, grpc::Status::OK, asio::use_awaitable_t<Executor>{});
+            }));
+    test::co_spawn(grpc_context,
+                   [&]() -> asio::awaitable<void>
+                   {
+                       while (!is_shutdown)
+                       {
+                           grpc::ClientContext new_client_context;
+                           test::v1::Request request;
+                           request.set_integer(42);
+                           const auto reader =
+                               stub->AsyncUnary(&new_client_context, request, grpc_context.get_completion_queue());
+                           test::v1::Response response;
+                           grpc::Status status;
+                           CHECK(co_await agrpc::finish(*reader, response, status));
+                           CHECK(status.ok());
+                           CHECK_EQ(21, response.integer());
+                       }
+                       if (use_server_shutdown)
+                       {
+                           server->Shutdown();
+                       }
+                       else
+                       {
+                           grpc_context.stop();
+                       }
+                   });
+    grpc_context.run();
+    CHECK_EQ(4, request_count);
+    CHECK(allocator_has_been_used());
+}
+
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "repeatedly_request with asio use_sender")
 {

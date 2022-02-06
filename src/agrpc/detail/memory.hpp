@@ -162,6 +162,8 @@ class MemoryResourceAllocator
   public:
     using value_type = T;
 
+    MemoryResourceAllocator() = default;
+
     constexpr explicit MemoryResourceAllocator(Resource* resource) noexcept : resource(resource) {}
 
     template <class U>

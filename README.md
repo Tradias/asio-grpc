@@ -764,19 +764,22 @@ Coro{deadline, grpc_context}(false);
 ## Repeatedly request server-side
 
 (**experimental**) The function `agrpc::repeatedly_request` helps to ensure that there are enough outstanding calls to `request` to match incoming RPCs. 
-It takes the RPC, the Service, a move-able Handler and a CompletionToken. The Handler determines what to do with a client request, it could e.g. spawn a new coroutine to process it. It must also have an associated executor that refers to a `agrpc::GrpcContext`. When the client makes a request the Handler is invoked with a `agrpc::RepeatedlyRequestContext` - a move-only type that provides a stable address to the `grpc::ServerContext`, the request (if any) and the responder that were used when requesting the RPC. It should be kept alive until the RPC is finished. The Handler or its associated executor may also have an associated allocator to control the allocation needed for the `agrpc::RepeatedlyRequestContext` and each request.
+It takes the RPC, the Service, a move-able Handler and a CompletionToken. The Handler determines what to do with a client request, it could e.g. spawn a new coroutine to process it. It must also have an associated executor that refers to a `agrpc::GrpcContext`. When the client makes a request the Handler is invoked with a `agrpc::RepeatedlyRequestContext` - a move-only type that provides a stable address to the `grpc::ServerContext`, the request (if any) and the responder that were used when requesting the RPC. It should be kept alive until the RPC is finished. The Handler or its associated executor may also have an associated allocator to control the allocation needed for each request.
 
 When using the special CompletionToken created by `agrpc::use_sender` the Handler's signature must be:    
 `sender auto operator()(grpc::ServerContext&, Request&, Responder&)` for unary and server-streaming requests and   
 `sender auto operator()(grpc::ServerContext&, Responder&)` otherwise.
 
+Another special overload of `agrpc::repeatedly_request` can be used by passing a Handler with the following signature:   
+`asio::awaitable<void,Executor> operator()(grpc::ServerContext&, Request&, Responder&)` for unary and server-streaming requests or   
+`asio::awaitable<void,Executor> operator()(grpc::ServerContext&, Responder&)` otherwise.
+
 `agrpc::repeatedly_request` will complete when it was cancelled, the `agrpc::GrpcContext` was stopped or the `grpc::Server` been shutdown. It will **not** wait until all outstanding RPCs that are being processed by the Handler have completed.
 
-The following example shows how to implement a generic Handler that spawns a new Boost.Coroutine for each incoming RPC and invokes 
-the provided handler to process it.
+The following example shows how to implement a generic Handler with a custom allocator for simple, high-performance RPC handling. 
 
-<!-- snippet: repeatedly-request-spawner -->
-<a id='snippet-repeatedly-request-spawner'></a>
+<!-- snippet: repeatedly-request-callback -->
+<a id='snippet-repeatedly-request-callback'></a>
 ```cpp
 template <class Executor, class Handler>
 struct Spawner
@@ -830,7 +833,7 @@ void repeatedly_request_example(example::v1::Example::AsyncService& service, agr
                 }});
 }
 ```
-<sup><a href='/doc/server.cpp#L181-L233' title='Snippet source file'>snippet source</a> | <a href='#snippet-repeatedly-request-spawner' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L181-L233' title='Snippet source file'>snippet source</a> | <a href='#snippet-repeatedly-request-callback' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## CMake asio_grpc_protobuf_generate 

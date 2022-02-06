@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "coSpawner.hpp"
 #include "helper.hpp"
 #include "protos/example.grpc.pb.h"
 
@@ -106,21 +105,13 @@ boost::asio::awaitable<void> handle_client_streaming_request(
 
 void register_client_streaming_handler(example::v1::Example::AsyncService& service, agrpc::GrpcContext& grpc_context)
 {
-    // Optionally register our handler so that it will handle all incoming
-    // requests for this RPC method (Example::ClientStreaming) until the server is being shut down.
-    // An API for requesting to handle a single RPC is also available:
+    // Register a handler for all incoming RPCs of this method (Example::ClientStreaming) until the server is being
+    // shut down. An API for requesting to handle a single RPC is also available:
     // `agrpc::request(&example::v1::Example::AsyncService::RequestClientStreaming, services, server_context, request,
-    // *reader)`
-    //
-    // Note that this is an experimental feature which means that it works correctly but its
-    // API is still subject to breaking changes
-    agrpc::repeatedly_request(&example::v1::Example::AsyncService::RequestClientStreaming, service,
-                              CoSpawner{grpc_context.get_executor(),
-                                        [&](auto& server_context, auto& reader) -> boost::asio::awaitable<void>
-                                        {
-                                            co_await handle_client_streaming_request(server_context, reader);
-                                        }},
-                              boost::asio::detached);
+    // reader)`
+    agrpc::repeatedly_request(
+        &example::v1::Example::AsyncService::RequestClientStreaming, service,
+        boost::asio::bind_executor(grpc_context.get_executor(), &handle_client_streaming_request));
 }
 
 boost::asio::awaitable<void> handle_bidirectional_streaming_request(example::v1::Example::AsyncService& service)
