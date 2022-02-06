@@ -32,10 +32,9 @@ class RepeatedlyRequestFn
     template <class RPC, class Service, class RequestHandler, class CompletionToken>
     static auto impl(RPC rpc, Service& service, RequestHandler&& request_handler, CompletionToken token)
     {
-        using DecayedRequestHandler = std::decay_t<RequestHandler>;
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
         using RPCContext = detail::RPCContextForRPCT<RPC>;
-        if constexpr (detail::INVOKE_RESULT_IS_SENDER<DecayedRequestHandler&&, typename RPCContext::Signature>)
+        if constexpr (detail::INVOKE_RESULT_IS_SENDER<std::decay_t<RequestHandler>&&, typename RPCContext::Signature>)
         {
 #endif
             return detail::RepeatedlyRequestSender{token.grpc_context, rpc, service,
@@ -43,7 +42,7 @@ class RepeatedlyRequestFn
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
         }
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
-        else if constexpr (detail::INVOKE_RESULT_IS_ASIO_AWAITABLE<DecayedRequestHandler&,
+        else if constexpr (detail::INVOKE_RESULT_IS_ASIO_AWAITABLE<std::decay_t<RequestHandler>&,
                                                                    typename RPCContext::Signature>)
         {
             return asio::async_initiate<CompletionToken, void()>(detail::RepeatedlyRequestAwaitableInitiator{}, token,

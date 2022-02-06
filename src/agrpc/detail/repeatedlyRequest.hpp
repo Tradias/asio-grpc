@@ -411,7 +411,7 @@ auto initiate_request_from_rpc_context(detail::ServerSingleArgRequest<RPC, Respo
 }
 
 template <class CompletionHandler, class RPC, class Service, class RequestHandler, bool IsStoppable>
-RepeatedlyRequestAwaitableOperation<CompletionHandler, RPC, Service, RequestHandler, IsStoppable>::Awaitable
+typename RepeatedlyRequestAwaitableOperation<CompletionHandler, RPC, Service, RequestHandler, IsStoppable>::Awaitable
 RepeatedlyRequestAwaitableOperation<CompletionHandler, RPC, Service, RequestHandler, IsStoppable>::on_request_complete()
 {
     auto& local_grpc_context = grpc_context();
