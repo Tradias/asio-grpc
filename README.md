@@ -319,7 +319,7 @@ For servers and clients:
 grpc::ServerBuilder builder;
 agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
 ```
-<sup><a href='/doc/server.cpp#L233-L236' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L234-L237' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 For clients only:
@@ -341,7 +341,7 @@ grpc_context.run();
 server->Shutdown();
 }  // grpc_context is destructed here before the server
 ```
-<sup><a href='/doc/server.cpp#L249-L253' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L250-L254' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 It might also be helpful to create a work guard before running the `agrpc::GrpcContext` to prevent `grpc_context.run()` from returning early.
@@ -796,7 +796,8 @@ struct AssociatedHandler
     template <class T>
     void operator()(agrpc::RepeatedlyRequestContext<T>&& request_context)
     {
-        std::invoke(handler, std::move(request_context), executor);
+        auto handler_copy{handler};  // `this` might get deallocated at the end of the scope
+        std::invoke(std::move(handler_copy), std::move(request_context), get_executor());
         //
         // The RepeatedlyRequestContext also provides access to:
         // * the grpc::ServerContext
@@ -816,7 +817,7 @@ void repeatedly_request_example(example::v1::Example::AsyncService& service, agr
         &example::v1::Example::AsyncService::RequestUnary, service,
         AssociatedHandler{boost::asio::require(grpc_context.get_executor(),
                                                boost::asio::execution::allocator(grpc_context.get_allocator())),
-                          [](auto&& request_context, auto&& executor)
+                          [](auto&& request_context, auto executor)
                           {
                               auto& writer = request_context.responder();
                               example::v1::Response response;
@@ -826,7 +827,7 @@ void repeatedly_request_example(example::v1::Example::AsyncService& service, agr
                           }});
 }
 ```
-<sup><a href='/doc/server.cpp#L181-L226' title='Snippet source file'>snippet source</a> | <a href='#snippet-repeatedly-request-callback' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L181-L227' title='Snippet source file'>snippet source</a> | <a href='#snippet-repeatedly-request-callback' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## CMake asio_grpc_protobuf_generate 
