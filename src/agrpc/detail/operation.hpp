@@ -37,26 +37,14 @@ class Operation<IsIntrusivelyListable, Handler, Allocator, void(Signature...)>
   public:
     template <class... Args>
     explicit Operation(Allocator allocator, Args&&... args)
-        : Base(&Operation::do_complete), impl(detail::SecondThenVariadic{}, allocator, std::forward<Args>(args)...)
+        : Base(&detail::default_do_complete<Operation, Base, Signature...>),
+          impl(detail::SecondThenVariadic{}, allocator, std::forward<Args>(args)...)
     {
     }
 
-    static void do_complete(Base* op, detail::InvokeHandler invoke_handler, Signature... args,
-                            detail::GrpcContextLocalAllocator)
-    {
-        auto* self = static_cast<Operation*>(op);
-        detail::AllocatedPointer ptr{self, self->get_allocator()};
-        if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
-        {
-            auto handler{std::move(self->handler())};
-            ptr.reset();
-            std::move(handler)(detail::forward_as<Signature>(args)...);
-        }
-    }
+    [[nodiscard]] constexpr decltype(auto) completion_handler() noexcept { return impl.first(); }
 
-    [[nodiscard]] constexpr decltype(auto) handler() noexcept { return impl.first(); }
-
-    [[nodiscard]] constexpr decltype(auto) handler() const noexcept { return impl.first(); }
+    [[nodiscard]] constexpr decltype(auto) completion_handler() const noexcept { return impl.first(); }
 
     [[nodiscard]] constexpr decltype(auto) get_allocator() noexcept { return impl.second(); }
 
@@ -89,15 +77,15 @@ class LocalOperation<IsIntrusivelyListable, Handler, R(Signature...)>
         detail::AllocatedPointer ptr{self, allocator};
         if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
         {
-            auto handler{std::move(self->handler_)};
+            auto handler{std::move(self->completion_handler())};
             ptr.reset();
             std::move(handler)(detail::forward_as<Signature>(args)...);
         }
     }
 
-    [[nodiscard]] constexpr auto& handler() noexcept { return handler_; }
+    [[nodiscard]] constexpr auto& completion_handler() noexcept { return handler_; }
 
-    [[nodiscard]] constexpr const auto& handler() const noexcept { return handler_; }
+    [[nodiscard]] constexpr const auto& completion_handler() const noexcept { return handler_; }
 
   private:
     Handler handler_;

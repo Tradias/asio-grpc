@@ -18,6 +18,7 @@
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/grpcContext.hpp"
 #include "agrpc/detail/intrusiveQueueHook.hpp"
+#include "agrpc/detail/memory.hpp"
 #include "agrpc/detail/utility.hpp"
 
 AGRPC_NAMESPACE_BEGIN()
@@ -54,6 +55,20 @@ class TypeErasedOperation
 
 using TypeErasedNoArgOperation = detail::TypeErasedOperation<true, detail::GrpcContextLocalAllocator>;
 using TypeErasedGrpcTagOperation = detail::TypeErasedOperation<false, bool, detail::GrpcContextLocalAllocator>;
+
+template <class Operation, class Base, class... Args>
+inline void default_do_complete(Base* op, detail::InvokeHandler invoke_handler, Args... args,
+                                detail::GrpcContextLocalAllocator)
+{
+    auto* self = static_cast<Operation*>(op);
+    detail::AllocatedPointer ptr{self, self->get_allocator()};
+    if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
+    {
+        auto handler{std::move(self->completion_handler())};
+        ptr.reset();
+        std::move(handler)(detail::forward_as<Args>(args)...);
+    }
+}
 }
 
 AGRPC_NAMESPACE_END

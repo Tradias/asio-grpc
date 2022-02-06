@@ -24,7 +24,7 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class Allocator>
-class NoOpReceiverWithAllocator : detail::EmptyBaseOptimization<Allocator>
+class NoOpReceiverWithAllocator : private detail::EmptyBaseOptimization<Allocator>
 {
   public:
     using allocator_type = Allocator;
