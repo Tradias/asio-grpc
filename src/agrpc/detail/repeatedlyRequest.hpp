@@ -402,16 +402,12 @@ RepeatedlyRequestAwaitableOperation<CompletionHandler, RPC, Service, RequestHand
     guard.release();
     if AGRPC_LIKELY (ok)
     {
-        const auto is_repeated = detail::initiate_awaitable_repeatedly_request(*this);
-        detail::ScopeGuard request_guard{[&]
-                                         {
-                                             if (!is_repeated)
-                                             {
-                                                 detail::GrpcContextImplementation::add_local_operation(
-                                                     local_grpc_context, this);
-                                             }
-                                         }};
-        co_await std::apply(request_handler(), rpc_context.args());
+        auto local_request_handler = request_handler();
+        if (!detail::initiate_awaitable_repeatedly_request(*this))
+        {
+            detail::GrpcContextImplementation::add_local_operation(local_grpc_context, this);
+        }
+        co_await std::apply(std::move(local_request_handler), rpc_context.args());
     }
     else
     {

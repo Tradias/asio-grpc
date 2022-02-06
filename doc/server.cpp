@@ -194,7 +194,8 @@ struct AssociatedHandler
     template <class T>
     void operator()(agrpc::RepeatedlyRequestContext<T>&& request_context)
     {
-        std::invoke(handler, std::move(request_context), executor);
+        auto handler_copy{handler};  // `this` might get deallocated at the end of the scope
+        std::invoke(std::move(handler_copy), std::move(request_context), get_executor());
         //
         // The RepeatedlyRequestContext also provides access to:
         // * the grpc::ServerContext
@@ -214,7 +215,7 @@ void repeatedly_request_example(example::v1::Example::AsyncService& service, agr
         &example::v1::Example::AsyncService::RequestUnary, service,
         AssociatedHandler{boost::asio::require(grpc_context.get_executor(),
                                                boost::asio::execution::allocator(grpc_context.get_allocator())),
-                          [](auto&& request_context, auto&& executor)
+                          [](auto&& request_context, auto executor)
                           {
                               auto& writer = request_context.responder();
                               example::v1::Response response;
