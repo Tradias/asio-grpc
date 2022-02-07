@@ -207,26 +207,6 @@ TEST_CASE("unifex GrpcContext.stop() with pending GrpcSender operation")
     CHECK_FALSE(is_invoked);
 }
 
-template <class Handler, class Allocator = std::allocator<std::byte>>
-struct AssociatedHandler
-{
-    Handler handler;
-    Allocator allocator;
-
-    explicit AssociatedHandler(Handler handler, Allocator allocator) : handler(handler), allocator(allocator) {}
-
-    template <class... Args>
-    auto operator()(Args&&... args) const
-    {
-        return handler(std::forward<Args>(args)...);
-    }
-
-    friend auto tag_invoke(unifex::tag_t<unifex::get_allocator>, const AssociatedHandler& receiver) noexcept
-    {
-        return receiver.allocator;
-    }
-};
-
 struct RepeatedlyRequestTest : test::GrpcClientServerTest
 {
     template <class OnRequestDone = test::InvocableArchetype>
@@ -295,15 +275,15 @@ struct RepeatedlyRequestTest : test::GrpcClientServerTest
 
     auto make_unary_repeatedly_request_sender()
     {
-        return agrpc::repeatedly_request(
-            &test::v1::Test::AsyncService::RequestUnary, service,
-            AssociatedHandler{[&](grpc::ServerContext&, test::v1::Request& request,
-                                  grpc::ServerAsyncResponseWriter<test::v1::Response>& writer)
-                              {
-                                  return handle_unary_request_sender(request, writer);
-                              },
-                              get_allocator()},
-            use_sender());
+        return unifex::with_query_value(agrpc::repeatedly_request(
+                                            &test::v1::Test::AsyncService::RequestUnary, service,
+                                            [&](grpc::ServerContext&, test::v1::Request& request,
+                                                grpc::ServerAsyncResponseWriter<test::v1::Response>& writer)
+                                            {
+                                                return handle_unary_request_sender(request, writer);
+                                            },
+                                            use_sender()),
+                                        unifex::get_allocator, get_allocator());
     }
 };
 
@@ -372,9 +352,8 @@ TEST_CASE_FIXTURE(RepeatedlyRequestTest, "unifex repeatedly_request unary - stop
     CHECK_FALSE(allocator_has_been_used());
 }
 
-TEST_CASE_FIXTURE(
-    RepeatedlyRequestTest,
-    "unifex repeatedly_request unary - throw exception from request handler factory does not cancel subsequent repeats")
+TEST_CASE_FIXTURE(RepeatedlyRequestTest,
+                  "unifex repeatedly_request unary - throw exception from request handler propagates")
 {
     int count{};
     unifex::inplace_stop_source stop;
@@ -392,27 +371,28 @@ TEST_CASE_FIXTURE(
                                                  },
                                                  use_sender()),
                                              unifex::get_stop_token, stop.get_token());
-    std::exception_ptr no_error_propagation{};
-    unifex::sync_wait(unifex::when_all(
-        unifex::sequence(make_client_unary_request_sender(test::ten_milliseconds_from_now(),
-                                                          [&](auto&&, auto&&, auto&&)
-                                                          {
-                                                              stop.request_stop();
-                                                          }),
-                         make_client_unary_request_sender(test::five_seconds_from_now(), &check_response_ok)),
-        unifex::let_error(std::move(repeater),
-                          [&](std::exception_ptr ep)
-                          {
-                              no_error_propagation = std::move(ep);
-                              return unifex::just();
-                          }),
-        unifex::then(unifex::just(),
-                     [&]
-                     {
-                         grpc_context.run();
-                     })));
-    CHECK_EQ(2, count);
-    CHECK_EQ(std::exception_ptr{}, no_error_propagation);
+    std::exception_ptr error_propagation{};
+    unifex::sync_wait(
+        unifex::when_all(unifex::sequence(make_client_unary_request_sender(test::ten_milliseconds_from_now(),
+                                                                           [&](auto&&, auto&&, auto&&)
+                                                                           {
+                                                                               stop.request_stop();
+                                                                           }),
+                                          make_client_unary_request_sender(test::hundred_milliseconds_from_now())),
+                         unifex::let_error(std::move(repeater),
+                                           [&](std::exception_ptr ep)
+                                           {
+                                               error_propagation = std::move(ep);
+                                               return unifex::just();
+                                           }),
+                         unifex::then(unifex::just(),
+                                      [&]
+                                      {
+                                          grpc_context.run();
+                                      })));
+    CHECK_EQ(1, count);
+    REQUIRE(error_propagation);
+    CHECK_THROWS_AS(std::rethrow_exception(error_propagation), std::logic_error);
 }
 
 struct ServerUnaryRequestContext

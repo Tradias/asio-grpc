@@ -136,22 +136,6 @@ class RepeatedlyRequestOperation : public detail::TypeErasedGrpcTagOperation, pu
     RPCContext* rpc_context;
 };
 
-template <class RPC, class Service, class Request, class Responder>
-void initiate_request_from_rpc_context(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
-                                       detail::MultiArgRPCContext<Request, Responder>& rpc_context,
-                                       grpc::ServerCompletionQueue* cq, void* tag)
-{
-    (service.*rpc)(&rpc_context.server_context(), &rpc_context.request(), &rpc_context.responder(), cq, cq, tag);
-}
-
-template <class RPC, class Service, class Responder>
-void initiate_request_from_rpc_context(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service,
-                                       detail::SingleArgRPCContext<Responder>& rpc_context,
-                                       grpc::ServerCompletionQueue* cq, void* tag)
-{
-    (service.*rpc)(&rpc_context.server_context(), &rpc_context.responder(), cq, cq, tag);
-}
-
 template <class Operation>
 auto initiate_repeatedly_request(Operation& operation)
 {
@@ -163,8 +147,7 @@ auto initiate_repeatedly_request(Operation& operation)
     auto rpc_context = operation.allocate_rpc_context();
     auto* cq = grpc_context.get_server_completion_queue();
     grpc_context.work_started();
-    detail::initiate_request_from_rpc_context(operation.rpc(), operation.service(), *rpc_context, cq,
-                                              std::addressof(operation));
+    detail::initiate_request_from_rpc_context(operation.rpc(), operation.service(), *rpc_context, cq, &operation);
     rpc_context.release();
     return true;
 }
@@ -271,18 +254,6 @@ template <class Function, class... Args>
 inline constexpr bool INVOKE_RESULT_IS_ASIO_AWAITABLE<
     Function, void(Args...), std::enable_if_t<detail::IS_ASIO_AWAITABLE<std::invoke_result_t<Function, Args...>>>> =
     true;
-
-template <class Function, class Signature>
-struct InvokeResultFromSignature;
-
-template <class Function, class... Args>
-struct InvokeResultFromSignature<Function, void(Args...)>
-{
-    using Type = std::invoke_result_t<Function, Args...>;
-};
-
-template <class Function, class Signature>
-using InvokeResultFromSignatureT = typename detail::InvokeResultFromSignature<Function, Signature>::Type;
 
 template <class CompletionHandler, class RequestHandler, class RPC, class Service, bool IsStoppable>
 class RepeatedlyRequestAwaitableOperation : public detail::TypeErasedNoArgOperation

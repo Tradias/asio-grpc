@@ -18,6 +18,7 @@
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/rpcs.hpp"
 
+#include <grpcpp/completion_queue.h>
 #include <grpcpp/server_context.h>
 
 #include <functional>
@@ -105,6 +106,22 @@ struct RPCContextForRPC<detail::ServerSingleArgRequest<RPC, Responder>>
 
 template <class RPC>
 using RPCContextForRPCT = typename detail::RPCContextForRPC<detail::RemoveCvrefT<RPC>>::Type;
+
+template <class RPC, class Service, class Request, class Responder>
+void initiate_request_from_rpc_context(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
+                                       detail::MultiArgRPCContext<Request, Responder>& rpc_context,
+                                       grpc::ServerCompletionQueue* cq, void* tag)
+{
+    (service.*rpc)(&rpc_context.server_context(), &rpc_context.request(), &rpc_context.responder(), cq, cq, tag);
+}
+
+template <class RPC, class Service, class Responder>
+void initiate_request_from_rpc_context(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service,
+                                       detail::SingleArgRPCContext<Responder>& rpc_context,
+                                       grpc::ServerCompletionQueue* cq, void* tag)
+{
+    (service.*rpc)(&rpc_context.server_context(), &rpc_context.responder(), cq, cq, tag);
+}
 }
 
 AGRPC_NAMESPACE_END

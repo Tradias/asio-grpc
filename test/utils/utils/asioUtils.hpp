@@ -68,43 +68,6 @@ struct FunctionAsReceiver
 #endif
 };
 
-template <class SenderFactory, class Allocator = std::allocator<void>>
-struct Submitter
-{
-    agrpc::GrpcContext& grpc_context;
-    SenderFactory sender_factory;
-    Allocator allocator;
-
-    Submitter(agrpc::GrpcContext& grpc_context, SenderFactory sender_factory, Allocator allocator = {})
-        : grpc_context(grpc_context), sender_factory(sender_factory), allocator(allocator)
-    {
-    }
-
-    template <class T>
-    void operator()(agrpc::RepeatedlyRequestContext<T>&& context, bool ok)
-    {
-        if (!ok)
-        {
-            return;
-        }
-        auto args = context.args();
-        agrpc::detail::submit(std::apply(sender_factory, args),
-                              test::FunctionAsReceiver{[c = std::move(context)](auto&&...) {}});
-    }
-
-#ifdef AGRPC_UNIFEX
-    friend auto tag_invoke(unifex::tag_t<unifex::get_scheduler>, const Submitter& self) noexcept
-    {
-        return self.grpc_context.get_scheduler();
-    }
-
-    friend auto tag_invoke(unifex::tag_t<unifex::get_allocator>, const Submitter& self) noexcept
-    {
-        return self.allocator;
-    }
-#endif
-};
-
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class Handler, class Allocator>
 struct HandlerWithAssociatedAllocator

@@ -28,6 +28,18 @@ namespace detail
 template <class T>
 using RemoveCvrefT = std::remove_cv_t<std::remove_reference_t<T>>;
 
+template <class Function, class Signature>
+struct InvokeResultFromSignature;
+
+template <class Function, class... Args>
+struct InvokeResultFromSignature<Function, void(Args...)>
+{
+    using Type = std::invoke_result_t<Function, Args...>;
+};
+
+template <class Function, class Signature>
+using InvokeResultFromSignatureT = typename detail::InvokeResultFromSignature<Function, Signature>::Type;
+
 struct Empty
 {
     Empty() = default;

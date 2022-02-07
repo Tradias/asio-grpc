@@ -34,7 +34,7 @@ class RepeatedlyRequestFn
     {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
         using RPCContext = detail::RPCContextForRPCT<RPC>;
-        if constexpr (detail::INVOKE_RESULT_IS_SENDER<std::decay_t<RequestHandler>&&, typename RPCContext::Signature>)
+        if constexpr (detail::INVOKE_RESULT_IS_SENDER<std::decay_t<RequestHandler>&, typename RPCContext::Signature>)
         {
 #endif
             return detail::RepeatedlyRequestSender{token.grpc_context, rpc, service,
