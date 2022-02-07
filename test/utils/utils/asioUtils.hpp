@@ -32,6 +32,14 @@ struct InvocableArchetype
     }
 };
 
+struct NoOp
+{
+    template <class... Args>
+    constexpr void operator()(Args&&...) const noexcept
+    {
+    }
+};
+
 template <class Function, class Allocator = std::allocator<std::byte>>
 struct FunctionAsReceiver
 {

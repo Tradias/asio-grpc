@@ -209,7 +209,7 @@ TEST_CASE("unifex GrpcContext.stop() with pending GrpcSender operation")
 
 struct RepeatedlyRequestTest : test::GrpcClientServerTest
 {
-    template <class OnRequestDone = test::InvocableArchetype>
+    template <class OnRequestDone = test::NoOp>
     auto make_client_unary_request_sender(std::chrono::system_clock::time_point deadline,
                                           OnRequestDone on_request_done = {})
     {
