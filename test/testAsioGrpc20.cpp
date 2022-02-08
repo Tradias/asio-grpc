@@ -396,8 +396,7 @@ template <class Function>
 asio::awaitable<void> run_with_deadline(grpc::Alarm& alarm, grpc::ClientContext& client_context,
                                         std::chrono::system_clock::time_point deadline, Function function)
 {
-    const auto set_alarm = [](grpc::Alarm& alarm, grpc::ClientContext& client_context,
-                              std::chrono::system_clock::time_point deadline) -> asio::awaitable<void>
+    const auto set_alarm = [&]() -> asio::awaitable<void>
     {
         if (co_await agrpc::wait(alarm, deadline))
         {
@@ -405,7 +404,7 @@ asio::awaitable<void> run_with_deadline(grpc::Alarm& alarm, grpc::ClientContext&
         }
     };
     using namespace asio::experimental::awaitable_operators;
-    co_await(set_alarm(alarm, client_context, deadline) || function());
+    co_await(set_alarm() || function());
 }
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline no cancel")

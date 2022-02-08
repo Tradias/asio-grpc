@@ -110,8 +110,7 @@ template <class Function>
 boost::asio::awaitable<void> run_with_deadline(grpc::Alarm& alarm, grpc::ClientContext& client_context,
                                                std::chrono::system_clock::time_point deadline, Function function)
 {
-    const auto set_alarm = [](grpc::Alarm& alarm, grpc::ClientContext& client_context,
-                              std::chrono::system_clock::time_point deadline) -> boost::asio::awaitable<void>
+    const auto set_alarm = [&]() -> boost::asio::awaitable<void>
     {
         if (co_await agrpc::wait(alarm, deadline))
         {
@@ -119,7 +118,7 @@ boost::asio::awaitable<void> run_with_deadline(grpc::Alarm& alarm, grpc::ClientC
         }
     };
     using namespace boost::asio::experimental::awaitable_operators;
-    co_await(set_alarm(alarm, client_context, deadline) || function());
+    co_await(set_alarm() || function());
 }
 
 boost::asio::awaitable<void> make_and_cancel_unary_request(example::v1::Example::Stub& stub)
@@ -184,7 +183,7 @@ int main(int argc, const char** argv)
             // Let's perform the client-streaming and bidirectional-streaming requests simultaneously
             using namespace boost::asio::experimental::awaitable_operators;
             co_await(make_client_streaming_request(*stub) && make_bidirectional_streaming_request(*stub));
-            co_await make_and_cancel_unary_request(*stub);
+            // co_await make_and_cancel_unary_request(*stub);
             co_await make_shutdown_request(*stub);
         },
         boost::asio::detached);
