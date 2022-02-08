@@ -213,13 +213,13 @@ int main(int argc, const char** argv)
             co_await handle_bidirectional_streaming_request(service);
         },
         boost::asio::detached);
-    // boost::asio::co_spawn(
-    //     grpc_context,
-    //     [&]() -> boost::asio::awaitable<void>
-    //     {
-    //         co_await handle_slow_unary_request(service);
-    //     },
-    //     boost::asio::detached);
+    boost::asio::co_spawn(
+        grpc_context,
+        [&]() -> boost::asio::awaitable<void>
+        {
+            co_await handle_slow_unary_request(service);
+        },
+        boost::asio::detached);
     boost::asio::co_spawn(
         grpc_context,
         [&]() -> boost::asio::awaitable<void>

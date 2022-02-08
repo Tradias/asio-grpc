@@ -183,7 +183,7 @@ int main(int argc, const char** argv)
             // Let's perform the client-streaming and bidirectional-streaming requests simultaneously
             using namespace boost::asio::experimental::awaitable_operators;
             co_await(make_client_streaming_request(*stub) && make_bidirectional_streaming_request(*stub));
-            // co_await make_and_cancel_unary_request(*stub);
+            co_await make_and_cancel_unary_request(*stub);
             co_await make_shutdown_request(*stub);
         },
         boost::asio::detached);
