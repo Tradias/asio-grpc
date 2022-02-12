@@ -50,13 +50,13 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request u
             grpc::ServerAsyncResponseWriter<test::v1::Response>& writer, asio::yield_context yield)
         {
             CHECK_EQ(42, request.integer());
-            test::v1::Response response;
-            response.set_integer(21);
             ++request_count;
             if (request_count > 3)
             {
                 is_shutdown = true;
             }
+            test::v1::Response response;
+            response.set_integer(21);
             CHECK(agrpc::finish(writer, response, grpc::Status::OK, yield));
         },
         [&](asio::yield_context yield)
@@ -95,13 +95,13 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request c
             test::v1::Request request;
             CHECK(agrpc::read(reader, request, yield));
             CHECK_EQ(42, request.integer());
-            test::v1::Response response;
-            response.set_integer(21);
             ++request_count;
             if (request_count > 3)
             {
                 is_shutdown = true;
             }
+            test::v1::Response response;
+            response.set_integer(21);
             CHECK(agrpc::finish(reader, response, grpc::Status::OK, yield));
         },
         [&](asio::yield_context yield)

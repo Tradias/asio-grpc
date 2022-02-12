@@ -266,7 +266,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
         {
             AGRPC_TRY
             {
-                operation.emplace_request_handler_operation(request_handler());
+                operation.emplace_request_handler_operation(this->request_handler());
                 return std::exception_ptr{};
             }
             AGRPC_CATCH(...) { return std::current_exception(); }
@@ -274,29 +274,29 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
 
         void finish()
         {
-            stop_context().reset();
+            this->stop_context().reset();
             detail::satisfy_receiver(std::move(receiver()));
         }
 
         void done() noexcept
         {
-            stop_context().reset();
+            this->stop_context().reset();
             detail::set_done(std::move(receiver()));
         }
 
-        constexpr decltype(auto) grpc_context() noexcept { return impl0.first(); }
+        constexpr auto& grpc_context() noexcept { return impl0.first(); }
 
-        constexpr decltype(auto) receiver() noexcept { return impl0.second(); }
+        constexpr auto& receiver() noexcept { return impl0.second(); }
 
-        constexpr decltype(auto) rpc() noexcept { return impl1.first(); }
+        constexpr auto& rpc() noexcept { return impl1.first(); }
 
-        constexpr decltype(auto) stop_context() noexcept { return impl1.second(); }
+        constexpr auto& stop_context() noexcept { return impl1.second(); }
 
-        constexpr decltype(auto) service() noexcept { return impl2.first(); }
+        constexpr auto& service() noexcept { return impl2.first(); }
 
-        constexpr decltype(auto) request_handler() noexcept { return impl2.second(); }
+        constexpr auto& request_handler() noexcept { return impl2.second(); }
 
-        constexpr decltype(auto) get_allocator() noexcept { return detail::get_allocator(receiver()); }
+        constexpr decltype(auto) get_allocator() noexcept { return detail::get_allocator(this->receiver()); }
 
         detail::CompressedPair<agrpc::GrpcContext&, Receiver> impl0;
         detail::CompressedPair<RPC, detail::RepeatedlyRequestStopContext<Receiver>> impl1;
