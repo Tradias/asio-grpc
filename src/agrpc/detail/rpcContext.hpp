@@ -45,13 +45,6 @@ class MultiArgRPCContext : public detail::RPCContextBase
 
     MultiArgRPCContext() = default;
 
-    template <class Handler, class... Args>
-    constexpr decltype(auto) operator()(Handler&& handler, Args&&... args)
-    {
-        return std::invoke(std::forward<Handler>(handler), this->server_context(), this->request_, this->responder_,
-                           std::forward<Args>(args)...);
-    }
-
     constexpr auto args() noexcept
     {
         return std::forward_as_tuple(this->server_context(), this->request_, this->responder_);
@@ -73,13 +66,6 @@ class SingleArgRPCContext : public detail::RPCContextBase
     using Signature = void(grpc::ServerContext&, Responder&);
 
     SingleArgRPCContext() = default;
-
-    template <class Handler, class... Args>
-    constexpr decltype(auto) operator()(Handler&& handler, Args&&... args)
-    {
-        return std::invoke(std::forward<Handler>(handler), this->server_context(), this->responder_,
-                           std::forward<Args>(args)...);
-    }
 
     constexpr auto args() noexcept { return std::forward_as_tuple(this->server_context(), this->responder_); }
 

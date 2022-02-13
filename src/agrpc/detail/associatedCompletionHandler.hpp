@@ -36,8 +36,8 @@ class AssociatedCompletionHandler
 #endif
 #endif
 
-    explicit AssociatedCompletionHandler(CompletionHandler completion_handler)
-        : completion_handler(std::move(completion_handler))
+    template <class... Args>
+    explicit AssociatedCompletionHandler(Args&&... args) : completion_handler(std::forward<Args>(args)...)
     {
     }
 

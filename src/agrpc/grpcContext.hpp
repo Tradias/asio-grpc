@@ -45,7 +45,7 @@ class GrpcContext
     using executor_type = agrpc::BasicGrpcExecutor<std::allocator<void>, detail::GrpcExecutorOptions::DEFAULT>;
     using allocator_type = detail::GrpcContextLocalAllocator;
 
-    explicit GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue);
+    explicit GrpcContext(std::unique_ptr<grpc::CompletionQueue>&& completion_queue);
 
     ~GrpcContext();
 

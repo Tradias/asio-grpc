@@ -30,7 +30,7 @@ class RepeatedlyRequestFn
 {
   private:
     template <class RPC, class Service, class RequestHandler, class CompletionToken>
-    static auto impl(RPC rpc, Service& service, RequestHandler&& request_handler, CompletionToken token)
+    static auto impl(RPC rpc, Service& service, RequestHandler&& request_handler, CompletionToken&& token)
     {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
         using RPCContext = detail::RPCContextForRPCT<RPC>;
@@ -63,16 +63,18 @@ class RepeatedlyRequestFn
     template <class RPC, class Service, class Request, class Responder, class RequestHandler,
               class CompletionToken = detail::NoOp>
     auto operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
-                    RequestHandler request_handler, CompletionToken token = {}) const
+                    RequestHandler&& request_handler, CompletionToken&& token = {}) const
     {
-        return RepeatedlyRequestFn::impl(rpc, service, std::move(request_handler), std::move(token));
+        return RepeatedlyRequestFn::impl(rpc, service, std::forward<RequestHandler>(request_handler),
+                                         std::forward<CompletionToken>(token));
     }
 
     template <class RPC, class Service, class Responder, class RequestHandler, class CompletionToken = detail::NoOp>
     auto operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service,
-                    RequestHandler request_handler, CompletionToken token = {}) const
+                    RequestHandler&& request_handler, CompletionToken&& token = {}) const
     {
-        return RepeatedlyRequestFn::impl(rpc, service, std::move(request_handler), std::move(token));
+        return RepeatedlyRequestFn::impl(rpc, service, std::forward<RequestHandler>(request_handler),
+                                         std::forward<CompletionToken>(token));
     }
 };
 }  // namespace detail

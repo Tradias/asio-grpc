@@ -31,7 +31,7 @@ struct GrpcInitiateImplFn
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     template <class InitiatingFunction, class CompletionToken = detail::DefaultCompletionToken>
-    auto operator()(InitiatingFunction initiating_function, CompletionToken token = {}) const
+    auto operator()(InitiatingFunction initiating_function, CompletionToken&& token = {}) const
     {
         return asio::async_initiate<CompletionToken, void(bool)>(
             detail::GrpcInitiator<InitiatingFunction, StopFunction>{std::move(initiating_function)}, token);
@@ -51,10 +51,14 @@ inline constexpr detail::GrpcInitiateImplFn<StopFunction> grpc_initiate_with_sto
 inline constexpr detail::GrpcInitiateImplFn<detail::Empty> grpc_initiate{};
 
 template <class CompletionToken>
-inline constexpr bool IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN = false;
+inline constexpr bool IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN_IMPL = false;
 
 template <>
-inline constexpr bool IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<detail::UseSender> = true;
+inline constexpr bool IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN_IMPL<detail::UseSender> = true;
+
+template <class CompletionToken>
+inline constexpr bool IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN =
+    detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN_IMPL<detail::RemoveCvrefT<CompletionToken>>;
 }
 
 AGRPC_NAMESPACE_END

@@ -31,7 +31,7 @@ namespace detail
 struct RepeatedlyRequestContextAccess
 {
     template <class ImplementationAllocator>
-    static constexpr auto create(detail::AllocatedPointer<ImplementationAllocator>&& allocated_pointer) noexcept
+    static auto create(detail::AllocatedPointer<ImplementationAllocator>&& allocated_pointer) noexcept
     {
         return agrpc::RepeatedlyRequestContext{std::move(allocated_pointer)};
     }
@@ -315,18 +315,19 @@ class RepeatedlyRequestAwaitableOperation
     static auto initiate_request_from_rpc_context(detail::ServerMultiArgRequest<RPCT, Request, Responder> rpc,
                                                   Service& service,
                                                   detail::MultiArgRPCContext<Request, Responder>& rpc_context,
-                                                  CompletionToken token)
+                                                  CompletionToken&& token)
     {
         return agrpc::request(rpc, service, rpc_context.server_context(), rpc_context.request(),
-                              rpc_context.responder(), token);
+                              rpc_context.responder(), std::forward<CompletionToken>(token));
     }
 
     template <class RPCT, class Responder, class CompletionToken>
     static auto initiate_request_from_rpc_context(detail::ServerSingleArgRequest<RPCT, Responder> rpc, Service& service,
                                                   detail::SingleArgRPCContext<Responder>& rpc_context,
-                                                  CompletionToken token)
+                                                  CompletionToken&& token)
     {
-        return agrpc::request(rpc, service, rpc_context.server_context(), rpc_context.responder(), token);
+        return agrpc::request(rpc, service, rpc_context.server_context(), rpc_context.responder(),
+                              std::forward<CompletionToken>(token));
     }
 
     Awaitable on_request_complete()

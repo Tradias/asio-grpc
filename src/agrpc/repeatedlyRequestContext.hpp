@@ -53,7 +53,7 @@ class RepeatedlyRequestContext
 
     detail::AllocatedPointer<ImplementationAllocator> impl;
 
-    constexpr explicit RepeatedlyRequestContext(detail::AllocatedPointer<ImplementationAllocator>&& impl) noexcept
+    explicit RepeatedlyRequestContext(detail::AllocatedPointer<ImplementationAllocator>&& impl) noexcept
         : impl(std::move(impl))
     {
     }

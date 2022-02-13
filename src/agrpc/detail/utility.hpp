@@ -63,6 +63,10 @@ struct NoOp
     }
 };
 
+struct InplaceWithFunction
+{
+};
+
 struct SecondThenVariadic
 {
 };
@@ -155,6 +159,11 @@ class EmptyBaseOptimization : private T
     {
     }
 
+    template <class Function>
+    EmptyBaseOptimization(detail::InplaceWithFunction, Function&& function) : T(std::forward<Function>(function)())
+    {
+    }
+
     constexpr auto& get() noexcept { return static_cast<T&>(*this); }
 
     constexpr auto& get() const noexcept { return static_cast<const T&>(*this); }
@@ -166,6 +175,11 @@ class EmptyBaseOptimization<T, false>
   public:
     template <class... Args>
     explicit EmptyBaseOptimization(Args&&... args) : value(std::forward<Args>(args)...)
+    {
+    }
+
+    template <class Function>
+    EmptyBaseOptimization(detail::InplaceWithFunction, Function&& function) : value(std::forward<Function>(function)())
     {
     }
 
@@ -201,10 +215,6 @@ class ScopeGuard
   private:
     OnExit on_exit;
     bool is_armed{true};
-};
-
-struct InplaceWithFunction
-{
 };
 
 template <class T>

@@ -150,25 +150,24 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "asio use_sender repeatedly_reques
     bool is_shutdown{false};
     auto request_count{0};
     test::v1::Response response;
-    asio::execution::submit(agrpc::repeatedly_request(
-                                &test::v1::Test::AsyncService::RequestUnary, service,
-                                [&](grpc::ServerContext&, test::v1::Request& request,
-                                    grpc::ServerAsyncResponseWriter<test::v1::Response>& writer)
-                                {
-                                    CHECK_EQ(42, request.integer());
-                                    ++request_count;
-                                    if (request_count > 3)
-                                    {
-                                        is_shutdown = true;
-                                    }
-                                    response.set_integer(21);
-                                    return agrpc::finish(writer, response, grpc::Status::OK, use_sender());
-                                },
-                                use_sender()),
-                            test::FunctionAsReceiver{[&]()
-                                                     {
-                                                         CHECK_EQ(4, request_count);
-                                                     }});
+    const auto request_handler = [&](grpc::ServerContext&, test::v1::Request& request,
+                                     grpc::ServerAsyncResponseWriter<test::v1::Response>& writer)
+    {
+        CHECK_EQ(42, request.integer());
+        ++request_count;
+        if (request_count > 3)
+        {
+            is_shutdown = true;
+        }
+        response.set_integer(21);
+        return agrpc::finish(writer, response, grpc::Status::OK, use_sender());
+    };
+    asio::execution::submit(
+        agrpc::repeatedly_request(&test::v1::Test::AsyncService::RequestUnary, service, request_handler, use_sender()),
+        test::FunctionAsReceiver{[&]()
+                                 {
+                                     CHECK_EQ(4, request_count);
+                                 }});
     test::co_spawn(grpc_context,
                    [&]() -> asio::awaitable<void>
                    {

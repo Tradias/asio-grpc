@@ -35,7 +35,7 @@ class ScheduleSender : public detail::SenderOf<>
     {
       public:
         template <class Receiver2>
-        constexpr Operation(const ScheduleSender& sender, Receiver2&& receiver)
+        Operation(const ScheduleSender& sender, Receiver2&& receiver)
             : detail::TypeErasedNoArgOperation(&Operation::on_complete),
               impl(sender.grpc_context, std::forward<Receiver2>(receiver))
         {
@@ -76,7 +76,7 @@ class ScheduleSender : public detail::SenderOf<>
 
   public:
     template <class Receiver>
-    constexpr auto connect(Receiver&& receiver) const noexcept(std::is_nothrow_constructible_v<Receiver, Receiver&&>)
+    auto connect(Receiver&& receiver) const noexcept(std::is_nothrow_constructible_v<Receiver, Receiver&&>)
         -> Operation<detail::RemoveCvrefT<Receiver>>
     {
         return {*this, std::forward<Receiver>(receiver)};
@@ -99,7 +99,7 @@ class ScheduleSender : public detail::SenderOf<>
     }
 
   private:
-    constexpr explicit ScheduleSender(agrpc::GrpcContext& grpc_context) noexcept : grpc_context(grpc_context) {}
+    explicit ScheduleSender(agrpc::GrpcContext& grpc_context) noexcept : grpc_context(grpc_context) {}
 
     template <class Allocator, std::uint32_t Options>
     friend class agrpc::BasicGrpcExecutor;

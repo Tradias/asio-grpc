@@ -64,7 +64,11 @@ class WorkTrackingCompletionHandler
 
   public:
     explicit WorkTrackingCompletionHandler(CompletionHandler completion_handler)
-        : Base1(WorkTrackingCompletionHandler::create_work_tracker(completion_handler)),
+        : Base1(detail::InplaceWithFunction{},
+                [&]
+                {
+                    return WorkTrackingCompletionHandler::create_work_tracker(completion_handler);
+                }),
           Base2(std::move(completion_handler))
     {
     }

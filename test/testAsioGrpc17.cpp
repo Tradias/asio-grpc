@@ -496,12 +496,12 @@ TEST_CASE("agrpc::request and agrpc::wait are noexcept for use_sender")
     CHECK(noexcept(agrpc::request(
         std::declval<decltype(&test::v1::Test::Stub::AsyncServerStreaming)>(), std::declval<test::v1::Test::Stub&>(),
         std::declval<grpc::ClientContext&>(), std::declval<test::v1::Request&>(),
-        std::declval<std::unique_ptr<grpc::ClientAsyncReader<test::v1::Response>>&>(), std::declval<UseSender>())));
+        std::declval<std::unique_ptr<grpc::ClientAsyncReader<test::v1::Response>>&>(), std::declval<UseSender&&>())));
     CHECK_FALSE(
         noexcept(agrpc::wait(std::declval<grpc::Alarm&>(), std::declval<std::chrono::system_clock::time_point>(),
                              std::declval<asio::yield_context>())));
     CHECK(noexcept(agrpc::wait(std::declval<grpc::Alarm&>(), std::declval<std::chrono::system_clock::time_point>(),
-                               std::declval<UseSender>())));
+                               std::declval<UseSender&&>())));
 }
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unary stackless coroutine")

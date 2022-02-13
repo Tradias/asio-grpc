@@ -26,10 +26,11 @@ namespace detail
 {
 template <class InitiatingFunction, class CompletionHandler, class Allocator>
 void grpc_submit(agrpc::GrpcContext& grpc_context, InitiatingFunction initiating_function,
-                 CompletionHandler completion_handler, Allocator allocator)
+                 CompletionHandler&& completion_handler, Allocator allocator)
 {
     detail::allocate_operation_and_invoke<false, CompletionHandler, void(bool)>(
-        grpc_context, initiating_function, initiating_function, allocator, std::move(completion_handler));
+        grpc_context, initiating_function, initiating_function, allocator,
+        std::forward<CompletionHandler>(completion_handler));
 }
 }
 

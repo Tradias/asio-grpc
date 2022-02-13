@@ -62,7 +62,7 @@ inline void drain_completion_queue(agrpc::GrpcContext& grpc_context)
 }
 }  // namespace detail
 
-inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue)
+inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue>&& completion_queue)
     : completion_queue(std::move(completion_queue))
 {
 }

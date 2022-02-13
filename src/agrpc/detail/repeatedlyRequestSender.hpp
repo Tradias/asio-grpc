@@ -52,7 +52,7 @@ class RepeatedlyRequestStopContext
 
   public:
     template <class StopToken>
-    void emplace([[maybe_unused]] StopToken&& stop_token) noexcept
+    void emplace(StopToken&& stop_token) noexcept
     {
         this->stop_callback.emplace(std::forward<StopToken>(stop_token), StopFunction{*this});
     }
@@ -166,7 +166,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
 
       public:
         template <class Receiver2>
-        constexpr Operation(const RepeatedlyRequestSender& sender, Receiver2&& receiver)
+        Operation(const RepeatedlyRequestSender& sender, Receiver2&& receiver)
             : GrpcBase(&Operation::on_request_complete),
               impl0(sender.grpc_context, std::forward<Receiver2>(receiver)),
               impl1(sender.rpc),
@@ -175,7 +175,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
         }
 
         template <class Receiver2>
-        constexpr Operation(RepeatedlyRequestSender&& sender, Receiver2&& receiver)
+        Operation(RepeatedlyRequestSender&& sender, Receiver2&& receiver)
             : GrpcBase(&Operation::on_request_complete),
               impl0(sender.grpc_context, std::forward<Receiver2>(receiver)),
               impl1(sender.rpc),
@@ -306,7 +306,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
 
   public:
     template <class Receiver>
-    constexpr auto connect(Receiver&& receiver) const& noexcept(
+    auto connect(Receiver&& receiver) const& noexcept(
         std::is_nothrow_constructible_v<Receiver, Receiver&&>&& std::is_nothrow_copy_constructible_v<RequestHandler>)
         -> Operation<detail::RemoveCvrefT<Receiver>>
     {
@@ -314,7 +314,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
     }
 
     template <class Receiver>
-    constexpr auto connect(Receiver&& receiver) && noexcept(
+    auto connect(Receiver&& receiver) && noexcept(
         std::is_nothrow_constructible_v<Receiver, Receiver&&>&& std::is_nothrow_move_constructible_v<RequestHandler>)
         -> Operation<detail::RemoveCvrefT<Receiver>>
     {
@@ -322,10 +322,9 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
     }
 
   private:
-    constexpr explicit RepeatedlyRequestSender(
-        agrpc::GrpcContext& grpc_context, RPC rpc, Service& service,
-        RequestHandler request_handler) noexcept(std::is_nothrow_move_constructible_v<RequestHandler>)
-        : grpc_context(grpc_context), rpc(rpc), impl(service, std::move(request_handler))
+    template <class Rh>
+    RepeatedlyRequestSender(agrpc::GrpcContext& grpc_context, RPC rpc, Service& service, Rh&& request_handler)
+        : grpc_context(grpc_context), rpc(rpc), impl(service, std::forward<Rh>(request_handler))
     {
     }
 
@@ -335,6 +334,10 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
     RPC rpc;
     detail::CompressedPair<Service&, RequestHandler> impl;
 };
+
+template <class RPC, class Service, class RequestHandler>
+RepeatedlyRequestSender(agrpc::GrpcContext&, RPC, Service&, RequestHandler&&)
+    -> RepeatedlyRequestSender<RPC, Service, detail::RemoveCvrefT<RequestHandler>>;
 }
 
 AGRPC_NAMESPACE_END

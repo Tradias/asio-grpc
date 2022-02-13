@@ -49,7 +49,7 @@ class GrpcSender : public detail::SenderOf<bool>
 
       public:
         template <class Receiver2>
-        constexpr Operation(const GrpcSender& sender, Receiver2&& receiver)
+        Operation(const GrpcSender& sender, Receiver2&& receiver)
             : detail::TypeErasedGrpcTagOperation(&Operation::on_complete),
               impl(sender.grpc_context, std::forward<Receiver2>(receiver)),
               functions(sender.initiating_function)
@@ -112,7 +112,7 @@ class GrpcSender : public detail::SenderOf<bool>
 
   public:
     template <class Receiver>
-    constexpr auto connect(Receiver&& receiver) const noexcept(std::is_nothrow_constructible_v<Receiver, Receiver&&>)
+    auto connect(Receiver&& receiver) const noexcept(std::is_nothrow_constructible_v<Receiver, Receiver&&>)
         -> Operation<detail::RemoveCvrefT<Receiver>>
     {
         return {*this, std::forward<Receiver>(receiver)};
@@ -132,7 +132,7 @@ class GrpcSender : public detail::SenderOf<bool>
     }
 
   private:
-    constexpr explicit GrpcSender(agrpc::GrpcContext& grpc_context, InitiatingFunction initiating_function) noexcept
+    explicit GrpcSender(agrpc::GrpcContext& grpc_context, InitiatingFunction initiating_function) noexcept
         : grpc_context(grpc_context), initiating_function(std::move(initiating_function))
     {
     }

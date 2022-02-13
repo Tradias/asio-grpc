@@ -53,7 +53,7 @@ class GrpcInitiator
     }
 
     template <class CompletionHandler>
-    void operator()(CompletionHandler completion_handler)
+    void operator()(CompletionHandler&& completion_handler)
     {
         const auto [executor, allocator] = detail::get_associated_executor_and_allocator(completion_handler);
         auto& grpc_context = detail::query_grpc_context(executor);
@@ -71,8 +71,8 @@ class GrpcInitiator
             }
         }
 #endif
-        detail::grpc_submit(grpc_context, std::move(this->initiating_function), std::move(completion_handler),
-                            allocator);
+        detail::grpc_submit(grpc_context, std::move(this->initiating_function),
+                            std::forward<CompletionHandler>(completion_handler), allocator);
     }
 
   private:
@@ -87,8 +87,8 @@ class GrpcCompletionHandlerWithPayload : public detail::AssociatedCompletionHand
     using Base = detail::AssociatedCompletionHandler<CompletionHandler>;
 
   public:
-    explicit GrpcCompletionHandlerWithPayload(CompletionHandler completion_handler)
-        : Base(std::move(completion_handler))
+    template <class... Args>
+    explicit GrpcCompletionHandlerWithPayload(Args&&... args) : Base(std::forward<Args>(args)...)
     {
     }
 
@@ -110,15 +110,16 @@ class GrpcWithPayloadInitiator : public detail::GrpcInitiator<InitiatingFunction
     using detail::GrpcInitiator<InitiatingFunction>::GrpcInitiator;
 
     template <class CompletionHandler>
-    void operator()(CompletionHandler completion_handler)
+    void operator()(CompletionHandler&& completion_handler)
     {
         detail::GrpcInitiator<InitiatingFunction>::operator()(
-            detail::GrpcCompletionHandlerWithPayload<CompletionHandler, Payload>{std::move(completion_handler)});
+            detail::GrpcCompletionHandlerWithPayload<detail::RemoveCvrefT<CompletionHandler>, Payload>{
+                std::forward<CompletionHandler>(completion_handler)});
     }
 };
 
 template <class Payload, class InitiatingFunction, class CompletionToken>
-auto grpc_initiate_with_payload(InitiatingFunction initiating_function, CompletionToken token)
+auto grpc_initiate_with_payload(InitiatingFunction initiating_function, CompletionToken&& token)
 {
     return asio::async_initiate<CompletionToken, void(std::pair<Payload, bool>)>(
         detail::GrpcWithPayloadInitiator<Payload, InitiatingFunction>{std::move(initiating_function)}, token);
