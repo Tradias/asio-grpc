@@ -4,16 +4,16 @@
 
 If you encountered a bug or want to make a feature request then do not hesitate to create a new issue. I am happy to look into it. 
 
-If you intend on working on the code, please follow the steps below.
+If you intend to work on the code then please follow the steps below.
 
 ## Prerequisites
 
-You will need a C++ compiler, CMake (3.19+) and a way of installing this project's dependencies: gRPC, Boost, standalone Asio and libunifex. I recommend [vcpkg](https://github.com/microsoft/vcpkg). 
+You will need a C++ compiler, CMake (3.19+) and a way of installing this project's dependencies: gRPC, Boost, standalone Asio, libunifex and doctest. I recommend [vcpkg](https://github.com/microsoft/vcpkg). 
 Head over to their github repository for more details, but in general the following should get you started: 
 
 ```sh
 git clone https://github.com/microsoft/vcpkg
-./vcpkg/bootstrap-vcpkg.bat  # or .sh on Linux
+./vcpkg/bootstrap-vcpkg.bat  # or bootstrap-vcpkg.sh on Linux
 ```
 
 ## Build and run tests
@@ -21,8 +21,7 @@ git clone https://github.com/microsoft/vcpkg
 From the root of the repository run:
 
 ```sh
-cmake -B build \
-  --preset default \
+cmake --preset default \
   # only needed if you do not have the VCPKG_ROOT env variable set
   -DCMAKE_TOOLCHAIN_FILE=<path-to-vcpkg>/scripts/buildsystems/vcpkg.cmake \
   # only needed if you are using a C++ compiler without <memory_resource>
@@ -40,13 +39,13 @@ cmake --build ./build --parallel
 And run all tests:
 
 ```sh
-ctest --test-dir ./build -T test -C Debug --output-on-failure --parallel
+ctest --preset default
 ```
 
 ## Install git hooks
 
-Before making a commit install [clang-format](https://github.com/llvm/llvm-project/releases) (part of clang-tools-extra) and [cmake-format](https://pypi.org/project/cmake-format/). 
-Re-run the CMake configure step and ensure that the CMake cache variables `ASIO_GRPC_CMAKE_FORMAT_PROGRAM` and `ASIO_GRPC_CLANG_FORMAT_PROGRAM` are set correctly. Finally run:
+Before making a commit, install [clang-format](https://github.com/llvm/llvm-project/releases) (part of clang-tools-extra) and [cmake-format](https://pypi.org/project/cmake-format/). 
+Re-run the CMake configure step and finally run:
 
 ```sh
 cmake --build ./build --target asio-grpc-init-git-hooks

@@ -40,7 +40,7 @@
             "execution": {
                 "noTestsAction": "error",
                 "timeout": 200,
-                "jobs": -1
+                "jobs": 8
             }
         }
     ]
