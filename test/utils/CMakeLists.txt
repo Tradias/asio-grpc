@@ -4,17 +4,14 @@ include(AsioGrpcProtobufGenerator)
 function(asio_grpc_add_test_protobuf _asio_grpc_name)
     add_library(${_asio_grpc_name} OBJECT)
 
-    set(ASIO_GRPC_GENERATED_TEST_PROTOS_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
-    set(ASIO_GRPC_GENERATED_TEST_PROTOS_OUT_DIR "${ASIO_GRPC_GENERATED_TEST_PROTOS_INCLUDE_DIR}/protos")
-
     asio_grpc_protobuf_generate(
         GENERATE_GRPC
         TARGET ${_asio_grpc_name}
-        OUT_DIR "${ASIO_GRPC_GENERATED_TEST_PROTOS_OUT_DIR}"
-        PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/protos/test.proto")
-
-    target_include_directories(${_asio_grpc_name}
-                               PUBLIC "$<BUILD_INTERFACE:${ASIO_GRPC_GENERATED_TEST_PROTOS_INCLUDE_DIR}>")
+        USAGE_REQUIREMENT PUBLIC
+        OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
+        IMPORT_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/proto"
+        PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/proto/test/v1/test.proto"
+               "${CMAKE_CURRENT_SOURCE_DIR}/proto/test/msg/message.proto")
 
     target_link_libraries(${_asio_grpc_name} PUBLIC protobuf::libprotobuf)
 endfunction()

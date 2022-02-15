@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Adapted from the original protobuf_generate provided by protobuf-config.cmake
 #[=======================================================================[.rst:
 asio_grpc_protobuf_generate
 ------------
@@ -41,7 +40,8 @@ asio_grpc_protobuf_generate(PROTOS <proto_file1> [<proto_file2>...]
     How to add sources to ``<target>``: ``PRIVATE``, ``PUBLIC``, ``INTERFACE``
     Default: ``PRIVATE``
 ``IMPORT_DIRS``
-    Additional import directories to be added to the protoc command line
+    Import directories to be added to the protoc command line. If unspecified
+    then the directory of each .proto file will be used.
 ``EXTRA_ARGS``
     Additional protoc command line arguments
 ``GENERATE_GRPC``
@@ -106,22 +106,21 @@ function(asio_grpc_protobuf_generate)
         set(asio_grpc_protobuf_generate_USAGE_REQUIREMENT "PRIVATE")
     endif()
 
-    # Create an include path for each file specified
-    foreach(_asio_grpc_file ${asio_grpc_protobuf_generate_PROTOS})
-        get_filename_component(_asio_grpc_abs_file "${_asio_grpc_file}" ABSOLUTE)
-        get_filename_component(_asio_grpc_abs_path "${_asio_grpc_abs_file}" PATH)
-        list(FIND _asio_grpc_protobuf_include_path "${_asio_grpc_abs_path}" _asio_grpc_contains_already)
-        if(${_asio_grpc_contains_already} EQUAL -1)
-            list(APPEND _asio_grpc_protobuf_include_path -I "${_asio_grpc_abs_path}")
-        endif()
-    endforeach()
+    if(NOT asio_grpc_protobuf_generate_IMPORT_DIRS)
+        # Create an include path for each file specified
+        foreach(_asio_grpc_file ${asio_grpc_protobuf_generate_PROTOS})
+            get_filename_component(_asio_grpc_abs_file "${_asio_grpc_file}" ABSOLUTE)
+            get_filename_component(_asio_grpc_abs_path "${_asio_grpc_abs_file}" PATH)
+            list(APPEND asio_grpc_protobuf_generate_IMPORT_DIRS "${_asio_grpc_abs_path}")
+        endforeach()
+    endif()
 
     # Add all explicitly specified import directory to the include path
     foreach(_asio_grpc_dir ${asio_grpc_protobuf_generate_IMPORT_DIRS})
         get_filename_component(_asio_grpc_abs_dir "${_asio_grpc_dir}" ABSOLUTE)
-        list(FIND _asio_grpc_protobuf_include_path "${_asio_grpc_abs_dir}" _asio_grpc_contains_already)
+        list(FIND _asio_grpc_protobuf_include_args "${_asio_grpc_abs_dir}" _asio_grpc_contains_already)
         if(${_asio_grpc_contains_already} EQUAL -1)
-            list(APPEND _asio_grpc_protobuf_include_path -I "${_asio_grpc_abs_dir}")
+            list(APPEND _asio_grpc_protobuf_include_args -I "${_asio_grpc_abs_dir}")
         endif()
     endforeach()
 
@@ -130,15 +129,32 @@ function(asio_grpc_protobuf_generate)
         get_filename_component(_asio_grpc_abs_file "${_asio_grpc_proto}" ABSOLUTE)
         get_filename_component(_asio_grpc_basename "${_asio_grpc_proto}" NAME_WE)
 
+        # Compute generated file output directory
+        set(_asio_grpc_proto_dir_lowest_path_count 999999999999)
+        set(_asio_grpc_actual_our_dir)
+        foreach(_asio_grpc_dir ${asio_grpc_protobuf_generate_IMPORT_DIRS})
+            file(RELATIVE_PATH _asio_grpc_proto_file_relative_path "${_asio_grpc_dir}" "${_asio_grpc_abs_file}")
+            file(TO_CMAKE_PATH "${_asio_grpc_proto_file_relative_path}" _asio_grpc_proto_file_relative_cmake_path)
+            get_filename_component(_asio_grpc_proto_dir_relative_cmake_path
+                                   "${_asio_grpc_proto_file_relative_cmake_path}" PATH)
+            string(REGEX MATCHALL "/" _asio_grpc_proto_dir_path_list "${_asio_grpc_proto_dir_relative_cmake_path}")
+            list(LENGTH _asio_grpc_proto_dir_path_list _asio_grpc_proto_dir_path_count)
+            if(${_asio_grpc_proto_dir_path_count} LESS ${_asio_grpc_proto_dir_lowest_path_count})
+                set(_asio_grpc_proto_dir_lowest_path_count ${_asio_grpc_proto_dir_path_count})
+                set(_asio_grpc_actual_our_dir
+                    "${asio_grpc_protobuf_generate_OUT_DIR}/${_asio_grpc_proto_dir_relative_cmake_path}")
+            endif()
+        endforeach()
+
         # Collect generated files
         set(_asio_grpc_generated_srcs)
         foreach(_asio_grpc_ext ${_asio_grpc_generated_extensions})
             list(APPEND _asio_grpc_generated_srcs
-                 "${asio_grpc_protobuf_generate_OUT_DIR}/${_asio_grpc_basename}${_asio_grpc_ext}")
+                 "${_asio_grpc_actual_our_dir}/${_asio_grpc_basename}${_asio_grpc_ext}")
         endforeach()
 
         if(asio_grpc_protobuf_generate_GENERATE_DESCRIPTORS)
-            set(_asio_grpc_descriptor_file "${asio_grpc_protobuf_generate_OUT_DIR}/${_asio_grpc_basename}.desc")
+            set(_asio_grpc_descriptor_file "${_asio_grpc_actual_our_dir}/${_asio_grpc_basename}.desc")
             set(_asio_grpc_descriptor_command "--descriptor_set_out=${_asio_grpc_descriptor_file}")
             list(APPEND _asio_grpc_generated_srcs "${_asio_grpc_descriptor_file}")
         endif()
@@ -146,7 +162,7 @@ function(asio_grpc_protobuf_generate)
 
         # Run protoc
         set(_asio_grpc_command_arguments --cpp_out "${asio_grpc_protobuf_generate_OUT_DIR}"
-                                         "${_asio_grpc_descriptor_command}" "${_asio_grpc_protobuf_include_path}")
+                                         "${_asio_grpc_descriptor_command}" "${_asio_grpc_protobuf_include_args}")
         if(asio_grpc_protobuf_generate_GENERATE_GRPC)
             list(APPEND _asio_grpc_command_arguments --grpc_out "${asio_grpc_protobuf_generate_OUT_DIR}"
                  "--plugin=protoc-gen-grpc=$<TARGET_FILE:gRPC::grpc_cpp_plugin>")
@@ -166,8 +182,20 @@ function(asio_grpc_protobuf_generate)
     set_source_files_properties(${_asio_grpc_generated_srcs_all} PROPERTIES SKIP_UNITY_BUILD_INCLUSION on)
 
     if(asio_grpc_protobuf_generate_TARGET)
-        target_sources(${asio_grpc_protobuf_generate_TARGET} "${asio_grpc_protobuf_generate_USAGE_REQUIREMENT}"
-                                                             ${_asio_grpc_generated_srcs_all})
+        if("${asio_grpc_protobuf_generate_USAGE_REQUIREMENT}" STREQUAL "INTERFACE")
+            target_sources(${asio_grpc_protobuf_generate_TARGET} INTERFACE ${_asio_grpc_generated_srcs_all})
+        else()
+            target_sources(${asio_grpc_protobuf_generate_TARGET} PRIVATE ${_asio_grpc_generated_srcs_all})
+        endif()
+
+        if("${asio_grpc_protobuf_generate_USAGE_REQUIREMENT}" STREQUAL "PUBLIC")
+            target_include_directories(${asio_grpc_protobuf_generate_TARGET}
+                                       PUBLIC "$<BUILD_INTERFACE:${asio_grpc_protobuf_generate_OUT_DIR}>")
+        else()
+            target_include_directories(
+                ${asio_grpc_protobuf_generate_TARGET} "${asio_grpc_protobuf_generate_USAGE_REQUIREMENT}"
+                "${asio_grpc_protobuf_generate_OUT_DIR}")
+        endif()
     endif()
 
     if(asio_grpc_protobuf_generate_OUT_VAR)

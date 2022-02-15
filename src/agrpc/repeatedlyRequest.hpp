@@ -30,7 +30,7 @@ class RepeatedlyRequestFn
 {
   private:
     template <class RPC, class Service, class RequestHandler, class CompletionToken>
-    static auto impl(RPC rpc, Service& service, RequestHandler&& request_handler, CompletionToken&& token)
+    static auto impl(RPC rpc, Service& service, RequestHandler&& request_handler, CompletionToken token)
     {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
         using RPCContext = detail::RPCContextForRPCT<RPC>;

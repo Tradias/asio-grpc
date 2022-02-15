@@ -28,14 +28,13 @@ asio_grpc_add_documentation(client)
 target_link_libraries(asio-grpc-documentation-client PRIVATE asio-grpc::asio-grpc Boost::coroutine Boost::thread
                                                              asio-grpc-example-protos)
 
-if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
-    if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT)
-        asio_grpc_add_documentation(blog)
-        target_link_libraries(asio-grpc-documentation-blog PRIVATE asio-grpc-example-protos-cpp20
-                                                                   asio-grpc-cpp20-compile-options)
-    endif()
+if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES AND ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT)
+    asio_grpc_add_documentation(blog)
+    target_link_libraries(asio-grpc-documentation-blog PRIVATE asio-grpc-example-protos-cpp20
+                                                               asio-grpc-cpp20-compile-options)
 
     asio_grpc_add_documentation(unifex-client OBJECT)
-    target_link_libraries(asio-grpc-documentation-unifex-client PRIVATE asio-grpc::asio-grpc-unifex
-                                                                        asio-grpc-example-protos)
+    target_link_libraries(
+        asio-grpc-documentation-unifex-client PRIVATE asio-grpc::asio-grpc-unifex asio-grpc-example-protos-cpp20
+                                                      asio-grpc-cpp20-compile-options)
 endif()

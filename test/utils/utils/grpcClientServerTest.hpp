@@ -15,7 +15,7 @@
 #ifndef AGRPC_UTILS_GRPCCLIENTSERVERTEST_HPP
 #define AGRPC_UTILS_GRPCCLIENTSERVERTEST_HPP
 
-#include "protos/test.grpc.pb.h"
+#include "test/v1/test.grpc.pb.h"
 #include "utils/grpcContextTest.hpp"
 
 #include <grpcpp/client_context.h>

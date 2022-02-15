@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "descriptor.pb.h"
+syntax = "proto3";
 
-#include <google/protobuf/descriptor.pb.h>
+package test.v1;
 
-#include <fstream>
+import "test/msg/message.proto";
 
-void run_descriptor()
-{
-    const auto file = DESCRIPTOR_FILE;
-    std::ifstream istream{file, std::ios::binary};
-    google::protobuf::FileDescriptorProto file_descriptor;
-    if (!file_descriptor.ParseFromIstream(&istream))
-    {
-        std::exit(1);
-    }
+service Test {
+  rpc ServerStreaming(msg.Request) returns (stream msg.Response) {}
+
+  rpc ClientStreaming(stream msg.Request) returns (msg.Response) {}
+
+  rpc BidirectionalStreaming(stream msg.Request) returns (stream msg.Response) {
+  }
+
+  rpc Unary(msg.Request) returns (msg.Response) {}
 }

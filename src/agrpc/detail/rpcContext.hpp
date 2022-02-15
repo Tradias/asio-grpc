@@ -21,7 +21,6 @@
 #include <grpcpp/completion_queue.h>
 #include <grpcpp/server_context.h>
 
-#include <functional>
 #include <tuple>
 
 AGRPC_NAMESPACE_BEGIN()

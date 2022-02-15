@@ -34,32 +34,30 @@ create_object_library(target-option target.cpp)
 target_link_libraries(target-option PRIVATE asio-grpc::asio-grpc-standalone-asio)
 
 # // begin-snippet: asio_grpc_protobuf_generate-target
-set(TARGET_GENERATED_PROTOS_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/target")
-
 asio_grpc_protobuf_generate(
     GENERATE_GRPC
     TARGET target-option
-    OUT_DIR "${TARGET_GENERATED_PROTOS_OUT_DIR}"
-    PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/target.proto")
-
-target_include_directories(target-option PRIVATE "${TARGET_GENERATED_PROTOS_OUT_DIR}")
+    OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/target"
+    PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/proto/target.proto")
 # // end-snippet: asio_grpc_protobuf_generate-target
 
 # OUT_VAR option
-set(OUT_VAR_GENERATED_PROTOS_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/outVar/")
-set(OUT_VAR_GENERATED_PROTOS_OUT_DIR "${OUT_VAR_GENERATED_PROTOS_INCLUDE_DIR}/protos")
+set(OUT_VAR_GENERATED_PROTOS_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/outVar/")
 
 asio_grpc_protobuf_generate(
     GENERATE_GRPC
     OUT_VAR OUT_VAR_GENERATED_SOURCES
     OUT_DIR "${OUT_VAR_GENERATED_PROTOS_OUT_DIR}"
-    PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/outVar.proto")
+    IMPORT_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/proto"
+    PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/proto/out_var/v1/outVar.proto"
+           "${CMAKE_CURRENT_SOURCE_DIR}/proto/out_var/msg/message.proto"
+           "${CMAKE_CURRENT_SOURCE_DIR}/proto/out_var/subdir/other.proto")
 
 create_object_library(out-var-option outVar.cpp ${OUT_VAR_GENERATED_SOURCES})
 
 target_link_libraries(out-var-option PRIVATE asio-grpc::asio-grpc)
 
-target_include_directories(out-var-option PRIVATE "${OUT_VAR_GENERATED_PROTOS_INCLUDE_DIR}")
+target_include_directories(out-var-option PRIVATE "${OUT_VAR_GENERATED_PROTOS_OUT_DIR}")
 
 # DESCRIPTOR option
 create_object_library(descriptor-option descriptor.cpp)
@@ -69,10 +67,10 @@ target_link_libraries(descriptor-option PRIVATE asio-grpc::asio-grpc)
 set(DESCRIPTOR_GENERATED_PROTOS_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/descriptor")
 
 asio_grpc_protobuf_generate(
-    GENERATE_GRPC GENERATE_DESCRIPTORS
+    GENERATE_DESCRIPTORS
     TARGET descriptor-option
     OUT_DIR "${DESCRIPTOR_GENERATED_PROTOS_OUT_DIR}"
-    PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/descriptor.proto")
+    PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/proto/descriptor.proto")
 
 target_include_directories(descriptor-option PRIVATE "${DESCRIPTOR_GENERATED_PROTOS_OUT_DIR}")
 

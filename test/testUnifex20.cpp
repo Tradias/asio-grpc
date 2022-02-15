@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "agrpc/asioGrpc.hpp"
-#include "protos/test.grpc.pb.h"
+#include "test/v1/test.grpc.pb.h"
 #include "utils/asioForward.hpp"
 #include "utils/asioUtils.hpp"
 #include "utils/grpcClientServerTest.hpp"
@@ -218,11 +218,11 @@ struct RepeatedlyRequestTest : test::GrpcClientServerTest
             {
                 auto context = std::make_unique<grpc::ClientContext>();
                 context->set_deadline(deadline);
-                test::v1::Request request;
+                test::msg::Request request;
                 request.set_integer(42);
                 auto* context_ptr = context.get();
                 return std::tuple{stub->AsyncUnary(context_ptr, request, agrpc::get_completion_queue(get_executor())),
-                                  test::v1::Response{}, grpc::Status{}, std::move(context)};
+                                  test::msg::Response{}, grpc::Status{}, std::move(context)};
             },
             [&, on_request_done](auto& tuple)
             {
@@ -236,7 +236,7 @@ struct RepeatedlyRequestTest : test::GrpcClientServerTest
             });
     }
 
-    static void check_response_ok(bool ok, const test::v1::Response& response, const grpc::Status& status)
+    static void check_response_ok(bool ok, const test::msg::Response& response, const grpc::Status& status)
     {
         CHECK(ok);
         CHECK(status.ok());
@@ -261,11 +261,11 @@ struct RepeatedlyRequestTest : test::GrpcClientServerTest
                                                 });
     }
 
-    auto handle_unary_request_sender(test::v1::Request& request,
-                                     grpc::ServerAsyncResponseWriter<test::v1::Response>& writer)
+    auto handle_unary_request_sender(test::msg::Request& request,
+                                     grpc::ServerAsyncResponseWriter<test::msg::Response>& writer)
     {
         CHECK_EQ(42, request.integer());
-        return unifex::let_value(unifex::just(test::v1::Response{}),
+        return unifex::let_value(unifex::just(test::msg::Response{}),
                                  [&](auto& response)
                                  {
                                      response.set_integer(24);
@@ -277,8 +277,8 @@ struct RepeatedlyRequestTest : test::GrpcClientServerTest
     {
         return unifex::with_query_value(agrpc::repeatedly_request(
                                             &test::v1::Test::AsyncService::RequestUnary, service,
-                                            [&](grpc::ServerContext&, test::v1::Request& request,
-                                                grpc::ServerAsyncResponseWriter<test::v1::Response>& writer)
+                                            [&](grpc::ServerContext&, test::msg::Request& request,
+                                                grpc::ServerAsyncResponseWriter<test::msg::Response>& writer)
                                             {
                                                 return handle_unary_request_sender(request, writer);
                                             },
@@ -359,8 +359,8 @@ TEST_CASE_FIXTURE(RepeatedlyRequestTest,
     unifex::inplace_stop_source stop;
     auto repeater = unifex::with_query_value(agrpc::repeatedly_request(
                                                  &test::v1::Test::AsyncService::RequestUnary, service,
-                                                 [&](grpc::ServerContext&, test::v1::Request& request,
-                                                     grpc::ServerAsyncResponseWriter<test::v1::Response>& writer)
+                                                 [&](grpc::ServerContext&, test::msg::Request& request,
+                                                     grpc::ServerAsyncResponseWriter<test::msg::Response>& writer)
                                                  {
                                                      ++count;
                                                      if (1 == count)
@@ -397,9 +397,9 @@ TEST_CASE_FIXTURE(RepeatedlyRequestTest,
 
 struct ServerUnaryRequestContext
 {
-    grpc::ServerAsyncResponseWriter<test::v1::Response> writer;
-    test::v1::Request request;
-    test::v1::Response response;
+    grpc::ServerAsyncResponseWriter<test::msg::Response> writer;
+    test::msg::Request request;
+    test::msg::Response response;
 
     explicit ServerUnaryRequestContext(grpc::ServerContext& context) : writer(&context) {}
 };
@@ -436,10 +436,10 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex::task unary")
         }(),
         [&]() -> unifex::task<void>
         {
-            test::v1::Request request;
+            test::msg::Request request;
             request.set_integer(42);
             auto reader = stub->AsyncUnary(&client_context, request, agrpc::get_completion_queue(get_executor()));
-            test::v1::Response response;
+            test::msg::Response response;
             grpc::Status status;
             client_finish_ok = co_await agrpc::finish(*reader, response, status, use_sender());
         }(),
@@ -460,10 +460,10 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request client 
         agrpc::repeatedly_request(
             &test::v1::Test::AsyncService::RequestClientStreaming, service,
 #ifdef _MSC_VER
-            [&](grpc::ServerContext&, grpc::ServerAsyncReader<test::v1::Response, test::v1::Request>& reader)
+            [&](grpc::ServerContext&, grpc::ServerAsyncReader<test::msg::Response, test::msg::Request>& reader)
             {
                 return unifex::let_value(
-                    unifex::just(test::v1::Request{}),
+                    unifex::just(test::msg::Request{}),
                     [&](auto& request)
                     {
                         return unifex::let_value(
@@ -473,7 +473,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request client 
                                 CHECK(read_ok);
                                 CHECK_EQ(42, request.integer());
                                 return unifex::let_value(
-                                    unifex::just(test::v1::Response{}),
+                                    unifex::just(test::msg::Response{}),
                                     [&](auto& response)
                                     {
                                         response.set_integer(21);
@@ -494,12 +494,12 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request client 
             },
 #else
                 [&](grpc::ServerContext&,
-                    grpc::ServerAsyncReader<test::v1::Response, test::v1::Request>& reader) -> unifex::task<void>
+                    grpc::ServerAsyncReader<test::msg::Response, test::msg::Request>& reader) -> unifex::task<void>
                 {
-                    test::v1::Request request{};
+                    test::msg::Request request{};
                     CHECK(co_await agrpc::read(reader, request, use_sender()));
                     CHECK_EQ(42, request.integer());
-                    test::v1::Response response{};
+                    test::msg::Response response{};
                     response.set_integer(21);
                     ++request_count;
                     if (request_count > 3)
@@ -514,12 +514,12 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request client 
         {
             while (!is_shutdown)
             {
-                test::v1::Response response;
+                test::msg::Response response;
                 grpc::ClientContext new_client_context;
-                std::unique_ptr<grpc::ClientAsyncWriter<test::v1::Request>> writer;
+                std::unique_ptr<grpc::ClientAsyncWriter<test::msg::Request>> writer;
                 CHECK(co_await agrpc::request(&test::v1::Test::Stub::AsyncClientStreaming, *stub, new_client_context,
                                               writer, response, use_sender()));
-                test::v1::Request request;
+                test::msg::Request request;
                 request.set_integer(42);
                 CHECK(co_await agrpc::write(*writer, request, use_sender()));
                 CHECK(co_await agrpc::writes_done(*writer, use_sender()));

@@ -12,19 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "descriptor.pb.h"
+syntax = "proto3";
 
-#include <google/protobuf/descriptor.pb.h>
+package test.msg;
 
-#include <fstream>
+message Request {
+  int32 integer = 1;
+}
 
-void run_descriptor()
-{
-    const auto file = DESCRIPTOR_FILE;
-    std::ifstream istream{file, std::ios::binary};
-    google::protobuf::FileDescriptorProto file_descriptor;
-    if (!file_descriptor.ParseFromIstream(&istream))
-    {
-        std::exit(1);
-    }
+message Response {
+  int32 integer = 1;
 }

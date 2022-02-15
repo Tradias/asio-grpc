@@ -31,7 +31,7 @@ struct GrpcInitiateImplFn
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     template <class InitiatingFunction, class CompletionToken = detail::DefaultCompletionToken>
-    auto operator()(InitiatingFunction initiating_function, CompletionToken&& token = {}) const
+    auto operator()(InitiatingFunction initiating_function, CompletionToken token = {}) const
     {
         return asio::async_initiate<CompletionToken, void(bool)>(
             detail::GrpcInitiator<InitiatingFunction, StopFunction>{std::move(initiating_function)}, token);

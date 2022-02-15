@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "example/v1/example.grpc.pb.h"
 #include "helper.hpp"
-#include "protos/example.grpc.pb.h"
 
 #include <agrpc/asioGrpc.hpp>
 #include <grpcpp/client_context.h>

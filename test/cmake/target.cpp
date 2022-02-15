@@ -21,6 +21,8 @@ void run_target()
 {
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
+    auto rpc = &target::Test::AsyncService::RequestUnary;
+
     target::Request request;
     request.set_integer(42);
 

@@ -12,19 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "protos/outVar.grpc.pb.h"
+#include "out_var/msg/message.grpc.pb.h"
+#include "out_var/subdir/other.grpc.pb.h"
+#include "out_var/v1/outVar.grpc.pb.h"
 
 #include <agrpc/asioGrpc.hpp>
+#include <boost/asio/bind_executor.hpp>
 #include <grpcpp/completion_queue.h>
 
 void run_out_var()
 {
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
-    out_var::Request request;
+    out_var::v1::Test::AsyncService service;
+
+    auto out_var_v1_rpc = &out_var::v1::Test::AsyncService::RequestUnary;
+    auto other_rpc = &other::Other::AsyncService::RequestUnary;
+
+    grpc::ServerContext server_context;
+
+    out_var::msg::Request request;
     request.set_integer(42);
 
-    out_var::Request response;
+    grpc::ServerAsyncResponseWriter<out_var::msg::Response> writer{&server_context};
+    const auto cb = boost::asio::bind_executor(grpc_context, [](bool) {});
+    const auto is_void =
+        std::is_same_v<void, decltype(agrpc::request(out_var_v1_rpc, service, server_context, request, writer, cb))>;
+
+    out_var::msg::Request response;
 
     grpc_context.run();
 }

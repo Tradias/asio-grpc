@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "helloworld/helloworld.grpc.pb.h"
 #include "helper.hpp"
-#include "protos/helloworld.grpc.pb.h"
 
 #include <agrpc/asioGrpc.hpp>
 #include <boost/asio/co_spawn.hpp>

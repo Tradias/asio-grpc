@@ -17,7 +17,7 @@ These are code snippets from the blog article about some of the implementation d
 https://medium.com/3yourmind/c-20-coroutines-for-asynchronous-grpc-services-5b3dab1d1d61
 */
 
-#include "protos/helloworld.grpc.pb.h"
+#include "helloworld/helloworld.grpc.pb.h"
 
 #include <boost/asio/execution_context.hpp>
 #include <boost/asio/use_awaitable.hpp>

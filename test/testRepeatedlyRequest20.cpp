@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "protos/test.grpc.pb.h"
+#include "test/v1/test.grpc.pb.h"
 #include "utils/asioUtils.hpp"
 #include "utils/grpcClientServerTest.hpp"
 
@@ -49,8 +49,8 @@ TEST_CASE_TEMPLATE("awaitable repeatedly_request unary", T, std::true_type, std:
         &test::v1::Test::AsyncService::RequestUnary, self.service,
         asio::bind_executor(
             executor,
-            [&](grpc::ServerContext&, test::v1::Request& request,
-                grpc::ServerAsyncResponseWriter<test::v1::Response>& writer) -> asio::awaitable<void, Executor>
+            [&](grpc::ServerContext&, test::msg::Request& request,
+                grpc::ServerAsyncResponseWriter<test::msg::Response>& writer) -> asio::awaitable<void, Executor>
             {
                 CHECK_EQ(42, request.integer());
                 ++request_count;
@@ -58,7 +58,7 @@ TEST_CASE_TEMPLATE("awaitable repeatedly_request unary", T, std::true_type, std:
                 {
                     is_shutdown = true;
                 }
-                test::v1::Response response;
+                test::msg::Response response;
                 response.set_integer(21);
                 co_await agrpc::finish(writer, response, grpc::Status::OK, asio::use_awaitable_t<Executor>{});
             }));
@@ -68,11 +68,11 @@ TEST_CASE_TEMPLATE("awaitable repeatedly_request unary", T, std::true_type, std:
                        while (!is_shutdown)
                        {
                            grpc::ClientContext new_client_context;
-                           test::v1::Request request;
+                           test::msg::Request request;
                            request.set_integer(42);
                            const auto reader = self.stub->AsyncUnary(&new_client_context, request,
                                                                      self.grpc_context.get_completion_queue());
-                           test::v1::Response response;
+                           test::msg::Response response;
                            grpc::Status status;
                            CHECK(co_await agrpc::finish(*reader, response, status));
                            CHECK(status.ok());
@@ -104,9 +104,9 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request clie
         asio::bind_executor(
             asio::require(get_executor(), asio::execution::allocator(get_allocator())),
             [&](grpc::ServerContext&,
-                grpc::ServerAsyncReader<test::v1::Response, test::v1::Request>& reader) -> asio::awaitable<void>
+                grpc::ServerAsyncReader<test::msg::Response, test::msg::Request>& reader) -> asio::awaitable<void>
             {
-                test::v1::Request request;
+                test::msg::Request request;
                 CHECK(co_await agrpc::read(reader, request));
                 CHECK_EQ(42, request.integer());
                 ++request_count;
@@ -114,7 +114,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request clie
                 {
                     is_shutdown = true;
                 }
-                test::v1::Response response;
+                test::msg::Response response;
                 response.set_integer(21);
                 CHECK(co_await agrpc::finish(reader, response, grpc::Status::OK));
             }));
@@ -123,12 +123,12 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request clie
                    {
                        while (!is_shutdown)
                        {
-                           test::v1::Response response;
+                           test::msg::Response response;
                            grpc::ClientContext new_client_context;
                            auto [writer, ok] = co_await agrpc::request(&test::v1::Test::Stub::AsyncClientStreaming,
                                                                        *stub, new_client_context, response);
                            CHECK(ok);
-                           test::v1::Request request;
+                           test::msg::Request request;
                            request.set_integer(42);
                            CHECK(co_await agrpc::write(*writer, request));
                            CHECK(co_await agrpc::writes_done(*writer));
@@ -149,9 +149,9 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "asio use_sender repeatedly_reques
 {
     bool is_shutdown{false};
     auto request_count{0};
-    test::v1::Response response;
-    const auto request_handler = [&](grpc::ServerContext&, test::v1::Request& request,
-                                     grpc::ServerAsyncResponseWriter<test::v1::Response>& writer)
+    test::msg::Response response;
+    const auto request_handler = [&](grpc::ServerContext&, test::msg::Request& request,
+                                     grpc::ServerAsyncResponseWriter<test::msg::Response>& writer)
     {
         CHECK_EQ(42, request.integer());
         ++request_count;
@@ -174,11 +174,11 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "asio use_sender repeatedly_reques
                        while (!is_shutdown)
                        {
                            grpc::ClientContext new_client_context;
-                           test::v1::Request request;
+                           test::msg::Request request;
                            request.set_integer(42);
                            const auto reader =
                                stub->AsyncUnary(&new_client_context, request, grpc_context.get_completion_queue());
-                           test::v1::Response response;
+                           test::msg::Response response;
                            grpc::Status status;
                            CHECK(co_await agrpc::finish(*reader, response, status));
                            CHECK(status.ok());

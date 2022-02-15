@@ -14,22 +14,10 @@
 
 syntax = "proto3";
 
-package test.v1;
+package out_var.v1;
+
+import "out_var/msg/message.proto";
 
 service Test {
-  rpc ServerStreaming(Request) returns (stream Response) {}
-
-  rpc ClientStreaming(stream Request) returns (Response) {}
-
-  rpc BidirectionalStreaming(stream Request) returns (stream Response) {}
-
-  rpc Unary(Request) returns (Response) {}
-}
-
-message Request {
-  int32 integer = 1;
-}
-
-message Response {
-  int32 integer = 1;
+  rpc Unary(out_var.msg.Request) returns (out_var.msg.Response) {}
 }

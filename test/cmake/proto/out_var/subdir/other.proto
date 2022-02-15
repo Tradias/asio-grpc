@@ -14,9 +14,9 @@
 
 syntax = "proto3";
 
-package out_var;
+package other;
 
-service Test {
+service Other {
   rpc Unary(Request) returns (Response) {}
 }
 

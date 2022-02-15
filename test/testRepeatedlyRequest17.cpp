@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "protos/test.grpc.pb.h"
+#include "test/v1/test.grpc.pb.h"
 #include "utils/asioUtils.hpp"
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/grpcContextTest.hpp"
@@ -46,8 +46,8 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request u
     auto request_count{0};
     this->test(
         &test::v1::Test::AsyncService::RequestUnary, service,
-        [&](grpc::ServerContext&, test::v1::Request& request,
-            grpc::ServerAsyncResponseWriter<test::v1::Response>& writer, asio::yield_context yield)
+        [&](grpc::ServerContext&, test::msg::Request& request,
+            grpc::ServerAsyncResponseWriter<test::msg::Response>& writer, asio::yield_context yield)
         {
             CHECK_EQ(42, request.integer());
             ++request_count;
@@ -55,7 +55,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request u
             {
                 is_shutdown = true;
             }
-            test::v1::Response response;
+            test::msg::Response response;
             response.set_integer(21);
             CHECK(agrpc::finish(writer, response, grpc::Status::OK, yield));
         },
@@ -63,12 +63,12 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request u
         {
             while (!is_shutdown)
             {
-                test::v1::Request request;
+                test::msg::Request request;
                 request.set_integer(42);
                 grpc::ClientContext new_client_context;
                 auto reader =
                     stub->AsyncUnary(&new_client_context, request, agrpc::get_completion_queue(get_executor()));
-                test::v1::Response response;
+                test::msg::Response response;
                 grpc::Status status;
                 CHECK(agrpc::finish(*reader, response, status, yield));
                 CHECK(status.ok());
@@ -89,10 +89,10 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request c
     std::optional<std::thread> server_shutdown_thread;
     this->test(
         &test::v1::Test::AsyncService::RequestClientStreaming, service,
-        [&](grpc::ServerContext&, grpc::ServerAsyncReader<test::v1::Response, test::v1::Request>& reader,
+        [&](grpc::ServerContext&, grpc::ServerAsyncReader<test::msg::Response, test::msg::Request>& reader,
             asio::yield_context yield)
         {
-            test::v1::Request request;
+            test::msg::Request request;
             CHECK(agrpc::read(reader, request, yield));
             CHECK_EQ(42, request.integer());
             ++request_count;
@@ -100,7 +100,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request c
             {
                 is_shutdown = true;
             }
-            test::v1::Response response;
+            test::msg::Response response;
             response.set_integer(21);
             CHECK(agrpc::finish(reader, response, grpc::Status::OK, yield));
         },
@@ -108,12 +108,12 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request c
         {
             while (!is_shutdown)
             {
-                test::v1::Response response;
+                test::msg::Response response;
                 grpc::ClientContext new_client_context;
                 auto [writer, ok] = agrpc::request(&test::v1::Test::Stub::AsyncClientStreaming, *stub,
                                                    new_client_context, response, yield);
                 CHECK(ok);
-                test::v1::Request request;
+                test::msg::Request request;
                 request.set_integer(42);
                 CHECK(agrpc::write(*writer, request, yield));
                 CHECK(agrpc::writes_done(*writer, yield));
@@ -158,22 +158,22 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "RepeatedlyRequestContext member fu
             [&](auto&& rpc_context)
             {
                 auto&& request = rpc_context.request();
-                CHECK(std::is_same_v<test::v1::Request&, decltype(request)>);
+                CHECK(std::is_same_v<test::msg::Request&, decltype(request)>);
                 auto&& responder = rpc_context.responder();
-                CHECK(std::is_same_v<grpc::ServerAsyncResponseWriter<test::v1::Response>&, decltype(responder)>);
+                CHECK(std::is_same_v<grpc::ServerAsyncResponseWriter<test::msg::Response>&, decltype(responder)>);
                 auto&& context = rpc_context.server_context();
                 CHECK(std::is_same_v<grpc::ServerContext&, decltype(context)>);
-                test::v1::Response response;
+                test::msg::Response response;
                 agrpc::finish(responder, response, grpc::Status::OK,
                               asio::bind_executor(get_executor(), [c = std::move(rpc_context)](bool) {}));
             }));
     asio::spawn(get_executor(),
                 [&](asio::yield_context yield)
                 {
-                    test::v1::Request request;
+                    test::msg::Request request;
                     auto reader =
                         stub->AsyncUnary(&client_context, request, agrpc::get_completion_queue(get_executor()));
-                    test::v1::Response response;
+                    test::msg::Response response;
                     grpc::Status status;
                     agrpc::finish(*reader, response, status, yield);
                     grpc_context.stop();
@@ -189,11 +189,11 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "RepeatedlyRequestContext member fu
                             [&](auto&& rpc_context)
                             {
                                 auto&& responder = rpc_context.responder();
-                                CHECK(std::is_same_v<grpc::ServerAsyncReader<test::v1::Response, test::v1::Request>&,
+                                CHECK(std::is_same_v<grpc::ServerAsyncReader<test::msg::Response, test::msg::Request>&,
                                                      decltype(responder)>);
                                 auto&& context = rpc_context.server_context();
                                 CHECK(std::is_same_v<grpc::ServerContext&, decltype(context)>);
-                                test::v1::Response response;
+                                test::msg::Response response;
                                 agrpc::finish(
                                     responder, response, grpc::Status::OK,
                                     asio::bind_executor(get_executor(), [c = std::move(rpc_context)](bool) {}));
@@ -201,7 +201,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "RepeatedlyRequestContext member fu
     asio::spawn(get_executor(),
                 [&](asio::yield_context yield)
                 {
-                    test::v1::Response response;
+                    test::msg::Response response;
                     auto [writer, ok] = agrpc::request(&test::v1::Test::Stub::AsyncClientStreaming, *stub,
                                                        client_context, response, yield);
                     agrpc::writes_done(*writer, yield);
@@ -257,10 +257,10 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "repeatedly_request cancellation")
     agrpc::repeatedly_request(
         &test::v1::Test::AsyncService::RequestUnary, service,
         test::RpcSpawner{grpc_context,
-                         [&](grpc::ServerContext&, test::v1::Request&,
-                             grpc::ServerAsyncResponseWriter<test::v1::Response>& writer, asio::yield_context yield)
+                         [&](grpc::ServerContext&, test::msg::Request&,
+                             grpc::ServerAsyncResponseWriter<test::msg::Response>& writer, asio::yield_context yield)
                          {
-                             test::v1::Response response;
+                             test::msg::Response response;
                              CHECK(agrpc::finish(writer, response, grpc::Status::OK, yield));
                              ++count;
                          }},
@@ -269,11 +269,11 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "repeatedly_request cancellation")
                 [&](auto&& yield)
                 {
                     signal.emit(asio::cancellation_type::all);
-                    test::v1::Request request;
+                    test::msg::Request request;
                     grpc::ClientContext new_client_context;
                     auto reader =
                         stub->AsyncUnary(&new_client_context, request, agrpc::get_completion_queue(get_executor()));
-                    test::v1::Response response;
+                    test::msg::Response response;
                     grpc::Status status;
                     CHECK(agrpc::finish(*reader, response, status, yield));
                 });

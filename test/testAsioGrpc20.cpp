@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "protos/test.grpc.pb.h"
+#include "test/v1/test.grpc.pb.h"
 #include "utils/asioUtils.hpp"
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/grpcContextTest.hpp"
@@ -196,12 +196,12 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable server streaming")
     test::co_spawn(grpc_context,
                    [&]() -> asio::awaitable<void>
                    {
-                       test::v1::Request request;
-                       grpc::ServerAsyncWriter<test::v1::Response> writer{&server_context};
+                       test::msg::Request request;
+                       grpc::ServerAsyncWriter<test::msg::Response> writer{&server_context};
                        CHECK(co_await agrpc::request(&test::v1::Test::AsyncService::RequestServerStreaming, service,
                                                      server_context, request, writer));
                        CHECK_EQ(42, request.integer());
-                       test::v1::Response response;
+                       test::msg::Response response;
                        response.set_integer(21);
                        CHECK(co_await agrpc::write(writer, response));
                        CHECK(co_await agrpc::finish(writer, grpc::Status::OK));
@@ -209,15 +209,15 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable server streaming")
     test::co_spawn(grpc_context,
                    [&]() -> asio::awaitable<void>
                    {
-                       test::v1::Request request;
+                       test::msg::Request request;
                        request.set_integer(42);
-                       std::unique_ptr<grpc::ClientAsyncReader<test::v1::Response>> reader;
+                       std::unique_ptr<grpc::ClientAsyncReader<test::msg::Response>> reader;
                        CHECK(co_await agrpc::request(&test::v1::Test::Stub::AsyncServerStreaming, *stub, client_context,
                                                      request, reader));
                        CHECK(std::is_same_v<std::pair<decltype(reader), bool>,
                                             decltype(agrpc::request(&test::v1::Test::Stub::AsyncServerStreaming, *stub,
                                                                     client_context, request))::value_type>);
-                       test::v1::Response response;
+                       test::msg::Response response;
                        CHECK(co_await agrpc::read(*reader, response));
                        grpc::Status status;
                        CHECK(co_await agrpc::finish(*reader, status));
@@ -232,27 +232,27 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable client streaming")
     test::co_spawn(grpc_context,
                    [&]() -> asio::awaitable<void>
                    {
-                       grpc::ServerAsyncReader<test::v1::Response, test::v1::Request> reader{&server_context};
+                       grpc::ServerAsyncReader<test::msg::Response, test::msg::Request> reader{&server_context};
                        CHECK(co_await agrpc::request(&test::v1::Test::AsyncService::RequestClientStreaming, service,
                                                      server_context, reader));
-                       test::v1::Request request;
+                       test::msg::Request request;
                        CHECK(co_await agrpc::read(reader, request));
                        CHECK_EQ(42, request.integer());
-                       test::v1::Response response;
+                       test::msg::Response response;
                        response.set_integer(21);
                        CHECK(co_await agrpc::finish(reader, response, grpc::Status::OK));
                    });
     test::co_spawn(grpc_context,
                    [&]() -> asio::awaitable<void>
                    {
-                       test::v1::Response response;
-                       std::unique_ptr<grpc::ClientAsyncWriter<test::v1::Request>> writer;
+                       test::msg::Response response;
+                       std::unique_ptr<grpc::ClientAsyncWriter<test::msg::Request>> writer;
                        CHECK(co_await agrpc::request(&test::v1::Test::Stub::AsyncClientStreaming, *stub, client_context,
                                                      writer, response));
                        CHECK(std::is_same_v<std::pair<decltype(writer), bool>,
                                             decltype(agrpc::request(&test::v1::Test::Stub::AsyncClientStreaming, *stub,
                                                                     client_context, response))::value_type>);
-                       test::v1::Request request;
+                       test::msg::Request request;
                        request.set_integer(42);
                        CHECK(co_await agrpc::write(*writer, request));
                        grpc::Status status;
@@ -272,12 +272,12 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable unary")
     test::co_spawn(grpc_context,
                    [&]() -> asio::awaitable<void>
                    {
-                       test::v1::Request request;
-                       grpc::ServerAsyncResponseWriter<test::v1::Response> writer{&server_context};
+                       test::msg::Request request;
+                       grpc::ServerAsyncResponseWriter<test::msg::Response> writer{&server_context};
                        CHECK(co_await agrpc::request(&test::v1::Test::AsyncService::RequestUnary, service,
                                                      server_context, request, writer));
                        CHECK_EQ(42, request.integer());
-                       test::v1::Response response;
+                       test::msg::Response response;
                        response.set_integer(21);
                        if (use_finish_with_error)
                        {
@@ -292,21 +292,21 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable unary")
         grpc_context,
         [&]() -> asio::awaitable<void>
         {
-            test::v1::Request request;
+            test::msg::Request request;
             request.set_integer(42);
             auto reader =
-                co_await [&]() -> asio::awaitable<std::unique_ptr<grpc::ClientAsyncResponseReader<test::v1::Response>>>
+                co_await [&]() -> asio::awaitable<std::unique_ptr<grpc::ClientAsyncResponseReader<test::msg::Response>>>
             {
                 if (use_client_convenience)
                 {
                     co_return co_await agrpc::request(&test::v1::Test::Stub::AsyncUnary, *stub, client_context,
                                                       request);
                 }
-                std::unique_ptr<grpc::ClientAsyncResponseReader<test::v1::Response>> reader;
+                std::unique_ptr<grpc::ClientAsyncResponseReader<test::msg::Response>> reader;
                 co_await agrpc::request(&test::v1::Test::Stub::AsyncUnary, *stub, client_context, request, reader);
                 co_return reader;
             }();
-            test::v1::Response response;
+            test::msg::Response response;
             grpc::Status status;
             CHECK(co_await agrpc::finish(*reader, response, status));
             if (use_finish_with_error)
@@ -331,13 +331,13 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable bidirectional streaming
         grpc_context,
         [&]() -> asio::awaitable<void>
         {
-            grpc::ServerAsyncReaderWriter<test::v1::Response, test::v1::Request> reader_writer{&server_context};
+            grpc::ServerAsyncReaderWriter<test::msg::Response, test::msg::Request> reader_writer{&server_context};
             CHECK(co_await agrpc::request(&test::v1::Test::AsyncService::RequestBidirectionalStreaming, service,
                                           server_context, reader_writer));
-            test::v1::Request request;
+            test::msg::Request request;
             CHECK(co_await agrpc::read(reader_writer, request));
             CHECK_EQ(42, request.integer());
-            test::v1::Response response;
+            test::msg::Response response;
             response.set_integer(21);
             if (use_write_and_finish)
             {
@@ -353,16 +353,16 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable bidirectional streaming
         grpc_context,
         [&]() -> asio::awaitable<void>
         {
-            std::unique_ptr<grpc::ClientAsyncReaderWriter<test::v1::Request, test::v1::Response>> reader_writer;
+            std::unique_ptr<grpc::ClientAsyncReaderWriter<test::msg::Request, test::msg::Response>> reader_writer;
             CHECK(co_await agrpc::request(&test::v1::Test::Stub::AsyncBidirectionalStreaming, *stub, client_context,
                                           reader_writer));
             CHECK(std::is_same_v<std::pair<decltype(reader_writer), bool>,
                                  decltype(agrpc::request(&test::v1::Test::Stub::AsyncBidirectionalStreaming, *stub,
                                                          client_context))::value_type>);
-            test::v1::Request request;
+            test::msg::Request request;
             request.set_integer(42);
             CHECK(co_await agrpc::write(*reader_writer, request));
-            test::v1::Response response;
+            test::msg::Response response;
             CHECK(co_await agrpc::read(*reader_writer, response));
             grpc::Status status;
             CHECK(co_await agrpc::finish(*reader_writer, status));
@@ -413,21 +413,21 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline no ca
     test::co_spawn(grpc_context,
                    [&]() -> asio::awaitable<void>
                    {
-                       test::v1::Request request;
-                       grpc::ServerAsyncResponseWriter<test::v1::Response> writer{&server_context};
+                       test::msg::Request request;
+                       grpc::ServerAsyncResponseWriter<test::msg::Response> writer{&server_context};
                        CHECK(co_await agrpc::request(&test::v1::Test::AsyncService::RequestUnary, service,
                                                      server_context, request, writer));
-                       test::v1::Response response;
+                       test::msg::Response response;
                        server_finish_ok = co_await agrpc::finish(writer, response, grpc::Status::OK);
                    });
     grpc::Status status;
     test::co_spawn(grpc_context,
                    [&]() -> asio::awaitable<void>
                    {
-                       test::v1::Request request;
+                       test::msg::Request request;
                        const auto reader =
                            stub->AsyncUnary(&client_context, request, agrpc::get_completion_queue(grpc_context));
-                       test::v1::Response response;
+                       test::msg::Response response;
                        grpc::Alarm alarm;
                        const auto not_too_exceed = test::one_seconds_from_now();
                        co_await run_with_deadline(alarm, client_context, test::one_seconds_from_now(),
@@ -448,23 +448,23 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline and c
     test::co_spawn(grpc_context,
                    [&]() -> asio::awaitable<void>
                    {
-                       test::v1::Request request;
-                       grpc::ServerAsyncResponseWriter<test::v1::Response> writer{&server_context};
+                       test::msg::Request request;
+                       grpc::ServerAsyncResponseWriter<test::msg::Response> writer{&server_context};
                        CHECK(co_await agrpc::request(&test::v1::Test::AsyncService::RequestUnary, service,
                                                      server_context, request, writer));
                        grpc::Alarm alarm;
                        co_await agrpc::wait(alarm, test::one_seconds_from_now());
-                       test::v1::Response response;
+                       test::msg::Response response;
                        server_finish_ok = co_await agrpc::finish(writer, response, grpc::Status::OK);
                    });
     grpc::Status status;
     test::co_spawn(grpc_context,
                    [&]() -> asio::awaitable<void>
                    {
-                       test::v1::Request request;
+                       test::msg::Request request;
                        const auto reader =
                            stub->AsyncUnary(&client_context, request, agrpc::get_completion_queue(grpc_context));
-                       test::v1::Response response;
+                       test::msg::Response response;
                        grpc::Alarm alarm;
                        const auto not_too_exceed = test::one_seconds_from_now();
                        co_await run_with_deadline(alarm, client_context, test::hundred_milliseconds_from_now(),

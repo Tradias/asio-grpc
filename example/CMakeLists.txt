@@ -18,17 +18,14 @@ include(AsioGrpcProtobufGenerator)
 function(asio_grpc_add_example_protos _asio_grpc_name)
     add_library(asio-grpc-${_asio_grpc_name} OBJECT)
 
-    set(ASIO_GRPC_GENERATED_EXAMPLE_PROTOS_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
-    set(ASIO_GRPC_GENERATED_EXAMPLE_PROTOS_OUT_DIR "${ASIO_GRPC_GENERATED_EXAMPLE_PROTOS_INCLUDE_DIR}/protos")
-
     asio_grpc_protobuf_generate(
         GENERATE_GRPC
         TARGET asio-grpc-${_asio_grpc_name}
-        OUT_DIR "${ASIO_GRPC_GENERATED_EXAMPLE_PROTOS_OUT_DIR}"
-        PROTOS "${CMAKE_CURRENT_LIST_DIR}/protos/helloworld.proto" "${CMAKE_CURRENT_LIST_DIR}/protos/example.proto")
-
-    target_include_directories(asio-grpc-${_asio_grpc_name}
-                               PUBLIC "$<BUILD_INTERFACE:${ASIO_GRPC_GENERATED_EXAMPLE_PROTOS_INCLUDE_DIR}>")
+        USAGE_REQUIREMENT PUBLIC
+        OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
+        IMPORT_DIRS "${CMAKE_CURRENT_LIST_DIR}/proto"
+        PROTOS "${CMAKE_CURRENT_LIST_DIR}/proto/helloworld/helloworld.proto"
+               "${CMAKE_CURRENT_LIST_DIR}/proto/example/v1/example.proto")
 
     target_link_libraries(asio-grpc-${_asio_grpc_name} PUBLIC protobuf::libprotobuf)
 

@@ -14,7 +14,7 @@
 
 #include "utils/grpcClientServerTest.hpp"
 
-#include "protos/test.grpc.pb.h"
+#include "test/v1/test.grpc.pb.h"
 #include "utils/freePort.hpp"
 #include "utils/grpcContextTest.hpp"
 

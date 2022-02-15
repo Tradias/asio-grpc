@@ -119,7 +119,7 @@ class GrpcWithPayloadInitiator : public detail::GrpcInitiator<InitiatingFunction
 };
 
 template <class Payload, class InitiatingFunction, class CompletionToken>
-auto grpc_initiate_with_payload(InitiatingFunction initiating_function, CompletionToken&& token)
+auto grpc_initiate_with_payload(InitiatingFunction initiating_function, CompletionToken token)
 {
     return asio::async_initiate<CompletionToken, void(std::pair<Payload, bool>)>(
         detail::GrpcWithPayloadInitiator<Payload, InitiatingFunction>{std::move(initiating_function)}, token);
