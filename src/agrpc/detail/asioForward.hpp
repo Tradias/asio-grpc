@@ -27,10 +27,15 @@
 #include <asio/async_result.hpp>
 #include <asio/execution/allocator.hpp>
 #include <asio/execution/blocking.hpp>
+#include <asio/execution/connect.hpp>
 #include <asio/execution/context.hpp>
 #include <asio/execution/mapping.hpp>
 #include <asio/execution/outstanding_work.hpp>
 #include <asio/execution/relationship.hpp>
+#include <asio/execution/set_done.hpp>
+#include <asio/execution/set_error.hpp>
+#include <asio/execution/set_value.hpp>
+#include <asio/execution/start.hpp>
 #include <asio/execution_context.hpp>
 #include <asio/query.hpp>
 #include <asio/system_executor.hpp>
@@ -57,14 +62,15 @@
 #include <boost/asio/async_result.hpp>
 #include <boost/asio/execution/allocator.hpp>
 #include <boost/asio/execution/blocking.hpp>
+#include <boost/asio/execution/connect.hpp>
 #include <boost/asio/execution/context.hpp>
 #include <boost/asio/execution/mapping.hpp>
 #include <boost/asio/execution/outstanding_work.hpp>
-#include <boost/asio/execution/receiver.hpp>
 #include <boost/asio/execution/relationship.hpp>
-#include <boost/asio/execution/sender.hpp>
+#include <boost/asio/execution/set_done.hpp>
+#include <boost/asio/execution/set_error.hpp>
+#include <boost/asio/execution/set_value.hpp>
 #include <boost/asio/execution/start.hpp>
-#include <boost/asio/execution/submit.hpp>
 #include <boost/asio/execution_context.hpp>
 #include <boost/asio/query.hpp>
 #include <boost/asio/system_executor.hpp>
@@ -91,7 +97,6 @@
 #include <unifex/scheduler_concepts.hpp>
 #include <unifex/sender_concepts.hpp>
 #include <unifex/stop_token_concepts.hpp>
-#include <unifex/submit.hpp>
 #endif
 
 AGRPC_NAMESPACE_BEGIN()
@@ -145,7 +150,6 @@ using asio::execution::set_done;
 using asio::execution::set_error;
 using asio::execution::set_value;
 using asio::execution::start;
-using asio::execution::submit;
 
 struct unstoppable_token
 {
@@ -189,7 +193,6 @@ using ::unifex::set_error;
 using ::unifex::set_value;
 using ::unifex::start;
 using ::unifex::stop_token_type_t;
-using ::unifex::submit;
 #endif
 
 template <class Receiver, class Callback>
