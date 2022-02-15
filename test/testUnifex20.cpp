@@ -462,52 +462,56 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request client 
 #ifdef _MSC_VER
             [&](grpc::ServerContext&, grpc::ServerAsyncReader<test::msg::Response, test::msg::Request>& reader)
             {
-                return unifex::let_value(
-                    unifex::just(test::msg::Request{}),
-                    [&](auto& request)
-                    {
-                        return unifex::let_value(
-                            agrpc::read(reader, request, use_sender()),
-                            [&](bool read_ok)
-                            {
-                                CHECK(read_ok);
-                                CHECK_EQ(42, request.integer());
-                                return unifex::let_value(
-                                    unifex::just(test::msg::Response{}),
-                                    [&](auto& response)
-                                    {
-                                        response.set_integer(21);
-                                        ++request_count;
-                                        if (request_count > 3)
-                                        {
-                                            is_shutdown = true;
-                                        }
-                                        return unifex::then(
-                                            agrpc::finish(reader, response, grpc::Status::OK, use_sender()),
-                                            [](bool finish_ok)
-                                            {
-                                                CHECK(finish_ok);
-                                            });
-                                    });
-                            });
-                    });
+                return unifex::just(test::msg::Request{}) |
+                       unifex::let_value(
+                           [&](auto& request)
+                           {
+                               return agrpc::read(reader, request, use_sender()) |
+                                      unifex::then(
+                                          [&](bool read_ok)
+                                          {
+                                              CHECK(read_ok);
+                                              CHECK_EQ(42, request.integer());
+                                          });
+                           }) |
+                       unifex::then(
+                           []()
+                           {
+                               return test::msg::Response{};
+                           }) |
+                       unifex::let_value(
+                           [&](auto& response)
+                           {
+                               response.set_integer(21);
+                               ++request_count;
+                               if (request_count > 3)
+                               {
+                                   is_shutdown = true;
+                               }
+                               return agrpc::finish(reader, response, grpc::Status::OK, use_sender());
+                           }) |
+                       unifex::then(
+                           [](bool finish_ok)
+                           {
+                               CHECK(finish_ok);
+                           });
             },
 #else
-                [&](grpc::ServerContext&,
-                    grpc::ServerAsyncReader<test::msg::Response, test::msg::Request>& reader) -> unifex::task<void>
+            [&](grpc::ServerContext&,
+                grpc::ServerAsyncReader<test::msg::Response, test::msg::Request>& reader) -> unifex::task<void>
+            {
+                test::msg::Request request{};
+                CHECK(co_await agrpc::read(reader, request, use_sender()));
+                CHECK_EQ(42, request.integer());
+                test::msg::Response response{};
+                response.set_integer(21);
+                ++request_count;
+                if (request_count > 3)
                 {
-                    test::msg::Request request{};
-                    CHECK(co_await agrpc::read(reader, request, use_sender()));
-                    CHECK_EQ(42, request.integer());
-                    test::msg::Response response{};
-                    response.set_integer(21);
-                    ++request_count;
-                    if (request_count > 3)
-                    {
-                        is_shutdown = true;
-                    }
-                    CHECK(co_await agrpc::finish(reader, response, grpc::Status::OK, use_sender()));
-                },
+                    is_shutdown = true;
+                }
+                CHECK(co_await agrpc::finish(reader, response, grpc::Status::OK, use_sender()));
+            },
 #endif
             use_sender()),
         [&]() -> unifex::task<void>
