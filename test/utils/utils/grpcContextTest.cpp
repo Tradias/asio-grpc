@@ -24,7 +24,6 @@
 
 #include <algorithm>
 #include <array>
-#include <chrono>
 #include <cstddef>
 #include <memory>
 
@@ -51,25 +50,5 @@ bool GrpcContextTest::allocator_has_been_used() noexcept
                        {
                            return value != std::byte{};
                        });
-}
-
-std::chrono::system_clock::time_point ten_milliseconds_from_now()
-{
-    return std::chrono::system_clock::now() + std::chrono::milliseconds(10);
-}
-
-std::chrono::system_clock::time_point hundred_milliseconds_from_now()
-{
-    return std::chrono::system_clock::now() + std::chrono::milliseconds(100);
-}
-
-std::chrono::system_clock::time_point one_seconds_from_now()
-{
-    return std::chrono::system_clock::now() + std::chrono::seconds(1);
-}
-
-std::chrono::system_clock::time_point five_seconds_from_now()
-{
-    return std::chrono::system_clock::now() + std::chrono::seconds(5);
 }
 }  // namespace test

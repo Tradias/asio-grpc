@@ -17,6 +17,7 @@
 #include "test/v1/test.grpc.pb.h"
 #include "utils/freePort.hpp"
 #include "utils/grpcContextTest.hpp"
+#include "utils/time.hpp"
 
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>

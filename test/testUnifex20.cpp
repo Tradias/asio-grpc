@@ -16,6 +16,7 @@
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asioForward.hpp"
 #include "utils/asioUtils.hpp"
+#include "utils/clientContext.hpp"
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/grpcContextTest.hpp"
 
@@ -216,8 +217,7 @@ struct RepeatedlyRequestTest : test::GrpcClientServerTest
         return unifex::let_value_with(
             [&, deadline]
             {
-                auto context = std::make_unique<grpc::ClientContext>();
-                context->set_deadline(deadline);
+                auto context = test::create_client_context(deadline);
                 test::msg::Request request;
                 request.set_integer(42);
                 auto* context_ptr = context.get();

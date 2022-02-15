@@ -25,7 +25,6 @@
 #include <grpcpp/server_builder.h>
 
 #include <array>
-#include <chrono>
 #include <cstddef>
 #include <memory>
 
@@ -51,14 +50,6 @@ struct GrpcContextTest
 
     bool allocator_has_been_used() noexcept;
 };
-
-std::chrono::system_clock::time_point ten_milliseconds_from_now();
-
-std::chrono::system_clock::time_point hundred_milliseconds_from_now();
-
-std::chrono::system_clock::time_point one_seconds_from_now();
-
-std::chrono::system_clock::time_point five_seconds_from_now();
 }  // namespace test
 
 #endif  // AGRPC_UTILS_GRPCCONTEXTTEST_HPP

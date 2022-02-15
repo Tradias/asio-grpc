@@ -16,6 +16,7 @@
 #include "utils/asioUtils.hpp"
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/grpcContextTest.hpp"
+#include "utils/rpcs.hpp"
 
 #include <agrpc/rpcs.hpp>
 #include <doctest/doctest.h>
@@ -424,25 +425,24 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post with throwing completion ha
     CHECK_THROWS_AS(grpc_context.run(), Exception);
 }
 
-template <class Function>
-struct Coro : asio::coroutine
+TEST_CASE("agrpc::request and agrpc::wait are noexcept for use_sender")
 {
-    using executor_type = std::decay_t<
-        asio::require_result<agrpc::GrpcContext::executor_type, asio::execution::outstanding_work_t::tracked_t>::type>;
-
-    executor_type executor;
-    Function function;
-
-    Coro(agrpc::GrpcContext& grpc_context, Function&& f)
-        : executor(asio::require(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked)),
-          function(std::forward<Function>(f))
-    {
-    }
-
-    void operator()(bool ok) { function(ok, this); }
-
-    executor_type get_executor() const noexcept { return executor; }
-};
+    using UseSender = decltype(agrpc::use_sender(std::declval<agrpc::GrpcContext&>()));
+    CHECK_FALSE(noexcept(agrpc::request(std::declval<decltype(&test::v1::Test::Stub::AsyncServerStreaming)>(),
+                                        std::declval<test::v1::Test::Stub&>(), std::declval<grpc::ClientContext&>(),
+                                        std::declval<test::msg::Request&>(),
+                                        std::declval<std::unique_ptr<grpc::ClientAsyncReader<test::msg::Response>>&>(),
+                                        std::declval<asio::yield_context>())));
+    CHECK(noexcept(agrpc::request(
+        std::declval<decltype(&test::v1::Test::Stub::AsyncServerStreaming)>(), std::declval<test::v1::Test::Stub&>(),
+        std::declval<grpc::ClientContext&>(), std::declval<test::msg::Request&>(),
+        std::declval<std::unique_ptr<grpc::ClientAsyncReader<test::msg::Response>>&>(), std::declval<UseSender&&>())));
+    CHECK_FALSE(
+        noexcept(agrpc::wait(std::declval<grpc::Alarm&>(), std::declval<std::chrono::system_clock::time_point>(),
+                             std::declval<asio::yield_context>())));
+    CHECK(noexcept(agrpc::wait(std::declval<grpc::Alarm&>(), std::declval<std::chrono::system_clock::time_point>(),
+                               std::declval<UseSender&&>())));
+}
 
 #ifdef AGRPC_STANDALONE_ASIO
 #include <asio/yield.hpp>
@@ -485,40 +485,41 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::coroutine with Alarm")
     CHECK(ok);
 }
 
-TEST_CASE("agrpc::request and agrpc::wait are noexcept for use_sender")
+template <class Function>
+struct Coro : asio::coroutine
 {
-    using UseSender = decltype(agrpc::use_sender(std::declval<agrpc::GrpcContext&>()));
-    CHECK_FALSE(noexcept(agrpc::request(std::declval<decltype(&test::v1::Test::Stub::AsyncServerStreaming)>(),
-                                        std::declval<test::v1::Test::Stub&>(), std::declval<grpc::ClientContext&>(),
-                                        std::declval<test::msg::Request&>(),
-                                        std::declval<std::unique_ptr<grpc::ClientAsyncReader<test::msg::Response>>&>(),
-                                        std::declval<asio::yield_context>())));
-    CHECK(noexcept(agrpc::request(
-        std::declval<decltype(&test::v1::Test::Stub::AsyncServerStreaming)>(), std::declval<test::v1::Test::Stub&>(),
-        std::declval<grpc::ClientContext&>(), std::declval<test::msg::Request&>(),
-        std::declval<std::unique_ptr<grpc::ClientAsyncReader<test::msg::Response>>&>(), std::declval<UseSender&&>())));
-    CHECK_FALSE(
-        noexcept(agrpc::wait(std::declval<grpc::Alarm&>(), std::declval<std::chrono::system_clock::time_point>(),
-                             std::declval<asio::yield_context>())));
-    CHECK(noexcept(agrpc::wait(std::declval<grpc::Alarm&>(), std::declval<std::chrono::system_clock::time_point>(),
-                               std::declval<UseSender&&>())));
-}
+    using executor_type = std::decay_t<
+        asio::require_result<agrpc::GrpcContext::executor_type, asio::execution::outstanding_work_t::tracked_t>::type>;
+
+    executor_type executor;
+    Function function;
+
+    Coro(agrpc::GrpcContext& grpc_context, Function&& f)
+        : executor(asio::require(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked)),
+          function(std::forward<Function>(f))
+    {
+    }
+
+    void operator()(bool ok) { function(ok, *this); }
+
+    executor_type get_executor() const noexcept { return executor; }
+};
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unary stackless coroutine")
 {
     grpc::ServerAsyncResponseWriter<test::msg::Response> writer{&server_context};
     test::msg::Request server_request;
     test::msg::Response server_response;
-    auto server_loop = [&](bool ok, auto* coro) mutable
+    auto server_loop = [&](bool ok, auto& coro) mutable
     {
-        reenter(*coro)
+        reenter(coro)
         {
             yield agrpc::request(&test::v1::Test::AsyncService::RequestUnary, service, server_context, server_request,
-                                 writer, *coro);
+                                 writer, coro);
             CHECK(ok);
             CHECK_EQ(42, server_request.integer());
             server_response.set_integer(21);
-            yield agrpc::finish(writer, server_response, grpc::Status::OK, *coro);
+            yield agrpc::finish(writer, server_response, grpc::Status::OK, coro);
             CHECK(ok);
         }
     };
@@ -533,12 +534,12 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unary stackless coroutine")
     test::msg::Response client_response;
     grpc::Status status;
     std::unique_ptr<grpc::ClientAsyncResponseReader<test::msg::Response>> reader;
-    auto client_loop = [&](bool ok, auto* coro) mutable
+    auto client_loop = [&](bool ok, auto& coro) mutable
     {
-        reenter(*coro)
+        reenter(coro)
         {
-            reader = stub->AsyncUnary(&client_context, client_request, agrpc::get_completion_queue(*coro));
-            yield agrpc::finish(*reader, client_response, status, *coro);
+            reader = stub->AsyncUnary(&client_context, client_request, agrpc::get_completion_queue(coro));
+            yield agrpc::finish(*reader, client_response, status, coro);
             CHECK(ok);
             CHECK(status.ok());
             CHECK_EQ(21, client_response.integer());
@@ -635,6 +636,9 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context client streaming")
                     test::msg::Request request;
                     CHECK(agrpc::read(reader, request, yield));
                     CHECK_EQ(42, request.integer());
+                    CHECK(agrpc::read(reader, request, yield));
+                    CHECK_EQ(42, request.integer());
+                    CHECK_FALSE(agrpc::read(reader, request, yield));
                     test::msg::Response response;
                     response.set_integer(21);
                     if (use_finish_with_error)
@@ -663,23 +667,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context client streaming")
                         return std::pair{std::move(writer), ok};
                     }();
                     CHECK(ok);
-                    CHECK(agrpc::read_initial_metadata(*writer, yield));
-                    test::msg::Request request;
-                    request.set_integer(42);
-                    CHECK(agrpc::write(*writer, request, yield));
-                    CHECK(agrpc::write(*writer, request, grpc::WriteOptions{}, yield));
-                    CHECK(agrpc::writes_done(*writer, yield));
-                    grpc::Status status;
-                    CHECK(agrpc::finish(*writer, status, yield));
-                    if (use_finish_with_error)
-                    {
-                        CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
-                    }
-                    else
-                    {
-                        CHECK(status.ok());
-                        CHECK_EQ(21, response.integer());
-                    }
+                    test::client_perform_client_streaming_success(response, *writer, yield, {use_finish_with_error});
                 });
     grpc_context.run();
 }
@@ -712,23 +700,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context unary")
     asio::spawn(get_executor(),
                 [&](asio::yield_context yield)
                 {
-                    test::msg::Request request;
-                    request.set_integer(42);
-                    auto reader =
-                        stub->AsyncUnary(&client_context, request, agrpc::get_completion_queue(get_executor()));
-                    CHECK(agrpc::read_initial_metadata(*reader, yield));
-                    test::msg::Response response;
-                    grpc::Status status;
-                    CHECK(agrpc::finish(*reader, response, status, yield));
-                    if (use_finish_with_error)
-                    {
-                        CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
-                    }
-                    else
-                    {
-                        CHECK(status.ok());
-                        CHECK_EQ(21, response.integer());
-                    }
+                    test::client_perform_unary_success(grpc_context, *stub, yield, {use_finish_with_error});
                 });
     grpc_context.run();
 }

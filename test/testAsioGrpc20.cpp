@@ -16,6 +16,7 @@
 #include "utils/asioUtils.hpp"
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/grpcContextTest.hpp"
+#include "utils/time.hpp"
 
 #include <agrpc/rpcs.hpp>
 #include <doctest/doctest.h>

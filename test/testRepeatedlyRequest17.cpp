@@ -16,6 +16,7 @@
 #include "utils/asioUtils.hpp"
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/grpcContextTest.hpp"
+#include "utils/rpcs.hpp"
 
 #include <agrpc/repeatedlyRequest.hpp>
 #include <agrpc/rpcs.hpp>
@@ -63,16 +64,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request u
         {
             while (!is_shutdown)
             {
-                test::msg::Request request;
-                request.set_integer(42);
-                grpc::ClientContext new_client_context;
-                auto reader =
-                    stub->AsyncUnary(&new_client_context, request, agrpc::get_completion_queue(get_executor()));
-                test::msg::Response response;
-                grpc::Status status;
-                CHECK(agrpc::finish(*reader, response, status, yield));
-                CHECK(status.ok());
-                CHECK_EQ(21, response.integer());
+                test::client_perform_unary_success(grpc_context, *stub, yield);
             }
             grpc_context.stop();
         },
@@ -92,6 +84,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request c
         [&](grpc::ServerContext&, grpc::ServerAsyncReader<test::msg::Response, test::msg::Request>& reader,
             asio::yield_context yield)
         {
+            CHECK(agrpc::send_initial_metadata(reader, yield));
             test::msg::Request request;
             CHECK(agrpc::read(reader, request, yield));
             CHECK_EQ(42, request.integer());
@@ -108,19 +101,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request c
         {
             while (!is_shutdown)
             {
-                test::msg::Response response;
-                grpc::ClientContext new_client_context;
-                auto [writer, ok] = agrpc::request(&test::v1::Test::Stub::AsyncClientStreaming, *stub,
-                                                   new_client_context, response, yield);
-                CHECK(ok);
-                test::msg::Request request;
-                request.set_integer(42);
-                CHECK(agrpc::write(*writer, request, yield));
-                CHECK(agrpc::writes_done(*writer, yield));
-                grpc::Status status;
-                CHECK(agrpc::finish(*writer, status, yield));
-                CHECK(status.ok());
-                CHECK_EQ(21, response.integer());
+                test::client_perform_client_streaming_success(*stub, yield);
             }
             server_shutdown_thread.emplace(
                 [&]
@@ -170,12 +151,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "RepeatedlyRequestContext member fu
     asio::spawn(get_executor(),
                 [&](asio::yield_context yield)
                 {
-                    test::msg::Request request;
-                    auto reader =
-                        stub->AsyncUnary(&client_context, request, agrpc::get_completion_queue(get_executor()));
-                    test::msg::Response response;
-                    grpc::Status status;
-                    agrpc::finish(*reader, response, status, yield);
+                    test::client_perform_unary_unchecked(grpc_context, *stub, yield);
                     grpc_context.stop();
                 });
     grpc_context.run();
@@ -269,13 +245,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "repeatedly_request cancellation")
                 [&](auto&& yield)
                 {
                     signal.emit(asio::cancellation_type::all);
-                    test::msg::Request request;
-                    grpc::ClientContext new_client_context;
-                    auto reader =
-                        stub->AsyncUnary(&new_client_context, request, agrpc::get_completion_queue(get_executor()));
-                    test::msg::Response response;
-                    grpc::Status status;
-                    CHECK(agrpc::finish(*reader, response, status, yield));
+                    test::client_perform_unary_unchecked(grpc_context, *stub, yield);
                 });
     grpc_context.run();
     CHECK_EQ(1, count);

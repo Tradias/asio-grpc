@@ -15,6 +15,7 @@
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asioUtils.hpp"
 #include "utils/grpcClientServerTest.hpp"
+#include "utils/rpcs.hpp"
 
 #include <agrpc/repeatedlyRequest.hpp>
 #include <agrpc/rpcs.hpp>
@@ -62,31 +63,22 @@ TEST_CASE_TEMPLATE("awaitable repeatedly_request unary", T, std::true_type, std:
                 response.set_integer(21);
                 co_await agrpc::finish(writer, response, grpc::Status::OK, asio::use_awaitable_t<Executor>{});
             }));
-    test::co_spawn(self.grpc_context,
-                   [&]() -> asio::awaitable<void>
-                   {
-                       while (!is_shutdown)
-                       {
-                           grpc::ClientContext new_client_context;
-                           test::msg::Request request;
-                           request.set_integer(42);
-                           const auto reader = self.stub->AsyncUnary(&new_client_context, request,
-                                                                     self.grpc_context.get_completion_queue());
-                           test::msg::Response response;
-                           grpc::Status status;
-                           CHECK(co_await agrpc::finish(*reader, response, status));
-                           CHECK(status.ok());
-                           CHECK_EQ(21, response.integer());
-                       }
-                       if (use_server_shutdown)
-                       {
-                           self.server->Shutdown();
-                       }
-                       else
-                       {
-                           self.grpc_context.stop();
-                       }
-                   });
+    asio::spawn(self.grpc_context,
+                [&](auto&& yield)
+                {
+                    while (!is_shutdown)
+                    {
+                        test::client_perform_unary_success(self.grpc_context, *self.stub, yield);
+                    }
+                    if (use_server_shutdown)
+                    {
+                        self.server->Shutdown();
+                    }
+                    else
+                    {
+                        self.grpc_context.stop();
+                    }
+                });
     self.grpc_context.run();
     CHECK_EQ(4, request_count);
     if constexpr (T{})
@@ -106,6 +98,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request clie
             [&](grpc::ServerContext&,
                 grpc::ServerAsyncReader<test::msg::Response, test::msg::Request>& reader) -> asio::awaitable<void>
             {
+                CHECK(co_await agrpc::send_initial_metadata(reader));
                 test::msg::Request request;
                 CHECK(co_await agrpc::read(reader, request));
                 CHECK_EQ(42, request.integer());
@@ -118,27 +111,15 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request clie
                 response.set_integer(21);
                 CHECK(co_await agrpc::finish(reader, response, grpc::Status::OK));
             }));
-    test::co_spawn(grpc_context,
-                   [&]() -> asio::awaitable<void>
-                   {
-                       while (!is_shutdown)
-                       {
-                           test::msg::Response response;
-                           grpc::ClientContext new_client_context;
-                           auto [writer, ok] = co_await agrpc::request(&test::v1::Test::Stub::AsyncClientStreaming,
-                                                                       *stub, new_client_context, response);
-                           CHECK(ok);
-                           test::msg::Request request;
-                           request.set_integer(42);
-                           CHECK(co_await agrpc::write(*writer, request));
-                           CHECK(co_await agrpc::writes_done(*writer));
-                           grpc::Status status;
-                           CHECK(co_await agrpc::finish(*writer, status));
-                           CHECK(status.ok());
-                           CHECK_EQ(21, response.integer());
-                       }
-                       server->Shutdown();
-                   });
+    asio::spawn(grpc_context,
+                [&](auto&& yield)
+                {
+                    while (!is_shutdown)
+                    {
+                        test::client_perform_client_streaming_success(*stub, yield);
+                    }
+                    server->Shutdown();
+                });
     grpc_context.run();
     CHECK_EQ(4, request_count);
     CHECK(allocator_has_been_used());
@@ -168,24 +149,15 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "asio use_sender repeatedly_reques
                                  {
                                      CHECK_EQ(4, request_count);
                                  }});
-    test::co_spawn(grpc_context,
-                   [&]() -> asio::awaitable<void>
-                   {
-                       while (!is_shutdown)
-                       {
-                           grpc::ClientContext new_client_context;
-                           test::msg::Request request;
-                           request.set_integer(42);
-                           const auto reader =
-                               stub->AsyncUnary(&new_client_context, request, grpc_context.get_completion_queue());
-                           test::msg::Response response;
-                           grpc::Status status;
-                           CHECK(co_await agrpc::finish(*reader, response, status));
-                           CHECK(status.ok());
-                           CHECK_EQ(21, response.integer());
-                       }
-                       server->Shutdown();
-                   });
+    asio::spawn(grpc_context,
+                [&](auto&& yield)
+                {
+                    while (!is_shutdown)
+                    {
+                        test::client_perform_unary_success(grpc_context, *stub, yield);
+                    }
+                    server->Shutdown();
+                });
     grpc_context.run();
     CHECK_EQ(4, request_count);
 }

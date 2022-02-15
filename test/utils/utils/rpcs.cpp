@@ -1,0 +1,93 @@
+// Copyright 2022 Dennis Hezel
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "utils/rpcs.hpp"
+
+#include "test/v1/test.grpc.pb.h"
+#include "utils/asioForward.hpp"
+#include "utils/clientContext.hpp"
+#include "utils/time.hpp"
+
+#include <agrpc/grpcContext.hpp>
+#include <agrpc/rpcs.hpp>
+#include <doctest/doctest.h>
+
+namespace test
+{
+void client_perform_unary_success(agrpc::GrpcContext& grpc_context, test::v1::Test::Stub& stub,
+                                  asio::yield_context yield, test::PerformOptions options)
+{
+    auto client_context = create_client_context();
+    test::msg::Request request;
+    request.set_integer(42);
+    auto reader = stub.AsyncUnary(client_context.get(), request, agrpc::get_completion_queue(grpc_context));
+    test::msg::Response response;
+    grpc::Status status;
+    CHECK(agrpc::finish(*reader, response, status, yield));
+    if (options.finish_with_error)
+    {
+        CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
+    }
+    else
+    {
+        CHECK(status.ok());
+        CHECK_EQ(21, response.integer());
+    }
+}
+
+void client_perform_unary_unchecked(agrpc::GrpcContext& grpc_context, test::v1::Test::Stub& stub,
+                                    asio::yield_context yield)
+{
+    auto client_context = create_client_context();
+    auto reader =
+        stub.AsyncUnary(client_context.get(), test::msg::Request{}, agrpc::get_completion_queue(grpc_context));
+    test::msg::Response response;
+    grpc::Status status;
+    CHECK(agrpc::finish(*reader, response, status, yield));
+}
+
+void client_perform_client_streaming_success(test::v1::Test::Stub& stub, asio::yield_context yield,
+                                             test::PerformOptions options)
+{
+    test::msg::Response response;
+    auto client_context = create_client_context();
+    auto [writer, ok] =
+        agrpc::request(&test::v1::Test::Stub::AsyncClientStreaming, stub, *client_context, response, yield);
+    CHECK(ok);
+    test::client_perform_client_streaming_success(response, *writer, yield, options);
+}
+
+void client_perform_client_streaming_success(test::msg::Response& response,
+                                             grpc::ClientAsyncWriter<test::msg::Request>& writer,
+                                             asio::yield_context yield, test::PerformOptions options)
+{
+    CHECK(agrpc::read_initial_metadata(writer, yield));
+    test::msg::Request request;
+    request.set_integer(42);
+    CHECK(agrpc::write(writer, request, yield));
+    CHECK(agrpc::write(writer, request, grpc::WriteOptions{}, yield));
+    CHECK(agrpc::writes_done(writer, yield));
+    grpc::Status status;
+    CHECK(agrpc::finish(writer, status, yield));
+    if (options.finish_with_error)
+    {
+        CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
+    }
+    else
+    {
+        CHECK(status.ok());
+        CHECK_EQ(21, response.integer());
+    }
+}
+}
