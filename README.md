@@ -690,11 +690,11 @@ A special completion token created by `agrpc::use_sender(scheduler)` where `sche
 unifex::task<void> unified_executors(example::v1::Example::Stub& stub, agrpc::GrpcContext& grpc_context)
 {
     grpc::ClientContext client_context;
-    test::v1::Request request;
-    std::unique_ptr<grpc::ClientAsyncReader<test::v1::Response>> reader;
-    co_await agrpc::request(&test::v1::Test::Stub::AsyncServerStreaming, stub, client_context, request, reader,
+    example::v1::Request request;
+    std::unique_ptr<grpc::ClientAsyncReader<example::v1::Response>> reader;
+    co_await agrpc::request(&example::v1::Example::Stub::AsyncServerStreaming, stub, client_context, request, reader,
                             agrpc::use_sender(grpc_context));
-    test::v1::Response response;
+    example::v1::Response response;
     co_await agrpc::read(*reader, response, agrpc::use_sender(grpc_context));
     grpc::Status status;
     co_await agrpc::finish(*reader, status, agrpc::use_sender(grpc_context));
@@ -836,17 +836,13 @@ In the same directory that called `find_package(asio-grpc)` a function called `a
 <!-- snippet: asio_grpc_protobuf_generate-target -->
 <a id='snippet-asio_grpc_protobuf_generate-target'></a>
 ```cmake
-set(TARGET_GENERATED_PROTOS_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/target")
-
 asio_grpc_protobuf_generate(
     GENERATE_GRPC
     TARGET target-option
-    OUT_DIR "${TARGET_GENERATED_PROTOS_OUT_DIR}"
-    PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/target.proto")
-
-target_include_directories(target-option PRIVATE "${TARGET_GENERATED_PROTOS_OUT_DIR}")
+    OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/target"
+    PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/proto/target.proto")
 ```
-<sup><a href='/test/cmake/Targets.cmake#L36-L46' title='Snippet source file'>snippet source</a> | <a href='#snippet-asio_grpc_protobuf_generate-target' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/test/cmake/Targets.cmake#L36-L42' title='Snippet source file'>snippet source</a> | <a href='#snippet-asio_grpc_protobuf_generate-target' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 See in-code documentation for more details:
