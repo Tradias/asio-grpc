@@ -19,24 +19,46 @@
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 #include <unifex/just.hpp>
+#include <unifex/let_done.hpp>
+#include <unifex/let_value_with_stop_source.hpp>
 #include <unifex/sync_wait.hpp>
 #include <unifex/task.hpp>
 #include <unifex/then.hpp>
 #include <unifex/when_all.hpp>
+#include <unifex/with_query_value.hpp>
 
-unifex::task<void> handle_unary_request(example::v1::Example::AsyncService& service, agrpc::GrpcContext& grpc_context)
+unifex::task<void> handle_unary_request(agrpc::GrpcContext& grpc_context, grpc::ServerContext&,
+                                        example::v1::Request& request,
+                                        grpc::ServerAsyncResponseWriter<example::v1::Response>& writer)
 {
-    grpc::ServerContext server_context;
-    grpc::ServerAsyncResponseWriter<example::v1::Response> writer{&server_context};
-    example::v1::Request request;
-    if (!co_await agrpc::request(&example::v1::Example::AsyncService::RequestUnary, service, server_context, request,
-                                 writer, agrpc::use_sender(grpc_context)))
-    {
-        co_return;
-    }
     example::v1::Response response;
     response.set_integer(request.integer());
     co_await agrpc::finish(writer, response, grpc::Status::OK, agrpc::use_sender(grpc_context));
+}
+
+auto register_unary_request_handler(example::v1::Example::AsyncService& service, agrpc::GrpcContext& grpc_context)
+{
+    return unifex::let_value_with_stop_source(
+        [&](unifex::inplace_stop_source& stop)
+        {
+            return unifex::let_done(
+                unifex::with_query_value(agrpc::repeatedly_request(
+                                             &example::v1::Example::AsyncService::RequestUnary, service,
+                                             [&](auto& server_context, auto& request, auto& writer)
+                                             {
+                                                 // Stop handling requests after this one
+                                                 stop.request_stop();
+                                                 return handle_unary_request(grpc_context, server_context, request,
+                                                                             writer);
+                                             },
+                                             agrpc::use_sender(grpc_context)),
+                                         unifex::get_stop_token, stop.get_token()),
+                []()
+                {
+                    // Prevent stop request from propagating up
+                    return unifex::just();
+                });
+        });
 }
 
 unifex::task<void> handle_server_streaming_request(example::v1::Example::AsyncService& service,
@@ -93,7 +115,7 @@ int main(int argc, const char** argv)
     server = builder.BuildAndStart();
     abort_if_not(bool{server});
 
-    unifex::sync_wait(unifex::when_all(handle_unary_request(service, grpc_context),
+    unifex::sync_wait(unifex::when_all(register_unary_request_handler(service, grpc_context),
                                        handle_server_streaming_request(service, grpc_context),
                                        unifex::then(unifex::just(),
                                                     [&]
