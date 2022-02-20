@@ -456,14 +456,23 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::coroutine with Alarm")
     {
         using executor_type = agrpc::GrpcContext::executor_type;
 
-        grpc::Alarm& alarm;
-        std::chrono::system_clock::time_point deadline;
-        agrpc::GrpcContext& grpc_context;
-        bool& ok;
+        struct Context
+        {
+            std::chrono::system_clock::time_point deadline;
+            agrpc::GrpcContext& grpc_context;
+            bool& ok;
+            grpc::Alarm alarm;
 
-        Coro(grpc::Alarm& alarm, std::chrono::system_clock::time_point deadline, agrpc::GrpcContext& grpc_context,
-             bool& ok)
-            : alarm(alarm), deadline(deadline), grpc_context(grpc_context), ok(ok)
+            Context(std::chrono::system_clock::time_point deadline, agrpc::GrpcContext& grpc_context, bool& ok)
+                : deadline(deadline), grpc_context(grpc_context), ok(ok)
+            {
+            }
+        };
+
+        std::shared_ptr<Context> context;
+
+        Coro(std::chrono::system_clock::time_point deadline, agrpc::GrpcContext& grpc_context, bool& ok)
+            : context(std::make_shared<Context>(deadline, grpc_context, ok))
         {
         }
 
@@ -471,16 +480,15 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::coroutine with Alarm")
         {
             reenter(*this)
             {
-                yield agrpc::wait(alarm, deadline, *this);
-                ok = wait_ok;
+                yield agrpc::wait(context->alarm, context->deadline, std::move(*this));
+                context->ok = wait_ok;
             }
         }
 
-        executor_type get_executor() const noexcept { return grpc_context.get_executor(); }
+        executor_type get_executor() const noexcept { return context->grpc_context.get_executor(); }
     };
     bool ok{false};
-    grpc::Alarm alarm;
-    Coro{alarm, test::ten_milliseconds_from_now(), grpc_context, ok}(false);
+    Coro{test::ten_milliseconds_from_now(), grpc_context, ok}(false);
     grpc_context.run();
     CHECK(ok);
 }
