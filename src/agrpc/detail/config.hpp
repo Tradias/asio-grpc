@@ -67,7 +67,11 @@
 #define AGRPC_RETHROW() ((void)0)
 #endif
 
-#ifdef AGRPC_BOOST_ASIO
+#ifdef AGRPC_GENERATING_DOCUMENTATION
+#define AGRPC_NAMESPACE_BEGIN() \
+    namespace agrpc             \
+    {
+#elif defined(AGRPC_BOOST_ASIO)
 #define AGRPC_NAMESPACE_BEGIN() \
     namespace agrpc             \
     {                           \
@@ -91,8 +95,12 @@ static_assert(false,
               "`asio-grpc::asio-grpc-standalone-asio` or `asio-grpc::asio-grpc-unifex` in your CMake file?");
 #endif
 
+#ifdef AGRPC_GENERTING_DOCUMENTATION
+#define AGRPC_NAMESPACE_END }
+#else
 #define AGRPC_NAMESPACE_END \
     }                       \
     }
+#endif
 
 #endif  // AGRPC_DETAIL_ATTRIBUTES_HPP

@@ -45,6 +45,13 @@ static constexpr agrpc::pmr::GrpcUseAwaitable GRPC_USE_AWAITABLE{};
 }  // namespace pmr
 #endif
 
+/**
+ * @brief Default completion token for all asynchronous methods
+ *
+ * For Boost.Asio and standalone Asio: `asio::use_awaitable`
+ *
+ * For libunifex: `agrpc::use_sender`
+ */
 using DefaultCompletionToken = detail::DefaultCompletionToken;
 
 template <class Allocator, std::uint32_t Options>

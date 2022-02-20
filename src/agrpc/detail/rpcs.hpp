@@ -47,7 +47,7 @@ using ClientServerStreamingRequest = Reader (RPC::*)(grpc::ClientContext*, const
                                                      void*);
 
 template <class RPC, class Writer, class Response>
-using ClientSideStreamingRequest = Writer (RPC::*)(grpc::ClientContext*, Response*, grpc::CompletionQueue*, void*);
+using ClientClientStreamingRequest = Writer (RPC::*)(grpc::ClientContext*, Response*, grpc::CompletionQueue*, void*);
 
 template <class RPC, class ReaderWriter>
 using ClientBidirectionalStreamingRequest = ReaderWriter (RPC::*)(grpc::ClientContext*, grpc::CompletionQueue*, void*);
@@ -332,9 +332,9 @@ ClientServerStreamingRequestConvenienceInitFunction(detail::ClientServerStreamin
     -> ClientServerStreamingRequestConvenienceInitFunction<RPC, Stub, Request, Reader>;
 
 template <class RPC, class Stub, class Writer, class Response>
-struct ClientSideStreamingRequestInitFunction
+struct ClientClientStreamingRequestInitFunction
 {
-    detail::ClientSideStreamingRequest<RPC, Writer, Response> rpc;
+    detail::ClientClientStreamingRequest<RPC, Writer, Response> rpc;
     Stub& stub;
     grpc::ClientContext& client_context;
     Writer& writer;
@@ -347,14 +347,14 @@ struct ClientSideStreamingRequestInitFunction
 };
 
 template <class RPC, class Stub, class Writer, class Response>
-ClientSideStreamingRequestInitFunction(detail::ClientSideStreamingRequest<RPC, Writer, Response>, Stub&,
-                                       grpc::ClientContext&, Writer&, Response&)
-    -> ClientSideStreamingRequestInitFunction<RPC, Stub, Writer, Response>;
+ClientClientStreamingRequestInitFunction(detail::ClientClientStreamingRequest<RPC, Writer, Response>, Stub&,
+                                         grpc::ClientContext&, Writer&, Response&)
+    -> ClientClientStreamingRequestInitFunction<RPC, Stub, Writer, Response>;
 
 template <class RPC, class Stub, class Writer, class Response>
-struct ClientSideStreamingRequestConvenienceInitFunction
+struct ClientClientStreamingRequestConvenienceInitFunction
 {
-    detail::ClientSideStreamingRequest<RPC, Writer, Response> rpc;
+    detail::ClientClientStreamingRequest<RPC, Writer, Response> rpc;
     Stub& stub;
     grpc::ClientContext& client_context;
     Response& response;
@@ -368,9 +368,9 @@ struct ClientSideStreamingRequestConvenienceInitFunction
 };
 
 template <class RPC, class Stub, class Writer, class Response>
-ClientSideStreamingRequestConvenienceInitFunction(detail::ClientSideStreamingRequest<RPC, Writer, Response>, Stub&,
-                                                  grpc::ClientContext&, Response&)
-    -> ClientSideStreamingRequestConvenienceInitFunction<RPC, Stub, Writer, Response>;
+ClientClientStreamingRequestConvenienceInitFunction(detail::ClientClientStreamingRequest<RPC, Writer, Response>, Stub&,
+                                                    grpc::ClientContext&, Response&)
+    -> ClientClientStreamingRequestConvenienceInitFunction<RPC, Stub, Writer, Response>;
 
 template <class RPC, class Stub, class ReaderWriter>
 struct ClientBidirectionalStreamingRequestInitFunction

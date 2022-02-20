@@ -40,9 +40,48 @@ struct WaitFn
     }
 };
 
+/**
+ * @brief Client and server-side function object to start RPCs
+ *
+ * The examples below are based on the following .proto file:
+ *
+ * @snippet example.proto example-proto
+ *
+ * @attention The completion handler created from the completion token that is provided to the functions described below
+ * must have an associated executor that refers to a GrpcContext. The following code would therefore be @b invalid:
+ * @code{.cpp}
+ * asio::io_context io_context;
+ * asio::co_spawn(io_context, []() -> asio::awaitable<void> {
+ *   grpc::ServerContext server_context;
+ *   grpc::ServerAsyncReader<example::v1::Response, example::v1::Request> reader{&server_context};
+ *   // error: asio::this_coro::executor does not refer to a GrpcContext
+ *   co_await agrpc::request(&example::v1::Example::AsyncService::RequestClientStreaming, service,
+ *                           server_context, reader, asio::use_awaitable);
+ * }, asio::detached);
+ * @endcode
+ * For a safer alternative see `agrpc::AsyncService` and `agrpc::Stub` (work in progress).
+ *
+ */
 struct RequestFn
 {
-    // Server
+    /**
+     * @brief Wait for a unary or server-streaming RPC request from a client
+     *
+     * Unary RPC:
+     *
+     * @snippet server.cpp request-unary-server-side
+     *
+     * Server-streaming RPC:
+     *
+     * @snippet server.cpp request-server-streaming-server-side
+     *
+     * @param rpc A pointer to the async version of the RPC method. The async version always starts with `Request`.
+     * @param service The AsyncService that corresponds to the RPC method. In the examples above the service is:
+     * `example::v1::Example::AsyncService`.
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` indicates that the RPC has indeed been started. If it is `false`
+     * then the server has been Shutdown before this particular call got matched to an incoming RPC.
+     */
     template <class RPC, class Service, class Request, class Responder,
               class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
@@ -55,6 +94,24 @@ struct RequestFn
             std::forward<CompletionToken>(token));
     }
 
+    /**
+     * @brief Wait for a client-streaming or bidirectional-streaming RPC request from a client
+     *
+     * Client-streaming RPC:
+     *
+     * @snippet server.cpp request-client-streaming-server-side
+     *
+     * Bidirectional-streaming RPC:
+     *
+     * @snippet server.cpp request-bidirectional-streaming-server-side
+     *
+     * @param rpc A pointer to the async version of the RPC method. The async version always starts with `Request`.
+     * @param service The AsyncService that corresponds to the RPC method. In the examples above the service is:
+     * `example::v1::Example::AsyncService`.
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` indicates that the RPC has indeed been started. If it is `false`
+     * then the server has been Shutdown before this particular call got matched to an incoming RPC.
+     */
     template <class RPC, class Service, class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service,
                     grpc::ServerContext& server_context, Responder& responder, CompletionToken&& token = {}) const
@@ -65,8 +122,23 @@ struct RequestFn
             std::forward<CompletionToken>(token));
     }
 
-    // Client
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
+    /**
+     * @brief Convenience function for starting a unary request
+     *
+     * Example:
+     *
+     * @snippet client.cpp request-unary-client-side-await
+     *
+     * @note
+     * For better performance use:
+     * @snippet client.cpp request-unary-client-side
+     * instead.
+     *
+     * @param rpc A pointer to the async version of the RPC method. The async version always starts with `Async`.
+     * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
+     * `example::v1::Example::Stub`.
+     */
     template <class RPC, class Stub, class Request, class Reader, class Executor = asio::any_io_executor>
     auto operator()(detail::ClientUnaryRequest<RPC, Request, Reader> rpc, Stub& stub,
                     grpc::ClientContext& client_context, const Request& request,
@@ -77,6 +149,12 @@ struct RequestFn
         co_return(stub.*rpc)(&client_context, request, completion_queue);
     }
 
+    /**
+     * @brief Convenience function for starting a unary request
+     *
+     * Takes `std::unique_ptr<grpc::ClientAsyncResponseReader<Response>>` as an output parameter, otherwise identical
+     * to: `operator()(ClientUnaryRequest, Stub&, ClientContext&, const Request&, use_awaitable_t<Executor>)`
+     */
     template <class RPC, class Stub, class Request, class Reader, class Executor = asio::any_io_executor>
     auto operator()(detail::ClientUnaryRequest<RPC, Request, Reader> rpc, Stub& stub,
                     grpc::ClientContext& client_context, const Request& request, Reader& reader,
@@ -89,6 +167,25 @@ struct RequestFn
 #endif
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+    /**
+     * @brief Convenience function for starting a server-streaming request
+     *
+     * Sends `std::unique_ptr<grpc::ClientAsyncReader<Response>>` through the completion handler, otherwise
+     * identical to `operator()(ClientServerStreamingRequest, Stub&, ClientContext&, const Request&, Reader&,
+     * CompletionToken&&)`
+     *
+     * Example:
+     *
+     * @snippet client.cpp request-server-streaming-client-side-alt
+     *
+     * @param rpc A pointer to the async version of the RPC method. The async version always starts with `Async`.
+     * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
+     * `example::v1::Example::Stub`.
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(std::pair<std::unique_ptr<grpc::ClientAsyncReader<Response>>, bool>)`. `true`
+     * indicates that the RPC is going to go to the wire. If it is `false`, it is not going to the wire. This would
+     * happen if the channel is either permanently broken or transiently broken but with the fail-fast option.
+     */
     template <class RPC, class Stub, class Request, class Reader, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(detail::ClientServerStreamingRequest<RPC, Request, Reader> rpc, Stub& stub,
                     grpc::ClientContext& client_context, const Request& request, CompletionToken&& token = {}) const
@@ -100,6 +197,21 @@ struct RequestFn
     }
 #endif
 
+    /**
+     * @brief Start a server-streaming request
+     *
+     * Example:
+     *
+     * @snippet client.cpp request-server-streaming-client-side
+     *
+     * @param rpc A pointer to the async version of the RPC method. The async version always starts with `Async`.
+     * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
+     * `example::v1::Example::Stub`.
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` indicates that the RPC is going to go to the wire. If it is `false`,
+     * it is not going to the wire. This would happen if the channel is either permanently broken or transiently broken
+     * but with the fail-fast option.
+     */
     template <class RPC, class Stub, class Request, class Reader, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(detail::ClientServerStreamingRequest<RPC, Request, Reader> rpc, Stub& stub,
                     grpc::ClientContext& client_context, const Request& request, Reader& reader,
@@ -112,31 +224,90 @@ struct RequestFn
     }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+    /**
+     * @brief Convenience function for starting a client-streaming request
+     *
+     * Sends `std::unique_ptr<grpc::ClientAsyncWriter<Request>>` through the completion handler, otherwise
+     * identical to `operator()(ClientClientStreamingRequest, Stub&, ClientContext&, Writer&, Response&,
+     * CompletionToken&&)`
+     *
+     * Example:
+     *
+     * @snippet client.cpp request-client-streaming-client-side-alt
+     *
+     * @param rpc A pointer to the async version of the RPC method. The async version always starts with `Async`.
+     * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
+     * `example::v1::Example::Stub`.
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(std::pair<std::unique_ptr<grpc::ClientAsyncWriter<Request>>, bool>)`. `true`
+     * indicates that the RPC is going to go to the wire. If it is `false`, it is not going to the wire. This would
+     * happen if the channel is either permanently broken or transiently broken but with the fail-fast option.
+     */
     template <class RPC, class Stub, class Writer, class Response,
               class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(detail::ClientSideStreamingRequest<RPC, Writer, Response> rpc, Stub& stub,
+    auto operator()(detail::ClientClientStreamingRequest<RPC, Writer, Response> rpc, Stub& stub,
                     grpc::ClientContext& client_context, Response& response, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate_with_payload<Writer>(
-            detail::ClientSideStreamingRequestConvenienceInitFunction{rpc, stub, client_context, response},
+            detail::ClientClientStreamingRequestConvenienceInitFunction{rpc, stub, client_context, response},
             std::forward<CompletionToken>(token));
     }
 #endif
 
+    /**
+     * @brief Start a client-streaming request
+     *
+     * Example:
+     *
+     * @snippet client.cpp request-client-streaming-client-side
+     *
+     * @attention Do not use this function with the
+     * [initial_metadata_corked](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#af79c64534c7b208594ba8e76021e2696)
+     * option set. Call the member function directly instead:
+     * @snippet client.cpp request-client-streaming-client-side-corked
+     *
+     *
+     * @param rpc A pointer to the async version of the RPC method. The async version always starts with `Async`.
+     * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
+     * `example::v1::Example::Stub`.
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` indicates that the RPC is going to go to the wire. If it is `false`,
+     * it is not going to the wire. This would happen if the channel is either permanently broken or transiently broken
+     * but with the fail-fast option.
+     */
     template <class RPC, class Stub, class Writer, class Response,
               class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(detail::ClientSideStreamingRequest<RPC, Writer, Response> rpc, Stub& stub,
+    auto operator()(detail::ClientClientStreamingRequest<RPC, Writer, Response> rpc, Stub& stub,
                     grpc::ClientContext& client_context, Writer& writer, Response& response,
                     CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
-            detail::ClientSideStreamingRequestInitFunction{rpc, stub, client_context, writer, response},
+            detail::ClientClientStreamingRequestInitFunction{rpc, stub, client_context, writer, response},
             std::forward<CompletionToken>(token));
     }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+    /**
+     * @brief Convenience function for starting a bidirectional-streaming request
+     *
+     * Sends `std::unique_ptr<grpc::ClientAsyncWriter<Request>>` through the completion handler, otherwise
+     * identical to `operator()(ClientClientStreamingRequest, Stub&, ClientContext&, Writer&, Response&,
+     * CompletionToken&&)`
+     *
+     * Example:
+     *
+     * @snippet client.cpp request-bidirectional-client-side-alt
+     *
+     * @param rpc A pointer to the async version of the RPC method. The async version always starts with `Async`.
+     * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
+     * `example::v1::Example::Stub`.
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(std::pair<std::unique_ptr<grpc::ClientAsyncWriter<Request>>, bool>)`. `true`
+     * indicates that the RPC is going to go to the wire. If it is `false`, it is not going to the wire. This would
+     * happen if the channel is either permanently broken or transiently broken but with the fail-fast option.
+     */
     template <class RPC, class Stub, class ReaderWriter, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter> rpc, Stub& stub,
                     grpc::ClientContext& client_context, CompletionToken&& token = {}) const
@@ -147,6 +318,27 @@ struct RequestFn
     }
 #endif
 
+    /**
+     * @brief Start a bidirectional-streaming request
+     *
+     * Example:
+     *
+     * @snippet client.cpp request-bidirectional-client-side
+     *
+     * @attention Do not use this function with the
+     * [initial_metadata_corked](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#af79c64534c7b208594ba8e76021e2696)
+     * option set. Call the member function directly instead:
+     * @snippet client.cpp request-client-bidirectional-client-side-corked
+     *
+     *
+     * @param rpc A pointer to the async version of the RPC method. The async version always starts with `Async`.
+     * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
+     * `example::v1::Example::Stub`.
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` indicates that the RPC is going to go to the wire. If it is `false`,
+     * it is not going to the wire. This would happen if the channel is either permanently broken or transiently broken
+     * but with the fail-fast option.
+     */
     template <class RPC, class Stub, class ReaderWriter, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter> rpc, Stub& stub,
                     grpc::ClientContext& client_context, ReaderWriter& reader_writer,
@@ -463,6 +655,13 @@ struct ReadInitialMetadataFn
 
 inline constexpr detail::WaitFn wait{};
 
+/**
+ * @brief Start a new RPC
+ *
+ * @link detail::RequestFn
+ * Client and server-side function to start RPCs.
+ * @endlink
+ */
 inline constexpr detail::RequestFn request{};
 
 inline constexpr detail::ReadFn read{};

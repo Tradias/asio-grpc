@@ -20,9 +20,11 @@
 #include "agrpc/detail/rpcContext.hpp"
 #include "agrpc/detail/utility.hpp"
 #include "agrpc/detail/workTrackingCompletionHandler.hpp"
-#include "agrpc/initiate.hpp"
 #include "agrpc/repeatedlyRequestContext.hpp"
+
+#ifdef AGRPC_ASIO_HAS_CO_AWAIT
 #include "agrpc/rpcs.hpp"
+#endif
 
 AGRPC_NAMESPACE_BEGIN()
 

@@ -16,19 +16,23 @@
 #include "helper.hpp"
 
 #include <agrpc/asioGrpc.hpp>
+#include <boost/asio/co_spawn.hpp>
 #include <boost/asio/coroutine.hpp>
-#include <boost/asio/experimental/deferred.hpp>
+#include <boost/asio/detached.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/use_awaitable.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
 #include <chrono>
 
-void timer(const boost::asio::yield_context& yield)
+namespace asio = boost::asio;
+
+void timer(const asio::yield_context& yield_context)
 {
     // begin-snippet: alarm
     grpc::Alarm alarm;
-    bool wait_ok = agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::seconds(1), yield);
+    bool wait_ok = agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::seconds(1), yield_context);
     // end-snippet
 
     silence_unused(wait_ok);
@@ -39,11 +43,11 @@ void timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context)
     grpc::Alarm alarm;
     const auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(1);
     // begin-snippet: alarm-with-callback
-    agrpc::wait(alarm, deadline, boost::asio::bind_executor(grpc_context, [&](bool /*wait_ok*/) {}));
+    agrpc::wait(alarm, deadline, asio::bind_executor(grpc_context, [&](bool /*wait_ok*/) {}));
     // end-snippet
 
     // begin-snippet: alarm-stackless-coroutine
-    struct Coro : boost::asio::coroutine
+    struct Coro : asio::coroutine
     {
         using executor_type = agrpc::GrpcContext::executor_type;
 
@@ -70,7 +74,7 @@ void timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context)
         {
             BOOST_ASIO_CORO_REENTER(*this)
             {
-                BOOST_ASIO_CORO_YIELD agrpc::wait(context->alarm, context->deadline, *this);
+                BOOST_ASIO_CORO_YIELD agrpc::wait(context->alarm, context->deadline, std::move(*this));
                 (void)wait_ok;
             }
         }
@@ -81,98 +85,99 @@ void timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context)
     // end-snippet
 }
 
-void unary(example::v1::Example::AsyncService& service, const boost::asio::yield_context& yield)
+asio::awaitable<void> unary(example::v1::Example::AsyncService& service)
 {
-    // begin-snippet: request-unary-server-side
+    /* [request-unary-server-side] */
     grpc::ServerContext server_context;
     example::v1::Request request;
     grpc::ServerAsyncResponseWriter<example::v1::Response> writer{&server_context};
-    bool request_ok = agrpc::request(&example::v1::Example::AsyncService::RequestUnary, service, server_context,
-                                     request, writer, yield);
-    // end-snippet
+    bool request_ok = co_await agrpc::request(&example::v1::Example::AsyncService::RequestUnary, service,
+                                              server_context, request, writer, asio::use_awaitable);
+    /* [request-unary-server-side] */
 
     // begin-snippet: unary-server-side
-    bool send_ok = agrpc::send_initial_metadata(writer, yield);
+    bool send_ok = co_await agrpc::send_initial_metadata(writer, asio::use_awaitable);
 
     example::v1::Response response;
-    bool finish_ok = agrpc::finish(writer, response, grpc::Status::OK, yield);
+    bool finish_ok = co_await agrpc::finish(writer, response, grpc::Status::OK, asio::use_awaitable);
 
-    bool finish_with_error_ok = agrpc::finish_with_error(writer, grpc::Status::CANCELLED, yield);
+    bool finish_with_error_ok = co_await agrpc::finish_with_error(writer, grpc::Status::CANCELLED, asio::use_awaitable);
     // end-snippet
 
     silence_unused(request_ok, send_ok, finish_ok, finish_with_error_ok);
 }
 
-void client_streaming(example::v1::Example::AsyncService& service, const boost::asio::yield_context& yield)
+asio::awaitable<void> client_streaming(example::v1::Example::AsyncService& service)
 {
-    // begin-snippet: request-client-streaming-server-side
+    /* [request-client-streaming-server-side] */
     grpc::ServerContext server_context;
     grpc::ServerAsyncReader<example::v1::Response, example::v1::Request> reader{&server_context};
-    bool request_ok = agrpc::request(&example::v1::Example::AsyncService::RequestClientStreaming, service,
-                                     server_context, reader, yield);
-    // end-snippet
+    bool request_ok = co_await agrpc::request(&example::v1::Example::AsyncService::RequestClientStreaming, service,
+                                              server_context, reader, asio::use_awaitable);
+    /* [request-client-streaming-server-side] */
 
     // begin-snippet: client-streaming-server-side
-    bool send_ok = agrpc::send_initial_metadata(reader, yield);
+    bool send_ok = co_await agrpc::send_initial_metadata(reader, asio::use_awaitable);
 
     example::v1::Request request;
-    bool read_ok = agrpc::read(reader, request, yield);
+    bool read_ok = co_await agrpc::read(reader, request, asio::use_awaitable);
 
     example::v1::Response response;
-    bool finish_ok = agrpc::finish(reader, response, grpc::Status::OK, yield);
+    bool finish_ok = co_await agrpc::finish(reader, response, grpc::Status::OK, asio::use_awaitable);
 
-    bool finish_with_error_ok = agrpc::finish_with_error(reader, grpc::Status::CANCELLED, yield);
+    bool finish_with_error_ok = co_await agrpc::finish_with_error(reader, grpc::Status::CANCELLED, asio::use_awaitable);
     // end-snippet
 
     silence_unused(request_ok, send_ok, read_ok, finish_with_error_ok, finish_ok);
 }
 
-void server_streaming(example::v1::Example::AsyncService& service, const boost::asio::yield_context& yield)
+asio::awaitable<void> server_streaming(example::v1::Example::AsyncService& service)
 {
-    // begin-snippet: request-server-streaming-server-side
+    /* [request-server-streaming-server-side] */
     grpc::ServerContext server_context;
     example::v1::Request request;
     grpc::ServerAsyncWriter<example::v1::Response> writer{&server_context};
-    bool request_ok = agrpc::request(&example::v1::Example::AsyncService::RequestServerStreaming, service,
-                                     server_context, request, writer, yield);
-    // end-snippet
+    bool request_ok = co_await agrpc::request(&example::v1::Example::AsyncService::RequestServerStreaming, service,
+                                              server_context, request, writer, asio::use_awaitable);
+    /* [request-server-streaming-server-side] */
 
     // begin-snippet: server-streaming-server-side
-    bool send_ok = agrpc::send_initial_metadata(writer, yield);
+    bool send_ok = co_await agrpc::send_initial_metadata(writer, asio::use_awaitable);
 
     example::v1::Response response;
-    bool write_ok = agrpc::write(writer, response, yield);
+    bool write_ok = co_await agrpc::write(writer, response, asio::use_awaitable);
 
-    bool write_and_finish_ok = agrpc::write_and_finish(writer, response, grpc::WriteOptions{}, grpc::Status::OK, yield);
+    bool write_and_finish_ok =
+        co_await agrpc::write_and_finish(writer, response, grpc::WriteOptions{}, grpc::Status::OK, asio::use_awaitable);
 
-    bool finish_ok = agrpc::finish(writer, grpc::Status::OK, yield);
+    bool finish_ok = co_await agrpc::finish(writer, grpc::Status::OK, asio::use_awaitable);
     // end-snippet
 
     silence_unused(request_ok, send_ok, write_ok, write_and_finish_ok, finish_ok);
 }
 
-void bidirectional_streaming(example::v1::Example::AsyncService& service, const boost::asio::yield_context& yield)
+asio::awaitable<void> bidirectional_streaming(example::v1::Example::AsyncService& service)
 {
-    // begin-snippet: request-bidirectional-streaming-server-side
+    /* [request-bidirectional-streaming-server-side] */
     grpc::ServerContext server_context;
     grpc::ServerAsyncReaderWriter<example::v1::Response, example::v1::Request> reader_writer{&server_context};
-    bool request_ok = agrpc::request(&example::v1::Example::AsyncService::RequestBidirectionalStreaming, service,
-                                     server_context, reader_writer, yield);
-    // end-snippet
+    bool request_ok = co_await agrpc::request(&example::v1::Example::AsyncService::RequestBidirectionalStreaming,
+                                              service, server_context, reader_writer, asio::use_awaitable);
+    /* [request-bidirectional-streaming-server-side] */
 
     // begin-snippet: bidirectional-streaming-server-side
-    bool send_ok = agrpc::send_initial_metadata(reader_writer, yield);
+    bool send_ok = co_await agrpc::send_initial_metadata(reader_writer, asio::use_awaitable);
 
     example::v1::Request request;
-    bool read_ok = agrpc::read(reader_writer, request, yield);
+    bool read_ok = co_await agrpc::read(reader_writer, request, asio::use_awaitable);
 
     example::v1::Response response;
-    bool write_and_finish_ok =
-        agrpc::write_and_finish(reader_writer, response, grpc::WriteOptions{}, grpc::Status::OK, yield);
+    bool write_and_finish_ok = co_await agrpc::write_and_finish(reader_writer, response, grpc::WriteOptions{},
+                                                                grpc::Status::OK, asio::use_awaitable);
 
-    bool write_ok = agrpc::write(reader_writer, response, yield);
+    bool write_ok = co_await agrpc::write(reader_writer, response, asio::use_awaitable);
 
-    bool finish_ok = agrpc::finish(reader_writer, grpc::Status::OK, yield);
+    bool finish_ok = co_await agrpc::finish(reader_writer, grpc::Status::OK, asio::use_awaitable);
     // end-snippet
 
     silence_unused(request_ok, send_ok, read_ok, write_and_finish_ok, write_ok, finish_ok);
@@ -212,16 +217,15 @@ void repeatedly_request_example(example::v1::Example::AsyncService& service, agr
 {
     agrpc::repeatedly_request(
         &example::v1::Example::AsyncService::RequestUnary, service,
-        AssociatedHandler{boost::asio::require(grpc_context.get_executor(),
-                                               boost::asio::execution::allocator(grpc_context.get_allocator())),
-                          [](auto&& request_context, auto&& executor)
-                          {
-                              auto& writer = request_context.responder();
-                              example::v1::Response response;
-                              agrpc::finish(
-                                  writer, response, grpc::Status::OK,
-                                  boost::asio::bind_executor(executor, [c = std::move(request_context)](bool) {}));
-                          }});
+        AssociatedHandler{
+            asio::require(grpc_context.get_executor(), asio::execution::allocator(grpc_context.get_allocator())),
+            [](auto&& request_context, auto&& executor)
+            {
+                auto& writer = request_context.responder();
+                example::v1::Response response;
+                agrpc::finish(writer, response, grpc::Status::OK,
+                              asio::bind_executor(executor, [c = std::move(request_context)](bool) {}));
+            }});
 }
 // end-snippet
 
@@ -239,12 +243,14 @@ int main()
     builder.RegisterService(&service);
     server = builder.BuildAndStart();
 
-    auto guard = boost::asio::make_work_guard(grpc_context);
-    boost::asio::spawn(grpc_context,
-                       [&](boost::asio::yield_context yield)
-                       {
-                           unary(service, yield);
-                       });
+    auto guard = asio::make_work_guard(grpc_context);
+    asio::co_spawn(
+        grpc_context,
+        [&]()
+        {
+            return unary(service);
+        },
+        asio::detached);
 
     // begin-snippet: run-grpc_context-server-side
     grpc_context.run();

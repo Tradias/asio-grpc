@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/* [example-proto] */
 syntax = "proto3";
 
 package example.v1;
@@ -39,3 +40,4 @@ message Request {
 message Response {
   int32 integer = 1;
 }
+/* [example-proto] */

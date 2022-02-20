@@ -12,6 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/**
+ * @file asioGrpc.hpp
+ * @brief Convenience header
+ */
+
+/**
+ * @namespace agrpc
+ * @brief Public namespace
+ */
+
 #ifndef AGRPC_AGRPC_ASIOGRPC_HPP
 #define AGRPC_AGRPC_ASIOGRPC_HPP
 
