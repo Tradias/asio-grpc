@@ -28,8 +28,33 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+/**
+ * @brief Function object to wait for timers
+ *
+ * @attention The completion handler created from the completion token that is provided to the functions described below
+ * must have an associated executor that refers to a GrpcContext:
+ * @snippet server.cpp bind_intermediate_executor
+ * Note: `agrpc::bind_intermediate_executor` is still under development.
+ */
 struct WaitFn
 {
+    /**
+     * @brief Wait for a `grpc::Alarm`
+     *
+     * The operation finishes once the alarm expires (at deadline) or is cancelled (see
+     * [Cancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_alarm.html#a57837c6b6d75f622c056b3050cf000fb)). If the
+     * alarm expired, the result will be true, false otherwise (ie, upon cancellation).
+     *
+     * Example:
+     *
+     * @snippet server.cpp alarm-awaitable
+     *
+     * @param deadline By default gRPC supports two types of deadlines: `gpr_timespec` and
+     * `std::chrono::system_clock::time_point`. More types can be added by specializing
+     * [grpc::TimePoint](https://grpc.github.io/grpc/cpp/classgrpc_1_1_time_point.html).
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` if it expired, `false` if it was canceled.
+     */
     template <class Deadline, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::Alarm& alarm, const Deadline& deadline, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>&&
@@ -48,19 +73,9 @@ struct WaitFn
  * @snippet example.proto example-proto
  *
  * @attention The completion handler created from the completion token that is provided to the functions described below
- * must have an associated executor that refers to a GrpcContext. The following code would therefore be @b invalid:
- * @code{.cpp}
- * asio::io_context io_context;
- * asio::co_spawn(io_context, []() -> asio::awaitable<void> {
- *   grpc::ServerContext server_context;
- *   grpc::ServerAsyncReader<example::v1::Response, example::v1::Request> reader{&server_context};
- *   // error: asio::this_coro::executor does not refer to a GrpcContext
- *   co_await agrpc::request(&example::v1::Example::AsyncService::RequestClientStreaming, service,
- *                           server_context, reader, asio::use_awaitable);
- * }, asio::detached);
- * @endcode
- * For a safer alternative see `agrpc::AsyncService` and `agrpc::Stub` (work in progress).
- *
+ * must have an associated executor that refers to a GrpcContext:
+ * @snippet server.cpp bind_intermediate_executor
+ * Note: `agrpc::bind_intermediate_executor` is still under development.
  */
 struct RequestFn
 {
@@ -351,9 +366,35 @@ struct RequestFn
     }
 };
 
+/**
+ * @brief Client and server-side function object to read from streaming RPCs
+ *
+ * The examples below are based on the following .proto file:
+ *
+ * @snippet example.proto example-proto
+ *
+ * @attention The completion handler created from the completion token that is provided to the functions described below
+ * must have an associated executor that refers to a GrpcContext:
+ * @snippet server.cpp bind_intermediate_executor
+ * Note: `agrpc::bind_intermediate_executor` is still under development.
+ */
 struct ReadFn
 {
-    // Server
+    /**
+     * @brief Read from a client stream
+     *
+     * It should not be called concurrently with other streaming APIs on the same stream. It is not meaningful to call
+     * it concurrently with another read on the same stream since reads on the same stream are delivered in order.
+     *
+     * Example:
+     *
+     * @snippet server.cpp read-client-streaming-server-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` indicates that a valid message was read. If not,
+     * you know that there are certainly no more messages that can ever be read from this stream. This could happen
+     * because the client has done a WritesDone already.
+     */
     template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncReader<Response, Request>& reader, Request& request,
                     CompletionToken&& token = {}) const
@@ -364,6 +405,21 @@ struct ReadFn
             std::forward<CompletionToken>(token));
     }
 
+    /**
+     * @brief Read from a bidirectional server stream
+     *
+     * This is thread-safe with respect to write or writes_done methods on the same stream. It should not be called
+     * concurrently with another read on the same stream as the order of delivery will not be defined.
+     *
+     * Example:
+     *
+     * @snippet server.cpp read-bidirectional-streaming-server-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` indicates that a valid message was read. `false` when
+     * there will be no more incoming messages, either because the other side has called WritesDone() or the stream has
+     * failed (or been cancelled).
+     */
     template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncReaderWriter<Response, Request>& reader_writer, Request& request,
                     CompletionToken&& token = {}) const
@@ -374,7 +430,20 @@ struct ReadFn
             std::forward<CompletionToken>(token));
     }
 
-    // Client
+    /**
+     * @brief Read from a server stream
+     *
+     * It should not be called concurrently with other streaming APIs on the same stream. It is not meaningful to call
+     * it concurrently with another read on the same stream since reads on the same stream are delivered in order.
+     *
+     * Example:
+     *
+     * @snippet client.cpp read-server-streaming-client-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` indicates that a valid message was read, `false` when the call is
+     * dead.
+     */
     template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncReader<Response>& reader, Response& response, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
@@ -383,6 +452,21 @@ struct ReadFn
                                      std::forward<CompletionToken>(token));
     }
 
+    /**
+     * @brief Read from a bidirectional client stream
+     *
+     * This is thread-safe with respect to write or writes_done methods. It should not be called concurrently with other
+     * streaming APIs on the same stream. It is not meaningful to call it concurrently with another read on the same
+     * stream since reads on the same stream are delivered in order.
+     *
+     * Example:
+     *
+     * @snippet client.cpp read-bidirectional-client-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` indicates that a valid message was read, `false` when the call is
+     * dead.
+     */
     template <class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncReaderWriter<Request, Response>& reader_writer, Response& response,
                     CompletionToken&& token = {}) const
@@ -394,9 +478,35 @@ struct ReadFn
     }
 };
 
+/**
+ * @brief Client and server-side function object to write to streaming RPCs
+ *
+ * The examples below are based on the following .proto file:
+ *
+ * @snippet example.proto example-proto
+ *
+ * @attention The completion handler created from the completion token that is provided to the functions described below
+ * must have an associated executor that refers to a GrpcContext:
+ * @snippet server.cpp bind_intermediate_executor
+ * Note: `agrpc::bind_intermediate_executor` is still under development.
+ */
 struct WriteFn
 {
-    // Server
+    /**
+     * @brief Write to a server stream
+     *
+     * Only one write may be outstanding at any given time. This is thread-safe with respect to read. gRPC does not
+     * take ownership or a reference to `response`, so it is safe to to deallocate once write returns.
+     *
+     * Example:
+     *
+     * @snippet server.cpp write-server-streaming-server-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
+     * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
+     * other side dropped the channel, etc).
+     */
     template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncWriter<Response>& writer, const Response& response,
                     CompletionToken&& token = {}) const
@@ -406,6 +516,12 @@ struct WriteFn
                                      std::forward<CompletionToken>(token));
     }
 
+    /**
+     * @brief Write to a server stream
+     *
+     * WriteOptions options is used to set the write options of this message, otherwise identical to:
+     * `operator()(ServerAsyncWriter&, const Response&, CompletionToken&&)`
+     */
     template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncWriter<Response>& writer, const Response& response, grpc::WriteOptions options,
                     CompletionToken&& token = {}) const
@@ -416,6 +532,21 @@ struct WriteFn
             std::forward<CompletionToken>(token));
     }
 
+    /**
+     * @brief Write to a bidirectional server stream
+     *
+     * Only one write may be outstanding at any given time. This is thread-safe with respect to read. gRPC does not
+     * take ownership or a reference to `response`, so it is safe to to deallocate once write returns.
+     *
+     * Example:
+     *
+     * @snippet server.cpp write-bidirectional-streaming-server-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
+     * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
+     * other side dropped the channel, etc).
+     */
     template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncReaderWriter<Response, Request>& reader_writer, const Response& response,
                     CompletionToken&& token = {}) const
@@ -426,6 +557,12 @@ struct WriteFn
             std::forward<CompletionToken>(token));
     }
 
+    /**
+     * @brief Write to a bidirectional server stream
+     *
+     * WriteOptions options is used to set the write options of this message, otherwise identical to:
+     * `operator()(ServerAsyncReaderWriter&, const Response&, CompletionToken&&)`
+     */
     template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncReaderWriter<Response, Request>& reader_writer, const Response& response,
                     grpc::WriteOptions options, CompletionToken&& token = {}) const
@@ -437,7 +574,21 @@ struct WriteFn
             std::forward<CompletionToken>(token));
     }
 
-    // Client
+    /**
+     * @brief Write to a client stream
+     *
+     * Only one write may be outstanding at any given time. This is thread-safe with respect to read. gRPC does not
+     * take ownership or a reference to `request`, so it is safe to to deallocate once write returns.
+     *
+     * Example:
+     *
+     * @snippet client.cpp write-client-streaming-client-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
+     * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
+     * other side dropped the channel, etc).
+     */
     template <class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncWriter<Request>& writer, const Request& request,
                     CompletionToken&& token = {}) const
@@ -447,6 +598,12 @@ struct WriteFn
                                      std::forward<CompletionToken>(token));
     }
 
+    /**
+     * @brief Write to a client stream
+     *
+     * WriteOptions options is used to set the write options of this message, otherwise identical to:
+     * `operator()(ClientAsyncWriter&, const Request&, CompletionToken&&)`
+     */
     template <class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncWriter<Request>& writer, const Request& request, grpc::WriteOptions options,
                     CompletionToken&& token = {}) const
@@ -457,6 +614,21 @@ struct WriteFn
             std::forward<CompletionToken>(token));
     }
 
+    /**
+     * @brief Write to a bidirectional client stream
+     *
+     * Only one write may be outstanding at any given time. This is thread-safe with respect to read. gRPC does not
+     * take ownership or a reference to `request`, so it is safe to to deallocate once write returns.
+     *
+     * Example:
+     *
+     * @snippet client.cpp write-bidirectional-client-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
+     * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
+     * other side dropped the channel, etc).
+     */
     template <class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncReaderWriter<Request, Response>& reader_writer, const Request& request,
                     CompletionToken&& token = {}) const
@@ -467,6 +639,12 @@ struct WriteFn
             std::forward<CompletionToken>(token));
     }
 
+    /**
+     * @brief Write to a bidirectional client stream
+     *
+     * WriteOptions options is used to set the write options of this message, otherwise identical to:
+     * `operator()(ClientAsyncReaderWriter&, const Request&, CompletionToken&&)`
+     */
     template <class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncReaderWriter<Request, Response>& reader_writer, const Request& request,
                     grpc::WriteOptions options, CompletionToken&& token = {}) const
@@ -479,9 +657,34 @@ struct WriteFn
     }
 };
 
+/**
+ * @brief Client-side function object to signal WritesDone to streaming RPCs
+ *
+ * The examples below are based on the following .proto file:
+ *
+ * @snippet example.proto example-proto
+ *
+ * @attention The completion handler created from the completion token that is provided to the functions described below
+ * must have an associated executor that refers to a GrpcContext:
+ * @snippet server.cpp bind_intermediate_executor
+ * Note: `agrpc::bind_intermediate_executor` is still under development.
+ */
 struct WritesDoneFn
 {
-    // Client
+    /**
+     * @brief Signal WritesDone to a client stream
+     *
+     * Signal the client is done with the writes (half-close the client stream). Thread-safe with respect to read.
+     *
+     * Example:
+     *
+     * @snippet client.cpp writes_done-client-streaming-client-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
+     * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
+     * other side dropped the channel, etc).
+     */
     template <class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncWriter<Request>& writer, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
@@ -490,6 +693,20 @@ struct WritesDoneFn
                                      std::forward<CompletionToken>(token));
     }
 
+    /**
+     * @brief Signal WritesDone to a bidirectional client stream
+     *
+     * Signal the client is done with the writes (half-close the client stream). Thread-safe with respect to read.
+     *
+     * Example:
+     *
+     * @snippet client.cpp write_done-bidirectional-client-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
+     * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
+     * other side dropped the channel, etc).
+     */
     template <class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncReaderWriter<Request, Response>& reader_writer, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
@@ -500,9 +717,48 @@ struct WritesDoneFn
     }
 };
 
+/**
+ * @brief Client and server-side function object to finish RPCs
+ *
+ * The examples below are based on the following .proto file:
+ *
+ * @snippet example.proto example-proto
+ *
+ * @attention The completion handler created from the completion token that is provided to the functions described below
+ * must have an associated executor that refers to a GrpcContext:
+ * @snippet server.cpp bind_intermediate_executor
+ * Note: `agrpc::bind_intermediate_executor` is still under development.
+ */
 struct FinishFn
 {
-    // Server
+    /**
+     * @brief Finish a server stream
+     *
+     * Indicate that the stream is to be finished with a certain status code. Should not be used concurrently with other
+     * operations.
+     *
+     * It is appropriate to call this method when either:
+     *
+     * @arg All messages from the client have been received (either known implictly, or explicitly because a previous
+     * read operation returned `false`).
+     * @arg It is desired to end the call early with some non-OK status code.
+     *
+     * This operation will end when the server has finished sending out initial metadata (if not sent already) and
+     * status, or if some failure occurred when trying to do so.
+     *
+     * The ServerContext associated with the call is used for sending trailing (and initial if not already
+     * sent) metadata to the client. There are no restrictions to the code of status, it may be non-OK. gRPC does not
+     * take ownership or a reference to status, so it is safe to to deallocate once finish returns.
+     *
+     * Example:
+     *
+     * @snippet server.cpp finish-server-streaming-server-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
+     * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
+     * other side dropped the channel, etc).
+     */
     template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncWriter<Response>& writer, const grpc::Status& status,
                     CompletionToken&& token = {}) const
@@ -512,6 +768,28 @@ struct FinishFn
                                      std::forward<CompletionToken>(token));
     }
 
+    /**
+     * @brief Finish a client stream (server-side)
+     *
+     * Side effect:
+     *
+     * @arg Also sends initial metadata if not alreay sent.
+     * @arg Uses the ServerContext associated with the call to send possible initial and trailing metadata.
+     *
+     * @note Response is not sent if status has a non-OK code.
+     *
+     * gRPC does not take ownership or a reference to response and status, so it is safe to deallocate once finish
+     * returns.
+     *
+     * Example:
+     *
+     * @snippet server.cpp finish-client-streaming-server-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
+     * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
+     * other side dropped the channel, etc).
+     */
     template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncReader<Response, Request>& reader, const Response& response,
                     const grpc::Status& status, CompletionToken&& token = {}) const
@@ -522,6 +800,28 @@ struct FinishFn
             std::forward<CompletionToken>(token));
     }
 
+    /**
+     * @brief Finish a unary RPC (server-side)
+     *
+     * Indicate that the RPC is to be finished and request notification when the server has sent the appropriate
+     * signals to the client to end the call. Should not be used concurrently with other operations.
+     *
+     * Side effect:
+     *
+     * @arg Also sends initial metadata if not already sent (using the ServerContext associated with the call).
+     *
+     * @note If status has a non-OK code, then response will not be sent, and the client will receive only the status
+     * with possible trailing metadata.
+     *
+     * Example:
+     *
+     * @snippet server.cpp finish-unary-server-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
+     * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
+     * other side dropped the channel, etc).
+     */
     template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncResponseWriter<Response>& writer, const Response& response,
                     const grpc::Status& status, CompletionToken&& token = {}) const
@@ -532,6 +832,34 @@ struct FinishFn
             std::forward<CompletionToken>(token));
     }
 
+    /**
+     * @brief Finish a bidirectional stream (server-side)
+     *
+     * Indicate that the stream is to be finished with a certain status code. Should not be used concurrently with other
+     * operations.
+     *
+     * It is appropriate to call this method when either:
+     *
+     * @arg All messages from the client have been received (either known implictly, or explicitly because a previous
+     * read operation returned `false`).
+     * @arg It is desired to end the call early with some non-OK status code.
+     *
+     * This operation will end when the server has finished sending out initial metadata (if not sent already) and
+     * status, or if some failure occurred when trying to do so.
+     *
+     * The ServerContext associated with the call is used for sending trailing (and initial if not
+     * already sent) metadata to the client. There are no restrictions to the code of status, it may be non-OK. gRPC
+     * does not take ownership or a reference to status, so it is safe to to deallocate once finish returns.
+     *
+     * Example:
+     *
+     * @snippet server.cpp finish-bidirectional-streaming-server-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
+     * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
+     * other side dropped the channel, etc).
+     */
     template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncReaderWriter<Response, Request>& reader_writer, const grpc::Status& status,
                     CompletionToken&& token = {}) const
@@ -542,7 +870,39 @@ struct FinishFn
             std::forward<CompletionToken>(token));
     }
 
-    // Client
+    /**
+     * @brief Finish a server stream (client-side)
+     *
+     * Indicate that the stream is to be finished and request notification for when the call has been ended.
+     *
+     * Should not be used concurrently with other operations.
+     *
+     * It is appropriate to call this method exactly once when:
+     *
+     * @arg All messages from the server have been received (either known implictly, or explicitly because a previous
+     * read operation returned `false`).
+     *
+     * The operation will finish when either:
+     *
+     * @arg All incoming messages have been read and the server has returned a status.
+     * @arg The server has returned a non-OK status.
+     * @arg The call failed for some reason and the library generated a status.
+     *
+     * Note that implementations of this method attempt to receive initial metadata from the server if initial metadata
+     * has not been received yet.
+     *
+     * Side effect:
+     *
+     * @arg The ClientContext associated with the call is updated with possible initial and trailing metadata received
+     * from the server.
+     *
+     * Example:
+     *
+     * @snippet client.cpp finish-server-streaming-client-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. The bool should always be `true`.
+     */
     template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncReader<Response>& reader, grpc::Status& status, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
@@ -551,6 +911,40 @@ struct FinishFn
                                      std::forward<CompletionToken>(token));
     }
 
+    /**
+     * @brief Finish a client stream (client-side)
+     *
+     * Indicate that the stream is to be finished and request notification for when the call has been ended.
+     *
+     * Should not be used concurrently with other operations.
+     *
+     * It is appropriate to call this method exactly once when:
+     *
+     * @arg The client side has no more message to send (this can be declared implicitly by calling this method, or
+     * explicitly through an earlier call to the writes_done method).
+     *
+     * The operation will finish when either:
+     *
+     * @arg All incoming messages have been read and the server has returned a status.
+     * @arg The server has returned a non-OK status.
+     * @arg The call failed for some reason and the library generated a status.
+     *
+     * Note that implementations of this method attempt to receive initial metadata from the server if initial metadata
+     * has not been received yet.
+     *
+     * Side effect:
+     *
+     * @arg The ClientContext associated with the call is updated with possible initial and trailing metadata received
+     * from the server.
+     * @arg Attempts to fill in the response parameter that was passed to `request`.
+     *
+     * Example:
+     *
+     * @snippet client.cpp finish-client-streaming-client-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. The bool should always be `true`.
+     */
     template <class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncWriter<Request>& writer, grpc::Status& status, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
@@ -559,6 +953,29 @@ struct FinishFn
                                      std::forward<CompletionToken>(token));
     }
 
+    /**
+     * @brief Finish a unary RPC (client-side)
+     *
+     * Receive the server's response message and final status for the call.
+     *
+     * This operation will finish when either:
+     *
+     * @arg The server's response message and status have been received.
+     * @arg The server has returned a non-OK status (no message expected in this case).
+     * @arg The call failed for some reason and the library generated a non-OK status.
+     *
+     * Side effect:
+     *
+     * @arg The ClientContext associated with the call is updated with possible initial and trailing metadata sent from
+     * the server.
+     *
+     * Example:
+     *
+     * @snippet client.cpp finish-unary-client-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. The bool should always be `true`.
+     */
     template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncResponseReader<Response>& reader, Response& response, grpc::Status& status,
                     CompletionToken&& token = {}) const
@@ -569,6 +986,41 @@ struct FinishFn
             std::forward<CompletionToken>(token));
     }
 
+    /**
+     * @brief Finish a bidirectional stream (client-side)
+     *
+     * Indicate that the stream is to be finished and request notification for when the call has been ended.
+     *
+     * Should not be used concurrently with other operations.
+     *
+     * It is appropriate to call this method exactly once when:
+     *
+     * @arg All messages from the server have been received (either known implictly, or explicitly because a previous
+     * read operation returned `false`).
+     * @arg The client side has no more message to send (this can be declared implicitly by calling this method, or
+     * explicitly through an earlier call to the writes_done method).
+     *
+     * The operation will finish when either:
+     *
+     * @arg All incoming messages have been read and the server has returned a status.
+     * @arg The server has returned a non-OK status.
+     * @arg The call failed for some reason and the library generated a status.
+     *
+     * Note that implementations of this method attempt to receive initial metadata from the server if initial metadata
+     * has not been received yet.
+     *
+     * Side effect:
+     *
+     * @arg The ClientContext associated with the call is updated with possible initial and trailing metadata sent from
+     * the server.
+     *
+     * Example:
+     *
+     * @snippet client.cpp finish-bidirectional-client-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. The bool should always be `true`.
+     */
     template <class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ClientAsyncReaderWriter<Request, Response>& reader_writer, grpc::Status& status,
                     CompletionToken&& token = {}) const
@@ -580,20 +1032,47 @@ struct FinishFn
     }
 };
 
+/**
+ * @brief Server-side function object to coalesce write and finish of streaming RPCs
+ *
+ * The examples below are based on the following .proto file:
+ *
+ * @snippet example.proto example-proto
+ *
+ * @attention The completion handler created from the completion token that is provided to the functions described below
+ * must have an associated executor that refers to a GrpcContext:
+ * @snippet server.cpp bind_intermediate_executor
+ * Note: `agrpc::bind_intermediate_executor` is still under development.
+ */
 struct WriteAndFinishFn
 {
-    // Server
-    template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(grpc::ServerAsyncReaderWriter<Response, Request>& reader_writer, const Response& response,
-                    grpc::WriteOptions options, const grpc::Status& status, CompletionToken&& token = {}) const
-        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
-    {
-        return detail::grpc_initiate(
-            typename detail::ServerAsyncReaderWriterInitFunctions<Response, Request>::WriteAndFinish{
-                reader_writer, response, options, status},
-            std::forward<CompletionToken>(token));
-    }
-
+    /**
+     * @brief Coalesce write and finish of a server stream
+     *
+     * Write response and coalesce it with trailing metadata which contains status, using WriteOptions
+     * options.
+     *
+     * write_and_finish is equivalent of performing write_last and finish in a single step.
+     *
+     * gRPC does not take ownership or a reference to response and status, so it is safe to deallocate once
+     * write_and_finish returns.
+     *
+     * Implicit input parameter:
+     *
+     * @arg The ServerContext associated with the call is used for sending trailing (and initial) metadata to the
+     * client.
+     *
+     * @note Status must have an OK code.
+     *
+     * Example:
+     *
+     * @snippet server.cpp write_and_finish-server-streaming-server-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
+     * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
+     * other side dropped the channel, etc).
+     */
     template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncWriter<Response>& reader_writer, const Response& response,
                     grpc::WriteOptions options, const grpc::Status& status, CompletionToken&& token = {}) const
@@ -604,11 +1083,82 @@ struct WriteAndFinishFn
                                                                                       status},
             std::forward<CompletionToken>(token));
     }
+
+    /**
+     * @brief Coalesce write and finish of a bidirectional stream
+     *
+     * Write response and coalesce it with trailing metadata which contains status, using WriteOptions
+     * options.
+     *
+     * write_and_finish is equivalent of performing write_last and finish in a single step.
+     *
+     * gRPC does not take ownership or a reference to response and status, so it is safe to deallocate once
+     * write_and_finish returns.
+     *
+     * Implicit input parameter:
+     *
+     * @arg The ServerContext associated with the call is used for sending trailing (and initial) metadata to the
+     * client.
+     *
+     * @note Status must have an OK code.
+     *
+     * Example:
+     *
+     * @snippet server.cpp write_and_finish-bidirectional-streaming-server-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
+     * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
+     * other side dropped the channel, etc).
+     */
+    template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(grpc::ServerAsyncReaderWriter<Response, Request>& reader_writer, const Response& response,
+                    grpc::WriteOptions options, const grpc::Status& status, CompletionToken&& token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
+    {
+        return detail::grpc_initiate(
+            typename detail::ServerAsyncReaderWriterInitFunctions<Response, Request>::WriteAndFinish{
+                reader_writer, response, options, status},
+            std::forward<CompletionToken>(token));
+    }
 };
 
+/**
+ * @brief Server-side function object to finish RPCs with an error
+ *
+ * The examples below are based on the following .proto file:
+ *
+ * @snippet example.proto example-proto
+ *
+ * @attention The completion handler created from the completion token that is provided to the functions described below
+ * must have an associated executor that refers to a GrpcContext:
+ * @snippet server.cpp bind_intermediate_executor
+ * Note: `agrpc::bind_intermediate_executor` is still under development.
+ */
 struct FinishWithErrorFn
 {
-    // Server
+    /**
+     * @brief Finish a client stream with an error
+     *
+     * It should not be called concurrently with other streaming APIs on the same stream.
+     *
+     * Side effect:
+     *
+     * @arg Sends initial metadata if not alreay sent.
+     * @arg Uses the ServerContext associated with the call to send possible initial and trailing metadata.
+     *
+     * gRPC does not take ownership or a reference to status, so it is safe to deallocate once finish_with_error
+     * returns.
+     *
+     * @note Status must have a non-OK code.
+     *
+     * Example:
+     *
+     * @snippet server.cpp finish_with_error-client-streaming-server-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. The bool should always be `true`.
+     */
     template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncReader<Response, Request>& reader, const grpc::Status& status,
                     CompletionToken&& token = {}) const
@@ -619,6 +1169,30 @@ struct FinishWithErrorFn
             std::forward<CompletionToken>(token));
     }
 
+    /**
+     * @brief Finish a unary RPC with an error
+     *
+     * Indicate that the stream is to be finished with a non-OK status, and request notification for when the server has
+     * finished sending the appropriate signals to the client to end the call.
+     *
+     * Should not be used concurrently with other operations.
+     *
+     * Side effect:
+     *
+     * @arg Sends initial metadata if not already sent (using the ServerContext associated with this call).
+     *
+     * gRPC does not take ownership or a reference to status, so it is safe to deallocate once finish_with_error
+     * returns.
+     *
+     * @note Status must have a non-OK code.
+     *
+     * Example:
+     *
+     * @snippet server.cpp finish_with_error-unary-server-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. The bool should always be `true`.
+     */
     template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::ServerAsyncResponseWriter<Response>& writer, const grpc::Status& status,
                     CompletionToken&& token = {}) const
@@ -630,8 +1204,36 @@ struct FinishWithErrorFn
     }
 };
 
+/**
+ * @brief Server-side function object to send initial metadata for RPCs
+ *
+ * The examples below are based on the following .proto file:
+ *
+ * @snippet example.proto example-proto
+ *
+ * @attention The completion handler created from the completion token that is provided to the functions described below
+ * must have an associated executor that refers to a GrpcContext:
+ * @snippet server.cpp bind_intermediate_executor
+ * Note: `agrpc::bind_intermediate_executor` is still under development.
+ */
 struct SendInitialMetadataFn
 {
+    /**
+     * @brief Send initial metadata
+     *
+     * Request notification of the sending of initial metadata to the client.
+     *
+     * This call is optional, but if it is used, it cannot be used concurrently with or after the Finish method.
+     *
+     * Example:
+     *
+     * @snippet server.cpp send_initial_metadata-unary-server-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
+     * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
+     * other side dropped the channel, etc).
+     */
     template <class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(Responder& responder, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
@@ -641,8 +1243,40 @@ struct SendInitialMetadataFn
     }
 };
 
+/**
+ * @brief Client-side function to read initial metadata for RPCs
+ *
+ * The examples below are based on the following .proto file:
+ *
+ * @snippet example.proto example-proto
+ *
+ * @attention The completion handler created from the completion token that is provided to the functions described below
+ * must have an associated executor that refers to a GrpcContext:
+ * @snippet server.cpp bind_intermediate_executor
+ * Note: `agrpc::bind_intermediate_executor` is still under development.
+ */
 struct ReadInitialMetadataFn
 {
+    /**
+     * @brief Read initial metadata
+     *
+     * Request notification of the reading of the initial metadata.
+     *
+     * This call is optional, but if it is used, it cannot be used concurrently with or after the read method.
+     *
+     * Side effect:
+     *
+     * @arg Upon receiving initial metadata from the server, the ClientContext associated with this call is updated, and
+     * the calling code can access the received metadata through the ClientContext.
+     *
+     * Example:
+     *
+     * @snippet client.cpp read_initial_metadata-unary-client-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` indicates that the metadata was read, `false` when the call is
+     * dead.
+     */
     template <class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(Responder& responder, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
@@ -653,6 +1287,13 @@ struct ReadInitialMetadataFn
 };
 }  // namespace detail
 
+/**
+ * @brief Wait for a timer
+ *
+ * @link detail::WaitFn
+ * Function to wait for timers.
+ * @endlink
+ */
 inline constexpr detail::WaitFn wait{};
 
 /**
@@ -664,20 +1305,76 @@ inline constexpr detail::WaitFn wait{};
  */
 inline constexpr detail::RequestFn request{};
 
+/**
+ * @brief Read from a streaming RPC
+ *
+ * @link detail::ReadFn
+ * Client and server-side function to read from streaming RPCs.
+ * @endlink
+ */
 inline constexpr detail::ReadFn read{};
 
+/**
+ * @brief Write to a streaming RPC
+ *
+ * @link detail::WriteFn
+ * Client and server-side function to write to streaming RPCs.
+ * @endlink
+ */
 inline constexpr detail::WriteFn write{};
 
+/**
+ * @brief Signal WritesDone to a streaming RPC
+ *
+ * @link detail::WritesDoneFn
+ * Client-side function to signal WritesDone to streaming RPCs.
+ * @endlink
+ */
 inline constexpr detail::WritesDoneFn writes_done{};
 
+/**
+ * @brief Finish a RPC
+ *
+ * @link detail::FinishFn
+ * Client and server-side function to finish RPCs.
+ * @endlink
+ */
 inline constexpr detail::FinishFn finish{};
 
+/**
+ * @brief Coalesce write and finish of a streaming RPC
+ *
+ * @link detail::WriteAndFinishFn
+ * Server-side function to coalesce write and finish of streaming RPCs.
+ * @endlink
+ */
 inline constexpr detail::WriteAndFinishFn write_and_finish{};
 
+/**
+ * @brief Finish a RPC with an error
+ *
+ * @link detail::FinishWithErrorFn
+ * Server-side function to finish RPCs with an error.
+ * @endlink
+ */
 inline constexpr detail::FinishWithErrorFn finish_with_error{};
 
+/**
+ * @brief Send initial metadata for a RPC
+ *
+ * @link detail::SendInitialMetadataFn
+ * Server-side function to send initial metadata for RPCs.
+ * @endlink
+ */
 inline constexpr detail::SendInitialMetadataFn send_initial_metadata{};
 
+/**
+ * @brief Read initial metadata for a RPC
+ *
+ * @link detail::ReadInitialMetadataFn
+ * Client-side function to read initial metadata for RPCs.
+ * @endlink
+ */
 inline constexpr detail::ReadInitialMetadataFn read_initial_metadata{};
 
 AGRPC_NAMESPACE_END

@@ -19,6 +19,7 @@
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/coroutine.hpp>
 #include <boost/asio/detached.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/use_awaitable.hpp>
 #include <grpcpp/server.h>
@@ -28,12 +29,13 @@
 
 namespace asio = boost::asio;
 
-void timer(const asio::yield_context& yield_context)
+asio::awaitable<void> timer()
 {
-    // begin-snippet: alarm
+    /* [alarm-awaitable] */
     grpc::Alarm alarm;
-    bool wait_ok = agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::seconds(1), yield_context);
-    // end-snippet
+    bool wait_ok =
+        co_await agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::seconds(1), asio::use_awaitable);
+    /* [alarm-awaitable] */
 
     silence_unused(wait_ok);
 }
@@ -95,14 +97,18 @@ asio::awaitable<void> unary(example::v1::Example::AsyncService& service)
                                               server_context, request, writer, asio::use_awaitable);
     /* [request-unary-server-side] */
 
-    // begin-snippet: unary-server-side
+    /* [send_initial_metadata-unary-server-side] */
     bool send_ok = co_await agrpc::send_initial_metadata(writer, asio::use_awaitable);
+    /* [send_initial_metadata-unary-server-side] */
 
+    /* [finish-unary-server-side] */
     example::v1::Response response;
     bool finish_ok = co_await agrpc::finish(writer, response, grpc::Status::OK, asio::use_awaitable);
+    /* [finish-unary-server-side] */
 
+    /* [finish_with_error-unary-server-side] */
     bool finish_with_error_ok = co_await agrpc::finish_with_error(writer, grpc::Status::CANCELLED, asio::use_awaitable);
-    // end-snippet
+    /* [finish_with_error-unary-server-side] */
 
     silence_unused(request_ok, send_ok, finish_ok, finish_with_error_ok);
 }
@@ -116,17 +122,19 @@ asio::awaitable<void> client_streaming(example::v1::Example::AsyncService& servi
                                               server_context, reader, asio::use_awaitable);
     /* [request-client-streaming-server-side] */
 
-    // begin-snippet: client-streaming-server-side
-    bool send_ok = co_await agrpc::send_initial_metadata(reader, asio::use_awaitable);
-
+    /* [read-client-streaming-server-side] */
     example::v1::Request request;
     bool read_ok = co_await agrpc::read(reader, request, asio::use_awaitable);
+    /* [read-client-streaming-server-side] */
 
+    /* [finish-client-streaming-server-side] */
     example::v1::Response response;
     bool finish_ok = co_await agrpc::finish(reader, response, grpc::Status::OK, asio::use_awaitable);
+    /* [finish-client-streaming-server-side] */
 
+    /* [finish_with_error-client-streaming-server-side] */
     bool finish_with_error_ok = co_await agrpc::finish_with_error(reader, grpc::Status::CANCELLED, asio::use_awaitable);
-    // end-snippet
+    /* [finish_with_error-client-streaming-server-side] */
 
     silence_unused(request_ok, send_ok, read_ok, finish_with_error_ok, finish_ok);
 }
@@ -141,17 +149,19 @@ asio::awaitable<void> server_streaming(example::v1::Example::AsyncService& servi
                                               server_context, request, writer, asio::use_awaitable);
     /* [request-server-streaming-server-side] */
 
-    // begin-snippet: server-streaming-server-side
-    bool send_ok = co_await agrpc::send_initial_metadata(writer, asio::use_awaitable);
-
+    /* [write-server-streaming-server-side] */
     example::v1::Response response;
     bool write_ok = co_await agrpc::write(writer, response, asio::use_awaitable);
+    /* [write-server-streaming-server-side] */
 
+    /* [write_and_finish-server-streaming-server-side] */
     bool write_and_finish_ok =
         co_await agrpc::write_and_finish(writer, response, grpc::WriteOptions{}, grpc::Status::OK, asio::use_awaitable);
+    /* [write_and_finish-server-streaming-server-side] */
 
+    /* [finish-server-streaming-server-side] */
     bool finish_ok = co_await agrpc::finish(writer, grpc::Status::OK, asio::use_awaitable);
-    // end-snippet
+    /* [finish-server-streaming-server-side] */
 
     silence_unused(request_ok, send_ok, write_ok, write_and_finish_ok, finish_ok);
 }
@@ -165,22 +175,59 @@ asio::awaitable<void> bidirectional_streaming(example::v1::Example::AsyncService
                                               service, server_context, reader_writer, asio::use_awaitable);
     /* [request-bidirectional-streaming-server-side] */
 
-    // begin-snippet: bidirectional-streaming-server-side
-    bool send_ok = co_await agrpc::send_initial_metadata(reader_writer, asio::use_awaitable);
-
+    /* [read-bidirectional-streaming-server-side] */
     example::v1::Request request;
     bool read_ok = co_await agrpc::read(reader_writer, request, asio::use_awaitable);
+    /* [read-bidirectional-streaming-server-side] */
 
+    /* [write_and_finish-bidirectional-streaming-server-side] */
     example::v1::Response response;
     bool write_and_finish_ok = co_await agrpc::write_and_finish(reader_writer, response, grpc::WriteOptions{},
                                                                 grpc::Status::OK, asio::use_awaitable);
+    /* [write_and_finish-bidirectional-streaming-server-side] */
 
+    /* [write-bidirectional-streaming-server-side] */
     bool write_ok = co_await agrpc::write(reader_writer, response, asio::use_awaitable);
+    /* [write-bidirectional-streaming-server-side] */
 
+    /* [finish-bidirectional-streaming-server-side] */
     bool finish_ok = co_await agrpc::finish(reader_writer, grpc::Status::OK, asio::use_awaitable);
-    // end-snippet
+    /* [finish-bidirectional-streaming-server-side] */
 
     silence_unused(request_ok, send_ok, read_ok, write_and_finish_ok, write_ok, finish_ok);
+}
+
+namespace agrpc
+{
+// Exposition only. Not a correct implementation
+template <class CompletionToken>
+auto bind_intermediate_executor(agrpc::GrpcContext& grpc_context, CompletionToken&& token)
+{
+    return asio::bind_executor(grpc_context.get_executor(), std::forward<CompletionToken>(token));
+}
+}
+
+void io_context(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
+{
+    /* [bind_intermediate_executor] */
+    asio::io_context io_context;
+    asio::co_spawn(
+        io_context,
+        [&]() -> asio::awaitable<void>
+        {
+            grpc::ServerContext server_context;
+            grpc::ServerAsyncReader<example::v1::Response, example::v1::Request> reader{&server_context};
+            // error: asio::this_coro::executor does not refer to a GrpcContext
+            // co_await agrpc::request(&example::v1::Example::AsyncService::RequestClientStreaming, service,
+            //                        server_context, reader, asio::use_awaitable);
+
+            // correct:
+            co_await agrpc::request(&example::v1::Example::AsyncService::RequestClientStreaming, service,
+                                    server_context, reader,
+                                    agrpc::bind_intermediate_executor(grpc_context, asio::use_awaitable));
+        },
+        asio::detached);
+    /* [bind_intermediate_executor] */
 }
 
 // begin-snippet: repeatedly-request-callback

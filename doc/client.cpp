@@ -35,13 +35,15 @@ asio::awaitable<void> unary(agrpc::GrpcContext& grpc_context, example::v1::Examp
         stub.AsyncUnary(&client_context, request, agrpc::get_completion_queue(grpc_context));
     /* [request-unary-client-side] */
 
-    // begin-snippet: unary-client-side
+    /* [read_initial_metadata-unary-client-side] */
     bool read_ok = co_await agrpc::read_initial_metadata(*reader, asio::use_awaitable);
+    /* [read_initial_metadata-unary-client-side] */
 
+    /* [finish-unary-client-side] */
     example::v1::Response response;
     grpc::Status status;
     bool finish_ok = co_await agrpc::finish(*reader, response, status, asio::use_awaitable);
-    // end-snippet
+    /* [finish-unary-client-side] */
 
     silence_unused(read_ok, finish_ok);
 }
@@ -66,17 +68,19 @@ asio::awaitable<void> client_streaming(example::v1::Example::Stub& stub)
                                               writer, response, asio::use_awaitable);
     /* [request-client-streaming-client-side] */
 
-    // begin-snippet: client-streaming-client-side
-    bool read_ok = co_await agrpc::read_initial_metadata(*writer, asio::use_awaitable);
-
+    /* [write-client-streaming-client-side] */
     example::v1::Request request;
     bool write_ok = co_await agrpc::write(*writer, request, asio::use_awaitable);
+    /* [write-client-streaming-client-side] */
 
+    /* [writes_done-client-streaming-client-side] */
     bool writes_done_ok = co_await agrpc::writes_done(*writer, asio::use_awaitable);
+    /* [writes_done-client-streaming-client-side] */
 
+    /* [finish-client-streaming-client-side] */
     grpc::Status status;
     bool finish_ok = co_await agrpc::finish(*writer, status, asio::use_awaitable);
-    // end-snippet
+    /* [finish-client-streaming-client-side] */
 
     silence_unused(request_ok, read_ok, write_ok, writes_done_ok, finish_ok);
 }
@@ -116,15 +120,15 @@ asio::awaitable<void> server_streaming(example::v1::Example::Stub& stub)
                                               request, reader, asio::use_awaitable);
     /* [request-server-streaming-client-side] */
 
-    // begin-snippet: server-streaming-client-side
-    bool read_metadata_ok = co_await agrpc::read_initial_metadata(*reader, asio::use_awaitable);
-
+    /* [read-server-streaming-client-side] */
     example::v1::Response response;
     bool read_ok = co_await agrpc::read(*reader, response, asio::use_awaitable);
+    /* [read-server-streaming-client-side] */
 
+    /* [finish-server-streaming-client-side] */
     grpc::Status status;
     bool finish_ok = co_await agrpc::finish(*reader, status, asio::use_awaitable);
-    // end-snippet
+    /* [finish-server-streaming-client-side] */
 
     silence_unused(request_ok, read_metadata_ok, read_ok, finish_ok);
 }
@@ -150,20 +154,24 @@ asio::awaitable<void> bidirectional_streaming(example::v1::Example::Stub& stub)
                                               client_context, reader_writer, asio::use_awaitable);
     /* [request-bidirectional-client-side] */
 
-    // begin-snippet: bidirectional-client-side
-    bool read_metadata_ok = co_await agrpc::read_initial_metadata(*reader_writer, asio::use_awaitable);
-
+    /* [write-bidirectional-client-side] */
     example::v1::Request request;
     bool write_ok = co_await agrpc::write(*reader_writer, request, asio::use_awaitable);
+    /* [write-bidirectional-client-side] */
 
+    /* [write_done-bidirectional-client-side] */
     bool writes_done_ok = co_await agrpc::writes_done(*reader_writer, asio::use_awaitable);
+    /* [write_done-bidirectional-client-side] */
 
+    /* [read-bidirectional-client-side] */
     example::v1::Response response;
     bool read_ok = co_await agrpc::read(*reader_writer, response, asio::use_awaitable);
+    /* [read-bidirectional-client-side] */
 
+    /* [finish-bidirectional-client-side] */
     grpc::Status status;
     bool finish_ok = co_await agrpc::finish(*reader_writer, status, asio::use_awaitable);
-    // end-snippet
+    /* [finish-bidirectional-client-side] */
 
     silence_unused(request_ok, read_metadata_ok, write_ok, writes_done_ok, read_ok, finish_ok);
 }
