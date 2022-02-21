@@ -36,6 +36,9 @@ AGRPC_NAMESPACE_BEGIN()
 template <class Allocator, std::uint32_t Options>
 class BasicGrpcExecutor;
 
+/**
+ * @brief Execution context based on `grpc::CompletionQueue`
+ */
 class GrpcContext
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     : public asio::execution_context

@@ -33,8 +33,7 @@ namespace detail
  *
  * @attention The completion handler created from the completion token that is provided to the functions described below
  * must have an associated executor that refers to a GrpcContext:
- * @snippet server.cpp bind_intermediate_executor
- * Note: `agrpc::bind_intermediate_executor` is still under development.
+ * @snippet server.cpp bind-executor-to-use-awaitable
  */
 struct WaitFn
 {
@@ -74,8 +73,7 @@ struct WaitFn
  *
  * @attention The completion handler created from the completion token that is provided to the functions described below
  * must have an associated executor that refers to a GrpcContext:
- * @snippet server.cpp bind_intermediate_executor
- * Note: `agrpc::bind_intermediate_executor` is still under development.
+ * @snippet server.cpp bind-executor-to-use-awaitable
  */
 struct RequestFn
 {
@@ -375,8 +373,7 @@ struct RequestFn
  *
  * @attention The completion handler created from the completion token that is provided to the functions described below
  * must have an associated executor that refers to a GrpcContext:
- * @snippet server.cpp bind_intermediate_executor
- * Note: `agrpc::bind_intermediate_executor` is still under development.
+ * @snippet server.cpp bind-executor-to-use-awaitable
  */
 struct ReadFn
 {
@@ -487,8 +484,7 @@ struct ReadFn
  *
  * @attention The completion handler created from the completion token that is provided to the functions described below
  * must have an associated executor that refers to a GrpcContext:
- * @snippet server.cpp bind_intermediate_executor
- * Note: `agrpc::bind_intermediate_executor` is still under development.
+ * @snippet server.cpp bind-executor-to-use-awaitable
  */
 struct WriteFn
 {
@@ -666,8 +662,7 @@ struct WriteFn
  *
  * @attention The completion handler created from the completion token that is provided to the functions described below
  * must have an associated executor that refers to a GrpcContext:
- * @snippet server.cpp bind_intermediate_executor
- * Note: `agrpc::bind_intermediate_executor` is still under development.
+ * @snippet server.cpp bind-executor-to-use-awaitable
  */
 struct WritesDoneFn
 {
@@ -726,8 +721,7 @@ struct WritesDoneFn
  *
  * @attention The completion handler created from the completion token that is provided to the functions described below
  * must have an associated executor that refers to a GrpcContext:
- * @snippet server.cpp bind_intermediate_executor
- * Note: `agrpc::bind_intermediate_executor` is still under development.
+ * @snippet server.cpp bind-executor-to-use-awaitable
  */
 struct FinishFn
 {
@@ -1041,8 +1035,7 @@ struct FinishFn
  *
  * @attention The completion handler created from the completion token that is provided to the functions described below
  * must have an associated executor that refers to a GrpcContext:
- * @snippet server.cpp bind_intermediate_executor
- * Note: `agrpc::bind_intermediate_executor` is still under development.
+ * @snippet server.cpp bind-executor-to-use-awaitable
  */
 struct WriteAndFinishFn
 {
@@ -1132,8 +1125,7 @@ struct WriteAndFinishFn
  *
  * @attention The completion handler created from the completion token that is provided to the functions described below
  * must have an associated executor that refers to a GrpcContext:
- * @snippet server.cpp bind_intermediate_executor
- * Note: `agrpc::bind_intermediate_executor` is still under development.
+ * @snippet server.cpp bind-executor-to-use-awaitable
  */
 struct FinishWithErrorFn
 {
@@ -1213,8 +1205,7 @@ struct FinishWithErrorFn
  *
  * @attention The completion handler created from the completion token that is provided to the functions described below
  * must have an associated executor that refers to a GrpcContext:
- * @snippet server.cpp bind_intermediate_executor
- * Note: `agrpc::bind_intermediate_executor` is still under development.
+ * @snippet server.cpp bind-executor-to-use-awaitable
  */
 struct SendInitialMetadataFn
 {
@@ -1252,8 +1243,7 @@ struct SendInitialMetadataFn
  *
  * @attention The completion handler created from the completion token that is provided to the functions described below
  * must have an associated executor that refers to a GrpcContext:
- * @snippet server.cpp bind_intermediate_executor
- * Note: `agrpc::bind_intermediate_executor` is still under development.
+ * @snippet server.cpp bind-executor-to-use-awaitable
  */
 struct ReadInitialMetadataFn
 {

@@ -16,6 +16,7 @@
 #include "helper.hpp"
 
 #include <agrpc/asioGrpc.hpp>
+#include <boost/asio/bind_executor.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/coroutine.hpp>
 #include <boost/asio/detached.hpp>
@@ -197,19 +198,9 @@ asio::awaitable<void> bidirectional_streaming(example::v1::Example::AsyncService
     silence_unused(request_ok, read_ok, write_and_finish_ok, write_ok, finish_ok);
 }
 
-namespace agrpc
-{
-// Exposition only. Not a correct implementation
-template <class CompletionToken>
-auto bind_intermediate_executor(agrpc::GrpcContext& grpc_context, CompletionToken&& token)
-{
-    return asio::bind_executor(grpc_context.get_executor(), std::forward<CompletionToken>(token));
-}
-}
-
 void io_context(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
 {
-    /* [bind_intermediate_executor] */
+    /* [bind-executor-to-use-awaitable] */
     asio::io_context io_context;
     asio::co_spawn(
         io_context,
@@ -223,11 +214,10 @@ void io_context(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncSer
 
             // correct:
             co_await agrpc::request(&example::v1::Example::AsyncService::RequestClientStreaming, service,
-                                    server_context, reader,
-                                    agrpc::bind_intermediate_executor(grpc_context, asio::use_awaitable));
+                                    server_context, reader, asio::bind_executor(grpc_context, asio::use_awaitable));
         },
         asio::detached);
-    /* [bind_intermediate_executor] */
+    /* [bind-executor-to-use-awaitable] */
 }
 
 // begin-snippet: repeatedly-request-callback

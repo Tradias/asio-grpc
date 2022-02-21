@@ -479,6 +479,31 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline and c
     CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
     CHECK_FALSE(server_finish_ok);
 }
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_executor can be used to await Alarm from an io_context")
+{
+    bool ok{false};
+    std::thread::id expected_thread_id{};
+    auto guard = asio::make_work_guard(grpc_context);
+    asio::io_context io_context;
+    test::co_spawn(io_context,
+                   [&]() -> asio::awaitable<void>
+                   {
+                       grpc::Alarm alarm;
+                       ok = co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(),
+                                                 asio::bind_executor(grpc_context, asio::use_awaitable));
+                       CHECK_EQ(expected_thread_id, std::this_thread::get_id());
+                       guard.reset();
+                   });
+    std::thread grpc_context_thread{[&]
+                                    {
+                                        expected_thread_id = std::this_thread::get_id();
+                                        grpc_context.run();
+                                    }};
+    io_context.run();
+    grpc_context_thread.join();
+    CHECK(ok);
+}
 #endif
 #endif
 
