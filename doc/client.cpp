@@ -82,7 +82,7 @@ asio::awaitable<void> client_streaming(example::v1::Example::Stub& stub)
     bool finish_ok = co_await agrpc::finish(*writer, status, asio::use_awaitable);
     /* [finish-client-streaming-client-side] */
 
-    silence_unused(request_ok, read_ok, write_ok, writes_done_ok, finish_ok);
+    silence_unused(request_ok, write_ok, writes_done_ok, finish_ok);
 }
 
 asio::awaitable<void> client_streaming_alt(example::v1::Example::Stub& stub)
@@ -130,7 +130,7 @@ asio::awaitable<void> server_streaming(example::v1::Example::Stub& stub)
     bool finish_ok = co_await agrpc::finish(*reader, status, asio::use_awaitable);
     /* [finish-server-streaming-client-side] */
 
-    silence_unused(request_ok, read_metadata_ok, read_ok, finish_ok);
+    silence_unused(request_ok, read_ok, finish_ok);
 }
 
 asio::awaitable<void> server_streaming_alt(example::v1::Example::Stub& stub)
@@ -173,7 +173,7 @@ asio::awaitable<void> bidirectional_streaming(example::v1::Example::Stub& stub)
     bool finish_ok = co_await agrpc::finish(*reader_writer, status, asio::use_awaitable);
     /* [finish-bidirectional-client-side] */
 
-    silence_unused(request_ok, read_metadata_ok, write_ok, writes_done_ok, read_ok, finish_ok);
+    silence_unused(request_ok, write_ok, writes_done_ok, read_ok, finish_ok);
 }
 
 asio::awaitable<void> bidirectional_streaming_alt(example::v1::Example::Stub& stub)

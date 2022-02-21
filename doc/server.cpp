@@ -136,7 +136,7 @@ asio::awaitable<void> client_streaming(example::v1::Example::AsyncService& servi
     bool finish_with_error_ok = co_await agrpc::finish_with_error(reader, grpc::Status::CANCELLED, asio::use_awaitable);
     /* [finish_with_error-client-streaming-server-side] */
 
-    silence_unused(request_ok, send_ok, read_ok, finish_with_error_ok, finish_ok);
+    silence_unused(request_ok, read_ok, finish_with_error_ok, finish_ok);
 }
 
 asio::awaitable<void> server_streaming(example::v1::Example::AsyncService& service)
@@ -163,7 +163,7 @@ asio::awaitable<void> server_streaming(example::v1::Example::AsyncService& servi
     bool finish_ok = co_await agrpc::finish(writer, grpc::Status::OK, asio::use_awaitable);
     /* [finish-server-streaming-server-side] */
 
-    silence_unused(request_ok, send_ok, write_ok, write_and_finish_ok, finish_ok);
+    silence_unused(request_ok, write_ok, write_and_finish_ok, finish_ok);
 }
 
 asio::awaitable<void> bidirectional_streaming(example::v1::Example::AsyncService& service)
@@ -194,7 +194,7 @@ asio::awaitable<void> bidirectional_streaming(example::v1::Example::AsyncService
     bool finish_ok = co_await agrpc::finish(reader_writer, grpc::Status::OK, asio::use_awaitable);
     /* [finish-bidirectional-streaming-server-side] */
 
-    silence_unused(request_ok, send_ok, read_ok, write_and_finish_ok, write_ok, finish_ok);
+    silence_unused(request_ok, read_ok, write_and_finish_ok, write_ok, finish_ok);
 }
 
 namespace agrpc
