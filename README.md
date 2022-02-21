@@ -319,7 +319,7 @@ For servers and clients:
 grpc::ServerBuilder builder;
 agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
 ```
-<sup><a href='/doc/server.cpp#L237-L240' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L284-L287' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 For clients only:
@@ -329,7 +329,7 @@ For clients only:
 ```cpp
 agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 ```
-<sup><a href='/doc/client.cpp#L197-L199' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-client-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/client.cpp#L205-L207' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-client-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Add some work to the `grpc_context` (shown further below) and run it. Make sure to shutdown the `server` before destructing the `grpc_context`. Also destruct the `grpc_context` before destructing the `server`. A `grpc_context` can only be run on one thread at a time.
@@ -341,7 +341,7 @@ grpc_context.run();
 server->Shutdown();
 }  // grpc_context is destructed here before the server
 ```
-<sup><a href='/doc/server.cpp#L255-L259' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L302-L306' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 It might also be helpful to create a work guard before running the `agrpc::GrpcContext` to prevent `grpc_context.run()` from returning early.
@@ -351,7 +351,7 @@ It might also be helpful to create a work guard before running the `agrpc::GrpcC
 ```cpp
 auto guard = asio::make_work_guard(grpc_context);
 ```
-<sup><a href='/doc/client.cpp#L201-L203' title='Snippet source file'>snippet source</a> | <a href='#snippet-make-work-guard' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/client.cpp#L209-L211' title='Snippet source file'>snippet source</a> | <a href='#snippet-make-work-guard' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## use_sender
@@ -388,7 +388,7 @@ The last argument to all async functions in this library is a [CompletionToken](
 ```cpp
 agrpc::wait(alarm, deadline, asio::bind_executor(grpc_context, [&](bool /*wait_ok*/) {}));
 ```
-<sup><a href='/doc/server.cpp#L45-L47' title='Snippet source file'>snippet source</a> | <a href='#snippet-alarm-with-callback' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L47-L49' title='Snippet source file'>snippet source</a> | <a href='#snippet-alarm-with-callback' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Stackless coroutine
@@ -432,7 +432,7 @@ struct Coro : asio::coroutine
 };
 Coro{deadline, grpc_context}(false);
 ```
-<sup><a href='/doc/server.cpp#L49-L85' title='Snippet source file'>snippet source</a> | <a href='#snippet-alarm-stackless-coroutine' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L51-L87' title='Snippet source file'>snippet source</a> | <a href='#snippet-alarm-stackless-coroutine' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Repeatedly request server-side
@@ -499,7 +499,7 @@ void repeatedly_request_example(example::v1::Example::AsyncService& service, agr
             }});
 }
 ```
-<sup><a href='/doc/server.cpp#L186-L230' title='Snippet source file'>snippet source</a> | <a href='#snippet-repeatedly-request-callback' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L233-L277' title='Snippet source file'>snippet source</a> | <a href='#snippet-repeatedly-request-callback' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## CMake asio_grpc_protobuf_generate 
