@@ -40,8 +40,9 @@ class GrpcSender : public detail::SenderOf<bool>
     class Operation : private detail::TypeErasedGrpcTagOperation
     {
       private:
-        static constexpr bool HAS_STOP_CALLBACK = !std::is_same_v<detail::Empty, StopFunction> &&
-                                                  detail::IS_STOP_EVER_POSSIBLE_V<detail::stop_token_type_t<Receiver&>>;
+        static constexpr bool HAS_STOP_CALLBACK =
+            !std::is_same_v<detail::Empty, StopFunction> &&
+            detail::IS_STOP_EVER_POSSIBLE_V<detail::exec::stop_token_type_t<Receiver&>>;
 
         using StopCallbackLifetime =
             std::conditional_t<HAS_STOP_CALLBACK, std::optional<detail::StopCallbackTypeT<Receiver&, StopFunction>>,
@@ -60,13 +61,13 @@ class GrpcSender : public detail::SenderOf<bool>
         {
             if AGRPC_UNLIKELY (this->grpc_context().is_stopped())
             {
-                detail::set_done(std::move(this->receiver()));
+                detail::exec::set_done(std::move(this->receiver()));
                 return;
             }
-            auto stop_token = detail::get_stop_token(this->receiver());
+            auto stop_token = detail::exec::get_stop_token(this->receiver());
             if (stop_token.stop_requested())
             {
-                detail::set_done(std::move(this->receiver()));
+                detail::exec::set_done(std::move(this->receiver()));
                 return;
             }
             if constexpr (HAS_STOP_CALLBACK)
@@ -94,7 +95,7 @@ class GrpcSender : public detail::SenderOf<bool>
             }
             else
             {
-                detail::set_done(std::move(self.receiver()));
+                detail::exec::set_done(std::move(self.receiver()));
             }
         }
 
@@ -121,7 +122,7 @@ class GrpcSender : public detail::SenderOf<bool>
     template <class Receiver>
     void submit(Receiver&& receiver) const
     {
-        auto allocator = detail::get_allocator(receiver);
+        auto allocator = detail::exec::get_allocator(receiver);
         detail::grpc_submit(
             this->grpc_context, this->initiating_function,
             [receiver = detail::RemoveCvrefT<Receiver>{std::forward<Receiver>(receiver)}](bool ok) mutable

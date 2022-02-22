@@ -45,7 +45,8 @@ inline constexpr bool INVOKE_RESULT_IS_SENDER = false;
 
 template <class Function, class... Args>
 inline constexpr bool INVOKE_RESULT_IS_SENDER<
-    Function, void(Args...), std::enable_if_t<detail::is_sender_v<std::invoke_result_t<Function, Args...>>>> = true;
+    Function, void(Args...), std::enable_if_t<detail::exec::is_sender_v<std::invoke_result_t<Function, Args...>>>> =
+    true;
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 class RepeatedlyRequestStopFunction
@@ -100,7 +101,10 @@ class RepeatedlyRequestOperationBase
         }
     }
 
-    [[nodiscard]] decltype(auto) get_executor() noexcept { return detail::get_scheduler(this->request_handler()); }
+    [[nodiscard]] decltype(auto) get_executor() noexcept
+    {
+        return detail::exec::get_scheduler(this->request_handler());
+    }
 
     [[nodiscard]] agrpc::GrpcContext& grpc_context() noexcept
     {

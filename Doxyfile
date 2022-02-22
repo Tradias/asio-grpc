@@ -357,7 +357,7 @@ AUTOLINK_SUPPORT       = YES
 # diagrams that involve STL classes more complete and accurate.
 # The default value is: NO.
 
-BUILTIN_STL_SUPPORT    = NO
+BUILTIN_STL_SUPPORT    = YES
 
 # If you use Microsoft's C++/CLI language, you should set this option to YES to
 # enable parsing support.
@@ -843,7 +843,7 @@ WARN_NO_PARAMDOC       = NO
 # Possible values are: NO, YES and FAIL_ON_WARNINGS.
 # The default value is: NO.
 
-WARN_AS_ERROR          = YES
+WARN_AS_ERROR          = NO
 
 # The WARN_FORMAT tag determines the format of the warning messages that doxygen
 # can produce. The string should contain the $file, $line, and $text tags, which
@@ -906,7 +906,8 @@ INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          = *.cpp \
                          *.ixx \
                          *.ipp \
-                         *.hpp
+                         *.hpp \
+                         *.md
 
 # The RECURSIVE tag can be used to specify whether or not subdirectories should
 # be searched for input files as well.
@@ -1035,7 +1036,7 @@ FILTER_SOURCE_PATTERNS =
 # (index.html). This can be useful if you have a project on for instance GitHub
 # and want to reuse the introduction page also for the doxygen output.
 
-USE_MDFILE_AS_MAINPAGE =
+USE_MDFILE_AS_MAINPAGE = README.md
 
 #---------------------------------------------------------------------------
 # Configuration options related to source browsing

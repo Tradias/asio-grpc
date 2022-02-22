@@ -108,6 +108,8 @@ namespace asio = ::boost::asio;
 
 namespace detail
 {
+namespace exec
+{
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class Object>
 auto get_scheduler(Object& object)
@@ -121,21 +123,6 @@ auto get_allocator(Object& object)
     if constexpr (asio::can_query_v<const Object&, asio::execution::allocator_t<void>>)
     {
         return asio::query(object, asio::execution::allocator);
-    }
-    else
-    {
-        return asio::get_associated_allocator(object);
-    }
-}
-
-template <class Object, class Executor>
-auto query_allocator(Object& object, Executor&& executor)
-{
-    if constexpr (asio::can_query_v<std::remove_cv_t<std::remove_reference_t<Executor>>,
-                                    asio::execution::allocator_t<void>>)
-    {
-        return asio::get_associated_allocator(
-            object, asio::query(std::forward<Executor>(executor), asio::execution::allocator));
     }
     else
     {
@@ -171,16 +158,10 @@ constexpr unstoppable_token get_stop_token(Receiver&&) noexcept
 }
 
 template <class>
-using stop_token_type_t = detail::unstoppable_token;
+using stop_token_type_t = detail::exec::unstoppable_token;
 #elif defined(AGRPC_UNIFEX)
 using ::unifex::get_allocator;
 using ::unifex::get_scheduler;
-
-template <class Object, class Scheduler>
-auto query_allocator(Object& object, Scheduler&&)
-{
-    return detail::get_allocator(object);
-}
 
 template <class T>
 inline constexpr bool is_sender_v = ::unifex::sender<T>;
@@ -194,9 +175,33 @@ using ::unifex::set_value;
 using ::unifex::start;
 using ::unifex::stop_token_type_t;
 #endif
+}  // namespace exec
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+template <class Object, class Executor>
+auto query_allocator(Object& object, Executor&& executor)
+{
+    if constexpr (asio::can_query_v<std::remove_cv_t<std::remove_reference_t<Executor>>,
+                                    asio::execution::allocator_t<void>>)
+    {
+        return asio::get_associated_allocator(
+            object, asio::query(std::forward<Executor>(executor), asio::execution::allocator));
+    }
+    else
+    {
+        return asio::get_associated_allocator(object);
+    }
+}
+#elif defined(AGRPC_UNIFEX)
+template <class Object, class Scheduler>
+auto query_allocator(Object& object, Scheduler&&)
+{
+    return detail::exec::get_allocator(object);
+}
+#endif
 
 template <class Receiver, class Callback>
-using StopCallbackTypeT = typename detail::stop_token_type_t<Receiver>::template callback_type<Callback>;
+using StopCallbackTypeT = typename detail::exec::stop_token_type_t<Receiver>::template callback_type<Callback>;
 
 template <class T>
 constexpr auto is_stop_ever_possible_helper(int) -> std::bool_constant<(T{}.stop_possible())>;
@@ -205,12 +210,12 @@ template <class>
 constexpr auto is_stop_ever_possible_helper(long) -> std::true_type;
 
 template <class T>
-inline constexpr bool IS_STOP_EVER_POSSIBLE_V = decltype(is_stop_ever_possible_helper<T>(0))::value;
+inline constexpr bool IS_STOP_EVER_POSSIBLE_V = decltype(detail::is_stop_ever_possible_helper<T>(0))::value;
 
 template <class Object>
 auto get_associated_executor_and_allocator(Object& object)
 {
-    auto executor = detail::get_scheduler(object);
+    auto executor = detail::exec::get_scheduler(object);
     auto allocator = detail::query_allocator(object, executor);
     return std::pair{std::move(executor), std::move(allocator)};
 }

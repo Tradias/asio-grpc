@@ -33,7 +33,7 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class Receiver, bool = detail::IS_STOP_EVER_POSSIBLE_V<detail::stop_token_type_t<Receiver&>>>
+template <class Receiver, bool = detail::IS_STOP_EVER_POSSIBLE_V<detail::exec::stop_token_type_t<Receiver&>>>
 class RepeatedlyRequestStopContext
 {
   private:
@@ -93,12 +93,12 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
     {
       private:
         using GrpcBase = detail::TypeErasedGrpcTagOperation;
-        using Allocator = detail::RemoveCvrefT<decltype(detail::get_allocator(std::declval<Receiver&>()))>;
+        using Allocator = detail::RemoveCvrefT<decltype(detail::exec::get_allocator(std::declval<Receiver&>()))>;
         using RPCContext = detail::RPCContextForRPCT<RPC>;
         using RequestHandlerSender =
             detail::InvokeResultFromSignatureT<RequestHandler&, typename RPCContext::Signature>;
 
-        static_assert(detail::is_sender_v<RequestHandlerSender>,
+        static_assert(detail::exec::is_sender_v<RequestHandlerSender>,
                       "`repeatedly_request` request handler must return a sender.");
 
         struct RequestHandlerOperation
@@ -133,7 +133,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
             agrpc::GrpcContext& grpc_context;
             detail::CompressedPair<detail::RPCContextForRPCT<RPC>, Allocator> impl;
             std::optional<detail::InplaceWithFunctionWrapper<
-                detail::connect_result_t<RequestHandlerSender, DeallocateRequestHandlerOperationReceiver>>>
+                detail::exec::connect_result_t<RequestHandlerSender, DeallocateRequestHandlerOperationReceiver>>>
                 operation_state;
 
             explicit RequestHandlerOperation(agrpc::GrpcContext& grpc_context, const Allocator& allocator)
@@ -146,15 +146,16 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
                 operation_state.emplace(detail::InplaceWithFunction{},
                                         [&]
                                         {
-                                            return detail::connect(std::apply(request_handler, rpc_context().args()),
-                                                                   DeallocateRequestHandlerOperationReceiver{*this});
+                                            return detail::exec::connect(
+                                                std::apply(request_handler, rpc_context().args()),
+                                                DeallocateRequestHandlerOperationReceiver{*this});
                                         });
             }
 
             void start_request_handler_operation()
             {
                 grpc_context.work_started();
-                detail::start(operation_state->value);
+                detail::exec::start(operation_state->value);
             }
 
             auto& rpc_context() noexcept { return impl.first(); }
@@ -185,13 +186,13 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
         {
             if AGRPC_UNLIKELY (this->grpc_context().is_stopped())
             {
-                detail::set_done(std::move(this->receiver()));
+                detail::exec::set_done(std::move(this->receiver()));
                 return;
             }
-            auto stop_token = detail::get_stop_token(this->receiver());
+            auto stop_token = detail::exec::get_stop_token(this->receiver());
             if (stop_token.stop_requested())
             {
-                detail::set_done(std::move(this->receiver()));
+                detail::exec::set_done(std::move(this->receiver()));
                 return;
             }
             this->stop_context().emplace(std::move(stop_token));
@@ -235,7 +236,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
                 {
                     self->stop_context().reset();
                     ptr.reset();
-                    detail::set_error(std::move(self->receiver()), std::move(ep));
+                    detail::exec::set_error(std::move(self->receiver()), std::move(ep));
                     return;
                 }
                 const auto is_repeated = self->initiate_repeatedly_request();
@@ -279,7 +280,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
         void done() noexcept
         {
             this->stop_context().reset();
-            detail::set_done(std::move(receiver()));
+            detail::exec::set_done(std::move(receiver()));
         }
 
         constexpr auto& grpc_context() noexcept { return impl0.first(); }
@@ -294,7 +295,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
 
         constexpr auto& request_handler() noexcept { return impl2.second(); }
 
-        constexpr decltype(auto) get_allocator() noexcept { return detail::get_allocator(this->receiver()); }
+        constexpr decltype(auto) get_allocator() noexcept { return detail::exec::get_allocator(this->receiver()); }
 
         detail::CompressedPair<agrpc::GrpcContext&, Receiver> impl0;
         detail::CompressedPair<RPC, detail::RepeatedlyRequestStopContext<Receiver>> impl1;
