@@ -266,6 +266,14 @@ void repeatedly_request_example(example::v1::Example::AsyncService& service, agr
 }
 // end-snippet
 
+void create_grpc_context()
+{
+    /* [create-grpc_context-server-side] */
+    grpc::ServerBuilder builder;
+    agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
+    /* [create-grpc_context-server-side] */
+}
+
 int main()
 {
     std::unique_ptr<grpc::Server> server;

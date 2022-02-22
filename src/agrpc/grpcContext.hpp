@@ -18,6 +18,7 @@
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/atomicIntrusiveQueue.hpp"
 #include "agrpc/detail/config.hpp"
+#include "agrpc/detail/forward.hpp"
 #include "agrpc/detail/grpcContext.hpp"
 #include "agrpc/detail/grpcContextImplementation.hpp"
 #include "agrpc/detail/grpcExecutorOptions.hpp"
@@ -33,11 +34,14 @@
 
 AGRPC_NAMESPACE_BEGIN()
 
-template <class Allocator, std::uint32_t Options>
-class BasicGrpcExecutor;
-
 /**
  * @brief Execution context based on `grpc::CompletionQueue`
+ *
+ * Satisfies the
+ * [ExecutionContext](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/ExecutionContext.html)
+ * requirements and can therefore be used in all places where Asio expects a `ExecutionContext`.
+ *
+ * Performance recommendation: Use one GrpcContext per thread.
  */
 class GrpcContext
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
@@ -45,33 +49,134 @@ class GrpcContext
 #endif
 {
   public:
-    using executor_type = agrpc::BasicGrpcExecutor<std::allocator<void>, detail::GrpcExecutorOptions::DEFAULT>;
+    /**
+     * @brief The associated executor type
+     */
+    using executor_type = agrpc::BasicGrpcExecutor<>;
+
+    /**
+     * @brief The associated allocator type
+     */
     using allocator_type = detail::GrpcContextLocalAllocator;
 
+    /**
+     * @brief Construct a GrpcContext from a `grpc::CompletionQueue`
+     *
+     * For servers and clients:
+     *
+     * @snippet server.cpp create-grpc_context-server-side
+     *
+     * For clients only:
+     *
+     * @snippet client.cpp create-grpc_context-client-side
+     */
     explicit GrpcContext(std::unique_ptr<grpc::CompletionQueue>&& completion_queue);
 
+    /**
+     * @brief Construct a GrpcContext from a `grpc::CompletionQueue`
+     *
+     * Calls Shutdown() on the `grpc::CompletionQueue` and drains it. Pending completion handler will not be
+     * invoked.
+     *
+     * @attention Make sure to destruct the GrpcContext before destructing the `grpc::Server`.
+     */
     ~GrpcContext();
 
+    /**
+     * @brief Run the `grpc::CompletionQueue`
+     *
+     * Runs the main event loop logic until the GrpcContext runs out of work or is stopped. The GrpcContext will be in
+     * the stopped state when this function returns. Make sure to call reset() before submitting more work to a stopped
+     * GrpcContext.
+     *
+     * @attention Only one call to run() may be performed at a time.
+     *
+     * Thread-safe with regards to other functions except the destructor.
+     */
     void run();
 
+    /**
+     * @brief Signal the GrpcContext to stop
+     *
+     * Waits for all outstanding operations to complete and prevents new ones from being submitted.
+     *
+     * Thread-safe with regards to other functions except the destructor.
+     */
     void stop();
 
+    /**
+     * @brief Bring a stopped GrpcContext back into the ready state
+     *
+     * When run() returns or stop() was called the GrpcContext will be in a stopped state. This function brings the
+     * GrpcContext back into the ready state so that new work can be submitted to it.
+     *
+     * Thread-safe with regards to other functions except the destructor.
+     */
     void reset() noexcept;
 
+    /**
+     * @brief Is the GrpcContext in the stopped state?
+     *
+     * Thread-safe
+     */
     [[nodiscard]] bool is_stopped() const noexcept;
 
+    /**
+     * @brief Get the associated executor
+     *
+     * Thread-safe
+     */
     [[nodiscard]] executor_type get_executor() noexcept;
 
+    /**
+     * @brief Get the associated scheduler
+     *
+     * Thread-safe
+     */
     [[nodiscard]] executor_type get_scheduler() noexcept;
 
+    /**
+     * @brief Get the associated allocator
+     *
+     * @attention The returned allocator may only be used for allocations within the same thread that calls run().
+     *
+     * Thread-safe
+     */
     [[nodiscard]] allocator_type get_allocator() noexcept;
 
+    /**
+     * @brief Signal that work has started
+     *
+     * The GrpcContext maintains an internal counter on how many operations have been started. Once that counter reaches
+     * zero it will go into the stopped state. Every call to work_started() should be matched to a call of
+     * work_finished().
+     *
+     * Thread-safe
+     */
     void work_started() noexcept;
 
+    /**
+     * @brief Signal that work has finished
+     *
+     * Thread-safe
+     */
     void work_finished() noexcept;
 
+    /**
+     * @brief Get the underlying `grpc::CompletionQueue`
+     *
+     * Thread-safe
+     */
     [[nodiscard]] grpc::CompletionQueue* get_completion_queue() noexcept;
 
+    /**
+     * @brief Get the underlying `grpc::CompletionQueue`
+     *
+     * @attention Only valid if the GrpcContext has been constructed with a ServerCompletionQueue:
+     * @snippet server.cpp create-grpc_context-server-side
+     *
+     * Thread-safe
+     */
     [[nodiscard]] grpc::ServerCompletionQueue* get_server_completion_queue() noexcept;
 
   private:

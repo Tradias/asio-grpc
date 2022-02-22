@@ -197,6 +197,13 @@ void bidirectional_streaming_corked(example::v1::Example::Stub& stub, agrpc::Grp
     /* [request-client-bidirectional-client-side-corked] */
 }
 
+void create_grpc_context()
+{
+    /* [create-grpc_context-client-side] */
+    agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+    /* [create-grpc_context-client-side] */
+}
+
 int main()
 {
     auto stub =

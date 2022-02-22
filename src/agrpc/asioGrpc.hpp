@@ -22,6 +22,11 @@
  * @brief Public namespace
  */
 
+/**
+ * @namespace agrpc::pmr
+ * @brief Public namespace
+ */
+
 #ifndef AGRPC_AGRPC_ASIOGRPC_HPP
 #define AGRPC_AGRPC_ASIOGRPC_HPP
 
