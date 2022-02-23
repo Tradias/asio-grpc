@@ -91,9 +91,8 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request clie
 {
     bool is_shutdown{false};
     auto request_count{0};
-    agrpc::repeatedly_request(
-        &test::v1::Test::AsyncService::RequestClientStreaming, service,
-        asio::bind_executor(
+    {
+        const auto request_handler = asio::bind_executor(
             asio::require(get_executor(), asio::execution::allocator(get_allocator())),
             [&](grpc::ServerContext&,
                 grpc::ServerAsyncReader<test::msg::Response, test::msg::Request>& reader) -> asio::awaitable<void>
@@ -110,7 +109,9 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request clie
                 test::msg::Response response;
                 response.set_integer(21);
                 CHECK(co_await agrpc::finish(reader, response, grpc::Status::OK));
-            }));
+            });
+        agrpc::repeatedly_request(&test::v1::Test::AsyncService::RequestClientStreaming, service, request_handler);
+    }
     asio::spawn(grpc_context,
                 [&](auto&& yield)
                 {

@@ -235,6 +235,7 @@ struct BasicRepeatedlyRequestInitiator
                     Service& service) const
     {
         using TrackingCompletionHandler = detail::WorkTrackingCompletionHandler<CompletionHandler>;
+        using DecayedRequestHandler = std::decay_t<RequestHandler>;
         const auto [executor, allocator] = detail::get_associated_executor_and_allocator(request_handler);
         auto& grpc_context = detail::query_grpc_context(executor);
         grpc_context.work_started();
@@ -243,9 +244,10 @@ struct BasicRepeatedlyRequestInitiator
         if (auto cancellation_slot = asio::get_associated_cancellation_slot(completion_handler);
             cancellation_slot.is_connected())
         {
-            auto operation = detail::allocate<Operation<RequestHandler, RPC, Service, TrackingCompletionHandler, true>>(
-                allocator, std::forward<RequestHandler>(request_handler), rpc, service,
-                std::forward<CompletionHandler>(completion_handler));
+            auto operation =
+                detail::allocate<Operation<DecayedRequestHandler, RPC, Service, TrackingCompletionHandler, true>>(
+                    allocator, std::forward<RequestHandler>(request_handler), rpc, service,
+                    std::forward<CompletionHandler>(completion_handler));
             cancellation_slot.template emplace<detail::RepeatedlyRequestStopFunction>(operation->stop_context());
             InitFunction{}(grpc_context, *operation);
             operation.release();
@@ -254,7 +256,7 @@ struct BasicRepeatedlyRequestInitiator
 #endif
         {
             auto operation =
-                detail::allocate<Operation<RequestHandler, RPC, Service, TrackingCompletionHandler, false>>(
+                detail::allocate<Operation<DecayedRequestHandler, RPC, Service, TrackingCompletionHandler, false>>(
                     allocator, std::forward<RequestHandler>(request_handler), rpc, service,
                     std::forward<CompletionHandler>(completion_handler));
             InitFunction{}(grpc_context, *operation);
@@ -268,18 +270,21 @@ using RepeatedlyRequestInitiator =
     detail::BasicRepeatedlyRequestInitiator<detail::RepeatedlyRequestOperation, detail::RepeatedlyRequestInitFunction>;
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
-template <class T>
-inline constexpr bool IS_ASIO_AWAITABLE = false;
+template <class Executor, class T, class = void>
+inline constexpr bool IS_CO_SPAWNABLE = false;
 
-template <class T, class Executor>
-inline constexpr bool IS_ASIO_AWAITABLE<asio::awaitable<T, Executor>> = true;
+template <class Executor, class T>
+inline constexpr bool IS_CO_SPAWNABLE<
+    Executor, T, std::void_t<decltype(asio::co_spawn(std::declval<Executor>(), std::declval<T>(), detail::NoOp{}))>> =
+    true;
 
 template <class Function, class Signature, class = void>
-inline constexpr bool INVOKE_RESULT_IS_ASIO_AWAITABLE = false;
+inline constexpr bool INVOKE_RESULT_IS_CO_SPAWNABLE = false;
 
 template <class Function, class... Args>
-inline constexpr bool INVOKE_RESULT_IS_ASIO_AWAITABLE<
-    Function, void(Args...), std::enable_if_t<detail::IS_ASIO_AWAITABLE<std::invoke_result_t<Function, Args...>>>> =
+inline constexpr bool INVOKE_RESULT_IS_CO_SPAWNABLE<
+    Function, void(Args...),
+    std::enable_if_t<detail::IS_CO_SPAWNABLE<detail::SchedulerT<Function>, std::invoke_result_t<Function, Args...>>>> =
     true;
 
 struct RethrowFirstArg

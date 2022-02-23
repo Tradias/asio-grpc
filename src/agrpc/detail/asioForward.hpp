@@ -200,6 +200,9 @@ auto query_allocator(Object& object, Scheduler&&)
 }
 #endif
 
+template <class T>
+using SchedulerT = decltype(detail::exec::get_scheduler(std::declval<T>()));
+
 template <class Receiver, class Callback>
 using StopCallbackTypeT = typename detail::exec::stop_token_type_t<Receiver>::template callback_type<Callback>;
 

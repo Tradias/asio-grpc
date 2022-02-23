@@ -42,8 +42,8 @@ class RepeatedlyRequestFn
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
         }
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
-        else if constexpr (detail::INVOKE_RESULT_IS_ASIO_AWAITABLE<std::decay_t<RequestHandler>&,
-                                                                   typename RPCContext::Signature>)
+        else if constexpr (detail::INVOKE_RESULT_IS_CO_SPAWNABLE<std::decay_t<RequestHandler>&,
+                                                                 typename RPCContext::Signature>)
         {
             return asio::async_initiate<CompletionToken, void()>(detail::RepeatedlyRequestAwaitableInitiator{}, token,
                                                                  std::forward<RequestHandler>(request_handler), rpc,
