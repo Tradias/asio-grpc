@@ -46,9 +46,10 @@ namespace detail
  * `grpc::Server` been shutdown. It will **not** wait until all outstanding RPCs that are being processed by the
  * RequestHandler have completed.
  *
- * When using the special CompletionToken `agrpc::use_sender` the RequestHandler's signature must be:<br>
+ * When using the special CompletionToken created by `agrpc::use_sender` the RequestHandler's signature must be:<br>
  * `sender auto operator()(grpc::ServerContext&, Request&, Responder&)` for unary and server-streaming requests and<br>
- * `sender auto operator()(grpc::ServerContext&, Responder&)` otherwise.
+ * `sender auto operator()(grpc::ServerContext&, Responder&)` otherwise.<br>
+ * For libunifex this is the only available overload of this function.
  *
  * @snippet unifex-server.cpp repeatedly-request-sender
  *
@@ -67,40 +68,40 @@ namespace detail
  *
  * @param request_handler Any exception thrown by the invocation of the request handler will be rethrown by
  * GrpcContext#run(). Except for the sender version, where the exception will be send to the receiver.
- * @param token The completion signature is `void()`. If the token is `agrpc::use_sender` then the request handler must
- * return a sender.
+ * @param token The completion signature is `void()`. If the token has been created by `agrpc::use_sender` then the
+ * request handler must return a sender.
  */
 class RepeatedlyRequestFn
 {
   private:
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     template <class RPC, class Service, class RequestHandler, class CompletionToken>
     static auto impl(RPC rpc, Service& service, RequestHandler&& request_handler, CompletionToken token)
     {
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-        using RPCContext = detail::RPCContextForRPCT<RPC>;
-        if constexpr (detail::INVOKE_RESULT_IS_SENDER<std::decay_t<RequestHandler>&, typename RPCContext::Signature>)
-        {
-#endif
-            return detail::RepeatedlyRequestSender{token.grpc_context, rpc, service,
-                                                   std::forward<RequestHandler>(request_handler)};
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-        }
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
-        else if constexpr (detail::INVOKE_RESULT_IS_CO_SPAWNABLE<std::decay_t<RequestHandler>&,
-                                                                 typename RPCContext::Signature>)
+        using RPCContext = detail::RPCContextForRPCT<RPC>;
+        if constexpr (detail::INVOKE_RESULT_IS_CO_SPAWNABLE<std::decay_t<RequestHandler>&,
+                                                            typename RPCContext::Signature>)
         {
             return asio::async_initiate<CompletionToken, void()>(detail::RepeatedlyRequestAwaitableInitiator{}, token,
                                                                  std::forward<RequestHandler>(request_handler), rpc,
                                                                  service);
         }
-#endif
         else
+#endif
         {
             return asio::async_initiate<CompletionToken, void()>(detail::RepeatedlyRequestInitiator{}, token,
                                                                  std::forward<RequestHandler>(request_handler), rpc,
                                                                  service);
         }
+    }
 #endif
+
+    template <class RPC, class Service, class RequestHandler>
+    static auto impl(RPC rpc, Service& service, RequestHandler&& request_handler, detail::UseSender token)
+    {
+        return detail::RepeatedlyRequestSender{token.grpc_context, rpc, service,
+                                               std::forward<RequestHandler>(request_handler)};
     }
 
   public:

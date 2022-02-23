@@ -40,13 +40,6 @@ struct RepeatedlyRequestContextAccess
 };
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-template <class Function, class Signature, class = void>
-inline constexpr bool INVOKE_RESULT_IS_SENDER = false;
-
-template <class Function, class... Args>
-inline constexpr bool INVOKE_RESULT_IS_SENDER<
-    Function, void(Args...), std::enable_if_t<detail::exec::is_sender_v<std::invoke_result_t<Function, Args...>>>> =
-    true;
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 class RepeatedlyRequestStopFunction
