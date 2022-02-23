@@ -47,14 +47,29 @@ struct UseSchedulerFn
     }
 };
 
+/**
+ * @brief Function object to create sender completion tokens
+ *
+ * The completion token created by this function causes other asynchronous functions in this library to return a
+ * [Sender](https://brycelelbach.github.io/wg21_p2300_std_execution/std_execution.html#design-senders). This is
+ * particularly useful for libunifex where senders are also awaitable:
+ *
+ * @snippet unifex-client.cpp unifex-server-streaming-client-side
+ */
 struct UseSenderFn
 {
+    /**
+     * @brief Overload for BasicGrpcExecutor
+     */
     template <class Allocator, std::uint32_t Options>
     [[nodiscard]] constexpr auto operator()(const agrpc::BasicGrpcExecutor<Allocator, Options>& executor) const noexcept
     {
         return detail::UseSender{executor.context()};
     }
 
+    /**
+     * @brief Overload for GrpcContext
+     */
     [[nodiscard]] constexpr auto operator()(agrpc::GrpcContext& context) const noexcept
     {
         return detail::UseSender{context};
@@ -64,6 +79,13 @@ struct UseSenderFn
 
 [[deprecated("renamed to use_sender")]] inline constexpr detail::UseSchedulerFn use_scheduler{};
 
+/**
+ * @brief Create sender completion token
+ *
+ * @link detail::UseSenderFn
+ * Function to create sender completion tokens.
+ * @endlink
+ */
 inline constexpr detail::UseSenderFn use_sender{};
 
 AGRPC_NAMESPACE_END

@@ -64,11 +64,9 @@ inline constexpr agrpc::pmr::GrpcUseAwaitable GRPC_USE_AWAITABLE{};
 #endif
 
 /**
- * @brief Default completion token for all asynchronous methods
+ * @brief Default completion token for all asynchronous functions
  *
- * For Boost.Asio and standalone Asio: `asio::use_awaitable`
- *
- * For libunifex: `agrpc::use_sender`
+ * Only available for Boost.Asio and standalone Asio: `asio::use_awaitable`
  */
 using DefaultCompletionToken = detail::DefaultCompletionToken;
 

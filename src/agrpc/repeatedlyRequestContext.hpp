@@ -30,14 +30,40 @@ template <class T>
 inline constexpr bool HAS_REQUEST_MEMBER_FUNCTION<T, std::void_t<decltype(std::declval<T&>()->request())>> = true;
 }
 
+/**
+ * @brief Context passed to the request handler of repeatedly_request
+ *
+ * A move-only type that provides a stable address to the `grpc::ServerContext`, the request (if any) and the responder
+ * of one request made by repeatedly_request.
+ */
 template <class ImplementationAllocator>
 class RepeatedlyRequestContext
 {
   public:
+    /**
+     * @brief Tuple of `grpc::ServerContext`, the request (if any) and the responder
+     *
+     * Useful in combination with `std::apply` when implementing generic request handler.
+     *
+     * The return type depends on the RPC.
+     *
+     * unary: `std::tuple<grpc::ServerContext&, Request&, grpc::ServerAsyncResponseWriter<Response>&>`<br>
+     * server-streaming: `std::tuple<grpc::ServerContext&, Request&, grpc::ServerAsyncWriter<Response>&>`<br>
+     * client-streaming: `std::tuple<grpc::ServerContext&, grpc::ServerAsyncReader<Response, Request>&>`<br>
+     * bidirectional-streaming: `std::tuple<grpc::ServerContext&, grpc::ServerAsyncReaderWriter<Response, Request>&>`
+     */
     [[nodiscard]] decltype(auto) args() const noexcept { return impl->args(); }
 
+    /**
+     * @brief Reference to the `grpc::ServerContext` of this request
+     */
     [[nodiscard]] decltype(auto) server_context() const noexcept { return impl->server_context(); }
 
+    /**
+     * @brief Reference to the request
+     *
+     * Only available for unary and server-streaming RPCs. Other RPCs are made without an initial request by the client.
+     */
     [[nodiscard]] decltype(auto) request() const noexcept
     {
         static_assert(detail::HAS_REQUEST_MEMBER_FUNCTION<detail::AllocatedPointer<ImplementationAllocator>>,
@@ -46,6 +72,16 @@ class RepeatedlyRequestContext
         return impl->request();
     }
 
+    /**
+     * @brief Reference to the responder
+     *
+     * The return type depends on the RPC.
+     *
+     * unary: `grpc::ServerAsyncResponseWriter<Response>&`<br>
+     * server-streaming: `grpc::ServerAsyncWriter<Response>&`<br>
+     * client-streaming: `grpc::ServerAsyncReader<Response, Request>&`<br>
+     * bidirectional-streaming: `grpc::ServerAsyncReaderWriter<Response, Request>&`
+     */
     [[nodiscard]] decltype(auto) responder() const noexcept { return impl->responder(); }
 
   private:

@@ -354,29 +354,6 @@ auto guard = asio::make_work_guard(grpc_context);
 <sup><a href='/doc/client.cpp#L216-L218' title='Snippet source file'>snippet source</a> | <a href='#snippet-make-work-guard' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
-## use_sender
-
-A special completion token created by `agrpc::use_sender(scheduler)` where `scheduler` is a `agrpc::GrpcContext` or `agrpc::GrpcExecutor`. It causes RPC step functions to return a [TypedSender](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/Sender.html#boost_asio.reference.Sender.typed_sender). The sender can e.g. be connected to a [unifex::task<>](https://github.com/facebookexperimental/libunifex/blob/main/doc/api_reference.md#task) to await completion of the RPC step:
-
-<!-- snippet: unifex-server-streaming-client-side -->
-<a id='snippet-unifex-server-streaming-client-side'></a>
-```cpp
-unifex::task<void> unified_executors(example::v1::Example::Stub& stub, agrpc::GrpcContext& grpc_context)
-{
-    grpc::ClientContext client_context;
-    example::v1::Request request;
-    std::unique_ptr<grpc::ClientAsyncReader<example::v1::Response>> reader;
-    co_await agrpc::request(&example::v1::Example::Stub::AsyncServerStreaming, stub, client_context, request, reader,
-                            agrpc::use_sender(grpc_context));
-    example::v1::Response response;
-    co_await agrpc::read(*reader, response, agrpc::use_sender(grpc_context));
-    grpc::Status status;
-    co_await agrpc::finish(*reader, status, agrpc::use_sender(grpc_context));
-}
-```
-<sup><a href='/doc/unifex-client.cpp#L25-L38' title='Snippet source file'>snippet source</a> | <a href='#snippet-unifex-server-streaming-client-side' title='Start of snippet'>anchor</a></sup>
-<!-- endSnippet -->
-
 ## Different completion tokens
 
 The last argument to all async functions in this library is a [CompletionToken](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers). It can be used to customize how to receive notification of the completion of the asynchronous operation. Aside from the ones shown earlier (`asio::yield_context` and `agrpc::use_sender`) there are many more, some examples:

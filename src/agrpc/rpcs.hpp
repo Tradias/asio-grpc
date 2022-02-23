@@ -1235,7 +1235,7 @@ struct SendInitialMetadataFn
 };
 
 /**
- * @brief Client-side function to read initial metadata for RPCs
+ * @brief Client-side function object to read initial metadata for RPCs
  *
  * The examples below are based on the following .proto file:
  *

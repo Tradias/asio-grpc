@@ -22,7 +22,7 @@
 #include <unifex/task.hpp>
 #include <unifex/when_all.hpp>
 
-// begin-snippet: unifex-server-streaming-client-side
+/* [unifex-server-streaming-client-side] */
 unifex::task<void> unified_executors(example::v1::Example::Stub& stub, agrpc::GrpcContext& grpc_context)
 {
     grpc::ClientContext client_context;
@@ -35,7 +35,7 @@ unifex::task<void> unified_executors(example::v1::Example::Stub& stub, agrpc::Gr
     grpc::Status status;
     co_await agrpc::finish(*reader, status, agrpc::use_sender(grpc_context));
 }
-// end-snippet
+/* [unifex-server-streaming-client-side] */
 
 int main()
 {

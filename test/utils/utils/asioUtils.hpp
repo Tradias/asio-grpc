@@ -119,8 +119,7 @@ struct RpcSpawner
         asio::spawn(get_executor(),
                     [h = handler, context = std::move(context)](auto&& yield_context) mutable
                     {
-                        std::apply(std::move(h),
-                                   std::tuple_cat(context.args(), std::forward_as_tuple(std::move(yield_context))));
+                        std::apply(std::move(h), std::tuple_cat(context.args(), std::forward_as_tuple(yield_context)));
                     });
     }
 
