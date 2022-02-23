@@ -48,7 +48,7 @@ asio::awaitable<void> unary(agrpc::GrpcContext& grpc_context, example::v1::Examp
     silence_unused(read_ok, finish_ok);
 }
 
-asio::awaitable<void> unary_awaitable(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
+asio::awaitable<void> unary_awaitable(example::v1::Example::Stub& stub)
 {
     /* [request-unary-client-side-await] */
     grpc::ClientContext client_context;

@@ -33,7 +33,7 @@ It might take a while until vcpkg has installed all dependencies.
 Compile the tests and examples with:
 
 ```sh
-cmake --build ./build --parallel
+cmake --build --preset default
 ```
 
 And run all tests:

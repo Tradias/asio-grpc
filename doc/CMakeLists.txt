@@ -33,4 +33,7 @@ if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES AND ASIO_GRPC_BOOST_ASIO_HAS_CO_AWA
 
     asio_grpc_add_documentation(unifex-client)
     target_link_libraries(asio-grpc-documentation-unifex-client PRIVATE asio-grpc::asio-grpc-unifex)
+
+    asio_grpc_add_documentation(unifex-server)
+    target_link_libraries(asio-grpc-documentation-unifex-server PRIVATE asio-grpc::asio-grpc-unifex)
 endif()

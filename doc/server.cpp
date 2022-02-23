@@ -220,14 +220,14 @@ void io_context(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncSer
     /* [bind-executor-to-use-awaitable] */
 }
 
-// begin-snippet: repeatedly-request-callback
+/* [repeatedly-request-callback] */
 template <class Executor, class Handler>
 struct AssociatedHandler
 {
     using executor_type = Executor;
 
     Executor executor;
-    /*[[no_unique_address]]*/ Handler handler;
+    Handler handler;
 
     AssociatedHandler(Executor executor, Handler handler) : executor(std::move(executor)), handler(std::move(handler))
     {
@@ -237,14 +237,6 @@ struct AssociatedHandler
     void operator()(agrpc::RepeatedlyRequestContext<T>&& request_context)
     {
         std::invoke(handler, std::move(request_context), executor);
-        //
-        // The RepeatedlyRequestContext also provides access to:
-        // * the grpc::ServerContext
-        // request_context.server_context();
-        // * the grpc::ServerAsyncReader/Writer
-        // request_context.responder();
-        // * the protobuf request message (for unary and server-streaming requests)
-        // request_context.request();
     }
 
     [[nodiscard]] executor_type get_executor() const noexcept { return executor; }
@@ -264,7 +256,23 @@ void repeatedly_request_example(example::v1::Example::AsyncService& service, agr
                               asio::bind_executor(executor, [c = std::move(request_context)](bool) {}));
             }});
 }
-// end-snippet
+/* [repeatedly-request-callback] */
+
+/* [repeatedly-request-awaitable] */
+void register_client_streaming_handler(example::v1::Example::AsyncService& service, agrpc::GrpcContext& grpc_context)
+{
+    agrpc::repeatedly_request(
+        &example::v1::Example::AsyncService::RequestClientStreaming, service,
+        asio::bind_executor(
+            grpc_context,
+            [&](grpc::ServerContext&,
+                grpc::ServerAsyncReader<example::v1::Response, example::v1::Request>&) -> asio::awaitable<void>
+            {
+                // ...
+                co_return;
+            }));
+}
+/* [repeatedly-request-awaitable] */
 
 void create_grpc_context()
 {

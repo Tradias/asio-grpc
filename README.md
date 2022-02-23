@@ -319,7 +319,7 @@ For servers and clients:
 grpc::ServerBuilder builder;
 agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
 ```
-<sup><a href='/doc/server.cpp#L282-L285' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L290-L293' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 For clients only:
@@ -341,7 +341,7 @@ grpc_context.run();
 server->Shutdown();
 }  // grpc_context is destructed here before the server
 ```
-<sup><a href='/doc/server.cpp#L300-L304' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/doc/server.cpp#L308-L312' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 It might also be helpful to create a work guard before running the `agrpc::GrpcContext` to prevent `grpc_context.run()` from returning early.
@@ -433,73 +433,6 @@ struct Coro : asio::coroutine
 Coro{deadline, grpc_context}(false);
 ```
 <sup><a href='/doc/server.cpp#L52-L88' title='Snippet source file'>snippet source</a> | <a href='#snippet-alarm-stackless-coroutine' title='Start of snippet'>anchor</a></sup>
-<!-- endSnippet -->
-
-## Repeatedly request server-side
-
-The function `agrpc::repeatedly_request` helps to ensure that there are enough outstanding calls to `request` to match incoming RPCs. 
-It takes a RPC, a Service, a Handler and a CompletionToken. The Handler determines what to do with a client request, it could e.g. spawn a new coroutine to process it. It must also have an associated executor that refers to a `agrpc::GrpcContext`. When the client makes a request the Handler is invoked with a `agrpc::RepeatedlyRequestContext` - a move-only type that provides a stable address to the `grpc::ServerContext`, the request (if any) and the responder that were used when requesting the RPC. It should be kept alive until the RPC is finished. The Handler or its associated executor may also have an associated allocator to control the allocation needed for each request.
-
-When using the special CompletionToken created by `agrpc::use_sender` the Handler's signature must be:    
-`sender auto operator()(grpc::ServerContext&, Request&, Responder&)` for unary and server-streaming requests and   
-`sender auto operator()(grpc::ServerContext&, Responder&)` otherwise.
-
-Another special overload of `agrpc::repeatedly_request` can be used by passing a Handler with the following signature:   
-`asio::awaitable<void, Executor> operator()(grpc::ServerContext&, Request&, Responder&)` for unary and server-streaming requests or   
-`asio::awaitable<void, Executor> operator()(grpc::ServerContext&, Responder&)` otherwise.
-
-`agrpc::repeatedly_request` will complete when it was cancelled, the `agrpc::GrpcContext` was stopped or the `grpc::Server` been shutdown. It will **not** wait until all outstanding RPCs that are being processed by the Handler have completed.
-
-The following example shows how to implement a generic Handler with a custom allocator for simple, high-performance RPC processing. More examples can be found in  the `/example` directory.
-
-<!-- snippet: repeatedly-request-callback -->
-<a id='snippet-repeatedly-request-callback'></a>
-```cpp
-template <class Executor, class Handler>
-struct AssociatedHandler
-{
-    using executor_type = Executor;
-
-    Executor executor;
-    /*[[no_unique_address]]*/ Handler handler;
-
-    AssociatedHandler(Executor executor, Handler handler) : executor(std::move(executor)), handler(std::move(handler))
-    {
-    }
-
-    template <class T>
-    void operator()(agrpc::RepeatedlyRequestContext<T>&& request_context)
-    {
-        std::invoke(handler, std::move(request_context), executor);
-        //
-        // The RepeatedlyRequestContext also provides access to:
-        // * the grpc::ServerContext
-        // request_context.server_context();
-        // * the grpc::ServerAsyncReader/Writer
-        // request_context.responder();
-        // * the protobuf request message (for unary and server-streaming requests)
-        // request_context.request();
-    }
-
-    [[nodiscard]] executor_type get_executor() const noexcept { return executor; }
-};
-
-void repeatedly_request_example(example::v1::Example::AsyncService& service, agrpc::GrpcContext& grpc_context)
-{
-    agrpc::repeatedly_request(
-        &example::v1::Example::AsyncService::RequestUnary, service,
-        AssociatedHandler{
-            asio::require(grpc_context.get_executor(), asio::execution::allocator(grpc_context.get_allocator())),
-            [](auto&& request_context, auto&& executor)
-            {
-                auto& writer = request_context.responder();
-                example::v1::Response response;
-                agrpc::finish(writer, response, grpc::Status::OK,
-                              asio::bind_executor(executor, [c = std::move(request_context)](bool) {}));
-            }});
-}
-```
-<sup><a href='/doc/server.cpp#L223-L267' title='Snippet source file'>snippet source</a> | <a href='#snippet-repeatedly-request-callback' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## CMake asio_grpc_protobuf_generate 
