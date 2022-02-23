@@ -63,7 +63,6 @@ add_subdirectory(src)
 
 if(ASIO_GRPC_BUILD_TESTS)
     add_subdirectory(example)
-    add_subdirectory(doc)
 
     find_package(doctest REQUIRED)
     enable_testing()
