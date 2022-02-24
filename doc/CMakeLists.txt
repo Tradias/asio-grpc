@@ -1,7 +1,7 @@
 find_package(Doxygen)
 
 set(DOXYGEN_PROJECT_NUMBER "v${PROJECT_VERSION}")
-set(DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}")
+set(DOXYGEN_OUTPUT_DIRECTORY "${ASIO_GRPC_PROJECT_ROOT}")
 set(DOXYGEN_PYTHON_DOCSTRING "NO")
 set(DOXYGEN_BUILTIN_STL_SUPPORT "YES")
 set(DOXYGEN_IDL_PROPERTY_SUPPORT "NO")
@@ -16,6 +16,7 @@ set(DOXYGEN_EXCLUDE_PATTERNS "*/build*" "*/example/*" "*/deps/*" "*/test/*" "REA
 set(DOXYGEN_EXAMPLE_PATH "example/proto" "example/snippets" "cmake")
 set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "doc/index.md")
 set(DOXYGEN_VERBATIM_HEADERS "NO")
+set(DOXYGEN_HTML_OUTPUT "docs")
 set(DOXYGEN_HTML_EXTRA_STYLESHEET "${CMAKE_CURRENT_LIST_DIR}/doxygen-awesome.css"
                                   "${CMAKE_CURRENT_LIST_DIR}/custom.css")
 set(DOXYGEN_HTML_COLORSTYLE_HUE "209")
