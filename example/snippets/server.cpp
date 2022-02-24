@@ -163,6 +163,10 @@ asio::awaitable<void> server_streaming(example::v1::Example::AsyncService& servi
     bool write_ok = co_await agrpc::write(writer, response, asio::use_awaitable);
     /* [write-server-streaming-server-side] */
 
+    /* [write_last-server-streaming-server-side] */
+    bool write_last_ok = co_await agrpc::write_last(writer, response, grpc::WriteOptions{}, asio::use_awaitable);
+    /* [write_last-server-streaming-server-side] */
+
     /* [write_and_finish-server-streaming-server-side] */
     bool write_and_finish_ok =
         co_await agrpc::write_and_finish(writer, response, grpc::WriteOptions{}, grpc::Status::OK, asio::use_awaitable);
@@ -172,7 +176,7 @@ asio::awaitable<void> server_streaming(example::v1::Example::AsyncService& servi
     bool finish_ok = co_await agrpc::finish(writer, grpc::Status::OK, asio::use_awaitable);
     /* [finish-server-streaming-server-side] */
 
-    silence_unused(request_ok, write_ok, write_and_finish_ok, finish_ok);
+    silence_unused(request_ok, write_ok, write_last_ok, write_and_finish_ok, finish_ok);
 }
 
 asio::awaitable<void> bidirectional_streaming(example::v1::Example::AsyncService& service)
@@ -189,8 +193,12 @@ asio::awaitable<void> bidirectional_streaming(example::v1::Example::AsyncService
     bool read_ok = co_await agrpc::read(reader_writer, request, asio::use_awaitable);
     /* [read-bidirectional-streaming-server-side] */
 
-    /* [write_and_finish-bidirectional-streaming-server-side] */
+    /* [write_last-bidirectional-streaming-server-side] */
     example::v1::Response response;
+    bool write_last_ok = co_await agrpc::write_last(reader_writer, response, grpc::WriteOptions{}, asio::use_awaitable);
+    /* [write_last-bidirectional-streaming-server-side] */
+
+    /* [write_and_finish-bidirectional-streaming-server-side] */
     bool write_and_finish_ok = co_await agrpc::write_and_finish(reader_writer, response, grpc::WriteOptions{},
                                                                 grpc::Status::OK, asio::use_awaitable);
     /* [write_and_finish-bidirectional-streaming-server-side] */
@@ -203,7 +211,7 @@ asio::awaitable<void> bidirectional_streaming(example::v1::Example::AsyncService
     bool finish_ok = co_await agrpc::finish(reader_writer, grpc::Status::OK, asio::use_awaitable);
     /* [finish-bidirectional-streaming-server-side] */
 
-    silence_unused(request_ok, read_ok, write_and_finish_ok, write_ok, finish_ok);
+    silence_unused(request_ok, read_ok, write_last_ok, write_and_finish_ok, write_ok, finish_ok);
 }
 
 void io_context(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)

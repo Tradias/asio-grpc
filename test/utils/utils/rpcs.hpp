@@ -27,6 +27,7 @@ namespace test
 struct PerformOptions
 {
     bool finish_with_error{false};
+    bool use_write_last{false};
 };
 
 void client_perform_unary_success(agrpc::GrpcContext& grpc_context, test::v1::Test::Stub& stub,

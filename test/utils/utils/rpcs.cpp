@@ -76,8 +76,15 @@ void client_perform_client_streaming_success(test::msg::Response& response,
     test::msg::Request request;
     request.set_integer(42);
     CHECK(agrpc::write(writer, request, yield));
-    CHECK(agrpc::write(writer, request, grpc::WriteOptions{}, yield));
-    CHECK(agrpc::writes_done(writer, yield));
+    if (options.use_write_last)
+    {
+        CHECK(agrpc::write_last(writer, request, grpc::WriteOptions{}, yield));
+    }
+    else
+    {
+        CHECK(agrpc::write(writer, request, grpc::WriteOptions{}, yield));
+        CHECK(agrpc::writes_done(writer, yield));
+    }
     grpc::Status status;
     CHECK(agrpc::finish(writer, status, yield));
     if (options.finish_with_error)

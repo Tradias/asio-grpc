@@ -1027,6 +1027,134 @@ struct FinishFn
 };
 
 /**
+ * @brief Function object to coalesce write and send trailing metadata of streaming RPCs
+ *
+ * The examples below are based on the following .proto file:
+ *
+ * @snippet example.proto example-proto
+ *
+ * @attention The completion handler created from the completion token that is provided to the functions described below
+ * must have an associated executor that refers to a GrpcContext:
+ * @snippet server.cpp bind-executor-to-use-awaitable
+ */
+struct WriteLastFn
+{
+    /**
+     * @brief Coalesce write and send trailing metadata of a server stream
+     *
+     * `write_last` buffers the response. The writing of response is held
+     * until `finish` is called, where response and trailing metadata are coalesced
+     * and write is initiated. Note that `write_last` can only buffer response up to
+     * the flow control window size. If response size is larger than the window
+     * size, it will be sent on wire without buffering.
+     *
+     * gRPC does not take ownership or a reference to response, so it is safe to
+     * to deallocate once `write_last` returns.
+     *
+     * Example:
+     *
+     * @snippet server.cpp write_last-server-streaming-server-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
+     * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
+     * other side dropped the channel, etc).
+     */
+    template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(grpc::ServerAsyncWriter<Response>& writer, const Response& response, grpc::WriteOptions options,
+                    CompletionToken&& token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
+    {
+        return detail::grpc_initiate(
+            typename detail::ServerAsyncWriterInitFunctions<Response>::WriteLast{writer, response, options},
+            std::forward<CompletionToken>(token));
+    }
+
+    /**
+     * @brief Perform `write` and `writes_done` in a single step
+     *
+     * gRPC does not take ownership or a reference to response, so it is safe to
+     * to deallocate once `write_last` returns.
+     *
+     * Example:
+     *
+     * @snippet client.cpp write_last-client-streaming-client-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
+     * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
+     * other side dropped the channel, etc).
+     */
+    template <class Request, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(grpc::ClientAsyncWriter<Request>& writer, const Request& request, grpc::WriteOptions options,
+                    CompletionToken&& token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
+    {
+        return detail::grpc_initiate(
+            typename detail::ClientAsyncWriterInitFunctions<Request>::WriteLast{writer, request, options},
+            std::forward<CompletionToken>(token));
+    }
+
+    /**
+     * @brief Coalesce write and send trailing metadata of a server stream
+     *
+     * `write_last` buffers the response. The writing of response is held
+     * until `finish` is called, where response and trailing metadata are coalesced
+     * and write is initiated. Note that `write_last` can only buffer response up to
+     * the flow control window size. If response size is larger than the window
+     * size, it will be sent on wire without buffering.
+     *
+     * gRPC does not take ownership or a reference to response, so it is safe to
+     * to deallocate once `write_last` returns.
+     *
+     * Example:
+     *
+     * @snippet server.cpp write_last-bidirectional-streaming-server-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
+     * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
+     * other side dropped the channel, etc).
+     */
+    template <class Response, class Request, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(grpc::ServerAsyncReaderWriter<Response, Request>& reader_writer, const Response& response,
+                    grpc::WriteOptions options, CompletionToken&& token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
+    {
+        return detail::grpc_initiate(
+            typename detail::ServerAsyncReaderWriterInitFunctions<Response, Request>::WriteLast{reader_writer, response,
+                                                                                                options},
+            std::forward<CompletionToken>(token));
+    }
+
+    /**
+     * @brief Perform `write` and `writes_done` in a single step
+     *
+     * gRPC does not take ownership or a reference to response, so it is safe to
+     * to deallocate once `write_last` returns.
+     *
+     * Example:
+     *
+     * @snippet client.cpp write_last-bidirectional-client-side
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
+     * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
+     * other side dropped the channel, etc).
+     */
+    template <class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(grpc::ClientAsyncReaderWriter<Request, Response>& writer, const Request& request,
+                    grpc::WriteOptions options, CompletionToken&& token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
+    {
+        return detail::grpc_initiate(
+            typename detail::ClientAsyncReaderWriterInitFunctions<Request, Response>::WriteLast{writer, request,
+                                                                                                options},
+            std::forward<CompletionToken>(token));
+    }
+};
+
+/**
  * @brief Server-side function object to coalesce write and finish of streaming RPCs
  *
  * The examples below are based on the following .proto file:
@@ -1067,12 +1195,12 @@ struct WriteAndFinishFn
      * other side dropped the channel, etc).
      */
     template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(grpc::ServerAsyncWriter<Response>& reader_writer, const Response& response,
-                    grpc::WriteOptions options, const grpc::Status& status, CompletionToken&& token = {}) const
+    auto operator()(grpc::ServerAsyncWriter<Response>& writer, const Response& response, grpc::WriteOptions options,
+                    const grpc::Status& status, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
-            typename detail::ServerAsyncWriterInitFunctions<Response>::WriteAndFinish{reader_writer, response, options,
+            typename detail::ServerAsyncWriterInitFunctions<Response>::WriteAndFinish{writer, response, options,
                                                                                       status},
             std::forward<CompletionToken>(token));
     }
@@ -1330,6 +1458,15 @@ inline constexpr detail::WritesDoneFn writes_done{};
  * @endlink
  */
 inline constexpr detail::FinishFn finish{};
+
+/**
+ * @brief Coalesce write and send trailing metadata of a streaming RPC
+ *
+ * @link detail::WriteLastFn
+ * Client and server-side function to coalesce write and send trailing metadata of streaming RPCs.
+ * @endlink
+ */
+inline constexpr detail::WriteLastFn write_last{};
 
 /**
  * @brief Coalesce write and finish of a streaming RPC

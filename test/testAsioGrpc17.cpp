@@ -574,6 +574,8 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context server streaming")
 {
     bool use_write_and_finish{false};
     SUBCASE("server write_and_finish") { use_write_and_finish = true; }
+    bool use_write_last{false};
+    SUBCASE("server write_last") { use_write_last = true; }
     bool use_client_convenience{false};
     SUBCASE("client use convenience") { use_client_convenience = true; }
     asio::spawn(get_executor(),
@@ -594,7 +596,14 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context server streaming")
                     }
                     else
                     {
-                        CHECK(agrpc::write(writer, response, yield));
+                        if (use_write_last)
+                        {
+                            CHECK(agrpc::write_last(writer, response, grpc::WriteOptions{}, yield));
+                        }
+                        else
+                        {
+                            CHECK(agrpc::write(writer, response, yield));
+                        }
                         CHECK(agrpc::finish(writer, grpc::Status::OK, yield));
                     }
                 });
@@ -632,6 +641,8 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context client streaming")
 {
     bool use_client_convenience{false};
     SUBCASE("client use convenience") { use_client_convenience = true; }
+    bool use_write_last{false};
+    SUBCASE("client write_last") { use_write_last = true; }
     bool use_finish_with_error{false};
     SUBCASE("server finish_with_error") { use_finish_with_error = true; }
     asio::spawn(get_executor(),
@@ -675,7 +686,8 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context client streaming")
                         return std::pair{std::move(writer), ok};
                     }();
                     CHECK(ok);
-                    test::client_perform_client_streaming_success(response, *writer, yield, {use_finish_with_error});
+                    test::client_perform_client_streaming_success(response, *writer, yield,
+                                                                  {use_finish_with_error, use_write_last});
                 });
     grpc_context.run();
 }
@@ -717,6 +729,8 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context bidirectional strea
 {
     bool use_write_and_finish{false};
     SUBCASE("server write_and_finish") { use_write_and_finish = true; }
+    bool use_write_last{false};
+    SUBCASE("write_last") { use_write_last = true; }
     bool use_client_convenience{false};
     SUBCASE("client use convenience") { use_client_convenience = true; }
     asio::spawn(
@@ -740,7 +754,14 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context bidirectional strea
             }
             else
             {
-                CHECK(agrpc::write(reader_writer, response, yield));
+                if (use_write_last)
+                {
+                    CHECK(agrpc::write_last(reader_writer, response, {}, yield));
+                }
+                else
+                {
+                    CHECK(agrpc::write(reader_writer, response, yield));
+                }
                 CHECK(agrpc::finish(reader_writer, grpc::Status::OK, yield));
             }
         });
@@ -765,8 +786,15 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context bidirectional strea
             test::msg::Request request;
             request.set_integer(42);
             CHECK(agrpc::write(*reader_writer, request, yield));
-            CHECK(agrpc::write(*reader_writer, request, grpc::WriteOptions{}, yield));
-            CHECK(agrpc::writes_done(*reader_writer, yield));
+            if (use_write_last)
+            {
+                CHECK(agrpc::write_last(*reader_writer, request, grpc::WriteOptions{}, yield));
+            }
+            else
+            {
+                CHECK(agrpc::write(*reader_writer, request, grpc::WriteOptions{}, yield));
+                CHECK(agrpc::writes_done(*reader_writer, yield));
+            }
             test::msg::Response response;
             CHECK(agrpc::read(*reader_writer, response, yield));
             CHECK(agrpc::read(*reader_writer, response, yield));
