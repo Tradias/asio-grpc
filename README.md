@@ -4,7 +4,7 @@
 
 A [Executor, Networking TS](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/Executor1.html#boost_asio.reference.Executor1.standard_executors) and [Unified Executors](https://brycelelbach.github.io/wg21_p2300_std_execution/std_execution.html) interface to [grpc::CompletionQueue](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html) for writing asynchronous gRPC clients and servers using C++20 coroutines, Boost.Coroutines, Asio's stackless coroutines, callbacks, sender/receiver and more.
 
-# Features and Roadmap
+# Features
 
 Completed features:
 
@@ -254,6 +254,8 @@ Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz, Linux, Boost 1.74, gRPC 1.41.0, asio-g
 
 # Documentation
 
+[**API reference**](https://tradias.github.io/asio-grpc/)
+
 The main workhorses of this library are the `agrpc::GrpcContext` and its `executor_type` - `agrpc::GrpcExecutor`. 
 
 The `agrpc::GrpcContext` implements [asio::execution_context](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/execution_context.html) and can be used as an argument to Asio functions that expect an `ExecutionContext` like [asio::spawn](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/spawn/overload7.html).
@@ -315,6 +317,10 @@ auto guard = asio::make_work_guard(grpc_context);
 ```
 <sup><a href='/doc/client.cpp#L216-L218' title='Snippet source file'>snippet source</a> | <a href='#snippet-make-work-guard' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
+
+## Where to go from here?
+
+Check out the examples and the [API documentation](https://tradias.github.io/asio-grpc/).
 
 </p>
 </details>
