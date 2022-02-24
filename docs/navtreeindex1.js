@@ -1,10 +1,21 @@
 var NAVTREEINDEX1 =
 {
-"structagrpc_1_1detail_1_1_writes_done_fn.html":[4,0,0,0,11],
-"structagrpc_1_1detail_1_1_writes_done_fn.html":[3,0,0,0,11],
-"structagrpc_1_1detail_1_1_writes_done_fn.html#a6fd5bfdb747ef207a91880e6193c8403":[4,0,0,0,11,0],
-"structagrpc_1_1detail_1_1_writes_done_fn.html#a6fd5bfdb747ef207a91880e6193c8403":[3,0,0,0,11,0],
-"structagrpc_1_1detail_1_1_writes_done_fn.html#ae7679543b5bfcb3e8fe6fdb64ecc633f":[3,0,0,0,11,1],
-"structagrpc_1_1detail_1_1_writes_done_fn.html#ae7679543b5bfcb3e8fe6fdb64ecc633f":[4,0,0,0,11,1],
+"structagrpc_1_1detail_1_1_write_fn.html#af6dd3b77037d71f9c9cdfe007f304c91":[3,0,0,0,10,6],
+"structagrpc_1_1detail_1_1_write_last_fn.html":[3,0,0,0,11],
+"structagrpc_1_1detail_1_1_write_last_fn.html":[4,0,0,0,11],
+"structagrpc_1_1detail_1_1_write_last_fn.html#a0939ecb1860385844bc7c05970de01b1":[4,0,0,0,11,1],
+"structagrpc_1_1detail_1_1_write_last_fn.html#a0939ecb1860385844bc7c05970de01b1":[3,0,0,0,11,1],
+"structagrpc_1_1detail_1_1_write_last_fn.html#a09d9927c915bcd07f78b3b0906e2d251":[4,0,0,0,11,3],
+"structagrpc_1_1detail_1_1_write_last_fn.html#a09d9927c915bcd07f78b3b0906e2d251":[3,0,0,0,11,3],
+"structagrpc_1_1detail_1_1_write_last_fn.html#a1d9c89560dd5a19d1c86e9b805928278":[4,0,0,0,11,2],
+"structagrpc_1_1detail_1_1_write_last_fn.html#a1d9c89560dd5a19d1c86e9b805928278":[3,0,0,0,11,2],
+"structagrpc_1_1detail_1_1_write_last_fn.html#a78cc28499213050ddd7512c86b8f0534":[4,0,0,0,11,0],
+"structagrpc_1_1detail_1_1_write_last_fn.html#a78cc28499213050ddd7512c86b8f0534":[3,0,0,0,11,0],
+"structagrpc_1_1detail_1_1_writes_done_fn.html":[4,0,0,0,12],
+"structagrpc_1_1detail_1_1_writes_done_fn.html":[3,0,0,0,12],
+"structagrpc_1_1detail_1_1_writes_done_fn.html#a6fd5bfdb747ef207a91880e6193c8403":[4,0,0,0,12,0],
+"structagrpc_1_1detail_1_1_writes_done_fn.html#a6fd5bfdb747ef207a91880e6193c8403":[3,0,0,0,12,0],
+"structagrpc_1_1detail_1_1_writes_done_fn.html#ae7679543b5bfcb3e8fe6fdb64ecc633f":[3,0,0,0,12,1],
+"structagrpc_1_1detail_1_1_writes_done_fn.html#ae7679543b5bfcb3e8fe6fdb64ecc633f":[4,0,0,0,12,1],
 "":[3,0,0,0]
 };

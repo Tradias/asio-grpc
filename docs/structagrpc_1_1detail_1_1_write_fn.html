@@ -178,7 +178,7 @@ Public Member Functions</h2></td></tr>
 <div class="line">                                    server_context, reader, asio::bind_executor(grpc_context, asio::use_awaitable));</div>
 <div class="line">        },</div>
 <div class="line">        asio::detached);</div>
-<div class="ttc" id="anamespaceagrpc_html_a4a11653afb11f9486e4e3db0136a3e08"><div class="ttname"><a href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">agrpc::request</a></div><div class="ttdeci">constexpr detail::RequestFn request</div><div class="ttdoc">Start a new RPC.</div><div class="ttdef"><b>Definition:</b> rpcs.hpp:1296</div></div>
+<div class="ttc" id="anamespaceagrpc_html_a4a11653afb11f9486e4e3db0136a3e08"><div class="ttname"><a href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">agrpc::request</a></div><div class="ttdeci">constexpr detail::RequestFn request</div><div class="ttdoc">Start a new RPC.</div><div class="ttdef"><b>Definition:</b> rpcs.hpp:1424</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a78df2cf0ad3dcd70225ee9ce3554dbef" name="a78df2cf0ad3dcd70225ee9ce3554dbef"></a>
@@ -228,7 +228,7 @@ template&lt;class Request , class Response , class CompletionToken  = agrpc::Def
 <p >Example:</p>
 <div class="fragment"><div class="line">    example::v1::Request <a class="code hl_variable" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">request</a>;</div>
 <div class="line">    <span class="keywordtype">bool</span> write_ok = <span class="keyword">co_await</span> <a class="code hl_variable" href="namespaceagrpc.html#a5e79b992afde93ce78e966a8e4cf93c1">agrpc::write</a>(*reader_writer, <a class="code hl_variable" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">request</a>, asio::use_awaitable);</div>
-<div class="ttc" id="anamespaceagrpc_html_a5e79b992afde93ce78e966a8e4cf93c1"><div class="ttname"><a href="namespaceagrpc.html#a5e79b992afde93ce78e966a8e4cf93c1">agrpc::write</a></div><div class="ttdeci">constexpr detail::WriteFn write</div><div class="ttdoc">Write to a streaming RPC.</div><div class="ttdef"><b>Definition:</b> rpcs.hpp:1314</div></div>
+<div class="ttc" id="anamespaceagrpc_html_a5e79b992afde93ce78e966a8e4cf93c1"><div class="ttname"><a href="namespaceagrpc.html#a5e79b992afde93ce78e966a8e4cf93c1">agrpc::write</a></div><div class="ttdeci">constexpr detail::WriteFn write</div><div class="ttdoc">Write to a streaming RPC.</div><div class="ttdef"><b>Definition:</b> rpcs.hpp:1442</div></div>
 </div><!-- fragment --><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">token</td><td>A completion token like <code>asio::yield_context</code> or the one created by <code><a class="el" href="namespaceagrpc.html#a35d42ccb3fa5adce6b5c045a275dafa9" title="Create sender completion token.">agrpc::use_sender</a></code>. The completion signature is <code>void(bool)</code>. <code>true</code> means that the data/metadata/status/etc is going to go to the wire. If it is <code>false</code>, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired, other side dropped the channel, etc). </td></tr>

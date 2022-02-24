@@ -13,6 +13,7 @@ var annotated_dup =
         [ "WaitFn", "structagrpc_1_1detail_1_1_wait_fn.html", "structagrpc_1_1detail_1_1_wait_fn" ],
         [ "WriteAndFinishFn", "structagrpc_1_1detail_1_1_write_and_finish_fn.html", "structagrpc_1_1detail_1_1_write_and_finish_fn" ],
         [ "WriteFn", "structagrpc_1_1detail_1_1_write_fn.html", "structagrpc_1_1detail_1_1_write_fn" ],
+        [ "WriteLastFn", "structagrpc_1_1detail_1_1_write_last_fn.html", "structagrpc_1_1detail_1_1_write_last_fn" ],
         [ "WritesDoneFn", "structagrpc_1_1detail_1_1_writes_done_fn.html", "structagrpc_1_1detail_1_1_writes_done_fn" ]
       ] ],
       [ "BasicGrpcExecutor", "classagrpc_1_1_basic_grpc_executor.html", "classagrpc_1_1_basic_grpc_executor" ],

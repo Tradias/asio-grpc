@@ -182,6 +182,9 @@ constexpr <a class="el" href="namespaceagrpc.html#a09770e93d81af05c59c0bc81f18e5
 <tr class="memitem:a88b9f806c77bb8077f3f7973beede2d0"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="structagrpc_1_1detail_1_1_finish_fn.html">detail::FinishFn</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceagrpc.html#a88b9f806c77bb8077f3f7973beede2d0">finish</a> {}</td></tr>
 <tr class="memdesc:a88b9f806c77bb8077f3f7973beede2d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finish a RPC.  <a href="namespaceagrpc.html#a88b9f806c77bb8077f3f7973beede2d0">More...</a><br /></td></tr>
 <tr class="separator:a88b9f806c77bb8077f3f7973beede2d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6f40531d4e75e86db3bddf7730bd7029"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="structagrpc_1_1detail_1_1_write_last_fn.html">detail::WriteLastFn</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceagrpc.html#a6f40531d4e75e86db3bddf7730bd7029">write_last</a> {}</td></tr>
+<tr class="memdesc:a6f40531d4e75e86db3bddf7730bd7029"><td class="mdescLeft">&#160;</td><td class="mdescRight">Coalesce write and send trailing metadata of a streaming RPC.  <a href="namespaceagrpc.html#a6f40531d4e75e86db3bddf7730bd7029">More...</a><br /></td></tr>
+<tr class="separator:a6f40531d4e75e86db3bddf7730bd7029"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aab88b35702357c55ec96addf9c32edcd"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="structagrpc_1_1detail_1_1_write_and_finish_fn.html">detail::WriteAndFinishFn</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceagrpc.html#aab88b35702357c55ec96addf9c32edcd">write_and_finish</a> {}</td></tr>
 <tr class="memdesc:aab88b35702357c55ec96addf9c32edcd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Coalesce write and finish of a streaming RPC.  <a href="namespaceagrpc.html#aab88b35702357c55ec96addf9c32edcd">More...</a><br /></td></tr>
 <tr class="separator:aab88b35702357c55ec96addf9c32edcd"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -655,6 +658,31 @@ template&lt;class Object &gt; </div>
 
 <p>Coalesce write and finish of a streaming RPC. </p>
 <p ><a class="el" href="structagrpc_1_1detail_1_1_write_and_finish_fn.html">Server-side function to coalesce write and finish of streaming RPCs. </a> </p>
+
+</div>
+</div>
+<a id="a6f40531d4e75e86db3bddf7730bd7029" name="a6f40531d4e75e86db3bddf7730bd7029"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6f40531d4e75e86db3bddf7730bd7029">&#9670;&nbsp;</a></span>write_last</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="structagrpc_1_1detail_1_1_write_last_fn.html">detail::WriteLastFn</a> agrpc::write_last {}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Coalesce write and send trailing metadata of a streaming RPC. </p>
+<p ><a class="el" href="structagrpc_1_1detail_1_1_write_last_fn.html">Client and server-side function to coalesce write and send trailing metadata of streaming RPCs. </a> </p>
 
 </div>
 </div>

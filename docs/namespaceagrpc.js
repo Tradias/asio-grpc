@@ -12,6 +12,7 @@ var namespaceagrpc =
       [ "WaitFn", "structagrpc_1_1detail_1_1_wait_fn.html", "structagrpc_1_1detail_1_1_wait_fn" ],
       [ "WriteAndFinishFn", "structagrpc_1_1detail_1_1_write_and_finish_fn.html", "structagrpc_1_1detail_1_1_write_and_finish_fn" ],
       [ "WriteFn", "structagrpc_1_1detail_1_1_write_fn.html", "structagrpc_1_1detail_1_1_write_fn" ],
+      [ "WriteLastFn", "structagrpc_1_1detail_1_1_write_last_fn.html", "structagrpc_1_1detail_1_1_write_last_fn" ],
       [ "WritesDoneFn", "structagrpc_1_1detail_1_1_writes_done_fn.html", "structagrpc_1_1detail_1_1_writes_done_fn" ]
     ] ],
     [ "pmr", "namespaceagrpc_1_1pmr.html", [
@@ -44,5 +45,6 @@ var namespaceagrpc =
     [ "wait", "namespaceagrpc.html#a3a4e32ff60d8f9bd8c8c68e42be959c1", null ],
     [ "write", "namespaceagrpc.html#a5e79b992afde93ce78e966a8e4cf93c1", null ],
     [ "write_and_finish", "namespaceagrpc.html#aab88b35702357c55ec96addf9c32edcd", null ],
+    [ "write_last", "namespaceagrpc.html#a6f40531d4e75e86db3bddf7730bd7029", null ],
     [ "writes_done", "namespaceagrpc.html#a3cd7bc6b5bd62059ddcfae73bab277b6", null ]
 ];
