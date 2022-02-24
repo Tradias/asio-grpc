@@ -11,24 +11,11 @@ Completed features:
 * Asio [ExecutionContext](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/ExecutionContext.html) compatible wrapper around [grpc::CompletionQueue](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html)
 * [Executor and Networking TS requirements](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/Executor1.html#boost_asio.reference.Executor1.standard_executors) fulfilling associated executor
 * Support for all RPC types: unary, client-streaming, server-streaming and bidirectional-streaming with any mix of Asio [CompletionToken](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers) as well as  [TypedSender](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#typedsender-concept)
-* Support for asynchronously waiting for [grpc::Alarm](https://grpc.github.io/grpc/cpp/classgrpc_1_1_alarm.html)s including cancellation through [cancellation_slot](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/cancellation_slot.html)s
+* Support for asynchronously waiting for [grpc::Alarm](https://grpc.github.io/grpc/cpp/classgrpc_1_1_alarm.html)s including cancellation through [cancellation_slot](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/cancellation_slot.html)s and [StopToken](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#stoptoken-concept)s
 * Initial support for unified executor concepts through [libunifex](https://github.com/facebookexperimental/libunifex) and Asio: [schedule](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/execution__schedule.html), [connect](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/execution__connect.html), [submit](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/execution__submit.html), [scheduler](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/Scheduler.html), [typed_sender](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/Sender.html#boost_asio.reference.Sender.typed_sender) and more
 * No-Boost version with [standalone Asio](https://github.com/chriskohlhoff/asio)
 * No-Asio version with [libunifex](https://github.com/facebookexperimental/libunifex)
-* CMake function for easily running `protoc`: [asio_grpc_protobuf_generate](/cmake/AsioGrpcProtobufGenerator.cmake)
-
-Upcoming features for v1.4.0:
-
-* [CancellationSlot](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/CancellationSlot.html) and [StopToken](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#stoptoken-concept) support for individual RPC steps
-* Add final completion handler and stop token support to `agrpc::repeatedly_request`
-* Classes that wrap Stub or AsyncService as IO-Object, constructible from any [asio::execution_context](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/execution_context.html). Making it possible to write asynchronous gRPC clients and servers without explicit use of a `agrpc::GrpcContext`. Roughly as follows:
-
-```cpp
-const auto stub = test::v1::Test::NewStub(grpc::CreateChannel(host, grpc::InsecureChannelCredentials()));
-boost::asio::io_context io_context;
-agrpc::GrpcStub grpc_stub{*stub, io_context};
-co_await agrpc::request(..., grpc_stub, ...);
-```
+* CMake function to generate gRPC source files: [asio_grpc_protobuf_generate](/cmake/AsioGrpcProtobufGenerator.cmake)
 
 # Example
 
@@ -65,34 +52,9 @@ grpc_context.run();
 <sup><a href='/example/hello-world-server.cpp#L32-L57' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
-* Client side 'hello world':
+* [Client side hello world](/example/hello-world-client.cpp)
 
-<!-- snippet: client-side-helloworld -->
-<a id='snippet-client-side-helloworld'></a>
-```cpp
-const auto stub = helloworld::Greeter::NewStub(grpc::CreateChannel(host, grpc::InsecureChannelCredentials()));
-agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
-
-boost::asio::co_spawn(
-    grpc_context,
-    [&]() -> boost::asio::awaitable<void>
-    {
-        grpc::ClientContext client_context;
-        helloworld::HelloRequest request;
-        request.set_name("world");
-        std::unique_ptr<grpc::ClientAsyncResponseReader<helloworld::HelloReply>> reader =
-            stub->AsyncSayHello(&client_context, request, agrpc::get_completion_queue(grpc_context));
-        helloworld::HelloReply response;
-        co_await agrpc::finish(*reader, response, status);
-    },
-    boost::asio::detached);
-
-grpc_context.run();
-```
-<sup><a href='/example/hello-world-client.cpp#L31-L50' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-helloworld' title='Start of snippet'>anchor</a></sup>
-<!-- endSnippet -->
-
-* Boost.Asio [client](/example/streaming-client.cpp) and [server](/example/streaming-server.cpp) streaming RPCs
+* Boost.Asio based streaming [client](/example/streaming-client.cpp) and [server](/example/streaming-server.cpp)
 
 * libunifex based [client](/example/unifex-client.cpp) and [server](/example/unifex-server.cpp)
 
@@ -298,13 +260,13 @@ The `agrpc::GrpcContext` implements [asio::execution_context](https://www.boost.
 
 Likewise, the `agrpc::GrpcExecutor` models the [Executor and Networking TS requirements](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/Executor1.html#boost_asio.reference.Executor1.standard_executors) and [Scheduler](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/Scheduler.html) and can therefore be used in places where Asio/libunifex expects an `Executor` or `Scheduler`.
 
-The API for RPCs is modeled closely after the asynchronous, tag-based API of gRPC. As an example, the equivalent for `grpc::ClientAsyncReader<helloworld::HelloReply>.Read(helloworld::HelloReply*, void*)` would be `agrpc::read(grpc::ClientAsyncReader<helloworld::HelloReply>&, helloworld::HelloReply&, CompletionToken)`. It can therefore be helpful to refer to [async_unary_call.h](https://github.com/grpc/grpc/blob/master/include/grpcpp/impl/codegen/async_unary_call.h) and [async_stream.h](https://github.com/grpc/grpc/blob/master/include/grpcpp/impl/codegen/async_stream.h) while working with this library.
+The API for RPCs is modeled closely after the asynchronous, tag-based API of gRPC. As an example, the equivalent for `grpc::ClientAsyncReader<helloworld::HelloReply>.Read(helloworld::HelloReply*, void*)` would be `agrpc::read(grpc::ClientAsyncReader<helloworld::HelloReply>&, helloworld::HelloReply&, CompletionToken)`.
 
 Instead of the `void*` tag in the gRPC API the functions in this library expect a [CompletionToken](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers). Asio comes with several CompletionTokens already: [C++20 coroutine](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/use_awaitable.html), [stackless coroutine](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/coroutine.html), [callback](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/executor_binder.html) and [Boost.Coroutine](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/basic_yield_context.html). There is also a special token created by `agrpc::use_sender(scheduler)` that causes RPC functions to return a [TypedSender](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/Sender.html#boost_asio.reference.Sender.typed_sender).
 
 If you are interested in learning more about the implementation details of this library then check out [this blog article](https://medium.com/3yourmind/c-20-coroutines-for-asynchronous-grpc-services-5b3dab1d1d61).
 
-<details><summary><b>Click to see full documentation</b></summary>
+<details><summary><b>Getting started</b></summary>
 <p>
 
 ## Getting started
@@ -332,7 +294,7 @@ agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 <sup><a href='/doc/client.cpp#L212-L214' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-client-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
-Add some work to the `grpc_context` (shown further below) and run it. Make sure to shutdown the `server` before destructing the `grpc_context`. Also destruct the `grpc_context` before destructing the `server`. A `grpc_context` can only be run on one thread at a time.
+Add some work to the `grpc_context` and run it. Make sure to shutdown the `server` before destructing the `grpc_context`. Also destruct the `grpc_context` before destructing the `server`. A `grpc_context` can only be run on one thread at a time.
 
 <!-- snippet: run-grpc_context-server-side -->
 <a id='snippet-run-grpc_context-server-side'></a>
@@ -353,92 +315,6 @@ auto guard = asio::make_work_guard(grpc_context);
 ```
 <sup><a href='/doc/client.cpp#L216-L218' title='Snippet source file'>snippet source</a> | <a href='#snippet-make-work-guard' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
-
-## Different completion tokens
-
-The last argument to all async functions in this library is a [CompletionToken](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers). It can be used to customize how to receive notification of the completion of the asynchronous operation. Aside from the ones shown earlier (`asio::yield_context` and `agrpc::use_sender`) there are many more, some examples:
-
-### Callback
-
-<!-- snippet: alarm-with-callback -->
-<a id='snippet-alarm-with-callback'></a>
-```cpp
-agrpc::wait(alarm, deadline, asio::bind_executor(grpc_context, [&](bool /*wait_ok*/) {}));
-```
-<sup><a href='/doc/server.cpp#L48-L50' title='Snippet source file'>snippet source</a> | <a href='#snippet-alarm-with-callback' title='Start of snippet'>anchor</a></sup>
-<!-- endSnippet -->
-
-### Stackless coroutine
-
-<!-- snippet: alarm-stackless-coroutine -->
-<a id='snippet-alarm-stackless-coroutine'></a>
-```cpp
-struct Coro : asio::coroutine
-{
-    using executor_type = agrpc::GrpcContext::executor_type;
-
-    struct Context
-    {
-        std::chrono::system_clock::time_point deadline;
-        agrpc::GrpcContext& grpc_context;
-        grpc::Alarm alarm;
-
-        Context(std::chrono::system_clock::time_point deadline, agrpc::GrpcContext& grpc_context)
-            : deadline(deadline), grpc_context(grpc_context)
-        {
-        }
-    };
-
-    std::shared_ptr<Context> context;
-
-    Coro(std::chrono::system_clock::time_point deadline, agrpc::GrpcContext& grpc_context)
-        : context(std::make_shared<Context>(deadline, grpc_context))
-    {
-    }
-
-    void operator()(bool wait_ok)
-    {
-        BOOST_ASIO_CORO_REENTER(*this)
-        {
-            BOOST_ASIO_CORO_YIELD agrpc::wait(context->alarm, context->deadline, std::move(*this));
-            (void)wait_ok;
-        }
-    }
-
-    executor_type get_executor() const noexcept { return context->grpc_context.get_executor(); }
-};
-Coro{deadline, grpc_context}(false);
-```
-<sup><a href='/doc/server.cpp#L52-L88' title='Snippet source file'>snippet source</a> | <a href='#snippet-alarm-stackless-coroutine' title='Start of snippet'>anchor</a></sup>
-<!-- endSnippet -->
-
-## CMake asio_grpc_protobuf_generate 
-
-In the same directory that called `find_package(asio-grpc)` a function called `asio_grpc_protobuf_generate` is made available. It can be used to generate Protobuf/gRPC source files from `.proto` files:
-
-<!-- snippet: asio_grpc_protobuf_generate-target -->
-<a id='snippet-asio_grpc_protobuf_generate-target'></a>
-```cmake
-asio_grpc_protobuf_generate(
-    GENERATE_GRPC
-    TARGET target-option
-    OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/target"
-    PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/proto/target.proto")
-```
-<sup><a href='/test/cmake/Targets.cmake#L36-L42' title='Snippet source file'>snippet source</a> | <a href='#snippet-asio_grpc_protobuf_generate-target' title='Start of snippet'>anchor</a></sup>
-<!-- endSnippet -->
-
-See in-code documentation for more details:
-
-<!-- snippet: asio_grpc_protobuf_generate -->
-<a id='snippet-asio_grpc_protobuf_generate'></a>
-```cmake
-function(asio_grpc_protobuf_generate)
-```
-<sup><a href='/cmake/AsioGrpcProtobufGenerator.cmake#L53-L55' title='Snippet source file'>snippet source</a> | <a href='#snippet-asio_grpc_protobuf_generate' title='Start of snippet'>anchor</a></sup>
-<!-- endSnippet -->
-
-If you are using [cmake-format](https://github.com/cheshirekow/cmake_format) then you can copy the `asio_grpc_protobuf_generate` section from [cmake-format.yaml](cmake-format.yaml#L2-L13) into your cmake-format.yaml to get proper formatting.
 
 </p>
 </details>

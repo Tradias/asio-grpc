@@ -43,13 +43,21 @@ asio::awaitable<void> timer()
 
 void timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context)
 {
+    std::allocator<std::byte> my_allocator{};
     grpc::Alarm alarm;
     const auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(1);
-    // begin-snippet: alarm-with-callback
+    /* [alarm-with-callback] */
     agrpc::wait(alarm, deadline, asio::bind_executor(grpc_context, [&](bool /*wait_ok*/) {}));
-    // end-snippet
+    /* [alarm-with-callback] */
 
-    // begin-snippet: alarm-stackless-coroutine
+    /* [alarm-with-allocator-aware-callback] */
+    agrpc::wait(
+        alarm, deadline,
+        asio::bind_executor(asio::require(grpc_context.get_executor(), asio::execution::allocator(my_allocator)),
+                            [&](bool /*wait_ok*/) {}));
+    /* [alarm-with-allocator-aware-callback] */
+
+    /* [alarm-stackless-coroutine] */
     struct Coro : asio::coroutine
     {
         using executor_type = agrpc::GrpcContext::executor_type;
@@ -85,7 +93,7 @@ void timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context)
         executor_type get_executor() const noexcept { return context->grpc_context.get_executor(); }
     };
     Coro{deadline, grpc_context}(false);
-    // end-snippet
+    /* [alarm-stackless-coroutine] */
 }
 
 asio::awaitable<void> unary(example::v1::Example::AsyncService& service)

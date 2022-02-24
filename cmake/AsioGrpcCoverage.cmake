@@ -33,7 +33,7 @@ if(ASIO_GRPC_TEST_COVERAGE)
     add_custom_target(
         asio-grpc-test-coverage
         COMMAND "${ASIO_GRPC_GCOVR_PROGRAM}" --gcov-executable "${_asio_grpc_gcov_command}" --sonarqube --output
-                "${ASIO_GRPC_COVERAGE_OUTPUT_FILE}" --root "${ASIO_GRPC_COVERAGE_WORKING_DIR}"
-        WORKING_DIRECTORY "${ASIO_GRPC_COVERAGE_WORKING_DIR}"
+                "${ASIO_GRPC_COVERAGE_OUTPUT_FILE}" --root "${ASIO_GRPC_PROJECT_ROOT}"
+        WORKING_DIRECTORY "${ASIO_GRPC_PROJECT_ROOT}"
         VERBATIM)
 endif()

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# /* [asio_grpc_protobuf_generate] */
 #[=======================================================================[.rst:
 asio_grpc_protobuf_generate
 ------------
@@ -50,9 +51,8 @@ asio_grpc_protobuf_generate(PROTOS <proto_file1> [<proto_file2>...]
     Generate descriptor files named <proto_file_base_name>.desc
 
 #]=======================================================================]
-# // begin-snippet: asio_grpc_protobuf_generate
+# /* [asio_grpc_protobuf_generate] */
 function(asio_grpc_protobuf_generate)
-    # // end-snippet: asio_grpc_protobuf_generate
     include(CMakeParseArguments)
 
     set(_asio_grpc_options GENERATE_GRPC GENERATE_DESCRIPTORS)

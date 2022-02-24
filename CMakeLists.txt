@@ -55,7 +55,7 @@ if(ASIO_GRPC_BUILD_TESTS)
     include(AsioGrpcCheckBoostVersion)
     include(AsioGrpcInstallGitHooks)
 
-    set(ASIO_GRPC_COVERAGE_WORKING_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+    set(ASIO_GRPC_PROJECT_ROOT "${CMAKE_CURRENT_LIST_DIR}")
     include(AsioGrpcCoverage)
 endif()
 
@@ -63,6 +63,7 @@ add_subdirectory(src)
 
 if(ASIO_GRPC_BUILD_TESTS)
     add_subdirectory(example)
+    add_subdirectory(doc)
 
     find_package(doctest REQUIRED)
     enable_testing()
