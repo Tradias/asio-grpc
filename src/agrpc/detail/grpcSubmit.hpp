@@ -15,9 +15,9 @@
 #ifndef AGRPC_DETAIL_GRPCSUBMIT_HPP
 #define AGRPC_DETAIL_GRPCSUBMIT_HPP
 
+#include "agrpc/detail/allocateOperation.hpp"
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/grpcContextImplementation.hpp"
-#include "agrpc/detail/grpcContextInteraction.hpp"
 #include "agrpc/grpcContext.hpp"
 
 AGRPC_NAMESPACE_BEGIN()

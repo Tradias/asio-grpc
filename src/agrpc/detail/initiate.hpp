@@ -15,11 +15,11 @@
 #ifndef AGRPC_DETAIL_INITIATE_HPP
 #define AGRPC_DETAIL_INITIATE_HPP
 
+#include "agrpc/detail/allocateOperation.hpp"
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/associatedCompletionHandler.hpp"
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/grpcContextImplementation.hpp"
-#include "agrpc/detail/grpcContextInteraction.hpp"
 #include "agrpc/detail/grpcSender.hpp"
 #include "agrpc/detail/grpcSubmit.hpp"
 #include "agrpc/detail/queryGrpcContext.hpp"

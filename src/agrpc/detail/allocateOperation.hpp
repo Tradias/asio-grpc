@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_GRPCCONTEXTINTERACTION_HPP
-#define AGRPC_DETAIL_GRPCCONTEXTINTERACTION_HPP
+#ifndef AGRPC_DETAIL_ALLOCATEOPERATION_HPP
+#define AGRPC_DETAIL_ALLOCATEOPERATION_HPP
 
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/grpcContextImplementation.hpp"
@@ -118,4 +118,4 @@ bool create_and_submit_no_arg_operation_if_not_stopped(agrpc::GrpcContext& grpc_
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_GRPCCONTEXTINTERACTION_HPP
+#endif  // AGRPC_DETAIL_ALLOCATEOPERATION_HPP

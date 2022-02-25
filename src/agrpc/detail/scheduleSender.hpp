@@ -15,10 +15,10 @@
 #ifndef AGRPC_AGRPC_SCHEDULESENDER_HPP
 #define AGRPC_AGRPC_SCHEDULESENDER_HPP
 
+#include "agrpc/detail/allocateOperation.hpp"
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/forward.hpp"
 #include "agrpc/detail/grpcContextImplementation.hpp"
-#include "agrpc/detail/grpcContextInteraction.hpp"
 #include "agrpc/detail/receiver.hpp"
 #include "agrpc/detail/senderOf.hpp"
 #include "agrpc/detail/utility.hpp"
