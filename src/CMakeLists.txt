@@ -98,6 +98,7 @@ if(ASIO_GRPC_BUILD_TESTS)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/typeErasedOperation.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/useSender.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/utility.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/wait.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/workTrackingCompletionHandler.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/getCompletionQueue.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcContext.hpp"

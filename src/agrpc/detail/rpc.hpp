@@ -18,12 +18,9 @@
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
 
-#include <grpcpp/alarm.h>
 #include <grpcpp/client_context.h>
 #include <grpcpp/completion_queue.h>
 #include <grpcpp/server_context.h>
-
-#include <utility>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -49,46 +46,6 @@ using ServerMultiArgRequest = void (RPC::*)(grpc::ServerContext*, Request*, Resp
 template <class RPC, class Responder>
 using ServerSingleArgRequest = void (RPC::*)(grpc::ServerContext*, Responder*, grpc::CompletionQueue*,
                                              grpc::ServerCompletionQueue*, void*);
-
-template <class Deadline>
-struct AlarmInitFunction
-{
-    grpc::Alarm& alarm;
-    Deadline deadline;
-
-    void operator()(agrpc::GrpcContext& grpc_context, void* tag)
-    {
-        alarm.Set(grpc_context.get_completion_queue(), deadline, tag);
-    }
-};
-
-template <class Deadline>
-AlarmInitFunction(grpc::Alarm&, const Deadline&) -> AlarmInitFunction<Deadline>;
-
-struct AlarmCancellationHandler
-{
-    grpc::Alarm& alarm;
-
-    constexpr explicit AlarmCancellationHandler(grpc::Alarm& alarm) noexcept : alarm(alarm) {}
-
-    template <class Deadline>
-    constexpr explicit AlarmCancellationHandler(const detail::AlarmInitFunction<Deadline>& init_function) noexcept
-        : alarm(init_function.alarm)
-    {
-    }
-
-    void operator()() { alarm.Cancel(); }
-
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-    void operator()(asio::cancellation_type type)
-    {
-        if (static_cast<bool>(type & asio::cancellation_type::all))
-        {
-            (*this)();
-        }
-    }
-#endif
-};
 
 template <class Message, class Responder>
 struct BaseAsyncReaderInitFunctions

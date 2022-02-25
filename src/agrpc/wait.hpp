@@ -19,8 +19,7 @@
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/grpcInitiate.hpp"
-
-#include <grpcpp/alarm.h>
+#include "agrpc/detail/wait.hpp"
 
 AGRPC_NAMESPACE_BEGIN()
 
