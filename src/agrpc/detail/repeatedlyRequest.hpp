@@ -24,7 +24,7 @@
 #include "agrpc/repeatedlyRequestContext.hpp"
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
-#include "agrpc/rpcs.hpp"
+#include "agrpc/rpc.hpp"
 #endif
 
 AGRPC_NAMESPACE_BEGIN()

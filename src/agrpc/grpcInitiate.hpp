@@ -32,7 +32,7 @@ struct GrpcInitiateFn
     /**
      * @brief Initiate a gRPC tag-based function
      *
-     * This function can be used to lift tag-based gRPC functions that are not covered by `rpcs.hpp` into the
+     * This function can be used to lift tag-based gRPC functions that are not covered by `rpc.hpp` into the
      * Asio/unifex world.
      *
      * Example:

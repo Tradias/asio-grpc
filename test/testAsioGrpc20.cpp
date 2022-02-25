@@ -19,8 +19,9 @@
 #include "utils/time.hpp"
 
 #include <agrpc/getCompletionQueue.hpp>
-#include <agrpc/rpcs.hpp>
+#include <agrpc/rpc.hpp>
 #include <agrpc/useAwaitable.hpp>
+#include <agrpc/wait.hpp>
 #include <doctest/doctest.h>
 
 #include <cstddef>

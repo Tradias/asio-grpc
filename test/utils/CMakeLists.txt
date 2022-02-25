@@ -76,7 +76,7 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
         target_sources(
             ${_asio_grpc_name}
             PRIVATE # cmake-format: sort
-                    "${CMAKE_CURRENT_SOURCE_DIR}/utils/rpcs.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/utils/rpcs.hpp")
+                    "${CMAKE_CURRENT_SOURCE_DIR}/utils/rpc.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/utils/rpc.hpp")
     endif()
 
     target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc-common-compile-options asio-grpc-coverage-options)

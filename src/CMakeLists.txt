@@ -92,7 +92,7 @@ if(ASIO_GRPC_BUILD_TESTS)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/receiver.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/repeatedlyRequest.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/repeatedlyRequestSender.hpp"
-                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/rpcs.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/rpc.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/scheduleSender.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/senderOf.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/typeErasedOperation.hpp"
@@ -105,8 +105,9 @@ if(ASIO_GRPC_BUILD_TESTS)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcInitiate.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/repeatedlyRequest.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/repeatedlyRequestContext.hpp"
-                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/rpcs.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/rpc.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/useAwaitable.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/useSender.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/wait.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/asioGrpc.cpp")
 endif()

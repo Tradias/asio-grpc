@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_UTILS_RPCS_HPP
-#define AGRPC_UTILS_RPCS_HPP
+#ifndef AGRPC_UTILS_RPC_HPP
+#define AGRPC_UTILS_RPC_HPP
 
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asioForward.hpp"
 #include "utils/time.hpp"
 
 #include <agrpc/grpcContext.hpp>
-#include <agrpc/rpcs.hpp>
+#include <agrpc/rpc.hpp>
 
 namespace test
 {
@@ -44,4 +44,4 @@ void client_perform_client_streaming_success(test::msg::Response& response,
                                              asio::yield_context yield, test::PerformOptions options = {});
 }
 
-#endif  // AGRPC_UTILS_RPCS_HPP
+#endif  // AGRPC_UTILS_RPC_HPP

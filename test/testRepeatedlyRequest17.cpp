@@ -16,10 +16,10 @@
 #include "utils/asioUtils.hpp"
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/grpcContextTest.hpp"
-#include "utils/rpcs.hpp"
+#include "utils/rpc.hpp"
 
 #include <agrpc/repeatedlyRequest.hpp>
-#include <agrpc/rpcs.hpp>
+#include <agrpc/rpc.hpp>
 #include <doctest/doctest.h>
 
 #include <cstddef>

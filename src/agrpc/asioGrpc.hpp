@@ -37,8 +37,9 @@
 #include "agrpc/grpcInitiate.hpp"
 #include "agrpc/repeatedlyRequest.hpp"
 #include "agrpc/repeatedlyRequestContext.hpp"
-#include "agrpc/rpcs.hpp"
+#include "agrpc/rpc.hpp"
 #include "agrpc/useAwaitable.hpp"
 #include "agrpc/useSender.hpp"
+#include "agrpc/wait.hpp"
 
 #endif  // AGRPC_AGRPC_ASIOGRPC_HPP

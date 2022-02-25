@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utils/rpcs.hpp"
+#include "utils/rpc.hpp"
 
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asioForward.hpp"
@@ -20,7 +20,7 @@
 #include "utils/time.hpp"
 
 #include <agrpc/grpcContext.hpp>
-#include <agrpc/rpcs.hpp>
+#include <agrpc/rpc.hpp>
 #include <doctest/doctest.h>
 
 namespace test

@@ -12,59 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_AGRPC_RPCS_HPP
-#define AGRPC_AGRPC_RPCS_HPP
+#ifndef AGRPC_AGRPC_RPC_HPP
+#define AGRPC_AGRPC_RPC_HPP
 
 #include "agrpc/defaultCompletionToken.hpp"
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/grpcInitiate.hpp"
 #include "agrpc/detail/initiate.hpp"
-#include "agrpc/detail/rpcs.hpp"
+#include "agrpc/detail/rpc.hpp"
 #include "agrpc/getCompletionQueue.hpp"
-
-#include <grpcpp/alarm.h>
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-/**
- * @brief Function object to wait for timers
- *
- * @attention The completion handler created from the completion token that is provided to the functions described below
- * must have an associated executor that refers to a GrpcContext:
- * @snippet server.cpp bind-executor-to-use-awaitable
- */
-struct WaitFn
-{
-    /**
-     * @brief Wait for a `grpc::Alarm`
-     *
-     * The operation finishes once the alarm expires (at deadline) or is cancelled (see
-     * [Cancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_alarm.html#a57837c6b6d75f622c056b3050cf000fb)). If the
-     * alarm expired, the result will be true, false otherwise (ie, upon cancellation).
-     *
-     * Example:
-     *
-     * @snippet server.cpp alarm-awaitable
-     *
-     * @param deadline By default gRPC supports two types of deadlines: `gpr_timespec` and
-     * `std::chrono::system_clock::time_point`. More types can be added by specializing
-     * [grpc::TimePoint](https://grpc.github.io/grpc/cpp/classgrpc_1_1_time_point.html).
-     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
-     * completion signature is `void(bool)`. `true` if it expired, `false` if it was canceled.
-     */
-    template <class Deadline, class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(grpc::Alarm& alarm, const Deadline& deadline, CompletionToken&& token = {}) const
-        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>&&
-                     std::is_nothrow_copy_constructible_v<Deadline>)
-    {
-        return detail::grpc_initiate_with_stop_function<detail::AlarmCancellationHandler>(
-            detail::AlarmInitFunction{alarm, deadline}, std::forward<CompletionToken>(token));
-    }
-};
-
 /**
  * @brief Client and server-side function object to start RPCs
  *
@@ -1407,15 +1369,6 @@ struct ReadInitialMetadataFn
 }  // namespace detail
 
 /**
- * @brief Wait for a timer
- *
- * @link detail::WaitFn
- * Function to wait for timers.
- * @endlink
- */
-inline constexpr detail::WaitFn wait{};
-
-/**
  * @brief Start a new RPC
  *
  * @link detail::RequestFn
@@ -1507,4 +1460,4 @@ inline constexpr detail::ReadInitialMetadataFn read_initial_metadata{};
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_AGRPC_RPCS_HPP
+#endif  // AGRPC_AGRPC_RPC_HPP

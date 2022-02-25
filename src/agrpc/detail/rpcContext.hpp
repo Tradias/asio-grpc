@@ -16,7 +16,7 @@
 #define AGRPC_DETAIL_RPCCONTEXT_HPP
 
 #include "agrpc/detail/config.hpp"
-#include "agrpc/detail/rpcs.hpp"
+#include "agrpc/detail/rpc.hpp"
 
 #include <grpcpp/completion_queue.h>
 #include <grpcpp/server_context.h>
