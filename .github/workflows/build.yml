@@ -22,7 +22,7 @@ on:
 
 env:
   VCPKG_ARGUMENTS: 'doctest grpc[codegen] boost-coroutine boost-asio boost-interprocess boost-thread boost-container boost-process asio libunifex'
-  VCPKG_VERSION: 'b86c0c35b88e2bf3557ff49dc831689c2f085090' # Jan 28, 2022
+  VCPKG_VERSION: '3b9259735964665519cc4dbd12505fa6c20692c4' # Feb 14, 2022
   CMAKE_ARGS: '-DVCPKG_MANIFEST_MODE=off -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on'
   CTEST_ARGS: '-T test --output-on-failure --timeout 200 --no-tests=error'
 
