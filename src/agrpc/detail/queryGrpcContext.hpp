@@ -12,31 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_FORWARD_HPP
-#define AGRPC_DETAIL_FORWARD_HPP
+#ifndef AGRPC_DETAIL_QUERYGRPCCONTEXT_HPP
+#define AGRPC_DETAIL_QUERYGRPCCONTEXT_HPP
 
+#include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
-#include "agrpc/detail/grpcExecutorOptions.hpp"
-
-#include <memory>
+#include "agrpc/detail/forward.hpp"
 
 AGRPC_NAMESPACE_BEGIN()
 
-template <class Allocator = std::allocator<void>, std::uint32_t Options = detail::GrpcExecutorOptions::DEFAULT>
-class BasicGrpcExecutor;
-
-class GrpcContext;
-
 namespace detail
 {
-template <class StopFunction>
-struct GrpcInitiateImplFn;
-
-class RepeatedlyRequestFn;
-
-struct RepeatedlyRequestContextAccess;
+template <class Executor>
+decltype(auto) query_grpc_context(const Executor& executor)
+{
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+    if constexpr (asio::can_query_v<Executor, asio::execution::context_t>)
+    {
+        return static_cast<agrpc::GrpcContext&>(asio::query(executor, asio::execution::context));
+    }
+    else
+#endif
+    {
+        return static_cast<agrpc::GrpcContext&>(executor.context());
+    }
+}
 }
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_FORWARD_HPP
+#endif  // AGRPC_DETAIL_QUERYGRPCCONTEXT_HPP

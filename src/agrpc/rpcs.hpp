@@ -15,12 +15,13 @@
 #ifndef AGRPC_AGRPC_RPCS_HPP
 #define AGRPC_AGRPC_RPCS_HPP
 
+#include "agrpc/defaultCompletionToken.hpp"
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/grpcInitiate.hpp"
 #include "agrpc/detail/initiate.hpp"
 #include "agrpc/detail/rpcs.hpp"
-#include "agrpc/initiate.hpp"
+#include "agrpc/getCompletionQueue.hpp"
 
 #include <grpcpp/alarm.h>
 

@@ -36,8 +36,8 @@ GrpcClientServerTest::GrpcClientServerTest()
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
     server = builder.BuildAndStart();
-    stub = test::v1::Test::NewStub(
-        grpc::CreateChannel(std::string{"localhost:"} + std::to_string(port), grpc::InsecureChannelCredentials()));
+    channel = grpc::CreateChannel(std::string{"localhost:"} + std::to_string(port), grpc::InsecureChannelCredentials());
+    stub = test::v1::Test::NewStub(channel);
     client_context.set_deadline(test::five_seconds_from_now());
 }
 

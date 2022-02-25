@@ -12,31 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_FORWARD_HPP
-#define AGRPC_DETAIL_FORWARD_HPP
+#ifndef AGRPC_AGRPC_DEFAULTCOMPLETIONTOKEN_HPP
+#define AGRPC_AGRPC_DEFAULTCOMPLETIONTOKEN_HPP
 
 #include "agrpc/detail/config.hpp"
-#include "agrpc/detail/grpcExecutorOptions.hpp"
-
-#include <memory>
+#include "agrpc/detail/defaultCompletionToken.hpp"
 
 AGRPC_NAMESPACE_BEGIN()
 
-template <class Allocator = std::allocator<void>, std::uint32_t Options = detail::GrpcExecutorOptions::DEFAULT>
-class BasicGrpcExecutor;
-
-class GrpcContext;
-
-namespace detail
-{
-template <class StopFunction>
-struct GrpcInitiateImplFn;
-
-class RepeatedlyRequestFn;
-
-struct RepeatedlyRequestContextAccess;
-}
+/**
+ * @brief Default completion token for all asynchronous functions
+ *
+ * Only available for Boost.Asio and standalone Asio: `asio::use_awaitable`
+ */
+using DefaultCompletionToken = detail::DefaultCompletionToken;
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_FORWARD_HPP
+#endif  // AGRPC_AGRPC_DEFAULTCOMPLETIONTOKEN_HPP

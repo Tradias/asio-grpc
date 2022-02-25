@@ -64,6 +64,7 @@ if(ASIO_GRPC_BUILD_TESTS)
         INTERFACE # cmake-format: sort
                   "${CMAKE_CURRENT_BINARY_DIR}/generated/agrpc/detail/memoryResource.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/asioGrpc.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/defaultCompletionToken.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/asioForward.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/associatedCompletionHandler.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/atomicIntrusiveQueue.hpp"
@@ -98,12 +99,14 @@ if(ASIO_GRPC_BUILD_TESTS)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/useSender.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/utility.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/workTrackingCompletionHandler.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/getCompletionQueue.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcContext.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcExecutor.hpp"
-                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/initiate.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcInitiate.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/repeatedlyRequest.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/repeatedlyRequestContext.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/rpcs.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/useAwaitable.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/useSender.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/asioGrpc.cpp")
 endif()

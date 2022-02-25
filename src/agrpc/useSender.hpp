@@ -17,7 +17,7 @@
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
-#include "agrpc/detail/initiate.hpp"
+#include "agrpc/detail/queryGrpcContext.hpp"
 #include "agrpc/detail/useSender.hpp"
 #include "agrpc/grpcContext.hpp"
 

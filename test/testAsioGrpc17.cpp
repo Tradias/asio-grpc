@@ -18,6 +18,7 @@
 #include "utils/grpcContextTest.hpp"
 #include "utils/rpcs.hpp"
 
+#include <agrpc/grpcInitiate.hpp>
 #include <agrpc/rpcs.hpp>
 #include <doctest/doctest.h>
 
@@ -442,6 +443,33 @@ TEST_CASE("agrpc::request and agrpc::wait are noexcept for use_sender")
                              std::declval<asio::yield_context>())));
     CHECK(noexcept(agrpc::wait(std::declval<grpc::Alarm&>(), std::declval<std::chrono::system_clock::time_point>(),
                                std::declval<UseSender&&>())));
+}
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "grpc_initiate NotifyOnStateChange")
+{
+    bool actual_ok{false};
+    bool expected_ok{true};
+    auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(5);
+    SUBCASE("success") {}
+    SUBCASE("deadline expires")
+    {
+        actual_ok = true;
+        expected_ok = false;
+        deadline = std::chrono::system_clock::now() - std::chrono::seconds(5);
+    }
+    const auto state = channel->GetState(true);
+    agrpc::grpc_initiate(
+        [&](agrpc::GrpcContext& context, void* tag)
+        {
+            channel->NotifyOnStateChange(state, deadline, agrpc::get_completion_queue(context), tag);
+        },
+        asio::bind_executor(grpc_context,
+                            [&](bool ok)
+                            {
+                                actual_ok = ok;
+                            }));
+    grpc_context.run();
+    CHECK_EQ(expected_ok, actual_ok);
 }
 
 #ifdef AGRPC_STANDALONE_ASIO

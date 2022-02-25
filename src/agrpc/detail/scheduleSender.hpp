@@ -18,6 +18,7 @@
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/forward.hpp"
 #include "agrpc/detail/grpcContextImplementation.hpp"
+#include "agrpc/detail/grpcContextInteraction.hpp"
 #include "agrpc/detail/receiver.hpp"
 #include "agrpc/detail/senderOf.hpp"
 #include "agrpc/detail/utility.hpp"

@@ -17,6 +17,7 @@
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
+#include "agrpc/detail/queryGrpcContext.hpp"
 #include "agrpc/detail/rpcContext.hpp"
 #include "agrpc/detail/utility.hpp"
 #include "agrpc/detail/workTrackingCompletionHandler.hpp"

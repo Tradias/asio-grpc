@@ -12,63 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_AGRPC_INITIATE_HPP
-#define AGRPC_AGRPC_INITIATE_HPP
+#ifndef AGRPC_AGRPC_GETCOMPLETIONQUEUE_HPP
+#define AGRPC_AGRPC_GETCOMPLETIONQUEUE_HPP
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
-#include "agrpc/detail/defaultCompletionToken.hpp"
-#include "agrpc/detail/grpcInitiate.hpp"
-#include "agrpc/detail/initiate.hpp"
-#include "agrpc/detail/utility.hpp"
+#include "agrpc/detail/queryGrpcContext.hpp"
 #include "agrpc/grpcContext.hpp"
 #include "agrpc/grpcExecutor.hpp"
 
 AGRPC_NAMESPACE_BEGIN()
-
-#ifdef AGRPC_ASIO_HAS_CO_AWAIT
-/**
- * @brief `asio::awaitable` specialized on `agrpc::GrpcExecutor`
- */
-template <class T>
-using GrpcAwaitable = asio::awaitable<T, agrpc::GrpcExecutor>;
-
-/**
- * @brief `asio::use_awaitable_t` specialized on `agrpc::GrpcExecutor`
- */
-using GrpcUseAwaitable = asio::use_awaitable_t<agrpc::GrpcExecutor>;
-
-/**
- * @brief `asio::use_awaitable` specialized on `agrpc::GrpcExecutor`
- */
-inline constexpr agrpc::GrpcUseAwaitable GRPC_USE_AWAITABLE{};
-
-namespace pmr
-{
-/**
- * @brief `asio::awaitable` specialized on `agrpc::pmr::GrpcExecutor`
- */
-template <class T>
-using GrpcAwaitable = asio::awaitable<T, agrpc::pmr::GrpcExecutor>;
-
-/**
- * @brief `asio::use_awaitable_t` specialized on `agrpc::pmr::GrpcExecutor`
- */
-using GrpcUseAwaitable = asio::use_awaitable_t<agrpc::pmr::GrpcExecutor>;
-
-/**
- * @brief `asio::use_awaitable` specialized on `agrpc::pmr::GrpcExecutor`
- */
-inline constexpr agrpc::pmr::GrpcUseAwaitable GRPC_USE_AWAITABLE{};
-}  // namespace pmr
-#endif
-
-/**
- * @brief Default completion token for all asynchronous functions
- *
- * Only available for Boost.Asio and standalone Asio: `asio::use_awaitable`
- */
-using DefaultCompletionToken = detail::DefaultCompletionToken;
 
 namespace detail
 {
@@ -153,20 +106,6 @@ struct GetCompletionQueueFn
  */
 inline constexpr detail::GetCompletionQueueFn get_completion_queue{};
 
-namespace detail
-{
-struct GrpcInitiateFn
-{
-    template <class InitiatingFunction, class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(InitiatingFunction initiating_function, CompletionToken token = {}) const
-    {
-        return detail::grpc_initiate(std::move(initiating_function), std::move(token));
-    }
-};
-}  // namespace detail
-
-inline constexpr detail::GrpcInitiateFn grpc_initiate{};
-
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_AGRPC_INITIATE_HPP
+#endif  // AGRPC_AGRPC_GETCOMPLETIONQUEUE_HPP

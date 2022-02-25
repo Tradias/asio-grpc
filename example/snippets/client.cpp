@@ -212,6 +212,23 @@ void create_grpc_context()
     /* [create-grpc_context-client-side] */
 }
 
+asio::awaitable<void> async_notify_on_state_change(const std::string& host)
+{
+    /* [grpc_initiate-NotifyOnStateChange] */
+    auto channel = grpc::CreateChannel(host, grpc::InsecureChannelCredentials());
+    auto state = channel->GetState(true);
+    auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(5);
+    bool is_deadline_not_expired = co_await agrpc::grpc_initiate(
+        [&](agrpc::GrpcContext& grpc_context, void* tag)
+        {
+            channel->NotifyOnStateChange(state, deadline, agrpc::get_completion_queue(grpc_context), tag);
+        },
+        asio::use_awaitable);
+    /* [grpc_initiate-NotifyOnStateChange] */
+
+    silence_unused(is_deadline_not_expired);
+}
+
 int main()
 {
     auto stub =

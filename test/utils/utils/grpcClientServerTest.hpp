@@ -33,6 +33,7 @@ struct GrpcClientServerTest : test::GrpcContextTest
     uint16_t port;
     std::string address;
     test::v1::Test::AsyncService service;
+    std::shared_ptr<grpc::Channel> channel;
     std::unique_ptr<test::v1::Test::Stub> stub;
     grpc::ServerContext server_context;
     grpc::ClientContext client_context;
