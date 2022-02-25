@@ -36,8 +36,8 @@ AGRPC_NAMESPACE_BEGIN()
  *
  * A lightweight handle to a GrpcContext. Trivially copyable if it is not tracking outstanding work.
  *
- * Satisfies the [Executor and Networking TS
- * requirements](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/Executor1.html#boost_asio.reference.Executor1.standard_executors)
+ * Satisfies the [Executor and Networking
+ * TS](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/Executor1.html#boost_asio.reference.Executor1.standard_executors)
  * and [Scheduler](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/Scheduler.html) requirements and
  * can therefore be used in places where Asio/libunifex expects an `Executor` or `Scheduler`.
  */

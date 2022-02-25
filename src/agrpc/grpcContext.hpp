@@ -73,12 +73,12 @@ class GrpcContext
     explicit GrpcContext(std::unique_ptr<grpc::CompletionQueue>&& completion_queue);
 
     /**
-     * @brief Construct a GrpcContext from a `grpc::CompletionQueue`
+     * @brief Destruct the GrpcContext
      *
-     * Calls Shutdown() on the `grpc::CompletionQueue` and drains it. Pending completion handler will not be
+     * Calls Shutdown() on the `grpc::CompletionQueue` and drains it. Pending completion handlers will not be
      * invoked.
      *
-     * @attention Make sure to destruct the GrpcContext before destructing the `grpc::Server`.
+     * @attention Make sure to destruct the GrpcContext before destructing the *grpc::Server*.
      */
     ~GrpcContext();
 
@@ -89,7 +89,7 @@ class GrpcContext
      * the stopped state when this function returns. Make sure to call reset() before submitting more work to a stopped
      * GrpcContext.
      *
-     * @attention Only one call to run() may be performed at a time.
+     * @attention Only one thread may call run() at a time.
      *
      * Thread-safe with regards to other functions except the destructor.
      */
@@ -165,17 +165,25 @@ class GrpcContext
     /**
      * @brief Get the underlying `grpc::CompletionQueue`
      *
-     * Thread-safe
+     * Do not use any functions of the returned CompletionQueue that might interfere with the GrpcContext, like Next().
+     *
+     * Do not delete the returned pointer.
+     *
+     * Thread-safe, never nullptr
      */
     [[nodiscard]] grpc::CompletionQueue* get_completion_queue() noexcept;
 
     /**
      * @brief Get the underlying `grpc::CompletionQueue`
      *
+     * Do not use any functions of the returned CompletionQueue that might interfere with the GrpcContext, like Next().
+     *
+     * Do not delete the returned pointer.
+     *
      * @attention Only valid if the GrpcContext has been constructed with a ServerCompletionQueue:
      * @snippet server.cpp create-grpc_context-server-side
      *
-     * Thread-safe
+     * Thread-safe, never nullptr
      */
     [[nodiscard]] grpc::ServerCompletionQueue* get_server_completion_queue() noexcept;
 

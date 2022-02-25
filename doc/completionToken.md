@@ -1,4 +1,4 @@
-# Completion tokens
+# Completion token
 
 The last argument to all async functions in this library is a [CompletionToken](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers). It can be used to customize how to receive notification of the completion of the asynchronous operation. Some examples:
 
