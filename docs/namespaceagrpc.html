@@ -117,6 +117,9 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
+<tr class="memitem:a06a4199d5f3746516453f66b9570c891"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceagrpc.html#a06a4199d5f3746516453f66b9570c891">DefaultCompletionToken</a> = detail::DefaultCompletionToken</td></tr>
+<tr class="memdesc:a06a4199d5f3746516453f66b9570c891"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default completion token for all asynchronous functions.  <a href="namespaceagrpc.html#a06a4199d5f3746516453f66b9570c891">More...</a><br /></td></tr>
+<tr class="separator:a06a4199d5f3746516453f66b9570c891"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aebdc4a27625d789667c7d54985157d28"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceagrpc.html#aebdc4a27625d789667c7d54985157d28">GrpcExecutor</a> = <a class="el" href="classagrpc_1_1_basic_grpc_executor.html">agrpc::BasicGrpcExecutor</a>&lt;&gt;</td></tr>
 <tr class="memdesc:aebdc4a27625d789667c7d54985157d28"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default GrpcExecutor.  <a href="namespaceagrpc.html#aebdc4a27625d789667c7d54985157d28">More...</a><br /></td></tr>
 <tr class="separator:aebdc4a27625d789667c7d54985157d28"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -129,25 +132,18 @@ template&lt;class T &gt; </td></tr>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>GrpcUseAwaitable</b> = asio::use_awaitable_t&lt; <a class="el" href="namespaceagrpc.html#aebdc4a27625d789667c7d54985157d28">agrpc::GrpcExecutor</a> &gt;</td></tr>
 <tr class="memdesc:a09770e93d81af05c59c0bc81f18e539f"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>asio::use_awaitable_t</code> specialized on <code><a class="el" href="namespaceagrpc.html#aebdc4a27625d789667c7d54985157d28" title="Default GrpcExecutor.">agrpc::GrpcExecutor</a></code> <br /></td></tr>
 <tr class="separator:a09770e93d81af05c59c0bc81f18e539f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a06a4199d5f3746516453f66b9570c891"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceagrpc.html#a06a4199d5f3746516453f66b9570c891">DefaultCompletionToken</a> = detail::DefaultCompletionToken</td></tr>
-<tr class="memdesc:a06a4199d5f3746516453f66b9570c891"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default completion token for all asynchronous functions.  <a href="namespaceagrpc.html#a06a4199d5f3746516453f66b9570c891">More...</a><br /></td></tr>
-<tr class="separator:a06a4199d5f3746516453f66b9570c891"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
-<tr class="memitem:abdc987a5025a9132b1dab93cc647f2cb"><td class="memItemLeft" align="right" valign="top"><a id="abdc987a5025a9132b1dab93cc647f2cb" name="abdc987a5025a9132b1dab93cc647f2cb"></a>
-constexpr <a class="el" href="namespaceagrpc.html#a09770e93d81af05c59c0bc81f18e539f">agrpc::GrpcUseAwaitable</a>&#160;</td><td class="memItemRight" valign="bottom"><b>GRPC_USE_AWAITABLE</b> {}</td></tr>
-<tr class="memdesc:abdc987a5025a9132b1dab93cc647f2cb"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>asio::use_awaitable</code> specialized on <code><a class="el" href="namespaceagrpc.html#aebdc4a27625d789667c7d54985157d28" title="Default GrpcExecutor.">agrpc::GrpcExecutor</a></code> <br /></td></tr>
-<tr class="separator:abdc987a5025a9132b1dab93cc647f2cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5abf4d06de9634b23c17e099314f29ac"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="structagrpc_1_1detail_1_1_get_completion_queue_fn.html">detail::GetCompletionQueueFn</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceagrpc.html#a5abf4d06de9634b23c17e099314f29ac">get_completion_queue</a> {}</td></tr>
 <tr class="memdesc:a5abf4d06de9634b23c17e099314f29ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get <code>grpc::CompletionQueue*</code> from an object.  <a href="namespaceagrpc.html#a5abf4d06de9634b23c17e099314f29ac">More...</a><br /></td></tr>
 <tr class="separator:a5abf4d06de9634b23c17e099314f29ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a88f68f5c9585030fe50eb2f8de3645d1"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="structagrpc_1_1detail_1_1_grpc_initiate_fn.html">detail::GrpcInitiateFn</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceagrpc.html#a88f68f5c9585030fe50eb2f8de3645d1">grpc_initiate</a> {}</td></tr>
+<tr class="memdesc:a88f68f5c9585030fe50eb2f8de3645d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initiate a gRPC tag-based function.  <a href="namespaceagrpc.html#a88f68f5c9585030fe50eb2f8de3645d1">More...</a><br /></td></tr>
+<tr class="separator:a88f68f5c9585030fe50eb2f8de3645d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ace37792785c92502711e61d9e9a5ff2d"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="classagrpc_1_1detail_1_1_repeatedly_request_fn.html">detail::RepeatedlyRequestFn</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceagrpc.html#ace37792785c92502711e61d9e9a5ff2d">repeatedly_request</a> {}</td></tr>
 <tr class="memdesc:ace37792785c92502711e61d9e9a5ff2d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register a request handler for a RPC.  <a href="namespaceagrpc.html#ace37792785c92502711e61d9e9a5ff2d">More...</a><br /></td></tr>
 <tr class="separator:ace37792785c92502711e61d9e9a5ff2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3a4e32ff60d8f9bd8c8c68e42be959c1"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="structagrpc_1_1detail_1_1_wait_fn.html">detail::WaitFn</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceagrpc.html#a3a4e32ff60d8f9bd8c8c68e42be959c1">wait</a> {}</td></tr>
-<tr class="memdesc:a3a4e32ff60d8f9bd8c8c68e42be959c1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait for a timer.  <a href="namespaceagrpc.html#a3a4e32ff60d8f9bd8c8c68e42be959c1">More...</a><br /></td></tr>
-<tr class="separator:a3a4e32ff60d8f9bd8c8c68e42be959c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4a11653afb11f9486e4e3db0136a3e08"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="structagrpc_1_1detail_1_1_request_fn.html">detail::RequestFn</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">request</a> {}</td></tr>
 <tr class="memdesc:a4a11653afb11f9486e4e3db0136a3e08"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start a new RPC.  <a href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">More...</a><br /></td></tr>
 <tr class="separator:a4a11653afb11f9486e4e3db0136a3e08"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -178,9 +174,16 @@ constexpr <a class="el" href="namespaceagrpc.html#a09770e93d81af05c59c0bc81f18e5
 <tr class="memitem:adfb175feaf15d5c970f73b4885eeaf72"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="structagrpc_1_1detail_1_1_read_initial_metadata_fn.html">detail::ReadInitialMetadataFn</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceagrpc.html#adfb175feaf15d5c970f73b4885eeaf72">read_initial_metadata</a> {}</td></tr>
 <tr class="memdesc:adfb175feaf15d5c970f73b4885eeaf72"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read initial metadata for a RPC.  <a href="namespaceagrpc.html#adfb175feaf15d5c970f73b4885eeaf72">More...</a><br /></td></tr>
 <tr class="separator:adfb175feaf15d5c970f73b4885eeaf72"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abdc987a5025a9132b1dab93cc647f2cb"><td class="memItemLeft" align="right" valign="top"><a id="abdc987a5025a9132b1dab93cc647f2cb" name="abdc987a5025a9132b1dab93cc647f2cb"></a>
+constexpr <a class="el" href="namespaceagrpc.html#a09770e93d81af05c59c0bc81f18e539f">agrpc::GrpcUseAwaitable</a>&#160;</td><td class="memItemRight" valign="bottom"><b>GRPC_USE_AWAITABLE</b> {}</td></tr>
+<tr class="memdesc:abdc987a5025a9132b1dab93cc647f2cb"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>asio::use_awaitable</code> specialized on <code><a class="el" href="namespaceagrpc.html#aebdc4a27625d789667c7d54985157d28" title="Default GrpcExecutor.">agrpc::GrpcExecutor</a></code> <br /></td></tr>
+<tr class="separator:abdc987a5025a9132b1dab93cc647f2cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a35d42ccb3fa5adce6b5c045a275dafa9"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="structagrpc_1_1detail_1_1_use_sender_fn.html">detail::UseSenderFn</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceagrpc.html#a35d42ccb3fa5adce6b5c045a275dafa9">use_sender</a> {}</td></tr>
 <tr class="memdesc:a35d42ccb3fa5adce6b5c045a275dafa9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create sender completion token.  <a href="namespaceagrpc.html#a35d42ccb3fa5adce6b5c045a275dafa9">More...</a><br /></td></tr>
 <tr class="separator:a35d42ccb3fa5adce6b5c045a275dafa9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3a4e32ff60d8f9bd8c8c68e42be959c1"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="structagrpc_1_1detail_1_1_wait_fn.html">detail::WaitFn</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceagrpc.html#a3a4e32ff60d8f9bd8c8c68e42be959c1">wait</a> {}</td></tr>
+<tr class="memdesc:a3a4e32ff60d8f9bd8c8c68e42be959c1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait for a timer.  <a href="namespaceagrpc.html#a3a4e32ff60d8f9bd8c8c68e42be959c1">More...</a><br /></td></tr>
+<tr class="separator:a3a4e32ff60d8f9bd8c8c68e42be959c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >Public namespace. </p>
@@ -292,6 +295,31 @@ constexpr <a class="el" href="namespaceagrpc.html#a09770e93d81af05c59c0bc81f18e5
 
 <p>Get <code>grpc::CompletionQueue*</code> from an object. </p>
 <p ><a class="el" href="structagrpc_1_1detail_1_1_get_completion_queue_fn.html">Function to get CompletionQueue from objects. </a> </p>
+
+</div>
+</div>
+<a id="a88f68f5c9585030fe50eb2f8de3645d1" name="a88f68f5c9585030fe50eb2f8de3645d1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a88f68f5c9585030fe50eb2f8de3645d1">&#9670;&nbsp;</a></span>grpc_initiate</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="structagrpc_1_1detail_1_1_grpc_initiate_fn.html">detail::GrpcInitiateFn</a> agrpc::grpc_initiate {}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Initiate a gRPC tag-based function. </p>
+<p ><a class="el" href="structagrpc_1_1detail_1_1_grpc_initiate_fn.html">Function to initiate gRPC tag-based functions. </a> </p>
 
 </div>
 </div>

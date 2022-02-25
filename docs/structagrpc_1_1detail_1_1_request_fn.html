@@ -95,7 +95,7 @@ $(document).ready(function(){initNavTree('structagrpc_1_1detail_1_1_request_fn.h
 <p>Client and server-side function object to start RPCs.  
  <a href="structagrpc_1_1detail_1_1_request_fn.html#details">More...</a></p>
 
-<p><code>#include &lt;rpcs.hpp&gt;</code></p>
+<p><code>#include &lt;agrpc/rpc.hpp&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -186,7 +186,7 @@ Public Member Functions</h2></td></tr>
 <div class="line">                                    server_context, reader, asio::bind_executor(grpc_context, asio::use_awaitable));</div>
 <div class="line">        },</div>
 <div class="line">        asio::detached);</div>
-<div class="ttc" id="anamespaceagrpc_html_a4a11653afb11f9486e4e3db0136a3e08"><div class="ttname"><a href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">agrpc::request</a></div><div class="ttdeci">constexpr detail::RequestFn request</div><div class="ttdoc">Start a new RPC.</div><div class="ttdef"><b>Definition:</b> rpcs.hpp:1424</div></div>
+<div class="ttc" id="anamespaceagrpc_html_a4a11653afb11f9486e4e3db0136a3e08"><div class="ttname"><a href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">agrpc::request</a></div><div class="ttdeci">constexpr detail::RequestFn request</div><div class="ttdoc">Start a new RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1378</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a7bea527a167544b92ddefeb787c864a9" name="a7bea527a167544b92ddefeb787c864a9"></a>
@@ -319,7 +319,7 @@ template&lt;class RPC , class Stub , class ReaderWriter , class CompletionToken 
 <div class="line">    client_context.set_initial_metadata_corked(<span class="keyword">true</span>);</div>
 <div class="line">    <span class="keyword">auto</span> reader_writer =</div>
 <div class="line">        stub.AsyncBidirectionalStreaming(&amp;client_context, <a class="code hl_variable" href="namespaceagrpc.html#a5abf4d06de9634b23c17e099314f29ac">agrpc::get_completion_queue</a>(grpc_context), <span class="keyword">nullptr</span>);</div>
-<div class="ttc" id="anamespaceagrpc_html_a5abf4d06de9634b23c17e099314f29ac"><div class="ttname"><a href="namespaceagrpc.html#a5abf4d06de9634b23c17e099314f29ac">agrpc::get_completion_queue</a></div><div class="ttdeci">constexpr detail::GetCompletionQueueFn get_completion_queue</div><div class="ttdoc">Get grpc::CompletionQueue* from an object.</div><div class="ttdef"><b>Definition:</b> initiate.hpp:154</div></div>
+<div class="ttc" id="anamespaceagrpc_html_a5abf4d06de9634b23c17e099314f29ac"><div class="ttname"><a href="namespaceagrpc.html#a5abf4d06de9634b23c17e099314f29ac">agrpc::get_completion_queue</a></div><div class="ttdeci">constexpr detail::GetCompletionQueueFn get_completion_queue</div><div class="ttdoc">Get grpc::CompletionQueue* from an object.</div><div class="ttdef"><b>Definition:</b> getCompletionQueue.hpp:107</div></div>
 </div><!-- fragment --></dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -943,7 +943,7 @@ template&lt;class RPC , class Service , class Responder , class CompletionToken 
 </div>
 </div>
 <hr/>The documentation for this struct was generated from the following file:<ul>
-<li>src/agrpc/rpcs.hpp</li>
+<li>src/agrpc/rpc.hpp</li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
