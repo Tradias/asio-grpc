@@ -64,7 +64,7 @@ class BasicGrpcExecutor
     }
 
     constexpr BasicGrpcExecutor(agrpc::GrpcContext& grpc_context, allocator_type allocator) noexcept
-        : Base(std::addressof(grpc_context), std::move(allocator))
+        : Base(&grpc_context, std::move(allocator))
     {
     }
 

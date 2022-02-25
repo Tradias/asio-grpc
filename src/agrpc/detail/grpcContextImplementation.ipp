@@ -76,7 +76,7 @@ inline bool GrpcContextImplementation::get_next_event(agrpc::GrpcContext& grpc_c
 
 inline bool GrpcContextImplementation::running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept
 {
-    return std::addressof(grpc_context) == detail::thread_local_grpc_context;
+    return &grpc_context == detail::thread_local_grpc_context;
 }
 
 inline const agrpc::GrpcContext* GrpcContextImplementation::set_thread_local_grpc_context(

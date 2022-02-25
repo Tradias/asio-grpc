@@ -80,7 +80,7 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
 
     GrpcExecutorWorkTrackerBase& operator=(const GrpcExecutorWorkTrackerBase& other) noexcept
     {
-        if (this != std::addressof(other))
+        if (this != &other)
         {
             if (this->grpc_context())
             {
@@ -98,7 +98,7 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
 
     GrpcExecutorWorkTrackerBase& operator=(GrpcExecutorWorkTrackerBase&& other) noexcept
     {
-        if (this != std::addressof(other))
+        if (this != &other)
         {
             if (this->grpc_context())
             {

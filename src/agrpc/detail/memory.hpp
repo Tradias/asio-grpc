@@ -50,7 +50,7 @@ class AllocatedPointer
 
     constexpr AllocatedPointer& operator=(AllocatedPointer&& other) noexcept
     {
-        if (this != std::addressof(other))
+        if (this != &other)
         {
             this->get() = std::exchange(other.get(), nullptr);
         }
