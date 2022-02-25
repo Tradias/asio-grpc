@@ -18,9 +18,10 @@
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
 
+#ifdef AGRPC_ASIO_HAS_CO_AWAIT
+
 AGRPC_NAMESPACE_BEGIN()
 
-#ifdef AGRPC_ASIO_HAS_CO_AWAIT
 /**
  * @brief `asio::awaitable` specialized on `agrpc::GrpcExecutor`
  */
@@ -55,8 +56,9 @@ using GrpcUseAwaitable = asio::use_awaitable_t<agrpc::pmr::GrpcExecutor>;
  */
 inline constexpr agrpc::pmr::GrpcUseAwaitable GRPC_USE_AWAITABLE{};
 }  // namespace pmr
-#endif
 
 AGRPC_NAMESPACE_END
+
+#endif
 
 #endif  // AGRPC_AGRPC_USEAWAITABLE_HPP
