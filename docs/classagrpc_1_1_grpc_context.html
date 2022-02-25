@@ -117,7 +117,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a977dfa398018fd3d62017f45ef05bc9e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> from a <code>grpc::CompletionQueue</code>  <a href="classagrpc_1_1_grpc_context.html#a977dfa398018fd3d62017f45ef05bc9e">More...</a><br /></td></tr>
 <tr class="separator:a977dfa398018fd3d62017f45ef05bc9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad54076bc77ee6db3f167b2ad073db171"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_grpc_context.html#ad54076bc77ee6db3f167b2ad073db171">~GrpcContext</a> ()</td></tr>
-<tr class="memdesc:ad54076bc77ee6db3f167b2ad073db171"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> from a <code>grpc::CompletionQueue</code>  <a href="classagrpc_1_1_grpc_context.html#ad54076bc77ee6db3f167b2ad073db171">More...</a><br /></td></tr>
+<tr class="memdesc:ad54076bc77ee6db3f167b2ad073db171"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destruct the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a>.  <a href="classagrpc_1_1_grpc_context.html#ad54076bc77ee6db3f167b2ad073db171">More...</a><br /></td></tr>
 <tr class="separator:ad54076bc77ee6db3f167b2ad073db171"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac287c8b9a86af915575be9807342bbf3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_grpc_context.html#ac287c8b9a86af915575be9807342bbf3">run</a> ()</td></tr>
 <tr class="memdesc:ac287c8b9a86af915575be9807342bbf3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run the <code>grpc::CompletionQueue</code>  <a href="classagrpc_1_1_grpc_context.html#ac287c8b9a86af915575be9807342bbf3">More...</a><br /></td></tr>
@@ -215,9 +215,9 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Construct a <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> from a <code>grpc::CompletionQueue</code> </p>
-<p >Calls Shutdown() on the <code>grpc::CompletionQueue</code> and drains it. Pending completion handler will not be invoked.</p>
-<dl class="section attention"><dt>Attention</dt><dd>Make sure to destruct the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> before destructing the <code>grpc::Server</code>. </dd></dl>
+<p>Destruct the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a>. </p>
+<p >Calls Shutdown() on the <code>grpc::CompletionQueue</code> and drains it. Pending completion handlers will not be invoked.</p>
+<dl class="section attention"><dt>Attention</dt><dd>Make sure to destruct the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> before destructing the <em>grpc::Server</em>. </dd></dl>
 
 </div>
 </div>
@@ -275,7 +275,9 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Get the underlying <code>grpc::CompletionQueue</code> </p>
-<p >Thread-safe </p>
+<p >Do not use any functions of the returned CompletionQueue that might interfere with the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a>, like Next().</p>
+<p >Do not delete the returned pointer.</p>
+<p >Thread-safe, never nullptr </p>
 
 </div>
 </div>
@@ -359,10 +361,12 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Get the underlying <code>grpc::CompletionQueue</code> </p>
+<p >Do not use any functions of the returned CompletionQueue that might interfere with the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a>, like Next().</p>
+<p >Do not delete the returned pointer.</p>
 <dl class="section attention"><dt>Attention</dt><dd>Only valid if the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> has been constructed with a ServerCompletionQueue: <div class="fragment"><div class="line">    grpc::ServerBuilder builder;</div>
 <div class="line">    <a class="code hl_class" href="classagrpc_1_1_grpc_context.html">agrpc::GrpcContext</a> grpc_context{builder.AddCompletionQueue()};</div>
 </div><!-- fragment --></dd></dl>
-<p>Thread-safe </p>
+<p>Thread-safe, never nullptr </p>
 
 </div>
 </div>
@@ -448,7 +452,7 @@ Public Member Functions</h2></td></tr>
 
 <p>Run the <code>grpc::CompletionQueue</code> </p>
 <p >Runs the main event loop logic until the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> runs out of work or is stopped. The <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> will be in the stopped state when this function returns. Make sure to call <a class="el" href="classagrpc_1_1_grpc_context.html#a9da2b2b94e92a9d46e1309209002784b" title="Bring a stopped GrpcContext back into the ready state.">reset()</a> before submitting more work to a stopped <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a>.</p>
-<dl class="section attention"><dt>Attention</dt><dd>Only one call to <a class="el" href="classagrpc_1_1_grpc_context.html#ac287c8b9a86af915575be9807342bbf3" title="Run the grpc::CompletionQueue">run()</a> may be performed at a time.</dd></dl>
+<dl class="section attention"><dt>Attention</dt><dd>Only one thread may call <a class="el" href="classagrpc_1_1_grpc_context.html#ac287c8b9a86af915575be9807342bbf3" title="Run the grpc::CompletionQueue">run()</a> at a time.</dd></dl>
 <p>Thread-safe with regards to other functions except the destructor. </p>
 
 </div>

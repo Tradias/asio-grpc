@@ -4,6 +4,7 @@ var annotated_dup =
       [ "detail", null, [
         [ "FinishFn", "structagrpc_1_1detail_1_1_finish_fn.html", "structagrpc_1_1detail_1_1_finish_fn" ],
         [ "FinishWithErrorFn", "structagrpc_1_1detail_1_1_finish_with_error_fn.html", "structagrpc_1_1detail_1_1_finish_with_error_fn" ],
+        [ "GetCompletionQueueFn", "structagrpc_1_1detail_1_1_get_completion_queue_fn.html", "structagrpc_1_1detail_1_1_get_completion_queue_fn" ],
         [ "ReadFn", "structagrpc_1_1detail_1_1_read_fn.html", "structagrpc_1_1detail_1_1_read_fn" ],
         [ "ReadInitialMetadataFn", "structagrpc_1_1detail_1_1_read_initial_metadata_fn.html", "structagrpc_1_1detail_1_1_read_initial_metadata_fn" ],
         [ "RepeatedlyRequestFn", "classagrpc_1_1detail_1_1_repeatedly_request_fn.html", "classagrpc_1_1detail_1_1_repeatedly_request_fn" ],

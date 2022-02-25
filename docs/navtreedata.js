@@ -27,17 +27,16 @@ var NAVTREE =
   [ "asio-grpc", "index.html", [
     [ "Overview", "index.html#autotoc_md7", null ],
     [ "CMake protobuf generate", "md_doc_cmake_protobuf_generate.html", null ],
-    [ "Completion tokens", "md_doc_completion_tokens.html", [
-      [ "Callback", "md_doc_completion_tokens.html#autotoc_md2", null ],
-      [ "Stackless coroutine", "md_doc_completion_tokens.html#autotoc_md3", null ],
-      [ "use_sender", "md_doc_completion_tokens.html#autotoc_md4", null ],
-      [ "Custom allocator", "md_doc_completion_tokens.html#autotoc_md5", null ]
+    [ "Completion token", "md_doc_completion_token.html", [
+      [ "Callback", "md_doc_completion_token.html#autotoc_md2", null ],
+      [ "Stackless coroutine", "md_doc_completion_token.html#autotoc_md3", null ],
+      [ "use_sender", "md_doc_completion_token.html#autotoc_md4", null ],
+      [ "Custom allocator", "md_doc_completion_token.html#autotoc_md5", null ]
     ] ],
     [ "Namespaces", "namespaces.html", [
       [ "Namespace List", "namespaces.html", "namespaces_dup" ],
       [ "Namespace Members", "namespacemembers.html", [
         [ "All", "namespacemembers.html", null ],
-        [ "Functions", "namespacemembers_func.html", null ],
         [ "Variables", "namespacemembers_vars.html", null ],
         [ "Typedefs", "namespacemembers_type.html", null ]
       ] ]
@@ -61,7 +60,7 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"structagrpc_1_1detail_1_1_write_fn.html#af6dd3b77037d71f9c9cdfe007f304c91"
+"structagrpc_1_1detail_1_1_write_fn.html#ab23a26dc8fb0883f8665670e2b4a79df"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

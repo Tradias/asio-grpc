@@ -318,8 +318,8 @@ template&lt;class RPC , class Stub , class ReaderWriter , class CompletionToken 
 </div><!-- fragment --><dl class="section attention"><dt>Attention</dt><dd>Do not use this function with the <a href="https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#af79c64534c7b208594ba8e76021e2696">initial_metadata_corked</a> option set. Call the member function directly instead: <div class="fragment"><div class="line">    grpc::ClientContext client_context;</div>
 <div class="line">    client_context.set_initial_metadata_corked(<span class="keyword">true</span>);</div>
 <div class="line">    <span class="keyword">auto</span> reader_writer =</div>
-<div class="line">        stub.AsyncBidirectionalStreaming(&amp;client_context, <a class="code hl_function" href="namespaceagrpc.html#a70a9ef22599c4c1fa95d4583524079b8">agrpc::get_completion_queue</a>(grpc_context), <span class="keyword">nullptr</span>);</div>
-<div class="ttc" id="anamespaceagrpc_html_a70a9ef22599c4c1fa95d4583524079b8"><div class="ttname"><a href="namespaceagrpc.html#a70a9ef22599c4c1fa95d4583524079b8">agrpc::get_completion_queue</a></div><div class="ttdeci">grpc::CompletionQueue * get_completion_queue(const agrpc::BasicGrpcExecutor&lt; Allocator, Options &gt; &amp;executor) noexcept</div><div class="ttdoc">Get grpc::CompletionQueue* from a GrpcExecutor.</div><div class="ttdef"><b>Definition:</b> initiate.hpp:79</div></div>
+<div class="line">        stub.AsyncBidirectionalStreaming(&amp;client_context, <a class="code hl_variable" href="namespaceagrpc.html#a5abf4d06de9634b23c17e099314f29ac">agrpc::get_completion_queue</a>(grpc_context), <span class="keyword">nullptr</span>);</div>
+<div class="ttc" id="anamespaceagrpc_html_a5abf4d06de9634b23c17e099314f29ac"><div class="ttname"><a href="namespaceagrpc.html#a5abf4d06de9634b23c17e099314f29ac">agrpc::get_completion_queue</a></div><div class="ttdeci">constexpr detail::GetCompletionQueueFn get_completion_queue</div><div class="ttdoc">Get grpc::CompletionQueue* from an object.</div><div class="ttdef"><b>Definition:</b> initiate.hpp:154</div></div>
 </div><!-- fragment --></dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -476,7 +476,7 @@ template&lt;class RPC , class Stub , class Writer , class Response , class Compl
 <div class="line">    client_context.set_initial_metadata_corked(<span class="keyword">true</span>);</div>
 <div class="line">    example::v1::Response response;</div>
 <div class="line">    <span class="keyword">auto</span> writer =</div>
-<div class="line">        stub.AsyncClientStreaming(&amp;client_context, &amp;response, <a class="code hl_function" href="namespaceagrpc.html#a70a9ef22599c4c1fa95d4583524079b8">agrpc::get_completion_queue</a>(grpc_context), <span class="keyword">nullptr</span>);</div>
+<div class="line">        stub.AsyncClientStreaming(&amp;client_context, &amp;response, <a class="code hl_variable" href="namespaceagrpc.html#a5abf4d06de9634b23c17e099314f29ac">agrpc::get_completion_queue</a>(grpc_context), <span class="keyword">nullptr</span>);</div>
 </div><!-- fragment --></dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -704,7 +704,7 @@ template&lt;class RPC , class Stub , class Request , class Reader , class Execut
 </div><!-- fragment --><dl class="section note"><dt>Note</dt><dd>For better performance use: <div class="fragment"><div class="line">    grpc::ClientContext client_context;</div>
 <div class="line">    example::v1::Request <a class="code hl_variable" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">request</a>;</div>
 <div class="line">    std::unique_ptr&lt;grpc::ClientAsyncResponseReader&lt;example::v1::Response&gt;&gt; reader =</div>
-<div class="line">        stub.AsyncUnary(&amp;client_context, <a class="code hl_variable" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">request</a>, <a class="code hl_function" href="namespaceagrpc.html#a70a9ef22599c4c1fa95d4583524079b8">agrpc::get_completion_queue</a>(grpc_context));</div>
+<div class="line">        stub.AsyncUnary(&amp;client_context, <a class="code hl_variable" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">request</a>, <a class="code hl_variable" href="namespaceagrpc.html#a5abf4d06de9634b23c17e099314f29ac">agrpc::get_completion_queue</a>(grpc_context));</div>
 </div><!-- fragment --> instead.</dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">

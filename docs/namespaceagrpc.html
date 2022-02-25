@@ -89,7 +89,6 @@ $(document).ready(function(){initNavTree('namespaceagrpc.html',''); initResizabl
 <a href="#namespaces">Namespaces</a> &#124;
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#typedef-members">Typedefs</a> &#124;
-<a href="#func-members">Functions</a> &#124;
 <a href="#var-members">Variables</a>  </div>
   <div class="headertitle"><div class="title">agrpc Namespace Reference</div></div>
 </div><!--header-->
@@ -134,33 +133,15 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>GrpcUseAwaitable</b>
 <tr class="memdesc:a06a4199d5f3746516453f66b9570c891"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default completion token for all asynchronous functions.  <a href="namespaceagrpc.html#a06a4199d5f3746516453f66b9570c891">More...</a><br /></td></tr>
 <tr class="separator:a06a4199d5f3746516453f66b9570c891"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
-Functions</h2></td></tr>
-<tr class="memitem:a70a9ef22599c4c1fa95d4583524079b8"><td class="memTemplParams" colspan="2">template&lt;class Allocator , std::uint32_t Options&gt; </td></tr>
-<tr class="memitem:a70a9ef22599c4c1fa95d4583524079b8"><td class="memTemplItemLeft" align="right" valign="top">grpc::CompletionQueue *&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceagrpc.html#a70a9ef22599c4c1fa95d4583524079b8">get_completion_queue</a> (const <a class="el" href="classagrpc_1_1_basic_grpc_executor.html">agrpc::BasicGrpcExecutor</a>&lt; Allocator, Options &gt; &amp;executor) noexcept</td></tr>
-<tr class="memdesc:a70a9ef22599c4c1fa95d4583524079b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get <code>grpc::CompletionQueue*</code> from a GrpcExecutor.  <a href="namespaceagrpc.html#a70a9ef22599c4c1fa95d4583524079b8">More...</a><br /></td></tr>
-<tr class="separator:a70a9ef22599c4c1fa95d4583524079b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae5caa32aad60d4c97c5412ccd980189a"><td class="memItemLeft" align="right" valign="top">grpc::CompletionQueue *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceagrpc.html#ae5caa32aad60d4c97c5412ccd980189a">get_completion_queue</a> (<a class="el" href="classagrpc_1_1_grpc_context.html">agrpc::GrpcContext</a> &amp;grpc_context) noexcept</td></tr>
-<tr class="memdesc:ae5caa32aad60d4c97c5412ccd980189a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get <code>grpc::CompletionQueue*</code> from a <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a>.  <a href="namespaceagrpc.html#ae5caa32aad60d4c97c5412ccd980189a">More...</a><br /></td></tr>
-<tr class="separator:ae5caa32aad60d4c97c5412ccd980189a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7fb759329e9f4064b3ad65e9dfa22b6e"><td class="memItemLeft" align="right" valign="top">grpc::CompletionQueue *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceagrpc.html#a7fb759329e9f4064b3ad65e9dfa22b6e">get_completion_queue</a> (const asio::any_io_executor &amp;executor) noexcept</td></tr>
-<tr class="memdesc:a7fb759329e9f4064b3ad65e9dfa22b6e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get <code>grpc::CompletionQueue*</code> from an <code>asio::any_io_executor</code>  <a href="namespaceagrpc.html#a7fb759329e9f4064b3ad65e9dfa22b6e">More...</a><br /></td></tr>
-<tr class="separator:a7fb759329e9f4064b3ad65e9dfa22b6e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6f73ebe78de1d0ac14f5bf5af3f6be6f"><td class="memTemplParams" colspan="2">template&lt;class Object &gt; </td></tr>
-<tr class="memitem:a6f73ebe78de1d0ac14f5bf5af3f6be6f"><td class="memTemplItemLeft" align="right" valign="top">grpc::CompletionQueue *&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceagrpc.html#a6f73ebe78de1d0ac14f5bf5af3f6be6f">get_completion_queue</a> (const Object &amp;object) noexcept</td></tr>
-<tr class="memdesc:a6f73ebe78de1d0ac14f5bf5af3f6be6f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get <code>grpc::CompletionQueue*</code> from an object's associated executor.  <a href="namespaceagrpc.html#a6f73ebe78de1d0ac14f5bf5af3f6be6f">More...</a><br /></td></tr>
-<tr class="separator:a6f73ebe78de1d0ac14f5bf5af3f6be6f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2564e3341a80fcc7ca0a5975e495cec7"><td class="memTemplParams" colspan="2">template&lt;class Executor  = asio::any_io_executor&gt; </td></tr>
-<tr class="memitem:a2564e3341a80fcc7ca0a5975e495cec7"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceagrpc.html#a2564e3341a80fcc7ca0a5975e495cec7">get_completion_queue</a> (asio::use_awaitable_t&lt; Executor &gt;={}) -&gt; typename asio::async_result&lt; asio::use_awaitable_t&lt; Executor &gt;, void(grpc::CompletionQueue *)&gt;::return_type</td></tr>
-<tr class="memdesc:a2564e3341a80fcc7ca0a5975e495cec7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get <code>grpc::CompletionQueue*</code> from an object's associated executor.  <a href="namespaceagrpc.html#a2564e3341a80fcc7ca0a5975e495cec7">More...</a><br /></td></tr>
-<tr class="separator:a2564e3341a80fcc7ca0a5975e495cec7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
 <tr class="memitem:abdc987a5025a9132b1dab93cc647f2cb"><td class="memItemLeft" align="right" valign="top"><a id="abdc987a5025a9132b1dab93cc647f2cb" name="abdc987a5025a9132b1dab93cc647f2cb"></a>
 constexpr <a class="el" href="namespaceagrpc.html#a09770e93d81af05c59c0bc81f18e539f">agrpc::GrpcUseAwaitable</a>&#160;</td><td class="memItemRight" valign="bottom"><b>GRPC_USE_AWAITABLE</b> {}</td></tr>
 <tr class="memdesc:abdc987a5025a9132b1dab93cc647f2cb"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>asio::use_awaitable</code> specialized on <code><a class="el" href="namespaceagrpc.html#aebdc4a27625d789667c7d54985157d28" title="Default GrpcExecutor.">agrpc::GrpcExecutor</a></code> <br /></td></tr>
 <tr class="separator:abdc987a5025a9132b1dab93cc647f2cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5abf4d06de9634b23c17e099314f29ac"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="structagrpc_1_1detail_1_1_get_completion_queue_fn.html">detail::GetCompletionQueueFn</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceagrpc.html#a5abf4d06de9634b23c17e099314f29ac">get_completion_queue</a> {}</td></tr>
+<tr class="memdesc:a5abf4d06de9634b23c17e099314f29ac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get <code>grpc::CompletionQueue*</code> from an object.  <a href="namespaceagrpc.html#a5abf4d06de9634b23c17e099314f29ac">More...</a><br /></td></tr>
+<tr class="separator:a5abf4d06de9634b23c17e099314f29ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ace37792785c92502711e61d9e9a5ff2d"><td class="memItemLeft" align="right" valign="top">constexpr <a class="el" href="classagrpc_1_1detail_1_1_repeatedly_request_fn.html">detail::RepeatedlyRequestFn</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceagrpc.html#ace37792785c92502711e61d9e9a5ff2d">repeatedly_request</a> {}</td></tr>
 <tr class="memdesc:ace37792785c92502711e61d9e9a5ff2d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register a request handler for a RPC.  <a href="namespaceagrpc.html#ace37792785c92502711e61d9e9a5ff2d">More...</a><br /></td></tr>
 <tr class="separator:ace37792785c92502711e61d9e9a5ff2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -238,153 +219,6 @@ constexpr <a class="el" href="namespaceagrpc.html#a09770e93d81af05c59c0bc81f18e5
 
 </div>
 </div>
-<h2 class="groupheader">Function Documentation</h2>
-<a id="ae5caa32aad60d4c97c5412ccd980189a" name="ae5caa32aad60d4c97c5412ccd980189a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae5caa32aad60d4c97c5412ccd980189a">&#9670;&nbsp;</a></span>get_completion_queue() <span class="overload">[1/5]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">grpc::CompletionQueue * agrpc::get_completion_queue </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classagrpc_1_1_grpc_context.html">agrpc::GrpcContext</a> &amp;&#160;</td>
-          <td class="paramname"><em>grpc_context</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Get <code>grpc::CompletionQueue*</code> from a <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a>. </p>
-<p >Equivalent to <code>executor.context().<a class="el" href="namespaceagrpc.html#a70a9ef22599c4c1fa95d4583524079b8" title="Get grpc::CompletionQueue* from a GrpcExecutor.">get_completion_queue()</a></code> </p>
-
-</div>
-</div>
-<a id="a2564e3341a80fcc7ca0a5975e495cec7" name="a2564e3341a80fcc7ca0a5975e495cec7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2564e3341a80fcc7ca0a5975e495cec7">&#9670;&nbsp;</a></span>get_completion_queue() <span class="overload">[2/5]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class Executor  = asio::any_io_executor&gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">auto agrpc::get_completion_queue </td>
-          <td>(</td>
-          <td class="paramtype">asio::use_awaitable_t&lt; Executor &gt;&#160;</td>
-          <td class="paramname"> = <code>{}</code></td><td>)</td>
-          <td> -&gt; typename asio::async_result&lt;asio::use_awaitable_t&lt;Executor&gt;, void(grpc::CompletionQueue*)&gt;::return_type
-</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Get <code>grpc::CompletionQueue*</code> from an object's associated executor. </p>
-<p >First obtains <code>asio::this_coro::executor</code> and then returns <code>agrpc::get_completion_queue(executor)</code>.</p>
-<dl class="section attention"><dt>Attention</dt><dd>The awaitable's executor must refer to a <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> </dd></dl>
-
-</div>
-</div>
-<a id="a70a9ef22599c4c1fa95d4583524079b8" name="a70a9ef22599c4c1fa95d4583524079b8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a70a9ef22599c4c1fa95d4583524079b8">&#9670;&nbsp;</a></span>get_completion_queue() <span class="overload">[3/5]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class Allocator , std::uint32_t Options&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">grpc::CompletionQueue * agrpc::get_completion_queue </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="classagrpc_1_1_basic_grpc_executor.html">agrpc::BasicGrpcExecutor</a>&lt; Allocator, Options &gt; &amp;&#160;</td>
-          <td class="paramname"><em>executor</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Get <code>grpc::CompletionQueue*</code> from a GrpcExecutor. </p>
-<p >Equivalent to <code>executor.context().<a class="el" href="namespaceagrpc.html#a70a9ef22599c4c1fa95d4583524079b8" title="Get grpc::CompletionQueue* from a GrpcExecutor.">get_completion_queue()</a></code> </p>
-
-</div>
-</div>
-<a id="a7fb759329e9f4064b3ad65e9dfa22b6e" name="a7fb759329e9f4064b3ad65e9dfa22b6e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7fb759329e9f4064b3ad65e9dfa22b6e">&#9670;&nbsp;</a></span>get_completion_queue() <span class="overload">[4/5]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">grpc::CompletionQueue * agrpc::get_completion_queue </td>
-          <td>(</td>
-          <td class="paramtype">const asio::any_io_executor &amp;&#160;</td>
-          <td class="paramname"><em>executor</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Get <code>grpc::CompletionQueue*</code> from an <code>asio::any_io_executor</code> </p>
-<dl class="section attention"><dt>Attention</dt><dd><code>executor</code> must have been created from a GrpcExecutor </dd></dl>
-
-</div>
-</div>
-<a id="a6f73ebe78de1d0ac14f5bf5af3f6be6f" name="a6f73ebe78de1d0ac14f5bf5af3f6be6f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6f73ebe78de1d0ac14f5bf5af3f6be6f">&#9670;&nbsp;</a></span>get_completion_queue() <span class="overload">[5/5]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class Object &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">grpc::CompletionQueue * agrpc::get_completion_queue </td>
-          <td>(</td>
-          <td class="paramtype">const Object &amp;&#160;</td>
-          <td class="paramname"><em>object</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Get <code>grpc::CompletionQueue*</code> from an object's associated executor. </p>
-<p >First obtains the object's associated executor and then returns <code>agrpc::get_completion_queue(executor)</code>.</p>
-<dl class="section attention"><dt>Attention</dt><dd>The associated executor must refer to a <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> </dd></dl>
-
-</div>
-</div>
 <h2 class="groupheader">Variable Documentation</h2>
 <a id="a88b9f806c77bb8077f3f7973beede2d0" name="a88b9f806c77bb8077f3f7973beede2d0"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a88b9f806c77bb8077f3f7973beede2d0">&#9670;&nbsp;</a></span>finish</h2>
@@ -433,6 +267,31 @@ template&lt;class Object &gt; </div>
 
 <p>Finish a RPC with an error. </p>
 <p ><a class="el" href="structagrpc_1_1detail_1_1_finish_with_error_fn.html">Server-side function to finish RPCs with an error. </a> </p>
+
+</div>
+</div>
+<a id="a5abf4d06de9634b23c17e099314f29ac" name="a5abf4d06de9634b23c17e099314f29ac"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5abf4d06de9634b23c17e099314f29ac">&#9670;&nbsp;</a></span>get_completion_queue</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr <a class="el" href="structagrpc_1_1detail_1_1_get_completion_queue_fn.html">detail::GetCompletionQueueFn</a> agrpc::get_completion_queue {}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get <code>grpc::CompletionQueue*</code> from an object. </p>
+<p ><a class="el" href="structagrpc_1_1detail_1_1_get_completion_queue_fn.html">Function to get CompletionQueue from objects. </a> </p>
 
 </div>
 </div>
