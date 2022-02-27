@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['post_0',['post',['../classagrpc_1_1_basic_grpc_executor.html#adedcdf906f42b5df5c4fec5d403e04a0',1,'agrpc::BasicGrpcExecutor']]],
-  ['prefer_1',['prefer',['../classagrpc_1_1_basic_grpc_executor.html#a64a880d5d9b37c55cacfa1a8ee0de254',1,'agrpc::BasicGrpcExecutor::prefer(asio::execution::relationship_t::fork_t) const noexcept -&gt; agrpc::BasicGrpcExecutor&lt; Allocator, detail::set_relationship_continuation(Options, false)&gt;'],['../classagrpc_1_1_basic_grpc_executor.html#abe981aab499deb8a8358a50433a16e01',1,'agrpc::BasicGrpcExecutor::prefer(asio::execution::relationship_t::continuation_t) const noexcept -&gt; agrpc::BasicGrpcExecutor&lt; Allocator, detail::set_relationship_continuation(Options, true)&gt;']]]
+  ['schedule_0',['schedule',['../classagrpc_1_1_basic_grpc_executor.html#a82c07555c9c88a40299d79f822168f07',1,'agrpc::BasicGrpcExecutor']]],
+  ['server_5fcontext_1',['server_context',['../classagrpc_1_1_repeatedly_request_context.html#accd2227a2b67c400db567d521395e2fd',1,'agrpc::RepeatedlyRequestContext']]],
+  ['stop_2',['stop',['../classagrpc_1_1_grpc_context.html#aee29d403f03ef487d22efdf2079c46bc',1,'agrpc::GrpcContext']]]
 ];

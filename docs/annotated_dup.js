@@ -21,25 +21,5 @@ var annotated_dup =
       [ "BasicGrpcExecutor", "classagrpc_1_1_basic_grpc_executor.html", "classagrpc_1_1_basic_grpc_executor" ],
       [ "GrpcContext", "classagrpc_1_1_grpc_context.html", "classagrpc_1_1_grpc_context" ],
       [ "RepeatedlyRequestContext", "classagrpc_1_1_repeatedly_request_context.html", "classagrpc_1_1_repeatedly_request_context" ]
-    ] ],
-    [ "Autolink_Test", "class_autolink___test.html", "class_autolink___test" ],
-    [ "C1", "class_c1.html", null ],
-    [ "C2", "class_c2.html", null ],
-    [ "C3", "class_c3.html", null ],
-    [ "C4", "class_c4.html", null ],
-    [ "C5", "class_c5.html", null ],
-    [ "CoordStruct", "struct_coord_struct.html", "struct_coord_struct" ],
-    [ "Example_Test", "class_example___test.html", "class_example___test" ],
-    [ "Include_Test", "class_include___test.html", "class_include___test" ],
-    [ "Javadoc_Test", "class_javadoc___test.html", "class_javadoc___test" ],
-    [ "Memgrp_Test", "class_memgrp___test.html", "class_memgrp___test" ],
-    [ "Overload_Test", "class_overload___test.html", "class_overload___test" ],
-    [ "Par_Test", "class_par___test.html", null ],
-    [ "QTstyle_Test", "class_q_tstyle___test.html", "class_q_tstyle___test" ],
-    [ "SomeNiceClass", "class_some_nice_class.html", null ],
-    [ "String", "class_string.html", "class_string" ],
-    [ "Tag", "class_tag.html", "class_tag" ],
-    [ "Test", "class_test.html", "class_test" ],
-    [ "Test< T * >", "class_test_3_01_t_01_5_01_4.html", "class_test_3_01_t_01_5_01_4" ],
-    [ "Test< void *, 200 >", "class_test_3_01void_01_5_00_01200_01_4.html", "class_test_3_01void_01_5_00_01200_01_4" ]
+    ] ]
 ];
