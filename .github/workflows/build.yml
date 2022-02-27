@@ -219,8 +219,10 @@ jobs:
       run: ctest -C Release --parallel $(nproc) ${{ env.CTEST_ARGS }}
 
     - name: Download doxygen
-      working-directory: ${{ runner.workspace }}/doxygen
+      working-directory: ${{ runner.workspace }}
       run: |
+        cmake -E make_directory doxygen &&\
+        cd doxygen &&\
         wget --quiet https://www.doxygen.nl/files/doxygen-1.9.3.linux.bin.tar.gz &&\
         tar xf doxygen-1.9.3.linux.bin.tar.gz --strip-components=1
 
@@ -235,7 +237,9 @@ jobs:
       run: ctest -C Release --parallel $(nproc) ${{ env.CTEST_ARGS }}
 
     - name: Run doxygen
-      run: cmake --build ${{ github.workspace }}/build-12 --config Release --target asio-grpc-doxygen
+      run: |
+        cmake -E rm -r ${{ github.workspace }}/docs &&\
+        cmake --build ${{ github.workspace }}/build-12 --config Release --target asio-grpc-doxygen
 
     - name: Push doxygen changes
       run: |

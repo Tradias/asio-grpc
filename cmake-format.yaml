@@ -14,6 +14,9 @@ additional_commands:
   doctest_discover_tests:
     kwargs:
       ADD_LABELS: '1'
+  doxygen_add_docs:
+    kwargs:
+      WORKING_DIRECTORY: '1'
 always_wrap: []
 command_case: lower
 dangle_parens: false

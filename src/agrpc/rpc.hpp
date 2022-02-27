@@ -1311,6 +1311,8 @@ struct SendInitialMetadataFn
      *
      * @snippet server.cpp send_initial_metadata-unary-server-side
      *
+     * @param responder `grpc::ServerAsyncResponseWriter`, `grpc::ServerAsyncReader`, `grpc::ServerAsyncWriter` or
+     * `grpc::ServerAsyncReaderWriter`
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
      * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
@@ -1354,6 +1356,8 @@ struct ReadInitialMetadataFn
      *
      * @snippet client.cpp read_initial_metadata-unary-client-side
      *
+     * @param responder `grpc::ClientAsyncResponseReader`, `grpc::ClientAsyncReader`, `grpc::ClientAsyncWriter` or
+     * `grpc::ClientAsyncReaderWriter`
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. `true` indicates that the metadata was read, `false` when the call is
      * dead.
