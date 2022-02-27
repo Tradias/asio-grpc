@@ -63,7 +63,7 @@ jobs:
         vcpkgTriplet: ${{ matrix.config.triplet }}
         vcpkgArguments: --overlay-ports=${{ github.workspace }}/deps ${{ env.VCPKG_ARGUMENTS }}
 
-    - if: matrix.config.os == 'windows-2019' 
+    - if: matrix.config.triplet == 'x64-windows' 
       name: Initialize CodeQL
       uses: github/codeql-action/init@v1
       with:
@@ -80,7 +80,7 @@ jobs:
       working-directory: ${{ github.workspace }}/build
       run: ctest -C ${{ matrix.config.config }} --parallel 2 ${{ env.CTEST_ARGS }}
 
-    - if: matrix.config.os == 'windows-2019' 
+    - if: matrix.config.triplet == 'x64-windows' 
       name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
 
