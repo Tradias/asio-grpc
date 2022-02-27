@@ -1,8 +1,7 @@
 var searchData=
 [
-  ['wait_0',['wait',['../namespaceagrpc.html#a3a4e32ff60d8f9bd8c8c68e42be959c1',1,'agrpc']]],
-  ['write_1',['write',['../namespaceagrpc.html#a5e79b992afde93ce78e966a8e4cf93c1',1,'agrpc']]],
-  ['write_5fand_5ffinish_2',['write_and_finish',['../namespaceagrpc.html#aab88b35702357c55ec96addf9c32edcd',1,'agrpc']]],
-  ['write_5flast_3',['write_last',['../namespaceagrpc.html#a6f40531d4e75e86db3bddf7730bd7029',1,'agrpc']]],
-  ['writes_5fdone_4',['writes_done',['../namespaceagrpc.html#a3cd7bc6b5bd62059ddcfae73bab277b6',1,'agrpc']]]
+  ['read_0',['read',['../namespaceagrpc.html#a685510388ab87c9a90c44f880e9de9cd',1,'agrpc']]],
+  ['read_5finitial_5fmetadata_1',['read_initial_metadata',['../namespaceagrpc.html#adfb175feaf15d5c970f73b4885eeaf72',1,'agrpc']]],
+  ['repeatedly_5frequest_2',['repeatedly_request',['../namespaceagrpc.html#ace37792785c92502711e61d9e9a5ff2d',1,'agrpc']]],
+  ['request_3',['request',['../namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08',1,'agrpc']]]
 ];

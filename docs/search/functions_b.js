@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['work_5ffinished_0',['work_finished',['../classagrpc_1_1_grpc_context.html#a9f89631518b2d38dbe0be11f7d5a4cc6',1,'agrpc::GrpcContext']]],
-  ['work_5fstarted_1',['work_started',['../classagrpc_1_1_grpc_context.html#ada19710c265c3a1e9cbffb696d079fbb',1,'agrpc::GrpcContext']]]
+  ['qtstyle_5ftest_0',['QTstyle_Test',['../class_q_tstyle___test.html#a14a296ea4e2ad446712f2310bec60766',1,'QTstyle_Test']]],
+  ['query_1',['query',['../classagrpc_1_1_basic_grpc_executor.html#a8fc182f74b1dbdb768671ec3e78f4df1',1,'agrpc::BasicGrpcExecutor::query(asio::execution::blocking_t) noexcept'],['../classagrpc_1_1_basic_grpc_executor.html#a7549f8cf2b5464b09acb21baf6806762',1,'agrpc::BasicGrpcExecutor::query(asio::execution::mapping_t) noexcept'],['../classagrpc_1_1_basic_grpc_executor.html#a41de4c176cc36e18949f590323cfbae1',1,'agrpc::BasicGrpcExecutor::query(asio::execution::context_t) const noexcept'],['../classagrpc_1_1_basic_grpc_executor.html#a4370da56cf9a7bca7cf256d9916b7fe0',1,'agrpc::BasicGrpcExecutor::query(asio::execution::relationship_t) noexcept'],['../classagrpc_1_1_basic_grpc_executor.html#abcc592f6e24d130c78690d6081269dfd',1,'agrpc::BasicGrpcExecutor::query(asio::execution::outstanding_work_t) noexcept'],['../classagrpc_1_1_basic_grpc_executor.html#a3864da8461ae1579a14bb20af274d8c5',1,'agrpc::BasicGrpcExecutor::query(asio::execution::allocator_t&lt; OtherAllocator &gt;) const noexcept']]]
 ];

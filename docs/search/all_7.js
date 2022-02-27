@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['is_5fstopped_0',['is_stopped',['../classagrpc_1_1_grpc_context.html#af71bfc1a827acb00e275161f189ea151',1,'agrpc::GrpcContext']]]
+  ['handler_0',['handler',['../class_javadoc___test.html#ace81a523a4eef44501a841a6d338832b',1,'Javadoc_Test::handler()'],['../class_q_tstyle___test.html#a79dd4e5498f09057775a819d911349e2',1,'QTstyle_Test::handler()']]]
 ];
