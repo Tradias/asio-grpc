@@ -35,8 +35,8 @@ jobs:
       matrix:
         config:
           - {
-            name: 'Windows/2022/MSVC-19.30.30706.0',
-            os: windows-2022,
+            name: 'Windows/2019/MSVC-19.29',
+            os: windows-2019,
             config: Release,
             triplet: x64-windows,
             cmake-extra-args: '',
