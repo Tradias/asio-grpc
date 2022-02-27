@@ -95,11 +95,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::submit with allocat
     asio::execution::submit(asio::execution::schedule(get_executor()),
                             test::FunctionAsReceiver{[] {}, get_allocator()});
     grpc_context.run();
-    CHECK(std::any_of(buffer.begin(), buffer.end(),
-                      [](auto&& value)
-                      {
-                          return value != std::byte{};
-                      }));
+    CHECK(allocator_has_been_used());
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::execution connect and start Alarm")
@@ -175,11 +171,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "wait for Alarm with allocator")
                        co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::pmr::GRPC_USE_AWAITABLE);
                    });
     grpc_context.run();
-    CHECK(std::any_of(buffer.begin(), buffer.end(),
-                      [](auto&& value)
-                      {
-                          return value != std::byte{};
-                      }));
+    CHECK(allocator_has_been_used());
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "wait for Alarm with asio::awaitable<>")
