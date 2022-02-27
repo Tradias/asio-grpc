@@ -29,7 +29,7 @@
   <td id="projectalign">
    <div id="projectname">asio-grpc<span id="projectnumber">&#160;v1.4.0</span>
    </div>
-   <div id="projectbrief">Asynchronous gRPC using Boost.Asio&#39;s executor model</div>
+   <div id="projectbrief">Asynchronous gRPC with Asio/unified executors</div>
   </td>
  </tr>
  </tbody>
@@ -150,7 +150,7 @@ Public Member Functions</h2></td></tr>
 <div class="line">                                    server_context, reader, asio::bind_executor(grpc_context, asio::use_awaitable));</div>
 <div class="line">        },</div>
 <div class="line">        asio::detached);</div>
-<div class="ttc" id="anamespaceagrpc_html_a4a11653afb11f9486e4e3db0136a3e08"><div class="ttname"><a href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">agrpc::request</a></div><div class="ttdeci">constexpr detail::RequestFn request</div><div class="ttdoc">Start a new RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1378</div></div>
+<div class="ttc" id="anamespaceagrpc_html_a4a11653afb11f9486e4e3db0136a3e08"><div class="ttname"><a href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">agrpc::request</a></div><div class="ttdeci">constexpr detail::RequestFn request</div><div class="ttdoc">Start a new RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1382</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a276b7f442c32ad9df731f8f4a6eb2857" name="a276b7f442c32ad9df731f8f4a6eb2857"></a>
@@ -194,9 +194,10 @@ template&lt;class Responder , class CompletionToken  = agrpc::DefaultCompletionT
 <p >This call is optional, but if it is used, it cannot be used concurrently with or after the Finish method.</p>
 <p >Example:</p>
 <div class="fragment"><div class="line">    <span class="keywordtype">bool</span> send_ok = <span class="keyword">co_await</span> <a class="code hl_variable" href="namespaceagrpc.html#a3aba46c16048e438aef48a67d551d77a">agrpc::send_initial_metadata</a>(writer, asio::use_awaitable);</div>
-<div class="ttc" id="anamespaceagrpc_html_a3aba46c16048e438aef48a67d551d77a"><div class="ttname"><a href="namespaceagrpc.html#a3aba46c16048e438aef48a67d551d77a">agrpc::send_initial_metadata</a></div><div class="ttdeci">constexpr detail::SendInitialMetadataFn send_initial_metadata</div><div class="ttdoc">Send initial metadata for a RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1450</div></div>
+<div class="ttc" id="anamespaceagrpc_html_a3aba46c16048e438aef48a67d551d77a"><div class="ttname"><a href="namespaceagrpc.html#a3aba46c16048e438aef48a67d551d77a">agrpc::send_initial_metadata</a></div><div class="ttdeci">constexpr detail::SendInitialMetadataFn send_initial_metadata</div><div class="ttdoc">Send initial metadata for a RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1454</div></div>
 </div><!-- fragment --><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
+    <tr><td class="paramname">responder</td><td><code>grpc::ServerAsyncResponseWriter</code>, <code>grpc::ServerAsyncReader</code>, <code>grpc::ServerAsyncWriter</code> or <code>grpc::ServerAsyncReaderWriter</code> </td></tr>
     <tr><td class="paramname">token</td><td>A completion token like <code>asio::yield_context</code> or the one created by <code><a class="el" href="namespaceagrpc.html#a35d42ccb3fa5adce6b5c045a275dafa9" title="Create sender completion token.">agrpc::use_sender</a></code>. The completion signature is <code>void(bool)</code>. <code>true</code> means that the data/metadata/status/etc is going to go to the wire. If it is <code>false</code>, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired, other side dropped the channel, etc). </td></tr>
   </table>
   </dd>
