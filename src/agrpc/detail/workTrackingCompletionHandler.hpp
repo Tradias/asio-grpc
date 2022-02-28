@@ -53,9 +53,6 @@ class WorkTrackingCompletionHandler
   public:
     using executor_type = asio::associated_executor_t<CompletionHandler>;
     using allocator_type = asio::associated_allocator_t<CompletionHandler>;
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-    using cancellation_slot = asio::associated_cancellation_slot_t<CompletionHandler>;
-#endif
 
   private:
     using WorkTracker = detail::AssociatedWorkTrackingExecutor<CompletionHandler>;
@@ -73,30 +70,26 @@ class WorkTrackingCompletionHandler
     {
     }
 
+    [[nodiscard]] auto& completion_handler() noexcept { return static_cast<const Base2*>(this)->get(); }
+
+    [[nodiscard]] auto& completion_handler() const noexcept { return static_cast<const Base2*>(this)->get(); }
+
     template <class... Args>
     void operator()(Args&&... args) &&
     {
-        WorkTrackingCompletionHandler::complete(std::move(static_cast<Base1*>(this)->get()),
-                                                std::move(static_cast<Base2*>(this)->get()),
+        WorkTrackingCompletionHandler::complete(std::move(static_cast<Base1*>(this)->get()), this->completion_handler(),
                                                 std::forward<Args>(args)...);
     }
 
     [[nodiscard]] executor_type get_executor() const noexcept
     {
-        return asio::get_associated_executor(static_cast<const Base2*>(this)->get());
+        return asio::get_associated_executor(this->completion_handler());
     }
 
     [[nodiscard]] allocator_type get_allocator() const noexcept
     {
-        return asio::get_associated_allocator(static_cast<const Base2*>(this)->get());
+        return asio::get_associated_allocator(this->completion_handler());
     }
-
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-    [[nodiscard]] cancellation_slot get_cancellation_slot() const noexcept
-    {
-        return asio::get_associated_cancellation_slot(static_cast<const Base2*>(this)->get());
-    }
-#endif
 
   private:
     static constexpr decltype(auto) create_work_tracker(CompletionHandler& completion_handler) noexcept
@@ -130,5 +123,23 @@ class WorkTrackingCompletionHandler
 }
 
 AGRPC_NAMESPACE_END
+
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+AGRPC_ASIO_NAMESPACE_BEGIN()
+
+template <template <class, class> class Associator, class CompletionHandler, class DefaultCandidate>
+struct associator<Associator, agrpc::detail::WorkTrackingCompletionHandler<CompletionHandler>, DefaultCandidate>
+{
+    using type = typename Associator<CompletionHandler, DefaultCandidate>::type;
+
+    static type get(const agrpc::detail::WorkTrackingCompletionHandler<CompletionHandler>& b,
+                    const DefaultCandidate& c = DefaultCandidate()) noexcept
+    {
+        return Associator<CompletionHandler, DefaultCandidate>::get(b.completion_handler(), c);
+    }
+};
+
+AGRPC_ASIO_NAMESPACE_END
+#endif
 
 #endif  // AGRPC_DETAIL_WORKTRACKINGCOMPLETIONHANDLER_HPP

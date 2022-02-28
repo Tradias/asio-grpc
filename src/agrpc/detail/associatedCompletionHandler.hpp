@@ -31,52 +31,64 @@ class AssociatedCompletionHandler
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     using executor_type = asio::associated_executor_t<CompletionHandler>;
     using allocator_type = asio::associated_allocator_t<CompletionHandler>;
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-    using cancellation_slot = asio::associated_cancellation_slot_t<CompletionHandler>;
-#endif
 #endif
 
     template <class... Args>
-    explicit AssociatedCompletionHandler(Args&&... args) : completion_handler(std::forward<Args>(args)...)
+    explicit AssociatedCompletionHandler(Args&&... args) : completion_handler_(std::forward<Args>(args)...)
     {
     }
+
+    [[nodiscard]] auto& completion_handler() noexcept { return completion_handler_; }
+
+    [[nodiscard]] auto& completion_handler() const noexcept { return completion_handler_; }
 
     template <class... Args>
     decltype(auto) operator()(Args&&... args) &&
     {
-        return std::move(this->completion_handler)(std::forward<Args>(args)...);
+        return std::move(this->completion_handler_)(std::forward<Args>(args)...);
     }
 
     template <class... Args>
     decltype(auto) operator()(Args&&... args) const&
     {
-        return this->completion_handler(std::forward<Args>(args)...);
+        return this->completion_handler_(std::forward<Args>(args)...);
     }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     [[nodiscard]] executor_type get_executor() const noexcept
     {
-        return asio::get_associated_executor(this->completion_handler);
+        return asio::get_associated_executor(this->completion_handler_);
     }
 
     [[nodiscard]] allocator_type get_allocator() const noexcept
     {
-        return asio::get_associated_allocator(this->completion_handler);
+        return asio::get_associated_allocator(this->completion_handler_);
     }
-
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-    [[nodiscard]] cancellation_slot get_cancellation_slot() const noexcept
-    {
-        return asio::get_associated_cancellation_slot(this->completion_handler);
-    }
-#endif
 #endif
 
   private:
-    CompletionHandler completion_handler;
+    CompletionHandler completion_handler_;
 };
 }
 
 AGRPC_NAMESPACE_END
+
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+AGRPC_ASIO_NAMESPACE_BEGIN()
+
+template <template <class, class> class Associator, class CompletionHandler, class DefaultCandidate>
+struct associator<Associator, agrpc::detail::AssociatedCompletionHandler<CompletionHandler>, DefaultCandidate>
+{
+    using type = typename Associator<CompletionHandler, DefaultCandidate>::type;
+
+    static type get(const agrpc::detail::AssociatedCompletionHandler<CompletionHandler>& b,
+                    const DefaultCandidate& c = DefaultCandidate()) noexcept
+    {
+        return Associator<CompletionHandler, DefaultCandidate>::get(b.completion_handler(), c);
+    }
+};
+
+AGRPC_ASIO_NAMESPACE_END
+#endif
 
 #endif  // AGRPC_DETAIL_ASSOCIATEDCOMPLETIONHANDLER_HPP

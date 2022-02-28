@@ -37,17 +37,14 @@ using DefaultCompletionToken = detail::DefaultCompletionTokenNotAvailable;
 AGRPC_NAMESPACE_END
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-#if defined(AGRPC_STANDALONE_ASIO)
-namespace asio
-#elif defined(AGRPC_BOOST_ASIO)
-namespace boost::asio
-#endif
-{
+AGRPC_ASIO_NAMESPACE_BEGIN()
+
 template <class Signature>
 class async_result<::agrpc::detail::DefaultCompletionTokenNotAvailable, Signature>
 {
 };
-}
+
+AGRPC_ASIO_NAMESPACE_END
 #endif
 
 #endif  // AGRPC_DETAIL_DEFAULTCOMPLETIONTOKEN_HPP
