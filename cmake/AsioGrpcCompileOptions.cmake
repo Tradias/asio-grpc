@@ -29,8 +29,19 @@ endif()
 
 target_compile_options(
     asio-grpc-common-compile-options
-    INTERFACE $<$<CXX_COMPILER_ID:MSVC>:/W4 /permissive-> $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra
-              -pedantic-errors> $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-self-move>)
+    INTERFACE $<$<CXX_COMPILER_ID:MSVC>:/W4
+              /permissive-
+              /Zc:preprocessor
+              /Zc:__cplusplus
+              /Zc:inline
+              /Zc:externConstexpr
+              /Zc:lambda
+              /Zc:sizedDealloc
+              /Zc:throwingNew>
+              $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall
+              -Wextra
+              -pedantic-errors>
+              $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-self-move>)
 
 if(CMAKE_GENERATOR STRGREATER_EQUAL "Visual Studio")
     target_compile_options(asio-grpc-common-compile-options INTERFACE /MP)
