@@ -107,38 +107,38 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a40b79d0ebe2733239226dc56a9222941"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_request_fn.html#a40b79d0ebe2733239226dc56a9222941">operator()</a> (detail::ServerSingleArgRequest&lt; RPC, Responder &gt; rpc, Service &amp;service, grpc::ServerContext &amp;server_context, Responder &amp;responder, CompletionToken &amp;&amp;token={}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN&lt; CompletionToken &gt;)</td></tr>
 <tr class="memdesc:a40b79d0ebe2733239226dc56a9222941"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait for a client-streaming or bidirectional-streaming RPC request from a client.  <a href="structagrpc_1_1detail_1_1_request_fn.html#a40b79d0ebe2733239226dc56a9222941">More...</a><br /></td></tr>
 <tr class="separator:a40b79d0ebe2733239226dc56a9222941"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6a4d0eb0fd3658017658e86ee1330ae3"><td class="memTemplParams" colspan="2">template&lt;class RPC , class Stub , class Request , class Reader , class Executor  = asio::any_io_executor&gt; </td></tr>
-<tr class="memitem:a6a4d0eb0fd3658017658e86ee1330ae3"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_request_fn.html#a6a4d0eb0fd3658017658e86ee1330ae3">operator()</a> (detail::ClientUnaryRequest&lt; RPC, Request, Reader &gt; rpc, Stub &amp;stub, grpc::ClientContext &amp;client_context, const Request &amp;<a class="el" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">request</a>, asio::use_awaitable_t&lt; Executor &gt; token={}) const -&gt; typename asio::async_result&lt; asio::use_awaitable_t&lt; Executor &gt;, void(Reader)&gt;::return_type</td></tr>
-<tr class="memdesc:a6a4d0eb0fd3658017658e86ee1330ae3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience function for starting a unary request.  <a href="structagrpc_1_1detail_1_1_request_fn.html#a6a4d0eb0fd3658017658e86ee1330ae3">More...</a><br /></td></tr>
-<tr class="separator:a6a4d0eb0fd3658017658e86ee1330ae3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad1dcf24e77c8dec67060b0ae9f197f1b"><td class="memTemplParams" colspan="2">template&lt;class RPC , class Stub , class Request , class Reader , class Executor  = asio::any_io_executor&gt; </td></tr>
-<tr class="memitem:ad1dcf24e77c8dec67060b0ae9f197f1b"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_request_fn.html#ad1dcf24e77c8dec67060b0ae9f197f1b">operator()</a> (detail::ClientUnaryRequest&lt; RPC, Request, Reader &gt; rpc, Stub &amp;stub, grpc::ClientContext &amp;client_context, const Request &amp;<a class="el" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">request</a>, Reader &amp;reader, asio::use_awaitable_t&lt; Executor &gt; token={}) const -&gt; typename asio::async_result&lt; asio::use_awaitable_t&lt; Executor &gt;, void()&gt;::return_type</td></tr>
-<tr class="memdesc:ad1dcf24e77c8dec67060b0ae9f197f1b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience function for starting a unary request.  <a href="structagrpc_1_1detail_1_1_request_fn.html#ad1dcf24e77c8dec67060b0ae9f197f1b">More...</a><br /></td></tr>
-<tr class="separator:ad1dcf24e77c8dec67060b0ae9f197f1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa61f76219cd003a8b9a13ba85aba57c2"><td class="memTemplParams" colspan="2">template&lt;class RPC , class Stub , class Request , class Reader , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </td></tr>
-<tr class="memitem:aa61f76219cd003a8b9a13ba85aba57c2"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_request_fn.html#aa61f76219cd003a8b9a13ba85aba57c2">operator()</a> (detail::ClientServerStreamingRequest&lt; RPC, Request, Reader &gt; rpc, Stub &amp;stub, grpc::ClientContext &amp;client_context, const Request &amp;<a class="el" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">request</a>, CompletionToken &amp;&amp;token={}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN&lt; CompletionToken &gt;)</td></tr>
-<tr class="memdesc:aa61f76219cd003a8b9a13ba85aba57c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience function for starting a server-streaming request.  <a href="structagrpc_1_1detail_1_1_request_fn.html#aa61f76219cd003a8b9a13ba85aba57c2">More...</a><br /></td></tr>
-<tr class="separator:aa61f76219cd003a8b9a13ba85aba57c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a47f58d2a46ea3d83ef42f4d402fdcd54"><td class="memTemplParams" colspan="2">template&lt;class RPC , class Stub , class Request , class Reader , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </td></tr>
-<tr class="memitem:a47f58d2a46ea3d83ef42f4d402fdcd54"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_request_fn.html#a47f58d2a46ea3d83ef42f4d402fdcd54">operator()</a> (detail::ClientServerStreamingRequest&lt; RPC, Request, Reader &gt; rpc, Stub &amp;stub, grpc::ClientContext &amp;client_context, const Request &amp;<a class="el" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">request</a>, Reader &amp;reader, CompletionToken &amp;&amp;token={}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN&lt; CompletionToken &gt;)</td></tr>
-<tr class="memdesc:a47f58d2a46ea3d83ef42f4d402fdcd54"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start a server-streaming request.  <a href="structagrpc_1_1detail_1_1_request_fn.html#a47f58d2a46ea3d83ef42f4d402fdcd54">More...</a><br /></td></tr>
-<tr class="separator:a47f58d2a46ea3d83ef42f4d402fdcd54"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adb3d3957d396faea6680fac686ead06c"><td class="memTemplParams" colspan="2">template&lt;class RPC , class Stub , class Writer , class Response , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </td></tr>
-<tr class="memitem:adb3d3957d396faea6680fac686ead06c"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_request_fn.html#adb3d3957d396faea6680fac686ead06c">operator()</a> (detail::ClientClientStreamingRequest&lt; RPC, Writer, Response &gt; rpc, Stub &amp;stub, grpc::ClientContext &amp;client_context, Response &amp;response, CompletionToken &amp;&amp;token={}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN&lt; CompletionToken &gt;)</td></tr>
-<tr class="memdesc:adb3d3957d396faea6680fac686ead06c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience function for starting a client-streaming request.  <a href="structagrpc_1_1detail_1_1_request_fn.html#adb3d3957d396faea6680fac686ead06c">More...</a><br /></td></tr>
-<tr class="separator:adb3d3957d396faea6680fac686ead06c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4daf22d15601eabb6ae1c6aec2627c68"><td class="memTemplParams" colspan="2">template&lt;class RPC , class Stub , class Writer , class Response , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </td></tr>
-<tr class="memitem:a4daf22d15601eabb6ae1c6aec2627c68"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_request_fn.html#a4daf22d15601eabb6ae1c6aec2627c68">operator()</a> (detail::ClientClientStreamingRequest&lt; RPC, Writer, Response &gt; rpc, Stub &amp;stub, grpc::ClientContext &amp;client_context, Writer &amp;writer, Response &amp;response, CompletionToken &amp;&amp;token={}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN&lt; CompletionToken &gt;)</td></tr>
-<tr class="memdesc:a4daf22d15601eabb6ae1c6aec2627c68"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start a client-streaming request.  <a href="structagrpc_1_1detail_1_1_request_fn.html#a4daf22d15601eabb6ae1c6aec2627c68">More...</a><br /></td></tr>
-<tr class="separator:a4daf22d15601eabb6ae1c6aec2627c68"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7bea527a167544b92ddefeb787c864a9"><td class="memTemplParams" colspan="2">template&lt;class RPC , class Stub , class ReaderWriter , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </td></tr>
-<tr class="memitem:a7bea527a167544b92ddefeb787c864a9"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_request_fn.html#a7bea527a167544b92ddefeb787c864a9">operator()</a> (detail::ClientBidirectionalStreamingRequest&lt; RPC, ReaderWriter &gt; rpc, Stub &amp;stub, grpc::ClientContext &amp;client_context, CompletionToken &amp;&amp;token={}) const</td></tr>
-<tr class="memdesc:a7bea527a167544b92ddefeb787c864a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience function for starting a bidirectional-streaming request.  <a href="structagrpc_1_1detail_1_1_request_fn.html#a7bea527a167544b92ddefeb787c864a9">More...</a><br /></td></tr>
-<tr class="separator:a7bea527a167544b92ddefeb787c864a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a51dbeb9fbd2b908c5fce9abe38001373"><td class="memTemplParams" colspan="2">template&lt;class RPC , class Stub , class ReaderWriter , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </td></tr>
-<tr class="memitem:a51dbeb9fbd2b908c5fce9abe38001373"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_request_fn.html#a51dbeb9fbd2b908c5fce9abe38001373">operator()</a> (detail::ClientBidirectionalStreamingRequest&lt; RPC, ReaderWriter &gt; rpc, Stub &amp;stub, grpc::ClientContext &amp;client_context, ReaderWriter &amp;reader_writer, CompletionToken &amp;&amp;token={}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN&lt; CompletionToken &gt;)</td></tr>
-<tr class="memdesc:a51dbeb9fbd2b908c5fce9abe38001373"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start a bidirectional-streaming request.  <a href="structagrpc_1_1detail_1_1_request_fn.html#a51dbeb9fbd2b908c5fce9abe38001373">More...</a><br /></td></tr>
-<tr class="separator:a51dbeb9fbd2b908c5fce9abe38001373"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1033698af3d6f1f47c3b94eef81f57cb"><td class="memTemplParams" colspan="2">template&lt;class Stub , class Request , class Response , class Executor  = asio::any_io_executor&gt; </td></tr>
+<tr class="memitem:a1033698af3d6f1f47c3b94eef81f57cb"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_request_fn.html#a1033698af3d6f1f47c3b94eef81f57cb">operator()</a> (detail::ClientUnaryRequest&lt; Stub, Request, Response &gt; rpc, Stub &amp;stub, grpc::ClientContext &amp;client_context, const Request &amp;<a class="el" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">request</a>, asio::use_awaitable_t&lt; Executor &gt; token={}) const -&gt; typename asio::async_result&lt; asio::use_awaitable_t&lt; Executor &gt;, void(std::unique_ptr&lt; grpc::ClientAsyncResponseReader&lt; Response &gt; &gt;)&gt;::return_type</td></tr>
+<tr class="memdesc:a1033698af3d6f1f47c3b94eef81f57cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience function for starting a unary request.  <a href="structagrpc_1_1detail_1_1_request_fn.html#a1033698af3d6f1f47c3b94eef81f57cb">More...</a><br /></td></tr>
+<tr class="separator:a1033698af3d6f1f47c3b94eef81f57cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4f817f6c3d2dbb091d3297d5e7bc0f5f"><td class="memTemplParams" colspan="2">template&lt;class Stub , class Request , class Response , class Executor  = asio::any_io_executor&gt; </td></tr>
+<tr class="memitem:a4f817f6c3d2dbb091d3297d5e7bc0f5f"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_request_fn.html#a4f817f6c3d2dbb091d3297d5e7bc0f5f">operator()</a> (detail::ClientUnaryRequest&lt; Stub, Request, Response &gt; rpc, Stub &amp;stub, grpc::ClientContext &amp;client_context, const Request &amp;<a class="el" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">request</a>, std::unique_ptr&lt; grpc::ClientAsyncResponseReader&lt; Response &gt; &gt; &amp;reader, asio::use_awaitable_t&lt; Executor &gt; token={}) const -&gt; typename asio::async_result&lt; asio::use_awaitable_t&lt; Executor &gt;, void()&gt;::return_type</td></tr>
+<tr class="memdesc:a4f817f6c3d2dbb091d3297d5e7bc0f5f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience function for starting a unary request.  <a href="structagrpc_1_1detail_1_1_request_fn.html#a4f817f6c3d2dbb091d3297d5e7bc0f5f">More...</a><br /></td></tr>
+<tr class="separator:a4f817f6c3d2dbb091d3297d5e7bc0f5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1f8f4ade9643cd886a7eb5bde62b9683"><td class="memTemplParams" colspan="2">template&lt;class Stub , class Request , class Response , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </td></tr>
+<tr class="memitem:a1f8f4ade9643cd886a7eb5bde62b9683"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_request_fn.html#a1f8f4ade9643cd886a7eb5bde62b9683">operator()</a> (detail::ClientServerStreamingRequest&lt; Stub, Request, Response &gt; rpc, Stub &amp;stub, grpc::ClientContext &amp;client_context, const Request &amp;<a class="el" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">request</a>, CompletionToken &amp;&amp;token={}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN&lt; CompletionToken &gt;)</td></tr>
+<tr class="memdesc:a1f8f4ade9643cd886a7eb5bde62b9683"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience function for starting a server-streaming request.  <a href="structagrpc_1_1detail_1_1_request_fn.html#a1f8f4ade9643cd886a7eb5bde62b9683">More...</a><br /></td></tr>
+<tr class="separator:a1f8f4ade9643cd886a7eb5bde62b9683"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab500668651a057f055c7f7a2fc9b9558"><td class="memTemplParams" colspan="2">template&lt;class Stub , class Request , class Response , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </td></tr>
+<tr class="memitem:ab500668651a057f055c7f7a2fc9b9558"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_request_fn.html#ab500668651a057f055c7f7a2fc9b9558">operator()</a> (detail::ClientServerStreamingRequest&lt; Stub, Request, Response &gt; rpc, Stub &amp;stub, grpc::ClientContext &amp;client_context, const Request &amp;<a class="el" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">request</a>, std::unique_ptr&lt; grpc::ClientAsyncReader&lt; Response &gt; &gt; &amp;reader, CompletionToken &amp;&amp;token={}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN&lt; CompletionToken &gt;)</td></tr>
+<tr class="memdesc:ab500668651a057f055c7f7a2fc9b9558"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start a server-streaming request.  <a href="structagrpc_1_1detail_1_1_request_fn.html#ab500668651a057f055c7f7a2fc9b9558">More...</a><br /></td></tr>
+<tr class="separator:ab500668651a057f055c7f7a2fc9b9558"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a708b1d7ac20e26fdb909b5ac8d668e31"><td class="memTemplParams" colspan="2">template&lt;class Stub , class Request , class Response , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </td></tr>
+<tr class="memitem:a708b1d7ac20e26fdb909b5ac8d668e31"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_request_fn.html#a708b1d7ac20e26fdb909b5ac8d668e31">operator()</a> (detail::ClientClientStreamingRequest&lt; Stub, Request, Response &gt; rpc, Stub &amp;stub, grpc::ClientContext &amp;client_context, Response &amp;response, CompletionToken &amp;&amp;token={}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN&lt; CompletionToken &gt;)</td></tr>
+<tr class="memdesc:a708b1d7ac20e26fdb909b5ac8d668e31"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience function for starting a client-streaming request.  <a href="structagrpc_1_1detail_1_1_request_fn.html#a708b1d7ac20e26fdb909b5ac8d668e31">More...</a><br /></td></tr>
+<tr class="separator:a708b1d7ac20e26fdb909b5ac8d668e31"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6b1a54569902ef4f02d9ec53db822306"><td class="memTemplParams" colspan="2">template&lt;class Stub , class Request , class Response , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </td></tr>
+<tr class="memitem:a6b1a54569902ef4f02d9ec53db822306"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_request_fn.html#a6b1a54569902ef4f02d9ec53db822306">operator()</a> (detail::ClientClientStreamingRequest&lt; Stub, Request, Response &gt; rpc, Stub &amp;stub, grpc::ClientContext &amp;client_context, std::unique_ptr&lt; grpc::ClientAsyncWriter&lt; Request &gt; &gt; &amp;writer, Response &amp;response, CompletionToken &amp;&amp;token={}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN&lt; CompletionToken &gt;)</td></tr>
+<tr class="memdesc:a6b1a54569902ef4f02d9ec53db822306"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start a client-streaming request.  <a href="structagrpc_1_1detail_1_1_request_fn.html#a6b1a54569902ef4f02d9ec53db822306">More...</a><br /></td></tr>
+<tr class="separator:a6b1a54569902ef4f02d9ec53db822306"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a711ad0c267a4302c519f4f1e8159ff55"><td class="memTemplParams" colspan="2">template&lt;class Stub , class Request , class Response , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </td></tr>
+<tr class="memitem:a711ad0c267a4302c519f4f1e8159ff55"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_request_fn.html#a711ad0c267a4302c519f4f1e8159ff55">operator()</a> (detail::ClientBidirectionalStreamingRequest&lt; Stub, Request, Response &gt; rpc, Stub &amp;stub, grpc::ClientContext &amp;client_context, CompletionToken &amp;&amp;token={}) const</td></tr>
+<tr class="memdesc:a711ad0c267a4302c519f4f1e8159ff55"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convenience function for starting a bidirectional-streaming request.  <a href="structagrpc_1_1detail_1_1_request_fn.html#a711ad0c267a4302c519f4f1e8159ff55">More...</a><br /></td></tr>
+<tr class="separator:a711ad0c267a4302c519f4f1e8159ff55"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a451583a8010d65447da7887bdc6ac535"><td class="memTemplParams" colspan="2">template&lt;class Stub , class Request , class Response , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </td></tr>
+<tr class="memitem:a451583a8010d65447da7887bdc6ac535"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_request_fn.html#a451583a8010d65447da7887bdc6ac535">operator()</a> (detail::ClientBidirectionalStreamingRequest&lt; Stub, Request, Response &gt; rpc, Stub &amp;stub, grpc::ClientContext &amp;client_context, std::unique_ptr&lt; grpc::ClientAsyncReaderWriter&lt; Request, Response &gt; &gt; &amp;reader_writer, CompletionToken &amp;&amp;token={}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN&lt; CompletionToken &gt;)</td></tr>
+<tr class="memdesc:a451583a8010d65447da7887bdc6ac535"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start a bidirectional-streaming request.  <a href="structagrpc_1_1detail_1_1_request_fn.html#a451583a8010d65447da7887bdc6ac535">More...</a><br /></td></tr>
+<tr class="separator:a451583a8010d65447da7887bdc6ac535"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >Client and server-side function object to start RPCs. </p>
@@ -186,16 +186,16 @@ Public Member Functions</h2></td></tr>
 <div class="line">                                    server_context, reader, asio::bind_executor(grpc_context, asio::use_awaitable));</div>
 <div class="line">        },</div>
 <div class="line">        asio::detached);</div>
-<div class="ttc" id="anamespaceagrpc_html_a4a11653afb11f9486e4e3db0136a3e08"><div class="ttname"><a href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">agrpc::request</a></div><div class="ttdeci">constexpr detail::RequestFn request</div><div class="ttdoc">Start a new RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1382</div></div>
+<div class="ttc" id="anamespaceagrpc_html_a4a11653afb11f9486e4e3db0136a3e08"><div class="ttname"><a href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">agrpc::request</a></div><div class="ttdeci">constexpr detail::RequestFn request</div><div class="ttdoc">Start a new RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1383</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="a7bea527a167544b92ddefeb787c864a9" name="a7bea527a167544b92ddefeb787c864a9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7bea527a167544b92ddefeb787c864a9">&#9670;&nbsp;</a></span>operator()() <span class="overload">[1/10]</span></h2>
+<a id="a711ad0c267a4302c519f4f1e8159ff55" name="a711ad0c267a4302c519f4f1e8159ff55"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a711ad0c267a4302c519f4f1e8159ff55">&#9670;&nbsp;</a></span>operator()() <span class="overload">[1/10]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class RPC , class Stub , class ReaderWriter , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </div>
+template&lt;class Stub , class Request , class Response , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -203,7 +203,7 @@ template&lt;class RPC , class Stub , class ReaderWriter , class CompletionToken 
         <tr>
           <td class="memname">auto agrpc::detail::RequestFn::operator() </td>
           <td>(</td>
-          <td class="paramtype">detail::ClientBidirectionalStreamingRequest&lt; RPC, ReaderWriter &gt;&#160;</td>
+          <td class="paramtype">detail::ClientBidirectionalStreamingRequest&lt; Stub, Request, Response &gt;&#160;</td>
           <td class="paramname"><em>rpc</em>, </td>
         </tr>
         <tr>
@@ -255,13 +255,13 @@ CompletionToken&amp;&amp;)</code></p>
 
 </div>
 </div>
-<a id="a51dbeb9fbd2b908c5fce9abe38001373" name="a51dbeb9fbd2b908c5fce9abe38001373"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a51dbeb9fbd2b908c5fce9abe38001373">&#9670;&nbsp;</a></span>operator()() <span class="overload">[2/10]</span></h2>
+<a id="a451583a8010d65447da7887bdc6ac535" name="a451583a8010d65447da7887bdc6ac535"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a451583a8010d65447da7887bdc6ac535">&#9670;&nbsp;</a></span>operator()() <span class="overload">[2/10]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class RPC , class Stub , class ReaderWriter , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </div>
+template&lt;class Stub , class Request , class Response , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -269,7 +269,7 @@ template&lt;class RPC , class Stub , class ReaderWriter , class CompletionToken 
         <tr>
           <td class="memname">auto agrpc::detail::RequestFn::operator() </td>
           <td>(</td>
-          <td class="paramtype">detail::ClientBidirectionalStreamingRequest&lt; RPC, ReaderWriter &gt;&#160;</td>
+          <td class="paramtype">detail::ClientBidirectionalStreamingRequest&lt; Stub, Request, Response &gt;&#160;</td>
           <td class="paramname"><em>rpc</em>, </td>
         </tr>
         <tr>
@@ -287,7 +287,7 @@ template&lt;class RPC , class Stub , class ReaderWriter , class CompletionToken 
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">ReaderWriter &amp;&#160;</td>
+          <td class="paramtype">std::unique_ptr&lt; grpc::ClientAsyncReaderWriter&lt; Request, Response &gt; &gt; &amp;&#160;</td>
           <td class="paramname"><em>reader_writer</em>, </td>
         </tr>
         <tr>
@@ -332,13 +332,13 @@ template&lt;class RPC , class Stub , class ReaderWriter , class CompletionToken 
 
 </div>
 </div>
-<a id="adb3d3957d396faea6680fac686ead06c" name="adb3d3957d396faea6680fac686ead06c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#adb3d3957d396faea6680fac686ead06c">&#9670;&nbsp;</a></span>operator()() <span class="overload">[3/10]</span></h2>
+<a id="a708b1d7ac20e26fdb909b5ac8d668e31" name="a708b1d7ac20e26fdb909b5ac8d668e31"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a708b1d7ac20e26fdb909b5ac8d668e31">&#9670;&nbsp;</a></span>operator()() <span class="overload">[3/10]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class RPC , class Stub , class Writer , class Response , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </div>
+template&lt;class Stub , class Request , class Response , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -346,7 +346,7 @@ template&lt;class RPC , class Stub , class Writer , class Response , class Compl
         <tr>
           <td class="memname">auto agrpc::detail::RequestFn::operator() </td>
           <td>(</td>
-          <td class="paramtype">detail::ClientClientStreamingRequest&lt; RPC, Writer, Response &gt;&#160;</td>
+          <td class="paramtype">detail::ClientClientStreamingRequest&lt; Stub, Request, Response &gt;&#160;</td>
           <td class="paramname"><em>rpc</em>, </td>
         </tr>
         <tr>
@@ -405,13 +405,13 @@ CompletionToken&amp;&amp;)</code></p>
 
 </div>
 </div>
-<a id="a4daf22d15601eabb6ae1c6aec2627c68" name="a4daf22d15601eabb6ae1c6aec2627c68"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4daf22d15601eabb6ae1c6aec2627c68">&#9670;&nbsp;</a></span>operator()() <span class="overload">[4/10]</span></h2>
+<a id="a6b1a54569902ef4f02d9ec53db822306" name="a6b1a54569902ef4f02d9ec53db822306"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6b1a54569902ef4f02d9ec53db822306">&#9670;&nbsp;</a></span>operator()() <span class="overload">[4/10]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class RPC , class Stub , class Writer , class Response , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </div>
+template&lt;class Stub , class Request , class Response , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -419,7 +419,7 @@ template&lt;class RPC , class Stub , class Writer , class Response , class Compl
         <tr>
           <td class="memname">auto agrpc::detail::RequestFn::operator() </td>
           <td>(</td>
-          <td class="paramtype">detail::ClientClientStreamingRequest&lt; RPC, Writer, Response &gt;&#160;</td>
+          <td class="paramtype">detail::ClientClientStreamingRequest&lt; Stub, Request, Response &gt;&#160;</td>
           <td class="paramname"><em>rpc</em>, </td>
         </tr>
         <tr>
@@ -437,7 +437,7 @@ template&lt;class RPC , class Stub , class Writer , class Response , class Compl
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">Writer &amp;&#160;</td>
+          <td class="paramtype">std::unique_ptr&lt; grpc::ClientAsyncWriter&lt; Request &gt; &gt; &amp;&#160;</td>
           <td class="paramname"><em>writer</em>, </td>
         </tr>
         <tr>
@@ -489,13 +489,13 @@ template&lt;class RPC , class Stub , class Writer , class Response , class Compl
 
 </div>
 </div>
-<a id="aa61f76219cd003a8b9a13ba85aba57c2" name="aa61f76219cd003a8b9a13ba85aba57c2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa61f76219cd003a8b9a13ba85aba57c2">&#9670;&nbsp;</a></span>operator()() <span class="overload">[5/10]</span></h2>
+<a id="a1f8f4ade9643cd886a7eb5bde62b9683" name="a1f8f4ade9643cd886a7eb5bde62b9683"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1f8f4ade9643cd886a7eb5bde62b9683">&#9670;&nbsp;</a></span>operator()() <span class="overload">[5/10]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class RPC , class Stub , class Request , class Reader , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </div>
+template&lt;class Stub , class Request , class Response , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -503,7 +503,7 @@ template&lt;class RPC , class Stub , class Request , class Reader , class Comple
         <tr>
           <td class="memname">auto agrpc::detail::RequestFn::operator() </td>
           <td>(</td>
-          <td class="paramtype">detail::ClientServerStreamingRequest&lt; RPC, Request, Reader &gt;&#160;</td>
+          <td class="paramtype">detail::ClientServerStreamingRequest&lt; Stub, Request, Response &gt;&#160;</td>
           <td class="paramname"><em>rpc</em>, </td>
         </tr>
         <tr>
@@ -562,13 +562,13 @@ CompletionToken&amp;&amp;)</code></p>
 
 </div>
 </div>
-<a id="a47f58d2a46ea3d83ef42f4d402fdcd54" name="a47f58d2a46ea3d83ef42f4d402fdcd54"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a47f58d2a46ea3d83ef42f4d402fdcd54">&#9670;&nbsp;</a></span>operator()() <span class="overload">[6/10]</span></h2>
+<a id="ab500668651a057f055c7f7a2fc9b9558" name="ab500668651a057f055c7f7a2fc9b9558"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab500668651a057f055c7f7a2fc9b9558">&#9670;&nbsp;</a></span>operator()() <span class="overload">[6/10]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class RPC , class Stub , class Request , class Reader , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </div>
+template&lt;class Stub , class Request , class Response , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -576,7 +576,7 @@ template&lt;class RPC , class Stub , class Request , class Reader , class Comple
         <tr>
           <td class="memname">auto agrpc::detail::RequestFn::operator() </td>
           <td>(</td>
-          <td class="paramtype">detail::ClientServerStreamingRequest&lt; RPC, Request, Reader &gt;&#160;</td>
+          <td class="paramtype">detail::ClientServerStreamingRequest&lt; Stub, Request, Response &gt;&#160;</td>
           <td class="paramname"><em>rpc</em>, </td>
         </tr>
         <tr>
@@ -600,7 +600,7 @@ template&lt;class RPC , class Stub , class Request , class Reader , class Comple
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">Reader &amp;&#160;</td>
+          <td class="paramtype">std::unique_ptr&lt; grpc::ClientAsyncReader&lt; Response &gt; &gt; &amp;&#160;</td>
           <td class="paramname"><em>reader</em>, </td>
         </tr>
         <tr>
@@ -640,13 +640,13 @@ template&lt;class RPC , class Stub , class Request , class Reader , class Comple
 
 </div>
 </div>
-<a id="a6a4d0eb0fd3658017658e86ee1330ae3" name="a6a4d0eb0fd3658017658e86ee1330ae3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6a4d0eb0fd3658017658e86ee1330ae3">&#9670;&nbsp;</a></span>operator()() <span class="overload">[7/10]</span></h2>
+<a id="a1033698af3d6f1f47c3b94eef81f57cb" name="a1033698af3d6f1f47c3b94eef81f57cb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1033698af3d6f1f47c3b94eef81f57cb">&#9670;&nbsp;</a></span>operator()() <span class="overload">[7/10]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class RPC , class Stub , class Request , class Reader , class Executor  = asio::any_io_executor&gt; </div>
+template&lt;class Stub , class Request , class Response , class Executor  = asio::any_io_executor&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -654,7 +654,7 @@ template&lt;class RPC , class Stub , class Request , class Reader , class Execut
         <tr>
           <td class="memname">auto agrpc::detail::RequestFn::operator() </td>
           <td>(</td>
-          <td class="paramtype">detail::ClientUnaryRequest&lt; RPC, Request, Reader &gt;&#160;</td>
+          <td class="paramtype">detail::ClientUnaryRequest&lt; Stub, Request, Response &gt;&#160;</td>
           <td class="paramname"><em>rpc</em>, </td>
         </tr>
         <tr>
@@ -684,7 +684,8 @@ template&lt;class RPC , class Stub , class Request , class Reader , class Execut
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td> const -&gt; typename asio::async_result&lt;asio::use_awaitable_t&lt;Executor&gt;, void(Reader)&gt;::return_type
+          <td></td><td> const -&gt; typename asio::async_result&lt;asio::use_awaitable_t&lt;Executor&gt;,
+                                    void(std::unique_ptr&lt;grpc::ClientAsyncResponseReader&lt;Response&gt;&gt;)&gt;::return_type
     </td>
         </tr>
       </table>
@@ -716,13 +717,13 @@ template&lt;class RPC , class Stub , class Request , class Reader , class Execut
 
 </div>
 </div>
-<a id="ad1dcf24e77c8dec67060b0ae9f197f1b" name="ad1dcf24e77c8dec67060b0ae9f197f1b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad1dcf24e77c8dec67060b0ae9f197f1b">&#9670;&nbsp;</a></span>operator()() <span class="overload">[8/10]</span></h2>
+<a id="a4f817f6c3d2dbb091d3297d5e7bc0f5f" name="a4f817f6c3d2dbb091d3297d5e7bc0f5f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4f817f6c3d2dbb091d3297d5e7bc0f5f">&#9670;&nbsp;</a></span>operator()() <span class="overload">[8/10]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class RPC , class Stub , class Request , class Reader , class Executor  = asio::any_io_executor&gt; </div>
+template&lt;class Stub , class Request , class Response , class Executor  = asio::any_io_executor&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -730,7 +731,7 @@ template&lt;class RPC , class Stub , class Request , class Reader , class Execut
         <tr>
           <td class="memname">auto agrpc::detail::RequestFn::operator() </td>
           <td>(</td>
-          <td class="paramtype">detail::ClientUnaryRequest&lt; RPC, Request, Reader &gt;&#160;</td>
+          <td class="paramtype">detail::ClientUnaryRequest&lt; Stub, Request, Response &gt;&#160;</td>
           <td class="paramname"><em>rpc</em>, </td>
         </tr>
         <tr>
@@ -754,7 +755,7 @@ template&lt;class RPC , class Stub , class Request , class Reader , class Execut
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">Reader &amp;&#160;</td>
+          <td class="paramtype">std::unique_ptr&lt; grpc::ClientAsyncResponseReader&lt; Response &gt; &gt; &amp;&#160;</td>
           <td class="paramname"><em>reader</em>, </td>
         </tr>
         <tr>
