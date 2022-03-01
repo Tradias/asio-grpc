@@ -762,6 +762,8 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context bidirectional strea
     SUBCASE("write_last") { use_write_last = true; }
     bool use_client_convenience{false};
     SUBCASE("client use convenience") { use_client_convenience = true; }
+    bool set_initial_metadata_corked{false};
+    SUBCASE("client set initial metadata corked") { set_initial_metadata_corked = true; }
     asio::spawn(
         get_executor(),
         [&](asio::yield_context yield)
@@ -805,13 +807,23 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context bidirectional strea
                     return agrpc::request(&test::v1::Test::Stub::AsyncBidirectionalStreaming, *stub, client_context,
                                           yield);
                 }
+                else if (set_initial_metadata_corked)
+                {
+                    client_context.set_initial_metadata_corked(true);
+                    return std::pair{stub->AsyncBidirectionalStreaming(
+                                         &client_context, agrpc::get_completion_queue(grpc_context), nullptr),
+                                     true};
+                }
                 std::unique_ptr<grpc::ClientAsyncReaderWriter<test::msg::Request, test::msg::Response>> reader_writer;
                 bool ok = agrpc::request(&test::v1::Test::Stub::AsyncBidirectionalStreaming, *stub, client_context,
                                          reader_writer, yield);
                 return std::pair{std::move(reader_writer), ok};
             }();
-            CHECK(ok);
-            CHECK(agrpc::read_initial_metadata(*reader_writer, yield));
+            if (!set_initial_metadata_corked)
+            {
+                CHECK(ok);
+                CHECK(agrpc::read_initial_metadata(*reader_writer, yield));
+            }
             test::msg::Request request;
             request.set_integer(42);
             CHECK(agrpc::write(*reader_writer, request, yield));
