@@ -22,22 +22,30 @@
 #include <grpcpp/completion_queue.h>
 #include <grpcpp/server_context.h>
 
+#include <memory>
+
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class RPC, class Request, class Reader>
-using ClientUnaryRequest = Reader (RPC::*)(grpc::ClientContext*, const Request&, grpc::CompletionQueue*);
+template <class Stub, class Request, class Response>
+using ClientUnaryRequest = std::unique_ptr<grpc::ClientAsyncResponseReader<Response>> (Stub::*)(grpc::ClientContext*,
+                                                                                                const Request&,
+                                                                                                grpc::CompletionQueue*);
 
-template <class RPC, class Request, class Reader>
-using ClientServerStreamingRequest = Reader (RPC::*)(grpc::ClientContext*, const Request&, grpc::CompletionQueue*,
-                                                     void*);
+template <class Stub, class Request, class Response>
+using ClientServerStreamingRequest = std::unique_ptr<grpc::ClientAsyncReader<Response>> (Stub::*)(
+    grpc::ClientContext*, const Request&, grpc::CompletionQueue*, void*);
 
-template <class RPC, class Writer, class Response>
-using ClientClientStreamingRequest = Writer (RPC::*)(grpc::ClientContext*, Response*, grpc::CompletionQueue*, void*);
+template <class Stub, class Request, class Response>
+using ClientClientStreamingRequest = std::unique_ptr<grpc::ClientAsyncWriter<Request>> (Stub::*)(grpc::ClientContext*,
+                                                                                                 Response*,
+                                                                                                 grpc::CompletionQueue*,
+                                                                                                 void*);
 
-template <class RPC, class ReaderWriter>
-using ClientBidirectionalStreamingRequest = ReaderWriter (RPC::*)(grpc::ClientContext*, grpc::CompletionQueue*, void*);
+template <class Stub, class Request, class Response>
+using ClientBidirectionalStreamingRequest = std::unique_ptr<grpc::ClientAsyncReaderWriter<Request, Response>> (Stub::*)(
+    grpc::ClientContext*, grpc::CompletionQueue*, void*);
 
 template <class RPC, class Request, class Responder>
 using ServerMultiArgRequest = void (RPC::*)(grpc::ServerContext*, Request*, Responder*, grpc::CompletionQueue*,
@@ -232,14 +240,14 @@ struct SendInitialMetadataInitFunction
     void operator()(const agrpc::GrpcContext&, void* tag) { responder.SendInitialMetadata(tag); }
 };
 
-template <class RPC, class Stub, class Request, class Reader>
+template <class Stub, class Request, class Response>
 struct ClientServerStreamingRequestInitFunction
 {
-    detail::ClientServerStreamingRequest<RPC, Request, Reader> rpc;
+    detail::ClientServerStreamingRequest<Stub, Request, Response> rpc;
     Stub& stub;
     grpc::ClientContext& client_context;
     const Request& request;
-    Reader& reader;
+    std::unique_ptr<grpc::ClientAsyncReader<Response>>& reader;
 
     void operator()(agrpc::GrpcContext& grpc_context, void* tag)
     {
@@ -247,15 +255,16 @@ struct ClientServerStreamingRequestInitFunction
     }
 };
 
-template <class RPC, class Stub, class Request, class Reader>
-ClientServerStreamingRequestInitFunction(detail::ClientServerStreamingRequest<RPC, Request, Reader>, Stub&,
-                                         grpc::ClientContext&, const Request&, Reader&)
-    -> ClientServerStreamingRequestInitFunction<RPC, Stub, Request, Reader>;
+template <class Stub, class Request, class Response>
+ClientServerStreamingRequestInitFunction(detail::ClientServerStreamingRequest<Stub, Request, Response>, Stub&,
+                                         grpc::ClientContext&, const Request&,
+                                         std::unique_ptr<grpc::ClientAsyncReader<Response>>&)
+    -> ClientServerStreamingRequestInitFunction<Stub, Request, Response>;
 
-template <class RPC, class Stub, class Request, class Reader>
+template <class Stub, class Request, class Response>
 struct ClientServerStreamingRequestConvenienceInitFunction
 {
-    detail::ClientServerStreamingRequest<RPC, Request, Reader> rpc;
+    detail::ClientServerStreamingRequest<Stub, Request, Response> rpc;
     Stub& stub;
     grpc::ClientContext& client_context;
     const Request& request;
@@ -268,18 +277,18 @@ struct ClientServerStreamingRequestConvenienceInitFunction
     }
 };
 
-template <class RPC, class Stub, class Request, class Reader>
-ClientServerStreamingRequestConvenienceInitFunction(detail::ClientServerStreamingRequest<RPC, Request, Reader>, Stub&,
-                                                    grpc::ClientContext&, const Request&)
-    -> ClientServerStreamingRequestConvenienceInitFunction<RPC, Stub, Request, Reader>;
+template <class Stub, class Request, class Response>
+ClientServerStreamingRequestConvenienceInitFunction(detail::ClientServerStreamingRequest<Stub, Request, Response>,
+                                                    Stub&, grpc::ClientContext&, const Request&)
+    -> ClientServerStreamingRequestConvenienceInitFunction<Stub, Request, Response>;
 
-template <class RPC, class Stub, class Writer, class Response>
+template <class Stub, class Request, class Response>
 struct ClientClientStreamingRequestInitFunction
 {
-    detail::ClientClientStreamingRequest<RPC, Writer, Response> rpc;
+    detail::ClientClientStreamingRequest<Stub, Request, Response> rpc;
     Stub& stub;
     grpc::ClientContext& client_context;
-    Writer& writer;
+    std::unique_ptr<grpc::ClientAsyncWriter<Request>>& writer;
     Response& response;
 
     void operator()(agrpc::GrpcContext& grpc_context, void* tag)
@@ -288,15 +297,16 @@ struct ClientClientStreamingRequestInitFunction
     }
 };
 
-template <class RPC, class Stub, class Writer, class Response>
-ClientClientStreamingRequestInitFunction(detail::ClientClientStreamingRequest<RPC, Writer, Response>, Stub&,
-                                         grpc::ClientContext&, Writer&, Response&)
-    -> ClientClientStreamingRequestInitFunction<RPC, Stub, Writer, Response>;
+template <class Stub, class Request, class Response>
+ClientClientStreamingRequestInitFunction(detail::ClientClientStreamingRequest<Stub, Request, Response>, Stub&,
+                                         grpc::ClientContext&, std::unique_ptr<grpc::ClientAsyncWriter<Request>>&,
+                                         Response&)
+    -> ClientClientStreamingRequestInitFunction<Stub, Request, Response>;
 
-template <class RPC, class Stub, class Writer, class Response>
+template <class Stub, class Request, class Response>
 struct ClientClientStreamingRequestConvenienceInitFunction
 {
-    detail::ClientClientStreamingRequest<RPC, Writer, Response> rpc;
+    detail::ClientClientStreamingRequest<Stub, Request, Response> rpc;
     Stub& stub;
     grpc::ClientContext& client_context;
     Response& response;
@@ -309,18 +319,18 @@ struct ClientClientStreamingRequestConvenienceInitFunction
     }
 };
 
-template <class RPC, class Stub, class Writer, class Response>
-ClientClientStreamingRequestConvenienceInitFunction(detail::ClientClientStreamingRequest<RPC, Writer, Response>, Stub&,
-                                                    grpc::ClientContext&, Response&)
-    -> ClientClientStreamingRequestConvenienceInitFunction<RPC, Stub, Writer, Response>;
+template <class Stub, class Request, class Response>
+ClientClientStreamingRequestConvenienceInitFunction(detail::ClientClientStreamingRequest<Stub, Request, Response>,
+                                                    Stub&, grpc::ClientContext&, Response&)
+    -> ClientClientStreamingRequestConvenienceInitFunction<Stub, Request, Response>;
 
-template <class RPC, class Stub, class ReaderWriter>
+template <class Stub, class Request, class Response>
 struct ClientBidirectionalStreamingRequestInitFunction
 {
-    detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter> rpc;
+    detail::ClientBidirectionalStreamingRequest<Stub, Request, Response> rpc;
     Stub& stub;
     grpc::ClientContext& client_context;
-    ReaderWriter& reader_writer;
+    std::unique_ptr<grpc::ClientAsyncReaderWriter<Request, Response>>& reader_writer;
 
     void operator()(agrpc::GrpcContext& grpc_context, void* tag)
     {
@@ -328,15 +338,16 @@ struct ClientBidirectionalStreamingRequestInitFunction
     }
 };
 
-template <class RPC, class Stub, class ReaderWriter>
-ClientBidirectionalStreamingRequestInitFunction(detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter>, Stub&,
-                                                grpc::ClientContext&, ReaderWriter&)
-    -> ClientBidirectionalStreamingRequestInitFunction<RPC, Stub, ReaderWriter>;
+template <class Stub, class Request, class Response>
+ClientBidirectionalStreamingRequestInitFunction(detail::ClientBidirectionalStreamingRequest<Stub, Request, Response>,
+                                                Stub&, grpc::ClientContext&,
+                                                std::unique_ptr<grpc::ClientAsyncReaderWriter<Request, Response>>&)
+    -> ClientBidirectionalStreamingRequestInitFunction<Stub, Request, Response>;
 
-template <class RPC, class Stub, class ReaderWriter>
+template <class Stub, class Request, class Response>
 struct ClientBidirectionalStreamingRequestConvenienceInitFunction
 {
-    detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter> rpc;
+    detail::ClientBidirectionalStreamingRequest<Stub, Request, Response> rpc;
     Stub& stub;
     grpc::ClientContext& client_context;
 
@@ -347,10 +358,10 @@ struct ClientBidirectionalStreamingRequestConvenienceInitFunction
     }
 };
 
-template <class RPC, class Stub, class ReaderWriter>
+template <class Stub, class Request, class Response>
 ClientBidirectionalStreamingRequestConvenienceInitFunction(
-    detail::ClientBidirectionalStreamingRequest<RPC, ReaderWriter>, Stub&, grpc::ClientContext&)
-    -> ClientBidirectionalStreamingRequestConvenienceInitFunction<RPC, Stub, ReaderWriter>;
+    detail::ClientBidirectionalStreamingRequest<Stub, Request, Response>, Stub&, grpc::ClientContext&)
+    -> ClientBidirectionalStreamingRequestConvenienceInitFunction<Stub, Request, Response>;
 
 template <class RPC, class Service, class Request, class Responder>
 struct ServerMultiArgRequestInitFunction
