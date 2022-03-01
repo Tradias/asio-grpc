@@ -256,12 +256,6 @@ struct ClientServerStreamingRequestInitFunction
 };
 
 template <class Stub, class Request, class Response>
-ClientServerStreamingRequestInitFunction(detail::ClientServerStreamingRequest<Stub, Request, Response>, Stub&,
-                                         grpc::ClientContext&, const Request&,
-                                         std::unique_ptr<grpc::ClientAsyncReader<Response>>&)
-    -> ClientServerStreamingRequestInitFunction<Stub, Request, Response>;
-
-template <class Stub, class Request, class Response>
 struct ClientServerStreamingRequestConvenienceInitFunction
 {
     detail::ClientServerStreamingRequest<Stub, Request, Response> rpc;
@@ -278,11 +272,6 @@ struct ClientServerStreamingRequestConvenienceInitFunction
 };
 
 template <class Stub, class Request, class Response>
-ClientServerStreamingRequestConvenienceInitFunction(detail::ClientServerStreamingRequest<Stub, Request, Response>,
-                                                    Stub&, grpc::ClientContext&, const Request&)
-    -> ClientServerStreamingRequestConvenienceInitFunction<Stub, Request, Response>;
-
-template <class Stub, class Request, class Response>
 struct ClientClientStreamingRequestInitFunction
 {
     detail::ClientClientStreamingRequest<Stub, Request, Response> rpc;
@@ -296,12 +285,6 @@ struct ClientClientStreamingRequestInitFunction
         writer = (stub.*rpc)(&client_context, &response, grpc_context.get_completion_queue(), tag);
     }
 };
-
-template <class Stub, class Request, class Response>
-ClientClientStreamingRequestInitFunction(detail::ClientClientStreamingRequest<Stub, Request, Response>, Stub&,
-                                         grpc::ClientContext&, std::unique_ptr<grpc::ClientAsyncWriter<Request>>&,
-                                         Response&)
-    -> ClientClientStreamingRequestInitFunction<Stub, Request, Response>;
 
 template <class Stub, class Request, class Response>
 struct ClientClientStreamingRequestConvenienceInitFunction
@@ -320,11 +303,6 @@ struct ClientClientStreamingRequestConvenienceInitFunction
 };
 
 template <class Stub, class Request, class Response>
-ClientClientStreamingRequestConvenienceInitFunction(detail::ClientClientStreamingRequest<Stub, Request, Response>,
-                                                    Stub&, grpc::ClientContext&, Response&)
-    -> ClientClientStreamingRequestConvenienceInitFunction<Stub, Request, Response>;
-
-template <class Stub, class Request, class Response>
 struct ClientBidirectionalStreamingRequestInitFunction
 {
     detail::ClientBidirectionalStreamingRequest<Stub, Request, Response> rpc;
@@ -339,12 +317,6 @@ struct ClientBidirectionalStreamingRequestInitFunction
 };
 
 template <class Stub, class Request, class Response>
-ClientBidirectionalStreamingRequestInitFunction(detail::ClientBidirectionalStreamingRequest<Stub, Request, Response>,
-                                                Stub&, grpc::ClientContext&,
-                                                std::unique_ptr<grpc::ClientAsyncReaderWriter<Request, Response>>&)
-    -> ClientBidirectionalStreamingRequestInitFunction<Stub, Request, Response>;
-
-template <class Stub, class Request, class Response>
 struct ClientBidirectionalStreamingRequestConvenienceInitFunction
 {
     detail::ClientBidirectionalStreamingRequest<Stub, Request, Response> rpc;
@@ -357,11 +329,6 @@ struct ClientBidirectionalStreamingRequestConvenienceInitFunction
         tag->completion_handler().payload() = (stub.*rpc)(&client_context, grpc_context.get_completion_queue(), tag);
     }
 };
-
-template <class Stub, class Request, class Response>
-ClientBidirectionalStreamingRequestConvenienceInitFunction(
-    detail::ClientBidirectionalStreamingRequest<Stub, Request, Response>, Stub&, grpc::ClientContext&)
-    -> ClientBidirectionalStreamingRequestConvenienceInitFunction<Stub, Request, Response>;
 
 template <class RPC, class Service, class Request, class Responder>
 struct ServerMultiArgRequestInitFunction
@@ -379,11 +346,6 @@ struct ServerMultiArgRequestInitFunction
     }
 };
 
-template <class RPC, class Service, class Request, class Responder>
-ServerMultiArgRequestInitFunction(detail::ServerMultiArgRequest<RPC, Request, Responder>, Service&,
-                                  grpc::ServerContext&, Request&, Responder&)
-    -> ServerMultiArgRequestInitFunction<RPC, Service, Request, Responder>;
-
 template <class RPC, class Service, class Responder>
 struct ServerSingleArgRequestInitFunction
 {
@@ -398,10 +360,6 @@ struct ServerSingleArgRequestInitFunction
         (service.*rpc)(&server_context, &responder, cq, cq, tag);
     }
 };
-
-template <class RPC, class Service, class Responder>
-ServerSingleArgRequestInitFunction(detail::ServerSingleArgRequest<RPC, Responder>, Service&, grpc::ServerContext&,
-                                   Responder&) -> ServerSingleArgRequestInitFunction<RPC, Service, Responder>;
 }
 
 AGRPC_NAMESPACE_END
