@@ -62,7 +62,7 @@ Tested by CI:
 
  * gRPC 1.41.0 (older versions work as well)
  * [Boost](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio.html) 1.78 (min. 1.74 or [standalone Asio](https://github.com/chriskohlhoff/asio) 1.17.0)
- * MSVC 19.30.30706.0 (Visual Studio 17 2022)
+ * MSVC 19.29.30140.0 (Visual Studio 16 2019)
  * GCC 9.3.0, 10.3.0, 11.1.0
  * Clang 10.0.0, 11.0.0, 12.0.0
  * AppleClang 13.0.0.13000029
@@ -205,9 +205,9 @@ See [selecting-library-features](https://vcpkg.io/en/docs/users/selecting-librar
 
 ## CMake Options
 
-`ASIO_GRPC_USE_BOOST_CONTAINER` - Use Boost.Container instead of `<memory_resource>`
+`ASIO_GRPC_USE_BOOST_CONTAINER` - Use Boost.Container instead of `<memory_resource>`.
 
-`ASIO_GRPC_DISABLE_AUTOLINK` - Set before using `find_package(asio-grpc)` to prevent `asio-grpcConfig.cmake` from finding and setting up interface link libraries
+`ASIO_GRPC_DISABLE_AUTOLINK` - Set before using `find_package(asio-grpc)` to prevent `asio-grpcConfig.cmake` from finding and setting up interface link libraries.
 
 # Performance
 
