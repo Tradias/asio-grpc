@@ -178,7 +178,7 @@ Public Member Functions</h2></td></tr>
 <div class="line">                                    server_context, reader, asio::bind_executor(grpc_context, asio::use_awaitable));</div>
 <div class="line">        },</div>
 <div class="line">        asio::detached);</div>
-<div class="ttc" id="anamespaceagrpc_html_a4a11653afb11f9486e4e3db0136a3e08"><div class="ttname"><a href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">agrpc::request</a></div><div class="ttdeci">constexpr detail::RequestFn request</div><div class="ttdoc">Start a new RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1383</div></div>
+<div class="ttc" id="anamespaceagrpc_html_a4a11653afb11f9486e4e3db0136a3e08"><div class="ttname"><a href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">agrpc::request</a></div><div class="ttdeci">constexpr detail::RequestFn request</div><div class="ttdoc">Start a new RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1391</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a24dd07d4fd1ea5b650ed18d43cfbd46e" name="a24dd07d4fd1ea5b650ed18d43cfbd46e"></a>
@@ -244,7 +244,7 @@ template&lt;class Response , class CompletionToken  = agrpc::DefaultCompletionTo
 <p>Example:</p>
 <div class="fragment"><div class="line">    grpc::Status status;</div>
 <div class="line">    <span class="keywordtype">bool</span> finish_ok = <span class="keyword">co_await</span> <a class="code hl_variable" href="namespaceagrpc.html#a88b9f806c77bb8077f3f7973beede2d0">agrpc::finish</a>(*reader, status, asio::use_awaitable);</div>
-<div class="ttc" id="anamespaceagrpc_html_a88b9f806c77bb8077f3f7973beede2d0"><div class="ttname"><a href="namespaceagrpc.html#a88b9f806c77bb8077f3f7973beede2d0">agrpc::finish</a></div><div class="ttdeci">constexpr detail::FinishFn finish</div><div class="ttdoc">Finish a RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1419</div></div>
+<div class="ttc" id="anamespaceagrpc_html_a88b9f806c77bb8077f3f7973beede2d0"><div class="ttname"><a href="namespaceagrpc.html#a88b9f806c77bb8077f3f7973beede2d0">agrpc::finish</a></div><div class="ttdeci">constexpr detail::FinishFn finish</div><div class="ttdoc">Finish a RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1427</div></div>
 </div><!-- fragment --><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">token</td><td>A completion token like <code>asio::yield_context</code> or the one created by <code><a class="el" href="namespaceagrpc.html#a35d42ccb3fa5adce6b5c045a275dafa9" title="Create sender completion token.">agrpc::use_sender</a></code>. The completion signature is <code>void(bool)</code>. The bool should always be <code>true</code>. </td></tr>

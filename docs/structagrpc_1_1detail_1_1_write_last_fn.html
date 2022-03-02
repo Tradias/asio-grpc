@@ -162,7 +162,7 @@ Public Member Functions</h2></td></tr>
 <div class="line">                                    server_context, reader, asio::bind_executor(grpc_context, asio::use_awaitable));</div>
 <div class="line">        },</div>
 <div class="line">        asio::detached);</div>
-<div class="ttc" id="anamespaceagrpc_html_a4a11653afb11f9486e4e3db0136a3e08"><div class="ttname"><a href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">agrpc::request</a></div><div class="ttdeci">constexpr detail::RequestFn request</div><div class="ttdoc">Start a new RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1383</div></div>
+<div class="ttc" id="anamespaceagrpc_html_a4a11653afb11f9486e4e3db0136a3e08"><div class="ttname"><a href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">agrpc::request</a></div><div class="ttdeci">constexpr detail::RequestFn request</div><div class="ttdoc">Start a new RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1391</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a78cc28499213050ddd7512c86b8f0534" name="a78cc28499213050ddd7512c86b8f0534"></a>
@@ -217,7 +217,7 @@ template&lt;class Request , class Response , class CompletionToken  = agrpc::Def
 <p >gRPC does not take ownership or a reference to response, so it is safe to to deallocate once <code>write_last</code> returns.</p>
 <p >Example:</p>
 <div class="fragment"><div class="line">    <span class="keywordtype">bool</span> write_last_ok = <span class="keyword">co_await</span> <a class="code hl_variable" href="namespaceagrpc.html#a6f40531d4e75e86db3bddf7730bd7029">agrpc::write_last</a>(*reader_writer, <a class="code hl_variable" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">request</a>, grpc::WriteOptions{}, asio::use_awaitable);</div>
-<div class="ttc" id="anamespaceagrpc_html_a6f40531d4e75e86db3bddf7730bd7029"><div class="ttname"><a href="namespaceagrpc.html#a6f40531d4e75e86db3bddf7730bd7029">agrpc::write_last</a></div><div class="ttdeci">constexpr detail::WriteLastFn write_last</div><div class="ttdoc">Coalesce write and send trailing metadata of a streaming RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1428</div></div>
+<div class="ttc" id="anamespaceagrpc_html_a6f40531d4e75e86db3bddf7730bd7029"><div class="ttname"><a href="namespaceagrpc.html#a6f40531d4e75e86db3bddf7730bd7029">agrpc::write_last</a></div><div class="ttdeci">constexpr detail::WriteLastFn write_last</div><div class="ttdoc">Coalesce write and send trailing metadata of a streaming RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1436</div></div>
 </div><!-- fragment --><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">token</td><td>A completion token like <code>asio::yield_context</code> or the one created by <code><a class="el" href="namespaceagrpc.html#a35d42ccb3fa5adce6b5c045a275dafa9" title="Create sender completion token.">agrpc::use_sender</a></code>. The completion signature is <code>void(bool)</code>. <code>true</code> means that the data/metadata/status/etc is going to go to the wire. If it is <code>false</code>, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired, other side dropped the channel, etc). </td></tr>
