@@ -474,11 +474,13 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline and c
     CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
     CHECK_FALSE(server_finish_ok);
 }
+#endif
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_executor can be used to await Alarm from an io_context")
 {
     bool ok{false};
     std::thread::id expected_thread_id{};
+    std::thread::id actual_thread_id{};
     auto guard = asio::make_work_guard(grpc_context);
     asio::io_context io_context;
     test::co_spawn(io_context,
@@ -487,7 +489,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_executor can be used to await Ala
                        grpc::Alarm alarm;
                        ok = co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(),
                                                  asio::bind_executor(grpc_context, asio::use_awaitable));
-                       CHECK_EQ(expected_thread_id, std::this_thread::get_id());
+                       actual_thread_id = std::this_thread::get_id();
                        guard.reset();
                    });
     std::thread grpc_context_thread{[&]
@@ -498,8 +500,54 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_executor can be used to await Ala
     io_context.run();
     grpc_context_thread.join();
     CHECK(ok);
+    CHECK_EQ(expected_thread_id, actual_thread_id);
 }
-#endif
+
+TEST_CASE_FIXTURE(test::GrpcContextTest,
+                  "bind_executor can be used to switch to io_context when awaiting asio::steady_timer")
+{
+    std::thread::id expected_thread_id{};
+    std::thread::id actual_thread_id{};
+    asio::io_context io_context;
+    auto guard = asio::make_work_guard(io_context);
+    asio::steady_timer timer{io_context};
+    test::co_spawn(grpc_context,
+                   [&]() -> asio::awaitable<void>
+                   {
+                       timer.expires_after(std::chrono::milliseconds(10));
+                       co_await timer.async_wait(asio::bind_executor(io_context, asio::use_awaitable));
+                       actual_thread_id = std::this_thread::get_id();
+                       guard.reset();
+                   });
+    std::thread io_context_thread{[&]
+                                  {
+                                      expected_thread_id = std::this_thread::get_id();
+                                      io_context.run();
+                                  }};
+    grpc_context.run();
+    io_context_thread.join();
+    CHECK_EQ(expected_thread_id, actual_thread_id);
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_executor can be used to switch to thread_pool and back to GrpcContext")
+{
+    std::thread::id actual_grpc_context_thread_id{};
+    std::thread::id thread_pool_thread_id{};
+    asio::thread_pool thread_pool;
+    test::co_spawn(grpc_context,
+                   [&]() -> asio::awaitable<void>
+                   {
+                       co_await asio::post(asio::bind_executor(thread_pool, asio::use_awaitable));
+                       thread_pool_thread_id = std::this_thread::get_id();
+                       co_await asio::post(asio::use_awaitable);
+                       actual_grpc_context_thread_id = std::this_thread::get_id();
+                   });
+    const auto grpc_context_thread_id = std::this_thread::get_id();
+    grpc_context.run();
+    thread_pool.join();
+    CHECK_NE(grpc_context_thread_id, thread_pool_thread_id);
+    CHECK_EQ(grpc_context_thread_id, actual_grpc_context_thread_id);
+}
 #endif
 
 TEST_SUITE_END();
