@@ -474,7 +474,6 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline and c
     CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
     CHECK_FALSE(server_finish_ok);
 }
-#endif
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_executor can be used to await Alarm from an io_context")
 {
@@ -548,6 +547,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_executor can be used to switch to
     CHECK_NE(grpc_context_thread_id, thread_pool_thread_id);
     CHECK_EQ(grpc_context_thread_id, actual_grpc_context_thread_id);
 }
+#endif
 #endif
 
 TEST_SUITE_END();
