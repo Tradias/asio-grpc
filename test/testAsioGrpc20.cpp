@@ -528,11 +528,12 @@ TEST_CASE_FIXTURE(test::GrpcContextTest,
     CHECK_EQ(expected_thread_id, actual_thread_id);
 }
 
+#if !defined(__clang__) || (__clang_major__ > 10)
 TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_executor can be used to switch to thread_pool and back to GrpcContext")
 {
     std::thread::id actual_grpc_context_thread_id{};
     std::thread::id thread_pool_thread_id{};
-    asio::thread_pool thread_pool;
+    asio::thread_pool thread_pool{1};
     test::co_spawn(grpc_context,
                    [&]() -> asio::awaitable<void>
                    {
@@ -547,6 +548,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_executor can be used to switch to
     CHECK_NE(grpc_context_thread_id, thread_pool_thread_id);
     CHECK_EQ(grpc_context_thread_id, actual_grpc_context_thread_id);
 }
+#endif
 #endif
 #endif
 
