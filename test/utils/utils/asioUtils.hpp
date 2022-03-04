@@ -128,6 +128,14 @@ struct RpcSpawner
     [[nodiscard]] allocator_type get_allocator() const noexcept { return allocator; }
 };
 
+template <class CompletionToken, class Signature, class Initiation, class RawCompletionToken, class... Args>
+decltype(auto) initiate_using_async_completion(Initiation&& initiation, RawCompletionToken&& token, Args&&... args)
+{
+    asio::async_completion<CompletionToken, Signature> completion(token);
+    std::forward<Initiation>(initiation)(std::move(completion.completion_handler), std::forward<Args>(args)...);
+    return completion.result.get();
+}
+
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 template <class Executor, class Function>
 auto co_spawn(Executor&& executor, Function function)

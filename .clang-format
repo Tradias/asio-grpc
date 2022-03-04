@@ -111,6 +111,7 @@ MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
 NamespaceMacros:
   - AGRPC_NAMESPACE_BEGIN
+  - DOCTEST_TEST_SUITE
 PenaltyBreakAssignment: 2
 PenaltyBreakBeforeFirstCallParameter: 1
 PenaltyBreakComment: 300

@@ -64,11 +64,13 @@ if(ASIO_GRPC_BUILD_TESTS)
         INTERFACE # cmake-format: sort
                   "${CMAKE_CURRENT_BINARY_DIR}/generated/agrpc/detail/memoryResource.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/asioGrpc.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/bindAllocator.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/defaultCompletionToken.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/allocateOperation.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/asioForward.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/associatedCompletionHandler.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/atomicIntrusiveQueue.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/bindAllocator.ipp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/config.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/defaultCompletionToken.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/forward.hpp"
