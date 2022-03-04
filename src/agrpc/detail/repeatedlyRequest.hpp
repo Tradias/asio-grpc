@@ -324,6 +324,8 @@ class RepeatedlyRequestAwaitableOperation
 
     static constexpr auto ON_STOP_COMPLETE =
         &detail::default_do_complete<RepeatedlyRequestAwaitableOperation, detail::TypeErasedNoArgOperation>;
+    static constexpr auto BUFFER_SIZE =
+        sizeof(detail::CompletionHandlerTypeT<UseAwaitable, void()>) + 3 * sizeof(void*);
 
     // Used to delay deallocation of the buffer that is used to store the awaitable_frame until after the coroutine has
     // been destroyed
@@ -337,7 +339,7 @@ class RepeatedlyRequestAwaitableOperation
             detail::AllocatedPointer{static_cast<BufferOperation*>(op), std::allocator<BufferOperation>{}};
         }
 
-        std::aligned_storage_t<sizeof(detail::CompletionHandlerTypeT<UseAwaitable, void()>) + 3 * sizeof(void*)> buffer;
+        std::aligned_storage_t<BUFFER_SIZE> buffer;
     };
 
     static auto make_buffer_operation()
@@ -384,7 +386,7 @@ class RepeatedlyRequestAwaitableOperation
 
     auto create_one_shot_allocator() noexcept
     {
-        return detail::OneShotAllocator<std::byte, 64>{&this->buffer_operation->buffer};
+        return detail::OneShotAllocator<std::byte, BUFFER_SIZE>{&this->buffer_operation->buffer};
     }
 
     Awaitable on_request_complete()
