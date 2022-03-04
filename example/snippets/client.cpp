@@ -212,6 +212,15 @@ void create_grpc_context()
     /* [create-grpc_context-client-side] */
 }
 
+asio::awaitable<void> bind_allocator(std::allocator<std::byte> my_allocator)
+{
+    std::unique_ptr<grpc::ClientAsyncWriter<example::v1::Request>> writer;
+
+    /* [bind_allocator-client-side] */
+    co_await agrpc::writes_done(*writer, agrpc::bind_allocator(my_allocator, asio::use_awaitable));
+    /* [bind_allocator-client-side] */
+}
+
 asio::awaitable<void> async_notify_on_state_change(const std::string& host)
 {
     /* [grpc_initiate-NotifyOnStateChange] */
