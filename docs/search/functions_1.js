@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['context_0',['context',['../classagrpc_1_1_basic_grpc_executor.html#ae03cda766d1198fa9fa135fccc02232a',1,'agrpc::BasicGrpcExecutor']]]
+  ['bind_5fallocator_0',['bind_allocator',['../namespaceagrpc.html#aa4bf6ea33e66ac64b1af0914393a895b',1,'agrpc']]]
 ];

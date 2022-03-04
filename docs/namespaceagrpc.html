@@ -89,6 +89,7 @@ $(document).ready(function(){initNavTree('namespaceagrpc.html',''); initResizabl
 <a href="#namespaces">Namespaces</a> &#124;
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#typedef-members">Typedefs</a> &#124;
+<a href="#func-members">Functions</a> &#124;
 <a href="#var-members">Variables</a>  </div>
   <div class="headertitle"><div class="title">agrpc Namespace Reference</div></div>
 </div><!--header-->
@@ -105,6 +106,9 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_allocator_binder.html">AllocatorBinder</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper class that associates an allocator to an object.  <a href="classagrpc_1_1_allocator_binder.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html">BasicGrpcExecutor</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a>'s executor.  <a href="classagrpc_1_1_basic_grpc_executor.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -132,6 +136,13 @@ template&lt;class T &gt; </td></tr>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>GrpcUseAwaitable</b> = asio::use_awaitable_t&lt; <a class="el" href="namespaceagrpc.html#aebdc4a27625d789667c7d54985157d28">agrpc::GrpcExecutor</a> &gt;</td></tr>
 <tr class="memdesc:a09770e93d81af05c59c0bc81f18e539f"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>asio::use_awaitable_t</code> specialized on <code><a class="el" href="namespaceagrpc.html#aebdc4a27625d789667c7d54985157d28" title="Default GrpcExecutor.">agrpc::GrpcExecutor</a></code> <br /></td></tr>
 <tr class="separator:a09770e93d81af05c59c0bc81f18e539f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:aa4bf6ea33e66ac64b1af0914393a895b"><td class="memTemplParams" colspan="2">template&lt;class Allocator , class Target &gt; </td></tr>
+<tr class="memitem:aa4bf6ea33e66ac64b1af0914393a895b"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceagrpc.html#aa4bf6ea33e66ac64b1af0914393a895b">bind_allocator</a> (const Allocator &amp;allocator, Target &amp;&amp;target)</td></tr>
+<tr class="memdesc:aa4bf6ea33e66ac64b1af0914393a895b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper function to create an <a class="el" href="classagrpc_1_1_allocator_binder.html" title="Helper class that associates an allocator to an object.">agrpc::AllocatorBinder</a>.  <a href="namespaceagrpc.html#aa4bf6ea33e66ac64b1af0914393a895b">More...</a><br /></td></tr>
+<tr class="separator:aa4bf6ea33e66ac64b1af0914393a895b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
@@ -219,6 +230,40 @@ constexpr <a class="el" href="namespaceagrpc.html#a09770e93d81af05c59c0bc81f18e5
 
 <p>Default GrpcExecutor. </p>
 <p >The default GrpcExecutor does not track outstanding work, has the relationship.fork and blocking.never properties and uses the default allocator (<code>std::allocator&lt;void&gt;</code>). </p>
+
+</div>
+</div>
+<h2 class="groupheader">Function Documentation</h2>
+<a id="aa4bf6ea33e66ac64b1af0914393a895b" name="aa4bf6ea33e66ac64b1af0914393a895b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa4bf6ea33e66ac64b1af0914393a895b">&#9670;&nbsp;</a></span>bind_allocator()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Allocator , class Target &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">auto agrpc::bind_allocator </td>
+          <td>(</td>
+          <td class="paramtype">const Allocator &amp;&#160;</td>
+          <td class="paramname"><em>allocator</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Target &amp;&amp;&#160;</td>
+          <td class="paramname"><em>target</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Helper function to create an <a class="el" href="classagrpc_1_1_allocator_binder.html" title="Helper class that associates an allocator to an object.">agrpc::AllocatorBinder</a>. </p>
+<dl class="section since"><dt>Since</dt><dd>1.5.0 </dd></dl>
 
 </div>
 </div>

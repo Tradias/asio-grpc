@@ -88,7 +88,8 @@ $(document).ready(function(){initNavTree('functions.html',''); initResizable(); 
 <div class="textblock">Here is a list of all documented class members with links to the class documentation for each member:</div>
 
 <h3><a id="index_a" name="index_a"></a>- a -</h3><ul>
-<li>allocator_type&#160;:&#160;<a class="el" href="classagrpc_1_1_basic_grpc_executor.html#a658f9dcfd92c049d9b8961bbb67eab13">agrpc::BasicGrpcExecutor&lt; Allocator, Options &gt;</a>, <a class="el" href="classagrpc_1_1_grpc_context.html#a3445ceeb54e332eabf163cc6afdc1e3d">agrpc::GrpcContext</a></li>
+<li>allocator_type&#160;:&#160;<a class="el" href="classagrpc_1_1_allocator_binder.html#ad28a075869bdc052c048648aa305d7d4">agrpc::AllocatorBinder&lt; Target, Allocator &gt;</a>, <a class="el" href="classagrpc_1_1_basic_grpc_executor.html#a658f9dcfd92c049d9b8961bbb67eab13">agrpc::BasicGrpcExecutor&lt; Allocator, Options &gt;</a>, <a class="el" href="classagrpc_1_1_grpc_context.html#a3445ceeb54e332eabf163cc6afdc1e3d">agrpc::GrpcContext</a></li>
+<li>AllocatorBinder()&#160;:&#160;<a class="el" href="classagrpc_1_1_allocator_binder.html#a3f9004590e33a6759d82ca344c8e8a84">agrpc::AllocatorBinder&lt; Target, Allocator &gt;</a></li>
 <li>args()&#160;:&#160;<a class="el" href="classagrpc_1_1_repeatedly_request_context.html#a95d2fde87ede9780f5b26d78da984352">agrpc::RepeatedlyRequestContext&lt; ImplementationAllocator &gt;</a></li>
 </ul>
 
@@ -106,14 +107,15 @@ $(document).ready(function(){initNavTree('functions.html',''); initResizable(); 
 
 <h3><a id="index_e" name="index_e"></a>- e -</h3><ul>
 <li>execute()&#160;:&#160;<a class="el" href="classagrpc_1_1_basic_grpc_executor.html#a582b3391e4c1c383800284659707501c">agrpc::BasicGrpcExecutor&lt; Allocator, Options &gt;</a></li>
-<li>executor_type&#160;:&#160;<a class="el" href="classagrpc_1_1_grpc_context.html#a72c65827092d85b2ce6376524e35141c">agrpc::GrpcContext</a></li>
+<li>executor_type&#160;:&#160;<a class="el" href="classagrpc_1_1_allocator_binder.html#a182d7670923cf344e87f98e44dcb4305">agrpc::AllocatorBinder&lt; Target, Allocator &gt;</a>, <a class="el" href="classagrpc_1_1_grpc_context.html#a72c65827092d85b2ce6376524e35141c">agrpc::GrpcContext</a></li>
 </ul>
 
 
 <h3><a id="index_g" name="index_g"></a>- g -</h3><ul>
-<li>get_allocator()&#160;:&#160;<a class="el" href="classagrpc_1_1_basic_grpc_executor.html#ac52c1c13b18d046adee3fa98b7f3f0c5">agrpc::BasicGrpcExecutor&lt; Allocator, Options &gt;</a>, <a class="el" href="classagrpc_1_1_grpc_context.html#ab38d929d30e72aface90b3d429727d33">agrpc::GrpcContext</a></li>
+<li>get()&#160;:&#160;<a class="el" href="classagrpc_1_1_allocator_binder.html#a4232b052031618b3ce04577a993e0a52">agrpc::AllocatorBinder&lt; Target, Allocator &gt;</a></li>
+<li>get_allocator()&#160;:&#160;<a class="el" href="classagrpc_1_1_allocator_binder.html#a0b4e365cab5a2c22956ec4b0cd15c565">agrpc::AllocatorBinder&lt; Target, Allocator &gt;</a>, <a class="el" href="classagrpc_1_1_basic_grpc_executor.html#ac52c1c13b18d046adee3fa98b7f3f0c5">agrpc::BasicGrpcExecutor&lt; Allocator, Options &gt;</a>, <a class="el" href="classagrpc_1_1_grpc_context.html#ab38d929d30e72aface90b3d429727d33">agrpc::GrpcContext</a></li>
 <li>get_completion_queue()&#160;:&#160;<a class="el" href="classagrpc_1_1_grpc_context.html#a897a9de9af8a2b81bbeef2f7fe0d0c63">agrpc::GrpcContext</a></li>
-<li>get_executor()&#160;:&#160;<a class="el" href="classagrpc_1_1_grpc_context.html#ab82f48f7e09542f242b683cda49aa6a9">agrpc::GrpcContext</a></li>
+<li>get_executor()&#160;:&#160;<a class="el" href="classagrpc_1_1_allocator_binder.html#ae3badbc5bba125e324f203907619537a">agrpc::AllocatorBinder&lt; Target, Allocator &gt;</a>, <a class="el" href="classagrpc_1_1_grpc_context.html#ab82f48f7e09542f242b683cda49aa6a9">agrpc::GrpcContext</a></li>
 <li>get_scheduler()&#160;:&#160;<a class="el" href="classagrpc_1_1_grpc_context.html#add171728b45fddd5740e4a3c9549bd3b">agrpc::GrpcContext</a></li>
 <li>get_server_completion_queue()&#160;:&#160;<a class="el" href="classagrpc_1_1_grpc_context.html#a43be219d02581b5959b120bc9f869fce">agrpc::GrpcContext</a></li>
 <li>GrpcContext()&#160;:&#160;<a class="el" href="classagrpc_1_1_grpc_context.html#a977dfa398018fd3d62017f45ef05bc9e">agrpc::GrpcContext</a></li>
@@ -127,7 +129,8 @@ $(document).ready(function(){initNavTree('functions.html',''); initResizable(); 
 
 <h3><a id="index_o" name="index_o"></a>- o -</h3><ul>
 <li>operator!=&#160;:&#160;<a class="el" href="classagrpc_1_1_basic_grpc_executor.html#a59d940966a2cbccb0905db9c4fe23e09">agrpc::BasicGrpcExecutor&lt; Allocator, Options &gt;</a></li>
-<li>operator()()&#160;:&#160;<a class="el" href="structagrpc_1_1detail_1_1_finish_fn.html#a567b2c7bc370d5eb3a39858cd8aff8c1">agrpc::detail::FinishFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_finish_with_error_fn.html#a4604474d621bc1cbb39881b6a9ae7d02">agrpc::detail::FinishWithErrorFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_get_completion_queue_fn.html#adf3460a72dc1ef14040185285c75258c">agrpc::detail::GetCompletionQueueFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_grpc_initiate_fn.html#a31f7d886bf8c15f7b51c543d215e07ec">agrpc::detail::GrpcInitiateFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_read_fn.html#ad70bfdde44d5e48c3ce0c82781521adb">agrpc::detail::ReadFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_read_initial_metadata_fn.html#a6a11ac849576aaacda0a4af2b89e1268">agrpc::detail::ReadInitialMetadataFn</a>, <a class="el" href="classagrpc_1_1detail_1_1_repeatedly_request_fn.html#a5b2141397745975b58a944218386f8b5">agrpc::detail::RepeatedlyRequestFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_request_fn.html#a1f8f4ade9643cd886a7eb5bde62b9683">agrpc::detail::RequestFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_send_initial_metadata_fn.html#a276b7f442c32ad9df731f8f4a6eb2857">agrpc::detail::SendInitialMetadataFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_use_sender_fn.html#a0205188ef4f05267e7d2b9d957bdbfbb">agrpc::detail::UseSenderFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_wait_fn.html#af04b370dce3527ead1d08ce9e94a4b43">agrpc::detail::WaitFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_write_and_finish_fn.html#aced079f1315dc6ea8ac12c108bc4d2bb">agrpc::detail::WriteAndFinishFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_write_fn.html#ac8877d05c5132f17084d9cf203dd161d">agrpc::detail::WriteFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_write_last_fn.html#a09d9927c915bcd07f78b3b0906e2d251">agrpc::detail::WriteLastFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_writes_done_fn.html#a6fd5bfdb747ef207a91880e6193c8403">agrpc::detail::WritesDoneFn</a></li>
+<li>operator()()&#160;:&#160;<a class="el" href="classagrpc_1_1_allocator_binder.html#ac88827f6c364f2055e6faf07db8f499e">agrpc::AllocatorBinder&lt; Target, Allocator &gt;</a>, <a class="el" href="structagrpc_1_1detail_1_1_finish_fn.html#a567b2c7bc370d5eb3a39858cd8aff8c1">agrpc::detail::FinishFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_finish_with_error_fn.html#a4604474d621bc1cbb39881b6a9ae7d02">agrpc::detail::FinishWithErrorFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_get_completion_queue_fn.html#a64f41175d841ec2d7a95d548151e96e1">agrpc::detail::GetCompletionQueueFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_grpc_initiate_fn.html#a31f7d886bf8c15f7b51c543d215e07ec">agrpc::detail::GrpcInitiateFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_read_fn.html#af737bdcfe170e27bc1c878bbe33163b8">agrpc::detail::ReadFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_read_initial_metadata_fn.html#a6a11ac849576aaacda0a4af2b89e1268">agrpc::detail::ReadInitialMetadataFn</a>, <a class="el" href="classagrpc_1_1detail_1_1_repeatedly_request_fn.html#a98ab137b91769cc566f31584d4cc97f8">agrpc::detail::RepeatedlyRequestFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_request_fn.html#a451583a8010d65447da7887bdc6ac535">agrpc::detail::RequestFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_send_initial_metadata_fn.html#a276b7f442c32ad9df731f8f4a6eb2857">agrpc::detail::SendInitialMetadataFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_use_sender_fn.html#a0205188ef4f05267e7d2b9d957bdbfbb">agrpc::detail::UseSenderFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_wait_fn.html#af04b370dce3527ead1d08ce9e94a4b43">agrpc::detail::WaitFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_write_and_finish_fn.html#a26a9b464d9f052896c3d8a6b8224fabb">agrpc::detail::WriteAndFinishFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_write_fn.html#ac8877d05c5132f17084d9cf203dd161d">agrpc::detail::WriteFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_write_last_fn.html#a09d9927c915bcd07f78b3b0906e2d251">agrpc::detail::WriteLastFn</a>, <a class="el" href="structagrpc_1_1detail_1_1_writes_done_fn.html#a6fd5bfdb747ef207a91880e6193c8403">agrpc::detail::WritesDoneFn</a></li>
+<li>operator=()&#160;:&#160;<a class="el" href="classagrpc_1_1_allocator_binder.html#a96320c0188cd921a4d98a9f9c175e901">agrpc::AllocatorBinder&lt; Target, Allocator &gt;</a></li>
 <li>operator==&#160;:&#160;<a class="el" href="classagrpc_1_1_basic_grpc_executor.html#a47785162ab9282e1afe21ca8617142eb">agrpc::BasicGrpcExecutor&lt; Allocator, Options &gt;</a></li>
 </ul>
 
@@ -160,6 +163,11 @@ $(document).ready(function(){initNavTree('functions.html',''); initResizable(); 
 </ul>
 
 
+<h3><a id="index_t" name="index_t"></a>- t -</h3><ul>
+<li>target_type&#160;:&#160;<a class="el" href="classagrpc_1_1_allocator_binder.html#ae51816e5dc68c3f8b9733f5398546d18">agrpc::AllocatorBinder&lt; Target, Allocator &gt;</a></li>
+</ul>
+
+
 <h3><a id="index_w" name="index_w"></a>- w -</h3><ul>
 <li>work_finished()&#160;:&#160;<a class="el" href="classagrpc_1_1_grpc_context.html#a9f89631518b2d38dbe0be11f7d5a4cc6">agrpc::GrpcContext</a></li>
 <li>work_started()&#160;:&#160;<a class="el" href="classagrpc_1_1_grpc_context.html#ada19710c265c3a1e9cbffb696d079fbb">agrpc::GrpcContext</a></li>
@@ -167,6 +175,7 @@ $(document).ready(function(){initNavTree('functions.html',''); initResizable(); 
 
 
 <h3><a id="index__7E" name="index__7E"></a>- ~ -</h3><ul>
+<li>~AllocatorBinder()&#160;:&#160;<a class="el" href="classagrpc_1_1_allocator_binder.html#a65ec40118cb8bca01e3bfbd3955dc736">agrpc::AllocatorBinder&lt; Target, Allocator &gt;</a></li>
 <li>~GrpcContext()&#160;:&#160;<a class="el" href="classagrpc_1_1_grpc_context.html#ad54076bc77ee6db3f167b2ad073db171">agrpc::GrpcContext</a></li>
 </ul>
 </div><!-- contents -->

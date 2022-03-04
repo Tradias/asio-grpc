@@ -23,6 +23,7 @@ var namespaceagrpc =
       [ "GrpcUseAwaitable", "namespaceagrpc_1_1pmr.html#a0b3e18717019f6ee7a91ea1f74b6791d", null ],
       [ "GRPC_USE_AWAITABLE", "namespaceagrpc_1_1pmr.html#aef66c04f213e44931dab693469ea58d8", null ]
     ] ],
+    [ "AllocatorBinder", "classagrpc_1_1_allocator_binder.html", "classagrpc_1_1_allocator_binder" ],
     [ "BasicGrpcExecutor", "classagrpc_1_1_basic_grpc_executor.html", "classagrpc_1_1_basic_grpc_executor" ],
     [ "GrpcContext", "classagrpc_1_1_grpc_context.html", "classagrpc_1_1_grpc_context" ],
     [ "RepeatedlyRequestContext", "classagrpc_1_1_repeatedly_request_context.html", "classagrpc_1_1_repeatedly_request_context" ],
@@ -30,6 +31,7 @@ var namespaceagrpc =
     [ "GrpcAwaitable", "namespaceagrpc.html#a086aba63bca7dd6bd14fb2fe4f95245f", null ],
     [ "GrpcExecutor", "namespaceagrpc.html#aebdc4a27625d789667c7d54985157d28", null ],
     [ "GrpcUseAwaitable", "namespaceagrpc.html#a09770e93d81af05c59c0bc81f18e539f", null ],
+    [ "bind_allocator", "namespaceagrpc.html#aa4bf6ea33e66ac64b1af0914393a895b", null ],
     [ "finish", "namespaceagrpc.html#a88b9f806c77bb8077f3f7973beede2d0", null ],
     [ "finish_with_error", "namespaceagrpc.html#abb5b5ff3c1680340d038592856c2983b", null ],
     [ "get_completion_queue", "namespaceagrpc.html#a5abf4d06de9634b23c17e099314f29ac", null ],

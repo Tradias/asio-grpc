@@ -18,6 +18,7 @@ var annotated_dup =
         [ "WriteLastFn", "structagrpc_1_1detail_1_1_write_last_fn.html", "structagrpc_1_1detail_1_1_write_last_fn" ],
         [ "WritesDoneFn", "structagrpc_1_1detail_1_1_writes_done_fn.html", "structagrpc_1_1detail_1_1_writes_done_fn" ]
       ] ],
+      [ "AllocatorBinder", "classagrpc_1_1_allocator_binder.html", "classagrpc_1_1_allocator_binder" ],
       [ "BasicGrpcExecutor", "classagrpc_1_1_basic_grpc_executor.html", "classagrpc_1_1_basic_grpc_executor" ],
       [ "GrpcContext", "classagrpc_1_1_grpc_context.html", "classagrpc_1_1_grpc_context" ],
       [ "RepeatedlyRequestContext", "classagrpc_1_1_repeatedly_request_context.html", "classagrpc_1_1_repeatedly_request_context" ]

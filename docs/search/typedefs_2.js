@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['executor_5ftype_0',['executor_type',['../classagrpc_1_1_grpc_context.html#a72c65827092d85b2ce6376524e35141c',1,'agrpc::GrpcContext']]]
+  ['executor_5ftype_0',['executor_type',['../classagrpc_1_1_allocator_binder.html#a182d7670923cf344e87f98e44dcb4305',1,'agrpc::AllocatorBinder::executor_type()'],['../classagrpc_1_1_grpc_context.html#a72c65827092d85b2ce6376524e35141c',1,'agrpc::GrpcContext::executor_type()']]]
 ];
