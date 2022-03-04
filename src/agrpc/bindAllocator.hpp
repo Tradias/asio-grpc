@@ -15,6 +15,8 @@
 #ifndef AGRPC_AGRPC_BINDALLOCATOR_HPP
 #define AGRPC_AGRPC_BINDALLOCATOR_HPP
 
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/utility.hpp"
@@ -201,6 +203,8 @@ auto bind_allocator(const Allocator& allocator, Target&& target)
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_AGRPC_BINDALLOCATOR_HPP
-
 #include "agrpc/detail/bindAllocator.ipp"
+
+#endif
+
+#endif  // AGRPC_AGRPC_BINDALLOCATOR_HPP

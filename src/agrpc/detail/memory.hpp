@@ -18,6 +18,7 @@
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/utility.hpp"
 
+#include <cassert>
 #include <cstddef>
 #include <memory>
 #include <type_traits>
@@ -199,6 +200,57 @@ class MemoryResourceAllocator
 
     Resource* resource;
 };
+
+template <class T, class Capacity>
+class BasicOneShotAllocator
+{
+  public:
+    using value_type = T;
+
+    BasicOneShotAllocator() = default;
+
+    constexpr explicit BasicOneShotAllocator(void* buffer) noexcept : buffer(buffer) {}
+
+    template <class U>
+    constexpr BasicOneShotAllocator(const detail::BasicOneShotAllocator<U, Capacity>& other) noexcept
+        : buffer(other.buffer)
+    {
+    }
+
+    [[nodiscard]] constexpr T* allocate([[maybe_unused]] std::size_t n) noexcept
+    {
+        static_assert(Capacity::value >= sizeof(T), "BasicOneShotAllocator has insufficient capacity");
+        assert(Capacity::value >= n * sizeof(T));
+        void* ptr = this->buffer;
+        assert(std::exchange(this->buffer, nullptr));
+        return static_cast<T*>(ptr);
+    }
+
+    static constexpr void deallocate(T*, std::size_t) noexcept {}
+
+    template <class U, class OtherCapacity>
+    friend constexpr bool operator==(const BasicOneShotAllocator& lhs,
+                                     const detail::BasicOneShotAllocator<U, OtherCapacity>& rhs) noexcept
+    {
+        return lhs.buffer == rhs.buffer;
+    }
+
+    template <class U, class OtherCapacity>
+    friend constexpr bool operator!=(const BasicOneShotAllocator& lhs,
+                                     const detail::BasicOneShotAllocator<U, OtherCapacity>& rhs) noexcept
+    {
+        return lhs.buffer != rhs.buffer;
+    }
+
+  private:
+    template <class, class>
+    friend class BasicOneShotAllocator;
+
+    void* buffer;
+};
+
+template <class T, std::size_t Capacity>
+using OneShotAllocator = detail::BasicOneShotAllocator<T, std::integral_constant<std::size_t, Capacity>>;
 }
 
 AGRPC_NAMESPACE_END
