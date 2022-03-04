@@ -36,11 +36,16 @@ struct AllocatorBinderAsyncResultCompletionHandlerType<TargetAsyncResult, Alloca
         agrpc::AllocatorBinder<typename TargetAsyncResult::completion_handler_type, Allocator>;
 };
 
-template <class TargetAsyncResult, class Allocator>
-struct AllocatorBinderAsyncResultCompletionHandlerType<TargetAsyncResult, Allocator,
-                                                       std::void_t<typename TargetAsyncResult::handler_type>>
+template <class TargetAsyncResult, class Allocator, class = void>
+struct AllocatorBinderAsyncResultHandlerType
 {
-    using completion_handler_type = agrpc::AllocatorBinder<typename TargetAsyncResult::handler_type, Allocator>;
+};
+
+template <class TargetAsyncResult, class Allocator>
+struct AllocatorBinderAsyncResultHandlerType<TargetAsyncResult, Allocator,
+                                             std::void_t<typename TargetAsyncResult::handler_type>>
+{
+    using handler_type = agrpc::AllocatorBinder<typename TargetAsyncResult::handler_type, Allocator>;
 };
 
 template <class TargetAsyncResult, class = void>
@@ -92,6 +97,8 @@ template <class CompletionToken, class Allocator, class Signature>
 class async_result<::agrpc::AllocatorBinder<CompletionToken, Allocator>, Signature>
     : public ::agrpc::detail::AllocatorBinderAsyncResultCompletionHandlerType<async_result<CompletionToken, Signature>,
                                                                               Allocator>,
+      public ::agrpc::detail::AllocatorBinderAsyncResultHandlerType<async_result<CompletionToken, Signature>,
+                                                                    Allocator>,
       public ::agrpc::detail::AllocatorBinderAsyncResultReturnType<async_result<CompletionToken, Signature>>
 {
   public:

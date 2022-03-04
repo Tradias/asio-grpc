@@ -23,7 +23,7 @@
 
 DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0))
 {
-TEST_CASE_FIXTURE(test::GrpcContextTest, "AllocatorBinder constructors")
+TEST_CASE_FIXTURE(test::GrpcContextTest, "AllocatorBinder constructor and member function")
 {
     agrpc::detail::pmr::polymorphic_allocator<std::byte> default_allocator{};
 
