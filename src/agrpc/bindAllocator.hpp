@@ -31,6 +31,8 @@ AGRPC_NAMESPACE_BEGIN()
  * possible:
  *
  * @snippet client.cpp bind_allocator-client-side
+ *
+ * @since 1.5.0
  */
 template <class Target, class Allocator>
 class AllocatorBinder
@@ -194,6 +196,8 @@ AllocatorBinder(const Allocator& allocator, Target&& target)
 
 /**
  * @brief Helper function to create an agrpc::AllocatorBinder
+ *
+ * @since 1.5.0
  */
 template <class Allocator, class Target>
 auto bind_allocator(const Allocator& allocator, Target&& target)

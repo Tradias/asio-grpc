@@ -294,6 +294,22 @@ struct RethrowFirstArg
     }
 };
 
+template <class CompletionToken, class Signature, class = void>
+struct CompletionHandlerType
+{
+    using Type = typename asio::async_result<CompletionToken, Signature>::completion_handler_type;
+};
+
+template <class CompletionToken, class Signature>
+struct CompletionHandlerType<CompletionToken, Signature,
+                             std::void_t<typename asio::async_result<CompletionToken, Signature>::handler_type>>
+{
+    using Type = typename asio::async_result<CompletionToken, Signature>::handler_type;
+};
+
+template <class CompletionToken, class Signature>
+using CompletionHandlerTypeT = typename CompletionHandlerType<CompletionToken, Signature>::Type;
+
 template <class RequestHandler, class RPC, class Service, class CompletionHandler, bool IsStoppable>
 class RepeatedlyRequestAwaitableOperation
     : public detail::TypeErasedNoArgOperation,
@@ -321,7 +337,7 @@ class RepeatedlyRequestAwaitableOperation
             detail::AllocatedPointer{static_cast<BufferOperation*>(op), std::allocator<BufferOperation>{}};
         }
 
-        std::aligned_storage_t<64> buffer;
+        std::aligned_storage_t<sizeof(detail::CompletionHandlerTypeT<UseAwaitable, void()>) + 3 * sizeof(void*)> buffer;
     };
 
     static auto make_buffer_operation()
