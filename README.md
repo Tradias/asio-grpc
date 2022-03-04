@@ -291,7 +291,7 @@ For clients only:
 ```cpp
 agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 ```
-<sup><a href='/example/snippets/client.cpp#L237-L239' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-client-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/snippets/client.cpp#L246-L248' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-client-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Add some work to the `grpc_context` and run it. Make sure to shutdown the `server` before destructing the `grpc_context`. Also destruct the `grpc_context` before destructing the `server`. A `grpc_context` can only be run on one thread at a time.
@@ -313,7 +313,7 @@ It might also be helpful to create a work guard before running the `agrpc::GrpcC
 ```cpp
 auto guard = asio::make_work_guard(grpc_context);
 ```
-<sup><a href='/example/snippets/client.cpp#L241-L243' title='Snippet source file'>snippet source</a> | <a href='#snippet-make-work-guard' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/snippets/client.cpp#L250-L252' title='Snippet source file'>snippet source</a> | <a href='#snippet-make-work-guard' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Where to go from here?
