@@ -61,7 +61,7 @@ class AllocatorBinder
      */
     template <class... Args>
     explicit AllocatorBinder(const Allocator& allocator, Args&&... args)
-        : allocator(allocator), target(std::forward<Args>(args)...)
+        : impl(detail::SecondThenVariadic{}, allocator, std::forward<Args>(args)...)
     {
     }
 
@@ -75,7 +75,7 @@ class AllocatorBinder
      */
     template <class OtherTarget, class OtherAllocator>
     explicit AllocatorBinder(const AllocatorBinder<OtherTarget, OtherAllocator>& other)
-        : allocator(other.get_allocator()), target(other.get())
+        : impl(other.get(), other.get_allocator())
     {
     }
 
@@ -84,7 +84,7 @@ class AllocatorBinder
      */
     template <class OtherTarget, class OtherAllocator>
     AllocatorBinder(const Allocator& allocator, AllocatorBinder<OtherTarget, OtherAllocator>& other)
-        : allocator(allocator), target(other.get())
+        : impl(other.get(), allocator)
     {
     }
 
@@ -93,7 +93,7 @@ class AllocatorBinder
      */
     template <class OtherTarget, class OtherAllocator>
     AllocatorBinder(const Allocator& allocator, const AllocatorBinder<OtherTarget, OtherAllocator>& other)
-        : allocator(allocator), target(other.get())
+        : impl(other.get(), allocator)
     {
     }
 
@@ -107,7 +107,7 @@ class AllocatorBinder
      */
     template <class OtherTarget, class OtherAllocator>
     explicit AllocatorBinder(AllocatorBinder<OtherTarget, OtherAllocator>&& other)
-        : allocator(std::move(other.get_allocator())), target(std::move(other.get()))
+        : impl(std::move(other.get()), std::move(other.get_allocator()))
     {
     }
 
@@ -116,7 +116,7 @@ class AllocatorBinder
      */
     template <class OtherTarget, class OtherAllocator>
     AllocatorBinder(const Allocator& allocator, AllocatorBinder<OtherTarget, OtherAllocator>&& other)
-        : allocator(allocator), target(std::move(other.get()))
+        : impl(std::move(other.get()), allocator)
     {
     }
 
@@ -138,22 +138,22 @@ class AllocatorBinder
     /**
      * @brief Get the target (mutable)
      */
-    target_type& get() noexcept { return target; }
+    target_type& get() noexcept { return impl.first(); }
 
     /**
      * @brief Get the target (const)
      */
-    const target_type& get() const noexcept { return target; }
+    const target_type& get() const noexcept { return impl.first(); }
 
     /**
      * @brief Get the target's associated executor
      */
-    executor_type get_executor() const noexcept { return asio::get_associated_executor(target); }
+    executor_type get_executor() const noexcept { return asio::get_associated_executor(this->get()); }
 
     /**
      * @brief Get the bound allocator
      */
-    allocator_type get_allocator() const noexcept { return allocator; }
+    allocator_type get_allocator() const noexcept { return impl.second(); }
 
     /**
      * @brief Invoke target with arguments (rvalue overload)
@@ -161,7 +161,7 @@ class AllocatorBinder
     template <class... Args>
     decltype(auto) operator()(Args&&... args) &&
     {
-        return std::move(target)(std::forward<Args>(args)...);
+        return std::move(this->get())(std::forward<Args>(args)...);
     }
 
     /**
@@ -170,7 +170,7 @@ class AllocatorBinder
     template <class... Args>
     decltype(auto) operator()(Args&&... args) &
     {
-        return target(std::forward<Args>(args)...);
+        return this->get()(std::forward<Args>(args)...);
     }
 
     /**
@@ -179,12 +179,11 @@ class AllocatorBinder
     template <class... Args>
     decltype(auto) operator()(Args&&... args) const&
     {
-        return target(std::forward<Args>(args)...);
+        return this->get()(std::forward<Args>(args)...);
     }
 
   private:
-    Allocator allocator;
-    Target target;
+    detail::CompressedPair<Target, Allocator> impl;
 };
 
 template <class Allocator, class Target>
