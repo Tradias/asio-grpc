@@ -208,21 +208,16 @@ class RepeatedlyRequestOperation
     RPCContext* rpc_context;
 };
 
-struct RepeatedlyRequestInitFunction
+template <class Operation>
+void initiate_repeatedly_request(agrpc::GrpcContext& grpc_context, Operation& operation)
 {
-    template <class RequestHandler, class RPC, class Service, class CompletionHandler, bool IsStoppable>
-    void operator()(agrpc::GrpcContext& grpc_context,
-                    detail::RepeatedlyRequestOperation<RequestHandler, RPC, Service, CompletionHandler, IsStoppable>&
-                        operation) const
+    if (!operation.initiate_repeatedly_request())
     {
-        if (!operation.initiate_repeatedly_request())
-        {
-            detail::GrpcContextImplementation::add_operation(grpc_context, &operation);
-        }
+        detail::GrpcContextImplementation::add_operation(grpc_context, &operation);
     }
-};
+}
 
-template <template <class, class, class, class, bool> class Operation, class InitFunction>
+template <template <class, class, class, class, bool> class Operation>
 struct BasicRepeatedlyRequestInitiator
 {
     template <class RequestHandler, class RPC, class Service, class CompletionHandler>
@@ -244,7 +239,7 @@ struct BasicRepeatedlyRequestInitiator
                     allocator, std::forward<RequestHandler>(request_handler), rpc, service,
                     std::forward<CompletionHandler>(completion_handler));
             cancellation_slot.template emplace<detail::RepeatedlyRequestStopFunction>(operation->stop_context());
-            InitFunction{}(grpc_context, *operation);
+            detail::initiate_repeatedly_request(grpc_context, *operation);
             operation.release();
         }
         else
@@ -254,15 +249,14 @@ struct BasicRepeatedlyRequestInitiator
                 detail::allocate<Operation<DecayedRequestHandler, RPC, Service, TrackingCompletionHandler, false>>(
                     allocator, std::forward<RequestHandler>(request_handler), rpc, service,
                     std::forward<CompletionHandler>(completion_handler));
-            InitFunction{}(grpc_context, *operation);
+            detail::initiate_repeatedly_request(grpc_context, *operation);
             operation.release();
         }
         on_exit.release();
     }
 };
 
-using RepeatedlyRequestInitiator =
-    detail::BasicRepeatedlyRequestInitiator<detail::RepeatedlyRequestOperation, detail::RepeatedlyRequestInitFunction>;
+using RepeatedlyRequestInitiator = detail::BasicRepeatedlyRequestInitiator<detail::RepeatedlyRequestOperation>;
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 template <class Executor, class T, class = void>
@@ -431,23 +425,8 @@ class RepeatedlyRequestAwaitableOperation
     BufferOperation* buffer_operation;
 };
 
-struct RepeatedlyRequestAwaitableInitFunction
-{
-    template <class RequestHandler, class RPC, class Service, class CompletionHandler, bool IsStoppable>
-    void operator()(agrpc::GrpcContext& grpc_context,
-                    detail::RepeatedlyRequestAwaitableOperation<RequestHandler, RPC, Service, CompletionHandler,
-                                                                IsStoppable>& operation) const
-    {
-        if (!operation.initiate_repeatedly_request())
-        {
-            detail::GrpcContextImplementation::add_operation(grpc_context, &operation);
-        }
-    }
-};
-
 using RepeatedlyRequestAwaitableInitiator =
-    detail::BasicRepeatedlyRequestInitiator<detail::RepeatedlyRequestAwaitableOperation,
-                                            detail::RepeatedlyRequestAwaitableInitFunction>;
+    detail::BasicRepeatedlyRequestInitiator<detail::RepeatedlyRequestAwaitableOperation>;
 #endif
 #endif
 }

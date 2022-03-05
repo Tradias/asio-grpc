@@ -201,26 +201,31 @@ class MemoryResourceAllocator
     Resource* resource;
 };
 
-template <class T, class Capacity>
-class BasicOneShotAllocator
+template <class T, std::size_t Capacity>
+class OneShotAllocator
 {
   public:
     using value_type = T;
 
-    BasicOneShotAllocator() = default;
+    template <class U>
+    struct rebind
+    {
+        using other = detail::OneShotAllocator<U, Capacity>;
+    };
 
-    constexpr explicit BasicOneShotAllocator(void* buffer) noexcept : buffer(buffer) {}
+    OneShotAllocator() = default;
+
+    constexpr explicit OneShotAllocator(void* buffer) noexcept : buffer(buffer) {}
 
     template <class U>
-    constexpr BasicOneShotAllocator(const detail::BasicOneShotAllocator<U, Capacity>& other) noexcept
-        : buffer(other.buffer)
+    constexpr OneShotAllocator(const detail::OneShotAllocator<U, Capacity>& other) noexcept : buffer(other.buffer)
     {
     }
 
     [[nodiscard]] constexpr T* allocate([[maybe_unused]] std::size_t n) noexcept
     {
-        static_assert(Capacity::value >= sizeof(T), "BasicOneShotAllocator has insufficient capacity");
-        assert(Capacity::value >= n * sizeof(T));
+        static_assert(Capacity >= sizeof(T), "OneShotAllocator has insufficient capacity");
+        assert(Capacity >= n * sizeof(T));
         void* ptr = this->buffer;
         assert(std::exchange(this->buffer, nullptr));
         return static_cast<T*>(ptr);
@@ -228,29 +233,26 @@ class BasicOneShotAllocator
 
     static constexpr void deallocate(T*, std::size_t) noexcept {}
 
-    template <class U, class OtherCapacity>
-    friend constexpr bool operator==(const BasicOneShotAllocator& lhs,
-                                     const detail::BasicOneShotAllocator<U, OtherCapacity>& rhs) noexcept
+    template <class U, std::size_t OtherCapacity>
+    friend constexpr bool operator==(const OneShotAllocator& lhs,
+                                     const detail::OneShotAllocator<U, OtherCapacity>& rhs) noexcept
     {
         return lhs.buffer == rhs.buffer;
     }
 
-    template <class U, class OtherCapacity>
-    friend constexpr bool operator!=(const BasicOneShotAllocator& lhs,
-                                     const detail::BasicOneShotAllocator<U, OtherCapacity>& rhs) noexcept
+    template <class U, std::size_t OtherCapacity>
+    friend constexpr bool operator!=(const OneShotAllocator& lhs,
+                                     const detail::OneShotAllocator<U, OtherCapacity>& rhs) noexcept
     {
         return lhs.buffer != rhs.buffer;
     }
 
   private:
-    template <class, class>
-    friend class BasicOneShotAllocator;
+    template <class, std::size_t>
+    friend class OneShotAllocator;
 
     void* buffer;
 };
-
-template <class T, std::size_t Capacity>
-using OneShotAllocator = detail::BasicOneShotAllocator<T, std::integral_constant<std::size_t, Capacity>>;
 }
 
 AGRPC_NAMESPACE_END
