@@ -35,26 +35,23 @@ boost::asio::awaitable<void> make_client_streaming_request(example::v1::Example:
     bool request_ok = co_await agrpc::request(&example::v1::Example::Stub::AsyncClientStreaming, stub, client_context,
                                               writer, response);
 
-    // Optionally read initial metadata first
-    // https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_async_writer.html#a02f613eaaed4177f1682da3f5eebbdeb
+    // Optionally read initial metadata first.
     bool read_ok = co_await agrpc::read_initial_metadata(*writer);
 
-    // Send a message
-    // https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_async_writer.html#a0e981b6dcce663e655edf305573f2f30
+    // Send a message.
     example::v1::Request request;
     bool write_ok = co_await agrpc::write(*writer, request);
 
-    // Signal that we are done writing
-    // https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_async_writer.html#ab9fd5cd7dedd73d878a86de84c58e8ff
+    // Signal that we are done writing.
     bool writes_done_ok = co_await agrpc::writes_done(*writer);
 
-    // Wait for the server to recieve all our messages
-    // https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_async_writer.html#aa94f32feaf8200695b65f1628d0ddf50
+    // Wait for the server to recieve all our messages.
     grpc::Status status;
     bool finish_ok = co_await agrpc::finish(*writer, status);
 
-    // See https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html#a86d9810ced694e50f7987ac90b9f8c1a
-    // for the meaning of the bool values
+    // The above three steps can also be combined into one using `agrpc::write_and_finish`.
+
+    // See documentation for the meaning of the bool values.
 
     abort_if_not(status.ok());
     silence_unused(request_ok, read_ok, write_ok, writes_done_ok, finish_ok);
@@ -70,8 +67,7 @@ boost::asio::awaitable<void> make_bidirectional_streaming_request(example::v1::E
                                               client_context, reader_writer);
     if (!request_ok)
     {
-        // See 'Client-side StartCall/RPC invocation' for an explanation when `request_ok` can be false
-        // https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html#a86d9810ced694e50f7987ac90b9f8c1a
+        // Channel is either permanently broken or transiently broken but with the fail-fast option.
         co_return;
     }
 
@@ -84,11 +80,7 @@ boost::asio::awaitable<void> make_bidirectional_streaming_request(example::v1::E
     while (read_ok && write_ok && count < 10)
     {
         example::v1::Response response;
-        // Reads and writes can be done simultaneously.
-        // More information on reads:
-        // https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_async_reader_writer.html#a2f2c91734a7de5affdd427fb88ee6167
-        // More information on writes:
-        // https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_async_reader_writer.html#a07bcc3a0737c3bee3ef50def89af5fc7
+        // Reads and writes can be performed simultaneously.
         using namespace boost::asio::experimental::awaitable_operators;
         std::tie(read_ok, write_ok) =
             co_await(agrpc::read(*reader_writer, response) && agrpc::write(*reader_writer, request));
@@ -96,9 +88,10 @@ boost::asio::awaitable<void> make_bidirectional_streaming_request(example::v1::E
         request.set_integer(response.integer());
         ++count;
     }
+
+    // Do not forget to signal that we are done writing before finishing.
     co_await agrpc::writes_done(*reader_writer);
 
-    // https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_async_reader_writer.html#a953d61a2b25473bb76c7038b940b87aa
     grpc::Status status;
     bool finish_ok = co_await agrpc::finish(*reader_writer, status);
 
@@ -121,16 +114,15 @@ boost::asio::awaitable<void> run_with_deadline(grpc::Alarm& alarm, grpc::ClientC
     co_await(set_alarm() || function());
 }
 
+// This example shows how to cancel an entire RPC when a single step did not complete within the specified time.
 boost::asio::awaitable<void> make_and_cancel_unary_request(example::v1::Example::Stub& stub)
 {
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
 
-    const auto executor = co_await boost::asio::this_coro::executor;
-
     example::v1::Request request;
     request.set_integer(2000);  // tell server to delay response by 2000ms
-    auto reader = stub.AsyncSlowUnary(&client_context, request, agrpc::get_completion_queue(executor));
+    auto reader = stub.AsyncSlowUnary(&client_context, request, co_await agrpc::get_completion_queue());
 
     example::v1::Response response;
     grpc::Status status;
@@ -146,6 +138,7 @@ boost::asio::awaitable<void> make_and_cancel_unary_request(example::v1::Example:
     abort_if_not(grpc::StatusCode::CANCELLED == status.error_code());
 }
 
+// This helps with writing unit tests for these examples.
 boost::asio::awaitable<void> make_shutdown_request(example::v1::Example::Stub& stub)
 {
     grpc::ClientContext client_context;

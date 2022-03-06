@@ -21,10 +21,10 @@
 #include <agrpc/rpc.hpp>
 #include <doctest/doctest.h>
 
+#ifdef AGRPC_ASIO_HAS_CO_AWAIT
 DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0))
 {
-#ifdef AGRPC_ASIO_HAS_CO_AWAIT
-TEST_CASE_TEMPLATE("awaitable repeatedly_request unary", T, std::true_type, std::false_type)
+TEST_CASE_TEMPLATE("awaitable repeatedly_request unary", UseAllocator, std::true_type, std::false_type)
 {
     test::GrpcClientServerTest self;
     bool use_server_shutdown{false};
@@ -34,7 +34,7 @@ TEST_CASE_TEMPLATE("awaitable repeatedly_request unary", T, std::true_type, std:
     auto request_count{0};
     auto executor = [&]
     {
-        if constexpr (T{})
+        if constexpr (UseAllocator{})
         {
             return asio::require(self.get_executor(), asio::execution::allocator(self.get_allocator()));
         }
@@ -79,7 +79,7 @@ TEST_CASE_TEMPLATE("awaitable repeatedly_request unary", T, std::true_type, std:
                 });
     self.grpc_context.run();
     CHECK_EQ(4, request_count);
-    if constexpr (T{})
+    if constexpr (UseAllocator{})
     {
         CHECK(self.allocator_has_been_used());
     }
@@ -161,5 +161,5 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "asio use_sender repeatedly_reques
     CHECK_EQ(4, request_count);
 }
 #endif
-#endif
 }
+#endif

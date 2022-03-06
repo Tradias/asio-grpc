@@ -46,7 +46,7 @@ auto register_unary_request_handler(example::v1::Example::AsyncService& service,
                                              &example::v1::Example::AsyncService::RequestUnary, service,
                                              [&](auto& server_context, auto& request, auto& writer)
                                              {
-                                                 // Stop handling requests after this one
+                                                 // Stop handling any more requests after this one
                                                  stop.request_stop();
                                                  return handle_unary_request(grpc_context, server_context, request,
                                                                              writer);
@@ -55,7 +55,7 @@ auto register_unary_request_handler(example::v1::Example::AsyncService& service,
                                          unifex::get_stop_token, stop.get_token()),
                 []()
                 {
-                    // Prevent stop request from propagating up
+                    // Prevent stop signal from propagating up
                     return unifex::just();
                 });
         });
@@ -106,11 +106,12 @@ int main(int argc, const char** argv)
     const auto port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("0.0.0.0:") + port;
 
-    grpc::ServerBuilder builder;
     std::unique_ptr<grpc::Server> server;
-    example::v1::Example::AsyncService service;
+
+    grpc::ServerBuilder builder;
     agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
     builder.AddListeningPort(host, grpc::InsecureServerCredentials());
+    example::v1::Example::AsyncService service;
     builder.RegisterService(&service);
     server = builder.BuildAndStart();
     abort_if_not(bool{server});

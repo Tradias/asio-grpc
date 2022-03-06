@@ -30,11 +30,12 @@ int main(int argc, const char** argv)
     const auto host = std::string("0.0.0.0:") + port;
 
     // begin-snippet: server-side-helloworld
-    grpc::ServerBuilder builder;
     std::unique_ptr<grpc::Server> server;
-    helloworld::Greeter::AsyncService service;
+
+    grpc::ServerBuilder builder;
     agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
     builder.AddListeningPort(host, grpc::InsecureServerCredentials());
+    helloworld::Greeter::AsyncService service;
     builder.RegisterService(&service);
     server = builder.BuildAndStart();
 

@@ -76,29 +76,24 @@ struct ServerShutdown
 boost::asio::awaitable<void> handle_client_streaming_request(
     grpc::ServerContext&, grpc::ServerAsyncReader<example::v1::Response, example::v1::Request>& reader)
 {
-    // Optionally send initial metadata
-    // https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_async_reader.html#a3158928c9f07d695b3deeb39e5dd0982
+    // Optionally send initial metadata first.
     bool send_ok = co_await agrpc::send_initial_metadata(reader);
 
     bool read_ok;
     do
     {
         example::v1::Request request;
-        // Read from the client stream
-        // https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_async_reader.html#aefbe83b79433a6ae85f9f1ce913997c1
+        // Read from the client stream until the client has signaled `writes_done`.
         read_ok = co_await agrpc::read(reader, request);
     } while (read_ok);
 
-    // See also https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_async_reader.html#a59951d06481769e3e40fc84454901467
     example::v1::Response response;
     bool finish_ok = co_await agrpc::finish(reader, response, grpc::Status::OK);
 
     // Or finish with an error
-    // https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_async_reader.html#ad35cb525d0eeaf49e61bd5a5aeaf9a05
     // bool finish_with_error_ok = co_await agrpc::finish_with_error(reader, grpc::Status::CANCELLED);
 
-    // See https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html#a86d9810ced694e50f7987ac90b9f8c1a
-    // for the meaning of the bool values
+    // See documentation for the meaning of the bool values
 
     silence_unused(send_ok, finish_ok);
 }
@@ -123,7 +118,6 @@ boost::asio::awaitable<void> handle_bidirectional_streaming_request(example::v1:
     if (!request_ok)
     {
         // Server is shutting down.
-        // https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html#a86d9810ced694e50f7987ac90b9f8c1a
         co_return;
     }
 
@@ -136,11 +130,7 @@ boost::asio::awaitable<void> handle_bidirectional_streaming_request(example::v1:
     {
         example::v1::Response response;
         response.set_integer(request.integer() + 1);
-        // Reads and writes can be done simultaneously.
-        // More information on reads:
-        // https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_async_reader_writer.html#a911d41783f644e170c017bb3032ca5c8
-        // More information on writes:
-        // https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_async_reader_writer.html#a816fd9065473a24d4ab613ee2ecb19e1
+        // Reads and writes can be performed simultaneously.
         using namespace boost::asio::experimental::awaitable_operators;
         std::tie(read_ok, write_ok) =
             co_await(agrpc::read(reader_writer, request) && agrpc::write(reader_writer, response));
@@ -151,6 +141,7 @@ boost::asio::awaitable<void> handle_bidirectional_streaming_request(example::v1:
     silence_unused(finish_ok);
 }
 
+// This endpoint is used by the client to demonstrate per RPC step cancellation
 boost::asio::awaitable<void> handle_slow_unary_request(example::v1::Example::AsyncService& service)
 {
     grpc::ServerContext server_context;
@@ -169,6 +160,7 @@ boost::asio::awaitable<void> handle_slow_unary_request(example::v1::Example::Asy
     co_await agrpc::finish(writer, response, grpc::Status::OK);
 }
 
+// This helps with writing unit tests for these examples.
 boost::asio::awaitable<void> handle_shutdown_request(example::v1::Example::AsyncService& service,
                                                      ServerShutdown& server_shutdown)
 {
@@ -194,11 +186,12 @@ int main(int argc, const char** argv)
     const auto port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("0.0.0.0:") + port;
 
-    grpc::ServerBuilder builder;
     std::unique_ptr<grpc::Server> server;
-    example::v1::Example::AsyncService service;
+
+    grpc::ServerBuilder builder;
     agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
     builder.AddListeningPort(host, grpc::InsecureServerCredentials());
+    example::v1::Example::AsyncService service;
     builder.RegisterService(&service);
     server = builder.BuildAndStart();
     abort_if_not(bool{server});
