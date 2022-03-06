@@ -22,11 +22,12 @@ A [Executor, Networking TS](https://www.boost.org/doc/libs/1_78_0/doc/html/boost
 <!-- snippet: server-side-helloworld -->
 <a id='snippet-server-side-helloworld'></a>
 ```cpp
-grpc::ServerBuilder builder;
 std::unique_ptr<grpc::Server> server;
-helloworld::Greeter::AsyncService service;
+
+grpc::ServerBuilder builder;
 agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
 builder.AddListeningPort(host, grpc::InsecureServerCredentials());
+helloworld::Greeter::AsyncService service;
 builder.RegisterService(&service);
 server = builder.BuildAndStart();
 
@@ -47,7 +48,7 @@ boost::asio::co_spawn(
 
 grpc_context.run();
 ```
-<sup><a href='/example/hello-world-server.cpp#L32-L57' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/hello-world-server.cpp#L32-L58' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 * [Client side hello world](/example/hello-world-client.cpp)
