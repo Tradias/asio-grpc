@@ -19,10 +19,8 @@
 
 #include <thread>
 
-namespace test_examples
+DOCTEST_TEST_SUITE("Examples" * doctest::timeout(180.0))
 {
-TEST_SUITE_BEGIN("Examples" * doctest::timeout(180.0));
-
 TEST_CASE("examples")
 {
     const auto port = std::to_string(test::get_free_port());
@@ -53,6 +51,4 @@ TEST_CASE("examples")
     CHECK_EQ(0, server.exit_code());
     CHECK_EQ(0, client.exit_code());
 }
-
-TEST_SUITE_END();
-}  // namespace test_asio_grpc_examples
+}

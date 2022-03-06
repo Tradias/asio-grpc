@@ -27,10 +27,8 @@
 #include <optional>
 #include <thread>
 
-namespace test_asio_grpc_17
+DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0))
 {
-TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0));
-
 TEST_CASE("GrpcExecutor fulfills Executor TS traits")
 {
     using Exec = agrpc::GrpcContext::executor_type;
@@ -1002,6 +1000,4 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with parallel_group
     CHECK_FALSE(ok);
 }
 #endif
-
-TEST_SUITE_END();
-}  // namespace test_asio_grpc
+}

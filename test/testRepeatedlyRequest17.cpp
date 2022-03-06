@@ -26,10 +26,8 @@
 #include <optional>
 #include <thread>
 
-namespace test_repeatedly_request_17
+DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0))
 {
-TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0));
-
 struct GrpcRepeatedlyRequestTest : test::GrpcClientServerTest
 {
     template <class RPC, class Service, class ServerFunction, class ClientFunction, class Allocator>
@@ -251,6 +249,4 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "repeatedly_request cancellation")
     CHECK_EQ(1, count);
 }
 #endif
-
-TEST_SUITE_END();
-}  // namespace test_asio_grpc
+}

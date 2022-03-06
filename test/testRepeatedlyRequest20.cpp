@@ -21,10 +21,8 @@
 #include <agrpc/rpc.hpp>
 #include <doctest/doctest.h>
 
-namespace test_repeatedly_request_20
+DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0))
 {
-TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0));
-
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 TEST_CASE_TEMPLATE("awaitable repeatedly_request unary", T, std::true_type, std::false_type)
 {
@@ -164,6 +162,4 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "asio use_sender repeatedly_reques
 }
 #endif
 #endif
-
-TEST_SUITE_END();
-}  // namespace test_asio_grpc
+}

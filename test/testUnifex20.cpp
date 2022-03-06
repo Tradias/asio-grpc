@@ -26,10 +26,8 @@
 #include <optional>
 #include <thread>
 
-namespace test_unifex_20
+DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0))
 {
-TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0));
-
 TEST_CASE("unifex asio-grpc fulfills unified executor concepts")
 {
     CHECK(unifex::scheduler<agrpc::GrpcExecutor>);
@@ -600,6 +598,4 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request client 
     CHECK_EQ(4, request_count);
 }
 #endif
-
-TEST_SUITE_END();
-}  // namespace test_asio_grpc_unifex_cpp20
+}
