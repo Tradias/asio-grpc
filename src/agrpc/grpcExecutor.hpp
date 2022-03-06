@@ -21,7 +21,6 @@
 #include "agrpc/detail/forward.hpp"
 #include "agrpc/detail/grpcExecutorBase.hpp"
 #include "agrpc/detail/grpcExecutorOptions.hpp"
-#include "agrpc/detail/memory.hpp"
 #include "agrpc/detail/memoryResource.hpp"
 #include "agrpc/detail/scheduleSender.hpp"
 #include "agrpc/grpcContext.hpp"

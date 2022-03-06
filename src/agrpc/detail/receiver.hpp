@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_RECIEVER_HPP
-#define AGRPC_DETAIL_RECIEVER_HPP
+#ifndef AGRPC_DETAIL_RECEIVER_HPP
+#define AGRPC_DETAIL_RECEIVER_HPP
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
@@ -41,4 +41,4 @@ void satisfy_receiver(Receiver&& receiver, Args&&... args) noexcept
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_RECIEVER_HPP
+#endif  // AGRPC_DETAIL_RECEIVER_HPP

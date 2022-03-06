@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_RPCS_HPP
-#define AGRPC_DETAIL_RPCS_HPP
+#ifndef AGRPC_DETAIL_RPC_HPP
+#define AGRPC_DETAIL_RPC_HPP
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
@@ -364,4 +364,4 @@ struct ServerSingleArgRequestInitFunction
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_RPCS_HPP
+#endif  // AGRPC_DETAIL_RPC_HPP

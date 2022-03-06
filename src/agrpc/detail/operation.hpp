@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_GRPCEXECUTOROPERATION_HPP
-#define AGRPC_DETAIL_GRPCEXECUTOROPERATION_HPP
+#ifndef AGRPC_DETAIL_OPERATION_HPP
+#define AGRPC_DETAIL_OPERATION_HPP
 
+#include "agrpc/detail/allocate.hpp"
 #include "agrpc/detail/config.hpp"
-#include "agrpc/detail/memory.hpp"
 #include "agrpc/detail/typeErasedOperation.hpp"
 #include "agrpc/detail/utility.hpp"
 
@@ -42,13 +42,9 @@ class Operation<IsIntrusivelyListable, Handler, Allocator, void(Signature...)>
     {
     }
 
-    [[nodiscard]] constexpr decltype(auto) completion_handler() noexcept { return impl.first(); }
+    [[nodiscard]] decltype(auto) completion_handler() noexcept { return impl.first(); }
 
-    [[nodiscard]] constexpr decltype(auto) completion_handler() const noexcept { return impl.first(); }
-
-    [[nodiscard]] constexpr decltype(auto) get_allocator() noexcept { return impl.second(); }
-
-    [[nodiscard]] constexpr decltype(auto) get_allocator() const noexcept { return impl.second(); }
+    [[nodiscard]] decltype(auto) get_allocator() noexcept { return impl.second(); }
 
   private:
     detail::CompressedPair<Handler, Allocator> impl;
@@ -57,8 +53,8 @@ class Operation<IsIntrusivelyListable, Handler, Allocator, void(Signature...)>
 template <bool IsIntrusivelyListable, class Handler, class Signature>
 class LocalOperation;
 
-template <bool IsIntrusivelyListable, class Handler, class R, class... Signature>
-class LocalOperation<IsIntrusivelyListable, Handler, R(Signature...)>
+template <bool IsIntrusivelyListable, class Handler, class... Signature>
+class LocalOperation<IsIntrusivelyListable, Handler, void(Signature...)>
     : public detail::TypeErasedOperation<IsIntrusivelyListable, Signature..., detail::GrpcContextLocalAllocator>
 {
   private:
@@ -83,9 +79,7 @@ class LocalOperation<IsIntrusivelyListable, Handler, R(Signature...)>
         }
     }
 
-    [[nodiscard]] constexpr auto& completion_handler() noexcept { return handler_; }
-
-    [[nodiscard]] constexpr const auto& completion_handler() const noexcept { return handler_; }
+    [[nodiscard]] auto& completion_handler() noexcept { return handler_; }
 
   private:
     Handler handler_;
@@ -94,4 +88,4 @@ class LocalOperation<IsIntrusivelyListable, Handler, R(Signature...)>
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_GRPCEXECUTOROPERATION_HPP
+#endif  // AGRPC_DETAIL_OPERATION_HPP

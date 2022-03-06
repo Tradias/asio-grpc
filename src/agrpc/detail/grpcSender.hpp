@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_AGRPC_GRPCSENDER_HPP
-#define AGRPC_AGRPC_GRPCSENDER_HPP
+#ifndef AGRPC_DETAIL_GRPCSENDER_HPP
+#define AGRPC_DETAIL_GRPCSENDER_HPP
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
@@ -147,4 +147,4 @@ class GrpcSender : public detail::SenderOf<bool>
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_AGRPC_GRPCSENDER_HPP
+#endif  // AGRPC_DETAIL_GRPCSENDER_HPP

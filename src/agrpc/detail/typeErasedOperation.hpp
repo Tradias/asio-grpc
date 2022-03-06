@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_GRPCCONTEXTOPERATION_HPP
-#define AGRPC_DETAIL_GRPCCONTEXTOPERATION_HPP
+#ifndef AGRPC_DETAIL_TYPEERASEDOPERATION_HPP
+#define AGRPC_DETAIL_TYPEERASEDOPERATION_HPP
 
+#include "agrpc/detail/allocate.hpp"
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/grpcContext.hpp"
 #include "agrpc/detail/intrusiveQueueHook.hpp"
-#include "agrpc/detail/memory.hpp"
 #include "agrpc/detail/utility.hpp"
 
 AGRPC_NAMESPACE_BEGIN()
@@ -39,7 +39,7 @@ class TypeErasedOperation
 
 {
   public:
-    constexpr void complete(detail::InvokeHandler invoke_handler, Signature... args)
+    void complete(detail::InvokeHandler invoke_handler, Signature... args)
     {
         this->on_complete(this, invoke_handler, detail::forward_as<Signature>(args)...);
     }
@@ -57,8 +57,8 @@ using TypeErasedNoArgOperation = detail::TypeErasedOperation<true, detail::GrpcC
 using TypeErasedGrpcTagOperation = detail::TypeErasedOperation<false, bool, detail::GrpcContextLocalAllocator>;
 
 template <class Operation, class Base, class... Args>
-inline void default_do_complete(Base* op, detail::InvokeHandler invoke_handler, Args... args,
-                                detail::GrpcContextLocalAllocator)
+void default_do_complete(Base* op, detail::InvokeHandler invoke_handler, Args... args,
+                         detail::GrpcContextLocalAllocator)
 {
     auto* self = static_cast<Operation*>(op);
     detail::AllocatedPointer ptr{self, self->get_allocator()};
@@ -73,4 +73,4 @@ inline void default_do_complete(Base* op, detail::InvokeHandler invoke_handler, 
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_GRPCCONTEXTOPERATION_HPP
+#endif  // AGRPC_DETAIL_TYPEERASEDOPERATION_HPP

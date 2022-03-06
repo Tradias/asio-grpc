@@ -15,9 +15,9 @@
 #ifndef AGRPC_DETAIL_ALLOCATEOPERATION_HPP
 #define AGRPC_DETAIL_ALLOCATEOPERATION_HPP
 
+#include "agrpc/detail/allocate.hpp"
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/grpcContextImplementation.hpp"
-#include "agrpc/detail/memory.hpp"
 #include "agrpc/detail/operation.hpp"
 #include "agrpc/grpcContext.hpp"
 

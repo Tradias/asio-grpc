@@ -25,6 +25,7 @@
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 #include "agrpc/bindAllocator.hpp"
+#include "agrpc/detail/oneShotAllocator.hpp"
 #include "agrpc/rpc.hpp"
 #endif
 
@@ -359,6 +360,17 @@ class RepeatedlyRequestAwaitableOperation
         detail::GrpcContextImplementation::add_local_operation(this->grpc_context(), this->buffer_operation);
     }
 
+    bool initiate_repeatedly_request()
+    {
+        if AGRPC_UNLIKELY (this->is_stopped() || this->grpc_context().is_stopped())
+        {
+            return false;
+        }
+        asio::co_spawn(this->get_executor(), this->on_request_complete(), detail::RethrowFirstArg{});
+        return true;
+    }
+
+  private:
     template <class RPCT, class Request, class Responder, class CompletionToken>
     static auto initiate_request_from_rpc_context(detail::ServerMultiArgRequest<RPCT, Request, Responder> rpc,
                                                   Service& service,
@@ -411,17 +423,6 @@ class RepeatedlyRequestAwaitableOperation
         }
     }
 
-    bool initiate_repeatedly_request()
-    {
-        if AGRPC_UNLIKELY (this->is_stopped() || this->grpc_context().is_stopped())
-        {
-            return false;
-        }
-        asio::co_spawn(this->get_executor(), this->on_request_complete(), detail::RethrowFirstArg{});
-        return true;
-    }
-
-  private:
     BufferOperation* buffer_operation;
 };
 

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_ATTRIBUTES_HPP
-#define AGRPC_DETAIL_ATTRIBUTES_HPP
+#ifndef AGRPC_DETAIL_CONFIG_HPP
+#define AGRPC_DETAIL_CONFIG_HPP
 
 #ifdef __has_include
 #if __has_include(<version>)
@@ -115,4 +115,4 @@ static_assert(false,
 #define AGRPC_ASIO_NAMESPACE_END }
 #endif
 
-#endif  // AGRPC_DETAIL_ATTRIBUTES_HPP
+#endif  // AGRPC_DETAIL_CONFIG_HPP

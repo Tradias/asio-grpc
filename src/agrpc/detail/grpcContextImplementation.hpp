@@ -35,7 +35,7 @@ struct WorkFinishedOnExitFunctor
 
 struct WorkFinishedOnExit : detail::ScopeGuard<detail::WorkFinishedOnExitFunctor>
 {
-    constexpr explicit WorkFinishedOnExit(agrpc::GrpcContext& grpc_context) noexcept
+    explicit WorkFinishedOnExit(agrpc::GrpcContext& grpc_context) noexcept
         : detail::ScopeGuard<detail::WorkFinishedOnExitFunctor>(detail::WorkFinishedOnExitFunctor{grpc_context})
     {
     }

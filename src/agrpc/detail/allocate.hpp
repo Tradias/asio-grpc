@@ -12,16 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_MEMORY_HPP
-#define AGRPC_DETAIL_MEMORY_HPP
+#ifndef AGRPC_DETAIL_ALLOCATE_HPP
+#define AGRPC_DETAIL_ALLOCATE_HPP
 
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/utility.hpp"
 
-#include <cassert>
-#include <cstddef>
 #include <memory>
-#include <type_traits>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -156,105 +153,8 @@ auto allocate(Allocator allocator, Args&&... args)
     Traits::construct(guard.get_allocator(), ptr, std::forward<Args>(args)...);
     return guard.release();
 }
-
-template <class T, class Resource>
-class MemoryResourceAllocator
-{
-  public:
-    using value_type = T;
-
-    MemoryResourceAllocator() = default;
-
-    constexpr explicit MemoryResourceAllocator(Resource* resource) noexcept : resource(resource) {}
-
-    template <class U>
-    constexpr MemoryResourceAllocator(const detail::MemoryResourceAllocator<U, Resource>& other) noexcept
-        : resource(other.resource)
-    {
-    }
-
-    [[nodiscard]] T* allocate(std::size_t n)
-    {
-        return static_cast<T*>(this->resource->allocate(n * sizeof(T), alignof(T)));
-    }
-
-    void deallocate(T* p, std::size_t n) noexcept { this->resource->deallocate(p, n * sizeof(T), alignof(T)); }
-
-    template <class U>
-    friend constexpr bool operator==(const MemoryResourceAllocator& lhs,
-                                     const detail::MemoryResourceAllocator<U, Resource>& rhs) noexcept
-    {
-        return lhs.resource == rhs.resource;
-    }
-
-    template <class U>
-    friend constexpr bool operator!=(const MemoryResourceAllocator& lhs,
-                                     const detail::MemoryResourceAllocator<U, Resource>& rhs) noexcept
-    {
-        return lhs.resource != rhs.resource;
-    }
-
-  private:
-    template <class, class>
-    friend class MemoryResourceAllocator;
-
-    Resource* resource;
-};
-
-template <class T, std::size_t Capacity>
-class OneShotAllocator
-{
-  public:
-    using value_type = T;
-
-    template <class U>
-    struct rebind
-    {
-        using other = detail::OneShotAllocator<U, Capacity>;
-    };
-
-    OneShotAllocator() = default;
-
-    constexpr explicit OneShotAllocator(void* buffer) noexcept : buffer(buffer) {}
-
-    template <class U>
-    constexpr OneShotAllocator(const detail::OneShotAllocator<U, Capacity>& other) noexcept : buffer(other.buffer)
-    {
-    }
-
-    [[nodiscard]] constexpr T* allocate([[maybe_unused]] std::size_t n) noexcept
-    {
-        static_assert(Capacity >= sizeof(T), "OneShotAllocator has insufficient capacity");
-        assert(Capacity >= n * sizeof(T));
-        void* ptr = this->buffer;
-        assert(std::exchange(this->buffer, nullptr));
-        return static_cast<T*>(ptr);
-    }
-
-    static constexpr void deallocate(T*, std::size_t) noexcept {}
-
-    template <class U, std::size_t OtherCapacity>
-    friend constexpr bool operator==(const OneShotAllocator& lhs,
-                                     const detail::OneShotAllocator<U, OtherCapacity>& rhs) noexcept
-    {
-        return lhs.buffer == rhs.buffer;
-    }
-
-    template <class U, std::size_t OtherCapacity>
-    friend constexpr bool operator!=(const OneShotAllocator& lhs,
-                                     const detail::OneShotAllocator<U, OtherCapacity>& rhs) noexcept
-    {
-        return lhs.buffer != rhs.buffer;
-    }
-
-  private:
-    template <class, std::size_t>
-    friend class OneShotAllocator;
-
-    void* buffer;
-};
 }
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_MEMORY_HPP
+#endif  // AGRPC_DETAIL_ALLOCATE_HPP

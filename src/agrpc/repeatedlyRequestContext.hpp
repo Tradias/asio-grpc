@@ -15,9 +15,9 @@
 #ifndef AGRPC_AGRPC_REPEATEDLYREQUESTCONTEXT_HPP
 #define AGRPC_AGRPC_REPEATEDLYREQUESTCONTEXT_HPP
 
+#include "agrpc/detail/allocate.hpp"
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/forward.hpp"
-#include "agrpc/detail/memory.hpp"
 
 AGRPC_NAMESPACE_BEGIN()
 
