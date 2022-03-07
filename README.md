@@ -127,10 +127,8 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-unifex unifex::unifex
 Clone the repository and install it.
 
 ```shell
-mkdir build
-cd build
-cmake -DCMAKE_INSTALL_PREFIX=/desired/installation/directory ..
-cmake --build . --target install
+cmake -B build -DCMAKE_INSTALL_PREFIX=/desired/installation/directory .
+cmake --build build --target install
 ```
 
 Locate it and link it to your target.
