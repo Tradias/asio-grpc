@@ -118,11 +118,12 @@ bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, I
         grpc_context.check_remote_work = false;
     }
     detail::GrpcContextImplementation::process_local_queue<Invoke>(grpc_context);
-    if (is_stopped_predicate())
+    if AGRPC_UNLIKELY (is_stopped_predicate())
     {
         return false;
     }
-    if (detail::GrpcCompletionQueueEvent event; detail::GrpcContextImplementation::get_next_event(grpc_context, event))
+    if AGRPC_LIKELY (detail::GrpcCompletionQueueEvent event;
+                     detail::GrpcContextImplementation::get_next_event(grpc_context, event))
     {
         if (event.tag == detail::GrpcContextImplementation::HAS_REMOTE_WORK_TAG)
         {

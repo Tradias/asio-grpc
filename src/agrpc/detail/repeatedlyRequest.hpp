@@ -177,7 +177,7 @@ class RepeatedlyRequestOperation
                 const auto is_repeated = self->initiate_repeatedly_request();
                 detail::ScopeGuard guard{[&]
                                          {
-                                             if (!is_repeated)
+                                             if AGRPC_UNLIKELY (!is_repeated)
                                              {
                                                  detail::GrpcContextImplementation::add_local_operation(grpc_context,
                                                                                                         self);
@@ -282,7 +282,7 @@ struct RethrowFirstArg
     template <class... Args>
     void operator()(std::exception_ptr ep, Args&&...) const
     {
-        if (ep)
+        if AGRPC_UNLIKELY (ep)
         {
             std::rethrow_exception(ep);
         }
@@ -411,7 +411,7 @@ class RepeatedlyRequestAwaitableOperation
         if AGRPC_LIKELY (ok)
         {
             auto local_request_handler = this->request_handler();
-            if (!this->initiate_repeatedly_request())
+            if AGRPC_UNLIKELY (!this->initiate_repeatedly_request())
             {
                 detail::GrpcContextImplementation::add_local_operation(local_grpc_context, this);
             }

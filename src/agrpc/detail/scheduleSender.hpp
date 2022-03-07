@@ -87,13 +87,13 @@ class ScheduleSender : public detail::SenderOf<>
     void submit(Receiver&& receiver) const
     {
         auto allocator = detail::exec::get_allocator(receiver);
-        if (!detail::create_and_submit_no_arg_operation_if_not_stopped<true>(
-                this->grpc_context,
-                [receiver = detail::RemoveCvrefT<Receiver>{std::forward<Receiver>(receiver)}]() mutable
-                {
-                    detail::satisfy_receiver(std::move(receiver));
-                },
-                allocator))
+        if AGRPC_UNLIKELY (!detail::create_and_submit_no_arg_operation_if_not_stopped<true>(
+                               this->grpc_context,
+                               [receiver = detail::RemoveCvrefT<Receiver>{std::forward<Receiver>(receiver)}]() mutable
+                               {
+                                   detail::satisfy_receiver(std::move(receiver));
+                               },
+                               allocator))
         {
             detail::exec::set_done(std::forward<Receiver>(receiver));
         }
