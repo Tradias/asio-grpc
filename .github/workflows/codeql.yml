@@ -9,12 +9,12 @@ on:
 env:
   VCPKG_ARGUMENTS: 'doctest grpc[codegen] boost-coroutine boost-asio boost-interprocess boost-thread boost-container boost-process asio libunifex'
   VCPKG_VERSION: '3b9259735964665519cc4dbd12505fa6c20692c4' # Feb 14, 2022
-  CMAKE_ARGS: '-DVCPKG_MANIFEST_MODE=off'
+  CMAKE_ARGS: '-DVCPKG_MANIFEST_MODE=off -DASIO_GRPC_BUILD_TESTS=on'
   config: Debug
 
 jobs:
   analyze:
-    name: 'Windows/2019/CodQL'
+    name: 'Windows/2019/CodeQL'
     runs-on: windows-2019
     permissions:
       actions: read
@@ -54,7 +54,7 @@ jobs:
         cmakeBuildDirectory: ${{ github.workspace }}/build
         buildConfiguration: ${{ env.config }}
         ruleset: NativeRecommendedRules.ruleset
-        ignoredPaths: ${{ github.workspace }}/build/vcpkg_installed;${{ github.workspace }}/test;${{ github.workspace }}/example
+        ignoredPaths: ${{ github.workspace }}/build/vcpkg_installed
 
     - name: Upload SARIF to GitHub
       uses: github/codeql-action/upload-sarif@v1
