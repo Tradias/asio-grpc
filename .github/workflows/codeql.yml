@@ -10,13 +10,12 @@ env:
   VCPKG_ARGUMENTS: 'doctest grpc[codegen] boost-coroutine boost-asio boost-interprocess boost-thread boost-container boost-process asio libunifex'
   VCPKG_VERSION: '3b9259735964665519cc4dbd12505fa6c20692c4' # Feb 14, 2022
   CMAKE_ARGS: '-DVCPKG_MANIFEST_MODE=off'
-  os: windows-2019
   config: Debug
 
 jobs:
   analyze:
     name: 'Windows/2019/CodQL'
-    runs-on: ${{ env.os }}
+    runs-on: windows-2019
     permissions:
       actions: read
       contents: read
@@ -32,7 +31,7 @@ jobs:
       with:
         vcpkgDirectory: ${{ runner.workspace }}/vcpkg
         vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
-        appendedCacheKey: ${{ env.os }}-v1
+        appendedCacheKey: windows-2019-v1
         vcpkgTriplet: x64-windows
         vcpkgArguments: --overlay-ports=${{ github.workspace }}/deps ${{ env.VCPKG_ARGUMENTS }}
 
