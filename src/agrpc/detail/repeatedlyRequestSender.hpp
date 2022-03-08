@@ -164,6 +164,26 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
         };
 
       public:
+        void start() noexcept
+        {
+            if AGRPC_UNLIKELY (this->grpc_context().is_stopped())
+            {
+                detail::exec::set_done(std::move(this->receiver()));
+                return;
+            }
+            auto stop_token = detail::exec::get_stop_token(this->receiver());
+            if (stop_token.stop_requested())
+            {
+                detail::exec::set_done(std::move(this->receiver()));
+                return;
+            }
+            this->stop_context().emplace(std::move(stop_token));
+            this->initiate_repeatedly_request();
+        }
+
+      private:
+        friend RepeatedlyRequestSender;
+
         template <class Receiver2>
         Operation(const RepeatedlyRequestSender& sender, Receiver2&& receiver)
             : GrpcBase(&Operation::on_request_complete),
@@ -182,24 +202,6 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
         {
         }
 
-        void start() & noexcept
-        {
-            if AGRPC_UNLIKELY (this->grpc_context().is_stopped())
-            {
-                detail::exec::set_done(std::move(this->receiver()));
-                return;
-            }
-            auto stop_token = detail::exec::get_stop_token(this->receiver());
-            if (stop_token.stop_requested())
-            {
-                detail::exec::set_done(std::move(this->receiver()));
-                return;
-            }
-            this->stop_context().emplace(std::move(stop_token));
-            this->initiate_repeatedly_request();
-        }
-
-      private:
         bool is_stopped() noexcept { return this->stop_context().is_stopped(); }
 
         auto allocate_request_handler_operation()

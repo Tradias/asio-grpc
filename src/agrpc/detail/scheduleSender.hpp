@@ -35,14 +35,7 @@ class ScheduleSender : public detail::SenderOf<>
     class Operation : private detail::TypeErasedNoArgOperation
     {
       public:
-        template <class Receiver2>
-        Operation(const ScheduleSender& sender, Receiver2&& receiver)
-            : detail::TypeErasedNoArgOperation(&Operation::on_complete),
-              impl(sender.grpc_context, std::forward<Receiver2>(receiver))
-        {
-        }
-
-        void start() & noexcept
+        void start() noexcept
         {
             if AGRPC_UNLIKELY (this->grpc_context().is_stopped())
             {
@@ -54,6 +47,15 @@ class ScheduleSender : public detail::SenderOf<>
         }
 
       private:
+        friend ScheduleSender;
+
+        template <class Receiver2>
+        Operation(const ScheduleSender& sender, Receiver2&& receiver)
+            : detail::TypeErasedNoArgOperation(&Operation::on_complete),
+              impl(sender.grpc_context, std::forward<Receiver2>(receiver))
+        {
+        }
+
         static void on_complete(detail::TypeErasedNoArgOperation* op, detail::InvokeHandler invoke_handler,
                                 detail::GrpcContextLocalAllocator) noexcept
         {
