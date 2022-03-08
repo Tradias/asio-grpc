@@ -80,7 +80,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::schedule")
                                       {
                                           is_invoked = true;
                                       }};
-    auto operation_state = asio::execution::connect(std::move(sender), std::move(receiver));
+    auto operation_state = asio::execution::connect(std::move(sender), receiver);
     asio::execution::start(operation_state);
     CHECK_FALSE(is_invoked);
     grpc_context.run();

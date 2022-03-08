@@ -60,10 +60,10 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::schedule")
     std::optional<unifex::connect_result_t<decltype(sender), decltype(receiver)>> operation_state;
     SUBCASE("connect")
     {
-        operation_state.emplace(unifex::connect(std::move(sender), receiver));
+        operation_state.emplace(unifex::connect(sender, receiver));
         unifex::start(*operation_state);
     }
-    SUBCASE("submit") { unifex::submit(std::move(sender), receiver); }
+    SUBCASE("submit") { unifex::submit(sender, receiver); }
     CHECK_FALSE(is_invoked);
     grpc_context.run();
     CHECK(is_invoked);
