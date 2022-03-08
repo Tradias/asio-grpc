@@ -9,7 +9,7 @@ on:
 env:
   VCPKG_ARGUMENTS: 'doctest grpc[codegen] boost-coroutine boost-asio boost-interprocess boost-thread boost-container boost-process asio libunifex'
   VCPKG_VERSION: '3b9259735964665519cc4dbd12505fa6c20692c4' # Feb 14, 2022
-  CMAKE_ARGS: '-DVCPKG_MANIFEST_MODE=off -DASIO_GRPC_BUILD_TESTS=on'
+  CMAKE_ARGS: '-DVCPKG_MANIFEST_MODE=off -DASIO_GRPC_BUILD_TESTS=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on'
   config: Debug
 
 jobs:
