@@ -56,7 +56,7 @@ jobs:
       with:
         cmakeBuildDirectory: ${{ github.workspace }}/build
         buildConfiguration: ${{ env.config }}
-        ruleset: NativeRecommendedRules.ruleset
+        ruleset: ${{ github.workspace }}/.github/codeql/MsvcRules.ruleset
         ignoredPaths: ${{ github.workspace }}/build/vcpkg_installed
 
     - name: Upload SARIF to GitHub
