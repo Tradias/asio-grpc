@@ -18,6 +18,7 @@
 
 #include <agrpc/bindAllocator.hpp>
 #include <agrpc/wait.hpp>
+#include <doctest/doctest.h>
 
 #include <optional>
 

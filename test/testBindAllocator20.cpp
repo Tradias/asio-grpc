@@ -18,6 +18,7 @@
 
 #include <agrpc/bindAllocator.hpp>
 #include <agrpc/wait.hpp>
+#include <doctest/doctest.h>
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0))
