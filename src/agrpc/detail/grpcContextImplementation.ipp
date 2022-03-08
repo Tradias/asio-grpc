@@ -122,8 +122,8 @@ bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, I
     {
         return false;
     }
-    if AGRPC_LIKELY (detail::GrpcCompletionQueueEvent event;
-                     detail::GrpcContextImplementation::get_next_event(grpc_context, event))
+    detail::GrpcCompletionQueueEvent event;
+    if AGRPC_LIKELY (detail::GrpcContextImplementation::get_next_event(grpc_context, event))
     {
         if (event.tag == detail::GrpcContextImplementation::HAS_REMOTE_WORK_TAG)
         {
