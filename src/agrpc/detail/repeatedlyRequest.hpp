@@ -305,6 +305,51 @@ struct CompletionHandlerType<CompletionToken, Signature,
 template <class CompletionToken, class Signature>
 using CompletionHandlerTypeT = typename CompletionHandlerType<CompletionToken, Signature>::Type;
 
+template <std::size_t BufferSize>
+class BufferOperation : public detail::TypeErasedNoArgOperation
+{
+  public:
+    BufferOperation() noexcept : detail::TypeErasedNoArgOperation(&do_complete) {}
+
+    auto one_shot_allocator() noexcept { return detail::OneShotAllocator<std::byte, BufferSize>{&this->buffer}; }
+
+  private:
+    static void do_complete(detail::TypeErasedNoArgOperation* op, detail::InvokeHandler,
+                            detail::GrpcContextLocalAllocator) noexcept
+    {
+        detail::deallocate(std::allocator<BufferOperation>{}, static_cast<BufferOperation*>(op));
+    }
+
+    std::aligned_storage_t<BufferSize> buffer;
+};
+
+template <std::size_t BufferSize>
+auto create_allocated_buffer_operation()
+{
+    using Op = detail::BufferOperation<BufferSize>;
+    auto ptr = detail::allocate<Op>(std::allocator<Op>{});
+    auto* buffer_operation_ptr = ptr.get();
+    ptr.release();
+    return buffer_operation_ptr;
+}
+
+template <class RPC, class Service, class Request, class Responder, class CompletionToken>
+auto initiate_request_from_rpc_context(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
+                                       detail::MultiArgRPCContext<Request, Responder>& rpc_context,
+                                       CompletionToken&& token)
+{
+    return agrpc::request(rpc, service, rpc_context.server_context(), rpc_context.request(), rpc_context.responder(),
+                          std::forward<CompletionToken>(token));
+}
+
+template <class RPC, class Service, class Responder, class CompletionToken>
+auto initiate_request_from_rpc_context(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service,
+                                       detail::SingleArgRPCContext<Responder>& rpc_context, CompletionToken&& token)
+{
+    return agrpc::request(rpc, service, rpc_context.server_context(), rpc_context.responder(),
+                          std::forward<CompletionToken>(token));
+}
+
 template <class RequestHandler, class RPC, class Service, class CompletionHandler, bool IsStoppable>
 class RepeatedlyRequestAwaitableOperation
     : public detail::TypeErasedNoArgOperation,
@@ -322,28 +367,7 @@ class RepeatedlyRequestAwaitableOperation
     static constexpr auto BUFFER_SIZE =
         sizeof(detail::CompletionHandlerTypeT<UseAwaitable, void()>) + 3 * sizeof(void*);
 
-    // Used to delay deallocation of the buffer that is used to store the awaitable_frame until after the coroutine has
-    // been destroyed
-    struct BufferOperation : detail::TypeErasedNoArgOperation
-    {
-        BufferOperation() noexcept : detail::TypeErasedNoArgOperation(&do_complete) {}
-
-        static void do_complete(detail::TypeErasedNoArgOperation* op, detail::InvokeHandler,
-                                detail::GrpcContextLocalAllocator) noexcept
-        {
-            detail::AllocatedPointer{static_cast<BufferOperation*>(op), std::allocator<BufferOperation>{}};
-        }
-
-        std::aligned_storage_t<BUFFER_SIZE> buffer;
-    };
-
-    static auto make_buffer_operation()
-    {
-        auto ptr = detail::allocate<BufferOperation>(std::allocator<BufferOperation>{});
-        auto* buffer_operation_ptr = ptr.get();
-        ptr.release();
-        return buffer_operation_ptr;
-    }
+    using BufferOp = detail::BufferOperation<BUFFER_SIZE>;
 
   public:
     template <class Ch, class Rh>
@@ -351,7 +375,7 @@ class RepeatedlyRequestAwaitableOperation
         : NoArgBase(ON_STOP_COMPLETE),
           detail::RepeatedlyRequestOperationBase<RequestHandler, RPC, Service, CompletionHandler, IsStoppable>(
               std::forward<Rh>(request_handler), rpc, service, std::forward<Ch>(completion_handler)),
-          buffer_operation(make_buffer_operation())
+          buffer_operation(detail::create_allocated_buffer_operation<BUFFER_SIZE>())
     {
     }
 
@@ -366,36 +390,12 @@ class RepeatedlyRequestAwaitableOperation
         {
             return false;
         }
-        asio::co_spawn(this->get_executor(), this->on_request_complete(), detail::RethrowFirstArg{});
+        asio::co_spawn(this->get_executor(), this->perform_request_and_repeat(), detail::RethrowFirstArg{});
         return true;
     }
 
   private:
-    template <class RPCT, class Request, class Responder, class CompletionToken>
-    static auto initiate_request_from_rpc_context(detail::ServerMultiArgRequest<RPCT, Request, Responder> rpc,
-                                                  Service& service,
-                                                  detail::MultiArgRPCContext<Request, Responder>& rpc_context,
-                                                  CompletionToken&& token)
-    {
-        return agrpc::request(rpc, service, rpc_context.server_context(), rpc_context.request(),
-                              rpc_context.responder(), std::forward<CompletionToken>(token));
-    }
-
-    template <class RPCT, class Responder, class CompletionToken>
-    static auto initiate_request_from_rpc_context(detail::ServerSingleArgRequest<RPCT, Responder> rpc, Service& service,
-                                                  detail::SingleArgRPCContext<Responder>& rpc_context,
-                                                  CompletionToken&& token)
-    {
-        return agrpc::request(rpc, service, rpc_context.server_context(), rpc_context.responder(),
-                              std::forward<CompletionToken>(token));
-    }
-
-    auto create_one_shot_allocator() noexcept
-    {
-        return detail::OneShotAllocator<std::byte, BUFFER_SIZE>{&this->buffer_operation->buffer};
-    }
-
-    Awaitable on_request_complete()
+    Awaitable perform_request_and_repeat()
     {
         auto& local_grpc_context = this->grpc_context();
         RPCContext rpc_context;
@@ -404,9 +404,9 @@ class RepeatedlyRequestAwaitableOperation
                                      detail::WorkFinishedOnExit on_exit{local_grpc_context};
                                      ON_STOP_COMPLETE(this, detail::InvokeHandler::NO, {});
                                  }};
-        const auto ok = co_await RepeatedlyRequestAwaitableOperation::initiate_request_from_rpc_context(
+        const auto ok = co_await detail::initiate_request_from_rpc_context(
             this->rpc(), this->service(), rpc_context,
-            agrpc::bind_allocator(this->create_one_shot_allocator(), UseAwaitable{}));
+            agrpc::bind_allocator(this->buffer_operation->one_shot_allocator(), UseAwaitable{}));
         guard.release();
         if AGRPC_LIKELY (ok)
         {
@@ -423,7 +423,7 @@ class RepeatedlyRequestAwaitableOperation
         }
     }
 
-    BufferOperation* buffer_operation;
+    BufferOp* buffer_operation;
 };
 
 using RepeatedlyRequestAwaitableInitiator =

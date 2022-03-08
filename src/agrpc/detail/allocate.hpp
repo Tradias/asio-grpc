@@ -25,6 +25,14 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class Allocator>
+void deallocate(Allocator allocator, typename std::allocator_traits<Allocator>::pointer ptr)
+{
+    using Traits = std::allocator_traits<Allocator>;
+    Traits::destroy(allocator, ptr);
+    Traits::deallocate(allocator, ptr, 1);
+}
+
+template <class Allocator>
 class AllocatedPointer
 {
   private:
@@ -59,7 +67,7 @@ class AllocatedPointer
     {
         if (this->get())
         {
-            this->destroy();
+            detail::deallocate(this->get_allocator(), this->get());
         }
     }
 
@@ -83,17 +91,11 @@ class AllocatedPointer
 
     constexpr void reset() noexcept
     {
-        this->destroy();
+        detail::deallocate(this->get_allocator(), this->get());
         this->release();
     }
 
   private:
-    constexpr void destroy() noexcept
-    {
-        Traits::destroy(this->get_allocator(), this->get());
-        Traits::deallocate(this->get_allocator(), this->get(), 1);
-    }
-
     detail::CompressedPair<typename Traits::pointer, allocator_type> impl;
 };
 
