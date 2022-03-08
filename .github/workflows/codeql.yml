@@ -47,6 +47,9 @@ jobs:
     - name: Build
       run: cmake --build ${{ github.workspace }}/build --config ${{ env.config }} --parallel 1
 
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v1
+
     - name: Initialize MSVC Code Analysis
       uses: microsoft/msvc-code-analysis-action@v0.1.0
       id: run-analysis
@@ -60,6 +63,3 @@ jobs:
       uses: github/codeql-action/upload-sarif@v1
       with:
         sarif_file: ${{ steps.run-analysis.outputs.sarif }}
-
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v1
