@@ -1,0 +1,66 @@
+name: CodeQL
+
+on:
+  workflow_dispatch:
+    branches: [ master ]
+  schedule:
+    - cron: '39 0 * * 1'
+
+env:
+  VCPKG_ARGUMENTS: 'doctest grpc[codegen] boost-coroutine boost-asio boost-interprocess boost-thread boost-container boost-process asio libunifex'
+  VCPKG_VERSION: '3b9259735964665519cc4dbd12505fa6c20692c4' # Feb 14, 2022
+  CMAKE_ARGS: '-DVCPKG_MANIFEST_MODE=off'
+  os: windows-2019
+  config: Debug
+
+jobs:
+  analyze:
+    name: 'Windows/2019/CodQL'
+    runs-on: ${{ env.os }}
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install vcpkg
+      uses: lukka/run-vcpkg@v7
+      with:
+        vcpkgDirectory: ${{ runner.workspace }}/vcpkg
+        vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
+        appendedCacheKey: ${{ env.os }}-v1
+        vcpkgTriplet: x64-windows
+        vcpkgArguments: --overlay-ports=${{ github.workspace }}/deps ${{ env.VCPKG_ARGUMENTS }}
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v1
+      with:
+        languages: 'cpp'
+        config-file: ./.github/codeql/codeql-config.yml
+
+    - name: Configure CMake
+      run: cmake -B ${{ github.workspace }}/build "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=${{ env.config }} ${{ env.CMAKE_ARGS }}
+
+    - name: Build
+      run: cmake --build ${{ github.workspace }}/build --config ${{ env.config }} --parallel 1
+
+    - name: Initialize MSVC Code Analysis
+      uses: microsoft/msvc-code-analysis-action@v0.1.0
+      id: run-analysis
+      with:
+        cmakeBuildDirectory: ${{ github.workspace }}/build
+        buildConfiguration: ${{ env.config }}
+        ruleset: NativeRecommendedRules.ruleset
+        ignoredPaths: ${{ github.workspace }}/build/vcpkg_installed;${{ github.workspace }}/test;${{ github.workspace }}/example
+
+    - name: Upload SARIF to GitHub
+      uses: github/codeql-action/upload-sarif@v1
+      with:
+        sarif_file: ${{ steps.run-analysis.outputs.sarif }}
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v1

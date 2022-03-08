@@ -63,13 +63,6 @@ jobs:
         vcpkgTriplet: ${{ matrix.config.triplet }}
         vcpkgArguments: --overlay-ports=${{ github.workspace }}/deps ${{ env.VCPKG_ARGUMENTS }}
 
-    - if: matrix.config.triplet == 'x64-windows' 
-      name: Initialize CodeQL
-      uses: github/codeql-action/init@v1
-      with:
-        languages: 'cpp'
-        config-file: ./.github/codeql/codeql-config.yml
-
     - name: Configure CMake
       run: cmake -B ${{ github.workspace }}/build ${{ matrix.config.cmake-extra-args }} "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=${{ matrix.config.config }} ${{ env.CMAKE_ARGS }}
 
@@ -80,18 +73,10 @@ jobs:
       working-directory: ${{ github.workspace }}/build
       run: ctest -C ${{ matrix.config.config }} --parallel 2 ${{ env.CTEST_ARGS }}
 
-    - if: matrix.config.triplet == 'x64-windows' 
-      name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v1
-
 
   multi-gcc-build:
     name: 'Ubuntu/20.04/GCC-9.3.0,10.3.0,11.1.0'
     runs-on: ubuntu-20.04
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
 
     steps:
     - name: Install GCC 11 and gcovr
