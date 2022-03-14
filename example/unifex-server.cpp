@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "example/v1/example.grpc.pb.h"
+#include "example/v1/exampleExt.grpc.pb.h"
 #include "helper.hpp"
 
 #include <agrpc/asioGrpc.hpp>
@@ -81,24 +82,23 @@ unifex::task<void> handle_server_streaming_request(example::v1::Example::AsyncSe
     co_await agrpc::finish(writer, grpc::Status::OK, agrpc::use_sender(grpc_context));
 }
 
-unifex::task<void> handle_slow_unary_request(example::v1::Example::AsyncService& service,
+unifex::task<void> handle_slow_unary_request(example::v1::ExampleExt::AsyncService& service,
                                              agrpc::GrpcContext& grpc_context)
 {
     grpc::ServerContext server_context;
-    example::v1::Request request;
-    grpc::ServerAsyncResponseWriter<example::v1::Response> writer{&server_context};
-    if (!co_await agrpc::request(&example::v1::Example::AsyncService::RequestSlowUnary, service, server_context,
+    example::v1::SlowRequest request;
+    grpc::ServerAsyncResponseWriter<google::protobuf::Empty> writer{&server_context};
+    if (!co_await agrpc::request(&example::v1::ExampleExt::AsyncService::RequestSlowUnary, service, server_context,
                                  request, writer, agrpc::use_sender(grpc_context)))
     {
         co_return;
     }
 
     grpc::Alarm alarm;
-    co_await agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::milliseconds(request.integer()),
+    co_await agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::milliseconds(request.delay()),
                          agrpc::use_sender(grpc_context));
 
-    example::v1::Response response;
-    co_await agrpc::finish(writer, response, grpc::Status::OK, agrpc::use_sender(grpc_context));
+    co_await agrpc::finish(writer, {}, grpc::Status::OK, agrpc::use_sender(grpc_context));
 }
 
 int main(int argc, const char** argv)
@@ -113,11 +113,14 @@ int main(int argc, const char** argv)
     builder.AddListeningPort(host, grpc::InsecureServerCredentials());
     example::v1::Example::AsyncService service;
     builder.RegisterService(&service);
+    example::v1::ExampleExt::AsyncService service_ext;
+    builder.RegisterService(&service_ext);
     server = builder.BuildAndStart();
     abort_if_not(bool{server});
 
     unifex::sync_wait(unifex::when_all(register_unary_request_handler(service, grpc_context),
                                        handle_server_streaming_request(service, grpc_context),
+                                       handle_slow_unary_request(service_ext, grpc_context),
                                        unifex::then(unifex::just(),
                                                     [&]
                                                     {

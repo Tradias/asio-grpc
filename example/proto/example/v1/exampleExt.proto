@@ -12,26 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/* [example-proto] */
 syntax = "proto3";
 
 package example.v1;
 
-service Example {
-  rpc ServerStreaming(Request) returns (stream Response) {}
+import "google/protobuf/empty.proto";
 
-  rpc ClientStreaming(stream Request) returns (Response) {}
+service ExampleExt {
+  rpc SlowUnary(SlowRequest) returns (google.protobuf.Empty) {}
 
-  rpc BidirectionalStreaming(stream Request) returns (stream Response) {}
-
-  rpc Unary(Request) returns (Response) {}
+  rpc Shutdown(google.protobuf.Empty) returns (google.protobuf.Empty) {}
 }
 
-message Request {
-  int32 integer = 1;
+message SlowRequest {
+  int32 delay = 1;
 }
-
-message Response {
-  int32 integer = 1;
-}
-/* [example-proto] */

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "example/v1/example.grpc.pb.h"
+#include "example/v1/exampleExt.grpc.pb.h"
 #include "helper.hpp"
 
 #include <agrpc/asioGrpc.hpp>
@@ -81,16 +82,16 @@ auto run_with_deadline(grpc::Alarm& alarm, agrpc::GrpcContext& grpc_context, grp
                                           }));
 }
 
-unifex::task<void> make_and_cancel_unary_request(example::v1::Example::Stub& stub, agrpc::GrpcContext& grpc_context)
+unifex::task<void> make_and_cancel_unary_request(example::v1::ExampleExt::Stub& stub, agrpc::GrpcContext& grpc_context)
 {
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
 
-    example::v1::Request request;
-    request.set_integer(2000);  // tell server to delay response by 2000ms
+    example::v1::SlowRequest request;
+    request.set_delay(2000);  // tell server to delay response by 2000ms
     auto reader = stub.AsyncSlowUnary(&client_context, request, agrpc::get_completion_queue(grpc_context));
 
-    example::v1::Response response;
+    google::protobuf::Empty response;
     grpc::Status status;
     grpc::Alarm alarm;
     co_await run_with_deadline(alarm, grpc_context, client_context,
@@ -105,12 +106,14 @@ int main(int argc, const char** argv)
     const auto port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("localhost:") + port;
 
-    const auto stub = example::v1::Example::NewStub(grpc::CreateChannel(host, grpc::InsecureChannelCredentials()));
+    const auto channel = grpc::CreateChannel(host, grpc::InsecureChannelCredentials());
+    const auto stub = example::v1::Example::NewStub(channel);
+    const auto stub_ext = example::v1::ExampleExt::NewStub(channel);
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
     unifex::sync_wait(unifex::when_all(make_unary_request(*stub, grpc_context),
                                        make_server_streaming_request(*stub, grpc_context),
-                                       make_and_cancel_unary_request(*stub, grpc_context),
+                                       make_and_cancel_unary_request(*stub_ext, grpc_context),
                                        unifex::then(unifex::just(),
                                                     [&]
                                                     {

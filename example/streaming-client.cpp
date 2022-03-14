@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "example/v1/example.grpc.pb.h"
+#include "example/v1/exampleExt.grpc.pb.h"
 #include "helper.hpp"
 
 #include <agrpc/asioGrpc.hpp>
@@ -115,16 +116,16 @@ boost::asio::awaitable<void> run_with_deadline(grpc::Alarm& alarm, grpc::ClientC
 }
 
 // This example shows how to cancel an entire RPC when a single step did not complete within the specified time.
-boost::asio::awaitable<void> make_and_cancel_unary_request(example::v1::Example::Stub& stub)
+boost::asio::awaitable<void> make_and_cancel_unary_request(example::v1::ExampleExt::Stub& stub)
 {
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
 
-    example::v1::Request request;
-    request.set_integer(2000);  // tell server to delay response by 2000ms
+    example::v1::SlowRequest request;
+    request.set_delay(2000);  // tell server to delay response by 2000ms
     auto reader = stub.AsyncSlowUnary(&client_context, request, co_await agrpc::get_completion_queue());
 
-    example::v1::Response response;
+    google::protobuf::Empty response;
     grpc::Status status;
     grpc::Alarm alarm;
     const auto not_too_exceed = std::chrono::steady_clock::now() + std::chrono::milliseconds(1900);
@@ -139,14 +140,14 @@ boost::asio::awaitable<void> make_and_cancel_unary_request(example::v1::Example:
 }
 
 // This helps with writing unit tests for these examples.
-boost::asio::awaitable<void> make_shutdown_request(example::v1::Example::Stub& stub)
+boost::asio::awaitable<void> make_shutdown_request(example::v1::ExampleExt::Stub& stub)
 {
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
 
     google::protobuf::Empty request;
     const auto reader =
-        co_await agrpc::request(&example::v1::Example::Stub::AsyncShutdown, stub, client_context, request);
+        co_await agrpc::request(&example::v1::ExampleExt::Stub::AsyncShutdown, stub, client_context, request);
 
     google::protobuf::Empty response;
     grpc::Status status;
@@ -166,7 +167,9 @@ int main(int argc, const char** argv)
     const auto port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("localhost:") + port;
 
-    const auto stub = example::v1::Example::NewStub(grpc::CreateChannel(host, grpc::InsecureChannelCredentials()));
+    const auto channel = grpc::CreateChannel(host, grpc::InsecureChannelCredentials());
+    const auto stub = example::v1::Example::NewStub(channel);
+    const auto stub_ext = example::v1::ExampleExt::NewStub(channel);
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
     boost::asio::co_spawn(
@@ -176,8 +179,8 @@ int main(int argc, const char** argv)
             // Let's perform the client-streaming and bidirectional-streaming requests simultaneously
             using namespace boost::asio::experimental::awaitable_operators;
             co_await(make_client_streaming_request(*stub) && make_bidirectional_streaming_request(*stub));
-            co_await make_and_cancel_unary_request(*stub);
-            co_await make_shutdown_request(*stub);
+            co_await make_and_cancel_unary_request(*stub_ext);
+            co_await make_shutdown_request(*stub_ext);
         },
         boost::asio::detached);
 

@@ -25,7 +25,8 @@ function(asio_grpc_add_example_protos _asio_grpc_name)
         OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
         IMPORT_DIRS "${CMAKE_CURRENT_LIST_DIR}/proto"
         PROTOS "${CMAKE_CURRENT_LIST_DIR}/proto/helloworld/helloworld.proto"
-               "${CMAKE_CURRENT_LIST_DIR}/proto/example/v1/example.proto")
+               "${CMAKE_CURRENT_LIST_DIR}/proto/example/v1/example.proto"
+               "${CMAKE_CURRENT_LIST_DIR}/proto/example/v1/exampleExt.proto")
 
     target_link_libraries(asio-grpc-${_asio_grpc_name} PUBLIC protobuf::libprotobuf)
 

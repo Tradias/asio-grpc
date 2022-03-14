@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "example/v1/example.grpc.pb.h"
+#include "example/v1/exampleExt.grpc.pb.h"
 #include "helper.hpp"
 
 #include <agrpc/asioGrpc.hpp>
@@ -142,33 +143,32 @@ boost::asio::awaitable<void> handle_bidirectional_streaming_request(example::v1:
 }
 
 // This endpoint is used by the client to demonstrate per RPC step cancellation
-boost::asio::awaitable<void> handle_slow_unary_request(example::v1::Example::AsyncService& service)
+boost::asio::awaitable<void> handle_slow_unary_request(example::v1::ExampleExt::AsyncService& service)
 {
     grpc::ServerContext server_context;
-    example::v1::Request request;
-    grpc::ServerAsyncResponseWriter<example::v1::Response> writer{&server_context};
-    if (!co_await agrpc::request(&example::v1::Example::AsyncService::RequestSlowUnary, service, server_context,
+    example::v1::SlowRequest request;
+    grpc::ServerAsyncResponseWriter<google::protobuf::Empty> writer{&server_context};
+    if (!co_await agrpc::request(&example::v1::ExampleExt::AsyncService::RequestSlowUnary, service, server_context,
                                  request, writer))
     {
         co_return;
     }
 
     grpc::Alarm alarm;
-    co_await agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::milliseconds(request.integer()));
+    co_await agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::milliseconds(request.delay()));
 
-    example::v1::Response response;
-    co_await agrpc::finish(writer, response, grpc::Status::OK);
+    co_await agrpc::finish(writer, {}, grpc::Status::OK);
 }
 
 // This helps with writing unit tests for these examples.
-boost::asio::awaitable<void> handle_shutdown_request(example::v1::Example::AsyncService& service,
+boost::asio::awaitable<void> handle_shutdown_request(example::v1::ExampleExt::AsyncService& service,
                                                      ServerShutdown& server_shutdown)
 {
     grpc::ServerContext server_context;
     grpc::ServerAsyncResponseWriter<google::protobuf::Empty> writer{&server_context};
     google::protobuf::Empty request;
-    if (!co_await agrpc::request(&example::v1::Example::AsyncService::RequestShutdown, service, server_context, request,
-                                 writer))
+    if (!co_await agrpc::request(&example::v1::ExampleExt::AsyncService::RequestShutdown, service, server_context,
+                                 request, writer))
     {
         co_return;
     }
@@ -193,6 +193,8 @@ int main(int argc, const char** argv)
     builder.AddListeningPort(host, grpc::InsecureServerCredentials());
     example::v1::Example::AsyncService service;
     builder.RegisterService(&service);
+    example::v1::ExampleExt::AsyncService service_ext;
+    builder.RegisterService(&service_ext);
     server = builder.BuildAndStart();
     abort_if_not(bool{server});
 
@@ -210,14 +212,14 @@ int main(int argc, const char** argv)
         grpc_context,
         [&]() -> boost::asio::awaitable<void>
         {
-            co_await handle_slow_unary_request(service);
+            co_await handle_slow_unary_request(service_ext);
         },
         boost::asio::detached);
     boost::asio::co_spawn(
         grpc_context,
         [&]() -> boost::asio::awaitable<void>
         {
-            co_await handle_shutdown_request(service, server_shutdown);
+            co_await handle_shutdown_request(service_ext, server_shutdown);
         },
         boost::asio::detached);
 
