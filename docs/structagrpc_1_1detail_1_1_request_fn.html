@@ -147,8 +147,6 @@ Public Member Functions</h2></td></tr>
 <div class="line"> </div>
 <div class="line">package example.v1;</div>
 <div class="line"> </div>
-<div class="line">import &quot;google/protobuf/empty.proto&quot;;</div>
-<div class="line"> </div>
 <div class="line">service Example {</div>
 <div class="line">  rpc ServerStreaming(Request) returns (stream Response) {}</div>
 <div class="line"> </div>
@@ -157,10 +155,6 @@ Public Member Functions</h2></td></tr>
 <div class="line">  rpc BidirectionalStreaming(stream Request) returns (stream Response) {}</div>
 <div class="line"> </div>
 <div class="line">  rpc Unary(Request) returns (Response) {}</div>
-<div class="line"> </div>
-<div class="line">  rpc SlowUnary(Request) returns (Response) {}</div>
-<div class="line"> </div>
-<div class="line">  rpc Shutdown(google.protobuf.Empty) returns (google.protobuf.Empty) {}</div>
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line">message Request {</div>
