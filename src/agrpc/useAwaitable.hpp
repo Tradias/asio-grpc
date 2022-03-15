@@ -16,7 +16,8 @@
 #define AGRPC_AGRPC_USEAWAITABLE_HPP
 
 #include "agrpc/detail/asioForward.hpp"
-#include "agrpc/detail/config.hpp"
+#include "agrpc/grpcContext.hpp"
+#include "agrpc/grpcExecutor.hpp"
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 

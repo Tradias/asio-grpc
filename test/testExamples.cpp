@@ -36,6 +36,11 @@ TEST_CASE("examples")
         client_program = ASIO_GRPC_EXAMPLE_STREAMING_CLIENT;
         server_program = ASIO_GRPC_EXAMPLE_STREAMING_SERVER;
     }
+    SUBCASE("Boost.Asio file transfer")
+    {
+        client_program = ASIO_GRPC_EXAMPLE_FILE_TRANSFER_CLIENT;
+        server_program = ASIO_GRPC_EXAMPLE_FILE_TRANSFER_SERVER;
+    }
     SUBCASE("unifex")
     {
         client_program = ASIO_GRPC_EXAMPLE_UNIFEX_CLIENT;

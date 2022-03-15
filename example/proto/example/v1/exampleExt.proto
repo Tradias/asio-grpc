@@ -22,8 +22,15 @@ service ExampleExt {
   rpc SlowUnary(SlowRequest) returns (google.protobuf.Empty) {}
 
   rpc Shutdown(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+
+  rpc SendFile(stream SendFileRequest) returns (google.protobuf.Empty) {}
 }
 
 message SlowRequest {
   int32 delay = 1;
+}
+
+message SendFileRequest {
+  bytes content = 2;
+  bool finish_write = 3;
 }
