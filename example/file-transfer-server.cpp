@@ -20,7 +20,9 @@
 
 #include <agrpc/asioGrpc.hpp>
 #include <boost/asio/bind_executor.hpp>
+#include <boost/asio/co_spawn.hpp>
 #include <boost/asio/detached.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/stream_file.hpp>
 #include <boost/asio/write.hpp>
 #include <grpcpp/server.h>
@@ -49,6 +51,7 @@ agrpc::GrpcAwaitable<bool> handle_send_file_request(agrpc::GrpcContext& grpc_con
                                  responder, buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE)))
     {
         // Server is shutting down.
+        std::cout << "shutting down" << std::endl;
         co_return false;
     }
 
@@ -62,6 +65,7 @@ agrpc::GrpcAwaitable<bool> handle_send_file_request(agrpc::GrpcContext& grpc_con
     {
         // Client hang up or forgot to set finish_write.
         co_await agrpc::finish(responder, {}, grpc::Status::OK, buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
+        std::cout << "non-ok, no finish write" << std::endl;
         co_return false;
     }
 
@@ -165,7 +169,8 @@ int main(int argc, const char** argv)
             grpc_context,
             [&]() -> agrpc::GrpcAwaitable<void>
             {
-                abort_if_not(co_await handle_send_file_request(grpc_context, io_context, service_ext, file_path));
+                std::cout << (co_await handle_send_file_request(grpc_context, io_context, service_ext, file_path))
+                          << std::endl;
             },
             boost::asio::detached);
 
@@ -178,7 +183,7 @@ int main(int argc, const char** argv)
         io_context_thread.join();
 
         // Check that output file has expected content
-        std::cout << "EXists: " << std::filesystem::exists(file_path) << std::endl;
+        std::cout << "Exists: " << std::filesystem::exists(file_path) << std::endl;
         std::ifstream file{file_path};
         std::string content;
         file >> content;

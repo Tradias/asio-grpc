@@ -21,6 +21,7 @@
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/detached.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/stream_file.hpp>
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
