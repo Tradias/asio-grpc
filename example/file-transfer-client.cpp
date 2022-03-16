@@ -100,6 +100,7 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
                 {
                     // Need to bind_executor here because completion_handler is a simple invocable without an associated
                     // executor.
+                    std::cout << "Sending: " << current->content() << std::endl;
                     agrpc::write(
                         *writer, *current,
                         buffer2.bind_allocator(asio::bind_executor(grpc_context, std::move(completion_handler))));
@@ -117,9 +118,10 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
 
     file.close();
 
-    // Signal that we are done sending the file
-    current->mutable_content()->clear();
+    // Signal that we are done sending chunks
+    current->mutable_content()->resize(bytes_read);
     current->set_finish_write(true);
+    std::cout << "Sending done" << std::endl;
     co_await agrpc::write_last(*writer, *current, {}, buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
 
     grpc::Status status;
