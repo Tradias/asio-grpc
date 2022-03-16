@@ -21,7 +21,6 @@
 #include <agrpc/asioGrpc.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/co_spawn.hpp>
-#include <boost/asio/detached.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/stream_file.hpp>
 #include <boost/asio/write.hpp>
@@ -184,7 +183,13 @@ int main(int argc, const char** argv)
                 std::cout << (co_await handle_send_file_request(grpc_context, io_context, service_ext, file_path))
                           << std::endl;
             },
-            asio::detached);
+            [](auto&& ep)
+            {
+                if (ep)
+                {
+                    std::rethrow_exception(ep);
+                }
+            });
 
         std::thread io_context_thread{&run_io_context, std::ref(io_context)};
         grpc_context.run();

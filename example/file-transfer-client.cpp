@@ -20,7 +20,6 @@
 #include <agrpc/asioGrpc.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/co_spawn.hpp>
-#include <boost/asio/detached.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/stream_file.hpp>
 #include <grpcpp/client_context.h>
@@ -170,9 +169,8 @@ int main(int argc, const char** argv)
         // Create the file to be send
         const auto temp_dir = argc >= 3 ? std::filesystem::path{argv[2]} : std::filesystem::temp_directory_path();
         const auto file_path = (temp_dir / "file-transfer-input.txt").string();
-        std::filesystem::remove(file_path);
         {
-            std::ofstream file{file_path};
+            std::ofstream file{file_path, std::ofstream::trunc};
             file << "content";
         }
 
@@ -183,7 +181,13 @@ int main(int argc, const char** argv)
                 abort_if_not(
                     co_await make_double_buffered_send_file_request(grpc_context, io_context, *stub_ext, file_path));
             },
-            asio::detached);
+            [](auto&& ep)
+            {
+                if (ep)
+                {
+                    std::rethrow_exception(ep);
+                }
+            });
 
         std::thread io_context_thread{&run_io_context, std::ref(io_context)};
         std::cout << "Start running" << std::endl;
