@@ -184,10 +184,11 @@ int main(int argc, const char** argv)
 
         // Check that output file has expected content
         std::cout << "Exists: " << std::filesystem::exists(file_path) << std::endl;
-        std::ifstream file{file_path};
         std::string content;
-        file >> content;
-        file.close();
+        {
+            std::ifstream file{file_path};
+            file >> content;
+        }
         std::cout << "Size: " << content.size() << " Content: " << content << std::endl;
         abort_if_not("content" == content);
     }

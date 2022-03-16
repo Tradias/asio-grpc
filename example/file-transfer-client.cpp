@@ -61,7 +61,9 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
 
     // Relying on CTAD here to create a `asio::basic_stream_file<asio::io_context::executor_type>` which is slightly
     // more performant than the default `asio::stream_file` that is templated on `asio::any_io_executor`.
+    std::cout << "Opening file: " << file_path << std::endl;
     asio::basic_stream_file file{io_context.get_executor(), file_path, asio::stream_file::read_only};
+    std::cout << "Opened file: " << file_path << std::endl;
 
     example::v1::SendFileRequest first_read_buffer;
     first_read_buffer.mutable_content()->resize(CHUNK_SIZE);
@@ -71,6 +73,7 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
     auto bytes_read = co_await file.async_read_some(
         asio::buffer(*first_read_buffer.mutable_content()),
         buffer1.bind_allocator(asio::bind_executor(io_context, agrpc::GRPC_USE_AWAITABLE)));
+    std::cout << "Read bytes: " << bytes_read << std::endl;
 
     bool is_eof{false};
 
@@ -142,28 +145,39 @@ int main(int argc, const char** argv)
     boost::asio::io_context io_context{1};
     auto guard = boost::asio::make_work_guard(io_context);
 
-    // Create the file to be send
-    const auto temp_dir = argc >= 3 ? std::filesystem::path{argv[2]} : std::filesystem::temp_directory_path();
-    const auto file_path = (temp_dir / "file-transfer-input.txt").string();
-    std::filesystem::remove(file_path);
-    std::ofstream file{file_path};
-    file << "content";
-    file.close();
-
-    boost::asio::co_spawn(
-        grpc_context,
-        [&]() -> agrpc::GrpcAwaitable<void>
+    try
+    {
+        // Create the file to be send
+        const auto temp_dir = argc >= 3 ? std::filesystem::path{argv[2]} : std::filesystem::temp_directory_path();
+        const auto file_path = (temp_dir / "file-transfer-input.txt").string();
+        std::filesystem::remove(file_path);
         {
-            abort_if_not(
-                co_await make_double_buffered_send_file_request(grpc_context, io_context, *stub_ext, file_path));
-        },
-        boost::asio::detached);
+            std::ofstream file{file_path};
+            file << "content";
+        }
 
-    std::thread io_context_thread{[&]
-                                  {
-                                      io_context.run();
-                                  }};
-    grpc_context.run();
-    guard.reset();
-    io_context_thread.join();
+        boost::asio::co_spawn(
+            grpc_context,
+            [&]() -> agrpc::GrpcAwaitable<void>
+            {
+                abort_if_not(
+                    co_await make_double_buffered_send_file_request(grpc_context, io_context, *stub_ext, file_path));
+            },
+            boost::asio::detached);
+
+        std::thread io_context_thread{[&]
+                                      {
+                                          io_context.run();
+                                      }};
+        std::cout << "Start running" << std::endl;
+        grpc_context.run();
+        std::cout << "Running done" << std::endl;
+
+        guard.reset();
+        io_context_thread.join();
+    }
+    catch (const std::exception& e)
+    {
+        std::cout << e.what() << std::endl;
+    }
 }
