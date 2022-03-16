@@ -154,33 +154,42 @@ int main(int argc, const char** argv)
     boost::asio::io_context io_context{1};
     auto guard = boost::asio::make_work_guard(io_context);
 
-    // Prepare output file
-    const auto temp_dir = argc >= 3 ? std::filesystem::path{argv[2]} : std::filesystem::temp_directory_path();
-    const auto file_path = (temp_dir / "file-transfer-output.txt").string();
-    std::filesystem::remove(file_path);
+    try
+    {
+        // Prepare output file
+        const auto temp_dir = argc >= 3 ? std::filesystem::path{argv[2]} : std::filesystem::temp_directory_path();
+        const auto file_path = (temp_dir / "file-transfer-output.txt").string();
+        std::filesystem::remove(file_path);
 
-    boost::asio::co_spawn(
-        grpc_context,
-        [&]() -> agrpc::GrpcAwaitable<void>
-        {
-            abort_if_not(co_await handle_send_file_request(grpc_context, io_context, service_ext, file_path));
-        },
-        boost::asio::detached);
+        boost::asio::co_spawn(
+            grpc_context,
+            [&]() -> agrpc::GrpcAwaitable<void>
+            {
+                abort_if_not(co_await handle_send_file_request(grpc_context, io_context, service_ext, file_path));
+            },
+            boost::asio::detached);
 
-    std::thread io_context_thread{[&]
-                                  {
-                                      io_context.run();
-                                  }};
-    grpc_context.run();
-    guard.reset();
-    io_context_thread.join();
+        std::thread io_context_thread{[&]
+                                      {
+                                          io_context.run();
+                                      }};
+        grpc_context.run();
+        guard.reset();
+        io_context_thread.join();
 
-    // Check that output file has expected content
-    std::ifstream file{file_path};
-    std::string content;
-    file >> content;
-    file.close();
-    abort_if_not("content" == content);
+        // Check that output file has expected content
+        std::cout << "EXists: " << std::filesystem::exists(file_path) << std::endl;
+        std::ifstream file{file_path};
+        std::string content;
+        file >> content;
+        file.close();
+        std::cout << "Size: " << content.size() << " Content: " << content << std::endl;
+        // abort_if_not("content" == content);
+    }
+    catch (const std::exception& e)
+    {
+        std::cout << e.what() << std::endl;
+    }
 
     server->Shutdown();
 }
