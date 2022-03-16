@@ -74,13 +74,13 @@ if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPL
         target_link_libraries(asio-grpc-example-file-transfer-client
                               PRIVATE asio-grpc::asio-grpc $<$<PLATFORM_ID:Linux>:PkgConfig::liburing>)
         target_compile_definitions(asio-grpc-example-file-transfer-client
-                                   PRIVATE $<$<PLATFORM_ID:Linux>:BOOST_ASIO_HAS_IO_URING>)
+                                   PRIVATE $<$<PLATFORM_ID:Linux>:BOOST_ASIO_HAS_IO_URING BOOST_ASIO_DISABLE_EPOLL>)
 
         asio_grpc_add_example(file-transfer-server)
         target_link_libraries(asio-grpc-example-file-transfer-server
                               PRIVATE asio-grpc::asio-grpc $<$<PLATFORM_ID:Linux>:PkgConfig::liburing>)
         target_compile_definitions(asio-grpc-example-file-transfer-server
-                                   PRIVATE $<$<PLATFORM_ID:Linux>:BOOST_ASIO_HAS_IO_URING>)
+                                   PRIVATE $<$<PLATFORM_ID:Linux>:BOOST_ASIO_HAS_IO_URING BOOST_ASIO_DISABLE_EPOLL>)
     endif()
 
     asio_grpc_add_example(unifex-server)
