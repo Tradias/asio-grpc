@@ -23,7 +23,7 @@ DOCTEST_TEST_SUITE("Examples" * doctest::timeout(180.0))
 {
 TEST_CASE("examples")
 {
-    const auto port = std::to_string(test::get_free_port());
+    std::vector<std::string> args{std::to_string(test::get_free_port())};
     const char* server_program{};
     const char* client_program{};
     SUBCASE("Boost.Asio hello world")
@@ -40,16 +40,17 @@ TEST_CASE("examples")
     {
         client_program = ASIO_GRPC_EXAMPLE_FILE_TRANSFER_CLIENT;
         server_program = ASIO_GRPC_EXAMPLE_FILE_TRANSFER_SERVER;
+        args.emplace_back(ASIO_GRPC_EXAMPLE_TEMP_DIR);
     }
     SUBCASE("unifex")
     {
         client_program = ASIO_GRPC_EXAMPLE_UNIFEX_CLIENT;
         server_program = ASIO_GRPC_EXAMPLE_UNIFEX_SERVER;
     }
-    boost::process::child server(server_program, port);
+    boost::process::child server(server_program, std::move(args));
     REQUIRE(server.valid());
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    boost::process::child client(client_program, port);
+    boost::process::child client(client_program, std::move(args));
     REQUIRE(client.valid());
     server.join();
     client.join();

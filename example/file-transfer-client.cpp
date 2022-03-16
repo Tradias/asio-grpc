@@ -38,7 +38,8 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
 {
     namespace asio = boost::asio;
 
-    static constexpr auto CHUNK_SIZE = 5;
+    // Use a larger chunk size in production code, like 64'0000
+    static constexpr std::size_t CHUNK_SIZE = 5;
 
     // These buffers are used to customize allocation of completion handlers.
     example::Buffer<250> buffer1;
@@ -139,7 +140,8 @@ int main(int argc, const char** argv)
     auto guard = boost::asio::make_work_guard(io_context);
 
     // Create the file to be send
-    const auto file_path = (std::filesystem::temp_directory_path() / "file-transfer-input.txt").string();
+    const auto temp_dir = argc >= 3 ? std::filesystem::path{argv[2]} : std::filesystem::temp_directory_path();
+    const auto file_path = (temp_dir / "file-transfer-input.txt").string();
     std::filesystem::remove(file_path);
     std::ofstream file{file_path};
     file << "content";

@@ -99,9 +99,13 @@ if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPL
         asio-grpc-example-unifex-client
         asio-grpc-example-unifex-server)
 
+    set(ASIO_GRPC_TEMP_DIR "${CMAKE_CURRENT_BINARY_DIR}/temp")
+    make_directory("${ASIO_GRPC_TEMP_DIR}")
+
     target_compile_definitions(
         asio-grpc-test-examples
-        PRIVATE "ASIO_GRPC_EXAMPLE_STREAMING_CLIENT=\"$<TARGET_FILE:asio-grpc-example-streaming-client>\""
+        PRIVATE "ASIO_GRPC_EXAMPLE_TEMP_DIR=\"${ASIO_GRPC_TEMP_DIR}\""
+                "ASIO_GRPC_EXAMPLE_STREAMING_CLIENT=\"$<TARGET_FILE:asio-grpc-example-streaming-client>\""
                 "ASIO_GRPC_EXAMPLE_STREAMING_SERVER=\"$<TARGET_FILE:asio-grpc-example-streaming-server>\""
                 "ASIO_GRPC_EXAMPLE_FILE_TRANSFER_CLIENT=\"$<TARGET_FILE:asio-grpc-example-file-transfer-client>\""
                 "ASIO_GRPC_EXAMPLE_FILE_TRANSFER_SERVER=\"$<TARGET_FILE:asio-grpc-example-file-transfer-server>\""

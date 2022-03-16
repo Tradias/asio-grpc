@@ -154,7 +154,9 @@ int main(int argc, const char** argv)
     boost::asio::io_context io_context{1};
     auto guard = boost::asio::make_work_guard(io_context);
 
-    const auto file_path = (std::filesystem::temp_directory_path() / "file-transfer-output.txt").string();
+    // Prepare output file
+    const auto temp_dir = argc >= 3 ? std::filesystem::path{argv[2]} : std::filesystem::temp_directory_path();
+    const auto file_path = (temp_dir / "file-transfer-output.txt").string();
     std::filesystem::remove(file_path);
 
     boost::asio::co_spawn(
@@ -173,6 +175,7 @@ int main(int argc, const char** argv)
     guard.reset();
     io_context_thread.join();
 
+    // Check that output file has expected content
     std::ifstream file{file_path};
     std::string content;
     file >> content;
