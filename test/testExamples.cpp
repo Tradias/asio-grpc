@@ -36,12 +36,14 @@ TEST_CASE("examples")
         client_program = ASIO_GRPC_EXAMPLE_STREAMING_CLIENT;
         server_program = ASIO_GRPC_EXAMPLE_STREAMING_SERVER;
     }
+#ifdef ASIO_GRPC_EXAMPLE_FILE_TRANSFER_CLIENT
     SUBCASE("Boost.Asio file transfer")
     {
         client_program = ASIO_GRPC_EXAMPLE_FILE_TRANSFER_CLIENT;
         server_program = ASIO_GRPC_EXAMPLE_FILE_TRANSFER_SERVER;
         args.emplace_back(ASIO_GRPC_EXAMPLE_TEMP_DIR);
     }
+#endif
     SUBCASE("unifex")
     {
         client_program = ASIO_GRPC_EXAMPLE_UNIFEX_CLIENT;

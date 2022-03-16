@@ -62,7 +62,13 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
     // Relying on CTAD here to create a `asio::basic_stream_file<asio::io_context::executor_type>` which is slightly
     // more performant than the default `asio::stream_file` that is templated on `asio::any_io_executor`.
     std::cout << "Opening file: " << file_path << std::endl;
-    asio::basic_stream_file file{io_context.get_executor(), file_path, asio::stream_file::read_only};
+    asio::basic_stream_file file{io_context.get_executor()};
+    boost::system::error_code ec;
+    file.open(file_path, asio::stream_file::read_only, ec);
+    if (ec)
+    {
+        std::cout << "Error opened file: " << ec.message() << std::endl;
+    }
     std::cout << "Opened file: " << file_path << std::endl;
 
     example::v1::SendFileRequest first_read_buffer;
