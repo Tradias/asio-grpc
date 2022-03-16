@@ -49,7 +49,6 @@ agrpc::GrpcAwaitable<bool> handle_send_file_request(agrpc::GrpcContext& grpc_con
                                  responder, buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE)))
     {
         // Server is shutting down.
-        std::cout << "shutting down" << std::endl;
         co_return false;
     }
 
@@ -63,7 +62,6 @@ agrpc::GrpcAwaitable<bool> handle_send_file_request(agrpc::GrpcContext& grpc_con
     {
         // Client hang up or forgot to set finish_write.
         co_await agrpc::finish(responder, {}, grpc::Status::OK, buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
-        std::cout << "non-ok, no finish write" << std::endl;
         co_return false;
     }
 
@@ -146,7 +144,7 @@ void run_io_context(asio::io_context& io_context)
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Exception while running io_context: " << e.what() << std::endl;
+        std::cerr << "Exception from io_context: " << e.what() << std::endl;
         std::abort();
     }
 }
@@ -180,8 +178,7 @@ int main(int argc, const char** argv)
             grpc_context,
             [&]() -> agrpc::GrpcAwaitable<void>
             {
-                std::cout << (co_await handle_send_file_request(grpc_context, io_context, service_ext, file_path))
-                          << std::endl;
+                abort_if_not(co_await handle_send_file_request(grpc_context, io_context, service_ext, file_path));
             },
             [](auto&& ep)
             {
@@ -197,24 +194,21 @@ int main(int argc, const char** argv)
         io_context_thread.join();
 
         // Check that output file has expected content
-        std::cout << "Exists: " << std::filesystem::exists(file_path) << std::endl;
         std::string content;
         {
             std::ifstream stream{file_path};
             stream.exceptions(std::ifstream::failbit);
             stream >> content;
         }
-        std::cout << "Size: " << content.size() << " Content: " << content << std::endl;
         abort_if_not("content" == content);
     }
     catch (const std::exception& e)
     {
-        std::cout << e.what() << std::endl;
+        std::cerr << "Exception: " << e.what() << std::endl;
+        server->Shutdown();
         return 1;
     }
-    abort_if_not(false);
 
     server->Shutdown();
-
     return 0;
 }

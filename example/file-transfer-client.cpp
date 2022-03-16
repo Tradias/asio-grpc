@@ -60,16 +60,7 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
 
     // Relying on CTAD here to create a `asio::basic_stream_file<asio::io_context::executor_type>` which is slightly
     // more performant than the default `asio::stream_file` that is templated on `asio::any_io_executor`.
-    std::cout << "Create file: " << file_path << std::endl;
-    asio::basic_stream_file file{io_context.get_executor()};
-    std::cout << "Created file: " << file_path << std::endl;
-    boost::system::error_code ec;
-    file.open(file_path, asio::stream_file::read_only, ec);
-    if (ec)
-    {
-        std::cout << "Error opened file: " << ec.message() << std::endl;
-    }
-    std::cout << "Opened file: " << file_path << std::endl;
+    asio::basic_stream_file file{io_context.get_executor(), file_path, asio::stream_file::read_only};
 
     example::v1::SendFileRequest first_read_buffer;
     first_read_buffer.mutable_content()->resize(CHUNK_SIZE);
@@ -79,7 +70,6 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
     auto bytes_read = co_await file.async_read_some(
         asio::buffer(*first_read_buffer.mutable_content()),
         buffer1.bind_allocator(asio::bind_executor(io_context, agrpc::GRPC_USE_AWAITABLE)));
-    std::cout << "Read bytes: " << bytes_read << std::endl;
 
     bool is_eof{false};
 
@@ -109,7 +99,6 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
                 {
                     // Need to bind_executor here because completion_handler is a simple invocable without an associated
                     // executor.
-                    std::cout << "Sending: " << current->content() << std::endl;
                     agrpc::write(
                         *writer, *current,
                         buffer2.bind_allocator(asio::bind_executor(grpc_context, std::move(completion_handler))));
@@ -130,7 +119,6 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
     // Signal that we are done sending chunks
     current->mutable_content()->resize(bytes_read);
     current->set_finish_write(true);
-    std::cout << "Sending done" << std::endl;
     co_await agrpc::write_last(*writer, *current, {}, buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
 
     grpc::Status status;
@@ -147,7 +135,7 @@ void run_io_context(asio::io_context& io_context)
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Exception while running io_context: " << e.what() << std::endl;
+        std::cerr << "Exception from io_context: " << e.what() << std::endl;
         std::abort();
     }
 }
@@ -163,8 +151,6 @@ int main(int argc, const char** argv)
 
     asio::io_context io_context{1};
     auto guard = asio::make_work_guard(io_context);
-
-    auto grpc_context_guard = asio::make_work_guard(grpc_context);
 
     try
     {
@@ -183,8 +169,6 @@ int main(int argc, const char** argv)
             {
                 abort_if_not(
                     co_await make_double_buffered_send_file_request(grpc_context, io_context, *stub_ext, file_path));
-                std::cout << "Finished" << std::endl;
-                grpc_context_guard.reset();
             },
             [](auto&& ep)
             {
@@ -195,16 +179,13 @@ int main(int argc, const char** argv)
             });
 
         std::thread io_context_thread{&run_io_context, std::ref(io_context)};
-        std::cout << "Start running" << std::endl;
         grpc_context.run();
-        std::cout << "Running done" << std::endl;
-
         guard.reset();
         io_context_thread.join();
     }
     catch (const std::exception& e)
     {
-        std::cout << e.what() << std::endl;
+        std::cerr << "Exception: " << e.what() << std::endl;
         return 1;
     }
 
