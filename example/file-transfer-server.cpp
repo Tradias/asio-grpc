@@ -31,16 +31,15 @@
 #include <filesystem>
 #include <fstream>
 
+namespace asio = boost::asio;
+
 // Example showing how to transfer files over a streaming RPC. Only a fixed number of dynamic memory allocations are
 // performed. The use of `agrpc::GrpcAwaitable<bool>` is not required but `agrpc::GrpcExecutor` is slightly smaller and
 // faster to copy than the `asio::any_io_executor` of the default `asio::awaitable`.
-agrpc::GrpcAwaitable<bool> handle_send_file_request(agrpc::GrpcContext& grpc_context,
-                                                    boost::asio::io_context& io_context,
+agrpc::GrpcAwaitable<bool> handle_send_file_request(agrpc::GrpcContext& grpc_context, asio::io_context& io_context,
                                                     example::v1::ExampleExt::AsyncService& service,
                                                     const std::string& file_path)
 {
-    namespace asio = boost::asio;
-
     // These buffers are used to customize allocation of completion handlers.
     example::Buffer<320> buffer1;
     example::Buffer<64> buffer2;
@@ -140,6 +139,19 @@ agrpc::GrpcAwaitable<bool> handle_send_file_request(agrpc::GrpcContext& grpc_con
                                      buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
 }
 
+void run_io_context(asio::io_context& io_context)
+{
+    try
+    {
+        io_context.run();
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Exception while running io_context: " << e.what() << std::endl;
+        std::abort();
+    }
+}
+
 int main(int argc, const char** argv)
 {
     const auto port = argc >= 2 ? argv[1] : "50051";
@@ -155,8 +167,8 @@ int main(int argc, const char** argv)
     server = builder.BuildAndStart();
     abort_if_not(bool{server});
 
-    boost::asio::io_context io_context{1};
-    auto guard = boost::asio::make_work_guard(io_context);
+    asio::io_context io_context{1};
+    auto guard = asio::make_work_guard(io_context);
 
     try
     {
@@ -165,19 +177,16 @@ int main(int argc, const char** argv)
         const auto file_path = (temp_dir / "file-transfer-output.txt").string();
         std::filesystem::remove(file_path);
 
-        boost::asio::co_spawn(
+        asio::co_spawn(
             grpc_context,
             [&]() -> agrpc::GrpcAwaitable<void>
             {
                 std::cout << (co_await handle_send_file_request(grpc_context, io_context, service_ext, file_path))
                           << std::endl;
             },
-            boost::asio::detached);
+            asio::detached);
 
-        std::thread io_context_thread{[&]
-                                      {
-                                          io_context.run();
-                                      }};
+        std::thread io_context_thread{&run_io_context, std::ref(io_context)};
         grpc_context.run();
         guard.reset();
         io_context_thread.join();

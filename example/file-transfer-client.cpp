@@ -29,16 +29,16 @@
 #include <filesystem>
 #include <fstream>
 
+namespace asio = boost::asio;
+
 // Example showing how to transfer files over a streaming RPC. Only a fixed number of dynamic memory allocations are
 // performed. The use of `agrpc::GrpcAwaitable<bool>` is not required but `agrpc::GrpcExecutor` is slightly smaller and
 // faster to copy than the `asio::any_io_executor` of the default `asio::awaitable`.
 agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcContext& grpc_context,
-                                                                  boost::asio::io_context& io_context,
+                                                                  asio::io_context& io_context,
                                                                   example::v1::ExampleExt::Stub& stub,
                                                                   const std::string& file_path)
 {
-    namespace asio = boost::asio;
-
     // Use a larger chunk size in production code, like 64'0000
     static constexpr std::size_t CHUNK_SIZE = 5;
 
@@ -61,8 +61,9 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
 
     // Relying on CTAD here to create a `asio::basic_stream_file<asio::io_context::executor_type>` which is slightly
     // more performant than the default `asio::stream_file` that is templated on `asio::any_io_executor`.
-    std::cout << "Opening file: " << file_path << std::endl;
+    std::cout << "Create file: " << file_path << std::endl;
     asio::basic_stream_file file{io_context.get_executor()};
+    std::cout << "Created file: " << file_path << std::endl;
     boost::system::error_code ec;
     file.open(file_path, asio::stream_file::read_only, ec);
     if (ec)
@@ -119,7 +120,7 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
             // Lost connection to server, no reason to finish this RPC.
             co_return false;
         }
-        is_eof = boost::asio::error::eof == ec_and_bytes_read.first;
+        is_eof = asio::error::eof == ec_and_bytes_read.first;
         bytes_read = ec_and_bytes_read.second;
 
         std::swap(current, next);
@@ -139,6 +140,19 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
     co_return status.ok();
 }
 
+void run_io_context(asio::io_context& io_context)
+{
+    try
+    {
+        io_context.run();
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Exception while running io_context: " << e.what() << std::endl;
+        std::abort();
+    }
+}
+
 int main(int argc, const char** argv)
 {
     const auto port = argc >= 2 ? argv[1] : "50051";
@@ -148,8 +162,8 @@ int main(int argc, const char** argv)
     const auto stub_ext = example::v1::ExampleExt::NewStub(channel);
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
-    boost::asio::io_context io_context{1};
-    auto guard = boost::asio::make_work_guard(io_context);
+    asio::io_context io_context{1};
+    auto guard = asio::make_work_guard(io_context);
 
     try
     {
@@ -162,19 +176,16 @@ int main(int argc, const char** argv)
             file << "content";
         }
 
-        boost::asio::co_spawn(
+        asio::co_spawn(
             grpc_context,
             [&]() -> agrpc::GrpcAwaitable<void>
             {
                 abort_if_not(
                     co_await make_double_buffered_send_file_request(grpc_context, io_context, *stub_ext, file_path));
             },
-            boost::asio::detached);
+            asio::detached);
 
-        std::thread io_context_thread{[&]
-                                      {
-                                          io_context.run();
-                                      }};
+        std::thread io_context_thread{&run_io_context, std::ref(io_context)};
         std::cout << "Start running" << std::endl;
         grpc_context.run();
         std::cout << "Running done" << std::endl;
