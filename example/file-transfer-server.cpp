@@ -189,12 +189,13 @@ int main(int argc, const char** argv)
         file >> content;
         file.close();
         std::cout << "Size: " << content.size() << " Content: " << content << std::endl;
-        // abort_if_not("content" == content);
+        abort_if_not("content" == content);
     }
     catch (const std::exception& e)
     {
         std::cout << e.what() << std::endl;
     }
+    abort_if_not(false);
 
     server->Shutdown();
 }
