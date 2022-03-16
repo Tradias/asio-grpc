@@ -164,14 +164,17 @@ int main(int argc, const char** argv)
     asio::io_context io_context{1};
     auto guard = asio::make_work_guard(io_context);
 
+    auto grpc_context_guard = asio::make_work_guard(grpc_context);
+
     try
     {
         // Create the file to be send
         const auto temp_dir = argc >= 3 ? std::filesystem::path{argv[2]} : std::filesystem::temp_directory_path();
         const auto file_path = (temp_dir / "file-transfer-input.txt").string();
         {
-            std::ofstream file{file_path, std::ofstream::trunc};
-            file << "content";
+            std::ofstream stream{file_path, std::ofstream::trunc};
+            stream.exceptions(std::ofstream::failbit);
+            stream << "content";
         }
 
         asio::co_spawn(
@@ -180,6 +183,8 @@ int main(int argc, const char** argv)
             {
                 abort_if_not(
                     co_await make_double_buffered_send_file_request(grpc_context, io_context, *stub_ext, file_path));
+                std::cout << "Finished" << std::endl;
+                grpc_context_guard.reset();
             },
             [](auto&& ep)
             {
@@ -200,5 +205,8 @@ int main(int argc, const char** argv)
     catch (const std::exception& e)
     {
         std::cout << e.what() << std::endl;
+        return 1;
     }
+
+    return 0;
 }

@@ -200,8 +200,9 @@ int main(int argc, const char** argv)
         std::cout << "Exists: " << std::filesystem::exists(file_path) << std::endl;
         std::string content;
         {
-            std::ifstream file{file_path};
-            file >> content;
+            std::ifstream stream{file_path};
+            stream.exceptions(std::ifstream::failbit);
+            stream >> content;
         }
         std::cout << "Size: " << content.size() << " Content: " << content << std::endl;
         abort_if_not("content" == content);
@@ -209,8 +210,11 @@ int main(int argc, const char** argv)
     catch (const std::exception& e)
     {
         std::cout << e.what() << std::endl;
+        return 1;
     }
     abort_if_not(false);
 
     server->Shutdown();
+
+    return 0;
 }
