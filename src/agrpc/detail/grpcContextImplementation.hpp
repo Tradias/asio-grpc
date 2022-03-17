@@ -55,6 +55,8 @@ struct GrpcContextImplementation
 
     static bool get_next_event(agrpc::GrpcContext& grpc_context, detail::GrpcCompletionQueueEvent& event) noexcept;
 
+    static bool poll_next_event(agrpc::GrpcContext& grpc_context, detail::GrpcCompletionQueueEvent& event) noexcept;
+
     [[nodiscard]] static bool running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept;
 
     static const agrpc::GrpcContext* set_thread_local_grpc_context(const agrpc::GrpcContext* grpc_context) noexcept;
@@ -66,6 +68,9 @@ struct GrpcContextImplementation
 
     template <detail::InvokeHandler Invoke, class IsStoppedPredicate>
     static bool process_work(agrpc::GrpcContext& grpc_context, IsStoppedPredicate is_stopped_predicate);
+
+    template <detail::InvokeHandler Invoke, class IsStoppedPredicate>
+    static bool poll(agrpc::GrpcContext& grpc_context, IsStoppedPredicate is_stopped_predicate);
 };
 }
 

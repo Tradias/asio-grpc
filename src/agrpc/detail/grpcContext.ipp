@@ -106,6 +106,32 @@ inline void GrpcContext::run()
         }
 }
 
+inline void GrpcContext::poll()
+{
+    if (this->outstanding_work.load(std::memory_order_relaxed) == 0)
+    {
+        this->stopped.store(true, std::memory_order_relaxed);
+        return;
+    }
+    this->reset();
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+    detail::GrpcContextThreadContext thread_context;
+#endif
+    detail::ScopeGuard on_exit{[old_context = detail::GrpcContextImplementation::set_thread_local_grpc_context(this)]
+                               {
+                                   detail::GrpcContextImplementation::set_thread_local_grpc_context(old_context);
+                               }};
+    while (detail::GrpcContextImplementation::poll<detail::InvokeHandler::YES>(*this,
+                                                                               [this]
+                                                                               {
+                                                                                   return this->is_stopped();
+                                                                               }))
+
+    {
+        //
+    }
+}
+
 inline void GrpcContext::stop()
 {
     if (!this->stopped.exchange(true, std::memory_order_relaxed) &&

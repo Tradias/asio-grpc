@@ -108,6 +108,7 @@ if(ASIO_GRPC_BUILD_TESTS)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcContext.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcExecutor.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcInitiate.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/pollContext.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/repeatedlyRequest.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/repeatedlyRequestContext.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/rpc.hpp"

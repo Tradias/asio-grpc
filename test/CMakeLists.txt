@@ -51,7 +51,8 @@ function(asio_grpc_add_test _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_stand
     endif()
 endfunction()
 
-set(ASIO_GRPC_CPP17_TEST_SOURCE_FILES "testAsioGrpc17.cpp" "testRepeatedlyRequest17.cpp" "testBindAllocator17.cpp")
+set(ASIO_GRPC_CPP17_TEST_SOURCE_FILES "testAsioGrpc17.cpp" "testRepeatedlyRequest17.cpp" "testBindAllocator17.cpp"
+                                      "testPollContext17.cpp")
 set(ASIO_GRPC_CPP20_TEST_SOURCE_FILES "testAsioGrpc20.cpp" "testRepeatedlyRequest20.cpp" "testBindAllocator20.cpp")
 
 asio_grpc_add_test(asio-grpc-test-boost-cpp17 "BOOST_ASIO" "17" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES})

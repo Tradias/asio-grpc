@@ -95,6 +95,8 @@ class GrpcContext
      */
     void run();
 
+    void poll();
+
     /**
      * @brief Signal the GrpcContext to stop
      *
