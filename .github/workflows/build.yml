@@ -81,7 +81,8 @@ jobs:
     steps:
     - name: Install GCC 11 and gcovr
       run: |
-        sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test &&
+        sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test &&\
+        sudo apt-get upgrade &&\
         sudo apt-get install g++-11 &&\
         sudo apt-get install gcovr
 
