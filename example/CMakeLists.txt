@@ -69,7 +69,7 @@ if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPL
     asio_grpc_add_example(streaming-server)
     target_link_libraries(asio-grpc-example-streaming-server PRIVATE asio-grpc::asio-grpc)
 
-    if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    if(ASIO_GRPC_ENABLE_IO_URING_EXAMPLES OR ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
         asio_grpc_add_example(file-transfer-client)
         target_link_libraries(asio-grpc-example-file-transfer-client
                               PRIVATE asio-grpc::asio-grpc $<$<PLATFORM_ID:Linux>:PkgConfig::liburing>)
