@@ -32,6 +32,8 @@ AGRPC_NAMESPACE_BEGIN()
  *
  * @snippet client.cpp bind_allocator-client-side
  *
+ * In contrast to `asio::bind_allocator` this class performs empty class optimization on the provided allocator.
+ *
  * @since 1.5.0
  */
 template <class Target, class Allocator>
