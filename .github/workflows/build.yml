@@ -79,10 +79,10 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-      # Increase ulimit to address exception: io_uring_queue_init: Cannot allocate memory [system:12]
+      # Increase max locked-in-memory address space to address exception: io_uring_queue_init: Cannot allocate memory [system:12]
       # https://github.com/axboe/liburing/issues/157
-    - name: Increase ulimit
-      run: sudo ulimit -l 65535
+    - name: Increase max locked-in-memory address space
+      run: printf '* hard memlock 65535' >> /etc/security/limits.conf
 
     - name: Install GCC 11 and gcovr
       run: |
@@ -168,10 +168,10 @@ jobs:
       CMAKE_EXTRA_ARGS: '-DASIO_GRPC_USE_BOOST_CONTAINER=on -DVCPKG_TARGET_TRIPLET=x64-linux-clang "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-10/include/c++/v1/"'
 
     steps:
-      # Increase ulimit to address exception: io_uring_queue_init: Cannot allocate memory [system:12]
+      # Increase max locked-in-memory address space to address exception: io_uring_queue_init: Cannot allocate memory [system:12]
       # https://github.com/axboe/liburing/issues/157
-    - name: Increase ulimit
-      run: sudo ulimit -l 65535
+    - name: Increase max locked-in-memory address space
+      run: printf '* hard memlock 65535' >> /etc/security/limits.conf
 
     - name: Make clang-10 default compiler
       run: |
