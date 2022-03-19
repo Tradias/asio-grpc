@@ -61,6 +61,9 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
 
     // Relying on CTAD here to create a `asio::basic_stream_file<asio::io_context::executor_type>` which is slightly
     // more performant than the default `asio::stream_file` that is templated on `asio::any_io_executor`.
+    //
+    // If you get exception: io_uring_queue_init: Cannot allocate memory [system:12]
+    // here then run `ulimit -l 65535`, see also https://github.com/axboe/liburing/issues/157
     asio::basic_stream_file file{io_context.get_executor(), file_path, asio::stream_file::read_only};
 
     example::v1::SendFileRequest first_read_buffer;
