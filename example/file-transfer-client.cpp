@@ -15,6 +15,7 @@
 #include "buffer.hpp"
 #include "example/v1/exampleExt.grpc.pb.h"
 #include "helper.hpp"
+#include "scopeGuard.hpp"
 #include "whenBoth.hpp"
 
 #include <agrpc/asioGrpc.hpp>
@@ -179,15 +180,17 @@ int main(int argc, const char** argv)
             });
 
         std::thread io_context_thread{&run_io_context, std::ref(io_context)};
+        example::ScopeGuard on_exit{[&]
+                                    {
+                                        guard.reset();
+                                        io_context_thread.join();
+                                    }};
         grpc_context.run();
-        guard.reset();
-        io_context_thread.join();
     }
     catch (const std::exception& e)
     {
         std::cerr << "Exception: " << e.what() << std::endl;
         return 1;
     }
-
     return 0;
 }

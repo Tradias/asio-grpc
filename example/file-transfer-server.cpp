@@ -16,6 +16,7 @@
 #include "example/v1/example.grpc.pb.h"
 #include "example/v1/exampleExt.grpc.pb.h"
 #include "helper.hpp"
+#include "scopeGuard.hpp"
 #include "whenBoth.hpp"
 
 #include <agrpc/asioGrpc.hpp>
@@ -189,9 +190,12 @@ int main(int argc, const char** argv)
             });
 
         std::thread io_context_thread{&run_io_context, std::ref(io_context)};
+        example::ScopeGuard on_exit{[&]
+                                    {
+                                        guard.reset();
+                                        io_context_thread.join();
+                                    }};
         grpc_context.run();
-        guard.reset();
-        io_context_thread.join();
 
         // Check that output file has expected content
         std::string content;
@@ -208,7 +212,6 @@ int main(int argc, const char** argv)
         server->Shutdown();
         return 1;
     }
-
     server->Shutdown();
     return 0;
 }
