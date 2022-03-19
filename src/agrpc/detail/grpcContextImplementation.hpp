@@ -20,6 +20,8 @@
 #include "agrpc/detail/typeErasedOperation.hpp"
 #include "agrpc/detail/utility.hpp"
 
+#include <grpcpp/completion_queue.h>
+
 AGRPC_NAMESPACE_BEGIN()
 
 class GrpcContext;
@@ -67,10 +69,14 @@ struct GrpcContextImplementation
     static void process_local_queue(agrpc::GrpcContext& grpc_context);
 
     template <detail::InvokeHandler Invoke, class IsStoppedPredicate>
+    static bool process_work(agrpc::GrpcContext& grpc_context, IsStoppedPredicate is_stopped_predicate,
+                             ::gpr_timespec deadline);
+
+    template <detail::InvokeHandler Invoke, class IsStoppedPredicate>
     static bool process_work(agrpc::GrpcContext& grpc_context, IsStoppedPredicate is_stopped_predicate);
 
     template <detail::InvokeHandler Invoke, class IsStoppedPredicate>
-    static bool poll(agrpc::GrpcContext& grpc_context, IsStoppedPredicate is_stopped_predicate);
+    static bool poll_work(agrpc::GrpcContext& grpc_context, IsStoppedPredicate is_stopped_predicate);
 };
 }
 

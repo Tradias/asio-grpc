@@ -121,11 +121,11 @@ inline void GrpcContext::poll()
                                {
                                    detail::GrpcContextImplementation::set_thread_local_grpc_context(old_context);
                                }};
-    while (detail::GrpcContextImplementation::poll<detail::InvokeHandler::YES>(*this,
-                                                                               [this]
-                                                                               {
-                                                                                   return this->is_stopped();
-                                                                               }))
+    while (detail::GrpcContextImplementation::poll_work<detail::InvokeHandler::YES>(*this,
+                                                                                    [this]
+                                                                                    {
+                                                                                        return this->is_stopped();
+                                                                                    }))
 
     {
         //

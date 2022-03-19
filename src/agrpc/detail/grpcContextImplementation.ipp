@@ -20,6 +20,8 @@
 #include "agrpc/detail/typeErasedOperation.hpp"
 #include "agrpc/grpcContext.hpp"
 
+#include <grpcpp/completion_queue.h>
+
 #include <cstdint>
 #include <limits>
 
@@ -66,22 +68,6 @@ inline void GrpcContextImplementation::add_operation(agrpc::GrpcContext& grpc_co
     }
 }
 
-inline bool GrpcContextImplementation::get_next_event(agrpc::GrpcContext& grpc_context,
-                                                      detail::GrpcCompletionQueueEvent& event) noexcept
-{
-    static constexpr ::gpr_timespec INFINITE_FUTURE{std::numeric_limits<std::int64_t>::max(), 0, ::GPR_CLOCK_MONOTONIC};
-    return grpc_context.get_completion_queue()->AsyncNext(&event.tag, &event.ok, INFINITE_FUTURE) !=
-           grpc::CompletionQueue::SHUTDOWN;
-}
-
-inline bool GrpcContextImplementation::poll_next_event(agrpc::GrpcContext& grpc_context,
-                                                       detail::GrpcCompletionQueueEvent& event) noexcept
-{
-    static constexpr ::gpr_timespec TIME_ZERO{std::numeric_limits<std::int64_t>::min(), 0, ::GPR_CLOCK_MONOTONIC};
-    return grpc_context.get_completion_queue()->AsyncNext(&event.tag, &event.ok, TIME_ZERO) ==
-           grpc::CompletionQueue::GOT_EVENT;
-}
-
 inline bool GrpcContextImplementation::running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept
 {
     return &grpc_context == detail::thread_local_grpc_context;
@@ -117,8 +103,15 @@ void GrpcContextImplementation::process_local_queue(agrpc::GrpcContext& grpc_con
     }
 }
 
+inline bool get_next_event(grpc::CompletionQueue* cq, detail::GrpcCompletionQueueEvent& event,
+                           ::gpr_timespec deadline) noexcept
+{
+    return cq->AsyncNext(&event.tag, &event.ok, deadline) == grpc::CompletionQueue::GOT_EVENT;
+}
+
 template <detail::InvokeHandler Invoke, class IsStoppedPredicate>
-bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, IsStoppedPredicate is_stopped_predicate)
+bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, IsStoppedPredicate is_stopped_predicate,
+                                             ::gpr_timespec deadline)
 {
     if (grpc_context.check_remote_work)
     {
@@ -131,7 +124,7 @@ bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, I
         return false;
     }
     detail::GrpcCompletionQueueEvent event;
-    if AGRPC_LIKELY (detail::GrpcContextImplementation::get_next_event(grpc_context, event))
+    if (detail::get_next_event(grpc_context.get_completion_queue(), event, deadline))
     {
         if (event.tag == detail::GrpcContextImplementation::HAS_REMOTE_WORK_TAG)
         {
@@ -149,34 +142,17 @@ bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, I
 }
 
 template <detail::InvokeHandler Invoke, class IsStoppedPredicate>
-bool GrpcContextImplementation::poll(agrpc::GrpcContext& grpc_context, IsStoppedPredicate is_stopped_predicate)
+bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, IsStoppedPredicate is_stopped_predicate)
 {
-    if (grpc_context.check_remote_work)
-    {
-        detail::GrpcContextImplementation::move_remote_work_to_local_queue(grpc_context);
-        grpc_context.check_remote_work = false;
-    }
-    detail::GrpcContextImplementation::process_local_queue<Invoke>(grpc_context);
-    if AGRPC_UNLIKELY (is_stopped_predicate())
-    {
-        return false;
-    }
-    detail::GrpcCompletionQueueEvent event;
-    if AGRPC_LIKELY (detail::GrpcContextImplementation::poll_next_event(grpc_context, event))
-    {
-        if (event.tag == detail::GrpcContextImplementation::HAS_REMOTE_WORK_TAG)
-        {
-            grpc_context.check_remote_work = true;
-        }
-        else
-        {
-            detail::WorkFinishedOnExit on_exit{grpc_context};
-            auto* operation = static_cast<detail::TypeErasedGrpcTagOperation*>(event.tag);
-            operation->complete(Invoke, event.ok, grpc_context.get_allocator());
-        }
-        return true;
-    }
-    return false;
+    static constexpr ::gpr_timespec INFINITE_FUTURE{std::numeric_limits<std::int64_t>::max(), 0, ::GPR_CLOCK_MONOTONIC};
+    return detail::GrpcContextImplementation::process_work<Invoke>(grpc_context, is_stopped_predicate, INFINITE_FUTURE);
+}
+
+template <detail::InvokeHandler Invoke, class IsStoppedPredicate>
+bool GrpcContextImplementation::poll_work(agrpc::GrpcContext& grpc_context, IsStoppedPredicate is_stopped_predicate)
+{
+    static constexpr ::gpr_timespec TIME_ZERO{std::numeric_limits<std::int64_t>::min(), 0, ::GPR_CLOCK_MONOTONIC};
+    return detail::GrpcContextImplementation::process_work<Invoke>(grpc_context, is_stopped_predicate, TIME_ZERO);
 }
 }
 

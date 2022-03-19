@@ -24,40 +24,35 @@
 
 DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0))
 {
-TEST_CASE_FIXTURE(test::GrpcContextTest, "PollContext")
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll()")
 {
     asio::io_context io_context;
     asio::steady_timer timer{io_context};
     grpc::Alarm alarm;
-    std::size_t alarms{};
-    std::size_t timers{};
-    asio::spawn(get_executor(),
-                [&](asio::yield_context yield)
-                {
-                    while (alarms < 10)
-                    {
-                        agrpc::wait(alarm, test::hundred_milliseconds_from_now(), yield);
-                        ++alarms;
-                    }
-                });
+    bool wait_done{};
     asio::spawn(io_context,
                 [&](asio::yield_context yield)
                 {
-                    while (timers < 10)
-                    {
-                        timer.expires_after(std::chrono::milliseconds(100));
-                        timer.async_wait(yield);
-                        ++timers;
-                    }
+                    asio::post(io_context,
+                               [&]()
+                               {
+                                   grpc_context.poll();
+                                   CHECK_FALSE(wait_done);
+                                   timer.expires_after(std::chrono::milliseconds(110));
+                                   timer.async_wait(
+                                       [&](auto&&)
+                                       {
+                                           grpc_context.poll();
+                                           CHECK(wait_done);
+                                       });
+                               });
+                    agrpc::wait(alarm, test::hundred_milliseconds_from_now(),
+                                asio::bind_executor(grpc_context,
+                                                    [&](bool)
+                                                    {
+                                                        wait_done = true;
+                                                    }));
                 });
-    agrpc::PollContext context{io_context.get_executor()};
-    context.poll(grpc_context);
-    const auto start = std::chrono::steady_clock::now();
     io_context.run();
-    const auto end = std::chrono::steady_clock::now();
-    CHECK_MESSAGE(std::chrono::milliseconds(1200) > end - start,
-                  std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count(););
-    CHECK_EQ(10, alarms);
-    CHECK_EQ(10, timers);
 }
 }
