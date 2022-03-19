@@ -82,7 +82,7 @@ jobs:
       # Increase max locked-in-memory address space to address exception: io_uring_queue_init: Cannot allocate memory [system:12]
       # https://github.com/axboe/liburing/issues/157
     - name: Increase max locked-in-memory address space
-      run: sudo printf '* hard memlock 65535' >> /etc/security/limits.conf
+      run: sudo printf '* hard memlock 65535' > /etc/security/limits.d/github.conf
 
     - name: Install GCC 11 and gcovr
       run: |
@@ -171,7 +171,7 @@ jobs:
       # Increase max locked-in-memory address space to address exception: io_uring_queue_init: Cannot allocate memory [system:12]
       # https://github.com/axboe/liburing/issues/157
     - name: Increase max locked-in-memory address space
-      run: sudo printf '* hard memlock 65535' >> /etc/security/limits.conf
+      run: sudo printf '* hard memlock 65535' > /etc/security/limits.d/github.conf
 
     - name: Make clang-10 default compiler
       run: |
