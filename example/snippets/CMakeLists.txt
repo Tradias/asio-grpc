@@ -22,7 +22,7 @@ function(asio_grpc_add_documentation _asio_grpc_name)
                                                            asio-grpc-cpp20-compile-options)
 endfunction()
 
-if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES AND ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT)
+if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
     asio_grpc_add_documentation(blog)
 
     asio_grpc_add_documentation(client)

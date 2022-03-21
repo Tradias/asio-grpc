@@ -15,6 +15,7 @@
 #include "buffer.hpp"
 #include "example/v1/exampleExt.grpc.pb.h"
 #include "helper.hpp"
+#include "scopeGuard.hpp"
 #include "whenBoth.hpp"
 
 #include <agrpc/asioGrpc.hpp>
@@ -60,6 +61,9 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
 
     // Relying on CTAD here to create a `asio::basic_stream_file<asio::io_context::executor_type>` which is slightly
     // more performant than the default `asio::stream_file` that is templated on `asio::any_io_executor`.
+    //
+    // If you get exception: io_uring_queue_init: Cannot allocate memory [system:12]
+    // here then run `ulimit -l 65535`, see also https://github.com/axboe/liburing/issues/157
     asio::basic_stream_file file{io_context.get_executor(), file_path, asio::stream_file::read_only};
 
     example::v1::SendFileRequest first_read_buffer;
@@ -179,15 +183,17 @@ int main(int argc, const char** argv)
             });
 
         std::thread io_context_thread{&run_io_context, std::ref(io_context)};
+        example::ScopeGuard on_exit{[&]
+                                    {
+                                        guard.reset();
+                                        io_context_thread.join();
+                                    }};
         grpc_context.run();
-        guard.reset();
-        io_context_thread.join();
     }
     catch (const std::exception& e)
     {
         std::cerr << "Exception: " << e.what() << std::endl;
         return 1;
     }
-
     return 0;
 }

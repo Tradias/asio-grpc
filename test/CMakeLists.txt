@@ -111,7 +111,7 @@ if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPL
                 "ASIO_GRPC_EXAMPLE_UNIFEX_CLIENT=\"$<TARGET_FILE:asio-grpc-example-unifex-client>\""
                 "ASIO_GRPC_EXAMPLE_UNIFEX_SERVER=\"$<TARGET_FILE:asio-grpc-example-unifex-server>\"")
 
-    if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+    if(ASIO_GRPC_ENABLE_IO_URING_EXAMPLES OR ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
         add_dependencies(asio-grpc-test-examples asio-grpc-example-file-transfer-client
                          asio-grpc-example-file-transfer-server)
 

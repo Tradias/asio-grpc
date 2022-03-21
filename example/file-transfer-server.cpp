@@ -16,6 +16,7 @@
 #include "example/v1/example.grpc.pb.h"
 #include "example/v1/exampleExt.grpc.pb.h"
 #include "helper.hpp"
+#include "scopeGuard.hpp"
 #include "whenBoth.hpp"
 
 #include <agrpc/asioGrpc.hpp>
@@ -72,6 +73,9 @@ agrpc::GrpcAwaitable<bool> handle_send_file_request(agrpc::GrpcContext& grpc_con
 
     // Relying on CTAD here to create a `asio::basic_stream_file<asio::io_context::executor_type>` which is slightly
     // more performant than the default `asio::stream_file` that is templated on `asio::any_io_executor`.
+    //
+    // If you get exception: io_uring_queue_init: Cannot allocate memory [system:12]
+    // here then run `ulimit -l 65535`, see also https://github.com/axboe/liburing/issues/157
     asio::basic_stream_file file{io_context.get_executor(), file_path,
                                  asio::stream_file::write_only | asio::stream_file::create};
 
@@ -189,9 +193,12 @@ int main(int argc, const char** argv)
             });
 
         std::thread io_context_thread{&run_io_context, std::ref(io_context)};
+        example::ScopeGuard on_exit{[&]
+                                    {
+                                        guard.reset();
+                                        io_context_thread.join();
+                                    }};
         grpc_context.run();
-        guard.reset();
-        io_context_thread.join();
 
         // Check that output file has expected content
         std::string content;
@@ -208,7 +215,6 @@ int main(int argc, const char** argv)
         server->Shutdown();
         return 1;
     }
-
     server->Shutdown();
     return 0;
 }

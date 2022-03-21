@@ -49,15 +49,15 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "AllocatorBinder constructor and member
     CHECK_EQ(1L, long_binder3.get());
 
     bool invoked{false};
-    auto executor_binder = agrpc::bind_allocator(default_allocator, asio::bind_executor(get_executor(),
-                                                                                        [&](bool ok)
-                                                                                        {
-                                                                                            invoked = ok;
-                                                                                        }));
-    CHECK_EQ(get_executor(), executor_binder.get_executor());
-    executor_binder(true);
+    auto allocator_binder = agrpc::bind_allocator(default_allocator, asio::bind_executor(get_executor(),
+                                                                                         [&](bool ok)
+                                                                                         {
+                                                                                             invoked = ok;
+                                                                                         }));
+    CHECK_EQ(get_executor(), asio::get_associated_executor(allocator_binder));
+    allocator_binder(true);
     CHECK(invoked);
-    std::as_const(executor_binder)(false);
+    std::as_const(allocator_binder)(false);
     CHECK_FALSE(invoked);
 
     struct MoveInvocable
