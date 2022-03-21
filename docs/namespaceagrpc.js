@@ -26,6 +26,7 @@ var namespaceagrpc =
     [ "AllocatorBinder", "classagrpc_1_1_allocator_binder.html", "classagrpc_1_1_allocator_binder" ],
     [ "BasicGrpcExecutor", "classagrpc_1_1_basic_grpc_executor.html", "classagrpc_1_1_basic_grpc_executor" ],
     [ "GrpcContext", "classagrpc_1_1_grpc_context.html", "classagrpc_1_1_grpc_context" ],
+    [ "PollContext", "classagrpc_1_1_poll_context.html", null ],
     [ "RepeatedlyRequestContext", "classagrpc_1_1_repeatedly_request_context.html", "classagrpc_1_1_repeatedly_request_context" ],
     [ "DefaultCompletionToken", "namespaceagrpc.html#a06a4199d5f3746516453f66b9570c891", null ],
     [ "GrpcAwaitable", "namespaceagrpc.html#a086aba63bca7dd6bd14fb2fe4f95245f", null ],
