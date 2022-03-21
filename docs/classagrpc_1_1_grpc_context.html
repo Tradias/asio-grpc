@@ -122,6 +122,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ac287c8b9a86af915575be9807342bbf3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_grpc_context.html#ac287c8b9a86af915575be9807342bbf3">run</a> ()</td></tr>
 <tr class="memdesc:ac287c8b9a86af915575be9807342bbf3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run the <code>grpc::CompletionQueue</code>  <a href="classagrpc_1_1_grpc_context.html#ac287c8b9a86af915575be9807342bbf3">More...</a><br /></td></tr>
 <tr class="separator:ac287c8b9a86af915575be9807342bbf3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0a3b439cbb198b385b233d30c6968486"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_grpc_context.html#a0a3b439cbb198b385b233d30c6968486">poll</a> ()</td></tr>
+<tr class="memdesc:a0a3b439cbb198b385b233d30c6968486"><td class="mdescLeft">&#160;</td><td class="mdescRight">Poll the <code>grpc::CompletionQueue</code>  <a href="classagrpc_1_1_grpc_context.html#a0a3b439cbb198b385b233d30c6968486">More...</a><br /></td></tr>
+<tr class="separator:a0a3b439cbb198b385b233d30c6968486"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aee29d403f03ef487d22efdf2079c46bc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_grpc_context.html#aee29d403f03ef487d22efdf2079c46bc">stop</a> ()</td></tr>
 <tr class="memdesc:aee29d403f03ef487d22efdf2079c46bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signal the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> to stop.  <a href="classagrpc_1_1_grpc_context.html#aee29d403f03ef487d22efdf2079c46bc">More...</a><br /></td></tr>
 <tr class="separator:aee29d403f03ef487d22efdf2079c46bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -398,6 +401,36 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a0a3b439cbb198b385b233d30c6968486" name="a0a3b439cbb198b385b233d30c6968486"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0a3b439cbb198b385b233d30c6968486">&#9670;&nbsp;</a></span>poll()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void agrpc::GrpcContext::poll </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Poll the <code>grpc::CompletionQueue</code> </p>
+<p >Processes all ready completion handlers.</p>
+<dl class="section attention"><dt>Attention</dt><dd>Only one thread may call <a class="el" href="classagrpc_1_1_grpc_context.html#ac287c8b9a86af915575be9807342bbf3" title="Run the grpc::CompletionQueue">run()</a>/poll() at a time.</dd></dl>
+<p>Thread-safe with regards to other functions except <a class="el" href="classagrpc_1_1_grpc_context.html#ac287c8b9a86af915575be9807342bbf3" title="Run the grpc::CompletionQueue">run()</a>, <a class="el" href="classagrpc_1_1_grpc_context.html#a0a3b439cbb198b385b233d30c6968486" title="Poll the grpc::CompletionQueue">poll()</a> and the destructor. </p>
+
+</div>
+</div>
 <a id="a9da2b2b94e92a9d46e1309209002784b" name="a9da2b2b94e92a9d46e1309209002784b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9da2b2b94e92a9d46e1309209002784b">&#9670;&nbsp;</a></span>reset()</h2>
 
@@ -422,7 +455,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Bring a stopped <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> back into the ready state. </p>
-<p >When <a class="el" href="classagrpc_1_1_grpc_context.html#ac287c8b9a86af915575be9807342bbf3" title="Run the grpc::CompletionQueue">run()</a> returns or <a class="el" href="classagrpc_1_1_grpc_context.html#aee29d403f03ef487d22efdf2079c46bc" title="Signal the GrpcContext to stop.">stop()</a> was called the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> will be in a stopped state. This function brings the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> back into the ready state so that new work can be submitted to it.</p>
+<p >When a call to <a class="el" href="classagrpc_1_1_grpc_context.html#ac287c8b9a86af915575be9807342bbf3" title="Run the grpc::CompletionQueue">run()</a> or <a class="el" href="classagrpc_1_1_grpc_context.html#aee29d403f03ef487d22efdf2079c46bc" title="Signal the GrpcContext to stop.">stop()</a> returns, the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> will be in a stopped state. This function brings the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> back into the ready state.</p>
 <p >Thread-safe with regards to other functions except the destructor. </p>
 
 </div>
@@ -451,9 +484,9 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Run the <code>grpc::CompletionQueue</code> </p>
-<p >Runs the main event loop logic until the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> runs out of work or is stopped. The <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> will be in the stopped state when this function returns. Make sure to call <a class="el" href="classagrpc_1_1_grpc_context.html#a9da2b2b94e92a9d46e1309209002784b" title="Bring a stopped GrpcContext back into the ready state.">reset()</a> before submitting more work to a stopped <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a>.</p>
-<dl class="section attention"><dt>Attention</dt><dd>Only one thread may call <a class="el" href="classagrpc_1_1_grpc_context.html#ac287c8b9a86af915575be9807342bbf3" title="Run the grpc::CompletionQueue">run()</a> at a time.</dd></dl>
-<p>Thread-safe with regards to other functions except the destructor. </p>
+<p >Runs the main event loop logic until the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> runs out of work or is stopped. The <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> will be brought into the ready state when this function is invoked. Upon return, the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> will be in the stopped state.</p>
+<dl class="section attention"><dt>Attention</dt><dd>Only one thread may call <a class="el" href="classagrpc_1_1_grpc_context.html#ac287c8b9a86af915575be9807342bbf3" title="Run the grpc::CompletionQueue">run()</a>/poll() at a time.</dd></dl>
+<p>Thread-safe with regards to other functions except <a class="el" href="classagrpc_1_1_grpc_context.html#ac287c8b9a86af915575be9807342bbf3" title="Run the grpc::CompletionQueue">run()</a>, <a class="el" href="classagrpc_1_1_grpc_context.html#a0a3b439cbb198b385b233d30c6968486" title="Poll the grpc::CompletionQueue">poll()</a> and the destructor. </p>
 
 </div>
 </div>
@@ -481,7 +514,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Signal the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> to stop. </p>
-<p >Waits for all outstanding operations to complete and prevents new ones from being submitted.</p>
+<p >Causes a call to <a class="el" href="classagrpc_1_1_grpc_context.html#ac287c8b9a86af915575be9807342bbf3" title="Run the grpc::CompletionQueue">run()</a> to return as soon as possible.</p>
 <p >Thread-safe with regards to other functions except the destructor. </p>
 
 </div>

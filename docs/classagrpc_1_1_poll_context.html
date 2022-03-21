@@ -91,18 +91,14 @@ $(document).ready(function(){initNavTree('classagrpc_1_1_poll_context.html','');
 </div><!--header-->
 <div class="contents">
 
-<p>Helper class that associates an allocator to an object.  
+<p>(experimental) Helper class to repeatedly poll a <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> in a different execution context  
  <a href="classagrpc_1_1_poll_context.html#details">More...</a></p>
 
 <p><code>#include &lt;agrpc/pollContext.hpp&gt;</code></p>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;class Executor&gt;<br />
-class agrpc::PollContext&lt; Executor &gt;</div><p >Helper class that associates an allocator to an object. </p>
-<p >This class can be used to customize the allocator of an asynchronous operation. Especially useful when the completion token has an associated executor already or when <code>asio::require</code>ing a different allocator from the executor is not possible:</p>
-<div class="fragment"><div class="line">    <span class="keyword">co_await</span> <a class="code hl_variable" href="namespaceagrpc.html#a3cd7bc6b5bd62059ddcfae73bab277b6">agrpc::writes_done</a>(*writer, <a class="code hl_function" href="namespaceagrpc.html#aa4bf6ea33e66ac64b1af0914393a895b">agrpc::bind_allocator</a>(my_allocator, asio::use_awaitable));</div>
-<div class="ttc" id="anamespaceagrpc_html_a3cd7bc6b5bd62059ddcfae73bab277b6"><div class="ttname"><a href="namespaceagrpc.html#a3cd7bc6b5bd62059ddcfae73bab277b6">agrpc::writes_done</a></div><div class="ttdeci">constexpr detail::WritesDoneFn writes_done</div><div class="ttdoc">Signal WritesDone to a streaming RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1418</div></div>
-<div class="ttc" id="anamespaceagrpc_html_aa4bf6ea33e66ac64b1af0914393a895b"><div class="ttname"><a href="namespaceagrpc.html#aa4bf6ea33e66ac64b1af0914393a895b">agrpc::bind_allocator</a></div><div class="ttdeci">auto bind_allocator(const Allocator &amp;allocator, Target &amp;&amp;target)</div><div class="ttdoc">Helper function to create an agrpc::AllocatorBinder.</div><div class="ttdef"><b>Definition:</b> bindAllocator.hpp:205</div></div>
-</div><!-- fragment --><dl class="section since"><dt>Since</dt><dd>1.5.0 </dd></dl>
+class agrpc::PollContext&lt; Executor &gt;</div><p >(experimental) Helper class to repeatedly poll a <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> in a different execution context </p>
+<dl class="section since"><dt>Since</dt><dd>1.5.0 </dd></dl>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
