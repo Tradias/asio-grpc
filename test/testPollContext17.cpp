@@ -38,7 +38,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll()")
                                {
                                    grpc_context.poll();
                                    CHECK_FALSE(wait_done);
-                                   timer.expires_after(std::chrono::milliseconds(110));
+                                   timer.expires_after(std::chrono::milliseconds(210));
                                    timer.async_wait(
                                        [&](auto&&)
                                        {

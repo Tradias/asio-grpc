@@ -108,37 +108,27 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::execute")
     CHECK(is_invoked);
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex submit to stopped GrpcContext")
+TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::schedule from different thread")
 {
     bool is_invoked{false};
     unifex::new_thread_context ctx;
-    unifex::sync_wait(unifex::let_value(unifex::schedule(ctx.get_scheduler()),
-                                        [&]
-                                        {
-                                            grpc_context.stop();
-                                            return unifex::then(unifex::schedule(get_executor()),
-                                                                [&]
-                                                                {
-                                                                    is_invoked = true;
-                                                                });
-                                        }));
-    grpc_context.run();
-    CHECK_FALSE(is_invoked);
-}
-
-TEST_CASE("unifex GrpcContext.stop() with pending GrpcExecutor::schedule operation")
-{
-    bool is_invoked{false};
-    unifex::new_thread_context ctx;
-    std::optional<agrpc::GrpcContext> grpc_context{std::make_unique<grpc::CompletionQueue>()};
-    auto receiver = test::FunctionAsReceiver{[&]
-                                             {
-                                                 is_invoked = true;
-                                             }};
-    auto op = unifex::connect(unifex::schedule(grpc_context->get_scheduler()), receiver);
-    unifex::start(op);
-    grpc_context.reset();
-    CHECK_FALSE(is_invoked);
+    grpc_context.work_started();
+    unifex::sync_wait(unifex::when_all(unifex::let_value(unifex::schedule(ctx.get_scheduler()),
+                                                         [&]
+                                                         {
+                                                             return unifex::then(unifex::schedule(get_executor()),
+                                                                                 [&]
+                                                                                 {
+                                                                                     grpc_context.work_finished();
+                                                                                     is_invoked = true;
+                                                                                 });
+                                                         }),
+                                       unifex::then(unifex::just(),
+                                                    [&]
+                                                    {
+                                                        grpc_context.run();
+                                                    })));
+    CHECK(is_invoked);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::schedule when already running in GrpcContext thread")
@@ -167,7 +157,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::schedule when alr
     CHECK_EQ(expected_thread_id, actual_thread_id);
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex agrpc::wait with stopped GrpcContext")
+TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex agrpc::wait with from different thread")
 {
     bool is_invoked{false};
     unifex::new_thread_context ctx;
@@ -177,10 +167,10 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex agrpc::wait with stopped GrpcCo
         unifex::let_value(unifex::schedule(ctx.get_scheduler()),
                           [&]
                           {
-                              grpc_context.work_finished();
                               return unifex::then(agrpc::wait(alarm, test::ten_milliseconds_from_now(), use_sender()),
                                                   [&](bool)
                                                   {
+                                                      grpc_context.work_finished();
                                                       is_invoked = true;
                                                   });
                           }),
@@ -189,7 +179,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex agrpc::wait with stopped GrpcCo
                      {
                          grpc_context.run();
                      })));
-    CHECK_FALSE(is_invoked);
+    CHECK(is_invoked);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex cancel agrpc::wait")
@@ -379,17 +369,6 @@ TEST_CASE_FIXTURE(RepeatedlyRequestTest, "unifex repeatedly_request unary - serv
                                                         grpc_context.run();
                                                     })));
     CHECK_EQ(1, request_count);
-}
-
-TEST_CASE_FIXTURE(RepeatedlyRequestTest, "unifex repeatedly_request unary - GrpcContext.stop() before start")
-{
-    grpc_context.stop();
-    unifex::sync_wait(unifex::when_all(make_unary_repeatedly_request_sender(), unifex::then(unifex::just(),
-                                                                                            [&]
-                                                                                            {
-                                                                                                grpc_context.run();
-                                                                                            })));
-    CHECK_FALSE(allocator_has_been_used());
 }
 
 TEST_CASE_FIXTURE(RepeatedlyRequestTest, "unifex repeatedly_request unary - stop with token before start")
