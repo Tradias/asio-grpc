@@ -92,13 +92,9 @@ void allocate_operation_and_invoke(agrpc::GrpcContext& grpc_context, OnLocalOper
 }
 
 template <bool IsBlockingNever, class Handler, class WorkAllocator>
-bool create_and_submit_no_arg_operation_if_not_stopped(agrpc::GrpcContext& grpc_context, Handler&& handler,
-                                                       WorkAllocator work_allocator)
+void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Handler&& handler,
+                                        WorkAllocator work_allocator)
 {
-    if AGRPC_UNLIKELY (grpc_context.is_stopped())
-    {
-        return false;
-    }
     const auto is_running_in_this_thread = detail::GrpcContextImplementation::running_in_this_thread(grpc_context);
     if constexpr (!IsBlockingNever)
     {
@@ -106,13 +102,12 @@ bool create_and_submit_no_arg_operation_if_not_stopped(agrpc::GrpcContext& grpc_
         {
             std::decay_t<Handler> temp{std::forward<Handler>(handler)};
             temp();
-            return true;
+            return;
         }
     }
     detail::allocate_operation_and_invoke<true, Handler, void()>(
         grpc_context, is_running_in_this_thread, &detail::GrpcContextImplementation::add_local_operation,
         &detail::GrpcContextImplementation::add_remote_operation, work_allocator, std::forward<Handler>(handler));
-    return true;
 }
 }
 

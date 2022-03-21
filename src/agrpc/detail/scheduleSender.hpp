@@ -37,11 +37,6 @@ class ScheduleSender : public detail::SenderOf<>
       public:
         void start() noexcept
         {
-            if AGRPC_UNLIKELY (this->grpc_context().is_stopped())
-            {
-                detail::exec::set_done(std::move(this->receiver()));
-                return;
-            }
             this->grpc_context().work_started();
             detail::GrpcContextImplementation::add_operation(this->grpc_context(), this);
         }
@@ -88,13 +83,8 @@ class ScheduleSender : public detail::SenderOf<>
     template <class Receiver>
     void submit(Receiver&& receiver) const
     {
-        if AGRPC_UNLIKELY (grpc_context.is_stopped())
-        {
-            detail::exec::set_done(std::forward<Receiver>(receiver));
-            return;
-        }
         auto allocator = detail::exec::get_allocator(receiver);
-        detail::create_and_submit_no_arg_operation_if_not_stopped<true>(
+        detail::create_and_submit_no_arg_operation<true>(
             this->grpc_context,
             [receiver = detail::RemoveCvrefT<Receiver>{std::forward<Receiver>(receiver)}]() mutable
             {

@@ -166,11 +166,6 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
       public:
         void start() noexcept
         {
-            if AGRPC_UNLIKELY (this->grpc_context().is_stopped())
-            {
-                detail::exec::set_done(std::move(this->receiver()));
-                return;
-            }
             auto stop_token = detail::exec::get_stop_token(this->receiver());
             if (stop_token.stop_requested())
             {
@@ -215,7 +210,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
         bool initiate_repeatedly_request()
         {
             auto& local_grpc_context = this->grpc_context();
-            if AGRPC_UNLIKELY (this->is_stopped() || local_grpc_context.is_stopped())
+            if AGRPC_UNLIKELY (this->is_stopped())
             {
                 return false;
             }

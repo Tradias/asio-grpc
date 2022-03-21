@@ -27,8 +27,8 @@ namespace detail
 {
 enum class InvokeHandler
 {
-    YES,
-    NO
+    NO,
+    YES
 };
 
 template <bool IsIntrusivelyListable, class... Signature>

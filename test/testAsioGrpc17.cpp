@@ -147,14 +147,9 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::reset")
     grpc_context.run();
     CHECK(grpc_context.is_stopped());
     CHECK(ok);
-    asio::post(grpc_context,
-               [&]
-               {
-                   ok = false;
-               });
-    grpc_context.run();
-    CHECK(ok);
     grpc_context.reset();
+    CHECK_FALSE(grpc_context.is_stopped());
+    grpc_context.stop();
     asio::post(grpc_context,
                [&]
                {

@@ -148,7 +148,7 @@ class RepeatedlyRequestOperation
     bool initiate_repeatedly_request()
     {
         auto& local_grpc_context = this->grpc_context();
-        if AGRPC_UNLIKELY (this->is_stopped() || local_grpc_context.is_stopped())
+        if AGRPC_UNLIKELY (this->is_stopped())
         {
             return false;
         }
@@ -386,7 +386,7 @@ class RepeatedlyRequestAwaitableOperation
 
     bool initiate_repeatedly_request()
     {
-        if AGRPC_UNLIKELY (this->is_stopped() || this->grpc_context().is_stopped())
+        if AGRPC_UNLIKELY (this->is_stopped())
         {
             return false;
         }

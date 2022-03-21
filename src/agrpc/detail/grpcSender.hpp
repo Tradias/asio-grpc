@@ -59,11 +59,6 @@ class GrpcSender : public detail::SenderOf<bool>
 
         void start() & noexcept
         {
-            if AGRPC_UNLIKELY (this->grpc_context().is_stopped())
-            {
-                detail::exec::set_done(std::move(this->receiver()));
-                return;
-            }
             auto stop_token = detail::exec::get_stop_token(this->receiver());
             if (stop_token.stop_requested())
             {

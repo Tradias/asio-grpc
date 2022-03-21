@@ -49,7 +49,19 @@ struct GrpcContextThreadContext : asio::detail::thread_context
 };
 #endif
 
-inline void drain_completion_queue(agrpc::GrpcContext& grpc_context)
+inline void drain_completion_queue_polling(agrpc::GrpcContext& grpc_context)
+{
+    while (detail::GrpcContextImplementation::poll_work<detail::InvokeHandler::NO>(grpc_context,
+                                                                                   []
+                                                                                   {
+                                                                                       return false;
+                                                                                   }))
+    {
+        //
+    }
+}
+
+inline void drain_completion_queue_blocking(agrpc::GrpcContext& grpc_context)
 {
     while (detail::GrpcContextImplementation::process_work<detail::InvokeHandler::NO>(grpc_context,
                                                                                       []
@@ -70,8 +82,9 @@ inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue>&& complet
 inline GrpcContext::~GrpcContext()
 {
     this->stop();
+    detail::drain_completion_queue_polling(*this);
     this->completion_queue->Shutdown();
-    detail::drain_completion_queue(*this);
+    detail::drain_completion_queue_blocking(*this);
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     asio::execution_context::shutdown();
     asio::execution_context::destroy();

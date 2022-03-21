@@ -114,20 +114,6 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request c
     CHECK(allocator_has_been_used());
 }
 
-TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "GrpcContext.stop() before repeatedly_request")
-{
-    bool done{};
-    grpc_context.stop();
-    agrpc::repeatedly_request(&test::v1::Test::AsyncService::RequestUnary, service,
-                              asio::bind_executor(get_executor(), [&](auto&&) {}),
-                              [&]
-                              {
-                                  done = true;
-                              });
-    grpc_context.run();
-    CHECK(done);
-}
-
 TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "RepeatedlyRequestContext member functions for multi-arg requests")
 {
     agrpc::repeatedly_request(
