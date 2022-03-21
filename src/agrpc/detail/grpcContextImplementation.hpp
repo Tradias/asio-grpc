@@ -20,6 +20,8 @@
 #include "agrpc/detail/typeErasedOperation.hpp"
 #include "agrpc/detail/utility.hpp"
 
+#include <grpcpp/completion_queue.h>
+
 AGRPC_NAMESPACE_BEGIN()
 
 class GrpcContext;
@@ -44,6 +46,8 @@ struct WorkFinishedOnExit : detail::ScopeGuard<detail::WorkFinishedOnExitFunctor
 struct GrpcContextImplementation
 {
     static constexpr void* HAS_REMOTE_WORK_TAG = nullptr;
+    static constexpr ::gpr_timespec TIME_ZERO{std::numeric_limits<std::int64_t>::min(), 0, ::GPR_CLOCK_MONOTONIC};
+    static constexpr ::gpr_timespec INFINITE_FUTURE{std::numeric_limits<std::int64_t>::max(), 0, ::GPR_CLOCK_MONOTONIC};
 
     static void trigger_work_alarm(agrpc::GrpcContext& grpc_context) noexcept;
 
@@ -67,10 +71,14 @@ struct GrpcContextImplementation
     static void process_local_queue(agrpc::GrpcContext& grpc_context);
 
     template <detail::InvokeHandler Invoke, class IsStoppedPredicate>
-    static bool process_work(agrpc::GrpcContext& grpc_context, IsStoppedPredicate is_stopped_predicate);
+    static bool process_work(agrpc::GrpcContext& grpc_context, IsStoppedPredicate is_stopped_predicate,
+                             ::gpr_timespec deadline);
 
-    template <detail::InvokeHandler Invoke, class IsStoppedPredicate>
-    static bool poll_work(agrpc::GrpcContext& grpc_context, IsStoppedPredicate is_stopped_predicate);
+    static void process_work(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline);
+
+    static void run(agrpc::GrpcContext& grpc_context);
+
+    static void poll(agrpc::GrpcContext& grpc_context);
 };
 }
 

@@ -36,26 +36,15 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-struct GrpcContextThreadInfo : asio::detail::thread_info_base
-{
-};
-
-// Enables Boost.Asio's awaitable frame memory recycling
-struct GrpcContextThreadContext : asio::detail::thread_context
-{
-    GrpcContextThreadInfo this_thread;
-    thread_call_stack::context ctx{this, this_thread};
-};
-#endif
-
 inline void drain_completion_queue_polling(agrpc::GrpcContext& grpc_context)
 {
-    while (detail::GrpcContextImplementation::poll_work<detail::InvokeHandler::NO>(grpc_context,
-                                                                                   []
-                                                                                   {
-                                                                                       return false;
-                                                                                   }))
+    while (detail::GrpcContextImplementation::process_work<detail::InvokeHandler::NO>(
+        grpc_context,
+        []
+        {
+            return false;
+        },
+        detail::GrpcContextImplementation::TIME_ZERO))
     {
         //
     }
@@ -63,11 +52,13 @@ inline void drain_completion_queue_polling(agrpc::GrpcContext& grpc_context)
 
 inline void drain_completion_queue_blocking(agrpc::GrpcContext& grpc_context)
 {
-    while (detail::GrpcContextImplementation::process_work<detail::InvokeHandler::NO>(grpc_context,
-                                                                                      []
-                                                                                      {
-                                                                                          return false;
-                                                                                      }))
+    while (detail::GrpcContextImplementation::process_work<detail::InvokeHandler::NO>(
+        grpc_context,
+        []
+        {
+            return false;
+        },
+        detail::GrpcContextImplementation::INFINITE_FUTURE))
     {
         //
     }
@@ -91,59 +82,9 @@ inline GrpcContext::~GrpcContext()
 #endif
 }
 
-inline void GrpcContext::run()
-{
-    if (this->outstanding_work.load(std::memory_order_relaxed) == 0)
-    {
-        this->stopped.store(true, std::memory_order_relaxed);
-        return;
-    }
-    this->reset();
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    detail::GrpcContextThreadContext thread_context;
-#endif
-    detail::ScopeGuard on_exit{[old_context = detail::GrpcContextImplementation::set_thread_local_grpc_context(this)]
-                               {
-                                   detail::GrpcContextImplementation::set_thread_local_grpc_context(old_context);
-                               }};
-    while
-        AGRPC_LIKELY(
-            detail::GrpcContextImplementation::process_work<detail::InvokeHandler::YES>(*this,
-                                                                                        [this]
-                                                                                        {
-                                                                                            return this->is_stopped();
-                                                                                        }))
+inline void GrpcContext::run() { detail::GrpcContextImplementation::run(*this); }
 
-        {
-            //
-        }
-}
-
-inline void GrpcContext::poll()
-{
-    if (this->outstanding_work.load(std::memory_order_relaxed) == 0)
-    {
-        this->stopped.store(true, std::memory_order_relaxed);
-        return;
-    }
-    this->reset();
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    detail::GrpcContextThreadContext thread_context;
-#endif
-    detail::ScopeGuard on_exit{[old_context = detail::GrpcContextImplementation::set_thread_local_grpc_context(this)]
-                               {
-                                   detail::GrpcContextImplementation::set_thread_local_grpc_context(old_context);
-                               }};
-    while (detail::GrpcContextImplementation::poll_work<detail::InvokeHandler::YES>(*this,
-                                                                                    [this]
-                                                                                    {
-                                                                                        return this->is_stopped();
-                                                                                    }))
-
-    {
-        //
-    }
-}
+inline void GrpcContext::poll() { detail::GrpcContextImplementation::poll(*this); }
 
 inline void GrpcContext::stop()
 {

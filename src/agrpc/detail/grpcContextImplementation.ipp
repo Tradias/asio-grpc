@@ -15,6 +15,7 @@
 #ifndef AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_IPP
 #define AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_IPP
 
+#include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/grpcCompletionQueueEvent.hpp"
 #include "agrpc/detail/grpcContextImplementation.hpp"
 #include "agrpc/detail/typeErasedOperation.hpp"
@@ -29,8 +30,18 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-static constexpr ::gpr_timespec TIME_ZERO{std::numeric_limits<std::int64_t>::min(), 0, ::GPR_CLOCK_MONOTONIC};
-static constexpr ::gpr_timespec INFINITE_FUTURE{std::numeric_limits<std::int64_t>::max(), 0, ::GPR_CLOCK_MONOTONIC};
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+struct GrpcContextThreadInfo : asio::detail::thread_info_base
+{
+};
+
+// Enables Boost.Asio's awaitable frame memory recycling
+struct GrpcContextThreadContext : asio::detail::thread_context
+{
+    GrpcContextThreadInfo this_thread;
+    thread_call_stack::context ctx{this, this_thread};
+};
+#endif
 
 inline thread_local const agrpc::GrpcContext* thread_local_grpc_context{};
 
@@ -38,7 +49,7 @@ inline void WorkFinishedOnExitFunctor::operator()() const noexcept { grpc_contex
 
 inline void GrpcContextImplementation::trigger_work_alarm(agrpc::GrpcContext& grpc_context) noexcept
 {
-    grpc_context.work_alarm.Set(grpc_context.completion_queue.get(), detail::TIME_ZERO,
+    grpc_context.work_alarm.Set(grpc_context.completion_queue.get(), detail::GrpcContextImplementation::TIME_ZERO,
                                 detail::GrpcContextImplementation::HAS_REMOTE_WORK_TAG);
 }
 
@@ -111,7 +122,8 @@ inline bool get_next_event(grpc::CompletionQueue* cq, detail::GrpcCompletionQueu
 }
 
 template <detail::InvokeHandler Invoke, class IsStoppedPredicate>
-bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, IsStoppedPredicate is_stopped_predicate)
+bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, IsStoppedPredicate is_stopped_predicate,
+                                             ::gpr_timespec deadline)
 {
     if (grpc_context.check_remote_work)
     {
@@ -126,8 +138,9 @@ bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, I
     const auto is_more_completed_work_pending =
         grpc_context.check_remote_work || !grpc_context.local_work_queue.empty();
     detail::GrpcCompletionQueueEvent event;
-    if (detail::get_next_event(grpc_context.get_completion_queue(), event,
-                               is_more_completed_work_pending ? detail::TIME_ZERO : detail::INFINITE_FUTURE))
+    if (detail::get_next_event(
+            grpc_context.get_completion_queue(), event,
+            is_more_completed_work_pending ? detail::GrpcContextImplementation::TIME_ZERO : deadline))
     {
         if (event.tag == detail::GrpcContextImplementation::HAS_REMOTE_WORK_TAG)
         {
@@ -144,35 +157,43 @@ bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, I
     return is_more_completed_work_pending;
 }
 
-template <detail::InvokeHandler Invoke, class IsStoppedPredicate>
-bool GrpcContextImplementation::poll_work(agrpc::GrpcContext& grpc_context, IsStoppedPredicate is_stopped_predicate)
+inline void GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline)
 {
-    if (grpc_context.check_remote_work)
+    if (grpc_context.outstanding_work.load(std::memory_order_relaxed) == 0)
     {
-        grpc_context.check_remote_work =
-            detail::GrpcContextImplementation::move_remote_work_to_local_queue(grpc_context);
+        grpc_context.stopped.store(true, std::memory_order_relaxed);
+        return;
     }
-    detail::GrpcContextImplementation::process_local_queue<Invoke>(grpc_context);
-    if AGRPC_UNLIKELY (is_stopped_predicate())
-    {
-        return false;
-    }
-    detail::GrpcCompletionQueueEvent event;
-    if (detail::get_next_event(grpc_context.get_completion_queue(), event, detail::TIME_ZERO))
-    {
-        if (event.tag == detail::GrpcContextImplementation::HAS_REMOTE_WORK_TAG)
+    grpc_context.reset();
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+    detail::GrpcContextThreadContext thread_context;
+#endif
+    detail::ScopeGuard on_exit{
+        [old_context = detail::GrpcContextImplementation::set_thread_local_grpc_context(&grpc_context)]
         {
-            grpc_context.check_remote_work = true;
-        }
-        else
+            detail::GrpcContextImplementation::set_thread_local_grpc_context(old_context);
+        }};
+    while (detail::GrpcContextImplementation::process_work<detail::InvokeHandler::YES>(
+        grpc_context,
+        [&grpc_context]
         {
-            detail::WorkFinishedOnExit on_exit{grpc_context};
-            auto* operation = static_cast<detail::TypeErasedGrpcTagOperation*>(event.tag);
-            operation->complete(Invoke, event.ok, grpc_context.get_allocator());
-        }
-        return true;
+            return grpc_context.is_stopped();
+        },
+        deadline))
+
+    {
+        //
     }
-    return grpc_context.check_remote_work || !grpc_context.local_work_queue.empty();
+}
+
+inline void GrpcContextImplementation::run(agrpc::GrpcContext& grpc_context)
+{
+    detail::GrpcContextImplementation::process_work(grpc_context, detail::GrpcContextImplementation::INFINITE_FUTURE);
+}
+
+inline void GrpcContextImplementation::poll(agrpc::GrpcContext& grpc_context)
+{
+    detail::GrpcContextImplementation::process_work(grpc_context, detail::GrpcContextImplementation::TIME_ZERO);
 }
 }
 

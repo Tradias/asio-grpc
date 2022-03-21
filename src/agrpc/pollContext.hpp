@@ -25,13 +25,7 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief Helper class that associates an allocator to an object
- *
- * This class can be used to customize the allocator of an asynchronous operation. Especially useful when the completion
- * token has an associated executor already or when `asio::require`ing a different allocator from the executor is not
- * possible:
- *
- * @snippet client.cpp bind_allocator-client-side
+ * @brief (experimental) Helper class to repeatedly poll a GrpcContext in a different execution context
  *
  * @since 1.5.0
  */

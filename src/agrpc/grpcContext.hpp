@@ -85,22 +85,31 @@ class GrpcContext
     /**
      * @brief Run the `grpc::CompletionQueue`
      *
-     * Runs the main event loop logic until the GrpcContext runs out of work or is stopped. The GrpcContext will be in
-     * the stopped state when this function returns. Make sure to call reset() before submitting more work to a stopped
-     * GrpcContext.
+     * Runs the main event loop logic until the GrpcContext runs out of work or is stopped. The GrpcContext will be
+     * brought into the ready state when this function is invoked. Upon return, the GrpcContext will be in the stopped
+     * state.
      *
-     * @attention Only one thread may call run() at a time.
+     * @attention Only one thread may call run()/poll() at a time.
      *
-     * Thread-safe with regards to other functions except the destructor.
+     * Thread-safe with regards to other functions except run(), poll() and the destructor.
      */
     void run();
 
+    /**
+     * @brief Poll the `grpc::CompletionQueue`
+     *
+     * Processes all ready completion handlers.
+     *
+     * @attention Only one thread may call run()/poll() at a time.
+     *
+     * Thread-safe with regards to other functions except run(), poll() and the destructor.
+     */
     void poll();
 
     /**
      * @brief Signal the GrpcContext to stop
      *
-     * Waits for all outstanding operations to complete and prevents new ones from being submitted.
+     * Causes a call to run() to return as soon as possible.
      *
      * Thread-safe with regards to other functions except the destructor.
      */
@@ -109,8 +118,8 @@ class GrpcContext
     /**
      * @brief Bring a stopped GrpcContext back into the ready state
      *
-     * When run() returns or stop() was called the GrpcContext will be in a stopped state. This function brings the
-     * GrpcContext back into the ready state so that new work can be submitted to it.
+     * When a call to run() or stop() returns, the GrpcContext will be in a stopped state. This function brings the
+     * GrpcContext back into the ready state.
      *
      * Thread-safe with regards to other functions except the destructor.
      */
