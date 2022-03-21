@@ -55,6 +55,11 @@ struct ThreadLocalGrpcContextGuard
     }
 
     ~ThreadLocalGrpcContextGuard() { detail::GrpcContextImplementation::set_thread_local_grpc_context(old_context); }
+
+    ThreadLocalGrpcContextGuard(const ThreadLocalGrpcContextGuard&) = delete;
+    ThreadLocalGrpcContextGuard(ThreadLocalGrpcContextGuard&&) = delete;
+    ThreadLocalGrpcContextGuard& operator=(const ThreadLocalGrpcContextGuard&) = delete;
+    ThreadLocalGrpcContextGuard& operator=(ThreadLocalGrpcContextGuard&&) = delete;
 };
 
 struct IsGrpcContextStoppedPredicate
@@ -66,7 +71,7 @@ struct IsGrpcContextStoppedPredicate
 
 inline void WorkFinishedOnExitFunctor::operator()() const noexcept { grpc_context.work_finished(); }
 
-inline bool GrpcContextImplementation::is_shutdown(agrpc::GrpcContext& grpc_context) noexcept
+inline bool GrpcContextImplementation::is_shutdown(const agrpc::GrpcContext& grpc_context) noexcept
 {
     return grpc_context.shutdown.load(std::memory_order_relaxed);
 }
@@ -161,8 +166,7 @@ bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, I
     }
     const auto is_more_completed_work_pending =
         grpc_context.check_remote_work || !grpc_context.local_work_queue.empty();
-    detail::GrpcCompletionQueueEvent event;
-    if (detail::get_next_event(
+    if (detail::GrpcCompletionQueueEvent event; detail::get_next_event(
             grpc_context.get_completion_queue(), event,
             is_more_completed_work_pending ? detail::GrpcContextImplementation::TIME_ZERO : deadline))
     {

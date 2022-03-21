@@ -49,7 +49,7 @@ struct GrpcContextImplementation
     static constexpr ::gpr_timespec TIME_ZERO{std::numeric_limits<std::int64_t>::min(), 0, ::GPR_CLOCK_MONOTONIC};
     static constexpr ::gpr_timespec INFINITE_FUTURE{std::numeric_limits<std::int64_t>::max(), 0, ::GPR_CLOCK_MONOTONIC};
 
-    static bool is_shutdown(agrpc::GrpcContext& grpc_context) noexcept;
+    [[nodiscard]] static bool is_shutdown(const agrpc::GrpcContext& grpc_context) noexcept;
 
     static void trigger_work_alarm(agrpc::GrpcContext& grpc_context) noexcept;
 

@@ -30,29 +30,29 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll()")
     asio::steady_timer timer{io_context};
     grpc::Alarm alarm;
     bool wait_done{};
-    asio::spawn(io_context,
-                [&](asio::yield_context yield)
-                {
-                    asio::post(io_context,
-                               [&]()
-                               {
-                                   grpc_context.poll();
-                                   CHECK_FALSE(wait_done);
-                                   timer.expires_after(std::chrono::milliseconds(210));
-                                   timer.async_wait(
-                                       [&](auto&&)
-                                       {
-                                           grpc_context.poll();
-                                           CHECK(wait_done);
-                                       });
-                               });
-                    agrpc::wait(alarm, test::hundred_milliseconds_from_now(),
-                                asio::bind_executor(grpc_context,
-                                                    [&](bool)
-                                                    {
-                                                        wait_done = true;
-                                                    }));
-                });
+    asio::post(io_context,
+               [&]()
+               {
+                   asio::post(io_context,
+                              [&]()
+                              {
+                                  grpc_context.poll();
+                                  CHECK_FALSE(wait_done);
+                                  timer.expires_after(std::chrono::milliseconds(210));
+                                  timer.async_wait(
+                                      [&](auto&&)
+                                      {
+                                          grpc_context.poll();
+                                          CHECK(wait_done);
+                                      });
+                              });
+                   agrpc::wait(alarm, test::hundred_milliseconds_from_now(),
+                               asio::bind_executor(grpc_context,
+                                                   [&](bool)
+                                                   {
+                                                       wait_done = true;
+                                                   }));
+               });
     io_context.run();
 }
 }
