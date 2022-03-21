@@ -166,6 +166,11 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
       public:
         void start() noexcept
         {
+            if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(this->grpc_context()))
+            {
+                detail::exec::set_done(std::move(this->receiver()));
+                return;
+            }
             auto stop_token = detail::exec::get_stop_token(this->receiver());
             if (stop_token.stop_requested())
             {
@@ -229,7 +234,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
             detail::AllocatedPointer ptr{self->request_handler_operation, self->get_allocator()};
             if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler && ok)
             {
-                if (auto ep = self->emplace_request_handler_operation(*ptr); ep)
+                if (auto ep = self->emplace_request_handler_operation(*ptr))
                 {
                     self->stop_context().reset();
                     ptr.reset();

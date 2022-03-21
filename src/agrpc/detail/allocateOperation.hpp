@@ -95,6 +95,10 @@ template <bool IsBlockingNever, class Handler, class WorkAllocator>
 void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Handler&& handler,
                                         WorkAllocator work_allocator)
 {
+    if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context))
+    {
+        return;
+    }
     const auto is_running_in_this_thread = detail::GrpcContextImplementation::running_in_this_thread(grpc_context);
     if constexpr (!IsBlockingNever)
     {

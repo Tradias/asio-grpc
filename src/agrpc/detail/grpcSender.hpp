@@ -57,8 +57,13 @@ class GrpcSender : public detail::SenderOf<bool>
         {
         }
 
-        void start() & noexcept
+        void start() noexcept
         {
+            if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(this->grpc_context()))
+            {
+                detail::exec::set_done(std::move(this->receiver()));
+                return;
+            }
             auto stop_token = detail::exec::get_stop_token(this->receiver());
             if (stop_token.stop_requested())
             {
@@ -117,6 +122,11 @@ class GrpcSender : public detail::SenderOf<bool>
     template <class Receiver>
     void submit(Receiver&& receiver) const
     {
+        if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(this->grpc_context))
+        {
+            detail::exec::set_done(std::forward<Receiver>(receiver));
+            return;
+        }
         auto allocator = detail::exec::get_allocator(receiver);
         detail::grpc_submit(
             this->grpc_context, this->initiating_function,

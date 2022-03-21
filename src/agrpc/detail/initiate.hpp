@@ -43,6 +43,10 @@ class GrpcInitiator
     {
         const auto [executor, allocator] = detail::get_associated_executor_and_allocator(completion_handler);
         auto& grpc_context = detail::query_grpc_context(executor);
+        if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context))
+        {
+            return;
+        }
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
         if constexpr (!std::is_same_v<detail::Empty, StopFunction>)
         {

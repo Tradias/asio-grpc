@@ -36,29 +36,15 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-inline void drain_completion_queue_polling(agrpc::GrpcContext& grpc_context)
+struct AlwaysFalsePredicate
 {
-    while (detail::GrpcContextImplementation::process_work<detail::InvokeHandler::NO>(
-        grpc_context,
-        []
-        {
-            return false;
-        },
-        detail::GrpcContextImplementation::TIME_ZERO))
-    {
-        //
-    }
-}
+    constexpr bool operator()() const noexcept { return false; }
+};
 
-inline void drain_completion_queue_blocking(agrpc::GrpcContext& grpc_context)
+inline void drain_completion_queue(agrpc::GrpcContext& grpc_context)
 {
     while (detail::GrpcContextImplementation::process_work<detail::InvokeHandler::NO>(
-        grpc_context,
-        []
-        {
-            return false;
-        },
-        detail::GrpcContextImplementation::INFINITE_FUTURE))
+        grpc_context, detail::AlwaysFalsePredicate{}, detail::GrpcContextImplementation::INFINITE_FUTURE))
     {
         //
     }
@@ -73,9 +59,9 @@ inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue>&& complet
 inline GrpcContext::~GrpcContext()
 {
     this->stop();
-    detail::drain_completion_queue_polling(*this);
+    this->shutdown.store(true, std::memory_order_relaxed);
     this->completion_queue->Shutdown();
-    detail::drain_completion_queue_blocking(*this);
+    detail::drain_completion_queue(*this);
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     asio::execution_context::shutdown();
     asio::execution_context::destroy();
@@ -112,7 +98,7 @@ inline void GrpcContext::work_started() noexcept { this->outstanding_work.fetch_
 
 inline void GrpcContext::work_finished() noexcept
 {
-    if AGRPC_UNLIKELY (this->outstanding_work.fetch_sub(1, std::memory_order_relaxed) == 1)
+    if AGRPC_UNLIKELY (1 == this->outstanding_work.fetch_sub(1, std::memory_order_relaxed))
     {
         this->stop();
     }

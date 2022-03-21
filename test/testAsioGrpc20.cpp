@@ -160,6 +160,55 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "co_spawn two Alarms and await their ok
     CHECK(ok2);
 }
 
+TEST_CASE_FIXTURE(test::GrpcContextTest, "destruct GrpcContext while co_await'ing an alarm")
+{
+    bool invoked{false};
+    asio::post(grpc_context,
+               [&]()
+               {
+                   grpc_context.stop();
+               });
+    test::co_spawn(grpc_context,
+                   [&]() -> agrpc::GrpcAwaitable<void>
+                   {
+                       grpc::Alarm alarm;
+                       co_await agrpc::wait(alarm, test::hundred_milliseconds_from_now(), agrpc::GRPC_USE_AWAITABLE);
+                       invoked = true;
+                   });
+    grpc_context.run();
+    CHECK_FALSE(invoked);
+    grpc_context.reset();
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest,
+                  "call agrpc::wait from destructor of an awaitable while GrpcContext is being destructed")
+{
+    bool invoked{false};
+    asio::post(grpc_context,
+               [&]()
+               {
+                   grpc_context.stop();
+               });
+    test::co_spawn(grpc_context,
+                   [&]() -> agrpc::GrpcAwaitable<void>
+                   {
+                       auto alarm = std::make_shared<grpc::Alarm>();
+                       agrpc::detail::ScopeGuard guard{[&, alarm]
+                                                       {
+                                                           agrpc::wait(*alarm, test::one_seconds_from_now(),
+                                                                       asio::bind_executor(grpc_context,
+                                                                                           [&, alarm](bool)
+                                                                                           {
+                                                                                               invoked = true;
+                                                                                           }));
+                                                       }};
+                       co_await agrpc::wait(*alarm, test::hundred_milliseconds_from_now(), agrpc::GRPC_USE_AWAITABLE);
+                   });
+    grpc_context.run();
+    CHECK_FALSE(invoked);
+    grpc_context.reset();
+}
+
 TEST_CASE_FIXTURE(test::GrpcContextTest, "wait for Alarm with allocator")
 {
     test::co_spawn(get_pmr_executor(),

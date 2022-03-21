@@ -207,6 +207,7 @@ class GrpcContext
     grpc::Alarm work_alarm;
     std::atomic_long outstanding_work{};
     std::atomic_bool stopped{false};
+    std::atomic_bool shutdown{false};
     bool check_remote_work{false};
     std::unique_ptr<grpc::CompletionQueue> completion_queue;
     detail::GrpcContextLocalMemoryResource local_resource{detail::pmr::new_delete_resource()};
