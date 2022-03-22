@@ -62,7 +62,7 @@ jobs:
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
         vcpkgJsonGlob: 'vcpkg.json'
         runVcpkgInstall: true
-        runVcpkgFormatString: ['install', '--recurse', '--clean-after-build', '--triplet', '${{ matrix.config.triplet }}', '--host-triplet', '${{ matrix.config.triplet }}', '--overlay-ports=${{ github.workspace }}/deps', '--overlay-triplets=${{ github.workspace }}/.github/vcpkg']
+        runVcpkgFormatString: '["install", "--recurse", "--clean-after-build", "--triplet", "${{ matrix.config.triplet }}", "--host-triplet", "${{ matrix.config.triplet }}", "--overlay-ports=${{ github.workspace }}/deps", "--overlay-triplets=${{ github.workspace }}/.github/vcpkg"]'
 
     - name: Configure CMake
       run: cmake --preset default ${{ matrix.config.cmake-extra-args }} ${{ env.CMAKE_ARGS }}
@@ -108,7 +108,7 @@ jobs:
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
         vcpkgJsonGlob: 'vcpkg.json'
         runVcpkgInstall: true
-        runVcpkgFormatString: ['install', '--recurse', '--clean-after-build', '--overlay-ports=${{ github.workspace }}/deps']
+        runVcpkgFormatString: '["install", "--recurse", "--clean-after-build", "--overlay-ports=${{ github.workspace }}/deps"]'
 
     - name: GCC 9 Configure CMake
       run: cmake --preset default -B ${{ github.workspace }}/build-9 -DCMAKE_CXX_COMPILER=$(which g++-9) ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
@@ -180,7 +180,7 @@ jobs:
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
         vcpkgJsonGlob: 'vcpkg.json'
         runVcpkgInstall: true
-        runVcpkgFormatString: ['install', '--recurse', '--clean-after-build', '--triplet', 'x64-linux-clang-release', '--host-triplet', 'x64-linux-clang-release', '--overlay-ports=${{ github.workspace }}/deps', '--overlay-triplets=${{ github.workspace }}/.github/vcpkg']
+        runVcpkgFormatString: '["install", "--recurse", "--clean-after-build", "--triplet", "x64-linux-clang-release", "--host-triplet", "x64-linux-clang-release", "--overlay-ports=${{ github.workspace }}/deps", "--overlay-triplets=${{ github.workspace }}/.github/vcpkg"]'
         appendedCacheKey: 'clang'
 
     - name: Clang 10 Configure CMake
