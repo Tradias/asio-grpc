@@ -36,8 +36,8 @@ jobs:
       matrix:
         config:
           - {
-            name: 'Windows/2019/MSVC-19.29',
-            os: windows-2019,
+            name: 'Windows/2022/MSVC-19.31',
+            os: windows-2022,
             cmake-extra-args: '',
             parallel: 1,
           }
@@ -49,6 +49,14 @@ jobs:
           }
 
     steps:
+    - if: matrix.config.os == 'windows-2022' 
+      name: Remove Java
+      shell: bash
+      run: |
+        rm -rf ${JAVA_HOME_8_X64} &&\
+        rm -rf ${JAVA_HOME_11_X64} &&\
+        rm -rf ${JAVA_HOME_17_X64}
+
     - uses: actions/checkout@v2
 
     - name: Install vcpkg
@@ -112,7 +120,7 @@ jobs:
       run: ctest --preset default --test-dir ${{ github.workspace }}/build-9 --config Release
 
     - name: GCC 10 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which g++-10) -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DASIO_GRPC_TEST_COVERAGE=on -DASIO_GRPC_GCOV_PROGRAM=$(which gcov-10) -DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build-10/sonarqube-coverage.xml ${{ env.CMAKE_EXTRA_ARGS }}
+      run: cmake --preset default -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which g++-10) -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DASIO_GRPC_TEST_COVERAGE=on -DASIO_GRPC_GCOV_PROGRAM=$(which gcov-10) -DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build-10/sonarqube-coverage.xml ${{ env.CMAKE_EXTRA_ARGS }} -DCMAKE_BUILD_TYPE=Debug
 
     - name: GCC 10 Build
       run: cmake --build ${{ github.workspace }}/build-10 --config Debug --parallel $(nproc)
