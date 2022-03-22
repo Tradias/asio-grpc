@@ -74,7 +74,7 @@ jobs:
       run: cmake --build --preset default --config Release --parallel ${{ matrix.config.parallel }}
 
     - name: Test
-      run: ctest ${{ env.CTEST_ARGS }} --config Release
+      run: ctest --preset default --config Release
 
 
   multi-gcc-build:

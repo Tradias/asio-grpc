@@ -7,10 +7,7 @@ on:
     - cron: '39 0 * * 1'
 
 env:
-  VCPKG_ARGUMENTS: 'doctest grpc[codegen] boost-coroutine boost-asio boost-interprocess boost-thread boost-container boost-process asio libunifex'
-  VCPKG_VERSION: '70a7074c685516fed36da7befb3898821b1425ed' # Feb 14, 2022
-  CMAKE_ARGS: '-DVCPKG_MANIFEST_MODE=off -DASIO_GRPC_BUILD_TESTS=on -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on'
-  config: Debug
+  VCPKG_VERSION: '70a7074c685516fed36da7befb3898821b1425ed'
 
 jobs:
   analyze:
@@ -24,16 +21,24 @@ jobs:
       fail-fast: false
 
     steps:
+    - name: Remove Java
+      shell: bash
+      run: |
+        rm -rf ${JAVA_HOME_8_X64} &&\
+        rm -rf ${JAVA_HOME_11_X64} &&\
+        rm -rf ${JAVA_HOME_17_X64}
+
     - uses: actions/checkout@v2
 
     - name: Install vcpkg
-      uses: lukka/run-vcpkg@v7
+      uses: lukka/run-vcpkg@v10
       with:
-        vcpkgDirectory: ${{ runner.workspace }}/vcpkg
-        vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
-        appendedCacheKey: windows-2019-v1
-        vcpkgTriplet: x64-windows
-        vcpkgArguments: --overlay-ports=${{ github.workspace }}/deps ${{ env.VCPKG_ARGUMENTS }}
+        vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
+        vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
+        vcpkgJsonGlob: 'vcpkg.json'
+
+    - name: Configure CMake
+      run: cmake --preset default -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v1
@@ -41,11 +46,8 @@ jobs:
         languages: 'cpp'
         config-file: ./.github/codeql/codeql-config.yml
 
-    - name: Configure CMake
-      run: cmake -B ${{ github.workspace }}/build "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=${{ env.config }} ${{ env.CMAKE_ARGS }}
-
     - name: Build
-      run: cmake --build ${{ github.workspace }}/build --config ${{ env.config }} --parallel 1
+      run: cmake --build --preset default --parallel 1
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
@@ -55,7 +57,7 @@ jobs:
       id: run-analysis
       with:
         cmakeBuildDirectory: ${{ github.workspace }}/build
-        buildConfiguration: ${{ env.config }}
+        buildConfiguration: Debug
         ruleset: ${{ github.workspace }}/.github/codeql/MsvcRules.ruleset
         ignoredPaths: ${{ github.workspace }}/build/vcpkg_installed
 
