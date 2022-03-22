@@ -25,10 +25,7 @@ on:
       - 'CMakePresets.json'
 
 env:
-  VCPKG_ARGUMENTS: 'doctest grpc[codegen] boost-coroutine boost-asio boost-interprocess boost-thread boost-container boost-process asio libunifex'
-  VCPKG_VERSION: '70a7074c685516fed36da7befb3898821b1425ed' # Feb 14, 2022
-  CMAKE_ARGS: '-DVCPKG_MANIFEST_MODE=off -DASIO_GRPC_BUILD_TESTS=on -DASIO_GRPC_DISCOVER_TESTS=on -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off'
-  CTEST_ARGS: '-T test --output-on-failure --timeout 200 --no-tests=error'
+  VCPKG_VERSION: '70a7074c685516fed36da7befb3898821b1425ed' # Mar 21, 2022
 
 jobs:
   build:
@@ -39,8 +36,8 @@ jobs:
       matrix:
         config:
           - {
-            name: 'Windows/2022/MSVC-19.31',
-            os: windows-2022,
+            name: 'Windows/2019/MSVC-19.29',
+            os: windows-2019,
             cmake-extra-args: '',
             parallel: 1,
           }
@@ -74,6 +71,8 @@ jobs:
   multi-gcc-build:
     name: 'Ubuntu/20.04/GCC-9.3.0,10.3.0,11.1.0'
     runs-on: ubuntu-20.04
+    env:
+      CMAKE_EXTRA_ARGS: '-DCMAKE_BUILD_TYPE=Release -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off'
 
     steps:
     - name: Install GCC 11 and gcovr
@@ -104,25 +103,25 @@ jobs:
         vcpkgJsonGlob: 'vcpkg.json'
 
     - name: GCC 9 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-9 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=$(which g++-9)
+      run: cmake --preset default -B ${{ github.workspace }}/build-9 -DCMAKE_CXX_COMPILER=$(which g++-9) ${{ env.CMAKE_EXTRA_ARGS }}
 
     - name: GCC 9 Build
-      run: cmake --build ${{ github.workspace }}/build-9 --preset default --config Release --parallel $(nproc)
+      run: cmake --build ${{ github.workspace }}/build-9 --config Release --parallel $(nproc)
 
     - name: GCC 9 Test
       run: ctest --preset default --test-dir ${{ github.workspace }}/build-9 --config Release
 
     - name: GCC 10 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which g++-10) -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DASIO_GRPC_TEST_COVERAGE=on -DASIO_GRPC_GCOV_PROGRAM=$(which gcov-10) -DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build-10/sonarqube-coverage.xml
+      run: cmake --preset default -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which g++-10) -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DASIO_GRPC_TEST_COVERAGE=on -DASIO_GRPC_GCOV_PROGRAM=$(which gcov-10) -DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build-10/sonarqube-coverage.xml ${{ env.CMAKE_EXTRA_ARGS }}
 
     - name: GCC 10 Build
-      run: cmake --build ${{ github.workspace }}/build-10 --preset default --config Debug --parallel $(nproc)
+      run: cmake --build ${{ github.workspace }}/build-10 --config Debug --parallel $(nproc)
 
     - name: GCC 10 Test
       run: ctest --preset default --test-dir ${{ github.workspace }}/build-9 --config Debug
 
     - name: GCC 10 Coverage
-      run: cmake --build ${{ github.workspace }}/build-10 --preset default --config Debug --target asio-grpc-test-coverage
+      run: cmake --build ${{ github.workspace }}/build-10 --config Debug --target asio-grpc-test-coverage
 
     - name: Download sonar-scanner
       uses: warchant/setup-sonar-scanner@v3
@@ -139,93 +138,87 @@ jobs:
           -Dsonar.coverageReportPaths=${{ github.workspace }}/build-10/sonarqube-coverage.xml
 
     - name: GCC 11 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-11 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=$(which g++-11)
+      run: cmake --preset default -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which g++-11) ${{ env.CMAKE_EXTRA_ARGS }}
 
     - name: GCC 11 Build
-      run: cmake --build ${{ github.workspace }}/build-11 --preset default --config Release --parallel $(nproc)
+      run: cmake --build ${{ github.workspace }}/build-11 --config Release --parallel $(nproc)
 
     - name: GCC 11 Test
       run: ctest --preset default --test-dir ${{ github.workspace }}/build-11 --config Release
 
 
-  # multi-clang-build:
-  #   name: 'Ubuntu/20.04/Clang-10.0.0,11.0.0,12.0.0'
-  #   runs-on: ubuntu-20.04
-  #   env:
-  #     CMAKE_EXTRA_ARGS: '-DASIO_GRPC_USE_BOOST_CONTAINER=on -DVCPKG_TARGET_TRIPLET=x64-linux-clang "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-10/include/c++/v1/"'
+  multi-clang-build:
+    name: 'Ubuntu/20.04/Clang-10.0.0,11.0.0,12.0.0'
+    runs-on: ubuntu-20.04
+    env:
+      CMAKE_EXTRA_ARGS: '-DCMAKE_BUILD_TYPE=Release -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_USE_BOOST_CONTAINER=on -DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}/.github/vcpkg -DVCPKG_TARGET_TRIPLET=x64-linux-clang "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-10/include/c++/v1/"'
 
-  #   steps:
-  #   - name: Make clang-10 default compiler
-  #     run: |
-  #       sudo update-alternatives --install /usr/bin/cc cc $(which clang-10) 50 &&\
-  #       sudo update-alternatives --set cc $(which clang-10) &&\
-  #       sudo update-alternatives --install /usr/bin/c++ c++ $(which clang++-10) 50 &&\
-  #       sudo update-alternatives --set c++ $(which clang++-10)  &&\
-  #       sudo update-alternatives --install /usr/bin/cpp cpp $(which clang++-10) 50 &&\
-  #       sudo update-alternatives --set cpp $(which clang++-10)
+    steps:
+    - name: Make clang-10 default compiler
+      run: |
+        sudo update-alternatives --install /usr/bin/cc cc $(which clang-10) 50 &&\
+        sudo update-alternatives --set cc $(which clang-10) &&\
+        sudo update-alternatives --install /usr/bin/c++ c++ $(which clang++-10) 50 &&\
+        sudo update-alternatives --set c++ $(which clang++-10)  &&\
+        sudo update-alternatives --install /usr/bin/cpp cpp $(which clang++-10) 50 &&\
+        sudo update-alternatives --set cpp $(which clang++-10)
 
-  #   - uses: actions/checkout@v2
+    - uses: actions/checkout@v2
 
-  #   - name: Install vcpkg
-  #     uses: lukka/run-vcpkg@v7
-  #     with:
-  #       vcpkgDirectory: ${{ runner.workspace }}/vcpkg
-  #       vcpkgGitCommitId: ${{ env.VCPKG_VERSION }}
-  #       appendedCacheKey: ubuntu-clang-v1
-  #       vcpkgTriplet: x64-linux-clang
-  #       vcpkgArguments: --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg ${{ env.VCPKG_ARGUMENTS }}
+    - name: Install vcpkg
+      uses: lukka/run-vcpkg@v10
+      with:
+        vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
+        vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
+        vcpkgJsonGlob: 'vcpkg.json'
 
-  #   - name: Clang 10 Configure CMake
-  #     run: cmake -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which clang++-10) "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release ${{ env.CMAKE_ARGS }} ${{ env.CMAKE_EXTRA_ARGS }}
+    - name: Clang 10 Configure CMake
+      run: cmake --preset default -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which clang++-10) ${{ env.CMAKE_EXTRA_ARGS }}
 
-  #   - name: Clang 10 Build
-  #     run: cmake --build ${{ github.workspace }}/build-10 --config Release --parallel $(nproc)
+    - name: Clang 10 Build
+      run: cmake --build ${{ github.workspace }}/build-10 --config Release --parallel $(nproc)
 
-  #   - name: Clang 10 Test
-  #     working-directory: ${{ github.workspace }}/build-10
-  #     run: ctest -C Release --parallel $(nproc) ${{ env.CTEST_ARGS }}
+    - name: Clang 10 Test
+      run: ctest --preset default --test-dir ${{ github.workspace }}/build-10 --config Release
 
-  #   - name: Clang 11 Configure CMake
-  #     run: cmake -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which clang++-11) "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release ${{ env.CMAKE_ARGS }} ${{ env.CMAKE_EXTRA_ARGS }}
+    - name: Clang 11 Configure CMake
+      run: cmake --preset default -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which clang++-11) ${{ env.CMAKE_EXTRA_ARGS }}
 
-  #   - name: Clang 11 Build
-  #     run: cmake --build ${{ github.workspace }}/build-11 --config Release --parallel $(nproc)
+    - name: Clang 11 Build
+      run: cmake --build ${{ github.workspace }}/build-11 --config Release --parallel $(nproc)
 
-  #   - name: Clang 11 Test
-  #     working-directory: ${{ github.workspace }}/build-11
-  #     run: ctest -C Release --parallel $(nproc) ${{ env.CTEST_ARGS }}
+    - name: Clang 11 Test
+      run: ctest --preset default --test-dir ${{ github.workspace }}/build-11 --config Release
 
-  #   - name: Download doxygen
-  #     working-directory: ${{ runner.workspace }}
-  #     run: |
-  #       cmake -E make_directory doxygen &&\
-  #       cd doxygen &&\
-  #       wget --quiet https://www.doxygen.nl/files/doxygen-1.9.3.linux.bin.tar.gz &&\
-  #       tar xf doxygen-1.9.3.linux.bin.tar.gz --strip-components=1
+    - name: Download doxygen
+      working-directory: ${{ runner.workspace }}
+      run: |
+        cmake -E make_directory doxygen &&\
+        cd doxygen &&\
+        wget --quiet https://www.doxygen.nl/files/doxygen-1.9.3.linux.bin.tar.gz &&\
+        tar xf doxygen-1.9.3.linux.bin.tar.gz --strip-components=1
 
-  #   - name: Clang 12 Configure CMake
-  #     run: cmake -B ${{ github.workspace }}/build-12 -DCMAKE_CXX_COMPILER=$(which clang++-12) "-DCMAKE_TOOLCHAIN_FILE=${{ runner.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_BUILD_TYPE=Release ${{ env.CMAKE_ARGS }} ${{ env.CMAKE_EXTRA_ARGS }} -DDOXYGEN_EXECUTABLE=${{ runner.workspace }}/doxygen/bin/doxygen
+    - name: Clang 12 Configure CMake
+      run: cmake --preset default -B ${{ github.workspace }}/build-12 -DCMAKE_CXX_COMPILER=$(which clang++-12) -DDOXYGEN_EXECUTABLE=${{ runner.workspace }}/doxygen/bin/doxygen ${{ env.CMAKE_EXTRA_ARGS }}
 
-  #   - name: Clang 12 Build
-  #     run: cmake --build ${{ github.workspace }}/build-12 --config Release --parallel $(nproc)
+    - name: Clang 12 Build
+      run: cmake --build ${{ github.workspace }}/build-12 --config Release --parallel $(nproc)
 
-  #   - name: Clang 12 Test
-  #     working-directory: ${{ github.workspace }}/build-12
-  #     run: ctest -C Release --parallel $(nproc) ${{ env.CTEST_ARGS }}
+    - name: Clang 12 Test
+      run: ctest --preset default --test-dir ${{ github.workspace }}/build-12 --config Release
 
-  #   - name: Run doxygen
-  #     run: |
-  #       cmake -E rm -r ${{ github.workspace }}/docs &&\
-  #       cmake --build ${{ github.workspace }}/build-12 --config Release --target asio-grpc-doxygen
+    - name: Run doxygen
+      run: |
+        cmake -E rm -r ${{ github.workspace }}/docs &&\
+        cmake --build ${{ github.workspace }}/build-12 --config Release --target asio-grpc-doxygen
 
-  #   - name: Push doxygen changes
-  #     run: |
-  #       git config --local user.email "action@github.com"
-  #       git config --local user.name "GitHub Action"
-  #       git add docs/* || echo "nothing to commit"
-  #       git commit -m "Re-generate Github Pages" || echo "nothing to commit"
-  #       remote="https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
-  #       branch="${GITHUB_REF:11}"
-  #       git push "${remote}" ${branch} || echo "nothing to push"
-  #     shell: bash
-
+    - name: Push doxygen changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add docs/* || echo "nothing to commit"
+        git commit -m "Re-generate Github Pages" || echo "nothing to commit"
+        remote="https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
+        branch="${GITHUB_REF:11}"
+        git push "${remote}" ${branch} || echo "nothing to push"
+      shell: bash
