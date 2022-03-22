@@ -24,35 +24,49 @@
 
 DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0))
 {
-TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll()")
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll() with asio::post")
 {
+    bool invoked{};
     asio::io_context io_context;
-    asio::steady_timer timer{io_context};
-    grpc::Alarm alarm;
-    bool wait_done{};
     asio::post(io_context,
                [&]()
                {
-                   asio::post(io_context,
-                              [&]()
+                   grpc_context.poll();
+                   CHECK_FALSE(invoked);
+                   asio::post(grpc_context,
+                              [&]
                               {
-                                  grpc_context.poll();
-                                  CHECK_FALSE(wait_done);
-                                  timer.expires_after(std::chrono::milliseconds(210));
-                                  timer.async_wait(
-                                      [&](auto&&)
-                                      {
-                                          grpc_context.poll();
-                                          CHECK(wait_done);
-                                      });
+                                  invoked = true;
                               });
-                   agrpc::wait(alarm, test::hundred_milliseconds_from_now(),
+                   grpc_context.poll();
+               });
+    io_context.run();
+    CHECK(invoked);
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll() with grpc::Alarm")
+{
+    bool invoked{};
+    asio::io_context io_context;
+    grpc::Alarm alarm;
+    asio::steady_timer timer{io_context};
+    asio::post(io_context,
+               [&]()
+               {
+                   agrpc::wait(alarm, std::chrono::system_clock::now(),
                                asio::bind_executor(grpc_context,
                                                    [&](bool)
                                                    {
-                                                       wait_done = true;
+                                                       invoked = true;
                                                    }));
+                   timer.expires_after(std::chrono::milliseconds(100));
+                   timer.async_wait(
+                       [&](auto&&)
+                       {
+                           grpc_context.poll();
+                       });
                });
     io_context.run();
+    CHECK(invoked);
 }
 }
