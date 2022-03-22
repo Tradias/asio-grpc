@@ -23,5 +23,11 @@
         },
         "libunifex"
     ],
-    "builtin-baseline": "3b9259735964665519cc4dbd12505fa6c20692c4"
+    "builtin-baseline": "70a7074c685516fed36da7befb3898821b1425ed",
+    "overrides": [
+        {
+            "name": "doctest",
+            "version": "2.4.6"
+        }
+    ]
 }
