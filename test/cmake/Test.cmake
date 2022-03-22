@@ -70,6 +70,7 @@ run_process(
     "-DVCPKG_OVERLAY_TRIPLETS=${VCPKG_OVERLAY_TRIPLETS}"
     "-DVCPKG_MANIFEST_MODE=${VCPKG_MANIFEST_MODE}"
     "-DVCPKG_OVERLAY_PORTS=${VCPKG_OVERLAY_PORTS}"
+    "-DVCPKG_INSTALL_OPTIONS=${VCPKG_INSTALL_OPTIONS}"
     # Use generator-expression to prevent multi-config generators from creating a subdirectory
     "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${PWD}/test-install/\$<BOOL:on>"
     "${PWD}")

@@ -118,7 +118,7 @@ jobs:
       run: cmake --build ${{ github.workspace }}/build-10 --config Debug --parallel $(nproc)
 
     - name: GCC 10 Test
-      run: ctest --preset default --test-dir ${{ github.workspace }}/build-9 --config Debug
+      run: ctest --preset default --test-dir ${{ github.workspace }}/build-10 --config Debug
 
     - name: GCC 10 Coverage
       run: cmake --build ${{ github.workspace }}/build-10 --config Debug --target asio-grpc-test-coverage
@@ -171,6 +171,7 @@ jobs:
         vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
         vcpkgJsonGlob: 'vcpkg.json'
+        appendedCacheKey: 'clang'
 
     - name: Clang 10 Configure CMake
       run: cmake --preset default -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which clang++-10) ${{ env.CMAKE_EXTRA_ARGS }}
