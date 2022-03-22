@@ -61,6 +61,7 @@ jobs:
         vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
         vcpkgJsonGlob: 'vcpkg.json'
+        appendedCacheKey: 'v1'
 
     - name: Run vcpkg
       run: |
@@ -110,9 +111,12 @@ jobs:
         vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
         vcpkgJsonGlob: 'vcpkg.json'
+        appendedCacheKey: 'v1'
 
     - name: Run vcpkg
-      run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --overlay-ports=${{ github.workspace }}/deps
+      run: |
+        ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --overlay-ports=${{ github.workspace }}/deps &&
+        ${{ env.VCPKG_ROOT }}/vcpkg integrate install
 
     - name: GCC 9 Configure CMake
       run: cmake --preset default -B ${{ github.workspace }}/build-9 -DCMAKE_CXX_COMPILER=$(which g++-9) ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
@@ -183,10 +187,12 @@ jobs:
         vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
         vcpkgJsonGlob: 'vcpkg.json'
-        appendedCacheKey: 'clang'
+        appendedCacheKey: 'clang-v1'
 
     - name: Run vcpkg
-      run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet x64-linux-clang-release --host-triplet x64-linux-clang-release --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
+      run: |
+        ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet x64-linux-clang-release --host-triplet x64-linux-clang-release --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg &&
+        ${{ env.VCPKG_ROOT }}/vcpkg integrate install
 
     - name: Clang 10 Configure CMake
       run: cmake --preset default -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which clang++-10) ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
