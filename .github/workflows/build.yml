@@ -151,7 +151,7 @@ jobs:
     name: 'Ubuntu/20.04/Clang-10.0.0,11.0.0,12.0.0'
     runs-on: ubuntu-20.04
     env:
-      CMAKE_EXTRA_ARGS: '-DCMAKE_BUILD_TYPE=Release -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_USE_BOOST_CONTAINER=on -DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}/.github/vcpkg -DVCPKG_TARGET_TRIPLET=x64-linux-clang "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-10/include/c++/v1/"'
+      CMAKE_EXTRA_ARGS: '-DCMAKE_BUILD_TYPE=Release -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_USE_BOOST_CONTAINER=on -DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}/.github/vcpkg -DVCPKG_TARGET_TRIPLET=x64-linux-clang "-DVCPKG_INSTALL_OPTIONS=--host-triplet=x64-linux-clang" "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-10/include/c++/v1/"'
 
     steps:
     - name: Make clang-10 default compiler
