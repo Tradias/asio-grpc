@@ -1,5 +1,3 @@
-vcpkg_fail_port_install(ON_TARGET "windows" "uwp" "osx" "ios" "android")
-
 vcpkg_from_github(
     OUT_SOURCE_PATH
     SOURCE_PATH
@@ -17,7 +15,7 @@ vcpkg_from_github(
     disable-tests-and-examples.patch)
 
 # note: check ${SOURCE_PATH}/liburing.spec before updating configure options
-vcpkg_configure_make(SOURCE_PATH ${SOURCE_PATH} COPY_SOURCE NO_DEBUG)
+vcpkg_configure_make(SOURCE_PATH ${SOURCE_PATH} COPY_SOURCE)
 vcpkg_install_make()
 vcpkg_fixup_pkgconfig()
 
