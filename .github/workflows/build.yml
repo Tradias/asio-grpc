@@ -40,12 +40,14 @@ jobs:
           - {
             name: 'Windows/2022/MSVC-19.31',
             os: windows-2022,
-            cmake-extra-args: '-DVCPKG_TARGET_TRIPLET=x64-windows-release "-DVCPKG_INSTALL_OPTIONS=--host-triplet=x64-windows-release"',
+            triplet: 'x64-windows-release',
+            cmake-extra-args: '',
             parallel: 1,
           }
           - {
             name: 'MacOSX/11/AppleClang-13.0.0.13000029',
             os: macos-11,
+            triplet: 'x64-osx-release',
             cmake-extra-args: '-DASIO_GRPC_USE_BOOST_CONTAINER=on',
             parallel: 3,
           }
@@ -60,6 +62,7 @@ jobs:
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
         vcpkgJsonGlob: 'vcpkg.json'
         runVcpkgInstall: true
+        runVcpkgFormatString: ['install', '--recurse', '--clean-after-build', '--triplet', '${{ matrix.config.triplet }}', '--host-triplet', '${{ matrix.config.triplet }}', '--overlay-ports=${{ github.workspace }}/deps', '--overlay-triplets=${{ github.workspace }}/.github/vcpkg']
 
     - name: Configure CMake
       run: cmake --preset default ${{ matrix.config.cmake-extra-args }} ${{ env.CMAKE_ARGS }}
@@ -105,6 +108,7 @@ jobs:
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
         vcpkgJsonGlob: 'vcpkg.json'
         runVcpkgInstall: true
+        runVcpkgFormatString: ['install', '--recurse', '--clean-after-build', '--overlay-ports=${{ github.workspace }}/deps']
 
     - name: GCC 9 Configure CMake
       run: cmake --preset default -B ${{ github.workspace }}/build-9 -DCMAKE_CXX_COMPILER=$(which g++-9) ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
@@ -155,7 +159,7 @@ jobs:
     name: 'Ubuntu/20.04/Clang-10.0.0,11.0.0,12.0.0'
     runs-on: ubuntu-20.04
     env:
-      CMAKE_EXTRA_ARGS: '-DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_USE_BOOST_CONTAINER=on -DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}/.github/vcpkg -DVCPKG_TARGET_TRIPLET=x64-linux-clang "-DVCPKG_INSTALL_OPTIONS=--host-triplet=x64-linux-clang" "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-10/include/c++/v1/"'
+      CMAKE_EXTRA_ARGS: '-DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_USE_BOOST_CONTAINER=on "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-10/include/c++/v1/"'
 
     steps:
     - name: Make clang-10 default compiler
@@ -176,6 +180,7 @@ jobs:
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
         vcpkgJsonGlob: 'vcpkg.json'
         runVcpkgInstall: true
+        runVcpkgFormatString: ['install', '--recurse', '--clean-after-build', '--triplet', 'x64-linux-clang-release', '--host-triplet', 'x64-linux-clang-release', '--overlay-ports=${{ github.workspace }}/deps', '--overlay-triplets=${{ github.workspace }}/.github/vcpkg']
         appendedCacheKey: 'clang'
 
     - name: Clang 10 Configure CMake
