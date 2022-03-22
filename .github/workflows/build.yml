@@ -39,7 +39,7 @@ jobs:
           - {
             name: 'Windows/2022/MSVC-19.31',
             os: windows-2022,
-            cmake-extra-args: '',
+            cmake-extra-args: '-DVCPKG_TARGET_TRIPLET=x64-windows-release "-DVCPKG_INSTALL_OPTIONS=--host-triplet=x64-windows-release"',
             parallel: 1,
           }
           - {
@@ -50,14 +50,6 @@ jobs:
           }
 
     steps:
-    - if: matrix.config.os == 'windows-2022' 
-      name: Remove Java
-      shell: bash
-      run: |
-        rm -rf ${JAVA_HOME_8_X64} &&\
-        rm -rf ${JAVA_HOME_11_X64} &&\
-        rm -rf ${JAVA_HOME_17_X64}
-
     - uses: actions/checkout@v2
 
     - name: Install vcpkg

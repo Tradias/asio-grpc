@@ -21,13 +21,6 @@ jobs:
       fail-fast: false
 
     steps:
-    - name: Remove Java
-      shell: bash
-      run: |
-        rm -rf ${JAVA_HOME_8_X64} &&\
-        rm -rf ${JAVA_HOME_11_X64} &&\
-        rm -rf ${JAVA_HOME_17_X64}
-
     - uses: actions/checkout@v2
 
     - name: Install vcpkg
@@ -38,16 +31,15 @@ jobs:
         vcpkgJsonGlob: 'vcpkg.json'
 
     - name: Configure CMake
-      run: cmake --preset default -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
+      run: cmake --preset default -DCMAKE_BUILD_TYPE=Release -DVCPKG_TARGET_TRIPLET=x64-windows-release "-DVCPKG_INSTALL_OPTIONS=--host-triplet=x64-windows-release" -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v1
       with:
         languages: 'cpp'
-        config-file: ./.github/codeql/codeql-config.yml
 
     - name: Build
-      run: cmake --build --preset default --parallel 1
+      run: cmake --build --preset default --config Release --parallel 1
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
@@ -57,7 +49,7 @@ jobs:
       id: run-analysis
       with:
         cmakeBuildDirectory: ${{ github.workspace }}/build
-        buildConfiguration: Debug
+        buildConfiguration: Release
         ruleset: ${{ github.workspace }}/.github/codeql/MsvcRules.ruleset
         ignoredPaths: ${{ github.workspace }}/build/vcpkg_installed
 
