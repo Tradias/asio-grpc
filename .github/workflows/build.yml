@@ -41,14 +41,14 @@ jobs:
             name: 'Windows/2022/MSVC-19.31',
             os: windows-2022,
             triplet: 'x64-windows-release',
-            cmake-extra-args: '-DVCPKG_INSTALLED_DIR=${{ github.workspace }}/vcpkg_installed',
+            cmake-extra-args: '-DVCPKG_TARGET_TRIPLET=x64-windows-release -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed',
             parallel: 1,
           }
           - {
             name: 'MacOSX/11/AppleClang-13.0.0.13000029',
             os: macos-11,
             triplet: 'x64-osx-release',
-            cmake-extra-args: '-DVCPKG_INSTALLED_DIR=${{ github.workspace }}/vcpkg_installed -DASIO_GRPC_USE_BOOST_CONTAINER=on',
+            cmake-extra-args: '-DVCPKG_TARGET_TRIPLET=x64-osx-release -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed -DASIO_GRPC_USE_BOOST_CONTAINER=on',
             parallel: 3,
           }
 
@@ -64,7 +64,7 @@ jobs:
         appendedCacheKey: '${{ matrix.config.triplet }}'
 
     - name: Run vcpkg
-      run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ matrix.config.triplet }} --host-triplet ${{ matrix.config.triplet }} --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
+      run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ matrix.config.triplet }} --host-triplet ${{ matrix.config.triplet }} --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
 
     - name: Configure CMake
       run: cmake --preset default ${{ matrix.config.cmake-extra-args }} ${{ env.CMAKE_ARGS }}
@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-20.04
     env:
       TRIPLET: 'x64-linux-release'
-      CMAKE_EXTRA_ARGS: '-DVCPKG_INSTALLED_DIR=${{ github.workspace }}/vcpkg_installed -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off'
+      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-release -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off'
 
     steps:
     - name: Install GCC 11 and gcovr
@@ -113,7 +113,7 @@ jobs:
         appendedCacheKey: '${{ env.TRIPLET }}'
 
     - name: Run vcpkg
-      run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
+      run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
 
     - name: GCC 9 Configure CMake
       run: cmake --preset default -B ${{ github.workspace }}/build-9 -DCMAKE_CXX_COMPILER=$(which g++-9) ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
@@ -165,7 +165,7 @@ jobs:
     runs-on: ubuntu-20.04
     env:
       TRIPLET: 'x64-linux-clang-release'
-      CMAKE_EXTRA_ARGS: '-DVCPKG_INSTALLED_DIR=${{ github.workspace }}/vcpkg_installed -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_USE_BOOST_CONTAINER=on "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-10/include/c++/v1/"'
+      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-clang-release -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_USE_BOOST_CONTAINER=on "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-10/include/c++/v1/"'
 
     steps:
     - name: Make clang-10 default compiler
@@ -188,7 +188,7 @@ jobs:
         appendedCacheKey: '${{ env.TRIPLET }}'
 
     - name: Run vcpkg
-      run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
+      run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
 
     - name: Clang 10 Configure CMake
       run: cmake --preset default -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which clang++-10) ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
