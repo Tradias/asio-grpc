@@ -26,7 +26,7 @@ on:
 
 env:
   VCPKG_VERSION: '70a7074c685516fed36da7befb3898821b1425ed' # Mar 21, 2022
-  CMAKE_ARGS: '-DCMAKE_BUILD_TYPE=Release'
+  CMAKE_ARGS: '-DCMAKE_BUILD_TYPE=Release -DVCPKG_MANIFEST_INSTALL=off'
   CTEST_ARGS: '-T test --output-on-failure --timeout 200 --no-tests=error --parallel 8'
 
 jobs:
@@ -62,6 +62,9 @@ jobs:
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
         vcpkgJsonGlob: 'vcpkg.json'
         appendedCacheKey: 'v1'
+
+    - name: Run vcpkg
+      run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ matrix.config.triplet }} --host-triplet ${{ matrix.config.triplet }} --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
 
     - name: Configure CMake
       run: cmake --preset default ${{ matrix.config.cmake-extra-args }} ${{ env.CMAKE_ARGS }}
@@ -107,6 +110,9 @@ jobs:
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
         vcpkgJsonGlob: 'vcpkg.json'
         appendedCacheKey: 'v1'
+
+    - name: Run vcpkg
+      run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --overlay-ports=${{ github.workspace }}/deps
 
     - name: GCC 9 Configure CMake
       run: cmake --preset default -B ${{ github.workspace }}/build-9 -DCMAKE_CXX_COMPILER=$(which g++-9) ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
@@ -178,6 +184,9 @@ jobs:
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
         vcpkgJsonGlob: 'vcpkg.json'
         appendedCacheKey: 'clang-v1'
+
+    - name: Run vcpkg
+      run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet x64-linux-clang-release --host-triplet x64-linux-clang-release --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
 
     - name: Clang 10 Configure CMake
       run: cmake --preset default -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which clang++-10) ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
