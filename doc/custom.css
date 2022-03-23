@@ -1,11 +1,4 @@
 html {
     --content-maxwidth: 75%;
-    --fragment-background: #f4f4f4;
-    --fragment-foreground: #000000;
-    --fragment-link: var(--primary-color);
-    --fragment-keyword: #ba5a57;
-    --fragment-keywordtype: #ba5a57;
-    --fragment-keywordflow: #ba5a57;
-    --fragment-token: #468a61;
-    --fragment-comment: #757575;
+    --side-nav-fixed-width: 310px;
 }
