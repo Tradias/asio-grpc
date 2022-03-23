@@ -48,5 +48,5 @@ Before making a commit, install [clang-format](https://github.com/llvm/llvm-proj
 Re-run the CMake configure step and finally run:
 
 ```sh
-cmake --build ./build --target asio-grpc-init-git-hooks
+cmake --build --preset default --target asio-grpc-init-git-hooks
 ```
