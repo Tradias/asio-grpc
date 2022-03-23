@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-20.04
     env:
       TRIPLET: 'x64-linux-release'
-      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-release -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off'
+      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-release -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off'
 
     steps:
     - name: Install GCC 11 and gcovr
@@ -116,7 +116,7 @@ jobs:
       run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
 
     - name: GCC 9 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-9 -DCMAKE_CXX_COMPILER=$(which g++-9) ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
+      run: cmake --preset default -B ${{ github.workspace }}/build-9 -DCMAKE_CXX_COMPILER=$(which g++-9) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
 
     - name: GCC 9 Build
       run: cmake --build ${{ github.workspace }}/build-9 --config Release --parallel $(nproc)
@@ -125,7 +125,7 @@ jobs:
       run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-9 --config Release
 
     - name: GCC 10 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which g++-10) -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DASIO_GRPC_TEST_COVERAGE=on -DASIO_GRPC_GCOV_PROGRAM=$(which gcov-10) -DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build-10/sonarqube-coverage.xml ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }} -DCMAKE_BUILD_TYPE=Debug
+      run: cmake --preset default -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which g++-10) -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DASIO_GRPC_TEST_COVERAGE=on -DASIO_GRPC_GCOV_PROGRAM=$(which gcov-10) -DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build-10/sonarqube-coverage.xml -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }} -DCMAKE_BUILD_TYPE=Debug
 
     - name: GCC 10 Build
       run: cmake --build ${{ github.workspace }}/build-10 --config Debug --parallel $(nproc)
@@ -151,7 +151,7 @@ jobs:
           -Dsonar.coverageReportPaths=${{ github.workspace }}/build-10/sonarqube-coverage.xml
 
     - name: GCC 11 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which g++-11) ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
+      run: cmake --preset default -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which g++-11) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
 
     - name: GCC 11 Build
       run: cmake --build ${{ github.workspace }}/build-11 --config Release --parallel $(nproc)
@@ -165,7 +165,7 @@ jobs:
     runs-on: ubuntu-20.04
     env:
       TRIPLET: 'x64-linux-clang-release'
-      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-clang-release -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_USE_BOOST_CONTAINER=on "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-10/include/c++/v1/"'
+      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-clang-release -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_USE_BOOST_CONTAINER=on "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-10/include/c++/v1/"'
 
     steps:
     - name: Make clang-10 default compiler
@@ -191,7 +191,7 @@ jobs:
       run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
 
     - name: Clang 10 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which clang++-10) ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
+      run: cmake --preset default -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which clang++-10) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
 
     - name: Clang 10 Build
       run: cmake --build ${{ github.workspace }}/build-10 --config Release --parallel $(nproc)
@@ -200,7 +200,7 @@ jobs:
       run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-10 --config Release
 
     - name: Clang 11 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which clang++-11) ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
+      run: cmake --preset default -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which clang++-11) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
 
     - name: Clang 11 Build
       run: cmake --build ${{ github.workspace }}/build-11 --config Release --parallel $(nproc)
@@ -217,7 +217,7 @@ jobs:
         tar xf doxygen-1.9.3.linux.bin.tar.gz --strip-components=1
 
     - name: Clang 12 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-12 -DCMAKE_CXX_COMPILER=$(which clang++-12) -DDOXYGEN_EXECUTABLE=${{ runner.workspace }}/doxygen/bin/doxygen ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
+      run: cmake --preset default -B ${{ github.workspace }}/build-12 -DCMAKE_CXX_COMPILER=$(which clang++-12) -DDOXYGEN_EXECUTABLE=${{ runner.workspace }}/doxygen/bin/doxygen -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
 
     - name: Clang 12 Build
       run: cmake --build ${{ github.workspace }}/build-12 --config Release --parallel $(nproc)
