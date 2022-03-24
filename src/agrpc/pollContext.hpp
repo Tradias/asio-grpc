@@ -20,48 +20,78 @@
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/oneShotAllocator.hpp"
+#include "agrpc/detail/utility.hpp"
 #include "agrpc/grpcContext.hpp"
 
 AGRPC_NAMESPACE_BEGIN()
+
+namespace detail
+{
+struct IsGrpcContextStoppedPredicate
+{
+    bool operator()(agrpc::GrpcContext& grpc_context) const noexcept { return grpc_context.is_stopped(); }
+};
+}
+
+struct DefaultPollContextTraits
+{
+    static constexpr std::size_t BUFFER_SIZE = 96;
+};
 
 /**
  * @brief (experimental) Helper class to repeatedly poll a GrpcContext in a different execution context
  *
  * @since 1.5.0
  */
-template <class Executor>
+template <class Executor, class Traits = agrpc::DefaultPollContextTraits>
 class PollContext
 {
+  private:
+    static constexpr auto BUFFER_SIZE = Traits::BUFFER_SIZE;
+
   public:
-    explicit PollContext(Executor executor)
-        : executor(asio::prefer(asio::require(executor, asio::execution::blocking.never),
+    template <class Exec>
+    explicit PollContext(Exec&& executor)
+        : executor(asio::prefer(asio::require(std::forward<Exec>(executor), asio::execution::blocking.never),
                                 asio::execution::relationship.continuation,
-                                asio::execution::allocator(detail::OneShotAllocator<std::byte, 80>{&buffer})))
+                                asio::execution::allocator(detail::OneShotAllocator<std::byte, BUFFER_SIZE>{&buffer})))
     {
     }
 
-    void poll(agrpc::GrpcContext& grpc_context)
+    PollContext(const PollContext&) = delete;
+    PollContext(PollContext&&) = delete;
+    PollContext& operator=(const PollContext&) = delete;
+    PollContext& operator=(PollContext&&) = delete;
+
+    void poll(agrpc::GrpcContext& grpc_context) { this->poll(grpc_context, detail::IsGrpcContextStoppedPredicate{}); }
+
+    template <class StopPredicate>
+    void poll(agrpc::GrpcContext& grpc_context, StopPredicate stop_predicate)
     {
-        if (grpc_context.is_stopped())
+        if (stop_predicate(grpc_context))
         {
             return;
         }
-        asio::execution::execute(std::as_const(executor),
-                                 [&]
+        asio::execution::execute(executor,
+                                 [&, stop_predicate = std::move(stop_predicate)]() mutable
                                  {
                                      grpc_context.poll();
-                                     poll(grpc_context);
+                                     this->poll(grpc_context, std::move(stop_predicate));
                                  });
     }
 
   private:
-    using Exec = decltype(asio::prefer(asio::require(std::declval<Executor>(), asio::execution::blocking_t::never),
-                                       asio::execution::relationship_t::continuation,
-                                       asio::execution::allocator(detail::OneShotAllocator<std::byte, 80>{nullptr})));
+    using Exec =
+        decltype(asio::prefer(asio::require(std::declval<Executor>(), asio::execution::blocking_t::never),
+                              asio::execution::relationship_t::continuation,
+                              asio::execution::allocator(detail::OneShotAllocator<std::byte, BUFFER_SIZE>{nullptr})));
 
     Exec executor;
-    std::aligned_storage_t<80> buffer;
+    std::aligned_storage_t<BUFFER_SIZE> buffer;
 };
+
+template <class Executor>
+PollContext(Executor&&) -> PollContext<detail::RemoveCvrefT<Executor>>;
 
 AGRPC_NAMESPACE_END
 

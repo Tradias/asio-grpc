@@ -62,7 +62,7 @@ struct ThreadLocalGrpcContextGuard
     ThreadLocalGrpcContextGuard& operator=(ThreadLocalGrpcContextGuard&&) = delete;
 };
 
-struct IsGrpcContextStoppedPredicate
+struct IsGrpcContextStoppedCondition
 {
     const agrpc::GrpcContext& grpc_context;
 
@@ -150,8 +150,8 @@ inline bool get_next_event(grpc::CompletionQueue* cq, detail::GrpcCompletionQueu
     return grpc::CompletionQueue::GOT_EVENT == cq->AsyncNext(&event.tag, &event.ok, deadline);
 }
 
-template <detail::InvokeHandler Invoke, class IsStoppedPredicate>
-bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, IsStoppedPredicate is_stopped_predicate,
+template <detail::InvokeHandler Invoke, class StopCondition>
+bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, StopCondition stop_condition,
                                              ::gpr_timespec deadline)
 {
     if (grpc_context.check_remote_work)
@@ -160,7 +160,7 @@ bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, I
             detail::GrpcContextImplementation::move_remote_work_to_local_queue(grpc_context);
     }
     detail::GrpcContextImplementation::process_local_queue<Invoke>(grpc_context);
-    if AGRPC_UNLIKELY (is_stopped_predicate())
+    if AGRPC_UNLIKELY (stop_condition())
     {
         return false;
     }
@@ -198,7 +198,7 @@ inline void GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_con
 #endif
     detail::ThreadLocalGrpcContextGuard guard{grpc_context};
     while (detail::GrpcContextImplementation::process_work<detail::InvokeHandler::YES>(
-        grpc_context, detail::IsGrpcContextStoppedPredicate{grpc_context}, deadline))
+        grpc_context, detail::IsGrpcContextStoppedCondition{grpc_context}, deadline))
 
     {
         //

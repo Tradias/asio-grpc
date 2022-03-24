@@ -52,7 +52,7 @@ function(asio_grpc_add_test _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_stand
 endfunction()
 
 set(ASIO_GRPC_CPP17_TEST_SOURCE_FILES "testAsioGrpc17.cpp" "testRepeatedlyRequest17.cpp" "testBindAllocator17.cpp"
-                                      "testGrpcContext17.cpp")
+                                      "testGrpcContext17.cpp" "testPollContext17.cpp")
 set(ASIO_GRPC_CPP20_TEST_SOURCE_FILES "testAsioGrpc20.cpp" "testRepeatedlyRequest20.cpp" "testBindAllocator20.cpp"
                                       "testGrpcContext20.cpp")
 

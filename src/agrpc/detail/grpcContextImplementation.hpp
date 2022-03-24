@@ -72,9 +72,8 @@ struct GrpcContextImplementation
     template <detail::InvokeHandler Invoke>
     static void process_local_queue(agrpc::GrpcContext& grpc_context);
 
-    template <detail::InvokeHandler Invoke, class IsStoppedPredicate>
-    static bool process_work(agrpc::GrpcContext& grpc_context, IsStoppedPredicate is_stopped_predicate,
-                             ::gpr_timespec deadline);
+    template <detail::InvokeHandler Invoke, class StopCondition>
+    static bool process_work(agrpc::GrpcContext& grpc_context, StopCondition stop_condition, ::gpr_timespec deadline);
 
     static void process_work(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline);
 
