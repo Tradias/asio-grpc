@@ -12,6 +12,8 @@ Feature overview, installation, performance benchmark and getting started instru
     * `agrpc::finish`, `agrpc::finish_with_error`, `agrpc::read`, `agrpc::read_initial_metadata`, `agrpc::request`, `agrpc::repeatedly_request`, `agrpc::send_initial_metadata`, `agrpc::write`, `agrpc::write_and_finish`, `agrpc::write_last`, `agrpc::writes_done`
 * Looking to wait for a `grpc::Alarm`?
     * `agrpc::wait`
+* Already using an `asio::io_context`?
+    * `agrpc::PollContext`
 * Want to customize asynchronous completion?
     * [Completion token](md_doc_completion_token.html)
 * Want to run `protoc` from CMake to generate gRPC source files?

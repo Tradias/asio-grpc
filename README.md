@@ -51,18 +51,14 @@ grpc_context.run();
 <sup><a href='/example/hello-world-server.cpp#L32-L58' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
-* [Client side hello world](/example/hello-world-client.cpp)
-
-* Boost.Asio based streaming [client](/example/streaming-client.cpp) and [server](/example/streaming-server.cpp)
-
-* libunifex based [client](/example/unifex-client.cpp) and [server](/example/unifex-server.cpp)
+More examples for things like streaming RPCs, double-buffered file transfer with io_uring, libunifex-based coroutines and sharing a thread with an io_context can be found in the [example](/example) directory.
 
 # Requirements
 
 Tested by CI:
 
  * gRPC 1.44.0 (older versions work as well)
- * [Boost](https://www.boost.org/doc/libs/1_77_0/doc/html/boost_asio.html) 1.78 (min. 1.74 or [standalone Asio](https://github.com/chriskohlhoff/asio) 1.17.0)
+ * [Boost](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio.html) 1.78 (min. 1.74 or [standalone Asio](https://github.com/chriskohlhoff/asio) 1.17.0)
  * MSVC 19.31 (Visual Studio 17 2022)
  * GCC 9.3.0, 10.3.0, 11.1.0
  * Clang 10.0.0, 11.0.0, 12.0.0

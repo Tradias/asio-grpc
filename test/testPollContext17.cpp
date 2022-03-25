@@ -75,7 +75,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest,
                                                  // Next grpc_context.poll() will reset the stopped state
                                                  CHECK(grpc_context.is_stopped());
                                                  asio::post(grpc_context,
-                                                            [&]
+                                                            [&, g = asio::make_work_guard(io_context)]
                                                             {
                                                                 invoked = true;
                                                             });
