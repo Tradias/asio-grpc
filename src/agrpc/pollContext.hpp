@@ -25,8 +25,14 @@
 
 AGRPC_NAMESPACE_BEGIN()
 
+/**
+ * @brief (experimental) Default PollContext traits
+ */
 struct DefaultPollContextTraits
 {
+    /**
+     * @brief The default buffer size
+     */
     static constexpr std::size_t BUFFER_SIZE = 96;
 };
 
@@ -56,7 +62,22 @@ struct PollContextHandler
 }
 
 /**
- * @brief (experimental) Helper class to repeatedly poll a GrpcContext in a different execution context
+ * @brief (experimental) Helper class to run a GrpcContext in a different execution context
+ *
+ * Example showing how to share a thread with an `asio::io_context`:
+ *
+ * @snippet client.cpp poll_context-with-io_context
+ *
+ * @tparam Executor The executor type
+ * @tparam Traits The traits type, defaults to `agrpc::DefaultPollContextTraits`. If the static assertion
+ * 'OneShotAllocator has insufficient capacity' triggers then inherit from the default to increase the buffer size of
+ * the PollContext. Example:
+ * @code{cpp}
+ * struct MyTraits : agrpc::DefaultPollContextTraits
+ * {
+ *   static constexpr std::size_t BUFFER_SIZE = 128;
+ * }
+ * @endcode
  *
  * @since 1.5.0
  */
@@ -67,6 +88,9 @@ class PollContext
     static constexpr auto BUFFER_SIZE = Traits::BUFFER_SIZE;
 
   public:
+    /**
+     * @brief Construct a PollContext from an Executor
+     */
     template <class Exec>
     explicit PollContext(Exec&& executor)
         : executor(asio::prefer(asio::require(std::forward<Exec>(executor), asio::execution::blocking.never),
@@ -80,11 +104,20 @@ class PollContext
     PollContext& operator=(const PollContext&) = delete;
     PollContext& operator=(PollContext&&) = delete;
 
+    /**
+     * @brief Repeatedly call .poll() on the GrpcContext until it is stopped
+     */
     void async_poll(agrpc::GrpcContext& grpc_context)
     {
         this->async_poll(grpc_context, detail::IsGrpcContextStoppedPredicate{});
     }
 
+    /**
+     * @brief Repeatedly call .poll() on the GrpcContext until the provided StopPredicate returns true
+     *
+     * @param stop_predicate A function that returns true when the polling should stop. Its signature should be
+     * `bool(agrpc::GrpcContext&)`.
+     */
     template <class StopPredicate>
     void async_poll(agrpc::GrpcContext& grpc_context, StopPredicate stop_predicate)
     {

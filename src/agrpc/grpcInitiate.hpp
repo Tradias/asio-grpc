@@ -32,10 +32,10 @@ struct GrpcInitiateFn
     /**
      * @brief Initiate a gRPC tag-based function
      *
-     * This function can be used to lift tag-based gRPC functions that are not covered by `rpc.hpp` into the
+     * This function can be used to lift tag-based gRPC functions that are not covered by `agrpc/rpc.hpp` into the
      * Asio/unifex world.
      *
-     * Example:
+     * Example showing how to asynchronously wait for a gRPC channel to change its state:
      *
      * @snippet client.cpp grpc_initiate-NotifyOnStateChange
      *

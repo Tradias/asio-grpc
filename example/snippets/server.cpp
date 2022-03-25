@@ -50,12 +50,16 @@ void timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context)
     agrpc::wait(alarm, deadline, asio::bind_executor(grpc_context, [&](bool /*wait_ok*/) {}));
     /* [alarm-with-callback] */
 
-    /* [alarm-with-allocator-aware-callback] */
+    /* [alarm-with-allocator-aware-awaitable] */
+    agrpc::wait(alarm, deadline, agrpc::bind_allocator(my_allocator, asio::use_awaitable));
+    /* [alarm-with-allocator-aware-awaitable] */
+
+    /* [alarm-with-allocator-aware-executor] */
     agrpc::wait(
         alarm, deadline,
         asio::bind_executor(asio::require(grpc_context.get_executor(), asio::execution::allocator(my_allocator)),
                             [&](bool /*wait_ok*/) {}));
-    /* [alarm-with-allocator-aware-callback] */
+    /* [alarm-with-allocator-aware-executor] */
 
     /* [alarm-stackless-coroutine] */
     struct Coro : asio::coroutine

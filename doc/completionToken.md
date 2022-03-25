@@ -18,6 +18,12 @@ In libunifex senders are awaitable. `agrpc::use_sender` causes RPC step function
 
 ## Custom allocator
 
-Asio-grpc will attempt to get the associated allocator of the completion handler (in this case the lambda function) by calling [asio::get_associated_allocator](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/get_associated_allocator.html). If there is none then it will retrieve it from the executor through the [allocator property](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/execution__allocator_t.html). The allocator property can be set as follows:
+Asio-grpc will attempt to get the associated allocator of the completion handler by calling [asio::get_associated_allocator](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/get_associated_allocator.html). If there is none then it will retrieve it from the executor through the [allocator property](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/execution__allocator_t.html).
 
-@snippet server.cpp alarm-with-allocator-aware-callback
+The associated allocator can be customized using `agrpc::bind_allocator` (or `asio::bind_allocator` since Boost.Asio 1.79):
+
+@snippet server.cpp alarm-with-allocator-aware-awaitable
+
+The allocator property can be set as follows:
+
+@snippet server.cpp alarm-with-allocator-aware-executor

@@ -238,6 +238,20 @@ asio::awaitable<void> async_notify_on_state_change(const std::string& host)
     silence_unused(is_deadline_not_expired);
 }
 
+void poll_context(agrpc::GrpcContext& grpc_context)
+{
+    /* [poll_context-with-io_context] */
+    asio::io_context io_context;
+    agrpc::PollContext poll_context{io_context.get_executor()};
+    auto guard = asio::make_work_guard(grpc_context);
+    poll_context.async_poll(grpc_context);
+
+    // Use io_context and grpc_context and reset the guard when done.
+
+    io_context.run();
+    /* [poll_context-with-io_context] */
+}
+
 int main()
 {
     auto stub =

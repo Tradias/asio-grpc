@@ -36,6 +36,7 @@
 #include "agrpc/grpcContext.hpp"
 #include "agrpc/grpcExecutor.hpp"
 #include "agrpc/grpcInitiate.hpp"
+#include "agrpc/pollContext.hpp"
 #include "agrpc/repeatedlyRequest.hpp"
 #include "agrpc/repeatedlyRequestContext.hpp"
 #include "agrpc/rpc.hpp"
