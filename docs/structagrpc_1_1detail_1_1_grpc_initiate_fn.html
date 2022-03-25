@@ -146,8 +146,8 @@ template&lt;class InitiatingFunction , class CompletionToken  = agrpc::DefaultCo
 </div><div class="memdoc">
 
 <p>Initiate a gRPC tag-based function. </p>
-<p >This function can be used to lift tag-based gRPC functions that are not covered by <code>rpc.hpp</code> into the Asio/unifex world.</p>
-<p >Example:</p>
+<p >This function can be used to lift tag-based gRPC functions that are not covered by <code>agrpc/rpc.hpp</code> into the Asio/unifex world.</p>
+<p >Example showing how to asynchronously wait for a gRPC channel to change its state:</p>
 <div class="fragment"><div class="line">    <span class="keyword">auto</span> channel = grpc::CreateChannel(host, grpc::InsecureChannelCredentials());</div>
 <div class="line">    <span class="keyword">auto</span> state = channel-&gt;GetState(<span class="keyword">true</span>);</div>
 <div class="line">    <span class="keyword">auto</span> deadline = std::chrono::system_clock::now() + std::chrono::seconds(5);</div>

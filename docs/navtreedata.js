@@ -48,6 +48,7 @@ var NAVTREE =
       [ "Class Members", "functions.html", [
         [ "All", "functions.html", null ],
         [ "Functions", "functions_func.html", null ],
+        [ "Variables", "functions_vars.html", null ],
         [ "Typedefs", "functions_type.html", null ],
         [ "Related Functions", "functions_rela.html", null ]
       ] ]
@@ -58,7 +59,7 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"structagrpc_1_1detail_1_1_request_fn.html"
+"structagrpc_1_1detail_1_1_read_fn.html#ab663debda3d09bcf202cfa9e3ac52de0"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

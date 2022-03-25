@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['use_5fsender_0',['use_sender',['../namespaceagrpc.html#a35d42ccb3fa5adce6b5c045a275dafa9',1,'agrpc']]]
+  ['send_5finitial_5fmetadata_0',['send_initial_metadata',['../namespaceagrpc.html#a3aba46c16048e438aef48a67d551d77a',1,'agrpc']]]
 ];
