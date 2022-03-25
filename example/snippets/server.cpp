@@ -41,7 +41,7 @@ asio::awaitable<void> timer()
     silence_unused(wait_ok);
 }
 
-void timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context)
+asio::awaitable<void> timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context)
 {
     std::allocator<std::byte> my_allocator{};
     grpc::Alarm alarm;
@@ -51,7 +51,7 @@ void timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context)
     /* [alarm-with-callback] */
 
     /* [alarm-with-allocator-aware-awaitable] */
-    agrpc::wait(alarm, deadline, agrpc::bind_allocator(my_allocator, asio::use_awaitable));
+    co_await agrpc::wait(alarm, deadline, agrpc::bind_allocator(my_allocator, asio::use_awaitable));
     /* [alarm-with-allocator-aware-awaitable] */
 
     /* [alarm-with-allocator-aware-executor] */
