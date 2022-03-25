@@ -40,7 +40,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "PollContext asio::post")
                                   grpc_context.work_finished();
                               });
                });
-    poll_context.poll(grpc_context);
+    poll_context.async_poll(grpc_context);
     io_context.run();
     CHECK(invoked);
 }

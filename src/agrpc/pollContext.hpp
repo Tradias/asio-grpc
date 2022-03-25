@@ -25,25 +25,42 @@
 
 AGRPC_NAMESPACE_BEGIN()
 
+struct DefaultPollContextTraits
+{
+    static constexpr std::size_t BUFFER_SIZE = 96;
+};
+
+template <class Executor, class Traits = agrpc::DefaultPollContextTraits>
+class PollContext;
+
 namespace detail
 {
 struct IsGrpcContextStoppedPredicate
 {
     bool operator()(agrpc::GrpcContext& grpc_context) const noexcept { return grpc_context.is_stopped(); }
 };
-}
 
-struct DefaultPollContextTraits
+template <class Executor, class Traits, class StopPredicate>
+struct PollContextHandler
 {
-    static constexpr std::size_t BUFFER_SIZE = 96;
+    agrpc::GrpcContext& grpc_context;
+    agrpc::PollContext<Executor, Traits>& poll_context;
+    StopPredicate stop_predicate;
+
+    void operator()()
+    {
+        grpc_context.poll();
+        poll_context.async_poll(grpc_context, std::move(stop_predicate));
+    }
 };
+}
 
 /**
  * @brief (experimental) Helper class to repeatedly poll a GrpcContext in a different execution context
  *
  * @since 1.5.0
  */
-template <class Executor, class Traits = agrpc::DefaultPollContextTraits>
+template <class Executor, class Traits>
 class PollContext
 {
   private:
@@ -63,21 +80,20 @@ class PollContext
     PollContext& operator=(const PollContext&) = delete;
     PollContext& operator=(PollContext&&) = delete;
 
-    void poll(agrpc::GrpcContext& grpc_context) { this->poll(grpc_context, detail::IsGrpcContextStoppedPredicate{}); }
+    void async_poll(agrpc::GrpcContext& grpc_context)
+    {
+        this->async_poll(grpc_context, detail::IsGrpcContextStoppedPredicate{});
+    }
 
     template <class StopPredicate>
-    void poll(agrpc::GrpcContext& grpc_context, StopPredicate stop_predicate)
+    void async_poll(agrpc::GrpcContext& grpc_context, StopPredicate stop_predicate)
     {
         if (stop_predicate(grpc_context))
         {
             return;
         }
-        asio::execution::execute(executor,
-                                 [&, stop_predicate = std::move(stop_predicate)]() mutable
-                                 {
-                                     grpc_context.poll();
-                                     this->poll(grpc_context, std::move(stop_predicate));
-                                 });
+        asio::execution::execute(executor, detail::PollContextHandler<Executor, Traits, StopPredicate>{
+                                               grpc_context, *this, std::move(stop_predicate)});
     }
 
   private:
