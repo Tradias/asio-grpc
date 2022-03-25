@@ -88,20 +88,109 @@ $(document).ready(function(){initNavTree('classagrpc_1_1_poll_context.html','');
 
 <div class="header">
   <div class="summary">
+<a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classagrpc_1_1_poll_context-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">agrpc::PollContext&lt; Executor, Traits &gt; Class Template Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>(experimental) Helper class to repeatedly poll a <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> in a different execution context  
+<p>(experimental) Helper class to run a <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> in a different execution context  
  <a href="classagrpc_1_1_poll_context.html#details">More...</a></p>
 
 <p><code>#include &lt;agrpc/pollContext.hpp&gt;</code></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
+Public Member Functions</h2></td></tr>
+<tr class="memitem:aeee8c9e0f75d6fbe29d582537051bb1d"><td class="memTemplParams" colspan="2"><a id="aeee8c9e0f75d6fbe29d582537051bb1d" name="aeee8c9e0f75d6fbe29d582537051bb1d"></a>
+template&lt;class Exec &gt; </td></tr>
+<tr class="memitem:aeee8c9e0f75d6fbe29d582537051bb1d"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><b>PollContext</b> (Exec &amp;&amp;executor)</td></tr>
+<tr class="memdesc:aeee8c9e0f75d6fbe29d582537051bb1d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a <a class="el" href="classagrpc_1_1_poll_context.html" title="(experimental) Helper class to run a GrpcContext in a different execution context">PollContext</a> from an Executor. <br /></td></tr>
+<tr class="separator:aeee8c9e0f75d6fbe29d582537051bb1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afa5e8905f177f48fc880066d65e274e4"><td class="memItemLeft" align="right" valign="top"><a id="afa5e8905f177f48fc880066d65e274e4" name="afa5e8905f177f48fc880066d65e274e4"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>async_poll</b> (<a class="el" href="classagrpc_1_1_grpc_context.html">agrpc::GrpcContext</a> &amp;grpc_context)</td></tr>
+<tr class="memdesc:afa5e8905f177f48fc880066d65e274e4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Repeatedly call .poll() on the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> until it is stopped. <br /></td></tr>
+<tr class="separator:afa5e8905f177f48fc880066d65e274e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ada56544fb928d5aeebc772c6de98bde2"><td class="memTemplParams" colspan="2">template&lt;class StopPredicate &gt; </td></tr>
+<tr class="memitem:ada56544fb928d5aeebc772c6de98bde2"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_poll_context.html#ada56544fb928d5aeebc772c6de98bde2">async_poll</a> (<a class="el" href="classagrpc_1_1_grpc_context.html">agrpc::GrpcContext</a> &amp;grpc_context, StopPredicate stop_predicate)</td></tr>
+<tr class="memdesc:ada56544fb928d5aeebc772c6de98bde2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Repeatedly call .poll() on the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> until the provided StopPredicate returns true.  <a href="classagrpc_1_1_poll_context.html#ada56544fb928d5aeebc772c6de98bde2">More...</a><br /></td></tr>
+<tr class="separator:ada56544fb928d5aeebc772c6de98bde2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><div class="compoundTemplParams">template&lt;class Executor, class Traits = agrpc::DefaultPollContextTraits&gt;<br />
-class agrpc::PollContext&lt; Executor, Traits &gt;</div><p >(experimental) Helper class to repeatedly poll a <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> in a different execution context </p>
+<div class="textblock"><div class="compoundTemplParams">template&lt;class Executor, class Traits&gt;<br />
+class agrpc::PollContext&lt; Executor, Traits &gt;</div><p >(experimental) Helper class to run a <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> in a different execution context </p>
+<p >Example showing how to share a thread with an <code>asio::io_context</code>:</p>
+<div class="fragment"><div class="line">    asio::io_context io_context;</div>
+<div class="line">    <a class="code hl_class" href="classagrpc_1_1_poll_context.html">agrpc::PollContext</a> poll_context{io_context.get_executor()};</div>
+<div class="line">    <span class="keyword">auto</span> guard = asio::make_work_guard(grpc_context);</div>
+<div class="line">    poll_context.async_poll(grpc_context);</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">// Use io_context and grpc_context and reset the guard when done.</span></div>
+<div class="line"> </div>
+<div class="line">    io_context.run();</div>
+<div class="ttc" id="aclassagrpc_1_1_poll_context_html"><div class="ttname"><a href="classagrpc_1_1_poll_context.html">agrpc::PollContext</a></div><div class="ttdoc">(experimental) Helper class to run a GrpcContext in a different execution context</div><div class="ttdef"><b>Definition:</b> pollContext.hpp:86</div></div>
+</div><!-- fragment --><dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">Executor</td><td>The executor type </td></tr>
+    <tr><td class="paramname">Traits</td><td>The traits type, defaults to <code><a class="el" href="structagrpc_1_1_default_poll_context_traits.html" title="(experimental) Default PollContext traits">agrpc::DefaultPollContextTraits</a></code>. If the static assertion 'OneShotAllocator has insufficient capacity' triggers then inherit from the default to increase the buffer size of the <a class="el" href="classagrpc_1_1_poll_context.html" title="(experimental) Helper class to run a GrpcContext in a different execution context">PollContext</a>. Example: <div class="fragment"><div class="line"><span class="keyword">struct </span>MyTraits : <a class="code hl_struct" href="structagrpc_1_1_default_poll_context_traits.html">agrpc::DefaultPollContextTraits</a></div>
+<div class="line">{</div>
+<div class="line">  <span class="keyword">static</span> <span class="keyword">constexpr</span> std::size_t BUFFER_SIZE = 128;</div>
+<div class="line">}</div>
+<div class="ttc" id="astructagrpc_1_1_default_poll_context_traits_html"><div class="ttname"><a href="structagrpc_1_1_default_poll_context_traits.html">agrpc::DefaultPollContextTraits</a></div><div class="ttdoc">(experimental) Default PollContext traits</div><div class="ttdef"><b>Definition:</b> pollContext.hpp:32</div></div>
+</div><!-- fragment --></td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section since"><dt>Since</dt><dd>1.5.0 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="ada56544fb928d5aeebc772c6de98bde2" name="ada56544fb928d5aeebc772c6de98bde2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ada56544fb928d5aeebc772c6de98bde2">&#9670;&nbsp;</a></span>async_poll()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Executor , class Traits &gt; </div>
+<div class="memtemplate">
+template&lt;class StopPredicate &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classagrpc_1_1_poll_context.html">agrpc::PollContext</a>&lt; Executor, Traits &gt;::async_poll </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classagrpc_1_1_grpc_context.html">agrpc::GrpcContext</a> &amp;&#160;</td>
+          <td class="paramname"><em>grpc_context</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">StopPredicate&#160;</td>
+          <td class="paramname"><em>stop_predicate</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Repeatedly call .poll() on the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> until the provided StopPredicate returns true. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">stop_predicate</td><td>A function that returns true when the polling should stop. Its signature should be <code>bool(agrpc::GrpcContext&amp;)</code>. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+</div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->

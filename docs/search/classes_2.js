@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['finishfn_0',['FinishFn',['../structagrpc_1_1detail_1_1_finish_fn.html',1,'agrpc::detail']]],
-  ['finishwitherrorfn_1',['FinishWithErrorFn',['../structagrpc_1_1detail_1_1_finish_with_error_fn.html',1,'agrpc::detail']]]
+  ['defaultpollcontexttraits_0',['DefaultPollContextTraits',['../structagrpc_1_1_default_poll_context_traits.html',1,'agrpc']]]
 ];

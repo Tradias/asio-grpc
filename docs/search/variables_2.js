@@ -1,7 +1,6 @@
 var searchData=
 [
-  ['read_0',['read',['../namespaceagrpc.html#a685510388ab87c9a90c44f880e9de9cd',1,'agrpc']]],
-  ['read_5finitial_5fmetadata_1',['read_initial_metadata',['../namespaceagrpc.html#adfb175feaf15d5c970f73b4885eeaf72',1,'agrpc']]],
-  ['repeatedly_5frequest_2',['repeatedly_request',['../namespaceagrpc.html#ace37792785c92502711e61d9e9a5ff2d',1,'agrpc']]],
-  ['request_3',['request',['../namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08',1,'agrpc']]]
+  ['get_5fcompletion_5fqueue_0',['get_completion_queue',['../namespaceagrpc.html#a5abf4d06de9634b23c17e099314f29ac',1,'agrpc']]],
+  ['grpc_5finitiate_1',['grpc_initiate',['../namespaceagrpc.html#a88f68f5c9585030fe50eb2f8de3645d1',1,'agrpc']]],
+  ['grpc_5fuse_5fawaitable_2',['GRPC_USE_AWAITABLE',['../namespaceagrpc.html#abdc987a5025a9132b1dab93cc647f2cb',1,'agrpc::GRPC_USE_AWAITABLE()'],['../namespaceagrpc_1_1pmr.html#aef66c04f213e44931dab693469ea58d8',1,'agrpc::pmr::GRPC_USE_AWAITABLE()']]]
 ];
