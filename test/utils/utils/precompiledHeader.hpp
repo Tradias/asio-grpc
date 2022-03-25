@@ -25,18 +25,14 @@
 #include <asio/associated_executor.hpp>
 #include <asio/async_result.hpp>
 #include <asio/coroutine.hpp>
+#include <asio/detached.hpp>
 #include <asio/execution.hpp>
-#include <asio/execution/allocator.hpp>
-#include <asio/execution/blocking.hpp>
-#include <asio/execution/context.hpp>
-#include <asio/execution/mapping.hpp>
-#include <asio/execution/outstanding_work.hpp>
-#include <asio/execution/relationship.hpp>
 #include <asio/execution_context.hpp>
 #include <asio/post.hpp>
 #include <asio/query.hpp>
 #include <asio/spawn.hpp>
 #include <asio/steady_timer.hpp>
+#include <asio/system_executor.hpp>
 #include <asio/thread_pool.hpp>
 #include <asio/use_awaitable.hpp>
 
@@ -49,6 +45,7 @@
 #include <asio/associated_cancellation_slot.hpp>
 #include <asio/bind_cancellation_slot.hpp>
 #include <asio/cancellation_signal.hpp>
+#include <asio/experimental/awaitable_operators.hpp>
 #include <asio/experimental/deferred.hpp>
 #include <asio/experimental/parallel_group.hpp>
 #endif
@@ -61,18 +58,14 @@
 #include <boost/asio/associated_executor.hpp>
 #include <boost/asio/async_result.hpp>
 #include <boost/asio/coroutine.hpp>
+#include <boost/asio/detached.hpp>
 #include <boost/asio/execution.hpp>
-#include <boost/asio/execution/allocator.hpp>
-#include <boost/asio/execution/blocking.hpp>
-#include <boost/asio/execution/context.hpp>
-#include <boost/asio/execution/mapping.hpp>
-#include <boost/asio/execution/outstanding_work.hpp>
-#include <boost/asio/execution/relationship.hpp>
 #include <boost/asio/execution_context.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/query.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/steady_timer.hpp>
+#include <boost/asio/system_executor.hpp>
 #include <boost/asio/thread_pool.hpp>
 #include <boost/asio/use_awaitable.hpp>
 
@@ -81,7 +74,7 @@
 #include <boost/asio/use_awaitable.hpp>
 #endif
 
-#if (BOOST_ASIO_VERSION >= 102000)
+#if (BOOST_VERSION >= 107700)
 #include <boost/asio/associated_cancellation_slot.hpp>
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/cancellation_signal.hpp>
@@ -94,8 +87,11 @@
 #include <unifex/get_allocator.hpp>
 #include <unifex/get_stop_token.hpp>
 #include <unifex/just.hpp>
+#include <unifex/let_done.hpp>
+#include <unifex/let_error.hpp>
 #include <unifex/let_value.hpp>
 #include <unifex/let_value_with.hpp>
+#include <unifex/let_value_with_stop_source.hpp>
 #include <unifex/new_thread_context.hpp>
 #include <unifex/receiver_concepts.hpp>
 #include <unifex/scheduler_concepts.hpp>
@@ -107,6 +103,7 @@
 #include <unifex/sync_wait.hpp>
 #include <unifex/then.hpp>
 #include <unifex/when_all.hpp>
+#include <unifex/with_query_value.hpp>
 
 #if !UNIFEX_NO_COROUTINES
 #include <unifex/task.hpp>
@@ -127,3 +124,4 @@
 #include <tuple>
 #include <type_traits>
 #include <utility>
+#include <vector>

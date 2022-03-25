@@ -583,12 +583,10 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with parallel_group
     grpc::Alarm alarm;
     asio::steady_timer timer{get_executor(), std::chrono::milliseconds(100)};
     const auto not_too_exceed = std::chrono::steady_clock::now() + std::chrono::seconds(5);
-    asio::experimental::make_parallel_group(timer.async_wait(asio::experimental::deferred),
-                                            [&](auto token)
-                                            {
-                                                return agrpc::wait(alarm, test::five_seconds_from_now(),
-                                                                   asio::bind_executor(get_executor(), token));
-                                            })
+    asio::experimental::make_parallel_group(
+        timer.async_wait(asio::experimental::deferred),
+        agrpc::wait(alarm, test::five_seconds_from_now(),
+                    asio::bind_executor(get_executor(), asio::experimental::deferred)))
         .async_wait(asio::experimental::wait_for_one(),
                     [&](std::array<std::size_t, 2> actual_completion_order, test::ErrorCode timer_ec, bool wait_ok)
                     {
