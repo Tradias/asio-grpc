@@ -19,9 +19,12 @@
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/grpcInitiate.hpp"
-#include "agrpc/detail/initiate.hpp"
 #include "agrpc/detail/rpc.hpp"
 #include "agrpc/getCompletionQueue.hpp"
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+#include "agrpc/detail/initiate.hpp"
+#endif
 
 AGRPC_NAMESPACE_BEGIN()
 

@@ -17,10 +17,14 @@
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
-#include "agrpc/detail/defaultCompletionToken.hpp"
 #include "agrpc/detail/grpcSender.hpp"
-#include "agrpc/detail/initiate.hpp"
+#include "agrpc/detail/useSender.hpp"
 #include "agrpc/detail/utility.hpp"
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+#include "agrpc/detail/defaultCompletionToken.hpp"
+#include "agrpc/detail/initiate.hpp"
+#endif
 
 AGRPC_NAMESPACE_BEGIN()
 

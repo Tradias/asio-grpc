@@ -25,6 +25,7 @@
 #include <asio/associated_allocator.hpp>
 #include <asio/associated_executor.hpp>
 #include <asio/async_result.hpp>
+#include <asio/bind_executor.hpp>
 #include <asio/execution/allocator.hpp>
 #include <asio/execution/blocking.hpp>
 #include <asio/execution/connect.hpp>
@@ -49,6 +50,7 @@
 
 #if (ASIO_VERSION >= 102000)
 #include <asio/associated_cancellation_slot.hpp>
+#include <asio/bind_cancellation_slot.hpp>
 
 #define AGRPC_ASIO_HAS_CANCELLATION_SLOT
 #endif
@@ -60,6 +62,7 @@
 #include <boost/asio/associated_allocator.hpp>
 #include <boost/asio/associated_executor.hpp>
 #include <boost/asio/async_result.hpp>
+#include <boost/asio/bind_executor.hpp>
 #include <boost/asio/execution/allocator.hpp>
 #include <boost/asio/execution/blocking.hpp>
 #include <boost/asio/execution/connect.hpp>
@@ -84,6 +87,7 @@
 
 #if (BOOST_VERSION >= 107700)
 #include <boost/asio/associated_cancellation_slot.hpp>
+#include <boost/asio/bind_cancellation_slot.hpp>
 
 #define AGRPC_ASIO_HAS_CANCELLATION_SLOT
 #endif

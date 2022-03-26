@@ -23,6 +23,7 @@
 #include "agrpc/detail/grpcSender.hpp"
 #include "agrpc/detail/grpcSubmit.hpp"
 #include "agrpc/detail/queryGrpcContext.hpp"
+#include "agrpc/detail/unbind.hpp"
 #include "agrpc/detail/useSender.hpp"
 #include "agrpc/grpcContext.hpp"
 
@@ -41,8 +42,8 @@ class GrpcInitiator
     template <class CompletionHandler>
     void operator()(CompletionHandler&& completion_handler)
     {
-        const auto [executor, allocator] = detail::get_associated_executor_and_allocator(completion_handler);
-        auto& grpc_context = detail::query_grpc_context(executor);
+        auto unbound = detail::unbind_and_get_associates(std::forward<CompletionHandler>(completion_handler));
+        auto& grpc_context = detail::query_grpc_context(unbound.executor());
         if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context))
         {
             return;
@@ -50,22 +51,20 @@ class GrpcInitiator
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
         if constexpr (!std::is_same_v<detail::Empty, StopFunction>)
         {
-            if (auto cancellation_slot = asio::get_associated_cancellation_slot(completion_handler);
-                cancellation_slot.is_connected())
+            if (unbound.cancellation_slot().is_connected())
             {
-                cancellation_slot.template emplace<StopFunction>(initiating_function);
+                unbound.cancellation_slot().template emplace<StopFunction>(initiating_function);
             }
         }
 #endif
-        detail::grpc_submit(grpc_context, std::move(this->initiating_function),
-                            std::forward<CompletionHandler>(completion_handler), allocator);
+        detail::grpc_submit(grpc_context, std::move(this->initiating_function), std::move(unbound.completion_handler()),
+                            unbound.allocator());
     }
 
   private:
     InitiatingFunction initiating_function;
 };
 
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class CompletionHandler, class Payload>
 class GrpcCompletionHandlerWithPayload : public detail::AssociatedCompletionHandler<CompletionHandler>
 {
@@ -110,7 +109,6 @@ auto grpc_initiate_with_payload(InitiatingFunction initiating_function, Completi
     return asio::async_initiate<CompletionToken, void(std::pair<Payload, bool>)>(
         detail::GrpcWithPayloadInitiator<Payload, InitiatingFunction>{std::move(initiating_function)}, token);
 }
-#endif
 }
 
 AGRPC_NAMESPACE_END
