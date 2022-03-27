@@ -146,7 +146,7 @@ Public Member Functions</h2></td></tr>
 <div class="line">                                    server_context, reader, asio::bind_executor(grpc_context, asio::use_awaitable));</div>
 <div class="line">        },</div>
 <div class="line">        asio::detached);</div>
-<div class="ttc" id="anamespaceagrpc_html_a4a11653afb11f9486e4e3db0136a3e08"><div class="ttname"><a href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">agrpc::request</a></div><div class="ttdeci">constexpr detail::RequestFn request</div><div class="ttdoc">Start a new RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1391</div></div>
+<div class="ttc" id="anamespaceagrpc_html_a4a11653afb11f9486e4e3db0136a3e08"><div class="ttname"><a href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">agrpc::request</a></div><div class="ttdeci">constexpr detail::RequestFn request</div><div class="ttdoc">Start a new RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1394</div></div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a6a11ac849576aaacda0a4af2b89e1268" name="a6a11ac849576aaacda0a4af2b89e1268"></a>
@@ -194,7 +194,7 @@ template&lt;class Responder , class CompletionToken  = agrpc::DefaultCompletionT
 </ul>
 <p>Example:</p>
 <div class="fragment"><div class="line">    <span class="keywordtype">bool</span> read_ok = <span class="keyword">co_await</span> <a class="code hl_variable" href="namespaceagrpc.html#adfb175feaf15d5c970f73b4885eeaf72">agrpc::read_initial_metadata</a>(*reader, asio::use_awaitable);</div>
-<div class="ttc" id="anamespaceagrpc_html_adfb175feaf15d5c970f73b4885eeaf72"><div class="ttname"><a href="namespaceagrpc.html#adfb175feaf15d5c970f73b4885eeaf72">agrpc::read_initial_metadata</a></div><div class="ttdeci">constexpr detail::ReadInitialMetadataFn read_initial_metadata</div><div class="ttdoc">Read initial metadata for a RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1472</div></div>
+<div class="ttc" id="anamespaceagrpc_html_adfb175feaf15d5c970f73b4885eeaf72"><div class="ttname"><a href="namespaceagrpc.html#adfb175feaf15d5c970f73b4885eeaf72">agrpc::read_initial_metadata</a></div><div class="ttdeci">constexpr detail::ReadInitialMetadataFn read_initial_metadata</div><div class="ttdoc">Read initial metadata for a RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1475</div></div>
 </div><!-- fragment --><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">responder</td><td><code>grpc::ClientAsyncResponseReader</code>, <code>grpc::ClientAsyncReader</code>, <code>grpc::ClientAsyncWriter</code> or <code>grpc::ClientAsyncReaderWriter</code> </td></tr>
