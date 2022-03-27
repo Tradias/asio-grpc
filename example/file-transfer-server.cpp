@@ -69,7 +69,7 @@ agrpc::GrpcAwaitable<bool> handle_send_file_request(agrpc::GrpcContext& grpc_con
     example::v1::SendFileRequest second_write_buffer;
 
     // Switch to the io_context and open the file there to avoid blocking the GrpcContext.
-    co_await asio::dispatch(buffer1.bind_allocator(asio::bind_executor(io_context, agrpc::GRPC_USE_AWAITABLE)));
+    co_await asio::post(buffer1.bind_allocator(asio::bind_executor(io_context, agrpc::GRPC_USE_AWAITABLE)));
 
     // Relying on CTAD here to create a `asio::basic_stream_file<asio::io_context::executor_type>` which is slightly
     // more performant than the default `asio::stream_file` that is templated on `asio::any_io_executor`.
