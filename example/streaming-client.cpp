@@ -74,7 +74,7 @@ boost::asio::awaitable<void> make_bidirectional_streaming_request(example::v1::E
 
     // Let's perform a request/response ping-pong.
     example::v1::Request request;
-    request.set_integer(0);
+    request.set_integer(1);
     bool write_ok{true};
     bool read_ok{true};
     int count{};

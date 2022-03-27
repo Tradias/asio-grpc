@@ -20,13 +20,18 @@
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/experimental/awaitable_operators.hpp>
+#include <boost/asio/experimental/channel.hpp>
+#include <boost/asio/redirect_error.hpp>
 #include <boost/asio/signal_set.hpp>
+#include <boost/asio/thread_pool.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
 #include <iostream>
 #include <optional>
 #include <thread>
+
+namespace asio = boost::asio;
 
 struct ServerShutdown
 {
@@ -110,7 +115,57 @@ void register_client_streaming_handler(example::v1::Example::AsyncService& servi
         boost::asio::bind_executor(grpc_context.get_executor(), &handle_client_streaming_request));
 }
 
-boost::asio::awaitable<void> handle_bidirectional_streaming_request(example::v1::Example::AsyncService& service)
+// The following bidirectional streaming example shows how to dispatch requests to a thread_pool and write responses
+// back to the client.
+using Channel = asio::experimental::channel<void(boost::system::error_code, example::v1::Request)>;
+
+asio::awaitable<void> reader(grpc::ServerAsyncReaderWriter<example::v1::Response, example::v1::Request>& reader_writer,
+                             Channel& channel)
+{
+    bool ok{true};
+    while (ok)
+    {
+        example::v1::Request request;
+        if (!co_await agrpc::read(reader_writer, request))
+        {
+            // Client is done writing.
+            break;
+        }
+        // Send request to writer. Using a detached as completion token since we do not want to wait until the writer
+        // has picked up the request.
+        channel.async_send(boost::system::error_code{}, std::move(request), asio::detached);
+    }
+    // Signal the writer to complete.
+    channel.close();
+}
+
+asio::awaitable<bool> writer(grpc::ServerAsyncReaderWriter<example::v1::Response, example::v1::Request>& reader_writer,
+                             Channel& channel, asio::thread_pool& thread_pool)
+{
+    bool ok{true};
+    while (ok)
+    {
+        boost::system::error_code ec;
+        const auto request = co_await channel.async_receive(asio::redirect_error(asio::use_awaitable, ec));
+        if (ec)
+        {
+            // Channel got closed by the reader.
+            break;
+        }
+        // Switch to the thread_pool.
+        co_await asio::post(asio::bind_executor(thread_pool, asio::use_awaitable));
+        // Compute the response.
+        example::v1::Response response;
+        response.set_integer(request.integer() * 2);
+        // reader_writer is thread-safe so we can just interact with it from the thread_pool.
+        ok = co_await agrpc::write(reader_writer, response);
+        // Now we are back on the main thread.
+    }
+    co_return ok;
+}
+
+boost::asio::awaitable<void> handle_bidirectional_streaming_request(example::v1::Example::AsyncService& service,
+                                                                    boost::asio::thread_pool& thread_pool)
 {
     grpc::ServerContext server_context;
     grpc::ServerAsyncReaderWriter<example::v1::Response, example::v1::Request> reader_writer{&server_context};
@@ -121,20 +176,15 @@ boost::asio::awaitable<void> handle_bidirectional_streaming_request(example::v1:
         // Server is shutting down.
         co_return;
     }
+    Channel channel{co_await asio::this_coro::executor};
 
-    // Let's perform a request/response ping-pong until the client is done sending requests,
-    // incrementing an integer in the client's request each time.
-    example::v1::Request request;
-    bool read_ok = co_await agrpc::read(reader_writer, request);
-    bool write_ok{true};
-    while (read_ok && write_ok)
+    using namespace asio::experimental::awaitable_operators;
+    const auto ok = co_await(reader(reader_writer, channel) && writer(reader_writer, channel, thread_pool));
+
+    if (!ok)
     {
-        example::v1::Response response;
-        response.set_integer(request.integer() + 1);
-        // Reads and writes can be performed simultaneously.
-        using namespace boost::asio::experimental::awaitable_operators;
-        std::tie(read_ok, write_ok) =
-            co_await(agrpc::read(reader_writer, request) && agrpc::write(reader_writer, response));
+        // Client has disconnected or server is shutting down.
+        co_return;
     }
 
     bool finish_ok = co_await agrpc::finish(reader_writer, grpc::Status::OK);
@@ -200,12 +250,14 @@ int main(int argc, const char** argv)
 
     ServerShutdown server_shutdown{*server, grpc_context};
 
+    boost::asio::thread_pool thread_pool;
+
     register_client_streaming_handler(service, grpc_context);
     boost::asio::co_spawn(
         grpc_context,
         [&]() -> boost::asio::awaitable<void>
         {
-            co_await handle_bidirectional_streaming_request(service);
+            co_await handle_bidirectional_streaming_request(service, thread_pool);
         },
         boost::asio::detached);
     boost::asio::co_spawn(
