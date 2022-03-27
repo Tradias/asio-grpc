@@ -25,28 +25,6 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-struct UseSchedulerFn
-{
-    template <class Scheduler>
-    [[deprecated("renamed to use_sender")]] [[nodiscard]] auto operator()(const Scheduler& scheduler) const noexcept
-    {
-        return detail::UseSender{detail::query_grpc_context(scheduler)};
-    }
-
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    [[deprecated("renamed to use_sender")]] [[nodiscard]] auto operator()(
-        asio::execution_context& context) const noexcept
-    {
-        return detail::UseSender{static_cast<agrpc::GrpcContext&>(context)};
-    }
-#endif
-
-    [[deprecated("renamed to use_sender")]] [[nodiscard]] auto operator()(agrpc::GrpcContext& context) const noexcept
-    {
-        return detail::UseSender{context};
-    }
-};
-
 /**
  * @brief Function object to create sender completion tokens
  *
@@ -76,8 +54,6 @@ struct UseSenderFn
     }
 };
 }  // namespace detail
-
-[[deprecated("renamed to use_sender")]] inline constexpr detail::UseSchedulerFn use_scheduler{};
 
 /**
  * @brief Create sender completion token

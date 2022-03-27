@@ -131,7 +131,7 @@ asio::awaitable<void> reader(grpc::ServerAsyncReaderWriter<example::v1::Response
             // Client is done writing.
             break;
         }
-        // Send request to writer. Using a detached as completion token since we do not want to wait until the writer
+        // Send request to writer. Using detached as completion token since we do not want to wait until the writer
         // has picked up the request.
         channel.async_send(boost::system::error_code{}, std::move(request), asio::detached);
     }
