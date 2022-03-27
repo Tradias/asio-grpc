@@ -20,7 +20,7 @@
 #include <agrpc/wait.hpp>
 #include <doctest/doctest.h>
 
-DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0))
+DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 {
 TEST_CASE("GrpcExecutor fulfills Executor TS traits")
 {

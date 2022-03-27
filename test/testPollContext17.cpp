@@ -19,7 +19,7 @@
 #include <agrpc/pollContext.hpp>
 #include <doctest/doctest.h>
 
-DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0))
+DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 {
 TEST_CASE_FIXTURE(test::GrpcContextTest, "PollContext asio::post")
 {

@@ -19,7 +19,7 @@
 
 #include <thread>
 
-DOCTEST_TEST_SUITE("Examples" * doctest::timeout(180.0))
+DOCTEST_TEST_SUITE("Examples")
 {
 TEST_CASE("examples")
 {

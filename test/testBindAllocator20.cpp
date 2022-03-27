@@ -21,7 +21,7 @@
 #include <doctest/doctest.h>
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
-DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0))
+DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 {
 TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_allocator with awaitable")
 {

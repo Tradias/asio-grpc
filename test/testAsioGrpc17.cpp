@@ -27,7 +27,7 @@
 #include <optional>
 #include <thread>
 
-DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0))
+DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 {
 TEST_CASE("agrpc::request and agrpc::wait are noexcept for use_sender")
 {

@@ -23,7 +23,7 @@
 
 #include <cstddef>
 
-DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION* doctest::timeout(180.0))
+DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 {
 #ifdef AGRPC_ASIO_HAS_CONCEPTS
 TEST_CASE("GrpcExecutor fulfills Executor TS concepts")
