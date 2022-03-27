@@ -160,7 +160,7 @@ bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, S
             detail::GrpcContextImplementation::move_remote_work_to_local_queue(grpc_context);
     }
     detail::GrpcContextImplementation::process_local_queue<Invoke>(grpc_context);
-    if AGRPC_UNLIKELY (stop_condition())
+    if (stop_condition())
     {
         return false;
     }
