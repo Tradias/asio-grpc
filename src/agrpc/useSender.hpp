@@ -20,6 +20,7 @@
 #include "agrpc/detail/queryGrpcContext.hpp"
 #include "agrpc/detail/useSender.hpp"
 #include "agrpc/grpcContext.hpp"
+#include "agrpc/grpcExecutor.hpp"
 
 AGRPC_NAMESPACE_BEGIN()
 

@@ -43,7 +43,7 @@ namespace detail
 {
 struct IsGrpcContextStoppedPredicate
 {
-    bool operator()(agrpc::GrpcContext& grpc_context) const noexcept { return grpc_context.is_stopped(); }
+    bool operator()(const agrpc::GrpcContext& grpc_context) const noexcept { return grpc_context.is_stopped(); }
 };
 
 template <class Executor, class Traits, class StopPredicate>
@@ -93,8 +93,8 @@ class PollContext
      */
     template <class Exec>
     explicit PollContext(Exec&& executor)
-        : executor(asio::prefer(asio::require(std::forward<Exec>(executor), asio::execution::blocking.never),
-                                asio::execution::relationship.continuation,
+        : executor(asio::prefer(asio::require(std::forward<Exec>(executor), asio::execution::blocking_t::never),
+                                asio::execution::relationship_t::continuation,
                                 asio::execution::allocator(detail::OneShotAllocator<std::byte, BUFFER_SIZE>{&buffer})))
     {
     }
