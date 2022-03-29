@@ -195,6 +195,45 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "asio use_sender repeatedly_reques
     grpc_context.run();
     CHECK_EQ(4, request_count);
 }
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request cancel keeps request handler alive")
+{
+    struct RequestHandler
+    {
+        using executor_type = agrpc::GrpcExecutor;
+
+        executor_type executor;
+        bool& is_repeatedly_request_completed;
+
+        asio::awaitable<void> operator()(grpc::ServerContext&, test::msg::Request& request,
+                                         grpc::ServerAsyncResponseWriter<test::msg::Response>& writer)
+        {
+            CHECK_EQ(42, request.integer());
+            test::msg::Response response;
+            response.set_integer(21);
+            co_await agrpc::finish(writer, response, grpc::Status::OK);
+            CHECK(is_repeatedly_request_completed);
+        }
+
+        auto get_executor() const noexcept { return executor; }
+    };
+    bool is_repeatedly_request_completed{false};
+    asio::cancellation_signal signal;
+    agrpc::repeatedly_request(&test::v1::Test::AsyncService::RequestUnary, service,
+                              RequestHandler{get_executor(), is_repeatedly_request_completed},
+                              asio::bind_cancellation_slot(signal.slot(),
+                                                           [&]
+                                                           {
+                                                               is_repeatedly_request_completed = true;
+                                                           }));
+    signal.emit(asio::cancellation_type::all);
+    asio::spawn(grpc_context,
+                [&](auto&& yield)
+                {
+                    test::client_perform_unary_success(grpc_context, *stub, yield);
+                });
+    grpc_context.run();
+}
 #endif
 }
 #endif

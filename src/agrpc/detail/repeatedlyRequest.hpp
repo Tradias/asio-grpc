@@ -161,8 +161,6 @@ class RepeatedlyRequestOperation
     }
 
   private:
-    using StopContext = std::conditional_t<IsStoppable, std::atomic_bool, detail::Empty>;
-
     static void on_request_complete(GrpcBase* op, detail::InvokeHandler invoke_handler, bool ok,
                                     detail::GrpcContextLocalAllocator local_allocator)
     {
