@@ -16,7 +16,7 @@ cmake_minimum_required(VERSION 3.14...3.22)
 
 project(
     asio-grpc
-    VERSION 1.5.0
+    VERSION 1.5.1
     DESCRIPTION "Asynchronous gRPC with Asio/unified executors"
     HOMEPAGE_URL "https://github.com/Tradias/asio-grpc"
     LANGUAGES CXX)
