@@ -377,6 +377,8 @@ class RepeatedlyRequestAwaitableOperation
               std::forward<Rh>(request_handler), rpc, service, std::forward<Ch>(completion_handler)),
           buffer_operation(detail::create_allocated_buffer_operation<BUFFER_SIZE>())
     {
+        // Count buffer_operation
+        this->grpc_context().work_started();
     }
 
     ~RepeatedlyRequestAwaitableOperation()

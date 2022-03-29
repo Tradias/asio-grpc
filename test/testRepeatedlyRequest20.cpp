@@ -19,6 +19,7 @@
 
 #include <agrpc/repeatedlyRequest.hpp>
 #include <agrpc/rpc.hpp>
+#include <agrpc/wait.hpp>
 #include <doctest/doctest.h>
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
@@ -122,6 +123,40 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request clie
     grpc_context.run();
     CHECK_EQ(4, request_count);
     CHECK(allocator_has_been_used());
+}
+
+template <class Awaitable = asio::awaitable<void>>
+auto noop_awaitable_request_handler(agrpc::GrpcContext& grpc_context)
+{
+    return asio::bind_executor(grpc_context,
+                               [&](auto&&...) -> Awaitable
+                               {
+                                   co_return;
+                               });
+}
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request tracks work correctly")
+{
+    bool invoked{false};
+    grpc::Alarm alarm;
+    agrpc::wait(alarm, test::five_seconds_from_now(),
+                asio::bind_executor(grpc_context,
+                                    [&](bool)
+                                    {
+                                        invoked = true;
+                                    }));
+    agrpc::repeatedly_request(&test::v1::Test::AsyncService::RequestUnary, service,
+                              noop_awaitable_request_handler(grpc_context));
+    agrpc::repeatedly_request(&test::v1::Test::AsyncService::RequestClientStreaming, service,
+                              noop_awaitable_request_handler(grpc_context));
+    grpc_context.poll();
+    server->Shutdown();
+    grpc_context.poll();
+    CHECK_FALSE(grpc_context.is_stopped());
+    CHECK_FALSE(invoked);
+    alarm.Cancel();
+    grpc_context.poll();
+    CHECK(invoked);
 }
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
