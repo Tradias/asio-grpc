@@ -220,7 +220,7 @@ asio::awaitable<void> run_with_deadline(grpc::Alarm& alarm, grpc::ClientContext&
         }
     };
     using namespace asio::experimental::awaitable_operators;
-    co_await(set_alarm() || function());
+    co_await (set_alarm() || function());
 }
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline no cancel")

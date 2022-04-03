@@ -128,7 +128,7 @@ struct RequestFn
                                     void(std::unique_ptr<grpc::ClientAsyncResponseReader<Response>>)>::return_type
     {
         auto* completion_queue = co_await agrpc::get_completion_queue(token);
-        co_return(stub.*rpc)(&client_context, request, completion_queue);
+        co_return (stub.*rpc)(&client_context, request, completion_queue);
     }
 
     /**

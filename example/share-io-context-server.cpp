@@ -92,7 +92,7 @@ int main(int argc, const char** argv)
         {
             // The two operations below will run concurrently on the same thread.
             using namespace boost::asio::experimental::awaitable_operators;
-            co_await(handle_grpc_request(grpc_context, service) && handle_tcp_request(tcp_port));
+            co_await (handle_grpc_request(grpc_context, service) && handle_tcp_request(tcp_port));
         },
         asio::detached);
 

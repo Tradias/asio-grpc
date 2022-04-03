@@ -242,8 +242,8 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with awaitable oper
                    [&]() -> asio::awaitable<void>
                    {
                        using namespace asio::experimental::awaitable_operators;
-                       const auto variant = co_await(timer.async_wait(asio::use_awaitable) ||
-                                                     agrpc::wait(alarm, test::five_seconds_from_now()));
+                       const auto variant = co_await (timer.async_wait(asio::use_awaitable) ||
+                                                      agrpc::wait(alarm, test::five_seconds_from_now()));
                        result_index = variant.index();
                    });
     grpc_context.run();

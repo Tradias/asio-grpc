@@ -179,7 +179,7 @@ boost::asio::awaitable<void> handle_bidirectional_streaming_request(example::v1:
     Channel channel{co_await asio::this_coro::executor};
 
     using namespace asio::experimental::awaitable_operators;
-    const auto ok = co_await(reader(reader_writer, channel) && writer(reader_writer, channel, thread_pool));
+    const auto ok = co_await (reader(reader_writer, channel) && writer(reader_writer, channel, thread_pool));
 
     if (!ok)
     {

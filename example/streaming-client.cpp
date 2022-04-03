@@ -84,7 +84,7 @@ boost::asio::awaitable<void> make_bidirectional_streaming_request(example::v1::E
         // Reads and writes can be performed simultaneously.
         using namespace boost::asio::experimental::awaitable_operators;
         std::tie(read_ok, write_ok) =
-            co_await(agrpc::read(*reader_writer, response) && agrpc::write(*reader_writer, request));
+            co_await (agrpc::read(*reader_writer, response) && agrpc::write(*reader_writer, request));
         std::cout << "Bidirectional streaming: " << response.integer() << '\n';
         request.set_integer(response.integer());
         ++count;
@@ -112,7 +112,7 @@ boost::asio::awaitable<void> run_with_deadline(grpc::Alarm& alarm, grpc::ClientC
         }
     };
     using namespace boost::asio::experimental::awaitable_operators;
-    co_await(set_alarm() || function());
+    co_await (set_alarm() || function());
 }
 
 // This example shows how to cancel an entire RPC when a single step did not complete within the specified time.
@@ -178,7 +178,7 @@ int main(int argc, const char** argv)
         {
             // Let's perform the client-streaming and bidirectional-streaming requests simultaneously
             using namespace boost::asio::experimental::awaitable_operators;
-            co_await(make_client_streaming_request(*stub) && make_bidirectional_streaming_request(*stub));
+            co_await (make_client_streaming_request(*stub) && make_bidirectional_streaming_request(*stub));
             co_await make_and_cancel_unary_request(*stub_ext);
             co_await make_shutdown_request(*stub_ext);
         },

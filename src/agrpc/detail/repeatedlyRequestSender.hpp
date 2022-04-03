@@ -27,7 +27,6 @@
 
 #include <atomic>
 #include <optional>
-#include <variant>
 
 AGRPC_NAMESPACE_BEGIN()
 

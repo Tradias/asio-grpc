@@ -86,7 +86,7 @@ int main(int argc, const char** argv)
         {
             // The two operations below will run concurrently on the same thread.
             using namespace asio::experimental::awaitable_operators;
-            co_await(make_grpc_request(grpc_context, *stub) && make_tcp_request(tcp_port));
+            co_await (make_grpc_request(grpc_context, *stub) && make_tcp_request(tcp_port));
         },
         asio::detached);
 
