@@ -70,6 +70,11 @@ namespace detail
  * GrpcContext#run(). Except for the sender version, where the exception will be send to the receiver.
  * @param token The completion signature is `void()`. If the token has been created by `agrpc::use_sender` then the
  * request handler must return a sender.
+ *
+ * **Per-Operation Cancellation**
+ *
+ * All. Upon cancellation, the operation completes after receiving the next request from the client. The next request
+ * will still be handled normally.
  */
 class RepeatedlyRequestFn
 {

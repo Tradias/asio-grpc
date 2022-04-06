@@ -40,6 +40,10 @@ namespace detail
  * @attention The completion handler created from the completion token that is provided to the functions described below
  * must have an associated executor that refers to a GrpcContext:
  * @snippet server.cpp bind-executor-to-use-awaitable
+ *
+ * **Per-Operation Cancellation**
+ *
+ * None. gRPC does not support cancellation of requests.
  */
 struct RequestFn
 {
@@ -349,6 +353,17 @@ struct RequestFn
  * @attention The completion handler created from the completion token that is provided to the functions described below
  * must have an associated executor that refers to a GrpcContext:
  * @snippet server.cpp bind-executor-to-use-awaitable
+ *
+ * **Per-Operation Cancellation**
+ *
+ * None. Operations will be cancelled when the deadline of the RPC has been reached
+ * (see
+ * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6))
+ * or the call has been cancelled
+ * (see
+ * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984)
+ * and
+ * [grpc::ServerContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_context.html#a88d3a0c3d53e39f38654ce8fba968301)).
  */
 struct ReadFn
 {
@@ -460,6 +475,17 @@ struct ReadFn
  * @attention The completion handler created from the completion token that is provided to the functions described below
  * must have an associated executor that refers to a GrpcContext:
  * @snippet server.cpp bind-executor-to-use-awaitable
+ *
+ * **Per-Operation Cancellation**
+ *
+ * None. Operations will be cancelled when the deadline of the RPC has been reached
+ * (see
+ * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6))
+ * or the call has been cancelled
+ * (see
+ * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984)
+ * and
+ * [grpc::ServerContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_context.html#a88d3a0c3d53e39f38654ce8fba968301)).
  */
 struct WriteFn
 {
@@ -638,6 +664,17 @@ struct WriteFn
  * @attention The completion handler created from the completion token that is provided to the functions described below
  * must have an associated executor that refers to a GrpcContext:
  * @snippet server.cpp bind-executor-to-use-awaitable
+ *
+ * **Per-Operation Cancellation**
+ *
+ * None. Operations will be cancelled when the deadline of the RPC has been reached
+ * (see
+ * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6))
+ * or the call has been cancelled
+ * (see
+ * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984)
+ * and
+ * [grpc::ServerContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_context.html#a88d3a0c3d53e39f38654ce8fba968301)).
  */
 struct WritesDoneFn
 {
@@ -697,6 +734,17 @@ struct WritesDoneFn
  * @attention The completion handler created from the completion token that is provided to the functions described below
  * must have an associated executor that refers to a GrpcContext:
  * @snippet server.cpp bind-executor-to-use-awaitable
+ *
+ * **Per-Operation Cancellation**
+ *
+ * None. Operations will be cancelled when the deadline of the RPC has been reached
+ * (see
+ * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6))
+ * or the call has been cancelled
+ * (see
+ * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984)
+ * and
+ * [grpc::ServerContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_context.html#a88d3a0c3d53e39f38654ce8fba968301)).
  */
 struct FinishFn
 {
@@ -1011,6 +1059,17 @@ struct FinishFn
  * @attention The completion handler created from the completion token that is provided to the functions described below
  * must have an associated executor that refers to a GrpcContext:
  * @snippet server.cpp bind-executor-to-use-awaitable
+ *
+ * **Per-Operation Cancellation**
+ *
+ * None. Operations will be cancelled when the deadline of the RPC has been reached
+ * (see
+ * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6))
+ * or the call has been cancelled
+ * (see
+ * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984)
+ * and
+ * [grpc::ServerContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_context.html#a88d3a0c3d53e39f38654ce8fba968301)).
  */
 struct WriteLastFn
 {
@@ -1139,6 +1198,17 @@ struct WriteLastFn
  * @attention The completion handler created from the completion token that is provided to the functions described below
  * must have an associated executor that refers to a GrpcContext:
  * @snippet server.cpp bind-executor-to-use-awaitable
+ *
+ * **Per-Operation Cancellation**
+ *
+ * None. Operations will be cancelled when the deadline of the RPC has been reached
+ * (see
+ * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6))
+ * or the call has been cancelled
+ * (see
+ * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984)
+ * and
+ * [grpc::ServerContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_context.html#a88d3a0c3d53e39f38654ce8fba968301)).
  */
 struct WriteAndFinishFn
 {
@@ -1229,6 +1299,17 @@ struct WriteAndFinishFn
  * @attention The completion handler created from the completion token that is provided to the functions described below
  * must have an associated executor that refers to a GrpcContext:
  * @snippet server.cpp bind-executor-to-use-awaitable
+ *
+ * **Per-Operation Cancellation**
+ *
+ * None. Operations will be cancelled when the deadline of the RPC has been reached
+ * (see
+ * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6))
+ * or the call has been cancelled
+ * (see
+ * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984)
+ * and
+ * [grpc::ServerContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_context.html#a88d3a0c3d53e39f38654ce8fba968301)).
  */
 struct FinishWithErrorFn
 {
@@ -1309,6 +1390,17 @@ struct FinishWithErrorFn
  * @attention The completion handler created from the completion token that is provided to the functions described below
  * must have an associated executor that refers to a GrpcContext:
  * @snippet server.cpp bind-executor-to-use-awaitable
+ *
+ * **Per-Operation Cancellation**
+ *
+ * None. Operations will be cancelled when the deadline of the RPC has been reached
+ * (see
+ * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6))
+ * or the call has been cancelled
+ * (see
+ * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984)
+ * and
+ * [grpc::ServerContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_context.html#a88d3a0c3d53e39f38654ce8fba968301)).
  */
 struct SendInitialMetadataFn
 {
@@ -1349,6 +1441,17 @@ struct SendInitialMetadataFn
  * @attention The completion handler created from the completion token that is provided to the functions described below
  * must have an associated executor that refers to a GrpcContext:
  * @snippet server.cpp bind-executor-to-use-awaitable
+ *
+ * **Per-Operation Cancellation**
+ *
+ * None. Operations will be cancelled when the deadline of the RPC has been reached
+ * (see
+ * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6))
+ * or the call has been cancelled
+ * (see
+ * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984)
+ * and
+ * [grpc::ServerContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_context.html#a88d3a0c3d53e39f38654ce8fba968301)).
  */
 struct ReadInitialMetadataFn
 {

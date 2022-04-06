@@ -31,6 +31,12 @@ namespace detail
  * @attention The completion handler created from the completion token that is provided to the functions described below
  * must have an associated executor that refers to a GrpcContext:
  * @snippet server.cpp bind-executor-to-use-awaitable
+ *
+ * **Per-Operation Cancellation**
+ *
+ * All. Effectively calls
+ * [grpc::Alarm::Cancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_alarm.html#a57837c6b6d75f622c056b3050cf000fb)
+ * which will cause the operation to complete with `false`.
  */
 struct WaitFn
 {
