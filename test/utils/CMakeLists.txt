@@ -1,30 +1,24 @@
 # test main
-add_library(asio-grpc-test-protobuf OBJECT)
+function(asio_grpc_add_test_protobuf _asio_grpc_name)
+    add_library(${_asio_grpc_name} OBJECT)
 
-include(AsioGrpcProtobufGenerator)
-asio_grpc_protobuf_generate(
-    GENERATE_GRPC
-    TARGET asio-grpc-test-protobuf
-    USAGE_REQUIREMENT PUBLIC
-    OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
-    IMPORT_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/proto"
-    PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/proto/test/v1/test.proto"
-           "${CMAKE_CURRENT_SOURCE_DIR}/proto/test/msg/message.proto")
+    asio_grpc_protobuf_generate(
+        GENERATE_GRPC
+        TARGET ${_asio_grpc_name}
+        USAGE_REQUIREMENT PUBLIC
+        OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
+        IMPORT_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/proto"
+        PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/proto/test/v1/test.proto"
+               "${CMAKE_CURRENT_SOURCE_DIR}/proto/test/msg/message.proto")
 
-target_link_libraries(asio-grpc-test-protobuf PUBLIC protobuf::libprotobuf)
+    target_link_libraries(${_asio_grpc_name} PUBLIC protobuf::libprotobuf)
+endfunction()
 
+asio_grpc_add_test_protobuf(asio-grpc-test-protobuf)
 target_compile_features(asio-grpc-test-protobuf PUBLIC cxx_std_17)
 
-add_library(asio-grpc-test-protobuf-cpp20 OBJECT)
-
-target_sources(asio-grpc-test-protobuf-cpp20 PRIVATE $<TARGET_PROPERTY:asio-grpc-test-protobuf,SOURCES>)
-
+asio_grpc_add_test_protobuf(asio-grpc-test-protobuf-cpp20)
 target_compile_features(asio-grpc-test-protobuf-cpp20 PUBLIC cxx_std_20)
-
-target_include_directories(asio-grpc-test-protobuf-cpp20
-                           PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>")
-
-target_link_libraries(asio-grpc-test-protobuf-cpp20 PUBLIC protobuf::libprotobuf)
 
 function(asio_grpc_add_test_main _asio_grpc_name)
     add_library(${_asio_grpc_name} OBJECT)

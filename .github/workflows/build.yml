@@ -43,14 +43,14 @@ jobs:
             triplet: 'x64-windows-release',
             build-type: 'Release',
             cmake-extra-args: '-DVCPKG_TARGET_TRIPLET=x64-windows-release',
-            parallel: 2,
+            parallel: 1,
           }
           - {
             name: 'MacOSX/11/AppleClang-13.0.0.13000029',
             os: macos-11,
             triplet: 'x64-osx-release',
             build-type: 'Debug',
-            cmake-extra-args: '-GXcode -DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-osx-release -DASIO_GRPC_USE_BOOST_CONTAINER=on',
+            cmake-extra-args: '-DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-osx-release -DASIO_GRPC_USE_BOOST_CONTAINER=on',
             parallel: 3,
           }
 
