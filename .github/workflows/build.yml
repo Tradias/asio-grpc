@@ -48,7 +48,7 @@ jobs:
             name: 'MacOSX/11/AppleClang-13.0.0.13000029',
             os: macos-11,
             triplet: 'x64-osx-release',
-            cmake-extra-args: '-DVCPKG_TARGET_TRIPLET=x64-osx-release -DASIO_GRPC_USE_BOOST_CONTAINER=on',
+            cmake-extra-args: '-GXcode -DVCPKG_TARGET_TRIPLET=x64-osx-release -DASIO_GRPC_USE_BOOST_CONTAINER=on',
             parallel: 3,
           }
 
@@ -67,7 +67,7 @@ jobs:
       run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ matrix.config.triplet }} --host-triplet ${{ matrix.config.triplet }} --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
 
     - name: Configure CMake
-      run: cmake --preset default -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ matrix.config.cmake-extra-args }} ${{ env.CMAKE_ARGS }}
+      run: cmake --preset default ${{ matrix.config.cmake-extra-args }} -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_ARGS }}
 
     - name: Build
       run: cmake --build --preset default --config Release --parallel ${{ matrix.config.parallel }}
