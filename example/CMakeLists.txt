@@ -51,10 +51,9 @@ target_compile_features(asio-grpc-example-protos PUBLIC cxx_std_17)
 if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
     add_library(asio-grpc-example-protos-cpp20 OBJECT)
     target_sources(asio-grpc-example-protos-cpp20 PRIVATE $<TARGET_PROPERTY:asio-grpc-test-protobuf,SOURCES>)
-    target_link_libraries(
-        asio-grpc-example-protos-cpp20
-        PRIVATE asio-grpc-example-protos
-        PUBLIC protobuf::libprotobuf)
+    target_include_directories(asio-grpc-example-protos-cpp20
+                               PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>")
+    target_link_libraries(asio-grpc-example-protos-cpp20 PUBLIC protobuf::libprotobuf)
     target_compile_features(asio-grpc-example-protos-cpp20 PUBLIC cxx_std_20)
 
     asio_grpc_add_example(hello-world-client)

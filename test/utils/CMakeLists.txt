@@ -21,10 +21,10 @@ target_sources(asio-grpc-test-protobuf-cpp20 PRIVATE $<TARGET_PROPERTY:asio-grpc
 
 target_compile_features(asio-grpc-test-protobuf-cpp20 PUBLIC cxx_std_20)
 
-target_link_libraries(
-    asio-grpc-test-protobuf-cpp20
-    PRIVATE asio-grpc-test-protobuf
-    PUBLIC protobuf::libprotobuf)
+target_include_directories(asio-grpc-test-protobuf-cpp20
+                           PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>")
+
+target_link_libraries(asio-grpc-test-protobuf-cpp20 PUBLIC protobuf::libprotobuf)
 
 function(asio_grpc_add_test_main _asio_grpc_name)
     add_library(${_asio_grpc_name} OBJECT)

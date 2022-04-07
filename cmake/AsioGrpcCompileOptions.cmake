@@ -43,7 +43,7 @@ target_compile_options(
               -pedantic-errors>
               $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-self-move>)
 
-if(CMAKE_GENERATOR STRGREATER_EQUAL "Visual Studio")
+if("${CMAKE_GENERATOR}" STRGREATER_EQUAL "Visual Studio")
     target_compile_options(asio-grpc-common-compile-options INTERFACE /MP)
 endif()
 
