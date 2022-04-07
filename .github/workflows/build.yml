@@ -41,14 +41,16 @@ jobs:
             name: 'Windows/2022/MSVC-19.31',
             os: windows-2022,
             triplet: 'x64-windows-release',
+            build-type: 'Release',
             cmake-extra-args: '-DVCPKG_TARGET_TRIPLET=x64-windows-release',
-            parallel: 1,
+            parallel: 2,
           }
           - {
             name: 'MacOSX/11/AppleClang-13.0.0.13000029',
             os: macos-11,
             triplet: 'x64-osx-release',
-            cmake-extra-args: '-GXcode -DVCPKG_TARGET_TRIPLET=x64-osx-release -DASIO_GRPC_USE_BOOST_CONTAINER=on',
+            build-type: 'Debug',
+            cmake-extra-args: '-GXcode -DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-osx-release -DASIO_GRPC_USE_BOOST_CONTAINER=on',
             parallel: 3,
           }
 
@@ -70,10 +72,10 @@ jobs:
       run: cmake --preset default ${{ matrix.config.cmake-extra-args }} -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_ARGS }}
 
     - name: Build
-      run: cmake --build --preset default --config Release --parallel ${{ matrix.config.parallel }}
+      run: cmake --build --preset default --config ${{ matrix.config.build-type }} --parallel ${{ matrix.config.parallel }}
 
     - name: Test
-      run: ctest --preset default --config Release
+      run: ctest --preset default --config ${{ matrix.config.build-type }}
 
 
   multi-gcc-build:

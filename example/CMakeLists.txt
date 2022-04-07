@@ -12,27 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# example protos
-include(AsioGrpcProtobufGenerator)
-
-function(asio_grpc_add_example_protos _asio_grpc_name)
-    add_library(asio-grpc-${_asio_grpc_name} OBJECT)
-
-    asio_grpc_protobuf_generate(
-        GENERATE_GRPC
-        TARGET asio-grpc-${_asio_grpc_name}
-        USAGE_REQUIREMENT PUBLIC
-        OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
-        IMPORT_DIRS "${CMAKE_CURRENT_LIST_DIR}/proto"
-        PROTOS "${CMAKE_CURRENT_LIST_DIR}/proto/helloworld/helloworld.proto"
-               "${CMAKE_CURRENT_LIST_DIR}/proto/example/v1/example.proto"
-               "${CMAKE_CURRENT_LIST_DIR}/proto/example/v1/exampleExt.proto")
-
-    target_link_libraries(asio-grpc-${_asio_grpc_name} PUBLIC protobuf::libprotobuf)
-
-    target_compile_features(asio-grpc-${_asio_grpc_name} PUBLIC cxx_std_17)
-endfunction()
-
 # example helper
 add_library(asio-grpc-example-helper INTERFACE)
 
@@ -51,10 +30,31 @@ function(asio_grpc_add_example _asio_grpc_name)
                                                      asio-grpc-cpp20-compile-options)
 endfunction()
 
-asio_grpc_add_example_protos(example-protos)
+# example protos
+add_library(asio-grpc-example-protos OBJECT)
+
+include(AsioGrpcProtobufGenerator)
+asio_grpc_protobuf_generate(
+    GENERATE_GRPC
+    TARGET asio-grpc-example-protos
+    USAGE_REQUIREMENT PUBLIC
+    OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
+    IMPORT_DIRS "${CMAKE_CURRENT_LIST_DIR}/proto"
+    PROTOS "${CMAKE_CURRENT_LIST_DIR}/proto/helloworld/helloworld.proto"
+           "${CMAKE_CURRENT_LIST_DIR}/proto/example/v1/example.proto"
+           "${CMAKE_CURRENT_LIST_DIR}/proto/example/v1/exampleExt.proto")
+
+target_link_libraries(asio-grpc-example-protos PUBLIC protobuf::libprotobuf)
+
+target_compile_features(asio-grpc-example-protos PUBLIC cxx_std_17)
 
 if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
-    asio_grpc_add_example_protos(example-protos-cpp20)
+    add_library(asio-grpc-example-protos-cpp20 OBJECT)
+    target_sources(asio-grpc-example-protos-cpp20 PRIVATE $<TARGET_PROPERTY:asio-grpc-test-protobuf,SOURCES>)
+    target_link_libraries(
+        asio-grpc-example-protos-cpp20
+        PRIVATE asio-grpc-example-protos
+        PUBLIC protobuf::libprotobuf)
     target_compile_features(asio-grpc-example-protos-cpp20 PUBLIC cxx_std_20)
 
     asio_grpc_add_example(hello-world-client)
