@@ -111,11 +111,11 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ad22c3553c61f8936df229212983defcf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0a0018782f6500114676859717add9dc"><td class="memTemplParams" colspan="2">template&lt;class Response , class Request , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </td></tr>
 <tr class="memitem:a0a0018782f6500114676859717add9dc"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_write_fn.html#a0a0018782f6500114676859717add9dc">operator()</a> (grpc::ServerAsyncReaderWriter&lt; Response, Request &gt; &amp;reader_writer, const Response &amp;response, CompletionToken &amp;&amp;token={}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN&lt; CompletionToken &gt;)</td></tr>
-<tr class="memdesc:a0a0018782f6500114676859717add9dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write to a bidirectional server stream.  <a href="structagrpc_1_1detail_1_1_write_fn.html#a0a0018782f6500114676859717add9dc">More...</a><br /></td></tr>
+<tr class="memdesc:a0a0018782f6500114676859717add9dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write to a bidirectional stream (server-side)  <a href="structagrpc_1_1detail_1_1_write_fn.html#a0a0018782f6500114676859717add9dc">More...</a><br /></td></tr>
 <tr class="separator:a0a0018782f6500114676859717add9dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5a3d092a7f7674f74b162c2934dbb774"><td class="memTemplParams" colspan="2">template&lt;class Response , class Request , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </td></tr>
 <tr class="memitem:a5a3d092a7f7674f74b162c2934dbb774"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_write_fn.html#a5a3d092a7f7674f74b162c2934dbb774">operator()</a> (grpc::ServerAsyncReaderWriter&lt; Response, Request &gt; &amp;reader_writer, const Response &amp;response, grpc::WriteOptions options, CompletionToken &amp;&amp;token={}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN&lt; CompletionToken &gt;)</td></tr>
-<tr class="memdesc:a5a3d092a7f7674f74b162c2934dbb774"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write to a bidirectional server stream.  <a href="structagrpc_1_1detail_1_1_write_fn.html#a5a3d092a7f7674f74b162c2934dbb774">More...</a><br /></td></tr>
+<tr class="memdesc:a5a3d092a7f7674f74b162c2934dbb774"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write to a bidirectional stream (server-side)  <a href="structagrpc_1_1detail_1_1_write_fn.html#a5a3d092a7f7674f74b162c2934dbb774">More...</a><br /></td></tr>
 <tr class="separator:a5a3d092a7f7674f74b162c2934dbb774"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac8877d05c5132f17084d9cf203dd161d"><td class="memTemplParams" colspan="2">template&lt;class Request , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </td></tr>
 <tr class="memitem:ac8877d05c5132f17084d9cf203dd161d"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_write_fn.html#ac8877d05c5132f17084d9cf203dd161d">operator()</a> (grpc::ClientAsyncWriter&lt; Request &gt; &amp;writer, const Request &amp;<a class="el" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">request</a>, CompletionToken &amp;&amp;token={}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN&lt; CompletionToken &gt;)</td></tr>
@@ -127,11 +127,11 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ab23a26dc8fb0883f8665670e2b4a79df"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a78df2cf0ad3dcd70225ee9ce3554dbef"><td class="memTemplParams" colspan="2">template&lt;class Request , class Response , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </td></tr>
 <tr class="memitem:a78df2cf0ad3dcd70225ee9ce3554dbef"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_write_fn.html#a78df2cf0ad3dcd70225ee9ce3554dbef">operator()</a> (grpc::ClientAsyncReaderWriter&lt; Request, Response &gt; &amp;reader_writer, const Request &amp;<a class="el" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">request</a>, CompletionToken &amp;&amp;token={}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN&lt; CompletionToken &gt;)</td></tr>
-<tr class="memdesc:a78df2cf0ad3dcd70225ee9ce3554dbef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write to a bidirectional client stream.  <a href="structagrpc_1_1detail_1_1_write_fn.html#a78df2cf0ad3dcd70225ee9ce3554dbef">More...</a><br /></td></tr>
+<tr class="memdesc:a78df2cf0ad3dcd70225ee9ce3554dbef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write to a bidirectional stream (client-side)  <a href="structagrpc_1_1detail_1_1_write_fn.html#a78df2cf0ad3dcd70225ee9ce3554dbef">More...</a><br /></td></tr>
 <tr class="separator:a78df2cf0ad3dcd70225ee9ce3554dbef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7c8bc47efa2a0359ea114a976c82e06a"><td class="memTemplParams" colspan="2">template&lt;class Request , class Response , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </td></tr>
 <tr class="memitem:a7c8bc47efa2a0359ea114a976c82e06a"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_write_fn.html#a7c8bc47efa2a0359ea114a976c82e06a">operator()</a> (grpc::ClientAsyncReaderWriter&lt; Request, Response &gt; &amp;reader_writer, const Request &amp;<a class="el" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">request</a>, grpc::WriteOptions options, CompletionToken &amp;&amp;token={}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN&lt; CompletionToken &gt;)</td></tr>
-<tr class="memdesc:a7c8bc47efa2a0359ea114a976c82e06a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write to a bidirectional client stream.  <a href="structagrpc_1_1detail_1_1_write_fn.html#a7c8bc47efa2a0359ea114a976c82e06a">More...</a><br /></td></tr>
+<tr class="memdesc:a7c8bc47efa2a0359ea114a976c82e06a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write to a bidirectional stream (client-side)  <a href="structagrpc_1_1detail_1_1_write_fn.html#a7c8bc47efa2a0359ea114a976c82e06a">More...</a><br /></td></tr>
 <tr class="separator:a7c8bc47efa2a0359ea114a976c82e06a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -221,7 +221,7 @@ template&lt;class Request , class Response , class CompletionToken  = agrpc::Def
 </table>
 </div><div class="memdoc">
 
-<p>Write to a bidirectional client stream. </p>
+<p>Write to a bidirectional stream (client-side) </p>
 <p >Only one write may be outstanding at any given time. This is thread-safe with respect to read. gRPC does not take ownership or a reference to <code>request</code>, so it is safe to to deallocate once write returns.</p>
 <p >Example:</p>
 <div class="fragment"><div class="line">    example::v1::Request <a class="code hl_variable" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">request</a>;</div>
@@ -284,7 +284,7 @@ template&lt;class Request , class Response , class CompletionToken  = agrpc::Def
 </table>
 </div><div class="memdoc">
 
-<p>Write to a bidirectional client stream. </p>
+<p>Write to a bidirectional stream (client-side) </p>
 <p >WriteOptions options is used to set the write options of this message, otherwise identical to: <code>operator()(ClientAsyncReaderWriter&amp;, const Request&amp;, CompletionToken&amp;&amp;)</code> </p>
 
 </div>
@@ -440,7 +440,7 @@ template&lt;class Response , class Request , class CompletionToken  = agrpc::Def
 </table>
 </div><div class="memdoc">
 
-<p>Write to a bidirectional server stream. </p>
+<p>Write to a bidirectional stream (server-side) </p>
 <p >Only one write may be outstanding at any given time. This is thread-safe with respect to read. gRPC does not take ownership or a reference to <code>response</code>, so it is safe to to deallocate once write returns.</p>
 <p >Example:</p>
 <div class="fragment"><div class="line">    <span class="keywordtype">bool</span> write_ok = <span class="keyword">co_await</span> <a class="code hl_variable" href="namespaceagrpc.html#a5e79b992afde93ce78e966a8e4cf93c1">agrpc::write</a>(reader_writer, response, asio::use_awaitable);</div>
@@ -501,7 +501,7 @@ template&lt;class Response , class Request , class CompletionToken  = agrpc::Def
 </table>
 </div><div class="memdoc">
 
-<p>Write to a bidirectional server stream. </p>
+<p>Write to a bidirectional stream (server-side) </p>
 <p >WriteOptions options is used to set the write options of this message, otherwise identical to: <code>operator()(ServerAsyncReaderWriter&amp;, const Response&amp;, CompletionToken&amp;&amp;)</code> </p>
 
 </div>

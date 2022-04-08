@@ -103,7 +103,7 @@ $(document).ready(function(){initNavTree('structagrpc_1_1detail_1_1_finish_fn.ht
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a613201161863f8ccea494e1c560c56ea"><td class="memTemplParams" colspan="2">template&lt;class Response , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </td></tr>
 <tr class="memitem:a613201161863f8ccea494e1c560c56ea"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_finish_fn.html#a613201161863f8ccea494e1c560c56ea">operator()</a> (grpc::ServerAsyncWriter&lt; Response &gt; &amp;writer, const grpc::Status &amp;status, CompletionToken &amp;&amp;token={}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN&lt; CompletionToken &gt;)</td></tr>
-<tr class="memdesc:a613201161863f8ccea494e1c560c56ea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finish a server stream.  <a href="structagrpc_1_1detail_1_1_finish_fn.html#a613201161863f8ccea494e1c560c56ea">More...</a><br /></td></tr>
+<tr class="memdesc:a613201161863f8ccea494e1c560c56ea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finish a server stream (server-side)  <a href="structagrpc_1_1detail_1_1_finish_fn.html#a613201161863f8ccea494e1c560c56ea">More...</a><br /></td></tr>
 <tr class="separator:a613201161863f8ccea494e1c560c56ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae7e8c3b3feb46544e7cd5a1630209ed9"><td class="memTemplParams" colspan="2">template&lt;class Response , class Request , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </td></tr>
 <tr class="memitem:ae7e8c3b3feb46544e7cd5a1630209ed9"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_finish_fn.html#ae7e8c3b3feb46544e7cd5a1630209ed9">operator()</a> (grpc::ServerAsyncReader&lt; Response, Request &gt; &amp;reader, const Response &amp;response, const grpc::Status &amp;status, CompletionToken &amp;&amp;token={}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN&lt; CompletionToken &gt;)</td></tr>
@@ -710,7 +710,7 @@ template&lt;class Response , class CompletionToken  = agrpc::DefaultCompletionTo
 </table>
 </div><div class="memdoc">
 
-<p>Finish a server stream. </p>
+<p>Finish a server stream (server-side) </p>
 <p >Indicate that the stream is to be finished with a certain status code. Should not be used concurrently with other operations.</p>
 <p >It is appropriate to call this method when either:</p>
 <ul>
