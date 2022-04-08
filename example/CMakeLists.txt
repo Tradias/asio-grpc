@@ -21,24 +21,27 @@ target_include_directories(asio-grpc-example-helper INTERFACE "${CMAKE_CURRENT_S
 
 # example protos
 include(AsioGrpcProtobufGenerator)
+asio_grpc_protobuf_generate(
+    GENERATE_GRPC
+    OUT_VAR "ASIO_GRPC_EXAMPLE_PROTO_SOURCES"
+    OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
+    IMPORT_DIRS "${CMAKE_CURRENT_LIST_DIR}/proto"
+    PROTOS "${CMAKE_CURRENT_LIST_DIR}/proto/helloworld/helloworld.proto"
+           "${CMAKE_CURRENT_LIST_DIR}/proto/example/v1/example.proto"
+           "${CMAKE_CURRENT_LIST_DIR}/proto/example/v1/exampleExt.proto")
 
-function(asio_grpc_add_example_protos _asio_grpc_name)
+function(asio_grpc_add_example_proto_target _asio_grpc_name)
     add_library(asio-grpc-${_asio_grpc_name} OBJECT)
 
-    asio_grpc_protobuf_generate(
-        GENERATE_GRPC
-        TARGET asio-grpc-${_asio_grpc_name}
-        USAGE_REQUIREMENT PUBLIC
-        OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
-        IMPORT_DIRS "${CMAKE_CURRENT_LIST_DIR}/proto"
-        PROTOS "${CMAKE_CURRENT_LIST_DIR}/proto/helloworld/helloworld.proto"
-               "${CMAKE_CURRENT_LIST_DIR}/proto/example/v1/example.proto"
-               "${CMAKE_CURRENT_LIST_DIR}/proto/example/v1/exampleExt.proto")
+    target_sources(asio-grpc-${_asio_grpc_name} PRIVATE ${ASIO_GRPC_EXAMPLE_PROTO_SOURCES})
 
     target_link_libraries(asio-grpc-${_asio_grpc_name} PUBLIC protobuf::libprotobuf)
+
+    target_include_directories(asio-grpc-${_asio_grpc_name}
+                               PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>")
 endfunction()
 
-asio_grpc_add_example_protos(example-protos)
+asio_grpc_add_example_proto_target(example-protos)
 target_compile_features(asio-grpc-example-protos PUBLIC cxx_std_17)
 
 # examples
@@ -53,7 +56,7 @@ function(asio_grpc_add_example _asio_grpc_name)
 endfunction()
 
 if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
-    asio_grpc_add_example_protos(example-protos-cpp20)
+    asio_grpc_add_example_proto_target(example-protos-cpp20)
     target_compile_features(asio-grpc-example-protos-cpp20 PUBLIC cxx_std_20)
 
     asio_grpc_add_example(hello-world-client)
