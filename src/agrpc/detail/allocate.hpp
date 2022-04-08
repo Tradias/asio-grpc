@@ -87,7 +87,7 @@ class AllocatedPointer
 
     constexpr decltype(auto) operator*() const noexcept { return *this->get(); }
 
-    constexpr void release() noexcept { this->get() = nullptr; }
+    constexpr decltype(auto) release() noexcept { return std::exchange(this->get(), nullptr); }
 
     constexpr void reset() noexcept
     {

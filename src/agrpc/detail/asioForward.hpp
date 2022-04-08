@@ -112,6 +112,12 @@ namespace asio = ::boost::asio;
 
 namespace detail
 {
+#if defined(AGRPC_STANDALONE_ASIO)
+using ErrorCode = std::error_code;
+#elif defined(AGRPC_BOOST_ASIO)
+using ErrorCode = boost::system::error_code;
+#endif
+
 namespace exec
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)

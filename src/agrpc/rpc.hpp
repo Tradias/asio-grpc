@@ -393,7 +393,7 @@ struct ReadFn
     }
 
     /**
-     * @brief Read from a bidirectional server stream
+     * @brief Read from a bidirectional stream (server-side)
      *
      * This is thread-safe with respect to write or writes_done methods on the same stream. It should not be called
      * concurrently with another read on the same stream as the order of delivery will not be defined.
@@ -440,7 +440,7 @@ struct ReadFn
     }
 
     /**
-     * @brief Read from a bidirectional client stream
+     * @brief Read from a bidirectional stream (client-side)
      *
      * This is thread-safe with respect to write or writes_done methods. It should not be called concurrently with other
      * streaming APIs on the same stream. It is not meaningful to call it concurrently with another read on the same
@@ -530,7 +530,7 @@ struct WriteFn
     }
 
     /**
-     * @brief Write to a bidirectional server stream
+     * @brief Write to a bidirectional stream (server-side)
      *
      * Only one write may be outstanding at any given time. This is thread-safe with respect to read. gRPC does not
      * take ownership or a reference to `response`, so it is safe to to deallocate once write returns.
@@ -555,7 +555,7 @@ struct WriteFn
     }
 
     /**
-     * @brief Write to a bidirectional server stream
+     * @brief Write to a bidirectional stream (server-side)
      *
      * WriteOptions options is used to set the write options of this message, otherwise identical to:
      * `operator()(ServerAsyncReaderWriter&, const Response&, CompletionToken&&)`
@@ -612,7 +612,7 @@ struct WriteFn
     }
 
     /**
-     * @brief Write to a bidirectional client stream
+     * @brief Write to a bidirectional stream (client-side)
      *
      * Only one write may be outstanding at any given time. This is thread-safe with respect to read. gRPC does not
      * take ownership or a reference to `request`, so it is safe to to deallocate once write returns.
@@ -637,7 +637,7 @@ struct WriteFn
     }
 
     /**
-     * @brief Write to a bidirectional client stream
+     * @brief Write to a bidirectional stream (client-side)
      *
      * WriteOptions options is used to set the write options of this message, otherwise identical to:
      * `operator()(ClientAsyncReaderWriter&, const Request&, CompletionToken&&)`
@@ -749,7 +749,7 @@ struct WritesDoneFn
 struct FinishFn
 {
     /**
-     * @brief Finish a server stream
+     * @brief Finish a server stream (server-side)
      *
      * Indicate that the stream is to be finished with a certain status code. Should not be used concurrently with other
      * operations.

@@ -18,6 +18,7 @@
 #include "utils/grpcContextTest.hpp"
 #include "utils/rpc.hpp"
 
+#include <agrpc/cancelSafe.hpp>
 #include <agrpc/grpcInitiate.hpp>
 #include <agrpc/rpc.hpp>
 #include <agrpc/wait.hpp>
@@ -600,6 +601,65 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with parallel_group
     CHECK_EQ(1, completion_order[1]);
     CHECK_EQ(test::ErrorCode{}, error_code);
     CHECK_FALSE(ok);
+}
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "CancelSafe: cancel wait for alarm and wait again")
+{
+    bool done{};
+    agrpc::GrpcCancelSafe safe;
+    grpc::Alarm alarm;
+    agrpc::wait(alarm, test::five_hundred_milliseconds_from_now(), asio::bind_executor(grpc_context, safe.token()));
+    asio::cancellation_signal signal;
+    safe.wait(agrpc::bind_allocator(get_allocator(),
+                                    asio::bind_cancellation_slot(signal.slot(), asio::bind_executor(grpc_context,
+                                                                                                    [&](auto&& ec, bool)
+                                                                                                    {
+                                                                                                        done = !ec;
+                                                                                                    }))));
+    signal.emit(asio::cancellation_type::terminal);
+    safe.wait(asio::bind_executor(grpc_context,
+                                  [&](auto&&, bool)
+                                  {
+                                      CHECK_FALSE(done);
+                                      done = true;
+                                  }));
+    grpc_context.run();
+    CHECK(done);
+    CHECK(allocator_has_been_used());
+}
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "CancelSafe: wait before initiate")
+{
+    bool ok{};
+    agrpc::CancelSafe<> safe;
+    safe.wait(asio::bind_executor(grpc_context,
+                                  [&](auto&& ec)
+                                  {
+                                      ok = !ec;
+                                  }));
+    asio::post(asio::bind_executor(grpc_context, safe.token()));
+    grpc_context.run();
+    CHECK(ok);
+}
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "CancelSafe: wait for already completed operation")
+{
+    bool ok{};
+    agrpc::CancelSafe<> safe;
+    asio::post(asio::bind_executor(grpc_context, safe.token()));
+    grpc::Alarm alarm;
+    agrpc::wait(alarm, test::ten_milliseconds_from_now(),
+                asio::bind_executor(grpc_context,
+                                    [&](bool)
+                                    {
+                                        safe.wait(asio::bind_executor(grpc_context,
+                                                                      [&](auto&& ec)
+                                                                      {
+                                                                          ok = !ec;
+                                                                      }));
+                                    }));
+    grpc_context.run();
+    CHECK(ok);
 }
 #endif
 }

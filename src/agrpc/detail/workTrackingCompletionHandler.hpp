@@ -50,9 +50,11 @@ class WorkTrackingCompletionHandler
     : private detail::EmptyBaseOptimization<detail::AssociatedWorkTrackingExecutor<CompletionHandler>>,
       private detail::EmptyBaseOptimization<CompletionHandler>
 {
+#ifndef AGRPC_ASIO_HAS_CANCELLATION_SLOT
   public:
     using executor_type = asio::associated_executor_t<CompletionHandler>;
     using allocator_type = asio::associated_allocator_t<CompletionHandler>;
+#endif
 
   private:
     using WorkTracker = detail::AssociatedWorkTrackingExecutor<CompletionHandler>;
@@ -60,27 +62,29 @@ class WorkTrackingCompletionHandler
     using Base2 = detail::EmptyBaseOptimization<CompletionHandler>;
 
   public:
-    explicit WorkTrackingCompletionHandler(CompletionHandler completion_handler)
+    template <class Ch>
+    explicit WorkTrackingCompletionHandler(Ch&& completion_handler)
         : Base1(detail::InplaceWithFunction{},
                 [&]
                 {
                     return WorkTrackingCompletionHandler::create_work_tracker(completion_handler);
                 }),
-          Base2(std::move(completion_handler))
+          Base2(std::forward<Ch>(completion_handler))
     {
     }
 
-    [[nodiscard]] auto& completion_handler() noexcept { return static_cast<const Base2*>(this)->get(); }
+    [[nodiscard]] auto& completion_handler() noexcept { return static_cast<Base2*>(this)->get(); }
 
     [[nodiscard]] auto& completion_handler() const noexcept { return static_cast<const Base2*>(this)->get(); }
 
     template <class... Args>
     void operator()(Args&&... args) &&
     {
-        WorkTrackingCompletionHandler::complete(std::move(static_cast<Base1*>(this)->get()), this->completion_handler(),
-                                                std::forward<Args>(args)...);
+        WorkTrackingCompletionHandler::complete(std::move(static_cast<Base1*>(this)->get()),
+                                                std::move(this->completion_handler()), std::forward<Args>(args)...);
     }
 
+#ifndef AGRPC_ASIO_HAS_CANCELLATION_SLOT
     [[nodiscard]] executor_type get_executor() const noexcept
     {
         return asio::get_associated_executor(this->completion_handler());
@@ -90,9 +94,10 @@ class WorkTrackingCompletionHandler
     {
         return asio::get_associated_allocator(this->completion_handler());
     }
+#endif
 
   private:
-    static constexpr decltype(auto) create_work_tracker(CompletionHandler& completion_handler) noexcept
+    static constexpr decltype(auto) create_work_tracker(CompletionHandler& ch) noexcept
     {
         if constexpr (std::is_same_v<detail::Empty, WorkTracker>)
         {
@@ -100,23 +105,20 @@ class WorkTrackingCompletionHandler
         }
         else
         {
-            return asio::prefer(asio::get_associated_executor(completion_handler),
-                                asio::execution::outstanding_work_t::tracked);
+            return asio::prefer(asio::get_associated_executor(ch), asio::execution::outstanding_work_t::tracked);
         }
     }
 
-    template <class Ch, class... Args>
-    static constexpr void complete(WorkTracker, Ch&& completion_handler, Args&&... args) noexcept
+    template <class... Args>
+    static constexpr void complete(WorkTracker, CompletionHandler&& ch, Args&&... args) noexcept
     {
-        auto executor =
-            asio::prefer(asio::get_associated_executor(completion_handler), asio::execution::blocking_t::possibly,
-                         asio::execution::allocator(asio::get_associated_allocator(completion_handler)));
-        asio::execution::execute(
-            std::move(executor),
-            [ch = std::forward<Ch>(completion_handler), args = std::tuple(std::forward<Args>(args)...)]() mutable
-            {
-                std::apply(std::move(ch), std::move(args));
-            });
+        auto executor = asio::prefer(asio::get_associated_executor(ch), asio::execution::blocking_t::possibly,
+                                     asio::execution::allocator(asio::get_associated_allocator(ch)));
+        asio::execution::execute(std::move(executor),
+                                 [ch = std::move(ch), args = std::tuple(std::forward<Args>(args)...)]() mutable
+                                 {
+                                     std::apply(std::move(ch), std::move(args));
+                                 });
     }
 };
 #endif
@@ -128,11 +130,11 @@ AGRPC_NAMESPACE_END
 AGRPC_ASIO_NAMESPACE_BEGIN()
 
 template <template <class, class> class Associator, class CompletionHandler, class DefaultCandidate>
-struct associator<Associator, agrpc::detail::WorkTrackingCompletionHandler<CompletionHandler>, DefaultCandidate>
+struct associator<Associator, ::agrpc::detail::WorkTrackingCompletionHandler<CompletionHandler>, DefaultCandidate>
 {
     using type = typename Associator<CompletionHandler, DefaultCandidate>::type;
 
-    static type get(const agrpc::detail::WorkTrackingCompletionHandler<CompletionHandler>& b,
+    static type get(const ::agrpc::detail::WorkTrackingCompletionHandler<CompletionHandler>& b,
                     const DefaultCandidate& c = DefaultCandidate()) noexcept
     {
         return Associator<CompletionHandler, DefaultCandidate>::get(b.completion_handler(), c);

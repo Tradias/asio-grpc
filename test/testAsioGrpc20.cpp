@@ -17,6 +17,7 @@
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/time.hpp"
 
+#include <agrpc/cancelSafe.hpp>
 #include <agrpc/rpc.hpp>
 #include <agrpc/wait.hpp>
 #include <doctest/doctest.h>
@@ -293,6 +294,28 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline and c
     grpc_context.run();
     CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
     CHECK_FALSE(server_finish_ok);
+}
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "CancelSafe: co_await for a CancelSafe and an alarm using operator||")
+{
+    test::co_spawn(get_executor(),
+                   [&]() -> asio::awaitable<void>
+                   {
+                       agrpc::GrpcCancelSafe safe;
+                       grpc::Alarm alarm;
+                       agrpc::wait(alarm, test::five_hundred_milliseconds_from_now(),
+                                   asio::bind_executor(grpc_context, safe.token()));
+                       grpc::Alarm alarm2;
+                       for (size_t i = 0; i < 3; ++i)
+                       {
+                           using namespace asio::experimental::awaitable_operators;
+                           auto variant = co_await (agrpc::wait(alarm2, test::ten_milliseconds_from_now()) ||
+                                                    safe.wait(agrpc::DefaultCompletionToken{}));
+                           CHECK(std::get<0>(variant));
+                       }
+                       CHECK(co_await safe.wait(agrpc::DefaultCompletionToken{}));
+                   });
+    grpc_context.run();
 }
 #endif
 }
