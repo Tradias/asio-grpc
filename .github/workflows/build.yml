@@ -156,7 +156,7 @@ jobs:
       run: cmake --preset default -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which g++-11) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
 
     - name: GCC 11 Build
-      run: cmake --build ${{ github.workspace }}/build-11 --config Release --parallel $(nproc)
+      run: cmake --build ${{ github.workspace }}/build-11 --config Release --parallel $(nproc) --target all asio-grpc-check-header
 
     - name: GCC 11 Test
       run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-11 --config Release

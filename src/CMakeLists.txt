@@ -115,6 +115,5 @@ if(ASIO_GRPC_BUILD_TESTS)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/rpc.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/useAwaitable.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/useSender.hpp"
-                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/wait.hpp"
-                  "${CMAKE_CURRENT_SOURCE_DIR}/asioGrpc.cpp")
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/wait.hpp")
 endif()

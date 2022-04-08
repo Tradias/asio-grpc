@@ -17,6 +17,7 @@
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
+#include "agrpc/grpcContext.hpp"
 
 #include <grpcpp/client_context.h>
 #include <grpcpp/completion_queue.h>
