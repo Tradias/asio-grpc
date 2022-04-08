@@ -107,7 +107,7 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ad70bfdde44d5e48c3ce0c82781521adb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab663debda3d09bcf202cfa9e3ac52de0"><td class="memTemplParams" colspan="2">template&lt;class Response , class Request , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </td></tr>
 <tr class="memitem:ab663debda3d09bcf202cfa9e3ac52de0"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_read_fn.html#ab663debda3d09bcf202cfa9e3ac52de0">operator()</a> (grpc::ServerAsyncReaderWriter&lt; Response, Request &gt; &amp;reader_writer, Request &amp;<a class="el" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">request</a>, CompletionToken &amp;&amp;token={}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN&lt; CompletionToken &gt;)</td></tr>
-<tr class="memdesc:ab663debda3d09bcf202cfa9e3ac52de0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read from a bidirectional server stream.  <a href="structagrpc_1_1detail_1_1_read_fn.html#ab663debda3d09bcf202cfa9e3ac52de0">More...</a><br /></td></tr>
+<tr class="memdesc:ab663debda3d09bcf202cfa9e3ac52de0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read from a bidirectional stream (server-side)  <a href="structagrpc_1_1detail_1_1_read_fn.html#ab663debda3d09bcf202cfa9e3ac52de0">More...</a><br /></td></tr>
 <tr class="separator:ab663debda3d09bcf202cfa9e3ac52de0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5d3a57d2579de87909c721e31f19cf8a"><td class="memTemplParams" colspan="2">template&lt;class Response , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </td></tr>
 <tr class="memitem:a5d3a57d2579de87909c721e31f19cf8a"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_read_fn.html#a5d3a57d2579de87909c721e31f19cf8a">operator()</a> (grpc::ClientAsyncReader&lt; Response &gt; &amp;reader, Response &amp;response, CompletionToken &amp;&amp;token={}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN&lt; CompletionToken &gt;)</td></tr>
@@ -115,7 +115,7 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a5d3a57d2579de87909c721e31f19cf8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af737bdcfe170e27bc1c878bbe33163b8"><td class="memTemplParams" colspan="2">template&lt;class Request , class Response , class CompletionToken  = agrpc::DefaultCompletionToken&gt; </td></tr>
 <tr class="memitem:af737bdcfe170e27bc1c878bbe33163b8"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structagrpc_1_1detail_1_1_read_fn.html#af737bdcfe170e27bc1c878bbe33163b8">operator()</a> (grpc::ClientAsyncReaderWriter&lt; Request, Response &gt; &amp;reader_writer, Response &amp;response, CompletionToken &amp;&amp;token={}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN&lt; CompletionToken &gt;)</td></tr>
-<tr class="memdesc:af737bdcfe170e27bc1c878bbe33163b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read from a bidirectional client stream.  <a href="structagrpc_1_1detail_1_1_read_fn.html#af737bdcfe170e27bc1c878bbe33163b8">More...</a><br /></td></tr>
+<tr class="memdesc:af737bdcfe170e27bc1c878bbe33163b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read from a bidirectional stream (client-side)  <a href="structagrpc_1_1detail_1_1_read_fn.html#af737bdcfe170e27bc1c878bbe33163b8">More...</a><br /></td></tr>
 <tr class="separator:af737bdcfe170e27bc1c878bbe33163b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -262,7 +262,7 @@ template&lt;class Request , class Response , class CompletionToken  = agrpc::Def
 </table>
 </div><div class="memdoc">
 
-<p>Read from a bidirectional client stream. </p>
+<p>Read from a bidirectional stream (client-side) </p>
 <p >This is thread-safe with respect to write or writes_done methods. It should not be called concurrently with other streaming APIs on the same stream. It is not meaningful to call it concurrently with another read on the same stream since reads on the same stream are delivered in order.</p>
 <p >Example:</p>
 <div class="fragment"><div class="line">    example::v1::Response response;</div>
@@ -374,7 +374,7 @@ template&lt;class Response , class Request , class CompletionToken  = agrpc::Def
 </table>
 </div><div class="memdoc">
 
-<p>Read from a bidirectional server stream. </p>
+<p>Read from a bidirectional stream (server-side) </p>
 <p >This is thread-safe with respect to write or writes_done methods on the same stream. It should not be called concurrently with another read on the same stream as the order of delivery will not be defined.</p>
 <p >Example:</p>
 <div class="fragment"><div class="line">    example::v1::Request <a class="code hl_variable" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">request</a>;</div>
