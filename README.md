@@ -60,7 +60,7 @@ Tested by CI:
  * gRPC 1.44.0 (older versions work as well)
  * [Boost](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio.html) 1.78 (min. 1.74 or [standalone Asio](https://github.com/chriskohlhoff/asio) 1.17.0)
  * MSVC 19.31 (Visual Studio 17 2022)
- * GCC 9.3.0, 10.3.0, 11.1.0
+ * GCC 8.4.0, 9.3.0, 10.3.0, 11.1.0
  * Clang 10.0.0, 11.0.0, 12.0.0
  * AppleClang 13.0.0.13000029
  * C++17 or C++20
