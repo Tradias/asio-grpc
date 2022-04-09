@@ -70,6 +70,9 @@ target_link_libraries(asio-grpc-common-compile-options INTERFACE gRPC::grpc++ Bo
 
 target_compile_features(asio-grpc-common-compile-options INTERFACE cxx_std_17)
 
+target_sources(asio-grpc-common-compile-options
+               INTERFACE "$<$<CXX_COMPILER_ID:MSVC>:${ASIO_GRPC_PROJECT_ROOT}/asio-grpc.natvis>")
+
 if(ASIO_GRPC_USE_BOOST_CONTAINER)
     target_link_libraries(asio-grpc-common-compile-options INTERFACE Boost::container)
 endif()

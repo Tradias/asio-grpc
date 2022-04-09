@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+    <!-- CompressedPair -->
+    <Type Name="agrpc::b::detail::CompressedPair&lt;*,*,1&gt;">
+        <DisplayString>{*($T2 *)this}</DisplayString>
+        <Expand>
+            <ExpandedItem>*($T2 *)this</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="agrpc::s::detail::CompressedPair&lt;*,*,1&gt;">
+        <DisplayString>{*($T2 *)this}</DisplayString>
+        <Expand>
+            <ExpandedItem>*($T2 *)this</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="agrpc::u::detail::CompressedPair&lt;*,*,1&gt;">
+        <DisplayString>{*($T2 *)this}</DisplayString>
+        <Expand>
+            <ExpandedItem>*($T2 *)this</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="agrpc::b::detail::CompressedPair&lt;*,*,0&gt;">
+        <DisplayString>{second_}</DisplayString>
+        <Expand>
+            <ExpandedItem>second_</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="agrpc::s::detail::CompressedPair&lt;*,*,0&gt;">
+        <DisplayString>{second_}</DisplayString>
+        <Expand>
+            <ExpandedItem>second_</ExpandedItem>
+        </Expand>
+    </Type>
+    <Type Name="agrpc::u::detail::CompressedPair&lt;*,*,0&gt;">
+        <DisplayString>{second_}</DisplayString>
+        <Expand>
+            <ExpandedItem>second_</ExpandedItem>
+        </Expand>
+    </Type>
+    <!-- RepeatedlyRequestContext -->
+    <Type Name="agrpc::b::RepeatedlyRequestContext&lt;*&gt;">
+        <DisplayString>{impl.impl.first_}</DisplayString>
+        <Expand>
+            <Item Name="[server_context]">impl.impl.first_->context</Item>
+            <Item Name="[request]" Optional="true">impl.impl.first_->request_</Item>
+            <Item Name="[responder]">impl.impl.first_->responder_</Item>
+        </Expand>
+    </Type>
+    <Type Name="agrpc::s::RepeatedlyRequestContext&lt;*&gt;">
+        <DisplayString>{impl.impl.first_}</DisplayString>
+        <Expand>
+            <Item Name="[server_context]">impl.impl.first_->context</Item>
+            <Item Name="[request]" Optional="true">impl.impl.first_->request_</Item>
+            <Item Name="[responder]">impl.impl.first_->responder_</Item>
+        </Expand>
+    </Type>
+    <!-- BasicGrpcExecutor -->
+    <Type Name="agrpc::b::BasicGrpcExecutor&lt;*,*&gt;">
+        <DisplayString>{this->impl}</DisplayString>
+        <Expand>
+            <Item Name="[grpc_context]">this->impl.first_</Item>
+            <Item Name="[allocator]" Optional="true">this->impl.second_</Item>
+        </Expand>
+    </Type>
+    <Type Name="agrpc::s::BasicGrpcExecutor&lt;*,*&gt;">
+        <DisplayString>{this->impl}</DisplayString>
+        <Expand>
+            <Item Name="[grpc_context]">this->impl.first_</Item>
+            <Item Name="[allocator]" Optional="true">this->impl.second_</Item>
+        </Expand>
+    </Type>
+    <Type Name="agrpc::u::BasicGrpcExecutor&lt;*,*&gt;">
+        <DisplayString>{this->impl}</DisplayString>
+        <Expand>
+            <Item Name="[grpc_context]">this->impl.first_</Item>
+            <Item Name="[allocator]" Optional="true">this->impl.second_</Item>
+        </Expand>
+    </Type>
+    <!-- AllocatorBinder -->
+    <Type Name="agrpc::b::AllocatorBinder&lt;*,*&gt;">
+        <DisplayString>{impl.first_}</DisplayString>
+        <Expand>
+            <Item Name="[target]">impl.first_</Item>
+            <Item Name="[allocator]" Optional="true">impl.second_</Item>
+        </Expand>
+    </Type>
+    <Type Name="agrpc::s::AllocatorBinder&lt;*,*&gt;">
+        <DisplayString>{impl.first_}</DisplayString>
+        <Expand>
+            <Item Name="[target]">impl.first_</Item>
+            <Item Name="[allocator]" Optional="true">impl.second_</Item>
+        </Expand>
+    </Type>
+</AutoVisualizer>
