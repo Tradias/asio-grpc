@@ -73,8 +73,8 @@ struct CancelSafe
                         std::move(executor), std::move(allocator),
                         [local_result = std::move(local_result), ch = std::move(ch)]() mutable
                         {
-                            std::apply(std::move(ch),
-                                       std::tuple_cat(std::tuple(detail::ErrorCode{}), std::move(local_result)));
+                            std::apply(std::move(ch), std::tuple_cat(std::forward_as_tuple(detail::ErrorCode{}),
+                                                                     std::move(local_result)));
                         });
                     return;
                 }

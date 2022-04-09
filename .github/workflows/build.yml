@@ -92,14 +92,14 @@ jobs:
         sudo apt-get install g++-11 &&\
         sudo apt-get install gcovr
 
-    - name: Make gcc-9 default compiler
+    - name: Make gcc-8 default compiler
       run: |
-        sudo update-alternatives --install /usr/bin/cc cc $(which gcc-9) 50 &&\
-        sudo update-alternatives --set cc $(which gcc-9) &&\
-        sudo update-alternatives --install /usr/bin/c++ c++ $(which g++-9) 50 &&\
-        sudo update-alternatives --set c++ $(which g++-9)  &&\
-        sudo update-alternatives --install /usr/bin/cpp cpp $(which g++-9) 50 &&\
-        sudo update-alternatives --set cpp $(which g++-9)
+        sudo update-alternatives --install /usr/bin/cc cc $(which gcc-8) 50 &&\
+        sudo update-alternatives --set cc $(which gcc-8) &&\
+        sudo update-alternatives --install /usr/bin/c++ c++ $(which g++-8) 50 &&\
+        sudo update-alternatives --set c++ $(which g++-8)  &&\
+        sudo update-alternatives --install /usr/bin/cpp cpp $(which g++-8) 50 &&\
+        sudo update-alternatives --set cpp $(which g++-8)
 
     - uses: actions/checkout@v2
       with:
@@ -112,10 +112,19 @@ jobs:
         vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
         vcpkgJsonGlob: 'vcpkg.json'
-        appendedCacheKey: '${{ env.TRIPLET }}'
+        appendedCacheKey: '${{ env.TRIPLET }}-gcc8'
 
     - name: Run vcpkg
       run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
+
+    - name: GCC 8 Configure CMake
+      run: cmake --preset default -B ${{ github.workspace }}/build-8 -DCMAKE_CXX_COMPILER=$(which g++-8) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
+
+    - name: GCC 8 Build
+      run: cmake --build ${{ github.workspace }}/build-8 --config Release --parallel $(nproc)
+
+    - name: GCC 8 Test
+      run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-8 --config Release
 
     - name: GCC 9 Configure CMake
       run: cmake --preset default -B ${{ github.workspace }}/build-9 -DCMAKE_CXX_COMPILER=$(which g++-9) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}

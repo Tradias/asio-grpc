@@ -115,7 +115,7 @@ class WorkTrackingCompletionHandler
         auto executor = asio::prefer(asio::get_associated_executor(ch), asio::execution::blocking_t::possibly,
                                      asio::execution::allocator(asio::get_associated_allocator(ch)));
         asio::execution::execute(std::move(executor),
-                                 [ch = std::move(ch), args = std::tuple(std::forward<Args>(args)...)]() mutable
+                                 [ch = std::move(ch), args = std::make_tuple(std::forward<Args>(args)...)]() mutable
                                  {
                                      std::apply(std::move(ch), std::move(args));
                                  });

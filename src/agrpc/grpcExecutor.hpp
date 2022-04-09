@@ -23,6 +23,7 @@
 #include "agrpc/detail/grpcExecutorOptions.hpp"
 #include "agrpc/detail/memoryResource.hpp"
 #include "agrpc/detail/scheduleSender.hpp"
+#include "agrpc/detail/utility.hpp"
 #include "agrpc/grpcContext.hpp"
 
 #include <cstddef>
@@ -100,9 +101,13 @@ class BasicGrpcExecutor
         {
             return false;
         }
-        else
+        else if constexpr (detail::IS_EQUALITY_COMPARABLE<Allocator>)
         {
             return lhs.grpc_context() == rhs.grpc_context() && lhs.allocator() == rhs.allocator();
+        }
+        else
+        {
+            return lhs.grpc_context() == rhs.grpc_context();
         }
     }
 

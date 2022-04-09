@@ -14,13 +14,14 @@
 
 #include "utils/freePort.hpp"
 
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 
 #include <array>
 #include <charconv>
 #include <cstdint>
-#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <mutex>
@@ -29,35 +30,37 @@ namespace test
 {
 namespace
 {
+namespace fs = boost::filesystem;
+
 constexpr auto PORT_FILE_NAME = "agrpcServerUsedTestPort";
 constexpr uint16_t START_PORT = 5050u;
 
-void recreate_if_old(const std::filesystem::path& port_file)
+void recreate_if_old(const fs::path& port_file)
 {
-    if (std::filesystem::exists(port_file))
+    if (fs::exists(port_file))
     {
-        auto last_write_time = std::filesystem::last_write_time(port_file);
-        if (last_write_time + std::chrono::minutes(1) < std::filesystem::file_time_type::clock::now())
+        const auto last_write_time = std::chrono::system_clock::from_time_t(fs::last_write_time(port_file));
+        if (last_write_time + std::chrono::minutes(1) < std::chrono::system_clock::now())
         {
-            std::filesystem::remove(port_file);
-            std::ofstream create_file{port_file};
+            fs::remove(port_file);
+            std::ofstream create_file{port_file.native()};
         }
     }
     else
     {
-        std::ofstream create_file{port_file};
+        std::ofstream create_file{port_file.native()};
     }
 }
 
 auto get_port_lock_file()
 {
-    auto port_file = std::filesystem::temp_directory_path() / (std::string(PORT_FILE_NAME) + ".lock");
-    std::ofstream file_stream{port_file};
+    const auto port_file = fs::temp_directory_path() / (std::string(PORT_FILE_NAME) + ".lock");
+    std::ofstream file_stream{port_file.native()};
     return port_file;
 }
 
 template <class Function>
-auto perform_under_file_lock(Function&& function, const std::filesystem::path& lock_file)
+auto perform_under_file_lock(Function&& function, const fs::path& lock_file)
 {
     auto lock_file_name = lock_file.string();
     static boost::interprocess::file_lock file_lock{lock_file_name.c_str()};
@@ -65,17 +68,17 @@ auto perform_under_file_lock(Function&& function, const std::filesystem::path& l
     return std::forward<Function>(function)();
 }
 
-auto read_and_increment_port(const std::filesystem::path& port_file)
+auto read_and_increment_port(const fs::path& port_file)
 {
     uint16_t port = START_PORT;
-    std::fstream file_stream{port_file, std::ios::in | std::ios::out};
+    std::fstream file_stream{port_file.native(), std::ios::in | std::ios::out};
     static constexpr auto MAX_DIGITS = std::numeric_limits<decltype(port)>::digits10 + 1;
     std::array<char, MAX_DIGITS> file_content{};
     file_stream.read(file_content.data(), file_content.size());
 
     std::from_chars(file_content.data(), file_content.data() + file_content.size(), port);
     ++port;
-    auto [end, _] = std::to_chars(file_content.data(), file_content.data() + file_content.size(), port);
+    const auto [end, _] = std::to_chars(file_content.data(), file_content.data() + file_content.size(), port);
 
     file_stream.clear();
     file_stream.seekp(std::ios::beg);
@@ -98,7 +101,7 @@ uint16_t get_free_port()
         []
         {
             static auto port_lock_file = get_port_lock_file();
-            auto port_file = std::filesystem::temp_directory_path() / PORT_FILE_NAME;
+            const auto port_file = fs::temp_directory_path() / PORT_FILE_NAME;
             return perform_under_file_lock(
                 [&]
                 {

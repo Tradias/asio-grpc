@@ -40,7 +40,7 @@ function(asio_grpc_add_test_main _asio_grpc_name)
     target_link_libraries(
         ${_asio_grpc_name}
         PUBLIC doctest::doctest asio-grpc-common-compile-options asio-grpc-coverage-options
-        PRIVATE Boost::headers)
+        PRIVATE Boost::headers Boost::filesystem)
 endfunction()
 
 asio_grpc_add_test_main(asio-grpc-test-main)

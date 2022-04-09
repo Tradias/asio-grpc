@@ -54,10 +54,10 @@ void post_and_complete(void* ptr, Args... args)
     auto* completion_handler = static_cast<CompletionHandler*>(ptr);
     detail::post_with_allocator(asio::get_associated_executor(*completion_handler),
                                 asio::get_associated_allocator(*completion_handler),
-                                [ptr, args = std::tuple(std::move(args)...)]() mutable
+                                [ptr, args = std::make_tuple(std::move(args)...)]() mutable
                                 {
                                     std::apply(&detail::deallocate_and_invoke<CompletionHandler, Args...>,
-                                               std::tuple_cat(std::tuple(ptr), std::move(args)));
+                                               std::tuple_cat(std::make_tuple(ptr), std::move(args)));
                                 });
 }
 }
