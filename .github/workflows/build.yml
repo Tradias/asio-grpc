@@ -89,9 +89,7 @@ jobs:
     - name: Install GCC 8, 11 and gcovr
       run: |
         sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test &&\
-        sudo apt-get install g++-8 &&\
-        sudo apt-get install g++-11 &&\
-        sudo apt-get install gcovr
+        sudo apt-get install g++-8 g++-11 gcovr
 
     - name: Make gcc-8 default compiler
       run: |
@@ -119,7 +117,7 @@ jobs:
       run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
 
     - name: GCC 8 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-8 -DCMAKE_CXX_COMPILER=$(which g++-8) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
+      run: cmake --preset default -B ${{ github.workspace }}/build-8 -DCMAKE_CXX_COMPILER=$(which g++-8) -DASIO_GRPC_USE_BOOST_CONTAINER=on -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
 
     - name: GCC 8 Build
       run: cmake --build ${{ github.workspace }}/build-8 --config Release --parallel $(nproc)
