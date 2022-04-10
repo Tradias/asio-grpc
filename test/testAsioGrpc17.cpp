@@ -14,6 +14,7 @@
 
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asioUtils.hpp"
+#include "utils/countingAllocator.hpp"
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/grpcContextTest.hpp"
 #include "utils/rpc.hpp"
@@ -448,6 +449,47 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context bidirectional strea
             CHECK_EQ(21, response.integer());
         });
     grpc_context.run();
+}
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "agrpc::wait correctly unbinds executor_binder and allocator_binder")
+{
+    grpc::Alarm alarm;
+    std::size_t bytes_allocated{};
+    test::CountingAllocator<std::byte> allocator{bytes_allocated};
+    auto token = agrpc::bind_allocator(
+        allocator, asio::bind_executor(asio::any_io_executor{grpc_context.get_executor()}, [](auto&&) {}));
+    agrpc::wait(alarm, test::ten_milliseconds_from_now(), token);
+    grpc_context.run();
+    auto expected = sizeof(void*) * 4;
+    CHECK_LT(expected, sizeof(token));
+    CHECK_GE(expected, bytes_allocated);
+}
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTest,
+                  "client convenience request function correctly unbinds executor_binder and allocator_binder")
+{
+    // Setup server streaming
+    test::msg::Response response;
+    test::msg::Request client_request;
+    grpc::ServerAsyncWriter<test::msg::Response> writer{&server_context};
+    agrpc::request(
+        &test::v1::Test::AsyncService::RequestServerStreaming, service, server_context, client_request, writer,
+        asio::bind_executor(grpc_context,
+                            [&](bool)
+                            {
+                                agrpc::finish(writer, grpc::Status::OK, asio::bind_executor(grpc_context, [](bool) {}));
+                            }));
+    // Perform test
+    std::size_t bytes_allocated{};
+    test::CountingAllocator<std::byte> allocator{bytes_allocated};
+    auto token = agrpc::bind_allocator(
+        allocator, asio::bind_executor(asio::any_io_executor{grpc_context.get_executor()}, [](auto&&) {}));
+    test::msg::Request request;
+    agrpc::request(&test::v1::Test::Stub::AsyncServerStreaming, *stub, client_context, request, token);
+    grpc_context.run();
+    auto expected = sizeof(void*) * 4;
+    CHECK_LT(expected, sizeof(token));
+    CHECK_GE(expected, bytes_allocated);
 }
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "RPC step after grpc_context stop")

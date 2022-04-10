@@ -23,7 +23,7 @@
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 #include "agrpc/detail/defaultCompletionToken.hpp"
-#include "agrpc/detail/initiate.hpp"
+#include "agrpc/detail/grpcInitiator.hpp"
 #endif
 
 AGRPC_NAMESPACE_BEGIN()
@@ -53,6 +53,15 @@ template <class StopFunction>
 inline constexpr detail::GrpcInitiateImplFn<StopFunction> grpc_initiate_with_stop_function{};
 
 inline constexpr detail::GrpcInitiateImplFn<detail::Empty> grpc_initiate{};
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+template <class Payload, class InitiatingFunction, class CompletionToken>
+auto grpc_initiate_with_payload(InitiatingFunction initiating_function, CompletionToken token)
+{
+    return asio::async_initiate<CompletionToken, void(std::pair<Payload, bool>)>(
+        detail::GrpcWithPayloadInitiator<Payload, InitiatingFunction>{std::move(initiating_function)}, token);
+}
+#endif
 
 template <class CompletionToken>
 inline constexpr bool IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN_IMPL = false;

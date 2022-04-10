@@ -33,6 +33,8 @@ template <class CompletionHandler, class Executor, class Allocator
           >
 struct UnbindResult
 {
+    using CompletionHandlerT = CompletionHandler;
+
     CompletionHandler completion_handler_;
     Executor executor_;
     Allocator allocator_;

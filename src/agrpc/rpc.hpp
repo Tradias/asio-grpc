@@ -22,10 +22,6 @@
 #include "agrpc/detail/rpc.hpp"
 #include "agrpc/getCompletionQueue.hpp"
 
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-#include "agrpc/detail/initiate.hpp"
-#endif
-
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail

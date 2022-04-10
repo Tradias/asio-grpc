@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_INITIATE_HPP
-#define AGRPC_DETAIL_INITIATE_HPP
+#ifndef AGRPC_DETAIL_GRPCINITIATOR_HPP
+#define AGRPC_DETAIL_GRPCINITIATOR_HPP
 
 #include "agrpc/detail/allocateOperation.hpp"
 #include "agrpc/detail/asioForward.hpp"
@@ -43,6 +43,13 @@ class GrpcInitiator
     void operator()(CompletionHandler&& completion_handler)
     {
         auto unbound = detail::unbind_and_get_associates(std::forward<CompletionHandler>(completion_handler));
+        this->submit(std::move(unbound), std::move(unbound.completion_handler()));
+    }
+
+  protected:
+    template <class Unbound, class CompletionHandler>
+    void submit(Unbound&& unbound, CompletionHandler&& completion_handler)
+    {
         auto& grpc_context = detail::query_grpc_context(unbound.executor());
         if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context))
         {
@@ -57,8 +64,8 @@ class GrpcInitiator
             }
         }
 #endif
-        detail::grpc_submit(grpc_context, std::move(this->initiating_function), std::move(unbound.completion_handler()),
-                            unbound.allocator());
+        detail::grpc_submit(grpc_context, std::move(this->initiating_function),
+                            std::forward<CompletionHandler>(completion_handler), unbound.allocator());
     }
 
   private:
@@ -97,20 +104,15 @@ class GrpcWithPayloadInitiator : public detail::GrpcInitiator<InitiatingFunction
     template <class CompletionHandler>
     void operator()(CompletionHandler&& completion_handler)
     {
-        detail::GrpcInitiator<InitiatingFunction>::operator()(
-            detail::GrpcCompletionHandlerWithPayload<detail::RemoveCvrefT<CompletionHandler>, Payload>{
-                std::forward<CompletionHandler>(completion_handler)});
+        auto unbound = detail::unbind_and_get_associates(std::forward<CompletionHandler>(completion_handler));
+        using UnboundCompletionHandler = typename decltype(unbound)::CompletionHandlerT;
+        detail::GrpcCompletionHandlerWithPayload<UnboundCompletionHandler, Payload>
+            unbound_completion_handler_with_payload{std::move(unbound.completion_handler())};
+        this->submit(std::move(unbound), std::move(unbound_completion_handler_with_payload));
     }
 };
-
-template <class Payload, class InitiatingFunction, class CompletionToken>
-auto grpc_initiate_with_payload(InitiatingFunction initiating_function, CompletionToken token)
-{
-    return asio::async_initiate<CompletionToken, void(std::pair<Payload, bool>)>(
-        detail::GrpcWithPayloadInitiator<Payload, InitiatingFunction>{std::move(initiating_function)}, token);
-}
 }
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_INITIATE_HPP
+#endif  // AGRPC_DETAIL_GRPCINITIATOR_HPP
