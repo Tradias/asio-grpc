@@ -19,6 +19,7 @@
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
+#include "agrpc/detail/memoryResource.hpp"
 #include "agrpc/detail/utility.hpp"
 
 #include <memory>
@@ -212,7 +213,7 @@ auto bind_allocator(const Allocator& allocator, Target&& target)
 AGRPC_NAMESPACE_END
 
 template <class Allocator, class Target, class Alloc>
-struct std::uses_allocator<::agrpc::AllocatorBinder<Allocator, Target>, Alloc> : std::false_type
+struct ::agrpc::detail::container::uses_allocator<::agrpc::AllocatorBinder<Allocator, Target>, Alloc> : std::false_type
 {
 };
 

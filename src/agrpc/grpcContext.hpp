@@ -219,7 +219,7 @@ class GrpcContext
 AGRPC_NAMESPACE_END
 
 template <class Alloc>
-struct std::uses_allocator<::agrpc::GrpcContext, Alloc> : std::false_type
+struct ::agrpc::detail::container::uses_allocator<::agrpc::GrpcContext, Alloc> : std::false_type
 {
 };
 

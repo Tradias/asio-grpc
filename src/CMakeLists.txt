@@ -28,11 +28,14 @@ function(asio_grpc_create_interface_target _asio_grpc_name)
         set(ASIO_GRPC_MEMORY_RESOURCE_INDLUCES
             [[#include <boost/container/pmr/memory_resource.hpp>
 #include <boost/container/pmr/polymorphic_allocator.hpp>
-#include <boost/container/pmr/unsynchronized_pool_resource.hpp>]])
-        set(ASIO_GRPC_MEMORY_RESOURCE_NAMESPACE_ALIAS "namespace pmr = boost::container::pmr;")
+#include <boost/container/pmr/unsynchronized_pool_resource.hpp>
+#include <boost/container/uses_allocator.hpp>]])
+        set(ASIO_GRPC_MEMORY_RESOURCE_NAMESPACE_ALIAS [[namespace pmr = boost::container::pmr;
+namespace container = boost::container;]])
     else()
         set(ASIO_GRPC_MEMORY_RESOURCE_INDLUCES "#include <memory_resource>")
-        set(ASIO_GRPC_MEMORY_RESOURCE_NAMESPACE_ALIAS "namespace pmr = std::pmr;")
+        set(ASIO_GRPC_MEMORY_RESOURCE_NAMESPACE_ALIAS [[namespace pmr = std::pmr;
+namespace container = std;]])
     endif()
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/memoryResource.hpp.in"
                    "${CMAKE_CURRENT_BINARY_DIR}/generated/agrpc/detail/memoryResource.hpp" @ONLY)

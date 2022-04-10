@@ -20,6 +20,7 @@
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 
+#include "agrpc/detail/memoryResource.hpp"
 #include "agrpc/detail/utility.hpp"
 
 #include <memory>
@@ -143,7 +144,8 @@ AGRPC_ASIO_NAMESPACE_END
 #endif
 
 template <class CompletionHandler, class Alloc>
-struct std::uses_allocator<::agrpc::detail::WorkTrackingCompletionHandler<CompletionHandler>, Alloc> : std::false_type
+struct ::agrpc::detail::container::uses_allocator<::agrpc::detail::WorkTrackingCompletionHandler<CompletionHandler>,
+                                                  Alloc> : std::false_type
 {
 };
 

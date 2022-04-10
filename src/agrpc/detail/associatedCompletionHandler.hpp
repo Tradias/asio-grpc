@@ -17,6 +17,7 @@
 
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
+#include "agrpc/detail/memoryResource.hpp"
 
 #include <memory>
 #include <utility>
@@ -93,7 +94,8 @@ AGRPC_ASIO_NAMESPACE_END
 #endif
 
 template <class CompletionHandler, class Alloc>
-struct std::uses_allocator<::agrpc::detail::AssociatedCompletionHandler<CompletionHandler>, Alloc> : std::false_type
+struct ::agrpc::detail::container::uses_allocator<::agrpc::detail::AssociatedCompletionHandler<CompletionHandler>,
+                                                  Alloc> : std::false_type
 {
 };
 
