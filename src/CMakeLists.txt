@@ -89,7 +89,6 @@ if(ASIO_GRPC_BUILD_TESTS)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/intrusiveQueue.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/intrusiveQueueHook.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/memoryResourceAllocator.hpp"
-                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/noOpReceiverWithAllocator.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/oneShotAllocator.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/operation.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/receiver.hpp"

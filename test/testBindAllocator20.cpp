@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "utils/allocator.hpp"
 #include "utils/asioUtils.hpp"
 #include "utils/grpcContextTest.hpp"
 #include "utils/time.hpp"
@@ -20,9 +21,20 @@
 #include <agrpc/wait.hpp>
 #include <doctest/doctest.h>
 
-#ifdef AGRPC_ASIO_HAS_CO_AWAIT
 DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 {
+TEST_CASE(
+    "AllocatorBinder can be constructed using allocator_traits<polymorphic_allocator>::construct with expected "
+    "arguments")
+{
+    using PmrAllocator = agrpc::detail::pmr::polymorphic_allocator<std::byte>;
+    agrpc::detail::pmr::monotonic_buffer_resource resource;
+    PmrAllocator expected_allocator{&resource};
+    auto&& binder = test::allocate<agrpc::AllocatorBinder<int, PmrAllocator>>(PmrAllocator{}, expected_allocator);
+    CHECK_EQ(expected_allocator, asio::get_associated_allocator(*binder));
+}
+
+#ifdef AGRPC_ASIO_HAS_CO_AWAIT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_allocator with awaitable")
 {
     test::co_spawn(get_executor(),
@@ -35,5 +47,5 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_allocator with awaitable")
     grpc_context.run();
     CHECK(allocator_has_been_used());
 }
-}
 #endif
+}

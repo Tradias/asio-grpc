@@ -18,6 +18,7 @@
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/config.hpp"
 
+#include <memory>
 #include <utility>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -90,5 +91,10 @@ struct associator<Associator, agrpc::detail::AssociatedCompletionHandler<Complet
 
 AGRPC_ASIO_NAMESPACE_END
 #endif
+
+template <class CompletionHandler, class Alloc>
+struct std::uses_allocator<::agrpc::detail::AssociatedCompletionHandler<CompletionHandler>, Alloc> : std::false_type
+{
+};
 
 #endif  // AGRPC_DETAIL_ASSOCIATEDCOMPLETIONHANDLER_HPP

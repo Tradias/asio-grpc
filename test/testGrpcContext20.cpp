@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "utils/allocator.hpp"
 #include "utils/asioUtils.hpp"
 #include "utils/grpcContextTest.hpp"
 #include "utils/time.hpp"
@@ -67,6 +68,16 @@ TEST_CASE("asio-grpc fulfills unified executor concepts")
 }
 #endif
 #endif
+
+TEST_CASE_FIXTURE(
+    test::GrpcContextTest,
+    "asio BasicGrpcExecutor<PmrAllocator> can be constructed using allocator_traits<polymorphic_allocator>::construct")
+{
+    using PmrAllocator = agrpc::detail::pmr::polymorphic_allocator<std::byte>;
+    auto&& executor =
+        test::allocate<agrpc::BasicGrpcExecutor<PmrAllocator>>(PmrAllocator{}, grpc_context, get_allocator());
+    CHECK_EQ(get_allocator(), executor->get_allocator());
+}
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::schedule")

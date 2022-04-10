@@ -30,6 +30,7 @@
 #include <grpcpp/completion_queue.h>
 
 #include <atomic>
+#include <memory>
 #include <thread>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -216,6 +217,11 @@ class GrpcContext
 };
 
 AGRPC_NAMESPACE_END
+
+template <class Alloc>
+struct std::uses_allocator<::agrpc::GrpcContext, Alloc> : std::false_type
+{
+};
 
 #endif  // AGRPC_AGRPC_GRPCCONTEXT_HPP
 

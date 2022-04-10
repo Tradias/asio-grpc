@@ -27,6 +27,7 @@
 #include "agrpc/grpcContext.hpp"
 
 #include <cstddef>
+#include <memory>
 #include <utility>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -461,5 +462,10 @@ using GrpcExecutor = agrpc::BasicGrpcExecutor<agrpc::detail::pmr::polymorphic_al
 }
 
 AGRPC_NAMESPACE_END
+
+template <class Allocator, std::uint32_t Options, class Alloc>
+struct std::uses_allocator<::agrpc::BasicGrpcExecutor<Allocator, Options>, Alloc> : std::false_type
+{
+};
 
 #endif  // AGRPC_AGRPC_GRPCEXECUTOR_HPP
