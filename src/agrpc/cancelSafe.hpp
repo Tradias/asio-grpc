@@ -20,10 +20,9 @@
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 
-#include "agrpc/detail/cancelSafe.hpp"
+#include "agrpc/detail/typeErasedCompletionHandler.hpp"
 #include "agrpc/detail/workTrackingCompletionHandler.hpp"
 
-#include <atomic>
 #include <cassert>
 #include <optional>
 #include <tuple>
@@ -31,7 +30,7 @@
 AGRPC_NAMESPACE_BEGIN()
 
 template <class... CompletionArgs>
-struct CancelSafe
+class CancelSafe
 {
   private:
     using CompletionSignature = void(detail::ErrorCode, CompletionArgs...);
@@ -42,9 +41,9 @@ struct CancelSafe
 
         void operator()(CompletionArgs... completion_args)
         {
-            if (void* ch = self.completion_handler.exchange(nullptr))
+            if (auto&& ch = self.completion_handler.release())
             {
-                self.complete(ch, detail::ErrorCode{}, std::move(completion_args)...);
+                std::move(ch).complete(detail::ErrorCode{}, std::move(completion_args)...);
             }
             else
             {
@@ -79,7 +78,7 @@ struct CancelSafe
                     return;
                 }
                 auto cancellation_slot = asio::get_associated_cancellation_slot(ch);
-                this->allocate_and_assign_completion_handler(std::move(ch));
+                this->emplace_completion_handler(std::move(ch));
                 this->install_cancellation_handler(cancellation_slot);
             },
             token);
@@ -87,14 +86,10 @@ struct CancelSafe
 
   private:
     template <class CompletionHandler>
-    void allocate_and_assign_completion_handler(CompletionHandler&& ch)
+    void emplace_completion_handler(CompletionHandler&& ch)
     {
         using WorkTrackingCompletionHandler = detail::WorkTrackingCompletionHandler<std::decay_t<CompletionHandler>>;
-        auto allocator{asio::get_associated_allocator(ch)};
-        completion_handler =
-            detail::allocate<WorkTrackingCompletionHandler>(allocator, std::forward<CompletionHandler>(ch)).release();
-        complete = &detail::deallocate_and_invoke<WorkTrackingCompletionHandler, detail::ErrorCode, CompletionArgs...>;
-        post_complete = &detail::post_and_complete<WorkTrackingCompletionHandler, detail::ErrorCode, CompletionArgs...>;
+        completion_handler.emplace(WorkTrackingCompletionHandler{std::forward<CompletionHandler>(ch)});
     }
 
     template <class CancellationSlot>
@@ -107,20 +102,16 @@ struct CancelSafe
                 {
                     if (static_cast<bool>(type & asio::cancellation_type::all))
                     {
-                        if (void* ch = completion_handler.exchange(nullptr))
+                        if (auto&& ch = completion_handler.release())
                         {
-                            post_complete(ch, asio::error::operation_aborted, CompletionArgs{}...);
+                            std::move(ch).post_complete(asio::error::operation_aborted, CompletionArgs{}...);
                         }
                     }
                 });
         }
     }
 
-    using Complete = void (*)(void*, detail::ErrorCode, CompletionArgs...);
-
-    std::atomic<void*> completion_handler{};
-    Complete complete;
-    Complete post_complete;
+    detail::AtomicTypeErasedCompletionHandler<void(detail::ErrorCode, CompletionArgs...)> completion_handler{};
     std::optional<std::tuple<CompletionArgs...>> result;
 };
 
