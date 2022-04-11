@@ -35,10 +35,10 @@ class CancelSafe
   private:
     using CompletionSignature = void(detail::ErrorCode, CompletionArgs...);
 
-    struct CompletionToken
+  public:
+    class CompletionToken
     {
-        CancelSafe& self;
-
+      public:
         void operator()(CompletionArgs... completion_args)
         {
             if (auto&& ch = self.completion_handler.release())
@@ -50,9 +50,15 @@ class CancelSafe
                 self.result.emplace(std::move(completion_args)...);
             }
         }
+
+      private:
+        friend agrpc::CancelSafe<CompletionArgs...>;
+
+        explicit CompletionToken(CancelSafe& self) noexcept : self(self) {}
+
+        CancelSafe& self;
     };
 
-  public:
     auto token() noexcept { return CompletionToken{*this}; }
 
     template <class CompletionToken>
