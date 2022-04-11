@@ -103,16 +103,4 @@ static_assert(false,
     }
 #endif
 
-#ifdef AGRPC_BOOST_ASIO
-#define AGRPC_ASIO_NAMESPACE_BEGIN() \
-    namespace boost::asio            \
-    {
-#define AGRPC_ASIO_NAMESPACE_END }
-#elif defined(AGRPC_STANDALONE_ASIO)
-#define AGRPC_ASIO_NAMESPACE_BEGIN() \
-    namespace asio                   \
-    {
-#define AGRPC_ASIO_NAMESPACE_END }
-#endif
-
 #endif  // AGRPC_DETAIL_CONFIG_HPP

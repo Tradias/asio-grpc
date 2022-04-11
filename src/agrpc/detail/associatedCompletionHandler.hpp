@@ -76,10 +76,10 @@ class AssociatedCompletionHandler
 AGRPC_NAMESPACE_END
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-AGRPC_ASIO_NAMESPACE_BEGIN()
 
 template <template <class, class> class Associator, class CompletionHandler, class DefaultCandidate>
-struct associator<Associator, agrpc::detail::AssociatedCompletionHandler<CompletionHandler>, DefaultCandidate>
+struct agrpc::asio::associator<Associator, agrpc::detail::AssociatedCompletionHandler<CompletionHandler>,
+                               DefaultCandidate>
 {
     using type = typename Associator<CompletionHandler, DefaultCandidate>::type;
 
@@ -90,7 +90,6 @@ struct associator<Associator, agrpc::detail::AssociatedCompletionHandler<Complet
     }
 };
 
-AGRPC_ASIO_NAMESPACE_END
 #endif
 
 template <class CompletionHandler, class Alloc>

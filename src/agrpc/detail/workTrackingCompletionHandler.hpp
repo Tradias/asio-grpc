@@ -126,21 +126,20 @@ class WorkTrackingCompletionHandler
 AGRPC_NAMESPACE_END
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-AGRPC_ASIO_NAMESPACE_BEGIN()
 
 template <template <class, class> class Associator, class CompletionHandler, class DefaultCandidate>
-struct associator<Associator, ::agrpc::detail::WorkTrackingCompletionHandler<CompletionHandler>, DefaultCandidate>
+struct agrpc::asio::associator<Associator, agrpc::detail::WorkTrackingCompletionHandler<CompletionHandler>,
+                               DefaultCandidate>
 {
     using type = typename Associator<CompletionHandler, DefaultCandidate>::type;
 
-    static type get(const ::agrpc::detail::WorkTrackingCompletionHandler<CompletionHandler>& b,
+    static type get(const agrpc::detail::WorkTrackingCompletionHandler<CompletionHandler>& b,
                     const DefaultCandidate& c = DefaultCandidate()) noexcept
     {
         return Associator<CompletionHandler, DefaultCandidate>::get(b.completion_handler(), c);
     }
 };
 
-AGRPC_ASIO_NAMESPACE_END
 #endif
 
 template <class CompletionHandler, class Alloc>
