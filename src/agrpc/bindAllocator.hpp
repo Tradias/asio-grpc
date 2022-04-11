@@ -213,7 +213,7 @@ auto bind_allocator(const Allocator& allocator, Target&& target)
 AGRPC_NAMESPACE_END
 
 template <class Allocator, class Target, class Alloc>
-struct ::agrpc::detail::container::uses_allocator<::agrpc::AllocatorBinder<Allocator, Target>, Alloc> : std::false_type
+struct agrpc::detail::container::uses_allocator<agrpc::AllocatorBinder<Allocator, Target>, Alloc> : std::false_type
 {
 };
 

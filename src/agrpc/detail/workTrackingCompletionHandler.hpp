@@ -144,8 +144,8 @@ AGRPC_ASIO_NAMESPACE_END
 #endif
 
 template <class CompletionHandler, class Alloc>
-struct ::agrpc::detail::container::uses_allocator<::agrpc::detail::WorkTrackingCompletionHandler<CompletionHandler>,
-                                                  Alloc> : std::false_type
+struct agrpc::detail::container::uses_allocator<agrpc::detail::WorkTrackingCompletionHandler<CompletionHandler>, Alloc>
+    : std::false_type
 {
 };
 

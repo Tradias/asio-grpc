@@ -464,8 +464,7 @@ using GrpcExecutor = agrpc::BasicGrpcExecutor<agrpc::detail::pmr::polymorphic_al
 AGRPC_NAMESPACE_END
 
 template <class Allocator, std::uint32_t Options, class Alloc>
-struct ::agrpc::detail::container::uses_allocator<::agrpc::BasicGrpcExecutor<Allocator, Options>, Alloc>
-    : std::false_type
+struct agrpc::detail::container::uses_allocator<agrpc::BasicGrpcExecutor<Allocator, Options>, Alloc> : std::false_type
 {
 };
 
