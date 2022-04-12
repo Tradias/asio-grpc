@@ -29,9 +29,13 @@ jobs:
         vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
         vcpkgJsonGlob: 'vcpkg.json'
+        appendedCacheKey: 'codeql'
+
+    - name: Run vcpkg
+      run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet x64-windows-release --host-triplet x64-windows-release --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps
 
     - name: Configure CMake
-      run: cmake --preset default -DCMAKE_BUILD_TYPE=Release -DVCPKG_TARGET_TRIPLET=x64-windows-release "-DVCPKG_INSTALL_OPTIONS=--host-triplet=x64-windows-release" -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
+      run: cmake --preset default -DCMAKE_BUILD_TYPE=Release -DVCPKG_MANIFEST_INSTALL=off -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v1
