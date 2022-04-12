@@ -42,8 +42,8 @@ template <class Executor, class Allocator, class Function>
 void post_with_allocator(Executor&& executor, Allocator&& allocator, Function&& function)
 {
     asio::execution::execute(
-        asio::prefer(asio::require(std::forward<Executor>(executor), asio::execution::blocking.never),
-                     asio::execution::relationship.fork,
+        asio::prefer(asio::require(std::forward<Executor>(executor), asio::execution::blocking_t::never),
+                     asio::execution::relationship_t::fork,
                      asio::execution::allocator(std::forward<Allocator>(allocator))),
         std::forward<Function>(function));
 }

@@ -43,12 +43,12 @@ class GrpcInitiator
     void operator()(CompletionHandler&& completion_handler)
     {
         auto unbound = detail::unbind_and_get_associates(std::forward<CompletionHandler>(completion_handler));
-        this->submit(std::move(unbound), std::move(unbound.completion_handler()));
+        this->submit(unbound, std::move(unbound.completion_handler()));
     }
 
   protected:
     template <class Unbound, class CompletionHandler>
-    void submit(Unbound&& unbound, CompletionHandler&& completion_handler)
+    void submit(Unbound& unbound, CompletionHandler&& completion_handler)
     {
         auto& grpc_context = detail::query_grpc_context(unbound.executor());
         if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context))
@@ -108,7 +108,7 @@ class GrpcWithPayloadInitiator : public detail::GrpcInitiator<InitiatingFunction
         using UnboundCompletionHandler = typename decltype(unbound)::CompletionHandlerT;
         detail::GrpcCompletionHandlerWithPayload<UnboundCompletionHandler, Payload>
             unbound_completion_handler_with_payload{std::move(unbound.completion_handler())};
-        this->submit(std::move(unbound), std::move(unbound_completion_handler_with_payload));
+        this->submit(unbound, std::move(unbound_completion_handler_with_payload));
     }
 };
 }

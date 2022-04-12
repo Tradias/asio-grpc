@@ -1,4 +1,5 @@
 {
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/70a7074c685516fed36da7befb3898821b1425ed/scripts/vcpkg.schema.json",
     "name": "asio-grpc",
     "version": "1",
     "dependencies": [

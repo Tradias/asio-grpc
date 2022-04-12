@@ -32,8 +32,8 @@ inline constexpr bool IS_EQUALITY_COMPARABLE = false;
 
 template <class T>
 inline constexpr bool IS_EQUALITY_COMPARABLE<
-    T, std::void_t<decltype(static_cast<bool>(std::declval<const T&>() == std::declval<const T&>()),
-                            static_cast<bool>(std::declval<const T&>() != std::declval<const T&>()))>> = true;
+    T, std::void_t<decltype(static_cast<bool>(std::declval<const T&>() == std::declval<const T&>())),
+                   decltype(static_cast<bool>(std::declval<const T&>() != std::declval<const T&>()))>> = true;
 
 template <class Function, class Signature>
 struct InvokeResultFromSignature;
