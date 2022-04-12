@@ -10,9 +10,9 @@ var classagrpc_1_1_grpc_context =
     [ "get_scheduler", "classagrpc_1_1_grpc_context.html#add171728b45fddd5740e4a3c9549bd3b", null ],
     [ "get_server_completion_queue", "classagrpc_1_1_grpc_context.html#a43be219d02581b5959b120bc9f869fce", null ],
     [ "is_stopped", "classagrpc_1_1_grpc_context.html#af71bfc1a827acb00e275161f189ea151", null ],
-    [ "poll", "classagrpc_1_1_grpc_context.html#a0a3b439cbb198b385b233d30c6968486", null ],
+    [ "poll", "classagrpc_1_1_grpc_context.html#a4eb77d4c7fe553bc7b8aa7bc0c73fc22", null ],
     [ "reset", "classagrpc_1_1_grpc_context.html#a9da2b2b94e92a9d46e1309209002784b", null ],
-    [ "run", "classagrpc_1_1_grpc_context.html#ac287c8b9a86af915575be9807342bbf3", null ],
+    [ "run", "classagrpc_1_1_grpc_context.html#acb1dae170b054aba4c83e266c456fee0", null ],
     [ "stop", "classagrpc_1_1_grpc_context.html#aee29d403f03ef487d22efdf2079c46bc", null ],
     [ "work_finished", "classagrpc_1_1_grpc_context.html#a9f89631518b2d38dbe0be11f7d5a4cc6", null ],
     [ "work_started", "classagrpc_1_1_grpc_context.html#ada19710c265c3a1e9cbffb696d079fbb", null ]
