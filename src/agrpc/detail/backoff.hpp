@@ -56,9 +56,10 @@ class Backoff
     constexpr void reset() noexcept { delay = Delay::zero(); }
 
   private:
+    static constexpr Delay INCREMENT{detail::maximum(Delay::rep{1}, MaxDelay / 5)};
+
     constexpr void increase_delay() noexcept
     {
-        static constexpr Delay INCREMENT{detail::maximum(Delay::rep{1}, MaxDelay / 5)};
         if (MAX_DELAY > delay)
         {
             delay += INCREMENT;

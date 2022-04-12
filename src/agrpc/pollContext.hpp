@@ -46,7 +46,7 @@ struct DefaultPollContextTraits
     /**
      * @brief The desired maximum latency
      */
-    static constexpr std::chrono::nanoseconds MAX_LATENCY{1000};
+    static constexpr std::chrono::nanoseconds MAX_LATENCY{50000};
 };
 
 /**
@@ -58,7 +58,7 @@ struct DefaultPollContextTraits
  *
  * @tparam Executor The executor type
  * @tparam Traits The traits type, defaults to `agrpc::DefaultPollContextTraits`. If the static assertion
- * 'OneShotAllocator has insufficient capacity' triggers then inherit from the default to increase the buffer size of
+ * 'OneShotAllocator has insufficient capacity' fails then inherit from the default to increase the buffer size of
  * the PollContext. Example:
  * @code{cpp}
  * struct MyTraits : agrpc::DefaultPollContextTraits

@@ -23,6 +23,8 @@
 
 AGRPC_NAMESPACE_BEGIN()
 
+struct DefaultPollContextTraits;
+
 template <class Executor, class Traits = agrpc::DefaultPollContextTraits>
 class PollContext;
 
