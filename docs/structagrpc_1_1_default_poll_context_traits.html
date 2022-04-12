@@ -102,9 +102,13 @@ $(document).ready(function(){initNavTree('structagrpc_1_1_default_poll_context_t
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
 <tr class="memitem:a134e9663f18e43bae0f00f87cbf5eaf5"><td class="memItemLeft" align="right" valign="top"><a id="a134e9663f18e43bae0f00f87cbf5eaf5" name="a134e9663f18e43bae0f00f87cbf5eaf5"></a>
-static constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><b>BUFFER_SIZE</b> = 96</td></tr>
-<tr class="memdesc:a134e9663f18e43bae0f00f87cbf5eaf5"><td class="mdescLeft">&#160;</td><td class="mdescRight">The default buffer size. <br /></td></tr>
+static constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><b>BUFFER_SIZE</b> {200}</td></tr>
+<tr class="memdesc:a134e9663f18e43bae0f00f87cbf5eaf5"><td class="mdescLeft">&#160;</td><td class="mdescRight">The default buffer size in bytes. <br /></td></tr>
 <tr class="separator:a134e9663f18e43bae0f00f87cbf5eaf5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad9789aa6ee185cdbe904dcf94c96171b"><td class="memItemLeft" align="right" valign="top"><a id="ad9789aa6ee185cdbe904dcf94c96171b" name="ad9789aa6ee185cdbe904dcf94c96171b"></a>
+static constexpr std::chrono::nanoseconds&#160;</td><td class="memItemRight" valign="bottom"><b>MAX_LATENCY</b> {50000}</td></tr>
+<tr class="memdesc:ad9789aa6ee185cdbe904dcf94c96171b"><td class="mdescLeft">&#160;</td><td class="mdescRight">The desired maximum latency. <br /></td></tr>
+<tr class="separator:ad9789aa6ee185cdbe904dcf94c96171b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >(experimental) Default <a class="el" href="classagrpc_1_1_poll_context.html" title="(experimental) Helper class to run a GrpcContext in a different execution context">PollContext</a> traits </p>

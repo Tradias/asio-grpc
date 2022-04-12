@@ -127,15 +127,15 @@ class agrpc::PollContext&lt; Executor, Traits &gt;</div><p >(experimental) Helpe
 <div class="line">    <span class="comment">// Use io_context and grpc_context and reset the guard when done.</span></div>
 <div class="line"> </div>
 <div class="line">    io_context.run();</div>
-<div class="ttc" id="aclassagrpc_1_1_poll_context_html"><div class="ttname"><a href="classagrpc_1_1_poll_context.html">agrpc::PollContext</a></div><div class="ttdoc">(experimental) Helper class to run a GrpcContext in a different execution context</div><div class="ttdef"><b>Definition:</b> pollContext.hpp:86</div></div>
+<div class="ttc" id="aclassagrpc_1_1_poll_context_html"><div class="ttname"><a href="classagrpc_1_1_poll_context.html">agrpc::PollContext</a></div><div class="ttdoc">(experimental) Helper class to run a GrpcContext in a different execution context</div><div class="ttdef"><b>Definition:</b> pollContext.hpp:74</div></div>
 </div><!-- fragment --><dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">Executor</td><td>The executor type </td></tr>
-    <tr><td class="paramname">Traits</td><td>The traits type, defaults to <code><a class="el" href="structagrpc_1_1_default_poll_context_traits.html" title="(experimental) Default PollContext traits">agrpc::DefaultPollContextTraits</a></code>. If the static assertion 'OneShotAllocator has insufficient capacity' triggers then inherit from the default to increase the buffer size of the <a class="el" href="classagrpc_1_1_poll_context.html" title="(experimental) Helper class to run a GrpcContext in a different execution context">PollContext</a>. Example: <div class="fragment"><div class="line"><span class="keyword">struct </span>MyTraits : <a class="code hl_struct" href="structagrpc_1_1_default_poll_context_traits.html">agrpc::DefaultPollContextTraits</a></div>
+    <tr><td class="paramname">Traits</td><td>The traits type, defaults to <code><a class="el" href="structagrpc_1_1_default_poll_context_traits.html" title="(experimental) Default PollContext traits">agrpc::DefaultPollContextTraits</a></code>. If the static assertion 'OneShotAllocator has insufficient capacity' fails then inherit from the default to increase the buffer size of the <a class="el" href="classagrpc_1_1_poll_context.html" title="(experimental) Helper class to run a GrpcContext in a different execution context">PollContext</a>. Example: <div class="fragment"><div class="line"><span class="keyword">struct </span>MyTraits : <a class="code hl_struct" href="structagrpc_1_1_default_poll_context_traits.html">agrpc::DefaultPollContextTraits</a></div>
 <div class="line">{</div>
-<div class="line">  <span class="keyword">static</span> <span class="keyword">constexpr</span> std::size_t BUFFER_SIZE = 128;</div>
+<div class="line">  <span class="keyword">static</span> <span class="keyword">constexpr</span> std::size_t BUFFER_SIZE{256};</div>
 <div class="line">}</div>
-<div class="ttc" id="astructagrpc_1_1_default_poll_context_traits_html"><div class="ttname"><a href="structagrpc_1_1_default_poll_context_traits.html">agrpc::DefaultPollContextTraits</a></div><div class="ttdoc">(experimental) Default PollContext traits</div><div class="ttdef"><b>Definition:</b> pollContext.hpp:32</div></div>
+<div class="ttc" id="astructagrpc_1_1_default_poll_context_traits_html"><div class="ttname"><a href="structagrpc_1_1_default_poll_context_traits.html">agrpc::DefaultPollContextTraits</a></div><div class="ttdoc">(experimental) Default PollContext traits</div><div class="ttdef"><b>Definition:</b> pollContext.hpp:40</div></div>
 </div><!-- fragment --></td></tr>
   </table>
   </dd>
