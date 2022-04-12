@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utils/allocator.hpp"
 #include "utils/asioUtils.hpp"
 #include "utils/grpcContextTest.hpp"
 #include "utils/time.hpp"
@@ -23,6 +22,7 @@
 #include <doctest/doctest.h>
 
 #include <cstddef>
+#include <vector>
 
 DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 {
@@ -74,9 +74,10 @@ TEST_CASE_FIXTURE(
     "asio BasicGrpcExecutor<PmrAllocator> can be constructed using allocator_traits<polymorphic_allocator>::construct")
 {
     using PmrAllocator = agrpc::detail::pmr::polymorphic_allocator<std::byte>;
-    auto&& executor =
-        test::allocate<agrpc::BasicGrpcExecutor<PmrAllocator>>(PmrAllocator{}, grpc_context, get_allocator());
-    CHECK_EQ(get_allocator(), executor->get_allocator());
+    using Executor = agrpc::BasicGrpcExecutor<PmrAllocator>;
+    std::vector<Executor, agrpc::detail::pmr::polymorphic_allocator<Executor>> vector;
+    vector.emplace_back(grpc_context, get_allocator());
+    CHECK_EQ(get_allocator(), vector.front().get_allocator());
 }
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT

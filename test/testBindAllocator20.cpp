@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utils/allocator.hpp"
 #include "utils/asioUtils.hpp"
 #include "utils/grpcContextTest.hpp"
 #include "utils/time.hpp"
@@ -21,6 +20,8 @@
 #include <agrpc/wait.hpp>
 #include <doctest/doctest.h>
 
+#include <vector>
+
 DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 {
 TEST_CASE(
@@ -28,10 +29,12 @@ TEST_CASE(
     "arguments")
 {
     using PmrAllocator = agrpc::detail::pmr::polymorphic_allocator<std::byte>;
+    using Binder = agrpc::AllocatorBinder<int, PmrAllocator>;
     agrpc::detail::pmr::monotonic_buffer_resource resource;
     PmrAllocator expected_allocator{&resource};
-    auto&& binder = test::allocate<agrpc::AllocatorBinder<int, PmrAllocator>>(PmrAllocator{}, expected_allocator);
-    CHECK_EQ(expected_allocator, asio::get_associated_allocator(*binder));
+    std::vector<Binder, agrpc::detail::pmr::polymorphic_allocator<Binder>> vector;
+    vector.emplace_back(expected_allocator);
+    CHECK_EQ(expected_allocator, asio::get_associated_allocator(vector.front()));
 }
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
