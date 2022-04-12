@@ -68,9 +68,9 @@ inline GrpcContext::~GrpcContext()
 #endif
 }
 
-inline void GrpcContext::run() { detail::GrpcContextImplementation::run(*this); }
+inline bool GrpcContext::run() { return detail::GrpcContextImplementation::run(*this); }
 
-inline void GrpcContext::poll() { detail::GrpcContextImplementation::poll(*this); }
+inline bool GrpcContext::poll() { return detail::GrpcContextImplementation::poll(*this); }
 
 inline void GrpcContext::stop()
 {

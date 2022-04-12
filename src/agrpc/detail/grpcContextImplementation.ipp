@@ -185,34 +185,37 @@ bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, S
     return is_more_completed_work_pending;
 }
 
-inline void GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline)
+inline bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline)
 {
     if (grpc_context.outstanding_work.load(std::memory_order_relaxed) == 0)
     {
         grpc_context.stopped.store(true, std::memory_order_relaxed);
-        return;
+        return false;
     }
     grpc_context.reset();
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     detail::GrpcContextThreadContext thread_context;
 #endif
     detail::ThreadLocalGrpcContextGuard guard{grpc_context};
+    bool processed{};
     while (detail::GrpcContextImplementation::process_work<detail::InvokeHandler::YES>(
         grpc_context, detail::IsGrpcContextStoppedCondition{grpc_context}, deadline))
 
     {
-        //
+        processed = true;
     }
+    return processed;
 }
 
-inline void GrpcContextImplementation::run(agrpc::GrpcContext& grpc_context)
+inline bool GrpcContextImplementation::run(agrpc::GrpcContext& grpc_context)
 {
-    detail::GrpcContextImplementation::process_work(grpc_context, detail::GrpcContextImplementation::INFINITE_FUTURE);
+    return detail::GrpcContextImplementation::process_work(grpc_context,
+                                                           detail::GrpcContextImplementation::INFINITE_FUTURE);
 }
 
-inline void GrpcContextImplementation::poll(agrpc::GrpcContext& grpc_context)
+inline bool GrpcContextImplementation::poll(agrpc::GrpcContext& grpc_context)
 {
-    detail::GrpcContextImplementation::process_work(grpc_context, detail::GrpcContextImplementation::TIME_ZERO);
+    return detail::GrpcContextImplementation::process_work(grpc_context, detail::GrpcContextImplementation::TIME_ZERO);
 }
 }
 

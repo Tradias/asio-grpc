@@ -18,10 +18,18 @@
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 
 #include "agrpc/detail/asioForward.hpp"
+#include "agrpc/detail/backoff.hpp"
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/oneShotAllocator.hpp"
+#include "agrpc/detail/pollContextHandler.hpp"
 #include "agrpc/detail/utility.hpp"
 #include "agrpc/grpcContext.hpp"
+
+#ifdef AGRPC_STANDALONE_ASIO
+#include <asio/steady_timer.hpp>
+#else
+#include <boost/asio/steady_timer.hpp>
+#endif
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -31,35 +39,15 @@ AGRPC_NAMESPACE_BEGIN()
 struct DefaultPollContextTraits
 {
     /**
-     * @brief The default buffer size
+     * @brief The default buffer size in bytes
      */
-    static constexpr std::size_t BUFFER_SIZE = 96;
+    static constexpr std::size_t BUFFER_SIZE{200};
+
+    /**
+     * @brief The desired maximum latency
+     */
+    static constexpr std::chrono::nanoseconds MAX_LATENCY{1000};
 };
-
-template <class Executor, class Traits = agrpc::DefaultPollContextTraits>
-class PollContext;
-
-namespace detail
-{
-struct IsGrpcContextStoppedPredicate
-{
-    bool operator()(const agrpc::GrpcContext& grpc_context) const noexcept { return grpc_context.is_stopped(); }
-};
-
-template <class Executor, class Traits, class StopPredicate>
-struct PollContextHandler
-{
-    agrpc::GrpcContext& grpc_context;
-    agrpc::PollContext<Executor, Traits>& poll_context;
-    StopPredicate stop_predicate;
-
-    void operator()()
-    {
-        grpc_context.poll();
-        poll_context.async_poll(grpc_context, std::move(stop_predicate));
-    }
-};
-}
 
 /**
  * @brief (experimental) Helper class to run a GrpcContext in a different execution context
@@ -75,7 +63,7 @@ struct PollContextHandler
  * @code{cpp}
  * struct MyTraits : agrpc::DefaultPollContextTraits
  * {
- *   static constexpr std::size_t BUFFER_SIZE = 128;
+ *   static constexpr std::size_t BUFFER_SIZE{256};
  * }
  * @endcode
  *
@@ -93,9 +81,11 @@ class PollContext
      */
     template <class Exec>
     explicit PollContext(Exec&& executor)
-        : executor(asio::prefer(asio::require(std::forward<Exec>(executor), asio::execution::blocking_t::never),
+        : timer(executor),
+          executor(asio::prefer(asio::require(std::forward<Exec>(executor), asio::execution::blocking_t::never),
                                 asio::execution::relationship_t::continuation,
-                                asio::execution::allocator(detail::OneShotAllocator<std::byte, BUFFER_SIZE>{&buffer})))
+                                asio::execution::allocator(this->allocator())))
+
     {
     }
 
@@ -130,13 +120,21 @@ class PollContext
     }
 
   private:
-    using Exec =
-        decltype(asio::prefer(asio::require(std::declval<Executor>(), asio::execution::blocking_t::never),
-                              asio::execution::relationship_t::continuation,
-                              asio::execution::allocator(detail::OneShotAllocator<std::byte, BUFFER_SIZE>{nullptr})));
+    template <class, class, class>
+    friend struct detail::PollContextHandler;
 
-    Exec executor;
+    using Backoff = detail::Backoff<std::chrono::duration_cast<detail::BackoffDelay>(Traits::MAX_LATENCY).count()>;
+    using Allocator = detail::OneShotAllocator<std::byte, BUFFER_SIZE>;
+    using Exec = decltype(asio::prefer(asio::require(std::declval<Executor>(), asio::execution::blocking_t::never),
+                                       asio::execution::relationship_t::continuation,
+                                       asio::execution::allocator(Allocator{nullptr})));
+
+    auto allocator() noexcept { return Allocator{&buffer}; }
+
     std::aligned_storage_t<BUFFER_SIZE> buffer;
+    asio::basic_waitable_timer<std::chrono::steady_clock, asio::wait_traits<std::chrono::steady_clock>, Executor> timer;
+    Exec executor;
+    Backoff backoff;
 };
 
 template <class Executor>

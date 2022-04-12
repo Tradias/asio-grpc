@@ -93,8 +93,10 @@ class GrpcContext
      * @attention Only one thread may call run()/poll() at a time.
      *
      * Thread-safe with regards to other functions except run(), poll() and the destructor.
+     *
+     * @return True if at least one operation has been processed.
      */
-    void run();
+    bool run();
 
     /**
      * @brief Poll the `grpc::CompletionQueue`
@@ -104,8 +106,10 @@ class GrpcContext
      * @attention Only one thread may call run()/poll() at a time.
      *
      * Thread-safe with regards to other functions except run(), poll() and the destructor.
+     *
+     * @return True if at least one operation has been processed.
      */
-    void poll();
+    bool poll();
 
     /**
      * @brief Signal the GrpcContext to stop

@@ -165,7 +165,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::stop does not complete pe
                                   ok = true;
                               });
                });
-    grpc_context.run();
+    CHECK(grpc_context.run());
     CHECK_FALSE(ok);
 }
 
@@ -416,14 +416,14 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll() with asio::post")
     asio::post(io_context,
                [&]()
                {
-                   grpc_context.poll();
-                   CHECK_FALSE(invoked);
+                   CHECK_FALSE(grpc_context.poll());
                    asio::post(grpc_context,
                               [&]
                               {
                                   invoked = true;
                               });
-                   grpc_context.poll();
+                   CHECK_FALSE(invoked);
+                   CHECK(grpc_context.poll());
                });
     io_context.run();
     CHECK(invoked);

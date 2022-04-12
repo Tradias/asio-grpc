@@ -21,7 +21,7 @@
 
 DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 {
-TEST_CASE_FIXTURE(test::GrpcContextTest, "PollContext asio::post")
+TEST_CASE_FIXTURE(test::GrpcContextTest, "PollContext can process asio::post")
 {
     const auto expected_thread = std::this_thread::get_id();
     bool invoked{false};
@@ -85,5 +85,23 @@ TEST_CASE_FIXTURE(test::GrpcContextTest,
     io_context.get_executor().on_work_finished();
     io_context.run();
     CHECK(invoked);
+}
+
+struct MyTraits : agrpc::DefaultPollContextTraits
+{
+    static constexpr std::chrono::nanoseconds MAX_LATENCY{0};
+};
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "PollContextTraits can specify zero max latency")
+{
+    asio::io_context io_context;
+    agrpc::PollContext<asio::any_io_executor, MyTraits> poll_context{io_context.get_executor()};
+    poll_context.async_poll(grpc_context,
+                            [count = 0](auto&) mutable
+                            {
+                                ++count;
+                                return 15 == count;
+                            });
+    io_context.run();
 }
 }

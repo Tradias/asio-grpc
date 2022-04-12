@@ -75,11 +75,11 @@ struct GrpcContextImplementation
     template <detail::InvokeHandler Invoke, class StopCondition>
     static bool process_work(agrpc::GrpcContext& grpc_context, StopCondition stop_condition, ::gpr_timespec deadline);
 
-    static void process_work(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline);
+    static bool process_work(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline);
 
-    static void run(agrpc::GrpcContext& grpc_context);
+    static bool run(agrpc::GrpcContext& grpc_context);
 
-    static void poll(agrpc::GrpcContext& grpc_context);
+    static bool poll(agrpc::GrpcContext& grpc_context);
 };
 }
 
