@@ -29,6 +29,7 @@ install(
     FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/asio-grpcConfigVersion.cmake"
           "${CMAKE_CURRENT_BINARY_DIR}/generated/asio-grpcConfig.cmake"
           "${CMAKE_CURRENT_SOURCE_DIR}/cmake/AsioGrpcProtobufGenerator.cmake"
+          "${ASIO_GRPC_PROJECT_ROOT}/asio-grpc.natvis"
     DESTINATION "${ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR}")
 
 install(TARGETS asio-grpc asio-grpc-standalone-asio asio-grpc-unifex EXPORT ASIO_GRPC_EXPORT_TARGETS)
