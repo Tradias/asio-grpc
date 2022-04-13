@@ -93,6 +93,8 @@ int main(int argc, const char** argv)
         asio::detached);
 
     // Discount the work performed by poll_context.async_poll.
+    // When compiling with BOOST_ASIO_NO_TS_EXECUTORS then see testPollContext17.cpp for a workaround of the removal of
+    // on_work_finished().
     io_context.get_executor().on_work_finished();
 
     io_context.run();

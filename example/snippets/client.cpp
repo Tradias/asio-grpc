@@ -24,6 +24,8 @@
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 
+#include <optional>
+
 namespace asio = boost::asio;
 
 asio::awaitable<void> unary(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
@@ -243,7 +245,7 @@ void poll_context(agrpc::GrpcContext& grpc_context)
     /* [poll_context-with-io_context] */
     asio::io_context io_context;
     agrpc::PollContext poll_context{io_context.get_executor()};
-    auto guard = asio::make_work_guard(grpc_context);
+    std::optional guard{asio::require(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked)};
     poll_context.async_poll(grpc_context);
 
     // Use io_context and grpc_context and reset the guard when done.
@@ -262,7 +264,7 @@ int main()
     // end-snippet
 
     // begin-snippet: make-work-guard
-    auto guard = asio::make_work_guard(grpc_context);
+    std::optional guard{asio::require(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked)};
     // end-snippet
     asio::co_spawn(
         grpc_context,

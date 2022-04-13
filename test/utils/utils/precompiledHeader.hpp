@@ -39,13 +39,16 @@
 #ifdef ASIO_HAS_CO_AWAIT
 #include <asio/co_spawn.hpp>
 #include <asio/use_awaitable.hpp>
+
+#if (ASIO_VERSION >= 102000)
+#include <asio/experimental/awaitable_operators.hpp>
+#endif
 #endif
 
 #if (ASIO_VERSION >= 102000)
 #include <asio/associated_cancellation_slot.hpp>
 #include <asio/bind_cancellation_slot.hpp>
 #include <asio/cancellation_signal.hpp>
-#include <asio/experimental/awaitable_operators.hpp>
 #include <asio/experimental/deferred.hpp>
 #include <asio/experimental/parallel_group.hpp>
 #endif
@@ -72,6 +75,10 @@
 #ifdef BOOST_ASIO_HAS_CO_AWAIT
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/use_awaitable.hpp>
+
+#if (BOOST_VERSION >= 107700)
+#include <boost/asio/experimental/awaitable_operators.hpp>
+#endif
 #endif
 
 #if (BOOST_VERSION >= 107700)

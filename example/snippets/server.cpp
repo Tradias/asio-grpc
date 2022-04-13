@@ -27,6 +27,7 @@
 #include <grpcpp/server_builder.h>
 
 #include <chrono>
+#include <optional>
 
 namespace asio = boost::asio;
 
@@ -316,7 +317,7 @@ int main()
     builder.RegisterService(&service);
     server = builder.BuildAndStart();
 
-    auto guard = asio::make_work_guard(grpc_context);
+    std::optional guard{asio::require(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked)};
     asio::co_spawn(
         grpc_context,
         [&]()

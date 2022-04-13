@@ -178,7 +178,7 @@ TEST_CASE("GrpcContext::stop while waiting for Alarm will not invoke the Alarm's
     {
         std::thread thread;
         agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
-        auto guard = asio::make_work_guard(grpc_context);
+        std::optional guard{test::work_tracking_executor(grpc_context)};
         grpc::Alarm alarm;
         asio::post(grpc_context,
                    [&]
@@ -312,7 +312,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post from multiple threads")
     static constexpr auto THREAD_COUNT = 32;
     std::atomic_int counter{};
     asio::thread_pool pool{THREAD_COUNT};
-    auto guard = asio::make_work_guard(grpc_context);
+    std::optional guard{test::work_tracking_executor(grpc_context)};
     for (size_t i = 0; i < THREAD_COUNT; ++i)
     {
         asio::post(pool,

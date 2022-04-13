@@ -50,21 +50,13 @@ endif()
 target_compile_definitions(
     asio-grpc-common-compile-options
     INTERFACE $<$<CXX_COMPILER_ID:MSVC>:
-              BOOST_ASIO_HAS_DEDUCED_REQUIRE_MEMBER_TRAIT
-              BOOST_ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT
-              BOOST_ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT
-              BOOST_ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT
-              BOOST_ASIO_HAS_DEDUCED_PREFER_MEMBER_TRAIT
-              ASIO_HAS_DEDUCED_REQUIRE_MEMBER_TRAIT
-              ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT
-              ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT
-              ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT
-              ASIO_HAS_DEDUCED_PREFER_MEMBER_TRAIT
               _WIN32_WINNT=0x0A00> # Windows 10
               $<$<CXX_COMPILER_ID:Clang>:BOOST_ASIO_HAS_STD_INVOKE_RESULT
               ASIO_HAS_STD_INVOKE_RESULT>
               BOOST_ASIO_NO_DEPRECATED
-              ASIO_NO_DEPRECATED)
+              BOOST_ASIO_NO_TS_EXECUTORS
+              ASIO_NO_DEPRECATED
+              ASIO_NO_TS_EXECUTORS)
 
 target_link_libraries(asio-grpc-common-compile-options INTERFACE gRPC::grpc++ Boost::disable_autolinking)
 

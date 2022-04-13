@@ -268,7 +268,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_executor can be used to await Ala
     bool ok{false};
     std::thread::id expected_thread_id{};
     std::thread::id actual_thread_id{};
-    auto guard = asio::make_work_guard(grpc_context);
+    std::optional guard{get_work_tracking_executor()};
     asio::io_context io_context;
     test::co_spawn(io_context,
                    [&]() -> asio::awaitable<void>
@@ -296,7 +296,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest,
     std::thread::id expected_thread_id{};
     std::thread::id actual_thread_id{};
     asio::io_context io_context;
-    auto guard = asio::make_work_guard(io_context);
+    std::optional guard{get_work_tracking_executor()};
     asio::steady_timer timer{io_context};
     test::co_spawn(grpc_context,
                    [&]() -> asio::awaitable<void>

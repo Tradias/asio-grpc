@@ -14,6 +14,7 @@
 
 #include "utils/asioUtils.hpp"
 #include "utils/grpcContextTest.hpp"
+#include "utils/manualLifetime.hpp"
 #include "utils/time.hpp"
 
 #include <agrpc/pollContext.hpp>
@@ -50,6 +51,12 @@ TEST_CASE_FIXTURE(test::GrpcContextTest,
 {
     bool invoked{false};
     asio::io_context io_context;
+    const auto create_io_context_work_guard = [&]
+    {
+        return asio::require(io_context.get_executor(), asio::execution::outstanding_work_t::tracked);
+    };
+    test::ManualLifetime<decltype(create_io_context_work_guard())> work;
+    work.construct(create_io_context_work_guard());
     agrpc::PollContext poll_context{io_context.get_executor()};
     poll_context.async_poll(grpc_context,
                             [&](auto&&)
@@ -57,7 +64,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest,
                                 if (io_context.stopped())
                                 {
                                     CHECK(invoked);
-                                    io_context.get_executor().on_work_started();
+                                    work.construct(create_io_context_work_guard());
                                     return true;
                                 }
                                 CHECK_FALSE(invoked);
@@ -67,7 +74,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest,
                [&]
                {
                    asio::post(grpc_context,
-                              [&, g = asio::make_work_guard(io_context)]
+                              [&, g = create_io_context_work_guard()]
                               {
                                   asio::post(io_context,
                                              [&]
@@ -75,14 +82,15 @@ TEST_CASE_FIXTURE(test::GrpcContextTest,
                                                  // Next grpc_context.poll() will reset the stopped state
                                                  CHECK(grpc_context.is_stopped());
                                                  asio::post(grpc_context,
-                                                            [&, g = asio::make_work_guard(io_context)]
+                                                            [&, g = create_io_context_work_guard()]
                                                             {
                                                                 invoked = true;
                                                             });
                                              });
                               });
                });
-    io_context.get_executor().on_work_finished();
+    work.destruct();
+    work.destruct();
     io_context.run();
     CHECK(invoked);
 }

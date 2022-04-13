@@ -73,9 +73,13 @@ if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPL
 
     asio_grpc_add_example(share-io-context-client)
     target_link_libraries(asio-grpc-example-share-io-context-client PRIVATE asio-grpc::asio-grpc)
+    target_compile_options(asio-grpc-example-share-io-context-client PRIVATE -UBOOST_ASIO_NO_TS_EXECUTORS
+                                                                             -UASIO_NO_TS_EXECUTORS)
 
     asio_grpc_add_example(share-io-context-server)
     target_link_libraries(asio-grpc-example-share-io-context-server PRIVATE asio-grpc::asio-grpc)
+    target_compile_options(asio-grpc-example-share-io-context-server PRIVATE -UBOOST_ASIO_NO_TS_EXECUTORS
+                                                                             -UASIO_NO_TS_EXECUTORS)
 
     if(ASIO_GRPC_ENABLE_IO_URING_EXAMPLES OR ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
         asio_grpc_add_example(file-transfer-client)

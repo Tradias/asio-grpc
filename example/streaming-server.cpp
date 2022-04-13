@@ -275,7 +275,7 @@ int main(int argc, const char** argv)
 
     ServerShutdown server_shutdown{*server, grpc_context};
 
-    asio::thread_pool thread_pool;
+    asio::thread_pool thread_pool{1};
 
     register_client_streaming_handler(service, grpc_context);
     asio::co_spawn(

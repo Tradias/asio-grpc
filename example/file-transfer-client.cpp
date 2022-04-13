@@ -28,6 +28,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <optional>
 
 namespace asio = boost::asio;
 
@@ -155,7 +156,7 @@ int main(int argc, const char** argv)
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
     asio::io_context io_context{1};
-    auto guard = asio::make_work_guard(io_context);
+    std::optional guard{asio::require(io_context.get_executor(), asio::execution::outstanding_work_t::tracked)};
 
     try
     {

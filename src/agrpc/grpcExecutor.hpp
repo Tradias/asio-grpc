@@ -146,7 +146,7 @@ class BasicGrpcExecutor
      * Thread-safe
      */
     template <class Function, class OtherAllocator>
-    void dispatch(Function&& function, OtherAllocator other_allocator) const
+    void dispatch(Function&& function, const OtherAllocator& other_allocator) const
     {
         detail::create_and_submit_no_arg_operation<false>(this->context(), std::forward<Function>(function),
                                                           other_allocator);
@@ -162,7 +162,7 @@ class BasicGrpcExecutor
      * Thread-safe
      */
     template <class Function, class OtherAllocator>
-    void post(Function&& function, OtherAllocator other_allocator) const
+    void post(Function&& function, const OtherAllocator& other_allocator) const
     {
         detail::create_and_submit_no_arg_operation<true>(this->context(), std::forward<Function>(function),
                                                          other_allocator);
@@ -178,7 +178,7 @@ class BasicGrpcExecutor
      * Thread-safe
      */
     template <class Function, class OtherAllocator>
-    void defer(Function&& function, OtherAllocator other_allocator) const
+    void defer(Function&& function, const OtherAllocator& other_allocator) const
     {
         detail::create_and_submit_no_arg_operation<true>(this->context(), std::forward<Function>(function),
                                                          other_allocator);
@@ -467,5 +467,202 @@ template <class Allocator, std::uint32_t Options, class Alloc>
 struct agrpc::detail::container::uses_allocator<agrpc::BasicGrpcExecutor<Allocator, Options>, Alloc> : std::false_type
 {
 };
+
+#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT) && \
+    !defined(ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT)
+template <class Allocator, std::uint32_t Options>
+struct agrpc::asio::traits::equality_comparable<agrpc::BasicGrpcExecutor<Allocator, Options>>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+};
+#endif
+
+#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT) && \
+    !defined(ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT)
+template <class Allocator, std::uint32_t Options, class F>
+struct agrpc::asio::traits::execute_member<agrpc::BasicGrpcExecutor<Allocator, Options>, F>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = false;
+    using result_type = void;
+};
+#endif
+
+#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_REQUIRE_MEMBER_TRAIT) && \
+    !defined(ASIO_HAS_DEDUCED_REQUIRE_MEMBER_TRAIT)
+template <class Allocator, std::uint32_t Options>
+struct agrpc::asio::traits::require_member<agrpc::BasicGrpcExecutor<Allocator, Options>,
+                                           agrpc::asio::execution::blocking_t::possibly_t>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+    using result_type = agrpc::BasicGrpcExecutor<Allocator, agrpc::detail::set_blocking_never(Options, false)>;
+};
+
+template <class Allocator, std::uint32_t Options>
+struct agrpc::asio::traits::require_member<agrpc::BasicGrpcExecutor<Allocator, Options>,
+                                           agrpc::asio::execution::blocking_t::never_t>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+    using result_type = agrpc::BasicGrpcExecutor<Allocator, agrpc::detail::set_blocking_never(Options, true)>;
+};
+
+template <class Allocator, std::uint32_t Options>
+struct agrpc::asio::traits::require_member<agrpc::BasicGrpcExecutor<Allocator, Options>,
+                                           agrpc::asio::execution::outstanding_work_t::tracked_t>
+    : asio::detail::io_context_bits
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+    using result_type = agrpc::BasicGrpcExecutor<Allocator, agrpc::detail::set_outstanding_work_tracked(Options, true)>;
+};
+
+template <class Allocator, std::uint32_t Options>
+struct agrpc::asio::traits::require_member<agrpc::BasicGrpcExecutor<Allocator, Options>,
+                                           agrpc::asio::execution::outstanding_work_t::untracked_t>
+    : asio::detail::io_context_bits
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+    using result_type =
+        agrpc::BasicGrpcExecutor<Allocator, agrpc::detail::set_outstanding_work_tracked(Options, false)>;
+};
+
+template <class Allocator, std::uint32_t Options>
+struct agrpc::asio::traits::require_member<agrpc::BasicGrpcExecutor<Allocator, Options>,
+                                           agrpc::asio::execution::allocator_t<void>>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+    using result_type = agrpc::BasicGrpcExecutor<std::allocator<void>, Options>;
+};
+
+template <class Allocator, std::uint32_t Options, typename OtherAllocator>
+struct agrpc::asio::traits::require_member<agrpc::BasicGrpcExecutor<Allocator, Options>,
+                                           agrpc::asio::execution::allocator_t<OtherAllocator>>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+    using result_type = agrpc::BasicGrpcExecutor<OtherAllocator, Options>;
+};
+#endif
+
+#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_PREFER_MEMBER_TRAIT) && \
+    !defined(ASIO_HAS_DEDUCED_PREFER_MEMBER_TRAIT)
+template <class Allocator, std::uint32_t Options>
+struct agrpc::asio::traits::prefer_member<agrpc::BasicGrpcExecutor<Allocator, Options>,
+                                          agrpc::asio::execution::relationship_t::fork_t>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+    using result_type =
+        agrpc::BasicGrpcExecutor<Allocator, agrpc::detail::set_relationship_continuation(Options, false)>;
+};
+
+template <class Allocator, std::uint32_t Options>
+struct agrpc::asio::traits::prefer_member<agrpc::BasicGrpcExecutor<Allocator, Options>,
+                                          agrpc::asio::execution::relationship_t::continuation_t>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+    using result_type =
+        agrpc::BasicGrpcExecutor<Allocator, agrpc::detail::set_relationship_continuation(Options, true)>;
+};
+#endif
+
+#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_QUERY_STATIC_CONSTEXPR_MEMBER_TRAIT) && \
+    !defined(ASIO_HAS_DEDUCED_QUERY_STATIC_CONSTEXPR_MEMBER_TRAIT)
+template <class Allocator, std::uint32_t Options, class Property>
+struct agrpc::asio::traits::query_static_constexpr_member<
+    agrpc::BasicGrpcExecutor<Allocator, Options>, Property,
+    typename std::enable_if_t<std::is_convertible_v<Property, agrpc::asio::execution::blocking_t>>>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+
+    static constexpr auto value() noexcept
+    {
+        return agrpc::BasicGrpcExecutor<Allocator, Options>::query(agrpc::asio::execution::blocking);
+    }
+
+    using result_type = decltype(value());
+};
+
+template <class Allocator, std::uint32_t Options, class Property>
+struct agrpc::asio::traits::query_static_constexpr_member<
+    agrpc::BasicGrpcExecutor<Allocator, Options>, Property,
+    typename std::enable_if_t<std::is_convertible_v<Property, agrpc::asio::execution::relationship_t>>>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+
+    static constexpr auto value() noexcept
+    {
+        return agrpc::BasicGrpcExecutor<Allocator, Options>::query(agrpc::asio::execution::relationship);
+    }
+
+    using result_type = decltype(value());
+};
+
+template <class Allocator, std::uint32_t Options, class Property>
+struct agrpc::asio::traits::query_static_constexpr_member<
+    agrpc::BasicGrpcExecutor<Allocator, Options>, Property,
+    typename std::enable_if_t<std::is_convertible_v<Property, agrpc::asio::execution::outstanding_work_t>>>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+
+    static constexpr auto value() noexcept
+    {
+        return agrpc::BasicGrpcExecutor<Allocator, Options>::query(agrpc::asio::execution::outstanding_work);
+    }
+
+    using result_type = decltype(value());
+};
+
+template <class Allocator, std::uint32_t Options, class Property>
+struct agrpc::asio::traits::query_static_constexpr_member<
+    agrpc::BasicGrpcExecutor<Allocator, Options>, Property,
+    typename std::enable_if_t<std::is_convertible_v<Property, agrpc::asio::execution::mapping_t>>>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+    using result_type = agrpc::asio::execution::mapping_t::thread_t;
+
+    static constexpr result_type value() noexcept { return result_type(); }
+};
+#endif
+
+#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT) && \
+    !defined(ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT)
+template <class Allocator, std::uint32_t Options>
+struct agrpc::asio::traits::query_member<agrpc::BasicGrpcExecutor<Allocator, Options>,
+                                         agrpc::asio::execution::context_t>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+    using result_type = agrpc::GrpcContext&;
+};
+
+template <class Allocator, std::uint32_t Options>
+struct agrpc::asio::traits::query_member<agrpc::BasicGrpcExecutor<Allocator, Options>,
+                                         agrpc::asio::execution::allocator_t<void>>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+    using result_type = Allocator;
+};
+
+template <class Allocator, std::uint32_t Options, typename OtherAllocator>
+struct agrpc::asio::traits::query_member<agrpc::BasicGrpcExecutor<Allocator, Options>,
+                                         agrpc::asio::execution::allocator_t<OtherAllocator>>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+    using result_type = Allocator;
+};
+#endif
 
 #endif  // AGRPC_AGRPC_GRPCEXECUTOR_HPP

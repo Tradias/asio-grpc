@@ -30,6 +30,13 @@
 
 namespace test
 {
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+inline auto work_tracking_executor(agrpc::GrpcContext& grpc_context)
+{
+    return asio::require(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked);
+}
+#endif
+
 struct GrpcContextTest
 {
     grpc::ServerBuilder builder;
@@ -44,6 +51,8 @@ struct GrpcContextTest
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     agrpc::pmr::GrpcExecutor get_pmr_executor() noexcept;
+
+    auto get_work_tracking_executor() noexcept { return test::work_tracking_executor(grpc_context); }
 #endif
 
     auto use_sender() noexcept { return agrpc::use_sender(get_executor()); }
