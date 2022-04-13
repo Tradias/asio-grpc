@@ -26,7 +26,14 @@
 
 #include <iostream>
 
-boost::asio::awaitable<void> make_client_streaming_request(example::v1::Example::Stub& stub)
+namespace asio = boost::asio;
+
+// Example showing some of the features of using asio-grpc with Boost.Asio.
+
+// ---------------------------------------------------
+// A simple client-streaming request with coroutines.
+// ---------------------------------------------------
+asio::awaitable<void> make_client_streaming_request(example::v1::Example::Stub& stub)
 {
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
@@ -57,8 +64,13 @@ boost::asio::awaitable<void> make_client_streaming_request(example::v1::Example:
     abort_if_not(status.ok());
     silence_unused(request_ok, read_ok, write_ok, writes_done_ok, finish_ok);
 }
+// ---------------------------------------------------
+//
 
-boost::asio::awaitable<void> make_bidirectional_streaming_request(example::v1::Example::Stub& stub)
+// ---------------------------------------------------
+// A bidirectional-streaming request that simply sends the response from the server back to it.
+// ---------------------------------------------------
+asio::awaitable<void> make_bidirectional_streaming_request(example::v1::Example::Stub& stub)
 {
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
@@ -82,9 +94,10 @@ boost::asio::awaitable<void> make_bidirectional_streaming_request(example::v1::E
     {
         example::v1::Response response;
         // Reads and writes can be performed simultaneously.
-        using namespace boost::asio::experimental::awaitable_operators;
+        using namespace asio::experimental::awaitable_operators;
         std::tie(read_ok, write_ok) =
             co_await (agrpc::read(*reader_writer, response) && agrpc::write(*reader_writer, request));
+
         std::cout << "Bidirectional streaming: " << response.integer() << '\n';
         request.set_integer(response.integer());
         ++count;
@@ -99,24 +112,30 @@ boost::asio::awaitable<void> make_bidirectional_streaming_request(example::v1::E
     abort_if_not(status.ok());
     silence_unused(finish_ok);
 }
+// ---------------------------------------------------
+//
 
+// ---------------------------------------------------
+// A unary request with a per-RPC step timeout. Using a unary RPC for demonstration purposes, the same mechanism can be
+// applied to streaming RPCs, where it is arguably more useful.
+// For unary RPCs, `grpc::ClientContext::set_deadline` should be preferred.
+// ---------------------------------------------------
 template <class Function>
-boost::asio::awaitable<void> run_with_deadline(grpc::Alarm& alarm, grpc::ClientContext& client_context,
-                                               std::chrono::system_clock::time_point deadline, Function function)
+asio::awaitable<void> run_with_deadline(grpc::Alarm& alarm, grpc::ClientContext& client_context,
+                                        std::chrono::system_clock::time_point deadline, Function function)
 {
-    const auto set_alarm = [&]() -> boost::asio::awaitable<void>
+    const auto set_alarm = [&]() -> asio::awaitable<void>
     {
         if (co_await agrpc::wait(alarm, deadline))
         {
             client_context.TryCancel();
         }
     };
-    using namespace boost::asio::experimental::awaitable_operators;
+    using namespace asio::experimental::awaitable_operators;
     co_await (set_alarm() || function());
 }
 
-// This example shows how to cancel an entire RPC when a single step did not complete within the specified time.
-boost::asio::awaitable<void> make_and_cancel_unary_request(example::v1::ExampleExt::Stub& stub)
+asio::awaitable<void> make_and_cancel_unary_request(example::v1::ExampleExt::Stub& stub)
 {
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
@@ -138,9 +157,13 @@ boost::asio::awaitable<void> make_and_cancel_unary_request(example::v1::ExampleE
     abort_if_not(std::chrono::steady_clock::now() < not_too_exceed);
     abort_if_not(grpc::StatusCode::CANCELLED == status.error_code());
 }
+// ---------------------------------------------------
+//
 
-// This helps with writing unit tests for these examples.
-boost::asio::awaitable<void> make_shutdown_request(example::v1::ExampleExt::Stub& stub)
+// ---------------------------------------------------
+// The Shutdown endpoint is used by unit tests.
+// ---------------------------------------------------
+asio::awaitable<void> make_shutdown_request(example::v1::ExampleExt::Stub& stub)
 {
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
@@ -161,6 +184,8 @@ boost::asio::awaitable<void> make_shutdown_request(example::v1::ExampleExt::Stub
     }
     abort_if_not(status.ok());
 }
+// ---------------------------------------------------
+//
 
 int main(int argc, const char** argv)
 {
@@ -172,17 +197,17 @@ int main(int argc, const char** argv)
     const auto stub_ext = example::v1::ExampleExt::NewStub(channel);
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
-    boost::asio::co_spawn(
+    asio::co_spawn(
         grpc_context,
-        [&]() -> boost::asio::awaitable<void>
+        [&]() -> asio::awaitable<void>
         {
             // Let's perform the client-streaming and bidirectional-streaming requests simultaneously
-            using namespace boost::asio::experimental::awaitable_operators;
+            using namespace asio::experimental::awaitable_operators;
             co_await (make_client_streaming_request(*stub) && make_bidirectional_streaming_request(*stub));
             co_await make_and_cancel_unary_request(*stub_ext);
             co_await make_shutdown_request(*stub_ext);
         },
-        boost::asio::detached);
+        asio::detached);
 
     grpc_context.run();
 }

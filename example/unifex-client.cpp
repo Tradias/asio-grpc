@@ -26,6 +26,11 @@
 #include <unifex/then.hpp>
 #include <unifex/when_all.hpp>
 
+// Example showing some of the features of using asio-grpc with libunifex.
+
+// ---------------------------------------------------
+// A simple unary request with coroutines.
+// ---------------------------------------------------
 unifex::task<void> make_unary_request(example::v1::Example::Stub& stub, agrpc::GrpcContext& grpc_context)
 {
     grpc::ClientContext client_context;
@@ -41,7 +46,12 @@ unifex::task<void> make_unary_request(example::v1::Example::Stub& stub, agrpc::G
 
     abort_if_not(status.ok());
 }
+// ---------------------------------------------------
+//
 
+// ---------------------------------------------------
+// A simple server-streaming request with coroutines.
+// ---------------------------------------------------
 unifex::task<void> make_server_streaming_request(example::v1::Example::Stub& stub, agrpc::GrpcContext& grpc_context)
 {
     grpc::ClientContext client_context;
@@ -66,7 +76,14 @@ unifex::task<void> make_server_streaming_request(example::v1::Example::Stub& stu
 
     abort_if_not(status.ok());
 }
+// ---------------------------------------------------
+//
 
+// ---------------------------------------------------
+// A unary request with a per-RPC step timeout. Using a unary RPC for demonstration purposes, the same mechanism can be
+// applied to streaming RPCs, where it is arguably more useful.
+// For unary RPCs, `grpc::ClientContext::set_deadline` should be preferred.
+// ---------------------------------------------------
 template <class Sender>
 auto run_with_deadline(grpc::Alarm& alarm, agrpc::GrpcContext& grpc_context, grpc::ClientContext& client_context,
                        std::chrono::system_clock::time_point deadline, Sender sender)
@@ -100,6 +117,8 @@ unifex::task<void> make_and_cancel_unary_request(example::v1::ExampleExt::Stub& 
 
     abort_if_not(grpc::StatusCode::CANCELLED == status.error_code());
 }
+// ---------------------------------------------------
+//
 
 int main(int argc, const char** argv)
 {

@@ -28,6 +28,11 @@
 
 namespace asio = boost::asio;
 
+// Example showing how to run an io_context and a GrpcContext on the same thread.
+// This can i.e. be useful when writing an HTTP server that occasionally reaches out to a gRPC server. In that case
+// creating a separate thread for the GrpcContext might be undesirable due to added synchronization complexity.
+
+//  A simple tcp request that will be handled by the io_context
 asio::awaitable<void> handle_tcp_request(asio::ip::port_type port)
 {
     const auto executor = co_await asio::this_coro::executor;
@@ -39,6 +44,7 @@ asio::awaitable<void> handle_tcp_request(asio::ip::port_type port)
     abort_if_not("example" == std::string_view(data, bytes_read - 1));
 }
 
+// A unary RPC request that will be handled by the GrpcContext
 asio::awaitable<void> handle_grpc_request(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
 {
     grpc::ServerContext server_context;

@@ -34,6 +34,7 @@ namespace asio = boost::asio;
 // Example showing how to transfer files over a streaming RPC. Only a fixed number of dynamic memory allocations are
 // performed. The use of `agrpc::GrpcAwaitable<bool>` is not required but `agrpc::GrpcExecutor` is slightly smaller and
 // faster to copy than the `asio::any_io_executor` of the default `asio::awaitable`.
+
 agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcContext& grpc_context,
                                                                   asio::io_context& io_context,
                                                                   example::v1::ExampleExt::Stub& stub,
@@ -69,8 +70,8 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
     example::v1::SendFileRequest first_read_buffer;
     first_read_buffer.mutable_content()->resize(CHUNK_SIZE);
 
-    // bind_executor prevents context switching to this_coro::executor when async_read_some completes.
-    // We do not need to switch because agrpc::write is thread-safe.
+    // bind_executor prevents context switching to this_coro::executor (the GrpcContext in our case) when
+    // async_read_some completes. We do not need to switch because agrpc::write is thread-safe.
     auto bytes_read = co_await file.async_read_some(
         asio::buffer(*first_read_buffer.mutable_content()),
         buffer1.bind_allocator(asio::bind_executor(io_context, agrpc::GRPC_USE_AWAITABLE)));

@@ -25,7 +25,7 @@
 namespace example
 {
 // Simple dynamic-allocation free implementation. Could also use asio::experimental::parallel_group but it
-// performs one allocate_shared that cannot be customized.
+// performs one call to std::allocate_shared that cannot be customized.
 template <class Result1, class Result2, class Init1, class Init2>
 agrpc::GrpcAwaitable<std::pair<Result1, Result2>> when_both(Init1&& init1, Init2&& init2)
 {

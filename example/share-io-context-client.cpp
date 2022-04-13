@@ -26,10 +26,11 @@
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 
-#include <string_view>
-
 namespace asio = boost::asio;
 
+// Example showing how to run an io_context and a GrpcContext on the same thread.
+
+// A simple tcp request that will be handled by the io_context
 asio::awaitable<void> make_tcp_request(asio::ip::port_type port)
 {
     const auto executor = co_await asio::this_coro::executor;
@@ -39,6 +40,7 @@ asio::awaitable<void> make_tcp_request(asio::ip::port_type port)
     co_await asio::async_write(socket, asio::buffer("example"), asio::use_awaitable);
 }
 
+// A unary RPC request that will be handled by the GrpcContext
 asio::awaitable<void> make_grpc_request(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
     grpc::ClientContext client_context;

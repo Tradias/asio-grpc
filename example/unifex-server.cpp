@@ -28,6 +28,12 @@
 #include <unifex/when_all.hpp>
 #include <unifex/with_query_value.hpp>
 
+// Example showing some of the features of using asio-grpc with libunifex.
+
+// ---------------------------------------------------
+// Register a request handler to unary requests. A bit of boilerplate code regarding stop_source is added to make this
+// example testable.
+// ---------------------------------------------------
 unifex::task<void> handle_unary_request(agrpc::GrpcContext& grpc_context, grpc::ServerContext&,
                                         example::v1::Request& request,
                                         grpc::ServerAsyncResponseWriter<example::v1::Response>& writer)
@@ -42,26 +48,36 @@ auto register_unary_request_handler(example::v1::Example::AsyncService& service,
     return unifex::let_value_with_stop_source(
         [&](unifex::inplace_stop_source& stop)
         {
-            return unifex::let_done(
-                unifex::with_query_value(agrpc::repeatedly_request(
-                                             &example::v1::Example::AsyncService::RequestUnary, service,
-                                             [&](auto& server_context, auto& request, auto& writer)
-                                             {
-                                                 // Stop handling any more requests after this one
-                                                 stop.request_stop();
-                                                 return handle_unary_request(grpc_context, server_context, request,
-                                                                             writer);
-                                             },
-                                             agrpc::use_sender(grpc_context)),
-                                         unifex::get_stop_token, stop.get_token()),
-                []()
-                {
-                    // Prevent stop signal from propagating up
-                    return unifex::just();
-                });
+            return unifex::let_done(unifex::with_query_value(
+                                        // Register a handler for all incoming RPCs of this method
+                                        // (Example::RequestUnary) until the server is being
+                                        // shut down or stop is requested. The handler must return a sender.
+                                        agrpc::repeatedly_request(
+                                            &example::v1::Example::AsyncService::RequestUnary, service,
+                                            [&](auto& server_context, auto& request, auto& writer)
+                                            {
+                                                // Stop handling any more requests after this one. This is done to make
+                                                // this example testable.
+                                                stop.request_stop();
+                                                return handle_unary_request(grpc_context, server_context, request,
+                                                                            writer);
+                                            },
+                                            agrpc::use_sender(grpc_context)),
+                                        //
+                                        unifex::get_stop_token, stop.get_token()),
+                                    []()
+                                    {
+                                        // Prevent stop signal from propagating up
+                                        return unifex::just();
+                                    });
         });
 }
+// ---------------------------------------------------
+//
 
+// ---------------------------------------------------
+// A simple server-streaming request handler using coroutines.
+// ---------------------------------------------------
 unifex::task<void> handle_server_streaming_request(example::v1::Example::AsyncService& service,
                                                    agrpc::GrpcContext& grpc_context)
 {
@@ -71,17 +87,27 @@ unifex::task<void> handle_server_streaming_request(example::v1::Example::AsyncSe
     if (!co_await agrpc::request(&example::v1::Example::AsyncService::RequestServerStreaming, service, server_context,
                                  request, writer, agrpc::use_sender(grpc_context)))
     {
+        // The gRPC server is shutting down.
         co_return;
     }
     for (google::protobuf::int32 i = 0; i < request.integer(); ++i)
     {
         example::v1::Response response;
         response.set_integer(i);
-        co_await agrpc::write(writer, response, agrpc::use_sender(grpc_context));
+        if (!co_await agrpc::write(writer, response, agrpc::use_sender(grpc_context)))
+        {
+            // The client hung up.
+            co_return;
+        }
     }
     co_await agrpc::finish(writer, grpc::Status::OK, agrpc::use_sender(grpc_context));
 }
+// ---------------------------------------------------
+//
 
+// ---------------------------------------------------
+// The SlowUnary endpoint is used by the client to demonstrate per-RPC step cancellation. See unifex-client.cpp.
+// ---------------------------------------------------
 unifex::task<void> handle_slow_unary_request(example::v1::ExampleExt::AsyncService& service,
                                              agrpc::GrpcContext& grpc_context)
 {
@@ -100,6 +126,8 @@ unifex::task<void> handle_slow_unary_request(example::v1::ExampleExt::AsyncServi
 
     co_await agrpc::finish(writer, {}, grpc::Status::OK, agrpc::use_sender(grpc_context));
 }
+// ---------------------------------------------------
+//
 
 int main(int argc, const char** argv)
 {
