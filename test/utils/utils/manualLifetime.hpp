@@ -30,18 +30,12 @@ class ManualLifetime
     template <class... Args>
     T& construct(Args&&... args)
     {
-        return *::new (voidify(std::addressof(value))) T(std::forward<Args>(args)...);
+        return *::new (static_cast<void*>(std::addressof(value))) T(std::forward<Args>(args)...);
     }
 
     void destruct() { std::destroy_at(std::addressof(value)); }
 
   private:
-    template <class T>
-    static constexpr void* voidify(T* ptr) noexcept
-    {
-        return const_cast<void*>(static_cast<const volatile void*>(ptr));
-    }
-
     union
     {
         T value;
