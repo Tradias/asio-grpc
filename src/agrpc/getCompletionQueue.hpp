@@ -33,13 +33,13 @@ struct GetCompletionQueueFn
     /**
      * @brief Get `grpc::CompletionQueue*` from a BasicGrpcExecutor
      *
-     * Equivalent to `executor.context().get_completion_queue()`
+     * Effectively calls `executor.context().get_completion_queue()`
      */
     template <class Allocator, std::uint32_t Options>
     [[nodiscard]] grpc::CompletionQueue* operator()(
         const agrpc::BasicGrpcExecutor<Allocator, Options>& executor) const noexcept
     {
-        return executor.context().get_completion_queue();
+        return detail::query_grpc_context(executor).get_completion_queue();
     }
 
     /**

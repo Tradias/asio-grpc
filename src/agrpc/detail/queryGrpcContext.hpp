@@ -24,7 +24,7 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class Executor>
-decltype(auto) query_grpc_context(const Executor& executor)
+agrpc::GrpcContext& query_grpc_context(const Executor& executor)
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     if constexpr (asio::can_query_v<Executor, asio::execution::context_t>)

@@ -29,11 +29,6 @@ namespace detail
 template <class Allocator>
 class GrpcExecutorBase
 {
-  public:
-    void on_work_started() const noexcept { this->grpc_context()->work_started(); }
-
-    void on_work_finished() const noexcept { this->grpc_context()->work_finished(); }
-
   protected:
     constexpr GrpcExecutorBase(agrpc::GrpcContext* grpc_context, Allocator allocator) noexcept
         : impl(grpc_context, std::move(allocator))
@@ -62,7 +57,8 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
     GrpcExecutorWorkTrackerBase(const GrpcExecutorWorkTrackerBase& other) noexcept
         : Base(other.grpc_context(), other.allocator())
     {
-        this->on_work_started();
+        this->grpc_context()->work_started();
+        ;
     }
 
     constexpr GrpcExecutorWorkTrackerBase(GrpcExecutorWorkTrackerBase&& other) noexcept
@@ -74,7 +70,8 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
     {
         if (this->grpc_context())
         {
-            this->on_work_finished();
+            this->grpc_context()->work_finished();
+            ;
         }
     }
 
@@ -117,7 +114,8 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
     GrpcExecutorWorkTrackerBase(agrpc::GrpcContext* grpc_context, Allocator allocator) noexcept
         : Base(grpc_context, std::move(allocator))
     {
-        this->on_work_started();
+        this->grpc_context()->work_started();
+        ;
     }
 };
 }

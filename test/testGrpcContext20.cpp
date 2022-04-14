@@ -296,7 +296,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest,
     std::thread::id expected_thread_id{};
     std::thread::id actual_thread_id{};
     asio::io_context io_context;
-    std::optional guard{get_work_tracking_executor()};
+    std::optional guard{asio::require(io_context.get_executor(), asio::execution::outstanding_work_t::tracked)};
     asio::steady_timer timer{io_context};
     test::co_spawn(grpc_context,
                    [&]() -> asio::awaitable<void>

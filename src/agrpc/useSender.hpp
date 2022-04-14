@@ -43,7 +43,7 @@ struct UseSenderFn
     template <class Allocator, std::uint32_t Options>
     [[nodiscard]] constexpr auto operator()(const agrpc::BasicGrpcExecutor<Allocator, Options>& executor) const noexcept
     {
-        return detail::UseSender{executor.context()};
+        return detail::UseSender{detail::query_grpc_context(executor)};
     }
 
     /**

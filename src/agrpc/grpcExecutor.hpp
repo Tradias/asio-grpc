@@ -69,12 +69,17 @@ class BasicGrpcExecutor
     {
     }
 
+#if defined(AGRPC_UNIFEX) || (defined(AGRPC_BOOST_ASIO) && !defined(BOOST_ASIO_NO_TS_EXECUTORS)) || \
+    (defined(AGRPC_STANDALONE_ASIO) && !defined(ASIO_NO_TS_EXECUTORS))
     /**
      * @brief Get the underlying GrpcContext
      *
      * Thread-safe
+     *
+     * Since 1.6.0 this function is hidden when `(BOOST_)ASIO_NO_TS_EXECUTORS` is defined.
      */
     [[nodiscard]] constexpr agrpc::GrpcContext& context() const noexcept { return *this->grpc_context(); }
+#endif
 
     /**
      * @brief Get the associated allocator
@@ -133,8 +138,29 @@ class BasicGrpcExecutor
      */
     [[nodiscard]] bool running_in_this_thread() const noexcept
     {
-        return detail::GrpcContextImplementation::running_in_this_thread(this->context());
+        return detail::GrpcContextImplementation::running_in_this_thread(*this->grpc_context());
     }
+
+#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_NO_TS_EXECUTORS) && !defined(ASIO_NO_TS_EXECUTORS)
+    /**
+     * @brief Signal the GrpcContext that an asynchronous operation is in progress
+     *
+     * Thread-safe
+     *
+     * Since 1.6.0 this function is hidden when `(BOOST_)ASIO_NO_TS_EXECUTORS` is defined.
+     */
+    void on_work_started() const noexcept { this->grpc_context()->work_started(); }
+
+    /**
+     * @brief Signal the GrpcContext that an asynchronous operation has completed
+     *
+     * Once all outstanding asynchronous operations have completed the GrpcContext will go into the stopped state.
+     *
+     * Thread-safe
+     *
+     * Since 1.6.0 this function is hidden when `(BOOST_)ASIO_NO_TS_EXECUTORS` is defined.
+     */
+    void on_work_finished() const noexcept { this->grpc_context()->work_finished(); }
 
     /**
      * @brief Request the GrpcContext to invoke the given function object
@@ -144,6 +170,8 @@ class BasicGrpcExecutor
      * function.
      *
      * Thread-safe
+     *
+     * Since 1.6.0 this function is hidden when `(BOOST_)ASIO_NO_TS_EXECUTORS` is defined.
      */
     template <class Function, class OtherAllocator>
     void dispatch(Function&& function, const OtherAllocator& other_allocator) const
@@ -160,6 +188,8 @@ class BasicGrpcExecutor
      * function.
      *
      * Thread-safe
+     *
+     * Since 1.6.0 this function is hidden when `(BOOST_)ASIO_NO_TS_EXECUTORS` is defined.
      */
     template <class Function, class OtherAllocator>
     void post(Function&& function, const OtherAllocator& other_allocator) const
@@ -176,6 +206,8 @@ class BasicGrpcExecutor
      * function.
      *
      * Thread-safe
+     *
+     * Since 1.6.0 this function is hidden when `(BOOST_)ASIO_NO_TS_EXECUTORS` is defined.
      */
     template <class Function, class OtherAllocator>
     void defer(Function&& function, const OtherAllocator& other_allocator) const
@@ -183,7 +215,9 @@ class BasicGrpcExecutor
         detail::create_and_submit_no_arg_operation<true>(this->context(), std::forward<Function>(function),
                                                          other_allocator);
     }
+#endif
 
+#if !defined(AGRPC_UNIFEX)
     /**
      * @brief Request the GrpcContext to invoke the given function object
      *
@@ -197,8 +231,9 @@ class BasicGrpcExecutor
     void execute(Function&& function) const
     {
         detail::create_and_submit_no_arg_operation<detail::is_blocking_never(Options)>(
-            this->context(), std::forward<Function>(function), this->allocator());
+            *this->grpc_context(), std::forward<Function>(function), this->allocator());
     }
+#endif
 
     /**
      * @brief Create a Sender that completes on the GrpcContext
@@ -209,7 +244,7 @@ class BasicGrpcExecutor
      *
      * Thread-safe
      */
-    constexpr auto schedule() const noexcept { return detail::ScheduleSender{this->context()}; }
+    [[nodiscard]] constexpr auto schedule() const noexcept { return detail::ScheduleSender{*this->grpc_context()}; }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     /**
@@ -224,7 +259,7 @@ class BasicGrpcExecutor
     [[nodiscard]] constexpr auto require(asio::execution::blocking_t::possibly_t) const noexcept
         -> agrpc::BasicGrpcExecutor<Allocator, detail::set_blocking_never(Options, false)>
     {
-        return {this->context(), this->allocator()};
+        return {*this->grpc_context(), this->allocator()};
     }
 
     /**
@@ -239,7 +274,7 @@ class BasicGrpcExecutor
     [[nodiscard]] constexpr auto require(asio::execution::blocking_t::never_t) const noexcept
         -> agrpc::BasicGrpcExecutor<Allocator, detail::set_blocking_never(Options, true)>
     {
-        return {this->context(), this->allocator()};
+        return {*this->grpc_context(), this->allocator()};
     }
 
     /**
@@ -254,7 +289,7 @@ class BasicGrpcExecutor
     [[nodiscard]] constexpr auto prefer(asio::execution::relationship_t::fork_t) const noexcept
         -> agrpc::BasicGrpcExecutor<Allocator, detail::set_relationship_continuation(Options, false)>
     {
-        return {this->context(), this->allocator()};
+        return {*this->grpc_context(), this->allocator()};
     }
 
     /**
@@ -269,7 +304,7 @@ class BasicGrpcExecutor
     [[nodiscard]] constexpr auto prefer(asio::execution::relationship_t::continuation_t) const noexcept
         -> agrpc::BasicGrpcExecutor<Allocator, detail::set_relationship_continuation(Options, true)>
     {
-        return {this->context(), this->allocator()};
+        return {*this->grpc_context(), this->allocator()};
     }
 
     /**
@@ -284,7 +319,7 @@ class BasicGrpcExecutor
     [[nodiscard]] constexpr auto require(asio::execution::outstanding_work_t::tracked_t) const noexcept
         -> agrpc::BasicGrpcExecutor<Allocator, detail::set_outstanding_work_tracked(Options, true)>
     {
-        return {this->context(), this->allocator()};
+        return {*this->grpc_context(), this->allocator()};
     }
 
     /**
@@ -299,7 +334,7 @@ class BasicGrpcExecutor
     [[nodiscard]] constexpr auto require(asio::execution::outstanding_work_t::untracked_t) const noexcept
         -> agrpc::BasicGrpcExecutor<Allocator, detail::set_outstanding_work_tracked(Options, false)>
     {
-        return {this->context(), this->allocator()};
+        return {*this->grpc_context(), this->allocator()};
     }
 
     /**
@@ -315,7 +350,7 @@ class BasicGrpcExecutor
     [[nodiscard]] constexpr auto require(asio::execution::allocator_t<OtherAllocator> other_allocator) const noexcept
         -> agrpc::BasicGrpcExecutor<OtherAllocator, Options>
     {
-        return {this->context(), other_allocator.value()};
+        return {*this->grpc_context(), other_allocator.value()};
     }
 
     /**
@@ -330,7 +365,7 @@ class BasicGrpcExecutor
     [[nodiscard]] constexpr auto require(asio::execution::allocator_t<void>) const noexcept
         -> agrpc::BasicGrpcExecutor<std::allocator<void>, Options>
     {
-        return agrpc::BasicGrpcExecutor<std::allocator<void>, Options>{this->context()};
+        return agrpc::BasicGrpcExecutor<std::allocator<void>, Options>{*this->grpc_context()};
     }
 
     /**
@@ -379,7 +414,7 @@ class BasicGrpcExecutor
      */
     [[nodiscard]] constexpr agrpc::GrpcContext& query(asio::execution::context_t) const noexcept
     {
-        return this->context();
+        return *this->grpc_context();
     }
 
     /**
