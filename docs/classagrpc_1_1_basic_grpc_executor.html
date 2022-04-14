@@ -122,6 +122,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aa88fb5798dd945616262dc58258f48ec"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html#aa88fb5798dd945616262dc58258f48ec">running_in_this_thread</a> () const noexcept</td></tr>
 <tr class="memdesc:aa88fb5798dd945616262dc58258f48ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determine whether the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> is running in the current thread.  <a href="classagrpc_1_1_basic_grpc_executor.html#aa88fb5798dd945616262dc58258f48ec">More...</a><br /></td></tr>
 <tr class="separator:aa88fb5798dd945616262dc58258f48ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab2333c1d9f61b6469aeb6c84898e9a36"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html#ab2333c1d9f61b6469aeb6c84898e9a36">on_work_started</a> () const noexcept</td></tr>
+<tr class="memdesc:ab2333c1d9f61b6469aeb6c84898e9a36"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signal the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> that an asynchronous operation is in progress.  <a href="classagrpc_1_1_basic_grpc_executor.html#ab2333c1d9f61b6469aeb6c84898e9a36">More...</a><br /></td></tr>
+<tr class="separator:ab2333c1d9f61b6469aeb6c84898e9a36"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a727afeb6438fe94ec105085ee9e00d56"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html#a727afeb6438fe94ec105085ee9e00d56">on_work_finished</a> () const noexcept</td></tr>
+<tr class="memdesc:a727afeb6438fe94ec105085ee9e00d56"><td class="mdescLeft">&#160;</td><td class="mdescRight">Signal the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> that an asynchronous operation has completed.  <a href="classagrpc_1_1_basic_grpc_executor.html#a727afeb6438fe94ec105085ee9e00d56">More...</a><br /></td></tr>
+<tr class="separator:a727afeb6438fe94ec105085ee9e00d56"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a97eda5ecec4b7066166e2f08eb1518be"><td class="memTemplParams" colspan="2">template&lt;class Function , class OtherAllocator &gt; </td></tr>
 <tr class="memitem:a97eda5ecec4b7066166e2f08eb1518be"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html#a97eda5ecec4b7066166e2f08eb1518be">dispatch</a> (Function &amp;&amp;function, const OtherAllocator &amp;other_allocator) const</td></tr>
 <tr class="memdesc:a97eda5ecec4b7066166e2f08eb1518be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> to invoke the given function object.  <a href="classagrpc_1_1_basic_grpc_executor.html#a97eda5ecec4b7066166e2f08eb1518be">More...</a><br /></td></tr>
@@ -147,12 +153,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ad7c8d60173fb17ccb20df74eba49c23a"><td class="memItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html#ad7c8d60173fb17ccb20df74eba49c23a">require</a> (asio::execution::blocking_t::never_t) const noexcept -&gt; <a class="el" href="classagrpc_1_1_basic_grpc_executor.html">agrpc::BasicGrpcExecutor</a>&lt; Allocator, detail::set_blocking_never(Options, true)&gt;</td></tr>
 <tr class="memdesc:ad7c8d60173fb17ccb20df74eba49c23a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtain an executor with the blocking.never property.  <a href="classagrpc_1_1_basic_grpc_executor.html#ad7c8d60173fb17ccb20df74eba49c23a">More...</a><br /></td></tr>
 <tr class="separator:ad7c8d60173fb17ccb20df74eba49c23a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a64a880d5d9b37c55cacfa1a8ee0de254"><td class="memItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html#a64a880d5d9b37c55cacfa1a8ee0de254">prefer</a> (asio::execution::relationship_t::fork_t) const noexcept -&gt; <a class="el" href="classagrpc_1_1_basic_grpc_executor.html">agrpc::BasicGrpcExecutor</a>&lt; Allocator, detail::set_relationship_continuation(Options, false)&gt;</td></tr>
-<tr class="memdesc:a64a880d5d9b37c55cacfa1a8ee0de254"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtain an executor with the relationship.fork property.  <a href="classagrpc_1_1_basic_grpc_executor.html#a64a880d5d9b37c55cacfa1a8ee0de254">More...</a><br /></td></tr>
-<tr class="separator:a64a880d5d9b37c55cacfa1a8ee0de254"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abe981aab499deb8a8358a50433a16e01"><td class="memItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html#abe981aab499deb8a8358a50433a16e01">prefer</a> (asio::execution::relationship_t::continuation_t) const noexcept -&gt; <a class="el" href="classagrpc_1_1_basic_grpc_executor.html">agrpc::BasicGrpcExecutor</a>&lt; Allocator, detail::set_relationship_continuation(Options, true)&gt;</td></tr>
-<tr class="memdesc:abe981aab499deb8a8358a50433a16e01"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtain an executor with the relationship.continuation property.  <a href="classagrpc_1_1_basic_grpc_executor.html#abe981aab499deb8a8358a50433a16e01">More...</a><br /></td></tr>
-<tr class="separator:abe981aab499deb8a8358a50433a16e01"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ada9763f836d7e1af44a67ce09c8d6522"><td class="memItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html#ada9763f836d7e1af44a67ce09c8d6522">prefer</a> (asio::execution::relationship_t::fork_t) const noexcept</td></tr>
+<tr class="memdesc:ada9763f836d7e1af44a67ce09c8d6522"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtain an executor with the relationship.fork property.  <a href="classagrpc_1_1_basic_grpc_executor.html#ada9763f836d7e1af44a67ce09c8d6522">More...</a><br /></td></tr>
+<tr class="separator:ada9763f836d7e1af44a67ce09c8d6522"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af81aa8e1195243f012aeab6f83653015"><td class="memItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html#af81aa8e1195243f012aeab6f83653015">prefer</a> (asio::execution::relationship_t::continuation_t) const noexcept</td></tr>
+<tr class="memdesc:af81aa8e1195243f012aeab6f83653015"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtain an executor with the relationship.continuation property.  <a href="classagrpc_1_1_basic_grpc_executor.html#af81aa8e1195243f012aeab6f83653015">More...</a><br /></td></tr>
+<tr class="separator:af81aa8e1195243f012aeab6f83653015"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab78813d4863b8e8175875dc9508db97f"><td class="memItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html#ab78813d4863b8e8175875dc9508db97f">require</a> (asio::execution::outstanding_work_t::tracked_t) const noexcept -&gt; <a class="el" href="classagrpc_1_1_basic_grpc_executor.html">agrpc::BasicGrpcExecutor</a>&lt; Allocator, detail::set_outstanding_work_tracked(Options, true)&gt;</td></tr>
 <tr class="memdesc:ab78813d4863b8e8175875dc9508db97f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtain an executor with the outstanding_work.tracked property.  <a href="classagrpc_1_1_basic_grpc_executor.html#ab78813d4863b8e8175875dc9508db97f">More...</a><br /></td></tr>
 <tr class="separator:ab78813d4863b8e8175875dc9508db97f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -182,9 +188,9 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a7549f8cf2b5464b09acb21baf6806762"><td class="memItemLeft" align="right" valign="top">static constexpr asio::execution::mapping_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html#a7549f8cf2b5464b09acb21baf6806762">query</a> (asio::execution::mapping_t) noexcept</td></tr>
 <tr class="memdesc:a7549f8cf2b5464b09acb21baf6806762"><td class="mdescLeft">&#160;</td><td class="mdescRight">Query the current value of the mapping property.  <a href="classagrpc_1_1_basic_grpc_executor.html#a7549f8cf2b5464b09acb21baf6806762">More...</a><br /></td></tr>
 <tr class="separator:a7549f8cf2b5464b09acb21baf6806762"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4370da56cf9a7bca7cf256d9916b7fe0"><td class="memItemLeft" align="right" valign="top">static constexpr asio::execution::relationship_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html#a4370da56cf9a7bca7cf256d9916b7fe0">query</a> (asio::execution::relationship_t) noexcept</td></tr>
-<tr class="memdesc:a4370da56cf9a7bca7cf256d9916b7fe0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Query the current value of the relationship property.  <a href="classagrpc_1_1_basic_grpc_executor.html#a4370da56cf9a7bca7cf256d9916b7fe0">More...</a><br /></td></tr>
-<tr class="separator:a4370da56cf9a7bca7cf256d9916b7fe0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2603ea0aff00684f73fc7ef46871e8b5"><td class="memItemLeft" align="right" valign="top">static constexpr asio::execution::relationship_t::fork_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html#a2603ea0aff00684f73fc7ef46871e8b5">query</a> (asio::execution::relationship_t) noexcept</td></tr>
+<tr class="memdesc:a2603ea0aff00684f73fc7ef46871e8b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Query the current value of the relationship property.  <a href="classagrpc_1_1_basic_grpc_executor.html#a2603ea0aff00684f73fc7ef46871e8b5">More...</a><br /></td></tr>
+<tr class="separator:a2603ea0aff00684f73fc7ef46871e8b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abcc592f6e24d130c78690d6081269dfd"><td class="memItemLeft" align="right" valign="top">static constexpr asio::execution::outstanding_work_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html#abcc592f6e24d130c78690d6081269dfd">query</a> (asio::execution::outstanding_work_t) noexcept</td></tr>
 <tr class="memdesc:abcc592f6e24d130c78690d6081269dfd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Query the current value of the outstanding_work property.  <a href="classagrpc_1_1_basic_grpc_executor.html#abcc592f6e24d130c78690d6081269dfd">More...</a><br /></td></tr>
 <tr class="separator:abcc592f6e24d130c78690d6081269dfd"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -232,7 +238,8 @@ template&lt;class Allocator , std::uint32_t Options&gt; </div>
 </div><div class="memdoc">
 
 <p>Get the underlying <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a>. </p>
-<p >Thread-safe </p>
+<p >Thread-safe</p>
+<p >Since 1.6.0 this function is hidden when <code>(BOOST_)ASIO_NO_TS_EXECUTORS</code> is defined. </p>
 
 </div>
 </div>
@@ -276,7 +283,8 @@ template&lt;class Function , class OtherAllocator &gt; </div>
 
 <p>Request the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> to invoke the given function object. </p>
 <p >Do not call this function directly, it is intended to be used by the <a href="https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/defer.html">asio::defer</a> free function.</p>
-<p >Thread-safe </p>
+<p >Thread-safe</p>
+<p >Since 1.6.0 this function is hidden when <code>(BOOST_)ASIO_NO_TS_EXECUTORS</code> is defined. </p>
 
 </div>
 </div>
@@ -320,7 +328,8 @@ template&lt;class Function , class OtherAllocator &gt; </div>
 
 <p>Request the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> to invoke the given function object. </p>
 <p >Do not call this function directly, it is intended to be used by the <a href="https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/dispatch.html">asio::dispatch</a> free function.</p>
-<p >Thread-safe </p>
+<p >Thread-safe</p>
+<p >Since 1.6.0 this function is hidden when <code>(BOOST_)ASIO_NO_TS_EXECUTORS</code> is defined. </p>
 
 </div>
 </div>
@@ -388,6 +397,69 @@ template&lt;class Allocator , std::uint32_t Options&gt; </div>
 
 </div>
 </div>
+<a id="a727afeb6438fe94ec105085ee9e00d56" name="a727afeb6438fe94ec105085ee9e00d56"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a727afeb6438fe94ec105085ee9e00d56">&#9670;&nbsp;</a></span>on_work_finished()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Allocator , std::uint32_t Options&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classagrpc_1_1_basic_grpc_executor.html">agrpc::BasicGrpcExecutor</a>&lt; Allocator, Options &gt;::on_work_finished </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Signal the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> that an asynchronous operation has completed. </p>
+<p >Once all outstanding asynchronous operations have completed the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> will go into the stopped state.</p>
+<p >Thread-safe</p>
+<p >Since 1.6.0 this function is hidden when <code>(BOOST_)ASIO_NO_TS_EXECUTORS</code> is defined. </p>
+
+</div>
+</div>
+<a id="ab2333c1d9f61b6469aeb6c84898e9a36" name="ab2333c1d9f61b6469aeb6c84898e9a36"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab2333c1d9f61b6469aeb6c84898e9a36">&#9670;&nbsp;</a></span>on_work_started()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Allocator , std::uint32_t Options&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classagrpc_1_1_basic_grpc_executor.html">agrpc::BasicGrpcExecutor</a>&lt; Allocator, Options &gt;::on_work_started </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Signal the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> that an asynchronous operation is in progress. </p>
+<p >Thread-safe</p>
+<p >Since 1.6.0 this function is hidden when <code>(BOOST_)ASIO_NO_TS_EXECUTORS</code> is defined. </p>
+
+</div>
+</div>
 <a id="aa55121002e69f6da4d193e2438556519" name="aa55121002e69f6da4d193e2438556519"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa55121002e69f6da4d193e2438556519">&#9670;&nbsp;</a></span>post()</h2>
 
@@ -428,12 +500,13 @@ template&lt;class Function , class OtherAllocator &gt; </div>
 
 <p>Request the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> to invoke the given function object. </p>
 <p >Do not call this function directly, it is intended to be used by the <a href="https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/post.html">asio::post</a> free function.</p>
-<p >Thread-safe </p>
+<p >Thread-safe</p>
+<p >Since 1.6.0 this function is hidden when <code>(BOOST_)ASIO_NO_TS_EXECUTORS</code> is defined. </p>
 
 </div>
 </div>
-<a id="abe981aab499deb8a8358a50433a16e01" name="abe981aab499deb8a8358a50433a16e01"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abe981aab499deb8a8358a50433a16e01">&#9670;&nbsp;</a></span>prefer() <span class="overload">[1/2]</span></h2>
+<a id="af81aa8e1195243f012aeab6f83653015" name="af81aa8e1195243f012aeab6f83653015"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af81aa8e1195243f012aeab6f83653015">&#9670;&nbsp;</a></span>prefer() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -448,8 +521,7 @@ template&lt;class Allocator , std::uint32_t Options&gt; </div>
           <td>(</td>
           <td class="paramtype">asio::execution::relationship_t::continuation_t&#160;</td>
           <td class="paramname"></td><td>)</td>
-          <td> const -&gt; <a class="el" href="classagrpc_1_1_basic_grpc_executor.html">agrpc::BasicGrpcExecutor</a>&lt;Allocator, detail::set_relationship_continuation(Options, true)&gt;
-    </td>
+          <td> const</td>
         </tr>
       </table>
   </td>
@@ -460,13 +532,14 @@ template&lt;class Allocator , std::uint32_t Options&gt; </div>
 </div><div class="memdoc">
 
 <p>Obtain an executor with the relationship.continuation property. </p>
+<p >The GrpcExecutor does not support continuation.</p>
 <p >Do not call this function directly. It is intended to be used by the <a href="https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/prefer.html">asio::prefer</a> customisation point.</p>
 <p >Thread-safe </p>
 
 </div>
 </div>
-<a id="a64a880d5d9b37c55cacfa1a8ee0de254" name="a64a880d5d9b37c55cacfa1a8ee0de254"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a64a880d5d9b37c55cacfa1a8ee0de254">&#9670;&nbsp;</a></span>prefer() <span class="overload">[2/2]</span></h2>
+<a id="ada9763f836d7e1af44a67ce09c8d6522" name="ada9763f836d7e1af44a67ce09c8d6522"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ada9763f836d7e1af44a67ce09c8d6522">&#9670;&nbsp;</a></span>prefer() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -481,8 +554,7 @@ template&lt;class Allocator , std::uint32_t Options&gt; </div>
           <td>(</td>
           <td class="paramtype">asio::execution::relationship_t::fork_t&#160;</td>
           <td class="paramname"></td><td>)</td>
-          <td> const -&gt; <a class="el" href="classagrpc_1_1_basic_grpc_executor.html">agrpc::BasicGrpcExecutor</a>&lt;Allocator, detail::set_relationship_continuation(Options, false)&gt;
-    </td>
+          <td> const</td>
         </tr>
       </table>
   </td>
@@ -493,6 +565,7 @@ template&lt;class Allocator , std::uint32_t Options&gt; </div>
 </div><div class="memdoc">
 
 <p>Obtain an executor with the relationship.fork property. </p>
+<p >The GrpcExecutor always forks.</p>
 <p >Do not call this function directly. It is intended to be used by the <a href="https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/prefer.html">asio::prefer</a> customisation point.</p>
 <p >Thread-safe </p>
 
@@ -660,8 +733,8 @@ template&lt;class Allocator , std::uint32_t Options&gt; </div>
 
 </div>
 </div>
-<a id="a4370da56cf9a7bca7cf256d9916b7fe0" name="a4370da56cf9a7bca7cf256d9916b7fe0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4370da56cf9a7bca7cf256d9916b7fe0">&#9670;&nbsp;</a></span>query() <span class="overload">[6/6]</span></h2>
+<a id="a2603ea0aff00684f73fc7ef46871e8b5" name="a2603ea0aff00684f73fc7ef46871e8b5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2603ea0aff00684f73fc7ef46871e8b5">&#9670;&nbsp;</a></span>query() <span class="overload">[6/6]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -672,7 +745,7 @@ template&lt;class Allocator , std::uint32_t Options&gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static constexpr asio::execution::relationship_t <a class="el" href="classagrpc_1_1_basic_grpc_executor.html">agrpc::BasicGrpcExecutor</a>&lt; Allocator, Options &gt;::query </td>
+          <td class="memname">static constexpr asio::execution::relationship_t::fork_t <a class="el" href="classagrpc_1_1_basic_grpc_executor.html">agrpc::BasicGrpcExecutor</a>&lt; Allocator, Options &gt;::query </td>
           <td>(</td>
           <td class="paramtype">asio::execution::relationship_t&#160;</td>
           <td class="paramname"></td><td>)</td>
