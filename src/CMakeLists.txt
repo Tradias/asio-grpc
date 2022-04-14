@@ -75,7 +75,6 @@ if(ASIO_GRPC_BUILD_TESTS)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/asioForward.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/associatedCompletionHandler.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/atomicIntrusiveQueue.hpp"
-                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/bindAllocator.ipp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/config.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/defaultCompletionToken.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/forward.hpp"

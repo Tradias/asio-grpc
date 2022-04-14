@@ -210,6 +210,75 @@ auto bind_allocator(const Allocator& allocator, Target&& target)
     return agrpc::AllocatorBinder{allocator, std::forward<Target>(target)};
 }
 
+// Implementation details
+namespace detail
+{
+template <class TargetAsyncResult, class Allocator, class = void>
+struct AllocatorBinderAsyncResultCompletionHandlerType
+{
+};
+
+template <class TargetAsyncResult, class Allocator>
+struct AllocatorBinderAsyncResultCompletionHandlerType<TargetAsyncResult, Allocator,
+                                                       std::void_t<typename TargetAsyncResult::completion_handler_type>>
+{
+    using completion_handler_type =
+        agrpc::AllocatorBinder<typename TargetAsyncResult::completion_handler_type, Allocator>;
+};
+
+template <class TargetAsyncResult, class Allocator, class = void>
+struct AllocatorBinderAsyncResultHandlerType
+{
+};
+
+template <class TargetAsyncResult, class Allocator>
+struct AllocatorBinderAsyncResultHandlerType<TargetAsyncResult, Allocator,
+                                             std::void_t<typename TargetAsyncResult::handler_type>>
+{
+    using handler_type = agrpc::AllocatorBinder<typename TargetAsyncResult::handler_type, Allocator>;
+};
+
+template <class TargetAsyncResult, class = void>
+struct AllocatorBinderAsyncResultReturnType
+{
+};
+
+template <class TargetAsyncResult>
+struct AllocatorBinderAsyncResultReturnType<TargetAsyncResult, std::void_t<typename TargetAsyncResult::return_type>>
+{
+    using return_type = typename TargetAsyncResult::return_type;
+};
+
+template <class Initiation, class Allocator>
+struct AllocatorBinderAsyncResultInitWrapper
+{
+    template <class Init>
+    AllocatorBinderAsyncResultInitWrapper(const Allocator& allocator, Init&& init)
+        : allocator(allocator), initiation(std::forward<Init>(init))
+    {
+    }
+
+    template <class Handler, class... Args>
+    void operator()(Handler&& handler, Args&&... args)
+    {
+        std::move(initiation)(agrpc::AllocatorBinder<agrpc::detail::RemoveCvrefT<Handler>, Allocator>(
+                                  allocator, std::forward<Handler>(handler)),
+                              std::forward<Args>(args)...);
+    }
+
+    template <class Handler, class... Args>
+    void operator()(Handler&& handler, Args&&... args) const
+    {
+        initiation(agrpc::AllocatorBinder<agrpc::detail::RemoveCvrefT<Handler>, Allocator>(
+                       allocator, std::forward<Handler>(handler)),
+                   std::forward<Args>(args)...);
+    }
+
+    Allocator allocator;
+    Initiation initiation;
+};
+}  // namespace detail
+
 AGRPC_NAMESPACE_END
 
 template <class Allocator, class Target, class Alloc>
@@ -217,7 +286,57 @@ struct agrpc::detail::container::uses_allocator<agrpc::AllocatorBinder<Allocator
 {
 };
 
-#include "agrpc/detail/bindAllocator.ipp"
+template <class CompletionToken, class Allocator, class Signature>
+class agrpc::asio::async_result<agrpc::AllocatorBinder<CompletionToken, Allocator>, Signature>
+    : public agrpc::detail::AllocatorBinderAsyncResultCompletionHandlerType<async_result<CompletionToken, Signature>,
+                                                                            Allocator>,
+      public agrpc::detail::AllocatorBinderAsyncResultHandlerType<async_result<CompletionToken, Signature>, Allocator>,
+      public agrpc::detail::AllocatorBinderAsyncResultReturnType<async_result<CompletionToken, Signature>>
+{
+  public:
+    explicit async_result(agrpc::AllocatorBinder<CompletionToken, Allocator>& binder) : result(binder.get()) {}
+
+    decltype(auto) get() { return result.get(); }
+
+    template <class Initiation, class RawCompletionToken, class... Args>
+    static decltype(auto) initiate(Initiation&& initiation, RawCompletionToken&& token, Args&&... args)
+    {
+        return asio::async_initiate<CompletionToken, Signature>(
+            agrpc::detail::AllocatorBinderAsyncResultInitWrapper<agrpc::detail::RemoveCvrefT<Initiation>, Allocator>(
+                token.get_allocator(), std::forward<Initiation>(initiation)),
+            token.get(), std::forward<Args>(args)...);
+    }
+
+  private:
+    async_result<CompletionToken, Signature> result;
+};
+
+template <class Target, class Allocator, class Allocator1>
+struct agrpc::asio::associated_allocator<agrpc::AllocatorBinder<Target, Allocator>, Allocator1>
+{
+    using type = Allocator;
+
+    static type get(const agrpc::AllocatorBinder<Target, Allocator>& b, const Allocator1& = Allocator1()) noexcept
+    {
+        return b.get_allocator();
+    }
+};
+
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+
+template <template <class, class> class Associator, class Target, class Allocator, class DefaultCandidate>
+struct agrpc::asio::associator<Associator, agrpc::AllocatorBinder<Target, Allocator>, DefaultCandidate>
+{
+    using type = typename Associator<Target, DefaultCandidate>::type;
+
+    static type get(const agrpc::AllocatorBinder<Target, Allocator>& b,
+                    const DefaultCandidate& c = DefaultCandidate()) noexcept
+    {
+        return Associator<Target, DefaultCandidate>::get(b.get(), c);
+    }
+};
+
+#endif
 
 #endif
 
