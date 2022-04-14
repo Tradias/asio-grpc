@@ -79,23 +79,41 @@ class CancelSafe
         void operator()(CompletionHandler&& ch)
         {
             auto executor = asio::get_associated_executor(ch);
-            auto allocator = asio::get_associated_allocator(ch);
+            const auto allocator = asio::get_associated_allocator(ch);
             if (self.result)
             {
                 auto local_result{std::move(*self.result)};
                 self.result.reset();
                 detail::post_with_allocator(
-                    std::move(executor), std::move(allocator),
-                    [local_result = std::move(local_result), ch = std::forward<CompletionHandler>(ch)]() mutable
+                    std::move(executor),
+                    [local_result = std::move(local_result),
+                     ch = std::decay_t<CompletionHandler>{std::forward<CompletionHandler>(ch)}]() mutable
                     {
                         std::apply(std::move(ch),
                                    std::tuple_cat(std::forward_as_tuple(detail::ErrorCode{}), std::move(local_result)));
-                    });
+                    },
+                    allocator);
                 return;
             }
             auto cancellation_slot = asio::get_associated_cancellation_slot(ch);
             self.emplace_completion_handler(std::forward<CompletionHandler>(ch));
             self.install_cancellation_handler(cancellation_slot);
+        }
+    };
+
+    struct CancellationHandler
+    {
+        CancelSafe& self;
+
+        void operator()(asio::cancellation_type type)
+        {
+            if (static_cast<bool>(type & asio::cancellation_type::all))
+            {
+                if (auto ch = self.completion_handler.release())
+                {
+                    std::move(ch).post_complete(asio::error::operation_aborted, CompletionArgs{}...);
+                }
+            }
         }
     };
 
@@ -111,17 +129,7 @@ class CancelSafe
     {
         if (cancellation_slot.is_connected())
         {
-            cancellation_slot.assign(
-                [this](asio::cancellation_type type)
-                {
-                    if (static_cast<bool>(type & asio::cancellation_type::all))
-                    {
-                        if (auto ch = completion_handler.release())
-                        {
-                            std::move(ch).post_complete(asio::error::operation_aborted, CompletionArgs{}...);
-                        }
-                    }
-                });
+            cancellation_slot.assign(CancellationHandler{*this});
         }
     }
 
@@ -129,7 +137,7 @@ class CancelSafe
     std::optional<std::tuple<CompletionArgs...>> result;
 };
 
-using GrpcCancelSafe = CancelSafe<bool>;
+using GrpcCancelSafe = detail::CancelSafe<bool>;
 
 AGRPC_NAMESPACE_END
 

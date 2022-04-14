@@ -26,25 +26,30 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+template <class CompletionHandler>
+auto deallocate_completion_handler(CompletionHandler* completion_handler)
+{
+    auto local_completion_handler{std::move(*completion_handler)};
+    auto allocator = asio::get_associated_allocator(local_completion_handler);
+    using Allocator = typename std::allocator_traits<decltype(allocator)>::template rebind_alloc<CompletionHandler>;
+    detail::deallocate<Allocator>(allocator, completion_handler);
+    return local_completion_handler;
+}
+
 template <class CompletionHandler, class... Args>
 void deallocate_and_invoke(void* data, Args... args)
 {
-    using Allocator = typename std::allocator_traits<
-        asio::associated_allocator_t<CompletionHandler>>::template rebind_alloc<CompletionHandler>;
     auto* completion_handler = static_cast<CompletionHandler*>(data);
-    auto local_completion_handler{std::move(*completion_handler)};
-    auto allocator = asio::get_associated_allocator(local_completion_handler);
-    detail::deallocate<Allocator>(allocator, completion_handler);
+    auto local_completion_handler = detail::deallocate_completion_handler(completion_handler);
     std::move(local_completion_handler)(std::move(args)...);
 }
 
-template <class Executor, class Allocator, class Function>
-void post_with_allocator(Executor&& executor, Allocator&& allocator, Function&& function)
+template <class Executor, class Function, class Allocator>
+void post_with_allocator(Executor&& executor, Function&& function, const Allocator& allocator)
 {
     asio::execution::execute(
         asio::prefer(asio::require(std::forward<Executor>(executor), asio::execution::blocking_t::never),
-                     asio::execution::relationship_t::fork,
-                     asio::execution::allocator(std::forward<Allocator>(allocator))),
+                     asio::execution::relationship_t::fork, asio::execution::allocator(allocator)),
         std::forward<Function>(function));
 }
 
@@ -52,13 +57,16 @@ template <class CompletionHandler, class... Args>
 void post_and_complete(void* ptr, Args... args)
 {
     auto* completion_handler = static_cast<CompletionHandler*>(ptr);
-    detail::post_with_allocator(asio::get_associated_executor(*completion_handler),
-                                asio::get_associated_allocator(*completion_handler),
-                                [ptr, args = std::make_tuple(std::move(args)...)]() mutable
-                                {
-                                    std::apply(&detail::deallocate_and_invoke<CompletionHandler, Args...>,
-                                               std::tuple_cat(std::make_tuple(ptr), std::move(args)));
-                                });
+    auto local_completion_handler = detail::deallocate_completion_handler(completion_handler);
+    auto executor = asio::get_associated_executor(local_completion_handler);
+    const auto allocator = asio::get_associated_allocator(local_completion_handler);
+    detail::post_with_allocator(
+        std::move(executor),
+        [ch = std::move(local_completion_handler), args = std::make_tuple(std::move(args)...)]() mutable
+        {
+            std::apply(std::move(ch), std::move(args));
+        },
+        allocator);
 }
 
 template <class Signature, class VoidPointer>

@@ -40,7 +40,7 @@ AGRPC_NAMESPACE_BEGIN()
  *
  * Satisfies the
  * [ExecutionContext](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/ExecutionContext.html)
- * requirements and can therefore be used in all places where Asio expects a `ExecutionContext`.
+ * requirements and can therefore be used in all places where Asio expects an `ExecutionContext`.
  *
  * Performance recommendation: Use one GrpcContext per thread.
  */
