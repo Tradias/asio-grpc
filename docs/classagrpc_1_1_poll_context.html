@@ -121,13 +121,14 @@ class agrpc::PollContext&lt; Executor, Traits &gt;</div><p >(experimental) Helpe
 <p >Example showing how to share a thread with an <code>asio::io_context</code>:</p>
 <div class="fragment"><div class="line">    asio::io_context io_context;</div>
 <div class="line">    <a class="code hl_class" href="classagrpc_1_1_poll_context.html">agrpc::PollContext</a> poll_context{io_context.get_executor()};</div>
-<div class="line">    <span class="keyword">auto</span> guard = asio::make_work_guard(grpc_context);</div>
-<div class="line">    poll_context.async_poll(grpc_context);</div>
+<div class="line">    std::optional guard{asio::require(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked)};</div>
+<div class="line">    poll_context.<a class="code hl_function" href="classagrpc_1_1_poll_context.html#afa5e8905f177f48fc880066d65e274e4">async_poll</a>(grpc_context);</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// Use io_context and grpc_context and reset the guard when done.</span></div>
 <div class="line"> </div>
 <div class="line">    io_context.run();</div>
 <div class="ttc" id="aclassagrpc_1_1_poll_context_html"><div class="ttname"><a href="classagrpc_1_1_poll_context.html">agrpc::PollContext</a></div><div class="ttdoc">(experimental) Helper class to run a GrpcContext in a different execution context</div><div class="ttdef"><b>Definition:</b> pollContext.hpp:74</div></div>
+<div class="ttc" id="aclassagrpc_1_1_poll_context_html_afa5e8905f177f48fc880066d65e274e4"><div class="ttname"><a href="classagrpc_1_1_poll_context.html#afa5e8905f177f48fc880066d65e274e4">agrpc::PollContext::async_poll</a></div><div class="ttdeci">void async_poll(agrpc::GrpcContext &amp;grpc_context)</div><div class="ttdoc">Repeatedly call .poll() on the GrpcContext until it is stopped.</div><div class="ttdef"><b>Definition:</b> pollContext.hpp:100</div></div>
 </div><!-- fragment --><dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">Executor</td><td>The executor type </td></tr>

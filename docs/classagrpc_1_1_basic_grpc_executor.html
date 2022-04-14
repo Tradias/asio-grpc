@@ -122,18 +122,18 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aa88fb5798dd945616262dc58258f48ec"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html#aa88fb5798dd945616262dc58258f48ec">running_in_this_thread</a> () const noexcept</td></tr>
 <tr class="memdesc:aa88fb5798dd945616262dc58258f48ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determine whether the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> is running in the current thread.  <a href="classagrpc_1_1_basic_grpc_executor.html#aa88fb5798dd945616262dc58258f48ec">More...</a><br /></td></tr>
 <tr class="separator:aa88fb5798dd945616262dc58258f48ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7e23c529c49a5ebbfc9bbc818466e904"><td class="memTemplParams" colspan="2">template&lt;class Function , class OtherAllocator &gt; </td></tr>
-<tr class="memitem:a7e23c529c49a5ebbfc9bbc818466e904"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html#a7e23c529c49a5ebbfc9bbc818466e904">dispatch</a> (Function &amp;&amp;function, OtherAllocator other_allocator) const</td></tr>
-<tr class="memdesc:a7e23c529c49a5ebbfc9bbc818466e904"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> to invoke the given function object.  <a href="classagrpc_1_1_basic_grpc_executor.html#a7e23c529c49a5ebbfc9bbc818466e904">More...</a><br /></td></tr>
-<tr class="separator:a7e23c529c49a5ebbfc9bbc818466e904"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adedcdf906f42b5df5c4fec5d403e04a0"><td class="memTemplParams" colspan="2">template&lt;class Function , class OtherAllocator &gt; </td></tr>
-<tr class="memitem:adedcdf906f42b5df5c4fec5d403e04a0"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html#adedcdf906f42b5df5c4fec5d403e04a0">post</a> (Function &amp;&amp;function, OtherAllocator other_allocator) const</td></tr>
-<tr class="memdesc:adedcdf906f42b5df5c4fec5d403e04a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> to invoke the given function object.  <a href="classagrpc_1_1_basic_grpc_executor.html#adedcdf906f42b5df5c4fec5d403e04a0">More...</a><br /></td></tr>
-<tr class="separator:adedcdf906f42b5df5c4fec5d403e04a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a17af985d08c78a837cd0753eb71b4ff0"><td class="memTemplParams" colspan="2">template&lt;class Function , class OtherAllocator &gt; </td></tr>
-<tr class="memitem:a17af985d08c78a837cd0753eb71b4ff0"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html#a17af985d08c78a837cd0753eb71b4ff0">defer</a> (Function &amp;&amp;function, OtherAllocator other_allocator) const</td></tr>
-<tr class="memdesc:a17af985d08c78a837cd0753eb71b4ff0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> to invoke the given function object.  <a href="classagrpc_1_1_basic_grpc_executor.html#a17af985d08c78a837cd0753eb71b4ff0">More...</a><br /></td></tr>
-<tr class="separator:a17af985d08c78a837cd0753eb71b4ff0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a97eda5ecec4b7066166e2f08eb1518be"><td class="memTemplParams" colspan="2">template&lt;class Function , class OtherAllocator &gt; </td></tr>
+<tr class="memitem:a97eda5ecec4b7066166e2f08eb1518be"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html#a97eda5ecec4b7066166e2f08eb1518be">dispatch</a> (Function &amp;&amp;function, const OtherAllocator &amp;other_allocator) const</td></tr>
+<tr class="memdesc:a97eda5ecec4b7066166e2f08eb1518be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> to invoke the given function object.  <a href="classagrpc_1_1_basic_grpc_executor.html#a97eda5ecec4b7066166e2f08eb1518be">More...</a><br /></td></tr>
+<tr class="separator:a97eda5ecec4b7066166e2f08eb1518be"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa55121002e69f6da4d193e2438556519"><td class="memTemplParams" colspan="2">template&lt;class Function , class OtherAllocator &gt; </td></tr>
+<tr class="memitem:aa55121002e69f6da4d193e2438556519"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html#aa55121002e69f6da4d193e2438556519">post</a> (Function &amp;&amp;function, const OtherAllocator &amp;other_allocator) const</td></tr>
+<tr class="memdesc:aa55121002e69f6da4d193e2438556519"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> to invoke the given function object.  <a href="classagrpc_1_1_basic_grpc_executor.html#aa55121002e69f6da4d193e2438556519">More...</a><br /></td></tr>
+<tr class="separator:aa55121002e69f6da4d193e2438556519"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c158f7d2dcad831b4930cf131e63f21"><td class="memTemplParams" colspan="2">template&lt;class Function , class OtherAllocator &gt; </td></tr>
+<tr class="memitem:a2c158f7d2dcad831b4930cf131e63f21"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html#a2c158f7d2dcad831b4930cf131e63f21">defer</a> (Function &amp;&amp;function, const OtherAllocator &amp;other_allocator) const</td></tr>
+<tr class="memdesc:a2c158f7d2dcad831b4930cf131e63f21"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> to invoke the given function object.  <a href="classagrpc_1_1_basic_grpc_executor.html#a2c158f7d2dcad831b4930cf131e63f21">More...</a><br /></td></tr>
+<tr class="separator:a2c158f7d2dcad831b4930cf131e63f21"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a582b3391e4c1c383800284659707501c"><td class="memTemplParams" colspan="2">template&lt;class Function &gt; </td></tr>
 <tr class="memitem:a582b3391e4c1c383800284659707501c"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html#a582b3391e4c1c383800284659707501c">execute</a> (Function &amp;&amp;function) const</td></tr>
 <tr class="memdesc:a582b3391e4c1c383800284659707501c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Request the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> to invoke the given function object.  <a href="classagrpc_1_1_basic_grpc_executor.html#a582b3391e4c1c383800284659707501c">More...</a><br /></td></tr>
@@ -236,8 +236,8 @@ template&lt;class Allocator , std::uint32_t Options&gt; </div>
 
 </div>
 </div>
-<a id="a17af985d08c78a837cd0753eb71b4ff0" name="a17af985d08c78a837cd0753eb71b4ff0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a17af985d08c78a837cd0753eb71b4ff0">&#9670;&nbsp;</a></span>defer()</h2>
+<a id="a2c158f7d2dcad831b4930cf131e63f21" name="a2c158f7d2dcad831b4930cf131e63f21"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2c158f7d2dcad831b4930cf131e63f21">&#9670;&nbsp;</a></span>defer()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -258,7 +258,7 @@ template&lt;class Function , class OtherAllocator &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">OtherAllocator&#160;</td>
+          <td class="paramtype">const OtherAllocator &amp;&#160;</td>
           <td class="paramname"><em>other_allocator</em>&#160;</td>
         </tr>
         <tr>
@@ -280,8 +280,8 @@ template&lt;class Function , class OtherAllocator &gt; </div>
 
 </div>
 </div>
-<a id="a7e23c529c49a5ebbfc9bbc818466e904" name="a7e23c529c49a5ebbfc9bbc818466e904"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7e23c529c49a5ebbfc9bbc818466e904">&#9670;&nbsp;</a></span>dispatch()</h2>
+<a id="a97eda5ecec4b7066166e2f08eb1518be" name="a97eda5ecec4b7066166e2f08eb1518be"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a97eda5ecec4b7066166e2f08eb1518be">&#9670;&nbsp;</a></span>dispatch()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -302,7 +302,7 @@ template&lt;class Function , class OtherAllocator &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">OtherAllocator&#160;</td>
+          <td class="paramtype">const OtherAllocator &amp;&#160;</td>
           <td class="paramname"><em>other_allocator</em>&#160;</td>
         </tr>
         <tr>
@@ -388,8 +388,8 @@ template&lt;class Allocator , std::uint32_t Options&gt; </div>
 
 </div>
 </div>
-<a id="adedcdf906f42b5df5c4fec5d403e04a0" name="adedcdf906f42b5df5c4fec5d403e04a0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#adedcdf906f42b5df5c4fec5d403e04a0">&#9670;&nbsp;</a></span>post()</h2>
+<a id="aa55121002e69f6da4d193e2438556519" name="aa55121002e69f6da4d193e2438556519"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa55121002e69f6da4d193e2438556519">&#9670;&nbsp;</a></span>post()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -410,7 +410,7 @@ template&lt;class Function , class OtherAllocator &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">OtherAllocator&#160;</td>
+          <td class="paramtype">const OtherAllocator &amp;&#160;</td>
           <td class="paramname"><em>other_allocator</em>&#160;</td>
         </tr>
         <tr>
