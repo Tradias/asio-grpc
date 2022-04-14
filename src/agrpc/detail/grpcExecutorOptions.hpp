@@ -26,8 +26,7 @@ namespace detail
 struct GrpcExecutorOptions
 {
     static constexpr std::uint32_t BLOCKING_NEVER = 1u << 0u;
-    static constexpr std::uint32_t RELATIONSHIP_CONTINUATION = 1u << 1u;
-    static constexpr std::uint32_t OUTSTANDING_WORK_TRACKED = 1u << 2u;
+    static constexpr std::uint32_t OUTSTANDING_WORK_TRACKED = 1u << 1u;
 
     static constexpr std::uint32_t DEFAULT = BLOCKING_NEVER;
 };
@@ -46,24 +45,6 @@ struct GrpcExecutorOptions
     else
     {
         options &= ~detail::GrpcExecutorOptions::BLOCKING_NEVER;
-    }
-    return options;
-}
-
-[[nodiscard]] constexpr bool is_relationship_continuation(std::uint32_t options) noexcept
-{
-    return (options & detail::GrpcExecutorOptions::RELATIONSHIP_CONTINUATION) != 0u;
-}
-
-[[nodiscard]] constexpr std::uint32_t set_relationship_continuation(std::uint32_t options, bool value) noexcept
-{
-    if (value)
-    {
-        options |= detail::GrpcExecutorOptions::RELATIONSHIP_CONTINUATION;
-    }
-    else
-    {
-        options &= ~detail::GrpcExecutorOptions::RELATIONSHIP_CONTINUATION;
     }
     return options;
 }

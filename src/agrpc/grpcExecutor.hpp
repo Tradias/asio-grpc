@@ -280,20 +280,20 @@ class BasicGrpcExecutor
     /**
      * @brief Obtain an executor with the relationship.fork property
      *
+     * The GrpcExecutor always forks.
+     *
      * Do not call this function directly. It is intended to be used by the
      * [asio::prefer](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/prefer.html) customisation
      * point.
      *
      * Thread-safe
      */
-    [[nodiscard]] constexpr auto prefer(asio::execution::relationship_t::fork_t) const noexcept
-        -> agrpc::BasicGrpcExecutor<Allocator, detail::set_relationship_continuation(Options, false)>
-    {
-        return {*this->grpc_context(), this->allocator()};
-    }
+    [[nodiscard]] constexpr auto prefer(asio::execution::relationship_t::fork_t) const noexcept { return *this; }
 
     /**
      * @brief Obtain an executor with the relationship.continuation property
+     *
+     * The GrpcExecutor does not support continuation.
      *
      * Do not call this function directly. It is intended to be used by the
      * [asio::prefer](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/prefer.html) customisation
@@ -302,9 +302,8 @@ class BasicGrpcExecutor
      * Thread-safe
      */
     [[nodiscard]] constexpr auto prefer(asio::execution::relationship_t::continuation_t) const noexcept
-        -> agrpc::BasicGrpcExecutor<Allocator, detail::set_relationship_continuation(Options, true)>
     {
-        return {*this->grpc_context(), this->allocator()};
+        return *this;
     }
 
     /**
@@ -426,16 +425,10 @@ class BasicGrpcExecutor
      *
      * Thread-safe
      */
-    [[nodiscard]] static constexpr asio::execution::relationship_t query(asio::execution::relationship_t) noexcept
+    [[nodiscard]] static constexpr asio::execution::relationship_t::fork_t query(
+        asio::execution::relationship_t) noexcept
     {
-        if constexpr (detail::is_relationship_continuation(Options))
-        {
-            return asio::execution::relationship_t::continuation;
-        }
-        else
-        {
-            return asio::execution::relationship_t::fork;
-        }
+        return asio::execution::relationship_t::fork;
     }
 
     /**
@@ -592,8 +585,7 @@ struct agrpc::asio::traits::prefer_member<agrpc::BasicGrpcExecutor<Allocator, Op
 {
     static constexpr bool is_valid = true;
     static constexpr bool is_noexcept = true;
-    using result_type =
-        agrpc::BasicGrpcExecutor<Allocator, agrpc::detail::set_relationship_continuation(Options, false)>;
+    using result_type = agrpc::BasicGrpcExecutor<Allocator, Options>;
 };
 
 template <class Allocator, std::uint32_t Options>
@@ -602,8 +594,8 @@ struct agrpc::asio::traits::prefer_member<agrpc::BasicGrpcExecutor<Allocator, Op
 {
     static constexpr bool is_valid = true;
     static constexpr bool is_noexcept = true;
-    using result_type =
-        agrpc::BasicGrpcExecutor<Allocator, agrpc::detail::set_relationship_continuation(Options, true)>;
+    // Relationship continuation is not supported
+    using result_type = agrpc::BasicGrpcExecutor<Allocator, Options>;
 };
 #endif
 

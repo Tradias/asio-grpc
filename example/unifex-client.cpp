@@ -112,7 +112,7 @@ unifex::task<void> make_and_cancel_unary_request(example::v1::ExampleExt::Stub& 
     grpc::Status status;
     grpc::Alarm alarm;
     co_await run_with_deadline(alarm, grpc_context, client_context,
-                               std::chrono::system_clock::now() + std::chrono::milliseconds(50),
+                               std::chrono::system_clock::now() + std::chrono::milliseconds(100),
                                agrpc::finish(*reader, response, status, agrpc::use_sender(grpc_context)));
 
     abort_if_not(grpc::StatusCode::CANCELLED == status.error_code());
