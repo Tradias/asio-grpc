@@ -137,7 +137,7 @@ class CancelSafe
     std::optional<std::tuple<CompletionArgs...>> result;
 };
 
-using GrpcCancelSafe = detail::CancelSafe<bool>;
+using GrpcCancelSafe = agrpc::CancelSafe<bool>;
 
 AGRPC_NAMESPACE_END
 
