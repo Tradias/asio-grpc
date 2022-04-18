@@ -49,14 +49,9 @@ endif()
 
 target_compile_definitions(
     asio-grpc-common-compile-options
-    INTERFACE $<$<CXX_COMPILER_ID:MSVC>:
-              _WIN32_WINNT=0x0A00> # Windows 10
-              $<$<CXX_COMPILER_ID:Clang>:BOOST_ASIO_HAS_STD_INVOKE_RESULT
-              ASIO_HAS_STD_INVOKE_RESULT>
-              BOOST_ASIO_NO_DEPRECATED
-              BOOST_ASIO_NO_TS_EXECUTORS
-              ASIO_NO_DEPRECATED
-              ASIO_NO_TS_EXECUTORS)
+    INTERFACE $<$<CXX_COMPILER_ID:MSVC>: _WIN32_WINNT=0x0A00> # Windows 10
+              $<$<CXX_COMPILER_ID:Clang>:BOOST_ASIO_HAS_STD_INVOKE_RESULT ASIO_HAS_STD_INVOKE_RESULT>
+              BOOST_ASIO_NO_DEPRECATED ASIO_NO_DEPRECATED)
 
 target_link_libraries(asio-grpc-common-compile-options INTERFACE gRPC::grpc++ Boost::disable_autolinking)
 
