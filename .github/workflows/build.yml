@@ -42,7 +42,7 @@ jobs:
             os: windows-2022,
             triplet: 'x64-windows-release',
             build-type: 'Release',
-            cmake-extra-args: '-DVCPKG_TARGET_TRIPLET=x64-windows-release -DCMAKE_CXX_FLAGS=/D_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING',
+            cmake-extra-args: '-DVCPKG_TARGET_TRIPLET=x64-windows-release "-DCMAKE_CXX_FLAGS=/D_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING /DWIN32 /D_WINDOWS /EHsc"',
             parallel: 1,
           }
           - {
