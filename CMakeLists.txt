@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.14...3.22)
+cmake_minimum_required(VERSION 3.14...3.23)
 
 project(
     asio-grpc
@@ -48,6 +48,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 set(ASIO_GRPC_PROJECT_ROOT "${CMAKE_CURRENT_LIST_DIR}")
 
 if(ASIO_GRPC_BUILD_TESTS)
+    message(STATUS "CMake version: ${CMAKE_VERSION}")
+
     # store value of Boost_USE_STATIC_RUNTIME because it gets cleared by find_package(Boost)
     set(ASIO_GRPC_BOOST_USE_STATIC_RUNTIME ${Boost_USE_STATIC_RUNTIME})
 

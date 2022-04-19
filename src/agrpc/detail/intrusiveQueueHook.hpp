@@ -17,8 +17,6 @@
 
 #include "agrpc/detail/config.hpp"
 
-#include <utility>
-
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
