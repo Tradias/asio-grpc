@@ -123,7 +123,7 @@ struct RpcSpawner
                     });
     }
 
-    [[nodiscard]] executor_type get_executor() const noexcept { return grpc_context.get_executor(); }
+    [[nodiscard]] decltype(auto) get_executor() const noexcept { return grpc_context.get_executor(); }
 
     [[nodiscard]] allocator_type get_allocator() const noexcept { return allocator; }
 };

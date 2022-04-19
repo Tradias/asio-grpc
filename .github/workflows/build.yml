@@ -72,7 +72,7 @@ jobs:
       run: cmake --preset default -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_ARGS }} ${{ matrix.config.cmake-extra-args }}
 
     - name: Build
-      run: cmake --build --preset default --config ${{ matrix.config.build-type }} --parallel ${{ matrix.config.parallel }}
+      run: cmake --build --preset default --config ${{ matrix.config.build-type }} --parallel ${{ matrix.config.parallel }} --target asio-grpc-check-header-syntax all
 
     - name: Test
       run: ctest --preset default --config ${{ matrix.config.build-type }}
@@ -164,7 +164,7 @@ jobs:
       run: cmake --preset default -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which g++-11) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
 
     - name: GCC 11 Build
-      run: cmake --build ${{ github.workspace }}/build-11 --config Release --parallel $(nproc)
+      run: cmake --build ${{ github.workspace }}/build-11 --config Release --parallel $(nproc) --target asio-grpc-check-header-syntax all
 
     - name: GCC 11 Test
       run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-11 --config Release
@@ -230,7 +230,7 @@ jobs:
       run: cmake --preset default -B ${{ github.workspace }}/build-12 -DCMAKE_CXX_COMPILER=$(which clang++-12) -DDOXYGEN_EXECUTABLE=${{ runner.workspace }}/doxygen/bin/doxygen -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
 
     - name: Clang 12 Build
-      run: cmake --build ${{ github.workspace }}/build-12 --config Release --parallel $(nproc)
+      run: cmake --build ${{ github.workspace }}/build-12 --config Release --parallel $(nproc) --target asio-grpc-check-header-syntax all
 
     - name: Clang 12 Test
       run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-12 --config Release

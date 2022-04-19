@@ -228,5 +228,3 @@ struct agrpc::detail::container::uses_allocator<agrpc::GrpcContext, Alloc> : std
 };
 
 #endif  // AGRPC_AGRPC_GRPCCONTEXT_HPP
-
-#include "agrpc/detail/grpcContext.ipp"

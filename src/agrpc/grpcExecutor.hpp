@@ -540,7 +540,6 @@ struct agrpc::asio::traits::require_member<agrpc::BasicGrpcExecutor<Allocator, O
 template <class Allocator, std::uint32_t Options>
 struct agrpc::asio::traits::require_member<agrpc::BasicGrpcExecutor<Allocator, Options>,
                                            agrpc::asio::execution::outstanding_work_t::tracked_t>
-    : asio::detail::io_context_bits
 {
     static constexpr bool is_valid = true;
     static constexpr bool is_noexcept = true;
@@ -550,7 +549,6 @@ struct agrpc::asio::traits::require_member<agrpc::BasicGrpcExecutor<Allocator, O
 template <class Allocator, std::uint32_t Options>
 struct agrpc::asio::traits::require_member<agrpc::BasicGrpcExecutor<Allocator, Options>,
                                            agrpc::asio::execution::outstanding_work_t::untracked_t>
-    : asio::detail::io_context_bits
 {
     static constexpr bool is_valid = true;
     static constexpr bool is_noexcept = true;
@@ -691,5 +689,7 @@ struct agrpc::asio::traits::query_member<agrpc::BasicGrpcExecutor<Allocator, Opt
     using result_type = Allocator;
 };
 #endif
+
+#include "agrpc/detail/grpcContext.ipp"
 
 #endif  // AGRPC_AGRPC_GRPCEXECUTOR_HPP
