@@ -58,7 +58,6 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
         : Base(other.grpc_context(), other.allocator())
     {
         this->grpc_context()->work_started();
-        ;
     }
 
     constexpr GrpcExecutorWorkTrackerBase(GrpcExecutorWorkTrackerBase&& other) noexcept
@@ -71,7 +70,6 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
         if (this->grpc_context())
         {
             this->grpc_context()->work_finished();
-            ;
         }
     }
 
@@ -115,7 +113,6 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
         : Base(grpc_context, std::move(allocator))
     {
         this->grpc_context()->work_started();
-        ;
     }
 };
 }

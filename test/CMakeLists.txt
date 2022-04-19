@@ -13,29 +13,32 @@
 # limitations under the License.
 
 # asio-grpc header check
-add_library(asio-grpc-check-header-syntax OBJECT)
+if(ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
+    add_library(asio-grpc-check-header-syntax OBJECT)
 
-function(asio_grpc_add_public_header_as_sources _asio_grpc_target)
-    get_target_property(_asio_grpc_public_header asio-grpc-sources INTERFACE_SOURCES)
+    function(asio_grpc_add_public_header_as_sources _asio_grpc_target)
+        get_target_property(_asio_grpc_public_header asio-grpc-sources INTERFACE_SOURCES)
 
-    mark_as_advanced(_asio_grpc_public_header)
+        mark_as_advanced(_asio_grpc_public_header)
 
-    list(FILTER _asio_grpc_public_header EXCLUDE REGEX ".*/agrpc/detail/.*")
+        list(FILTER _asio_grpc_public_header EXCLUDE REGEX ".*/agrpc/detail/.*")
 
-    target_sources(${_asio_grpc_target} PRIVATE ${_asio_grpc_public_header})
+        target_sources(${_asio_grpc_target} PRIVATE ${_asio_grpc_public_header})
 
-    set_source_files_properties(${_asio_grpc_public_header} PROPERTIES LANGUAGE CXX)
-endfunction()
+        set_source_files_properties(${_asio_grpc_public_header} PROPERTIES LANGUAGE CXX)
+    endfunction()
 
-asio_grpc_add_public_header_as_sources(asio-grpc-check-header-syntax)
+    asio_grpc_add_public_header_as_sources(asio-grpc-check-header-syntax)
 
-target_compile_options(asio-grpc-check-header-syntax
-                       PRIVATE $<IF:$<CXX_COMPILER_ID:MSVC>,/Zs;/WX,-Werror;-fsyntax-only;-Wno-unused-const-variable>)
+    target_compile_options(
+        asio-grpc-check-header-syntax
+        PRIVATE $<IF:$<CXX_COMPILER_ID:MSVC>,/Zs;/WX,-Werror;-fsyntax-only;-Wno-unused-const-variable>)
 
-target_link_libraries(asio-grpc-check-header-syntax PRIVATE asio-grpc-sources asio-grpc-common-compile-options
-                                                            asio-grpc)
+    target_link_libraries(asio-grpc-check-header-syntax PRIVATE asio-grpc-sources asio-grpc-common-compile-options
+                                                                asio-grpc)
 
-set_target_properties(asio-grpc-check-header-syntax PROPERTIES EXCLUDE_FROM_ALL on)
+    set_target_properties(asio-grpc-check-header-syntax PROPERTIES EXCLUDE_FROM_ALL on)
+endif()
 
 # utils
 add_subdirectory(utils)

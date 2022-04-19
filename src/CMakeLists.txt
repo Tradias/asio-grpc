@@ -59,7 +59,7 @@ if(ASIO_GRPC_BUILD_TESTS)
 endif()
 
 # asio-grpc sources
-if(ASIO_GRPC_BUILD_TESTS)
+if(ASIO_GRPC_BUILD_TESTS AND ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
     add_library(asio-grpc-sources INTERFACE)
 
     target_sources(

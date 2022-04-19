@@ -35,7 +35,7 @@ jobs:
       run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet x64-windows-release --host-triplet x64-windows-release --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps
 
     - name: Configure CMake
-      run: cmake --preset default -DCMAKE_BUILD_TYPE=Release -DVCPKG_TARGET_TRIPLET=x64-windows-release -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed -DVCPKG_MANIFEST_INSTALL=off -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on
+      run: cmake --preset default -DCMAKE_BUILD_TYPE=Release -DVCPKG_TARGET_TRIPLET=x64-windows-release -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed -DVCPKG_MANIFEST_INSTALL=off -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on -DASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET=off
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v1
