@@ -17,7 +17,7 @@
 
 #include "utils/asioForward.hpp"
 
-#include <agrpc/grpcContext.hpp>
+#include <agrpc/grpcExecutor.hpp>
 #include <agrpc/repeatedlyRequestContext.hpp>
 
 #include <type_traits>
@@ -123,7 +123,7 @@ struct RpcSpawner
                     });
     }
 
-    [[nodiscard]] decltype(auto) get_executor() const noexcept { return grpc_context.get_executor(); }
+    [[nodiscard]] executor_type get_executor() const noexcept { return grpc_context.get_executor(); }
 
     [[nodiscard]] allocator_type get_allocator() const noexcept { return allocator; }
 };
