@@ -20,6 +20,7 @@
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 
+#include "agrpc/detail/cancelSafe.hpp"
 #include "agrpc/detail/typeErasedCompletionHandler.hpp"
 #include "agrpc/detail/workTrackingCompletionHandler.hpp"
 
@@ -29,15 +30,30 @@
 
 AGRPC_NAMESPACE_BEGIN()
 
+/**
+ * @brief (experimental) Cancellation safety for asynchronous operations
+ *
+ * This class provides a completion token that can be used to initiate asynchronous operations in a cancellation safe
+ * manner. A second method of this class is then used to wait for the operation or cancel the wait without cancelling
+ * the underlying operation.
+ *
+ * @tparam CompletionArgs The arguments to the completion signature. E.g. for `asio::steady_timer::async_wait` the
+ * completion arguments would `boost::system::error_code`.
+ */
 template <class... CompletionArgs>
 class CancelSafe
 {
   private:
-    using CompletionSignature = void(detail::ErrorCode, CompletionArgs...);
+    using CompletionSignature = detail::PrependErrorCodeToSignatureT<void(CompletionArgs...)>;
 
     struct Initiator;
 
   public:
+    /**
+     * @brief The completion token used to initiate asynchronous operations
+     *
+     * Create an instance of this class with the `token()` member function.
+     */
     class CompletionToken
     {
       public:
@@ -45,7 +61,7 @@ class CancelSafe
         {
             if (auto ch = self.completion_handler.release())
             {
-                std::move(ch).complete(detail::ErrorCode{}, std::move(completion_args)...);
+                detail::complete_successfully(std::move(ch), std::move(completion_args)...);
             }
             else
             {
@@ -61,12 +77,28 @@ class CancelSafe
         CancelSafe& self;
     };
 
+    /**
+     * @brief Create the completion token for initiating asynchronous operations
+     */
     auto token() noexcept { return CompletionToken{*this}; }
 
+    /**
+     * @brief Wait for the asynchronous operation to complete
+     *
+     * Only one call to `wait()` may be outstanding at a time. Waiting for an already completed operation will
+     * immediately invoke the completion handler in a manner equivalent to using `asio::post`.
+     *
+     * **Per-Operation Cancellation**
+     *
+     * All. Upon cancellation, the asynchronous operation continues to run.
+     *
+     * @param token Completion token that matches the completion args. Either `void(error_code, CompletionArgs...)` if
+     * the first argument in CompletionArgs is not `error_code` or `void(CompletionArgs...)` otherwise.
+     */
     template <class CompletionToken>
     auto wait(CompletionToken token)
     {
-        assert(!completion_handler && "Can only wait again when previous wait has been cancelled or completed");
+        assert(!completion_handler && "Can only wait again when the previous wait has been cancelled or completed");
         return asio::async_initiate<CompletionToken, CompletionSignature>(Initiator{*this}, token);
     }
 
@@ -89,8 +121,7 @@ class CancelSafe
                     [local_result = std::move(local_result),
                      ch = std::decay_t<CompletionHandler>{std::forward<CompletionHandler>(ch)}]() mutable
                     {
-                        std::apply(std::move(ch),
-                                   std::tuple_cat(std::forward_as_tuple(detail::ErrorCode{}), std::move(local_result)));
+                        detail::invoke_successfully_from_tuple(std::move(ch), std::move(local_result));
                     },
                     allocator);
                 return;
@@ -111,7 +142,7 @@ class CancelSafe
             {
                 if (auto ch = self.completion_handler.release())
                 {
-                    std::move(ch).post_complete(asio::error::operation_aborted, CompletionArgs{}...);
+                    detail::post_complete_operation_aborted(std::move(ch), CompletionArgs{}...);
                 }
             }
         }
@@ -133,10 +164,13 @@ class CancelSafe
         }
     }
 
-    detail::AtomicTypeErasedCompletionHandler<void(detail::ErrorCode, CompletionArgs...)> completion_handler{};
+    detail::AtomicTypeErasedCompletionHandler<CompletionSignature> completion_handler{};
     std::optional<std::tuple<CompletionArgs...>> result;
 };
 
+/**
+ * @brief CancelSafe templated on `bool`
+ */
 using GrpcCancelSafe = agrpc::CancelSafe<bool>;
 
 AGRPC_NAMESPACE_END

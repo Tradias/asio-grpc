@@ -703,5 +703,21 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "CancelSafe: wait for already comp
     grpc_context.run();
     CHECK(ok);
 }
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "CancelSafe: wait for asio::steady_timer")
+{
+    agrpc::CancelSafe<boost::system::error_code> safe;
+    asio::steady_timer timer{grpc_context, std::chrono::seconds(5)};
+    timer.async_wait(safe.token());
+    asio::cancellation_signal signal;
+    safe.wait(asio::bind_cancellation_slot(signal.slot(),
+                                           [&](auto&& ec)
+                                           {
+                                               CHECK_EQ(asio::error::operation_aborted, ec);
+                                               CHECK_EQ(1, timer.cancel());
+                                           }));
+    signal.emit(asio::cancellation_type::all);
+    grpc_context.run();
+}
 #endif
 }

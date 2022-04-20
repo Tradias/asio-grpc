@@ -75,6 +75,7 @@ if(ASIO_GRPC_BUILD_TESTS AND ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/asioForward.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/associatedCompletionHandler.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/atomicIntrusiveQueue.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/cancelSafe.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/config.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/defaultCompletionToken.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/forward.hpp"

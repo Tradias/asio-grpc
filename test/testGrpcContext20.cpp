@@ -316,7 +316,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest,
     CHECK_EQ(expected_thread_id, actual_thread_id);
 }
 
-#ifndef __clang__
+#if !defined(__clang__) || __clang_major__ >= 14
 TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_executor can be used to switch to thread_pool and back to GrpcContext")
 {
     std::thread::id actual_grpc_context_thread_id{};
