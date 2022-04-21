@@ -456,8 +456,15 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "agrpc::wait correctly unbinds exe
     grpc::Alarm alarm;
     std::size_t bytes_allocated{};
     test::CountingAllocator<std::byte> allocator{bytes_allocated};
+#ifdef AGRPC_ASIO_HAS_BIND_ALLOCATOR
+    auto token = asio::bind_allocator(
+        allocator,
+        agrpc::bind_allocator(allocator,
+                              asio::bind_executor(asio::any_io_executor{grpc_context.get_executor()}, [](auto&&) {})));
+#else
     auto token = agrpc::bind_allocator(
         allocator, asio::bind_executor(asio::any_io_executor{grpc_context.get_executor()}, [](auto&&) {}));
+#endif
     agrpc::wait(alarm, test::ten_milliseconds_from_now(), token);
     grpc_context.run();
     auto expected = sizeof(void*) * 4;
@@ -704,20 +711,22 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "CancelSafe: wait for already comp
     CHECK(ok);
 }
 
-TEST_CASE_FIXTURE(test::GrpcClientServerTest, "CancelSafe: wait for asio::steady_timer")
+TEST_CASE("CancelSafe: wait for asio::steady_timer")
 {
+    asio::io_context io_context;
     agrpc::CancelSafe<boost::system::error_code> safe;
-    asio::steady_timer timer{grpc_context, std::chrono::seconds(5)};
+    asio::steady_timer timer{io_context, std::chrono::seconds(5)};
     timer.async_wait(safe.token());
     asio::cancellation_signal signal;
     safe.wait(asio::bind_cancellation_slot(signal.slot(),
-                                           [&](auto&& ec)
-                                           {
-                                               CHECK_EQ(asio::error::operation_aborted, ec);
-                                               CHECK_EQ(1, timer.cancel());
-                                           }));
+                                           asio::bind_executor(io_context,
+                                                               [&](auto&& ec)
+                                                               {
+                                                                   CHECK_EQ(asio::error::operation_aborted, ec);
+                                                                   CHECK_EQ(1, timer.cancel());
+                                                               })));
     signal.emit(asio::cancellation_type::all);
-    grpc_context.run();
+    io_context.run();
 }
 #endif
 }

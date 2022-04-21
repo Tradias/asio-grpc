@@ -81,6 +81,11 @@ decltype(auto) unbind_recursively(asio::executor_binder<CompletionHandler, Execu
 template <class CompletionHandler, class Allocator>
 decltype(auto) unbind_recursively(agrpc::AllocatorBinder<CompletionHandler, Allocator>&& binder);
 
+#ifdef AGRPC_ASIO_HAS_BIND_ALLOCATOR
+template <class CompletionHandler, class Allocator>
+decltype(auto) unbind_recursively(asio::allocator_binder<CompletionHandler, Allocator>&& binder);
+#endif
+
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 template <class CompletionHandler, class CancellationSlot>
 decltype(auto) unbind_recursively(asio::cancellation_slot_binder<CompletionHandler, CancellationSlot>&& binder)
@@ -100,6 +105,14 @@ decltype(auto) unbind_recursively(agrpc::AllocatorBinder<CompletionHandler, Allo
 {
     return detail::unbind_recursively(std::move(binder.get()));
 }
+
+#ifdef AGRPC_ASIO_HAS_BIND_ALLOCATOR
+template <class CompletionHandler, class Allocator>
+decltype(auto) unbind_recursively(asio::allocator_binder<CompletionHandler, Allocator>&& binder)
+{
+    return detail::unbind_recursively(std::move(binder.get()));
+}
+#endif
 
 template <class CompletionHandler>
 auto unbind_and_get_associates(CompletionHandler&& completion_handler)

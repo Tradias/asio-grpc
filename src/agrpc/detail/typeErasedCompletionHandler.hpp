@@ -98,15 +98,13 @@ class BasicTypeErasedCompletionHandler<R(Args...), VoidPointer>
 
     ~BasicTypeErasedCompletionHandler() { assert(!(*this)); }
 
-    template <class CompletionHandler>
+    template <class Target, class CompletionHandler>
     void emplace(CompletionHandler&& ch)
     {
-        using DecayedCompletionHandler = std::decay_t<CompletionHandler>;
         auto allocator{asio::get_associated_allocator(ch)};
-        completion_handler =
-            detail::allocate<DecayedCompletionHandler>(allocator, std::forward<CompletionHandler>(ch)).release();
-        complete_ = &detail::deallocate_and_invoke<DecayedCompletionHandler, Args...>;
-        post_complete_ = &detail::post_and_complete<DecayedCompletionHandler, Args...>;
+        completion_handler = detail::allocate<Target>(allocator, std::forward<CompletionHandler>(ch)).release();
+        complete_ = &detail::deallocate_and_invoke<Target, Args...>;
+        post_complete_ = &detail::post_and_complete<Target, Args...>;
     }
 
     auto release() noexcept

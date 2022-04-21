@@ -85,6 +85,8 @@ class CancelSafe
 
     /**
      * @brief Create a completion token to initiate asynchronous operations
+     *
+     * The CancelSafe may not be moved while the operation is outstanding.
      */
     auto token() noexcept { return CompletionToken{*this}; }
 
@@ -116,10 +118,10 @@ class CancelSafe
         template <class CompletionHandler>
         void operator()(CompletionHandler&& ch)
         {
-            auto executor = asio::get_associated_executor(ch);
-            const auto allocator = asio::get_associated_allocator(ch);
             if (self.result)
             {
+                auto executor = asio::get_associated_executor(ch);
+                const auto allocator = asio::get_associated_allocator(ch);
                 auto local_result{std::move(*self.result)};
                 self.result.reset();
                 detail::post_with_allocator(
@@ -157,8 +159,8 @@ class CancelSafe
     template <class CompletionHandler>
     void emplace_completion_handler(CompletionHandler&& ch)
     {
-        using WorkTrackingCompletionHandler = detail::WorkTrackingCompletionHandler<std::decay_t<CompletionHandler>>;
-        completion_handler.emplace(WorkTrackingCompletionHandler{std::forward<CompletionHandler>(ch)});
+        completion_handler.template emplace<detail::WorkTrackingCompletionHandler<std::decay_t<CompletionHandler>>>(
+            std::forward<CompletionHandler>(ch));
     }
 
     template <class CancellationSlot>

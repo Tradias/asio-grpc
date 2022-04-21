@@ -54,6 +54,12 @@
 
 #define AGRPC_ASIO_HAS_CANCELLATION_SLOT
 #endif
+
+#if (ASIO_VERSION >= 102201)
+#include <asio/bind_allocator.hpp>
+
+#define AGRPC_ASIO_HAS_BIND_ALLOCATOR
+#endif
 #elif defined(AGRPC_BOOST_ASIO)
 //
 #include <boost/version.hpp>
@@ -90,6 +96,12 @@
 #include <boost/asio/bind_cancellation_slot.hpp>
 
 #define AGRPC_ASIO_HAS_CANCELLATION_SLOT
+#endif
+
+#if (BOOST_VERSION >= 107900)
+#include <boost/asio/bind_allocator.hpp>
+
+#define AGRPC_ASIO_HAS_BIND_ALLOCATOR
 #endif
 #endif
 
