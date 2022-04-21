@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['_7eallocatorbinder_0',['~AllocatorBinder',['../classagrpc_1_1_allocator_binder.html#a65ec40118cb8bca01e3bfbd3955dc736',1,'agrpc::AllocatorBinder']]],
-  ['_7egrpccontext_1',['~GrpcContext',['../classagrpc_1_1_grpc_context.html#ad54076bc77ee6db3f167b2ad073db171',1,'agrpc::GrpcContext']]]
+  ['wait_0',['wait',['../classagrpc_1_1_cancel_safe.html#ab8f073954095be29298b864ee0f39cfa',1,'agrpc::CancelSafe']]],
+  ['work_5ffinished_1',['work_finished',['../classagrpc_1_1_grpc_context.html#a9f89631518b2d38dbe0be11f7d5a4cc6',1,'agrpc::GrpcContext']]],
+  ['work_5fstarted_2',['work_started',['../classagrpc_1_1_grpc_context.html#ada19710c265c3a1e9cbffb696d079fbb',1,'agrpc::GrpcContext']]]
 ];
