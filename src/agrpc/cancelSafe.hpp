@@ -34,11 +34,17 @@ AGRPC_NAMESPACE_BEGIN()
  * @brief (experimental) Cancellation safety for asynchronous operations
  *
  * This class provides a completion token that can be used to initiate asynchronous operations in a cancellation safe
- * manner. A second method of this class is then used to wait for the operation or cancel the wait without cancelling
- * the underlying operation.
+ * manner. A second method of this class is then used to wait for the operation to complete. Cancelling said waiting
+ * will not cancel the underlying operation but still invoke the completion handler with
+ * `asio::error::operation_aborted`. This can be useful in combination with `asio::parallel_group` or
+ * `asio::awaitable_operators`, e.g. to perform an action every 100ms while waiting for a server-stream:
  *
- * @tparam CompletionArgs The arguments to the completion signature. E.g. for `asio::steady_timer::async_wait` the
- * completion arguments would `boost::system::error_code`.
+ * @snippet client.cpp cancel-safe-server-streaming
+ *
+ * @tparam CompletionArgs The arguments of the completion signature. E.g. for `asio::steady_timer::async_wait` the
+ * completion arguments would be `boost::system::error_code`.
+ *
+ * @since 1.6.0 (and Boost.Asio 1.77.0)
  */
 template <class... CompletionArgs>
 class CancelSafe
@@ -78,7 +84,7 @@ class CancelSafe
     };
 
     /**
-     * @brief Create the completion token for initiating asynchronous operations
+     * @brief Create a completion token to initiate asynchronous operations
      */
     auto token() noexcept { return CompletionToken{*this}; }
 

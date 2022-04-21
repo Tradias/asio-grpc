@@ -200,7 +200,7 @@ AllocatorBinder(const Allocator& allocator, Target&& target)
     -> AllocatorBinder<detail::RemoveCvrefT<Target>, Allocator>;
 
 /**
- * @brief Helper function to create an agrpc::AllocatorBinder
+ * @brief Helper function to create an AllocatorBinder
  *
  * @since 1.5.0
  */

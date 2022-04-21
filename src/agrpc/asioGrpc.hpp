@@ -31,6 +31,7 @@
 #define AGRPC_AGRPC_ASIOGRPC_HPP
 
 #include "agrpc/bindAllocator.hpp"
+#include "agrpc/cancelSafe.hpp"
 #include "agrpc/defaultCompletionToken.hpp"
 #include "agrpc/getCompletionQueue.hpp"
 #include "agrpc/grpcContext.hpp"

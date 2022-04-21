@@ -19,6 +19,7 @@
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/coroutine.hpp>
 #include <boost/asio/detached.hpp>
+#include <boost/asio/experimental/awaitable_operators.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/use_awaitable.hpp>
 #include <grpcpp/client_context.h>
@@ -252,6 +253,45 @@ void poll_context(agrpc::GrpcContext& grpc_context)
 
     io_context.run();
     /* [poll_context-with-io_context] */
+}
+
+auto hundred_milliseconds_from_now() { return std::chrono::system_clock::now() + std::chrono::milliseconds(100); }
+
+asio::awaitable<void> server_streaming_cancel_safe(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
+{
+    /* [cancel-safe-server-streaming] */
+    grpc::ClientContext client_context;
+    example::v1::Request request;
+    std::unique_ptr<grpc::ClientAsyncReader<example::v1::Response>> reader;
+    co_await agrpc::request(&example::v1::Example::Stub::AsyncServerStreaming, stub, client_context, request, reader);
+
+    agrpc::GrpcCancelSafe safe;  // equivalent to agrpc::CancelSafe<bool>
+
+    // Initiate a read with cancellation safety.
+    example::v1::Response response;
+    agrpc::read(*reader, response, asio::bind_executor(grpc_context, safe.token()));
+
+    grpc::Alarm alarm;
+    bool ok{true};
+    while (ok)
+    {
+        using namespace asio::experimental::awaitable_operators;
+        auto variant = co_await (agrpc::wait(alarm, hundred_milliseconds_from_now()) || safe.wait(asio::use_awaitable));
+        if (0 == variant.index())  // Alarm finished
+        {
+            // The read continues in the background.
+        }
+        else  // Read finished
+        {
+            ok = std::get<1>(variant);
+            if (ok)
+            {
+                // Initiate the next read.
+                agrpc::read(*reader, response, asio::bind_executor(grpc_context, safe.token()));
+            }
+        }
+    }
+    /* [cancel-safe-server-streaming] */
 }
 
 int main()
