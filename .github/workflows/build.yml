@@ -25,7 +25,7 @@ on:
       - 'CMakePresets.json'
 
 env:
-  VCPKG_VERSION: '70a7074c685516fed36da7befb3898821b1425ed' # Mar 21, 2022
+  VCPKG_VERSION: '8ea52bad1ac13e1afb892ccba6c261d8e82d06fd' # Apr 21, 2022
   CMAKE_ARGS: '-DCMAKE_BUILD_TYPE=Release -DVCPKG_MANIFEST_INSTALL=off'
   CTEST_ARGS: '-T test --output-on-failure --timeout 200 --no-tests=error --parallel 8'
 

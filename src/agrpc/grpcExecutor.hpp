@@ -38,8 +38,8 @@ AGRPC_NAMESPACE_BEGIN()
  * A lightweight handle to a GrpcContext. Trivially copyable if it is not tracking outstanding work.
  *
  * Satisfies the [Executor and Networking
- * TS](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/Executor1.html#boost_asio.reference.Executor1.standard_executors)
- * and [Scheduler](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/Scheduler.html) requirements and
+ * TS](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/Executor1.html#boost_asio.reference.Executor1.standard_executors)
+ * and [Scheduler](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/Scheduler.html) requirements and
  * can therefore be used in places where Asio/libunifex expects an `Executor` or `Scheduler`.
  */
 template <class Allocator, std::uint32_t Options>
@@ -166,7 +166,7 @@ class BasicGrpcExecutor
      * @brief Request the GrpcContext to invoke the given function object
      *
      * Do not call this function directly, it is intended to be used by the
-     * [asio::dispatch](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/dispatch.html) free
+     * [asio::dispatch](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/dispatch.html) free
      * function.
      *
      * Thread-safe
@@ -184,7 +184,7 @@ class BasicGrpcExecutor
      * @brief Request the GrpcContext to invoke the given function object
      *
      * Do not call this function directly, it is intended to be used by the
-     * [asio::post](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/post.html) free
+     * [asio::post](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/post.html) free
      * function.
      *
      * Thread-safe
@@ -202,7 +202,7 @@ class BasicGrpcExecutor
      * @brief Request the GrpcContext to invoke the given function object
      *
      * Do not call this function directly, it is intended to be used by the
-     * [asio::defer](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/defer.html) free
+     * [asio::defer](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/defer.html) free
      * function.
      *
      * Thread-safe
@@ -222,7 +222,7 @@ class BasicGrpcExecutor
      * @brief Request the GrpcContext to invoke the given function object
      *
      * Do not call this function directly. It is intended to be used by the
-     * [asio::execution::execute](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/execution__execute.html)
+     * [asio::execution::execute](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/execution__execute.html)
      * customisation point.
      *
      * Thread-safe
@@ -239,7 +239,7 @@ class BasicGrpcExecutor
      * @brief Create a Sender that completes on the GrpcContext
      *
      * Do not call this function directly. It is intended to be used by the
-     * [asio::execution::schedule](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/execution__schedule.html)
+     * [asio::execution::schedule](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/execution__schedule.html)
      * customisation point.
      *
      * Thread-safe
@@ -251,7 +251,7 @@ class BasicGrpcExecutor
      * @brief Obtain an executor with the blocking.possibly property
      *
      * Do not call this function directly. It is intended to be used by the
-     * [asio::require](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/require.html) customisation
+     * [asio::require](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/require.html) customisation
      * point.
      *
      * Thread-safe
@@ -266,7 +266,7 @@ class BasicGrpcExecutor
      * @brief Obtain an executor with the blocking.never property
      *
      * Do not call this function directly. It is intended to be used by the
-     * [asio::require](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/require.html) customisation
+     * [asio::require](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/require.html) customisation
      * point.
      *
      * Thread-safe
@@ -283,7 +283,7 @@ class BasicGrpcExecutor
      * The GrpcExecutor always forks.
      *
      * Do not call this function directly. It is intended to be used by the
-     * [asio::prefer](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/prefer.html) customisation
+     * [asio::prefer](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/prefer.html) customisation
      * point.
      *
      * Thread-safe
@@ -296,7 +296,7 @@ class BasicGrpcExecutor
      * The GrpcExecutor does not support continuation.
      *
      * Do not call this function directly. It is intended to be used by the
-     * [asio::prefer](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/prefer.html) customisation
+     * [asio::prefer](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/prefer.html) customisation
      * point.
      *
      * Thread-safe
@@ -310,7 +310,7 @@ class BasicGrpcExecutor
      * @brief Obtain an executor with the outstanding_work.tracked property
      *
      * Do not call this function directly. It is intended to be used by the
-     * [asio::require](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/require.html) customisation
+     * [asio::require](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/require.html) customisation
      * point.
      *
      * Thread-safe
@@ -325,7 +325,7 @@ class BasicGrpcExecutor
      * @brief Obtain an executor with the outstanding_work.untracked property
      *
      * Do not call this function directly. It is intended to be used by the
-     * [asio::require](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/require.html) customisation
+     * [asio::require](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/require.html) customisation
      * point.
      *
      * Thread-safe
@@ -340,7 +340,7 @@ class BasicGrpcExecutor
      * @brief Obtain an executor with the specified allocator property
      *
      * Do not call this function directly. It is intended to be used by the
-     * [asio::require](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/require.html) customisation
+     * [asio::require](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/require.html) customisation
      * point.
      *
      * Thread-safe
@@ -356,7 +356,7 @@ class BasicGrpcExecutor
      * @brief Obtain an executor with the default allocator property
      *
      * Do not call this function directly. It is intended to be used by the
-     * [asio::require](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/require.html) customisation
+     * [asio::require](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/require.html) customisation
      * point.
      *
      * Thread-safe
@@ -371,7 +371,7 @@ class BasicGrpcExecutor
      * @brief Query the current value of the blocking property
      *
      * Do not call this function directly. It is intended to be used by the
-     * [asio::query](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/query.html) customisation
+     * [asio::query](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/query.html) customisation
      * point.
      *
      * Thread-safe
@@ -392,7 +392,7 @@ class BasicGrpcExecutor
      * @brief Query the current value of the mapping property
      *
      * Do not call this function directly. It is intended to be used by the
-     * [asio::query](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/query.html) customisation
+     * [asio::query](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/query.html) customisation
      * point.
      *
      * Thread-safe
@@ -406,7 +406,7 @@ class BasicGrpcExecutor
      * @brief Query the current value of the context property
      *
      * Do not call this function directly. It is intended to be used by the
-     * [asio::query](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/query.html) customisation
+     * [asio::query](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/query.html) customisation
      * point.
      *
      * Thread-safe
@@ -420,7 +420,7 @@ class BasicGrpcExecutor
      * @brief Query the current value of the relationship property
      *
      * Do not call this function directly. It is intended to be used by the
-     * [asio::query](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/query.html) customisation
+     * [asio::query](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/query.html) customisation
      * point.
      *
      * Thread-safe
@@ -435,7 +435,7 @@ class BasicGrpcExecutor
      * @brief Query the current value of the outstanding_work property
      *
      * Do not call this function directly. It is intended to be used by the
-     * [asio::query](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/query.html) customisation
+     * [asio::query](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/query.html) customisation
      * point.
      *
      * Thread-safe
@@ -457,7 +457,7 @@ class BasicGrpcExecutor
      * @brief Query the current value of the allocator property
      *
      * Do not call this function directly. It is intended to be used by the
-     * [asio::query](https://www.boost.org/doc/libs/1_78_0/doc/html/boost_asio/reference/query.html) customisation
+     * [asio::query](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/query.html) customisation
      * point.
      *
      * Thread-safe
