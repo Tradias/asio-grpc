@@ -20,8 +20,8 @@
 #include "agrpc/detail/asioForward.hpp"
 #include "agrpc/detail/backoff.hpp"
 #include "agrpc/detail/config.hpp"
+#include "agrpc/detail/forward.hpp"
 #include "agrpc/detail/oneShotAllocator.hpp"
-#include "agrpc/detail/pollContextHandler.hpp"
 #include "agrpc/detail/utility.hpp"
 #include "agrpc/grpcContext.hpp"
 
@@ -45,6 +45,9 @@ struct DefaultPollContextTraits
 
     /**
      * @brief The desired maximum latency
+     *
+     * The maximum latency when going from an idle GrpcContext to a busy one. A low latency leads to higher CPU
+     * consumption during idle time.
      */
     static constexpr std::chrono::nanoseconds MAX_LATENCY{50000};
 };
@@ -71,7 +74,7 @@ struct DefaultPollContextTraits
  *
  * @since 1.5.0
  */
-template <class Executor, class Traits>
+template <class Executor, class Traits = agrpc::DefaultPollContextTraits>
 class PollContext
 {
   private:
@@ -101,10 +104,7 @@ class PollContext
     /**
      * @brief Repeatedly call .poll() on the GrpcContext until it is stopped
      */
-    void async_poll(agrpc::GrpcContext& grpc_context)
-    {
-        this->async_poll(grpc_context, detail::IsGrpcContextStoppedPredicate{});
-    }
+    void async_poll(agrpc::GrpcContext& grpc_context);
 
     /**
      * @brief Repeatedly call .poll() on the GrpcContext until the provided StopPredicate returns true
@@ -113,15 +113,7 @@ class PollContext
      * `bool(agrpc::GrpcContext&)`.
      */
     template <class StopPredicate>
-    void async_poll(agrpc::GrpcContext& grpc_context, StopPredicate stop_predicate)
-    {
-        if (stop_predicate(grpc_context))
-        {
-            return;
-        }
-        asio::execution::execute(executor, detail::PollContextHandler<Executor, Traits, StopPredicate>{
-                                               grpc_context, *this, std::move(stop_predicate)});
-    }
+    void async_poll(agrpc::GrpcContext& grpc_context, StopPredicate stop_predicate);
 
   private:
     template <class, class, class>
@@ -144,6 +136,101 @@ class PollContext
 
 template <class Executor>
 PollContext(Executor&&) -> PollContext<detail::RemoveCvrefT<Executor>>;
+
+// Implementation details
+namespace detail
+{
+template <class Traits, class = void>
+inline constexpr auto RESOLVED_POLL_CONTEXT_BUFFER_SIZE = agrpc::DefaultPollContextTraits::BUFFER_SIZE;
+
+template <class Traits>
+inline constexpr auto RESOLVED_POLL_CONTEXT_BUFFER_SIZE<Traits, decltype((void)Traits::BUFFER_SIZE)> =
+    Traits::BUFFER_SIZE;
+
+template <class Traits, class = void>
+inline constexpr auto RESOLVED_POLL_CONTEXT_MAX_LATENCY = agrpc::DefaultPollContextTraits::MAX_LATENCY;
+
+template <class Traits>
+inline constexpr auto RESOLVED_POLL_CONTEXT_MAX_LATENCY<Traits, decltype((void)Traits::MAX_LATENCY)> =
+    Traits::MAX_LATENCY;
+
+template <class Traits>
+struct ResolvedPollContextTraits
+{
+    static constexpr auto BUFFER_SIZE = detail::RESOLVED_POLL_CONTEXT_BUFFER_SIZE<Traits>;
+    static constexpr auto MAX_LATENCY = detail::RESOLVED_POLL_CONTEXT_MAX_LATENCY<Traits>;
+};
+
+struct IsGrpcContextStoppedPredicate
+{
+    bool operator()(const agrpc::GrpcContext& grpc_context) const noexcept { return grpc_context.is_stopped(); }
+};
+
+template <class Executor, class Traits, class StopPredicate>
+struct PollContextHandler
+{
+    using ResolvedTraits = detail::ResolvedPollContextTraits<Traits>;
+    using PollContext = agrpc::PollContext<Executor, Traits>;
+    using allocator_type = typename PollContext::Allocator;
+
+    agrpc::GrpcContext& grpc_context;
+    PollContext& poll_context;
+    StopPredicate stop_predicate;
+
+    void operator()(detail::ErrorCode = {})
+    {
+        if constexpr (detail::BackoffDelay::zero() == ResolvedTraits::MAX_LATENCY)
+        {
+            poll_context.async_poll(grpc_context, std::move(stop_predicate));
+        }
+        else
+        {
+            if (grpc_context.poll())
+            {
+                poll_context.backoff.reset();
+                poll_context.async_poll(grpc_context, std::move(stop_predicate));
+            }
+            else
+            {
+                const auto delay = poll_context.backoff.next();
+                if (detail::BackoffDelay::zero() == delay)
+                {
+                    poll_context.async_poll(grpc_context, std::move(stop_predicate));
+                }
+                else
+                {
+                    if (stop_predicate(grpc_context))
+                    {
+                        return;
+                    }
+                    poll_context.timer.expires_after(delay);
+                    poll_context.timer.async_wait(std::move(*this));
+                }
+            }
+        }
+    }
+
+    allocator_type get_allocator() const noexcept { return poll_context.allocator(); }
+};
+}
+
+template <class Executor, class Traits>
+void PollContext<Executor, Traits>::async_poll(agrpc::GrpcContext& grpc_context)
+{
+    this->async_poll(grpc_context, detail::IsGrpcContextStoppedPredicate{});
+}
+
+template <class Executor, class Traits>
+template <class StopPredicate>
+void PollContext<Executor, Traits>::async_poll(agrpc::GrpcContext& grpc_context, StopPredicate stop_predicate)
+{
+    if (stop_predicate(grpc_context))
+    {
+        return;
+    }
+    asio::execution::execute(executor, detail::PollContextHandler<Executor, Traits, StopPredicate>{
+                                           grpc_context, *this, std::move(stop_predicate)});
+}
 
 AGRPC_NAMESPACE_END
 
