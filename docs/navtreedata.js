@@ -25,7 +25,7 @@
 var NAVTREE =
 [
   [ "asio-grpc", "index.html", [
-    [ "Overview", "index.html#autotoc_md7", null ],
+    [ "Overview", "index.html#autotoc_md8", null ],
     [ "CMake protobuf generate", "md_doc_cmake_protobuf_generate.html", null ],
     [ "Completion token", "md_doc_completion_token.html", [
       [ "Callback", "md_doc_completion_token.html#autotoc_md2", null ],
@@ -33,6 +33,7 @@ var NAVTREE =
       [ "use_sender", "md_doc_completion_token.html#autotoc_md4", null ],
       [ "Custom allocator", "md_doc_completion_token.html#autotoc_md5", null ]
     ] ],
+    [ "Difference to Asio", "md_doc_difference_to_asio.html", null ],
     [ "Namespaces", "namespaces.html", [
       [ "Namespace List", "namespaces.html", "namespaces_dup" ],
       [ "Namespace Members", "namespacemembers.html", [
@@ -59,7 +60,7 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"structagrpc_1_1detail_1_1_grpc_initiate_fn.html#a31f7d886bf8c15f7b51c543d215e07ec"
+"structagrpc_1_1detail_1_1_get_completion_queue_fn.html#a64f41175d841ec2d7a95d548151e96e1"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

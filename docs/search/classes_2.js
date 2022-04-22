@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['defaultpollcontexttraits_0',['DefaultPollContextTraits',['../structagrpc_1_1_default_poll_context_traits.html',1,'agrpc']]]
+  ['cancelsafe_0',['CancelSafe',['../classagrpc_1_1_cancel_safe.html',1,'agrpc']]],
+  ['completiontoken_1',['CompletionToken',['../classagrpc_1_1_cancel_safe_1_1_completion_token.html',1,'agrpc::CancelSafe']]]
 ];

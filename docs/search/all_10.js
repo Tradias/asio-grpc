@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['wait_0',['wait',['../namespaceagrpc.html#a3a4e32ff60d8f9bd8c8c68e42be959c1',1,'agrpc']]],
+  ['wait_0',['wait',['../classagrpc_1_1_cancel_safe.html#ab8f073954095be29298b864ee0f39cfa',1,'agrpc::CancelSafe::wait()'],['../namespaceagrpc.html#a3a4e32ff60d8f9bd8c8c68e42be959c1',1,'agrpc::wait()']]],
   ['waitfn_1',['WaitFn',['../structagrpc_1_1detail_1_1_wait_fn.html',1,'agrpc::detail']]],
   ['work_5ffinished_2',['work_finished',['../classagrpc_1_1_grpc_context.html#a9f89631518b2d38dbe0be11f7d5a4cc6',1,'agrpc::GrpcContext']]],
   ['work_5fstarted_3',['work_started',['../classagrpc_1_1_grpc_context.html#ada19710c265c3a1e9cbffb696d079fbb',1,'agrpc::GrpcContext']]],
