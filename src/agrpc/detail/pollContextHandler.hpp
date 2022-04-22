@@ -30,6 +30,27 @@ class PollContext;
 
 namespace detail
 {
+template <class Traits, class = void>
+inline constexpr auto RESOLVED_POLL_CONTEXT_BUFFER_SIZE = agrpc::DefaultPollContextTraits::BUFFER_SIZE;
+
+template <class Traits>
+inline constexpr auto RESOLVED_POLL_CONTEXT_BUFFER_SIZE<Traits, decltype((void)Traits::BUFFER_SIZE)> =
+    Traits::BUFFER_SIZE;
+
+template <class Traits, class = void>
+inline constexpr auto RESOLVED_POLL_CONTEXT_MAX_LATENCY = agrpc::DefaultPollContextTraits::MAX_LATENCY;
+
+template <class Traits>
+inline constexpr auto RESOLVED_POLL_CONTEXT_MAX_LATENCY<Traits, decltype((void)Traits::MAX_LATENCY)> =
+    Traits::MAX_LATENCY;
+
+template <class Traits>
+struct ResolvedPollContextTraits
+{
+    static constexpr auto BUFFER_SIZE = detail::RESOLVED_POLL_CONTEXT_BUFFER_SIZE<Traits>;
+    static constexpr auto MAX_LATENCY = detail::RESOLVED_POLL_CONTEXT_MAX_LATENCY<Traits>;
+};
+
 struct IsGrpcContextStoppedPredicate
 {
     bool operator()(const agrpc::GrpcContext& grpc_context) const noexcept { return grpc_context.is_stopped(); }
@@ -38,6 +59,7 @@ struct IsGrpcContextStoppedPredicate
 template <class Executor, class Traits, class StopPredicate>
 struct PollContextHandler
 {
+    using ResolvedTraits = detail::ResolvedPollContextTraits<Traits>;
     using PollContext = agrpc::PollContext<Executor, Traits>;
     using allocator_type = typename PollContext::Allocator;
 
@@ -47,7 +69,7 @@ struct PollContextHandler
 
     void operator()(detail::ErrorCode = {})
     {
-        if constexpr (detail::BackoffDelay::zero() == Traits::MAX_LATENCY)
+        if constexpr (detail::BackoffDelay::zero() == ResolvedTraits::MAX_LATENCY)
         {
             poll_context.async_poll(grpc_context, std::move(stop_predicate));
         }
@@ -67,6 +89,10 @@ struct PollContextHandler
                 }
                 else
                 {
+                    if (stop_predicate(grpc_context))
+                    {
+                        return;
+                    }
                     poll_context.timer.expires_after(delay);
                     poll_context.timer.async_wait(std::move(*this));
                 }

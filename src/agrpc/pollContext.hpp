@@ -58,14 +58,16 @@ struct DefaultPollContextTraits
  *
  * @tparam Executor The executor type
  * @tparam Traits The traits type, defaults to `agrpc::DefaultPollContextTraits`. If the static assertion
- * 'OneShotAllocator has insufficient capacity' fails then inherit from the default to increase the buffer size of
+ * 'OneShotAllocator has insufficient capacity' fails then create your own traits to increase the buffer size of
  * the PollContext. Example:
  * @code{cpp}
- * struct MyTraits : agrpc::DefaultPollContextTraits
+ * struct MyTraits
  * {
  *   static constexpr std::size_t BUFFER_SIZE{256};
  * }
  * @endcode
+ * Before asio-grpc 1.6.0 the custom traits had to inherit from the default:
+ * `struct MyTraits : agrpc::DefaultPollContextTraits`.
  *
  * @since 1.5.0
  */
@@ -73,7 +75,9 @@ template <class Executor, class Traits>
 class PollContext
 {
   private:
-    static constexpr auto BUFFER_SIZE = Traits::BUFFER_SIZE;
+    using ResolvedTraits = detail::ResolvedPollContextTraits<Traits>;
+
+    static constexpr auto BUFFER_SIZE = ResolvedTraits::BUFFER_SIZE;
 
   public:
     /**
@@ -123,7 +127,8 @@ class PollContext
     template <class, class, class>
     friend struct detail::PollContextHandler;
 
-    using Backoff = detail::Backoff<std::chrono::duration_cast<detail::BackoffDelay>(Traits::MAX_LATENCY).count()>;
+    using Backoff =
+        detail::Backoff<std::chrono::duration_cast<detail::BackoffDelay>(ResolvedTraits::MAX_LATENCY).count()>;
     using Allocator = detail::OneShotAllocator<std::byte, BUFFER_SIZE>;
     using Exec = decltype(asio::prefer(asio::require(std::declval<Executor>(), asio::execution::blocking_t::never),
                                        asio::execution::relationship_t::continuation,

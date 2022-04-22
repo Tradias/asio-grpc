@@ -54,12 +54,6 @@ class CancelSafe
 
     struct Initiator;
 
-  public:
-    /**
-     * @brief The completion token used to initiate asynchronous operations
-     *
-     * Create an instance of this class with the `token()` member function.
-     */
     class CompletionToken
     {
       public:
@@ -83,6 +77,7 @@ class CancelSafe
         CancelSafe& self;
     };
 
+  public:
     /**
      * @brief Create a completion token to initiate asynchronous operations
      *
@@ -98,7 +93,16 @@ class CancelSafe
      *
      * **Per-Operation Cancellation**
      *
-     * All. Upon cancellation, the asynchronous operation continues to run.
+     * All. Upon cancellation, the asynchronous operation continues to run. The completion handler is invoked in a
+     * manner equivalent to:
+     *
+     * @code{cpp}
+     * asio::post(asio::get_associated_executor(completion_handler),
+     *   asio::bind_allocator(asio::get_associated_allocator(completion_handler),
+     *     [=<moved>]() mutable { std::move(completion_handler)(asio::error::operation_aborted, CompletionArgs{}...); }
+     *   )
+     * );
+     * @endcode
      *
      * @param token Completion token that matches the completion args. Either `void(error_code, CompletionArgs...)` if
      * the first argument in CompletionArgs is not `error_code` or `void(CompletionArgs...)` otherwise.
