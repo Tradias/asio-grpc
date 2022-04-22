@@ -116,7 +116,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>async_poll</b> (<a cl
 <tr class="separator:ada56544fb928d5aeebc772c6de98bde2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><div class="compoundTemplParams">template&lt;class Executor, class Traits&gt;<br />
+<div class="textblock"><div class="compoundTemplParams">template&lt;class Executor, class Traits = agrpc::DefaultPollContextTraits&gt;<br />
 class agrpc::PollContext&lt; Executor, Traits &gt;</div><p >(experimental) Helper class to run a <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> in a different execution context </p>
 <p >Example showing how to share a thread with an <code>asio::io_context</code>:</p>
 <div class="fragment"><div class="line">    asio::io_context io_context;</div>
@@ -127,17 +127,16 @@ class agrpc::PollContext&lt; Executor, Traits &gt;</div><p >(experimental) Helpe
 <div class="line">    <span class="comment">// Use io_context and grpc_context and reset the guard when done.</span></div>
 <div class="line"> </div>
 <div class="line">    io_context.run();</div>
-<div class="ttc" id="aclassagrpc_1_1_poll_context_html"><div class="ttname"><a href="classagrpc_1_1_poll_context.html">agrpc::PollContext</a></div><div class="ttdoc">(experimental) Helper class to run a GrpcContext in a different execution context</div><div class="ttdef"><b>Definition:</b> pollContext.hpp:74</div></div>
-<div class="ttc" id="aclassagrpc_1_1_poll_context_html_afa5e8905f177f48fc880066d65e274e4"><div class="ttname"><a href="classagrpc_1_1_poll_context.html#afa5e8905f177f48fc880066d65e274e4">agrpc::PollContext::async_poll</a></div><div class="ttdeci">void async_poll(agrpc::GrpcContext &amp;grpc_context)</div><div class="ttdoc">Repeatedly call .poll() on the GrpcContext until it is stopped.</div><div class="ttdef"><b>Definition:</b> pollContext.hpp:100</div></div>
+<div class="ttc" id="aclassagrpc_1_1_poll_context_html"><div class="ttname"><a href="classagrpc_1_1_poll_context.html">agrpc::PollContext</a></div><div class="ttdoc">(experimental) Helper class to run a GrpcContext in a different execution context</div><div class="ttdef"><b>Definition:</b> pollContext.hpp:79</div></div>
+<div class="ttc" id="aclassagrpc_1_1_poll_context_html_afa5e8905f177f48fc880066d65e274e4"><div class="ttname"><a href="classagrpc_1_1_poll_context.html#afa5e8905f177f48fc880066d65e274e4">agrpc::PollContext::async_poll</a></div><div class="ttdeci">void async_poll(agrpc::GrpcContext &amp;grpc_context)</div><div class="ttdoc">Repeatedly call .poll() on the GrpcContext until it is stopped.</div><div class="ttdef"><b>Definition:</b> pollContext.hpp:218</div></div>
 </div><!-- fragment --><dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">Executor</td><td>The executor type </td></tr>
-    <tr><td class="paramname">Traits</td><td>The traits type, defaults to <code><a class="el" href="structagrpc_1_1_default_poll_context_traits.html" title="(experimental) Default PollContext traits">agrpc::DefaultPollContextTraits</a></code>. If the static assertion 'OneShotAllocator has insufficient capacity' fails then inherit from the default to increase the buffer size of the <a class="el" href="classagrpc_1_1_poll_context.html" title="(experimental) Helper class to run a GrpcContext in a different execution context">PollContext</a>. Example: <div class="fragment"><div class="line"><span class="keyword">struct </span>MyTraits : <a class="code hl_struct" href="structagrpc_1_1_default_poll_context_traits.html">agrpc::DefaultPollContextTraits</a></div>
+    <tr><td class="paramname">Traits</td><td>The traits type, defaults to <code><a class="el" href="structagrpc_1_1_default_poll_context_traits.html" title="(experimental) Default PollContext traits">agrpc::DefaultPollContextTraits</a></code>. If the static assertion 'OneShotAllocator has insufficient capacity' fails then create your own traits to increase the buffer size of the <a class="el" href="classagrpc_1_1_poll_context.html" title="(experimental) Helper class to run a GrpcContext in a different execution context">PollContext</a>. Example: <div class="fragment"><div class="line"><span class="keyword">struct </span>MyTraits</div>
 <div class="line">{</div>
 <div class="line">  <span class="keyword">static</span> <span class="keyword">constexpr</span> std::size_t BUFFER_SIZE{256};</div>
 <div class="line">}</div>
-<div class="ttc" id="astructagrpc_1_1_default_poll_context_traits_html"><div class="ttname"><a href="structagrpc_1_1_default_poll_context_traits.html">agrpc::DefaultPollContextTraits</a></div><div class="ttdoc">(experimental) Default PollContext traits</div><div class="ttdef"><b>Definition:</b> pollContext.hpp:40</div></div>
-</div><!-- fragment --></td></tr>
+</div><!-- fragment --> Before asio-grpc 1.6.0 the custom traits had to inherit from the default: <code>struct MyTraits : <a class="el" href="structagrpc_1_1_default_poll_context_traits.html" title="(experimental) Default PollContext traits">agrpc::DefaultPollContextTraits</a></code>.</td></tr>
   </table>
   </dd>
 </dl>
@@ -152,9 +151,6 @@ class agrpc::PollContext&lt; Executor, Traits &gt;</div><p >(experimental) Helpe
 template&lt;class Executor , class Traits &gt; </div>
 <div class="memtemplate">
 template&lt;class StopPredicate &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">void <a class="el" href="classagrpc_1_1_poll_context.html">agrpc::PollContext</a>&lt; Executor, Traits &gt;::async_poll </td>
@@ -174,11 +170,6 @@ template&lt;class StopPredicate &gt; </div>
           <td></td><td></td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>Repeatedly call .poll() on the <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> until the provided StopPredicate returns true. </p>
