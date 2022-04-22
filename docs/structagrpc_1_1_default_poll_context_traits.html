@@ -105,14 +105,39 @@ Static Public Attributes</h2></td></tr>
 static constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><b>BUFFER_SIZE</b> {200}</td></tr>
 <tr class="memdesc:a134e9663f18e43bae0f00f87cbf5eaf5"><td class="mdescLeft">&#160;</td><td class="mdescRight">The default buffer size in bytes. <br /></td></tr>
 <tr class="separator:a134e9663f18e43bae0f00f87cbf5eaf5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad9789aa6ee185cdbe904dcf94c96171b"><td class="memItemLeft" align="right" valign="top"><a id="ad9789aa6ee185cdbe904dcf94c96171b" name="ad9789aa6ee185cdbe904dcf94c96171b"></a>
-static constexpr std::chrono::nanoseconds&#160;</td><td class="memItemRight" valign="bottom"><b>MAX_LATENCY</b> {50000}</td></tr>
-<tr class="memdesc:ad9789aa6ee185cdbe904dcf94c96171b"><td class="mdescLeft">&#160;</td><td class="mdescRight">The desired maximum latency. <br /></td></tr>
+<tr class="memitem:ad9789aa6ee185cdbe904dcf94c96171b"><td class="memItemLeft" align="right" valign="top">static constexpr std::chrono::nanoseconds&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structagrpc_1_1_default_poll_context_traits.html#ad9789aa6ee185cdbe904dcf94c96171b">MAX_LATENCY</a> {50000}</td></tr>
+<tr class="memdesc:ad9789aa6ee185cdbe904dcf94c96171b"><td class="mdescLeft">&#160;</td><td class="mdescRight">The desired maximum latency.  <a href="structagrpc_1_1_default_poll_context_traits.html#ad9789aa6ee185cdbe904dcf94c96171b">More...</a><br /></td></tr>
 <tr class="separator:ad9789aa6ee185cdbe904dcf94c96171b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p >(experimental) Default <a class="el" href="classagrpc_1_1_poll_context.html" title="(experimental) Helper class to run a GrpcContext in a different execution context">PollContext</a> traits </p>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Member Data Documentation</h2>
+<a id="ad9789aa6ee185cdbe904dcf94c96171b" name="ad9789aa6ee185cdbe904dcf94c96171b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad9789aa6ee185cdbe904dcf94c96171b">&#9670;&nbsp;</a></span>MAX_LATENCY</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr std::chrono::nanoseconds agrpc::DefaultPollContextTraits::MAX_LATENCY {50000}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>The desired maximum latency. </p>
+<p >The maximum latency when going from an idle <a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a> to a busy one. A low latency leads to higher CPU consumption during idle time. </p>
+
+</div>
+</div>
+</div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
