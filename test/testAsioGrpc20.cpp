@@ -296,22 +296,29 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline and c
     CHECK_FALSE(server_finish_ok);
 }
 
-TEST_CASE_FIXTURE(test::GrpcClientServerTest, "CancelSafe: co_await for a CancelSafe and an alarm using operator||")
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "CancelSafe: co_await for a CancelSafe and an alarm using parallel_group")
 {
     test::co_spawn(get_executor(),
                    [&]() -> asio::awaitable<void>
                    {
                        agrpc::GrpcCancelSafe safe;
-                       grpc::Alarm alarm;
-                       agrpc::wait(alarm, test::five_hundred_milliseconds_from_now(),
+                       grpc::Alarm alarm1;
+                       agrpc::wait(alarm1, test::five_hundred_milliseconds_from_now(),
                                    asio::bind_executor(grpc_context, safe.token()));
                        grpc::Alarm alarm2;
                        for (size_t i = 0; i < 3; ++i)
                        {
-                           using namespace asio::experimental::awaitable_operators;
-                           auto variant = co_await (agrpc::wait(alarm2, test::ten_milliseconds_from_now()) ||
-                                                    safe.wait(agrpc::DefaultCompletionToken{}));
-                           CHECK(std::get<0>(variant));
+                           auto [completion_order, alarm2_ok, alarm1_ec, alarm1_ok] =
+                               co_await asio::experimental::make_parallel_group(
+                                   agrpc::wait(alarm2, test::ten_milliseconds_from_now(),
+                                               asio::bind_executor(grpc_context, asio::experimental::deferred)),
+                                   safe.wait(asio::experimental::deferred))
+                                   .async_wait(asio::experimental::wait_for_one(), asio::use_awaitable);
+                           CHECK_EQ(0, completion_order[0]);
+                           CHECK_EQ(1, completion_order[1]);
+                           CHECK(alarm2_ok);
+                           CHECK_EQ(asio::error::operation_aborted, alarm1_ec);
+                           CHECK_EQ(bool{}, alarm1_ok);
                        }
                        CHECK(co_await safe.wait(agrpc::DefaultCompletionToken{}));
                    });

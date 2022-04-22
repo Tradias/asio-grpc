@@ -93,16 +93,7 @@ class CancelSafe
      *
      * **Per-Operation Cancellation**
      *
-     * All. Upon cancellation, the asynchronous operation continues to run. The completion handler is invoked in a
-     * manner equivalent to:
-     *
-     * @code{cpp}
-     * asio::post(asio::get_associated_executor(completion_handler),
-     *   asio::bind_allocator(asio::get_associated_allocator(completion_handler),
-     *     [=<moved>]() mutable { std::move(completion_handler)(asio::error::operation_aborted, CompletionArgs{}...); }
-     *   )
-     * );
-     * @endcode
+     * All. Upon cancellation, the asynchronous operation continues to run.
      *
      * @param token Completion token that matches the completion args. Either `void(error_code, CompletionArgs...)` if
      * the first argument in CompletionArgs is not `error_code` or `void(CompletionArgs...)` otherwise.
@@ -154,7 +145,7 @@ class CancelSafe
             {
                 if (auto ch = self.completion_handler.release())
                 {
-                    detail::post_complete_operation_aborted(std::move(ch), CompletionArgs{}...);
+                    detail::complete_operation_aborted(std::move(ch), CompletionArgs{}...);
                 }
             }
         }

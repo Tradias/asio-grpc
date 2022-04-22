@@ -70,15 +70,15 @@ void invoke_successfully_from_tuple(CompletionHandler&& handler, std::tuple<Args
 }
 
 template <class CompletionHandler, class... Args>
-void post_complete_operation_aborted(CompletionHandler&& handler, detail::ErrorCode, Args&&... args)
+void complete_operation_aborted(CompletionHandler&& handler, detail::ErrorCode, Args&&... args)
 {
-    std::forward<CompletionHandler>(handler).post_complete(asio::error::operation_aborted, std::forward<Args>(args)...);
+    std::forward<CompletionHandler>(handler).complete(asio::error::operation_aborted, std::forward<Args>(args)...);
 }
 
 template <class CompletionHandler, class... Args>
-void post_complete_operation_aborted(CompletionHandler&& handler, Args&&... args)
+void complete_operation_aborted(CompletionHandler&& handler, Args&&... args)
 {
-    std::forward<CompletionHandler>(handler).post_complete(asio::error::operation_aborted, std::forward<Args>(args)...);
+    std::forward<CompletionHandler>(handler).complete(asio::error::operation_aborted, std::forward<Args>(args)...);
 }
 }
 

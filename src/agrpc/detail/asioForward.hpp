@@ -214,6 +214,15 @@ auto query_allocator(Object& object, Executor&& executor)
         return asio::get_associated_allocator(object);
     }
 }
+
+template <class Executor, class Function, class Allocator>
+void post_with_allocator(Executor&& executor, Function&& function, const Allocator& allocator)
+{
+    asio::execution::execute(
+        asio::prefer(asio::require(std::forward<Executor>(executor), asio::execution::blocking_t::never),
+                     asio::execution::relationship_t::fork, asio::execution::allocator(allocator)),
+        std::forward<Function>(function));
+}
 #elif defined(AGRPC_UNIFEX)
 template <class Object, class Scheduler>
 auto query_allocator(Object& object, Scheduler&&)
