@@ -40,8 +40,8 @@ namespace detail
  * `agrpc::GrpcContext`. When the client makes a request the RequestHandler is invoked with a
  * `agrpc::RepeatedlyRequestContext` - a move-only type that provides a stable address to the `grpc::ServerContext`, the
  * request (if any) and the responder that were used when requesting the RPC. It should be kept alive until the RPC is
- * finished. The RequestHandler or its associated executor may also have an associated allocator to control the
- * allocation needed for each request.
+ * finished. The RequestHandler (or its associated executor [until v1.8.0] / the CompletionToken's completion handler
+ * [since v1.8.0]) may also have an associated allocator to control the allocation needed for each request.
  *
  * `agrpc::repeatedly_request` will complete when it was cancelled, the `agrpc::GrpcContext` was stopped or the
  * `grpc::Server` been shutdown. It will **not** wait until all outstanding RPCs that are being processed by the

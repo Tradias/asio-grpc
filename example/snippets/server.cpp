@@ -55,13 +55,6 @@ asio::awaitable<void> timer_with_different_completion_tokens(agrpc::GrpcContext&
     co_await agrpc::wait(alarm, deadline, agrpc::bind_allocator(my_allocator, asio::use_awaitable));
     /* [alarm-with-allocator-aware-awaitable] */
 
-    /* [alarm-with-allocator-aware-executor] */
-    agrpc::wait(
-        alarm, deadline,
-        asio::bind_executor(asio::require(grpc_context.get_executor(), asio::execution::allocator(my_allocator)),
-                            [&](bool /*wait_ok*/) {}));
-    /* [alarm-with-allocator-aware-executor] */
-
     /* [alarm-stackless-coroutine] */
     struct Coro : asio::coroutine
     {
@@ -242,15 +235,18 @@ void io_context(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncSer
 }
 
 /* [repeatedly-request-callback] */
-template <class Executor, class Handler>
+template <class Executor, class Handler, class Alllocator>
 struct AssociatedHandler
 {
     using executor_type = Executor;
+    using allocator_type = Alllocator;
 
     Executor executor;
     Handler handler;
+    Alllocator allocator;
 
-    AssociatedHandler(Executor executor, Handler handler) : executor(std::move(executor)), handler(std::move(handler))
+    AssociatedHandler(Executor executor, Handler handler, Alllocator allocator)
+        : executor(std::move(executor)), handler(std::move(handler)), allocator(allocator)
     {
     }
 
@@ -261,21 +257,23 @@ struct AssociatedHandler
     }
 
     [[nodiscard]] executor_type get_executor() const noexcept { return executor; }
+
+    [[nodiscard]] allocator_type get_allocator() const noexcept { return allocator; }
 };
 
 void repeatedly_request_example(example::v1::Example::AsyncService& service, agrpc::GrpcContext& grpc_context)
 {
     agrpc::repeatedly_request(
         &example::v1::Example::AsyncService::RequestUnary, service,
-        AssociatedHandler{
-            asio::require(grpc_context.get_executor(), asio::execution::allocator(grpc_context.get_allocator())),
-            [](auto&& request_context, auto&& executor)
-            {
-                auto& writer = request_context.responder();
-                example::v1::Response response;
-                agrpc::finish(writer, response, grpc::Status::OK,
-                              asio::bind_executor(executor, [c = std::move(request_context)](bool) {}));
-            }});
+        AssociatedHandler{grpc_context.get_executor(),
+                          [](auto&& request_context, auto&& executor)
+                          {
+                              auto& writer = request_context.responder();
+                              example::v1::Response response;
+                              agrpc::finish(writer, response, grpc::Status::OK,
+                                            asio::bind_executor(executor, [c = std::move(request_context)](bool) {}));
+                          },
+                          grpc_context.get_allocator()});
 }
 /* [repeatedly-request-callback] */
 
