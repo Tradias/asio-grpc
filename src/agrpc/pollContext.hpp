@@ -49,7 +49,7 @@ struct DefaultPollContextTraits
      * The maximum latency when going from an idle GrpcContext to a busy one. A low latency leads to higher CPU
      * consumption during idle time.
      */
-    static constexpr std::chrono::nanoseconds MAX_LATENCY{50000};
+    static constexpr std::chrono::nanoseconds MAX_LATENCY{200};
 };
 
 /**
@@ -181,6 +181,7 @@ struct PollContextHandler
     {
         if constexpr (detail::BackoffDelay::zero() == ResolvedTraits::MAX_LATENCY)
         {
+            grpc_context.poll();
             poll_context.async_poll(grpc_context, std::move(stop_predicate));
         }
         else

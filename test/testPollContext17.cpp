@@ -102,6 +102,7 @@ struct MyIntrusiveTraits : agrpc::DefaultPollContextTraits
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "PollContextTraits can specify zero max latency")
 {
+    bool invoked{};
     asio::io_context io_context;
     agrpc::PollContext<asio::any_io_executor, MyIntrusiveTraits> poll_context{io_context.get_executor()};
     poll_context.async_poll(grpc_context,
@@ -110,7 +111,13 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "PollContextTraits can specify zero max
                                 ++count;
                                 return 15 == count;
                             });
+    asio::post(grpc_context,
+               [&]
+               {
+                   invoked = true;
+               });
     io_context.run();
+    CHECK(invoked);
 }
 
 struct MyTraits
@@ -120,6 +127,7 @@ struct MyTraits
 TEST_CASE_FIXTURE(test::GrpcContextTest,
                   "PollContextTraits can use traits that do not inherit from DefaultPollContextTraits")
 {
+    bool invoked{};
     asio::io_context io_context;
     agrpc::PollContext<asio::any_io_executor, MyTraits> poll_context{io_context.get_executor()};
     poll_context.async_poll(grpc_context,
@@ -128,6 +136,12 @@ TEST_CASE_FIXTURE(test::GrpcContextTest,
                                 ++count;
                                 return 15 == count;
                             });
+    asio::post(grpc_context,
+               [&]
+               {
+                   invoked = true;
+               });
     io_context.run();
+    CHECK(invoked);
 }
 }
