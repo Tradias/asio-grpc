@@ -3,22 +3,8 @@ add_library(compile-options INTERFACE)
 
 target_link_libraries(compile-options INTERFACE Boost::coroutine Boost::thread Boost::disable_autolinking)
 
-target_compile_definitions(
-    compile-options
-    INTERFACE $<$<CXX_COMPILER_ID:MSVC>:
-              BOOST_ASIO_HAS_DEDUCED_REQUIRE_MEMBER_TRAIT
-              BOOST_ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT
-              BOOST_ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT
-              BOOST_ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT
-              BOOST_ASIO_HAS_DEDUCED_PREFER_MEMBER_TRAIT
-              ASIO_HAS_DEDUCED_REQUIRE_MEMBER_TRAIT
-              ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT
-              ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT
-              ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT
-              ASIO_HAS_DEDUCED_PREFER_MEMBER_TRAIT
-              _WIN32_WINNT=0x0A00> # Windows 10
-              BOOST_ASIO_NO_DEPRECATED
-              ASIO_NO_DEPRECATED)
+target_compile_definitions(compile-options INTERFACE $<$<CXX_COMPILER_ID:MSVC>:_WIN32_WINNT=0x0A00> # Windows 10
+                                                     BOOST_ASIO_NO_DEPRECATED ASIO_NO_DEPRECATED)
 
 function(create_object_library _name)
     add_library(${_name} OBJECT)
@@ -33,13 +19,11 @@ create_object_library(target-option target.cpp)
 
 target_link_libraries(target-option PRIVATE asio-grpc::asio-grpc-standalone-asio)
 
-# // begin-snippet: asio_grpc_protobuf_generate-target
 asio_grpc_protobuf_generate(
-    GENERATE_GRPC
+    GENERATE_GRPC GENERATE_MOCK_CODE
     TARGET target-option
     OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/target"
     PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/proto/target.proto")
-# // end-snippet: asio_grpc_protobuf_generate-target
 
 # OUT_VAR option
 set(OUT_VAR_GENERATED_PROTOS_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/outVar/")

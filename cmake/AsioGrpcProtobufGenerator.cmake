@@ -49,13 +49,15 @@ asio_grpc_protobuf_generate(PROTOS <proto_file1> [<proto_file2>...]
     Generate grpc files
 ``GENERATE_DESCRIPTORS``
     Generate descriptor files named <proto_file_base_name>.desc
+``GENERATE_MOCK_CODE``
+    Generate gRPC client stub mock files named _mock.grpc.pb.h
 
 #]=======================================================================]
 # /* [asio_grpc_protobuf_generate] */
 function(asio_grpc_protobuf_generate)
     include(CMakeParseArguments)
 
-    set(_asio_grpc_options GENERATE_GRPC GENERATE_DESCRIPTORS)
+    set(_asio_grpc_options GENERATE_GRPC GENERATE_DESCRIPTORS GENERATE_MOCK_CODE)
     set(_asio_grpc_singleargs OUT_VAR OUT_DIR TARGET USAGE_REQUIREMENT)
     set(_asio_grpc_multiargs PROTOS IMPORT_DIRS EXTRA_ARGS)
 
@@ -93,6 +95,11 @@ function(asio_grpc_protobuf_generate)
         return()
     endif()
 
+    if(asio_grpc_protobuf_generate_GENERATE_MOCK_CODE AND NOT asio_grpc_protobuf_generate_GENERATE_GRPC)
+        message(SEND_ERROR "asio_grpc_protobuf_generate argument GENERATE_MOCK_CODE requires GENERATE_GRPC")
+        return()
+    endif()
+
     if(NOT asio_grpc_protobuf_generate_OUT_DIR)
         set(asio_grpc_protobuf_generate_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}")
     endif()
@@ -100,6 +107,9 @@ function(asio_grpc_protobuf_generate)
     set(_asio_grpc_generated_extensions ".pb.cc" ".pb.h")
     if(asio_grpc_protobuf_generate_GENERATE_GRPC)
         list(APPEND _asio_grpc_generated_extensions ".grpc.pb.cc" ".grpc.pb.h")
+        if(asio_grpc_protobuf_generate_GENERATE_MOCK_CODE)
+            list(APPEND _asio_grpc_generated_extensions "_mock.grpc.pb.h")
+        endif()
     endif()
 
     if(NOT asio_grpc_protobuf_generate_USAGE_REQUIREMENT)
@@ -166,7 +176,11 @@ function(asio_grpc_protobuf_generate)
     set(_asio_grpc_command_arguments --cpp_out "${asio_grpc_protobuf_generate_OUT_DIR}"
                                      "${_asio_grpc_descriptor_command}" "${_asio_grpc_protobuf_include_args}")
     if(asio_grpc_protobuf_generate_GENERATE_GRPC)
-        list(APPEND _asio_grpc_command_arguments --grpc_out "${asio_grpc_protobuf_generate_OUT_DIR}"
+        if(asio_grpc_protobuf_generate_GENERATE_MOCK_CODE)
+            set(_asio_grpc_generate_mock_code "generate_mock_code=true:")
+        endif()
+        list(APPEND _asio_grpc_command_arguments --grpc_out
+             "${_asio_grpc_generate_mock_code}${asio_grpc_protobuf_generate_OUT_DIR}"
              "--plugin=protoc-gen-grpc=$<TARGET_FILE:gRPC::grpc_cpp_plugin>")
     endif()
     list(APPEND _asio_grpc_command_arguments ${asio_grpc_protobuf_generate_EXTRA_ARGS} ${_asio_grpc_abs_input_files})

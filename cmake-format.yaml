@@ -3,6 +3,7 @@ additional_commands:
     flags:
     - GENERATE_GRPC
     - GENERATE_DESCRIPTORS
+    - GENERATE_MOCK_CODE
     kwargs:
       OUT_VAR: '1'
       OUT_DIR: '1'

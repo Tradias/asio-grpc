@@ -17,6 +17,12 @@
 #include <agrpc/asioGrpc.hpp>
 #include <grpcpp/completion_queue.h>
 
+#if defined __has_include
+#if !__has_include("target_mock.grpc.pb.h")
+static_assert(false, "asio_grpc_protobuf_generate GENERATE_MOCK_CODE did not create expected output file");
+#endif
+#endif
+
 void run_target()
 {
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
