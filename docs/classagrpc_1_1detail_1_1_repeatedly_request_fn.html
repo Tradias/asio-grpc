@@ -136,7 +136,7 @@ template&lt;class RPC , class Service , class Responder , class RequestHandler ,
 <div class="line">message Response {</div>
 <div class="line">  int32 integer = 1;</div>
 <div class="line">}</div>
-</div><!-- fragment --><p >This function helps to ensure that there are enough outstanding calls to <code>request</code> to match incoming RPCs. It takes a RPC, a Service, a RequestHandler and a CompletionToken. The RequestHandler determines what to do with a client request, it could e.g. spawn a new coroutine to process it. It must also have an associated executor that refers to a <code><a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">agrpc::GrpcContext</a></code>. When the client makes a request the RequestHandler is invoked with a <code><a class="el" href="classagrpc_1_1_repeatedly_request_context.html" title="Context passed to the request handler of repeatedly_request.">agrpc::RepeatedlyRequestContext</a></code> - a move-only type that provides a stable address to the <code>grpc::ServerContext</code>, the request (if any) and the responder that were used when requesting the RPC. It should be kept alive until the RPC is finished. The RequestHandler or its associated executor may also have an associated allocator to control the allocation needed for each request.</p>
+</div><!-- fragment --><p >This function helps to ensure that there are enough outstanding calls to <code>request</code> to match incoming RPCs. It takes a RPC, a Service, a RequestHandler and a CompletionToken. The RequestHandler determines what to do with a client request, it could e.g. spawn a new coroutine to process it. It must also have an associated executor that refers to a <code><a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">agrpc::GrpcContext</a></code>. When the client makes a request the RequestHandler is invoked with a <code><a class="el" href="classagrpc_1_1_repeatedly_request_context.html" title="Context passed to the request handler of repeatedly_request.">agrpc::RepeatedlyRequestContext</a></code> - a move-only type that provides a stable address to the <code>grpc::ServerContext</code>, the request (if any) and the responder that were used when requesting the RPC. It should be kept alive until the RPC is finished. The RequestHandler (or its associated executor [until v1.8.0] / the CompletionToken's completion handler [since v1.8.0]) may also have an associated allocator to control the allocation needed for each request.</p>
 <p ><code><a class="el" href="namespaceagrpc.html#ace37792785c92502711e61d9e9a5ff2d" title="Register a request handler for a RPC.">agrpc::repeatedly_request</a></code> will complete when it was cancelled, the <code><a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">agrpc::GrpcContext</a></code> was stopped or the <code>grpc::Server</code> been shutdown. It will <b>not</b> wait until all outstanding RPCs that are being processed by the RequestHandler have completed.</p>
 <p >When using the special CompletionToken created by <code><a class="el" href="namespaceagrpc.html#a35d42ccb3fa5adce6b5c045a275dafa9" title="Create sender completion token.">agrpc::use_sender</a></code> the RequestHandler's signature must be:<br  />
  <code>sender auto operator()(grpc::ServerContext&amp;, Request&amp;, Responder&amp;)</code> for unary and server-streaming requests and<br  />
@@ -181,15 +181,18 @@ template&lt;class RPC , class Service , class Responder , class RequestHandler ,
 <div class="line">            }));</div>
 <div class="line">}</div>
 </div><!-- fragment --><p >The following example shows how to implement a RequestHandler with a custom allocator for simple, high-performance RPC processing:</p>
-<div class="fragment"><div class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> Executor, <span class="keyword">class</span> Handler&gt;</div>
+<div class="fragment"><div class="line"><span class="keyword">template</span> &lt;<span class="keyword">class</span> Executor, <span class="keyword">class</span> Handler, <span class="keyword">class</span> Alllocator&gt;</div>
 <div class="line"><span class="keyword">struct </span>AssociatedHandler</div>
 <div class="line">{</div>
 <div class="line">    <span class="keyword">using</span> executor_type = Executor;</div>
+<div class="line">    <span class="keyword">using</span> allocator_type = Alllocator;</div>
 <div class="line"> </div>
 <div class="line">    Executor executor;</div>
 <div class="line">    Handler handler;</div>
+<div class="line">    Alllocator allocator;</div>
 <div class="line"> </div>
-<div class="line">    AssociatedHandler(Executor executor, Handler handler) : executor(std::move(executor)), handler(std::move(handler))</div>
+<div class="line">    AssociatedHandler(Executor executor, Handler handler, Alllocator allocator)</div>
+<div class="line">        : executor(std::move(executor)), handler(std::move(handler)), allocator(allocator)</div>
 <div class="line">    {</div>
 <div class="line">    }</div>
 <div class="line"> </div>
@@ -200,21 +203,23 @@ template&lt;class RPC , class Service , class Responder , class RequestHandler ,
 <div class="line">    }</div>
 <div class="line"> </div>
 <div class="line">    [[nodiscard]] executor_type get_executor() const noexcept { <span class="keywordflow">return</span> executor; }</div>
+<div class="line"> </div>
+<div class="line">    [[nodiscard]] allocator_type get_allocator() const noexcept { <span class="keywordflow">return</span> allocator; }</div>
 <div class="line">};</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">void</span> repeatedly_request_example(example::v1::Example::AsyncService&amp; service, <a class="code hl_class" href="classagrpc_1_1_grpc_context.html">agrpc::GrpcContext</a>&amp; grpc_context)</div>
 <div class="line">{</div>
 <div class="line">    <a class="code hl_variable" href="namespaceagrpc.html#ace37792785c92502711e61d9e9a5ff2d">agrpc::repeatedly_request</a>(</div>
 <div class="line">        &amp;example::v1::Example::AsyncService::RequestUnary, service,</div>
-<div class="line">        AssociatedHandler{</div>
-<div class="line">            asio::require(grpc_context.<a class="code hl_function" href="classagrpc_1_1_grpc_context.html#ab82f48f7e09542f242b683cda49aa6a9">get_executor</a>(), asio::execution::allocator(grpc_context.<a class="code hl_function" href="classagrpc_1_1_grpc_context.html#ab38d929d30e72aface90b3d429727d33">get_allocator</a>())),</div>
-<div class="line">            [](<span class="keyword">auto</span>&amp;&amp; request_context, <span class="keyword">auto</span>&amp;&amp; executor)</div>
-<div class="line">            {</div>
-<div class="line">                <span class="keyword">auto</span>&amp; writer = request_context.responder();</div>
-<div class="line">                example::v1::Response response;</div>
-<div class="line">                <a class="code hl_variable" href="namespaceagrpc.html#a88b9f806c77bb8077f3f7973beede2d0">agrpc::finish</a>(writer, response, grpc::Status::OK,</div>
-<div class="line">                              asio::bind_executor(executor, [c = std::move(request_context)](<span class="keywordtype">bool</span>) {}));</div>
-<div class="line">            }});</div>
+<div class="line">        AssociatedHandler{grpc_context.<a class="code hl_function" href="classagrpc_1_1_grpc_context.html#ab82f48f7e09542f242b683cda49aa6a9">get_executor</a>(),</div>
+<div class="line">                          [](<span class="keyword">auto</span>&amp;&amp; request_context, <span class="keyword">auto</span>&amp;&amp; executor)</div>
+<div class="line">                          {</div>
+<div class="line">                              <span class="keyword">auto</span>&amp; writer = request_context.responder();</div>
+<div class="line">                              example::v1::Response response;</div>
+<div class="line">                              <a class="code hl_variable" href="namespaceagrpc.html#a88b9f806c77bb8077f3f7973beede2d0">agrpc::finish</a>(writer, response, grpc::Status::OK,</div>
+<div class="line">                                            asio::bind_executor(executor, [c = std::move(request_context)](<span class="keywordtype">bool</span>) {}));</div>
+<div class="line">                          },</div>
+<div class="line">                          grpc_context.<a class="code hl_function" href="classagrpc_1_1_grpc_context.html#ab38d929d30e72aface90b3d429727d33">get_allocator</a>()});</div>
 <div class="line">}</div>
 <div class="ttc" id="aclassagrpc_1_1_grpc_context_html_ab38d929d30e72aface90b3d429727d33"><div class="ttname"><a href="classagrpc_1_1_grpc_context.html#ab38d929d30e72aface90b3d429727d33">agrpc::GrpcContext::get_allocator</a></div><div class="ttdeci">allocator_type get_allocator() noexcept</div><div class="ttdoc">Get the associated allocator.</div><div class="ttdef"><b>Definition:</b> grpcContext.ipp:92</div></div>
 <div class="ttc" id="aclassagrpc_1_1_grpc_context_html_ab82f48f7e09542f242b683cda49aa6a9"><div class="ttname"><a href="classagrpc_1_1_grpc_context.html#ab82f48f7e09542f242b683cda49aa6a9">agrpc::GrpcContext::get_executor</a></div><div class="ttdeci">executor_type get_executor() noexcept</div><div class="ttdoc">Get the associated executor.</div><div class="ttdef"><b>Definition:</b> grpcContext.ipp:88</div></div>

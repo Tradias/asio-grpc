@@ -95,11 +95,19 @@ $(document).ready(function(){initNavTree('md_doc_difference_to_asio.html',''); i
 <div class="line">timer.async_wait(asio::bind_executor(exec2, [](<span class="keyword">auto</span>&amp;&amp;) {})); <span class="comment">// exec2 is the completion handler executor</span></div>
 </div><!-- fragment --><p >In asio-grpc:</p>
 <div class="fragment"><div class="line">grpc::Alarm alarm;</div>
-<div class="line"><a class="code hl_variable" href="namespaceagrpc.html#a3a4e32ff60d8f9bd8c8c68e42be959c1">agrpc::wait</a>(alarm, deadline, asio::bind_executor(grpc_context.get_executor(), [](<span class="keyword">auto</span>&amp;&amp;) {})); <span class="comment">// grpc_context.get_executor() is both, the I/O executor and completion handler executor</span></div>
+<div class="line"><a class="code hl_variable" href="namespaceagrpc.html#a3a4e32ff60d8f9bd8c8c68e42be959c1">agrpc::wait</a>(alarm, deadline, asio::bind_executor(grpc_context.get_executor(), [](<span class="keyword">auto</span>&amp;&amp;) {}));</div>
+<div class="line"><span class="comment">// grpc_context.get_executor() is both, the I/O executor and completion handler executor</span></div>
 <div class="ttc" id="anamespaceagrpc_html_a3a4e32ff60d8f9bd8c8c68e42be959c1"><div class="ttname"><a href="namespaceagrpc.html#a3a4e32ff60d8f9bd8c8c68e42be959c1">agrpc::wait</a></div><div class="ttdeci">constexpr detail::WaitFn wait</div><div class="ttdoc">Wait for a timer.</div><div class="ttdef"><b>Definition:</b> wait.hpp:78</div></div>
-</div><!-- fragment --><p >As a consequence, asynchronous operations in asio-grpc always complete in the thread that called <code>GrpcContext::run()/poll()</code>, whereas Asio would submit the completion handler for execution as if by performing <code>asio::dispatch(exec2, [completion_handler](auto... args) { completion_handler(args...); })</code>. See also <a href="https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/asynchronous_operations.html">asio's documentation</a>. <br  />
- Please open a ticket if you would like to have a wrapper class in asio-grpc that mimics that behavior, it is rather easy to implement. </p>
-</div></div><!-- contents -->
+</div><!-- fragment --><p >As a consequence, asynchronous operations in asio-grpc always complete in the thread that called <code>GrpcContext::run()/poll()</code>, whereas Asio would submit the completion handler for execution as if by performing <code>asio::dispatch(exec2, [=&lt;moved&gt;]() { completion_handler(args...); })</code>. See also <a href="https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/asynchronous_operations.html">Asio's documentation</a>. <br  />
+ Please open a ticket if you would like to have a wrapper class in asio-grpc that mimics that behavior, it is rather easy to implement.</p>
+<hr  />
+<p >Until asio-grpc v1.8.0 the completion handler's allocator was retrieved in a manner equivalent to:</p>
+<div class="fragment"><div class="line">asio::get_associated_allocator(completion_handler, asio::query(asio::get_associated_executor(completion_handler), asio::execution::allocator));</div>
+</div><!-- fragment --><p >Since v1.8.0 the allocator is retrieved using:</p>
+<div class="fragment"><div class="line">asio::get_associated_allocator(completion_handler);</div>
+</div><!-- fragment --><p >And for <code><a class="el" href="namespaceagrpc.html#ace37792785c92502711e61d9e9a5ff2d" title="Register a request handler for a RPC.">agrpc::repeatedly_request</a></code> using:</p>
+<div class="fragment"><div class="line">asio::get_associated_allocator(completion_handler, asio::get_associated_allocator(request_handler));</div>
+</div><!-- fragment --> </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->
 <!-- start footer part -->

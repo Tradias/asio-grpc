@@ -25,7 +25,7 @@
 var NAVTREE =
 [
   [ "asio-grpc", "index.html", [
-    [ "Overview", "index.html#autotoc_md8", null ],
+    [ "Overview", "index.html#autotoc_md9", null ],
     [ "CMake protobuf generate", "md_doc_cmake_protobuf_generate.html", null ],
     [ "Completion token", "md_doc_completion_token.html", [
       [ "Callback", "md_doc_completion_token.html#autotoc_md2", null ],
