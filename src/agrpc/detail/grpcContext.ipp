@@ -112,6 +112,6 @@ inline grpc::ServerCompletionQueue* GrpcContext::get_server_completion_queue() n
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_GRPCCONTEXT_IPP
-
 #include <agrpc/detail/grpcContextImplementation.ipp>
+
+#endif  // AGRPC_DETAIL_GRPCCONTEXT_IPP

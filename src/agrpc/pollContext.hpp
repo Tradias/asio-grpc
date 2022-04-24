@@ -190,24 +190,20 @@ struct PollContextHandler
             {
                 poll_context.backoff.reset();
                 poll_context.async_poll(grpc_context, std::move(stop_predicate));
+                return;
             }
-            else
+            const auto delay = poll_context.backoff.next();
+            if (detail::BackoffDelay::zero() == delay)
             {
-                const auto delay = poll_context.backoff.next();
-                if (detail::BackoffDelay::zero() == delay)
-                {
-                    poll_context.async_poll(grpc_context, std::move(stop_predicate));
-                }
-                else
-                {
-                    if (stop_predicate(grpc_context))
-                    {
-                        return;
-                    }
-                    poll_context.timer.expires_after(delay);
-                    poll_context.timer.async_wait(std::move(*this));
-                }
+                poll_context.async_poll(grpc_context, std::move(stop_predicate));
+                return;
             }
+            if (stop_predicate(grpc_context))
+            {
+                return;
+            }
+            poll_context.timer.expires_after(delay);
+            poll_context.timer.async_wait(std::move(*this));
         }
     }
 
