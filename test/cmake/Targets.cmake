@@ -1,7 +1,7 @@
 # common compile options
 add_library(compile-options INTERFACE)
 
-target_link_libraries(compile-options INTERFACE Boost::coroutine Boost::thread Boost::disable_autolinking)
+target_link_libraries(compile-options INTERFACE Boost::disable_autolinking)
 
 target_compile_definitions(compile-options INTERFACE $<$<CXX_COMPILER_ID:MSVC>:_WIN32_WINNT=0x0A00> # Windows 10
                                                      BOOST_ASIO_NO_DEPRECATED ASIO_NO_DEPRECATED)

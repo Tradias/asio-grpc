@@ -14,6 +14,14 @@
 
 cmake_minimum_required(VERSION 3.14...3.23)
 
+# Hunter package manager options
+option(HUNTER_ENABLED "Enable Hunter package manager" off)
+option(ASIO_GRPC_HUNTER_BACKEND_BOOST_ASIO "Build Boost.Asio using Hunter" on)
+option(ASIO_GRPC_HUNTER_BACKEND_STANDALONE_ASIO "Build standalone Asio using Hunter" off)
+if(HUNTER_ENABLED)
+    include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcHunter.cmake")
+endif()
+
 project(
     asio-grpc
     VERSION 1.5.1
@@ -43,8 +51,6 @@ set(ASIO_GRPC_COVERAGE_OUTPUT_FILE
 option(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS "Compile tests with -fsanitize=address,undefined" off)
 option(ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET "Create target to check header files for syntax errors" on)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-
 set(ASIO_GRPC_PROJECT_ROOT "${CMAKE_CURRENT_LIST_DIR}")
 
 if(ASIO_GRPC_BUILD_TESTS)
@@ -53,6 +59,7 @@ if(ASIO_GRPC_BUILD_TESTS)
     # store value of Boost_USE_STATIC_RUNTIME because it gets cleared by find_package(Boost)
     set(ASIO_GRPC_BOOST_USE_STATIC_RUNTIME ${Boost_USE_STATIC_RUNTIME})
 
+    # find dependencies
     find_package(protobuf)
     find_package(gRPC)
     if(ASIO_GRPC_USE_BOOST_CONTAINER)
@@ -61,16 +68,20 @@ if(ASIO_GRPC_BUILD_TESTS)
         find_package(Boost REQUIRED COMPONENTS coroutine thread filesystem)
     endif()
     find_package(asio)
-    find_package(unifex)
-    if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-        include(FindPkgConfig)
-        pkg_check_modules(liburing IMPORTED_TARGET GLOBAL liburing)
+    if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
+        find_package(unifex)
+        if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+            include(FindPkgConfig)
+            pkg_check_modules(liburing IMPORTED_TARGET GLOBAL liburing)
+        endif()
     endif()
-    include(AsioGrpcCompileOptions)
-    include(AsioGrpcCheckBoostVersion)
-    include(AsioGrpcInstallGitHooks)
 
-    include(AsioGrpcCoverage)
+    # include CMake modules
+    include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcCompileOptions.cmake")
+    include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcCheckBoostVersion.cmake")
+    include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcInstallGitHooks.cmake")
+    include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcCoverage.cmake")
+    include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcProtobufGenerator.cmake")
 endif()
 
 add_subdirectory(src)
@@ -86,5 +97,5 @@ if(ASIO_GRPC_BUILD_TESTS)
 endif()
 
 if(ASIO_GRPC_INSTALL)
-    include(AsioGrpcInstallation)
+    include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcInstallation.cmake")
 endif()

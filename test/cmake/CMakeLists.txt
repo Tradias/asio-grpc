@@ -16,8 +16,6 @@ cmake_minimum_required(VERSION 3.19)
 
 project(asio-grpc-cmake-test LANGUAGES CXX)
 
-find_package(Boost REQUIRED coroutine thread)
-
 find_package(
     asio-grpc
     CONFIG

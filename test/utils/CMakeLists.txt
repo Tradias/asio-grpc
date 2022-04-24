@@ -1,5 +1,4 @@
 # test protobuf sources
-include(AsioGrpcProtobufGenerator)
 asio_grpc_protobuf_generate(
     GENERATE_GRPC
     OUT_VAR "ASIO_GRPC_TEXT_PROTO_SOURCES"
@@ -112,9 +111,10 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
 endfunction()
 
 asio_grpc_add_test_util(asio-grpc-test-util-boost-asio "BOOST_ASIO" "17")
-asio_grpc_add_test_util(asio-grpc-test-util-boost-asio-cpp20 "BOOST_ASIO" "20")
-
 asio_grpc_add_test_util(asio-grpc-test-util-standalone-asio "STANDALONE_ASIO" "17")
-asio_grpc_add_test_util(asio-grpc-test-util-standalone-asio-cpp20 "STANDALONE_ASIO" "20")
 
-asio_grpc_add_test_util(asio-grpc-test-util-unifex-cpp20 "UNIFEX" "20")
+if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
+    asio_grpc_add_test_util(asio-grpc-test-util-boost-asio-cpp20 "BOOST_ASIO" "20")
+    asio_grpc_add_test_util(asio-grpc-test-util-standalone-asio-cpp20 "STANDALONE_ASIO" "20")
+    asio_grpc_add_test_util(asio-grpc-test-util-unifex-cpp20 "UNIFEX" "20")
+endif()

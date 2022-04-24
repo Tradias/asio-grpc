@@ -20,7 +20,6 @@ target_link_libraries(asio-grpc-example-helper INTERFACE asio-grpc-common-compil
 target_include_directories(asio-grpc-example-helper INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/helper")
 
 # example protos
-include(AsioGrpcProtobufGenerator)
 asio_grpc_protobuf_generate(
     GENERATE_GRPC
     OUT_VAR "ASIO_GRPC_EXAMPLE_PROTO_SOURCES"
