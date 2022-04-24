@@ -124,10 +124,13 @@ function(asio_grpc_protobuf_generate)
         endif()
     endforeach()
 
-    set(_asio_grpc_generated_srcs_all)
+    set(_asio_grpc_abs_input_files)
+    set(_asio_grpc_generated_srcs)
     foreach(_asio_grpc_proto ${asio_grpc_protobuf_generate_PROTOS})
         get_filename_component(_asio_grpc_abs_file "${_asio_grpc_proto}" ABSOLUTE)
         get_filename_component(_asio_grpc_basename "${_asio_grpc_proto}" NAME_WE)
+
+        list(APPEND _asio_grpc_abs_input_files "${_asio_grpc_abs_file}")
 
         # Compute generated file output directory
         set(_asio_grpc_proto_dir_lowest_path_count 999999999999)
@@ -147,7 +150,6 @@ function(asio_grpc_protobuf_generate)
         endforeach()
 
         # Collect generated files
-        set(_asio_grpc_generated_srcs)
         foreach(_asio_grpc_ext ${_asio_grpc_generated_extensions})
             list(APPEND _asio_grpc_generated_srcs
                  "${_asio_grpc_actual_our_dir}/${_asio_grpc_basename}${_asio_grpc_ext}")
@@ -158,34 +160,32 @@ function(asio_grpc_protobuf_generate)
             set(_asio_grpc_descriptor_command "--descriptor_set_out=${_asio_grpc_descriptor_file}")
             list(APPEND _asio_grpc_generated_srcs "${_asio_grpc_descriptor_file}")
         endif()
-        list(APPEND _asio_grpc_generated_srcs_all ${_asio_grpc_generated_srcs})
-
-        # Run protoc
-        set(_asio_grpc_command_arguments --cpp_out "${asio_grpc_protobuf_generate_OUT_DIR}"
-                                         "${_asio_grpc_descriptor_command}" "${_asio_grpc_protobuf_include_args}")
-        if(asio_grpc_protobuf_generate_GENERATE_GRPC)
-            list(APPEND _asio_grpc_command_arguments --grpc_out "${asio_grpc_protobuf_generate_OUT_DIR}"
-                 "--plugin=protoc-gen-grpc=$<TARGET_FILE:gRPC::grpc_cpp_plugin>")
-        endif()
-        list(APPEND _asio_grpc_command_arguments ${asio_grpc_protobuf_generate_EXTRA_ARGS} "${_asio_grpc_abs_file}")
-        string(REPLACE ";" " " _asio_grpc_pretty_command_arguments "${_asio_grpc_command_arguments}")
-        add_custom_command(
-            OUTPUT ${_asio_grpc_generated_srcs}
-            COMMAND "${CMAKE_COMMAND}" "-E" "make_directory" "${asio_grpc_protobuf_generate_OUT_DIR}"
-            COMMAND protobuf::protoc ${_asio_grpc_command_arguments}
-            MAIN_DEPENDENCY "${_asio_grpc_abs_file}"
-            DEPENDS protobuf::protoc
-            COMMENT "protoc ${_asio_grpc_pretty_command_arguments}"
-            VERBATIM)
     endforeach()
 
-    set_source_files_properties(${_asio_grpc_generated_srcs_all} PROPERTIES SKIP_UNITY_BUILD_INCLUSION on)
+    # Run protoc
+    set(_asio_grpc_command_arguments --cpp_out "${asio_grpc_protobuf_generate_OUT_DIR}"
+                                     "${_asio_grpc_descriptor_command}" "${_asio_grpc_protobuf_include_args}")
+    if(asio_grpc_protobuf_generate_GENERATE_GRPC)
+        list(APPEND _asio_grpc_command_arguments --grpc_out "${asio_grpc_protobuf_generate_OUT_DIR}"
+             "--plugin=protoc-gen-grpc=$<TARGET_FILE:gRPC::grpc_cpp_plugin>")
+    endif()
+    list(APPEND _asio_grpc_command_arguments ${asio_grpc_protobuf_generate_EXTRA_ARGS} ${_asio_grpc_abs_input_files})
+    string(REPLACE ";" " " _asio_grpc_pretty_command_arguments "${_asio_grpc_command_arguments}")
+    add_custom_command(
+        OUTPUT ${_asio_grpc_generated_srcs}
+        COMMAND "${CMAKE_COMMAND}" "-E" "make_directory" "${asio_grpc_protobuf_generate_OUT_DIR}"
+        COMMAND protobuf::protoc ${_asio_grpc_command_arguments}
+        DEPENDS protobuf::protoc ${_asio_grpc_abs_input_files}
+        COMMENT "protoc ${_asio_grpc_pretty_command_arguments}"
+        VERBATIM)
+
+    set_source_files_properties(${_asio_grpc_generated_srcs} PROPERTIES SKIP_UNITY_BUILD_INCLUSION on)
 
     if(asio_grpc_protobuf_generate_TARGET)
         if("${asio_grpc_protobuf_generate_USAGE_REQUIREMENT}" STREQUAL "INTERFACE")
-            target_sources(${asio_grpc_protobuf_generate_TARGET} INTERFACE ${_asio_grpc_generated_srcs_all})
+            target_sources(${asio_grpc_protobuf_generate_TARGET} INTERFACE ${_asio_grpc_generated_srcs})
         else()
-            target_sources(${asio_grpc_protobuf_generate_TARGET} PRIVATE ${_asio_grpc_generated_srcs_all})
+            target_sources(${asio_grpc_protobuf_generate_TARGET} PRIVATE ${_asio_grpc_generated_srcs})
         endif()
 
         if("${asio_grpc_protobuf_generate_USAGE_REQUIREMENT}" STREQUAL "PUBLIC")
@@ -200,7 +200,7 @@ function(asio_grpc_protobuf_generate)
 
     if(asio_grpc_protobuf_generate_OUT_VAR)
         set(${asio_grpc_protobuf_generate_OUT_VAR}
-            ${_asio_grpc_generated_srcs_all}
+            ${_asio_grpc_generated_srcs}
             PARENT_SCOPE)
     endif()
 endfunction()
