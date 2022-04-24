@@ -16,7 +16,7 @@
 if(ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
     add_library(asio-grpc-check-header-syntax OBJECT)
 
-    function(asio_grpc_add_public_header_as_sources _asio_grpc_target)
+    function(asio_grpc_add_public_headers_as_sources _asio_grpc_target)
         get_target_property(_asio_grpc_public_header asio-grpc-sources INTERFACE_SOURCES)
 
         mark_as_advanced(_asio_grpc_public_header)
@@ -28,7 +28,7 @@ if(ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
         set_source_files_properties(${_asio_grpc_public_header} PROPERTIES LANGUAGE CXX)
     endfunction()
 
-    asio_grpc_add_public_header_as_sources(asio-grpc-check-header-syntax)
+    asio_grpc_add_public_headers_as_sources(asio-grpc-check-header-syntax)
 
     target_compile_options(
         asio-grpc-check-header-syntax

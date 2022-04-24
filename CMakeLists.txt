@@ -30,7 +30,8 @@ project(
     LANGUAGES CXX)
 
 # user options
-option(ASIO_GRPC_INSTALL "Create the install target" on)
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcProjectTopLevel.cmake")
+option(ASIO_GRPC_INSTALL "Create the install target" ${ASIO_GRPC_PROJECT_IS_TOP_LEVEL})
 option(ASIO_GRPC_USE_BOOST_CONTAINER "Use Boost.Container instead of <memory_resource>" off)
 
 # maintainer options
@@ -81,6 +82,9 @@ if(ASIO_GRPC_BUILD_TESTS)
     include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcCheckBoostVersion.cmake")
     include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcInstallGitHooks.cmake")
     include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcCoverage.cmake")
+endif()
+
+if(NOT ASIO_GRPC_PROJECT_IS_TOP_LEVEL OR ASIO_GRPC_BUILD_TESTS)
     include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcProtobufGenerator.cmake")
 endif()
 

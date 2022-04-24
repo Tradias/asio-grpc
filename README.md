@@ -96,25 +96,28 @@ Clone the repository into a subdirectory of your CMake project. Then add it and 
 Using [Boost.Asio](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio.html):
 
 ```cmake
+find_package(gRPC)
 find_package(Boost)
 add_subdirectory(/path/to/repository/root)
-target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc Boost::headers)
+target_link_libraries(your_app PUBLIC gRPC::grpc++ asio-grpc::asio-grpc Boost::headers)
 ```
 
 Or using [standalone Asio](https://github.com/chriskohlhoff/asio):
 
 ```cmake
+find_package(gRPC)
 find_package(asio)
 add_subdirectory(/path/to/repository/root)
-target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-standalone-asio asio::asio)
+target_link_libraries(your_app PUBLIC gRPC::grpc++ asio-grpc::asio-grpc-standalone-asio asio::asio)
 ```
 
 Or using [libunifex](https://github.com/facebookexperimental/libunifex):
 
 ```cmake
+find_package(gRPC)
 find_package(unifex)
 add_subdirectory(/path/to/repository/root)
-target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-unifex unifex::unifex)
+target_link_libraries(your_app PUBLIC gRPC::grpc++ asio-grpc::asio-grpc-unifex unifex::unifex)
 ```
 
 </p>
