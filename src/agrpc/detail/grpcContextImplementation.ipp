@@ -15,16 +15,12 @@
 #ifndef AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_IPP
 #define AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_IPP
 
-#include "agrpc/detail/asioForward.hpp"
-#include "agrpc/detail/grpcCompletionQueueEvent.hpp"
-#include "agrpc/detail/grpcContextImplementation.hpp"
-#include "agrpc/detail/typeErasedOperation.hpp"
-#include "agrpc/grpcContext.hpp"
-
+#include <agrpc/detail/asioForward.hpp>
+#include <agrpc/detail/grpcCompletionQueueEvent.hpp>
+#include <agrpc/detail/grpcContextImplementation.hpp>
+#include <agrpc/detail/typeErasedOperation.hpp>
+#include <agrpc/grpcContext.hpp>
 #include <grpcpp/completion_queue.h>
-
-#include <cstdint>
-#include <limits>
 
 AGRPC_NAMESPACE_BEGIN()
 

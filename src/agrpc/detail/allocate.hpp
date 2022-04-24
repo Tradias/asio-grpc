@@ -15,8 +15,8 @@
 #ifndef AGRPC_DETAIL_ALLOCATE_HPP
 #define AGRPC_DETAIL_ALLOCATE_HPP
 
-#include "agrpc/detail/config.hpp"
-#include "agrpc/detail/utility.hpp"
+#include <agrpc/detail/config.hpp>
+#include <agrpc/detail/utility.hpp>
 
 #include <memory>
 

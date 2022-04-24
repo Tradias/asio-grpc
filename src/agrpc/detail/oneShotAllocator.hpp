@@ -15,7 +15,7 @@
 #ifndef AGRPC_DETAIL_ONESHOTALLOCATOR_HPP
 #define AGRPC_DETAIL_ONESHOTALLOCATOR_HPP
 
-#include "agrpc/detail/config.hpp"
+#include <agrpc/detail/config.hpp>
 
 #include <cassert>
 #include <cstddef>

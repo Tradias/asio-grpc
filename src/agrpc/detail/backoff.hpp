@@ -15,7 +15,7 @@
 #ifndef AGRPC_DETAIL_BACKOFF_HPP
 #define AGRPC_DETAIL_BACKOFF_HPP
 
-#include "agrpc/detail/config.hpp"
+#include <agrpc/detail/config.hpp>
 
 #include <chrono>
 #include <cstdint>

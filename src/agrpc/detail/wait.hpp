@@ -15,9 +15,8 @@
 #ifndef AGRPC_DETAIL_WAIT_HPP
 #define AGRPC_DETAIL_WAIT_HPP
 
-#include "agrpc/detail/asioForward.hpp"
-#include "agrpc/detail/config.hpp"
-
+#include <agrpc/detail/asioForward.hpp>
+#include <agrpc/detail/config.hpp>
 #include <grpcpp/alarm.h>
 
 AGRPC_NAMESPACE_BEGIN()

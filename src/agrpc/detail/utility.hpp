@@ -15,7 +15,7 @@
 #ifndef AGRPC_DETAIL_UTILITY_HPP
 #define AGRPC_DETAIL_UTILITY_HPP
 
-#include "agrpc/detail/config.hpp"
+#include <agrpc/detail/config.hpp>
 
 #include <type_traits>
 #include <utility>

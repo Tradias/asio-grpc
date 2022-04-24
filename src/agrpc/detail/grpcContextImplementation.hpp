@@ -15,12 +15,14 @@
 #ifndef AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_HPP
 #define AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_HPP
 
-#include "agrpc/detail/config.hpp"
-#include "agrpc/detail/grpcCompletionQueueEvent.hpp"
-#include "agrpc/detail/typeErasedOperation.hpp"
-#include "agrpc/detail/utility.hpp"
-
+#include <agrpc/detail/config.hpp>
+#include <agrpc/detail/grpcCompletionQueueEvent.hpp>
+#include <agrpc/detail/typeErasedOperation.hpp>
+#include <agrpc/detail/utility.hpp>
 #include <grpcpp/completion_queue.h>
+
+#include <cstdint>
+#include <limits>
 
 AGRPC_NAMESPACE_BEGIN()
 

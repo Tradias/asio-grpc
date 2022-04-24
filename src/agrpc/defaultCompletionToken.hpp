@@ -15,8 +15,8 @@
 #ifndef AGRPC_AGRPC_DEFAULTCOMPLETIONTOKEN_HPP
 #define AGRPC_AGRPC_DEFAULTCOMPLETIONTOKEN_HPP
 
-#include "agrpc/detail/config.hpp"
-#include "agrpc/detail/defaultCompletionToken.hpp"
+#include <agrpc/detail/config.hpp>
+#include <agrpc/detail/defaultCompletionToken.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

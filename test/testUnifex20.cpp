@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "agrpc/asioGrpc.hpp"
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asioForward.hpp"
 #include "utils/asioUtils.hpp"
@@ -20,6 +19,7 @@
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/grpcContextTest.hpp"
 
+#include <agrpc/asioGrpc.hpp>
 #include <doctest/doctest.h>
 
 #include <cstddef>

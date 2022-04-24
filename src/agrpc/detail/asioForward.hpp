@@ -15,7 +15,7 @@
 #ifndef AGRPC_DETAIL_ASIOFORWARD_HPP
 #define AGRPC_DETAIL_ASIOFORWARD_HPP
 
-#include "agrpc/detail/config.hpp"
+#include <agrpc/detail/config.hpp>
 
 #ifdef AGRPC_STANDALONE_ASIO
 //

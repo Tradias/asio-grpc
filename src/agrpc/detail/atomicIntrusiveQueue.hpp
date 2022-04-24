@@ -15,8 +15,8 @@
 #ifndef AGRPC_DETAIL_ATOMICINTRUSIVEQUEUE_HPP
 #define AGRPC_DETAIL_ATOMICINTRUSIVEQUEUE_HPP
 
-#include "agrpc/detail/config.hpp"
-#include "agrpc/detail/intrusiveQueue.hpp"
+#include <agrpc/detail/config.hpp>
+#include <agrpc/detail/intrusiveQueue.hpp>
 
 #include <atomic>
 #include <utility>

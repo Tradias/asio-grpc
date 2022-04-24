@@ -15,8 +15,8 @@
 #ifndef AGRPC_DETAIL_FORWARD_HPP
 #define AGRPC_DETAIL_FORWARD_HPP
 
-#include "agrpc/detail/config.hpp"
-#include "agrpc/detail/grpcExecutorOptions.hpp"
+#include <agrpc/detail/config.hpp>
+#include <agrpc/detail/grpcExecutorOptions.hpp>
 
 #include <memory>
 
