@@ -50,7 +50,7 @@ jobs:
             os: macos-11,
             triplet: 'x64-osx-release',
             build-type: 'Debug',
-            cmake-extra-args: '-DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-osx-release -DASIO_GRPC_USE_BOOST_CONTAINER=on',
+            cmake-extra-args: '-DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-osx-release',
             parallel: 3,
           }
 
@@ -117,7 +117,7 @@ jobs:
       run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
 
     - name: GCC 8 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-8 -DCMAKE_CXX_COMPILER=$(which g++-8) -DASIO_GRPC_USE_BOOST_CONTAINER=on -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
+      run: cmake --preset default -B ${{ github.workspace }}/build-8 -DCMAKE_CXX_COMPILER=$(which g++-8) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
 
     - name: GCC 8 Build
       run: cmake --build ${{ github.workspace }}/build-8 --config Release --parallel $(nproc)
@@ -175,7 +175,7 @@ jobs:
     runs-on: ubuntu-20.04
     env:
       TRIPLET: 'x64-linux-clang-release'
-      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-clang-release -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_USE_BOOST_CONTAINER=on "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-10/include/c++/v1/ -Wno-unused-command-line-argument"'
+      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-clang-release -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-10/include/c++/v1/ -Wno-unused-command-line-argument"'
 
     steps:
     - name: Make clang-10 default compiler

@@ -14,6 +14,12 @@
 
 cmake_minimum_required(VERSION 3.14...3.23)
 
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcOptionDefaults.cmake")
+
+# user options
+option(ASIO_GRPC_USE_BOOST_CONTAINER "Use Boost.Container instead of <memory_resource>"
+       ${ASIO_GRPC_DEFAULT_USE_BOOST_CONTAINER})
+
 # Hunter package manager options
 option(HUNTER_ENABLED "Enable Hunter package manager" off)
 option(ASIO_GRPC_HUNTER_BACKEND_BOOST_ASIO "Build Boost.Asio using Hunter" on)
@@ -29,10 +35,10 @@ project(
     HOMEPAGE_URL "https://github.com/Tradias/asio-grpc"
     LANGUAGES CXX)
 
-# user options
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcProjectTopLevel.cmake")
+
+# user options
 option(ASIO_GRPC_INSTALL "Create the install target" ${ASIO_GRPC_PROJECT_IS_TOP_LEVEL})
-option(ASIO_GRPC_USE_BOOST_CONTAINER "Use Boost.Container instead of <memory_resource>" off)
 
 # maintainer options
 option(ASIO_GRPC_BUILD_TESTS "Build tests and examples" off)

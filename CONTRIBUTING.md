@@ -21,11 +21,8 @@ git clone https://github.com/microsoft/vcpkg
 From the root of the repository run:
 
 ```sh
-cmake --preset default \
-  # only needed if you do not have the VCPKG_ROOT env variable set
-  -DCMAKE_TOOLCHAIN_FILE=<path-to-vcpkg>/scripts/buildsystems/vcpkg.cmake \
-  # only needed if you are using a C++ compiler without <memory_resource>
-  -DASIO_GRPC_USE_BOOST_CONTAINER=true
+# Make sure the VCPKG_ROOT env variable points to the to the cloned vcpkg repository
+cmake --preset default
 ```
 
 It might take a while until vcpkg has installed all dependencies.
