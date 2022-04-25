@@ -15,7 +15,6 @@
                 "CMAKE_BUILD_TYPE": "Debug",
                 "VCPKG_OVERLAY_PORTS": "${sourceDir}/deps",
                 "CMAKE_INSTALL_PREFIX": "out",
-                "ASIO_GRPC_INSTALL": "TRUE",
                 "ASIO_GRPC_BUILD_TESTS": "TRUE",
                 "ASIO_GRPC_DISCOVER_TESTS": "TRUE"
             }
