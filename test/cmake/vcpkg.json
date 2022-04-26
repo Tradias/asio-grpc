@@ -3,15 +3,32 @@
     "name": "asio-grpc-cmake-test",
     "version": "1",
     "dependencies": [
+        "doctest",
         {
             "name": "grpc",
             "features": [
                 "codegen"
             ]
         },
+        "boost-coroutine",
         "boost-asio",
-        "asio",
-        "boost-container"
+        "boost-interprocess",
+        "boost-thread",
+        "boost-container",
+        "boost-process",
+        {
+            "name": "asio",
+            "features": [
+                "coroutine"
+            ]
+        },
+        "libunifex"
     ],
-    "builtin-baseline": "8ea52bad1ac13e1afb892ccba6c261d8e82d06fd"
+    "builtin-baseline": "8ea52bad1ac13e1afb892ccba6c261d8e82d06fd",
+    "overrides": [
+        {
+            "name": "doctest",
+            "version": "2.4.6"
+        }
+    ]
 }
