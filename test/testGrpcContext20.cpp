@@ -84,17 +84,55 @@ TEST_CASE_FIXTURE(
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::schedule")
 {
     bool is_invoked{false};
-    auto sender = asio::execution::schedule(get_executor());
-    test::FunctionAsReceiver receiver{[&]
-                                      {
-                                          is_invoked = true;
-                                      }};
-    auto operation_state = asio::execution::connect(std::move(sender), receiver);
+    test::StatefulReceiverState state;
+    test::FunctionAsStatefulReceiver receiver{[&]
+                                              {
+                                                  is_invoked = true;
+                                              },
+                                              state};
+    auto operation_state = asio::execution::connect(asio::execution::schedule(get_executor()), receiver);
     asio::execution::start(operation_state);
     CHECK_FALSE(is_invoked);
     grpc_context.run();
     CHECK(is_invoked);
-    CHECK_FALSE(receiver.was_done);
+    CHECK_FALSE(state.was_done);
+    CHECK_FALSE(state.exception);
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::schedule with throwing receiver")
+{
+    test::StatefulReceiverState state;
+    test::FunctionAsStatefulReceiver receiver{[&]
+                                              {
+                                                  throw std::invalid_argument{"test"};
+                                              },
+                                              state};
+    auto operation_state = asio::execution::connect(asio::execution::schedule(get_executor()), receiver);
+    asio::execution::start(operation_state);
+    grpc_context.run();
+    CHECK_FALSE(state.was_done);
+    REQUIRE(state.exception);
+    CHECK_THROWS_WITH_AS(std::rethrow_exception(state.exception), "test", std::invalid_argument);
+}
+
+TEST_CASE("asio GrpcExecutor::schedule on shutdown GrpcContext")
+{
+    bool is_invoked{false};
+    test::StatefulReceiverState state;
+    test::FunctionAsStatefulReceiver receiver{[&]
+                                              {
+                                                  is_invoked = true;
+                                              },
+                                              state};
+    {
+        agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+        auto operation_state =
+            asio::execution::connect(asio::execution::schedule(grpc_context.get_scheduler()), receiver);
+        asio::execution::start(operation_state);
+    }
+    CHECK_FALSE(is_invoked);
+    CHECK_FALSE(state.exception);
+    CHECK(state.was_done);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::submit with allocator")
@@ -122,6 +160,47 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::execution connect and start Alar
 #endif
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
+TEST_CASE_TEMPLATE("asio ScheduleSender start/submit with shutdown GrpcContext", T, std::true_type, std::false_type)
+{
+    test::StatefulReceiverState state;
+    test::FunctionAsStatefulReceiver receiver{[](auto&&...) {}, state};
+    {
+        agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+        grpc::Alarm alarm;
+        test::co_spawn(grpc_context,
+                       [&]() -> asio::awaitable<void>
+                       {
+                           agrpc::detail::ScopeGuard guard{
+                               [&]
+                               {
+                                   auto sender = [&]
+                                   {
+                                       if constexpr (T{})
+                                       {
+                                           return asio::execution::schedule(grpc_context.get_scheduler());
+                                       }
+                                       else
+                                       {
+                                           return agrpc::wait(alarm, test::five_seconds_from_now(),
+                                                              agrpc::use_sender(grpc_context));
+                                       }
+                                   }();
+                                   SUBCASE("submit") { asio::execution::submit(std::move(sender), receiver); }
+                                   SUBCASE("start")
+                                   {
+                                       auto operation_state = asio::execution::connect(std::move(sender), receiver);
+                                       asio::execution::start(operation_state);
+                                   }
+                               }};
+                           grpc_context.stop();
+                           co_await agrpc::wait(alarm, test::five_seconds_from_now());
+                       });
+        grpc_context.run();
+    }
+    CHECK(state.was_done);
+    CHECK_FALSE(state.exception);
+}
+
 TEST_CASE_FIXTURE(test::GrpcContextTest, "get_completion_queue")
 {
     grpc::CompletionQueue* queue{};

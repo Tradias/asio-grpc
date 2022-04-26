@@ -677,32 +677,34 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "CancelSafe: cancel wait for alarm
     CHECK(allocator_has_been_used());
 }
 
-TEST_CASE_FIXTURE(test::GrpcClientServerTest, "CancelSafe: wait before initiate")
+TEST_CASE_TEMPLATE("CancelSafe: wait before initiate", T, bool, test::ErrorCode)
 {
+    agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
     bool ok{};
-    agrpc::CancelSafe<> safe;
+    agrpc::CancelSafe<T> safe;
     safe.wait(asio::bind_executor(grpc_context,
-                                  [&](auto&& ec)
+                                  [&](test::ErrorCode ec, auto&&...)
                                   {
                                       ok = !ec;
                                   }));
-    asio::post(asio::bind_executor(grpc_context, safe.token()));
+    safe.token()(T{});
     grpc_context.run();
     CHECK(ok);
 }
 
-TEST_CASE_FIXTURE(test::GrpcClientServerTest, "CancelSafe: wait for already completed operation")
+TEST_CASE_TEMPLATE("CancelSafe: wait for already completed operation", T, bool, test::ErrorCode)
 {
+    agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
     bool ok{};
-    agrpc::CancelSafe<> safe;
-    asio::post(asio::bind_executor(grpc_context, safe.token()));
+    agrpc::CancelSafe<T> safe;
+    safe.token()(T{});
     grpc::Alarm alarm;
     agrpc::wait(alarm, test::ten_milliseconds_from_now(),
                 asio::bind_executor(grpc_context,
                                     [&](bool)
                                     {
                                         safe.wait(asio::bind_executor(grpc_context,
-                                                                      [&](auto&& ec)
+                                                                      [&](test::ErrorCode ec, auto&&...)
                                                                       {
                                                                           ok = !ec;
                                                                       }));
@@ -720,7 +722,7 @@ TEST_CASE("CancelSafe: wait for asio::steady_timer")
     asio::cancellation_signal signal;
     safe.wait(asio::bind_cancellation_slot(signal.slot(),
                                            asio::bind_executor(io_context,
-                                                               [&](auto&& ec)
+                                                               [&](test::ErrorCode ec)
                                                                {
                                                                    CHECK_EQ(asio::error::operation_aborted, ec);
                                                                    CHECK_EQ(1, timer.cancel());
@@ -745,7 +747,7 @@ TEST_CASE("CancelSafe: can handle move-only completion arguments")
         },
         token);
     safe.wait(
-        [&](auto&& ec, std::unique_ptr<int>&& actual)
+        [&](test::ErrorCode ec, std::unique_ptr<int>&& actual)
         {
             CHECK_FALSE(ec);
             CHECK_EQ(42, *actual);

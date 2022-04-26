@@ -234,6 +234,28 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request canc
                 });
     grpc_context.run();
 }
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request throw exception from request handler")
+{
+    asio::cancellation_signal signal;
+    agrpc::repeatedly_request(
+        &test::v1::Test::AsyncService::RequestUnary, service,
+        asio::bind_executor(grpc_context,
+                            [&](grpc::ServerContext&, test::msg::Request&,
+                                grpc::ServerAsyncResponseWriter<test::msg::Response>&) -> asio::awaitable<void>
+                            {
+                                throw std::invalid_argument{"test"};
+                                co_return;
+                            }),
+        asio::bind_cancellation_slot(signal.slot(), asio::detached));
+    asio::spawn(grpc_context,
+                [&](auto&& yield)
+                {
+                    signal.emit(asio::cancellation_type::all);
+                    test::client_perform_unary_unchecked(grpc_context, *stub, yield, test::ten_milliseconds_from_now());
+                });
+    CHECK_THROWS_WITH_AS(grpc_context.run(), "test", std::invalid_argument);
+}
 #endif
 }
 #endif

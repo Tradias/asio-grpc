@@ -33,8 +33,9 @@ struct PerformOptions
 void client_perform_unary_success(agrpc::GrpcContext& grpc_context, test::v1::Test::Stub& stub,
                                   asio::yield_context yield, test::PerformOptions options = {});
 
-void client_perform_unary_unchecked(agrpc::GrpcContext& grpc_context, test::v1::Test::Stub& stub,
-                                    asio::yield_context yield);
+bool client_perform_unary_unchecked(agrpc::GrpcContext& grpc_context, test::v1::Test::Stub& stub,
+                                    asio::yield_context yield,
+                                    std::chrono::system_clock::time_point deadline = test::five_seconds_from_now());
 
 void client_perform_client_streaming_success(test::v1::Test::Stub& stub, asio::yield_context yield,
                                              test::PerformOptions options = {});

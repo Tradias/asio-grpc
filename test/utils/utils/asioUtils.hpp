@@ -46,8 +46,6 @@ struct FunctionAsReceiver
     using allocator_type = Allocator;
 
     Function function;
-    std::exception_ptr exception;
-    bool was_done{false};
     Allocator allocator;
 
     explicit FunctionAsReceiver(Function function, Allocator allocator = {})
@@ -55,7 +53,7 @@ struct FunctionAsReceiver
     {
     }
 
-    void set_done() noexcept { was_done = true; }
+    void set_done() noexcept {}
 
     template <class... Args>
     void set_value(Args&&... args)
@@ -63,7 +61,7 @@ struct FunctionAsReceiver
         function(std::forward<Args>(args)...);
     }
 
-    void set_error(std::exception_ptr ptr) noexcept { exception = ptr; }
+    void set_error(std::exception_ptr ptr) noexcept {}
 
     auto get_allocator() const noexcept { return allocator; }
 
@@ -74,6 +72,27 @@ struct FunctionAsReceiver
         return receiver.allocator;
     }
 #endif
+};
+
+struct StatefulReceiverState
+{
+    std::exception_ptr exception{};
+    bool was_done{false};
+};
+
+template <class Function, class Allocator = std::allocator<std::byte>>
+struct FunctionAsStatefulReceiver : public test::FunctionAsReceiver<Function, Allocator>
+{
+    test::StatefulReceiverState& state;
+
+    FunctionAsStatefulReceiver(Function function, StatefulReceiverState& state, Allocator allocator = {})
+        : test::FunctionAsReceiver<Function, Allocator>(std::move(function), allocator), state(state)
+    {
+    }
+
+    void set_done() noexcept { state.was_done = true; }
+
+    void set_error(std::exception_ptr ptr) noexcept { state.exception = ptr; }
 };
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)

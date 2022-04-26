@@ -53,10 +53,12 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::schedule")
 {
     bool is_invoked{false};
     auto sender = unifex::schedule(get_executor());
-    test::FunctionAsReceiver receiver{[&]
-                                      {
-                                          is_invoked = true;
-                                      }};
+    test::StatefulReceiverState state;
+    test::FunctionAsStatefulReceiver receiver{[&]
+                                              {
+                                                  is_invoked = true;
+                                              },
+                                              state};
     std::optional<unifex::connect_result_t<decltype(sender), decltype(receiver)>> operation_state;
     SUBCASE("connect")
     {
@@ -67,25 +69,29 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::schedule")
     CHECK_FALSE(is_invoked);
     grpc_context.run();
     CHECK(is_invoked);
-    CHECK_FALSE(receiver.was_done);
+    CHECK_FALSE(state.was_done);
+    CHECK_FALSE(state.exception);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::submit from Grpc::Context::run")
 {
     bool is_invoked{false};
-    test::FunctionAsReceiver receiver{[&]
-                                      {
-                                          unifex::submit(unifex::schedule(get_executor()),
-                                                         test::FunctionAsReceiver{[&]
-                                                                                  {
-                                                                                      is_invoked = true;
-                                                                                  }});
-                                      }};
+    test::StatefulReceiverState state;
+    test::FunctionAsStatefulReceiver receiver{[&]
+                                              {
+                                                  unifex::submit(unifex::schedule(get_executor()),
+                                                                 test::FunctionAsReceiver{[&]
+                                                                                          {
+                                                                                              is_invoked = true;
+                                                                                          }});
+                                              },
+                                              state};
     unifex::submit(unifex::schedule(get_executor()), receiver);
     CHECK_FALSE(is_invoked);
     grpc_context.run();
     CHECK(is_invoked);
-    CHECK_FALSE(receiver.was_done);
+    CHECK_FALSE(state.was_done);
+    CHECK_FALSE(state.exception);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::submit with allocator")
@@ -157,7 +163,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::schedule when alr
     CHECK_EQ(expected_thread_id, actual_thread_id);
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex agrpc::wait with from different thread")
+TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex agrpc::wait from different thread")
 {
     bool is_invoked{false};
     unifex::new_thread_context ctx;
@@ -206,15 +212,37 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex cancel agrpc::wait")
     CHECK_FALSE(ok);
 }
 
+TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex cancel agrpc::wait before starting")
+{
+    bool is_invoked{false};
+    grpc::Alarm alarm;
+    test::StatefulReceiverState state;
+    test::FunctionAsStatefulReceiver receiver{[&](bool)
+                                              {
+                                                  is_invoked = true;
+                                              },
+                                              state};
+    unifex::inplace_stop_source source;
+    auto sender = unifex::with_query_value(agrpc::wait(alarm, test::five_seconds_from_now(), use_sender()),
+                                           unifex::get_stop_token, source.get_token());
+    auto op = unifex::connect(std::move(sender), receiver);
+    source.request_stop();
+    unifex::start(op);
+    grpc_context.run();
+    CHECK_FALSE(is_invoked);
+    CHECK(state.was_done);
+    CHECK_FALSE(state.exception);
+}
+
 TEST_CASE("unifex GrpcContext.stop() with pending GrpcSender operation")
 {
     bool is_invoked{false};
     unifex::new_thread_context ctx;
     std::optional<agrpc::GrpcContext> grpc_context{std::make_unique<grpc::CompletionQueue>()};
-    auto receiver = test::FunctionAsReceiver{[&](bool)
-                                             {
-                                                 is_invoked = true;
-                                             }};
+    test::FunctionAsReceiver receiver{[&](bool)
+                                      {
+                                          is_invoked = true;
+                                      }};
     grpc::Alarm alarm;
     auto op = unifex::connect(agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::use_sender(*grpc_context)),
                               receiver);

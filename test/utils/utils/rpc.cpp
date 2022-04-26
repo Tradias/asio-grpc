@@ -46,15 +46,15 @@ void client_perform_unary_success(agrpc::GrpcContext& grpc_context, test::v1::Te
     }
 }
 
-void client_perform_unary_unchecked(agrpc::GrpcContext& grpc_context, test::v1::Test::Stub& stub,
-                                    asio::yield_context yield)
+bool client_perform_unary_unchecked(agrpc::GrpcContext& grpc_context, test::v1::Test::Stub& stub,
+                                    asio::yield_context yield, std::chrono::system_clock::time_point deadline)
 {
-    auto client_context = create_client_context();
+    auto client_context = create_client_context(deadline);
     auto reader =
         stub.AsyncUnary(client_context.get(), test::msg::Request{}, agrpc::get_completion_queue(grpc_context));
     test::msg::Response response;
     grpc::Status status;
-    CHECK(agrpc::finish(*reader, response, status, yield));
+    return agrpc::finish(*reader, response, status, yield);
 }
 
 void client_perform_client_streaming_success(test::v1::Test::Stub& stub, asio::yield_context yield,

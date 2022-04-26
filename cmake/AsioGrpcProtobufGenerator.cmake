@@ -27,7 +27,8 @@ asio_grpc_protobuf_generate(PROTOS <proto_file1> [<proto_file2>...]
                             [IMPORT_DIRS <directories>...]
                             [EXTRA_ARGS <arguments>...]
                             [GENERATE_GRPC]
-                            [GENERATE_DESCRIPTORS])
+                            [GENERATE_DESCRIPTORS]
+                            [GENERATE_MOCK_CODE])
 
 ``PROTOS``
     ``.proto`` files

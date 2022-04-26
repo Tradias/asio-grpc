@@ -135,7 +135,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "RepeatedlyRequestContext member fu
     asio::spawn(get_executor(),
                 [&](asio::yield_context yield)
                 {
-                    test::client_perform_unary_unchecked(grpc_context, *stub, yield);
+                    CHECK(test::client_perform_unary_unchecked(grpc_context, *stub, yield));
                     grpc_context.stop();
                 });
     grpc_context.run();
@@ -229,7 +229,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "repeatedly_request cancellation")
                 [&](auto&& yield)
                 {
                     signal.emit(asio::cancellation_type::all);
-                    test::client_perform_unary_unchecked(grpc_context, *stub, yield);
+                    CHECK(test::client_perform_unary_unchecked(grpc_context, *stub, yield));
                 });
     grpc_context.run();
     CHECK_EQ(1, count);
