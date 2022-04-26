@@ -61,7 +61,7 @@ struct FunctionAsReceiver
         function(std::forward<Args>(args)...);
     }
 
-    void set_error(std::exception_ptr ptr) noexcept {}
+    void set_error(std::exception_ptr) noexcept {}
 
     auto get_allocator() const noexcept { return allocator; }
 
