@@ -224,7 +224,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "repeatedly_request cancellation")
                              CHECK(agrpc::finish(writer, response, grpc::Status::OK, yield));
                              ++count;
                          }},
-        asio::bind_cancellation_slot(signal.slot(), asio::detached));
+        asio::bind_cancellation_slot(signal.slot(), test::NoOp{}));
     asio::spawn(grpc_context,
                 [&](auto&& yield)
                 {

@@ -19,7 +19,6 @@
 
 #ifdef AGRPC_STANDALONE_ASIO
 #include <asio/coroutine.hpp>
-#include <asio/detached.hpp>
 #include <asio/execution.hpp>
 #include <asio/execution/submit.hpp>
 #include <asio/post.hpp>
@@ -50,7 +49,6 @@
 #include <boost/version.hpp>
 //
 #include <boost/asio/coroutine.hpp>
-#include <boost/asio/detached.hpp>
 #include <boost/asio/execution.hpp>
 #include <boost/asio/execution/submit.hpp>
 #include <boost/asio/post.hpp>
