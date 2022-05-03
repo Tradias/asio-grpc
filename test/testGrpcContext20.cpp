@@ -173,7 +173,7 @@ TEST_CASE_TEMPLATE("asio ScheduleSender start/submit with shutdown GrpcContext",
                            agrpc::detail::ScopeGuard guard{
                                [&]
                                {
-                                   auto sender = [&]
+                                   const auto sender = [&]
                                    {
                                        if constexpr (T{})
                                        {
@@ -184,11 +184,11 @@ TEST_CASE_TEMPLATE("asio ScheduleSender start/submit with shutdown GrpcContext",
                                            return agrpc::wait(alarm, test::five_seconds_from_now(),
                                                               agrpc::use_sender(grpc_context));
                                        }
-                                   }();
-                                   SUBCASE("submit") { asio::execution::submit(std::move(sender), receiver); }
+                                   };
+                                   SUBCASE("submit") { asio::execution::submit(sender(), receiver); }
                                    SUBCASE("start")
                                    {
-                                       auto operation_state = asio::execution::connect(std::move(sender), receiver);
+                                       auto operation_state = asio::execution::connect(sender(), receiver);
                                        asio::execution::start(operation_state);
                                    }
                                }};
