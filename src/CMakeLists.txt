@@ -117,6 +117,7 @@ if(ASIO_GRPC_BUILD_TESTS AND ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcContext.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcExecutor.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcInitiate.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpcStream.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/pollContext.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/repeatedlyRequest.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/repeatedlyRequestContext.hpp"

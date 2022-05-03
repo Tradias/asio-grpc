@@ -57,25 +57,6 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcStream: initiate alarm -> cancel a
     grpc_context.run();
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcStream: initiate on a done stream does nothing")
-{
-    agrpc::GrpcStream stream{grpc_context};
-    grpc::Alarm alarm;
-    stream.initiate(agrpc::wait, alarm, test::five_seconds_from_now());
-    alarm.Cancel();
-    stream.next(asio::bind_executor(grpc_context,
-                                    [&](auto&& ec, bool ok)
-                                    {
-                                        CHECK_FALSE(ec);
-                                        CHECK_FALSE(ok);
-                                        stream.initiate(agrpc::wait, alarm, test::five_seconds_from_now());
-                                        stream.cleanup([](auto&&, bool) {});
-                                    }));
-    const auto not_to_exceed = test::one_seconds_from_now();
-    grpc_context.run();
-    CHECK_LT(std::chrono::system_clock::now(), not_to_exceed);
-}
-
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcStream: initiate can customize allocator")
 {
     agrpc::GrpcStream stream{grpc_context};
@@ -84,6 +65,32 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcStream: initiate can customize all
     stream.cleanup([](auto&&, bool) {});
     grpc_context.run();
     CHECK(allocator_has_been_used());
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcStream: can change default completion token")
+{
+    static bool is_ok{};
+    struct Callback
+    {
+        explicit Callback() {}
+
+        void operator()(test::ErrorCode, bool ok) { is_ok = ok; }
+    };
+    struct Exec : agrpc::GrpcExecutor
+    {
+        using default_completion_token_type = Callback;
+
+        explicit Exec(agrpc::GrpcExecutor exec) : agrpc::GrpcExecutor(exec) {}
+
+        // Workaround for Asio misdetecting BOOST_ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT in MSVC C++17
+        auto& context() const noexcept { return this->query(asio::execution::context); }
+    };
+    agrpc::BasicGrpcStream<Exec> stream{grpc_context};
+    grpc::Alarm alarm;
+    stream.initiate(agrpc::wait, alarm, test::ten_milliseconds_from_now());
+    stream.cleanup();
+    grpc_context.run();
+    CHECK(is_ok);
 }
 }
 #endif

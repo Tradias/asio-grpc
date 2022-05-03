@@ -24,6 +24,9 @@ namespace detail
 {
 struct DefaultCompletionTokenNotAvailable
 {
+    template <class T>
+    using as_default_on_t = typename T::template rebind_executor<typename T::executor_type>::other;
+
     DefaultCompletionTokenNotAvailable() = delete;
 };
 
