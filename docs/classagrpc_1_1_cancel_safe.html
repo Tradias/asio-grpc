@@ -146,7 +146,7 @@ class agrpc::CancelSafe&lt; CompletionArgs &gt;</div><p >(experimental) Cancella
 <div class="line">    }</div>
 <div class="ttc" id="aclassagrpc_1_1_cancel_safe_html"><div class="ttname"><a href="classagrpc_1_1_cancel_safe.html">agrpc::CancelSafe&lt; bool &gt;</a></div></div>
 <div class="ttc" id="aclassagrpc_1_1_cancel_safe_html_aac7be374de964fe0e71af47bcdf6e473"><div class="ttname"><a href="classagrpc_1_1_cancel_safe.html#aac7be374de964fe0e71af47bcdf6e473">agrpc::CancelSafe::token</a></div><div class="ttdeci">auto token() noexcept</div><div class="ttdoc">Create a completion token to initiate asynchronous operations.</div><div class="ttdef"><b>Definition:</b> cancelSafe.hpp:86</div></div>
-<div class="ttc" id="aclassagrpc_1_1_cancel_safe_html_ab8f073954095be29298b864ee0f39cfa"><div class="ttname"><a href="classagrpc_1_1_cancel_safe.html#ab8f073954095be29298b864ee0f39cfa">agrpc::CancelSafe::wait</a></div><div class="ttdeci">auto wait(CompletionToken token)</div><div class="ttdoc">Wait for the asynchronous operation to complete.</div><div class="ttdef"><b>Definition:</b> cancelSafe.hpp:102</div></div>
+<div class="ttc" id="aclassagrpc_1_1_cancel_safe_html_ab8f073954095be29298b864ee0f39cfa"><div class="ttname"><a href="classagrpc_1_1_cancel_safe.html#ab8f073954095be29298b864ee0f39cfa">agrpc::CancelSafe::wait</a></div><div class="ttdeci">auto wait(CompletionToken token)</div><div class="ttdoc">Wait for the asynchronous operation to complete.</div><div class="ttdef"><b>Definition:</b> cancelSafe.hpp:104</div></div>
 <div class="ttc" id="anamespaceagrpc_html_a3a4e32ff60d8f9bd8c8c68e42be959c1"><div class="ttname"><a href="namespaceagrpc.html#a3a4e32ff60d8f9bd8c8c68e42be959c1">agrpc::wait</a></div><div class="ttdeci">constexpr detail::WaitFn wait</div><div class="ttdoc">Wait for a timer.</div><div class="ttdef"><b>Definition:</b> wait.hpp:78</div></div>
 <div class="ttc" id="anamespaceagrpc_html_a4a11653afb11f9486e4e3db0136a3e08"><div class="ttname"><a href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">agrpc::request</a></div><div class="ttdeci">constexpr detail::RequestFn request</div><div class="ttdoc">Start a new RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1493</div></div>
 <div class="ttc" id="anamespaceagrpc_html_a685510388ab87c9a90c44f880e9de9cd"><div class="ttname"><a href="namespaceagrpc.html#a685510388ab87c9a90c44f880e9de9cd">agrpc::read</a></div><div class="ttdeci">constexpr detail::ReadFn read</div><div class="ttdoc">Read from a streaming RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1502</div></div>
@@ -184,7 +184,7 @@ template&lt;class... CompletionArgs&gt; </div>
 </div><div class="memdoc">
 
 <p>Create a completion token to initiate asynchronous operations. </p>
-<p >The <a class="el" href="classagrpc_1_1_cancel_safe.html" title="(experimental) Cancellation safety for asynchronous operations">CancelSafe</a> may not be moved while the operation is outstanding. </p>
+<p >Thread-safe </p>
 
 </div>
 </div>
@@ -218,6 +218,7 @@ template&lt;class CompletionToken &gt; </div>
 
 <p>Wait for the asynchronous operation to complete. </p>
 <p >Only one call to <code><a class="el" href="classagrpc_1_1_cancel_safe.html#ab8f073954095be29298b864ee0f39cfa" title="Wait for the asynchronous operation to complete.">wait()</a></code> may be outstanding at a time. Waiting for an already completed operation will immediately invoke the completion handler in a manner equivalent to using <code>asio::post</code>.</p>
+<p >Not thread-safe with regards to successful completion of the asynchronous operation.</p>
 <p ><b>Per-Operation Cancellation</b></p>
 <p >All. Upon cancellation, the asynchronous operation continues to run.</p>
 <dl class="params"><dt>Parameters</dt><dd>

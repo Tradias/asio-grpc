@@ -20,6 +20,7 @@ var annotated_dup =
       ] ],
       [ "AllocatorBinder", "classagrpc_1_1_allocator_binder.html", "classagrpc_1_1_allocator_binder" ],
       [ "BasicGrpcExecutor", "classagrpc_1_1_basic_grpc_executor.html", "classagrpc_1_1_basic_grpc_executor" ],
+      [ "BasicGrpcStream", "classagrpc_1_1_basic_grpc_stream.html", "classagrpc_1_1_basic_grpc_stream" ],
       [ "CancelSafe", "classagrpc_1_1_cancel_safe.html", "classagrpc_1_1_cancel_safe" ],
       [ "DefaultPollContextTraits", "structagrpc_1_1_default_poll_context_traits.html", "structagrpc_1_1_default_poll_context_traits" ],
       [ "GrpcContext", "classagrpc_1_1_grpc_context.html", "classagrpc_1_1_grpc_context" ],

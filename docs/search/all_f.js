@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['use_5fsender_0',['use_sender',['../namespaceagrpc.html#a35d42ccb3fa5adce6b5c045a275dafa9',1,'agrpc']]],
-  ['usesenderfn_1',['UseSenderFn',['../structagrpc_1_1detail_1_1_use_sender_fn.html',1,'agrpc::detail']]]
+  ['target_5ftype_0',['target_type',['../classagrpc_1_1_allocator_binder.html#ae51816e5dc68c3f8b9733f5398546d18',1,'agrpc::AllocatorBinder']]],
+  ['token_1',['token',['../classagrpc_1_1_cancel_safe.html#aac7be374de964fe0e71af47bcdf6e473',1,'agrpc::CancelSafe']]]
 ];
