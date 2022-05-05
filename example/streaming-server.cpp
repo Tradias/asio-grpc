@@ -210,6 +210,98 @@ asio::awaitable<void> handle_bidirectional_streaming_request(example::v1::Exampl
 }
 
 // ---------------------------------------------------
+// A bidirectional-streaming RPC where the client subscribes to a topic and the server sends the feed for the last
+// subscribed topic every 333ms. The feed is a simple string identified by an integer in the topic.
+// ---------------------------------------------------
+auto get_feed_for_topic(int32_t id)
+{
+    example::v1::Feed feed;
+    if (0 == id)
+    {
+        feed.set_content("zero");
+    }
+    if (1 == id)
+    {
+        feed.set_content("one");
+    }
+    if (2 == id)
+    {
+        feed.set_content("two");
+    }
+    return feed;
+}
+
+asio::awaitable<void> handle_topic_subscription(
+    agrpc::GrpcContext& grpc_context, grpc::ServerContext&,
+    grpc::ServerAsyncReaderWriter<example::v1::Feed, example::v1::Topic>& reader_writer)
+{
+    grpc::Alarm alarm;
+    agrpc::GrpcStream read_stream{grpc_context};
+    agrpc::GrpcStream write_stream{grpc_context};
+    example::v1::Topic topic;
+    const auto initiate_write = [&]
+    {
+        if (!write_stream.is_running())
+        {
+            write_stream.initiate(agrpc::write, reader_writer, get_feed_for_topic(topic.id()));
+        }
+    };
+    bool read_ok = co_await agrpc::read(reader_writer, topic);
+    if (read_ok)
+    {
+        initiate_write();
+        read_stream.initiate(agrpc::read, reader_writer, topic);
+    }
+    std::chrono::system_clock::time_point deadline;
+    const auto update_deadline = [&]
+    {
+        deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(333);
+    };
+    update_deadline();
+    bool write_ok{true};
+    do
+    {
+        using namespace asio::experimental::awaitable_operators;
+        const auto variant = co_await (read_stream.next() || agrpc::wait(alarm, deadline) || write_stream.next());
+        if (0 == variant.index())  // read completed
+        {
+            read_ok = std::get<0>(variant);
+            if (read_ok)
+            {
+                read_stream.initiate(agrpc::read, reader_writer, topic);
+            }
+            update_deadline();
+            initiate_write();
+        }
+        else if (1 == variant.index())  // wait completed
+        {
+            update_deadline();
+            initiate_write();
+        }
+        else  // write completed
+        {
+            write_ok = std::get<2>(variant);
+        }
+    } while (read_ok && write_ok);
+    co_await read_stream.cleanup();
+    co_await write_stream.cleanup();
+    co_await agrpc::finish(reader_writer, grpc::Status::OK);
+}
+
+void register_subscription_handler(example::v1::ExampleExt::AsyncService& service, agrpc::GrpcContext& grpc_context)
+{
+    agrpc::repeatedly_request(&example::v1::ExampleExt::AsyncService::RequestSubscribe, service,
+                              asio::bind_executor(grpc_context,
+                                                  [&](auto&&... args)
+                                                  {
+                                                      return handle_topic_subscription(
+                                                          grpc_context, std::forward<decltype(args)>(args)...);
+                                                  }));
+}
+// ---------------------------------------------------
+//
+
+// ---------------------------------------------------
 // The SlowUnary endpoint is used by the client to demonstrate per-RPC step cancellation. See streaming-client.cpp.
 // ---------------------------------------------------
 asio::awaitable<void> handle_slow_unary_request(example::v1::ExampleExt::AsyncService& service)
@@ -232,7 +324,7 @@ asio::awaitable<void> handle_slow_unary_request(example::v1::ExampleExt::AsyncSe
 //
 
 // ---------------------------------------------------
-// The Shutdown endpoint is used by unit tests.
+// The Shutdown endpoint that is used by unit tests.
 // ---------------------------------------------------
 asio::awaitable<void> handle_shutdown_request(example::v1::ExampleExt::AsyncService& service,
                                               ServerShutdown& server_shutdown)
@@ -278,6 +370,7 @@ int main(int argc, const char** argv)
     asio::thread_pool thread_pool{1};
 
     register_client_streaming_handler(service, grpc_context);
+    register_subscription_handler(service_ext, grpc_context);
     asio::co_spawn(
         grpc_context,
         [&]() -> asio::awaitable<void>

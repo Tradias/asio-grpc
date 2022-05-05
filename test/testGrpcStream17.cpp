@@ -12,9 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "test/v1/test.grpc.pb.h"
-#include "utils/asioUtils.hpp"
-#include "utils/grpcClientServerTest.hpp"
+#include "utils/grpcContextTest.hpp"
 #include "utils/time.hpp"
 
 #include <agrpc/cancelSafe.hpp>
@@ -135,6 +133,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest,
 {
     bool invoked{};
     agrpc::GrpcStream stream{grpc_context};
+    CHECK_FALSE(stream.is_running());
     stream.cleanup(asio::bind_executor(grpc_context,
                                        [&](auto&&, bool)
                                        {
@@ -149,12 +148,14 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcStream: initiate alarm -> cancel a
     agrpc::GrpcStream stream{grpc_context};
     grpc::Alarm alarm;
     stream.initiate(agrpc::wait, alarm, test::five_seconds_from_now());
+    CHECK(stream.is_running());
     alarm.Cancel();
     stream.next(asio::bind_executor(grpc_context,
                                     [&](auto&& ec, bool ok)
                                     {
                                         CHECK_FALSE(ec);
                                         CHECK_FALSE(ok);
+                                        CHECK_FALSE(stream.is_running());
                                         stream.cleanup([](auto&&, bool) {});
                                     }));
     grpc_context.run();

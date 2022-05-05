@@ -28,10 +28,15 @@
 #include <agrpc/grpcContext.hpp>
 #include <agrpc/grpcExecutor.hpp>
 
-#include <memory>
+#include <atomic>
 
 AGRPC_NAMESPACE_BEGIN()
 
+/**
+ * @brief Cancellation safety for streaming RPCs
+ *
+ * Lightweight, IoObject-like class with cancellation safety for RPC functions.
+ */
 template <class Executor>
 class BasicGrpcStream
 {
@@ -40,34 +45,82 @@ class BasicGrpcStream
     class CompletionHandler;
 
   public:
+    /**
+     * @brief The associated executor type
+     */
     using executor_type = Executor;
 
+    /**
+     * @brief Rebind the stream to another executor
+     */
     template <class OtherExecutor>
     struct rebind_executor
     {
+        /**
+         * @brief The stream type when rebound to the specified executor
+         */
         using other = BasicGrpcStream<OtherExecutor>;
     };
 
+    /**
+     * @brief Construct from an executor
+     */
     template <class Exec>
     explicit BasicGrpcStream(Exec&& executor) noexcept : executor(std::forward<Exec>(executor))
     {
     }
 
+    /**
+     * @brief Construct from a `agrpc::GrpcContext`
+     */
     explicit BasicGrpcStream(agrpc::GrpcContext& grpc_context) noexcept : executor(grpc_context.get_executor()) {}
 
+    /**
+     * @brief Get the associated executor
+     *
+     * Thread-safe
+     */
+    [[nodiscard]] executor_type get_executor() const noexcept { return executor; }
+
+    /**
+     * @brief Is an operation currently running?
+     *
+     * Thread-safe
+     */
+    [[nodiscard]] bool is_running() const noexcept { return running.load(std::memory_order_relaxed); }
+
+    /**
+     * @brief Wait for the initiated operation to complete
+     *
+     * Only one call to `next()` may be outstanding at a time.
+     *
+     * **Per-Operation Cancellation**
+     *
+     * All. Upon cancellation, the initiated operation continues to run.
+     */
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
     auto next(CompletionToken&& token = asio::default_completion_token_t<Executor>{})
     {
         return safe.wait(std::forward<CompletionToken>(token));
     }
 
+    /**
+     * @brief Initiate an operation using the specified allocator
+     *
+     * Typically only one operation may be running at a time.
+     */
     template <class Allocator, class Function, class... Args>
     void initiate(std::allocator_arg_t, Allocator allocator, Function&& function, Args&&... args)
     {
-        is_running = true;
+        running.store(true, std::memory_order_relaxed);
         std::forward<Function>(function)(std::forward<Args>(args)..., CompletionHandler<Allocator>{*this, allocator});
     }
 
+    /**
+     * @brief Initiate an operation
+     *
+     * Typically only one operation may be running at a time.
+     */
     template <class Function, class... Args>
     void initiate(Function&& function, Args&&... args)
     {
@@ -75,17 +128,25 @@ class BasicGrpcStream
                        std::forward<Args>(args)...);
     }
 
+    /**
+     * @brief Either wait for the initiated operation to complete or complete immediately
+     *
+     * If the initiated operation has already completed then the completion handler will be invoked in a manner
+     * equivalent to using `asio::post`.
+     *
+     * **Per-Operation Cancellation**
+     *
+     * All. Upon cancellation, the initiated operation continues to run.
+     */
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
     auto cleanup(CompletionToken token = asio::default_completion_token_t<Executor>{})
     {
-        if (!is_running)
+        if (!this->is_running())
         {
             return detail::async_initiate_immediate_completion<void(detail::ErrorCode, bool)>(token);
         }
         return safe.wait(std::forward<CompletionToken>(token));
     }
-
-    executor_type get_executor() const noexcept { return executor; }
 
   private:
     template <class Allocator>
@@ -100,7 +161,7 @@ class BasicGrpcStream
         void operator()(bool ok)
         {
             auto& self = impl.first();
-            self.is_running = false;
+            self.running.store(false, std::memory_order_relaxed);
             self.safe.token()(ok);
         }
 
@@ -114,9 +175,12 @@ class BasicGrpcStream
 
     Executor executor;
     agrpc::GrpcCancelSafe safe;
-    bool is_running{};
+    std::atomic_bool running{};
 };
 
+/**
+ * @brief A BasicGrpcStream that uses `agrpc::DefaultCompletionToken`
+ */
 using GrpcStream = agrpc::DefaultCompletionToken::as_default_on_t<agrpc::BasicGrpcStream<agrpc::GrpcExecutor>>;
 
 AGRPC_NAMESPACE_END

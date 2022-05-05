@@ -81,7 +81,7 @@ class CancelSafe
     /**
      * @brief Create a completion token to initiate asynchronous operations
      *
-     * The CancelSafe may not be moved while the operation is outstanding.
+     * Thread-safe
      */
     auto token() noexcept { return CompletionToken{*this}; }
 
@@ -90,6 +90,8 @@ class CancelSafe
      *
      * Only one call to `wait()` may be outstanding at a time. Waiting for an already completed operation will
      * immediately invoke the completion handler in a manner equivalent to using `asio::post`.
+     *
+     * Not thread-safe with regards to successful completion of the asynchronous operation.
      *
      * **Per-Operation Cancellation**
      *
