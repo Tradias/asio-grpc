@@ -139,11 +139,12 @@ class BasicGrpcStream
      * All. Upon cancellation, the initiated operation continues to run.
      */
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
-    auto cleanup(CompletionToken token = asio::default_completion_token_t<Executor>{})
+    auto cleanup(CompletionToken&& token = asio::default_completion_token_t<Executor>{})
     {
         if (!this->is_running())
         {
-            return detail::async_initiate_immediate_completion<void(detail::ErrorCode, bool)>(token);
+            return detail::async_initiate_immediate_completion<void(detail::ErrorCode, bool)>(
+                std::forward<CompletionToken>(token));
         }
         return safe.wait(std::forward<CompletionToken>(token));
     }

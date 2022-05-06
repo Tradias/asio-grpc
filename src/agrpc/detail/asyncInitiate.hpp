@@ -29,7 +29,7 @@ template <class R, class... Args>
 struct InitiateImmediateCompletion<R(Args...)>
 {
     template <class CompletionHandler>
-    void operator()(CompletionHandler&& ch)
+    void operator()(CompletionHandler&& ch) const
     {
         auto executor = asio::get_associated_executor(ch);
         const auto allocator = asio::get_associated_allocator(ch);
@@ -44,7 +44,7 @@ struct InitiateImmediateCompletion<R(Args...)>
 };
 
 template <class Signature, class CompletionToken>
-auto async_initiate_immediate_completion(CompletionToken&& token)
+auto async_initiate_immediate_completion(CompletionToken token)
 {
     return asio::async_initiate<CompletionToken, Signature>(detail::InitiateImmediateCompletion<Signature>{}, token);
 }
