@@ -20,11 +20,13 @@
 
 #include <agrpc/repeatedlyRequest.hpp>
 #include <agrpc/rpc.hpp>
+#include <agrpc/wait.hpp>
 #include <doctest/doctest.h>
 
 #include <cstddef>
 #include <optional>
 #include <thread>
+#include <vector>
 
 DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 {
@@ -41,35 +43,53 @@ struct GrpcRepeatedlyRequestTest : test::GrpcClientServerTest
 
 TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request unary")
 {
-    bool is_shutdown{false};
-    auto request_count{0};
-    this->test(
+    auto request_received_count{0};
+    auto request_send_count{0};
+    std::vector<size_t> completion_order;
+    agrpc::repeatedly_request(
         &test::v1::Test::AsyncService::RequestUnary, service,
-        [&](grpc::ServerContext&, test::msg::Request& request,
-            grpc::ServerAsyncResponseWriter<test::msg::Response>& writer, asio::yield_context yield)
-        {
-            CHECK_EQ(42, request.integer());
-            ++request_count;
-            if (request_count > 3)
-            {
-                is_shutdown = true;
-            }
-            test::msg::Response response;
-            response.set_integer(21);
-            CHECK(agrpc::finish(writer, response, grpc::Status::OK, yield));
-        },
-        [&](asio::yield_context yield)
-        {
-            while (!is_shutdown)
-            {
-                test::client_perform_unary_success(grpc_context, *stub, yield);
-            }
-            grpc_context.stop();
-        },
-        get_allocator());
+        test::RpcSpawner{grpc_context,
+                         [&](grpc::ServerContext&, test::msg::Request& request,
+                             grpc::ServerAsyncResponseWriter<test::msg::Response>& writer, asio::yield_context yield)
+                         {
+                             ++request_received_count;
+                             grpc::Alarm alarm;
+                             if (0 == request.integer())
+                             {
+                                 agrpc::wait(alarm, test::five_hundred_milliseconds_from_now(), yield);
+                             }
+                             if (1 == request.integer())
+                             {
+                                 agrpc::wait(alarm, test::two_hundred_milliseconds_from_now(), yield);
+                             }
+                             test::msg::Response response;
+                             response.set_integer(21);
+                             CHECK(agrpc::finish(writer, response, grpc::Status::OK, yield));
+                         },
+                         get_allocator()});
+    for (size_t i = 0; i < 3; ++i)
+    {
+        asio::spawn(grpc_context,
+                    [&](asio::yield_context yield)
+                    {
+                        test::PerformUnarySuccessOptions options;
+                        options.request_payload = request_send_count;
+                        ++request_send_count;
+                        test::client_perform_unary_success(grpc_context, *stub, yield, options);
+                        completion_order.emplace_back(options.request_payload);
+                        if (3 == completion_order.size())
+                        {
+                            grpc_context.stop();
+                        }
+                    });
+    }
     grpc_context.run();
-    CHECK_EQ(4, request_count);
+    CHECK_EQ(3, request_received_count);
     CHECK(allocator_has_been_used());
+    REQUIRE_EQ(3, completion_order.size());
+    CHECK_EQ(2, completion_order[0]);
+    CHECK_EQ(1, completion_order[1]);
+    CHECK_EQ(0, completion_order[2]);
 }
 
 TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request client streaming")
