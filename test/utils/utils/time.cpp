@@ -23,6 +23,11 @@ std::chrono::system_clock::time_point ten_milliseconds_from_now()
     return std::chrono::system_clock::now() + std::chrono::milliseconds(10);
 }
 
+std::chrono::system_clock::time_point two_hundred_milliseconds_from_now()
+{
+    return std::chrono::system_clock::now() + std::chrono::milliseconds(200);
+}
+
 std::chrono::system_clock::time_point hundred_milliseconds_from_now()
 {
     return std::chrono::system_clock::now() + std::chrono::milliseconds(100);

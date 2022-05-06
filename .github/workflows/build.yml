@@ -223,8 +223,8 @@ jobs:
       run: |
         cmake -E make_directory doxygen &&\
         cd doxygen &&\
-        wget --quiet https://www.doxygen.nl/files/doxygen-1.9.3.linux.bin.tar.gz &&\
-        tar xf doxygen-1.9.3.linux.bin.tar.gz --strip-components=1
+        wget --quiet https://netcologne.dl.sourceforge.net/project/doxygen/rel-1.9.4/doxygen-1.9.4.linux.bin.tar.gz &&\
+        tar xf doxygen-1.9.4.linux.bin.tar.gz --strip-components=1
 
     - name: Clang 12 Configure CMake
       run: cmake --preset default -B ${{ github.workspace }}/build-12 -DCMAKE_CXX_COMPILER=$(which clang++-12) -DDOXYGEN_EXECUTABLE=${{ runner.workspace }}/doxygen/bin/doxygen -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}

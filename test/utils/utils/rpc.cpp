@@ -26,11 +26,11 @@
 namespace test
 {
 void client_perform_unary_success(agrpc::GrpcContext& grpc_context, test::v1::Test::Stub& stub,
-                                  asio::yield_context yield, test::PerformOptions options)
+                                  asio::yield_context yield, test::PerformUnarySuccessOptions options)
 {
     auto client_context = create_client_context();
     test::msg::Request request;
-    request.set_integer(42);
+    request.set_integer(options.request_payload);
     auto reader = stub.AsyncUnary(client_context.get(), request, agrpc::get_completion_queue(grpc_context));
     test::msg::Response response;
     grpc::Status status;
@@ -58,7 +58,7 @@ bool client_perform_unary_unchecked(agrpc::GrpcContext& grpc_context, test::v1::
 }
 
 void client_perform_client_streaming_success(test::v1::Test::Stub& stub, asio::yield_context yield,
-                                             test::PerformOptions options)
+                                             test::PerformClientStreamingSuccessOptions options)
 {
     test::msg::Response response;
     auto client_context = create_client_context();
@@ -70,11 +70,12 @@ void client_perform_client_streaming_success(test::v1::Test::Stub& stub, asio::y
 
 void client_perform_client_streaming_success(test::msg::Response& response,
                                              grpc::ClientAsyncWriter<test::msg::Request>& writer,
-                                             asio::yield_context yield, test::PerformOptions options)
+                                             asio::yield_context yield,
+                                             test::PerformClientStreamingSuccessOptions options)
 {
     CHECK(agrpc::read_initial_metadata(writer, yield));
     test::msg::Request request;
-    request.set_integer(42);
+    request.set_integer(options.request_payload);
     CHECK(agrpc::write(writer, request, yield));
     if (options.use_write_last)
     {
