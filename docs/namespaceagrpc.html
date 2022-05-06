@@ -114,6 +114,9 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_executor.html">BasicGrpcExecutor</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classagrpc_1_1_grpc_context.html" title="Execution context based on grpc::CompletionQueue">GrpcContext</a>'s executor.  <a href="classagrpc_1_1_basic_grpc_executor.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_basic_grpc_stream.html">BasicGrpcStream</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cancellation safety for streaming RPCs.  <a href="classagrpc_1_1_basic_grpc_stream.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classagrpc_1_1_cancel_safe.html">CancelSafe</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">(experimental) Cancellation safety for asynchronous operations  <a href="classagrpc_1_1_cancel_safe.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -142,6 +145,10 @@ using&#160;</td><td class="memItemRight" valign="bottom"><b>GrpcCancelSafe</b> =
 <tr class="memitem:aebdc4a27625d789667c7d54985157d28"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceagrpc.html#aebdc4a27625d789667c7d54985157d28">GrpcExecutor</a> = <a class="el" href="classagrpc_1_1_basic_grpc_executor.html">agrpc::BasicGrpcExecutor</a>&lt;&gt;</td></tr>
 <tr class="memdesc:aebdc4a27625d789667c7d54985157d28"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default GrpcExecutor.  <a href="namespaceagrpc.html#aebdc4a27625d789667c7d54985157d28">More...</a><br /></td></tr>
 <tr class="separator:aebdc4a27625d789667c7d54985157d28"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a62544e804d21b5ffbf2fb62a0a6f4828"><td class="memItemLeft" align="right" valign="top"><a id="a62544e804d21b5ffbf2fb62a0a6f4828" name="a62544e804d21b5ffbf2fb62a0a6f4828"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>GrpcStream</b> = agrpc::DefaultCompletionToken::as_default_on_t&lt; <a class="el" href="classagrpc_1_1_basic_grpc_stream.html">agrpc::BasicGrpcStream</a>&lt; <a class="el" href="namespaceagrpc.html#aebdc4a27625d789667c7d54985157d28">agrpc::GrpcExecutor</a> &gt; &gt;</td></tr>
+<tr class="memdesc:a62544e804d21b5ffbf2fb62a0a6f4828"><td class="mdescLeft">&#160;</td><td class="mdescRight">A <a class="el" href="classagrpc_1_1_basic_grpc_stream.html" title="Cancellation safety for streaming RPCs.">BasicGrpcStream</a> that uses <code><a class="el" href="namespaceagrpc.html#a06a4199d5f3746516453f66b9570c891" title="Default completion token for all asynchronous functions.">agrpc::DefaultCompletionToken</a></code> <br /></td></tr>
+<tr class="separator:a62544e804d21b5ffbf2fb62a0a6f4828"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a086aba63bca7dd6bd14fb2fe4f95245f"><td class="memTemplParams" colspan="2"><a id="a086aba63bca7dd6bd14fb2fe4f95245f" name="a086aba63bca7dd6bd14fb2fe4f95245f"></a>
 template&lt;class T &gt; </td></tr>
 <tr class="memitem:a086aba63bca7dd6bd14fb2fe4f95245f"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>GrpcAwaitable</b> = asio::awaitable&lt; T, <a class="el" href="namespaceagrpc.html#aebdc4a27625d789667c7d54985157d28">agrpc::GrpcExecutor</a> &gt;</td></tr>
