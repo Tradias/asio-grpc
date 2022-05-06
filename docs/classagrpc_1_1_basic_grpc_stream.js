@@ -4,7 +4,7 @@ var classagrpc_1_1_basic_grpc_stream =
     [ "executor_type", "classagrpc_1_1_basic_grpc_stream.html#a464c5c46acb416ea3976ef807fc521ac", null ],
     [ "BasicGrpcStream", "classagrpc_1_1_basic_grpc_stream.html#a26d6807efc5128348b2d055d40610d5c", null ],
     [ "BasicGrpcStream", "classagrpc_1_1_basic_grpc_stream.html#a6356697cdb9175b4ad973cb670054637", null ],
-    [ "cleanup", "classagrpc_1_1_basic_grpc_stream.html#ae68ad01e71d35e23d78f53e8906444f0", null ],
+    [ "cleanup", "classagrpc_1_1_basic_grpc_stream.html#a73925080532804b0cc04ca754e4f5eca", null ],
     [ "get_executor", "classagrpc_1_1_basic_grpc_stream.html#af3e93823ecd4cf92d82957a95f4e5701", null ],
     [ "initiate", "classagrpc_1_1_basic_grpc_stream.html#aee90579125cb533e4cee40d76edae8b6", null ],
     [ "initiate", "classagrpc_1_1_basic_grpc_stream.html#a8211d4af8e703213d2871439c41e45f4", null ],
