@@ -106,6 +106,13 @@ struct RequestFn
     /**
      * @brief Wait for a generic RPC request from a client
      *
+     * This function can be used to wait for a unary, client-streaming, server-streaming or bidirectional-streaming
+     * request from a client.
+     *
+     * Example:
+     *
+     * @snippet server.cpp request-generic-server-side
+     *
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. `true` indicates that the RPC has indeed been started. If it is `false`
      * then the server has been Shutdown before this particular call got matched to an incoming RPC.
@@ -355,14 +362,17 @@ struct RequestFn
     /**
      * @brief Start a generic streaming request
      *
+     * This function can be used to start a generic client-streaming, server-streaming or bidirectional-streaming
+     * request.
+     *
      * Example:
      *
-     * @snippet client.cpp request-bidirectional-client-side
+     * @snippet client.cpp request-generic-streaming-client-side
      *
-     * @attention Do not use this function with the
+     * @attention Do not use this function for client-streaming or bidirectional-streaming RPCs with the
      * [initial_metadata_corked](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#af79c64534c7b208594ba8e76021e2696)
      * option set. Call the member function directly instead:
-     * @snippet client.cpp request-client-bidirectional-client-side-corked
+     * @snippet client.cpp request-client-generic-streaming-corked
      *
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. `true` indicates that the RPC is going to go to the wire. If it is `false`,
