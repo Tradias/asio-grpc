@@ -190,7 +190,7 @@ Public Member Functions</h2></td></tr>
 <div class="line">                                    server_context, reader, asio::bind_executor(grpc_context, asio::use_awaitable));</div>
 <div class="line">        },</div>
 <div class="line">        asio::detached);</div>
-<div class="ttc" id="anamespaceagrpc_html_a4a11653afb11f9486e4e3db0136a3e08"><div class="ttname"><a href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">agrpc::request</a></div><div class="ttdeci">constexpr detail::RequestFn request</div><div class="ttdoc">Start a new RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1537</div></div>
+<div class="ttc" id="anamespaceagrpc_html_a4a11653afb11f9486e4e3db0136a3e08"><div class="ttname"><a href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">agrpc::request</a></div><div class="ttdeci">constexpr detail::RequestFn request</div><div class="ttdoc">Start a new RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1547</div></div>
 </div><!-- fragment --></dd></dl>
 <p><b>Per-Operation Cancellation</b></p>
 <p >None. gRPC does not support cancellation of requests. </p>
@@ -250,15 +250,17 @@ template&lt;class Request , class Response , class CompletionToken  = agrpc::Def
 </div><div class="memdoc">
 
 <p>Start a generic streaming request. </p>
+<p >This function can be used to start a generic client-streaming, server-streaming or bidirectional-streaming request.</p>
 <p >Example:</p>
 <div class="fragment"><div class="line">    grpc::ClientContext client_context;</div>
-<div class="line">    std::unique_ptr&lt;grpc::ClientAsyncReaderWriter&lt;example::v1::Request, example::v1::Response&gt;&gt; reader_writer;</div>
-<div class="line">    <span class="keywordtype">bool</span> request_ok = <span class="keyword">co_await</span> <a class="code hl_variable" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">agrpc::request</a>(&amp;example::v1::Example::Stub::AsyncBidirectionalStreaming, stub,</div>
-<div class="line">                                              client_context, reader_writer, asio::use_awaitable);</div>
-</div><!-- fragment --><dl class="section attention"><dt>Attention</dt><dd>Do not use this function with the <a href="https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#af79c64534c7b208594ba8e76021e2696">initial_metadata_corked</a> option set. Call the member function directly instead: <div class="fragment"><div class="line">    grpc::ClientContext client_context;</div>
+<div class="line">    std::unique_ptr&lt;grpc::GenericClientAsyncReaderWriter&gt; reader_writer;</div>
+<div class="line">    <span class="keywordtype">bool</span> request_ok = <span class="keyword">co_await</span> <a class="code hl_variable" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">agrpc::request</a>(<span class="stringliteral">&quot;/example.v1.Example/BidirectionalStreaming&quot;</span>, stub, client_context,</div>
+<div class="line">                                              reader_writer, asio::use_awaitable);</div>
+</div><!-- fragment --><dl class="section attention"><dt>Attention</dt><dd>Do not use this function for client-streaming or bidirectional-streaming RPCs with the <a href="https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#af79c64534c7b208594ba8e76021e2696">initial_metadata_corked</a> option set. Call the member function directly instead: <div class="fragment"><div class="line">    grpc::ClientContext client_context;</div>
 <div class="line">    client_context.set_initial_metadata_corked(<span class="keyword">true</span>);</div>
-<div class="line">    <span class="keyword">auto</span> reader_writer =</div>
-<div class="line">        stub.AsyncBidirectionalStreaming(&amp;client_context, <a class="code hl_variable" href="namespaceagrpc.html#a5abf4d06de9634b23c17e099314f29ac">agrpc::get_completion_queue</a>(grpc_context), <span class="keyword">nullptr</span>);</div>
+<div class="line">    <span class="keyword">auto</span> reader_writer = stub.PrepareCall(&amp;client_context, <span class="stringliteral">&quot;/example.v1.Example/BidirectionalStreaming&quot;</span>,</div>
+<div class="line">                                          <a class="code hl_variable" href="namespaceagrpc.html#a5abf4d06de9634b23c17e099314f29ac">agrpc::get_completion_queue</a>(grpc_context));</div>
+<div class="line">    reader_writer-&gt;StartCall(<span class="keyword">nullptr</span>);</div>
 <div class="ttc" id="anamespaceagrpc_html_a5abf4d06de9634b23c17e099314f29ac"><div class="ttname"><a href="namespaceagrpc.html#a5abf4d06de9634b23c17e099314f29ac">agrpc::get_completion_queue</a></div><div class="ttdeci">constexpr detail::GetCompletionQueueFn get_completion_queue</div><div class="ttdoc">Get grpc::CompletionQueue* from an object.</div><div class="ttdef"><b>Definition:</b> getCompletionQueue.hpp:107</div></div>
 </div><!-- fragment --></dd></dl>
 <dl class="params"><dt>Parameters</dt><dd>
@@ -1072,7 +1074,13 @@ template&lt;class CompletionToken  = agrpc::DefaultCompletionToken&gt; </div>
 </div><div class="memdoc">
 
 <p>Wait for a generic RPC request from a client. </p>
-<dl class="params"><dt>Parameters</dt><dd>
+<p >This function can be used to wait for a unary, client-streaming, server-streaming or bidirectional-streaming request from a client.</p>
+<p >Example:</p>
+<div class="fragment"><div class="line">    grpc::GenericServerContext server_context;</div>
+<div class="line">    grpc::GenericServerAsyncReaderWriter reader_writer{&amp;server_context};</div>
+<div class="line">    <span class="keywordtype">bool</span> request_ok = <span class="keyword">co_await</span> <a class="code hl_variable" href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">agrpc::request</a>(service, server_context, reader_writer, asio::use_awaitable);</div>
+<div class="line">    assert(<span class="stringliteral">&quot;/example.v1.Example/Unary&quot;</span> == server_context.method());</div>
+</div><!-- fragment --><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">token</td><td>A completion token like <code>asio::yield_context</code> or the one created by <code><a class="el" href="namespaceagrpc.html#a35d42ccb3fa5adce6b5c045a275dafa9" title="Create sender completion token.">agrpc::use_sender</a></code>. The completion signature is <code>void(bool)</code>. <code>true</code> indicates that the RPC has indeed been started. If it is <code>false</code> then the server has been Shutdown before this particular call got matched to an incoming RPC. </td></tr>
   </table>

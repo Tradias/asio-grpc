@@ -146,7 +146,7 @@ Public Member Functions</h2></td></tr>
 <div class="line">                                    server_context, reader, asio::bind_executor(grpc_context, asio::use_awaitable));</div>
 <div class="line">        },</div>
 <div class="line">        asio::detached);</div>
-<div class="ttc" id="anamespaceagrpc_html_a4a11653afb11f9486e4e3db0136a3e08"><div class="ttname"><a href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">agrpc::request</a></div><div class="ttdeci">constexpr detail::RequestFn request</div><div class="ttdoc">Start a new RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1537</div></div>
+<div class="ttc" id="anamespaceagrpc_html_a4a11653afb11f9486e4e3db0136a3e08"><div class="ttname"><a href="namespaceagrpc.html#a4a11653afb11f9486e4e3db0136a3e08">agrpc::request</a></div><div class="ttdeci">constexpr detail::RequestFn request</div><div class="ttdoc">Start a new RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1547</div></div>
 </div><!-- fragment --></dd></dl>
 <p><b>Per-Operation Cancellation</b></p>
 <p >None. Operations will be cancelled when the deadline of the RPC has been reached (see <a href="https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6">grpc::ClientContext::set_deadline</a>) or the call has been cancelled (see <a href="https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984">grpc::ClientContext::TryCancel</a> and <a href="https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_context.html#a88d3a0c3d53e39f38654ce8fba968301">grpc::ServerContext::TryCancel</a>). </p>
@@ -192,7 +192,7 @@ template&lt;class Responder , class CompletionToken  = agrpc::DefaultCompletionT
 <p >This call is optional, but if it is used, it cannot be used concurrently with or after the Finish method.</p>
 <p >Example:</p>
 <div class="fragment"><div class="line">    <span class="keywordtype">bool</span> send_ok = <span class="keyword">co_await</span> <a class="code hl_variable" href="namespaceagrpc.html#a3aba46c16048e438aef48a67d551d77a">agrpc::send_initial_metadata</a>(writer, asio::use_awaitable);</div>
-<div class="ttc" id="anamespaceagrpc_html_a3aba46c16048e438aef48a67d551d77a"><div class="ttname"><a href="namespaceagrpc.html#a3aba46c16048e438aef48a67d551d77a">agrpc::send_initial_metadata</a></div><div class="ttdeci">constexpr detail::SendInitialMetadataFn send_initial_metadata</div><div class="ttdoc">Send initial metadata for a RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1609</div></div>
+<div class="ttc" id="anamespaceagrpc_html_a3aba46c16048e438aef48a67d551d77a"><div class="ttname"><a href="namespaceagrpc.html#a3aba46c16048e438aef48a67d551d77a">agrpc::send_initial_metadata</a></div><div class="ttdeci">constexpr detail::SendInitialMetadataFn send_initial_metadata</div><div class="ttdoc">Send initial metadata for a RPC.</div><div class="ttdef"><b>Definition:</b> rpc.hpp:1619</div></div>
 </div><!-- fragment --><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">responder</td><td><code>grpc::ServerAsyncResponseWriter</code>, <code>grpc::ServerAsyncReader</code>, <code>grpc::ServerAsyncWriter</code> or <code>grpc::ServerAsyncReaderWriter</code> </td></tr>
