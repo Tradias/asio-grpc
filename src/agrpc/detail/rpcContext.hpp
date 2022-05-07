@@ -130,7 +130,7 @@ void initiate_request_from_rpc_context(detail::ServerSingleArgRequest<RPC, Respo
     (service.*rpc)(&rpc_context.server_context(), &rpc_context.responder(), cq, cq, tag);
 }
 
-inline void initiate_request_from_rpc_context(GenericRPCMarker, grpc::AsyncGenericService& service,
+inline void initiate_request_from_rpc_context(detail::GenericRPCMarker, grpc::AsyncGenericService& service,
                                               detail::GenericRPCContext& rpc_context, grpc::ServerCompletionQueue* cq,
                                               void* tag)
 {

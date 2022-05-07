@@ -15,7 +15,8 @@
 #ifndef AGRPC_UTILS_PROTOBUF_HPP
 #define AGRPC_UTILS_PROTOBUF_HPP
 
-#include <doctest/doctest.h>
+#include "utils/doctest.hpp"
+
 #include <grpcpp/grpcpp.h>
 
 namespace test

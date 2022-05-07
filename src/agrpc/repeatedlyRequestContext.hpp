@@ -43,7 +43,7 @@ class RepeatedlyRequestContext
     /**
      * @brief Tuple of `grpc::ServerContext`, the request (if any) and the responder
      *
-     * Useful in combination with `std::apply` when implementing generic request handler.
+     * Useful in combination with `std::apply` when implementing request handler templates.
      *
      * The return type depends on the RPC.
      *

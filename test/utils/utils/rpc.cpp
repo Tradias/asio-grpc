@@ -17,11 +17,11 @@
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asioForward.hpp"
 #include "utils/clientContext.hpp"
+#include "utils/doctest.hpp"
 #include "utils/time.hpp"
 
 #include <agrpc/grpcContext.hpp>
 #include <agrpc/rpc.hpp>
-#include <doctest/doctest.h>
 
 namespace test
 {

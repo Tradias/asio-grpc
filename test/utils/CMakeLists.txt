@@ -32,6 +32,7 @@ function(asio_grpc_add_test_main _asio_grpc_name)
         PRIVATE # cmake-format: sort
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/clientContext.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/clientContext.hpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/doctest.hpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/freePort.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/freePort.hpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/main.cpp"

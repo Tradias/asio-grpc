@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "utils/doctest.hpp"
 #include "utils/freePort.hpp"
 
 #include <boost/process/child.hpp>
-#include <doctest/doctest.h>
 
 #include <thread>
 

@@ -14,11 +14,11 @@
 
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asioUtils.hpp"
+#include "utils/doctest.hpp"
 #include "utils/grpcGenericClientServerTest.hpp"
 #include "utils/protobuf.hpp"
 
 #include <agrpc/rpc.hpp>
-#include <doctest/doctest.h>
 
 #include <cstddef>
 

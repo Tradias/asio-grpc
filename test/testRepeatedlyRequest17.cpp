@@ -14,6 +14,7 @@
 
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asioUtils.hpp"
+#include "utils/doctest.hpp"
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/grpcContextTest.hpp"
 #include "utils/grpcGenericClientServerTest.hpp"
@@ -23,7 +24,6 @@
 #include <agrpc/repeatedlyRequest.hpp>
 #include <agrpc/rpc.hpp>
 #include <agrpc/wait.hpp>
-#include <doctest/doctest.h>
 
 #include <cstddef>
 #include <optional>

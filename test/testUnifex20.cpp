@@ -16,11 +16,11 @@
 #include "utils/asioForward.hpp"
 #include "utils/asioUtils.hpp"
 #include "utils/clientContext.hpp"
+#include "utils/doctest.hpp"
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/grpcContextTest.hpp"
 
 #include <agrpc/asioGrpc.hpp>
-#include <doctest/doctest.h>
 
 #include <cstddef>
 #include <optional>
