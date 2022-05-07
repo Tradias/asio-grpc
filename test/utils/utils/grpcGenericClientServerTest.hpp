@@ -12,20 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utils/grpcClientServerTest.hpp"
+#ifndef AGRPC_UTILS_GRPCGENERICCLIENTSERVERTEST_HPP
+#define AGRPC_UTILS_GRPCGENERICCLIENTSERVERTEST_HPP
 
-#include "test/v1/test.grpc.pb.h"
+#include "utils/grpcClientServerTestBase.hpp"
 
-#include <grpcpp/server_context.h>
+#include <grpcpp/generic/async_generic_service.h>
+#include <grpcpp/generic/generic_stub.h>
 
 namespace test
 {
-GrpcClientServerTest::GrpcClientServerTest()
+struct GrpcGenericClientServerTest : test::GrpcClientServerTestBase
 {
-    builder.RegisterService(&service);
-    this->server = builder.BuildAndStart();
-    stub = test::v1::Test::NewStub(this->channel);
-}
+    grpc::AsyncGenericService service;
+    grpc::GenericStub stub;
+    grpc::GenericServerContext server_context;
 
-GrpcClientServerTest::~GrpcClientServerTest() { stub.reset(); }
+    GrpcGenericClientServerTest();
+
+    // ~GrpcGenericClientServerTest();
+};
 }  // namespace test
+
+#endif  // AGRPC_UTILS_GRPCGENERICCLIENTSERVERTEST_HPP

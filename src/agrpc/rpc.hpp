@@ -103,6 +103,22 @@ struct RequestFn
             std::forward<CompletionToken>(token));
     }
 
+    /**
+     * @brief Wait for a generic RPC request from a client
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` indicates that the RPC has indeed been started. If it is `false`
+     * then the server has been Shutdown before this particular call got matched to an incoming RPC.
+     */
+    template <class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(grpc::AsyncGenericService& service, grpc::GenericServerContext& server_context,
+                    grpc::GenericServerAsyncReaderWriter& reader_writer, CompletionToken&& token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
+    {
+        return detail::grpc_initiate(detail::ServerGenericRequestInitFunction{service, server_context, reader_writer},
+                                     std::forward<CompletionToken>(token));
+    }
+
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
     /**
      * @brief Convenience function for starting a unary request
@@ -252,7 +268,6 @@ struct RequestFn
      * option set. Call the member function directly instead:
      * @snippet client.cpp request-client-streaming-client-side-corked
      *
-     *
      * @param rpc A pointer to the async version of the RPC method. The async version always starts with `Async`.
      * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
      * `example::v1::Example::Stub`.
@@ -316,7 +331,6 @@ struct RequestFn
      * option set. Call the member function directly instead:
      * @snippet client.cpp request-client-bidirectional-client-side-corked
      *
-     *
      * @param rpc A pointer to the async version of the RPC method. The async version always starts with `Async`.
      * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
      * `example::v1::Example::Stub`.
@@ -335,6 +349,36 @@ struct RequestFn
         return detail::grpc_initiate(
             detail::ClientBidirectionalStreamingRequestInitFunction<Stub, Request, Response>{rpc, stub, client_context,
                                                                                              reader_writer},
+            std::forward<CompletionToken>(token));
+    }
+
+    /**
+     * @brief Start a generic streaming request
+     *
+     * Example:
+     *
+     * @snippet client.cpp request-bidirectional-client-side
+     *
+     * @attention Do not use this function with the
+     * [initial_metadata_corked](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#af79c64534c7b208594ba8e76021e2696)
+     * option set. Call the member function directly instead:
+     * @snippet client.cpp request-client-bidirectional-client-side-corked
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(bool)`. `true` indicates that the RPC is going to go to the wire. If it is `false`,
+     * it is not going to the wire. This would happen if the channel is either permanently broken or transiently broken
+     * but with the fail-fast option.
+     */
+    template <class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(const std::string& method, grpc::TemplatedGenericStub<Request, Response>& stub,
+                    grpc::ClientContext& client_context,
+                    std::unique_ptr<grpc::ClientAsyncReaderWriter<Request, Response>>& reader_writer,
+                    CompletionToken&& token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
+    {
+        return detail::grpc_initiate(
+            detail::ClientGenericStreamingRequestInitFunction<Request, Response>{method, stub, client_context,
+                                                                                 reader_writer},
             std::forward<CompletionToken>(token));
     }
 };

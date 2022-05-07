@@ -16,27 +16,17 @@
 #define AGRPC_UTILS_GRPCCLIENTSERVERTEST_HPP
 
 #include "test/v1/test.grpc.pb.h"
-#include "utils/grpcContextTest.hpp"
+#include "utils/grpcClientServerTestBase.hpp"
 
-#include <grpcpp/client_context.h>
 #include <grpcpp/server_context.h>
-
-#include <chrono>
-#include <cstdint>
-#include <string>
-#include <thread>
 
 namespace test
 {
-struct GrpcClientServerTest : test::GrpcContextTest
+struct GrpcClientServerTest : test::GrpcClientServerTestBase
 {
-    uint16_t port;
-    std::string address;
     test::v1::Test::AsyncService service;
-    std::shared_ptr<grpc::Channel> channel;
     std::unique_ptr<test::v1::Test::Stub> stub;
     grpc::ServerContext server_context;
-    grpc::ClientContext client_context;
 
     GrpcClientServerTest();
 

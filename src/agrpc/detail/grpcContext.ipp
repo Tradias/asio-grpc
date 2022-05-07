@@ -28,7 +28,6 @@
 #include <grpcpp/completion_queue.h>
 
 #include <atomic>
-#include <thread>
 #include <utility>
 
 AGRPC_NAMESPACE_BEGIN()

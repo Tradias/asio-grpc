@@ -29,6 +29,11 @@
 
 namespace test
 {
+GrpcContextTest::GrpcContextTest()
+    : buffer{}, resource{buffer.data(), buffer.size()}, grpc_context{builder.AddCompletionQueue()}
+{
+}
+
 agrpc::GrpcExecutor GrpcContextTest::get_executor() noexcept { return grpc_context.get_executor(); }
 
 agrpc::detail::pmr::polymorphic_allocator<std::byte> GrpcContextTest::get_allocator() noexcept

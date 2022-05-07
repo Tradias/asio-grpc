@@ -73,8 +73,12 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/asioUtils.hpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcClientServerTest.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcClientServerTest.hpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcClientServerTestBase.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcClientServerTestBase.hpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcContextTest.cpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcContextTest.hpp")
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcContextTest.hpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcGenericClientServerTest.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcGenericClientServerTest.hpp")
     if(NOT ${_asio_grpc_type} STREQUAL "UNIFEX")
         target_sources(
             ${_asio_grpc_name}

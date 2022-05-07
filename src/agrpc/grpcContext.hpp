@@ -30,7 +30,6 @@
 
 #include <atomic>
 #include <memory>
-#include <thread>
 
 AGRPC_NAMESPACE_BEGIN()
 
