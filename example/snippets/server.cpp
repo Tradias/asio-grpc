@@ -26,7 +26,7 @@
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
-#include <assert>
+#include <cassert>
 #include <chrono>
 #include <optional>
 
@@ -213,7 +213,7 @@ asio::awaitable<void> bidirectional_streaming(example::v1::Example::AsyncService
     silence_unused(request_ok, read_ok, write_last_ok, write_and_finish_ok, write_ok, finish_ok);
 }
 
-asio::awaitable<void> server_generic(example::v1::Example::AsyncService& service)
+asio::awaitable<void> server_generic_request(grpc::AsyncGenericService& service)
 {
     /* [request-generic-server-side] */
     grpc::GenericServerContext server_context;
@@ -221,6 +221,8 @@ asio::awaitable<void> server_generic(example::v1::Example::AsyncService& service
     bool request_ok = co_await agrpc::request(service, server_context, reader_writer, asio::use_awaitable);
     assert("/example.v1.Example/Unary" == server_context.method());
     /* [request-generic-server-side] */
+
+    silence_unused(request_ok);
 }
 
 void io_context(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)

@@ -50,8 +50,8 @@ TEST_CASE_FIXTURE(test::GrpcGenericClientServerTest, "yield_context generic unar
                     test::msg::Request request;
                     request.set_integer(42);
                     const auto request_buffer = test::message_to_grpc_buffer(request);
-                    const auto reader = stub.PrepareUnaryCall(&client_context, "/test.v1.Test/Unary", request_buffer,
-                                                              grpc_context.get_completion_queue());
+                    const auto reader = stub->PrepareUnaryCall(&client_context, "/test.v1.Test/Unary", request_buffer,
+                                                               grpc_context.get_completion_queue());
                     reader->StartCall();
                     grpc::ByteBuffer buffer;
                     grpc::Status status;
@@ -87,7 +87,7 @@ TEST_CASE_FIXTURE(test::GrpcGenericClientServerTest, "yield_context generic serv
                 [&](asio::yield_context yield)
                 {
                     std::unique_ptr<grpc::GenericClientAsyncReaderWriter> reader_writer;
-                    CHECK(agrpc::request("/test.v1.Test/ServerStreaming", stub, client_context, reader_writer, yield));
+                    CHECK(agrpc::request("/test.v1.Test/ServerStreaming", *stub, client_context, reader_writer, yield));
                     CHECK(agrpc::read_initial_metadata(*reader_writer, yield));
                     test::msg::Request request;
                     request.set_integer(42);

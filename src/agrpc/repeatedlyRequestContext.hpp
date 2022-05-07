@@ -66,9 +66,10 @@ class RepeatedlyRequestContext
      */
     [[nodiscard]] decltype(auto) request() const noexcept
     {
-        static_assert(detail::HAS_REQUEST_MEMBER_FUNCTION<detail::AllocatedPointer<ImplementationAllocator>>,
-                      "Client-streaming and bidirectional-streaming requests are made without an initial request by "
-                      "the client. The .request() member function is therefore not available.");
+        static_assert(
+            detail::HAS_REQUEST_MEMBER_FUNCTION<detail::AllocatedPointer<ImplementationAllocator>>,
+            "Client-streaming, bidirectional-streaming and generic requests are made without an initial request by "
+            "the client. The .request() member function is therefore not available.");
         return impl->request();
     }
 
@@ -94,6 +95,10 @@ class RepeatedlyRequestContext
     {
     }
 };
+
+template <class Allocator = std::allocator<void>>
+using GenericRepeatedlyRequestContext = agrpc::RepeatedlyRequestContext<
+    typename std::allocator_traits<Allocator>::template rebind_alloc<detail::GenericRPCContext>>;
 
 AGRPC_NAMESPACE_END
 

@@ -208,7 +208,7 @@ void bidirectional_streaming_corked(example::v1::Example::Stub& stub, agrpc::Grp
     /* [request-client-bidirectional-client-side-corked] */
 }
 
-asio::awaitable<void> client_generic_streaming(grpc::GenericStub& stub)
+asio::awaitable<void> client_generic_streaming_request(grpc::GenericStub& stub)
 {
     /* [request-generic-streaming-client-side] */
     grpc::ClientContext client_context;
@@ -216,6 +216,8 @@ asio::awaitable<void> client_generic_streaming(grpc::GenericStub& stub)
     bool request_ok = co_await agrpc::request("/example.v1.Example/BidirectionalStreaming", stub, client_context,
                                               reader_writer, asio::use_awaitable);
     /* [request-generic-streaming-client-side] */
+
+    silence_unused(request_ok);
 }
 
 void client_generic_streaming_corked(grpc::GenericStub& stub, agrpc::GrpcContext& grpc_context)

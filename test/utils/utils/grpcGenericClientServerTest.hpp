@@ -25,12 +25,12 @@ namespace test
 struct GrpcGenericClientServerTest : test::GrpcClientServerTestBase
 {
     grpc::AsyncGenericService service;
-    grpc::GenericStub stub;
+    std::unique_ptr<grpc::GenericStub> stub;
     grpc::GenericServerContext server_context;
 
     GrpcGenericClientServerTest();
 
-    // ~GrpcGenericClientServerTest();
+    ~GrpcGenericClientServerTest();
 };
 }  // namespace test
 

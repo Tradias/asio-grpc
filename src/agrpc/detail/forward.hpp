@@ -43,6 +43,8 @@ struct IsGrpcContextStoppedPredicate;
 
 template <class Executor, class Traits, class StopPredicate>
 struct PollContextHandler;
+
+class GenericRPCContext;
 }
 
 AGRPC_NAMESPACE_END

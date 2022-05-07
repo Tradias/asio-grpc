@@ -19,11 +19,11 @@
 
 namespace test
 {
-GrpcGenericClientServerTest::GrpcGenericClientServerTest() : stub{this->channel}
+GrpcGenericClientServerTest::GrpcGenericClientServerTest() : stub{std::make_unique<grpc::GenericStub>(this->channel)}
 {
     builder.RegisterAsyncGenericService(&service);
     this->server = builder.BuildAndStart();
 }
 
-// GrpcClientServerTest::~GrpcClientServerTest() { stub.reset(); }
+GrpcGenericClientServerTest::~GrpcGenericClientServerTest() { stub.reset(); }
 }  // namespace test
