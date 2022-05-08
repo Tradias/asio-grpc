@@ -24,6 +24,8 @@
 #include <grpcpp/server_builder.h>
 
 #include <memory>
+#include <optional>
+#include <thread>
 
 namespace asio = boost::asio;
 
