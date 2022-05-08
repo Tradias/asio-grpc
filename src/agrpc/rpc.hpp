@@ -172,6 +172,18 @@ struct RequestFn
     }
 #endif
 
+    /**
+     * @brief Convenience function for starting a unary request
+     *
+     * Note, this function completes immediately.
+     */
+    template <class Stub, class Request, class Response>
+    auto operator()(detail::ClientUnaryRequest<Stub, Request, Response> rpc, Stub& stub,
+                    grpc::ClientContext& client_context, const Request& request, agrpc::GrpcContext& grpc_context) const
+    {
+        return (stub.*rpc)(&client_context, request, agrpc::get_completion_queue(grpc_context));
+    }
+
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     /**
      * @brief Convenience function for starting a server-streaming request
@@ -360,6 +372,23 @@ struct RequestFn
     }
 
     /**
+     * @brief Convenience function for starting a generic unary request
+     *
+     * Note, this function completes immediately.
+     *
+     * @param method The RPC method to call, e.g. "/test.v1.Test/Unary"
+     */
+    template <class Request, class Response>
+    auto operator()(const std::string& method, grpc::TemplatedGenericStub<Request, Response>& stub,
+                    grpc::ClientContext& client_context, const Request& request, agrpc::GrpcContext& grpc_context) const
+    {
+        auto reader =
+            stub.PrepareUnaryCall(&client_context, method, request, agrpc::get_completion_queue(grpc_context));
+        reader->StartCall();
+        return reader;
+    }
+
+    /**
      * @brief Start a generic streaming request
      *
      * This function can be used to start a generic client-streaming, server-streaming or bidirectional-streaming
@@ -374,6 +403,7 @@ struct RequestFn
      * option set. Call the member function directly instead:
      * @snippet client.cpp request-client-generic-streaming-corked
      *
+     * @param method The RPC method to call, e.g. "/test.v1.Test/Unary"
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. `true` indicates that the RPC is going to go to the wire. If it is `false`,
      * it is not going to the wire. This would happen if the channel is either permanently broken or transiently broken

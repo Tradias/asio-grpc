@@ -35,7 +35,7 @@ asio::awaitable<void> unary(agrpc::GrpcContext& grpc_context, example::v1::Examp
     grpc::ClientContext client_context;
     example::v1::Request request;
     std::unique_ptr<grpc::ClientAsyncResponseReader<example::v1::Response>> reader =
-        stub.AsyncUnary(&client_context, request, agrpc::get_completion_queue(grpc_context));
+        agrpc::request(&example::v1::Example::Stub::AsyncUnary, stub, client_context, request, grpc_context);
     /* [request-unary-client-side] */
 
     /* [read_initial_metadata-unary-client-side] */

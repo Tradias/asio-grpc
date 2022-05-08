@@ -264,8 +264,9 @@ struct RepeatedlyRequestTest : test::GrpcClientServerTest
                 test::msg::Request request;
                 request.set_integer(42);
                 auto* context_ptr = context.get();
-                return std::tuple{stub->AsyncUnary(context_ptr, request, agrpc::get_completion_queue(get_executor())),
-                                  test::msg::Response{}, grpc::Status{}, std::move(context)};
+                return std::tuple{
+                    agrpc::request(&test::v1::Test::Stub::AsyncUnary, *stub, *context_ptr, request, grpc_context),
+                    test::msg::Response{}, grpc::Status{}, std::move(context)};
             },
             [&, on_request_done](auto& tuple)
             {
@@ -501,7 +502,8 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex::task unary")
         {
             test::msg::Request request;
             request.set_integer(42);
-            auto reader = stub->AsyncUnary(&client_context, request, agrpc::get_completion_queue(get_executor()));
+            auto reader =
+                agrpc::request(&test::v1::Test::Stub::AsyncUnary, *stub, client_context, request, grpc_context);
             test::msg::Response response;
             grpc::Status status;
             client_finish_ok = co_await agrpc::finish(*reader, response, status, use_sender());

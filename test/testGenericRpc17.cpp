@@ -50,9 +50,8 @@ TEST_CASE_FIXTURE(test::GrpcGenericClientServerTest, "yield_context generic unar
                     test::msg::Request request;
                     request.set_integer(42);
                     const auto request_buffer = test::message_to_grpc_buffer(request);
-                    const auto reader = stub->PrepareUnaryCall(&client_context, "/test.v1.Test/Unary", request_buffer,
-                                                               grpc_context.get_completion_queue());
-                    reader->StartCall();
+                    const auto reader =
+                        agrpc::request("/test.v1.Test/Unary", *stub, client_context, request_buffer, grpc_context);
                     grpc::ByteBuffer buffer;
                     grpc::Status status;
                     CHECK(agrpc::finish(*reader, buffer, status, yield));
