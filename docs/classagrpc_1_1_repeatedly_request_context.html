@@ -146,7 +146,7 @@ template&lt;class ImplementationAllocator &gt; </div>
 </div><div class="memdoc">
 
 <p>Tuple of <code>grpc::ServerContext</code>, the request (if any) and the responder. </p>
-<p >Useful in combination with <code>std::apply</code> when implementing generic request handler.</p>
+<p >Useful in combination with <code>std::apply</code> when implementing request handler templates.</p>
 <p >The return type depends on the RPC.</p>
 <p >unary: <code>std::tuple&lt;grpc::ServerContext&amp;, Request&amp;, grpc::ServerAsyncResponseWriter&lt;Response&gt;&amp;&gt;</code><br  />
  server-streaming: <code>std::tuple&lt;grpc::ServerContext&amp;, Request&amp;, grpc::ServerAsyncWriter&lt;Response&gt;&amp;&gt;</code><br  />
