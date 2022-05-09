@@ -242,7 +242,7 @@ jobs:
         cmake --build ${{ github.workspace }}/build-12 --config Release --target asio-grpc-doxygen
 
     - name: Push doxygen changes
-      if: ${{ github.ref == 'master' }}
+      if: ${{ github.ref_protected }}
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
