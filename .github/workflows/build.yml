@@ -255,11 +255,11 @@ jobs:
 
 
   default-gcc-build:
-    name: 'Ubuntu/20.04/default'
+    name: 'Ubuntu/20.04/Default'
     runs-on: ubuntu-20.04
     env:
       TRIPLET: 'x64-linux-release'
-      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-release -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DDASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=on'
+      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-release -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=on'
 
     steps:
     - name: Install protobuf, gRPC and doctest
