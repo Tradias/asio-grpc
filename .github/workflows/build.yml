@@ -246,9 +246,8 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add docs/* || echo "nothing to commit"
-        git commit -m "Re-generate Github Pages" || echo "nothing to commit"
+        git add -f docs/* || echo "nothing to add"
         remote="https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
-        commit="$(git log -n 1 --pretty=format:"%H")"
-        git push "${remote}" ${commit}:gh-pages || echo "nothing to push"
+        git commit -m "Re-generate Github Pages" && \
+        git push --force "${remote}" $(git log -n 1 --pretty=format:"%H"):gh-pages || echo "nothing to push"
       shell: bash
