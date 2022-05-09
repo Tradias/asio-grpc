@@ -220,14 +220,14 @@ asio::awaitable<void> client_generic_streaming_request(grpc::GenericStub& stub)
     silence_unused(request_ok);
 }
 
-void client_generic_streaming_corked(grpc::GenericStub& stub, agrpc::GrpcContext& grpc_context)
+void client_generic_streaming_corked(grpc::GenericStub& stub, const grpc::ByteBuffer& request,
+                                     agrpc::GrpcContext& grpc_context)
 {
     /* [request-client-generic-streaming-corked] */
     grpc::ClientContext client_context;
     client_context.set_initial_metadata_corked(true);
-    auto reader_writer = stub.PrepareCall(&client_context, "/example.v1.Example/BidirectionalStreaming",
-                                          agrpc::get_completion_queue(grpc_context));
-    reader_writer->StartCall(nullptr);
+    std::unique_ptr<grpc::GenericClientAsyncResponseReader> reader_writer =
+        agrpc::request("/example.v1.Example/BidirectionalStreaming", stub, client_context, request, grpc_context);
     /* [request-client-generic-streaming-corked] */
 }
 
