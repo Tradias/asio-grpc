@@ -263,17 +263,13 @@ TEST_CASE_FIXTURE(test::GrpcGenericClientServerTest, "RepeatedlyRequestContext m
                                 CHECK(std::is_same_v<grpc::GenericServerAsyncReaderWriter&, decltype(responder)>);
                                 [[maybe_unused]] auto&& context = rpc_context.server_context();
                                 CHECK(std::is_same_v<grpc::GenericServerContext&, decltype(context)>);
-                                asio::spawn(grpc_context,
-                                            [c = std::move(rpc_context)](auto&& yield)
-                                            {
-                                                GenericRequestHandler::write_response(c.responder(), {}, yield);
-                                            });
                             }));
     test::v1::Test::Stub test_stub{channel};
     asio::spawn(get_executor(),
                 [&](asio::yield_context yield)
                 {
-                    CHECK(test::client_perform_unary_unchecked(grpc_context, test_stub, yield));
+                    CHECK(test::client_perform_unary_unchecked(grpc_context, test_stub, yield,
+                                                               test::ten_milliseconds_from_now()));
                     grpc_context.stop();
                 });
     grpc_context.run();
