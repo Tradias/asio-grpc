@@ -20,6 +20,8 @@
 #include <agrpc/grpcContext.hpp>
 #include <grpcpp/client_context.h>
 #include <grpcpp/completion_queue.h>
+#include <grpcpp/generic/async_generic_service.h>
+#include <grpcpp/generic/generic_stub.h>
 #include <grpcpp/server_context.h>
 
 #include <memory>
@@ -330,6 +332,20 @@ struct ClientBidirectionalStreamingRequestConvenienceInitFunction
     }
 };
 
+struct ClientGenericStreamingRequestInitFunction
+{
+    const std::string& method;
+    grpc::GenericStub& stub;
+    grpc::ClientContext& client_context;
+    std::unique_ptr<grpc::ClientAsyncReaderWriter<grpc::ByteBuffer, grpc::ByteBuffer>>& reader_writer;
+
+    void operator()(agrpc::GrpcContext& grpc_context, void* tag)
+    {
+        reader_writer = stub.PrepareCall(&client_context, method, grpc_context.get_completion_queue());
+        reader_writer->StartCall(tag);
+    }
+};
+
 template <class RPC, class Service, class Request, class Responder>
 struct ServerMultiArgRequestInitFunction
 {
@@ -341,7 +357,7 @@ struct ServerMultiArgRequestInitFunction
 
     void operator()(agrpc::GrpcContext& grpc_context, void* tag)
     {
-        auto* cq = grpc_context.get_server_completion_queue();
+        auto* const cq = grpc_context.get_server_completion_queue();
         (service.*rpc)(&server_context, &request, &responder, cq, cq, tag);
     }
 };
@@ -356,8 +372,21 @@ struct ServerSingleArgRequestInitFunction
 
     void operator()(agrpc::GrpcContext& grpc_context, void* tag)
     {
-        auto* cq = grpc_context.get_server_completion_queue();
+        auto* const cq = grpc_context.get_server_completion_queue();
         (service.*rpc)(&server_context, &responder, cq, cq, tag);
+    }
+};
+
+struct ServerGenericRequestInitFunction
+{
+    grpc::AsyncGenericService& service;
+    grpc::GenericServerContext& server_context;
+    grpc::GenericServerAsyncReaderWriter& reader_writer;
+
+    void operator()(agrpc::GrpcContext& grpc_context, void* tag)
+    {
+        auto* const cq = grpc_context.get_server_completion_queue();
+        service.RequestCall(&server_context, &reader_writer, cq, cq, tag);
     }
 };
 }

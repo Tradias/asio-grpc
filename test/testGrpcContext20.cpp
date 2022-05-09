@@ -13,15 +13,16 @@
 // limitations under the License.
 
 #include "utils/asioUtils.hpp"
+#include "utils/doctest.hpp"
 #include "utils/grpcContextTest.hpp"
 #include "utils/time.hpp"
 
 #include <agrpc/getCompletionQueue.hpp>
 #include <agrpc/useAwaitable.hpp>
 #include <agrpc/wait.hpp>
-#include <doctest/doctest.h>
 
 #include <cstddef>
+#include <thread>
 #include <vector>
 
 DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)

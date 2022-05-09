@@ -47,7 +47,8 @@ asio::awaitable<void> make_grpc_request(agrpc::GrpcContext& grpc_context, exampl
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
     example::v1::Request request;
     request.set_integer(42);
-    auto reader = stub.AsyncUnary(&client_context, request, agrpc::get_completion_queue(grpc_context));
+    const auto reader =
+        agrpc::request(&example::v1::Example::Stub::AsyncUnary, stub, client_context, request, grpc_context);
     example::v1::Response response;
     grpc::Status status;
     co_await agrpc::finish(*reader, response, status, asio::bind_executor(grpc_context, asio::use_awaitable));

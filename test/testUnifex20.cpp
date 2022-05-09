@@ -16,11 +16,11 @@
 #include "utils/asioForward.hpp"
 #include "utils/asioUtils.hpp"
 #include "utils/clientContext.hpp"
+#include "utils/doctest.hpp"
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/grpcContextTest.hpp"
 
 #include <agrpc/asioGrpc.hpp>
-#include <doctest/doctest.h>
 
 #include <cstddef>
 #include <optional>
@@ -264,8 +264,9 @@ struct RepeatedlyRequestTest : test::GrpcClientServerTest
                 test::msg::Request request;
                 request.set_integer(42);
                 auto* context_ptr = context.get();
-                return std::tuple{stub->AsyncUnary(context_ptr, request, agrpc::get_completion_queue(get_executor())),
-                                  test::msg::Response{}, grpc::Status{}, std::move(context)};
+                return std::tuple{
+                    agrpc::request(&test::v1::Test::Stub::AsyncUnary, *stub, *context_ptr, request, grpc_context),
+                    test::msg::Response{}, grpc::Status{}, std::move(context)};
             },
             [&, on_request_done](auto& tuple)
             {
@@ -415,9 +416,8 @@ TEST_CASE_FIXTURE(RepeatedlyRequestTest, "unifex repeatedly_request unary - stop
     CHECK_FALSE(allocator_has_been_used());
 }
 
-TEST_CASE_FIXTURE(
-    RepeatedlyRequestTest,
-    "unifex repeatedly_request unary - throw exception from request handler call set_error in repeatedly_request")
+TEST_CASE_FIXTURE(RepeatedlyRequestTest,
+                  "unifex repeatedly_request unary - throw exception from request handler calls set_error")
 {
     int count{};
     auto repeater = agrpc::repeatedly_request(
@@ -433,15 +433,14 @@ TEST_CASE_FIXTURE(
             return handle_unary_request_sender(request, writer);
         },
         use_sender());
-    const auto check_deadline_exceeded = [](auto&&, auto&&, auto&& status)
+    const auto check_status_not_ok = [](auto&&, auto&&, auto&& status)
     {
-        CHECK_EQ(grpc::StatusCode::DEADLINE_EXCEEDED, status.error_code());
+        CHECK_FALSE(status.ok());
     };
     std::exception_ptr error_propagation{};
     unifex::sync_wait(unifex::when_all(
-        unifex::sequence(
-            make_client_unary_request_sender(test::hundred_milliseconds_from_now(), check_deadline_exceeded),
-            make_client_unary_request_sender(test::hundred_milliseconds_from_now(), check_deadline_exceeded)),
+        unifex::sequence(make_client_unary_request_sender(test::hundred_milliseconds_from_now(), check_status_not_ok),
+                         make_client_unary_request_sender(test::hundred_milliseconds_from_now(), check_status_not_ok)),
         unifex::let_error(std::move(repeater),
                           [&](std::exception_ptr ep)
                           {
@@ -501,7 +500,8 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex::task unary")
         {
             test::msg::Request request;
             request.set_integer(42);
-            auto reader = stub->AsyncUnary(&client_context, request, agrpc::get_completion_queue(get_executor()));
+            auto reader =
+                agrpc::request(&test::v1::Test::Stub::AsyncUnary, *stub, client_context, request, grpc_context);
             test::msg::Response response;
             grpc::Status status;
             client_finish_ok = co_await agrpc::finish(*reader, response, status, use_sender());

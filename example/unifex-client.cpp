@@ -38,7 +38,8 @@ unifex::task<void> make_unary_request(example::v1::Example::Stub& stub, agrpc::G
 
     example::v1::Request request;
     request.set_integer(42);
-    const auto reader = stub.AsyncUnary(&client_context, request, agrpc::get_completion_queue(grpc_context));
+    const auto reader =
+        agrpc::request(&example::v1::Example::Stub::AsyncUnary, stub, client_context, request, grpc_context);
 
     example::v1::Response response;
     grpc::Status status;

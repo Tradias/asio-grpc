@@ -12,20 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utils/grpcClientServerTest.hpp"
+#ifndef AGRPC_UTILS_DOCTEST_HPP
+#define AGRPC_UTILS_DOCTEST_HPP
 
-#include "test/v1/test.grpc.pb.h"
+#include <doctest/doctest.h>
 
-#include <grpcpp/server_context.h>
+#include <type_traits>
 
-namespace test
-{
-GrpcClientServerTest::GrpcClientServerTest()
-{
-    builder.RegisterService(&service);
-    this->server = builder.BuildAndStart();
-    stub = test::v1::Test::NewStub(this->channel);
-}
+TYPE_TO_STRING(std::true_type);
+TYPE_TO_STRING(std::false_type);
 
-GrpcClientServerTest::~GrpcClientServerTest() { stub.reset(); }
-}  // namespace test
+#endif  // AGRPC_UTILS_DOCTEST_HPP

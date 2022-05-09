@@ -58,7 +58,7 @@ More examples for things like streaming RPCs, double-buffered file transfer with
 
 Tested by CI:
 
- * gRPC 1.44.0 (older versions work as well)
+ * gRPC 1.44.0, 1.16.1 (older versions might work as well)
  * [Boost](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio.html) 1.79.0 (min. 1.74.0)
  * [Standalone Asio](https://github.com/chriskohlhoff/asio) 1.17.0 (min. 1.17.0)
  * [libunifex](https://github.com/facebookexperimental/libunifex) 2022-02-09
@@ -291,7 +291,7 @@ For servers and clients:
 grpc::ServerBuilder builder;
 agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
 ```
-<sup><a href='/example/snippets/server.cpp#L309-L312' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/snippets/server.cpp#L322-L325' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 For clients only:
@@ -301,7 +301,7 @@ For clients only:
 ```cpp
 agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 ```
-<sup><a href='/example/snippets/client.cpp#L302-L304' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-client-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/snippets/client.cpp#L325-L327' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-client-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Add some work to the `grpc_context` and run it. Make sure to shutdown the `server` before destructing the `grpc_context`. Also destruct the `grpc_context` before destructing the `server`. A `grpc_context` can only be run on one thread at a time.
@@ -313,7 +313,7 @@ grpc_context.run();
 server->Shutdown();
 }  // grpc_context is destructed here before the server
 ```
-<sup><a href='/example/snippets/server.cpp#L327-L331' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/snippets/server.cpp#L340-L344' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 It might also be helpful to create a work guard before running the `agrpc::GrpcContext` to prevent `grpc_context.run()` from returning early.
@@ -323,7 +323,7 @@ It might also be helpful to create a work guard before running the `agrpc::GrpcC
 ```cpp
 std::optional guard{asio::require(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked)};
 ```
-<sup><a href='/example/snippets/client.cpp#L306-L308' title='Snippet source file'>snippet source</a> | <a href='#snippet-make-work-guard' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/snippets/client.cpp#L329-L331' title='Snippet source file'>snippet source</a> | <a href='#snippet-make-work-guard' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Where to go from here?
