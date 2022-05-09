@@ -237,7 +237,8 @@ jobs:
 
     - name: Run doxygen
       run: |
-        cmake -E rm -r ${{ github.workspace }}/docs &&\
+        cmake -E make_directory ${{ github.workspace }}/docs &&\
+        cmake -E touch ${{ github.workspace }}/docs/.nojekyll &&\
         cmake --build ${{ github.workspace }}/build-12 --config Release --target asio-grpc-doxygen
 
     - name: Push doxygen changes
