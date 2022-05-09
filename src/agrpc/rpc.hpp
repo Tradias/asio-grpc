@@ -378,9 +378,8 @@ struct RequestFn
      *
      * @param method The RPC method to call, e.g. "/test.v1.Test/Unary"
      */
-    template <class Request, class Response>
-    auto operator()(const std::string& method, grpc::TemplatedGenericStub<Request, Response>& stub,
-                    grpc::ClientContext& client_context, const Request& request, agrpc::GrpcContext& grpc_context) const
+    auto operator()(const std::string& method, grpc::GenericStub& stub, grpc::ClientContext& client_context,
+                    const grpc::ByteBuffer& request, agrpc::GrpcContext& grpc_context) const
     {
         auto reader =
             stub.PrepareUnaryCall(&client_context, method, request, agrpc::get_completion_queue(grpc_context));
@@ -409,16 +408,14 @@ struct RequestFn
      * it is not going to the wire. This would happen if the channel is either permanently broken or transiently broken
      * but with the fail-fast option.
      */
-    template <class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(const std::string& method, grpc::TemplatedGenericStub<Request, Response>& stub,
-                    grpc::ClientContext& client_context,
-                    std::unique_ptr<grpc::ClientAsyncReaderWriter<Request, Response>>& reader_writer,
+    template <class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(const std::string& method, grpc::GenericStub& stub, grpc::ClientContext& client_context,
+                    std::unique_ptr<grpc::ClientAsyncReaderWriter<grpc::ByteBuffer, grpc::ByteBuffer>>& reader_writer,
                     CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
-            detail::ClientGenericStreamingRequestInitFunction<Request, Response>{method, stub, client_context,
-                                                                                 reader_writer},
+            detail::ClientGenericStreamingRequestInitFunction{method, stub, client_context, reader_writer},
             std::forward<CompletionToken>(token));
     }
 };

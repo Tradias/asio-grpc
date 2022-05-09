@@ -17,7 +17,8 @@
 
 #include "utils/doctest.hpp"
 
-#include <grpcpp/grpcpp.h>
+#include <grpcpp/support/proto_buffer_reader.h>
+#include <grpcpp/support/proto_buffer_writer.h>
 
 namespace test
 {
@@ -25,8 +26,8 @@ template <class Message>
 Message grpc_buffer_to_message(grpc::ByteBuffer& buffer)
 {
     Message message;
-    grpc::ProtoBufferReader reader{&buffer};
-    CHECK(message.ParseFromZeroCopyStream(&reader));
+    const auto status = grpc::GenericDeserialize<grpc::ProtoBufferReader, Message>(&buffer, &message);
+    CHECK_MESSAGE(status.ok(), status.error_message());
     return message;
 }
 
@@ -34,9 +35,9 @@ template <class Message>
 grpc::ByteBuffer message_to_grpc_buffer(const Message& message)
 {
     grpc::ByteBuffer buffer;
-    const auto message_byte_size = static_cast<int>(message.ByteSizeLong());
-    grpc::ProtoBufferWriter writer{&buffer, message_byte_size, message_byte_size};
-    CHECK(message.SerializeToZeroCopyStream(&writer));
+    bool own_buffer;
+    const auto status = grpc::GenericSerialize<grpc::ProtoBufferWriter, Message>(message, &buffer, &own_buffer);
+    CHECK_MESSAGE(status.ok(), status.error_message());
     return buffer;
 }
 }

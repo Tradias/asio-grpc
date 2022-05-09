@@ -332,13 +332,12 @@ struct ClientBidirectionalStreamingRequestConvenienceInitFunction
     }
 };
 
-template <class Request, class Response>
 struct ClientGenericStreamingRequestInitFunction
 {
     const std::string& method;
-    grpc::TemplatedGenericStub<Request, Response>& stub;
+    grpc::GenericStub& stub;
     grpc::ClientContext& client_context;
-    std::unique_ptr<grpc::ClientAsyncReaderWriter<Request, Response>>& reader_writer;
+    std::unique_ptr<grpc::ClientAsyncReaderWriter<grpc::ByteBuffer, grpc::ByteBuffer>>& reader_writer;
 
     void operator()(agrpc::GrpcContext& grpc_context, void* tag)
     {

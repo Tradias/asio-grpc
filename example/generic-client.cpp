@@ -33,9 +33,8 @@ void make_generic_unary_request(grpc::GenericStub& stub, agrpc::GrpcContext& grp
 
     // -- Serialize the request message
     grpc::ByteBuffer buffer;
-    const auto message_byte_size = static_cast<int>(request.ByteSizeLong());
-    grpc::ProtoBufferWriter writer{&buffer, message_byte_size, message_byte_size};
-    abort_if_not(request.SerializeToZeroCopyStream(&writer));
+    bool own_buffer;
+    grpc::GenericSerialize<grpc::ProtoBufferWriter, example::v1::Request>(request, &buffer, &own_buffer);
 
     // -- Initiate the unary request:
     grpc::ClientContext client_context;
@@ -52,9 +51,10 @@ void make_generic_unary_request(grpc::GenericStub& stub, agrpc::GrpcContext& grp
     abort_if_not(status.ok());
 
     // -- Deserialize the response message
-    grpc::ProtoBufferReader reader{&buffer};
     example::v1::Response response;
-    abort_if_not(response.ParseFromZeroCopyStream(&reader));
+    const auto deserialize_status =
+        grpc::GenericDeserialize<grpc::ProtoBufferReader, example::v1::Response>(&buffer, &response);
+    abort_if_not(deserialize_status.ok());
     abort_if_not(21 == response.integer());
 }
 

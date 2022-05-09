@@ -49,18 +49,17 @@ struct GenericRequestHandler
         agrpc::read(reader_writer, buffer, yield);
 
         // -- Deserialize the request message
-        grpc::ProtoBufferReader reader{&buffer};
         example::v1::Request request;
-        abort_if_not(request.ParseFromZeroCopyStream(&reader));
+        const auto deserialize_status =
+            grpc::GenericDeserialize<grpc::ProtoBufferReader, example::v1::Request>(&buffer, &request);
+        abort_if_not(deserialize_status.ok());
         abort_if_not(42 == request.integer());
 
         // -- Serialize the response message
-        buffer.Clear();
         example::v1::Response response;
         response.set_integer(21);
-        const auto message_byte_size = static_cast<int>(response.ByteSizeLong());
-        grpc::ProtoBufferWriter writer{&buffer, message_byte_size, message_byte_size};
-        abort_if_not(response.SerializeToZeroCopyStream(&writer));
+        bool own_buffer;
+        grpc::GenericSerialize<grpc::ProtoBufferWriter, example::v1::Response>(response, &buffer, &own_buffer);
 
         // -- Write the response message and finish this RPC with OK
         agrpc::write_and_finish(reader_writer, buffer, grpc::WriteOptions{}, grpc::Status::OK, yield);

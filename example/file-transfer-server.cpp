@@ -31,6 +31,7 @@
 #include <filesystem>
 #include <fstream>
 #include <optional>
+#include <thread>
 
 namespace asio = boost::asio;
 

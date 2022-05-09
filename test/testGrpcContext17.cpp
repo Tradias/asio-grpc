@@ -20,6 +20,8 @@
 #include <agrpc/grpcContext.hpp>
 #include <agrpc/wait.hpp>
 
+#include <thread>
+
 DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 {
 TEST_CASE("GrpcExecutor fulfills Executor TS traits")

@@ -22,6 +22,7 @@
 #include <agrpc/wait.hpp>
 
 #include <cstddef>
+#include <thread>
 #include <vector>
 
 DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
