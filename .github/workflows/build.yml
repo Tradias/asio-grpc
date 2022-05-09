@@ -241,12 +241,13 @@ jobs:
         cmake --build ${{ github.workspace }}/build-12 --config Release --target asio-grpc-doxygen
 
     - name: Push doxygen changes
+      if: ${{ github.ref == 'master' }}
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add docs/* || echo "nothing to commit"
         git commit -m "Re-generate Github Pages" || echo "nothing to commit"
         remote="https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
-        branch="${GITHUB_REF:11}"
-        git push "${remote}" ${branch} || echo "nothing to push"
+        commit="$(git log -n 1 --pretty=format:"%H")"
+        git push "${remote}" ${commit}:gh-pages || echo "nothing to push"
       shell: bash
