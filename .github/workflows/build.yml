@@ -237,19 +237,20 @@ jobs:
 
     - name: Run doxygen
       run: |
-        cmake -E rm -r ${{ github.workspace }}/docs &&\
+        cmake -E make_directory ${{ github.workspace }}/docs &&\
+        cmake -E touch ${{ github.workspace }}/docs/.nojekyll &&\
         cmake --build ${{ github.workspace }}/build-12 --config Release --target asio-grpc-doxygen
 
     - name: Push doxygen changes
-      if: ${{ github.ref == 'master' }}
+      if: ${{ github.ref_name == 'master' }}
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add docs/* || echo "nothing to commit"
-        git commit -m "Re-generate Github Pages" || echo "nothing to commit"
+        git add -f docs/.nojekyll || echo "nothing to add"
+        git add -f docs/* || echo "nothing to add"
         remote="https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
-        commit="$(git log -n 1 --pretty=format:"%H")"
-        git push "${remote}" ${commit}:gh-pages || echo "nothing to push"
+        git commit -m "Re-generate Github Pages" && \
+        git push "${remote}" $(git log -n 1 --pretty=format:"%H"):gh-pages || echo "nothing to push"
       shell: bash
 
 
