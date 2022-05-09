@@ -279,6 +279,7 @@ jobs:
         ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} \
           --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg \
           libunifex boost-coroutine boost-asio boost-interprocess boost-thread boost-container boost-process asio[coroutine]
+      working-directory: ${{ env.VCPKG_ROOT }}
 
     - name: Configure CMake
       run: cmake --preset default -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_ARGS }} ${{ env.CMAKE_EXTRA_ARGS }}
