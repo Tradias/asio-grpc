@@ -26,14 +26,14 @@
 #if defined(AGRPC_ASIO_HAS_CANCELLATION_SLOT) && defined(AGRPC_ASIO_HAS_CO_AWAIT)
 DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 {
-TEST_CASE_FIXTURE(test::GrpcContextTest, "CancelSafe: co_await for a CancelSafe and an alarm using operator||")
+TEST_CASE_FIXTURE(test::GrpcContextTest, "CancelSafe: co_await for a CancelSafe and an alarm parallel_group")
 {
     test::co_spawn(get_executor(),
                    [&]() -> asio::awaitable<void>
                    {
                        agrpc::GrpcCancelSafe safe;
-                       grpc::Alarm alarm;
-                       agrpc::wait(alarm, test::five_hundred_milliseconds_from_now(),
+                       grpc::Alarm alarm1;
+                       agrpc::wait(alarm1, test::five_hundred_milliseconds_from_now(),
                                    asio::bind_executor(grpc_context, safe.token()));
                        grpc::Alarm alarm2;
                        for (size_t i = 0; i < 3; ++i)

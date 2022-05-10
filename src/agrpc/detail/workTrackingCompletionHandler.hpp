@@ -46,7 +46,7 @@ inline constexpr bool
 template <class T>
 using AssociatedWorkTrackingExecutor =
     std::conditional_t<detail::IS_INLINE_EXECUTOR<asio::associated_executor_t<T>>, detail::Empty,
-                       std::decay_t<typename asio::prefer_result<
+                       detail::RemoveCvrefT<typename asio::prefer_result<
                            asio::associated_executor_t<T>, asio::execution::outstanding_work_t::tracked_t>::type>>;
 
 template <class CompletionHandler>

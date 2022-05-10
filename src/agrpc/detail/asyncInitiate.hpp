@@ -35,7 +35,7 @@ struct InitiateImmediateCompletion<R(Args...)>
         const auto allocator = asio::get_associated_allocator(ch);
         detail::post_with_allocator(
             std::move(executor),
-            [ch = std::decay_t<CompletionHandler>{std::forward<CompletionHandler>(ch)}]() mutable
+            [ch = std::forward<CompletionHandler>(ch)]() mutable
             {
                 std::move(ch)(Args{}...);
             },

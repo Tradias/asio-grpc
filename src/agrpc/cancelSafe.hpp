@@ -91,7 +91,7 @@ class CancelSafe
      * Only one call to `wait()` may be outstanding at a time. Waiting for an already completed operation will
      * immediately invoke the completion handler in a manner equivalent to using `asio::post`.
      *
-     * Not thread-safe with regards to successful completion of the asynchronous operation.
+     * Thread-unsafe with regards to successful completion of the asynchronous operation.
      *
      * **Per-Operation Cancellation**
      *
@@ -123,8 +123,7 @@ class CancelSafe
                 self.result.reset();
                 detail::post_with_allocator(
                     std::move(executor),
-                    [local_result = std::move(local_result),
-                     ch = std::decay_t<CompletionHandler>{std::forward<CompletionHandler>(ch)}]() mutable
+                    [local_result = std::move(local_result), ch = std::forward<CompletionHandler>(ch)]() mutable
                     {
                         detail::invoke_successfully_from_tuple(std::move(ch), std::move(local_result));
                     },

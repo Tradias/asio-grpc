@@ -246,18 +246,16 @@ asio::awaitable<void> handle_topic_subscription(
             write_stream.initiate(agrpc::write, reader_writer, get_feed_for_topic(topic.id()));
         }
     };
-    bool read_ok = co_await agrpc::read(reader_writer, topic);
-    if (read_ok)
-    {
-        initiate_write();
-        read_stream.initiate(agrpc::read, reader_writer, topic);
-    }
+    abort_if_not(co_await read_stream.initiate(agrpc::read, reader_writer, topic).next());
+    initiate_write();
+    read_stream.initiate(agrpc::read, reader_writer, topic);
     std::chrono::system_clock::time_point deadline;
     const auto update_deadline = [&]
     {
         deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(333);
     };
     update_deadline();
+    bool read_ok{true};
     bool write_ok{true};
     do
     {
@@ -269,9 +267,9 @@ asio::awaitable<void> handle_topic_subscription(
             if (read_ok)
             {
                 read_stream.initiate(agrpc::read, reader_writer, topic);
+                update_deadline();
+                initiate_write();
             }
-            update_deadline();
-            initiate_write();
         }
         else if (1 == variant.index())  // wait completed
         {
@@ -324,7 +322,7 @@ asio::awaitable<void> handle_slow_unary_request(example::v1::ExampleExt::AsyncSe
 //
 
 // ---------------------------------------------------
-// The Shutdown endpoint that is used by unit tests.
+// The Shutdown endpoint is used by unit tests.
 // ---------------------------------------------------
 asio::awaitable<void> handle_shutdown_request(example::v1::ExampleExt::AsyncService& service,
                                               ServerShutdown& server_shutdown)

@@ -123,13 +123,11 @@ asio::awaitable<void> make_topic_subscription_request(agrpc::GrpcContext& grpc_c
                                                       example::v1::ExampleExt::Stub& stub)
 {
     grpc::ClientContext client_context;
-    client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(500));
+    client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
 
     std::unique_ptr<grpc::ClientAsyncReaderWriter<example::v1::Topic, example::v1::Feed>> reader_writer;
-    if (!co_await agrpc::request(&example::v1::ExampleExt::Stub::AsyncSubscribe, stub, client_context, reader_writer))
-    {
-        co_return;
-    }
+    abort_if_not(
+        co_await agrpc::request(&example::v1::ExampleExt::Stub::AsyncSubscribe, stub, client_context, reader_writer));
 
     example::v1::Topic topic;
     example::v1::Feed feed;
@@ -169,10 +167,6 @@ asio::awaitable<void> make_topic_subscription_request(agrpc::GrpcContext& grpc_c
     co_await read_stream.cleanup();
 
     abort_if_not(co_await agrpc::writes_done(*reader_writer));
-
-    while (co_await agrpc::read(*reader_writer, feed))
-    {
-    }
 
     grpc::Status status;
     co_await agrpc::finish(*reader_writer, status);

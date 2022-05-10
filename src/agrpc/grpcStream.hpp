@@ -33,7 +33,7 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief Cancellation safety for streaming RPCs
+ * @brief (experimental) Cancellation safety for streaming RPCs
  *
  * Lightweight, IoObject-like class with cancellation safety for RPC functions.
  */
@@ -107,25 +107,27 @@ class BasicGrpcStream
     /**
      * @brief Initiate an operation using the specified allocator
      *
-     * Typically only one operation may be running at a time.
+     * Only one operation may be running at a time.
      */
     template <class Allocator, class Function, class... Args>
-    void initiate(std::allocator_arg_t, Allocator allocator, Function&& function, Args&&... args)
+    auto& initiate(std::allocator_arg_t, Allocator allocator, Function&& function, Args&&... args)
     {
         running.store(true, std::memory_order_relaxed);
         std::forward<Function>(function)(std::forward<Args>(args)..., CompletionHandler<Allocator>{*this, allocator});
+        return *this;
     }
 
     /**
      * @brief Initiate an operation
      *
-     * Typically only one operation may be running at a time.
+     * Only one operation may be running at a time.
      */
     template <class Function, class... Args>
-    void initiate(Function&& function, Args&&... args)
+    auto& initiate(Function&& function, Args&&... args)
     {
         this->initiate(std::allocator_arg, std::allocator<void>{}, std::forward<Function>(function),
                        std::forward<Args>(args)...);
+        return *this;
     }
 
     /**
@@ -180,7 +182,7 @@ class BasicGrpcStream
 };
 
 /**
- * @brief A BasicGrpcStream that uses `agrpc::DefaultCompletionToken`
+ * @brief (experimental) A BasicGrpcStream that uses `agrpc::DefaultCompletionToken`
  */
 using GrpcStream = agrpc::DefaultCompletionToken::as_default_on_t<agrpc::BasicGrpcStream<agrpc::GrpcExecutor>>;
 
