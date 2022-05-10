@@ -12,20 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utils/grpcClientServerTest.hpp"
+#ifndef AGRPC_UTILS_GRPCCLIENTSERVERTESTBASE_HPP
+#define AGRPC_UTILS_GRPCCLIENTSERVERTESTBASE_HPP
 
-#include "test/v1/test.grpc.pb.h"
+#include "utils/grpcContextTest.hpp"
 
-#include <grpcpp/server_context.h>
+#include <grpcpp/client_context.h>
+
+#include <cstdint>
+#include <string>
 
 namespace test
 {
-GrpcClientServerTest::GrpcClientServerTest()
+struct GrpcClientServerTestBase : test::GrpcContextTest
 {
-    builder.RegisterService(&service);
-    this->server = builder.BuildAndStart();
-    stub = test::v1::Test::NewStub(this->channel);
-}
+    uint16_t port;
+    std::string address;
+    std::shared_ptr<grpc::Channel> channel;
+    grpc::ClientContext client_context;
 
-GrpcClientServerTest::~GrpcClientServerTest() { stub.reset(); }
+    GrpcClientServerTestBase();
+
+    ~GrpcClientServerTestBase();
+};
 }  // namespace test
+
+#endif  // AGRPC_UTILS_GRPCCLIENTSERVERTESTBASE_HPP

@@ -59,7 +59,7 @@ struct ServerShutdown
         if (!shutdown_thread)
         {
             // This will cause all coroutines to run to completion normally
-            // while returning `false` from RPC related steps, cancelling the signal
+            // while returning `false` from RPC related steps. Also cancel the signals
             // so that the GrpcContext will eventually run out of work and return
             // from `run()`.
             shutdown_thread.emplace(

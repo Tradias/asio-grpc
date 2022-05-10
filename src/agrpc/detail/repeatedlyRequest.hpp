@@ -349,6 +349,14 @@ auto initiate_request_from_rpc_context(detail::ServerSingleArgRequest<RPC, Respo
                           std::forward<CompletionToken>(token));
 }
 
+template <class CompletionToken>
+auto initiate_request_from_rpc_context(detail::GenericRPCMarker, grpc::AsyncGenericService& service,
+                                       detail::GenericRPCContext& rpc_context, CompletionToken&& token)
+{
+    return agrpc::request(service, rpc_context.server_context(), rpc_context.responder(),
+                          std::forward<CompletionToken>(token));
+}
+
 template <class RequestHandler, class RPC, class Service, class CompletionHandler, bool IsStoppable>
 class RepeatedlyRequestAwaitableOperation
     : public detail::TypeErasedNoArgOperation,

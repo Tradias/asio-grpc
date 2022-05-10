@@ -14,44 +14,92 @@
 
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asioUtils.hpp"
+#include "utils/doctest.hpp"
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/grpcContextTest.hpp"
+#include "utils/grpcGenericClientServerTest.hpp"
+#include "utils/protobuf.hpp"
 #include "utils/rpc.hpp"
 
 #include <agrpc/repeatedlyRequest.hpp>
 #include <agrpc/rpc.hpp>
 #include <agrpc/wait.hpp>
-#include <doctest/doctest.h>
 
 #include <cstddef>
 #include <optional>
 #include <thread>
 #include <vector>
 
-DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
+struct TypedRequestHandler
 {
-struct GrpcRepeatedlyRequestTest : test::GrpcClientServerTest
-{
-    template <class RPC, class Service, class ServerFunction, class ClientFunction, class Allocator>
-    auto test(RPC rpc, Service& service, ServerFunction server_function, ClientFunction client_function,
-              Allocator allocator)
+    using Test = test::GrpcClientServerTest;
+
+    template <class RPC, class RequestHandler>
+    static auto invoke_repeatedly_request(RPC rpc, test::v1::Test::AsyncService& service, RequestHandler handler)
     {
-        agrpc::repeatedly_request(rpc, service, test::RpcSpawner{grpc_context, std::move(server_function), allocator});
-        asio::spawn(get_executor(), std::move(client_function));
+        return agrpc::repeatedly_request(rpc, service, handler);
+    }
+
+    static auto get_request_args(grpc::ServerContext&, test::msg::Request& request,
+                                 grpc::ServerAsyncResponseWriter<test::msg::Response>& writer,
+                                 asio::yield_context yield)
+    {
+        return std::make_tuple(request, writer, std::move(yield));
+    }
+
+    static void write_response(grpc::ServerAsyncResponseWriter<test::msg::Response>& writer,
+                               const test::msg::Response& response, const asio::yield_context& yield)
+    {
+        CHECK(agrpc::finish(writer, response, grpc::Status::OK, yield));
     }
 };
 
-TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request unary")
+TYPE_TO_STRING(TypedRequestHandler);
+
+struct GenericRequestHandler
 {
+    using Test = test::GrpcGenericClientServerTest;
+
+    template <class RPC, class RequestHandler>
+    static auto invoke_repeatedly_request(RPC, grpc::AsyncGenericService& service, RequestHandler handler)
+    {
+        return agrpc::repeatedly_request(service, handler);
+    }
+
+    static auto get_request_args(grpc::GenericServerContext&, grpc::GenericServerAsyncReaderWriter& reader_writer,
+                                 asio::yield_context yield)
+    {
+        grpc::ByteBuffer buffer;
+        CHECK(agrpc::read(reader_writer, buffer, yield));
+        return std::make_tuple(test::grpc_buffer_to_message<test::msg::Request>(buffer), reader_writer,
+                               std::move(yield));
+    }
+
+    static void write_response(grpc::GenericServerAsyncReaderWriter& reader_writer, const test::msg::Response& response,
+                               const asio::yield_context& yield)
+    {
+        const auto response_buffer = test::message_to_grpc_buffer(response);
+        CHECK(agrpc::write_and_finish(reader_writer, response_buffer, {}, grpc::Status::OK, yield));
+    }
+};
+
+TYPE_TO_STRING(GenericRequestHandler);
+
+DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
+{
+TEST_CASE_TEMPLATE("yield_context repeatedly_request unary", T, TypedRequestHandler, GenericRequestHandler)
+{
+    typename T::Test test;
     auto request_received_count{0};
     auto request_send_count{0};
     std::vector<size_t> completion_order;
-    agrpc::repeatedly_request(
-        &test::v1::Test::AsyncService::RequestUnary, service,
-        test::RpcSpawner{grpc_context,
-                         [&](grpc::ServerContext&, test::msg::Request& request,
-                             grpc::ServerAsyncResponseWriter<test::msg::Response>& writer, asio::yield_context yield)
+    T::invoke_repeatedly_request(
+        &test::v1::Test::AsyncService::RequestUnary, test.service,
+        test::RpcSpawner{test.grpc_context,
+                         [&](auto&&... args)
                          {
+                             auto&& [request, writer, yield] =
+                                 T::get_request_args(std::forward<decltype(args)>(args)...);
                              ++request_received_count;
                              grpc::Alarm alarm;
                              if (0 == request.integer())
@@ -64,33 +112,45 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request u
                              }
                              test::msg::Response response;
                              response.set_integer(21);
-                             CHECK(agrpc::finish(writer, response, grpc::Status::OK, yield));
+                             T::write_response(writer, response, yield);
                          },
-                         get_allocator()});
+                         test.get_allocator()});
+    test::v1::Test::Stub test_stub{test.channel};
     for (size_t i = 0; i < 3; ++i)
     {
-        asio::spawn(grpc_context,
+        asio::spawn(test.grpc_context,
                     [&](asio::yield_context yield)
                     {
                         test::PerformUnarySuccessOptions options;
                         options.request_payload = request_send_count;
                         ++request_send_count;
-                        test::client_perform_unary_success(grpc_context, *stub, yield, options);
+                        test::client_perform_unary_success(test.grpc_context, test_stub, yield, options);
                         completion_order.emplace_back(options.request_payload);
                         if (3 == completion_order.size())
                         {
-                            grpc_context.stop();
+                            test.grpc_context.stop();
                         }
                     });
     }
-    grpc_context.run();
+    test.grpc_context.run();
     CHECK_EQ(3, request_received_count);
-    CHECK(allocator_has_been_used());
+    CHECK(test.allocator_has_been_used());
     REQUIRE_EQ(3, completion_order.size());
     CHECK_EQ(2, completion_order[0]);
     CHECK_EQ(1, completion_order[1]);
     CHECK_EQ(0, completion_order[2]);
 }
+
+struct GrpcRepeatedlyRequestTest : test::GrpcClientServerTest
+{
+    template <class RPC, class Service, class ServerFunction, class ClientFunction, class Allocator>
+    auto test(RPC rpc, Service& service, ServerFunction server_function, ClientFunction client_function,
+              Allocator allocator)
+    {
+        agrpc::repeatedly_request(rpc, service, test::RpcSpawner{grpc_context, std::move(server_function), allocator});
+        asio::spawn(get_executor(), std::move(client_function));
+    }
+};
 
 TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request client streaming")
 {
@@ -187,6 +247,29 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "RepeatedlyRequestContext member fu
                     agrpc::writes_done(*writer, yield);
                     grpc::Status status;
                     agrpc::finish(*writer, status, yield);
+                    grpc_context.stop();
+                });
+    grpc_context.run();
+}
+
+TEST_CASE_FIXTURE(test::GrpcGenericClientServerTest, "RepeatedlyRequestContext member functions for generic requests")
+{
+    agrpc::repeatedly_request(
+        service,
+        asio::bind_executor(get_executor(),
+                            [&](agrpc::GenericRepeatedlyRequestContext<>&& rpc_context)
+                            {
+                                [[maybe_unused]] auto&& responder = rpc_context.responder();
+                                CHECK(std::is_same_v<grpc::GenericServerAsyncReaderWriter&, decltype(responder)>);
+                                [[maybe_unused]] auto&& context = rpc_context.server_context();
+                                CHECK(std::is_same_v<grpc::GenericServerContext&, decltype(context)>);
+                            }));
+    test::v1::Test::Stub test_stub{channel};
+    asio::spawn(get_executor(),
+                [&](asio::yield_context yield)
+                {
+                    CHECK(test::client_perform_unary_unchecked(grpc_context, test_stub, yield,
+                                                               test::ten_milliseconds_from_now()));
                     grpc_context.stop();
                 });
     grpc_context.run();

@@ -15,6 +15,7 @@
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asioUtils.hpp"
 #include "utils/countingAllocator.hpp"
+#include "utils/doctest.hpp"
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/grpcContextTest.hpp"
 #include "utils/rpc.hpp"
@@ -22,7 +23,6 @@
 #include <agrpc/grpcInitiate.hpp>
 #include <agrpc/rpc.hpp>
 #include <agrpc/wait.hpp>
-#include <doctest/doctest.h>
 
 #include <cstddef>
 #include <optional>

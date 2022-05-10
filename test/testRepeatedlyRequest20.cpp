@@ -14,15 +14,72 @@
 
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asioUtils.hpp"
+#include "utils/doctest.hpp"
 #include "utils/grpcClientServerTest.hpp"
+#include "utils/grpcGenericClientServerTest.hpp"
+#include "utils/protobuf.hpp"
 #include "utils/rpc.hpp"
 
 #include <agrpc/repeatedlyRequest.hpp>
 #include <agrpc/rpc.hpp>
 #include <agrpc/wait.hpp>
-#include <doctest/doctest.h>
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
+struct TypedAwaitableRequestHandler
+{
+    using Test = test::GrpcClientServerTest;
+
+    template <class RPC, class RequestHandler>
+    static auto invoke_repeatedly_request(RPC rpc, test::v1::Test::AsyncService& service, RequestHandler handler)
+    {
+        return agrpc::repeatedly_request(rpc, service, handler);
+    }
+
+    static asio::awaitable<test::msg::Request> read_request(
+        grpc::ServerContext&, grpc::ServerAsyncReader<test::msg::Response, test::msg::Request>& reader)
+    {
+        test::msg::Request request;
+        CHECK(co_await agrpc::read(reader, request));
+        co_return request;
+    }
+
+    static asio::awaitable<bool> write_response(
+        grpc::ServerAsyncReader<test::msg::Response, test::msg::Request>& reader, const test::msg::Response& response)
+    {
+        co_return co_await agrpc::finish(reader, response, grpc::Status::OK);
+    }
+};
+
+TYPE_TO_STRING(TypedAwaitableRequestHandler);
+
+struct GenericAwaitableRequestHandler
+{
+    using Test = test::GrpcGenericClientServerTest;
+
+    template <class RPC, class RequestHandler>
+    static auto invoke_repeatedly_request(RPC, grpc::AsyncGenericService& service, RequestHandler handler)
+    {
+        return agrpc::repeatedly_request(service, handler);
+    }
+
+    static asio::awaitable<test::msg::Request> read_request(grpc::GenericServerContext&,
+                                                            grpc::GenericServerAsyncReaderWriter& reader_writer)
+    {
+        grpc::ByteBuffer buffer;
+        CHECK(co_await agrpc::read(reader_writer, buffer));
+        co_return test::grpc_buffer_to_message<test::msg::Request>(buffer);
+    }
+
+    static asio::awaitable<bool> write_response(grpc::GenericServerAsyncReaderWriter& reader_writer,
+                                                const test::msg::Response& response)
+    {
+        const auto response_buffer = test::message_to_grpc_buffer(response);
+        co_return co_await agrpc::write_and_finish(reader_writer, response_buffer, {}, grpc::Status::OK);
+    }
+};
+
+TYPE_TO_STRING(GenericAwaitableRequestHandler);
+
 DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 {
 TEST_CASE_TEMPLATE("awaitable repeatedly_request unary", UseAllocator, std::true_type, std::false_type)
@@ -86,43 +143,45 @@ TEST_CASE_TEMPLATE("awaitable repeatedly_request unary", UseAllocator, std::true
     }
 }
 
-TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request client streaming")
+TEST_CASE_TEMPLATE("awaitable repeatedly_request client streaming", T, TypedAwaitableRequestHandler,
+                   GenericAwaitableRequestHandler)
 {
+    typename T::Test test;
     bool is_shutdown{false};
     auto request_count{0};
     {
-        const auto request_handler = asio::bind_executor(
-            asio::require(get_executor(), asio::execution::allocator(get_allocator())),
-            [&](grpc::ServerContext&,
-                grpc::ServerAsyncReader<test::msg::Response, test::msg::Request>& reader) -> asio::awaitable<void>
-            {
-                CHECK(co_await agrpc::send_initial_metadata(reader));
-                test::msg::Request request;
-                CHECK(co_await agrpc::read(reader, request));
-                CHECK_EQ(42, request.integer());
-                ++request_count;
-                if (request_count > 3)
-                {
-                    is_shutdown = true;
-                }
-                test::msg::Response response;
-                response.set_integer(21);
-                CHECK(co_await agrpc::finish(reader, response, grpc::Status::OK));
-            });
-        agrpc::repeatedly_request(&test::v1::Test::AsyncService::RequestClientStreaming, service, request_handler);
+        const auto request_handler =
+            asio::bind_executor(asio::require(test.get_executor(), asio::execution::allocator(test.get_allocator())),
+                                [&](auto& server_context, auto& reader) -> asio::awaitable<void>
+                                {
+                                    CHECK(co_await agrpc::send_initial_metadata(reader));
+                                    const auto request = co_await T::read_request(server_context, reader);
+                                    CHECK_EQ(42, request.integer());
+                                    ++request_count;
+                                    if (request_count > 3)
+                                    {
+                                        is_shutdown = true;
+                                    }
+                                    test::msg::Response response;
+                                    response.set_integer(21);
+                                    CHECK(co_await T::write_response(reader, response));
+                                });
+        T::invoke_repeatedly_request(&test::v1::Test::AsyncService::RequestClientStreaming, test.service,
+                                     request_handler);
     }
-    asio::spawn(grpc_context,
+    test::v1::Test::Stub test_stub{test.channel};
+    asio::spawn(test.grpc_context,
                 [&](auto&& yield)
                 {
                     while (!is_shutdown)
                     {
-                        test::client_perform_client_streaming_success(*stub, yield);
+                        test::client_perform_client_streaming_success(test_stub, yield);
                     }
-                    server->Shutdown();
+                    test.server->Shutdown();
                 });
-    grpc_context.run();
+    test.grpc_context.run();
     CHECK_EQ(4, request_count);
-    CHECK(allocator_has_been_used());
+    CHECK(test.allocator_has_been_used());
 }
 
 template <class Awaitable = asio::awaitable<void>>

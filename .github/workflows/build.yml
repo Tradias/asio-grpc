@@ -26,7 +26,7 @@ on:
 
 env:
   VCPKG_VERSION: '8ea52bad1ac13e1afb892ccba6c261d8e82d06fd' # Apr 21, 2022
-  CMAKE_ARGS: '-DCMAKE_BUILD_TYPE=Release -DVCPKG_MANIFEST_INSTALL=off'
+  CMAKE_ARGS: '-DCMAKE_BUILD_TYPE=Release -DVCPKG_MANIFEST_INSTALL=off -DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=off'
   CTEST_ARGS: '-T test --output-on-failure --timeout 200 --no-tests=error --parallel 8'
 
 jobs:
@@ -237,16 +237,56 @@ jobs:
 
     - name: Run doxygen
       run: |
-        cmake -E rm -r ${{ github.workspace }}/docs &&\
+        cmake -E make_directory ${{ github.workspace }}/docs &&\
+        cmake -E touch ${{ github.workspace }}/docs/.nojekyll &&\
         cmake --build ${{ github.workspace }}/build-12 --config Release --target asio-grpc-doxygen
 
     - name: Push doxygen changes
+      if: ${{ github.ref_name == 'master' }}
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add docs/* || echo "nothing to commit"
-        git commit -m "Re-generate Github Pages" || echo "nothing to commit"
+        git add -f docs/.nojekyll || echo "nothing to add"
+        git add -f docs/* || echo "nothing to add"
         remote="https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
-        branch="${GITHUB_REF:11}"
-        git push "${remote}" ${branch} || echo "nothing to push"
+        git commit -m "Re-generate Github Pages" && \
+        git push --force "${remote}" $(git log -n 1 --pretty=format:"%H"):gh-pages || echo "nothing to push"
       shell: bash
+
+
+  default-gcc-build:
+    name: 'Ubuntu/20.04/Default'
+    runs-on: ubuntu-20.04
+    env:
+      TRIPLET: 'x64-linux-release'
+      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-release -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=on'
+
+    steps:
+    - name: Install protobuf, gRPC and doctest
+      run: sudo apt-get install libgrpc++-dev protobuf-compiler-grpc libprotobuf-dev doctest-dev
+
+    - uses: actions/checkout@v2
+
+    - name: Install vcpkg
+      uses: lukka/run-vcpkg@v10
+      with:
+        vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
+        vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
+        vcpkgJsonGlob: 'vcpkg.json'
+        appendedCacheKey: '${{ env.TRIPLET }}-gcc-default'
+
+    - name: Run vcpkg
+      run: |
+        ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} \
+          --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg \
+          libunifex boost-coroutine boost-asio boost-interprocess boost-thread boost-container boost-process asio[coroutine]
+      working-directory: ${{ env.VCPKG_ROOT }}
+
+    - name: Configure CMake
+      run: cmake --preset default -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_ARGS }} ${{ env.CMAKE_EXTRA_ARGS }}
+
+    - name: Build
+      run: cmake --build --preset default --config Release --parallel $(nproc)
+
+    - name: Test
+      run: ctest --preset default --config Release

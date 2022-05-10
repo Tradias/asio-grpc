@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "utils/doctest.hpp"
 #include "utils/freePort.hpp"
 
 #include <boost/process/child.hpp>
-#include <doctest/doctest.h>
 
 #include <thread>
 
@@ -54,6 +54,11 @@ TEST_CASE("examples")
     {
         client_program = ASIO_GRPC_EXAMPLE_UNIFEX_CLIENT;
         server_program = ASIO_GRPC_EXAMPLE_UNIFEX_SERVER;
+    }
+    SUBCASE("generic")
+    {
+        client_program = ASIO_GRPC_EXAMPLE_GENERIC_CLIENT;
+        server_program = ASIO_GRPC_EXAMPLE_GENERIC_SERVER;
     }
     boost::process::child server(server_program, args);
     REQUIRE(server.valid());

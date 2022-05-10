@@ -41,9 +41,11 @@ struct GrpcContextTest
 {
     grpc::ServerBuilder builder;
     std::unique_ptr<grpc::Server> server;
-    std::array<std::byte, 4096> buffer{};
-    agrpc::detail::pmr::monotonic_buffer_resource resource{buffer.data(), buffer.size()};
-    agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
+    std::array<std::byte, 4096> buffer;
+    agrpc::detail::pmr::monotonic_buffer_resource resource;
+    agrpc::GrpcContext grpc_context;
+
+    GrpcContextTest();
 
     agrpc::GrpcExecutor get_executor() noexcept;
 

@@ -26,10 +26,14 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+struct GenericRPCMarker
+{
+};
+
 class RPCContextBase
 {
   public:
-    constexpr auto& server_context() noexcept { return context; }
+    auto& server_context() noexcept { return context; }
 
   private:
     grpc::ServerContext context{};
@@ -43,14 +47,11 @@ class MultiArgRPCContext : public detail::RPCContextBase
 
     MultiArgRPCContext() = default;
 
-    constexpr auto args() noexcept
-    {
-        return std::forward_as_tuple(this->server_context(), this->request_, this->responder_);
-    }
+    auto args() noexcept { return std::forward_as_tuple(this->server_context(), this->request_, this->responder_); }
 
-    constexpr auto& request() noexcept { return this->request_; }
+    auto& request() noexcept { return this->request_; }
 
-    constexpr auto& responder() noexcept { return this->responder_; }
+    auto& responder() noexcept { return this->responder_; }
 
   private:
     Request request_{};
@@ -65,12 +66,28 @@ class SingleArgRPCContext : public detail::RPCContextBase
 
     SingleArgRPCContext() = default;
 
-    constexpr auto args() noexcept { return std::forward_as_tuple(this->server_context(), this->responder_); }
+    auto args() noexcept { return std::forward_as_tuple(this->server_context(), this->responder_); }
 
-    constexpr auto& responder() noexcept { return this->responder_; }
+    auto& responder() noexcept { return this->responder_; }
 
   private:
     Responder responder_{&this->server_context()};
+};
+
+class GenericRPCContext
+{
+  public:
+    using Signature = void(grpc::GenericServerContext&, grpc::GenericServerAsyncReaderWriter&);
+
+    auto& server_context() noexcept { return this->context; }
+
+    auto args() noexcept { return std::forward_as_tuple(this->context, this->responder_); }
+
+    auto& responder() noexcept { return this->responder_; }
+
+  private:
+    grpc::GenericServerContext context{};
+    grpc::GenericServerAsyncReaderWriter responder_{&this->context};
 };
 
 template <class>
@@ -86,6 +103,12 @@ template <class RPC, class Responder>
 struct RPCContextForRPC<detail::ServerSingleArgRequest<RPC, Responder>>
 {
     using Type = detail::SingleArgRPCContext<Responder>;
+};
+
+template <>
+struct RPCContextForRPC<detail::GenericRPCMarker>
+{
+    using Type = detail::GenericRPCContext;
 };
 
 template <class RPC>
@@ -105,6 +128,13 @@ void initiate_request_from_rpc_context(detail::ServerSingleArgRequest<RPC, Respo
                                        grpc::ServerCompletionQueue* cq, void* tag)
 {
     (service.*rpc)(&rpc_context.server_context(), &rpc_context.responder(), cq, cq, tag);
+}
+
+inline void initiate_request_from_rpc_context(detail::GenericRPCMarker, grpc::AsyncGenericService& service,
+                                              detail::GenericRPCContext& rpc_context, grpc::ServerCompletionQueue* cq,
+                                              void* tag)
+{
+    service.RequestCall(&rpc_context.server_context(), &rpc_context.responder(), cq, cq, tag);
 }
 }
 

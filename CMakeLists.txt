@@ -57,6 +57,10 @@ set(ASIO_GRPC_COVERAGE_OUTPUT_FILE
     CACHE PATH "Output file for SonarQube XML coverage files")
 option(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS "Compile tests with -fsanitize=address,undefined" off)
 option(ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET "Create target to check header files for syntax errors" on)
+option(ASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK
+       "Fall back to pkg-config when a dependency cannot be found through find_package" on)
+option(ASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST
+       "Add test to ctest that will verify installation and asio_grpc_protobuf_generate" on)
 
 set(ASIO_GRPC_PROJECT_ROOT "${CMAKE_CURRENT_LIST_DIR}")
 
@@ -67,21 +71,7 @@ if(ASIO_GRPC_BUILD_TESTS)
     set(ASIO_GRPC_BOOST_USE_STATIC_RUNTIME ${Boost_USE_STATIC_RUNTIME})
 
     # find dependencies
-    find_package(protobuf)
-    find_package(gRPC)
-    if(ASIO_GRPC_USE_BOOST_CONTAINER)
-        find_package(Boost REQUIRED COMPONENTS coroutine thread filesystem container)
-    else()
-        find_package(Boost REQUIRED COMPONENTS coroutine thread filesystem)
-    endif()
-    find_package(asio)
-    if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
-        find_package(unifex)
-        if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-            include(FindPkgConfig)
-            pkg_check_modules(liburing IMPORTED_TARGET GLOBAL liburing)
-        endif()
-    endif()
+    include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcFindPackages.cmake")
 
     # include CMake modules
     include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcCompileOptions.cmake")

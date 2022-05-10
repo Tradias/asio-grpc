@@ -14,12 +14,12 @@
 
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asioUtils.hpp"
+#include "utils/doctest.hpp"
 #include "utils/grpcClientServerTest.hpp"
 #include "utils/time.hpp"
 
 #include <agrpc/rpc.hpp>
 #include <agrpc/wait.hpp>
-#include <doctest/doctest.h>
 
 #include <cstddef>
 
@@ -241,8 +241,8 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline no ca
                    [&]() -> asio::awaitable<void>
                    {
                        test::msg::Request request;
-                       const auto reader =
-                           stub->AsyncUnary(&client_context, request, agrpc::get_completion_queue(grpc_context));
+                       const auto reader = agrpc::request(&test::v1::Test::Stub::AsyncUnary, *stub, client_context,
+                                                          request, grpc_context);
                        test::msg::Response response;
                        grpc::Alarm alarm;
                        const auto not_too_exceed = test::one_seconds_from_now();

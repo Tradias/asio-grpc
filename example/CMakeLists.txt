@@ -43,57 +43,71 @@ endfunction()
 asio_grpc_add_example_proto_target(example-protos)
 target_compile_features(asio-grpc-example-protos PUBLIC cxx_std_17)
 
+if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
+    asio_grpc_add_example_proto_target(example-protos-cpp20)
+    target_compile_features(asio-grpc-example-protos-cpp20 PUBLIC cxx_std_20)
+endif()
+
 # examples
-function(asio_grpc_add_example _asio_grpc_name)
+function(asio_grpc_add_example _asio_grpc_name _asio_grpc_cxx_standard)
     add_executable(asio-grpc-example-${_asio_grpc_name})
 
     target_sources(asio-grpc-example-${_asio_grpc_name} PRIVATE ${_asio_grpc_name}.cpp)
 
-    target_link_libraries(
-        asio-grpc-example-${_asio_grpc_name} PRIVATE asio-grpc-example-helper asio-grpc-example-protos-cpp20
-                                                     asio-grpc-cpp20-compile-options)
+    target_link_libraries(asio-grpc-example-${_asio_grpc_name} PRIVATE asio-grpc-example-helper
+                                                                       asio-grpc-common-compile-options)
+
+    if(${_asio_grpc_cxx_standard} STREQUAL "20")
+        target_link_libraries(asio-grpc-example-${_asio_grpc_name} PRIVATE asio-grpc-example-protos-cpp20
+                                                                           asio-grpc-cpp20-compile-options)
+    else()
+        target_link_libraries(asio-grpc-example-${_asio_grpc_name} PRIVATE asio-grpc-example-protos)
+    endif()
 endfunction()
 
 if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
-    asio_grpc_add_example_proto_target(example-protos-cpp20)
-    target_compile_features(asio-grpc-example-protos-cpp20 PUBLIC cxx_std_20)
+    asio_grpc_add_example(generic-server "17")
+    target_link_libraries(asio-grpc-example-generic-server PRIVATE asio-grpc::asio-grpc Boost::coroutine)
 
-    asio_grpc_add_example(hello-world-client)
+    asio_grpc_add_example(generic-client "17")
+    target_link_libraries(asio-grpc-example-generic-client PRIVATE asio-grpc::asio-grpc Boost::coroutine)
+
+    asio_grpc_add_example(hello-world-client "20")
     target_link_libraries(asio-grpc-example-hello-world-client PRIVATE asio-grpc::asio-grpc)
 
-    asio_grpc_add_example(hello-world-server)
+    asio_grpc_add_example(hello-world-server "20")
     target_link_libraries(asio-grpc-example-hello-world-server PRIVATE asio-grpc::asio-grpc)
 
-    asio_grpc_add_example(streaming-client)
+    asio_grpc_add_example(streaming-client "20")
     target_link_libraries(asio-grpc-example-streaming-client PRIVATE asio-grpc::asio-grpc)
 
-    asio_grpc_add_example(streaming-server)
+    asio_grpc_add_example(streaming-server "20")
     target_link_libraries(asio-grpc-example-streaming-server PRIVATE asio-grpc::asio-grpc)
 
-    asio_grpc_add_example(share-io-context-client)
+    asio_grpc_add_example(share-io-context-client "20")
     target_link_libraries(asio-grpc-example-share-io-context-client PRIVATE asio-grpc::asio-grpc)
 
-    asio_grpc_add_example(share-io-context-server)
+    asio_grpc_add_example(share-io-context-server "20")
     target_link_libraries(asio-grpc-example-share-io-context-server PRIVATE asio-grpc::asio-grpc)
 
-    if(ASIO_GRPC_ENABLE_IO_URING_EXAMPLES OR ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-        asio_grpc_add_example(file-transfer-client)
+    if(ASIO_GRPC_ENABLE_IO_URING_EXAMPLES OR "${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
+        asio_grpc_add_example(file-transfer-client "20")
         target_link_libraries(asio-grpc-example-file-transfer-client
                               PRIVATE asio-grpc::asio-grpc $<$<PLATFORM_ID:Linux>:PkgConfig::liburing>)
         target_compile_definitions(asio-grpc-example-file-transfer-client
                                    PRIVATE $<$<PLATFORM_ID:Linux>:BOOST_ASIO_HAS_IO_URING BOOST_ASIO_DISABLE_EPOLL>)
 
-        asio_grpc_add_example(file-transfer-server)
+        asio_grpc_add_example(file-transfer-server "20")
         target_link_libraries(asio-grpc-example-file-transfer-server
                               PRIVATE asio-grpc::asio-grpc $<$<PLATFORM_ID:Linux>:PkgConfig::liburing>)
         target_compile_definitions(asio-grpc-example-file-transfer-server
                                    PRIVATE $<$<PLATFORM_ID:Linux>:BOOST_ASIO_HAS_IO_URING BOOST_ASIO_DISABLE_EPOLL>)
     endif()
 
-    asio_grpc_add_example(unifex-server)
+    asio_grpc_add_example(unifex-server "20")
     target_link_libraries(asio-grpc-example-unifex-server PRIVATE asio-grpc::asio-grpc-unifex)
 
-    asio_grpc_add_example(unifex-client)
+    asio_grpc_add_example(unifex-client "20")
     target_link_libraries(asio-grpc-example-unifex-client PRIVATE asio-grpc::asio-grpc-unifex)
 endif()
 

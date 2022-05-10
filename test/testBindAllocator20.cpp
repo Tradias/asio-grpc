@@ -13,12 +13,12 @@
 // limitations under the License.
 
 #include "utils/asioUtils.hpp"
+#include "utils/doctest.hpp"
 #include "utils/grpcContextTest.hpp"
 #include "utils/time.hpp"
 
 #include <agrpc/bindAllocator.hpp>
 #include <agrpc/wait.hpp>
-#include <doctest/doctest.h>
 
 #include <vector>
 

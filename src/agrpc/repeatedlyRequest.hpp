@@ -133,6 +133,18 @@ class RepeatedlyRequestFn
         return RepeatedlyRequestFn::impl(rpc, service, std::forward<RequestHandler>(request_handler),
                                          std::forward<CompletionToken>(token));
     }
+
+    /**
+     * @brief Overload for generic RPCs
+     */
+    template <class RequestHandler, class CompletionToken = detail::NoOp>
+    auto operator()(grpc::AsyncGenericService& service, RequestHandler&& request_handler,
+                    CompletionToken&& token = {}) const
+    {
+        return RepeatedlyRequestFn::impl(detail::GenericRPCMarker{}, service,
+                                         std::forward<RequestHandler>(request_handler),
+                                         std::forward<CompletionToken>(token));
+    }
 };
 }  // namespace detail
 
