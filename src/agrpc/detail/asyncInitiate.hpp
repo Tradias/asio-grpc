@@ -25,8 +25,8 @@ namespace detail
 template <class Signature>
 struct InitiateImmediateCompletion;
 
-template <class R, class... Args>
-struct InitiateImmediateCompletion<R(Args...)>
+template <class... Args>
+struct InitiateImmediateCompletion<void(Args...)>
 {
     template <class CompletionHandler>
     void operator()(CompletionHandler&& ch) const

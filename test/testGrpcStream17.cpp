@@ -54,7 +54,7 @@ TEST_CASE_TEMPLATE("CancelSafe: wait before initiate", T, bool, test::ErrorCode)
 {
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
     bool ok{};
-    agrpc::CancelSafe<T> safe;
+    agrpc::CancelSafe<void(T)> safe;
     safe.wait(asio::bind_executor(grpc_context,
                                   [&](test::ErrorCode ec, auto&&...)
                                   {
@@ -69,7 +69,7 @@ TEST_CASE_TEMPLATE("CancelSafe: wait for already completed operation", T, bool, 
 {
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
     bool ok{};
-    agrpc::CancelSafe<T> safe;
+    agrpc::CancelSafe<void(T)> safe;
     safe.token()(T{});
     grpc::Alarm alarm;
     agrpc::wait(alarm, test::ten_milliseconds_from_now(),
@@ -89,7 +89,7 @@ TEST_CASE_TEMPLATE("CancelSafe: wait for already completed operation", T, bool, 
 TEST_CASE("CancelSafe: wait for asio::steady_timer")
 {
     asio::io_context io_context;
-    agrpc::CancelSafe<boost::system::error_code> safe;
+    agrpc::CancelSafe<void(boost::system::error_code)> safe;
     asio::steady_timer timer{io_context, std::chrono::seconds(5)};
     timer.async_wait(safe.token());
     asio::cancellation_signal signal;
@@ -107,7 +107,7 @@ TEST_CASE("CancelSafe: wait for asio::steady_timer")
 TEST_CASE("CancelSafe: can handle move-only completion arguments")
 {
     asio::io_context io_context;
-    agrpc::CancelSafe<std::unique_ptr<int>> safe;
+    agrpc::CancelSafe<void(std::unique_ptr<int>)> safe;
     auto token = safe.token();
     asio::async_initiate<decltype(token), void(std::unique_ptr<int> &&)>(
         [&](auto ch)
