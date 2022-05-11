@@ -283,7 +283,7 @@ jobs:
       working-directory: ${{ env.VCPKG_ROOT }}
 
     - name: Configure CMake
-      run: cmake --preset default -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_ARGS }} ${{ env.CMAKE_EXTRA_ARGS }}
+      run: cmake --preset default -DCMAKE_CXX_COMPILER=$(which g++-10) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_ARGS }} ${{ env.CMAKE_EXTRA_ARGS }}
 
     - name: Build
       run: cmake --build --preset default --config Release --parallel $(nproc)

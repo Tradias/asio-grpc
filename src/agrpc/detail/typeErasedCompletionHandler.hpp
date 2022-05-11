@@ -53,8 +53,8 @@ using AtomicTypeErasedCompletionHandler = detail::BasicTypeErasedCompletionHandl
 template <class Signature>
 using TypeErasedCompletionHandler = detail::BasicTypeErasedCompletionHandler<Signature, void*>;
 
-template <class VoidPointer, class R, class... Args>
-class BasicTypeErasedCompletionHandler<R(Args...), VoidPointer>
+template <class VoidPointer, class... Args>
+class BasicTypeErasedCompletionHandler<void(Args...), VoidPointer>
 {
   private:
     using Complete = void (*)(void*, Args...);
@@ -88,15 +88,15 @@ class BasicTypeErasedCompletionHandler<R(Args...), VoidPointer>
 
     auto release() noexcept
     {
-        return detail::TypeErasedCompletionHandler<R(Args...)>{this->release_completion_handler(), complete_};
+        return detail::TypeErasedCompletionHandler<void(Args...)>{this->release_completion_handler(), complete_};
     }
 
     explicit operator bool() const noexcept { return static_cast<bool>(completion_handler); }
 
     template <class... CompletionArgs>
-    R complete(CompletionArgs&&... args) &&
+    void complete(CompletionArgs&&... args) &&
     {
-        return complete_(this->release_completion_handler(), std::forward<CompletionArgs>(args)...);
+        complete_(this->release_completion_handler(), std::forward<CompletionArgs>(args)...);
     }
 
   private:

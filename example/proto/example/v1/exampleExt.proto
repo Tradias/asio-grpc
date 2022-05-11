@@ -19,11 +19,21 @@ package example.v1;
 import "google/protobuf/empty.proto";
 
 service ExampleExt {
+  rpc Subscribe(stream Topic) returns (stream Feed) {}
+
   rpc SlowUnary(SlowRequest) returns (google.protobuf.Empty) {}
 
   rpc Shutdown(google.protobuf.Empty) returns (google.protobuf.Empty) {}
 
   rpc SendFile(stream SendFileRequest) returns (google.protobuf.Empty) {}
+}
+
+message Topic {
+  int32 id = 1;
+}
+
+message Feed {
+  string content = 1;
 }
 
 message SlowRequest {

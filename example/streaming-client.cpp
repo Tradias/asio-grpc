@@ -116,6 +116,66 @@ asio::awaitable<void> make_bidirectional_streaming_request(example::v1::Example:
 //
 
 // ---------------------------------------------------
+// A bidirectional-streaming RPC where the client subscribes to a topic and the server sends the feed for the last
+// subscribed topic every 333ms. The feed is a simple string identified by an integer in the topic.
+// ---------------------------------------------------
+asio::awaitable<void> make_topic_subscription_request(agrpc::GrpcContext& grpc_context,
+                                                      example::v1::ExampleExt::Stub& stub)
+{
+    grpc::ClientContext client_context;
+    client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
+
+    std::unique_ptr<grpc::ClientAsyncReaderWriter<example::v1::Topic, example::v1::Feed>> reader_writer;
+    abort_if_not(
+        co_await agrpc::request(&example::v1::ExampleExt::Stub::AsyncSubscribe, stub, client_context, reader_writer));
+
+    example::v1::Topic topic;
+    example::v1::Feed feed;
+    grpc::Alarm alarm;
+    agrpc::GrpcStream read_stream{grpc_context};
+
+    bool read_ok{true};
+    for (int32_t topic_id{}; topic_id < 3; ++topic_id)
+    {
+        topic.set_id(topic_id);
+        bool write_ok = co_await agrpc::write(*reader_writer, topic);
+
+        read_stream.initiate(agrpc::read, *reader_writer, feed);
+
+        const auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(1);
+        while (read_ok && write_ok)
+        {
+            using namespace asio::experimental::awaitable_operators;
+            const auto variant = co_await (read_stream.next() || agrpc::wait(alarm, deadline));
+            if (0 == variant.index())  // read completed
+            {
+                read_ok = std::get<0>(variant);
+                if (read_ok)
+                {
+                    std::cout << feed.content() << std::endl;
+                    read_stream.initiate(agrpc::read, *reader_writer, feed);
+                }
+            }
+            else  // alarm completed
+            {
+                co_await read_stream.cleanup();
+                break;
+            }
+        }
+        feed.Clear();
+    }
+    co_await read_stream.cleanup();
+
+    abort_if_not(co_await agrpc::writes_done(*reader_writer));
+
+    grpc::Status status;
+    co_await agrpc::finish(*reader_writer, status);
+    abort_if_not(status.ok());
+}
+// ---------------------------------------------------
+//
+
+// ---------------------------------------------------
 // A unary request with a per-RPC step timeout. Using a unary RPC for demonstration purposes, the same mechanism can be
 // applied to streaming RPCs, where it is arguably more useful.
 // For unary RPCs, `grpc::ClientContext::set_deadline` should be preferred.
@@ -205,6 +265,7 @@ int main(int argc, const char** argv)
             using namespace asio::experimental::awaitable_operators;
             co_await (make_client_streaming_request(*stub) && make_bidirectional_streaming_request(*stub));
             co_await make_and_cancel_unary_request(*stub_ext);
+            co_await make_topic_subscription_request(grpc_context, *stub_ext);
             co_await make_shutdown_request(*stub_ext);
         },
         asio::detached);

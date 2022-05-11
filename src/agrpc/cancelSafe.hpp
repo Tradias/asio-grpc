@@ -30,8 +30,11 @@
 
 AGRPC_NAMESPACE_BEGIN()
 
+template <class CompletionSignature>
+class CancelSafe;
+
 /**
- * @brief (experimental) Cancellation safety for asynchronous operations
+ * @brief Cancellation safety for asynchronous operations
  *
  * This class provides a completion token that can be used to initiate asynchronous operations in a cancellation safe
  * manner. A second method of this class is then used to wait for the operation to complete. Cancelling said waiting
@@ -47,7 +50,7 @@ AGRPC_NAMESPACE_BEGIN()
  * @since 1.6.0 (and Boost.Asio 1.77.0)
  */
 template <class... CompletionArgs>
-class CancelSafe
+class CancelSafe<void(CompletionArgs...)>
 {
   private:
     using CompletionSignature = detail::PrependErrorCodeToSignatureT<void(CompletionArgs...)>;
@@ -70,7 +73,7 @@ class CancelSafe
         }
 
       private:
-        friend agrpc::CancelSafe<CompletionArgs...>;
+        friend agrpc::CancelSafe<void(CompletionArgs...)>;
 
         explicit CompletionToken(CancelSafe& self) noexcept : self(self) {}
 
@@ -81,7 +84,7 @@ class CancelSafe
     /**
      * @brief Create a completion token to initiate asynchronous operations
      *
-     * The CancelSafe may not be moved while the operation is outstanding.
+     * Thread-safe
      */
     auto token() noexcept { return CompletionToken{*this}; }
 
@@ -90,6 +93,8 @@ class CancelSafe
      *
      * Only one call to `wait()` may be outstanding at a time. Waiting for an already completed operation will
      * immediately invoke the completion handler in a manner equivalent to using `asio::post`.
+     *
+     * Thread-unsafe with regards to successful completion of the asynchronous operation.
      *
      * **Per-Operation Cancellation**
      *
@@ -121,8 +126,7 @@ class CancelSafe
                 self.result.reset();
                 detail::post_with_allocator(
                     std::move(executor),
-                    [local_result = std::move(local_result),
-                     ch = std::decay_t<CompletionHandler>{std::forward<CompletionHandler>(ch)}]() mutable
+                    [local_result = std::move(local_result), ch = std::forward<CompletionHandler>(ch)]() mutable
                     {
                         detail::invoke_successfully_from_tuple(std::move(ch), std::move(local_result));
                     },
@@ -172,9 +176,9 @@ class CancelSafe
 };
 
 /**
- * @brief CancelSafe templated on `bool`
+ * @brief CancelSafe templated on `void(bool)`
  */
-using GrpcCancelSafe = agrpc::CancelSafe<bool>;
+using GrpcCancelSafe = agrpc::CancelSafe<void(bool)>;
 
 AGRPC_NAMESPACE_END
 

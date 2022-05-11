@@ -288,7 +288,7 @@ asio::awaitable<void> server_streaming_cancel_safe(agrpc::GrpcContext& grpc_cont
     std::unique_ptr<grpc::ClientAsyncReader<example::v1::Response>> reader;
     co_await agrpc::request(&example::v1::Example::Stub::AsyncServerStreaming, stub, client_context, request, reader);
 
-    agrpc::GrpcCancelSafe safe;  // equivalent to agrpc::CancelSafe<bool>
+    agrpc::GrpcCancelSafe safe;  // equivalent to agrpc::CancelSafe<void(bool)>
 
     // Initiate a read with cancellation safety.
     example::v1::Response response;
