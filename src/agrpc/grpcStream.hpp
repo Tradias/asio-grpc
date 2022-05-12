@@ -36,6 +36,8 @@ AGRPC_NAMESPACE_BEGIN()
  * @brief (experimental) Cancellation safety for streaming RPCs
  *
  * Lightweight, IoObject-like class with cancellation safety for RPC functions.
+ *
+ * @since 1.7.0 (and Boost.Asio 1.77.0)
  */
 template <class Executor>
 class BasicGrpcStream
@@ -183,6 +185,8 @@ class BasicGrpcStream
 
 /**
  * @brief (experimental) A BasicGrpcStream that uses `agrpc::DefaultCompletionToken`
+ *
+ * @since 1.7.0 (and Boost.Asio 1.77.0)
  */
 using GrpcStream = agrpc::DefaultCompletionToken::as_default_on_t<agrpc::BasicGrpcStream<agrpc::GrpcExecutor>>;
 

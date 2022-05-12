@@ -59,8 +59,10 @@ option(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS "Compile tests with -fsanitize=address,
 option(ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET "Create target to check header files for syntax errors" on)
 option(ASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK
        "Fall back to pkg-config when a dependency cannot be found through find_package" on)
-option(ASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST
-       "Add test to ctest that will verify installation and asio_grpc_protobuf_generate" on)
+option(
+    ASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST
+    "Add test to ctest that will verify installability of asio-grpc and its CMake function asio_grpc_protobuf_generate"
+    on)
 
 set(ASIO_GRPC_PROJECT_ROOT "${CMAKE_CURRENT_LIST_DIR}")
 

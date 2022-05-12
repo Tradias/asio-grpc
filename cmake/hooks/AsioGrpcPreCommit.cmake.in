@@ -28,7 +28,7 @@ list(REMOVE_ITEM _git_output_list "")
 foreach(_git_out IN LISTS _git_output_list)
     string(REGEX MATCHALL ".*\\.cmake\\.in\$|.*\\.cmake\$|.*CMakeLists.txt\$" _file "${_git_out}")
 
-    if(NOT _file STREQUAL "")
+    if(NOT "${_file}" STREQUAL "")
         execute_process(COMMAND "@ASIO_GRPC_CMAKE_FORMAT_PROGRAM@" "-i" "${_file}"
                         WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@")
 
@@ -41,7 +41,7 @@ foreach(_git_out IN LISTS _git_output_list)
     string(REGEX MATCHALL ".*\\.tpp\$|.*\\.hpp\$|.*\\.ipp\$|.*\\.cpp\$|.*\\.proto\$|.*\\.h\$|.*\\.c\$" _file
                  "${_git_out}")
 
-    if(NOT _file STREQUAL "")
+    if(NOT "${_file}" STREQUAL "")
         execute_process(COMMAND "@ASIO_GRPC_CLANG_FORMAT_PROGRAM@" "-i" "-style=file" "${_file}"
                         WORKING_DIRECTORY "@CMAKE_SOURCE_DIR@")
 

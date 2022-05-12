@@ -7,17 +7,7 @@ on:
       - '**.hpp'
       - '**.ipp'
       - '**.cmake'
-      - '**/CMakeLists.txt'
-      - '.github/workflows/build.yml'
-      - 'sonar-project.properties'
-      - 'vcpkg.json'
-      - 'CMakePresets.json'
-  pull_request:
-    paths:
-      - '**.cpp'
-      - '**.hpp'
-      - '**.ipp'
-      - '**.cmake'
+      - '**.cmake.in'
       - '**/CMakeLists.txt'
       - '.github/workflows/build.yml'
       - 'sonar-project.properties'
