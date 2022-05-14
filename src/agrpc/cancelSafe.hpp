@@ -68,7 +68,7 @@ class CancelSafe<void(CompletionArgs...)>
             }
             else
             {
-                self.result.emplace(std::move(completion_args)...);
+                this->self.result.emplace(std::move(completion_args)...);
             }
         }
 
@@ -86,7 +86,14 @@ class CancelSafe<void(CompletionArgs...)>
      *
      * Thread-safe
      */
-    auto token() noexcept { return CompletionToken{*this}; }
+    [[nodiscard]] auto token() noexcept { return CompletionToken{*this}; }
+
+    /**
+     * @brief Is an operation currently running?
+     *
+     * Thread-safe
+     */
+    [[nodiscard]] bool is_running() const noexcept { return bool{this->completion_handler}; }
 
     /**
      * @brief Wait for the asynchronous operation to complete

@@ -43,7 +43,6 @@ template <class Executor>
 class BasicGrpcStream
 {
   private:
-    template <class Allocator>
     class CompletionHandler;
 
   public:
@@ -82,14 +81,14 @@ class BasicGrpcStream
      *
      * Thread-safe
      */
-    [[nodiscard]] executor_type get_executor() const noexcept { return executor; }
+    [[nodiscard]] executor_type get_executor() const noexcept { return this->executor; }
 
     /**
      * @brief Is an operation currently running?
      *
      * Thread-safe
      */
-    [[nodiscard]] bool is_running() const noexcept { return running.load(std::memory_order_relaxed); }
+    [[nodiscard]] bool is_running() const noexcept { return this->running.load(std::memory_order_relaxed); }
 
     /**
      * @brief Wait for the initiated operation to complete
@@ -103,7 +102,7 @@ class BasicGrpcStream
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
     auto next(CompletionToken&& token = asio::default_completion_token_t<Executor>{})
     {
-        return safe.wait(std::forward<CompletionToken>(token));
+        return this->safe.wait(std::forward<CompletionToken>(token));
     }
 
     /**
@@ -114,8 +113,9 @@ class BasicGrpcStream
     template <class Allocator, class Function, class... Args>
     auto& initiate(std::allocator_arg_t, Allocator allocator, Function&& function, Args&&... args)
     {
-        running.store(true, std::memory_order_relaxed);
-        std::forward<Function>(function)(std::forward<Args>(args)..., CompletionHandler<Allocator>{*this, allocator});
+        this->running.store(true, std::memory_order_relaxed);
+        std::invoke(std::forward<Function>(function), std::forward<Args>(args)...,
+                    agrpc::bind_allocator(allocator, CompletionHandler{*this}));
         return *this;
     }
 
@@ -127,8 +127,8 @@ class BasicGrpcStream
     template <class Function, class... Args>
     auto& initiate(Function&& function, Args&&... args)
     {
-        this->initiate(std::allocator_arg, std::allocator<void>{}, std::forward<Function>(function),
-                       std::forward<Args>(args)...);
+        this->running.store(true, std::memory_order_relaxed);
+        std::invoke(std::forward<Function>(function), std::forward<Args>(args)..., CompletionHandler{*this});
         return *this;
     }
 
@@ -145,37 +145,32 @@ class BasicGrpcStream
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
     auto cleanup(CompletionToken&& token = asio::default_completion_token_t<Executor>{})
     {
-        if (!this->is_running())
+        if (this->is_running())
         {
-            return detail::async_initiate_immediate_completion<void(detail::ErrorCode, bool)>(
-                std::forward<CompletionToken>(token));
+            return this->safe.wait(std::forward<CompletionToken>(token));
         }
-        return safe.wait(std::forward<CompletionToken>(token));
+        return detail::async_initiate_immediate_completion<void(detail::ErrorCode, bool)>(
+            std::forward<CompletionToken>(token));
     }
 
   private:
-    template <class Allocator>
     class CompletionHandler
     {
       public:
         using executor_type = Executor;
-        using allocator_type = Allocator;
 
-        explicit CompletionHandler(BasicGrpcStream& stream, Allocator allocator) : impl(stream, allocator) {}
+        explicit CompletionHandler(BasicGrpcStream& stream) : self(stream) {}
 
         void operator()(bool ok)
         {
-            auto& self = impl.first();
-            self.running.store(false, std::memory_order_relaxed);
-            self.safe.token()(ok);
+            this->self.running.store(false, std::memory_order_relaxed);
+            this->self.safe.token()(ok);
         }
 
-        [[nodiscard]] executor_type get_executor() const noexcept { return impl.first().executor; }
-
-        [[nodiscard]] allocator_type get_allocator() const noexcept { return impl.second(); }
+        [[nodiscard]] executor_type get_executor() const noexcept { return self.executor; }
 
       private:
-        detail::CompressedPair<BasicGrpcStream&, Allocator> impl;
+        BasicGrpcStream& self;
     };
 
     Executor executor;
