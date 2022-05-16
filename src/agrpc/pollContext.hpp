@@ -69,7 +69,7 @@ struct DefaultPollContextTraits
  *   static constexpr std::size_t BUFFER_SIZE{256};
  * }
  * @endcode
- * Before asio-grpc 1.6.0 the custom traits had to inherit from the default:
+ * Before asio-grpc 1.6.0 custom traits had to inherit from the default:
  * `struct MyTraits : agrpc::DefaultPollContextTraits`.
  *
  * @since 1.5.0
@@ -103,8 +103,17 @@ class PollContext
 
     /**
      * @brief Repeatedly call .poll() on the GrpcContext until it is stopped
+     *
+     * Calls grpc_context.poll() in the execution context of the PollContext's executor.
      */
     void async_poll(agrpc::GrpcContext& grpc_context);
+
+    /**
+     * @brief Repeatedly call .poll_completion_queue() on the GrpcContext until it is stopped
+     *
+     * Calls grpc_context.poll_completion_queue() in the execution context of the PollContext's executor.
+     */
+    void async_poll_completion_queue(agrpc::GrpcContext& grpc_context);
 
     /**
      * @brief Repeatedly call .poll() on the GrpcContext until the provided StopPredicate returns true
@@ -115,8 +124,17 @@ class PollContext
     template <class StopPredicate>
     void async_poll(agrpc::GrpcContext& grpc_context, StopPredicate stop_predicate);
 
+    /**
+     * @brief Repeatedly call .poll_completion_queue() on the GrpcContext until the provided StopPredicate returns true
+     *
+     * @param stop_predicate A function that returns true when the polling should stop. Its signature should be
+     * `bool(agrpc::GrpcContext&)`.
+     */
+    template <class StopPredicate>
+    void async_poll_completion_queue(agrpc::GrpcContext& grpc_context, StopPredicate stop_predicate);
+
   private:
-    template <class, class, class>
+    template <class>
     friend struct detail::PollContextHandler;
 
     using Backoff =
@@ -166,11 +184,12 @@ struct IsGrpcContextStoppedPredicate
     bool operator()(const agrpc::GrpcContext& grpc_context) const noexcept { return grpc_context.is_stopped(); }
 };
 
-template <class Executor, class Traits, class StopPredicate>
+template <class Poller>
 struct PollContextHandler
 {
-    using ResolvedTraits = detail::ResolvedPollContextTraits<Traits>;
-    using PollContext = agrpc::PollContext<Executor, Traits>;
+    using ResolvedTraits = detail::ResolvedPollContextTraits<typename Poller::PollContextTraits>;
+    using PollContext = typename Poller::PollContext;
+    using StopPredicate = typename Poller::StopPredicate;
     using allocator_type = typename PollContext::Allocator;
 
     agrpc::GrpcContext& grpc_context;
@@ -181,21 +200,21 @@ struct PollContextHandler
     {
         if constexpr (detail::BackoffDelay::zero() == ResolvedTraits::MAX_LATENCY)
         {
-            grpc_context.poll();
-            poll_context.async_poll(grpc_context, std::move(stop_predicate));
+            Poller::poll(grpc_context);
+            Poller::async_poll(poll_context, grpc_context, std::move(stop_predicate));
         }
         else
         {
-            if (grpc_context.poll())
+            if (Poller::poll(grpc_context))
             {
                 poll_context.backoff.reset();
-                poll_context.async_poll(grpc_context, std::move(stop_predicate));
+                Poller::async_poll(poll_context, grpc_context, std::move(stop_predicate));
                 return;
             }
             const auto delay = poll_context.backoff.next();
             if (detail::BackoffDelay::zero() == delay)
             {
-                poll_context.async_poll(grpc_context, std::move(stop_predicate));
+                Poller::async_poll(poll_context, grpc_context, std::move(stop_predicate));
                 return;
             }
             if (stop_predicate(grpc_context))
@@ -209,12 +228,48 @@ struct PollContextHandler
 
     allocator_type get_allocator() const noexcept { return poll_context.allocator(); }
 };
+
+template <class Executor, class Traits, class StopPred>
+struct RegularPoller
+{
+    using PollContextTraits = Traits;
+    using PollContext = agrpc::PollContext<Executor, Traits>;
+    using StopPredicate = StopPred;
+
+    static bool poll(agrpc::GrpcContext& grpc_context) { return grpc_context.poll(); }
+
+    static void async_poll(PollContext& poll_context, agrpc::GrpcContext& grpc_context, StopPredicate stop_predicate)
+    {
+        poll_context.async_poll(grpc_context, std::move(stop_predicate));
+    }
+};
+
+template <class Executor, class Traits, class StopPred>
+struct CompletionQueuePoller
+{
+    using PollContextTraits = Traits;
+    using PollContext = agrpc::PollContext<Executor, Traits>;
+    using StopPredicate = StopPred;
+
+    static bool poll(agrpc::GrpcContext& grpc_context) { return grpc_context.poll_completion_queue(); }
+
+    static void async_poll(PollContext& poll_context, agrpc::GrpcContext& grpc_context, StopPredicate stop_predicate)
+    {
+        poll_context.async_poll_completion_queue(grpc_context, std::move(stop_predicate));
+    }
+};
 }
 
 template <class Executor, class Traits>
 void PollContext<Executor, Traits>::async_poll(agrpc::GrpcContext& grpc_context)
 {
     this->async_poll(grpc_context, detail::IsGrpcContextStoppedPredicate{});
+}
+
+template <class Executor, class Traits>
+void PollContext<Executor, Traits>::async_poll_completion_queue(agrpc::GrpcContext& grpc_context)
+{
+    this->async_poll_completion_queue(grpc_context, detail::IsGrpcContextStoppedPredicate{});
 }
 
 template <class Executor, class Traits>
@@ -225,8 +280,23 @@ void PollContext<Executor, Traits>::async_poll(agrpc::GrpcContext& grpc_context,
     {
         return;
     }
-    asio::execution::execute(executor, detail::PollContextHandler<Executor, Traits, StopPredicate>{
-                                           grpc_context, *this, std::move(stop_predicate)});
+    asio::execution::execute(executor,
+                             detail::PollContextHandler<detail::RegularPoller<Executor, Traits, StopPredicate>>{
+                                 grpc_context, *this, std::move(stop_predicate)});
+}
+
+template <class Executor, class Traits>
+template <class StopPredicate>
+void PollContext<Executor, Traits>::async_poll_completion_queue(agrpc::GrpcContext& grpc_context,
+                                                                StopPredicate stop_predicate)
+{
+    if (stop_predicate(grpc_context))
+    {
+        return;
+    }
+    asio::execution::execute(executor,
+                             detail::PollContextHandler<detail::CompletionQueuePoller<Executor, Traits, StopPredicate>>{
+                                 grpc_context, *this, std::move(stop_predicate)});
 }
 
 AGRPC_NAMESPACE_END

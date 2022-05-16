@@ -41,8 +41,9 @@ struct AlwaysFalseCondition
 
 inline void drain_completion_queue(agrpc::GrpcContext& grpc_context)
 {
+    bool processsed{};
     while (detail::GrpcContextImplementation::process_work<detail::InvokeHandler::NO>(
-        grpc_context, detail::AlwaysFalseCondition{}, detail::GrpcContextImplementation::INFINITE_FUTURE))
+        grpc_context, detail::AlwaysFalseCondition{}, detail::GrpcContextImplementation::INFINITE_FUTURE, processsed))
     {
         //
     }
@@ -69,6 +70,11 @@ inline GrpcContext::~GrpcContext()
 inline bool GrpcContext::run() { return detail::GrpcContextImplementation::run(*this); }
 
 inline bool GrpcContext::poll() { return detail::GrpcContextImplementation::poll(*this); }
+
+inline bool GrpcContext::poll_completion_queue()
+{
+    return detail::GrpcContextImplementation::poll_completion_queue(*this);
+}
 
 inline void GrpcContext::stop()
 {

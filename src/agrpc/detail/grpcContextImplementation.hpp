@@ -73,9 +73,8 @@ struct GrpcContextImplementation
 
     static void add_operation(agrpc::GrpcContext& grpc_context, detail::TypeErasedNoArgOperation* op) noexcept;
 
-    static bool get_next_event(agrpc::GrpcContext& grpc_context, detail::GrpcCompletionQueueEvent& event) noexcept;
-
-    static bool poll_next_event(agrpc::GrpcContext& grpc_context, detail::GrpcCompletionQueueEvent& event) noexcept;
+    static bool get_and_handle_next_event(agrpc::GrpcContext& grpc_context, detail::InvokeHandler invoke,
+                                          ::gpr_timespec deadline);
 
     [[nodiscard]] static bool running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept;
 
@@ -84,16 +83,20 @@ struct GrpcContextImplementation
     static bool move_remote_work_to_local_queue(agrpc::GrpcContext& grpc_context) noexcept;
 
     template <detail::InvokeHandler Invoke>
-    static void process_local_queue(agrpc::GrpcContext& grpc_context);
+    static bool process_local_queue(agrpc::GrpcContext& grpc_context);
 
     template <detail::InvokeHandler Invoke, class StopCondition>
-    static bool process_work(agrpc::GrpcContext& grpc_context, StopCondition stop_condition, ::gpr_timespec deadline);
+    static bool process_work(agrpc::GrpcContext& grpc_context, StopCondition stop_condition, ::gpr_timespec deadline,
+                             bool& processed);
 
-    static bool process_work(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline);
+    template <class LoopFunction>
+    static bool process_work(agrpc::GrpcContext& grpc_context, LoopFunction loop_function);
 
     static bool run(agrpc::GrpcContext& grpc_context);
 
     static bool poll(agrpc::GrpcContext& grpc_context);
+
+    static bool poll_completion_queue(agrpc::GrpcContext& grpc_context);
 };
 
 void process_grpc_tag(void* tag, detail::InvokeHandler invoke, bool ok, agrpc::GrpcContext& grpc_context);
