@@ -62,10 +62,10 @@ class AllocatorBinder
      * @brief Construct from an allocator and argument pack
      *
      * Supports deduction guide when constructing from a single argument. The following creates an `AllocatorBinder<int
-     * std::allocator<std::byte>>`
+     * std::allocator<void>>`
      *
      * @code{.cpp}
-     * agrpc::AllocatorBinder int_binder{std::allocator<std::byte>{}, 1};
+     * agrpc::AllocatorBinder int_binder{std::allocator<void>{}, 1};
      * @endcode
      */
     template <class... Args>

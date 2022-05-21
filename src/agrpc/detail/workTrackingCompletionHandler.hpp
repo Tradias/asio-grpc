@@ -45,9 +45,9 @@ inline constexpr bool
 
 template <class T>
 using AssociatedWorkTrackingExecutor =
-    std::conditional_t<detail::IS_INLINE_EXECUTOR<asio::associated_executor_t<T>>, detail::Empty,
-                       detail::RemoveCvrefT<typename asio::prefer_result<
-                           asio::associated_executor_t<T>, asio::execution::outstanding_work_t::tracked_t>::type>>;
+    detail::ConditionalT<detail::IS_INLINE_EXECUTOR<asio::associated_executor_t<T>>, detail::Empty,
+                         detail::RemoveCvrefT<typename asio::prefer_result<
+                             asio::associated_executor_t<T>, asio::execution::outstanding_work_t::tracked_t>::type>>;
 
 template <class CompletionHandler>
 class WorkTrackingCompletionHandler
@@ -117,7 +117,7 @@ class WorkTrackingCompletionHandler
         asio::execution::execute(std::move(executor),
                                  [ch = std::move(ch), args = std::make_tuple(std::forward<Args>(args)...)]() mutable
                                  {
-                                     std::apply(std::move(ch), std::move(args));
+                                     detail::apply(std::move(ch), std::move(args));
                                  });
     }
 };

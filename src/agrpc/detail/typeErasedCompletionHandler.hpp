@@ -86,7 +86,7 @@ class BasicTypeErasedCompletionHandler<void(Args...), VoidPointer>
         complete_ = &detail::deallocate_and_invoke<Target, Args...>;
     }
 
-    auto release() noexcept
+    auto release() noexcept -> detail::TypeErasedCompletionHandler<void(Args...)>
     {
         return detail::TypeErasedCompletionHandler<void(Args...)>{this->release_completion_handler(), complete_};
     }

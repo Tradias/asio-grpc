@@ -47,14 +47,26 @@ struct InvokeResultFromSignature<Function, void(Args...)>
 template <class Function, class Signature>
 using InvokeResultFromSignatureT = typename detail::InvokeResultFromSignature<Function, Signature>::Type;
 
+template <bool>
+struct Conditional
+{
+    template <class T, class>
+    using Type = T;
+};
+
+template <>
+struct Conditional<false>
+{
+    template <class, class U>
+    using Type = U;
+};
+
+template <bool Condition, class T, class U>
+using ConditionalT = typename Conditional<Condition>::template Type<T, U>;
+
 struct Empty
 {
     Empty() = default;
-    Empty(const Empty&) = default;
-    Empty(Empty&&) = default;
-    Empty& operator=(const Empty&) = default;
-    Empty& operator=(Empty&&) = default;
-    ~Empty() = default;
 
     template <class Arg, class... Args>
     constexpr explicit Empty(Arg&&, Args&&...) noexcept
@@ -105,9 +117,9 @@ class CompressedPair : private Second
     {
     }
 
-    constexpr auto& first() noexcept { return this->first_; }
+    constexpr First& first() noexcept { return this->first_; }
 
-    constexpr const auto& first() const noexcept { return this->first_; }
+    constexpr const First& first() const noexcept { return this->first_; }
 
     constexpr Second& second() noexcept { return *this; }
 
@@ -144,13 +156,13 @@ class CompressedPair<First, Second, false>
     {
     }
 
-    constexpr auto& first() noexcept { return this->first_; }
+    constexpr First& first() noexcept { return this->first_; }
 
-    constexpr const auto& first() const noexcept { return this->first_; }
+    constexpr const First& first() const noexcept { return this->first_; }
 
-    constexpr auto& second() noexcept { return this->second_; }
+    constexpr Second& second() noexcept { return this->second_; }
 
-    constexpr const auto& second() const noexcept { return this->second_; }
+    constexpr const Second& second() const noexcept { return this->second_; }
 
   private:
     First first_;
@@ -171,9 +183,9 @@ class EmptyBaseOptimization : private T
     {
     }
 
-    constexpr auto& get() noexcept { return static_cast<T&>(*this); }
+    constexpr T& get() noexcept { return static_cast<T&>(*this); }
 
-    constexpr auto& get() const noexcept { return static_cast<const T&>(*this); }
+    constexpr const T& get() const noexcept { return static_cast<const T&>(*this); }
 };
 
 template <class T>
@@ -190,9 +202,9 @@ class EmptyBaseOptimization<T, false>
     {
     }
 
-    constexpr auto& get() noexcept { return this->value; }
+    constexpr T& get() noexcept { return this->value; }
 
-    constexpr auto& get() const noexcept { return this->value; }
+    constexpr const T& get() const noexcept { return this->value; }
 
   private:
     T value;
@@ -203,6 +215,11 @@ class ScopeGuard
 {
   public:
     constexpr explicit ScopeGuard(OnExit on_exit) : on_exit(std::move(on_exit)) {}
+
+    template <class... Args>
+    constexpr explicit ScopeGuard(Args&&... args) : on_exit(std::forward<Args>(args)...)
+    {
+    }
 
     ScopeGuard(const ScopeGuard&) = delete;
     ScopeGuard(ScopeGuard&&) = delete;
@@ -252,6 +269,19 @@ T forward_as(std::add_lvalue_reference_t<std::remove_reference_t<T>> u)
     {
         return u;
     }
+}
+
+template <class Function, class Tuple, size_t... I>
+constexpr decltype(auto) apply_impl(Function&& function, Tuple&& tuple, std::index_sequence<I...>)
+{
+    return std::forward<Function>(function)(std::get<I>(std::forward<Tuple>(tuple))...);
+}
+
+template <class Function, class... T>
+constexpr decltype(auto) apply(Function&& function, std::tuple<T...>&& tuple)
+{
+    return detail::apply_impl(std::forward<Function>(function), std::move(tuple),
+                              std::make_index_sequence<sizeof...(T)>{});
 }
 }
 

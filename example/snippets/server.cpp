@@ -45,7 +45,7 @@ asio::awaitable<void> timer()
 
 asio::awaitable<void> timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context)
 {
-    std::allocator<std::byte> my_allocator{};
+    std::allocator<void> my_allocator{};
     grpc::Alarm alarm;
     const auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(1);
     /* [alarm-with-callback] */

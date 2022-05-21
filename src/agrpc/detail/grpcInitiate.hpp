@@ -31,28 +31,43 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class StopFunction>
+using GrpcInitiateTemplateArgs = void (*)(StopFunction);
+
 struct GrpcInitiateImplFn
 {
+    GrpcInitiateImplFn() = default;
+    GrpcInitiateImplFn(const GrpcInitiateImplFn&) = delete;
+    GrpcInitiateImplFn(GrpcInitiateImplFn&&) = delete;
+    GrpcInitiateImplFn& operator=(const GrpcInitiateImplFn&) = delete;
+    GrpcInitiateImplFn& operator=(GrpcInitiateImplFn&&) = delete;
+
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    template <class InitiatingFunction, class CompletionToken = detail::DefaultCompletionToken>
-    auto operator()(InitiatingFunction initiating_function, CompletionToken token = {}) const
+    template <class StopFunction, class InitiatingFunction, class CompletionToken>
+    auto operator()(const detail::GrpcInitiateTemplateArgs<StopFunction>, InitiatingFunction initiating_function,
+                    CompletionToken token) const
     {
         return asio::async_initiate<CompletionToken, void(bool)>(
             detail::GrpcInitiator<InitiatingFunction, StopFunction>{std::move(initiating_function)}, token);
     }
 #endif
 
-    template <class InitiatingFunction>
-    auto operator()(InitiatingFunction initiating_function, detail::UseSender token) const noexcept
+    template <class StopFunction, class InitiatingFunction>
+    auto operator()(const detail::GrpcInitiateTemplateArgs<StopFunction>, InitiatingFunction initiating_function,
+                    detail::UseSender token) const noexcept
     {
         return detail::GrpcSender<InitiatingFunction, StopFunction>{token.grpc_context, std::move(initiating_function)};
     }
 };
 
-template <class StopFunction>
-inline constexpr detail::GrpcInitiateImplFn<StopFunction> grpc_initiate_with_stop_function{};
+inline constexpr detail::GrpcInitiateImplFn grpc_initiate_impl{};
 
-inline constexpr detail::GrpcInitiateImplFn<detail::Empty> grpc_initiate{};
+template <class InitiatingFunction, class CompletionToken>
+auto grpc_initiate(InitiatingFunction&& initiating_function, CompletionToken&& token)
+{
+    return detail::grpc_initiate_impl(detail::GrpcInitiateTemplateArgs<detail::Empty>{},
+                                      std::forward<InitiatingFunction>(initiating_function),
+                                      std::forward<CompletionToken>(token));
+}
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class Payload, class InitiatingFunction, class CompletionToken>

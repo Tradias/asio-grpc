@@ -70,9 +70,9 @@ class ScheduleSender : public detail::SenderOf<>
             }
         }
 
-        constexpr decltype(auto) grpc_context() noexcept { return impl.first(); }
+        constexpr agrpc::GrpcContext& grpc_context() noexcept { return impl.first(); }
 
-        constexpr decltype(auto) receiver() noexcept { return impl.second(); }
+        constexpr Receiver& receiver() noexcept { return impl.second(); }
 
         detail::CompressedPair<agrpc::GrpcContext&, Receiver> impl;
     };

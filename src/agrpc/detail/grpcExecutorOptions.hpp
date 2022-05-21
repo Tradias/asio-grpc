@@ -29,6 +29,11 @@ struct GrpcExecutorOptions
     static constexpr std::uint32_t OUTSTANDING_WORK_TRACKED = 1u << 1u;
 
     static constexpr std::uint32_t DEFAULT = BLOCKING_NEVER;
+
+    GrpcExecutorOptions(const GrpcExecutorOptions&) = delete;
+    GrpcExecutorOptions(GrpcExecutorOptions&&) = delete;
+    GrpcExecutorOptions& operator=(const GrpcExecutorOptions&) = delete;
+    GrpcExecutorOptions& operator=(GrpcExecutorOptions&&) = delete;
 };
 
 [[nodiscard]] constexpr bool is_blocking_never(std::uint32_t options) noexcept

@@ -262,7 +262,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
             }
         }
 
-        auto emplace_request_handler_operation(RequestHandlerOperation& operation)
+        std::exception_ptr emplace_request_handler_operation(RequestHandlerOperation& operation)
         {
             AGRPC_TRY
             {
@@ -284,17 +284,17 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
             detail::exec::set_done(std::move(receiver()));
         }
 
-        constexpr auto& grpc_context() noexcept { return impl0.first(); }
+        constexpr agrpc::GrpcContext& grpc_context() noexcept { return impl0.first(); }
 
-        constexpr auto& receiver() noexcept { return impl0.second(); }
+        constexpr Receiver& receiver() noexcept { return impl0.second(); }
 
-        constexpr auto& rpc() noexcept { return impl1.first(); }
+        constexpr RPC rpc() noexcept { return impl1.first(); }
 
         constexpr auto& stop_context() noexcept { return impl1.second(); }
 
-        constexpr auto& service() noexcept { return impl2.first(); }
+        constexpr Service& service() noexcept { return impl2.first(); }
 
-        constexpr auto& request_handler() noexcept { return impl2.second(); }
+        constexpr RequestHandler& request_handler() noexcept { return impl2.second(); }
 
         constexpr decltype(auto) get_allocator() noexcept { return detail::exec::get_allocator(this->receiver()); }
 

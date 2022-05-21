@@ -33,9 +33,9 @@ enum class InvokeHandler
 
 template <bool IsIntrusivelyListable, class... Signature>
 class TypeErasedOperation
-    : public std::conditional_t<IsIntrusivelyListable,
-                                detail::IntrusiveQueueHook<TypeErasedOperation<IsIntrusivelyListable, Signature...>>,
-                                detail::Empty>
+    : public detail::ConditionalT<IsIntrusivelyListable,
+                                  detail::IntrusiveQueueHook<TypeErasedOperation<IsIntrusivelyListable, Signature...>>,
+                                  detail::Empty>
 
 {
   public:

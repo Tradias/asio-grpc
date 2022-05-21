@@ -111,7 +111,7 @@ class BasicGrpcStream
      * Only one operation may be running at a time.
      */
     template <class Allocator, class Function, class... Args>
-    auto& initiate(std::allocator_arg_t, Allocator allocator, Function&& function, Args&&... args)
+    BasicGrpcStream& initiate(std::allocator_arg_t, Allocator allocator, Function&& function, Args&&... args)
     {
         this->running.store(true, std::memory_order_relaxed);
         std::invoke(std::forward<Function>(function), std::forward<Args>(args)...,
@@ -125,7 +125,7 @@ class BasicGrpcStream
      * Only one operation may be running at a time.
      */
     template <class Function, class... Args>
-    auto& initiate(Function&& function, Args&&... args)
+    BasicGrpcStream& initiate(Function&& function, Args&&... args)
     {
         this->running.store(true, std::memory_order_relaxed);
         std::invoke(std::forward<Function>(function), std::forward<Args>(args)..., CompletionHandler{*this});

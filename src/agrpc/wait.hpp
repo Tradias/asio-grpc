@@ -62,8 +62,9 @@ struct WaitFn
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>&&
                      std::is_nothrow_copy_constructible_v<Deadline>)
     {
-        return detail::grpc_initiate_with_stop_function<detail::AlarmCancellationHandler>(
-            detail::AlarmInitFunction{alarm, deadline}, std::forward<CompletionToken>(token));
+        return detail::grpc_initiate_impl(detail::GrpcInitiateTemplateArgs<detail::AlarmCancellationHandler>{},
+                                          detail::AlarmInitFunction{alarm, deadline},
+                                          std::forward<CompletionToken>(token));
     }
 };
 }

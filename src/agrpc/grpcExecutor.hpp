@@ -44,13 +44,13 @@ AGRPC_NAMESPACE_BEGIN()
  */
 template <class Allocator, std::uint32_t Options>
 class BasicGrpcExecutor
-    : public std::conditional_t<detail::is_outstanding_work_tracked(Options),
-                                detail::GrpcExecutorWorkTrackerBase<Allocator>, detail::GrpcExecutorBase<Allocator>>
+    : public detail::ConditionalT<detail::is_outstanding_work_tracked(Options),
+                                  detail::GrpcExecutorWorkTrackerBase<Allocator>, detail::GrpcExecutorBase<Allocator>>
 {
   private:
     using Base =
-        std::conditional_t<detail::is_outstanding_work_tracked(Options), detail::GrpcExecutorWorkTrackerBase<Allocator>,
-                           detail::GrpcExecutorBase<Allocator>>;
+        detail::ConditionalT<detail::is_outstanding_work_tracked(Options),
+                             detail::GrpcExecutorWorkTrackerBase<Allocator>, detail::GrpcExecutorBase<Allocator>>;
 
   public:
     /**

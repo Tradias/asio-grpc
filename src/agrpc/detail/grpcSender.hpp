@@ -45,8 +45,8 @@ class GrpcSender : public detail::SenderOf<bool>
             detail::IS_STOP_EVER_POSSIBLE_V<detail::exec::stop_token_type_t<Receiver&>>;
 
         using StopCallbackLifetime =
-            std::conditional_t<HAS_STOP_CALLBACK, std::optional<detail::StopCallbackTypeT<Receiver&, StopFunction>>,
-                               detail::Empty>;
+            detail::ConditionalT<HAS_STOP_CALLBACK, std::optional<detail::StopCallbackTypeT<Receiver&, StopFunction>>,
+                                 detail::Empty>;
 
       public:
         template <class Receiver2>
@@ -143,7 +143,7 @@ class GrpcSender : public detail::SenderOf<bool>
     {
     }
 
-    friend agrpc::detail::GrpcInitiateImplFn<StopFunction>;
+    friend detail::GrpcInitiateImplFn;
 
     agrpc::GrpcContext& grpc_context;
     InitiatingFunction initiating_function;

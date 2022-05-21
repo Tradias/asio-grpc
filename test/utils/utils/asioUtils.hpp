@@ -40,7 +40,7 @@ struct NoOp
     }
 };
 
-template <class Function, class Allocator = std::allocator<std::byte>>
+template <class Function, class Allocator = std::allocator<void>>
 struct FunctionAsReceiver
 {
     using allocator_type = Allocator;
@@ -80,7 +80,7 @@ struct StatefulReceiverState
     bool was_done{false};
 };
 
-template <class Function, class Allocator = std::allocator<std::byte>>
+template <class Function, class Allocator = std::allocator<void>>
 struct FunctionAsStatefulReceiver : public test::FunctionAsReceiver<Function, Allocator>
 {
     test::StatefulReceiverState& state;

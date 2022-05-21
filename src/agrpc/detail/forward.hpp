@@ -29,7 +29,6 @@ class GrpcContext;
 
 namespace detail
 {
-template <class StopFunction>
 struct GrpcInitiateImplFn;
 
 class RepeatedlyRequestFn;

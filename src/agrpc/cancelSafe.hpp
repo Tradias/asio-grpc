@@ -57,6 +57,10 @@ class CancelSafe<void(CompletionArgs...)>
 
     struct Initiator;
 
+  public:
+    /**
+     * @brief The type of completion token used to initiate asynchronous operations
+     */
     class CompletionToken
     {
       public:
@@ -80,13 +84,12 @@ class CancelSafe<void(CompletionArgs...)>
         CancelSafe& self;
     };
 
-  public:
     /**
      * @brief Create a completion token to initiate asynchronous operations
      *
      * Thread-safe
      */
-    [[nodiscard]] auto token() noexcept { return CompletionToken{*this}; }
+    [[nodiscard]] CompletionToken token() noexcept { return CompletionToken{*this}; }
 
     /**
      * @brief Is an operation currently running?

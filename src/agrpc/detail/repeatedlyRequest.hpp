@@ -108,14 +108,14 @@ class RepeatedlyRequestOperationBase
         return detail::query_grpc_context(this->get_executor());
     }
 
-    [[nodiscard]] auto& rpc() noexcept { return impl1.first(); }
+    [[nodiscard]] RPC rpc() noexcept { return impl1.first(); }
 
-    [[nodiscard]] auto& service() noexcept { return impl2.first(); }
+    [[nodiscard]] Service& service() noexcept { return impl2.first(); }
 
-    [[nodiscard]] auto& request_handler() noexcept { return request_handler_; }
+    [[nodiscard]] RequestHandler& request_handler() noexcept { return request_handler_; }
 
   private:
-    using StopContext = std::conditional_t<IsStoppable, std::atomic_bool, detail::Empty>;
+    using StopContext = detail::ConditionalT<IsStoppable, std::atomic_bool, detail::Empty>;
 
     RequestHandler request_handler_;
     detail::CompressedPair<RPC, StopContext> impl1;

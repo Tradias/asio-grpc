@@ -18,6 +18,7 @@
 #include <agrpc/detail/asioForward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/typeErasedCompletionHandler.hpp>
+#include <agrpc/detail/utility.hpp>
 #include <agrpc/detail/workTrackingCompletionHandler.hpp>
 
 #include <tuple>
@@ -59,14 +60,14 @@ void complete_successfully(CompletionHandler&& handler, Args&&... args)
 template <class CompletionHandler, class... Args>
 void invoke_successfully_from_tuple(CompletionHandler&& handler, std::tuple<detail::ErrorCode, Args...>&& args)
 {
-    std::apply(std::forward<CompletionHandler>(handler), std::move(args));
+    detail::apply(std::forward<CompletionHandler>(handler), std::move(args));
 }
 
 template <class CompletionHandler, class... Args>
 void invoke_successfully_from_tuple(CompletionHandler&& handler, std::tuple<Args...>&& args)
 {
-    std::apply(std::forward<CompletionHandler>(handler),
-               std::tuple_cat(std::forward_as_tuple(detail::ErrorCode{}), std::move(args)));
+    detail::apply(std::forward<CompletionHandler>(handler),
+                  std::tuple_cat(std::forward_as_tuple(detail::ErrorCode{}), std::move(args)));
 }
 
 template <class CompletionHandler, class... Args>

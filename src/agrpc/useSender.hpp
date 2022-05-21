@@ -41,7 +41,8 @@ struct UseSenderFn
      * @brief Overload for BasicGrpcExecutor
      */
     template <class Allocator, std::uint32_t Options>
-    [[nodiscard]] constexpr auto operator()(const agrpc::BasicGrpcExecutor<Allocator, Options>& executor) const noexcept
+    [[nodiscard]] constexpr detail::UseSender operator()(
+        const agrpc::BasicGrpcExecutor<Allocator, Options>& executor) const noexcept
     {
         return detail::UseSender{detail::query_grpc_context(executor)};
     }
@@ -49,7 +50,7 @@ struct UseSenderFn
     /**
      * @brief Overload for GrpcContext
      */
-    [[nodiscard]] constexpr auto operator()(agrpc::GrpcContext& context) const noexcept
+    [[nodiscard]] constexpr detail::UseSender operator()(agrpc::GrpcContext& context) const noexcept
     {
         return detail::UseSender{context};
     }

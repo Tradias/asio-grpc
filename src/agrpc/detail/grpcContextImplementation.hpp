@@ -34,15 +34,27 @@ struct WorkFinishedOnExitFunctor
 {
     agrpc::GrpcContext& grpc_context;
 
+    explicit WorkFinishedOnExitFunctor(agrpc::GrpcContext& grpc_context) noexcept : grpc_context(grpc_context) {}
+
     void operator()() const noexcept;
+
+    WorkFinishedOnExitFunctor(const WorkFinishedOnExitFunctor&) = delete;
+    WorkFinishedOnExitFunctor(WorkFinishedOnExitFunctor&&) = delete;
+    WorkFinishedOnExitFunctor& operator=(const WorkFinishedOnExitFunctor&) = delete;
+    WorkFinishedOnExitFunctor& operator=(WorkFinishedOnExitFunctor&&) = delete;
 };
 
 struct WorkFinishedOnExit : detail::ScopeGuard<detail::WorkFinishedOnExitFunctor>
 {
     explicit WorkFinishedOnExit(agrpc::GrpcContext& grpc_context) noexcept
-        : detail::ScopeGuard<detail::WorkFinishedOnExitFunctor>(detail::WorkFinishedOnExitFunctor{grpc_context})
+        : detail::ScopeGuard<detail::WorkFinishedOnExitFunctor>(grpc_context)
     {
     }
+
+    WorkFinishedOnExit(const WorkFinishedOnExit&) = delete;
+    WorkFinishedOnExit(WorkFinishedOnExit&&) = delete;
+    WorkFinishedOnExit& operator=(const WorkFinishedOnExit&) = delete;
+    WorkFinishedOnExit& operator=(WorkFinishedOnExit&&) = delete;
 };
 
 struct GrpcContextImplementation

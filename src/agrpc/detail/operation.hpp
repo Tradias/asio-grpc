@@ -42,9 +42,9 @@ class Operation<IsIntrusivelyListable, Handler, Allocator, void(Signature...)>
     {
     }
 
-    [[nodiscard]] decltype(auto) completion_handler() noexcept { return impl.first(); }
+    [[nodiscard]] Handler& completion_handler() noexcept { return impl.first(); }
 
-    [[nodiscard]] decltype(auto) get_allocator() noexcept { return impl.second(); }
+    [[nodiscard]] Allocator& get_allocator() noexcept { return impl.second(); }
 
   private:
     detail::CompressedPair<Handler, Allocator> impl;
@@ -79,7 +79,7 @@ class LocalOperation<IsIntrusivelyListable, Handler, void(Signature...)>
         }
     }
 
-    [[nodiscard]] auto& completion_handler() noexcept { return handler_; }
+    [[nodiscard]] Handler& completion_handler() noexcept { return handler_; }
 
   private:
     Handler handler_;

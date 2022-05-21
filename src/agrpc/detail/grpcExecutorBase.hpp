@@ -35,13 +35,13 @@ class GrpcExecutorBase
     {
     }
 
-    constexpr decltype(auto) grpc_context() noexcept { return impl.first(); }
+    constexpr agrpc::GrpcContext*& grpc_context() noexcept { return impl.first(); }
 
-    constexpr decltype(auto) grpc_context() const noexcept { return impl.first(); }
+    constexpr agrpc::GrpcContext* grpc_context() const noexcept { return impl.first(); }
 
-    constexpr decltype(auto) allocator() noexcept { return impl.second(); }
+    constexpr Allocator& allocator() noexcept { return impl.second(); }
 
-    constexpr decltype(auto) allocator() const noexcept { return impl.second(); }
+    constexpr const Allocator& allocator() const noexcept { return impl.second(); }
 
   private:
     detail::CompressedPair<agrpc::GrpcContext*, Allocator> impl;
