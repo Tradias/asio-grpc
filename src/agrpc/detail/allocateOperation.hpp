@@ -25,10 +25,10 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class Handler, class Signature>
-using AllocateOperationTemplateArgs = void (*)(Handler, Signature);
+template <class Handler>
+using AllocateOperationTemplateArgs = void (*)(Handler);
 
-template <bool IsIntrusivelyListable>
+template <bool IsIntrusivelyListable, class Signature>
 struct AllocateOperationFn
 {
     AllocateOperationFn() = default;
@@ -37,23 +37,22 @@ struct AllocateOperationFn
     AllocateOperationFn& operator=(const AllocateOperationFn&) = delete;
     AllocateOperationFn& operator=(AllocateOperationFn&&) = delete;
 
-    template <class Handler, class Signature, class Allocator, class... Args>
-    auto operator()(const detail::AllocateOperationTemplateArgs<Handler, Signature>, Allocator allocator,
-                    Args&&... args) const
+    template <class Handler, class Allocator, class... Args>
+    auto operator()(const detail::AllocateOperationTemplateArgs<Handler>, Allocator allocator, Args&&... args) const
     {
         using Operation = detail::Operation<IsIntrusivelyListable, Handler, Allocator, Signature>;
         return detail::allocate<Operation>(allocator, allocator, std::forward<Args>(args)...);
     }
 
-    template <class Handler, class Signature, class Allocator, class... Args>
-    auto operator()(const detail::AllocateOperationTemplateArgs<Handler, Signature> t, const agrpc::GrpcContext&,
+    template <class Handler, class Allocator, class... Args>
+    auto operator()(const detail::AllocateOperationTemplateArgs<Handler> t, const agrpc::GrpcContext&,
                     Allocator allocator, Args&&... args) const
     {
         return this->operator()(t, allocator, std::forward<Args>(args)...);
     }
 
-    template <class Handler, class Signature, class T, class... Args>
-    auto operator()(const detail::AllocateOperationTemplateArgs<Handler, Signature>, agrpc::GrpcContext& grpc_context,
+    template <class Handler, class T, class... Args>
+    auto operator()(const detail::AllocateOperationTemplateArgs<Handler>, agrpc::GrpcContext& grpc_context,
                     std::allocator<T>, Args&&... args) const
     {
         using Operation = detail::LocalOperation<IsIntrusivelyListable, Handler, Signature>;
@@ -61,8 +60,8 @@ struct AllocateOperationFn
     }
 };
 
-template <bool IsIntrusivelyListable>
-inline constexpr detail::AllocateOperationFn<IsIntrusivelyListable> allocate_operation{};
+template <bool IsIntrusivelyListable, class Signature>
+inline constexpr detail::AllocateOperationFn<IsIntrusivelyListable, Signature> allocate_operation{};
 
 template <bool IsIntrusivelyListable, class Handler, class Signature, class OnLocalOperation, class OnRemoteOperation,
           class WorkAllocator, class... Args>
@@ -75,17 +74,16 @@ void allocate_operation_and_invoke(agrpc::GrpcContext& grpc_context, bool is_run
     detail::WorkFinishedOnExit on_exit{grpc_context};
     if (is_running_in_this_thread)
     {
-        auto operation = detail::allocate_operation<IsIntrusivelyListable>(
-            detail::AllocateOperationTemplateArgs<DecayedHandler, Signature>{}, grpc_context, work_allocator,
+        auto operation = detail::allocate_operation<IsIntrusivelyListable, Signature>(
+            detail::AllocateOperationTemplateArgs<DecayedHandler>{}, grpc_context, work_allocator,
             std::forward<Args>(args)...);
         std::forward<OnLocalOperation>(on_local_operation)(grpc_context, operation.get());
         operation.release();
     }
     else
     {
-        auto operation = detail::allocate_operation<IsIntrusivelyListable>(
-            detail::AllocateOperationTemplateArgs<DecayedHandler, Signature>{}, work_allocator,
-            std::forward<Args>(args)...);
+        auto operation = detail::allocate_operation<IsIntrusivelyListable, Signature>(
+            detail::AllocateOperationTemplateArgs<DecayedHandler>{}, work_allocator, std::forward<Args>(args)...);
         std::forward<OnRemoteOperation>(on_remote_operation)(grpc_context, operation.get());
         operation.release();
     }
