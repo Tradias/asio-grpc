@@ -117,13 +117,14 @@ struct RequestFn
      * completion signature is `void(bool)`. `true` indicates that the RPC has indeed been started. If it is `false`
      * then the server has been Shutdown before this particular call got matched to an incoming RPC.
      */
-    template <class CompletionToken = agrpc::DefaultCompletionToken>
+    template <class ReaderWriter, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::AsyncGenericService& service, grpc::GenericServerContext& server_context,
-                    grpc::GenericServerAsyncReaderWriter& reader_writer, CompletionToken&& token = {}) const
+                    ReaderWriter& reader_writer, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
-        return detail::grpc_initiate(detail::ServerGenericRequestInitFunction{service, server_context, reader_writer},
-                                     std::forward<CompletionToken>(token));
+        return detail::grpc_initiate(
+            detail::ServerGenericRequestInitFunction<ReaderWriter>{service, server_context, reader_writer},
+            std::forward<CompletionToken>(token));
     }
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
@@ -143,12 +144,11 @@ struct RequestFn
      * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
      * `example::v1::Example::Stub`.
      */
-    template <class Stub, class Request, class Response, class Executor = asio::any_io_executor>
-    auto operator()(detail::ClientUnaryRequest<Stub, Request, Response> rpc, Stub& stub,
+    template <class Stub, class Request, class Responder, class Executor = asio::any_io_executor>
+    auto operator()(detail::ClientUnaryRequest<Stub, Request, Responder> rpc, Stub& stub,
                     grpc::ClientContext& client_context, const Request& request,
                     asio::use_awaitable_t<Executor> token = {}) const ->
-        typename asio::async_result<asio::use_awaitable_t<Executor>,
-                                    void(std::unique_ptr<grpc::ClientAsyncResponseReader<Response>>)>::return_type
+        typename asio::async_result<asio::use_awaitable_t<Executor>, void(Responder)>::return_type
     {
         auto* completion_queue = co_await agrpc::get_completion_queue(token);
         co_return (stub.*rpc)(&client_context, request, completion_queue);
@@ -160,10 +160,9 @@ struct RequestFn
      * Takes `std::unique_ptr<grpc::ClientAsyncResponseReader<Response>>` as an output parameter, otherwise identical
      * to: `operator()(ClientUnaryRequest, Stub&, ClientContext&, const Request&, use_awaitable_t<Executor>)`
      */
-    template <class Stub, class Request, class Response, class Executor = asio::any_io_executor>
-    auto operator()(detail::ClientUnaryRequest<Stub, Request, Response> rpc, Stub& stub,
-                    grpc::ClientContext& client_context, const Request& request,
-                    std::unique_ptr<grpc::ClientAsyncResponseReader<Response>>& reader,
+    template <class Stub, class Request, class Responder, class Executor = asio::any_io_executor>
+    auto operator()(detail::ClientUnaryRequest<Stub, Request, Responder> rpc, Stub& stub,
+                    grpc::ClientContext& client_context, const Request& request, Responder& reader,
                     asio::use_awaitable_t<Executor> token = {}) const ->
         typename asio::async_result<asio::use_awaitable_t<Executor>, void()>::return_type
     {
@@ -177,8 +176,8 @@ struct RequestFn
      *
      * Note, this function completes immediately.
      */
-    template <class Stub, class Request, class Response>
-    auto operator()(detail::ClientUnaryRequest<Stub, Request, Response> rpc, Stub& stub,
+    template <class Stub, class Request, class Responder>
+    auto operator()(detail::ClientUnaryRequest<Stub, Request, Responder> rpc, Stub& stub,
                     grpc::ClientContext& client_context, const Request& request, agrpc::GrpcContext& grpc_context) const
     {
         return (stub.*rpc)(&client_context, request, agrpc::get_completion_queue(grpc_context));
@@ -204,13 +203,13 @@ struct RequestFn
      * indicates that the RPC is going to go to the wire. If it is `false`, it is not going to the wire. This would
      * happen if the channel is either permanently broken or transiently broken but with the fail-fast option.
      */
-    template <class Stub, class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(detail::ClientServerStreamingRequest<Stub, Request, Response> rpc, Stub& stub,
+    template <class Stub, class Request, class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(detail::ClientServerStreamingRequest<Stub, Request, Responder> rpc, Stub& stub,
                     grpc::ClientContext& client_context, const Request& request, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
-        return detail::grpc_initiate_with_payload<std::unique_ptr<grpc::ClientAsyncReader<Response>>>(
-            detail::ClientServerStreamingRequestConvenienceInitFunction<Stub, Request, Response>{
+        return detail::grpc_initiate_with_payload<Responder>(
+            detail::ClientServerStreamingRequestConvenienceInitFunction<Stub, Request, Responder>{
                 rpc, stub, client_context, request},
             std::forward<CompletionToken>(token));
     }
@@ -231,15 +230,15 @@ struct RequestFn
      * it is not going to the wire. This would happen if the channel is either permanently broken or transiently broken
      * but with the fail-fast option.
      */
-    template <class Stub, class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(detail::ClientServerStreamingRequest<Stub, Request, Response> rpc, Stub& stub,
-                    grpc::ClientContext& client_context, const Request& request,
-                    std::unique_ptr<grpc::ClientAsyncReader<Response>>& reader, CompletionToken&& token = {}) const
+    template <class Stub, class Request, class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(detail::ClientServerStreamingRequest<Stub, Request, Responder> rpc, Stub& stub,
+                    grpc::ClientContext& client_context, const Request& request, Responder& reader,
+                    CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
-            detail::ClientServerStreamingRequestInitFunction<Stub, Request, Response>{rpc, stub, client_context,
-                                                                                      request, reader},
+            detail::ClientServerStreamingRequestInitFunction<Stub, Request, Responder>{rpc, stub, client_context,
+                                                                                       request, reader},
             std::forward<CompletionToken>(token));
     }
 
@@ -263,13 +262,13 @@ struct RequestFn
      * indicates that the RPC is going to go to the wire. If it is `false`, it is not going to the wire. This would
      * happen if the channel is either permanently broken or transiently broken but with the fail-fast option.
      */
-    template <class Stub, class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(detail::ClientClientStreamingRequest<Stub, Request, Response> rpc, Stub& stub,
+    template <class Stub, class Responder, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(detail::ClientClientStreamingRequest<Stub, Responder, Response> rpc, Stub& stub,
                     grpc::ClientContext& client_context, Response& response, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
-        return detail::grpc_initiate_with_payload<std::unique_ptr<grpc::ClientAsyncWriter<Request>>>(
-            detail::ClientClientStreamingRequestConvenienceInitFunction<Stub, Request, Response>{
+        return detail::grpc_initiate_with_payload<Responder>(
+            detail::ClientClientStreamingRequestConvenienceInitFunction<Stub, Responder, Response>{
                 rpc, stub, client_context, response},
             std::forward<CompletionToken>(token));
     }
@@ -295,15 +294,15 @@ struct RequestFn
      * it is not going to the wire. This would happen if the channel is either permanently broken or transiently broken
      * but with the fail-fast option.
      */
-    template <class Stub, class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(detail::ClientClientStreamingRequest<Stub, Request, Response> rpc, Stub& stub,
-                    grpc::ClientContext& client_context, std::unique_ptr<grpc::ClientAsyncWriter<Request>>& writer,
-                    Response& response, CompletionToken&& token = {}) const
+    template <class Stub, class Responder, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(detail::ClientClientStreamingRequest<Stub, Responder, Response> rpc, Stub& stub,
+                    grpc::ClientContext& client_context, Responder& writer, Response& response,
+                    CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
-            detail::ClientClientStreamingRequestInitFunction<Stub, Request, Response>{rpc, stub, client_context, writer,
-                                                                                      response},
+            detail::ClientClientStreamingRequestInitFunction<Stub, Responder, Response>{rpc, stub, client_context,
+                                                                                        writer, response},
             std::forward<CompletionToken>(token));
     }
 
@@ -327,13 +326,13 @@ struct RequestFn
      * indicates that the RPC is going to go to the wire. If it is `false`, it is not going to the wire. This would
      * happen if the channel is either permanently broken or transiently broken but with the fail-fast option.
      */
-    template <class Stub, class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(detail::ClientBidirectionalStreamingRequest<Stub, Request, Response> rpc, Stub& stub,
+    template <class Stub, class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(detail::ClientBidirectionalStreamingRequest<Stub, Responder> rpc, Stub& stub,
                     grpc::ClientContext& client_context, CompletionToken&& token = {}) const
     {
-        return detail::grpc_initiate_with_payload<std::unique_ptr<grpc::ClientAsyncReaderWriter<Request, Response>>>(
-            detail::ClientBidirectionalStreamingRequestConvenienceInitFunction<Stub, Request, Response>{rpc, stub,
-                                                                                                        client_context},
+        return detail::grpc_initiate_with_payload<Responder>(
+            detail::ClientBidirectionalStreamingRequestConvenienceInitFunction<Stub, Responder>{rpc, stub,
+                                                                                                client_context},
             std::forward<CompletionToken>(token));
     }
 #endif
@@ -358,16 +357,14 @@ struct RequestFn
      * it is not going to the wire. This would happen if the channel is either permanently broken or transiently broken
      * but with the fail-fast option.
      */
-    template <class Stub, class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(detail::ClientBidirectionalStreamingRequest<Stub, Request, Response> rpc, Stub& stub,
-                    grpc::ClientContext& client_context,
-                    std::unique_ptr<grpc::ClientAsyncReaderWriter<Request, Response>>& reader_writer,
-                    CompletionToken&& token = {}) const
+    template <class Stub, class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(detail::ClientBidirectionalStreamingRequest<Stub, Responder> rpc, Stub& stub,
+                    grpc::ClientContext& client_context, Responder& reader_writer, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
-            detail::ClientBidirectionalStreamingRequestInitFunction<Stub, Request, Response>{rpc, stub, client_context,
-                                                                                             reader_writer},
+            detail::ClientBidirectionalStreamingRequestInitFunction<Stub, Responder>{rpc, stub, client_context,
+                                                                                     reader_writer},
             std::forward<CompletionToken>(token));
     }
 
@@ -408,14 +405,14 @@ struct RequestFn
      * it is not going to the wire. This would happen if the channel is either permanently broken or transiently broken
      * but with the fail-fast option.
      */
-    template <class CompletionToken = agrpc::DefaultCompletionToken>
+    template <class ReaderWriter, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(const std::string& method, grpc::GenericStub& stub, grpc::ClientContext& client_context,
-                    std::unique_ptr<grpc::ClientAsyncReaderWriter<grpc::ByteBuffer, grpc::ByteBuffer>>& reader_writer,
-                    CompletionToken&& token = {}) const
+                    std::unique_ptr<ReaderWriter>& reader_writer, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
-            detail::ClientGenericStreamingRequestInitFunction{method, stub, client_context, reader_writer},
+            detail::ClientGenericStreamingRequestInitFunction<ReaderWriter>{method, stub, client_context,
+                                                                            reader_writer},
             std::forward<CompletionToken>(token));
     }
 };
@@ -514,6 +511,17 @@ struct ReadFn
     {
         return detail::grpc_initiate(typename detail::ClientAsyncReaderInitFunctions<Response>::Read{reader, response},
                                      std::forward<CompletionToken>(token));
+    }
+
+    template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(grpc::ClientAsyncReaderInterface<Response>& reader, Response& response,
+                    CompletionToken&& token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
+    {
+        return detail::grpc_initiate(
+            typename detail::BaseAsyncReaderInitFunctions<Response, grpc::ClientAsyncReaderInterface<Response>>::Read{
+                reader, response},
+            std::forward<CompletionToken>(token));
     }
 
     /**
@@ -1005,6 +1013,17 @@ struct FinishFn
                                      std::forward<CompletionToken>(token));
     }
 
+    template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(grpc::ClientAsyncReaderInterface<Response>& reader, grpc::Status& status,
+                    CompletionToken&& token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
+    {
+        return detail::grpc_initiate(
+            typename detail::BaseClientAsyncStreamingInitFunctions<grpc::ClientAsyncReaderInterface<Response>>::Finish{
+                reader, status},
+            std::forward<CompletionToken>(token));
+    }
+
     /**
      * @brief Finish a client stream (client-side)
      *
@@ -1047,6 +1066,17 @@ struct FinishFn
                                      std::forward<CompletionToken>(token));
     }
 
+    template <class Request, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(grpc::ClientAsyncWriterInterface<Request>& writer, grpc::Status& status,
+                    CompletionToken&& token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
+    {
+        return detail::grpc_initiate(
+            typename detail::BaseClientAsyncStreamingInitFunctions<grpc::ClientAsyncWriterInterface<Request>>::Finish{
+                writer, status},
+            std::forward<CompletionToken>(token));
+    }
+
     /**
      * @brief Finish a unary RPC (client-side)
      *
@@ -1077,6 +1107,17 @@ struct FinishFn
     {
         return detail::grpc_initiate(
             typename detail::ClientAsyncResponseReaderInitFunctions<Response>::Finish{reader, response, status},
+            std::forward<CompletionToken>(token));
+    }
+
+    template <class Response, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(grpc::ClientAsyncResponseReaderInterface<Response>& reader, Response& response,
+                    grpc::Status& status, CompletionToken&& token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
+    {
+        return detail::grpc_initiate(
+            typename detail::BaseClientAsyncStreamingInitFunctions<
+                grpc::ClientAsyncResponseReaderInterface<Response>>::Finish{reader, response, status},
             std::forward<CompletionToken>(token));
     }
 
@@ -1122,6 +1163,17 @@ struct FinishFn
     {
         return detail::grpc_initiate(
             typename detail::ClientAsyncReaderWriterInitFunctions<Request, Response>::Finish{reader_writer, status},
+            std::forward<CompletionToken>(token));
+    }
+
+    template <class Request, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(grpc::ClientAsyncReaderWriterInterface<Request, Response>& reader_writer, grpc::Status& status,
+                    CompletionToken&& token = {}) const
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
+    {
+        return detail::grpc_initiate(
+            typename detail::BaseClientAsyncStreamingInitFunctions<
+                grpc::ClientAsyncReaderWriterInterface<Request, Response>>::Finish{reader_writer, status},
             std::forward<CompletionToken>(token));
     }
 };

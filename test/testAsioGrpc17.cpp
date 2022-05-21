@@ -202,21 +202,23 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unary stackless coroutine")
 #include <boost/asio/unyield.hpp>
 #endif
 
-TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context server streaming")
+TEST_CASE_TEMPLATE("yield_context server streaming", Stub, test::v1::Test::Stub, test::v1::Test::StubInterface)
 {
+    test::GrpcClientServerTest test;
+    Stub& test_stub = *test.stub;
     bool use_write_and_finish{false};
     SUBCASE("server write_and_finish") { use_write_and_finish = true; }
     bool use_write_last{false};
     SUBCASE("server write_last") { use_write_last = true; }
     bool use_client_convenience{false};
     SUBCASE("client use convenience") { use_client_convenience = true; }
-    asio::spawn(get_executor(),
+    asio::spawn(test.get_executor(),
                 [&](asio::yield_context yield)
                 {
                     test::msg::Request request;
-                    grpc::ServerAsyncWriter<test::msg::Response> writer{&server_context};
-                    CHECK(agrpc::request(&test::v1::Test::AsyncService::RequestServerStreaming, service, server_context,
-                                         request, writer, yield));
+                    grpc::ServerAsyncWriter<test::msg::Response> writer{&test.server_context};
+                    CHECK(agrpc::request(&test::v1::Test::AsyncService::RequestServerStreaming, test.service,
+                                         test.server_context, request, writer, yield));
                     CHECK(agrpc::send_initial_metadata(writer, yield));
                     CHECK_EQ(42, request.integer());
                     test::msg::Response response;
@@ -239,34 +241,44 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context server streaming")
                         CHECK(agrpc::finish(writer, grpc::Status::OK, yield));
                     }
                 });
-    asio::spawn(get_executor(),
-                [&](asio::yield_context yield)
+    asio::spawn(
+        test.get_executor(),
+        [&](asio::yield_context yield)
+        {
+            test::msg::Request request;
+            request.set_integer(42);
+            auto [reader, ok] = [&]
+            {
+                if (use_client_convenience)
                 {
-                    test::msg::Request request;
-                    request.set_integer(42);
-                    auto [reader, ok] = [&]
+                    return agrpc::request(&Stub::AsyncServerStreaming, test_stub, test.client_context, request, yield);
+                }
+                auto reader = [&]
+                {
+                    if constexpr (std::is_same_v<test::v1::Test::Stub, Stub>)
                     {
-                        if (use_client_convenience)
-                        {
-                            return agrpc::request(&test::v1::Test::Stub::AsyncServerStreaming, *stub, client_context,
-                                                  request, yield);
-                        }
-                        std::unique_ptr<grpc::ClientAsyncReader<test::msg::Response>> reader;
-                        bool ok = agrpc::request(&test::v1::Test::Stub::AsyncServerStreaming, *stub, client_context,
-                                                 request, reader, yield);
-                        return std::pair{std::move(reader), ok};
-                    }();
-                    CHECK(ok);
-                    CHECK(agrpc::read_initial_metadata(*reader, yield));
-                    test::msg::Response response;
-                    CHECK(agrpc::read(*reader, response, yield));
-                    CHECK(agrpc::read(*reader, response, yield));
-                    grpc::Status status;
-                    CHECK(agrpc::finish(*reader, status, yield));
-                    CHECK(status.ok());
-                    CHECK_EQ(21, response.integer());
-                });
-    grpc_context.run();
+                        return std::unique_ptr<grpc::ClientAsyncReader<test::msg::Response>>();
+                    }
+                    else
+                    {
+                        return std::unique_ptr<grpc::ClientAsyncReaderInterface<test::msg::Response>>();
+                    }
+                }();
+                bool ok =
+                    agrpc::request(&Stub::AsyncServerStreaming, test_stub, test.client_context, request, reader, yield);
+                return std::pair{std::move(reader), ok};
+            }();
+            CHECK(ok);
+            CHECK(agrpc::read_initial_metadata(*reader, yield));
+            test::msg::Response response;
+            CHECK(agrpc::read(*reader, response, yield));
+            CHECK(agrpc::read(*reader, response, yield));
+            grpc::Status status;
+            CHECK(agrpc::finish(*reader, status, yield));
+            CHECK(status.ok());
+            CHECK_EQ(21, response.integer());
+        });
+    test.grpc_context.run();
 }
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "yield_context client streaming")

@@ -1,6 +1,6 @@
 # test protobuf sources
 asio_grpc_protobuf_generate(
-    GENERATE_GRPC
+    GENERATE_GRPC GENERATE_MOCK_CODE
     OUT_VAR "ASIO_GRPC_TEXT_PROTO_SOURCES"
     OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
     IMPORT_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/proto"
