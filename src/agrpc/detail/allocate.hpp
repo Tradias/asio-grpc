@@ -146,7 +146,6 @@ class AllocationGuard
 
 template <class T, class Allocator, class... Args>
 auto allocate(Allocator allocator, Args&&... args)
-    -> detail::AllocatedPointer<typename std::allocator_traits<Allocator>::template rebind_alloc<T>>
 {
     using Traits = typename std::allocator_traits<Allocator>::template rebind_traits<T>;
     using ReboundAllocator = typename Traits::allocator_type;
