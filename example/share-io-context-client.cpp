@@ -51,7 +51,7 @@ asio::awaitable<void> make_grpc_request(agrpc::GrpcContext& grpc_context, exampl
         agrpc::request(&example::v1::Example::Stub::AsyncUnary, stub, client_context, request, grpc_context);
     example::v1::Response response;
     grpc::Status status;
-    co_await agrpc::finish(*reader, response, status, asio::bind_executor(grpc_context, asio::use_awaitable));
+    co_await agrpc::finish(reader, response, status, asio::bind_executor(grpc_context, asio::use_awaitable));
 
     abort_if_not(status.ok());
     abort_if_not(42 == response.integer());

@@ -43,7 +43,7 @@ unifex::task<void> make_unary_request(example::v1::Example::Stub& stub, agrpc::G
 
     example::v1::Response response;
     grpc::Status status;
-    co_await agrpc::finish(*reader, response, status, agrpc::use_sender(grpc_context));
+    co_await agrpc::finish(reader, response, status, agrpc::use_sender(grpc_context));
 
     abort_if_not(status.ok());
 }
@@ -65,15 +65,15 @@ unifex::task<void> make_server_streaming_request(example::v1::Example::Stub& stu
                                          request, reader, agrpc::use_sender(grpc_context)));
 
     example::v1::Response response;
-    bool read_ok = co_await agrpc::read(*reader, response, agrpc::use_sender(grpc_context));
+    bool read_ok = co_await agrpc::read(reader, response, agrpc::use_sender(grpc_context));
     while (read_ok)
     {
         std::cout << "Server streaming: " << response.integer() << '\n';
-        read_ok = co_await agrpc::read(*reader, response, agrpc::use_sender(grpc_context));
+        read_ok = co_await agrpc::read(reader, response, agrpc::use_sender(grpc_context));
     }
 
     grpc::Status status;
-    co_await agrpc::finish(*reader, status, agrpc::use_sender(grpc_context));
+    co_await agrpc::finish(reader, status, agrpc::use_sender(grpc_context));
 
     abort_if_not(status.ok());
 }
@@ -114,7 +114,7 @@ unifex::task<void> make_and_cancel_unary_request(example::v1::ExampleExt::Stub& 
     grpc::Alarm alarm;
     co_await run_with_deadline(alarm, grpc_context, client_context,
                                std::chrono::system_clock::now() + std::chrono::milliseconds(100),
-                               agrpc::finish(*reader, response, status, agrpc::use_sender(grpc_context)));
+                               agrpc::finish(reader, response, status, agrpc::use_sender(grpc_context)));
 
     abort_if_not(grpc::StatusCode::CANCELLED == status.error_code());
 }

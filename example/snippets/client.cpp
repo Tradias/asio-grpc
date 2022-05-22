@@ -39,13 +39,13 @@ asio::awaitable<void> unary(agrpc::GrpcContext& grpc_context, example::v1::Examp
     /* [request-unary-client-side] */
 
     /* [read_initial_metadata-unary-client-side] */
-    bool read_ok = co_await agrpc::read_initial_metadata(*reader, asio::use_awaitable);
+    bool read_ok = co_await agrpc::read_initial_metadata(reader, asio::use_awaitable);
     /* [read_initial_metadata-unary-client-side] */
 
     /* [finish-unary-client-side] */
     example::v1::Response response;
     grpc::Status status;
-    bool finish_ok = co_await agrpc::finish(*reader, response, status, asio::use_awaitable);
+    bool finish_ok = co_await agrpc::finish(reader, response, status, asio::use_awaitable);
     /* [finish-unary-client-side] */
 
     silence_unused(read_ok, finish_ok);
@@ -73,20 +73,20 @@ asio::awaitable<void> client_streaming(example::v1::Example::Stub& stub)
 
     /* [write-client-streaming-client-side] */
     example::v1::Request request;
-    bool write_ok = co_await agrpc::write(*writer, request, asio::use_awaitable);
+    bool write_ok = co_await agrpc::write(writer, request, asio::use_awaitable);
     /* [write-client-streaming-client-side] */
 
     /* [writes_done-client-streaming-client-side] */
-    bool writes_done_ok = co_await agrpc::writes_done(*writer, asio::use_awaitable);
+    bool writes_done_ok = co_await agrpc::writes_done(writer, asio::use_awaitable);
     /* [writes_done-client-streaming-client-side] */
 
     /* [write_last-client-streaming-client-side] */
-    bool write_last_ok = co_await agrpc::write_last(*writer, request, grpc::WriteOptions{}, asio::use_awaitable);
+    bool write_last_ok = co_await agrpc::write_last(writer, request, grpc::WriteOptions{}, asio::use_awaitable);
     /* [write_last-client-streaming-client-side] */
 
     /* [finish-client-streaming-client-side] */
     grpc::Status status;
-    bool finish_ok = co_await agrpc::finish(*writer, status, asio::use_awaitable);
+    bool finish_ok = co_await agrpc::finish(writer, status, asio::use_awaitable);
     /* [finish-client-streaming-client-side] */
 
     silence_unused(request_ok, write_ok, writes_done_ok, write_last_ok, finish_ok);
@@ -129,12 +129,12 @@ asio::awaitable<void> server_streaming(example::v1::Example::Stub& stub)
 
     /* [read-server-streaming-client-side] */
     example::v1::Response response;
-    bool read_ok = co_await agrpc::read(*reader, response, asio::use_awaitable);
+    bool read_ok = co_await agrpc::read(reader, response, asio::use_awaitable);
     /* [read-server-streaming-client-side] */
 
     /* [finish-server-streaming-client-side] */
     grpc::Status status;
-    bool finish_ok = co_await agrpc::finish(*reader, status, asio::use_awaitable);
+    bool finish_ok = co_await agrpc::finish(reader, status, asio::use_awaitable);
     /* [finish-server-streaming-client-side] */
 
     silence_unused(request_ok, read_ok, finish_ok);
@@ -163,25 +163,25 @@ asio::awaitable<void> bidirectional_streaming(example::v1::Example::Stub& stub)
 
     /* [write-bidirectional-client-side] */
     example::v1::Request request;
-    bool write_ok = co_await agrpc::write(*reader_writer, request, asio::use_awaitable);
+    bool write_ok = co_await agrpc::write(reader_writer, request, asio::use_awaitable);
     /* [write-bidirectional-client-side] */
 
     /* [write_done-bidirectional-client-side] */
-    bool writes_done_ok = co_await agrpc::writes_done(*reader_writer, asio::use_awaitable);
+    bool writes_done_ok = co_await agrpc::writes_done(reader_writer, asio::use_awaitable);
     /* [write_done-bidirectional-client-side] */
 
     /* [write_last-bidirectional-client-side] */
-    bool write_last_ok = co_await agrpc::write_last(*reader_writer, request, grpc::WriteOptions{}, asio::use_awaitable);
+    bool write_last_ok = co_await agrpc::write_last(reader_writer, request, grpc::WriteOptions{}, asio::use_awaitable);
     /* [write_last-bidirectional-client-side] */
 
     /* [read-bidirectional-client-side] */
     example::v1::Response response;
-    bool read_ok = co_await agrpc::read(*reader_writer, response, asio::use_awaitable);
+    bool read_ok = co_await agrpc::read(reader_writer, response, asio::use_awaitable);
     /* [read-bidirectional-client-side] */
 
     /* [finish-bidirectional-client-side] */
     grpc::Status status;
-    bool finish_ok = co_await agrpc::finish(*reader_writer, status, asio::use_awaitable);
+    bool finish_ok = co_await agrpc::finish(reader_writer, status, asio::use_awaitable);
     /* [finish-bidirectional-client-side] */
 
     silence_unused(request_ok, write_ok, writes_done_ok, write_last_ok, read_ok, finish_ok);
@@ -243,7 +243,7 @@ asio::awaitable<void> bind_allocator(std::allocator<void> my_allocator)
     std::unique_ptr<grpc::ClientAsyncWriter<example::v1::Request>> writer;
 
     /* [bind_allocator-client-side] */
-    co_await agrpc::writes_done(*writer, agrpc::bind_allocator(my_allocator, asio::use_awaitable));
+    co_await agrpc::writes_done(writer, agrpc::bind_allocator(my_allocator, asio::use_awaitable));
     /* [bind_allocator-client-side] */
 }
 
@@ -292,7 +292,7 @@ asio::awaitable<void> server_streaming_cancel_safe(agrpc::GrpcContext& grpc_cont
 
     // Initiate a read with cancellation safety.
     example::v1::Response response;
-    agrpc::read(*reader, response, asio::bind_executor(grpc_context, safe.token()));
+    agrpc::read(reader, response, asio::bind_executor(grpc_context, safe.token()));
 
     grpc::Alarm alarm;
     bool ok{true};
@@ -310,7 +310,7 @@ asio::awaitable<void> server_streaming_cancel_safe(agrpc::GrpcContext& grpc_cont
             if (ok)
             {
                 // Initiate the next read.
-                agrpc::read(*reader, response, asio::bind_executor(grpc_context, safe.token()));
+                agrpc::read(reader, response, asio::bind_executor(grpc_context, safe.token()));
             }
         }
     }

@@ -47,7 +47,7 @@ void make_generic_unary_request(grpc::GenericStub& stub, agrpc::GrpcContext& grp
     // -- Wait for the response message
     buffer.Clear();
     grpc::Status status;
-    agrpc::finish(*response_writer, buffer, status, yield);
+    agrpc::finish(response_writer, buffer, status, yield);
     abort_if_not(status.ok());
 
     // -- Deserialize the response message

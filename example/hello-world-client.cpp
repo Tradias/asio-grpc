@@ -42,7 +42,7 @@ int main(int argc, const char** argv)
             std::unique_ptr<grpc::ClientAsyncResponseReader<helloworld::HelloReply>> reader =
                 stub->AsyncSayHello(&client_context, request, agrpc::get_completion_queue(grpc_context));
             helloworld::HelloReply response;
-            co_await agrpc::finish(*reader, response, status);
+            co_await agrpc::finish(reader, response, status);
         },
         boost::asio::detached);
 

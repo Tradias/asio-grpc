@@ -17,6 +17,7 @@
 
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asioForward.hpp"
+#include "utils/clientContext.hpp"
 #include "utils/time.hpp"
 
 #include <agrpc/grpcContext.hpp>
@@ -30,8 +31,27 @@ struct PerformUnarySuccessOptions
     int32_t request_payload{42};
 };
 
-void client_perform_unary_success(agrpc::GrpcContext& grpc_context, test::v1::Test::Stub& stub,
-                                  asio::yield_context yield, test::PerformUnarySuccessOptions options = {});
+template <class Stub>
+void client_perform_unary_success(agrpc::GrpcContext& grpc_context, Stub& stub, asio::yield_context yield,
+                                  test::PerformUnarySuccessOptions options = {})
+{
+    const auto client_context = test::create_client_context();
+    test::msg::Request request;
+    request.set_integer(options.request_payload);
+    const auto reader = agrpc::request(&Stub::AsyncUnary, stub, *client_context, request, grpc_context);
+    test::msg::Response response;
+    grpc::Status status;
+    CHECK(agrpc::finish(*reader, response, status, yield));
+    if (options.finish_with_error)
+    {
+        CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
+    }
+    else
+    {
+        CHECK(status.ok());
+        CHECK_EQ(21, response.integer());
+    }
+}
 
 bool client_perform_unary_unchecked(agrpc::GrpcContext& grpc_context, test::v1::Test::Stub& stub,
                                     asio::yield_context yield,
@@ -49,6 +69,11 @@ void client_perform_client_streaming_success(test::v1::Test::Stub& stub, asio::y
 
 void client_perform_client_streaming_success(test::msg::Response& response,
                                              grpc::ClientAsyncWriter<test::msg::Request>& writer,
+                                             asio::yield_context yield,
+                                             test::PerformClientStreamingSuccessOptions options = {});
+
+void client_perform_client_streaming_success(test::msg::Response& response,
+                                             grpc::ClientAsyncWriterInterface<test::msg::Request>& writer,
                                              asio::yield_context yield,
                                              test::PerformClientStreamingSuccessOptions options = {});
 }
