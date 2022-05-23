@@ -25,9 +25,9 @@ DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 template <class Response>
 struct MockAsyncWriter : grpc::ClientAsyncResponseReaderInterface<Response>
 {
-    MOCK_METHOD(void, StartCall, (), (override));
-    MOCK_METHOD(void, ReadInitialMetadata, (void*), (override));
-    MOCK_METHOD(void, Finish, (Response * msg, grpc::Status* status, void*), (override));
+    MOCK_METHOD0(StartCall, void());
+    MOCK_METHOD1(ReadInitialMetadata, void(void*));
+    MOCK_METHOD3(Finish, void(Response* msg, grpc::Status* status, void*));
 };
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "mock unary request")

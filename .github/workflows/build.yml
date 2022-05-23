@@ -253,7 +253,7 @@ jobs:
 
     steps:
     - name: Install protobuf, gRPC and doctest
-      run: sudo apt-get install libgrpc++-dev protobuf-compiler-grpc libprotobuf-dev doctest-dev
+      run: sudo apt-get install libgrpc++-dev protobuf-compiler-grpc libprotobuf-dev doctest-dev libgtest-dev
 
     - uses: actions/checkout@v2
 
