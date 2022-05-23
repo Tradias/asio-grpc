@@ -93,6 +93,7 @@ if(ASIO_GRPC_BUILD_TESTS)
     add_subdirectory(doc)
 
     find_package(doctest REQUIRED)
+    find_package(GTest REQUIRED)
     enable_testing()
     include(doctest)
     add_subdirectory(test)
