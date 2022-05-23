@@ -55,8 +55,8 @@ TEST_CASE_TEMPLATE("awaitable server streaming", Stub, test::v1::Test::Stub, tes
             CHECK(
                 co_await agrpc::request(&Stub::AsyncServerStreaming, test_stub, test.client_context, request, reader));
             CHECK(std::is_same_v<std::pair<decltype(reader), bool>,
-                                 decltype(agrpc::request(&Stub::AsyncServerStreaming, test_stub, test.client_context,
-                                                         request))::value_type>);
+                                 typename decltype(agrpc::request(&Stub::AsyncServerStreaming, test_stub,
+                                                                  test.client_context, request))::value_type>);
             test::msg::Response response;
             CHECK(co_await agrpc::read(*reader, response));
             grpc::Status status;
@@ -93,8 +93,8 @@ TEST_CASE_TEMPLATE("awaitable client streaming", Stub, test::v1::Test::Stub, tes
             CHECK(
                 co_await agrpc::request(&Stub::AsyncClientStreaming, test_stub, test.client_context, writer, response));
             CHECK(std::is_same_v<std::pair<decltype(writer), bool>,
-                                 decltype(agrpc::request(&Stub::AsyncClientStreaming, test_stub, test.client_context,
-                                                         response))::value_type>);
+                                 typename decltype(agrpc::request(&Stub::AsyncClientStreaming, test_stub,
+                                                                  test.client_context, response))::value_type>);
             test::msg::Request request;
             request.set_integer(42);
             CHECK(co_await agrpc::write(*writer, request));
@@ -200,8 +200,8 @@ TEST_CASE_TEMPLATE("awaitable bidirectional streaming", Stub, test::v1::Test::St
             CHECK(co_await agrpc::request(&Stub::AsyncBidirectionalStreaming, test_stub, test.client_context,
                                           reader_writer));
             CHECK(std::is_same_v<std::pair<decltype(reader_writer), bool>,
-                                 decltype(agrpc::request(&Stub::AsyncBidirectionalStreaming, test_stub,
-                                                         test.client_context))::value_type>);
+                                 typename decltype(agrpc::request(&Stub::AsyncBidirectionalStreaming, test_stub,
+                                                                  test.client_context))::value_type>);
             test::msg::Request request;
             request.set_integer(42);
             CHECK(co_await agrpc::write(*reader_writer, request));
