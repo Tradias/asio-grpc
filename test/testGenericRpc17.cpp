@@ -26,80 +26,78 @@ DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 {
 TEST_CASE_FIXTURE(test::GrpcGenericClientServerTest, "yield_context generic unary")
 {
-    asio::spawn(grpc_context,
-                [&](asio::yield_context yield)
-                {
-                    grpc::GenericServerContext server_context;
-                    grpc::GenericServerAsyncReaderWriter reader_writer{&server_context};
-                    CHECK(agrpc::request(service, server_context, reader_writer, yield));
-                    CHECK_EQ("/test.v1.Test/Unary", server_context.method());
-                    CHECK(agrpc::send_initial_metadata(reader_writer, yield));
-                    grpc::ByteBuffer buffer;
-                    CHECK(agrpc::read(reader_writer, buffer, yield));
-                    const auto request = test::grpc_buffer_to_message<test::msg::Request>(buffer);
-                    CHECK_EQ(42, request.integer());
-                    test::msg::Response response;
-                    response.set_integer(21);
-                    const auto response_buffer = test::message_to_grpc_buffer(response);
-                    CHECK(agrpc::write(reader_writer, response_buffer, yield));
-                    CHECK(agrpc::finish(reader_writer, grpc::Status::OK, yield));
-                });
-    asio::spawn(grpc_context,
-                [&](asio::yield_context yield)
-                {
-                    test::msg::Request request;
-                    request.set_integer(42);
-                    const auto request_buffer = test::message_to_grpc_buffer(request);
-                    const auto reader =
-                        agrpc::request("/test.v1.Test/Unary", *stub, client_context, request_buffer, grpc_context);
-                    grpc::ByteBuffer buffer;
-                    grpc::Status status;
-                    CHECK(agrpc::finish(*reader, buffer, status, yield));
-                    CHECK(status.ok());
-                    const auto response = test::grpc_buffer_to_message<test::msg::Response>(buffer);
-                    CHECK_EQ(21, response.integer());
-                });
-    grpc_context.run();
+    test::spawn_and_run(
+        grpc_context,
+        [&](asio::yield_context yield)
+        {
+            grpc::GenericServerContext server_context;
+            grpc::GenericServerAsyncReaderWriter reader_writer{&server_context};
+            CHECK(agrpc::request(service, server_context, reader_writer, yield));
+            CHECK_EQ("/test.v1.Test/Unary", server_context.method());
+            CHECK(agrpc::send_initial_metadata(reader_writer, yield));
+            grpc::ByteBuffer buffer;
+            CHECK(agrpc::read(reader_writer, buffer, yield));
+            const auto request = test::grpc_buffer_to_message<test::msg::Request>(buffer);
+            CHECK_EQ(42, request.integer());
+            test::msg::Response response;
+            response.set_integer(21);
+            const auto response_buffer = test::message_to_grpc_buffer(response);
+            CHECK(agrpc::write(reader_writer, response_buffer, yield));
+            CHECK(agrpc::finish(reader_writer, grpc::Status::OK, yield));
+        },
+        [&](asio::yield_context yield)
+        {
+            test::msg::Request request;
+            request.set_integer(42);
+            const auto request_buffer = test::message_to_grpc_buffer(request);
+            const auto reader =
+                agrpc::request("/test.v1.Test/Unary", *stub, client_context, request_buffer, grpc_context);
+            grpc::ByteBuffer buffer;
+            grpc::Status status;
+            CHECK(agrpc::finish(*reader, buffer, status, yield));
+            CHECK(status.ok());
+            const auto response = test::grpc_buffer_to_message<test::msg::Response>(buffer);
+            CHECK_EQ(21, response.integer());
+        });
 }
 
 TEST_CASE_FIXTURE(test::GrpcGenericClientServerTest, "yield_context generic server streaming")
 {
-    asio::spawn(grpc_context,
-                [&](asio::yield_context yield)
-                {
-                    grpc::GenericServerContext server_context;
-                    grpc::GenericServerAsyncReaderWriter reader_writer{&server_context};
-                    CHECK(agrpc::request(service, server_context, reader_writer, yield));
-                    CHECK_EQ("/test.v1.Test/ServerStreaming", server_context.method());
-                    CHECK(agrpc::send_initial_metadata(reader_writer, yield));
-                    grpc::ByteBuffer buffer;
-                    CHECK(agrpc::read(reader_writer, buffer, yield));
-                    const auto request = test::grpc_buffer_to_message<test::msg::Request>(buffer);
-                    CHECK_EQ(42, request.integer());
-                    test::msg::Response response;
-                    response.set_integer(21);
-                    const auto response_buffer = test::message_to_grpc_buffer(response);
-                    CHECK(agrpc::write(reader_writer, response_buffer, yield));
-                    CHECK(agrpc::finish(reader_writer, grpc::Status::OK, yield));
-                });
-    asio::spawn(grpc_context,
-                [&](asio::yield_context yield)
-                {
-                    std::unique_ptr<grpc::GenericClientAsyncReaderWriter> reader_writer;
-                    CHECK(agrpc::request("/test.v1.Test/ServerStreaming", *stub, client_context, reader_writer, yield));
-                    CHECK(agrpc::read_initial_metadata(*reader_writer, yield));
-                    test::msg::Request request;
-                    request.set_integer(42);
-                    const auto request_buffer = test::message_to_grpc_buffer(request);
-                    CHECK(agrpc::write(*reader_writer, request_buffer, yield));
-                    grpc::ByteBuffer buffer;
-                    CHECK(agrpc::read(*reader_writer, buffer, yield));
-                    const auto response = test::grpc_buffer_to_message<test::msg::Response>(buffer);
-                    grpc::Status status;
-                    CHECK(agrpc::finish(*reader_writer, status, yield));
-                    CHECK(status.ok());
-                    CHECK_EQ(21, response.integer());
-                });
-    grpc_context.run();
+    test::spawn_and_run(
+        grpc_context,
+        [&](asio::yield_context yield)
+        {
+            grpc::GenericServerContext server_context;
+            grpc::GenericServerAsyncReaderWriter reader_writer{&server_context};
+            CHECK(agrpc::request(service, server_context, reader_writer, yield));
+            CHECK_EQ("/test.v1.Test/ServerStreaming", server_context.method());
+            CHECK(agrpc::send_initial_metadata(reader_writer, yield));
+            grpc::ByteBuffer buffer;
+            CHECK(agrpc::read(reader_writer, buffer, yield));
+            const auto request = test::grpc_buffer_to_message<test::msg::Request>(buffer);
+            CHECK_EQ(42, request.integer());
+            test::msg::Response response;
+            response.set_integer(21);
+            const auto response_buffer = test::message_to_grpc_buffer(response);
+            CHECK(agrpc::write(reader_writer, response_buffer, yield));
+            CHECK(agrpc::finish(reader_writer, grpc::Status::OK, yield));
+        },
+        [&](asio::yield_context yield)
+        {
+            std::unique_ptr<grpc::GenericClientAsyncReaderWriter> reader_writer;
+            CHECK(agrpc::request("/test.v1.Test/ServerStreaming", *stub, client_context, reader_writer, yield));
+            CHECK(agrpc::read_initial_metadata(*reader_writer, yield));
+            test::msg::Request request;
+            request.set_integer(42);
+            const auto request_buffer = test::message_to_grpc_buffer(request);
+            CHECK(agrpc::write(*reader_writer, request_buffer, yield));
+            grpc::ByteBuffer buffer;
+            CHECK(agrpc::read(*reader_writer, buffer, yield));
+            const auto response = test::grpc_buffer_to_message<test::msg::Response>(buffer);
+            grpc::Status status;
+            CHECK(agrpc::finish(*reader_writer, status, yield));
+            CHECK(status.ok());
+            CHECK_EQ(21, response.integer());
+        });
 }
 }

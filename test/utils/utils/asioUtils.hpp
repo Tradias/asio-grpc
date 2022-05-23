@@ -155,6 +155,13 @@ decltype(auto) initiate_using_async_completion(Initiation&& initiation, RawCompl
     return completion.result.get();
 }
 
+template <class... Functions>
+void spawn_and_run(agrpc::GrpcContext& grpc_context, Functions&&... functions)
+{
+    (asio::spawn(grpc_context, std::forward<Functions>(functions)), ...);
+    grpc_context.run();
+}
+
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 template <class Executor, class Function>
 auto co_spawn(Executor&& executor, Function function)
@@ -167,6 +174,13 @@ auto co_spawn(Executor&& executor, Function function)
                                   std::rethrow_exception(ep);
                               }
                           });
+}
+
+template <class... Functions>
+void co_spawn_and_run(agrpc::GrpcContext& grpc_context, Functions&&... functions)
+{
+    (test::co_spawn(grpc_context, std::forward<Functions>(functions)), ...);
+    grpc_context.run();
 }
 #endif
 #endif

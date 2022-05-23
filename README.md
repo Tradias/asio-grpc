@@ -299,7 +299,7 @@ For servers and clients:
 grpc::ServerBuilder builder;
 agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
 ```
-<sup><a href='/example/snippets/server.cpp#L322-L325' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/snippets/server.cpp#L324-L327' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 For clients only:
@@ -321,7 +321,7 @@ grpc_context.run();
 server->Shutdown();
 }  // grpc_context is destructed here before the server
 ```
-<sup><a href='/example/snippets/server.cpp#L340-L344' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/snippets/server.cpp#L342-L346' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 It might also be helpful to create a work guard before running the `agrpc::GrpcContext` to prevent `grpc_context.run()` from returning early.

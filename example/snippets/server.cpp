@@ -111,6 +111,7 @@ asio::awaitable<void> unary(example::v1::Example::AsyncService& service)
 
     /* [finish-unary-server-side] */
     example::v1::Response response;
+    response.set_integer(42);
     bool finish_ok = co_await agrpc::finish(writer, response, grpc::Status::OK, asio::use_awaitable);
     /* [finish-unary-server-side] */
 
@@ -137,6 +138,7 @@ asio::awaitable<void> client_streaming(example::v1::Example::AsyncService& servi
 
     /* [finish-client-streaming-server-side] */
     example::v1::Response response;
+    response.set_integer(42);
     bool finish_ok = co_await agrpc::finish(reader, response, grpc::Status::OK, asio::use_awaitable);
     /* [finish-client-streaming-server-side] */
 

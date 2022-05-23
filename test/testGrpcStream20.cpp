@@ -28,49 +28,48 @@ DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 {
 TEST_CASE_FIXTURE(test::GrpcContextTest, "CancelSafe: co_await for a CancelSafe and an alarm parallel_group")
 {
-    test::co_spawn(get_executor(),
-                   [&]() -> asio::awaitable<void>
-                   {
-                       agrpc::GrpcCancelSafe safe;
-                       grpc::Alarm alarm1;
-                       agrpc::wait(alarm1, test::five_hundred_milliseconds_from_now(),
-                                   asio::bind_executor(grpc_context, safe.token()));
-                       grpc::Alarm alarm2;
-                       for (size_t i = 0; i < 3; ++i)
-                       {
-                           auto [completion_order, alarm2_ok, alarm1_ec, alarm1_ok] =
-                               co_await asio::experimental::make_parallel_group(
-                                   agrpc::wait(alarm2, test::ten_milliseconds_from_now(),
-                                               asio::bind_executor(grpc_context, asio::experimental::deferred)),
-                                   safe.wait(asio::experimental::deferred))
-                                   .async_wait(asio::experimental::wait_for_one(), asio::use_awaitable);
-                           CHECK_EQ(0, completion_order[0]);
-                           CHECK_EQ(1, completion_order[1]);
-                           CHECK(alarm2_ok);
-                           CHECK_EQ(asio::error::operation_aborted, alarm1_ec);
-                           CHECK_EQ(bool{}, alarm1_ok);
-                       }
-                       CHECK(co_await safe.wait(agrpc::DefaultCompletionToken{}));
-                   });
-    grpc_context.run();
+    test::co_spawn_and_run(grpc_context,
+                           [&]() -> asio::awaitable<void>
+                           {
+                               agrpc::GrpcCancelSafe safe;
+                               grpc::Alarm alarm1;
+                               agrpc::wait(alarm1, test::five_hundred_milliseconds_from_now(),
+                                           asio::bind_executor(grpc_context, safe.token()));
+                               grpc::Alarm alarm2;
+                               for (size_t i = 0; i < 3; ++i)
+                               {
+                                   auto [completion_order, alarm2_ok, alarm1_ec, alarm1_ok] =
+                                       co_await asio::experimental::make_parallel_group(
+                                           agrpc::wait(alarm2, test::ten_milliseconds_from_now(),
+                                                       asio::bind_executor(grpc_context, asio::experimental::deferred)),
+                                           safe.wait(asio::experimental::deferred))
+                                           .async_wait(asio::experimental::wait_for_one(), asio::use_awaitable);
+                                   CHECK_EQ(0, completion_order[0]);
+                                   CHECK_EQ(1, completion_order[1]);
+                                   CHECK(alarm2_ok);
+                                   CHECK_EQ(asio::error::operation_aborted, alarm1_ec);
+                                   CHECK_EQ(bool{}, alarm1_ok);
+                               }
+                               CHECK(co_await safe.wait(agrpc::DefaultCompletionToken{}));
+                           });
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcStream: next can be interrupted without cancelling initiated operation")
 {
-    test::co_spawn(get_executor(),
-                   [&]() -> asio::awaitable<void>
-                   {
-                       agrpc::GrpcStream stream{grpc_context};
-                       grpc::Alarm alarm;
-                       stream.initiate(agrpc::wait, alarm, test::hundred_milliseconds_from_now());
-                       grpc::Alarm alarm2;
-                       using namespace asio::experimental::awaitable_operators;
-                       auto result = co_await (agrpc::wait(alarm2, test::ten_milliseconds_from_now()) || stream.next());
-                       CHECK_EQ(0, result.index());
-                       CHECK(co_await stream.next());
-                       co_await stream.cleanup();
-                   });
-    grpc_context.run();
+    test::co_spawn_and_run(grpc_context,
+                           [&]() -> asio::awaitable<void>
+                           {
+                               agrpc::GrpcStream stream{grpc_context};
+                               grpc::Alarm alarm;
+                               stream.initiate(agrpc::wait, alarm, test::hundred_milliseconds_from_now());
+                               grpc::Alarm alarm2;
+                               using namespace asio::experimental::awaitable_operators;
+                               auto result =
+                                   co_await (agrpc::wait(alarm2, test::ten_milliseconds_from_now()) || stream.next());
+                               CHECK_EQ(0, result.index());
+                               CHECK(co_await stream.next());
+                               co_await stream.cleanup();
+                           });
 }
 }
 #endif

@@ -44,18 +44,18 @@ asio::awaitable<void> make_client_streaming_request(example::v1::Example::Stub& 
                                               writer, response);
 
     // Optionally read initial metadata first.
-    bool read_ok = co_await agrpc::read_initial_metadata(*writer);
+    bool read_ok = co_await agrpc::read_initial_metadata(writer);
 
     // Send a message.
     example::v1::Request request;
-    bool write_ok = co_await agrpc::write(*writer, request);
+    bool write_ok = co_await agrpc::write(writer, request);
 
     // Signal that we are done writing.
-    bool writes_done_ok = co_await agrpc::writes_done(*writer);
+    bool writes_done_ok = co_await agrpc::writes_done(writer);
 
     // Wait for the server to recieve all our messages.
     grpc::Status status;
-    bool finish_ok = co_await agrpc::finish(*writer, status);
+    bool finish_ok = co_await agrpc::finish(writer, status);
 
     // The above three steps can also be combined into one using `agrpc::write_and_finish`.
 
@@ -96,7 +96,7 @@ asio::awaitable<void> make_bidirectional_streaming_request(example::v1::Example:
         // Reads and writes can be performed simultaneously.
         using namespace asio::experimental::awaitable_operators;
         std::tie(read_ok, write_ok) =
-            co_await (agrpc::read(*reader_writer, response) && agrpc::write(*reader_writer, request));
+            co_await (agrpc::read(reader_writer, response) && agrpc::write(reader_writer, request));
 
         std::cout << "Bidirectional streaming: " << response.integer() << '\n';
         request.set_integer(response.integer());
@@ -104,10 +104,10 @@ asio::awaitable<void> make_bidirectional_streaming_request(example::v1::Example:
     }
 
     // Do not forget to signal that we are done writing before finishing.
-    co_await agrpc::writes_done(*reader_writer);
+    co_await agrpc::writes_done(reader_writer);
 
     grpc::Status status;
-    bool finish_ok = co_await agrpc::finish(*reader_writer, status);
+    bool finish_ok = co_await agrpc::finish(reader_writer, status);
 
     abort_if_not(status.ok());
     silence_unused(finish_ok);
@@ -138,9 +138,9 @@ asio::awaitable<void> make_topic_subscription_request(agrpc::GrpcContext& grpc_c
     for (int32_t topic_id{}; topic_id < 3; ++topic_id)
     {
         topic.set_id(topic_id);
-        bool write_ok = co_await agrpc::write(*reader_writer, topic);
+        bool write_ok = co_await agrpc::write(reader_writer, topic);
 
-        read_stream.initiate(agrpc::read, *reader_writer, feed);
+        read_stream.initiate(agrpc::read, reader_writer, feed);
 
         const auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(1);
         while (read_ok && write_ok)
@@ -153,7 +153,7 @@ asio::awaitable<void> make_topic_subscription_request(agrpc::GrpcContext& grpc_c
                 if (read_ok)
                 {
                     std::cout << feed.content() << std::endl;
-                    read_stream.initiate(agrpc::read, *reader_writer, feed);
+                    read_stream.initiate(agrpc::read, reader_writer, feed);
                 }
             }
             else  // alarm completed
@@ -166,10 +166,10 @@ asio::awaitable<void> make_topic_subscription_request(agrpc::GrpcContext& grpc_c
     }
     co_await read_stream.cleanup();
 
-    abort_if_not(co_await agrpc::writes_done(*reader_writer));
+    abort_if_not(co_await agrpc::writes_done(reader_writer));
 
     grpc::Status status;
-    co_await agrpc::finish(*reader_writer, status);
+    co_await agrpc::finish(reader_writer, status);
     abort_if_not(status.ok());
 }
 // ---------------------------------------------------
@@ -211,7 +211,7 @@ asio::awaitable<void> make_and_cancel_unary_request(example::v1::ExampleExt::Stu
     co_await run_with_deadline(alarm, client_context, std::chrono::system_clock::now() + std::chrono::milliseconds(100),
                                [&]
                                {
-                                   return agrpc::finish(*reader, response, status);
+                                   return agrpc::finish(reader, response, status);
                                });
 
     abort_if_not(std::chrono::steady_clock::now() < not_too_exceed);
@@ -234,7 +234,7 @@ asio::awaitable<void> make_shutdown_request(example::v1::ExampleExt::Stub& stub)
 
     google::protobuf::Empty response;
     grpc::Status status;
-    if (co_await agrpc::finish(*reader, response, status) && status.ok())
+    if (co_await agrpc::finish(reader, response, status) && status.ok())
     {
         std::cout << "Successfully send shutdown request to server\n";
     }

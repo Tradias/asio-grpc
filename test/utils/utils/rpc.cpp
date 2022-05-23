@@ -25,31 +25,10 @@
 
 namespace test
 {
-void client_perform_unary_success(agrpc::GrpcContext& grpc_context, test::v1::Test::Stub& stub,
-                                  asio::yield_context yield, test::PerformUnarySuccessOptions options)
-{
-    const auto client_context = create_client_context();
-    test::msg::Request request;
-    request.set_integer(options.request_payload);
-    const auto reader = agrpc::request(&test::v1::Test::Stub::AsyncUnary, stub, *client_context, request, grpc_context);
-    test::msg::Response response;
-    grpc::Status status;
-    CHECK(agrpc::finish(*reader, response, status, yield));
-    if (options.finish_with_error)
-    {
-        CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
-    }
-    else
-    {
-        CHECK(status.ok());
-        CHECK_EQ(21, response.integer());
-    }
-}
-
 bool client_perform_unary_unchecked(agrpc::GrpcContext& grpc_context, test::v1::Test::Stub& stub,
                                     asio::yield_context yield, std::chrono::system_clock::time_point deadline)
 {
-    const auto client_context = create_client_context(deadline);
+    const auto client_context = test::create_client_context(deadline);
     const auto reader = agrpc::request(&test::v1::Test::Stub::AsyncUnary, stub, *client_context, {}, grpc_context);
     test::msg::Response response;
     grpc::Status status;
@@ -60,17 +39,19 @@ void client_perform_client_streaming_success(test::v1::Test::Stub& stub, asio::y
                                              test::PerformClientStreamingSuccessOptions options)
 {
     test::msg::Response response;
-    const auto client_context = create_client_context();
+    const auto client_context = test::create_client_context();
     const auto [writer, ok] =
         agrpc::request(&test::v1::Test::Stub::AsyncClientStreaming, stub, *client_context, response, yield);
     CHECK(ok);
     test::client_perform_client_streaming_success(response, *writer, yield, options);
 }
 
-void client_perform_client_streaming_success(test::msg::Response& response,
-                                             grpc::ClientAsyncWriter<test::msg::Request>& writer,
-                                             asio::yield_context yield,
-                                             test::PerformClientStreamingSuccessOptions options)
+namespace
+{
+template <class Writer>
+void client_perform_client_streaming_success_impl(test::msg::Response& response, Writer& writer,
+                                                  asio::yield_context yield,
+                                                  test::PerformClientStreamingSuccessOptions options)
 {
     CHECK(agrpc::read_initial_metadata(writer, yield));
     test::msg::Request request;
@@ -96,5 +77,22 @@ void client_perform_client_streaming_success(test::msg::Response& response,
         CHECK(status.ok());
         CHECK_EQ(21, response.integer());
     }
+}
+}
+
+void client_perform_client_streaming_success(test::msg::Response& response,
+                                             grpc::ClientAsyncWriter<test::msg::Request>& writer,
+                                             asio::yield_context yield,
+                                             test::PerformClientStreamingSuccessOptions options)
+{
+    test::client_perform_client_streaming_success_impl(response, writer, yield, options);
+}
+
+void client_perform_client_streaming_success(test::msg::Response& response,
+                                             grpc::ClientAsyncWriterInterface<test::msg::Request>& writer,
+                                             asio::yield_context yield,
+                                             test::PerformClientStreamingSuccessOptions options)
+{
+    test::client_perform_client_streaming_success_impl(response, writer, yield, options);
 }
 }
