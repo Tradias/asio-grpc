@@ -83,14 +83,13 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_allocator with old async_completi
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_allocator with yield_context")
 {
-    asio::spawn(get_executor(),
-                [&](asio::yield_context yield)
-                {
-                    grpc::Alarm alarm;
-                    agrpc::wait(alarm, test::ten_milliseconds_from_now(),
-                                agrpc::bind_allocator(get_allocator(), yield));
-                });
-    grpc_context.run();
+    test::spawn_and_run(grpc_context,
+                        [&](asio::yield_context yield)
+                        {
+                            grpc::Alarm alarm;
+                            agrpc::wait(alarm, test::ten_milliseconds_from_now(),
+                                        agrpc::bind_allocator(get_allocator(), yield));
+                        });
     CHECK(allocator_has_been_used());
 }
 }

@@ -148,7 +148,7 @@ struct GrpcRepeatedlyRequestTest : test::GrpcClientServerTest
               Allocator allocator)
     {
         agrpc::repeatedly_request(rpc, service, test::RpcSpawner{grpc_context, std::move(server_function), allocator});
-        asio::spawn(get_executor(), std::move(client_function));
+        test::spawn_and_run(grpc_context, std::move(client_function));
     }
 };
 
@@ -188,7 +188,6 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request c
                 });
         },
         get_allocator());
-    grpc_context.run();
     server_shutdown_thread->join();
     CHECK_EQ(4, request_count);
     CHECK(allocator_has_been_used());
@@ -212,13 +211,12 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "RepeatedlyRequestContext member fu
                 agrpc::finish(responder, response, grpc::Status::OK,
                               asio::bind_executor(get_executor(), [c = std::move(rpc_context)](bool) {}));
             }));
-    asio::spawn(get_executor(),
-                [&](asio::yield_context yield)
-                {
-                    CHECK(test::client_perform_unary_unchecked(grpc_context, *stub, yield));
-                    grpc_context.stop();
-                });
-    grpc_context.run();
+    test::spawn_and_run(grpc_context,
+                        [&](asio::yield_context yield)
+                        {
+                            CHECK(test::client_perform_unary_unchecked(grpc_context, *stub, yield));
+                            grpc_context.stop();
+                        });
 }
 
 TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "RepeatedlyRequestContext member functions for single-arg requests")
@@ -238,18 +236,17 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "RepeatedlyRequestContext member fu
                                     responder, response, grpc::Status::OK,
                                     asio::bind_executor(get_executor(), [c = std::move(rpc_context)](bool) {}));
                             }));
-    asio::spawn(get_executor(),
-                [&](asio::yield_context yield)
-                {
-                    test::msg::Response response;
-                    auto [writer, ok] = agrpc::request(&test::v1::Test::Stub::AsyncClientStreaming, *stub,
-                                                       client_context, response, yield);
-                    agrpc::writes_done(*writer, yield);
-                    grpc::Status status;
-                    agrpc::finish(*writer, status, yield);
-                    grpc_context.stop();
-                });
-    grpc_context.run();
+    test::spawn_and_run(grpc_context,
+                        [&](asio::yield_context yield)
+                        {
+                            test::msg::Response response;
+                            auto [writer, ok] = agrpc::request(&test::v1::Test::Stub::AsyncClientStreaming, *stub,
+                                                               client_context, response, yield);
+                            agrpc::writes_done(*writer, yield);
+                            grpc::Status status;
+                            agrpc::finish(*writer, status, yield);
+                            grpc_context.stop();
+                        });
 }
 
 TEST_CASE_FIXTURE(test::GrpcGenericClientServerTest, "RepeatedlyRequestContext member functions for generic requests")
@@ -265,14 +262,13 @@ TEST_CASE_FIXTURE(test::GrpcGenericClientServerTest, "RepeatedlyRequestContext m
                                 CHECK(std::is_same_v<grpc::GenericServerContext&, decltype(context)>);
                             }));
     test::v1::Test::Stub test_stub{channel};
-    asio::spawn(get_executor(),
-                [&](asio::yield_context yield)
-                {
-                    CHECK(test::client_perform_unary_unchecked(grpc_context, test_stub, yield,
-                                                               test::ten_milliseconds_from_now()));
-                    grpc_context.stop();
-                });
-    grpc_context.run();
+    test::spawn_and_run(grpc_context,
+                        [&](asio::yield_context yield)
+                        {
+                            CHECK(test::client_perform_unary_unchecked(grpc_context, test_stub, yield,
+                                                                       test::ten_milliseconds_from_now()));
+                            grpc_context.stop();
+                        });
 }
 
 TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "repeatedly_request tracks work of completion_handler's executor")
@@ -328,13 +324,12 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "repeatedly_request cancellation")
                              ++count;
                          }},
         asio::bind_cancellation_slot(signal.slot(), test::NoOp{}));
-    asio::spawn(grpc_context,
-                [&](auto&& yield)
-                {
-                    signal.emit(asio::cancellation_type::all);
-                    CHECK(test::client_perform_unary_unchecked(grpc_context, *stub, yield));
-                });
-    grpc_context.run();
+    test::spawn_and_run(grpc_context,
+                        [&](auto&& yield)
+                        {
+                            signal.emit(asio::cancellation_type::all);
+                            CHECK(test::client_perform_unary_unchecked(grpc_context, *stub, yield));
+                        });
     CHECK_EQ(1, count);
 }
 #endif

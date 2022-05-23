@@ -25,6 +25,41 @@
 
 namespace test
 {
+template <bool IsInterface>
+using ClientAsyncResponseReader =
+    std::conditional_t<IsInterface, std::unique_ptr<grpc::ClientAsyncResponseReaderInterface<test::msg::Response>>,
+                       std::unique_ptr<grpc::ClientAsyncResponseReader<test::msg::Response>>>;
+
+template <bool IsInterface>
+using ClientAsyncReader =
+    std::conditional_t<IsInterface, std::unique_ptr<grpc::ClientAsyncReaderInterface<test::msg::Response>>,
+                       std::unique_ptr<grpc::ClientAsyncReader<test::msg::Response>>>;
+
+template <bool IsInterface>
+using ClientAsyncWriter =
+    std::conditional_t<IsInterface, std::unique_ptr<grpc::ClientAsyncWriterInterface<test::msg::Request>>,
+                       std::unique_ptr<grpc::ClientAsyncWriter<test::msg::Request>>>;
+
+template <bool IsInterface>
+using ClientAsyncReaderWriter =
+    std::conditional_t<IsInterface,
+                       std::unique_ptr<grpc::ClientAsyncReaderWriterInterface<test::msg::Request, test::msg::Response>>,
+                       std::unique_ptr<grpc::ClientAsyncReaderWriter<test::msg::Request, test::msg::Response>>>;
+
+template <bool IsInterface>
+using ServerAsyncWriter = std::conditional_t<IsInterface, grpc::ServerAsyncWriterInterface<test::msg::Response>&,
+                                             grpc::ServerAsyncWriter<test::msg::Response>&>;
+
+template <bool IsInterface>
+using ServerAsyncReader =
+    std::conditional_t<IsInterface, grpc::ServerAsyncReaderInterface<test::msg::Response, test::msg::Request>&,
+                       grpc::ServerAsyncReader<test::msg::Response, test::msg::Request>&>;
+
+template <bool IsInterface>
+using ServerAsyncReaderWriter =
+    std::conditional_t<IsInterface, grpc::ServerAsyncReaderWriterInterface<test::msg::Response, test::msg::Request>&,
+                       grpc::ServerAsyncReaderWriter<test::msg::Response, test::msg::Request>&>;
+
 struct PerformUnarySuccessOptions
 {
     bool finish_with_error{false};

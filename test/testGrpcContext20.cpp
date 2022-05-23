@@ -168,35 +168,34 @@ TEST_CASE_TEMPLATE("asio ScheduleSender start/submit with shutdown GrpcContext",
     {
         agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
         grpc::Alarm alarm;
-        test::co_spawn(grpc_context,
-                       [&]() -> asio::awaitable<void>
-                       {
-                           agrpc::detail::ScopeGuard guard{
-                               [&]
+        test::co_spawn_and_run(grpc_context,
+                               [&]() -> asio::awaitable<void>
                                {
-                                   const auto sender = [&]
-                                   {
-                                       if constexpr (T{})
+                                   agrpc::detail::ScopeGuard guard{
+                                       [&]
                                        {
-                                           return asio::execution::schedule(grpc_context.get_scheduler());
-                                       }
-                                       else
-                                       {
-                                           return agrpc::wait(alarm, test::five_seconds_from_now(),
-                                                              agrpc::use_sender(grpc_context));
-                                       }
-                                   };
-                                   SUBCASE("submit") { asio::execution::submit(sender(), receiver); }
-                                   SUBCASE("start")
-                                   {
-                                       auto operation_state = asio::execution::connect(sender(), receiver);
-                                       asio::execution::start(operation_state);
-                                   }
-                               }};
-                           grpc_context.stop();
-                           co_await agrpc::wait(alarm, test::five_seconds_from_now());
-                       });
-        grpc_context.run();
+                                           const auto sender = [&]
+                                           {
+                                               if constexpr (T{})
+                                               {
+                                                   return asio::execution::schedule(grpc_context.get_scheduler());
+                                               }
+                                               else
+                                               {
+                                                   return agrpc::wait(alarm, test::five_seconds_from_now(),
+                                                                      agrpc::use_sender(grpc_context));
+                                               }
+                                           };
+                                           SUBCASE("submit") { asio::execution::submit(sender(), receiver); }
+                                           SUBCASE("start")
+                                           {
+                                               auto operation_state = asio::execution::connect(sender(), receiver);
+                                               asio::execution::start(operation_state);
+                                           }
+                                       }};
+                                   grpc_context.stop();
+                                   co_await agrpc::wait(alarm, test::five_seconds_from_now());
+                               });
     }
     CHECK(state.was_done);
     CHECK_FALSE(state.exception);
@@ -229,22 +228,21 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "co_spawn two Alarms and await their ok
 {
     bool ok1{false};
     bool ok2{false};
-    test::co_spawn(grpc_context,
-                   [&]() -> agrpc::GrpcAwaitable<void>
-                   {
-                       grpc::Alarm alarm;
-                       ok1 = co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::GRPC_USE_AWAITABLE);
-                       co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::GRPC_USE_AWAITABLE);
-                       grpc_context.stop();
-                   });
-    test::co_spawn(grpc_context,
-                   [&]() -> agrpc::GrpcAwaitable<void>
-                   {
-                       grpc::Alarm alarm;
-                       ok2 = co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::GRPC_USE_AWAITABLE);
-                       co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::GRPC_USE_AWAITABLE);
-                   });
-    grpc_context.run();
+    test::co_spawn_and_run(
+        grpc_context,
+        [&]() -> agrpc::GrpcAwaitable<void>
+        {
+            grpc::Alarm alarm;
+            ok1 = co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::GRPC_USE_AWAITABLE);
+            co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::GRPC_USE_AWAITABLE);
+            grpc_context.stop();
+        },
+        [&]() -> agrpc::GrpcAwaitable<void>
+        {
+            grpc::Alarm alarm;
+            ok2 = co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::GRPC_USE_AWAITABLE);
+            co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::GRPC_USE_AWAITABLE);
+        });
     CHECK(ok1);
     CHECK(ok2);
 }

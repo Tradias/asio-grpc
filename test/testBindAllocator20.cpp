@@ -40,14 +40,13 @@ TEST_CASE(
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_allocator with awaitable")
 {
-    test::co_spawn(get_executor(),
-                   [&]() -> asio::awaitable<void>
-                   {
-                       grpc::Alarm alarm;
-                       co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(),
-                                            agrpc::bind_allocator(get_allocator(), asio::use_awaitable));
-                   });
-    grpc_context.run();
+    test::co_spawn_and_run(grpc_context,
+                           [&]() -> asio::awaitable<void>
+                           {
+                               grpc::Alarm alarm;
+                               co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(),
+                                                    agrpc::bind_allocator(get_allocator(), asio::use_awaitable));
+                           });
     CHECK(allocator_has_been_used());
 }
 #endif
