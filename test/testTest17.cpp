@@ -22,18 +22,17 @@
 
 DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 {
-template <class Response>
-struct MockAsyncWriter : grpc::ClientAsyncResponseReaderInterface<Response>
+struct MockAsyncWriter : grpc::ClientAsyncResponseReaderInterface<test::msg::Response>
 {
     MOCK_METHOD0(StartCall, void());
     MOCK_METHOD1(ReadInitialMetadata, void(void*));
-    MOCK_METHOD3(Finish, void(Response* msg, grpc::Status* status, void*));
+    MOCK_METHOD3(Finish, void(test::msg::Response*, grpc::Status*, void*));
 };
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "mock unary request")
 {
     testing::NiceMock<test::v1::MockTestStub> mock_stub;
-    testing::NiceMock<MockAsyncWriter<test::msg::Response>> mock_writer;
+    testing::NiceMock<MockAsyncWriter> mock_writer;
     EXPECT_CALL(mock_writer, Finish)
         .WillOnce(
             [&](test::msg::Response* response, grpc::Status*, void* tag)
