@@ -39,14 +39,9 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "mock unary request")
             [&](test::msg::Response* response, grpc::Status*, void* tag)
             {
                 response->set_integer(42);
-                agrpc::process_tag(tag, true, grpc_context);
+                agrpc::process_grpc_tag(tag, true, grpc_context);
             });
-    EXPECT_CALL(mock_stub, AsyncUnaryRaw)
-        .WillOnce(
-            [&](auto&&, auto&&, auto&&)
-            {
-                return &mock_writer;
-            });
+    EXPECT_CALL(mock_stub, AsyncUnaryRaw).WillOnce(testing::Return(&mock_writer));
     test::spawn_and_run(grpc_context,
                         [&](auto&& yield)
                         {

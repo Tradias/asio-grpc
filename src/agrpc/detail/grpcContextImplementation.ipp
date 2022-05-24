@@ -172,7 +172,7 @@ bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, S
         }
         else
         {
-            detail::process_tag(event.tag, Invoke, event.ok, grpc_context);
+            detail::process_grpc_tag(event.tag, Invoke, event.ok, grpc_context);
         }
         return true;
     }
@@ -212,7 +212,7 @@ inline bool GrpcContextImplementation::poll(agrpc::GrpcContext& grpc_context)
     return detail::GrpcContextImplementation::process_work(grpc_context, detail::GrpcContextImplementation::TIME_ZERO);
 }
 
-inline void process_tag(void* tag, detail::InvokeHandler invoke, bool ok, agrpc::GrpcContext& grpc_context)
+inline void process_grpc_tag(void* tag, detail::InvokeHandler invoke, bool ok, agrpc::GrpcContext& grpc_context)
 {
     detail::WorkFinishedOnExit on_exit{grpc_context};
     auto* operation = static_cast<detail::TypeErasedGrpcTagOperation*>(tag);
