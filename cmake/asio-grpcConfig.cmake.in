@@ -52,6 +52,8 @@ endif()
 find_package(asio QUIET)
 if(TARGET "asio::asio")
     list(APPEND ASIO_GRPC_STANDALONE_ASIO_LINK_LIBRARIES "asio::asio")
+elseif(TARGET "asio::asio_headeronly")
+    list(APPEND ASIO_GRPC_STANDALONE_ASIO_LINK_LIBRARIES "asio::asio_headeronly")
 endif()
 
 find_package(unifex QUIET)

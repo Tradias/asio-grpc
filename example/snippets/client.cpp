@@ -268,7 +268,7 @@ void poll_context(agrpc::GrpcContext& grpc_context)
 {
     /* [poll_context-with-io_context] */
     asio::io_context io_context;
-    agrpc::PollContext poll_context{io_context.get_executor()};
+    agrpc::PollContext poll_context{io_context};
     std::optional guard{asio::require(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked)};
     poll_context.async_poll(grpc_context);
 

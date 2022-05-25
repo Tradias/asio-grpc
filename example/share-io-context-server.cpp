@@ -78,7 +78,7 @@ int main(int argc, const char** argv)
     server = builder.BuildAndStart();
     abort_if_not(bool{server});
 
-    agrpc::PollContext poll_context{io_context.get_executor()};
+    agrpc::PollContext poll_context{io_context};
     // Poll the GrpcContext until the io_context stops (runs out of work).
     poll_context.async_poll(grpc_context,
                             [&](auto&&)

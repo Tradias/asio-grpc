@@ -69,7 +69,7 @@ int main(int argc, const char** argv)
     const auto stub = example::v1::Example::NewStub(channel);
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
-    agrpc::PollContext poll_context{io_context.get_executor()};
+    agrpc::PollContext poll_context{io_context};
     // Poll the GrpcContext until the io_context stops (runs out of work).
     poll_context.async_poll(grpc_context,
                             [&](auto&&)

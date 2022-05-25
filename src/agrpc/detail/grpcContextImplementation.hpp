@@ -46,10 +46,7 @@ struct WorkFinishedOnExitFunctor
 
 struct WorkFinishedOnExit : detail::ScopeGuard<detail::WorkFinishedOnExitFunctor>
 {
-    explicit WorkFinishedOnExit(agrpc::GrpcContext& grpc_context) noexcept
-        : detail::ScopeGuard<detail::WorkFinishedOnExitFunctor>(grpc_context)
-    {
-    }
+    using detail::ScopeGuard<detail::WorkFinishedOnExitFunctor>::ScopeGuard;
 
     WorkFinishedOnExit(const WorkFinishedOnExit&) = delete;
     WorkFinishedOnExit(WorkFinishedOnExit&&) = delete;
