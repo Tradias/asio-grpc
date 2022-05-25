@@ -62,16 +62,16 @@ struct RequestFn
      * completion signature is `void(bool)`. `true` indicates that the RPC has indeed been started. If it is `false`
      * then the server has been Shutdown before this particular call got matched to an incoming RPC.
      */
-    template <class RPC, class Service, class Request, class Responder,
+    template <class Service, class DerivedService, class Request, class Responder,
               class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
+    auto operator()(detail::ServerMultiArgRequest<Service, Request, Responder> rpc, DerivedService& service,
                     grpc::ServerContext& server_context, Request& request, Responder& responder,
                     CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
-            detail::ServerMultiArgRequestInitFunction<RPC, Service, Request, Responder>{rpc, service, server_context,
-                                                                                        request, responder},
+            detail::ServerMultiArgRequestInitFunction<Service, DerivedService, Request, Responder>{
+                rpc, service, server_context, request, responder},
             std::forward<CompletionToken>(token));
     }
 
@@ -93,14 +93,15 @@ struct RequestFn
      * completion signature is `void(bool)`. `true` indicates that the RPC has indeed been started. If it is `false`
      * then the server has been Shutdown before this particular call got matched to an incoming RPC.
      */
-    template <class RPC, class Service, class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service,
+    template <class Service, class DerivedService, class Responder,
+              class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(detail::ServerSingleArgRequest<Service, Responder> rpc, DerivedService& service,
                     grpc::ServerContext& server_context, Responder& responder, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
-            detail::ServerSingleArgRequestInitFunction<RPC, Service, Responder>{rpc, service, server_context,
-                                                                                responder},
+            detail::ServerSingleArgRequestInitFunction<Service, DerivedService, Responder>{rpc, service, server_context,
+                                                                                           responder},
             std::forward<CompletionToken>(token));
     }
 
@@ -145,8 +146,8 @@ struct RequestFn
      * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
      * `example::v1::Example::Stub`.
      */
-    template <class Stub, class Request, class Responder, class Executor = asio::any_io_executor>
-    auto operator()(detail::ClientUnaryRequest<Stub, Request, Responder> rpc, Stub& stub,
+    template <class Stub, class DerivedStub, class Request, class Responder, class Executor = asio::any_io_executor>
+    auto operator()(detail::ClientUnaryRequest<Stub, Request, Responder> rpc, DerivedStub& stub,
                     grpc::ClientContext& client_context, const Request& request,
                     asio::use_awaitable_t<Executor> token = {}) const ->
         typename asio::async_result<asio::use_awaitable_t<Executor>, void(Responder)>::return_type
@@ -161,8 +162,8 @@ struct RequestFn
      * Takes `std::unique_ptr<grpc::ClientAsyncResponseReader<Response>>` as an output parameter, otherwise identical
      * to: `operator()(ClientUnaryRequest, Stub&, ClientContext&, const Request&, use_awaitable_t<Executor>)`
      */
-    template <class Stub, class Request, class Responder, class Executor = asio::any_io_executor>
-    auto operator()(detail::ClientUnaryRequest<Stub, Request, Responder> rpc, Stub& stub,
+    template <class Stub, class DerivedStub, class Request, class Responder, class Executor = asio::any_io_executor>
+    auto operator()(detail::ClientUnaryRequest<Stub, Request, Responder> rpc, DerivedStub& stub,
                     grpc::ClientContext& client_context, const Request& request, Responder& reader,
                     asio::use_awaitable_t<Executor> token = {}) const ->
         typename asio::async_result<asio::use_awaitable_t<Executor>, void()>::return_type
@@ -177,8 +178,8 @@ struct RequestFn
      *
      * Note, this function completes immediately.
      */
-    template <class Stub, class Request, class Responder>
-    auto operator()(detail::ClientUnaryRequest<Stub, Request, Responder> rpc, Stub& stub,
+    template <class Stub, class DerivedStub, class Request, class Responder>
+    auto operator()(detail::ClientUnaryRequest<Stub, Request, Responder> rpc, DerivedStub& stub,
                     grpc::ClientContext& client_context, const Request& request, agrpc::GrpcContext& grpc_context) const
     {
         return (stub.*rpc)(&client_context, request, agrpc::get_completion_queue(grpc_context));
@@ -204,8 +205,9 @@ struct RequestFn
      * indicates that the RPC is going to go to the wire. If it is `false`, it is not going to the wire. This would
      * happen if the channel is either permanently broken or transiently broken but with the fail-fast option.
      */
-    template <class Stub, class Request, class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(detail::ClientServerStreamingRequest<Stub, Request, Responder> rpc, Stub& stub,
+    template <class Stub, class DerivedStub, class Request, class Responder,
+              class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(detail::ClientServerStreamingRequest<Stub, Request, Responder> rpc, DerivedStub& stub,
                     grpc::ClientContext& client_context, const Request& request, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
@@ -231,8 +233,9 @@ struct RequestFn
      * it is not going to the wire. This would happen if the channel is either permanently broken or transiently broken
      * but with the fail-fast option.
      */
-    template <class Stub, class Request, class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(detail::ClientServerStreamingRequest<Stub, Request, Responder> rpc, Stub& stub,
+    template <class Stub, class DerivedStub, class Request, class Responder,
+              class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(detail::ClientServerStreamingRequest<Stub, Request, Responder> rpc, DerivedStub& stub,
                     grpc::ClientContext& client_context, const Request& request, Responder& reader,
                     CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
@@ -263,8 +266,9 @@ struct RequestFn
      * indicates that the RPC is going to go to the wire. If it is `false`, it is not going to the wire. This would
      * happen if the channel is either permanently broken or transiently broken but with the fail-fast option.
      */
-    template <class Stub, class Responder, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(detail::ClientClientStreamingRequest<Stub, Responder, Response> rpc, Stub& stub,
+    template <class Stub, class DerivedStub, class Responder, class Response,
+              class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(detail::ClientClientStreamingRequest<Stub, Responder, Response> rpc, DerivedStub& stub,
                     grpc::ClientContext& client_context, Response& response, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
@@ -295,8 +299,9 @@ struct RequestFn
      * it is not going to the wire. This would happen if the channel is either permanently broken or transiently broken
      * but with the fail-fast option.
      */
-    template <class Stub, class Responder, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(detail::ClientClientStreamingRequest<Stub, Responder, Response> rpc, Stub& stub,
+    template <class Stub, class DerivedStub, class Responder, class Response,
+              class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(detail::ClientClientStreamingRequest<Stub, Responder, Response> rpc, DerivedStub& stub,
                     grpc::ClientContext& client_context, Responder& writer, Response& response,
                     CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
@@ -327,8 +332,8 @@ struct RequestFn
      * indicates that the RPC is going to go to the wire. If it is `false`, it is not going to the wire. This would
      * happen if the channel is either permanently broken or transiently broken but with the fail-fast option.
      */
-    template <class Stub, class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(detail::ClientBidirectionalStreamingRequest<Stub, Responder> rpc, Stub& stub,
+    template <class Stub, class DerivedStub, class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(detail::ClientBidirectionalStreamingRequest<Stub, Responder> rpc, DerivedStub& stub,
                     grpc::ClientContext& client_context, CompletionToken&& token = {}) const
     {
         return detail::grpc_initiate_with_payload<Responder>(
@@ -358,8 +363,8 @@ struct RequestFn
      * it is not going to the wire. This would happen if the channel is either permanently broken or transiently broken
      * but with the fail-fast option.
      */
-    template <class Stub, class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(detail::ClientBidirectionalStreamingRequest<Stub, Responder> rpc, Stub& stub,
+    template <class Stub, class DerivedStub, class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(detail::ClientBidirectionalStreamingRequest<Stub, Responder> rpc, DerivedStub& stub,
                     grpc::ClientContext& client_context, Responder& reader_writer, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {

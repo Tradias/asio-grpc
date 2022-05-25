@@ -44,13 +44,13 @@ using ClientClientStreamingRequest = Responder (Stub::*)(grpc::ClientContext*, R
 template <class Stub, class Responder>
 using ClientBidirectionalStreamingRequest = Responder (Stub::*)(grpc::ClientContext*, grpc::CompletionQueue*, void*);
 
-template <class RPC, class Request, class Responder>
-using ServerMultiArgRequest = void (RPC::*)(grpc::ServerContext*, Request*, Responder*, grpc::CompletionQueue*,
-                                            grpc::ServerCompletionQueue*, void*);
+template <class Service, class Request, class Responder>
+using ServerMultiArgRequest = void (Service::*)(grpc::ServerContext*, Request*, Responder*, grpc::CompletionQueue*,
+                                                grpc::ServerCompletionQueue*, void*);
 
-template <class RPC, class Responder>
-using ServerSingleArgRequest = void (RPC::*)(grpc::ServerContext*, Responder*, grpc::CompletionQueue*,
-                                             grpc::ServerCompletionQueue*, void*);
+template <class Service, class Responder>
+using ServerSingleArgRequest = void (Service::*)(grpc::ServerContext*, Responder*, grpc::CompletionQueue*,
+                                                 grpc::ServerCompletionQueue*, void*);
 
 template <class Message, class Responder>
 struct ReadInitFunction
@@ -295,11 +295,11 @@ struct ClientGenericStreamingRequestInitFunction
     }
 };
 
-template <class RPC, class Service, class Request, class Responder>
+template <class Service, class DerivedService, class Request, class Responder>
 struct ServerMultiArgRequestInitFunction
 {
-    detail::ServerMultiArgRequest<RPC, Request, Responder> rpc;
-    Service& service;
+    detail::ServerMultiArgRequest<Service, Request, Responder> rpc;
+    DerivedService& service;
     grpc::ServerContext& server_context;
     Request& request;
     Responder& responder;
@@ -311,11 +311,11 @@ struct ServerMultiArgRequestInitFunction
     }
 };
 
-template <class RPC, class Service, class Responder>
+template <class Service, class DerivedService, class Responder>
 struct ServerSingleArgRequestInitFunction
 {
-    detail::ServerSingleArgRequest<RPC, Responder> rpc;
-    Service& service;
+    detail::ServerSingleArgRequest<Service, Responder> rpc;
+    DerivedService& service;
     grpc::ServerContext& server_context;
     Responder& responder;
 

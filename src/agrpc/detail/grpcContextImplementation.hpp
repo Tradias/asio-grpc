@@ -95,6 +95,8 @@ struct GrpcContextImplementation
 
     static bool poll(agrpc::GrpcContext& grpc_context);
 };
+
+void process_grpc_tag(void* tag, detail::InvokeHandler invoke, bool ok, agrpc::GrpcContext& grpc_context);
 }
 
 AGRPC_NAMESPACE_END

@@ -1,6 +1,6 @@
 # test protobuf sources
 asio_grpc_protobuf_generate(
-    GENERATE_GRPC
+    GENERATE_GRPC GENERATE_MOCK_CODE
     OUT_VAR "ASIO_GRPC_TEXT_PROTO_SOURCES"
     OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
     IMPORT_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/proto"
@@ -44,7 +44,7 @@ function(asio_grpc_add_test_main _asio_grpc_name)
 
     target_link_libraries(
         ${_asio_grpc_name}
-        PUBLIC doctest::doctest asio-grpc-common-compile-options asio-grpc-coverage-options
+        PUBLIC doctest::doctest GTest::gmock asio-grpc-common-compile-options asio-grpc-coverage-options
         PRIVATE Boost::headers Boost::filesystem)
 endfunction()
 
