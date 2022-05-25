@@ -149,8 +149,9 @@ inline bool get_next_event(grpc::CompletionQueue* cq, detail::GrpcCompletionQueu
     return grpc::CompletionQueue::GOT_EVENT == cq->AsyncNext(&event.tag, &event.ok, deadline);
 }
 
-inline bool GrpcContextImplementation::get_and_handle_next_event(agrpc::GrpcContext& grpc_context,
-                                                                 detail::InvokeHandler invoke, ::gpr_timespec deadline)
+inline bool GrpcContextImplementation::handle_next_completion_queue_event(agrpc::GrpcContext& grpc_context,
+                                                                          detail::InvokeHandler invoke,
+                                                                          ::gpr_timespec deadline)
 {
     if (detail::GrpcCompletionQueueEvent event;
         detail::get_next_event(grpc_context.get_completion_queue(), event, deadline))
@@ -178,14 +179,14 @@ bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, S
         check_remote_work = detail::GrpcContextImplementation::move_remote_work_to_local_queue(grpc_context);
         grpc_context.check_remote_work = check_remote_work;
     }
-    const auto processed_local_operation = detail::GrpcContextImplementation::process_local_queue<Invoke>(grpc_context);
+    const bool processed_local_operation = detail::GrpcContextImplementation::process_local_queue<Invoke>(grpc_context);
     processed = processed || processed_local_operation;
     if (stop_condition())
     {
         return false;
     }
     const bool is_more_completed_work_pending = check_remote_work || !grpc_context.local_work_queue.empty();
-    const bool handled_event = detail::GrpcContextImplementation::get_and_handle_next_event(
+    const bool handled_event = detail::GrpcContextImplementation::handle_next_completion_queue_event(
         grpc_context, Invoke, is_more_completed_work_pending ? detail::GrpcContextImplementation::TIME_ZERO : deadline);
     processed = processed || handled_event;
     return handled_event || is_more_completed_work_pending;
@@ -246,7 +247,7 @@ inline bool GrpcContextImplementation::poll_completion_queue(agrpc::GrpcContext&
             {
                 return false;
             }
-            const auto handled_event = detail::GrpcContextImplementation::get_and_handle_next_event(
+            const bool handled_event = detail::GrpcContextImplementation::handle_next_completion_queue_event(
                 grpc_context, detail::InvokeHandler::YES, detail::GrpcContextImplementation::TIME_ZERO);
             processed = processed || handled_event;
             return handled_event;

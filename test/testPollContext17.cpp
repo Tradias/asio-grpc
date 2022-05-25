@@ -27,7 +27,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "PollContext can process asio::post")
     const auto expected_thread = std::this_thread::get_id();
     bool invoked{false};
     asio::io_context io_context;
-    agrpc::PollContext poll_context{io_context.get_executor()};
+    agrpc::PollContext poll_context{io_context};
     grpc_context.work_started();
     asio::post(io_context,
                [&]
@@ -57,7 +57,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest,
     };
     test::ManualLifetime<decltype(create_io_context_work_guard())> work;
     work.construct(create_io_context_work_guard());
-    agrpc::PollContext poll_context{io_context.get_executor()};
+    agrpc::PollContext poll_context{io_context};
     poll_context.async_poll(grpc_context,
                             [&](auto&&)
                             {
@@ -104,7 +104,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "PollContextTraits can specify zero max
 {
     bool invoked{};
     asio::io_context io_context;
-    agrpc::PollContext<asio::any_io_executor, MyIntrusiveTraits> poll_context{io_context.get_executor()};
+    agrpc::PollContext<asio::io_context, MyIntrusiveTraits> poll_context{io_context};
     poll_context.async_poll(grpc_context,
                             [count = 0](auto&) mutable
                             {
@@ -127,21 +127,62 @@ struct MyTraits
 TEST_CASE_FIXTURE(test::GrpcContextTest,
                   "PollContextTraits can use traits that do not inherit from DefaultPollContextTraits")
 {
-    bool invoked{};
+    int invoked_count{};
     asio::io_context io_context;
-    agrpc::PollContext<asio::any_io_executor, MyTraits> poll_context{io_context.get_executor()};
+    agrpc::PollContext<asio::io_context, MyTraits> poll_context{io_context};
     poll_context.async_poll(grpc_context,
-                            [count = 0](auto&) mutable
+                            [&, count = 0](auto&) mutable
                             {
                                 ++count;
-                                return 15 == count;
+                                if (count % 4 == 0 || count % 4 - 1 == 0)
+                                {
+                                    asio::post(grpc_context,
+                                               [&]
+                                               {
+                                                   ++invoked_count;
+                                               });
+                                }
+                                return 25 == count;
                             });
-    asio::post(grpc_context,
-               [&]
-               {
-                   invoked = true;
-               });
     io_context.run();
-    CHECK(invoked);
+    CHECK_EQ(12, invoked_count);
+    CHECK(grpc_context.poll());
+    CHECK_EQ(13, invoked_count);
+}
+
+struct MyCustomPoll
+{
+    static void poll(asio::thread_pool&) {}
+};
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "PollContextTraits can use traits to customize polling")
+{
+    int invoked_count_grpc_context{};
+    int invoked_count_thread_pool{};
+    asio::thread_pool thread_pool{1};
+    agrpc::PollContext<asio::thread_pool, MyCustomPoll> poll_context{thread_pool};
+    poll_context.async_poll(grpc_context,
+                            [&, count = -1](auto&) mutable
+                            {
+                                ++count;
+                                if (count % 6 == 0)
+                                {
+                                    asio::post(grpc_context,
+                                               [&]
+                                               {
+                                                   ++invoked_count_grpc_context;
+                                               });
+                                }
+                                asio::post(thread_pool,
+                                           [&]
+                                           {
+                                               CHECK_EQ(invoked_count_thread_pool / 6, invoked_count_grpc_context - 1);
+                                               ++invoked_count_thread_pool;
+                                           });
+                                return 25 == count;
+                            });
+    thread_pool.join();
+    CHECK_EQ(5, invoked_count_grpc_context);
+    CHECK_EQ(26, invoked_count_thread_pool);
 }
 }

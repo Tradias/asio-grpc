@@ -41,11 +41,12 @@ class Backoff
 
   public:
     static constexpr Delay MAX_DELAY{MaxDelay};
+    static constexpr Iteration ITERATIONS_PER_DELAY{5};
 
     constexpr Delay next() noexcept
     {
         ++iterations;
-        if (Iteration{5} == iterations)
+        if (ITERATIONS_PER_DELAY == iterations)
         {
             iterations = Iteration{};
             increase_delay();
@@ -53,10 +54,15 @@ class Backoff
         return delay;
     }
 
-    constexpr void reset() noexcept { delay = Delay::zero(); }
+    constexpr auto reset() noexcept
+    {
+        iterations = Iteration{};
+        delay = Delay::zero();
+        return delay;
+    }
 
   private:
-    static constexpr Delay INCREMENT{detail::maximum(Delay::rep{1}, MaxDelay / 5)};
+    static constexpr Delay INCREMENT{detail::maximum(Delay::rep{1}, MaxDelay)};
 
     constexpr void increase_delay() noexcept
     {

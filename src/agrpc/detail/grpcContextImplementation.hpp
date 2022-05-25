@@ -73,8 +73,8 @@ struct GrpcContextImplementation
 
     static void add_operation(agrpc::GrpcContext& grpc_context, detail::TypeErasedNoArgOperation* op) noexcept;
 
-    static bool get_and_handle_next_event(agrpc::GrpcContext& grpc_context, detail::InvokeHandler invoke,
-                                          ::gpr_timespec deadline);
+    static bool handle_next_completion_queue_event(agrpc::GrpcContext& grpc_context, detail::InvokeHandler invoke,
+                                                   ::gpr_timespec deadline);
 
     [[nodiscard]] static bool running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept;
 
