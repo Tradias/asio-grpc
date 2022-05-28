@@ -30,6 +30,8 @@
 #include <agrpc/rpc.hpp>
 #endif
 
+#include <tuple>
+
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
@@ -424,7 +426,7 @@ class RepeatedlyRequestAwaitableOperation
             {
                 detail::GrpcContextImplementation::add_local_operation(local_grpc_context, this);
             }
-            co_await detail::apply(std::move(local_request_handler), rpc_context.args());
+            co_await std::apply(std::move(local_request_handler), rpc_context.args());
         }
         else
         {

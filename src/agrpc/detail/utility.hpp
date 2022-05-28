@@ -271,19 +271,6 @@ T forward_as(std::add_lvalue_reference_t<std::remove_reference_t<T>> u)
         return u;
     }
 }
-
-template <class Function, class Tuple, std::size_t... I>
-constexpr decltype(auto) apply_impl(Function&& function, Tuple&& tuple, std::index_sequence<I...>)
-{
-    return std::forward<Function>(function)(std::get<I>(std::forward<Tuple>(tuple))...);
-}
-
-template <class Function, template <class...> class Tuple, class... T>
-constexpr decltype(auto) apply(Function&& function, Tuple<T...>&& tuple)
-{
-    return detail::apply_impl(std::forward<Function>(function), std::move(tuple),
-                              std::make_index_sequence<sizeof...(T)>{});
-}
 }
 
 AGRPC_NAMESPACE_END

@@ -27,6 +27,7 @@
 
 #include <atomic>
 #include <optional>
+#include <tuple>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -146,7 +147,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
                                         [&]
                                         {
                                             return detail::exec::connect(
-                                                detail::apply(request_handler, rpc_context().args()),
+                                                std::apply(request_handler, rpc_context().args()),
                                                 DeallocateRequestHandlerOperationReceiver{*this});
                                         });
             }

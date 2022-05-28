@@ -60,14 +60,14 @@ void complete_successfully(CompletionHandler&& handler, Args&&... args)
 template <class CompletionHandler, class... Args>
 void invoke_successfully_from_tuple(CompletionHandler&& handler, std::tuple<detail::ErrorCode, Args...>&& args)
 {
-    detail::apply(std::forward<CompletionHandler>(handler), std::move(args));
+    std::apply(std::forward<CompletionHandler>(handler), std::move(args));
 }
 
 template <class CompletionHandler, class... Args>
 void invoke_successfully_from_tuple(CompletionHandler&& handler, std::tuple<Args...>&& args)
 {
-    detail::apply(std::forward<CompletionHandler>(handler),
-                  std::tuple_cat(std::forward_as_tuple(detail::ErrorCode{}), std::move(args)));
+    std::apply(std::forward<CompletionHandler>(handler),
+               std::tuple_cat(std::forward_as_tuple(detail::ErrorCode{}), std::move(args)));
 }
 
 template <class CompletionHandler, class... Args>

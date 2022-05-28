@@ -24,6 +24,7 @@
 #include <agrpc/detail/utility.hpp>
 
 #include <memory>
+#include <tuple>
 #include <utility>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -119,7 +120,7 @@ class WorkTrackingCompletionHandler : private detail::WorkTracker<CompletionHand
         asio::execution::execute(std::move(executor),
                                  [ch = std::move(ch), args = std::make_tuple(std::forward<Args>(args)...)]() mutable
                                  {
-                                     detail::apply(std::move(ch), std::move(args));
+                                     std::apply(std::move(ch), std::move(args));
                                  });
     }
 };
