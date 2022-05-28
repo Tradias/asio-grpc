@@ -81,14 +81,14 @@ class BasicTypeErasedCompletionHandler<void(Args...), VoidPointer>
     template <class Target, class CompletionHandler>
     void emplace(CompletionHandler&& ch)
     {
-        auto allocator{asio::get_associated_allocator(ch)};
+        auto allocator = asio::get_associated_allocator(ch);
         completion_handler = detail::allocate<Target>(allocator, std::forward<CompletionHandler>(ch)).release();
         complete_ = &detail::deallocate_and_invoke<Target, Args...>;
     }
 
-    auto release() noexcept -> detail::TypeErasedCompletionHandler<void(Args...)>
+    detail::TypeErasedCompletionHandler<void(Args...)> release() noexcept
     {
-        return detail::TypeErasedCompletionHandler<void(Args...)>{this->release_completion_handler(), complete_};
+        return {this->release_completion_handler(), complete_};
     }
 
     explicit operator bool() const noexcept { return static_cast<bool>(completion_handler); }
