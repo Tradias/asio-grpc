@@ -23,11 +23,19 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+#ifdef AGRPC_HAS_CONCEPTS
+template <class T>
+concept HAS_REQUEST_MEMBER_FUNCTION = requires(T& t)
+{
+    {t->request()};
+};
+#else
 template <class, class = void>
 inline constexpr bool HAS_REQUEST_MEMBER_FUNCTION = false;
 
 template <class T>
-inline constexpr bool HAS_REQUEST_MEMBER_FUNCTION<T, std::void_t<decltype(std::declval<T&>()->request())>> = true;
+inline constexpr bool HAS_REQUEST_MEMBER_FUNCTION<T, decltype((void)std::declval<T&>()->request())> = true;
+#endif
 }
 
 /**

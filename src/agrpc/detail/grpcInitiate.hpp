@@ -79,14 +79,8 @@ auto grpc_initiate_with_payload(InitiatingFunction initiating_function, Completi
 #endif
 
 template <class CompletionToken>
-inline constexpr bool IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN_IMPL = false;
-
-template <>
-inline constexpr bool IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN_IMPL<detail::UseSender> = true;
-
-template <class CompletionToken>
 inline constexpr bool IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN =
-    detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN_IMPL<detail::RemoveCvrefT<CompletionToken>>;
+    std::is_same_v<detail::UseSender, detail::RemoveCvrefT<CompletionToken>>;
 }
 
 AGRPC_NAMESPACE_END

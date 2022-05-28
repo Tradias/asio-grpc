@@ -53,7 +53,11 @@
 #endif
 #endif
 
-#if __cpp_exceptions >= 199711
+#if __cpp_concepts >= 201907L
+#define AGRPC_HAS_CONCEPTS
+#endif
+
+#if __cpp_exceptions >= 199711L
 #define AGRPC_TRY try
 #define AGRPC_CATCH(...) catch (__VA_ARGS__)
 #define AGRPC_RETHROW() throw

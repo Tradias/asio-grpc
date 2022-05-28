@@ -28,6 +28,14 @@ namespace detail
 template <class T>
 using RemoveCvrefT = std::remove_cv_t<std::remove_reference_t<T>>;
 
+#ifdef AGRPC_HAS_CONCEPTS
+template <class T>
+concept IS_EQUALITY_COMPARABLE = requires(const T& lhs, const T& rhs)
+{
+    {static_cast<bool>(lhs == rhs)};
+    {static_cast<bool>(lhs != rhs)};
+};
+#else
 template <class T, class = void>
 inline constexpr bool IS_EQUALITY_COMPARABLE = false;
 
@@ -35,6 +43,7 @@ template <class T>
 inline constexpr bool IS_EQUALITY_COMPARABLE<
     T, std::void_t<decltype(static_cast<bool>(std::declval<const T&>() == std::declval<const T&>())),
                    decltype(static_cast<bool>(std::declval<const T&>() != std::declval<const T&>()))>> = true;
+#endif
 
 template <class Function, class Signature>
 struct InvokeResultFromSignature;

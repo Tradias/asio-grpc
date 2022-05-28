@@ -261,13 +261,20 @@ struct BasicRepeatedlyRequestInitiator
 using RepeatedlyRequestInitiator = detail::BasicRepeatedlyRequestInitiator<detail::RepeatedlyRequestOperation>;
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
+#ifdef AGRPC_HAS_CONCEPTS
+template <class Executor, class T>
+concept IS_CO_SPAWNABLE = requires(Executor executor, T t)
+{
+    {asio::co_spawn(executor, static_cast<T&&>(t), detail::NoOp{})};
+};
+#else
 template <class Executor, class T, class = void>
 inline constexpr bool IS_CO_SPAWNABLE = false;
 
 template <class Executor, class T>
 inline constexpr bool IS_CO_SPAWNABLE<
-    Executor, T, std::void_t<decltype(asio::co_spawn(std::declval<Executor>(), std::declval<T>(), detail::NoOp{}))>> =
-    true;
+    Executor, T, decltype((void)asio::co_spawn(std::declval<Executor>(), std::declval<T>(), detail::NoOp{}))> = true;
+#endif
 
 template <class Function, class Signature, class = void>
 inline constexpr bool INVOKE_RESULT_IS_CO_SPAWNABLE = false;
