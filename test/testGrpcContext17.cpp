@@ -484,4 +484,27 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll_completion_queue()")
                });
     io_context.run();
 }
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll() within run()")
+{
+    int count{};
+    asio::post(grpc_context,
+               [&]()
+               {
+                   asio::post(grpc_context,
+                              [&]
+                              {
+                                  ++count;
+                              });
+                   CHECK(grpc_context.poll());
+                   CHECK_EQ(1, count);
+                   asio::post(grpc_context,
+                              [&]
+                              {
+                                  ++count;
+                              });
+               });
+    grpc_context.run();
+    CHECK_EQ(2, count);
+}
 }
