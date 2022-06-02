@@ -29,6 +29,10 @@ class GrpcContext;
 
 namespace detail
 {
+struct GrpcContextThreadContext;
+
+struct ThreadLocalGrpcContextGuard;
+
 struct GrpcInitiateImplFn;
 
 class RepeatedlyRequestFn;

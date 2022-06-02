@@ -18,6 +18,8 @@
 #include <agrpc/detail/asioForward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpcContextImplementation.hpp>
+#include <agrpc/grpcContext.hpp>
+#include <agrpc/grpcExecutor.hpp>
 #include <agrpc/wait.hpp>
 
 #include <memory>

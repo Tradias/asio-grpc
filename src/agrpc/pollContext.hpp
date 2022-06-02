@@ -21,6 +21,7 @@
 #include <agrpc/detail/backoff.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
+#include <agrpc/detail/grpcContextImplementation.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/grpcContext.hpp>
 
