@@ -118,6 +118,7 @@ struct MyTraits
 TEST_CASE_FIXTURE(PollContextTest, "PollContextTraits can use traits that do not inherit from DefaultPollContextTraits")
 {
     int invoked_count{};
+    const auto guard = create_io_context_work_guard();
     agrpc::run<MyTraits>(grpc_context, io_context,
                          [&, count = 0](auto&) mutable
                          {
@@ -132,9 +133,9 @@ TEST_CASE_FIXTURE(PollContextTest, "PollContextTraits can use traits that do not
                              ++count;
                              return 10 == count;
                          });
-    CHECK_EQ(4, invoked_count);
-    CHECK(io_context.poll());
     CHECK_EQ(5, invoked_count);
+    CHECK(io_context.poll());
+    CHECK_EQ(6, invoked_count);
 }
 
 struct Counter
