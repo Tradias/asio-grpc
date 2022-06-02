@@ -28,12 +28,12 @@ namespace detail
 {
 inline thread_local const agrpc::GrpcContext* thread_local_grpc_context{};
 
-ThreadLocalGrpcContextGuard::ThreadLocalGrpcContextGuard(const agrpc::GrpcContext& grpc_context) noexcept
+inline ThreadLocalGrpcContextGuard::ThreadLocalGrpcContextGuard(const agrpc::GrpcContext& grpc_context) noexcept
     : old_context{detail::GrpcContextImplementation::set_thread_local_grpc_context(&grpc_context)}
 {
 }
 
-ThreadLocalGrpcContextGuard::~ThreadLocalGrpcContextGuard()
+inline ThreadLocalGrpcContextGuard::~ThreadLocalGrpcContextGuard()
 {
     detail::GrpcContextImplementation::set_thread_local_grpc_context(old_context);
 }
