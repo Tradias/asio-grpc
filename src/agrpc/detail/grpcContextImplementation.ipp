@@ -26,41 +26,17 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-struct GrpcContextThreadInfo : asio::detail::thread_info_base
-{
-};
-
-// Enables Boost.Asio's awaitable frame memory recycling
-struct GrpcContextThreadContext : asio::detail::thread_context
-{
-    GrpcContextThreadInfo this_thread;
-    thread_call_stack::context ctx{this, this_thread};
-};
-#else
-struct GrpcContextThreadContext
-{
-};
-#endif
-
 inline thread_local const agrpc::GrpcContext* thread_local_grpc_context{};
 
-struct ThreadLocalGrpcContextGuard
+ThreadLocalGrpcContextGuard::ThreadLocalGrpcContextGuard(const agrpc::GrpcContext& grpc_context) noexcept
+    : old_context{detail::GrpcContextImplementation::set_thread_local_grpc_context(&grpc_context)}
 {
-    const agrpc::GrpcContext* old_context;
+}
 
-    explicit ThreadLocalGrpcContextGuard(const agrpc::GrpcContext& grpc_context) noexcept
-        : old_context{detail::GrpcContextImplementation::set_thread_local_grpc_context(&grpc_context)}
-    {
-    }
-
-    ~ThreadLocalGrpcContextGuard() { detail::GrpcContextImplementation::set_thread_local_grpc_context(old_context); }
-
-    ThreadLocalGrpcContextGuard(const ThreadLocalGrpcContextGuard&) = delete;
-    ThreadLocalGrpcContextGuard(ThreadLocalGrpcContextGuard&&) = delete;
-    ThreadLocalGrpcContextGuard& operator=(const ThreadLocalGrpcContextGuard&) = delete;
-    ThreadLocalGrpcContextGuard& operator=(ThreadLocalGrpcContextGuard&&) = delete;
-};
+ThreadLocalGrpcContextGuard::~ThreadLocalGrpcContextGuard()
+{
+    detail::GrpcContextImplementation::set_thread_local_grpc_context(old_context);
+}
 
 inline void WorkFinishedOnExitFunctor::operator()() const noexcept { grpc_context.work_finished(); }
 

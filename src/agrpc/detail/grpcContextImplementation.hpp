@@ -15,6 +15,7 @@
 #ifndef AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_HPP
 #define AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_HPP
 
+#include <agrpc/detail/asioForward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/grpcCompletionQueueEvent.hpp>
@@ -51,6 +52,37 @@ struct WorkFinishedOnExit : detail::ScopeGuard<detail::WorkFinishedOnExitFunctor
     WorkFinishedOnExit(WorkFinishedOnExit&&) = delete;
     WorkFinishedOnExit& operator=(const WorkFinishedOnExit&) = delete;
     WorkFinishedOnExit& operator=(WorkFinishedOnExit&&) = delete;
+};
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+struct GrpcContextThreadInfo : asio::detail::thread_info_base
+{
+};
+
+// Enables Boost.Asio's awaitable frame memory recycling
+struct GrpcContextThreadContext : asio::detail::thread_context
+{
+    GrpcContextThreadInfo this_thread;
+    thread_call_stack::context ctx{this, this_thread};
+};
+#else
+struct GrpcContextThreadContext
+{
+};
+#endif
+
+struct ThreadLocalGrpcContextGuard
+{
+    const agrpc::GrpcContext* old_context;
+
+    explicit ThreadLocalGrpcContextGuard(const agrpc::GrpcContext& grpc_context) noexcept;
+
+    ~ThreadLocalGrpcContextGuard();
+
+    ThreadLocalGrpcContextGuard(const ThreadLocalGrpcContextGuard&) = delete;
+    ThreadLocalGrpcContextGuard(ThreadLocalGrpcContextGuard&&) = delete;
+    ThreadLocalGrpcContextGuard& operator=(const ThreadLocalGrpcContextGuard&) = delete;
+    ThreadLocalGrpcContextGuard& operator=(ThreadLocalGrpcContextGuard&&) = delete;
 };
 
 struct IsGrpcContextStoppedPredicate

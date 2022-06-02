@@ -32,7 +32,7 @@ jobs:
             os: windows-2022,
             triplet: 'x64-windows-release',
             build-type: 'Release',
-            cmake-extra-args: '-DVCPKG_TARGET_TRIPLET=x64-windows-release',
+            cmake-extra-args: '-DVCPKG_TARGET_TRIPLET=x64-windows-release -DCMAKE_CXX_FLAGS_RELEASE=/D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS',
             parallel: 1,
           }
           - {
