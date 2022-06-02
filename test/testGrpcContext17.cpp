@@ -507,4 +507,32 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll() within run()")
     grpc_context.run();
     CHECK_EQ(2, count);
 }
+
+void recursively_post(agrpc::GrpcContext& grpc_context)
+{
+    asio::post(grpc_context,
+               [&]
+               {
+                   recursively_post(grpc_context);
+               });
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run() is not blocked by repeated asio::posts")
+{
+    bool alarm_completed{false};
+    recursively_post(grpc_context);
+    grpc::Alarm alarm;
+    asio::post(grpc_context,
+               [&]()
+               {
+                   agrpc::wait(alarm, std::chrono::system_clock::now(),
+                               asio::bind_executor(grpc_context,
+                                                   [&](bool)
+                                                   {
+                                                       alarm_completed = true;
+                                                       grpc_context.stop();
+                                                   }));
+               });
+    grpc_context.run();
+}
 }

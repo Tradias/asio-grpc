@@ -268,13 +268,12 @@ void poll_context(agrpc::GrpcContext& grpc_context)
 {
     /* [poll_context-with-io_context] */
     asio::io_context io_context;
-    agrpc::PollContext poll_context{io_context};
-    std::optional guard{asio::require(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked)};
-    poll_context.async_poll(grpc_context);
 
-    // Use io_context and grpc_context and reset the guard when done.
+    const auto grpc_context_work_guard =
+        asio::prefer(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked);
 
-    io_context.run();
+    // Poll GrpcContext and io_context until the io_context stops.
+    agrpc::run<>(grpc_context, io_context);
     /* [poll_context-with-io_context] */
 }
 

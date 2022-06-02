@@ -54,6 +54,11 @@ struct WorkFinishedOnExit : detail::ScopeGuard<detail::WorkFinishedOnExitFunctor
     WorkFinishedOnExit& operator=(WorkFinishedOnExit&&) = delete;
 };
 
+struct IsGrpcContextStoppedPredicate
+{
+    [[nodiscard]] bool operator()(const agrpc::GrpcContext& grpc_context) const noexcept;
+};
+
 struct GrpcContextImplementation
 {
     static constexpr void* HAS_REMOTE_WORK_TAG = nullptr;
@@ -70,8 +75,8 @@ struct GrpcContextImplementation
 
     static void add_operation(agrpc::GrpcContext& grpc_context, detail::TypeErasedNoArgOperation* op) noexcept;
 
-    static bool handle_next_completion_queue_event(agrpc::GrpcContext& grpc_context, detail::InvokeHandler invoke,
-                                                   ::gpr_timespec deadline);
+    static bool handle_next_completion_queue_event(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline,
+                                                   detail::InvokeHandler invoke);
 
     [[nodiscard]] static bool running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept;
 
@@ -79,12 +84,14 @@ struct GrpcContextImplementation
 
     static bool move_remote_work_to_local_queue(agrpc::GrpcContext& grpc_context) noexcept;
 
-    template <detail::InvokeHandler Invoke>
-    static bool process_local_queue(agrpc::GrpcContext& grpc_context);
+    static bool process_local_queue(agrpc::GrpcContext& grpc_context, detail::InvokeHandler invoke);
 
-    template <detail::InvokeHandler Invoke, class StopCondition>
-    static bool process_work(agrpc::GrpcContext& grpc_context, StopCondition stop_condition, ::gpr_timespec deadline,
-                             bool& processed);
+    template <class StopPredicate = detail::IsGrpcContextStoppedPredicate>
+    static bool do_one(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline,
+                       detail::InvokeHandler invoke = detail::InvokeHandler::YES, StopPredicate stop_predicate = {});
+
+    static bool do_one_completion_queue(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline,
+                                        detail::InvokeHandler invoke = detail::InvokeHandler::YES);
 
     template <class LoopFunction>
     static bool process_work(agrpc::GrpcContext& grpc_context, LoopFunction loop_function);

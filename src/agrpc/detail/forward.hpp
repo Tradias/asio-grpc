@@ -38,9 +38,6 @@ struct RepeatedlyRequestContextAccess;
 template <class Traits>
 struct ResolvedPollContextTraits;
 
-template <class Poller>
-struct PollContextHandler;
-
 class GenericRPCContext;
 }
 

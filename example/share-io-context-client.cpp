@@ -69,20 +69,6 @@ int main(int argc, const char** argv)
     const auto stub = example::v1::Example::NewStub(channel);
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
-    agrpc::PollContext poll_context{io_context};
-    // Poll the GrpcContext until the io_context stops (runs out of work).
-    poll_context.async_poll(grpc_context,
-                            [&](auto&&)
-                            {
-                                if (io_context.stopped())
-                                {
-                                    // Undo the discount.
-                                    io_context.get_executor().on_work_started();
-                                    return true;
-                                }
-                                return false;
-                            });
-
     asio::co_spawn(
         io_context,
         [&]() -> asio::awaitable<void>
@@ -93,10 +79,9 @@ int main(int argc, const char** argv)
         },
         asio::detached);
 
-    // Discount the work performed by poll_context.async_poll.
-    // When compiling with BOOST_ASIO_NO_TS_EXECUTORS then see testPollContext17.cpp for a workaround of the removal of
-    // on_work_finished().
-    io_context.get_executor().on_work_finished();
+    const auto grpc_context_work_guard =
+        asio::prefer(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked);
 
-    io_context.run();
+    // Poll GrpcContext and io_context until the io_context stops.
+    agrpc::run<>(grpc_context, io_context);
 }

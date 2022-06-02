@@ -34,16 +34,15 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-struct AlwaysFalseCondition
+struct AlwaysFalsePredicate
 {
-    constexpr bool operator()() const noexcept { return false; }
+    [[nodiscard]] constexpr bool operator()(const agrpc::GrpcContext&) const noexcept { return false; }
 };
 
 inline void drain_completion_queue(agrpc::GrpcContext& grpc_context)
 {
-    bool processsed{};
-    while (detail::GrpcContextImplementation::process_work<detail::InvokeHandler::NO>(
-        grpc_context, detail::AlwaysFalseCondition{}, detail::GrpcContextImplementation::INFINITE_FUTURE, processsed))
+    while (detail::GrpcContextImplementation::do_one(grpc_context, detail::GrpcContextImplementation::INFINITE_FUTURE,
+                                                     detail::InvokeHandler::NO, detail::AlwaysFalsePredicate{}))
     {
         //
     }
