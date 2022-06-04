@@ -18,7 +18,7 @@
 #include "utils/manualLifetime.hpp"
 #include "utils/time.hpp"
 
-#include <agrpc/pollContext.hpp>
+#include <agrpc/run.hpp>
 
 DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 {
@@ -49,7 +49,7 @@ TEST_CASE_FIXTURE(PollContextTest, "PollContext can process asio::post")
                                   guard.reset();
                               });
                });
-    agrpc::run<>(grpc_context, io_context);
+    agrpc::run(grpc_context, io_context);
     CHECK(invoked);
 }
 
@@ -75,21 +75,21 @@ TEST_CASE_FIXTURE(PollContextTest,
                                              });
                               });
                });
-    agrpc::run<>(grpc_context, io_context,
-                 [&](auto&&)
-                 {
-                     if (io_context.stopped())
-                     {
-                         CHECK(invoked);
-                         return true;
-                     }
-                     CHECK_FALSE(invoked);
-                     return false;
-                 });
+    agrpc::run(grpc_context, io_context,
+               [&]()
+               {
+                   if (io_context.stopped())
+                   {
+                       CHECK(invoked);
+                       return true;
+                   }
+                   CHECK_FALSE(invoked);
+                   return false;
+               });
     CHECK(invoked);
 }
 
-struct MyIntrusiveTraits : agrpc::DefaultPollContextTraits
+struct MyIntrusiveTraits : agrpc::DefaultRunTraits
 {
     static constexpr std::chrono::nanoseconds MAX_LATENCY{0};
 };
@@ -103,7 +103,7 @@ TEST_CASE_FIXTURE(PollContextTest, "PollContextTraits can specify zero max laten
                    invoked = true;
                });
     agrpc::run<MyIntrusiveTraits>(grpc_context, io_context,
-                                  [count = 0](auto&) mutable
+                                  [count = 0]() mutable
                                   {
                                       ++count;
                                       return 15 == count;
@@ -115,12 +115,12 @@ struct MyTraits
 {
 };
 
-TEST_CASE_FIXTURE(PollContextTest, "PollContextTraits can use traits that do not inherit from DefaultPollContextTraits")
+TEST_CASE_FIXTURE(PollContextTest, "PollContextTraits can use traits that do not inherit from DefaultRunTraits")
 {
     int invoked_count{};
     const auto guard = create_io_context_work_guard();
     agrpc::run<MyTraits>(grpc_context, io_context,
-                         [&, count = 0](auto&) mutable
+                         [&, count = 0]() mutable
                          {
                              if (count % 4 == 0 || count % 4 - 1 == 0)
                              {
@@ -158,7 +158,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "PollContextTraits can use traits to cu
     Counter counter{};
     const auto guard = get_work_tracking_executor();
     agrpc::run<MyCustomPoll>(grpc_context, counter,
-                             [&, count = 0](auto&) mutable
+                             [&, count = 0]() mutable
                              {
                                  if (count % 6 == 0)
                                  {

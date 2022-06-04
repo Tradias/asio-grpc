@@ -32,7 +32,7 @@ jobs:
             os: windows-2022,
             triplet: 'x64-windows-release',
             build-type: 'Release',
-            cmake-extra-args: '-DVCPKG_TARGET_TRIPLET=x64-windows-release -DCMAKE_CXX_FLAGS_RELEASE=/D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS',
+            cmake-extra-args: '-DVCPKG_TARGET_TRIPLET=x64-windows-release',
             parallel: 1,
           }
           - {
@@ -62,7 +62,7 @@ jobs:
       run: cmake --preset default -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_ARGS }} ${{ matrix.config.cmake-extra-args }}
 
     - name: Build
-      run: cmake --build --preset default --config ${{ matrix.config.build-type }} --parallel ${{ matrix.config.parallel }} --target asio-grpc-check-header-syntax all
+      run: cmake --build --preset default --config ${{ matrix.config.build-type }} --parallel ${{ matrix.config.parallel }}
 
     - name: Test
       run: ctest --preset default --config ${{ matrix.config.build-type }}

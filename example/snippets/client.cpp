@@ -273,7 +273,7 @@ void poll_context(agrpc::GrpcContext& grpc_context)
         asio::prefer(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked);
 
     // Poll GrpcContext and io_context until the io_context stops.
-    agrpc::run<>(grpc_context, io_context);
+    agrpc::run(grpc_context, io_context);
     /* [poll_context-with-io_context] */
 }
 

@@ -35,9 +35,6 @@ class RepeatedlyRequestFn;
 
 struct RepeatedlyRequestContextAccess;
 
-template <class Traits>
-struct ResolvedPollContextTraits;
-
 class GenericRPCContext;
 }
 

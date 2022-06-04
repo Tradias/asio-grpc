@@ -135,6 +135,8 @@ struct GrpcContextImplementation
 };
 
 void process_grpc_tag(void* tag, detail::InvokeHandler invoke, bool ok, agrpc::GrpcContext& grpc_context);
+
+::gpr_timespec gpr_timespec_from_now(std::chrono::nanoseconds duration) noexcept;
 }
 
 AGRPC_NAMESPACE_END

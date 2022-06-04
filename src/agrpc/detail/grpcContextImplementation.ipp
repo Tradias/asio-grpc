@@ -20,6 +20,7 @@
 #include <agrpc/detail/grpcContextImplementation.hpp>
 #include <agrpc/detail/typeErasedOperation.hpp>
 #include <agrpc/grpcContext.hpp>
+#include <grpc/support/time.h>
 #include <grpcpp/completion_queue.h>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -241,6 +242,13 @@ inline void process_grpc_tag(void* tag, detail::InvokeHandler invoke, bool ok, a
     detail::WorkFinishedOnExit on_exit{grpc_context};
     auto* operation = static_cast<detail::TypeErasedGrpcTagOperation*>(tag);
     operation->complete(invoke, ok, grpc_context.get_allocator());
+}
+
+inline ::gpr_timespec gpr_timespec_from_now(std::chrono::nanoseconds duration) noexcept
+{
+    const auto duration_timespec = ::gpr_time_from_nanos(duration.count(), GPR_TIMESPAN);
+    const auto timespec = ::gpr_now(GPR_CLOCK_MONOTONIC);
+    return ::gpr_time_add(timespec, duration_timespec);
 }
 }
 
