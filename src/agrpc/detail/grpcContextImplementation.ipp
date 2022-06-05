@@ -204,39 +204,6 @@ inline bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_con
     return processed;
 }
 
-inline bool GrpcContextImplementation::run(agrpc::GrpcContext& grpc_context)
-{
-    return detail::GrpcContextImplementation::process_work(grpc_context,
-                                                           [](agrpc::GrpcContext& grpc_context)
-                                                           {
-                                                               return detail::GrpcContextImplementation::do_one(
-                                                                   grpc_context,
-                                                                   detail::GrpcContextImplementation::INFINITE_FUTURE);
-                                                           });
-}
-
-inline bool GrpcContextImplementation::poll(agrpc::GrpcContext& grpc_context)
-{
-    return detail::GrpcContextImplementation::process_work(grpc_context,
-                                                           [](agrpc::GrpcContext& grpc_context)
-                                                           {
-                                                               return detail::GrpcContextImplementation::do_one(
-                                                                   grpc_context,
-                                                                   detail::GrpcContextImplementation::TIME_ZERO);
-                                                           });
-}
-
-inline bool GrpcContextImplementation::poll_completion_queue(agrpc::GrpcContext& grpc_context)
-{
-    return detail::GrpcContextImplementation::process_work(
-        grpc_context,
-        [](agrpc::GrpcContext& grpc_context)
-        {
-            return detail::GrpcContextImplementation::do_one_completion_queue(
-                grpc_context, detail::GrpcContextImplementation::TIME_ZERO);
-        });
-}
-
 inline void process_grpc_tag(void* tag, detail::InvokeHandler invoke, bool ok, agrpc::GrpcContext& grpc_context)
 {
     detail::WorkFinishedOnExit on_exit{grpc_context};

@@ -88,22 +88,39 @@ class GrpcContext
      * brought into the ready state when this function is invoked. Upon return, the GrpcContext will be in the stopped
      * state.
      *
-     * @attention Only one thread may call run()/poll()/poll_completion_queue() at a time.
+     * @attention Only one thread may call run*()/poll*() at a time.
      *
-     * Thread-safe with regards to other functions except run(), poll(). poll_completion_queue() and the destructor.
+     * Thread-safe with regards to other functions except run*(), poll*() and the destructor.
      *
      * @return True if at least one operation has been processed.
      */
     bool run();
 
     /**
+     * @brief Run the `grpc::CompletionQueue`
+     *
+     * Runs the main event loop logic until the GrpcContext runs out of work or is stopped. Only events from the
+     * `grpc::CompletionQueue` will be handled. That means that completion handler that were e.g. created using
+     * `asio::post(grpc_context, ...)` will not be processed. The GrpcContext will be brought into the ready state when
+     * this function is invoked. Upon return, the GrpcContext will be in the stopped state.
+     *
+     * @attention Only one thread may call run*()/poll*() at a time.
+     *
+     * Thread-safe with regards to other functions except run*(), poll*() and the destructor.
+     *
+     * @return True if at least one event has been processed.
+     */
+    bool run_completion_queue();
+
+    /**
      * @brief Poll ready completion handlers and `grpc::CompletionQueue`
      *
-     * Processes all ready completion handlers and ready events of the `grpc::CompletionQueue`.
+     * Processes all ready completion handlers and ready events of the `grpc::CompletionQueue`. The GrpcContext will be
+     * brought into the ready state when this function is invoked.
      *
-     * @attention Only one thread may call run()/poll()/poll_completion_queue() at a time.
+     * @attention Only one thread may call run*()/poll*() at a time.
      *
-     * Thread-safe with regards to other functions except run(), poll(). poll_completion_queue() and the destructor.
+     * Thread-safe with regards to other functions except run*(), poll*() and the destructor.
      *
      * @return True if at least one operation has been processed.
      */
@@ -113,11 +130,12 @@ class GrpcContext
      * @brief Poll the `grpc::CompletionQueue`
      *
      * Processes only ready events of the `grpc::CompletionQueue`. That means that completion handler that were e.g.
-     * created using `asio::post(grpc_context, ...)` will not be processed.
+     * created using `asio::post(grpc_context, ...)` will not be processed. The GrpcContext will be brought into the
+     * ready state when this function is invoked.
      *
-     * @attention Only one thread may call run()/poll()/poll_completion_queue() at a time.
+     * @attention Only one thread may call run*()/poll*() at a time.
      *
-     * Thread-safe with regards to other functions except run(), poll(). poll_completion_queue() and the destructor.
+     * Thread-safe with regards to other functions except run*(), poll*() and the destructor.
      *
      * @return True if at least one operation has been processed.
      */

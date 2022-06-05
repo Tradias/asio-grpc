@@ -485,6 +485,31 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll_completion_queue()")
     io_context.run();
 }
 
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_completion_queue()")
+{
+    bool post_completed{false};
+    bool alarm_completed{false};
+    grpc::Alarm alarm;
+    asio::post(grpc_context,
+               [&]
+               {
+                   post_completed = true;
+               });
+    agrpc::wait(alarm, test::hundred_milliseconds_from_now(),
+                asio::bind_executor(grpc_context,
+                                    [&](bool)
+                                    {
+                                        CHECK_FALSE(post_completed);
+                                        alarm_completed = true;
+                                        grpc_context.stop();
+                                    }));
+    CHECK(grpc_context.run_completion_queue());
+    CHECK_FALSE(post_completed);
+    CHECK(grpc_context.run());
+    CHECK(post_completed);
+    CHECK_FALSE(grpc_context.run_completion_queue());
+}
+
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll() within run()")
 {
     int count{};

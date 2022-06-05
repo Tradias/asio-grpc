@@ -126,12 +126,6 @@ struct GrpcContextImplementation
 
     template <class LoopFunction>
     static bool process_work(agrpc::GrpcContext& grpc_context, LoopFunction loop_function);
-
-    static bool run(agrpc::GrpcContext& grpc_context);
-
-    static bool poll(agrpc::GrpcContext& grpc_context);
-
-    static bool poll_completion_queue(agrpc::GrpcContext& grpc_context);
 };
 
 void process_grpc_tag(void* tag, detail::InvokeHandler invoke, bool ok, agrpc::GrpcContext& grpc_context);

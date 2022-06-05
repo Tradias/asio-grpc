@@ -66,13 +66,48 @@ inline GrpcContext::~GrpcContext()
 #endif
 }
 
-inline bool GrpcContext::run() { return detail::GrpcContextImplementation::run(*this); }
+inline bool GrpcContext::run()
+{
+    return detail::GrpcContextImplementation::process_work(*this,
+                                                           [](agrpc::GrpcContext& grpc_context)
+                                                           {
+                                                               return detail::GrpcContextImplementation::do_one(
+                                                                   grpc_context,
+                                                                   detail::GrpcContextImplementation::INFINITE_FUTURE);
+                                                           });
+}
 
-inline bool GrpcContext::poll() { return detail::GrpcContextImplementation::poll(*this); }
+inline bool GrpcContext::run_completion_queue()
+{
+    return detail::GrpcContextImplementation::process_work(
+        *this,
+        [](agrpc::GrpcContext& grpc_context)
+        {
+            return detail::GrpcContextImplementation::do_one_completion_queue(
+                grpc_context, detail::GrpcContextImplementation::INFINITE_FUTURE);
+        });
+}
+
+inline bool GrpcContext::poll()
+{
+    return detail::GrpcContextImplementation::process_work(*this,
+                                                           [](agrpc::GrpcContext& grpc_context)
+                                                           {
+                                                               return detail::GrpcContextImplementation::do_one(
+                                                                   grpc_context,
+                                                                   detail::GrpcContextImplementation::TIME_ZERO);
+                                                           });
+}
 
 inline bool GrpcContext::poll_completion_queue()
 {
-    return detail::GrpcContextImplementation::poll_completion_queue(*this);
+    return detail::GrpcContextImplementation::process_work(
+        *this,
+        [](agrpc::GrpcContext& grpc_context)
+        {
+            return detail::GrpcContextImplementation::do_one_completion_queue(
+                grpc_context, detail::GrpcContextImplementation::TIME_ZERO);
+        });
 }
 
 inline void GrpcContext::stop()
