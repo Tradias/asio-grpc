@@ -22,7 +22,7 @@
 
 DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 {
-struct PollContextTest : test::GrpcContextTest
+struct RunTest : test::GrpcContextTest
 {
     asio::io_context io_context;
 
@@ -32,7 +32,7 @@ struct PollContextTest : test::GrpcContextTest
     }
 };
 
-TEST_CASE_FIXTURE(PollContextTest, "PollContext can process asio::post")
+TEST_CASE_FIXTURE(RunTest, "agrpc::run can process asio::post")
 {
     const auto expected_thread = std::this_thread::get_id();
     bool invoked{false};
@@ -53,8 +53,7 @@ TEST_CASE_FIXTURE(PollContextTest, "PollContext can process asio::post")
     CHECK(invoked);
 }
 
-TEST_CASE_FIXTURE(PollContextTest,
-                  "PollContext.async_poll custom stop predicate that ends when io_context runs out of work")
+TEST_CASE_FIXTURE(RunTest, "agrpc::run.async_poll custom stop predicate that ends when io_context runs out of work")
 {
     bool invoked{false};
     asio::post(io_context,
@@ -94,7 +93,7 @@ struct MyIntrusiveTraits : agrpc::DefaultRunTraits
     static constexpr std::chrono::nanoseconds MAX_LATENCY{0};
 };
 
-TEST_CASE_FIXTURE(PollContextTest, "PollContextTraits can specify zero max latency")
+TEST_CASE_FIXTURE(RunTest, "agrpc::runTraits can specify zero max latency")
 {
     bool invoked{};
     asio::post(grpc_context,
@@ -115,7 +114,7 @@ struct MyTraits
 {
 };
 
-TEST_CASE_FIXTURE(PollContextTest, "PollContextTraits can use traits that do not inherit from DefaultRunTraits")
+TEST_CASE_FIXTURE(RunTest, "agrpc::runTraits can use traits that do not inherit from DefaultRunTraits")
 {
     int invoked_count{};
     const auto guard = create_io_context_work_guard();
@@ -152,7 +151,7 @@ struct MyCustomPoll
     }
 };
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "PollContextTraits can use traits to customize polling")
+TEST_CASE_FIXTURE(test::GrpcContextTest, "agrpc::runTraits can use traits to customize polling")
 {
     int invoked_count_grpc_context{};
     Counter counter{};

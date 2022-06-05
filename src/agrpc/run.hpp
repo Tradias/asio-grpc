@@ -29,22 +29,21 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief (experimental) Default PollContext traits
+ * @brief (experimental) Default run traits
  */
 struct DefaultRunTraits
 {
     /**
      * @brief The desired maximum latency
      *
-     * The maximum latency when going from an idle execution context to a busy one. A low latency leads to higher CPU
-     * consumption during idle time.
+     * The maximum latency between consecutive polls of the execution context.
      */
     static constexpr std::chrono::microseconds MAX_LATENCY{250};
 
     /**
      * @brief How to poll the execution context
      *
-     * This function should let the execution context process some work without blocking.
+     * This function should let the execution context process some work without sleeping.
      */
     template <class ExecutionContext>
     static bool poll(ExecutionContext& execution_context)
@@ -53,9 +52,25 @@ struct DefaultRunTraits
     }
 };
 
+/**
+ * @brief (experimental) Run an execution context in the same thread as a GrpcContext
+ *
+ * The GrpcContext should be in the ready state when this function is invoked, other than that semantically identical to
+ * GrpcContext::run(). This function ends when both contexts are stopped.
+ *
+ * @tparam Traits See DefaultRunTraits
+ */
 template <class Traits = agrpc::DefaultRunTraits, class ExecutionContext = void>
 void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context);
 
+/**
+ * @brief (experimental) Run an execution context in the same thread as a GrpcContext
+ *
+ * The GrpcContext should be in the ready state when this function is invoked, other than that semantically identical to
+ * GrpcContext::run(). This function ends when the `stop_condition` returns `false`.
+ *
+ * @tparam Traits See DefaultRunTraits
+ */
 template <class Traits = agrpc::DefaultRunTraits, class ExecutionContext = void, class StopCondition = void>
 void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context, StopCondition stop_condition);
 
@@ -97,11 +112,12 @@ struct ResolvedRunTraits
 };
 
 template <class ExecutionContext>
-struct IsExecutionContextStoppedCondition
+struct AreContextsStoppedCondition
 {
+    const agrpc::GrpcContext& grpc_context;
     ExecutionContext& execution_context;
 
-    [[nodiscard]] bool operator()() const noexcept { return execution_context.stopped(); }
+    [[nodiscard]] bool operator()() const noexcept { return grpc_context.is_stopped() && execution_context.stopped(); }
 };
 }
 
@@ -109,7 +125,7 @@ template <class Traits, class ExecutionContext>
 void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context)
 {
     agrpc::run<Traits>(grpc_context, execution_context,
-                       detail::IsExecutionContextStoppedCondition<ExecutionContext>{execution_context});
+                       detail::AreContextsStoppedCondition<ExecutionContext>{grpc_context, execution_context});
 }
 
 template <class Traits, class ExecutionContext, class StopCondition>

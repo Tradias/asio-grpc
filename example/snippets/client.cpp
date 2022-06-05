@@ -264,19 +264,6 @@ asio::awaitable<void> async_notify_on_state_change(const std::string& host)
     silence_unused(is_deadline_not_expired);
 }
 
-void poll_context(agrpc::GrpcContext& grpc_context)
-{
-    /* [poll_context-with-io_context] */
-    asio::io_context io_context;
-
-    const auto grpc_context_work_guard =
-        asio::prefer(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked);
-
-    // Poll GrpcContext and io_context until the io_context stops.
-    agrpc::run(grpc_context, io_context);
-    /* [poll_context-with-io_context] */
-}
-
 auto hundred_milliseconds_from_now() { return std::chrono::system_clock::now() + std::chrono::milliseconds(100); }
 
 asio::awaitable<void> server_streaming_cancel_safe(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)

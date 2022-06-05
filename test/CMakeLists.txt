@@ -80,7 +80,7 @@ set(ASIO_GRPC_CPP17_TEST_SOURCE_FILES
     "testRepeatedlyRequest17.cpp"
     "testBindAllocator17.cpp"
     "testGrpcContext17.cpp"
-    "testPollContext17.cpp"
+    "testRun17.cpp"
     "testGenericRpc17.cpp"
     "testGrpcStream17.cpp"
     "testTest17.cpp")

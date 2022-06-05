@@ -24,6 +24,7 @@
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
+#include <optional>
 #include <string_view>
 
 namespace asio = boost::asio;
@@ -78,6 +79,9 @@ int main(int argc, const char** argv)
     server = builder.BuildAndStart();
     abort_if_not(bool{server});
 
+    std::optional grpc_context_work_guard{
+        asio::prefer(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked)};
+
     asio::co_spawn(
         io_context,
         [&]() -> asio::awaitable<void>
@@ -85,13 +89,11 @@ int main(int argc, const char** argv)
             // The two operations below will run concurrently on the same thread.
             using namespace boost::asio::experimental::awaitable_operators;
             co_await (handle_grpc_request(grpc_context, service) && handle_tcp_request(tcp_port));
+            grpc_context_work_guard.reset();
         },
         asio::detached);
 
-    const auto grpc_context_work_guard =
-        asio::prefer(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked);
-
-    // Poll GrpcContext and io_context until the io_context stops.
+    // Run GrpcContext and io_context until both stop.
     agrpc::run(grpc_context, io_context);
 
     server->Shutdown();
