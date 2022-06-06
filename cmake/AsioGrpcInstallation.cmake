@@ -12,10 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(GNUInstallDirs)
-
-set(ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/asio-grpc")
-
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/asio-grpcConfig.cmake.in"
                "${CMAKE_CURRENT_BINARY_DIR}/generated/asio-grpcConfig.cmake" @ONLY)
 
@@ -48,5 +44,3 @@ install(
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/src/generated/agrpc/detail/memoryResource.hpp"
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/agrpc/detail")
-
-unset(ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR)
