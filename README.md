@@ -55,10 +55,6 @@ grpc_context.run();
 
 More examples for things like streaming RPCs, double-buffered file transfer with io_uring, libunifex-based coroutines, sharing a thread with an io_context and generic clients/servers can be found in the [example](/example) directory.
 
-# Looking for ideas
-
-If you got any wishes or ideas for new features to asio-grpc then do not hesitate to open an issue. Some food for thought: A high-level API (what would that look like?), rate-limiting and `protobuf::Arena` support in `agrpc::repeatedly_request`, .... I am also happy to help with general gRPC and Asio questions.
-
 # Requirements
 
 Tested by CI:
