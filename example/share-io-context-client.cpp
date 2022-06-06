@@ -26,6 +26,8 @@
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 
+#include <optional>
+
 namespace asio = boost::asio;
 
 // Example showing how to run an io_context and a GrpcContext on the same thread.
@@ -68,20 +70,8 @@ int main(int argc, const char** argv)
     const auto channel = grpc::CreateChannel(host, grpc::InsecureChannelCredentials());
     const auto stub = example::v1::Example::NewStub(channel);
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
-
-    agrpc::PollContext poll_context{io_context.get_executor()};
-    // Poll the GrpcContext until the io_context stops (runs out of work).
-    poll_context.async_poll(grpc_context,
-                            [&](auto&&)
-                            {
-                                if (io_context.stopped())
-                                {
-                                    // Undo the discount.
-                                    io_context.get_executor().on_work_started();
-                                    return true;
-                                }
-                                return false;
-                            });
+    std::optional grpc_context_work_guard{
+        asio::prefer(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked)};
 
     asio::co_spawn(
         io_context,
@@ -90,13 +80,10 @@ int main(int argc, const char** argv)
             // The two operations below will run concurrently on the same thread.
             using namespace asio::experimental::awaitable_operators;
             co_await (make_grpc_request(grpc_context, *stub) && make_tcp_request(tcp_port));
+            grpc_context_work_guard.reset();
         },
         asio::detached);
 
-    // Discount the work performed by poll_context.async_poll.
-    // When compiling with BOOST_ASIO_NO_TS_EXECUTORS then see testPollContext17.cpp for a workaround of the removal of
-    // on_work_finished().
-    io_context.get_executor().on_work_finished();
-
-    io_context.run();
+    // Run GrpcContext and io_context until both stop.
+    agrpc::run(grpc_context, io_context);
 }

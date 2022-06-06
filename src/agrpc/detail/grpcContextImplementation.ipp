@@ -20,52 +20,31 @@
 #include <agrpc/detail/grpcContextImplementation.hpp>
 #include <agrpc/detail/typeErasedOperation.hpp>
 #include <agrpc/grpcContext.hpp>
+#include <grpc/support/time.h>
 #include <grpcpp/completion_queue.h>
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-struct GrpcContextThreadInfo : asio::detail::thread_info_base
-{
-};
-
-// Enables Boost.Asio's awaitable frame memory recycling
-struct GrpcContextThreadContext : asio::detail::thread_context
-{
-    GrpcContextThreadInfo this_thread;
-    thread_call_stack::context ctx{this, this_thread};
-};
-#endif
-
 inline thread_local const agrpc::GrpcContext* thread_local_grpc_context{};
 
-struct ThreadLocalGrpcContextGuard
+inline ThreadLocalGrpcContextGuard::ThreadLocalGrpcContextGuard(const agrpc::GrpcContext& grpc_context) noexcept
+    : old_context{detail::GrpcContextImplementation::set_thread_local_grpc_context(&grpc_context)}
 {
-    const agrpc::GrpcContext* old_context;
+}
 
-    explicit ThreadLocalGrpcContextGuard(const agrpc::GrpcContext& grpc_context) noexcept
-        : old_context{detail::GrpcContextImplementation::set_thread_local_grpc_context(&grpc_context)}
-    {
-    }
-
-    ~ThreadLocalGrpcContextGuard() { detail::GrpcContextImplementation::set_thread_local_grpc_context(old_context); }
-
-    ThreadLocalGrpcContextGuard(const ThreadLocalGrpcContextGuard&) = delete;
-    ThreadLocalGrpcContextGuard(ThreadLocalGrpcContextGuard&&) = delete;
-    ThreadLocalGrpcContextGuard& operator=(const ThreadLocalGrpcContextGuard&) = delete;
-    ThreadLocalGrpcContextGuard& operator=(ThreadLocalGrpcContextGuard&&) = delete;
-};
-
-struct IsGrpcContextStoppedCondition
+inline ThreadLocalGrpcContextGuard::~ThreadLocalGrpcContextGuard()
 {
-    const agrpc::GrpcContext& grpc_context;
-
-    bool operator()() const noexcept { return grpc_context.is_stopped(); }
-};
+    detail::GrpcContextImplementation::set_thread_local_grpc_context(old_context);
+}
 
 inline void WorkFinishedOnExitFunctor::operator()() const noexcept { grpc_context.work_finished(); }
+
+inline bool IsGrpcContextStoppedPredicate::operator()(const agrpc::GrpcContext& grpc_context) const noexcept
+{
+    return grpc_context.is_stopped();
+}
 
 inline bool GrpcContextImplementation::is_shutdown(const agrpc::GrpcContext& grpc_context) noexcept
 {
@@ -128,16 +107,19 @@ inline bool GrpcContextImplementation::move_remote_work_to_local_queue(agrpc::Gr
     return true;
 }
 
-template <detail::InvokeHandler Invoke>
-void GrpcContextImplementation::process_local_queue(agrpc::GrpcContext& grpc_context)
+inline bool GrpcContextImplementation::process_local_queue(agrpc::GrpcContext& grpc_context,
+                                                           detail::InvokeHandler invoke)
 {
+    bool processed{};
     auto queue{std::move(grpc_context.local_work_queue)};
     while (!queue.empty())
     {
+        processed = true;
         detail::WorkFinishedOnExit on_exit{grpc_context};
         auto* operation = queue.pop_front();
-        operation->complete(Invoke, grpc_context.get_allocator());
+        operation->complete(invoke, grpc_context.get_allocator());
     }
+    return processed;
 }
 
 inline bool get_next_event(grpc::CompletionQueue* cq, detail::GrpcCompletionQueueEvent& event,
@@ -146,25 +128,12 @@ inline bool get_next_event(grpc::CompletionQueue* cq, detail::GrpcCompletionQueu
     return grpc::CompletionQueue::GOT_EVENT == cq->AsyncNext(&event.tag, &event.ok, deadline);
 }
 
-template <detail::InvokeHandler Invoke, class StopCondition>
-bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, StopCondition stop_condition,
-                                             ::gpr_timespec deadline)
+inline bool GrpcContextImplementation::handle_next_completion_queue_event(agrpc::GrpcContext& grpc_context,
+                                                                          ::gpr_timespec deadline,
+                                                                          detail::InvokeHandler invoke)
 {
-    if (grpc_context.check_remote_work)
-    {
-        grpc_context.check_remote_work =
-            detail::GrpcContextImplementation::move_remote_work_to_local_queue(grpc_context);
-    }
-    detail::GrpcContextImplementation::process_local_queue<Invoke>(grpc_context);
-    if (stop_condition())
-    {
-        return false;
-    }
-    const auto is_more_completed_work_pending =
-        grpc_context.check_remote_work || !grpc_context.local_work_queue.empty();
-    if (detail::GrpcCompletionQueueEvent event; detail::get_next_event(
-            grpc_context.get_completion_queue(), event,
-            is_more_completed_work_pending ? detail::GrpcContextImplementation::TIME_ZERO : deadline))
+    if (detail::GrpcCompletionQueueEvent event;
+        detail::get_next_event(grpc_context.get_completion_queue(), event, deadline))
     {
         if (detail::GrpcContextImplementation::HAS_REMOTE_WORK_TAG == event.tag)
         {
@@ -172,14 +141,52 @@ bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, S
         }
         else
         {
-            detail::process_grpc_tag(event.tag, Invoke, event.ok, grpc_context);
+            detail::process_grpc_tag(event.tag, invoke, event.ok, grpc_context);
         }
         return true;
     }
-    return is_more_completed_work_pending;
+    return false;
 }
 
-inline bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline)
+template <class StopPredicate>
+bool GrpcContextImplementation::do_one(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline,
+                                       detail::InvokeHandler invoke, StopPredicate stop_predicate)
+{
+    if (stop_predicate(grpc_context))
+    {
+        return false;
+    }
+    bool processed{};
+    bool check_remote_work = grpc_context.check_remote_work;
+    if (check_remote_work)
+    {
+        check_remote_work = detail::GrpcContextImplementation::move_remote_work_to_local_queue(grpc_context);
+        grpc_context.check_remote_work = check_remote_work;
+    }
+    const bool processed_local_operation = detail::GrpcContextImplementation::process_local_queue(grpc_context, invoke);
+    processed = processed || processed_local_operation;
+    const bool is_more_completed_work_pending = check_remote_work || !grpc_context.local_work_queue.empty();
+    if (!is_more_completed_work_pending && stop_predicate(grpc_context))
+    {
+        return processed;
+    }
+    const bool handled_event = detail::GrpcContextImplementation::handle_next_completion_queue_event(
+        grpc_context, is_more_completed_work_pending ? detail::GrpcContextImplementation::TIME_ZERO : deadline, invoke);
+    return processed || handled_event;
+}
+
+inline bool GrpcContextImplementation::do_one_completion_queue(agrpc::GrpcContext& grpc_context,
+                                                               ::gpr_timespec deadline, detail::InvokeHandler invoke)
+{
+    if (grpc_context.is_stopped())
+    {
+        return false;
+    }
+    return detail::GrpcContextImplementation::handle_next_completion_queue_event(grpc_context, deadline, invoke);
+}
+
+template <class LoopFunction>
+inline bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, LoopFunction loop_function)
 {
     if (grpc_context.outstanding_work.load(std::memory_order_relaxed) == 0)
     {
@@ -187,29 +194,14 @@ inline bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_con
         return false;
     }
     grpc_context.reset();
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    detail::GrpcContextThreadContext thread_context;
-#endif
+    [[maybe_unused]] detail::GrpcContextThreadContext thread_context;
     detail::ThreadLocalGrpcContextGuard guard{grpc_context};
     bool processed{};
-    while (detail::GrpcContextImplementation::process_work<detail::InvokeHandler::YES>(
-        grpc_context, detail::IsGrpcContextStoppedCondition{grpc_context}, deadline))
-
+    while (loop_function(grpc_context))
     {
         processed = true;
     }
     return processed;
-}
-
-inline bool GrpcContextImplementation::run(agrpc::GrpcContext& grpc_context)
-{
-    return detail::GrpcContextImplementation::process_work(grpc_context,
-                                                           detail::GrpcContextImplementation::INFINITE_FUTURE);
-}
-
-inline bool GrpcContextImplementation::poll(agrpc::GrpcContext& grpc_context)
-{
-    return detail::GrpcContextImplementation::process_work(grpc_context, detail::GrpcContextImplementation::TIME_ZERO);
 }
 
 inline void process_grpc_tag(void* tag, detail::InvokeHandler invoke, bool ok, agrpc::GrpcContext& grpc_context)
@@ -217,6 +209,13 @@ inline void process_grpc_tag(void* tag, detail::InvokeHandler invoke, bool ok, a
     detail::WorkFinishedOnExit on_exit{grpc_context};
     auto* operation = static_cast<detail::TypeErasedGrpcTagOperation*>(tag);
     operation->complete(invoke, ok, grpc_context.get_allocator());
+}
+
+inline ::gpr_timespec gpr_timespec_from_now(std::chrono::nanoseconds duration) noexcept
+{
+    const auto duration_timespec = ::gpr_time_from_nanos(duration.count(), GPR_TIMESPAN);
+    const auto timespec = ::gpr_now(GPR_CLOCK_MONOTONIC);
+    return ::gpr_time_add(timespec, duration_timespec);
 }
 }
 

@@ -15,7 +15,9 @@
 #ifndef AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_HPP
 #define AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_HPP
 
+#include <agrpc/detail/asioForward.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/grpcCompletionQueueEvent.hpp>
 #include <agrpc/detail/typeErasedOperation.hpp>
 #include <agrpc/detail/utility.hpp>
@@ -25,8 +27,6 @@
 #include <limits>
 
 AGRPC_NAMESPACE_BEGIN()
-
-class GrpcContext;
 
 namespace detail
 {
@@ -46,15 +46,48 @@ struct WorkFinishedOnExitFunctor
 
 struct WorkFinishedOnExit : detail::ScopeGuard<detail::WorkFinishedOnExitFunctor>
 {
-    explicit WorkFinishedOnExit(agrpc::GrpcContext& grpc_context) noexcept
-        : detail::ScopeGuard<detail::WorkFinishedOnExitFunctor>(grpc_context)
-    {
-    }
+    using detail::ScopeGuard<detail::WorkFinishedOnExitFunctor>::ScopeGuard;
 
     WorkFinishedOnExit(const WorkFinishedOnExit&) = delete;
     WorkFinishedOnExit(WorkFinishedOnExit&&) = delete;
     WorkFinishedOnExit& operator=(const WorkFinishedOnExit&) = delete;
     WorkFinishedOnExit& operator=(WorkFinishedOnExit&&) = delete;
+};
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+struct GrpcContextThreadInfo : asio::detail::thread_info_base
+{
+};
+
+// Enables Boost.Asio's awaitable frame memory recycling
+struct GrpcContextThreadContext : asio::detail::thread_context
+{
+    GrpcContextThreadInfo this_thread;
+    thread_call_stack::context ctx{this, this_thread};
+};
+#else
+struct GrpcContextThreadContext
+{
+};
+#endif
+
+struct ThreadLocalGrpcContextGuard
+{
+    const agrpc::GrpcContext* old_context;
+
+    explicit ThreadLocalGrpcContextGuard(const agrpc::GrpcContext& grpc_context) noexcept;
+
+    ~ThreadLocalGrpcContextGuard();
+
+    ThreadLocalGrpcContextGuard(const ThreadLocalGrpcContextGuard&) = delete;
+    ThreadLocalGrpcContextGuard(ThreadLocalGrpcContextGuard&&) = delete;
+    ThreadLocalGrpcContextGuard& operator=(const ThreadLocalGrpcContextGuard&) = delete;
+    ThreadLocalGrpcContextGuard& operator=(ThreadLocalGrpcContextGuard&&) = delete;
+};
+
+struct IsGrpcContextStoppedPredicate
+{
+    [[nodiscard]] bool operator()(const agrpc::GrpcContext& grpc_context) const noexcept;
 };
 
 struct GrpcContextImplementation
@@ -73,9 +106,8 @@ struct GrpcContextImplementation
 
     static void add_operation(agrpc::GrpcContext& grpc_context, detail::TypeErasedNoArgOperation* op) noexcept;
 
-    static bool get_next_event(agrpc::GrpcContext& grpc_context, detail::GrpcCompletionQueueEvent& event) noexcept;
-
-    static bool poll_next_event(agrpc::GrpcContext& grpc_context, detail::GrpcCompletionQueueEvent& event) noexcept;
+    static bool handle_next_completion_queue_event(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline,
+                                                   detail::InvokeHandler invoke);
 
     [[nodiscard]] static bool running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept;
 
@@ -83,20 +115,22 @@ struct GrpcContextImplementation
 
     static bool move_remote_work_to_local_queue(agrpc::GrpcContext& grpc_context) noexcept;
 
-    template <detail::InvokeHandler Invoke>
-    static void process_local_queue(agrpc::GrpcContext& grpc_context);
+    static bool process_local_queue(agrpc::GrpcContext& grpc_context, detail::InvokeHandler invoke);
 
-    template <detail::InvokeHandler Invoke, class StopCondition>
-    static bool process_work(agrpc::GrpcContext& grpc_context, StopCondition stop_condition, ::gpr_timespec deadline);
+    template <class StopPredicate = detail::IsGrpcContextStoppedPredicate>
+    static bool do_one(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline,
+                       detail::InvokeHandler invoke = detail::InvokeHandler::YES, StopPredicate stop_predicate = {});
 
-    static bool process_work(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline);
+    static bool do_one_completion_queue(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline,
+                                        detail::InvokeHandler invoke = detail::InvokeHandler::YES);
 
-    static bool run(agrpc::GrpcContext& grpc_context);
-
-    static bool poll(agrpc::GrpcContext& grpc_context);
+    template <class LoopFunction>
+    static bool process_work(agrpc::GrpcContext& grpc_context, LoopFunction loop_function);
 };
 
 void process_grpc_tag(void* tag, detail::InvokeHandler invoke, bool ok, agrpc::GrpcContext& grpc_context);
+
+::gpr_timespec gpr_timespec_from_now(std::chrono::nanoseconds duration) noexcept;
 }
 
 AGRPC_NAMESPACE_END

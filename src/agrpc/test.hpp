@@ -18,6 +18,8 @@
 #include <agrpc/detail/asioForward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpcContextImplementation.hpp>
+#include <agrpc/grpcContext.hpp>
+#include <agrpc/grpcExecutor.hpp>
 #include <agrpc/wait.hpp>
 
 #include <memory>
@@ -45,7 +47,7 @@ inline void process_grpc_tag(void* tag, bool ok, agrpc::GrpcContext& grpc_contex
 
         void operator()(bool) { detail::process_grpc_tag(tag, detail::InvokeHandler::YES, ok, grpc_context); }
 
-        executor_type get_executor() const noexcept { return grpc_context.get_executor(); }
+        [[nodiscard]] executor_type get_executor() const noexcept { return grpc_context.get_executor(); }
     };
     auto alarm = std::make_unique<grpc::Alarm>();
     auto& alarm_ref = *alarm;

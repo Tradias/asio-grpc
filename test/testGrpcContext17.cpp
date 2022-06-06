@@ -439,10 +439,125 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll() with grpc::Alarm")
                    timer.async_wait(
                        [&](auto&&)
                        {
-                           grpc_context.poll();
+                           CHECK_FALSE(invoked);
+                           CHECK(grpc_context.poll());
                        });
                });
     io_context.run();
     CHECK(invoked);
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll_completion_queue()")
+{
+    bool post_completed{false};
+    bool alarm_completed{false};
+    asio::io_context io_context;
+    grpc::Alarm alarm;
+    asio::steady_timer timer{io_context};
+    asio::post(io_context,
+               [&]()
+               {
+                   asio::post(grpc_context,
+                              [&]
+                              {
+                                  post_completed = true;
+                              });
+                   agrpc::wait(alarm, std::chrono::system_clock::now(),
+                               asio::bind_executor(grpc_context,
+                                                   [&](bool)
+                                                   {
+                                                       alarm_completed = true;
+                                                   }));
+                   timer.expires_after(std::chrono::milliseconds(100));
+                   timer.async_wait(
+                       [&](auto&&)
+                       {
+                           CHECK_FALSE(post_completed);
+                           CHECK_FALSE(alarm_completed);
+                           CHECK(grpc_context.poll_completion_queue());
+                           CHECK_FALSE(post_completed);
+                           CHECK(alarm_completed);
+                           CHECK_FALSE(grpc_context.poll_completion_queue());
+                           CHECK(grpc_context.poll());
+                           CHECK(post_completed);
+                       });
+               });
+    io_context.run();
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_completion_queue()")
+{
+    bool post_completed{false};
+    bool alarm_completed{false};
+    grpc::Alarm alarm;
+    asio::post(grpc_context,
+               [&]
+               {
+                   post_completed = true;
+               });
+    agrpc::wait(alarm, test::hundred_milliseconds_from_now(),
+                asio::bind_executor(grpc_context,
+                                    [&](bool)
+                                    {
+                                        CHECK_FALSE(post_completed);
+                                        alarm_completed = true;
+                                        grpc_context.stop();
+                                    }));
+    CHECK(grpc_context.run_completion_queue());
+    CHECK_FALSE(post_completed);
+    CHECK(grpc_context.run());
+    CHECK(post_completed);
+    CHECK_FALSE(grpc_context.run_completion_queue());
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll() within run()")
+{
+    int count{};
+    asio::post(grpc_context,
+               [&]()
+               {
+                   asio::post(grpc_context,
+                              [&]
+                              {
+                                  ++count;
+                              });
+                   CHECK(grpc_context.poll());
+                   CHECK_EQ(1, count);
+                   asio::post(grpc_context,
+                              [&]
+                              {
+                                  ++count;
+                              });
+               });
+    grpc_context.run();
+    CHECK_EQ(2, count);
+}
+
+void recursively_post(agrpc::GrpcContext& grpc_context)
+{
+    asio::post(grpc_context,
+               [&]
+               {
+                   recursively_post(grpc_context);
+               });
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run() is not blocked by repeated asio::posts")
+{
+    bool alarm_completed{false};
+    recursively_post(grpc_context);
+    grpc::Alarm alarm;
+    asio::post(grpc_context,
+               [&]()
+               {
+                   agrpc::wait(alarm, std::chrono::system_clock::now(),
+                               asio::bind_executor(grpc_context,
+                                                   [&](bool)
+                                                   {
+                                                       alarm_completed = true;
+                                                       grpc_context.stop();
+                                                   }));
+               });
+    grpc_context.run();
 }
 }

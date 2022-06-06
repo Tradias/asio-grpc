@@ -35,14 +35,6 @@ class RepeatedlyRequestFn;
 
 struct RepeatedlyRequestContextAccess;
 
-template <class Traits>
-struct ResolvedPollContextTraits;
-
-struct IsGrpcContextStoppedPredicate;
-
-template <class Executor, class Traits, class StopPredicate>
-struct PollContextHandler;
-
 class GenericRPCContext;
 }
 

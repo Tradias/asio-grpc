@@ -24,6 +24,7 @@
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
+#include <optional>
 #include <string_view>
 
 namespace asio = boost::asio;
@@ -78,19 +79,8 @@ int main(int argc, const char** argv)
     server = builder.BuildAndStart();
     abort_if_not(bool{server});
 
-    agrpc::PollContext poll_context{io_context.get_executor()};
-    // Poll the GrpcContext until the io_context stops (runs out of work).
-    poll_context.async_poll(grpc_context,
-                            [&](auto&&)
-                            {
-                                if (io_context.stopped())
-                                {
-                                    // Undo the discount.
-                                    io_context.get_executor().on_work_started();
-                                    return true;
-                                }
-                                return false;
-                            });
+    std::optional grpc_context_work_guard{
+        asio::prefer(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked)};
 
     asio::co_spawn(
         io_context,
@@ -99,15 +89,12 @@ int main(int argc, const char** argv)
             // The two operations below will run concurrently on the same thread.
             using namespace boost::asio::experimental::awaitable_operators;
             co_await (handle_grpc_request(grpc_context, service) && handle_tcp_request(tcp_port));
+            grpc_context_work_guard.reset();
         },
         asio::detached);
 
-    // Discount the work performed by poll_context.async_poll.
-    // When compiling with BOOST_ASIO_NO_TS_EXECUTORS then see testPollContext17.cpp for a workaround of the removal of
-    // on_work_finished().
-    io_context.get_executor().on_work_finished();
-
-    io_context.run();
+    // Run GrpcContext and io_context until both stop.
+    agrpc::run(grpc_context, io_context);
 
     server->Shutdown();
 }

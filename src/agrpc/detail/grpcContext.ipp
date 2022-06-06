@@ -34,15 +34,15 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-struct AlwaysFalseCondition
+struct AlwaysFalsePredicate
 {
-    constexpr bool operator()() const noexcept { return false; }
+    [[nodiscard]] constexpr bool operator()(const agrpc::GrpcContext&) const noexcept { return false; }
 };
 
 inline void drain_completion_queue(agrpc::GrpcContext& grpc_context)
 {
-    while (detail::GrpcContextImplementation::process_work<detail::InvokeHandler::NO>(
-        grpc_context, detail::AlwaysFalseCondition{}, detail::GrpcContextImplementation::INFINITE_FUTURE))
+    while (detail::GrpcContextImplementation::do_one(grpc_context, detail::GrpcContextImplementation::INFINITE_FUTURE,
+                                                     detail::InvokeHandler::NO, detail::AlwaysFalsePredicate{}))
     {
         //
     }
@@ -66,9 +66,49 @@ inline GrpcContext::~GrpcContext()
 #endif
 }
 
-inline bool GrpcContext::run() { return detail::GrpcContextImplementation::run(*this); }
+inline bool GrpcContext::run()
+{
+    return detail::GrpcContextImplementation::process_work(*this,
+                                                           [](agrpc::GrpcContext& grpc_context)
+                                                           {
+                                                               return detail::GrpcContextImplementation::do_one(
+                                                                   grpc_context,
+                                                                   detail::GrpcContextImplementation::INFINITE_FUTURE);
+                                                           });
+}
 
-inline bool GrpcContext::poll() { return detail::GrpcContextImplementation::poll(*this); }
+inline bool GrpcContext::run_completion_queue()
+{
+    return detail::GrpcContextImplementation::process_work(
+        *this,
+        [](agrpc::GrpcContext& grpc_context)
+        {
+            return detail::GrpcContextImplementation::do_one_completion_queue(
+                grpc_context, detail::GrpcContextImplementation::INFINITE_FUTURE);
+        });
+}
+
+inline bool GrpcContext::poll()
+{
+    return detail::GrpcContextImplementation::process_work(*this,
+                                                           [](agrpc::GrpcContext& grpc_context)
+                                                           {
+                                                               return detail::GrpcContextImplementation::do_one(
+                                                                   grpc_context,
+                                                                   detail::GrpcContextImplementation::TIME_ZERO);
+                                                           });
+}
+
+inline bool GrpcContext::poll_completion_queue()
+{
+    return detail::GrpcContextImplementation::process_work(
+        *this,
+        [](agrpc::GrpcContext& grpc_context)
+        {
+            return detail::GrpcContextImplementation::do_one_completion_queue(
+                grpc_context, detail::GrpcContextImplementation::TIME_ZERO);
+        });
+}
 
 inline void GrpcContext::stop()
 {
