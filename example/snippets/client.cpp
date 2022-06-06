@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "example/v1/example.grpc.pb.h"
+#include "example/v1/example_mock.grpc.pb.h"
 #include "helper.hpp"
 
 #include <agrpc/asioGrpc.hpp>
@@ -25,6 +25,7 @@
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 
+#include <cassert>
 #include <optional>
 
 namespace asio = boost::asio;
@@ -301,6 +302,42 @@ asio::awaitable<void> server_streaming_cancel_safe(agrpc::GrpcContext& grpc_cont
         }
     }
     /* [cancel-safe-server-streaming] */
+}
+
+asio::awaitable<void> mock_stub(agrpc::GrpcContext& grpc_context)
+{
+    /* [mock-stub] */
+    // Setup mock stub
+    struct MockResponseReader : grpc::ClientAsyncResponseReaderInterface<example::v1::Response>
+    {
+        MOCK_METHOD0(StartCall, void());
+        MOCK_METHOD1(ReadInitialMetadata, void(void*));
+        MOCK_METHOD3(Finish, void(example::v1::Response*, grpc::Status*, void*));
+    };
+    testing::NiceMock<example::v1::MockExampleStub> mock_stub;
+    testing::NiceMock<MockResponseReader> mock_reader;
+    EXPECT_CALL(mock_reader, Finish)
+        .WillOnce(
+            [&](example::v1::Response* response, grpc::Status* status, void* tag)
+            {
+                *status = grpc::Status::OK;
+                response->set_integer(42);
+                agrpc::process_grpc_tag(grpc_context, tag, true);
+            });
+    EXPECT_CALL(mock_stub, AsyncUnaryRaw).WillOnce(testing::Return(&mock_reader));
+
+    // Inject mock_stub into code under test
+    grpc::ClientContext client_context;
+    example::v1::Request request;
+    const auto writer = agrpc::request(&example::v1::Example::StubInterface::AsyncUnary, mock_stub, client_context,
+                                       request, grpc_context);
+    grpc::Status status;
+    example::v1::Response response;
+    co_await agrpc::finish(writer, response, status);
+
+    assert(status.ok());
+    assert(42 == response.integer());
+    /* [mock-stub] */
 }
 
 int main()

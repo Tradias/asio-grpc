@@ -15,8 +15,10 @@
 #ifndef AGRPC_AGRPC_TEST_HPP
 #define AGRPC_AGRPC_TEST_HPP
 
-#include <agrpc/detail/asioForward.hpp>
 #include <agrpc/detail/config.hpp>
+
+#ifndef AGRPC_UNIFEX
+#include <agrpc/detail/asioForward.hpp>
 #include <agrpc/detail/grpcContextImplementation.hpp>
 #include <agrpc/grpcContext.hpp>
 #include <agrpc/grpcExecutor.hpp>
@@ -32,18 +34,22 @@ AGRPC_NAMESPACE_BEGIN()
  * This function can be used to process gRPC tags in places where the tag does not go through the
  * `grpc::CompletionQueue`, e.g. in mocked stubs. It processes the tag in a manner equivalent to `asio::post`.
  *
+ * Example using GMock:
+ *
+ * @snippet client.cpp mock-stub
+ *
  * @since 1.7.0
  */
-inline void process_grpc_tag(void* tag, bool ok, agrpc::GrpcContext& grpc_context)
+inline void process_grpc_tag(agrpc::GrpcContext& grpc_context, void* tag, bool ok)
 {
     struct ProcessTag
     {
         using executor_type = agrpc::GrpcContext::executor_type;
 
-        std::unique_ptr<grpc::Alarm> alarm;
+        agrpc::GrpcContext& grpc_context;
         void* tag;
         bool ok;
-        agrpc::GrpcContext& grpc_context;
+        std::unique_ptr<grpc::Alarm> alarm;
 
         void operator()(bool) { detail::process_grpc_tag(tag, detail::InvokeHandler::YES, ok, grpc_context); }
 
@@ -52,9 +58,11 @@ inline void process_grpc_tag(void* tag, bool ok, agrpc::GrpcContext& grpc_contex
     auto alarm = std::make_unique<grpc::Alarm>();
     auto& alarm_ref = *alarm;
     agrpc::wait(alarm_ref, detail::GrpcContextImplementation::TIME_ZERO,
-                ProcessTag{std::move(alarm), tag, ok, grpc_context});
+                ProcessTag{grpc_context, tag, ok, std::move(alarm)});
 }
 
 AGRPC_NAMESPACE_END
+
+#endif
 
 #endif  // AGRPC_AGRPC_TEST_HPP

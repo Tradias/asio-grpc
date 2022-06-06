@@ -22,7 +22,7 @@
 
 DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 {
-struct MockAsyncWriter : grpc::ClientAsyncResponseReaderInterface<test::msg::Response>
+struct MockResponseReader : grpc::ClientAsyncResponseReaderInterface<test::msg::Response>
 {
     MOCK_METHOD0(StartCall, void());
     MOCK_METHOD1(ReadInitialMetadata, void(void*));
@@ -32,15 +32,15 @@ struct MockAsyncWriter : grpc::ClientAsyncResponseReaderInterface<test::msg::Res
 TEST_CASE_FIXTURE(test::GrpcContextTest, "mock unary request")
 {
     testing::NiceMock<test::v1::MockTestStub> mock_stub;
-    testing::NiceMock<MockAsyncWriter> mock_writer;
-    EXPECT_CALL(mock_writer, Finish)
+    testing::NiceMock<MockResponseReader> mock_reader;
+    EXPECT_CALL(mock_reader, Finish)
         .WillOnce(
             [&](test::msg::Response* response, grpc::Status*, void* tag)
             {
                 response->set_integer(42);
-                agrpc::process_grpc_tag(tag, true, grpc_context);
+                agrpc::process_grpc_tag(grpc_context, tag, true);
             });
-    EXPECT_CALL(mock_stub, AsyncUnaryRaw).WillOnce(testing::Return(&mock_writer));
+    EXPECT_CALL(mock_stub, AsyncUnaryRaw).WillOnce(testing::Return(&mock_reader));
     test::spawn_and_run(grpc_context,
                         [&](auto&& yield)
                         {

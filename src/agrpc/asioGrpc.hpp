@@ -42,6 +42,7 @@
 #include <agrpc/repeatedlyRequestContext.hpp>
 #include <agrpc/rpc.hpp>
 #include <agrpc/run.hpp>
+#include <agrpc/test.hpp>
 #include <agrpc/useAwaitable.hpp>
 #include <agrpc/useSender.hpp>
 #include <agrpc/wait.hpp>
