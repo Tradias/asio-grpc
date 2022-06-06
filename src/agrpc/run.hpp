@@ -30,6 +30,8 @@ AGRPC_NAMESPACE_BEGIN()
 
 /**
  * @brief (experimental) Default run traits
+ *
+ * @since 1.7.0
  */
 struct DefaultRunTraits
 {
@@ -59,6 +61,8 @@ struct DefaultRunTraits
  * GrpcContext::run(). This function ends when both contexts are stopped.
  *
  * @tparam Traits See DefaultRunTraits
+ *
+ * @since 1.7.0
  */
 template <class Traits = agrpc::DefaultRunTraits, class ExecutionContext = void>
 void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context);
@@ -70,6 +74,8 @@ void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context);
  * GrpcContext::run(). This function ends when the `stop_condition` returns `false`.
  *
  * @tparam Traits See DefaultRunTraits
+ *
+ * @since 1.7.0
  */
 template <class Traits = agrpc::DefaultRunTraits, class ExecutionContext = void, class StopCondition = void>
 void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context, StopCondition stop_condition);
