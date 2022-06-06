@@ -31,10 +31,9 @@ file(MAKE_DIRECTORY "${WORKING_DIRECTORY}")
 
 # configure asio-grpc
 run_process(
-    "${CMAKE_COMMAND}"
+    "${ASIO_GRPC_CMAKE_INSTALL_TEST_CMAKE_COMMAND}"
     "-B"
     "${WORKING_DIRECTORY}/build"
-    "-G${CMAKE_GENERATOR}"
     "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
     "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
     "-DCMAKE_INSTALL_PREFIX=${WORKING_DIRECTORY}/install"
@@ -43,7 +42,7 @@ run_process(
 
 # install asio-grpc
 run_process(
-    "${CMAKE_COMMAND}"
+    "${ASIO_GRPC_CMAKE_INSTALL_TEST_CMAKE_COMMAND}"
     --build
     "${WORKING_DIRECTORY}/build"
     --config
@@ -55,10 +54,9 @@ file(COPY "${TEST_SOURCE_DIR}/." DESTINATION "${WORKING_DIRECTORY}")
 
 # configure test project
 run_process(
-    "${CMAKE_COMMAND}"
+    "${ASIO_GRPC_CMAKE_INSTALL_TEST_CMAKE_COMMAND}"
     "-B"
     "${WORKING_DIRECTORY}/test-build"
-    "-G${CMAKE_GENERATOR}"
     "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
     "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}"
     "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
@@ -78,7 +76,8 @@ run_process(
     "${WORKING_DIRECTORY}")
 
 # build test project
-run_process("${CMAKE_COMMAND}" --build "${WORKING_DIRECTORY}/test-build" --config ${CMAKE_BUILD_TYPE})
+run_process("${ASIO_GRPC_CMAKE_INSTALL_TEST_CMAKE_COMMAND}" --build "${WORKING_DIRECTORY}/test-build" --config
+            ${CMAKE_BUILD_TYPE})
 
 # run test project
 run_process("${WORKING_DIRECTORY}/test-install/1/asio-grpc-cmake-test${CMAKE_EXECUTABLE_SUFFIX}")

@@ -73,13 +73,13 @@ jobs:
     runs-on: ubuntu-20.04
     env:
       TRIPLET: 'x64-linux-release'
-      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-release -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off'
+      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-release -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_CMAKE_INSTALL_TEST_CMAKE_COMMAND=/usr/bin/cmake'
 
     steps:
     - name: Install GCC 8, 11 and gcovr
       run: |
         sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test &&\
-        sudo apt-get install g++-8 g++-11 gcovr
+        sudo apt-get install g++-8 g++-11 gcovr cmake
 
     - name: Make gcc-8 default compiler
       run: |

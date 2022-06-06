@@ -32,12 +32,11 @@ install(
           "${ASIO_GRPC_PROJECT_ROOT}/asio-grpc.natvis"
     DESTINATION "${ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR}")
 
-install(TARGETS asio-grpc asio-grpc-standalone-asio asio-grpc-unifex EXPORT ASIO_GRPC_EXPORT_TARGETS)
+install(TARGETS asio-grpc asio-grpc-standalone-asio asio-grpc-unifex EXPORT asio-grpcTargets)
 
 install(
-    EXPORT ASIO_GRPC_EXPORT_TARGETS
+    EXPORT asio-grpcTargets
     NAMESPACE asio-grpc::
-    FILE asio-grpcTargets.cmake
     DESTINATION "${ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR}")
 
 install(

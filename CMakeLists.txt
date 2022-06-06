@@ -63,6 +63,9 @@ option(
     ASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST
     "Add test to ctest that will verify installability of asio-grpc and its CMake function asio_grpc_protobuf_generate"
     on)
+set(ASIO_GRPC_CMAKE_INSTALL_TEST_CMAKE_COMMAND
+    "${CMAKE_COMMAND}"
+    CACHE FILEPATH "CMake executable used in cmake install test")
 
 set(ASIO_GRPC_PROJECT_ROOT "${CMAKE_CURRENT_LIST_DIR}")
 
