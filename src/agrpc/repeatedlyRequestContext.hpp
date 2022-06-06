@@ -104,6 +104,9 @@ class RepeatedlyRequestContext
     }
 };
 
+/**
+ * @brief The RepeatedlyRequestContext for generic RPC requests
+ */
 template <class Allocator = std::allocator<void>>
 using GenericRepeatedlyRequestContext = agrpc::RepeatedlyRequestContext<
     typename std::allocator_traits<Allocator>::template rebind_alloc<detail::GenericRPCContext>>;
