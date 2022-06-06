@@ -79,6 +79,7 @@
 #ifdef AGRPC_UNIFEX
 #include <unifex/config.hpp>
 #include <unifex/execute.hpp>
+#include <unifex/finally.hpp>
 #include <unifex/just.hpp>
 #include <unifex/let_done.hpp>
 #include <unifex/let_error.hpp>

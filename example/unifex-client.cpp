@@ -19,6 +19,7 @@
 #include <agrpc/asioGrpc.hpp>
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
+#include <unifex/finally.hpp>
 #include <unifex/just.hpp>
 #include <unifex/stop_when.hpp>
 #include <unifex/sync_wait.hpp>
@@ -131,12 +132,19 @@ int main(int argc, const char** argv)
     const auto stub_ext = example::v1::ExampleExt::NewStub(channel);
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
-    unifex::sync_wait(unifex::when_all(make_unary_request(*stub, grpc_context),
-                                       make_server_streaming_request(*stub, grpc_context),
-                                       make_and_cancel_unary_request(*stub_ext, grpc_context),
-                                       unifex::then(unifex::just(),
-                                                    [&]
-                                                    {
-                                                        grpc_context.run();
-                                                    })));
+    grpc_context.work_started();
+    unifex::sync_wait(
+        unifex::when_all(unifex::finally(unifex::when_all(make_unary_request(*stub, grpc_context),
+                                                          make_server_streaming_request(*stub, grpc_context),
+                                                          make_and_cancel_unary_request(*stub_ext, grpc_context)),
+                                         unifex::then(unifex::just(),
+                                                      [&]
+                                                      {
+                                                          grpc_context.work_finished();
+                                                      })),
+                         unifex::then(unifex::just(),
+                                      [&]
+                                      {
+                                          grpc_context.run();
+                                      })));
 }

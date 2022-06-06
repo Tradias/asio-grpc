@@ -24,7 +24,7 @@
 
 namespace test
 {
-struct GrpcClientServerTestBase : test::GrpcContextTest
+struct GrpcClientServerTestBase : virtual test::GrpcContextTest
 {
     uint16_t port;
     std::string address;

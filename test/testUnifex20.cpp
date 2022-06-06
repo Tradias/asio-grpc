@@ -28,6 +28,26 @@
 
 DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 {
+struct UnifexTest : virtual test::GrpcContextTest
+{
+    template <class... Sender>
+    void run(Sender&&... sender)
+    {
+        grpc_context.work_started();
+        unifex::sync_wait(unifex::when_all(unifex::finally(unifex::when_all(std::forward<Sender>(sender)...),
+                                                           unifex::then(unifex::just(),
+                                                                        [&]
+                                                                        {
+                                                                            grpc_context.work_finished();
+                                                                        })),
+                                           unifex::then(unifex::just(),
+                                                        [&]
+                                                        {
+                                                            grpc_context.run();
+                                                        })));
+    }
+};
+
 TEST_CASE("unifex asio-grpc fulfills unified executor concepts")
 {
     CHECK(unifex::scheduler<agrpc::GrpcExecutor>);
@@ -49,7 +69,7 @@ TEST_CASE("unifex asio-grpc fulfills unified executor concepts")
     CHECK(unifex::is_nothrow_connectable_v<ScheduleSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::schedule")
+TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::schedule")
 {
     bool is_invoked{false};
     auto sender = unifex::schedule(get_executor());
@@ -73,7 +93,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::schedule")
     CHECK_FALSE(state.exception);
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::submit from Grpc::Context::run")
+TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::submit from Grpc::Context::run")
 {
     bool is_invoked{false};
     test::StatefulReceiverState state;
@@ -94,14 +114,14 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::submit from Grpc:
     CHECK_FALSE(state.exception);
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::submit with allocator")
+TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::submit with allocator")
 {
     unifex::submit(unifex::schedule(get_executor()), test::FunctionAsReceiver{[] {}, get_allocator()});
     grpc_context.run();
     CHECK(allocator_has_been_used());
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::execute")
+TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::execute")
 {
     bool is_invoked{false};
     unifex::execute(get_executor(),
@@ -114,30 +134,23 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::execute")
     CHECK(is_invoked);
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::schedule from different thread")
+TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::schedule from different thread")
 {
     bool is_invoked{false};
     unifex::new_thread_context ctx;
-    grpc_context.work_started();
-    unifex::sync_wait(unifex::when_all(unifex::let_value(unifex::schedule(ctx.get_scheduler()),
-                                                         [&]
-                                                         {
-                                                             return unifex::then(unifex::schedule(get_executor()),
-                                                                                 [&]
-                                                                                 {
-                                                                                     grpc_context.work_finished();
-                                                                                     is_invoked = true;
-                                                                                 });
-                                                         }),
-                                       unifex::then(unifex::just(),
-                                                    [&]
-                                                    {
-                                                        grpc_context.run();
-                                                    })));
+    run(unifex::let_value(unifex::schedule(ctx.get_scheduler()),
+                          [&]
+                          {
+                              return unifex::then(unifex::schedule(get_executor()),
+                                                  [&]
+                                                  {
+                                                      is_invoked = true;
+                                                  });
+                          }));
     CHECK(is_invoked);
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::schedule when already running in GrpcContext thread")
+TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::schedule when already running in GrpcContext thread")
 {
     std::thread::id expected_thread_id;
     std::thread::id actual_thread_id;
@@ -163,37 +176,28 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex GrpcExecutor::schedule when alr
     CHECK_EQ(expected_thread_id, actual_thread_id);
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex agrpc::wait from different thread")
+TEST_CASE_FIXTURE(UnifexTest, "unifex agrpc::wait from different thread")
 {
     bool is_invoked{false};
     unifex::new_thread_context ctx;
     grpc::Alarm alarm;
-    grpc_context.work_started();
-    unifex::sync_wait(unifex::when_all(
-        unifex::let_value(unifex::schedule(ctx.get_scheduler()),
+    run(unifex::let_value(unifex::schedule(ctx.get_scheduler()),
                           [&]
                           {
                               return unifex::then(agrpc::wait(alarm, test::ten_milliseconds_from_now(), use_sender()),
                                                   [&](bool)
                                                   {
-                                                      grpc_context.work_finished();
                                                       is_invoked = true;
                                                   });
-                          }),
-        unifex::then(unifex::just(),
-                     [&]
-                     {
-                         grpc_context.run();
-                     })));
+                          }));
     CHECK(is_invoked);
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex cancel agrpc::wait")
+TEST_CASE_FIXTURE(UnifexTest, "unifex cancel agrpc::wait")
 {
     bool ok{true};
     grpc::Alarm alarm;
-    unifex::sync_wait(unifex::when_all(
-        unifex::let_value(unifex::schedule(get_executor()),
+    run(unifex::let_value(unifex::schedule(get_executor()),
                           [&]
                           {
                               return unifex::stop_when(
@@ -203,16 +207,11 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex cancel agrpc::wait")
                                                    ok = wait_ok;
                                                }),
                                   unifex::just());
-                          }),
-        unifex::then(unifex::just(),
-                     [&]
-                     {
-                         grpc_context.run();
-                     })));
+                          }));
     CHECK_FALSE(ok);
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "unifex cancel agrpc::wait before starting")
+TEST_CASE_FIXTURE(UnifexTest, "unifex cancel agrpc::wait before starting")
 {
     bool is_invoked{false};
     grpc::Alarm alarm;
@@ -251,7 +250,7 @@ TEST_CASE("unifex GrpcContext.stop() with pending GrpcSender operation")
     CHECK_FALSE(is_invoked);
 }
 
-struct RepeatedlyRequestTest : test::GrpcClientServerTest
+struct RepeatedlyRequestTest : UnifexTest, test::GrpcClientServerTest
 {
     template <class OnRequestDone = test::NoOp>
     auto make_client_unary_request_sender(std::chrono::system_clock::time_point deadline,
@@ -335,13 +334,8 @@ TEST_CASE_FIXTURE(RepeatedlyRequestTest, "unifex repeatedly_request unary - shut
 {
     auto request_count{0};
     auto request_sender = make_client_unary_request_sender(request_count, 4);
-    unifex::sync_wait(unifex::when_all(unifex::sequence(request_sender, request_sender, request_sender, request_sender),
-                                       make_unary_repeatedly_request_sender(),
-                                       unifex::then(unifex::just(),
-                                                    [&]
-                                                    {
-                                                        grpc_context.run();
-                                                    })));
+    run(unifex::sequence(request_sender, request_sender, request_sender, request_sender),
+        make_unary_repeatedly_request_sender());
     CHECK_EQ(4, request_count);
     CHECK(allocator_has_been_used());
 }
@@ -358,13 +352,7 @@ TEST_CASE_FIXTURE(RepeatedlyRequestTest, "unifex repeatedly_request unary - clie
                                                       {
                                                           stop.request_stop();
                                                       });
-    unifex::sync_wait(unifex::when_all(unifex::sequence(make_three_requests_then_stop, request_sender),
-                                       std::move(repeater),
-                                       unifex::then(unifex::just(),
-                                                    [&]
-                                                    {
-                                                        grpc_context.run();
-                                                    })));
+    run(unifex::sequence(make_three_requests_then_stop, request_sender), std::move(repeater));
     CHECK_EQ(4, request_count);
     CHECK(allocator_has_been_used());
 }
@@ -391,12 +379,7 @@ TEST_CASE_FIXTURE(RepeatedlyRequestTest, "unifex repeatedly_request unary - serv
                                     });
         });
     auto request_sender = make_client_unary_request_sender(request_count, std::numeric_limits<int>::max());
-    unifex::sync_wait(unifex::when_all(request_sender, std::move(repeater),
-                                       unifex::then(unifex::just(),
-                                                    [&]
-                                                    {
-                                                        grpc_context.run();
-                                                    })));
+    run(request_sender, std::move(repeater));
     CHECK_EQ(1, request_count);
 }
 
@@ -408,11 +391,7 @@ TEST_CASE_FIXTURE(RepeatedlyRequestTest, "unifex repeatedly_request unary - stop
             stop.request_stop();
             return make_unary_repeatedly_request_sender();
         });
-    unifex::sync_wait(unifex::when_all(std::move(repeater), unifex::then(unifex::just(),
-                                                                         [&]
-                                                                         {
-                                                                             grpc_context.run();
-                                                                         })));
+    run(std::move(repeater));
     CHECK_FALSE(allocator_has_been_used());
 }
 
@@ -438,20 +417,14 @@ TEST_CASE_FIXTURE(RepeatedlyRequestTest,
         CHECK_FALSE(status.ok());
     };
     std::exception_ptr error_propagation{};
-    unifex::sync_wait(unifex::when_all(
-        unifex::sequence(make_client_unary_request_sender(test::hundred_milliseconds_from_now(), check_status_not_ok),
+    run(unifex::sequence(make_client_unary_request_sender(test::hundred_milliseconds_from_now(), check_status_not_ok),
                          make_client_unary_request_sender(test::hundred_milliseconds_from_now(), check_status_not_ok)),
         unifex::let_error(std::move(repeater),
                           [&](std::exception_ptr ep)
                           {
                               error_propagation = std::move(ep);
                               return unifex::just();
-                          }),
-        unifex::then(unifex::just(),
-                     [&]
-                     {
-                         grpc_context.run();
-                     })));
+                          }));
     CHECK_EQ(1, count);
     REQUIRE(error_propagation);
     CHECK_THROWS_AS(std::rethrow_exception(error_propagation), std::logic_error);
@@ -467,14 +440,18 @@ struct ServerUnaryRequestContext
 };
 
 #if !UNIFEX_NO_COROUTINES
-TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex::task unary")
+struct UnifexClientServerTest : UnifexTest, test::GrpcClientServerTest
+{
+};
+
+TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex::task unary")
 {
     bool server_finish_ok{false};
     bool client_finish_ok{false};
     bool use_submit{false};
     SUBCASE("use submit") { use_submit = true; }
     SUBCASE("use co_await") {}
-    unifex::sync_wait(unifex::when_all(
+    run(
         [&]() -> unifex::task<void>
         {
             auto context = std::make_shared<ServerUnaryRequestContext>(server_context);
@@ -505,22 +482,16 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex::task unary")
             test::msg::Response response;
             grpc::Status status;
             client_finish_ok = co_await agrpc::finish(*reader, response, status, use_sender());
-        }(),
-        unifex::then(unifex::just(),
-                     [&]
-                     {
-                         grpc_context.run();
-                     })));
+        }());
     CHECK(server_finish_ok);
     CHECK(client_finish_ok);
 }
 
-TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request client streaming")
+TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex repeatedly_request client streaming")
 {
     bool is_shutdown{false};
     auto request_count{0};
-    unifex::sync_wait(unifex::when_all(
-        agrpc::repeatedly_request(
+    run(agrpc::repeatedly_request(
             &test::v1::Test::AsyncService::RequestClientStreaming, service,
             [&](grpc::ServerContext&,
                 grpc::ServerAsyncReader<test::msg::Response, test::msg::Request>& reader) -> unifex::task<void>
@@ -557,12 +528,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unifex repeatedly_request client 
                 CHECK_EQ(21, response.integer());
             }
             server->Shutdown();
-        }(),
-        unifex::then(unifex::just(),
-                     [&]
-                     {
-                         grpc_context.run();
-                     })));
+        }());
     CHECK_EQ(4, request_count);
 }
 #endif

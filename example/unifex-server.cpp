@@ -19,6 +19,7 @@
 #include <agrpc/asioGrpc.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
+#include <unifex/finally.hpp>
 #include <unifex/just.hpp>
 #include <unifex/let_done.hpp>
 #include <unifex/let_value_with_stop_source.hpp>
@@ -146,14 +147,21 @@ int main(int argc, const char** argv)
     server = builder.BuildAndStart();
     abort_if_not(bool{server});
 
-    unifex::sync_wait(unifex::when_all(register_unary_request_handler(service, grpc_context),
-                                       handle_server_streaming_request(service, grpc_context),
-                                       handle_slow_unary_request(service_ext, grpc_context),
-                                       unifex::then(unifex::just(),
-                                                    [&]
-                                                    {
-                                                        grpc_context.run();
-                                                    })));
+    grpc_context.work_started();
+    unifex::sync_wait(
+        unifex::when_all(unifex::finally(unifex::when_all(register_unary_request_handler(service, grpc_context),
+                                                          handle_server_streaming_request(service, grpc_context),
+                                                          handle_slow_unary_request(service_ext, grpc_context)),
+                                         unifex::then(unifex::just(),
+                                                      [&]
+                                                      {
+                                                          grpc_context.work_finished();
+                                                      })),
+                         unifex::then(unifex::just(),
+                                      [&]
+                                      {
+                                          grpc_context.run();
+                                      })));
 
     server->Shutdown();
 }
