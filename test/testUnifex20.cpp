@@ -250,7 +250,7 @@ TEST_CASE("unifex GrpcContext.stop() with pending GrpcSender operation")
     CHECK_FALSE(is_invoked);
 }
 
-struct RepeatedlyRequestTest : UnifexTest, test::GrpcClientServerTest
+struct UnifexRepeatedlyRequestTest : UnifexTest, test::GrpcClientServerTest
 {
     template <class OnRequestDone = test::NoOp>
     auto make_client_unary_request_sender(std::chrono::system_clock::time_point deadline,
@@ -330,7 +330,7 @@ struct RepeatedlyRequestTest : UnifexTest, test::GrpcClientServerTest
     }
 };
 
-TEST_CASE_FIXTURE(RepeatedlyRequestTest, "unifex repeatedly_request unary - shutdown server")
+TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex repeatedly_request unary - shutdown server")
 {
     auto request_count{0};
     auto request_sender = make_client_unary_request_sender(request_count, 4);
@@ -340,7 +340,7 @@ TEST_CASE_FIXTURE(RepeatedlyRequestTest, "unifex repeatedly_request unary - shut
     CHECK(allocator_has_been_used());
 }
 
-TEST_CASE_FIXTURE(RepeatedlyRequestTest, "unifex repeatedly_request unary - client requests stop")
+TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex repeatedly_request unary - client requests stop")
 {
     auto request_count{0};
     unifex::inplace_stop_source stop;
@@ -357,7 +357,7 @@ TEST_CASE_FIXTURE(RepeatedlyRequestTest, "unifex repeatedly_request unary - clie
     CHECK(allocator_has_been_used());
 }
 
-TEST_CASE_FIXTURE(RepeatedlyRequestTest, "unifex repeatedly_request unary - server requests stop")
+TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex repeatedly_request unary - server requests stop")
 {
     auto request_count{0};
     auto repeater = unifex::let_value_with_stop_source(
@@ -383,7 +383,7 @@ TEST_CASE_FIXTURE(RepeatedlyRequestTest, "unifex repeatedly_request unary - serv
     CHECK_EQ(1, request_count);
 }
 
-TEST_CASE_FIXTURE(RepeatedlyRequestTest, "unifex repeatedly_request unary - stop with token before start")
+TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex repeatedly_request unary - stop with token before start")
 {
     auto repeater = unifex::let_value_with_stop_source(
         [&](unifex::inplace_stop_source& stop)
@@ -395,7 +395,7 @@ TEST_CASE_FIXTURE(RepeatedlyRequestTest, "unifex repeatedly_request unary - stop
     CHECK_FALSE(allocator_has_been_used());
 }
 
-TEST_CASE_FIXTURE(RepeatedlyRequestTest,
+TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest,
                   "unifex repeatedly_request unary - throw exception from request handler calls set_error")
 {
     int count{};

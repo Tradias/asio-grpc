@@ -59,6 +59,7 @@ More examples for things like streaming RPCs, double-buffered file transfer with
 
 Tested by CI:
 
+ * CMake 3.16.3 (min. 3.14)
  * gRPC 1.44.0, 1.16.1 (older versions might work as well)
  * [Boost](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio.html) 1.79.0 (min. 1.74.0)
  * [Standalone Asio](https://github.com/chriskohlhoff/asio) 1.17.0 (min. 1.17.0)
