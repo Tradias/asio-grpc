@@ -15,7 +15,7 @@
 # asio-grpc
 function(asio_grpc_create_interface_target _asio_grpc_name)
     add_library(${_asio_grpc_name} INTERFACE)
-    add_library(asio-grpc::${_asio_grpc_name} ALIAS ${_asio_grpc_name})
+    add_library(${PROJECT_NAME}::${_asio_grpc_name} ALIAS ${_asio_grpc_name})
 
     target_compile_features(${_asio_grpc_name} INTERFACE cxx_std_17)
 

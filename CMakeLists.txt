@@ -41,7 +41,7 @@ include(GNUInstallDirs)
 # user options
 option(ASIO_GRPC_INSTALL "Create the install target" ${ASIO_GRPC_PROJECT_IS_TOP_LEVEL})
 set(ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR
-    "${CMAKE_INSTALL_LIBDIR}/cmake/asio-grpc"
+    "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
     CACHE STRING "Install directory for CMake config files")
 
 # maintainer options
@@ -65,7 +65,7 @@ option(ASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK
        "Fall back to pkg-config when a dependency cannot be found through find_package" on)
 option(
     ASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST
-    "Add test to ctest that will verify installability of asio-grpc and its CMake function asio_grpc_protobuf_generate"
+    "Add test to ctest that will verify installability of ${PROJECT_NAME} and its CMake function asio_grpc_protobuf_generate"
     on)
 set(ASIO_GRPC_CMAKE_INSTALL_TEST_CMAKE_COMMAND
     "${CMAKE_COMMAND}"

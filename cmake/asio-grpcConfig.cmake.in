@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include("${CMAKE_CURRENT_LIST_DIR}/asio-grpcTargets.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/AsioGrpcProtobufGenerator.cmake")
 
 if(ASIO_GRPC_DISABLE_AUTOLINK)
@@ -64,16 +64,16 @@ elseif(TARGET "unofficial::unifex")
 endif()
 
 if(DEFINED ASIO_GRPC_BOOST_ASIO_LINK_LIBRARIES)
-    set_target_properties(asio-grpc::asio-grpc PROPERTIES INTERFACE_LINK_LIBRARIES
-                                                          "${ASIO_GRPC_BOOST_ASIO_LINK_LIBRARIES}")
+    set_target_properties(@PROJECT_NAME@::asio-grpc PROPERTIES INTERFACE_LINK_LIBRARIES
+                                                               "${ASIO_GRPC_BOOST_ASIO_LINK_LIBRARIES}")
 endif()
 if(DEFINED ASIO_GRPC_STANDALONE_ASIO_LINK_LIBRARIES)
-    set_target_properties(asio-grpc::asio-grpc-standalone-asio PROPERTIES INTERFACE_LINK_LIBRARIES
-                                                                          "${ASIO_GRPC_STANDALONE_ASIO_LINK_LIBRARIES}")
+    set_target_properties(@PROJECT_NAME@::asio-grpc-standalone-asio
+                          PROPERTIES INTERFACE_LINK_LIBRARIES "${ASIO_GRPC_STANDALONE_ASIO_LINK_LIBRARIES}")
 endif()
 if(DEFINED ASIO_GRPC_UNIFEX_LINK_LIBRARIES)
-    set_target_properties(asio-grpc::asio-grpc-unifex PROPERTIES INTERFACE_LINK_LIBRARIES
-                                                                 "${ASIO_GRPC_UNIFEX_LINK_LIBRARIES}")
+    set_target_properties(@PROJECT_NAME@::asio-grpc-unifex PROPERTIES INTERFACE_LINK_LIBRARIES
+                                                                      "${ASIO_GRPC_UNIFEX_LINK_LIBRARIES}")
 endif()
 
 unset(ASIO_GRPC_BOOST_ASIO_LINK_LIBRARIES)
@@ -81,7 +81,8 @@ unset(ASIO_GRPC_STANDALONE_ASIO_LINK_LIBRARIES)
 unset(ASIO_GRPC_UNIFEX_LINK_LIBRARIES)
 
 if("${CMAKE_GENERATOR}" STRGREATER_EQUAL "Visual Studio")
-    target_sources(asio-grpc::asio-grpc INTERFACE "${CMAKE_CURRENT_LIST_DIR}/asio-grpc.natvis")
-    target_sources(asio-grpc::asio-grpc-standalone-asio INTERFACE "${CMAKE_CURRENT_LIST_DIR}/asio-grpc.natvis")
-    target_sources(asio-grpc::asio-grpc-unifex INTERFACE "${CMAKE_CURRENT_LIST_DIR}/asio-grpc.natvis")
+    target_sources(@PROJECT_NAME@::asio-grpc INTERFACE "${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@.natvis")
+    target_sources(@PROJECT_NAME@::asio-grpc-standalone-asio
+                   INTERFACE "${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@.natvis")
+    target_sources(@PROJECT_NAME@::asio-grpc-unifex INTERFACE "${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@.natvis")
 endif()

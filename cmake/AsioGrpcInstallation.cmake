@@ -13,26 +13,30 @@
 # limitations under the License.
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/asio-grpcConfig.cmake.in"
-               "${CMAKE_CURRENT_BINARY_DIR}/generated/asio-grpcConfig.cmake" @ONLY)
+               "${CMAKE_CURRENT_BINARY_DIR}/generated/${PROJECT_NAME}Config.cmake" @ONLY)
 
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/generated/asio-grpcConfigVersion.cmake" ARCH_INDEPENDENT
+    "${CMAKE_CURRENT_BINARY_DIR}/generated/${PROJECT_NAME}ConfigVersion.cmake" ARCH_INDEPENDENT
     VERSION "${PROJECT_VERSION}"
     COMPATIBILITY SameMajorVersion)
 
 install(
-    FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/asio-grpcConfigVersion.cmake"
-          "${CMAKE_CURRENT_BINARY_DIR}/generated/asio-grpcConfig.cmake"
+    FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/${PROJECT_NAME}ConfigVersion.cmake"
+          "${CMAKE_CURRENT_BINARY_DIR}/generated/${PROJECT_NAME}Config.cmake"
           "${CMAKE_CURRENT_SOURCE_DIR}/cmake/AsioGrpcProtobufGenerator.cmake"
-          "${ASIO_GRPC_PROJECT_ROOT}/asio-grpc.natvis"
     DESTINATION "${ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR}")
 
-install(TARGETS asio-grpc asio-grpc-standalone-asio asio-grpc-unifex EXPORT asio-grpcTargets)
+install(
+    FILES "${ASIO_GRPC_PROJECT_ROOT}/asio-grpc.natvis"
+    DESTINATION "${ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR}"
+    RENAME "${PROJECT_NAME}.natvis")
+
+install(TARGETS asio-grpc asio-grpc-standalone-asio asio-grpc-unifex EXPORT ${PROJECT_NAME}Targets)
 
 install(
-    EXPORT asio-grpcTargets
-    NAMESPACE asio-grpc::
+    EXPORT ${PROJECT_NAME}Targets
+    NAMESPACE ${PROJECT_NAME}::
     DESTINATION "${ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR}")
 
 install(
