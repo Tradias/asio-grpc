@@ -38,7 +38,7 @@ struct GenericRequestHandler
     agrpc::GrpcContext& grpc_context;
 
     static void handle_generic_request(grpc::GenericServerContext& server_context,
-                                       grpc::GenericServerAsyncReaderWriter reader_writer,
+                                       grpc::GenericServerAsyncReaderWriter& reader_writer,
                                        const asio::yield_context& yield)
     {
         abort_if_not("/test.v1.Test/Unary" == server_context.method());
@@ -62,7 +62,7 @@ struct GenericRequestHandler
         grpc::GenericSerialize<grpc::ProtoBufferWriter, example::v1::Response>(response, &buffer, &own_buffer);
 
         // -- Write the response message and finish this RPC with OK
-        agrpc::write_and_finish(reader_writer, buffer, grpc::WriteOptions{}, grpc::Status::OK, yield);
+        agrpc::write_and_finish(reader_writer, buffer, {}, grpc::Status::OK, yield);
     }
 
     void operator()(agrpc::GenericRepeatedlyRequestContext<>&& context) const

@@ -40,7 +40,7 @@ void make_generic_unary_request(grpc::GenericStub& stub, agrpc::GrpcContext& grp
     grpc::ClientContext client_context;
     const auto response_writer = agrpc::request("/test.v1.Test/Unary", stub, client_context, buffer, grpc_context);
 
-    // -- Initiate a streaming RPC using:
+    // -- For streaming RPC use:
     // std::unique_ptr<grpc::GenericClientAsyncReaderWriter> reader_writer;
     // agrpc::request("/example.v1.Example/ServerStreaming", stub, client_context, reader_writer, yield);
 
