@@ -73,7 +73,7 @@ jobs:
     runs-on: ubuntu-20.04
     env:
       TRIPLET: 'x64-linux-release'
-      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-release -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_CMAKE_INSTALL_TEST_CMAKE_COMMAND=/usr/bin/cmake'
+      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-release -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_CMAKE_INSTALL_TEST_CTEST_COMMAND=/usr/bin/ctest'
 
     steps:
     - name: Install GCC 8, 11 and gcovr

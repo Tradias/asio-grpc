@@ -87,8 +87,8 @@ target_compile_definitions(descriptor-option
                            PRIVATE "DESCRIPTOR_FILE=R\"(${DESCRIPTOR_GENERATED_PROTOS_OUT_DIR}/descriptor.desc)\"")
 
 # main
-add_executable(${PROJECT_NAME})
+add_executable(main)
 
-target_sources(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp")
+target_sources(main PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp")
 
-target_link_libraries(${PROJECT_NAME} PRIVATE target-option out-var-option descriptor-option compile-options)
+target_link_libraries(main PRIVATE target-option out-var-option descriptor-option compile-options)
