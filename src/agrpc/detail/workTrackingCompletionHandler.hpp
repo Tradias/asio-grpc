@@ -48,8 +48,7 @@ template <class CompletionHandler, bool = detail::IS_INLINE_EXECUTOR<asio::assoc
 class WorkTracker
 {
   public:
-    template <class Ch>
-    explicit WorkTracker(Ch&& ch)
+    explicit WorkTracker(const CompletionHandler& ch)
         : work(asio::prefer(asio::get_associated_executor(ch), asio::execution::outstanding_work_t::tracked))
     {
     }
@@ -63,15 +62,13 @@ template <class CompletionHandler>
 class WorkTracker<CompletionHandler, true>
 {
   public:
-    template <class Ch>
-    explicit WorkTracker(Ch&&)
-    {
-    }
+    explicit WorkTracker(const CompletionHandler&) noexcept {}
 };
 
 template <class CompletionHandler>
-class WorkTrackingCompletionHandler : private detail::WorkTracker<CompletionHandler>,
-                                      private detail::EmptyBaseOptimization<CompletionHandler>
+class WorkTrackingCompletionHandler : private detail::EmptyBaseOptimization<CompletionHandler>,
+                                      private detail::WorkTracker<CompletionHandler>
+
 {
   public:
     using executor_type = asio::associated_executor_t<CompletionHandler>;
@@ -83,8 +80,8 @@ class WorkTrackingCompletionHandler : private detail::WorkTracker<CompletionHand
 
   public:
     template <class Ch>
-    explicit WorkTrackingCompletionHandler(Ch&& completion_handler)
-        : WorkTrackerBase(completion_handler), CompletionHandlerBase(std::forward<Ch>(completion_handler))
+    explicit WorkTrackingCompletionHandler(Ch&& ch)
+        : CompletionHandlerBase(std::forward<Ch>(ch)), WorkTrackerBase(this->completion_handler())
     {
     }
 
