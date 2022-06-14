@@ -28,7 +28,7 @@ jobs:
       matrix:
         config:
           - {
-            name: 'Windows/2022/MSVC-19.31',
+            name: 'Windows/2022/MSVC',
             os: windows-2022,
             triplet: 'x64-windows-release',
             build-type: 'Release',
@@ -36,7 +36,7 @@ jobs:
             parallel: 1,
           }
           - {
-            name: 'MacOSX/11/AppleClang-13.0.0.13000029',
+            name: 'MacOSX/11/AppleClang',
             os: macos-11,
             triplet: 'x64-osx-release',
             build-type: 'Debug',
@@ -69,7 +69,7 @@ jobs:
 
 
   multi-gcc-build:
-    name: 'Ubuntu/20.04/GCC-8.4.0,9.3.0,10.3.0,11.1.0'
+    name: 'Ubuntu/20.04/GCC'
     runs-on: ubuntu-20.04
     env:
       TRIPLET: 'x64-linux-release'
@@ -161,7 +161,7 @@ jobs:
 
 
   multi-clang-build:
-    name: 'Ubuntu/20.04/Clang-10.0.0,11.0.0,12.0.0'
+    name: 'Ubuntu/20.04/Clang'
     runs-on: ubuntu-20.04
     env:
       TRIPLET: 'x64-linux-clang-release'
