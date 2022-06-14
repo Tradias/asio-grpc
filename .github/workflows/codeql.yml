@@ -38,7 +38,7 @@ jobs:
       run: cmake --preset default -DCMAKE_BUILD_TYPE=Release -DVCPKG_TARGET_TRIPLET=x64-windows-release -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed -DVCPKG_MANIFEST_INSTALL=off -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on -DASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET=off
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v1
+      uses: github/codeql-action/init@v2
       with:
         languages: 'cpp'
 
@@ -46,7 +46,7 @@ jobs:
       run: cmake --build --preset default --config Release --parallel 1
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v1
+      uses: github/codeql-action/analyze@v2
 
     - name: Initialize MSVC Code Analysis
       uses: microsoft/msvc-code-analysis-action@v0.1.0
@@ -55,9 +55,9 @@ jobs:
         cmakeBuildDirectory: ${{ github.workspace }}/build
         buildConfiguration: Release
         ruleset: ${{ github.workspace }}/.github/codeql/MsvcRules.ruleset
-        ignoredPaths: ${{ github.workspace }}/vcpkg_installed
+        ignoredPaths: ${{ runner.workspace }}/vcpkg_installed
 
     - name: Upload SARIF to GitHub
-      uses: github/codeql-action/upload-sarif@v1
+      uses: github/codeql-action/upload-sarif@v2
       with:
         sarif_file: ${{ steps.run-analysis.outputs.sarif }}
