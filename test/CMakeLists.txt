@@ -73,6 +73,10 @@ function(asio_grpc_add_test _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_stand
 
         target_precompile_headers(${_asio_grpc_name} REUSE_FROM "asio-grpc-test-util-unifex${_asio_grpc_cxx_standard}")
     endif()
+
+    if(ASIO_GRPC_DISCOVER_TESTS)
+        doctest_discover_tests(${_asio_grpc_name} ADD_LABELS 0)
+    endif()
 endfunction()
 
 set(ASIO_GRPC_CPP17_TEST_SOURCE_FILES
@@ -160,26 +164,9 @@ if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPL
             PRIVATE "ASIO_GRPC_EXAMPLE_FILE_TRANSFER_CLIENT=\"$<TARGET_FILE:asio-grpc-example-file-transfer-client>\""
                     "ASIO_GRPC_EXAMPLE_FILE_TRANSFER_SERVER=\"$<TARGET_FILE:asio-grpc-example-file-transfer-server>\"")
     endif()
-endif()
 
-if(ASIO_GRPC_DISCOVER_TESTS)
-    doctest_discover_tests(
-        asio-grpc-test-boost-cpp17 # workaround for regression in doctest 2.4.6
-        #
-        # if given arguments:
-        #
-        # "EQUAL" "1"
-        #
-        # Unknown arguments specified
-        ADD_LABELS 0)
-    doctest_discover_tests(asio-grpc-test-cpp17 ADD_LABELS 0)
-    if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
-        doctest_discover_tests(asio-grpc-test-boost-cpp20 ADD_LABELS 0)
-        doctest_discover_tests(asio-grpc-test-cpp20 ADD_LABELS 0)
-        doctest_discover_tests(asio-grpc-test-unifex-cpp20 ADD_LABELS 0)
-        if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT)
-            doctest_discover_tests(asio-grpc-test-examples ADD_LABELS 0)
-        endif()
+    if(ASIO_GRPC_DISCOVER_TESTS)
+        doctest_discover_tests(asio-grpc-test-examples ADD_LABELS 0)
     endif()
 endif()
 
