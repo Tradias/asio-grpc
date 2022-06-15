@@ -28,7 +28,6 @@
 #include <grpcpp/server_builder.h>
 
 #include <iostream>
-#include <optional>
 #include <thread>
 
 namespace asio = boost::asio;
@@ -42,27 +41,31 @@ struct ServerShutdown
 {
     grpc::Server& server;
     asio::basic_signal_set<agrpc::GrpcContext::executor_type> signals;
-    std::optional<std::thread> shutdown_thread;
+    std::atomic_bool is_shutdown{};
+    std::thread shutdown_thread;
 
     ServerShutdown(grpc::Server& server, agrpc::GrpcContext& grpc_context)
         : server(server), signals(grpc_context, SIGINT, SIGTERM)
     {
         signals.async_wait(
-            [&](auto&&, auto&&)
+            [&](auto&& ec, auto&&)
             {
-                shutdown();
+                if (asio::error::operation_aborted != ec)
+                {
+                    shutdown();
+                }
             });
     }
 
     void shutdown()
     {
-        if (!shutdown_thread)
+        if (!is_shutdown.exchange(true))
         {
             // This will cause all coroutines to run to completion normally
             // while returning `false` from RPC related steps. Also cancel the signals
             // so that the GrpcContext will eventually run out of work and return
             // from `run()`.
-            shutdown_thread.emplace(
+            shutdown_thread = std::thread(
                 [&]
                 {
                     signals.cancel();
@@ -77,9 +80,13 @@ struct ServerShutdown
 
     ~ServerShutdown()
     {
-        if (shutdown_thread)
+        if (shutdown_thread.joinable())
         {
-            shutdown_thread->join();
+            shutdown_thread.join();
+        }
+        else if (!is_shutdown.exchange(true))
+        {
+            server.Shutdown();
         }
     }
 };

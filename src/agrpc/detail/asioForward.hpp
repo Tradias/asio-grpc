@@ -246,12 +246,20 @@ constexpr auto is_stop_ever_possible_helper(long) -> std::true_type;
 template <class T>
 inline constexpr bool IS_STOP_EVER_POSSIBLE_V = decltype(detail::is_stop_ever_possible_helper<T>(0))::value;
 
+template <class Executor, class Allocator>
+struct ExecutorAndAllocator
+{
+    Executor executor;
+    Allocator allocator;
+};
+
 template <class Object>
 auto get_associated_executor_and_allocator(Object& object)
 {
     auto executor = detail::exec::get_scheduler(object);
     auto allocator = detail::query_allocator(object, executor);
-    return std::pair{std::move(executor), std::move(allocator)};
+    return detail::ExecutorAndAllocator<decltype(executor), decltype(allocator)>{std::move(executor),
+                                                                                 std::move(allocator)};
 }
 }  // namespace detail
 
