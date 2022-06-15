@@ -108,7 +108,8 @@ unifex::task<void> make_and_cancel_unary_request(example::v1::ExampleExt::Stub& 
 
     example::v1::SlowRequest request;
     request.set_delay(2000);  // tell server to delay response by 2000ms
-    auto reader = stub.AsyncSlowUnary(&client_context, request, agrpc::get_completion_queue(grpc_context));
+    const auto reader =
+        agrpc::request(&example::v1::ExampleExt::Stub::AsyncSlowUnary, stub, client_context, request, grpc_context);
 
     google::protobuf::Empty response;
     grpc::Status status;

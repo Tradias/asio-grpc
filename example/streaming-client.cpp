@@ -202,7 +202,8 @@ asio::awaitable<void> make_and_cancel_unary_request(example::v1::ExampleExt::Stu
 
     example::v1::SlowRequest request;
     request.set_delay(2000);  // tell server to delay response by 2000ms
-    auto reader = stub.AsyncSlowUnary(&client_context, request, co_await agrpc::get_completion_queue());
+    const auto reader =
+        co_await agrpc::request(&example::v1::ExampleExt::Stub::AsyncSlowUnary, stub, client_context, request);
 
     google::protobuf::Empty response;
     grpc::Status status;

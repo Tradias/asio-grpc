@@ -153,7 +153,7 @@ struct RequestFn
         typename asio::async_result<asio::use_awaitable_t<Executor>, void(Responder)>::return_type
     {
         auto* completion_queue = co_await agrpc::get_completion_queue(token);
-        co_return (stub.*rpc)(&client_context, request, completion_queue);
+        co_return (detail::unwrap_unique_ptr(stub).*rpc)(&client_context, request, completion_queue);
     }
 
     /**
@@ -169,7 +169,7 @@ struct RequestFn
         typename asio::async_result<asio::use_awaitable_t<Executor>, void()>::return_type
     {
         auto* completion_queue = co_await agrpc::get_completion_queue(token);
-        reader = (stub.*rpc)(&client_context, request, completion_queue);
+        reader = (detail::unwrap_unique_ptr(stub).*rpc)(&client_context, request, completion_queue);
     }
 #endif
 
@@ -182,7 +182,8 @@ struct RequestFn
     auto operator()(detail::ClientUnaryRequest<Stub, Request, Responder> rpc, DerivedStub& stub,
                     grpc::ClientContext& client_context, const Request& request, agrpc::GrpcContext& grpc_context) const
     {
-        return (stub.*rpc)(&client_context, request, agrpc::get_completion_queue(grpc_context));
+        return (detail::unwrap_unique_ptr(stub).*rpc)(&client_context, request,
+                                                      agrpc::get_completion_queue(grpc_context));
     }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
@@ -213,7 +214,7 @@ struct RequestFn
     {
         return detail::grpc_initiate_with_payload<Responder>(
             detail::ClientServerStreamingRequestConvenienceInitFunction<Stub, Request, Responder>{
-                rpc, stub, client_context, request},
+                rpc, detail::unwrap_unique_ptr(stub), client_context, request},
             std::forward<CompletionToken>(token));
     }
 #endif
@@ -241,8 +242,8 @@ struct RequestFn
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
-            detail::ClientServerStreamingRequestInitFunction<Stub, Request, Responder>{rpc, stub, client_context,
-                                                                                       request, reader},
+            detail::ClientServerStreamingRequestInitFunction<Stub, Request, Responder>{
+                rpc, detail::unwrap_unique_ptr(stub), client_context, request, reader},
             std::forward<CompletionToken>(token));
     }
 
@@ -274,7 +275,7 @@ struct RequestFn
     {
         return detail::grpc_initiate_with_payload<Responder>(
             detail::ClientClientStreamingRequestConvenienceInitFunction<Stub, Responder, Response>{
-                rpc, stub, client_context, response},
+                rpc, detail::unwrap_unique_ptr(stub), client_context, response},
             std::forward<CompletionToken>(token));
     }
 #endif
@@ -307,8 +308,8 @@ struct RequestFn
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
-            detail::ClientClientStreamingRequestInitFunction<Stub, Responder, Response>{rpc, stub, client_context,
-                                                                                        writer, response},
+            detail::ClientClientStreamingRequestInitFunction<Stub, Responder, Response>{
+                rpc, detail::unwrap_unique_ptr(stub), client_context, writer, response},
             std::forward<CompletionToken>(token));
     }
 
@@ -337,8 +338,8 @@ struct RequestFn
                     grpc::ClientContext& client_context, CompletionToken&& token = {}) const
     {
         return detail::grpc_initiate_with_payload<Responder>(
-            detail::ClientBidirectionalStreamingRequestConvenienceInitFunction<Stub, Responder>{rpc, stub,
-                                                                                                client_context},
+            detail::ClientBidirectionalStreamingRequestConvenienceInitFunction<Stub, Responder>{
+                rpc, detail::unwrap_unique_ptr(stub), client_context},
             std::forward<CompletionToken>(token));
     }
 #endif
@@ -369,8 +370,8 @@ struct RequestFn
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
-            detail::ClientBidirectionalStreamingRequestInitFunction<Stub, Responder>{rpc, stub, client_context,
-                                                                                     reader_writer},
+            detail::ClientBidirectionalStreamingRequestInitFunction<Stub, Responder>{
+                rpc, detail::unwrap_unique_ptr(stub), client_context, reader_writer},
             std::forward<CompletionToken>(token));
     }
 

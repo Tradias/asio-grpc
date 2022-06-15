@@ -39,10 +39,10 @@ int main(int argc, const char** argv)
             grpc::ClientContext client_context;
             helloworld::HelloRequest request;
             request.set_name("world");
-            std::unique_ptr<grpc::ClientAsyncResponseReader<helloworld::HelloReply>> reader =
-                stub->AsyncSayHello(&client_context, request, agrpc::get_completion_queue(grpc_context));
+            const auto reader =
+                agrpc::request(&helloworld::Greeter::Stub::AsyncSayHello, stub, client_context, request, grpc_context);
             helloworld::HelloReply response;
-            co_await agrpc::finish(reader, response, status);
+            co_await agrpc::finish(reader, response, status, boost::asio::use_awaitable);
         },
         boost::asio::detached);
 
