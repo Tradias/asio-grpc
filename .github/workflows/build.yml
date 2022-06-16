@@ -40,7 +40,7 @@ jobs:
             os: macos-11,
             triplet: 'x64-osx-release',
             build-type: 'Debug',
-            cmake-extra-args: '-DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-osx-release -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld',
+            cmake-extra-args: '-DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-osx-release',
             parallel: 3,
           }
 
