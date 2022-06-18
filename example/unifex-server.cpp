@@ -32,8 +32,8 @@
 // Example showing some of the features of using asio-grpc with libunifex.
 
 // ---------------------------------------------------
-// Register a request handler to unary requests. A bit of boilerplate code regarding stop_source is added to make this
-// example testable.
+// Register a request handler to unary requests. A bit of boilerplate code regarding stop_source has been added to make
+// the example testable.
 // ---------------------------------------------------
 unifex::task<void> handle_unary_request(agrpc::GrpcContext& grpc_context, grpc::ServerContext&,
                                         example::v1::Request& request,
@@ -58,13 +58,12 @@ auto register_unary_request_handler(example::v1::Example::AsyncService& service,
                                             [&](auto& server_context, auto& request, auto& writer)
                                             {
                                                 // Stop handling any more requests after this one. This is done to make
-                                                // this example testable.
+                                                // the example testable.
                                                 stop.request_stop();
                                                 return handle_unary_request(grpc_context, server_context, request,
                                                                             writer);
                                             },
                                             agrpc::use_sender(grpc_context)),
-                                        //
                                         unifex::get_stop_token, stop.get_token()),
                                     []()
                                     {
