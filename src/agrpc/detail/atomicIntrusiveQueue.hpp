@@ -102,7 +102,8 @@ class AtomicIntrusiveQueue
     {
         // Pick some pointer that is not nullptr and that is
         // guaranteed to not be the address of a valid item.
-        return const_cast<void*>(static_cast<const void*>(&this->head));
+        const void* head_address = std::addressof(this->head);
+        return const_cast<void*>(head_address);
     }
 
     std::atomic<void*> head{nullptr};

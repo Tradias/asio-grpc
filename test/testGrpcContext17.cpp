@@ -89,34 +89,143 @@ TEST_CASE("GrpcExecutorOptions")
         agrpc::detail::GrpcExecutorOptions::OUTSTANDING_WORK_TRACKED, false)));
 }
 
-TEST_CASE("Work tracking GrpcExecutor constructor and assignment")
+struct GrpcExecutorTest : test::GrpcContextTest
 {
-    agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
-    agrpc::GrpcContext other_context{std::make_unique<grpc::CompletionQueue>()};
+    agrpc::GrpcContext other_grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
-    auto other_ex = asio::prefer(grpc_context.get_executor(), asio::execution::blocking_t::possibly);
-    auto ex = asio::require(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked,
-                            asio::execution::allocator(agrpc::detail::pmr::polymorphic_allocator<std::byte>()));
-    auto ex2a = asio::require(ex, asio::execution::allocator);
-    CHECK_EQ(std::allocator<void>{}, asio::query(ex2a, asio::execution::allocator));
-    CHECK_NE(other_ex, ex2a);
-    CHECK_NE(grpc_context.get_executor(), ex2a);
-    CHECK_NE(other_context.get_executor(), ex2a);
+    auto other_executor() noexcept { return other_grpc_context.get_executor(); }
 
-    const auto ex1{ex};
-    auto ex2{ex};
-    auto ex3{std::move(ex)};
-    CHECK_EQ(ex3, ex2);
-    ex2 = ex1;
-    CHECK_EQ(ex2, ex1);
-    ex2 = std::move(ex3);
-    ex2 = std::move(ex2);
-    CHECK_EQ(ex2, ex1);
-    ex3 = std::move(ex2);
-    CHECK_EQ(ex3, ex1);
-    ex2 = std::as_const(ex3);
-    ex2 = std::as_const(ex2);
-    CHECK_EQ(ex2, ex1);
+    auto other_work_tracking_executor() noexcept
+    {
+        return asio::require(other_executor(), asio::execution::outstanding_work_t::tracked);
+    }
+};
+
+TEST_CASE_FIXTURE(GrpcExecutorTest, "Work tracking GrpcExecutor constructor and assignment")
+{
+    agrpc::detail::pmr::monotonic_buffer_resource other_resource;
+    const auto this_executor = [&]
+    {
+        return asio::require(get_work_tracking_executor(), asio::execution::allocator(get_allocator()));
+    };
+    const auto other_executor = [&]
+    {
+        return asio::require(
+            other_work_tracking_executor(),
+            asio::execution::allocator(agrpc::detail::pmr::polymorphic_allocator<std::byte>(&other_resource)));
+    };
+    const auto has_work = [](agrpc::GrpcContext& context)
+    {
+        return !context.is_stopped();
+    };
+    const auto context = [](auto&& executor)
+    {
+        return std::addressof(asio::query(executor, asio::execution::context));
+    };
+    SUBCASE("copy construct")
+    {
+        std::optional ex1{this_executor()};
+        CHECK(has_work(grpc_context));
+        auto ex2{*ex1};
+        CHECK_EQ(ex1, ex2);
+        ex1.reset();
+        CHECK(has_work(grpc_context));
+    }
+    SUBCASE("move construct")
+    {
+        auto ex1 = this_executor();
+        {
+            auto ex2{std::move(ex1)};
+            CHECK_EQ(this_executor(), ex2);
+            CHECK(has_work(grpc_context));
+        }
+        CHECK_FALSE(has_work(grpc_context));
+    }
+    SUBCASE("copy assign - same GrpcContext")
+    {
+        std::optional ex1{this_executor()};
+        auto ex2 = this_executor();
+        ex2 = std::as_const(*ex1);
+        ex2 = std::as_const(ex2);
+        CHECK_EQ(ex1, ex2);
+        ex1.reset();
+        CHECK(has_work(grpc_context));
+    }
+    SUBCASE("copy assign - other GrpcContext")
+    {
+        std::optional ex1{this_executor()};
+        auto ex2 = other_executor();
+        CHECK(has_work(other_grpc_context));
+        ex2 = std::as_const(*ex1);
+        CHECK_EQ(context(*ex1), context(ex2));
+        CHECK_NE(ex1, ex2);
+        ex1.reset();
+        CHECK(has_work(grpc_context));
+        CHECK_FALSE(has_work(other_grpc_context));
+    }
+    SUBCASE("move assign - same GrpcContext")
+    {
+        auto ex1 = this_executor();
+        {
+            auto ex2 = this_executor();
+            ex2 = std::move(ex1);
+            ex2 = std::move(ex2);
+#ifdef _MSC_VER
+#pragma warning(suppress : 26800)
+#endif
+            CHECK_EQ(this_executor(), ex2);
+            CHECK(has_work(grpc_context));
+        }
+        CHECK_FALSE(has_work(grpc_context));
+    }
+    SUBCASE("move assign - other GrpcContext")
+    {
+        std::optional ex1{this_executor()};
+        auto ex2 = other_executor();
+        ex2 = std::move(*ex1);
+        CHECK_EQ(context(this_executor()), context(ex2));
+        CHECK_NE(this_executor(), ex2);
+        ex1.reset();
+        CHECK(has_work(grpc_context));
+        CHECK_FALSE(has_work(other_grpc_context));
+    }
+    CHECK_FALSE(has_work(grpc_context));
+}
+
+TEST_CASE_FIXTURE(GrpcExecutorTest, "GrpcExecutor comparison operator - different options")
+{
+    CHECK_EQ(get_executor(), asio::require(get_executor(), asio::execution::blocking_t::never));
+    CHECK_NE(get_executor(), asio::require(get_executor(), asio::execution::blocking_t::possibly));
+    CHECK_NE(other_executor(), asio::require(get_executor(), asio::execution::blocking_t::never));
+    CHECK_NE(other_executor(), asio::require(get_executor(), asio::execution::blocking_t::possibly));
+}
+
+TEST_CASE_FIXTURE(GrpcExecutorTest, "GrpcExecutor comparison operator - different allocator")
+{
+    CHECK_EQ(get_executor(), asio::require(get_executor(), asio::execution::allocator));
+    auto default_pmr_executor = asio::require(
+        get_executor(), asio::execution::allocator(agrpc::detail::pmr::polymorphic_allocator<std::byte>()));
+    auto default_pmr_other_executor = asio::require(
+        other_executor(), asio::execution::allocator(agrpc::detail::pmr::polymorphic_allocator<std::byte>()));
+    SUBCASE("same options")
+    {
+        CHECK_EQ(default_pmr_executor, default_pmr_executor);
+        CHECK_NE(default_pmr_executor,
+                 asio::require(default_pmr_executor, asio::execution::allocator(get_allocator())));
+        CHECK_NE(default_pmr_other_executor, default_pmr_executor);
+        CHECK_NE(default_pmr_other_executor,
+                 asio::require(default_pmr_executor, asio::execution::allocator(get_allocator())));
+    }
+    SUBCASE("different options")
+    {
+        CHECK_NE(default_pmr_executor, asio::require(default_pmr_executor, asio::execution::blocking_t::possibly));
+        CHECK_NE(default_pmr_executor, asio::require(default_pmr_executor, asio::execution::blocking_t::possibly,
+                                                     asio::execution::allocator(get_allocator())));
+        CHECK_NE(default_pmr_other_executor,
+                 asio::require(default_pmr_executor, asio::execution::blocking_t::possibly));
+        CHECK_NE(default_pmr_other_executor, asio::require(default_pmr_executor, asio::execution::blocking_t::possibly,
+                                                           asio::execution::allocator(get_allocator())));
+    }
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::reset")

@@ -31,7 +31,7 @@
 namespace test
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-inline auto work_tracking_executor(agrpc::GrpcContext& grpc_context)
+inline auto work_tracking_executor(agrpc::GrpcContext& grpc_context) noexcept
 {
     return asio::require(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked);
 }

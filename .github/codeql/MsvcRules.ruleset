@@ -177,14 +177,10 @@
     <Rule Id="C26820" Action="Warning" />
     <!-- Use fallthrough annotation -->
     <Rule Id="C26819" Action="Warning" />
-    <!-- Don't use reinterpret_cast. A cast from void* can use static_cast. -->
-    <Rule Id="C26471" Action="Warning" />
     <!-- Don't cast between pointer types when the conversion could be implicit. -->
     <Rule Id="C26474" Action="Warning" />
     <!-- Do not use function style C-casts. -->
     <Rule Id="C26475" Action="Warning" />
-    <!-- USE_NULLPTR_NOT_CONSTANT -->
-    <Rule Id="C26477" Action="Warning" />
 
     <Rule Id="C28020" Action="Warning" />
     <Rule Id="C28021" Action="Warning" />

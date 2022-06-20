@@ -85,12 +85,9 @@ class WorkTrackingCompletionHandler : private detail::EmptyBaseOptimization<Comp
     {
     }
 
-    [[nodiscard]] auto& completion_handler() noexcept { return static_cast<CompletionHandlerBase*>(this)->get(); }
+    [[nodiscard]] auto& completion_handler() noexcept { return this->get(); }
 
-    [[nodiscard]] auto& completion_handler() const noexcept
-    {
-        return static_cast<const CompletionHandlerBase*>(this)->get();
-    }
+    [[nodiscard]] auto& completion_handler() const noexcept { return this->get(); }
 
     template <class... Args>
     void operator()(Args&&... args) &&
