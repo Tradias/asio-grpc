@@ -14,17 +14,13 @@
 
 # asio-grpc header check
 if(ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
+    get_target_property(_asio_grpc_headers asio-grpc-sources INTERFACE_SOURCES)
+
+    set_source_files_properties(${_asio_grpc_headers} PROPERTIES LANGUAGE CXX)
+    
     add_library(asio-grpc-check-header-syntax OBJECT)
-
-    function(asio_grpc_add_public_headers_as_sources _asio_grpc_target)
-        get_target_property(_asio_grpc_headers asio-grpc-sources INTERFACE_SOURCES)
-
-        target_sources(${_asio_grpc_target} PRIVATE ${_asio_grpc_headers})
-
-        set_source_files_properties(${_asio_grpc_headers} PROPERTIES LANGUAGE CXX)
-    endfunction()
-
-    asio_grpc_add_public_headers_as_sources(asio-grpc-check-header-syntax)
+    
+    target_sources(asio-grpc-check-header-syntax PRIVATE ${_asio_grpc_headers})
 
     target_compile_options(
         asio-grpc-check-header-syntax

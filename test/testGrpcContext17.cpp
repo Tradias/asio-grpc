@@ -16,6 +16,7 @@
 #include "utils/doctest.hpp"
 #include "utils/grpcContextTest.hpp"
 #include "utils/time.hpp"
+#include "utils/unassignableAllocator.hpp"
 
 #include <agrpc/grpcContext.hpp>
 #include <agrpc/wait.hpp>
@@ -103,16 +104,17 @@ struct GrpcExecutorTest : test::GrpcContextTest
 
 TEST_CASE_FIXTURE(GrpcExecutorTest, "Work tracking GrpcExecutor constructor and assignment")
 {
-    agrpc::detail::pmr::monotonic_buffer_resource other_resource;
+    int this_marker{};
+    int other_marker{};
     const auto this_executor = [&]
     {
-        return asio::require(get_work_tracking_executor(), asio::execution::allocator(get_allocator()));
+        return asio::require(get_work_tracking_executor(),
+                             asio::execution::allocator(test::UnassignableAllocator<std::byte>(&this_marker)));
     };
     const auto other_executor = [&]
     {
-        return asio::require(
-            other_work_tracking_executor(),
-            asio::execution::allocator(agrpc::detail::pmr::polymorphic_allocator<std::byte>(&other_resource)));
+        return asio::require(other_work_tracking_executor(),
+                             asio::execution::allocator(test::UnassignableAllocator<std::byte>(&other_marker)));
     };
     const auto has_work = [](agrpc::GrpcContext& context)
     {
