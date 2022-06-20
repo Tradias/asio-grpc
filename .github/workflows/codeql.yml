@@ -11,8 +11,8 @@ env:
 
 jobs:
   analyze:
-    name: 'Windows/2019/CodeQL'
-    runs-on: windows-2019
+    name: 'Windows/2022/CodeQL'
+    runs-on: windows-2022
     permissions:
       actions: read
       contents: read
