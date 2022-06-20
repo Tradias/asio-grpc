@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_USESENDER_HPP
 
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/forward.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

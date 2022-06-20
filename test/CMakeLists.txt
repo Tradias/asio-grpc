@@ -17,15 +17,11 @@ if(ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
     add_library(asio-grpc-check-header-syntax OBJECT)
 
     function(asio_grpc_add_public_headers_as_sources _asio_grpc_target)
-        get_target_property(_asio_grpc_public_header asio-grpc-sources INTERFACE_SOURCES)
+        get_target_property(_asio_grpc_headers asio-grpc-sources INTERFACE_SOURCES)
 
-        mark_as_advanced(_asio_grpc_public_header)
+        target_sources(${_asio_grpc_target} PRIVATE ${_asio_grpc_headers})
 
-        list(FILTER _asio_grpc_public_header EXCLUDE REGEX ".*/agrpc/detail/.*")
-
-        target_sources(${_asio_grpc_target} PRIVATE ${_asio_grpc_public_header})
-
-        set_source_files_properties(${_asio_grpc_public_header} PROPERTIES LANGUAGE CXX)
+        set_source_files_properties(${_asio_grpc_headers} PROPERTIES LANGUAGE CXX)
     endfunction()
 
     asio_grpc_add_public_headers_as_sources(asio-grpc-check-header-syntax)

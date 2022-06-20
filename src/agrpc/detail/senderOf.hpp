@@ -17,6 +17,8 @@
 
 #include <agrpc/detail/config.hpp>
 
+#include <exception>
+
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail

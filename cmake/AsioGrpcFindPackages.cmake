@@ -12,7 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Suppress warnings, see https://cmake.org/cmake/help/v3.17/module/FindPackageHandleStandardArgs.html
+set(FPHSA_NAME_MISMATCHED on)
 find_package(protobuf)
+unset(FPHSA_NAME_MISMATCHED)
+
 find_package(gRPC)
 if(ASIO_GRPC_USE_BOOST_CONTAINER)
     find_package(Boost REQUIRED COMPONENTS coroutine thread filesystem container)
