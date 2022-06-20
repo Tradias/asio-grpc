@@ -36,7 +36,7 @@ function(asio_grpc_add_example_proto_target _asio_grpc_name)
 
     target_link_libraries(asio-grpc-${_asio_grpc_name} PUBLIC protobuf::libprotobuf)
 
-    target_include_directories(asio-grpc-${_asio_grpc_name}
+    target_include_directories(asio-grpc-${_asio_grpc_name} SYSTEM
                                PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>")
 endfunction()
 
