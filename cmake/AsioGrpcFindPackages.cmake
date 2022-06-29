@@ -51,11 +51,11 @@ if(NOT TARGET protobuf::protoc)
     set_target_properties(protobuf::protoc PROPERTIES IMPORTED_LOCATION "${_asio_grpc_protoc_root}")
 endif()
 
-if(NOT TARGET gRPC::grpc++)
+if(NOT TARGET gRPC::grpc++_unsecure)
     pkg_check_modules(grpc++ REQUIRED IMPORTED_TARGET grpc++)
     pkg_check_modules(grpc REQUIRED IMPORTED_TARGET grpc)
     add_library(gRPC INTERFACE IMPORTED)
-    add_library(gRPC::grpc++ ALIAS gRPC)
+    add_library(gRPC::grpc++_unsecure ALIAS gRPC)
     set_target_properties(gRPC PROPERTIES INTERFACE_LINK_LIBRARIES "PkgConfig::grpc++;PkgConfig::grpc")
 endif()
 

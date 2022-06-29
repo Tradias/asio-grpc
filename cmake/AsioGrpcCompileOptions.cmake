@@ -53,7 +53,7 @@ target_compile_definitions(
               $<$<CXX_COMPILER_ID:Clang>:BOOST_ASIO_HAS_STD_INVOKE_RESULT ASIO_HAS_STD_INVOKE_RESULT>
               BOOST_ASIO_NO_DEPRECATED ASIO_NO_DEPRECATED)
 
-target_link_libraries(asio-grpc-common-compile-options INTERFACE gRPC::grpc++ Boost::disable_autolinking)
+target_link_libraries(asio-grpc-common-compile-options INTERFACE gRPC::grpc++_unsecure Boost::disable_autolinking)
 
 target_compile_features(asio-grpc-common-compile-options INTERFACE cxx_std_17)
 
