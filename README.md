@@ -200,7 +200,7 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
 
 ### Available features
 
-`boost-container` - Use Boost.Container instead of `<memory_resource>`
+`boost-container` - Use Boost.Container instead of `<memory_resource>`.
 
 See [selecting-library-features](https://vcpkg.io/en/docs/users/selecting-library-features.html) to learn how to select features with vcpkg.
 
@@ -211,6 +211,20 @@ See [selecting-library-features](https://vcpkg.io/en/docs/users/selecting-librar
 <p>
 
 See asio-grpc's documentation on the Hunter website: [https://hunter.readthedocs.io/en/latest/packages/pkg/asio-grpc.html](https://hunter.readthedocs.io/en/latest/packages/pkg/asio-grpc.html).
+
+</p>
+</details>
+
+<details><summary><b>Using conan</b></summary>
+<p>
+
+Please refer to the conan documentation on how to [use packages](https://docs.conan.io/en/latest/using_packages.html). The recipe in conan-center is called [asio-grpc/1.7.0](https://conan.io/center/asio-grpc).
+
+### Available options
+
+`backend` - One of "boost" for Boost.Asio, "asio" for standalone Asio or "unifex" for libunifex.
+
+`use_boost_container` - "True" to use Boost.Container instead of `<memory_resource>`.
 
 </p>
 </details>
