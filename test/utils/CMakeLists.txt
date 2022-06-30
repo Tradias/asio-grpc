@@ -7,7 +7,7 @@ asio_grpc_protobuf_generate(
     PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/proto/test/v1/test.proto"
            "${CMAKE_CURRENT_SOURCE_DIR}/proto/test/msg/message.proto")
 
-function(asio_grpc_add_test_proto_target _asio_grpc_name)
+function(asio_grpc_add_test_proto_target _asio_grpc_name _asio_grpc_cxx_standard)
     add_library(${_asio_grpc_name} OBJECT)
 
     target_sources(${_asio_grpc_name} PRIVATE ${ASIO_GRPC_TEXT_PROTO_SOURCES})
@@ -16,16 +16,18 @@ function(asio_grpc_add_test_proto_target _asio_grpc_name)
 
     target_include_directories(${_asio_grpc_name} SYSTEM
                                PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>")
+
+    convert_to_cpp_suffix(${_asio_grpc_cxx_standard})
+
+    target_link_libraries(${_asio_grpc_name} PRIVATE asio-grpc-compile-options${_asio_grpc_cxx_standard}
+                                                     asio-grpc-coverage-options)
 endfunction()
 
-asio_grpc_add_test_proto_target(asio-grpc-test-protobuf)
-target_compile_features(asio-grpc-test-protobuf PUBLIC cxx_std_17)
-
-asio_grpc_add_test_proto_target(asio-grpc-test-protobuf-cpp20)
-target_compile_features(asio-grpc-test-protobuf-cpp20 PUBLIC cxx_std_20)
+asio_grpc_add_test_proto_target(asio-grpc-test-protobuf "17")
+asio_grpc_add_test_proto_target(asio-grpc-test-protobuf-cpp20 "20")
 
 # test main
-function(asio_grpc_add_test_main _asio_grpc_name)
+function(asio_grpc_add_test_main _asio_grpc_name _asio_grpc_cxx_standard)
     add_library(${_asio_grpc_name} OBJECT)
 
     target_sources(
@@ -40,20 +42,19 @@ function(asio_grpc_add_test_main _asio_grpc_name)
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/time.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/time.hpp")
 
-    target_include_directories(${_asio_grpc_name} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
-                                                         $<INSTALL_INTERFACE:include>)
+    target_include_directories(${_asio_grpc_name} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
+
+    convert_to_cpp_suffix(${_asio_grpc_cxx_standard})
 
     target_link_libraries(
         ${_asio_grpc_name}
-        PUBLIC doctest::doctest GTest::gmock asio-grpc-common-compile-options asio-grpc-coverage-options
+        PUBLIC doctest::doctest GTest::gmock asio-grpc-compile-options${_asio_grpc_cxx_standard}
+               asio-grpc-test-protobuf${_asio_grpc_cxx_standard} asio-grpc-coverage-options
         PRIVATE Boost::headers Boost::filesystem)
 endfunction()
 
-asio_grpc_add_test_main(asio-grpc-test-main)
-target_link_libraries(asio-grpc-test-main PUBLIC asio-grpc-test-protobuf)
-
-asio_grpc_add_test_main(asio-grpc-test-main-cpp20)
-target_link_libraries(asio-grpc-test-main-cpp20 PUBLIC asio-grpc-test-protobuf-cpp20 asio-grpc-cpp20-compile-options)
+asio_grpc_add_test_main(asio-grpc-test-main "17")
+asio_grpc_add_test_main(asio-grpc-test-main-cpp20 "20")
 
 # test utils
 if(ASIO_GRPC_USE_BOOST_CONTAINER)
@@ -88,7 +89,10 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
                     "${CMAKE_CURRENT_SOURCE_DIR}/utils/rpc.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/utils/rpc.hpp")
     endif()
 
-    target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc-common-compile-options asio-grpc-coverage-options)
+    target_include_directories(${_asio_grpc_name} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
+                                                         "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>")
+
+    target_precompile_headers(${_asio_grpc_name} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/utils/precompiledHeader.hpp")
 
     if(${_asio_grpc_type} STREQUAL "BOOST_ASIO")
         target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc)
@@ -102,18 +106,11 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
         target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc-unifex)
     endif()
 
-    target_include_directories(
-        ${_asio_grpc_name}
-        PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
-               "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>" $<INSTALL_INTERFACE:include>)
+    convert_to_cpp_suffix(${_asio_grpc_cxx_standard})
 
-    target_precompile_headers(${_asio_grpc_name} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/utils/precompiledHeader.hpp")
-
-    if(${_asio_grpc_cxx_standard} STREQUAL "20")
-        target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc-test-main-cpp20 asio-grpc-test-protobuf-cpp20)
-    else()
-        target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc-test-main asio-grpc-test-protobuf)
-    endif()
+    target_link_libraries(
+        ${_asio_grpc_name} PUBLIC asio-grpc-test-main${_asio_grpc_cxx_standard}
+                                  asio-grpc-test-protobuf${_asio_grpc_cxx_standard} asio-grpc-coverage-options)
 endfunction()
 
 asio_grpc_add_test_util(asio-grpc-test-util-boost-asio "BOOST_ASIO" "17")

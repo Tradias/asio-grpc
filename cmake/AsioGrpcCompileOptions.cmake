@@ -13,22 +13,20 @@
 # limitations under the License.
 
 # common compile options
-add_library(asio-grpc-common-compile-options INTERFACE)
+add_library(asio-grpc-compile-options INTERFACE)
 
 if(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS)
     target_compile_options(
-        asio-grpc-common-compile-options
-        INTERFACE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fsanitize=undefined,leak -fno-omit-frame-pointer>
-                  $<$<CXX_COMPILER_ID:MSVC>:/fsanitize=address>)
+        asio-grpc-compile-options INTERFACE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fsanitize=undefined,leak
+                                            -fno-omit-frame-pointer> $<$<CXX_COMPILER_ID:MSVC>:/fsanitize=address>)
 
-    target_link_options(asio-grpc-common-compile-options INTERFACE
-                        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fsanitize=undefined,leak>)
+    target_link_options(asio-grpc-compile-options INTERFACE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fsanitize=undefined,leak>)
 
-    target_compile_definitions(asio-grpc-common-compile-options INTERFACE GRPC_ASAN_SUPPRESSED GRPC_TSAN_SUPPRESSED)
+    target_compile_definitions(asio-grpc-compile-options INTERFACE GRPC_ASAN_SUPPRESSED GRPC_TSAN_SUPPRESSED)
 endif()
 
 target_compile_options(
-    asio-grpc-common-compile-options
+    asio-grpc-compile-options
     INTERFACE $<$<CXX_COMPILER_ID:MSVC>:/W4
               /permissive-
               /Zc:preprocessor
@@ -44,34 +42,47 @@ target_compile_options(
               $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-self-move>)
 
 if("${CMAKE_GENERATOR}" STRGREATER_EQUAL "Visual Studio")
-    target_compile_options(asio-grpc-common-compile-options INTERFACE /MP)
+    target_compile_options(asio-grpc-compile-options INTERFACE /MP)
 endif()
 
 target_compile_definitions(
-    asio-grpc-common-compile-options
-    INTERFACE $<$<CXX_COMPILER_ID:MSVC>: _WIN32_WINNT=0x0A00> # Windows 10
+    asio-grpc-compile-options
+    INTERFACE $<$<CXX_COMPILER_ID:MSVC>:_WIN32_WINNT=0x0A00> # Windows 10
               $<$<CXX_COMPILER_ID:Clang>:BOOST_ASIO_HAS_STD_INVOKE_RESULT ASIO_HAS_STD_INVOKE_RESULT>
               BOOST_ASIO_NO_DEPRECATED ASIO_NO_DEPRECATED)
 
-target_link_libraries(asio-grpc-common-compile-options INTERFACE gRPC::grpc++_unsecure Boost::disable_autolinking)
+target_link_libraries(asio-grpc-compile-options INTERFACE gRPC::grpc++_unsecure Boost::disable_autolinking)
 
-target_compile_features(asio-grpc-common-compile-options INTERFACE cxx_std_17)
+target_compile_features(asio-grpc-compile-options INTERFACE cxx_std_17)
 
-target_sources(asio-grpc-common-compile-options
+target_sources(asio-grpc-compile-options
                INTERFACE "$<$<CXX_COMPILER_ID:MSVC>:${ASIO_GRPC_PROJECT_ROOT}/asio-grpc.natvis>")
 
 if(ASIO_GRPC_USE_BOOST_CONTAINER)
-    target_link_libraries(asio-grpc-common-compile-options INTERFACE Boost::container)
+    target_link_libraries(asio-grpc-compile-options INTERFACE Boost::container)
 endif()
 
 # C++20 compile options
-add_library(asio-grpc-cpp20-compile-options INTERFACE)
+add_library(asio-grpc-compile-options-cpp20 INTERFACE)
 
-target_compile_features(asio-grpc-cpp20-compile-options INTERFACE cxx_std_20)
+target_link_libraries(asio-grpc-compile-options-cpp20 INTERFACE asio-grpc-compile-options)
+
+target_compile_features(asio-grpc-compile-options-cpp20 INTERFACE cxx_std_20)
 
 target_compile_options(
-    asio-grpc-cpp20-compile-options
+    asio-grpc-compile-options-cpp20
     INTERFACE
         $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,10>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,12>>:-fcoroutines>
         $<$<AND:$<CXX_COMPILER_ID:Clang>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,11>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,14>>:-fcoroutines-ts>
 )
+
+# helper functions
+function(convert_to_cpp_suffix _asio_grpc_cxx_standard)
+    if(${_asio_grpc_cxx_standard} STREQUAL "20")
+        set(_asio_grpc_cxx_standard
+            "-cpp20"
+            PARENT_SCOPE)
+    else()
+        set(_asio_grpc_cxx_standard PARENT_SCOPE)
+    endif()
+endfunction()

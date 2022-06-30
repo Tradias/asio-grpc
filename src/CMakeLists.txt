@@ -39,8 +39,6 @@ namespace container = std;]])
     endif()
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/memoryResource.hpp.in"
                    "${CMAKE_CURRENT_BINARY_DIR}/generated/agrpc/detail/memoryResource.hpp" @ONLY)
-    unset(ASIO_GRPC_MEMORY_RESOURCE_INDLUCES)
-    unset(ASIO_GRPC_MEMORY_RESOURCE_NAMESPACE_ALIAS)
 endfunction()
 
 asio_grpc_create_interface_target(asio-grpc)

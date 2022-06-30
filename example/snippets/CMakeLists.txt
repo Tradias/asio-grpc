@@ -13,21 +13,20 @@
 # limitations under the License.
 
 function(asio_grpc_add_documentation _asio_grpc_name)
-    add_library(asio-grpc-documentation-${_asio_grpc_name} OBJECT)
+    add_library(${_asio_grpc_name} OBJECT)
 
-    target_sources(asio-grpc-documentation-${_asio_grpc_name} PRIVATE ${ARGN})
+    target_sources(${_asio_grpc_name} PRIVATE ${ARGN})
 
-    target_link_libraries(
-        asio-grpc-documentation-${_asio_grpc_name} PRIVATE asio-grpc-example-helper asio-grpc-example-protos-cpp20
-                                                           asio-grpc-cpp20-compile-options)
+    target_link_libraries(${_asio_grpc_name} PRIVATE asio-grpc-example-helper asio-grpc-example-protos-cpp20
+                                                     asio-grpc-compile-options-cpp20)
 endfunction()
 
 if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
-    asio_grpc_add_documentation(blog blog.cpp)
+    asio_grpc_add_documentation(asio-grpc-documentation-blog blog.cpp)
 
-    asio_grpc_add_documentation(boost-asio client.cpp server.cpp)
+    asio_grpc_add_documentation(asio-grpc-documentation-boost-asio client.cpp server.cpp)
     target_link_libraries(asio-grpc-documentation-boost-asio PRIVATE asio-grpc::asio-grpc)
 
-    asio_grpc_add_documentation(unifex unifex-client.cpp unifex-server.cpp)
+    asio_grpc_add_documentation(asio-grpc-documentation-unifex unifex-client.cpp unifex-server.cpp)
     target_link_libraries(asio-grpc-documentation-unifex PRIVATE asio-grpc::asio-grpc-unifex)
 endif()

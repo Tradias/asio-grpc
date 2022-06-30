@@ -17,17 +17,16 @@ if(ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
     get_target_property(_asio_grpc_headers asio-grpc-sources INTERFACE_SOURCES)
 
     set_source_files_properties(${_asio_grpc_headers} PROPERTIES LANGUAGE CXX)
-    
+
     add_library(asio-grpc-check-header-syntax OBJECT)
-    
+
     target_sources(asio-grpc-check-header-syntax PRIVATE ${_asio_grpc_headers})
 
     target_compile_options(
         asio-grpc-check-header-syntax
         PRIVATE $<IF:$<CXX_COMPILER_ID:MSVC>,/Zs;/WX,-Werror;-fsyntax-only;-Wno-unused-const-variable>)
 
-    target_link_libraries(asio-grpc-check-header-syntax PRIVATE asio-grpc-sources asio-grpc-common-compile-options
-                                                                asio-grpc)
+    target_link_libraries(asio-grpc-check-header-syntax PRIVATE asio-grpc-sources asio-grpc-compile-options asio-grpc)
 
     set_target_properties(asio-grpc-check-header-syntax PROPERTIES EXCLUDE_FROM_ALL on)
 endif()
@@ -41,11 +40,7 @@ function(asio_grpc_add_test _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_stand
 
     target_sources(${_asio_grpc_name} PRIVATE ${ARGN})
 
-    if(${_asio_grpc_cxx_standard} STREQUAL "20")
-        set(_asio_grpc_cxx_standard "-cpp20")
-    else()
-        unset(_asio_grpc_cxx_standard)
-    endif()
+    convert_to_cpp_suffix(${_asio_grpc_cxx_standard})
 
     target_link_libraries(${_asio_grpc_name} PRIVATE "asio-grpc-test-main${_asio_grpc_cxx_standard}"
                                                      "asio-grpc-test-protobuf${_asio_grpc_cxx_standard}")

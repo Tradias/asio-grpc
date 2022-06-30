@@ -15,8 +15,6 @@
 # example helper
 add_library(asio-grpc-example-helper INTERFACE)
 
-target_link_libraries(asio-grpc-example-helper INTERFACE asio-grpc-common-compile-options)
-
 target_include_directories(asio-grpc-example-helper INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/helper")
 
 # example protos
@@ -30,21 +28,21 @@ asio_grpc_protobuf_generate(
            "${CMAKE_CURRENT_LIST_DIR}/proto/example/v1/exampleExt.proto")
 
 function(asio_grpc_add_example_proto_target _asio_grpc_name)
-    add_library(asio-grpc-${_asio_grpc_name} OBJECT)
+    add_library(${_asio_grpc_name} OBJECT)
 
-    target_sources(asio-grpc-${_asio_grpc_name} PRIVATE ${ASIO_GRPC_EXAMPLE_PROTO_SOURCES})
+    target_sources(${_asio_grpc_name} PRIVATE ${ASIO_GRPC_EXAMPLE_PROTO_SOURCES})
 
-    target_link_libraries(asio-grpc-${_asio_grpc_name} PUBLIC protobuf::libprotobuf)
+    target_link_libraries(${_asio_grpc_name} PUBLIC protobuf::libprotobuf)
 
-    target_include_directories(asio-grpc-${_asio_grpc_name} SYSTEM
+    target_include_directories(${_asio_grpc_name} SYSTEM
                                PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>")
 endfunction()
 
-asio_grpc_add_example_proto_target(example-protos)
+asio_grpc_add_example_proto_target(asio-grpc-example-protos)
 target_compile_features(asio-grpc-example-protos PUBLIC cxx_std_17)
 
 if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
-    asio_grpc_add_example_proto_target(example-protos-cpp20)
+    asio_grpc_add_example_proto_target(asio-grpc-example-protos-cpp20)
     target_compile_features(asio-grpc-example-protos-cpp20 PUBLIC cxx_std_20)
 endif()
 
@@ -54,24 +52,21 @@ function(asio_grpc_add_example _asio_grpc_name _asio_grpc_cxx_standard)
 
     target_sources(asio-grpc-example-${_asio_grpc_name} PRIVATE ${_asio_grpc_name}.cpp)
 
-    target_link_libraries(asio-grpc-example-${_asio_grpc_name} PRIVATE asio-grpc-example-helper
-                                                                       asio-grpc-common-compile-options)
+    convert_to_cpp_suffix(${_asio_grpc_cxx_standard})
 
-    if(${_asio_grpc_cxx_standard} STREQUAL "20")
-        target_link_libraries(asio-grpc-example-${_asio_grpc_name} PRIVATE asio-grpc-example-protos-cpp20
-                                                                           asio-grpc-cpp20-compile-options)
-    else()
-        target_link_libraries(asio-grpc-example-${_asio_grpc_name} PRIVATE asio-grpc-example-protos)
-    endif()
+    target_link_libraries(
+        asio-grpc-example-${_asio_grpc_name}
+        PRIVATE asio-grpc-example-helper asio-grpc-compile-options${_asio_grpc_cxx_standard}
+                asio-grpc-example-protos${_asio_grpc_cxx_standard})
 endfunction()
 
+asio_grpc_add_example(generic-server "17")
+target_link_libraries(asio-grpc-example-generic-server PRIVATE asio-grpc::asio-grpc Boost::coroutine)
+
+asio_grpc_add_example(generic-client "17")
+target_link_libraries(asio-grpc-example-generic-client PRIVATE asio-grpc::asio-grpc Boost::coroutine)
+
 if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
-    asio_grpc_add_example(generic-server "17")
-    target_link_libraries(asio-grpc-example-generic-server PRIVATE asio-grpc::asio-grpc Boost::coroutine)
-
-    asio_grpc_add_example(generic-client "17")
-    target_link_libraries(asio-grpc-example-generic-client PRIVATE asio-grpc::asio-grpc Boost::coroutine)
-
     asio_grpc_add_example(hello-world-client "20")
     target_link_libraries(asio-grpc-example-hello-world-client PRIVATE asio-grpc::asio-grpc)
 
