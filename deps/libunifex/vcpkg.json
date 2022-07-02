@@ -1,9 +1,9 @@
 {
   "name": "libunifex",
-  "version-date": "2021-12-07",
-  "port-version": 1,
+  "version-date": "2022-04-30",
   "description": "Unified Executors",
   "homepage": "https://github.com/facebookexperimental/libunifex",
+  "license": "Apache-2.0",
   "dependencies": [
     {
       "name": "liburing",

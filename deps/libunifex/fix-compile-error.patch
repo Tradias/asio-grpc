@@ -7,7 +7,7 @@ index cb99ae4..9825532 100644
  if (MSVC)
      # warning level 3 and all warnings as errors
 -    add_compile_options(/W3 /WX)
-+    add_compile_options(/W3 /WX /EHsc)
++    add_compile_options(/W3 /WX /Zc:externConstexpr /EHsc)
  else()
      # lots of warnings and all warnings as errors
 -    add_compile_options(-Wall -Wextra -pedantic -Werror)

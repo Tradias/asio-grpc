@@ -6,14 +6,13 @@ vcpkg_from_github(
     REPO
     facebookexperimental/libunifex
     REF
-    d7d191e4dc61b67f21cf18220751973025ae520e
+    c359fd8e7d97d91359cf4a6c1dbef99b0b1767b6
     SHA512
-    2fc27c2b0670456bd178c52f2a39766f89a238581dc517eb007cc1d41decad143107414abcf330344f7de3d52cac6da5f269f982d8a835520e1f5888f939e7b3
+    0ae33e0275b6c717839495a9435cb5232cab15e0de87a181c0212ce64fcf589e3d59ff74881804d72542c0694d034f81e1b4891596215a2736d4e082e4fb5fb0
     HEAD_REF
     master
     PATCHES
     fix-compile-error.patch
-    fix-execute-forward-declaration.patch
     do-not-link-std-coroutines.patch)
 
 vcpkg_check_features(
