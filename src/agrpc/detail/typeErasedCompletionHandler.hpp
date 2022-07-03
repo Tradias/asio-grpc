@@ -27,7 +27,7 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class CompletionHandler>
-auto deallocate_completion_handler(CompletionHandler* completion_handler)
+CompletionHandler deallocate_completion_handler(CompletionHandler* completion_handler) noexcept
 {
     auto local_completion_handler{std::move(*completion_handler)};
     auto allocator = asio::get_associated_allocator(local_completion_handler);
@@ -59,9 +59,6 @@ class BasicTypeErasedCompletionHandler<void(Args...), VoidPointer>
   private:
     using Complete = void (*)(void*, Args...);
     using VoidPointerTraits = detail::VoidPointerTraits<VoidPointer>;
-
-    template <class, class>
-    friend class BasicTypeErasedCompletionHandler;
 
   public:
     BasicTypeErasedCompletionHandler() = default;
@@ -100,6 +97,9 @@ class BasicTypeErasedCompletionHandler<void(Args...), VoidPointer>
     }
 
   private:
+    template <class, class>
+    friend class detail::BasicTypeErasedCompletionHandler;
+
     BasicTypeErasedCompletionHandler(void* completion_handler, Complete complete)
         : completion_handler(completion_handler), complete_(complete)
     {

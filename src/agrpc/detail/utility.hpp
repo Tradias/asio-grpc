@@ -26,7 +26,7 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class T>
-using RemoveCvrefT = std::remove_cv_t<std::remove_reference_t<T>>;
+using RemoveCrefT = std::remove_const_t<std::remove_reference_t<T>>;
 
 #ifdef AGRPC_HAS_CONCEPTS
 template <class T>
@@ -45,17 +45,18 @@ inline constexpr bool IS_EQUALITY_COMPARABLE<
                    decltype(static_cast<bool>(std::declval<const T&>() != std::declval<const T&>()))>> = true;
 #endif
 
-template <class Function, class Signature>
+template <class Signature>
 struct InvokeResultFromSignature;
 
-template <class Function, class... Args>
-struct InvokeResultFromSignature<Function, void(Args...)>
+template <class... Args>
+struct InvokeResultFromSignature<void(Args...)>
 {
+    template <class Function>
     using Type = std::invoke_result_t<Function, Args...>;
 };
 
 template <class Function, class Signature>
-using InvokeResultFromSignatureT = typename detail::InvokeResultFromSignature<Function, Signature>::Type;
+using InvokeResultFromSignatureT = typename detail::InvokeResultFromSignature<Signature>::template Type<Function>;
 
 template <bool>
 struct Conditional
@@ -90,10 +91,6 @@ struct NoOp
     constexpr void operator()(Args&&...) const noexcept
     {
     }
-};
-
-struct InplaceWithFunction
-{
 };
 
 struct SecondThenVariadic
@@ -179,17 +176,22 @@ class CompressedPair<First, Second, false>
     Second second_;
 };
 
+struct InplaceWithFunction
+{
+};
+
 template <class T, bool = std::is_empty_v<T> && !std::is_final_v<T>>
 class EmptyBaseOptimization : private T
 {
   public:
     template <class... Args>
-    explicit EmptyBaseOptimization(Args&&... args) : T(std::forward<Args>(args)...)
+    constexpr explicit EmptyBaseOptimization(Args&&... args) : T(std::forward<Args>(args)...)
     {
     }
 
     template <class Function>
-    EmptyBaseOptimization(detail::InplaceWithFunction, Function&& function) : T(std::forward<Function>(function)())
+    constexpr EmptyBaseOptimization(detail::InplaceWithFunction, Function&& function)
+        : T(std::forward<Function>(function)())
     {
     }
 
@@ -203,12 +205,13 @@ class EmptyBaseOptimization<T, false>
 {
   public:
     template <class... Args>
-    explicit EmptyBaseOptimization(Args&&... args) : value(std::forward<Args>(args)...)
+    constexpr explicit EmptyBaseOptimization(Args&&... args) : value(std::forward<Args>(args)...)
     {
     }
 
     template <class Function>
-    EmptyBaseOptimization(detail::InplaceWithFunction, Function&& function) : value(std::forward<Function>(function)())
+    constexpr EmptyBaseOptimization(detail::InplaceWithFunction, Function&& function)
+        : value(std::forward<Function>(function)())
     {
     }
 
@@ -255,12 +258,12 @@ template <class T>
 struct InplaceWithFunctionWrapper
 {
     template <class... Args>
-    explicit InplaceWithFunctionWrapper(Args&&... args) : value(std::forward<Args>(args)...)
+    constexpr explicit InplaceWithFunctionWrapper(Args&&... args) : value(std::forward<Args>(args)...)
     {
     }
 
     template <class Function>
-    InplaceWithFunctionWrapper(detail::InplaceWithFunction, Function&& function)
+    constexpr InplaceWithFunctionWrapper(detail::InplaceWithFunction, Function&& function)
         : value(std::forward<Function>(function)())
     {
     }
@@ -269,15 +272,15 @@ struct InplaceWithFunctionWrapper
 };
 
 template <class T>
-T forward_as(std::add_lvalue_reference_t<std::remove_reference_t<T>> u)
+constexpr T forward_as(std::add_lvalue_reference_t<std::remove_reference_t<T>> value)
 {
     if constexpr (std::is_rvalue_reference_v<T> || !std::is_reference_v<T>)
     {
-        return std::move(u);
+        return std::move(value);
     }
     else
     {
-        return u;
+        return value;
     }
 }
 }

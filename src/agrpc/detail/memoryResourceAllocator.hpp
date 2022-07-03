@@ -62,7 +62,7 @@ class MemoryResourceAllocator
 
   private:
     template <class, class>
-    friend class MemoryResourceAllocator;
+    friend class detail::MemoryResourceAllocator;
 
     Resource* resource;
 };

@@ -73,7 +73,7 @@ class OneShotAllocator
 
   private:
     template <class, std::size_t>
-    friend class OneShotAllocator;
+    friend class detail::OneShotAllocator;
 
     void* buffer;
 };

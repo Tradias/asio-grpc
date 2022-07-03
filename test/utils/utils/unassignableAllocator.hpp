@@ -57,7 +57,7 @@ class UnassignableAllocator
 
   private:
     template <class>
-    friend class UnassignableAllocator;
+    friend class test::UnassignableAllocator;
 
     void* marker;
 };

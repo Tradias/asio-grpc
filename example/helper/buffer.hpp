@@ -26,13 +26,13 @@ namespace example
 template <std::size_t Capacity>
 struct Buffer
 {
-    std::aligned_storage_t<Capacity> buffer;
+    std::byte buffer[Capacity];
 
     auto allocator() noexcept
     {
         // You should copy the implementation of OneShotAllocator into your code if you intent to use it. Do not worry,
         // it is very simple!
-        return agrpc::detail::OneShotAllocator<std::byte, Capacity>{&buffer};
+        return agrpc::detail::OneShotAllocator<std::byte, Capacity>{buffer};
     }
 
     template <class Target>

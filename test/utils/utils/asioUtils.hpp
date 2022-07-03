@@ -48,7 +48,7 @@ struct FunctionAsReceiver
     Function function;
     Allocator allocator;
 
-    explicit FunctionAsReceiver(Function function, Allocator allocator = {})
+    explicit FunctionAsReceiver(Function function, const Allocator& allocator = {})
         : function(std::move(function)), allocator(allocator)
     {
     }
@@ -85,7 +85,7 @@ struct FunctionAsStatefulReceiver : public test::FunctionAsReceiver<Function, Al
 {
     test::StatefulReceiverState& state;
 
-    FunctionAsStatefulReceiver(Function function, StatefulReceiverState& state, Allocator allocator = {})
+    FunctionAsStatefulReceiver(Function function, StatefulReceiverState& state, const Allocator& allocator = {})
         : test::FunctionAsReceiver<Function, Allocator>(std::move(function), allocator), state(state)
     {
     }
@@ -105,7 +105,7 @@ struct HandlerWithAssociatedAllocator
     Handler handler;
     Allocator allocator;
 
-    HandlerWithAssociatedAllocator(Handler handler, Allocator allocator)
+    HandlerWithAssociatedAllocator(Handler handler, const Allocator& allocator)
         : handler(std::move(handler)), allocator(allocator)
     {
     }
@@ -127,7 +127,7 @@ struct RpcSpawner
     Handler handler;
     Allocator allocator;
 
-    RpcSpawner(agrpc::GrpcContext& grpc_context, Handler handler, Allocator allocator = {})
+    RpcSpawner(agrpc::GrpcContext& grpc_context, Handler handler, const Allocator& allocator = {})
         : grpc_context(grpc_context), handler(std::move(handler)), allocator(allocator)
     {
     }

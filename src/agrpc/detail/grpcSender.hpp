@@ -114,7 +114,7 @@ class GrpcSender : public detail::SenderOf<bool>
   public:
     template <class Receiver>
     auto connect(Receiver&& receiver) const noexcept(std::is_nothrow_constructible_v<Receiver, Receiver&&>)
-        -> Operation<detail::RemoveCvrefT<Receiver>>
+        -> Operation<detail::RemoveCrefT<Receiver>>
     {
         return {*this, std::forward<Receiver>(receiver)};
     }
@@ -130,7 +130,7 @@ class GrpcSender : public detail::SenderOf<bool>
         auto allocator = detail::exec::get_allocator(receiver);
         detail::grpc_submit(
             this->grpc_context, this->initiating_function,
-            [receiver = detail::RemoveCvrefT<Receiver>{std::forward<Receiver>(receiver)}](bool ok) mutable
+            [receiver = std::forward<Receiver>(receiver)](bool ok) mutable
             {
                 detail::satisfy_receiver(std::move(receiver), ok);
             },

@@ -36,7 +36,7 @@ class Operation<IsIntrusivelyListable, Handler, Allocator, void(Signature...)>
 
   public:
     template <class... Args>
-    explicit Operation(Allocator allocator, Args&&... args)
+    explicit Operation(const Allocator& allocator, Args&&... args)
         : Base(&detail::default_do_complete<Operation, Base, Signature...>),
           impl(detail::SecondThenVariadic{}, allocator, std::forward<Args>(args)...)
     {

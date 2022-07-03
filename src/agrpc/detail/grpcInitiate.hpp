@@ -80,7 +80,7 @@ auto grpc_initiate_with_payload(InitiatingFunction initiating_function, Completi
 
 template <class CompletionToken>
 inline constexpr bool IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN =
-    std::is_same_v<detail::UseSender, detail::RemoveCvrefT<CompletionToken>>;
+    std::is_same_v<detail::UseSender, detail::RemoveCrefT<CompletionToken>>;
 }
 
 AGRPC_NAMESPACE_END

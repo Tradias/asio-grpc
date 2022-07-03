@@ -25,7 +25,7 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class Allocator>
-void deallocate(Allocator allocator, typename std::allocator_traits<Allocator>::pointer ptr)
+void deallocate(Allocator allocator, typename std::allocator_traits<Allocator>::pointer ptr) noexcept
 {
     using Traits = std::allocator_traits<Allocator>;
     Traits::destroy(allocator, ptr);
@@ -49,12 +49,12 @@ class AllocatedPointer
     AllocatedPointer(const AllocatedPointer&) = delete;
     AllocatedPointer& operator=(const AllocatedPointer&) = delete;
 
-    constexpr AllocatedPointer(AllocatedPointer&& other) noexcept
+    AllocatedPointer(AllocatedPointer&& other) noexcept
         : impl(std::exchange(other.get(), nullptr), other.get_allocator())
     {
     }
 
-    constexpr AllocatedPointer& operator=(AllocatedPointer&& other) noexcept
+    AllocatedPointer& operator=(AllocatedPointer&& other) noexcept
     {
         if (this != &other)
         {

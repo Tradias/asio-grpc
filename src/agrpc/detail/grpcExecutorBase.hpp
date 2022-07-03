@@ -30,8 +30,8 @@ template <class Allocator>
 class GrpcExecutorBase
 {
   protected:
-    constexpr GrpcExecutorBase(agrpc::GrpcContext* grpc_context, Allocator allocator) noexcept
-        : impl(grpc_context, std::move(allocator))
+    constexpr GrpcExecutorBase(agrpc::GrpcContext* grpc_context, const Allocator& allocator) noexcept
+        : impl(grpc_context, allocator)
     {
     }
 
@@ -60,8 +60,8 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
         this->grpc_context()->work_started();
     }
 
-    constexpr GrpcExecutorWorkTrackerBase(GrpcExecutorWorkTrackerBase&& other) noexcept
-        : Base(std::exchange(other.grpc_context(), nullptr), std::move(other.allocator()))
+    GrpcExecutorWorkTrackerBase(GrpcExecutorWorkTrackerBase&& other) noexcept
+        : Base(std::exchange(other.grpc_context(), nullptr), other.allocator())
     {
     }
 
@@ -109,8 +109,8 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
     }
 
   protected:
-    GrpcExecutorWorkTrackerBase(agrpc::GrpcContext* grpc_context, Allocator allocator) noexcept
-        : Base(grpc_context, std::move(allocator))
+    GrpcExecutorWorkTrackerBase(agrpc::GrpcContext* grpc_context, const Allocator& allocator) noexcept
+        : Base(grpc_context, allocator)
     {
         this->grpc_context()->work_started();
     }

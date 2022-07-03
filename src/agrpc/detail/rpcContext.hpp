@@ -112,7 +112,7 @@ struct RPCContextForRPC<detail::GenericRPCMarker>
 };
 
 template <class RPC>
-using RPCContextForRPCT = typename detail::RPCContextForRPC<detail::RemoveCvrefT<RPC>>::Type;
+using RPCContextForRPCT = typename detail::RPCContextForRPC<detail::RemoveCrefT<RPC>>::Type;
 
 template <class RPC, class Service, class Request, class Responder>
 void initiate_request_from_rpc_context(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,

@@ -45,19 +45,19 @@ template <class T>
 using UnwrapUniquePtrT = typename detail::UnwrapUniquePtr<T>::Type;
 
 template <class T>
-auto& unwrap_unique_ptr(T& t)
+auto& unwrap_unique_ptr(T& t) noexcept
 {
     return t;
 }
 
 template <class T>
-auto& unwrap_unique_ptr(std::unique_ptr<T>& t)
+auto& unwrap_unique_ptr(std::unique_ptr<T>& t) noexcept
 {
     return *t;
 }
 
 template <class T>
-auto& unwrap_unique_ptr(const std::unique_ptr<T>& t)
+auto& unwrap_unique_ptr(const std::unique_ptr<T>& t) noexcept
 {
     return *t;
 }

@@ -44,15 +44,7 @@ struct WorkFinishedOnExitFunctor
     WorkFinishedOnExitFunctor& operator=(WorkFinishedOnExitFunctor&&) = delete;
 };
 
-struct WorkFinishedOnExit : detail::ScopeGuard<detail::WorkFinishedOnExitFunctor>
-{
-    using detail::ScopeGuard<detail::WorkFinishedOnExitFunctor>::ScopeGuard;
-
-    WorkFinishedOnExit(const WorkFinishedOnExit&) = delete;
-    WorkFinishedOnExit(WorkFinishedOnExit&&) = delete;
-    WorkFinishedOnExit& operator=(const WorkFinishedOnExit&) = delete;
-    WorkFinishedOnExit& operator=(WorkFinishedOnExit&&) = delete;
-};
+using WorkFinishedOnExit = detail::ScopeGuard<detail::WorkFinishedOnExitFunctor>;
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 struct GrpcContextThreadInfo : asio::detail::thread_info_base
@@ -62,7 +54,7 @@ struct GrpcContextThreadInfo : asio::detail::thread_info_base
 // Enables Boost.Asio's awaitable frame memory recycling
 struct GrpcContextThreadContext : asio::detail::thread_context
 {
-    GrpcContextThreadInfo this_thread;
+    detail::GrpcContextThreadInfo this_thread;
     thread_call_stack::context ctx{this, this_thread};
 };
 #else

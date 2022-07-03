@@ -69,7 +69,7 @@ class AllocatorBinder
      * @endcode
      */
     template <class... Args>
-    explicit AllocatorBinder(const Allocator& allocator, Args&&... args)
+    constexpr explicit AllocatorBinder(const Allocator& allocator, Args&&... args)
         : impl(detail::SecondThenVariadic{}, allocator, std::forward<Args>(args)...)
     {
     }
@@ -83,8 +83,8 @@ class AllocatorBinder
      * @brief Copy construct from a different agrpc::AllocatorBinder
      */
     template <class OtherTarget, class OtherAllocator>
-    explicit AllocatorBinder(const AllocatorBinder<OtherTarget, OtherAllocator>& other)
-        : impl(other.get(), other.get_allocator())
+    constexpr explicit AllocatorBinder(const AllocatorBinder<OtherTarget, OtherAllocator>& other)
+        : impl(other.get(), other.impl.second())
     {
     }
 
@@ -92,7 +92,7 @@ class AllocatorBinder
      * @brief Copy construct from a different agrpc::AllocatorBinder and specified allocator
      */
     template <class OtherTarget, class OtherAllocator>
-    AllocatorBinder(const Allocator& allocator, AllocatorBinder<OtherTarget, OtherAllocator>& other)
+    constexpr AllocatorBinder(const Allocator& allocator, AllocatorBinder<OtherTarget, OtherAllocator>& other)
         : impl(other.get(), allocator)
     {
     }
@@ -101,7 +101,7 @@ class AllocatorBinder
      * @brief Copy construct from a different const agrpc::AllocatorBinder and specified allocator
      */
     template <class OtherTarget, class OtherAllocator>
-    AllocatorBinder(const Allocator& allocator, const AllocatorBinder<OtherTarget, OtherAllocator>& other)
+    constexpr AllocatorBinder(const Allocator& allocator, const AllocatorBinder<OtherTarget, OtherAllocator>& other)
         : impl(other.get(), allocator)
     {
     }
@@ -115,8 +115,8 @@ class AllocatorBinder
      * @brief Move construct from a different agrpc::AllocatorBinder
      */
     template <class OtherTarget, class OtherAllocator>
-    explicit AllocatorBinder(AllocatorBinder<OtherTarget, OtherAllocator>&& other)
-        : impl(std::move(other.get()), std::move(other.get_allocator()))
+    constexpr explicit AllocatorBinder(AllocatorBinder<OtherTarget, OtherAllocator>&& other)
+        : impl(std::move(other.get()), std::move(other.impl.second()))
     {
     }
 
@@ -124,7 +124,7 @@ class AllocatorBinder
      * @brief Move construct from a different agrpc::AllocatorBinder and specified allocator
      */
     template <class OtherTarget, class OtherAllocator>
-    AllocatorBinder(const Allocator& allocator, AllocatorBinder<OtherTarget, OtherAllocator>&& other)
+    constexpr AllocatorBinder(const Allocator& allocator, AllocatorBinder<OtherTarget, OtherAllocator>&& other)
         : impl(std::move(other.get()), allocator)
     {
     }
@@ -147,12 +147,12 @@ class AllocatorBinder
     /**
      * @brief Get the target (mutable)
      */
-    target_type& get() noexcept { return impl.first(); }
+    constexpr target_type& get() noexcept { return impl.first(); }
 
     /**
      * @brief Get the target (const)
      */
-    const target_type& get() const noexcept { return impl.first(); }
+    constexpr const target_type& get() const noexcept { return impl.first(); }
 
     /**
      * @brief Get the target's associated executor
@@ -162,13 +162,13 @@ class AllocatorBinder
     /**
      * @brief Get the bound allocator
      */
-    allocator_type get_allocator() const noexcept { return impl.second(); }
+    constexpr allocator_type get_allocator() const noexcept { return impl.second(); }
 
     /**
      * @brief Invoke target with arguments (rvalue overload)
      */
     template <class... Args>
-    decltype(auto) operator()(Args&&... args) &&
+    constexpr decltype(auto) operator()(Args&&... args) &&
     {
         return std::move(this->get())(std::forward<Args>(args)...);
     }
@@ -177,7 +177,7 @@ class AllocatorBinder
      * @brief Invoke target with arguments (lvalue overload)
      */
     template <class... Args>
-    decltype(auto) operator()(Args&&... args) &
+    constexpr decltype(auto) operator()(Args&&... args) &
     {
         return this->get()(std::forward<Args>(args)...);
     }
@@ -186,18 +186,20 @@ class AllocatorBinder
      * @brief Invoke target with arguments (const lvalue overload)
      */
     template <class... Args>
-    decltype(auto) operator()(Args&&... args) const&
+    constexpr decltype(auto) operator()(Args&&... args) const&
     {
         return this->get()(std::forward<Args>(args)...);
     }
 
   private:
+    template <class, class>
+    friend class agrpc::AllocatorBinder;
+
     detail::CompressedPair<Target, Allocator> impl;
 };
 
 template <class Allocator, class Target>
-AllocatorBinder(const Allocator& allocator, Target&& target)
-    -> AllocatorBinder<detail::RemoveCvrefT<Target>, Allocator>;
+AllocatorBinder(const Allocator& allocator, Target&& target) -> AllocatorBinder<detail::RemoveCrefT<Target>, Allocator>;
 
 /**
  * @brief Helper function to create an AllocatorBinder
@@ -205,7 +207,7 @@ AllocatorBinder(const Allocator& allocator, Target&& target)
  * @since 1.5.0
  */
 template <class Allocator, class Target>
-auto bind_allocator(const Allocator& allocator, Target&& target)
+constexpr auto bind_allocator(const Allocator& allocator, Target&& target)
 {
     return agrpc::AllocatorBinder{allocator, std::forward<Target>(target)};
 }
@@ -253,23 +255,23 @@ template <class Initiation, class Allocator>
 struct AllocatorBinderAsyncResultInitWrapper
 {
     template <class Init>
-    AllocatorBinderAsyncResultInitWrapper(const Allocator& allocator, Init&& init)
+    constexpr AllocatorBinderAsyncResultInitWrapper(const Allocator& allocator, Init&& init)
         : allocator(allocator), initiation(std::forward<Init>(init))
     {
     }
 
     template <class Handler, class... Args>
-    void operator()(Handler&& handler, Args&&... args)
+    constexpr void operator()(Handler&& handler, Args&&... args)
     {
-        std::move(initiation)(agrpc::AllocatorBinder<agrpc::detail::RemoveCvrefT<Handler>, Allocator>(
+        std::move(initiation)(agrpc::AllocatorBinder<agrpc::detail::RemoveCrefT<Handler>, Allocator>(
                                   allocator, std::forward<Handler>(handler)),
                               std::forward<Args>(args)...);
     }
 
     template <class Handler, class... Args>
-    void operator()(Handler&& handler, Args&&... args) const
+    constexpr void operator()(Handler&& handler, Args&&... args) const
     {
-        initiation(agrpc::AllocatorBinder<agrpc::detail::RemoveCvrefT<Handler>, Allocator>(
+        initiation(agrpc::AllocatorBinder<agrpc::detail::RemoveCrefT<Handler>, Allocator>(
                        allocator, std::forward<Handler>(handler)),
                    std::forward<Args>(args)...);
     }
@@ -294,15 +296,17 @@ class agrpc::asio::async_result<agrpc::AllocatorBinder<CompletionToken, Allocato
       public agrpc::detail::AllocatorBinderAsyncResultReturnType<async_result<CompletionToken, Signature>>
 {
   public:
-    explicit async_result(agrpc::AllocatorBinder<CompletionToken, Allocator>& binder) : result(binder.get()) {}
+    constexpr explicit async_result(agrpc::AllocatorBinder<CompletionToken, Allocator>& binder) : result(binder.get())
+    {
+    }
 
-    decltype(auto) get() { return result.get(); }
+    constexpr decltype(auto) get() { return result.get(); }
 
     template <class Initiation, class RawCompletionToken, class... Args>
     static decltype(auto) initiate(Initiation&& initiation, RawCompletionToken&& token, Args&&... args)
     {
         return asio::async_initiate<CompletionToken, Signature>(
-            agrpc::detail::AllocatorBinderAsyncResultInitWrapper<agrpc::detail::RemoveCvrefT<Initiation>, Allocator>(
+            agrpc::detail::AllocatorBinderAsyncResultInitWrapper<agrpc::detail::RemoveCrefT<Initiation>, Allocator>(
                 token.get_allocator(), std::forward<Initiation>(initiation)),
             token.get(), std::forward<Args>(args)...);
     }
@@ -316,7 +320,8 @@ struct agrpc::asio::associated_allocator<agrpc::AllocatorBinder<Target, Allocato
 {
     using type = Allocator;
 
-    static type get(const agrpc::AllocatorBinder<Target, Allocator>& b, const Allocator1& = Allocator1()) noexcept
+    static constexpr type get(const agrpc::AllocatorBinder<Target, Allocator>& b,
+                              const Allocator1& = Allocator1()) noexcept
     {
         return b.get_allocator();
     }
@@ -329,8 +334,8 @@ struct agrpc::asio::associator<Associator, agrpc::AllocatorBinder<Target, Alloca
 {
     using type = typename Associator<Target, DefaultCandidate>::type;
 
-    static type get(const agrpc::AllocatorBinder<Target, Allocator>& b,
-                    const DefaultCandidate& c = DefaultCandidate()) noexcept
+    static constexpr type get(const agrpc::AllocatorBinder<Target, Allocator>& b,
+                              const DefaultCandidate& c = DefaultCandidate()) noexcept
     {
         return Associator<Target, DefaultCandidate>::get(b.get(), c);
     }

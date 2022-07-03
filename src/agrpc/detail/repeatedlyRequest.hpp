@@ -317,9 +317,12 @@ template <std::size_t BufferSize>
 class BufferOperation : public detail::TypeErasedNoArgOperation
 {
   public:
-    BufferOperation() noexcept : detail::TypeErasedNoArgOperation(&do_complete) {}
+    constexpr BufferOperation() noexcept : detail::TypeErasedNoArgOperation(&do_complete) {}
 
-    auto one_shot_allocator() noexcept { return detail::OneShotAllocator<std::byte, BufferSize>{&this->buffer}; }
+    constexpr auto one_shot_allocator() noexcept
+    {
+        return detail::OneShotAllocator<std::byte, BufferSize>{this->buffer};
+    }
 
   private:
     static void do_complete(detail::TypeErasedNoArgOperation* op, detail::InvokeHandler,
@@ -328,7 +331,7 @@ class BufferOperation : public detail::TypeErasedNoArgOperation
         detail::deallocate(std::allocator<BufferOperation>{}, static_cast<BufferOperation*>(op));
     }
 
-    std::aligned_storage_t<BufferSize> buffer;
+    std::byte buffer[BufferSize];
 };
 
 template <std::size_t BufferSize>
@@ -415,11 +418,10 @@ class RepeatedlyRequestAwaitableOperation
   private:
     Awaitable perform_request_and_repeat()
     {
-        auto& local_grpc_context = this->grpc_context();
         RPCContext rpc_context;
         detail::ScopeGuard guard{[&]
                                  {
-                                     detail::WorkFinishedOnExit on_exit{local_grpc_context};
+                                     detail::WorkFinishedOnExit on_exit{this->grpc_context()};
                                      ON_STOP_COMPLETE(this, detail::InvokeHandler::NO, {});
                                  }};
         const auto ok = co_await detail::initiate_request_from_rpc_context(
@@ -431,13 +433,13 @@ class RepeatedlyRequestAwaitableOperation
             auto local_request_handler = this->request_handler();
             if AGRPC_UNLIKELY (!this->initiate_repeatedly_request())
             {
-                detail::GrpcContextImplementation::add_local_operation(local_grpc_context, this);
+                detail::GrpcContextImplementation::add_local_operation(this->grpc_context(), this);
             }
             co_await std::apply(std::move(local_request_handler), rpc_context.args());
         }
         else
         {
-            detail::GrpcContextImplementation::add_local_operation(local_grpc_context, this);
+            detail::GrpcContextImplementation::add_local_operation(this->grpc_context(), this);
         }
     }
 

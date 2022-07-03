@@ -93,7 +93,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
     {
       private:
         using GrpcBase = detail::TypeErasedGrpcTagOperation;
-        using Allocator = detail::RemoveCvrefT<decltype(detail::exec::get_allocator(std::declval<Receiver&>()))>;
+        using Allocator = detail::RemoveCrefT<decltype(detail::exec::get_allocator(std::declval<Receiver&>()))>;
         using RPCContext = detail::RPCContextForRPCT<RPC>;
         using RequestHandlerSender =
             detail::InvokeResultFromSignatureT<RequestHandler&, typename RPCContext::Signature>;
@@ -131,7 +131,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
             };
 
             agrpc::GrpcContext& grpc_context;
-            detail::CompressedPair<detail::RPCContextForRPCT<RPC>, Allocator> impl;
+            detail::CompressedPair<Operation::RPCContext, Allocator> impl;
             std::optional<detail::InplaceWithFunctionWrapper<
                 detail::exec::connect_result_t<RequestHandlerSender, DeallocateRequestHandlerOperationReceiver>>>
                 operation_state;
@@ -234,11 +234,11 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
             detail::AllocatedPointer ptr{self->request_handler_operation, self->get_allocator()};
             if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler && ok)
             {
-                if (auto ep = self->emplace_request_handler_operation(*ptr))
+                if (auto exception_ptr = self->emplace_request_handler_operation(*ptr))
                 {
                     self->stop_context().reset();
                     ptr.reset();
-                    detail::exec::set_error(std::move(self->receiver()), std::move(ep));
+                    detail::exec::set_error(std::move(self->receiver()), std::move(exception_ptr));
                     return;
                 }
                 const auto is_repeated = self->initiate_repeatedly_request();
@@ -309,7 +309,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
     template <class Receiver>
     auto connect(Receiver&& receiver) const& noexcept(
         std::is_nothrow_constructible_v<Receiver, Receiver&&>&& std::is_nothrow_copy_constructible_v<RequestHandler>)
-        -> Operation<detail::RemoveCvrefT<Receiver>>
+        -> Operation<detail::RemoveCrefT<Receiver>>
     {
         return {*this, std::forward<Receiver>(receiver)};
     }
@@ -317,7 +317,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
     template <class Receiver>
     auto connect(Receiver&& receiver) && noexcept(
         std::is_nothrow_constructible_v<Receiver, Receiver&&>&& std::is_nothrow_move_constructible_v<RequestHandler>)
-        -> Operation<detail::RemoveCvrefT<Receiver>>
+        -> Operation<detail::RemoveCrefT<Receiver>>
     {
         return {std::move(*this), std::forward<Receiver>(receiver)};
     }
@@ -329,7 +329,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
     {
     }
 
-    friend agrpc::detail::RepeatedlyRequestFn;
+    friend detail::RepeatedlyRequestFn;
 
     agrpc::GrpcContext& grpc_context;
     RPC rpc;
@@ -338,7 +338,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
 
 template <class RPC, class Service, class RequestHandler>
 RepeatedlyRequestSender(agrpc::GrpcContext&, RPC, Service&, RequestHandler&&)
-    -> RepeatedlyRequestSender<RPC, Service, detail::RemoveCvrefT<RequestHandler>>;
+    -> RepeatedlyRequestSender<RPC, Service, detail::RemoveCrefT<RequestHandler>>;
 }
 
 AGRPC_NAMESPACE_END

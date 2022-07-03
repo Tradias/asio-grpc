@@ -57,7 +57,7 @@ class CountingAllocator
 
   private:
     template <class>
-    friend class CountingAllocator;
+    friend class test::CountingAllocator;
 
     std::size_t* counter;
 };

@@ -62,7 +62,7 @@ template <class CompletionHandler>
 class WorkTracker<CompletionHandler, true>
 {
   public:
-    explicit WorkTracker(const CompletionHandler&) noexcept {}
+    constexpr explicit WorkTracker(const CompletionHandler&) noexcept {}
 };
 
 template <class CompletionHandler>
@@ -92,7 +92,14 @@ class WorkTrackingCompletionHandler : private detail::EmptyBaseOptimization<Comp
     template <class... Args>
     void operator()(Args&&... args) &&
     {
-        WorkTrackingCompletionHandler::complete(std::move(this->completion_handler()), std::forward<Args>(args)...);
+        auto& ch = this->completion_handler();
+        auto executor = asio::prefer(asio::get_associated_executor(ch), asio::execution::blocking_t::possibly,
+                                     asio::execution::allocator(asio::get_associated_allocator(ch)));
+        asio::execution::execute(std::move(executor),
+                                 [ch = std::move(ch), args = std::make_tuple(std::forward<Args>(args)...)]() mutable
+                                 {
+                                     std::apply(std::move(ch), std::move(args));
+                                 });
     }
 
     [[nodiscard]] executor_type get_executor() const noexcept
@@ -103,19 +110,6 @@ class WorkTrackingCompletionHandler : private detail::EmptyBaseOptimization<Comp
     [[nodiscard]] allocator_type get_allocator() const noexcept
     {
         return asio::get_associated_allocator(this->completion_handler());
-    }
-
-  private:
-    template <class... Args>
-    static void complete(CompletionHandler&& ch, Args&&... args) noexcept
-    {
-        auto executor = asio::prefer(asio::get_associated_executor(ch), asio::execution::blocking_t::possibly,
-                                     asio::execution::allocator(asio::get_associated_allocator(ch)));
-        asio::execution::execute(std::move(executor),
-                                 [ch = std::move(ch), args = std::make_tuple(std::forward<Args>(args)...)]() mutable
-                                 {
-                                     std::apply(std::move(ch), std::move(args));
-                                 });
     }
 };
 }

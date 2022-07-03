@@ -47,7 +47,7 @@ class TypeErasedOperation
   protected:
     using OnCompleteFunction = void (*)(TypeErasedOperation*, detail::InvokeHandler, Signature...);
 
-    explicit TypeErasedOperation(OnCompleteFunction on_complete) noexcept : on_complete(on_complete) {}
+    constexpr explicit TypeErasedOperation(OnCompleteFunction on_complete) noexcept : on_complete(on_complete) {}
 
   private:
     OnCompleteFunction on_complete;
