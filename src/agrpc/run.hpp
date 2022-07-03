@@ -71,7 +71,7 @@ void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context);
  * @brief (experimental) Run an execution context in the same thread as a GrpcContext
  *
  * The GrpcContext should be in the ready state when this function is invoked, other than that semantically identical to
- * GrpcContext::run(). This function ends when the `stop_condition` returns `false`.
+ * GrpcContext::run(). This function ends when the `stop_condition` returns `true`.
  *
  * @tparam Traits See DefaultRunTraits
  *
