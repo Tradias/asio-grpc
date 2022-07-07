@@ -109,6 +109,8 @@ class GrpcContext
      * @tparam Deadline A type that is compatible with `grpc::TimePoint<Deadline>`.
      *
      * @return True if at least one operation has been processed.
+     *
+     * @since 1.8.0
      */
     template <class Deadline>
     bool run_until(const Deadline& deadline)
