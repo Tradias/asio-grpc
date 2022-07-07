@@ -671,4 +671,27 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run() is not blocked by re
                });
     grpc_context.run();
 }
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() can wait for grpc::Alarm")
+{
+    bool invoked{false};
+    grpc::Alarm alarm;
+    agrpc::wait(alarm, test::ten_milliseconds_from_now(),
+                asio::bind_executor(grpc_context,
+                                    [&](bool)
+                                    {
+                                        invoked = true;
+                                    }));
+    CHECK(grpc_context.run_until(test::hundred_milliseconds_from_now()));
+    CHECK(grpc_context.is_stopped());
+    CHECK(invoked);
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() times out correctly")
+{
+    grpc::Alarm alarm;
+    agrpc::wait(alarm, test::one_seconds_from_now(), asio::bind_executor(grpc_context, [](bool) {}));
+    CHECK_FALSE(grpc_context.run_until(std::chrono::system_clock::now()));
+    CHECK_FALSE(grpc_context.run_until(test::ten_milliseconds_from_now()));
+}
 }

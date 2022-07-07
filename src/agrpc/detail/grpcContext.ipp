@@ -99,6 +99,16 @@ inline bool GrpcContext::poll()
                                                            });
 }
 
+inline bool GrpcContext::run_until_impl(::gpr_timespec deadline)
+{
+    return detail::GrpcContextImplementation::process_work(*this,
+                                                           [deadline](agrpc::GrpcContext& grpc_context)
+                                                           {
+                                                               return detail::GrpcContextImplementation::do_one(
+                                                                   grpc_context, deadline);
+                                                           });
+}
+
 inline bool GrpcContext::poll_completion_queue()
 {
     return detail::GrpcContextImplementation::process_work(

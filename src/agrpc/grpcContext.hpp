@@ -97,6 +97,27 @@ class GrpcContext
     bool run();
 
     /**
+     * @brief Run ready completion handlers and `grpc::CompletionQueue` until deadline
+     *
+     * Runs the main event loop logic until the GrpcContext runs out of work, is stopped or the specified deadline has
+     * been reached. The GrpcContext will be brought into the ready state when this function is invoked.
+     *
+     * @attention Only one thread may call run*()/poll*() at a time.
+     *
+     * Thread-safe with regards to other functions except run*(), poll*() and the destructor.
+     *
+     * @tparam Deadline A type that is compatible with `grpc::TimePoint<Deadline>`.
+     *
+     * @return True if at least one operation has been processed.
+     */
+    template <class Deadline>
+    bool run_until(const Deadline& deadline)
+    {
+        grpc::TimePoint<Deadline> deadline_tp(deadline);
+        return this->run_until_impl(deadline_tp.raw_time());
+    }
+
+    /**
      * @brief Run the `grpc::CompletionQueue`
      *
      * Runs the main event loop logic until the GrpcContext runs out of work or is stopped. Only events from the
@@ -238,6 +259,8 @@ class GrpcContext
     using LocalWorkQueue = detail::IntrusiveQueue<detail::TypeErasedNoArgOperation>;
 
     friend detail::GrpcContextImplementation;
+
+    bool run_until_impl(::gpr_timespec deadline);
 
     grpc::Alarm work_alarm;
     std::atomic_long outstanding_work{};
