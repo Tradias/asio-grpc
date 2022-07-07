@@ -24,33 +24,26 @@ An [Executor, Networking TS](https://www.boost.org/doc/libs/1_79_0/doc/html/boos
 <!-- snippet: client-side-helloworld -->
 <a id='snippet-client-side-helloworld'></a>
 ```cpp
-std::unique_ptr<grpc::Server> server;
+helloworld::Greeter::Stub stub{grpc::CreateChannel(host, grpc::InsecureChannelCredentials())};
+agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
-grpc::ServerBuilder builder;
-agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
-builder.AddListeningPort(host, grpc::InsecureServerCredentials());
-helloworld::Greeter::AsyncService service;
-builder.RegisterService(&service);
-server = builder.BuildAndStart();
-
-boost::asio::co_spawn(
+asio::co_spawn(
     grpc_context,
-    [&]() -> boost::asio::awaitable<void>
+    [&]() -> asio::awaitable<void>
     {
-        grpc::ServerContext server_context;
+        grpc::ClientContext client_context;
         helloworld::HelloRequest request;
-        grpc::ServerAsyncResponseWriter<helloworld::HelloReply> writer{&server_context};
-        co_await agrpc::request(&helloworld::Greeter::AsyncService::RequestSayHello, service, server_context,
-                                request, writer);
+        request.set_name("world");
+        const auto reader =
+            agrpc::request(&helloworld::Greeter::Stub::AsyncSayHello, stub, client_context, request, grpc_context);
         helloworld::HelloReply response;
-        response.set_message("Hello " + request.name());
-        co_await agrpc::finish(writer, response, grpc::Status::OK);
+        co_await agrpc::finish(reader, response, status, asio::use_awaitable);
     },
-    boost::asio::detached);
+    asio::detached);
 
 grpc_context.run();
 ```
-<sup><a href='/example/hello-world-server.cpp#L32-L58' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-helloworld' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/hello-world-client.cpp#L33-L52' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-helloworld' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 More examples for things like streaming RPCs, double-buffered file transfer with io_uring, libunifex-based coroutines, sharing a thread with an io_context and generic clients/servers can be found in the [example](/example) directory. Even more examples can be found in another [repository](https://github.com/Tradias/example-vcpkg-grpc#branches).
