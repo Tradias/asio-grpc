@@ -1,6 +1,6 @@
 # asio-grpc
 
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=Tradias_asio-grpc&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=Tradias_asio-grpc) [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=Tradias_asio-grpc&metric=coverage)](https://sonarcloud.io/dashboard?id=Tradias_asio-grpc) [![vcpkg](https://repology.org/badge/version-for-repo/vcpkg/asio-grpc.svg?header=vcpkg)](https://repology.org/project/asio-grpc/versions) [![hunter](https://img.shields.io/badge/hunter-asio_grpc-green.svg)](https://hunter.readthedocs.io/en/latest/packages/pkg/asio-grpc.html)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=Tradias_asio-grpc&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=Tradias_asio-grpc) [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=Tradias_asio-grpc&metric=coverage)](https://sonarcloud.io/dashboard?id=Tradias_asio-grpc) [![vcpkg](https://repology.org/badge/version-for-repo/vcpkg/asio-grpc.svg?header=vcpkg)](https://repology.org/project/asio-grpc/versions) [![conan](https://repology.org/badge/version-for-repo/conancenter/asio-grpc.svg?header=conan)](https://repology.org/project/asio-grpc/versions) [![hunter](https://img.shields.io/badge/hunter-asio_grpc-green.svg)](https://hunter.readthedocs.io/en/latest/packages/pkg/asio-grpc.html)
 
 An [Executor, Networking TS](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/Executor1.html#boost_asio.reference.Executor1.standard_executors) and [std::execution](https://brycelelbach.github.io/wg21_p2300_std_execution/std_execution.html) interface to [grpc::CompletionQueue](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html) for writing asynchronous gRPC clients and servers using C++20 coroutines, Boost.Coroutines, Asio's stackless coroutines, callbacks, sender/receiver and more.
 
@@ -19,10 +19,10 @@ An [Executor, Networking TS](https://www.boost.org/doc/libs/1_79_0/doc/html/boos
 
 # Example
 
-* Server side 'hello world':
+* Client side 'hello world':
 
-<!-- snippet: server-side-helloworld -->
-<a id='snippet-server-side-helloworld'></a>
+<!-- snippet: client-side-helloworld -->
+<a id='snippet-client-side-helloworld'></a>
 ```cpp
 std::unique_ptr<grpc::Server> server;
 
@@ -50,7 +50,7 @@ boost::asio::co_spawn(
 
 grpc_context.run();
 ```
-<sup><a href='/example/hello-world-server.cpp#L32-L58' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/hello-world-server.cpp#L32-L58' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-helloworld' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 More examples for things like streaming RPCs, double-buffered file transfer with io_uring, libunifex-based coroutines, sharing a thread with an io_context and generic clients/servers can be found in the [example](/example) directory. Even more examples can be found in another [repository](https://github.com/Tradias/example-vcpkg-grpc#branches).
@@ -85,7 +85,7 @@ When using [standalone Asio](https://github.com/chriskohlhoff/asio) then omit th
 
 # Usage
 
-The library can be added to a CMake project using either `add_subdirectory` or `find_package`. Once set up, include the individual headers from the agrpc/ directory or the combined header:
+The library can be added to a CMake project using either `add_subdirectory` or `find_package`. Once set up, include the individual headers from the agrpc/ directory or the convenience header:
 
 ```cpp
 #include <agrpc/asioGrpc.hpp>
@@ -218,7 +218,13 @@ See asio-grpc's documentation on the Hunter website: [https://hunter.readthedocs
 <details><summary><b>Using conan</b></summary>
 <p>
 
-Please refer to the conan documentation on how to [use packages](https://docs.conan.io/en/latest/using_packages.html). The recipe in conan-center is called [asio-grpc/1.7.0](https://conan.io/center/asio-grpc).
+Please refer to the conan documentation on how to [use packages](https://docs.conan.io/en/latest/using_packages.html). The recipe in conan-center is called [asio-grpc/1.7.0](https://conan.io/center/asio-grpc).   
+If you are using conan's CMake generator then link with `asio-grpc::asio-grpc` independent of the backend that you choose:
+
+```cmake
+find_package(asio-grpc)
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
+```
 
 ### Available options
 

@@ -21,6 +21,8 @@
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 
+namespace asio = boost::asio;
+
 int main(int argc, const char** argv)
 {
     const auto port = argc >= 2 ? argv[1] : "50051";
@@ -29,12 +31,12 @@ int main(int argc, const char** argv)
     grpc::Status status;
 
     // begin-snippet: client-side-helloworld
-    const auto stub = helloworld::Greeter::NewStub(grpc::CreateChannel(host, grpc::InsecureChannelCredentials()));
+    helloworld::Greeter::Stub stub{grpc::CreateChannel(host, grpc::InsecureChannelCredentials())};
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
-    boost::asio::co_spawn(
+    asio::co_spawn(
         grpc_context,
-        [&]() -> boost::asio::awaitable<void>
+        [&]() -> asio::awaitable<void>
         {
             grpc::ClientContext client_context;
             helloworld::HelloRequest request;
@@ -42,9 +44,9 @@ int main(int argc, const char** argv)
             const auto reader =
                 agrpc::request(&helloworld::Greeter::Stub::AsyncSayHello, stub, client_context, request, grpc_context);
             helloworld::HelloReply response;
-            co_await agrpc::finish(reader, response, status, boost::asio::use_awaitable);
+            co_await agrpc::finish(reader, response, status, asio::use_awaitable);
         },
-        boost::asio::detached);
+        asio::detached);
 
     grpc_context.run();
     // end-snippet

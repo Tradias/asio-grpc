@@ -24,12 +24,13 @@
 #include <optional>
 #include <thread>
 
+namespace asio = boost::asio;
+
 int main(int argc, const char** argv)
 {
     const auto port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("0.0.0.0:") + port;
 
-    // begin-snippet: server-side-helloworld
     std::unique_ptr<grpc::Server> server;
 
     grpc::ServerBuilder builder;
@@ -39,23 +40,22 @@ int main(int argc, const char** argv)
     builder.RegisterService(&service);
     server = builder.BuildAndStart();
 
-    boost::asio::co_spawn(
+    asio::co_spawn(
         grpc_context,
-        [&]() -> boost::asio::awaitable<void>
+        [&]() -> asio::awaitable<void>
         {
             grpc::ServerContext server_context;
             helloworld::HelloRequest request;
             grpc::ServerAsyncResponseWriter<helloworld::HelloReply> writer{&server_context};
             co_await agrpc::request(&helloworld::Greeter::AsyncService::RequestSayHello, service, server_context,
-                                    request, writer);
+                                    request, writer, asio::use_awaitable);
             helloworld::HelloReply response;
             response.set_message("Hello " + request.name());
-            co_await agrpc::finish(writer, response, grpc::Status::OK);
+            co_await agrpc::finish(writer, response, grpc::Status::OK, asio::use_awaitable);
         },
-        boost::asio::detached);
+        asio::detached);
 
     grpc_context.run();
-    // end-snippet
 
     server->Shutdown();
 }
