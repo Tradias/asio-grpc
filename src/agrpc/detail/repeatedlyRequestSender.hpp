@@ -285,19 +285,19 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
             detail::exec::set_done(std::move(receiver()));
         }
 
-        constexpr agrpc::GrpcContext& grpc_context() noexcept { return impl0.first(); }
+        agrpc::GrpcContext& grpc_context() noexcept { return impl0.first(); }
 
-        constexpr Receiver& receiver() noexcept { return impl0.second(); }
+        Receiver& receiver() noexcept { return impl0.second(); }
 
-        constexpr RPC rpc() noexcept { return impl1.first(); }
+        RPC rpc() noexcept { return impl1.first(); }
 
-        constexpr auto& stop_context() noexcept { return impl1.second(); }
+        auto& stop_context() noexcept { return impl1.second(); }
 
-        constexpr Service& service() noexcept { return impl2.first(); }
+        Service& service() noexcept { return impl2.first(); }
 
-        constexpr RequestHandler& request_handler() noexcept { return impl2.second(); }
+        RequestHandler& request_handler() noexcept { return impl2.second(); }
 
-        constexpr decltype(auto) get_allocator() noexcept { return detail::exec::get_allocator(this->receiver()); }
+        decltype(auto) get_allocator() noexcept { return detail::exec::get_allocator(this->receiver()); }
 
         detail::CompressedPair<agrpc::GrpcContext&, Receiver> impl0;
         detail::CompressedPair<RPC, detail::RepeatedlyRequestStopContext<Receiver>> impl1;

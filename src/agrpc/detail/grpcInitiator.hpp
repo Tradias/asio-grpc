@@ -64,7 +64,7 @@ class GrpcInitiator
             }
         }
 #endif
-        detail::grpc_submit(grpc_context, std::move(this->initiating_function),
+        detail::grpc_submit(grpc_context, this->initiating_function,
                             std::forward<CompletionHandler>(completion_handler), unbound.allocator());
     }
 
@@ -89,7 +89,7 @@ class GrpcCompletionHandlerWithPayload : public detail::AssociatedCompletionHand
         return static_cast<Base&&>(*this)(std::pair{std::move(this->payload_), ok});
     }
 
-    [[nodiscard]] constexpr auto& payload() noexcept { return payload_; }
+    [[nodiscard]] auto& payload() noexcept { return payload_; }
 
   private:
     Payload payload_;

@@ -58,7 +58,7 @@ struct ReadInitFunction
     Responder& responder;
     Message& message;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) { responder.Read(&message, tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.Read(&message, tag); }
 };
 
 template <class Message, class Responder>
@@ -67,7 +67,7 @@ struct WriteInitFunction
     Responder& responder;
     const Message& message;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) { responder.Write(message, tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.Write(message, tag); }
 };
 
 template <class Message, class Responder>
@@ -77,7 +77,7 @@ struct WriteWithOptionsInitFunction
     const Message& message;
     grpc::WriteOptions options;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) { responder.Write(message, options, tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.Write(message, options, tag); }
 };
 
 template <class Message, class Responder>
@@ -87,7 +87,7 @@ struct WriteLastInitFunction
     const Message& message;
     grpc::WriteOptions options;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) { responder.WriteLast(message, options, tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.WriteLast(message, options, tag); }
 };
 
 template <class Responder>
@@ -95,7 +95,7 @@ struct ClientWritesDoneInitFunction
 {
     Responder& responder;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) { responder.WritesDone(tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.WritesDone(tag); }
 };
 
 template <class Responder>
@@ -103,7 +103,7 @@ struct ReadInitialMetadataInitFunction
 {
     Responder& responder;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) { responder.ReadInitialMetadata(tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.ReadInitialMetadata(tag); }
 };
 
 template <class Responder, class = decltype(&Responder::Finish)>
@@ -117,7 +117,7 @@ struct FinishInitFunction<Responder, void (BaseResponder::*)(const grpc::Status&
     Responder& responder;
     const grpc::Status& status;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) { responder.Finish(status, tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.Finish(status, tag); }
 };
 
 template <class Responder, class BaseResponder>
@@ -128,7 +128,7 @@ struct FinishInitFunction<Responder, void (BaseResponder::*)(grpc::Status*, void
     Responder& responder;
     grpc::Status& status;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) { responder.Finish(&status, tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.Finish(&status, tag); }
 };
 
 template <class Responder, class = decltype(&Responder::Finish)>
@@ -145,7 +145,7 @@ struct FinishWithMessageInitFunction<Responder, void (BaseResponder::*)(const Re
     const Message& message;
     const grpc::Status& status;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) { responder.Finish(message, status, tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.Finish(message, status, tag); }
 };
 
 template <class Responder, class BaseResponder, class Response>
@@ -159,7 +159,7 @@ struct FinishWithMessageInitFunction<Responder, void (BaseResponder::*)(Response
     Message& message;
     grpc::Status& status;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) { responder.Finish(&message, &status, tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.Finish(&message, &status, tag); }
 };
 
 template <class Responder>
@@ -168,7 +168,7 @@ struct ServerFinishWithErrorInitFunction
     Responder& responder;
     const grpc::Status& status;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) { responder.FinishWithError(status, tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.FinishWithError(status, tag); }
 };
 
 template <class Message, class Responder>
@@ -179,7 +179,10 @@ struct ServerWriteAndFinishInitFunction
     grpc::WriteOptions options;
     const grpc::Status& status;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) { responder.WriteAndFinish(message, options, status, tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const
+    {
+        responder.WriteAndFinish(message, options, status, tag);
+    }
 };
 
 template <class Responder>
@@ -187,7 +190,7 @@ struct SendInitialMetadataInitFunction
 {
     Responder& responder;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) { responder.SendInitialMetadata(tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.SendInitialMetadata(tag); }
 };
 
 template <class Stub, class Request, class Responder>
@@ -199,7 +202,7 @@ struct ClientServerStreamingRequestInitFunction
     const Request& request;
     Responder& reader;
 
-    void operator()(agrpc::GrpcContext& grpc_context, void* tag)
+    void operator()(agrpc::GrpcContext& grpc_context, void* tag) const
     {
         reader = (stub.*rpc)(&client_context, request, grpc_context.get_completion_queue(), tag);
     }
@@ -214,7 +217,7 @@ struct ClientServerStreamingRequestConvenienceInitFunction
     const Request& request;
 
     template <class T>
-    void operator()(agrpc::GrpcContext& grpc_context, T* tag)
+    void operator()(agrpc::GrpcContext& grpc_context, T* tag) const
     {
         tag->completion_handler().payload() =
             (stub.*rpc)(&client_context, request, grpc_context.get_completion_queue(), tag);
@@ -230,7 +233,7 @@ struct ClientClientStreamingRequestInitFunction
     Responder& writer;
     Response& response;
 
-    void operator()(agrpc::GrpcContext& grpc_context, void* tag)
+    void operator()(agrpc::GrpcContext& grpc_context, void* tag) const
     {
         writer = (stub.*rpc)(&client_context, &response, grpc_context.get_completion_queue(), tag);
     }
@@ -245,7 +248,7 @@ struct ClientClientStreamingRequestConvenienceInitFunction
     Response& response;
 
     template <class T>
-    void operator()(agrpc::GrpcContext& grpc_context, T* tag)
+    void operator()(agrpc::GrpcContext& grpc_context, T* tag) const
     {
         tag->completion_handler().payload() =
             (stub.*rpc)(&client_context, &response, grpc_context.get_completion_queue(), tag);
@@ -260,7 +263,7 @@ struct ClientBidirectionalStreamingRequestInitFunction
     grpc::ClientContext& client_context;
     Responder& reader_writer;
 
-    void operator()(agrpc::GrpcContext& grpc_context, void* tag)
+    void operator()(agrpc::GrpcContext& grpc_context, void* tag) const
     {
         reader_writer = (stub.*rpc)(&client_context, grpc_context.get_completion_queue(), tag);
     }
@@ -274,7 +277,7 @@ struct ClientBidirectionalStreamingRequestConvenienceInitFunction
     grpc::ClientContext& client_context;
 
     template <class T>
-    void operator()(agrpc::GrpcContext& grpc_context, T* tag)
+    void operator()(agrpc::GrpcContext& grpc_context, T* tag) const
     {
         tag->completion_handler().payload() = (stub.*rpc)(&client_context, grpc_context.get_completion_queue(), tag);
     }
@@ -288,7 +291,7 @@ struct ClientGenericStreamingRequestInitFunction
     grpc::ClientContext& client_context;
     std::unique_ptr<ReaderWriter>& reader_writer;
 
-    void operator()(agrpc::GrpcContext& grpc_context, void* tag)
+    void operator()(agrpc::GrpcContext& grpc_context, void* tag) const
     {
         reader_writer = stub.PrepareCall(&client_context, method, grpc_context.get_completion_queue());
         reader_writer->StartCall(tag);
@@ -304,7 +307,7 @@ struct ServerMultiArgRequestInitFunction
     Request& request;
     Responder& responder;
 
-    void operator()(agrpc::GrpcContext& grpc_context, void* tag)
+    void operator()(agrpc::GrpcContext& grpc_context, void* tag) const
     {
         auto* const cq = grpc_context.get_server_completion_queue();
         (service.*rpc)(&server_context, &request, &responder, cq, cq, tag);
@@ -319,7 +322,7 @@ struct ServerSingleArgRequestInitFunction
     grpc::ServerContext& server_context;
     Responder& responder;
 
-    void operator()(agrpc::GrpcContext& grpc_context, void* tag)
+    void operator()(agrpc::GrpcContext& grpc_context, void* tag) const
     {
         auto* const cq = grpc_context.get_server_completion_queue();
         (service.*rpc)(&server_context, &responder, cq, cq, tag);
@@ -333,7 +336,7 @@ struct ServerGenericRequestInitFunction
     grpc::GenericServerContext& server_context;
     ReaderWriter& reader_writer;
 
-    void operator()(agrpc::GrpcContext& grpc_context, void* tag)
+    void operator()(agrpc::GrpcContext& grpc_context, void* tag) const
     {
         auto* const cq = grpc_context.get_server_completion_queue();
         service.RequestCall(&server_context, &reader_writer, cq, cq, tag);

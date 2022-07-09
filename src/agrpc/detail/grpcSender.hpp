@@ -32,6 +32,13 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+template <class Receiver, class StopFunction>
+inline constexpr bool GRPC_SENDER_HAS_STOP_CALLBACK =
+    detail::IS_STOP_EVER_POSSIBLE_V<detail::exec::stop_token_type_t<Receiver&>>;
+
+template <class Receiver>
+inline constexpr bool GRPC_SENDER_HAS_STOP_CALLBACK<Receiver, detail::Empty> = false;
+
 template <class InitiatingFunction, class StopFunction = detail::Empty>
 class GrpcSender : public detail::SenderOf<bool>
 {
@@ -40,9 +47,7 @@ class GrpcSender : public detail::SenderOf<bool>
     class Operation : private detail::TypeErasedGrpcTagOperation
     {
       private:
-        static constexpr bool HAS_STOP_CALLBACK =
-            !std::is_same_v<detail::Empty, StopFunction> &&
-            detail::IS_STOP_EVER_POSSIBLE_V<detail::exec::stop_token_type_t<Receiver&>>;
+        static constexpr bool HAS_STOP_CALLBACK = detail::GRPC_SENDER_HAS_STOP_CALLBACK<Receiver, StopFunction>;
 
         using StopCallbackLifetime =
             detail::ConditionalT<HAS_STOP_CALLBACK, std::optional<detail::StopCallbackTypeT<Receiver&, StopFunction>>,
@@ -99,13 +104,13 @@ class GrpcSender : public detail::SenderOf<bool>
             }
         }
 
-        constexpr decltype(auto) grpc_context() noexcept { return impl.first(); }
+        agrpc::GrpcContext& grpc_context() noexcept { return impl.first(); }
 
-        constexpr decltype(auto) receiver() noexcept { return impl.second(); }
+        Receiver& receiver() noexcept { return impl.second(); }
 
-        constexpr decltype(auto) initiating_function() noexcept { return functions.first(); }
+        InitiatingFunction& initiating_function() noexcept { return functions.first(); }
 
-        constexpr decltype(auto) stop_callback() noexcept { return functions.second(); }
+        StopCallbackLifetime& stop_callback() noexcept { return functions.second(); }
 
         detail::CompressedPair<agrpc::GrpcContext&, Receiver> impl;
         detail::CompressedPair<InitiatingFunction, StopCallbackLifetime> functions;

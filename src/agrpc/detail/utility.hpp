@@ -26,7 +26,43 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class T>
-using RemoveCrefT = std::remove_const_t<std::remove_reference_t<T>>;
+struct RemoveCref
+{
+    using Type = T;
+};
+
+template <class T>
+struct RemoveCref<const T>
+{
+    using Type = T;
+};
+
+template <class T>
+struct RemoveCref<T&>
+{
+    using Type = T;
+};
+
+template <class T>
+struct RemoveCref<const T&>
+{
+    using Type = T;
+};
+
+template <class T>
+struct RemoveCref<T&&>
+{
+    using Type = T;
+};
+
+template <class T>
+struct RemoveCref<const T&&>
+{
+    using Type = T;
+};
+
+template <class T>
+using RemoveCrefT = typename detail::RemoveCref<T>::Type;
 
 #ifdef AGRPC_HAS_CONCEPTS
 template <class T>

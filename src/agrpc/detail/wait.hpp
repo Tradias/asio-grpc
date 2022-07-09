@@ -30,7 +30,7 @@ struct AlarmInitFunction
     grpc::Alarm& alarm;
     Deadline deadline;
 
-    void operator()(agrpc::GrpcContext& grpc_context, void* tag)
+    void operator()(agrpc::GrpcContext& grpc_context, void* tag) const
     {
         alarm.Set(grpc_context.get_completion_queue(), deadline, tag);
     }
@@ -51,10 +51,10 @@ struct AlarmCancellationHandler
     {
     }
 
-    void operator()() { alarm.Cancel(); }
+    void operator()() const { alarm.Cancel(); }
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-    void operator()(asio::cancellation_type type)
+    void operator()(asio::cancellation_type type) const
     {
         if (static_cast<bool>(type & asio::cancellation_type::all))
         {
