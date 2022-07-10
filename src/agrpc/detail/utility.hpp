@@ -64,6 +64,15 @@ struct RemoveCref<const T&&>
 template <class T>
 using RemoveCrefT = typename detail::RemoveCref<T>::Type;
 
+template <class T>
+struct TypeIdentity
+{
+    using Type = T;
+};
+
+template <class T>
+using TypeIdentityT = typename detail::TypeIdentity<T>::Type;
+
 #ifdef AGRPC_HAS_CONCEPTS
 template <class T>
 concept IS_EQUALITY_COMPARABLE = requires(const T& lhs, const T& rhs)
@@ -134,28 +143,23 @@ struct SecondThenVariadic
 };
 
 template <class First, class Second, bool = std::is_empty_v<Second> && !std::is_final_v<Second>>
-class CompressedPair : private Second
+class CompressedPair final : private Second
 {
   public:
     CompressedPair() = default;
 
     template <class T, class U>
-    constexpr CompressedPair(T&& first, U&& second) noexcept(
-        std::is_nothrow_constructible_v<First, T&&>&& std::is_nothrow_constructible_v<Second, U&&>)
-        : Second(std::forward<U>(second)), first_(std::forward<T>(first))
+    constexpr CompressedPair(T&& first, U&& second) : Second(std::forward<U>(second)), first_(std::forward<T>(first))
     {
     }
 
     template <class T>
-    constexpr explicit CompressedPair(T&& first) noexcept(
-        std::is_nothrow_constructible_v<First, T&&>&& std::is_nothrow_default_constructible_v<Second>)
-        : Second(), first_(std::forward<T>(first))
+    constexpr explicit CompressedPair(T&& first) : Second(), first_(std::forward<T>(first))
     {
     }
 
     template <class U, class... Args>
-    constexpr CompressedPair(detail::SecondThenVariadic, U&& second, Args&&... args) noexcept(
-        std::is_nothrow_constructible_v<First, Args&&...>&& std::is_nothrow_constructible_v<Second, U&&>)
+    constexpr CompressedPair(detail::SecondThenVariadic, U&& second, Args&&... args)
         : Second(std::forward<U>(second)), first_(std::forward<Args>(args)...)
     {
     }
@@ -173,28 +177,23 @@ class CompressedPair : private Second
 };
 
 template <class First, class Second>
-class CompressedPair<First, Second, false>
+class CompressedPair<First, Second, false> final
 {
   public:
     CompressedPair() = default;
 
     template <class T, class U>
-    constexpr CompressedPair(T&& first, U&& second) noexcept(
-        std::is_nothrow_constructible_v<First, T&&>&& std::is_nothrow_constructible_v<Second, U&&>)
-        : first_(std::forward<T>(first)), second_(std::forward<U>(second))
+    constexpr CompressedPair(T&& first, U&& second) : first_(std::forward<T>(first)), second_(std::forward<U>(second))
     {
     }
 
     template <class T>
-    constexpr explicit CompressedPair(T&& first) noexcept(
-        std::is_nothrow_constructible_v<First, T&&>&& std::is_nothrow_default_constructible_v<Second>)
-        : first_(std::forward<T>(first)), second_()
+    constexpr explicit CompressedPair(T&& first) : first_(std::forward<T>(first)), second_()
     {
     }
 
     template <class U, class... Args>
-    constexpr CompressedPair(detail::SecondThenVariadic, U&& second, Args&&... args) noexcept(
-        std::is_nothrow_constructible_v<First, Args&&...>&& std::is_nothrow_constructible_v<Second, U&&>)
+    constexpr CompressedPair(detail::SecondThenVariadic, U&& second, Args&&... args)
         : first_(std::forward<Args>(args)...), second_(std::forward<U>(second))
     {
     }

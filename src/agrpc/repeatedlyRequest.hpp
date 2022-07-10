@@ -19,6 +19,7 @@
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/repeatedlyRequest.hpp>
 #include <agrpc/detail/repeatedlyRequestSender.hpp>
+#include <agrpc/detail/rpc.hpp>
 #include <agrpc/detail/rpcContext.hpp>
 #include <agrpc/detail/useSender.hpp>
 #include <agrpc/repeatedlyRequestContext.hpp>
@@ -81,8 +82,9 @@ class RepeatedlyRequestFn
 {
   private:
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    template <class RPC, class Service, class RequestHandler, class CompletionToken>
-    static auto impl(RPC rpc, Service& service, RequestHandler&& request_handler, CompletionToken token)
+    template <class RPC, class RequestHandler, class CompletionToken>
+    static auto impl(RPC rpc, detail::GetServiceT<RPC>& service, RequestHandler&& request_handler,
+                     CompletionToken token)
     {
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
         using RPCContext = detail::RPCContextForRPCT<RPC>;
@@ -103,8 +105,9 @@ class RepeatedlyRequestFn
     }
 #endif
 
-    template <class RPC, class Service, class RequestHandler>
-    static auto impl(RPC rpc, Service& service, RequestHandler&& request_handler, detail::UseSender token)
+    template <class RPC, class RequestHandler>
+    static auto impl(RPC rpc, detail::GetServiceT<RPC>& service, RequestHandler&& request_handler,
+                     detail::UseSender token)
     {
         return detail::RepeatedlyRequestSender{token.grpc_context, rpc, service,
                                                std::forward<RequestHandler>(request_handler)};
@@ -112,23 +115,11 @@ class RepeatedlyRequestFn
 
   public:
     /**
-     * @brief Overload for unary and server-streaming RPCs
+     * @brief Overload for typed RPCs
      */
-    template <class RPC, class Service, class Request, class Responder, class RequestHandler,
-              class CompletionToken = detail::NoOp>
-    auto operator()(detail::ServerMultiArgRequest<RPC, Request, Responder> rpc, Service& service,
-                    RequestHandler&& request_handler, CompletionToken&& token = {}) const
-    {
-        return RepeatedlyRequestFn::impl(rpc, service, std::forward<RequestHandler>(request_handler),
-                                         std::forward<CompletionToken>(token));
-    }
-
-    /**
-     * @brief Overload for client-streaming and bidirectional RPCs
-     */
-    template <class RPC, class Service, class Responder, class RequestHandler, class CompletionToken = detail::NoOp>
-    auto operator()(detail::ServerSingleArgRequest<RPC, Responder> rpc, Service& service,
-                    RequestHandler&& request_handler, CompletionToken&& token = {}) const
+    template <class RPC, class RequestHandler, class CompletionToken = detail::NoOp>
+    auto operator()(RPC rpc, detail::GetServiceT<RPC>& service, RequestHandler&& request_handler,
+                    CompletionToken&& token = {}) const
     {
         return RepeatedlyRequestFn::impl(rpc, service, std::forward<RequestHandler>(request_handler),
                                          std::forward<CompletionToken>(token));

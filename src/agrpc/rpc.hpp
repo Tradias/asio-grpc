@@ -62,16 +62,15 @@ struct RequestFn
      * completion signature is `void(bool)`. `true` indicates that the RPC has indeed been started. If it is `false`
      * then the server has been Shutdown before this particular call got matched to an incoming RPC.
      */
-    template <class Service, class DerivedService, class Request, class Responder,
-              class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(detail::ServerMultiArgRequest<Service, Request, Responder> rpc, DerivedService& service,
-                    grpc::ServerContext& server_context, Request& request, Responder& responder,
-                    CompletionToken&& token = {}) const
+    template <class Service, class Request, class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(detail::ServerMultiArgRequest<Service, Request, Responder> rpc,
+                    detail::TypeIdentityT<Service>& service, grpc::ServerContext& server_context, Request& request,
+                    Responder& responder, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
-            detail::ServerMultiArgRequestInitFunction<Service, DerivedService, Request, Responder>{
-                rpc, service, server_context, request, responder},
+            detail::ServerMultiArgRequestInitFunction<Service, Request, Responder>{rpc, service, server_context,
+                                                                                   request, responder},
             std::forward<CompletionToken>(token));
     }
 
@@ -93,15 +92,13 @@ struct RequestFn
      * completion signature is `void(bool)`. `true` indicates that the RPC has indeed been started. If it is `false`
      * then the server has been Shutdown before this particular call got matched to an incoming RPC.
      */
-    template <class Service, class DerivedService, class Responder,
-              class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(detail::ServerSingleArgRequest<Service, Responder> rpc, DerivedService& service,
+    template <class Service, class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
+    auto operator()(detail::ServerSingleArgRequest<Service, Responder> rpc, detail::TypeIdentityT<Service>& service,
                     grpc::ServerContext& server_context, Responder& responder, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
-            detail::ServerSingleArgRequestInitFunction<Service, DerivedService, Responder>{rpc, service, server_context,
-                                                                                           responder},
+            detail::ServerSingleArgRequestInitFunction<Service, Responder>{rpc, service, server_context, responder},
             std::forward<CompletionToken>(token));
     }
 

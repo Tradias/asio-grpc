@@ -52,6 +52,34 @@ template <class Service, class Responder>
 using ServerSingleArgRequest = void (Service::*)(grpc::ServerContext*, Responder*, grpc::CompletionQueue*,
                                                  grpc::ServerCompletionQueue*, void*);
 
+struct GenericRPCMarker
+{
+};
+
+template <class RPC>
+struct GetService;
+
+template <class ServiceT, class Request, class Responder>
+struct GetService<detail::ServerMultiArgRequest<ServiceT, Request, Responder>>
+{
+    using Type = ServiceT;
+};
+
+template <class ServiceT, class Responder>
+struct GetService<detail::ServerSingleArgRequest<ServiceT, Responder>>
+{
+    using Type = ServiceT;
+};
+
+template <>
+struct GetService<detail::GenericRPCMarker>
+{
+    using Type = grpc::AsyncGenericService;
+};
+
+template <class RPC>
+using GetServiceT = typename detail::GetService<RPC>::Type;
+
 template <class Message, class Responder>
 struct ReadInitFunction
 {
@@ -298,11 +326,11 @@ struct ClientGenericStreamingRequestInitFunction
     }
 };
 
-template <class Service, class DerivedService, class Request, class Responder>
+template <class Service, class Request, class Responder>
 struct ServerMultiArgRequestInitFunction
 {
     detail::ServerMultiArgRequest<Service, Request, Responder> rpc;
-    DerivedService& service;
+    Service& service;
     grpc::ServerContext& server_context;
     Request& request;
     Responder& responder;
@@ -314,11 +342,11 @@ struct ServerMultiArgRequestInitFunction
     }
 };
 
-template <class Service, class DerivedService, class Responder>
+template <class Service, class Responder>
 struct ServerSingleArgRequestInitFunction
 {
     detail::ServerSingleArgRequest<Service, Responder> rpc;
-    DerivedService& service;
+    Service& service;
     grpc::ServerContext& server_context;
     Responder& responder;
 
