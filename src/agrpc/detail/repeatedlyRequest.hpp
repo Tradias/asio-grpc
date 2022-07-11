@@ -231,7 +231,7 @@ struct BasicRepeatedlyRequestInitiator
                     detail::GetServiceT<RPC>& service) const
     {
         using TrackingCompletionHandler = detail::WorkTrackingCompletionHandler<CompletionHandler>;
-        using DecayedRequestHandler = std::decay_t<RequestHandler>;
+        using DecayedRequestHandler = detail::RemoveCrefT<RequestHandler>;
         const auto [executor, allocator] = detail::get_associated_executor_and_allocator(request_handler);
         auto& grpc_context = detail::query_grpc_context(executor);
         grpc_context.work_started();

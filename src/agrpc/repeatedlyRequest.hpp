@@ -22,6 +22,7 @@
 #include <agrpc/detail/rpc.hpp>
 #include <agrpc/detail/rpcContext.hpp>
 #include <agrpc/detail/useSender.hpp>
+#include <agrpc/detail/utility.hpp>
 #include <agrpc/repeatedlyRequestContext.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -88,7 +89,7 @@ class RepeatedlyRequestFn
     {
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
         using RPCContext = detail::RPCContextForRPCT<RPC>;
-        if constexpr (detail::INVOKE_RESULT_IS_CO_SPAWNABLE<std::decay_t<RequestHandler>&,
+        if constexpr (detail::INVOKE_RESULT_IS_CO_SPAWNABLE<detail::RemoveCrefT<RequestHandler>&,
                                                             typename RPCContext::Signature>)
         {
             return asio::async_initiate<CompletionToken, void()>(detail::RepeatedlyRequestAwaitableInitiator{}, token,

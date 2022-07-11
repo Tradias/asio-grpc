@@ -19,6 +19,7 @@
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpcContextImplementation.hpp>
 #include <agrpc/detail/operation.hpp>
+#include <agrpc/detail/utility.hpp>
 #include <agrpc/grpcContext.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -26,25 +27,35 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <bool IsIntrusivelyListable, class Signature, class CompletionHandler, class Allocator>
-auto allocate_operation(CompletionHandler&& completion_handler, const Allocator& allocator)
+detail::AllocatedPointerT<
+    detail::Operation<IsIntrusivelyListable, detail::RemoveCrefT<CompletionHandler>, Allocator, Signature>, Allocator>
+allocate_operation(CompletionHandler&& completion_handler, const Allocator& allocator)
+
 {
-    using Operation = detail::Operation<IsIntrusivelyListable, std::decay_t<CompletionHandler>, Allocator, Signature>;
+    using Operation =
+        detail::Operation<IsIntrusivelyListable, detail::RemoveCrefT<CompletionHandler>, Allocator, Signature>;
     return detail::allocate<Operation>(allocator, allocator, std::forward<CompletionHandler>(completion_handler));
 }
 
 template <bool IsIntrusivelyListable, class Signature, class CompletionHandler, class Allocator>
-auto allocate_local_operation(const agrpc::GrpcContext&, CompletionHandler&& completion_handler,
-                              const Allocator& allocator)
+detail::AllocatedPointerT<
+    detail::Operation<IsIntrusivelyListable, detail::RemoveCrefT<CompletionHandler>, Allocator, Signature>, Allocator>
+allocate_local_operation(const agrpc::GrpcContext&, CompletionHandler&& completion_handler, const Allocator& allocator)
+
 {
     return detail::allocate_operation<IsIntrusivelyListable, Signature>(
         std::forward<CompletionHandler>(completion_handler), allocator);
 }
 
 template <bool IsIntrusivelyListable, class Signature, class CompletionHandler, class T>
-auto allocate_local_operation(agrpc::GrpcContext& grpc_context, CompletionHandler&& completion_handler,
-                              const std::allocator<T>&)
+detail::AllocatedPointerT<
+    detail::LocalOperation<IsIntrusivelyListable, detail::RemoveCrefT<CompletionHandler>, Signature>,
+    detail::GrpcContextLocalAllocator>
+allocate_local_operation(agrpc::GrpcContext& grpc_context, CompletionHandler&& completion_handler,
+                         const std::allocator<T>&)
+
 {
-    using Operation = detail::LocalOperation<IsIntrusivelyListable, std::decay_t<CompletionHandler>, Signature>;
+    using Operation = detail::LocalOperation<IsIntrusivelyListable, detail::RemoveCrefT<CompletionHandler>, Signature>;
     return detail::allocate<Operation>(grpc_context.get_allocator(),
                                        std::forward<CompletionHandler>(completion_handler));
 }
@@ -103,7 +114,7 @@ void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Comple
     {
         if (is_running_in_this_thread)
         {
-            std::decay_t<CompletionHandler> ch{std::forward<CompletionHandler>(completion_handler)};
+            auto ch{std::forward<CompletionHandler>(completion_handler)};
             ch();
             return;
         }

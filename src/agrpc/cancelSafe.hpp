@@ -22,6 +22,7 @@
 
 #include <agrpc/detail/cancelSafe.hpp>
 #include <agrpc/detail/typeErasedCompletionHandler.hpp>
+#include <agrpc/detail/utility.hpp>
 #include <agrpc/detail/workTrackingCompletionHandler.hpp>
 
 #include <cassert>
@@ -168,8 +169,9 @@ class CancelSafe<void(CompletionArgs...)>
     template <class CompletionHandler>
     void emplace_completion_handler(CompletionHandler&& ch)
     {
-        completion_handler.template emplace<detail::WorkTrackingCompletionHandler<std::decay_t<CompletionHandler>>>(
-            std::forward<CompletionHandler>(ch));
+        completion_handler
+            .template emplace<detail::WorkTrackingCompletionHandler<detail::RemoveCrefT<CompletionHandler>>>(
+                std::forward<CompletionHandler>(ch));
     }
 
     template <class CancellationSlot>

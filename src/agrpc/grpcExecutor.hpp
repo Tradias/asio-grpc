@@ -86,11 +86,7 @@ class BasicGrpcExecutor
      *
      * Thread-safe
      */
-    [[nodiscard]] constexpr allocator_type get_allocator() const
-        noexcept(std::is_nothrow_copy_constructible_v<allocator_type>)
-    {
-        return this->allocator();
-    }
+    [[nodiscard]] constexpr allocator_type get_allocator() const noexcept { return this->allocator(); }
 
     /**
      * @brief Compare two GrpcExecutor for equality
@@ -513,6 +509,7 @@ struct agrpc::asio::traits::execute_member<agrpc::BasicGrpcExecutor<Allocator, O
 {
     static constexpr bool is_valid = true;
     static constexpr bool is_noexcept = false;
+
     using result_type = void;
 };
 #endif
@@ -525,6 +522,7 @@ struct agrpc::asio::traits::require_member<agrpc::BasicGrpcExecutor<Allocator, O
 {
     static constexpr bool is_valid = true;
     static constexpr bool is_noexcept = true;
+
     using result_type = agrpc::BasicGrpcExecutor<Allocator, agrpc::detail::set_blocking_never(Options, false)>;
 };
 
@@ -534,6 +532,7 @@ struct agrpc::asio::traits::require_member<agrpc::BasicGrpcExecutor<Allocator, O
 {
     static constexpr bool is_valid = true;
     static constexpr bool is_noexcept = true;
+
     using result_type = agrpc::BasicGrpcExecutor<Allocator, agrpc::detail::set_blocking_never(Options, true)>;
 };
 
@@ -543,6 +542,7 @@ struct agrpc::asio::traits::require_member<agrpc::BasicGrpcExecutor<Allocator, O
 {
     static constexpr bool is_valid = true;
     static constexpr bool is_noexcept = true;
+
     using result_type = agrpc::BasicGrpcExecutor<Allocator, agrpc::detail::set_outstanding_work_tracked(Options, true)>;
 };
 
@@ -552,6 +552,7 @@ struct agrpc::asio::traits::require_member<agrpc::BasicGrpcExecutor<Allocator, O
 {
     static constexpr bool is_valid = true;
     static constexpr bool is_noexcept = true;
+
     using result_type =
         agrpc::BasicGrpcExecutor<Allocator, agrpc::detail::set_outstanding_work_tracked(Options, false)>;
 };
@@ -562,6 +563,7 @@ struct agrpc::asio::traits::require_member<agrpc::BasicGrpcExecutor<Allocator, O
 {
     static constexpr bool is_valid = true;
     static constexpr bool is_noexcept = true;
+
     using result_type = agrpc::BasicGrpcExecutor<std::allocator<void>, Options>;
 };
 
@@ -571,6 +573,7 @@ struct agrpc::asio::traits::require_member<agrpc::BasicGrpcExecutor<Allocator, O
 {
     static constexpr bool is_valid = true;
     static constexpr bool is_noexcept = true;
+
     using result_type = agrpc::BasicGrpcExecutor<OtherAllocator, Options>;
 };
 #endif
@@ -583,6 +586,7 @@ struct agrpc::asio::traits::prefer_member<agrpc::BasicGrpcExecutor<Allocator, Op
 {
     static constexpr bool is_valid = true;
     static constexpr bool is_noexcept = true;
+
     using result_type = agrpc::BasicGrpcExecutor<Allocator, Options>;
 };
 
@@ -592,6 +596,7 @@ struct agrpc::asio::traits::prefer_member<agrpc::BasicGrpcExecutor<Allocator, Op
 {
     static constexpr bool is_valid = true;
     static constexpr bool is_noexcept = true;
+
     // Relationship continuation is not supported
     using result_type = agrpc::BasicGrpcExecutor<Allocator, Options>;
 };
@@ -654,6 +659,7 @@ struct agrpc::asio::traits::query_static_constexpr_member<
 {
     static constexpr bool is_valid = true;
     static constexpr bool is_noexcept = true;
+
     using result_type = agrpc::asio::execution::mapping_t::thread_t;
 
     static constexpr result_type value() noexcept { return result_type(); }
@@ -668,24 +674,17 @@ struct agrpc::asio::traits::query_member<agrpc::BasicGrpcExecutor<Allocator, Opt
 {
     static constexpr bool is_valid = true;
     static constexpr bool is_noexcept = true;
+
     using result_type = agrpc::GrpcContext&;
 };
 
-template <class Allocator, std::uint32_t Options>
-struct agrpc::asio::traits::query_member<agrpc::BasicGrpcExecutor<Allocator, Options>,
-                                         agrpc::asio::execution::allocator_t<void>>
-{
-    static constexpr bool is_valid = true;
-    static constexpr bool is_noexcept = true;
-    using result_type = Allocator;
-};
-
-template <class Allocator, std::uint32_t Options, typename OtherAllocator>
+template <class Allocator, std::uint32_t Options, class OtherAllocator>
 struct agrpc::asio::traits::query_member<agrpc::BasicGrpcExecutor<Allocator, Options>,
                                          agrpc::asio::execution::allocator_t<OtherAllocator>>
 {
     static constexpr bool is_valid = true;
     static constexpr bool is_noexcept = true;
+
     using result_type = Allocator;
 };
 #endif

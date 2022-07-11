@@ -37,14 +37,11 @@ class AllocatedPointer
 {
   private:
     using Traits = std::allocator_traits<Allocator>;
+    using Pointer = typename Traits::pointer;
+    using Value = typename Traits::value_type;
 
   public:
-    using allocator_type = Allocator;
-
-    constexpr AllocatedPointer(typename Traits::pointer ptr, const allocator_type& allocator) noexcept
-        : impl(ptr, allocator)
-    {
-    }
+    AllocatedPointer(Pointer ptr, const Allocator& allocator) noexcept : impl(ptr, allocator) {}
 
     AllocatedPointer(const AllocatedPointer&) = delete;
     AllocatedPointer& operator=(const AllocatedPointer&) = delete;
@@ -71,51 +68,46 @@ class AllocatedPointer
         }
     }
 
-    constexpr decltype(auto) get() noexcept { return this->impl.first(); }
+    Pointer& get() noexcept { return this->impl.first(); }
 
-    constexpr decltype(auto) get() const noexcept { return this->impl.first(); }
+    Pointer get() const noexcept { return this->impl.first(); }
 
-    constexpr decltype(auto) get_allocator() noexcept { return this->impl.second(); }
+    Allocator& get_allocator() noexcept { return this->impl.second(); }
 
-    constexpr decltype(auto) get_allocator() const noexcept { return this->impl.second(); }
+    const Allocator& get_allocator() const noexcept { return this->impl.second(); }
 
-    constexpr decltype(auto) operator->() noexcept { return this->get(); }
+    Pointer operator->() const noexcept { return this->get(); }
 
-    constexpr decltype(auto) operator->() const noexcept { return this->get(); }
+    Value& operator*() const noexcept { return *this->get(); }
 
-    constexpr decltype(auto) operator*() noexcept { return *this->get(); }
+    Pointer release() noexcept { return std::exchange(this->get(), nullptr); }
 
-    constexpr decltype(auto) operator*() const noexcept { return *this->get(); }
-
-    constexpr decltype(auto) release() noexcept { return std::exchange(this->get(), nullptr); }
-
-    constexpr void reset() noexcept
+    void reset() noexcept
     {
         detail::deallocate(this->get_allocator(), this->get());
         this->release();
     }
 
   private:
-    detail::CompressedPair<typename Traits::pointer, allocator_type> impl;
+    detail::CompressedPair<Pointer, Allocator> impl;
 };
 
 template <class T, class Allocator>
 AllocatedPointer(T*, const Allocator&)
     -> AllocatedPointer<typename std::allocator_traits<Allocator>::template rebind_alloc<T>>;
 
+template <class T, class Allocator>
+using AllocatedPointerT = detail::AllocatedPointer<typename std::allocator_traits<Allocator>::template rebind_alloc<T>>;
+
 template <class Allocator>
 class AllocationGuard
 {
   private:
     using Traits = std::allocator_traits<Allocator>;
+    using Pointer = typename Traits::pointer;
 
   public:
-    using allocator_type = Allocator;
-
-    constexpr AllocationGuard(typename Traits::pointer ptr, allocator_type allocator) noexcept
-        : ptr(ptr), allocator(std::move(allocator))
-    {
-    }
+    AllocationGuard(Pointer ptr, Allocator& allocator) noexcept : ptr(ptr), allocator(allocator) {}
 
     AllocationGuard(const AllocationGuard&) = delete;
     AllocationGuard(AllocationGuard&&) = delete;
@@ -130,29 +122,29 @@ class AllocationGuard
         }
     }
 
-    constexpr detail::AllocatedPointer<Allocator> release() noexcept
+    detail::AllocatedPointer<Allocator> release() noexcept
     {
         this->is_allocated = false;
         return {this->ptr, this->allocator};
     }
 
-    constexpr auto& get_allocator() noexcept { return allocator; }
+    Allocator& get_allocator() noexcept { return allocator; }
 
   private:
-    typename Traits::pointer ptr;
-    allocator_type allocator;
+    Pointer ptr;
+    Allocator& allocator;
     bool is_allocated{true};
 };
 
 template <class T, class Allocator, class... Args>
-auto allocate(Allocator allocator, Args&&... args)
+detail::AllocatedPointerT<T, Allocator> allocate(Allocator allocator, Args&&... args)
 {
     using Traits = typename std::allocator_traits<Allocator>::template rebind_traits<T>;
     using ReboundAllocator = typename Traits::allocator_type;
     ReboundAllocator rebound_allocator{allocator};
     auto* ptr = Traits::allocate(rebound_allocator, 1);
     detail::AllocationGuard<ReboundAllocator> guard{ptr, rebound_allocator};
-    Traits::construct(guard.get_allocator(), ptr, std::forward<Args>(args)...);
+    Traits::construct(rebound_allocator, ptr, std::forward<Args>(args)...);
     return guard.release();
 }
 }
