@@ -23,6 +23,7 @@
 #include <agrpc/grpcInitiate.hpp>
 #include <agrpc/rpc.hpp>
 #include <agrpc/wait.hpp>
+#include <grpcpp/create_channel.h>
 
 #include <cstddef>
 #include <optional>
