@@ -258,7 +258,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline no ca
                                        {
                                            CHECK(co_await agrpc::finish(*reader, response, status));
                                        });
-            CHECK_LT(std::chrono::system_clock::now(), not_too_exceed);
+            CHECK_LT(test::now(), not_too_exceed);
         });
     CHECK_EQ(grpc::StatusCode::OK, status.error_code());
     CHECK(server_finish_ok);
@@ -293,7 +293,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline and c
                                        {
                                            CHECK(co_await agrpc::finish(*reader, response, status));
                                        });
-            CHECK_LT(std::chrono::system_clock::now(), not_too_exceed);
+            CHECK_LT(test::now(), not_too_exceed);
         });
     CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
     CHECK_FALSE(server_finish_ok);

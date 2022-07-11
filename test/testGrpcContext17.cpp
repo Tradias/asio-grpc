@@ -325,11 +325,11 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wai
                 [&](auto&& yield)
                 {
                     grpc::Alarm alarm;
-                    start = std::chrono::system_clock::now();
+                    start = test::now();
                     ok = agrpc::wait(alarm, test::hundred_milliseconds_from_now(), yield);
                 });
     grpc_context.run();
-    CHECK_LE(std::chrono::milliseconds(100), std::chrono::system_clock::now() - start);
+    CHECK_LE(std::chrono::milliseconds(100), test::now() - start);
     CHECK(ok);
 }
 
@@ -341,7 +341,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post an Alarm and check time")
     asio::post(grpc_context,
                [&]()
                {
-                   start = std::chrono::system_clock::now();
+                   start = test::now();
                    agrpc::wait(alarm, test::hundred_milliseconds_from_now(),
                                asio::bind_executor(grpc_context,
                                                    [&](bool)
@@ -350,7 +350,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post an Alarm and check time")
                                                    }));
                });
     grpc_context.run();
-    CHECK_LE(std::chrono::milliseconds(100), std::chrono::system_clock::now() - start);
+    CHECK_LE(std::chrono::milliseconds(100), test::now() - start);
     CHECK(ok);
 }
 
@@ -540,7 +540,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll() with grpc::Alarm")
     asio::post(io_context,
                [&]()
                {
-                   agrpc::wait(alarm, std::chrono::system_clock::now(),
+                   agrpc::wait(alarm, test::now(),
                                asio::bind_executor(grpc_context,
                                                    [&](bool)
                                                    {
@@ -573,7 +573,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll_completion_queue()")
                               {
                                   post_completed = true;
                               });
-                   agrpc::wait(alarm, std::chrono::system_clock::now(),
+                   agrpc::wait(alarm, test::now(),
                                asio::bind_executor(grpc_context,
                                                    [&](bool)
                                                    {
@@ -661,7 +661,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run() is not blocked by re
     asio::post(grpc_context,
                [&]()
                {
-                   agrpc::wait(alarm, std::chrono::system_clock::now(),
+                   agrpc::wait(alarm, test::now(),
                                asio::bind_executor(grpc_context,
                                                    [&](bool)
                                                    {
@@ -691,7 +691,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() times out corr
 {
     grpc::Alarm alarm;
     agrpc::wait(alarm, test::one_seconds_from_now(), asio::bind_executor(grpc_context, [](bool) {}));
-    CHECK_FALSE(grpc_context.run_until(std::chrono::system_clock::now()));
+    CHECK_FALSE(grpc_context.run_until(test::now()));
     CHECK_FALSE(grpc_context.run_until(test::ten_milliseconds_from_now()));
 }
 }

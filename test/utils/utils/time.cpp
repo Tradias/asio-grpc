@@ -18,33 +18,29 @@
 
 namespace test
 {
+std::chrono::system_clock::time_point now() { return std::chrono::system_clock::now(); }
+
 std::chrono::system_clock::time_point ten_milliseconds_from_now()
 {
-    return std::chrono::system_clock::now() + std::chrono::milliseconds(10);
+    return test::now() + std::chrono::milliseconds(10);
 }
 
 std::chrono::system_clock::time_point two_hundred_milliseconds_from_now()
 {
-    return std::chrono::system_clock::now() + std::chrono::milliseconds(200);
+    return test::now() + std::chrono::milliseconds(200);
 }
 
 std::chrono::system_clock::time_point hundred_milliseconds_from_now()
 {
-    return std::chrono::system_clock::now() + std::chrono::milliseconds(100);
+    return test::now() + std::chrono::milliseconds(100);
 }
 
 std::chrono::system_clock::time_point five_hundred_milliseconds_from_now()
 {
-    return std::chrono::system_clock::now() + std::chrono::milliseconds(500);
+    return test::now() + std::chrono::milliseconds(500);
 }
 
-std::chrono::system_clock::time_point one_seconds_from_now()
-{
-    return std::chrono::system_clock::now() + std::chrono::seconds(1);
-}
+std::chrono::system_clock::time_point one_seconds_from_now() { return test::now() + std::chrono::seconds(1); }
 
-std::chrono::system_clock::time_point five_seconds_from_now()
-{
-    return std::chrono::system_clock::now() + std::chrono::seconds(5);
-}
+std::chrono::system_clock::time_point five_seconds_from_now() { return test::now() + std::chrono::seconds(5); }
 }  // namespace test

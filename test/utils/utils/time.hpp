@@ -19,6 +19,8 @@
 
 namespace test
 {
+std::chrono::system_clock::time_point now();
+
 std::chrono::system_clock::time_point ten_milliseconds_from_now();
 
 std::chrono::system_clock::time_point two_hundred_milliseconds_from_now();

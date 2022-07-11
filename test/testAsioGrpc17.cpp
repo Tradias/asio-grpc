@@ -57,13 +57,13 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "grpc_initiate NotifyOnStateChange
 {
     bool actual_ok{false};
     bool expected_ok{true};
-    auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(5);
+    auto deadline = test::five_seconds_from_now();
     SUBCASE("success") {}
     SUBCASE("deadline expires")
     {
         actual_ok = true;
         expected_ok = false;
-        deadline = std::chrono::system_clock::now() - std::chrono::seconds(5);
+        deadline = test::now() - std::chrono::seconds(5);
     }
     const auto state = channel->GetState(true);
     agrpc::grpc_initiate(
