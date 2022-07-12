@@ -31,10 +31,10 @@ class MemoryResourceAllocator
 
     MemoryResourceAllocator() = default;
 
-    constexpr explicit MemoryResourceAllocator(Resource* resource) noexcept : resource(resource) {}
+    explicit MemoryResourceAllocator(Resource* resource) noexcept : resource(resource) {}
 
     template <class U>
-    constexpr MemoryResourceAllocator(const detail::MemoryResourceAllocator<U, Resource>& other) noexcept
+    MemoryResourceAllocator(const detail::MemoryResourceAllocator<U, Resource>& other) noexcept
         : resource(other.resource)
     {
     }
@@ -47,15 +47,15 @@ class MemoryResourceAllocator
     void deallocate(T* p, std::size_t n) noexcept { this->resource->deallocate(p, n * sizeof(T), alignof(T)); }
 
     template <class U>
-    friend constexpr bool operator==(const MemoryResourceAllocator& lhs,
-                                     const detail::MemoryResourceAllocator<U, Resource>& rhs) noexcept
+    friend bool operator==(const MemoryResourceAllocator& lhs,
+                           const detail::MemoryResourceAllocator<U, Resource>& rhs) noexcept
     {
         return lhs.resource == rhs.resource;
     }
 
     template <class U>
-    friend constexpr bool operator!=(const MemoryResourceAllocator& lhs,
-                                     const detail::MemoryResourceAllocator<U, Resource>& rhs) noexcept
+    friend bool operator!=(const MemoryResourceAllocator& lhs,
+                           const detail::MemoryResourceAllocator<U, Resource>& rhs) noexcept
     {
         return lhs.resource != rhs.resource;
     }

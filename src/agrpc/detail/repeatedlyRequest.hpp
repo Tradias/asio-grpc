@@ -91,7 +91,7 @@ class RepeatedlyRequestOperationBase
     }
 
   protected:
-    [[nodiscard]] constexpr bool is_stopped() const noexcept
+    [[nodiscard]] bool is_stopped() const noexcept
     {
         if constexpr (IsStoppable)
         {
@@ -139,14 +139,11 @@ class RepeatedlyRequestOperation
     using Service = detail::GetServiceT<RPC>;
     using RPCContext = detail::RPCContextForRPCT<RPC>;
 
-    static constexpr auto ON_STOP_COMPLETE =
-        &detail::default_do_complete<RepeatedlyRequestOperation, detail::TypeErasedNoArgOperation>;
-
   public:
     template <class Ch, class Rh>
     RepeatedlyRequestOperation(Rh&& request_handler, RPC rpc, Service& service, Ch&& completion_handler)
         : GrpcBase(&RepeatedlyRequestOperation::on_request_complete),
-          NoArgBase(ON_STOP_COMPLETE),
+          NoArgBase(&detail::default_do_complete<RepeatedlyRequestOperation, detail::TypeErasedNoArgOperation>),
           detail::RepeatedlyRequestOperationBase<RequestHandler, RPC, CompletionHandler, IsStoppable>(
               std::forward<Rh>(request_handler), rpc, service, std::forward<Ch>(completion_handler))
     {
@@ -169,10 +166,11 @@ class RepeatedlyRequestOperation
 
   private:
     static void on_request_complete(GrpcBase* op, detail::InvokeHandler invoke_handler, bool ok,
-                                    detail::GrpcContextLocalAllocator local_allocator)
+                                    detail::GrpcContextLocalAllocator)
     {
         auto* self = static_cast<RepeatedlyRequestOperation*>(op);
-        detail::AllocatedPointer ptr{self->rpc_context, self->get_allocator()};
+        const auto allocator = self->get_allocator();
+        detail::AllocatedPointer ptr{self->rpc_context, allocator};
         auto& grpc_context = self->grpc_context();
         auto& request_handler = self->request_handler();
         if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
@@ -200,7 +198,7 @@ class RepeatedlyRequestOperation
         {
             ptr.reset();
             detail::WorkFinishedOnExit on_exit{grpc_context};
-            ON_STOP_COMPLETE(self, invoke_handler, local_allocator);
+            detail::destroy_deallocate(self, allocator);
         }
     }
 
@@ -319,18 +317,15 @@ template <std::size_t BufferSize>
 class BufferOperation : public detail::TypeErasedNoArgOperation
 {
   public:
-    constexpr BufferOperation() noexcept : detail::TypeErasedNoArgOperation(&do_complete) {}
+    BufferOperation() noexcept : detail::TypeErasedNoArgOperation(&BufferOperation::do_complete) {}
 
-    constexpr auto one_shot_allocator() noexcept
-    {
-        return detail::OneShotAllocator<std::byte, BufferSize>{this->buffer};
-    }
+    auto one_shot_allocator() noexcept { return detail::OneShotAllocator<std::byte, BufferSize>{this->buffer}; }
 
   private:
     static void do_complete(detail::TypeErasedNoArgOperation* op, detail::InvokeHandler,
                             detail::GrpcContextLocalAllocator) noexcept
     {
-        detail::deallocate(std::allocator<BufferOperation>{}, static_cast<BufferOperation*>(op));
+        detail::destroy_deallocate(static_cast<BufferOperation*>(op), std::allocator<BufferOperation>{});
     }
 
     std::byte buffer[BufferSize];

@@ -39,14 +39,14 @@ class OneShotAllocator
 
     OneShotAllocator() = default;
 
-    constexpr explicit OneShotAllocator(void* buffer) noexcept : buffer(buffer) {}
+    explicit OneShotAllocator(void* buffer) noexcept : buffer(buffer) {}
 
     template <class U>
-    constexpr OneShotAllocator(const detail::OneShotAllocator<U, Capacity>& other) noexcept : buffer(other.buffer)
+    OneShotAllocator(const detail::OneShotAllocator<U, Capacity>& other) noexcept : buffer(other.buffer)
     {
     }
 
-    [[nodiscard]] constexpr T* allocate([[maybe_unused]] std::size_t n) noexcept
+    [[nodiscard]] T* allocate([[maybe_unused]] std::size_t n) noexcept
     {
         static_assert(Capacity >= sizeof(T), "OneShotAllocator has insufficient capacity");
         assert(Capacity >= n * sizeof(T));
@@ -55,18 +55,16 @@ class OneShotAllocator
         return static_cast<T*>(ptr);
     }
 
-    static constexpr void deallocate(T*, std::size_t) noexcept {}
+    static void deallocate(T*, std::size_t) noexcept {}
 
     template <class U, std::size_t OtherCapacity>
-    friend constexpr bool operator==(const OneShotAllocator& lhs,
-                                     const detail::OneShotAllocator<U, OtherCapacity>& rhs) noexcept
+    friend bool operator==(const OneShotAllocator& lhs, const detail::OneShotAllocator<U, OtherCapacity>& rhs) noexcept
     {
         return lhs.buffer == rhs.buffer;
     }
 
     template <class U, std::size_t OtherCapacity>
-    friend constexpr bool operator!=(const OneShotAllocator& lhs,
-                                     const detail::OneShotAllocator<U, OtherCapacity>& rhs) noexcept
+    friend bool operator!=(const OneShotAllocator& lhs, const detail::OneShotAllocator<U, OtherCapacity>& rhs) noexcept
     {
         return lhs.buffer != rhs.buffer;
     }

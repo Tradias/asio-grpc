@@ -30,9 +30,7 @@ template <class CompletionHandler>
 CompletionHandler deallocate_completion_handler(CompletionHandler* completion_handler) noexcept
 {
     auto local_completion_handler{std::move(*completion_handler)};
-    auto allocator = asio::get_associated_allocator(local_completion_handler);
-    using Allocator = typename std::allocator_traits<decltype(allocator)>::template rebind_alloc<CompletionHandler>;
-    detail::deallocate<Allocator>(allocator, completion_handler);
+    detail::destroy_deallocate(completion_handler, asio::get_associated_allocator(local_completion_handler));
     return local_completion_handler;
 }
 

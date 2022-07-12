@@ -176,7 +176,7 @@ struct unstoppable_token
 template <class Receiver>
 constexpr unstoppable_token get_stop_token(Receiver&&) noexcept
 {
-    return {};
+    return unstoppable_token{};
 }
 
 template <class>

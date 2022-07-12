@@ -25,14 +25,6 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class Allocator>
-void deallocate(Allocator allocator, typename std::allocator_traits<Allocator>::pointer ptr) noexcept
-{
-    using Traits = std::allocator_traits<Allocator>;
-    Traits::destroy(allocator, ptr);
-    Traits::deallocate(allocator, ptr, 1);
-}
-
-template <class Allocator>
 class AllocatedPointer
 {
   private:
@@ -64,7 +56,7 @@ class AllocatedPointer
     {
         if (this->get())
         {
-            detail::deallocate(this->get_allocator(), this->get());
+            AllocatedPointer::destroy_deallocate(this->get_allocator(), this->get());
         }
     }
 
@@ -84,11 +76,17 @@ class AllocatedPointer
 
     void reset() noexcept
     {
-        detail::deallocate(this->get_allocator(), this->get());
+        AllocatedPointer::destroy_deallocate(this->get_allocator(), this->get());
         this->release();
     }
 
   private:
+    static void destroy_deallocate(Allocator& allocator, Pointer ptr) noexcept
+    {
+        Traits::destroy(allocator, ptr);
+        Traits::deallocate(allocator, ptr, 1);
+    }
+
     detail::CompressedPair<Pointer, Allocator> impl;
 };
 
@@ -137,7 +135,7 @@ class AllocationGuard
 };
 
 template <class T, class Allocator, class... Args>
-detail::AllocatedPointerT<T, Allocator> allocate(Allocator allocator, Args&&... args)
+detail::AllocatedPointerT<T, Allocator> allocate(const Allocator& allocator, Args&&... args)
 {
     using Traits = typename std::allocator_traits<Allocator>::template rebind_traits<T>;
     using ReboundAllocator = typename Traits::allocator_type;
@@ -146,6 +144,16 @@ detail::AllocatedPointerT<T, Allocator> allocate(Allocator allocator, Args&&... 
     detail::AllocationGuard<ReboundAllocator> guard{ptr, rebound_allocator};
     Traits::construct(rebound_allocator, ptr, std::forward<Args>(args)...);
     return guard.release();
+}
+
+template <class T, class Allocator>
+void destroy_deallocate(T* ptr, const Allocator& allocator) noexcept
+{
+    using Traits = typename std::allocator_traits<Allocator>::template rebind_traits<T>;
+    using ReboundAllocator = typename Traits::allocator_type;
+    ReboundAllocator rebound_allocator{allocator};
+    Traits::destroy(rebound_allocator, ptr);
+    Traits::deallocate(rebound_allocator, ptr, 1);
 }
 }
 
