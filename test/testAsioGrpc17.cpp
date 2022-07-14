@@ -206,23 +206,24 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unary stackless coroutine")
 #include <boost/asio/unyield.hpp>
 #endif
 
-template <bool Decision, class Stub>
-auto choose_client_rpc()
-{
-    if constexpr (Decision)
-    {
-        return &Stub::AsyncBidirectionalStreaming;
-    }
-    else
-    {
-        return &Stub::PrepareAsyncBidirectionalStreaming;
-    }
-}
+#define choose_client_rpc(Decision, Async, PrepareAsync) \
+    []                                                   \
+    {                                                    \
+        if constexpr (Decision)                          \
+        {                                                \
+            return &Async;                               \
+        }                                                \
+        else                                             \
+        {                                                \
+            return &PrepareAsync;                        \
+        }                                                \
+    }()
 
 TEST_CASE_TEMPLATE("yield_context server streaming", Stub, test::v1::Test::Stub, test::v1::Test::StubInterface)
 {
     constexpr bool IS_STUB_INTERFACE = std::is_same_v<test::v1::Test::StubInterface, Stub>;
-    const auto client_rpc = choose_client_rpc<IS_STUB_INTERFACE, Stub>();
+    const auto client_rpc =
+        choose_client_rpc(IS_STUB_INTERFACE, Stub::AsyncServerStreaming, Stub::PrepareAsyncServerStreaming);
     test::GrpcClientServerTest test;
     Stub& test_stub = *test.stub;
     bool use_write_and_finish{false};
@@ -291,7 +292,8 @@ TEST_CASE_TEMPLATE("yield_context server streaming", Stub, test::v1::Test::Stub,
 TEST_CASE_TEMPLATE("yield_context client streaming", Stub, test::v1::Test::Stub, test::v1::Test::StubInterface)
 {
     constexpr bool IS_STUB_INTERFACE = std::is_same_v<test::v1::Test::StubInterface, Stub>;
-    const auto client_rpc = choose_client_rpc<IS_STUB_INTERFACE, Stub>();
+    const auto client_rpc =
+        choose_client_rpc(IS_STUB_INTERFACE, Stub::AsyncClientStreaming, Stub::PrepareAsyncClientStreaming);
     test::GrpcClientServerTest test;
     Stub& test_stub = *test.stub;
     bool use_client_convenience{false};
@@ -382,7 +384,8 @@ TEST_CASE_TEMPLATE("yield_context unary", Stub, test::v1::Test::Stub, test::v1::
 TEST_CASE_TEMPLATE("yield_context bidirectional streaming", Stub, test::v1::Test::Stub, test::v1::Test::StubInterface)
 {
     constexpr bool IS_STUB_INTERFACE = std::is_same_v<test::v1::Test::StubInterface, Stub>;
-    const auto client_rpc = choose_client_rpc<IS_STUB_INTERFACE, Stub>();
+    const auto client_rpc = choose_client_rpc(IS_STUB_INTERFACE, Stub::AsyncBidirectionalStreaming,
+                                              Stub::PrepareAsyncBidirectionalStreaming);
     test::GrpcClientServerTest test;
     Stub& test_stub = *test.stub;
     bool use_write_and_finish{false};
@@ -524,7 +527,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest,
     auto token = agrpc::bind_allocator(
         allocator, asio::bind_executor(asio::any_io_executor{grpc_context.get_executor()}, [](auto&&) {}));
     test::msg::Request request;
-    agrpc::request(&test::v1::Test::Stub::AsyncServerStreaming, *stub, client_context, request, token);
+    agrpc::request(&test::v1::Test::Stub::PrepareAsyncServerStreaming, *stub, client_context, request, token);
     grpc_context.run();
     auto expected = sizeof(void*) * 4;
     CHECK_LT(expected, sizeof(token));

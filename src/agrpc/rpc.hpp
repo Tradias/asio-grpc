@@ -126,50 +126,6 @@ struct RequestFn
             std::forward<CompletionToken>(token));
     }
 
-#ifdef AGRPC_ASIO_HAS_CO_AWAIT
-    /**
-     * @brief Convenience function for starting a unary request
-     *
-     * Example:
-     *
-     * @snippet client.cpp request-unary-client-side-await
-     *
-     * @note
-     * For better performance use:
-     * @snippet client.cpp request-unary-client-side
-     * instead.
-     *
-     * @param rpc A pointer to the async version of the RPC method. The async version always starts with `Async`.
-     * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
-     * `example::v1::Example::Stub`.
-     */
-    template <class Stub, class DerivedStub, class Request, class Responder, class Executor = asio::any_io_executor>
-    auto operator()(detail::ClientUnaryRequest<Stub, Request, Responder> rpc, DerivedStub& stub,
-                    grpc::ClientContext& client_context, const Request& request,
-                    asio::use_awaitable_t<Executor> token = {}) const ->
-        typename asio::async_result<asio::use_awaitable_t<Executor>, void(Responder)>::return_type
-    {
-        auto* completion_queue = co_await agrpc::get_completion_queue(token);
-        co_return (detail::unwrap_unique_ptr(stub).*rpc)(&client_context, request, completion_queue);
-    }
-
-    /**
-     * @brief Convenience function for starting a unary request
-     *
-     * Takes `std::unique_ptr<grpc::ClientAsyncResponseReader<Response>>` as an output parameter, otherwise identical
-     * to: `operator()(ClientUnaryRequest, Stub&, ClientContext&, const Request&, use_awaitable_t<Executor>)`
-     */
-    template <class Stub, class DerivedStub, class Request, class Responder, class Executor = asio::any_io_executor>
-    auto operator()(detail::ClientUnaryRequest<Stub, Request, Responder> rpc, DerivedStub& stub,
-                    grpc::ClientContext& client_context, const Request& request, Responder& reader,
-                    asio::use_awaitable_t<Executor> token = {}) const ->
-        typename asio::async_result<asio::use_awaitable_t<Executor>, void()>::return_type
-    {
-        auto* completion_queue = co_await agrpc::get_completion_queue(token);
-        reader = (detail::unwrap_unique_ptr(stub).*rpc)(&client_context, request, completion_queue);
-    }
-#endif
-
     /**
      * @brief Convenience function for starting a unary request
      *
@@ -179,8 +135,7 @@ struct RequestFn
     auto operator()(detail::ClientUnaryRequest<Stub, Request, Responder> rpc, DerivedStub& stub,
                     grpc::ClientContext& client_context, const Request& request, agrpc::GrpcContext& grpc_context) const
     {
-        return (detail::unwrap_unique_ptr(stub).*rpc)(&client_context, request,
-                                                      agrpc::get_completion_queue(grpc_context));
+        return (detail::unwrap_unique_ptr(stub).*rpc)(&client_context, request, grpc_context.get_completion_queue());
     }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
@@ -226,8 +181,7 @@ struct RequestFn
      * @since 1.8.0
      */
     template <class Stub, class DerivedStub, class Request, class Responder,
-              class CompletionToken = agrpc::DefaultCompletionToken,
-              class = std::enable_if_t<!std::is_same_v<agrpc::GrpcContext, detail::RemoveCrefT<CompletionToken>>>>
+              class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(detail::PrepareAsyncClientServerStreamingRequest<Stub, Request, Responder> rpc, DerivedStub& stub,
                     grpc::ClientContext& client_context, const Request& request, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
@@ -510,8 +464,7 @@ struct RequestFn
     auto operator()(const std::string& method, grpc::GenericStub& stub, grpc::ClientContext& client_context,
                     const grpc::ByteBuffer& request, agrpc::GrpcContext& grpc_context) const
     {
-        auto reader =
-            stub.PrepareUnaryCall(&client_context, method, request, agrpc::get_completion_queue(grpc_context));
+        auto reader = stub.PrepareUnaryCall(&client_context, method, request, grpc_context.get_completion_queue());
         reader->StartCall();
         return reader;
     }

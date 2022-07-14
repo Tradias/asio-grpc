@@ -41,7 +41,7 @@ void client_perform_client_streaming_success(test::v1::Test::Stub& stub, asio::y
     test::msg::Response response;
     const auto client_context = test::create_client_context();
     const auto [writer, ok] =
-        agrpc::request(&test::v1::Test::Stub::AsyncClientStreaming, stub, *client_context, response, yield);
+        agrpc::request(&test::v1::Test::Stub::PrepareAsyncClientStreaming, stub, *client_context, response, yield);
     CHECK(ok);
     test::client_perform_client_streaming_success(response, *writer, yield, options);
 }

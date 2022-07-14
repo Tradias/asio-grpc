@@ -28,8 +28,8 @@ unifex::task<void> unified_executors(example::v1::Example::Stub& stub, agrpc::Gr
     grpc::ClientContext client_context;
     example::v1::Request request;
     std::unique_ptr<grpc::ClientAsyncReader<example::v1::Response>> reader;
-    co_await agrpc::request(&example::v1::Example::Stub::AsyncServerStreaming, stub, client_context, request, reader,
-                            agrpc::use_sender(grpc_context));
+    co_await agrpc::request(&example::v1::Example::Stub::PrepareAsyncServerStreaming, stub, client_context, request,
+                            reader, agrpc::use_sender(grpc_context));
     example::v1::Response response;
     co_await agrpc::read(*reader, response, agrpc::use_sender(grpc_context));
     grpc::Status status;

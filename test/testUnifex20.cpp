@@ -516,8 +516,8 @@ TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex repeatedly_request client stre
                 test::msg::Response response;
                 grpc::ClientContext new_client_context;
                 std::unique_ptr<grpc::ClientAsyncWriter<test::msg::Request>> writer;
-                CHECK(co_await agrpc::request(&test::v1::Test::Stub::AsyncClientStreaming, *stub, new_client_context,
-                                              writer, response, use_sender()));
+                CHECK(co_await agrpc::request(&test::v1::Test::Stub::PrepareAsyncClientStreaming, *stub,
+                                              new_client_context, writer, response, use_sender()));
                 test::msg::Request request;
                 request.set_integer(42);
                 CHECK(co_await agrpc::write(*writer, request, use_sender()));

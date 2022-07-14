@@ -62,7 +62,7 @@ unifex::task<void> make_server_streaming_request(example::v1::Example::Stub& stu
     example::v1::Request request;
     request.set_integer(10);
     std::unique_ptr<grpc::ClientAsyncReader<example::v1::Response>> reader;
-    abort_if_not(co_await agrpc::request(&example::v1::Example::Stub::AsyncServerStreaming, stub, client_context,
+    abort_if_not(co_await agrpc::request(&example::v1::Example::Stub::PrepareAsyncServerStreaming, stub, client_context,
                                          request, reader, agrpc::use_sender(grpc_context)));
 
     example::v1::Response response;

@@ -240,8 +240,8 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "RepeatedlyRequestContext member fu
                         [&](asio::yield_context yield)
                         {
                             test::msg::Response response;
-                            auto [writer, ok] = agrpc::request(&test::v1::Test::Stub::AsyncClientStreaming, *stub,
-                                                               client_context, response, yield);
+                            auto [writer, ok] = agrpc::request(&test::v1::Test::Stub::PrepareAsyncClientStreaming,
+                                                               *stub, client_context, response, yield);
                             agrpc::writes_done(*writer, yield);
                             grpc::Status status;
                             agrpc::finish(*writer, status, yield);
