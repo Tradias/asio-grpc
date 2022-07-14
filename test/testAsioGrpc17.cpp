@@ -206,9 +206,23 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unary stackless coroutine")
 #include <boost/asio/unyield.hpp>
 #endif
 
+template <bool Decision, class Stub>
+auto choose_client_rpc()
+{
+    if constexpr (Decision)
+    {
+        return &Stub::AsyncBidirectionalStreaming;
+    }
+    else
+    {
+        return &Stub::PrepareAsyncBidirectionalStreaming;
+    }
+}
+
 TEST_CASE_TEMPLATE("yield_context server streaming", Stub, test::v1::Test::Stub, test::v1::Test::StubInterface)
 {
     constexpr bool IS_STUB_INTERFACE = std::is_same_v<test::v1::Test::StubInterface, Stub>;
+    const auto client_rpc = choose_client_rpc<IS_STUB_INTERFACE, Stub>();
     test::GrpcClientServerTest test;
     Stub& test_stub = *test.stub;
     bool use_write_and_finish{false};
@@ -256,11 +270,10 @@ TEST_CASE_TEMPLATE("yield_context server streaming", Stub, test::v1::Test::Stub,
             {
                 if (use_client_convenience)
                 {
-                    return agrpc::request(&Stub::AsyncServerStreaming, test_stub, test.client_context, request, yield);
+                    return agrpc::request(client_rpc, test_stub, test.client_context, request, yield);
                 }
                 test::ClientAsyncReader<IS_STUB_INTERFACE> reader;
-                bool ok =
-                    agrpc::request(&Stub::AsyncServerStreaming, test_stub, test.client_context, request, reader, yield);
+                bool ok = agrpc::request(client_rpc, test_stub, test.client_context, request, reader, yield);
                 return std::pair{std::move(reader), ok};
             }();
             CHECK(ok);
@@ -278,6 +291,7 @@ TEST_CASE_TEMPLATE("yield_context server streaming", Stub, test::v1::Test::Stub,
 TEST_CASE_TEMPLATE("yield_context client streaming", Stub, test::v1::Test::Stub, test::v1::Test::StubInterface)
 {
     constexpr bool IS_STUB_INTERFACE = std::is_same_v<test::v1::Test::StubInterface, Stub>;
+    const auto client_rpc = choose_client_rpc<IS_STUB_INTERFACE, Stub>();
     test::GrpcClientServerTest test;
     Stub& test_stub = *test.stub;
     bool use_client_convenience{false};
@@ -319,11 +333,10 @@ TEST_CASE_TEMPLATE("yield_context client streaming", Stub, test::v1::Test::Stub,
             {
                 if (use_client_convenience)
                 {
-                    return agrpc::request(&Stub::AsyncClientStreaming, test_stub, test.client_context, response, yield);
+                    return agrpc::request(client_rpc, test_stub, test.client_context, response, yield);
                 }
                 test::ClientAsyncWriter<IS_STUB_INTERFACE> writer;
-                bool ok = agrpc::request(&Stub::AsyncClientStreaming, test_stub, test.client_context, writer, response,
-                                         yield);
+                bool ok = agrpc::request(client_rpc, test_stub, test.client_context, writer, response, yield);
                 return std::pair{std::move(writer), ok};
             }();
             CHECK(ok);
@@ -369,6 +382,7 @@ TEST_CASE_TEMPLATE("yield_context unary", Stub, test::v1::Test::Stub, test::v1::
 TEST_CASE_TEMPLATE("yield_context bidirectional streaming", Stub, test::v1::Test::Stub, test::v1::Test::StubInterface)
 {
     constexpr bool IS_STUB_INTERFACE = std::is_same_v<test::v1::Test::StubInterface, Stub>;
+    const auto client_rpc = choose_client_rpc<IS_STUB_INTERFACE, Stub>();
     test::GrpcClientServerTest test;
     Stub& test_stub = *test.stub;
     bool use_write_and_finish{false};
@@ -419,9 +433,9 @@ TEST_CASE_TEMPLATE("yield_context bidirectional streaming", Stub, test::v1::Test
             {
                 if (use_client_convenience)
                 {
-                    return agrpc::request(&Stub::AsyncBidirectionalStreaming, test_stub, test.client_context, yield);
+                    return agrpc::request(client_rpc, test_stub, test.client_context, yield);
                 }
-                else if (set_initial_metadata_corked)
+                if (set_initial_metadata_corked)
                 {
                     test.client_context.set_initial_metadata_corked(true);
                     return std::pair{test_stub.AsyncBidirectionalStreaming(
@@ -429,8 +443,7 @@ TEST_CASE_TEMPLATE("yield_context bidirectional streaming", Stub, test::v1::Test
                                      true};
                 }
                 test::ClientAsyncReaderWriter<IS_STUB_INTERFACE> reader_writer;
-                bool ok = agrpc::request(&Stub::AsyncBidirectionalStreaming, test_stub, test.client_context,
-                                         reader_writer, yield);
+                bool ok = agrpc::request(client_rpc, test_stub, test.client_context, reader_writer, yield);
                 return std::pair{std::move(reader_writer), ok};
             }();
             if (!set_initial_metadata_corked)

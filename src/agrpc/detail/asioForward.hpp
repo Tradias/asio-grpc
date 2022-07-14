@@ -237,14 +237,14 @@ using SchedulerT = decltype(detail::exec::get_scheduler(std::declval<T>()));
 template <class Receiver, class Callback>
 using StopCallbackTypeT = typename detail::exec::stop_token_type_t<Receiver>::template callback_type<Callback>;
 
-template <class T>
-constexpr auto is_stop_ever_possible_helper(int) -> std::bool_constant<(T{}.stop_possible())>;
-
-template <class>
-constexpr auto is_stop_ever_possible_helper(long) -> std::true_type;
+template <class T, class = std::false_type>
+inline constexpr bool IS_STOP_EVER_POSSIBLE_V = true;
 
 template <class T>
-inline constexpr bool IS_STOP_EVER_POSSIBLE_V = decltype(detail::is_stop_ever_possible_helper<T>(0))::value;
+using IsStopEverPossibleHelper = std::bool_constant<(T{}.stop_possible())>;
+
+template <class T>
+inline constexpr bool IS_STOP_EVER_POSSIBLE_V<T, detail::IsStopEverPossibleHelper<T>> = false;
 
 template <class Executor, class Allocator>
 struct ExecutorAndAllocator
