@@ -22,17 +22,21 @@
 
 DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 {
-struct MockResponseReader : grpc::ClientAsyncResponseReaderInterface<test::msg::Response>
+struct MockTest : test::GrpcContextTest
+{
+    testing::NiceMock<test::v1::MockTestStub> stub;
+};
+
+struct MockClientAsyncResponseReader : grpc::ClientAsyncResponseReaderInterface<test::msg::Response>
 {
     MOCK_METHOD0(StartCall, void());
     MOCK_METHOD1(ReadInitialMetadata, void(void*));
     MOCK_METHOD3(Finish, void(test::msg::Response*, grpc::Status*, void*));
 };
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "mock unary request")
+TEST_CASE_FIXTURE(MockTest, "mock unary request")
 {
-    testing::NiceMock<test::v1::MockTestStub> mock_stub;
-    testing::NiceMock<MockResponseReader> mock_reader;
+    testing::NiceMock<MockClientAsyncResponseReader> mock_reader;
     EXPECT_CALL(mock_reader, Finish)
         .WillOnce(
             [&](test::msg::Response* response, grpc::Status*, void* tag)
@@ -40,17 +44,56 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "mock unary request")
                 response->set_integer(42);
                 agrpc::process_grpc_tag(grpc_context, tag, true);
             });
-    EXPECT_CALL(mock_stub, AsyncUnaryRaw).WillOnce(testing::Return(&mock_reader));
+    EXPECT_CALL(stub, AsyncUnaryRaw).WillOnce(testing::Return(&mock_reader));
     test::spawn_and_run(grpc_context,
                         [&](auto&& yield)
                         {
                             grpc::ClientContext client_context;
                             test::msg::Request request;
-                            const auto writer = agrpc::request(&test::v1::Test::StubInterface::AsyncUnary, mock_stub,
+                            const auto writer = agrpc::request(&test::v1::Test::StubInterface::AsyncUnary, stub,
                                                                client_context, request, grpc_context);
                             grpc::Status status;
                             test::msg::Response response;
                             agrpc::finish(writer, response, status, yield);
+                            CHECK_EQ(42, response.integer());
+                        });
+}
+
+struct MockClientAsyncReader : grpc::ClientAsyncReaderInterface<test::msg::Response>
+{
+    MOCK_METHOD1(StartCall, void(void*));
+    MOCK_METHOD1(ReadInitialMetadata, void(void*));
+    MOCK_METHOD2(Finish, void(grpc::Status*, void*));
+    MOCK_METHOD2(Read, void(test::msg::Response*, void*));
+};
+
+TEST_CASE_FIXTURE(MockTest, "mock server streaming request")
+{
+    auto mock_reader = std::make_unique<testing::NiceMock<MockClientAsyncReader>>();
+    EXPECT_CALL(*mock_reader, Read)
+        .WillOnce(
+            [&](test::msg::Response* response, void* tag)
+            {
+                response->set_integer(42);
+                agrpc::process_grpc_tag(grpc_context, tag, true);
+            });
+    EXPECT_CALL(*mock_reader, StartCall)
+        .WillOnce(
+            [&](void* tag)
+            {
+                agrpc::process_grpc_tag(grpc_context, tag, true);
+            });
+    EXPECT_CALL(stub, PrepareAsyncServerStreamingRaw).WillOnce(testing::Return(mock_reader.release()));
+    test::spawn_and_run(grpc_context,
+                        [&](auto&& yield)
+                        {
+                            grpc::ClientContext client_context;
+                            test::msg::Request request;
+                            const auto [writer, ok] =
+                                agrpc::request(&test::v1::Test::StubInterface::PrepareAsyncServerStreaming, stub,
+                                               client_context, request, yield);
+                            test::msg::Response response;
+                            agrpc::read(writer, response, yield);
                             CHECK_EQ(42, response.integer());
                         });
 }
