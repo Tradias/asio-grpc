@@ -319,7 +319,10 @@ class BufferOperation : public detail::TypeErasedNoArgOperation
   public:
     BufferOperation() noexcept : detail::TypeErasedNoArgOperation(&BufferOperation::do_complete) {}
 
-    auto one_shot_allocator() noexcept { return detail::OneShotAllocator<std::byte, BufferSize>{this->buffer}; }
+    detail::OneShotAllocator<std::byte, BufferSize> one_shot_allocator() noexcept
+    {
+        return detail::OneShotAllocator<std::byte, BufferSize>{this->buffer};
+    }
 
   private:
     static void do_complete(detail::TypeErasedNoArgOperation* op, detail::InvokeHandler,

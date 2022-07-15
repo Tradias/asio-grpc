@@ -115,7 +115,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
                 void deallocate() noexcept
                 {
                     auto& local_grpc_context = repeat_operation.grpc_context;
-                    detail::AllocatedPointer{&repeat_operation, repeat_operation.get_allocator()};
+                    detail::destroy_deallocate(&repeat_operation, repeat_operation.get_allocator());
                     local_grpc_context.work_finished();
                 }
 

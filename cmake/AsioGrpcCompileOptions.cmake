@@ -28,6 +28,7 @@ endif()
 target_compile_options(
     asio-grpc-compile-options
     INTERFACE $<$<CXX_COMPILER_ID:MSVC>:/W4
+              /wd4996
               /permissive-
               /Zc:preprocessor
               /Zc:__cplusplus
@@ -38,7 +39,8 @@ target_compile_options(
               /Zc:throwingNew>
               $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall
               -Wextra
-              -pedantic-errors>
+              -pedantic-errors
+              -Wno-deprecated-declarations>
               $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-self-move>)
 
 if("${CMAKE_GENERATOR}" STRGREATER_EQUAL "Visual Studio")

@@ -276,7 +276,7 @@ struct AssociatedHandler
     [[nodiscard]] allocator_type get_allocator() const noexcept { return allocator; }
 };
 
-void repeatedly_request_example(example::v1::Example::AsyncService& service, agrpc::GrpcContext& grpc_context)
+void repeatedly_request_example(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
 {
     agrpc::repeatedly_request(
         &example::v1::Example::AsyncService::RequestUnary, service,
@@ -293,7 +293,7 @@ void repeatedly_request_example(example::v1::Example::AsyncService& service, agr
 /* [repeatedly-request-callback] */
 
 /* [repeatedly-request-awaitable] */
-void register_client_streaming_handler(example::v1::Example::AsyncService& service, agrpc::GrpcContext& grpc_context)
+void register_client_streaming_handler(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
 {
     agrpc::repeatedly_request(
         &example::v1::Example::AsyncService::RequestClientStreaming, service,

@@ -52,24 +52,14 @@ asio::awaitable<void> unary(agrpc::GrpcContext& grpc_context, example::v1::Examp
     silence_unused(read_ok, finish_ok);
 }
 
-asio::awaitable<void> unary_awaitable(example::v1::Example::Stub& stub)
-{
-    /* [request-unary-client-side-await] */
-    grpc::ClientContext client_context;
-    example::v1::Request request;
-    std::unique_ptr<grpc::ClientAsyncResponseReader<example::v1::Response>> reader =
-        co_await agrpc::request(&example::v1::Example::Stub::AsyncUnary, stub, client_context, request);
-    /* [request-unary-client-side-await] */
-}
-
 asio::awaitable<void> client_streaming(example::v1::Example::Stub& stub)
 {
     /* [request-client-streaming-client-side] */
     grpc::ClientContext client_context;
     example::v1::Response response;
     std::unique_ptr<grpc::ClientAsyncWriter<example::v1::Request>> writer;
-    bool request_ok = co_await agrpc::request(&example::v1::Example::Stub::AsyncClientStreaming, stub, client_context,
-                                              writer, response, asio::use_awaitable);
+    bool request_ok = co_await agrpc::request(&example::v1::Example::Stub::PrepareAsyncClientStreaming, stub,
+                                              client_context, writer, response, asio::use_awaitable);
     /* [request-client-streaming-client-side] */
 
     /* [write-client-streaming-client-side] */
@@ -98,14 +88,14 @@ asio::awaitable<void> client_streaming_alt(example::v1::Example::Stub& stub)
     /* [request-client-streaming-client-side-alt] */
     grpc::ClientContext client_context;
     example::v1::Response response;
-    auto [writer, request_ok] = co_await agrpc::request(&example::v1::Example::Stub::AsyncClientStreaming, stub,
+    auto [writer, request_ok] = co_await agrpc::request(&example::v1::Example::Stub::PrepareAsyncClientStreaming, stub,
                                                         client_context, response, asio::use_awaitable);
     /* [request-client-streaming-client-side-alt] */
 
     silence_unused(writer, request_ok);
 }
 
-void client_streaming_corked(example::v1::Example::Stub& stub, agrpc::GrpcContext& grpc_context)
+void client_streaming_corked(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
     /* [request-client-streaming-client-side-corked] */
     grpc::ClientContext client_context;
@@ -124,8 +114,8 @@ asio::awaitable<void> server_streaming(example::v1::Example::Stub& stub)
     grpc::ClientContext client_context;
     example::v1::Request request;
     std::unique_ptr<grpc::ClientAsyncReader<example::v1::Response>> reader;
-    bool request_ok = co_await agrpc::request(&example::v1::Example::Stub::AsyncServerStreaming, stub, client_context,
-                                              request, reader, asio::use_awaitable);
+    bool request_ok = co_await agrpc::request(&example::v1::Example::Stub::PrepareAsyncServerStreaming, stub,
+                                              client_context, request, reader, asio::use_awaitable);
     /* [request-server-streaming-client-side] */
 
     /* [read-server-streaming-client-side] */
@@ -146,7 +136,7 @@ asio::awaitable<void> server_streaming_alt(example::v1::Example::Stub& stub)
     /* [request-server-streaming-client-side-alt] */
     grpc::ClientContext client_context;
     example::v1::Request request;
-    auto [reader, request_ok] = co_await agrpc::request(&example::v1::Example::Stub::AsyncServerStreaming, stub,
+    auto [reader, request_ok] = co_await agrpc::request(&example::v1::Example::Stub::PrepareAsyncServerStreaming, stub,
                                                         client_context, request, asio::use_awaitable);
     /* [request-server-streaming-client-side-alt] */
 
@@ -158,7 +148,7 @@ asio::awaitable<void> bidirectional_streaming(example::v1::Example::Stub& stub)
     /* [request-bidirectional-client-side] */
     grpc::ClientContext client_context;
     std::unique_ptr<grpc::ClientAsyncReaderWriter<example::v1::Request, example::v1::Response>> reader_writer;
-    bool request_ok = co_await agrpc::request(&example::v1::Example::Stub::AsyncBidirectionalStreaming, stub,
+    bool request_ok = co_await agrpc::request(&example::v1::Example::Stub::PrepareAsyncBidirectionalStreaming, stub,
                                               client_context, reader_writer, asio::use_awaitable);
     /* [request-bidirectional-client-side] */
 
@@ -192,14 +182,14 @@ asio::awaitable<void> bidirectional_streaming_alt(example::v1::Example::Stub& st
 {
     /* [request-bidirectional-client-side-alt] */
     grpc::ClientContext client_context;
-    auto [reader_writer, request_ok] = co_await agrpc::request(&example::v1::Example::Stub::AsyncBidirectionalStreaming,
-                                                               stub, client_context, asio::use_awaitable);
+    auto [reader_writer, request_ok] = co_await agrpc::request(
+        &example::v1::Example::Stub::PrepareAsyncBidirectionalStreaming, stub, client_context, asio::use_awaitable);
     /* [request-bidirectional-client-side-alt] */
 
     silence_unused(reader_writer, request_ok);
 }
 
-void bidirectional_streaming_corked(example::v1::Example::Stub& stub, agrpc::GrpcContext& grpc_context)
+void bidirectional_streaming_corked(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
     /* [request-client-bidirectional-client-side-corked] */
     grpc::ClientContext client_context;
@@ -221,8 +211,8 @@ asio::awaitable<void> client_generic_streaming_request(grpc::GenericStub& stub)
     silence_unused(request_ok);
 }
 
-void client_generic_streaming_corked(grpc::GenericStub& stub, const grpc::ByteBuffer& request,
-                                     agrpc::GrpcContext& grpc_context)
+void client_generic_streaming_corked(agrpc::GrpcContext& grpc_context, grpc::GenericStub& stub,
+                                     const grpc::ByteBuffer& request)
 {
     /* [request-client-generic-streaming-corked] */
     grpc::ClientContext client_context;
@@ -273,7 +263,8 @@ asio::awaitable<void> server_streaming_cancel_safe(agrpc::GrpcContext& grpc_cont
     grpc::ClientContext client_context;
     example::v1::Request request;
     std::unique_ptr<grpc::ClientAsyncReader<example::v1::Response>> reader;
-    co_await agrpc::request(&example::v1::Example::Stub::AsyncServerStreaming, stub, client_context, request, reader);
+    co_await agrpc::request(&example::v1::Example::Stub::PrepareAsyncServerStreaming, stub, client_context, request,
+                            reader);
 
     agrpc::GrpcCancelSafe safe;  // equivalent to agrpc::CancelSafe<void(bool)>
 

@@ -52,10 +52,10 @@ TEST_CASE_TEMPLATE("awaitable server streaming", Stub, test::v1::Test::Stub, tes
             test::msg::Request request;
             request.set_integer(42);
             test::ClientAsyncReader<IS_STUB_INTERFACE> reader;
-            CHECK(
-                co_await agrpc::request(&Stub::AsyncServerStreaming, test_stub, test.client_context, request, reader));
+            CHECK(co_await agrpc::request(&Stub::PrepareAsyncServerStreaming, test_stub, test.client_context, request,
+                                          reader));
             CHECK(std::is_same_v<std::pair<decltype(reader), bool>,
-                                 typename decltype(agrpc::request(&Stub::AsyncServerStreaming, test_stub,
+                                 typename decltype(agrpc::request(&Stub::PrepareAsyncServerStreaming, test_stub,
                                                                   test.client_context, request))::value_type>);
             test::msg::Response response;
             CHECK(co_await agrpc::read(*reader, response));
@@ -90,10 +90,10 @@ TEST_CASE_TEMPLATE("awaitable client streaming", Stub, test::v1::Test::Stub, tes
         {
             test::msg::Response response;
             test::ClientAsyncWriter<IS_STUB_INTERFACE> writer;
-            CHECK(
-                co_await agrpc::request(&Stub::AsyncClientStreaming, test_stub, test.client_context, writer, response));
+            CHECK(co_await agrpc::request(&Stub::PrepareAsyncClientStreaming, test_stub, test.client_context, writer,
+                                          response));
             CHECK(std::is_same_v<std::pair<decltype(writer), bool>,
-                                 typename decltype(agrpc::request(&Stub::AsyncClientStreaming, test_stub,
+                                 typename decltype(agrpc::request(&Stub::PrepareAsyncClientStreaming, test_stub,
                                                                   test.client_context, response))::value_type>);
             test::msg::Request request;
             request.set_integer(42);
@@ -111,8 +111,7 @@ TEST_CASE_TEMPLATE("awaitable unary", Stub, test::v1::Test::Stub, test::v1::Test
     Stub& test_stub = *test.stub;
     bool use_finish_with_error{false};
     SUBCASE("server finish_with_error") { use_finish_with_error = true; }
-    bool use_client_convenience{false};
-    SUBCASE("client use convenience") { use_client_convenience = true; }
+    SUBCASE("server finish") { use_finish_with_error = false; }
     test::co_spawn_and_run(
         test.grpc_context,
         [&]() -> asio::awaitable<void>
@@ -138,16 +137,8 @@ TEST_CASE_TEMPLATE("awaitable unary", Stub, test::v1::Test::Stub, test::v1::Test
             using Reader = test::ClientAsyncResponseReader<std::is_same_v<test::v1::Test::StubInterface, Stub>>;
             test::msg::Request request;
             request.set_integer(42);
-            auto reader = co_await [&]() -> asio::awaitable<Reader>
-            {
-                if (use_client_convenience)
-                {
-                    co_return co_await agrpc::request(&Stub::AsyncUnary, test_stub, test.client_context, request);
-                }
-                Reader reader;
-                co_await agrpc::request(&Stub::AsyncUnary, test_stub, test.client_context, request, reader);
-                co_return reader;
-            }();
+            Reader reader =
+                agrpc::request(&Stub::AsyncUnary, test_stub, test.client_context, request, test.grpc_context);
             test::msg::Response response;
             grpc::Status status;
             CHECK(co_await agrpc::finish(*reader, response, status));
@@ -197,10 +188,10 @@ TEST_CASE_TEMPLATE("awaitable bidirectional streaming", Stub, test::v1::Test::St
         [&]() -> asio::awaitable<void>
         {
             test::ClientAsyncReaderWriter<IS_STUB_INTERFACE> reader_writer;
-            CHECK(co_await agrpc::request(&Stub::AsyncBidirectionalStreaming, test_stub, test.client_context,
+            CHECK(co_await agrpc::request(&Stub::PrepareAsyncBidirectionalStreaming, test_stub, test.client_context,
                                           reader_writer));
             CHECK(std::is_same_v<std::pair<decltype(reader_writer), bool>,
-                                 typename decltype(agrpc::request(&Stub::AsyncBidirectionalStreaming, test_stub,
+                                 typename decltype(agrpc::request(&Stub::PrepareAsyncBidirectionalStreaming, test_stub,
                                                                   test.client_context))::value_type>);
             test::msg::Request request;
             request.set_integer(42);

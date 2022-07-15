@@ -207,7 +207,8 @@ AllocatorBinder(const Allocator& allocator, Target&& target) -> AllocatorBinder<
  * @since 1.5.0
  */
 template <class Allocator, class Target>
-constexpr auto bind_allocator(const Allocator& allocator, Target&& target)
+constexpr agrpc::AllocatorBinder<detail::RemoveCrefT<Target>, Allocator> bind_allocator(const Allocator& allocator,
+                                                                                        Target&& target)
 {
     return agrpc::AllocatorBinder{allocator, std::forward<Target>(target)};
 }

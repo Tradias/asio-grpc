@@ -25,7 +25,7 @@ namespace asio = boost::asio;
 
 // Example showing how to write to generic client that sends a single unary request.
 
-void make_generic_unary_request(grpc::GenericStub& stub, agrpc::GrpcContext& grpc_context,
+void make_generic_unary_request(agrpc::GrpcContext& grpc_context, grpc::GenericStub& stub,
                                 const asio::yield_context& yield)
 {
     example::v1::Request request;
@@ -58,7 +58,7 @@ void make_generic_unary_request(grpc::GenericStub& stub, agrpc::GrpcContext& grp
     abort_if_not(21 == response.integer());
 }
 
-void make_shutdown_request(example::v1::ExampleExt::Stub& stub, agrpc::GrpcContext& grpc_context,
+void make_shutdown_request(agrpc::GrpcContext& grpc_context, example::v1::ExampleExt::Stub& stub,
                            const asio::yield_context& yield)
 {
     grpc::ClientContext client_context;
@@ -85,8 +85,8 @@ int main(int argc, const char** argv)
     asio::spawn(grpc_context,
                 [&](asio::yield_context yield)
                 {
-                    make_generic_unary_request(generic_stub, grpc_context, yield);
-                    make_shutdown_request(stub, grpc_context, yield);
+                    make_generic_unary_request(grpc_context, generic_stub, yield);
+                    make_shutdown_request(grpc_context, stub, yield);
                 });
 
     grpc_context.run();

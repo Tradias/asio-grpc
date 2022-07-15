@@ -53,8 +53,8 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
     google::protobuf::Empty response;
     std::unique_ptr<grpc::ClientAsyncWriter<example::v1::SendFileRequest>> writer;
-    if (!co_await agrpc::request(&example::v1::ExampleExt::Stub::AsyncSendFile, stub, client_context, writer, response,
-                                 buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE)))
+    if (!co_await agrpc::request(&example::v1::ExampleExt::Stub::PrepareAsyncSendFile, stub, client_context, writer,
+                                 response, buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE)))
     {
         co_return false;
     }

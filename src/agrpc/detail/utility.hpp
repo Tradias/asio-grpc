@@ -122,12 +122,6 @@ using ConditionalT = typename Conditional<Condition>::template Type<T, U>;
 
 struct Empty
 {
-    Empty() = default;
-
-    template <class Arg, class... Args>
-    constexpr explicit Empty(Arg&&, Args&&...) noexcept
-    {
-    }
 };
 
 struct NoOp

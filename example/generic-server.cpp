@@ -79,13 +79,13 @@ struct GenericRequestHandler
 
 using ShutdownService = example::v1::ExampleExt::WithAsyncMethod_Shutdown<example::v1::ExampleExt::Service>;
 
-void handle_shutdown_request(ShutdownService& service, grpc::Server& server,
+void handle_shutdown_request(ShutdownService& shutdown_service, grpc::Server& server,
                              std::optional<std::thread>& shutdown_thread, const asio::yield_context& yield)
 {
     grpc::ServerContext server_context;
     grpc::ServerAsyncResponseWriter<google::protobuf::Empty> writer{&server_context};
     google::protobuf::Empty request;
-    agrpc::request(&ShutdownService::RequestShutdown, service, server_context, request, writer, yield);
+    agrpc::request(&ShutdownService::RequestShutdown, shutdown_service, server_context, request, writer, yield);
     agrpc::finish(writer, {}, grpc::Status::OK, yield);
     shutdown_thread.emplace(
         [&]
@@ -110,8 +110,8 @@ int main(int argc, const char** argv)
     builder.RegisterAsyncGenericService(&service);
 
     // All requests will be handled in a generic fashion except the shutdown request:
-    ShutdownService service_ext;
-    builder.RegisterService(&service_ext);
+    ShutdownService shutdown_service;
+    builder.RegisterService(&shutdown_service);
 
     server = builder.BuildAndStart();
     abort_if_not(bool{server});
@@ -119,7 +119,7 @@ int main(int argc, const char** argv)
     asio::spawn(grpc_context,
                 [&](asio::yield_context yield)
                 {
-                    handle_shutdown_request(service_ext, *server, shutdown_thread, yield);
+                    handle_shutdown_request(shutdown_service, *server, shutdown_thread, yield);
                 });
 
     agrpc::repeatedly_request(service, GenericRequestHandler{grpc_context});
