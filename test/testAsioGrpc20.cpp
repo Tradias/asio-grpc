@@ -137,7 +137,8 @@ TEST_CASE_TEMPLATE("awaitable unary", Stub, test::v1::Test::Stub, test::v1::Test
             using Reader = test::ClientAsyncResponseReader<std::is_same_v<test::v1::Test::StubInterface, Stub>>;
             test::msg::Request request;
             request.set_integer(42);
-            auto reader = agrpc::request(&Stub::AsyncUnary, test_stub, test.client_context, request, test.grpc_context);
+            Reader reader =
+                agrpc::request(&Stub::AsyncUnary, test_stub, test.client_context, request, test.grpc_context);
             test::msg::Response response;
             grpc::Status status;
             CHECK(co_await agrpc::finish(*reader, response, status));
