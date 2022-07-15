@@ -123,7 +123,7 @@ asio::awaitable<void> handle_client_streaming_request(
     silence_unused(send_ok, finish_ok);
 }
 
-void register_client_streaming_handler(example::v1::Example::AsyncService& service, agrpc::GrpcContext& grpc_context)
+void register_client_streaming_handler(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
 {
     // Register a handler for all incoming RPCs of this method (Example::ClientStreaming) until the server is being
     // shut down. An API for requesting to handle a single RPC is also available:
@@ -215,6 +215,8 @@ asio::awaitable<void> handle_bidirectional_streaming_request(example::v1::Exampl
 
     silence_unused(finish_ok);
 }
+// ---------------------------------------------------
+//
 
 // ---------------------------------------------------
 // A bidirectional-streaming RPC where the client subscribes to a topic and the server sends the feed for the last
@@ -293,7 +295,7 @@ asio::awaitable<void> handle_topic_subscription(
     co_await agrpc::finish(reader_writer, grpc::Status::OK);
 }
 
-void register_subscription_handler(example::v1::ExampleExt::AsyncService& service, agrpc::GrpcContext& grpc_context)
+void register_subscription_handler(agrpc::GrpcContext& grpc_context, example::v1::ExampleExt::AsyncService& service)
 {
     agrpc::repeatedly_request(&example::v1::ExampleExt::AsyncService::RequestSubscribe, service,
                               asio::bind_executor(grpc_context,
@@ -374,8 +376,8 @@ int main(int argc, const char** argv)
 
     asio::thread_pool thread_pool{1};
 
-    register_client_streaming_handler(service, grpc_context);
-    register_subscription_handler(service_ext, grpc_context);
+    register_client_streaming_handler(grpc_context, service);
+    register_subscription_handler(grpc_context, service_ext);
     asio::co_spawn(
         grpc_context,
         [&]() -> asio::awaitable<void>

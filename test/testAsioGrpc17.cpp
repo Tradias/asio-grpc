@@ -37,15 +37,16 @@ DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 TEST_CASE("agrpc::request and agrpc::wait are noexcept for use_sender")
 {
     using UseSender = decltype(agrpc::use_sender(std::declval<agrpc::GrpcContext&>()));
-    CHECK_FALSE(noexcept(agrpc::request(std::declval<decltype(&test::v1::Test::Stub::AsyncServerStreaming)>(),
+    CHECK_FALSE(noexcept(agrpc::request(std::declval<decltype(&test::v1::Test::Stub::PrepareAsyncServerStreaming)>(),
                                         std::declval<test::v1::Test::Stub&>(), std::declval<grpc::ClientContext&>(),
                                         std::declval<test::msg::Request&>(),
                                         std::declval<std::unique_ptr<grpc::ClientAsyncReader<test::msg::Response>>&>(),
                                         std::declval<asio::yield_context>())));
-    CHECK(noexcept(agrpc::request(
-        std::declval<decltype(&test::v1::Test::Stub::AsyncServerStreaming)>(), std::declval<test::v1::Test::Stub&>(),
-        std::declval<grpc::ClientContext&>(), std::declval<test::msg::Request&>(),
-        std::declval<std::unique_ptr<grpc::ClientAsyncReader<test::msg::Response>>&>(), std::declval<UseSender&&>())));
+    CHECK(noexcept(agrpc::request(std::declval<decltype(&test::v1::Test::Stub::PrepareAsyncServerStreaming)>(),
+                                  std::declval<test::v1::Test::Stub&>(), std::declval<grpc::ClientContext&>(),
+                                  std::declval<test::msg::Request&>(),
+                                  std::declval<std::unique_ptr<grpc::ClientAsyncReader<test::msg::Response>>&>(),
+                                  std::declval<UseSender&&>())));
     CHECK_FALSE(
         noexcept(agrpc::wait(std::declval<grpc::Alarm&>(), std::declval<std::chrono::system_clock::time_point>(),
                              std::declval<asio::yield_context>())));

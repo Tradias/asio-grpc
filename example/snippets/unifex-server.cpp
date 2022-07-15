@@ -19,7 +19,7 @@
 #include <unifex/let_value.hpp>
 
 /* [repeatedly-request-sender] */
-auto register_client_streaming_handler(example::v1::Example::AsyncService& service, agrpc::GrpcContext& grpc_context)
+auto register_client_streaming_handler(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
 {
     return agrpc::repeatedly_request(
         &example::v1::Example::AsyncService::RequestUnary, service,

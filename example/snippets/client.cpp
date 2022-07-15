@@ -95,7 +95,7 @@ asio::awaitable<void> client_streaming_alt(example::v1::Example::Stub& stub)
     silence_unused(writer, request_ok);
 }
 
-void client_streaming_corked(example::v1::Example::Stub& stub, agrpc::GrpcContext& grpc_context)
+void client_streaming_corked(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
     /* [request-client-streaming-client-side-corked] */
     grpc::ClientContext client_context;
@@ -189,7 +189,7 @@ asio::awaitable<void> bidirectional_streaming_alt(example::v1::Example::Stub& st
     silence_unused(reader_writer, request_ok);
 }
 
-void bidirectional_streaming_corked(example::v1::Example::Stub& stub, agrpc::GrpcContext& grpc_context)
+void bidirectional_streaming_corked(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
     /* [request-client-bidirectional-client-side-corked] */
     grpc::ClientContext client_context;
@@ -211,8 +211,8 @@ asio::awaitable<void> client_generic_streaming_request(grpc::GenericStub& stub)
     silence_unused(request_ok);
 }
 
-void client_generic_streaming_corked(grpc::GenericStub& stub, const grpc::ByteBuffer& request,
-                                     agrpc::GrpcContext& grpc_context)
+void client_generic_streaming_corked(agrpc::GrpcContext& grpc_context, grpc::GenericStub& stub,
+                                     const grpc::ByteBuffer& request)
 {
     /* [request-client-generic-streaming-corked] */
     grpc::ClientContext client_context;

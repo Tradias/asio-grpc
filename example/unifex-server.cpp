@@ -43,8 +43,7 @@ unifex::task<void> handle_unary_request(agrpc::GrpcContext& grpc_context, grpc::
     response.set_integer(request.integer());
     co_await agrpc::finish(writer, response, grpc::Status::OK, agrpc::use_sender(grpc_context));
 }
-
-auto register_unary_request_handler(example::v1::Example::AsyncService& service, agrpc::GrpcContext& grpc_context)
+auto register_unary_request_handler(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
 {
     return unifex::let_value_with_stop_source(
         [&](unifex::inplace_stop_source& stop)
@@ -78,8 +77,8 @@ auto register_unary_request_handler(example::v1::Example::AsyncService& service,
 // ---------------------------------------------------
 // A simple server-streaming request handler using coroutines.
 // ---------------------------------------------------
-unifex::task<void> handle_server_streaming_request(example::v1::Example::AsyncService& service,
-                                                   agrpc::GrpcContext& grpc_context)
+unifex::task<void> handle_server_streaming_request(agrpc::GrpcContext& grpc_context,
+                                                   example::v1::Example::AsyncService& service)
 {
     grpc::ServerContext server_context;
     grpc::ServerAsyncWriter<example::v1::Response> writer{&server_context};
@@ -108,8 +107,8 @@ unifex::task<void> handle_server_streaming_request(example::v1::Example::AsyncSe
 // ---------------------------------------------------
 // The SlowUnary endpoint is used by the client to demonstrate per-RPC step cancellation. See unifex-client.cpp.
 // ---------------------------------------------------
-unifex::task<void> handle_slow_unary_request(example::v1::ExampleExt::AsyncService& service,
-                                             agrpc::GrpcContext& grpc_context)
+unifex::task<void> handle_slow_unary_request(agrpc::GrpcContext& grpc_context,
+                                             example::v1::ExampleExt::AsyncService& service)
 {
     grpc::ServerContext server_context;
     example::v1::SlowRequest request;
@@ -148,9 +147,9 @@ int main(int argc, const char** argv)
 
     grpc_context.work_started();
     unifex::sync_wait(
-        unifex::when_all(unifex::finally(unifex::when_all(register_unary_request_handler(service, grpc_context),
-                                                          handle_server_streaming_request(service, grpc_context),
-                                                          handle_slow_unary_request(service_ext, grpc_context)),
+        unifex::when_all(unifex::finally(unifex::when_all(register_unary_request_handler(grpc_context, service),
+                                                          handle_server_streaming_request(grpc_context, service),
+                                                          handle_slow_unary_request(grpc_context, service_ext)),
                                          unifex::then(unifex::just(),
                                                       [&]
                                                       {

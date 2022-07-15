@@ -32,7 +32,7 @@
 // ---------------------------------------------------
 // A simple unary request with coroutines.
 // ---------------------------------------------------
-unifex::task<void> make_unary_request(example::v1::Example::Stub& stub, agrpc::GrpcContext& grpc_context)
+unifex::task<void> make_unary_request(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
@@ -54,7 +54,7 @@ unifex::task<void> make_unary_request(example::v1::Example::Stub& stub, agrpc::G
 // ---------------------------------------------------
 // A simple server-streaming request with coroutines.
 // ---------------------------------------------------
-unifex::task<void> make_server_streaming_request(example::v1::Example::Stub& stub, agrpc::GrpcContext& grpc_context)
+unifex::task<void> make_server_streaming_request(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
@@ -101,7 +101,7 @@ auto run_with_deadline(grpc::Alarm& alarm, agrpc::GrpcContext& grpc_context, grp
                                           }));
 }
 
-unifex::task<void> make_and_cancel_unary_request(example::v1::ExampleExt::Stub& stub, agrpc::GrpcContext& grpc_context)
+unifex::task<void> make_and_cancel_unary_request(agrpc::GrpcContext& grpc_context, example::v1::ExampleExt::Stub& stub)
 {
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
@@ -135,9 +135,9 @@ int main(int argc, const char** argv)
 
     grpc_context.work_started();
     unifex::sync_wait(
-        unifex::when_all(unifex::finally(unifex::when_all(make_unary_request(*stub, grpc_context),
-                                                          make_server_streaming_request(*stub, grpc_context),
-                                                          make_and_cancel_unary_request(*stub_ext, grpc_context)),
+        unifex::when_all(unifex::finally(unifex::when_all(make_unary_request(grpc_context, *stub),
+                                                          make_server_streaming_request(grpc_context, *stub),
+                                                          make_and_cancel_unary_request(grpc_context, *stub_ext)),
                                          unifex::then(unifex::just(),
                                                       [&]
                                                       {

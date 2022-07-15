@@ -195,8 +195,8 @@ asio::awaitable<void> run_with_deadline(grpc::Alarm& alarm, grpc::ClientContext&
     co_await (set_alarm() || function());
 }
 
-asio::awaitable<void> make_and_cancel_unary_request(example::v1::ExampleExt::Stub& stub,
-                                                    agrpc::GrpcContext& grpc_context)
+asio::awaitable<void> make_and_cancel_unary_request(agrpc::GrpcContext& grpc_context,
+                                                    example::v1::ExampleExt::Stub& stub)
 {
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
@@ -225,7 +225,7 @@ asio::awaitable<void> make_and_cancel_unary_request(example::v1::ExampleExt::Stu
 // ---------------------------------------------------
 // The Shutdown endpoint is used by unit tests.
 // ---------------------------------------------------
-asio::awaitable<void> make_shutdown_request(example::v1::ExampleExt::Stub& stub, agrpc::GrpcContext& grpc_context)
+asio::awaitable<void> make_shutdown_request(agrpc::GrpcContext& grpc_context, example::v1::ExampleExt::Stub& stub)
 {
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
@@ -266,9 +266,9 @@ int main(int argc, const char** argv)
             // Let's perform the client-streaming and bidirectional-streaming requests simultaneously
             using namespace asio::experimental::awaitable_operators;
             co_await (make_client_streaming_request(*stub) && make_bidirectional_streaming_request(*stub));
-            co_await make_and_cancel_unary_request(*stub_ext, grpc_context);
+            co_await make_and_cancel_unary_request(grpc_context, *stub_ext);
             co_await make_topic_subscription_request(grpc_context, *stub_ext);
-            co_await make_shutdown_request(*stub_ext, grpc_context);
+            co_await make_shutdown_request(grpc_context, *stub_ext);
         },
         asio::detached);
 

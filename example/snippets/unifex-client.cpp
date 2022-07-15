@@ -23,7 +23,7 @@
 #include <unifex/when_all.hpp>
 
 /* [unifex-server-streaming-client-side] */
-unifex::task<void> unified_executors(example::v1::Example::Stub& stub, agrpc::GrpcContext& grpc_context)
+unifex::task<void> unified_executors(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
     grpc::ClientContext client_context;
     example::v1::Request request;
@@ -43,7 +43,7 @@ int main()
         example::v1::Example::NewStub(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
-    unifex::sync_wait(unifex::when_all(unified_executors(*stub, grpc_context),
+    unifex::sync_wait(unifex::when_all(unified_executors(grpc_context, *stub),
                                        [&]() -> unifex::task<void>
                                        {
                                            grpc_context.run();
