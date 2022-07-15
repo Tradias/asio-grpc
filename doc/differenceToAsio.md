@@ -20,13 +20,13 @@ Please open a ticket if you would like to have a wrapper class in asio-grpc that
 
 -------
 
-Until asio-grpc v1.8.0 the completion handler's allocator was retrieved in a manner equivalent to:
+Until asio-grpc v2.0.0 the completion handler's allocator was retrieved in a manner equivalent to:
 
 ```cpp
 asio::get_associated_allocator(completion_handler, asio::query(asio::get_associated_executor(completion_handler), asio::execution::allocator));
 ```
 
-Since v1.8.0 the allocator is retrieved using:
+Since v2.0.0 the allocator is retrieved using:
 
 ```cpp
 asio::get_associated_allocator(completion_handler);

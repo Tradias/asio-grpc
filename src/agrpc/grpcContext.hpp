@@ -110,13 +110,13 @@ class GrpcContext
      *
      * @return True if at least one operation has been processed.
      *
-     * @since 1.8.0
+     * @since 2.0.0
      */
     template <class Deadline>
     bool run_until(const Deadline& deadline)
     {
-        grpc::TimePoint<Deadline> deadline_tp(deadline);
-        return this->run_until_impl(deadline_tp.raw_time());
+        grpc::TimePoint<Deadline> deadline_time_point(deadline);
+        return this->run_until_impl(deadline_time_point.raw_time());
     }
 
     /**

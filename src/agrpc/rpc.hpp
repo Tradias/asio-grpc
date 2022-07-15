@@ -178,7 +178,7 @@ struct RequestFn
      * indicates that the RPC is going to go to the wire. If it is `false`, it is not going to the wire. This would
      * happen if the channel is either permanently broken or transiently broken but with the fail-fast option.
      *
-     * @since 1.8.0
+     * @since 2.0.0
      */
     template <class Stub, class DerivedStub, class Request, class Responder,
               class CompletionToken = agrpc::DefaultCompletionToken>
@@ -281,7 +281,7 @@ struct RequestFn
      * indicates that the RPC is going to go to the wire. If it is `false`, it is not going to the wire. This would
      * happen if the channel is either permanently broken or transiently broken but with the fail-fast option.
      *
-     * @since 1.8.0
+     * @since 2.0.0
      */
     template <class Stub, class DerivedStub, class Responder, class Response,
               class CompletionToken = agrpc::DefaultCompletionToken>
@@ -336,7 +336,7 @@ struct RequestFn
      * it is not going to the wire. This would happen if the channel is either permanently broken or transiently broken
      * but with the fail-fast option.
      *
-     * @since 1.8.0
+     * @since 2.0.0
      */
     template <class Stub, class DerivedStub, class Responder, class Response,
               class CompletionToken = agrpc::DefaultCompletionToken>
@@ -389,7 +389,7 @@ struct RequestFn
      * indicates that the RPC is going to go to the wire. If it is `false`, it is not going to the wire. This would
      * happen if the channel is either permanently broken or transiently broken but with the fail-fast option.
      *
-     * @since 1.8.0
+     * @since 2.0.0
      */
     template <class Stub, class DerivedStub, class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(detail::PrepareAsyncClientBidirectionalStreamingRequest<Stub, Responder> rpc, DerivedStub& stub,
@@ -441,7 +441,7 @@ struct RequestFn
      * it is not going to the wire. This would happen if the channel is either permanently broken or transiently broken
      * but with the fail-fast option.
      *
-     * @since 1.8.0
+     * @since 2.0.0
      */
     template <class Stub, class DerivedStub, class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(detail::PrepareAsyncClientBidirectionalStreamingRequest<Stub, Responder> rpc, DerivedStub& stub,
