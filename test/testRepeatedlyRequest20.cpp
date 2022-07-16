@@ -82,7 +82,7 @@ TYPE_TO_STRING(GenericAwaitableRequestHandler);
 
 DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
 {
-TEST_CASE_TEMPLATE("awaitable repeatedly_request unary", UseAllocator, std::true_type, std::false_type)
+TEST_CASE_TEMPLATE("awaitable repeatedly_request unary", UsePmrExecutor, std::true_type, std::false_type)
 {
     test::GrpcClientServerTest self;
     bool use_server_shutdown{false};
@@ -92,9 +92,9 @@ TEST_CASE_TEMPLATE("awaitable repeatedly_request unary", UseAllocator, std::true
     auto request_count{0};
     auto executor = [&]
     {
-        if constexpr (UseAllocator{})
+        if constexpr (UsePmrExecutor::value)
         {
-            return asio::require(self.get_executor(), asio::execution::allocator(self.get_allocator()));
+            return self.get_pmr_executor();
         }
         else
         {
@@ -137,10 +137,6 @@ TEST_CASE_TEMPLATE("awaitable repeatedly_request unary", UseAllocator, std::true
                 });
     self.grpc_context.run();
     CHECK_EQ(4, request_count);
-    if constexpr (UseAllocator{})
-    {
-        CHECK(self.allocator_has_been_used());
-    }
 }
 
 TEST_CASE_TEMPLATE("awaitable repeatedly_request client streaming", T, TypedAwaitableRequestHandler,

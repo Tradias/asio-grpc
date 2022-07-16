@@ -300,27 +300,28 @@ TEST_CASE_FIXTURE(test::GrpcContextTest,
     grpc_context.reset();
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "co_await for Alarm with pmr::GRPC_USE_AWAITABLE")
-{
-    test::co_spawn(get_pmr_executor(),
-                   [&]() -> agrpc::pmr::GrpcAwaitable<void>
-                   {
-                       grpc::Alarm alarm;
-                       co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::pmr::GRPC_USE_AWAITABLE);
-                   });
-    grpc_context.run();
-    CHECK(allocator_has_been_used());
-}
-
-TEST_CASE_FIXTURE(test::GrpcContextTest, "co_await for Alarm with asio::awaitable<>")
+TEST_CASE_FIXTURE(test::GrpcContextTest, "co_await for Alarm with special awaitable")
 {
     bool ok{false};
-    test::co_spawn(get_executor(),
-                   [&]() -> asio::awaitable<void>
-                   {
-                       grpc::Alarm alarm;
-                       ok = co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), asio::use_awaitable);
-                   });
+    SUBCASE("pmr::GRPC_USE_AWAITABLE")
+    {
+        test::co_spawn(get_pmr_executor(),
+                       [&]() -> agrpc::pmr::GrpcAwaitable<void>
+                       {
+                           grpc::Alarm alarm;
+                           ok = co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(),
+                                                     agrpc::pmr::GRPC_USE_AWAITABLE);
+                       });
+    }
+    SUBCASE("asio::awaitable<>")
+    {
+        test::co_spawn(get_executor(),
+                       [&]() -> asio::awaitable<void>
+                       {
+                           grpc::Alarm alarm;
+                           ok = co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), asio::use_awaitable);
+                       });
+    }
     grpc_context.run();
     CHECK(ok);
 }

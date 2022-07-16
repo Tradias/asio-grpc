@@ -459,21 +459,6 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post/execute with allocator")
                        exec.execute([] {});
                    });
     }
-    SUBCASE("agrpc::wait")
-    {
-        asio::execution::execute(get_executor(),
-                                 [&, executor = get_pmr_executor()]() mutable
-                                 {
-                                     auto alarm = std::make_shared<grpc::Alarm>();
-                                     auto& alarm_ref = *alarm;
-                                     agrpc::wait(alarm_ref, test::ten_milliseconds_from_now(),
-                                                 asio::bind_executor(std::move(executor),
-                                                                     [a = std::move(alarm)](bool ok)
-                                                                     {
-                                                                         CHECK(ok);
-                                                                     }));
-                                 });
-    }
     grpc_context.run();
     CHECK(allocator_has_been_used());
 }

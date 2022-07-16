@@ -87,7 +87,7 @@ class RepeatedlyRequestOperationBase
 
     [[nodiscard]] decltype(auto) get_allocator() noexcept
     {
-        return detail::query_allocator(this->request_handler(), this->get_executor());
+        return detail::exec::get_allocator(this->request_handler());
     }
 
   protected:
@@ -103,10 +103,7 @@ class RepeatedlyRequestOperationBase
         }
     }
 
-    [[nodiscard]] decltype(auto) get_executor() noexcept
-    {
-        return detail::exec::get_scheduler(this->request_handler());
-    }
+    [[nodiscard]] decltype(auto) get_executor() noexcept { return detail::exec::get_executor(this->request_handler()); }
 
     [[nodiscard]] agrpc::GrpcContext& grpc_context() noexcept
     {
@@ -230,7 +227,8 @@ struct BasicRepeatedlyRequestInitiator
     {
         using TrackingCompletionHandler = detail::WorkTrackingCompletionHandler<CompletionHandler>;
         using DecayedRequestHandler = detail::RemoveCrefT<RequestHandler>;
-        const auto [executor, allocator] = detail::get_associated_executor_and_allocator(request_handler);
+        const auto executor = detail::exec::get_executor(request_handler);
+        const auto allocator = detail::exec::get_allocator(request_handler);
         auto& grpc_context = detail::query_grpc_context(executor);
         grpc_context.work_started();
         detail::WorkFinishedOnExit on_exit{grpc_context};
@@ -282,8 +280,8 @@ inline constexpr bool INVOKE_RESULT_IS_CO_SPAWNABLE = false;
 template <class Function, class... Args>
 inline constexpr bool INVOKE_RESULT_IS_CO_SPAWNABLE<
     Function, void(Args...),
-    std::enable_if_t<detail::IS_CO_SPAWNABLE<detail::SchedulerT<Function>, std::invoke_result_t<Function, Args...>>>> =
-    true;
+    std::enable_if_t<
+        detail::IS_CO_SPAWNABLE<detail::GetExecutorT<Function>, std::invoke_result_t<Function, Args...>>>> = true;
 
 struct RethrowFirstArg
 {

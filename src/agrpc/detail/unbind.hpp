@@ -117,7 +117,8 @@ decltype(auto) unbind_recursively(asio::allocator_binder<CompletionHandler, Allo
 template <class CompletionHandler>
 auto unbind_and_get_associates(CompletionHandler&& completion_handler)
 {
-    auto [executor, allocator] = detail::get_associated_executor_and_allocator(completion_handler);
+    auto executor = detail::exec::get_executor(completion_handler);
+    auto allocator = detail::exec::get_allocator(completion_handler);
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
     auto cancellation_slot = asio::get_associated_cancellation_slot(completion_handler);
     return UnbindResult{detail::unbind_recursively(std::forward<CompletionHandler>(completion_handler)),
