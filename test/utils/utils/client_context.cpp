@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "utils/clientContext.hpp"
-
 #include "utils/time.hpp"
 
 #include <grpcpp/client_context.h>
