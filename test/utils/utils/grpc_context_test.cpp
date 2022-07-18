@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utils/asioForward.hpp"
-#include "utils/grpcContextTest.hpp"
-#include "utils/memoryResource.hpp"
+#include "utils/grpc_context_test.hpp"
 
-#include <agrpc/grpcContext.hpp>
-#include <agrpc/grpcExecutor.hpp>
+#include "utils/asio_forward.hpp"
+#include "utils/memory_resource.hpp"
+
+#include <agrpc/grpc_context.hpp>
+#include <agrpc/grpc_executor.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 

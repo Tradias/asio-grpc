@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_UTILS_GRPCCLIENTSERVERTEST_HPP
-#define AGRPC_UTILS_GRPCCLIENTSERVERTEST_HPP
+#ifndef AGRPC_UTILS_GRPC_CLIENT_SERVER_TEST_HPP
+#define AGRPC_UTILS_GRPC_CLIENT_SERVER_TEST_HPP
 
 #include "test/v1/test.grpc.pb.h"
-#include "utils/grpcClientServerTestBase.hpp"
+#include "utils/grpc_client_server_test_base.hpp"
 
 #include <grpcpp/server_context.h>
 
@@ -34,4 +34,4 @@ struct GrpcClientServerTest : virtual test::GrpcClientServerTestBase
 };
 }  // namespace test
 
-#endif  // AGRPC_UTILS_GRPCCLIENTSERVERTEST_HPP
+#endif  // AGRPC_UTILS_GRPC_CLIENT_SERVER_TEST_HPP

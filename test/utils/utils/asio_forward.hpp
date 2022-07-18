@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_UTILS_ASIOFORWARD_HPP
-#define AGRPC_UTILS_ASIOFORWARD_HPP
+#ifndef AGRPC_UTILS_ASIO_FORWARD_HPP
+#define AGRPC_UTILS_ASIO_FORWARD_HPP
 
-#include <agrpc/detail/asioForward.hpp>
+#include <agrpc/detail/asio_forward.hpp>
 
 #ifdef AGRPC_STANDALONE_ASIO
 #include <asio/coroutine.hpp>
@@ -115,4 +115,4 @@ using ErrorCode = boost::system::error_code;
 namespace asio = ::boost::asio;
 #endif
 
-#endif  // AGRPC_UTILS_ASIOFORWARD_HPP
+#endif  // AGRPC_UTILS_ASIO_FORWARD_HPP

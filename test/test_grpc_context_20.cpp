@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utils/asioUtils.hpp"
+#include "utils/asio_utils.hpp"
 #include "utils/doctest.hpp"
-#include "utils/grpcContextTest.hpp"
+#include "utils/grpc_context_test.hpp"
 #include "utils/time.hpp"
 
-#include <agrpc/getCompletionQueue.hpp>
-#include <agrpc/useAwaitable.hpp>
+#include <agrpc/get_completion_queue.hpp>
+#include <agrpc/use_awaitable.hpp>
 #include <agrpc/wait.hpp>
 
 #include <cstddef>

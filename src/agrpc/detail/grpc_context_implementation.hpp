@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_HPP
-#define AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_HPP
+#ifndef AGRPC_DETAIL_GRPC_CONTEXT_IMPLEMENTATION_HPP
+#define AGRPC_DETAIL_GRPC_CONTEXT_IMPLEMENTATION_HPP
 
-#include <agrpc/detail/asioForward.hpp>
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
-#include <agrpc/detail/grpcCompletionQueueEvent.hpp>
-#include <agrpc/detail/typeErasedOperation.hpp>
+#include <agrpc/detail/grpc_completion_queue_event.hpp>
+#include <agrpc/detail/type_erased_operation.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <grpcpp/completion_queue.h>
 
@@ -127,4 +127,4 @@ void process_grpc_tag(void* tag, detail::InvokeHandler invoke, bool ok, agrpc::G
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_HPP
+#endif  // AGRPC_DETAIL_GRPC_CONTEXT_IMPLEMENTATION_HPP

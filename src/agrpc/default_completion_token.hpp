@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_AGRPC_DEFAULTCOMPLETIONTOKEN_HPP
-#define AGRPC_AGRPC_DEFAULTCOMPLETIONTOKEN_HPP
+#ifndef AGRPC_AGRPC_DEFAULT_COMPLETION_TOKEN_HPP
+#define AGRPC_AGRPC_DEFAULT_COMPLETION_TOKEN_HPP
 
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/defaultCompletionToken.hpp>
+#include <agrpc/detail/default_completion_token.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -29,4 +29,4 @@ using DefaultCompletionToken = detail::DefaultCompletionToken;
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_AGRPC_DEFAULTCOMPLETIONTOKEN_HPP
+#endif  // AGRPC_AGRPC_DEFAULT_COMPLETION_TOKEN_HPP

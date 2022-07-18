@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_AGRPC_GRPCEXECUTOR_HPP
-#define AGRPC_AGRPC_GRPCEXECUTOR_HPP
+#ifndef AGRPC_AGRPC_GRPC_EXECUTOR_HPP
+#define AGRPC_AGRPC_GRPC_EXECUTOR_HPP
 
-#include <agrpc/detail/allocateOperation.hpp>
-#include <agrpc/detail/asioForward.hpp>
+#include <agrpc/detail/allocate_operation.hpp>
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
-#include <agrpc/detail/grpcExecutorBase.hpp>
-#include <agrpc/detail/grpcExecutorOptions.hpp>
-#include <agrpc/detail/memoryResource.hpp>
-#include <agrpc/detail/scheduleSender.hpp>
+#include <agrpc/detail/grpc_executor_base.hpp>
+#include <agrpc/detail/grpc_executor_options.hpp>
+#include <agrpc/detail/memory_resource.hpp>
+#include <agrpc/detail/schedule_sender.hpp>
 #include <agrpc/detail/utility.hpp>
-#include <agrpc/grpcContext.hpp>
+#include <agrpc/grpc_context.hpp>
 
 #include <cstddef>
 #include <memory>
@@ -689,6 +689,6 @@ struct agrpc::asio::traits::query_member<agrpc::BasicGrpcExecutor<Allocator, Opt
 };
 #endif
 
-#include <agrpc/detail/grpcContext.ipp>
+#include <agrpc/detail/grpc_context.ipp>
 
-#endif  // AGRPC_AGRPC_GRPCEXECUTOR_HPP
+#endif  // AGRPC_AGRPC_GRPC_EXECUTOR_HPP

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_HELPER_WHENBOTH_HPP
-#define AGRPC_HELPER_WHENBOTH_HPP
+#ifndef AGRPC_HELPER_WHEN_BOTH_HPP
+#define AGRPC_HELPER_WHEN_BOTH_HPP
 
 #include <agrpc/use_awaitable.hpp>
 
@@ -67,4 +67,4 @@ agrpc::GrpcAwaitable<std::pair<Result1, Result2>> when_both(Init1&& init1, Init2
 }
 }
 
-#endif  // AGRPC_HELPER_WHENBOTH_HPP
+#endif  // AGRPC_HELPER_WHEN_BOTH_HPP

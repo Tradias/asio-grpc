@@ -14,7 +14,7 @@
 
 #include "example/v1/example.grpc.pb.h"
 
-#include <agrpc/asioGrpc.hpp>
+#include <agrpc/asio_grpc.hpp>
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 #include <unifex/config.hpp>

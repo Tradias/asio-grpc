@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_AGRPC_GRPCCONTEXT_HPP
-#define AGRPC_AGRPC_GRPCCONTEXT_HPP
+#ifndef AGRPC_AGRPC_GRPC_CONTEXT_HPP
+#define AGRPC_AGRPC_GRPC_CONTEXT_HPP
 
-#include <agrpc/detail/asioForward.hpp>
-#include <agrpc/detail/atomicIntrusiveQueue.hpp>
+#include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/atomic_intrusive_queue.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
-#include <agrpc/detail/grpcContext.hpp>
-#include <agrpc/detail/grpcContextImplementation.hpp>
-#include <agrpc/detail/grpcExecutorOptions.hpp>
-#include <agrpc/detail/intrusiveQueue.hpp>
-#include <agrpc/detail/memoryResource.hpp>
-#include <agrpc/detail/typeErasedOperation.hpp>
+#include <agrpc/detail/grpc_context.hpp>
+#include <agrpc/detail/grpc_context_implementation.hpp>
+#include <agrpc/detail/grpc_executor_options.hpp>
+#include <agrpc/detail/intrusive_queue.hpp>
+#include <agrpc/detail/memory_resource.hpp>
+#include <agrpc/detail/type_erased_operation.hpp>
 #include <grpcpp/alarm.h>
 #include <grpcpp/completion_queue.h>
 
@@ -282,4 +282,4 @@ struct agrpc::detail::container::uses_allocator<agrpc::GrpcContext, Alloc> : std
 {
 };
 
-#endif  // AGRPC_AGRPC_GRPCCONTEXT_HPP
+#endif  // AGRPC_AGRPC_GRPC_CONTEXT_HPP

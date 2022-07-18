@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_MEMORYRESOURCEALLOCATOR_HPP
-#define AGRPC_DETAIL_MEMORYRESOURCEALLOCATOR_HPP
+#ifndef AGRPC_DETAIL_MEMORY_RESOURCE_ALLOCATOR_HPP
+#define AGRPC_DETAIL_MEMORY_RESOURCE_ALLOCATOR_HPP
 
 #include <agrpc/detail/config.hpp>
 
@@ -70,4 +70,4 @@ class MemoryResourceAllocator
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_MEMORYRESOURCEALLOCATOR_HPP
+#endif  // AGRPC_DETAIL_MEMORY_RESOURCE_ALLOCATOR_HPP

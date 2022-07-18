@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_RPCCONTEXT_HPP
-#define AGRPC_DETAIL_RPCCONTEXT_HPP
+#ifndef AGRPC_DETAIL_RPC_CONTEXT_HPP
+#define AGRPC_DETAIL_RPC_CONTEXT_HPP
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/rpc.hpp>
@@ -136,4 +136,4 @@ inline void initiate_request_from_rpc_context(detail::GenericRPCMarker, grpc::As
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_RPCCONTEXT_HPP
+#endif  // AGRPC_DETAIL_RPC_CONTEXT_HPP

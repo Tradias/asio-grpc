@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_GRPCEXECUTOROPTIONS_HPP
-#define AGRPC_DETAIL_GRPCEXECUTOROPTIONS_HPP
+#ifndef AGRPC_DETAIL_GRPC_EXECUTOR_OPTIONS_HPP
+#define AGRPC_DETAIL_GRPC_EXECUTOR_OPTIONS_HPP
 
 #include <agrpc/detail/config.hpp>
 
@@ -75,4 +75,4 @@ struct GrpcExecutorOptions
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_GRPCEXECUTOROPTIONS_HPP
+#endif  // AGRPC_DETAIL_GRPC_EXECUTOR_OPTIONS_HPP

@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_QUERYGRPCCONTEXT_HPP
-#define AGRPC_DETAIL_QUERYGRPCCONTEXT_HPP
+#ifndef AGRPC_DETAIL_QUERY_GRPC_CONTEXT_HPP
+#define AGRPC_DETAIL_QUERY_GRPC_CONTEXT_HPP
 
-#include <agrpc/detail/asioForward.hpp>
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 
@@ -70,4 +70,4 @@ agrpc::GrpcContext& query_grpc_context(const Executor& executor)
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_QUERYGRPCCONTEXT_HPP
+#endif  // AGRPC_DETAIL_QUERY_GRPC_CONTEXT_HPP

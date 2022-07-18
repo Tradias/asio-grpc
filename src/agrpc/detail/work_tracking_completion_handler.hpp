@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_WORKTRACKINGCOMPLETIONHANDLER_HPP
-#define AGRPC_DETAIL_WORKTRACKINGCOMPLETIONHANDLER_HPP
+#ifndef AGRPC_DETAIL_WORK_TRACKING_COMPLETION_HANDLER_HPP
+#define AGRPC_DETAIL_WORK_TRACKING_COMPLETION_HANDLER_HPP
 
-#include <agrpc/detail/asioForward.hpp>
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 
-#include <agrpc/detail/memoryResource.hpp>
+#include <agrpc/detail/memory_resource.hpp>
 #include <agrpc/detail/utility.hpp>
 
 #include <memory>
@@ -141,4 +141,4 @@ struct agrpc::detail::container::uses_allocator<agrpc::detail::WorkTrackingCompl
 
 #endif
 
-#endif  // AGRPC_DETAIL_WORKTRACKINGCOMPLETIONHANDLER_HPP
+#endif  // AGRPC_DETAIL_WORK_TRACKING_COMPLETION_HANDLER_HPP

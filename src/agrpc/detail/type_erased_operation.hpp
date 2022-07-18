@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_TYPEERASEDOPERATION_HPP
-#define AGRPC_DETAIL_TYPEERASEDOPERATION_HPP
+#ifndef AGRPC_DETAIL_TYPE_ERASED_OPERATION_HPP
+#define AGRPC_DETAIL_TYPE_ERASED_OPERATION_HPP
 
 #include <agrpc/detail/allocate.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/grpcContext.hpp>
-#include <agrpc/detail/intrusiveQueueHook.hpp>
+#include <agrpc/detail/grpc_context.hpp>
+#include <agrpc/detail/intrusive_queue_hook.hpp>
 #include <agrpc/detail/utility.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -73,4 +73,4 @@ void default_do_complete(Base* op, detail::InvokeHandler invoke_handler, Args...
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_TYPEERASEDOPERATION_HPP
+#endif  // AGRPC_DETAIL_TYPE_ERASED_OPERATION_HPP

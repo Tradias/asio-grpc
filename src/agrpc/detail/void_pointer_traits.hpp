@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_VOIDPOINTERTRAITS_HPP
-#define AGRPC_DETAIL_VOIDPOINTERTRAITS_HPP
+#ifndef AGRPC_DETAIL_VOID_POINTER_TRAITS_HPP
+#define AGRPC_DETAIL_VOID_POINTER_TRAITS_HPP
 
 #include <agrpc/detail/config.hpp>
 
@@ -44,4 +44,4 @@ struct VoidPointerTraits<std::atomic<void*>>
 }
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_VOIDPOINTERTRAITS_HPP
+#endif  // AGRPC_DETAIL_VOID_POINTER_TRAITS_HPP

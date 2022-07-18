@@ -25,7 +25,7 @@ asio_grpc_protobuf_generate(
     IMPORT_DIRS "${CMAKE_CURRENT_LIST_DIR}/proto"
     PROTOS "${CMAKE_CURRENT_LIST_DIR}/proto/helloworld/helloworld.proto"
            "${CMAKE_CURRENT_LIST_DIR}/proto/example/v1/example.proto"
-           "${CMAKE_CURRENT_LIST_DIR}/proto/example/v1/exampleExt.proto")
+           "${CMAKE_CURRENT_LIST_DIR}/proto/example/v1/example_ext.proto")
 
 function(asio_grpc_add_example_proto_target _asio_grpc_name)
     add_library(${_asio_grpc_name} OBJECT)

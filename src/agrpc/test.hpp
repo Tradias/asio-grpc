@@ -18,10 +18,10 @@
 #include <agrpc/detail/config.hpp>
 
 #ifndef AGRPC_UNIFEX
-#include <agrpc/detail/asioForward.hpp>
-#include <agrpc/detail/grpcContextImplementation.hpp>
-#include <agrpc/grpcContext.hpp>
-#include <agrpc/grpcExecutor.hpp>
+#include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/grpc_context_implementation.hpp>
+#include <agrpc/grpc_context.hpp>
+#include <agrpc/grpc_executor.hpp>
 #include <agrpc/wait.hpp>
 
 #include <memory>

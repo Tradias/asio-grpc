@@ -15,7 +15,7 @@
 #include "example/v1/example_mock.grpc.pb.h"
 #include "helper.hpp"
 
-#include <agrpc/asioGrpc.hpp>
+#include <agrpc/asio_grpc.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/coroutine.hpp>
 #include <boost/asio/detached.hpp>

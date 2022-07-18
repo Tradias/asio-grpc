@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utils/grpcGenericClientServerTest.hpp"
+#include "utils/grpc_generic_client_server_test.hpp"
 
 #include <grpcpp/generic/async_generic_service.h>
 #include <grpcpp/generic/generic_stub.h>

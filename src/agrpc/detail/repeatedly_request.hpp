@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_REPEATEDLYREQUEST_HPP
-#define AGRPC_DETAIL_REPEATEDLYREQUEST_HPP
+#ifndef AGRPC_DETAIL_REPEATEDLY_REQUEST_HPP
+#define AGRPC_DETAIL_REPEATEDLY_REQUEST_HPP
 
-#include <agrpc/detail/asioForward.hpp>
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/queryGrpcContext.hpp>
-#include <agrpc/detail/rpcContext.hpp>
-#include <agrpc/detail/typeErasedOperation.hpp>
+#include <agrpc/detail/query_grpc_context.hpp>
+#include <agrpc/detail/rpc_context.hpp>
+#include <agrpc/detail/type_erased_operation.hpp>
 #include <agrpc/detail/utility.hpp>
-#include <agrpc/detail/workTrackingCompletionHandler.hpp>
-#include <agrpc/repeatedlyRequestContext.hpp>
+#include <agrpc/detail/work_tracking_completion_handler.hpp>
+#include <agrpc/repeatedly_request_context.hpp>
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
-#include <agrpc/bindAllocator.hpp>
-#include <agrpc/detail/oneShotAllocator.hpp>
+#include <agrpc/bind_allocator.hpp>
+#include <agrpc/detail/one_shot_allocator.hpp>
 #include <agrpc/rpc.hpp>
 #endif
 
@@ -453,4 +453,4 @@ using RepeatedlyRequestAwaitableInitiator =
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_REPEATEDLYREQUEST_HPP
+#endif  // AGRPC_DETAIL_REPEATEDLY_REQUEST_HPP

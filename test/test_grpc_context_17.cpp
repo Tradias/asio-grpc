@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utils/asioUtils.hpp"
+#include "utils/asio_utils.hpp"
 #include "utils/doctest.hpp"
-#include "utils/grpcContextTest.hpp"
+#include "utils/grpc_context_test.hpp"
 #include "utils/time.hpp"
-#include "utils/unassignableAllocator.hpp"
+#include "utils/unassignable_allocator.hpp"
 
-#include <agrpc/grpcContext.hpp>
+#include <agrpc/grpc_context.hpp>
 #include <agrpc/wait.hpp>
 
 #include <thread>

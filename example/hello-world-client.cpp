@@ -15,7 +15,7 @@
 #include "helloworld/helloworld.grpc.pb.h"
 #include "helper.hpp"
 
-#include <agrpc/asioGrpc.hpp>
+#include <agrpc/asio_grpc.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/detached.hpp>
 #include <grpcpp/client_context.h>

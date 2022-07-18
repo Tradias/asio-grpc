@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_GRPCINITIATOR_HPP
-#define AGRPC_DETAIL_GRPCINITIATOR_HPP
+#ifndef AGRPC_DETAIL_GRPC_INITIATOR_HPP
+#define AGRPC_DETAIL_GRPC_INITIATOR_HPP
 
-#include <agrpc/detail/allocateOperation.hpp>
-#include <agrpc/detail/asioForward.hpp>
-#include <agrpc/detail/associatedCompletionHandler.hpp>
+#include <agrpc/detail/allocate_operation.hpp>
+#include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/associated_completion_handler.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/grpcContextImplementation.hpp>
-#include <agrpc/detail/grpcSender.hpp>
-#include <agrpc/detail/grpcSubmit.hpp>
-#include <agrpc/detail/queryGrpcContext.hpp>
+#include <agrpc/detail/grpc_context_implementation.hpp>
+#include <agrpc/detail/grpc_sender.hpp>
+#include <agrpc/detail/grpc_submit.hpp>
+#include <agrpc/detail/query_grpc_context.hpp>
 #include <agrpc/detail/unbind.hpp>
-#include <agrpc/detail/useSender.hpp>
-#include <agrpc/grpcContext.hpp>
+#include <agrpc/detail/use_sender.hpp>
+#include <agrpc/grpc_context.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -115,4 +115,4 @@ class GrpcWithPayloadInitiator : public detail::GrpcInitiator<InitiatingFunction
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_GRPCINITIATOR_HPP
+#endif  // AGRPC_DETAIL_GRPC_INITIATOR_HPP

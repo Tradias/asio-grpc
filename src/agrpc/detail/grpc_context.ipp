@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_GRPCCONTEXT_IPP
-#define AGRPC_DETAIL_GRPCCONTEXT_IPP
+#ifndef AGRPC_DETAIL_GRPC_CONTEXT_IPP
+#define AGRPC_DETAIL_GRPC_CONTEXT_IPP
 
-#include <agrpc/detail/asioForward.hpp>
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/grpcCompletionQueueEvent.hpp>
-#include <agrpc/detail/grpcContext.hpp>
-#include <agrpc/detail/grpcExecutorOptions.hpp>
-#include <agrpc/detail/intrusiveQueue.hpp>
-#include <agrpc/detail/memoryResource.hpp>
-#include <agrpc/grpcContext.hpp>
-#include <agrpc/grpcExecutor.hpp>
+#include <agrpc/detail/grpc_completion_queue_event.hpp>
+#include <agrpc/detail/grpc_context.hpp>
+#include <agrpc/detail/grpc_executor_options.hpp>
+#include <agrpc/detail/intrusive_queue.hpp>
+#include <agrpc/detail/memory_resource.hpp>
+#include <agrpc/grpc_context.hpp>
+#include <agrpc/grpc_executor.hpp>
 #include <grpcpp/alarm.h>
 #include <grpcpp/completion_queue.h>
 
@@ -161,6 +161,6 @@ inline grpc::ServerCompletionQueue* GrpcContext::get_server_completion_queue() n
 
 AGRPC_NAMESPACE_END
 
-#include <agrpc/detail/grpcContextImplementation.ipp>
+#include <agrpc/detail/grpc_context_implementation.ipp>
 
-#endif  // AGRPC_DETAIL_GRPCCONTEXT_IPP
+#endif  // AGRPC_DETAIL_GRPC_CONTEXT_IPP

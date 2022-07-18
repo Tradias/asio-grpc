@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_UTILS_UNASSIGNABLEALLOCATOR_HPP
-#define AGRPC_UTILS_UNASSIGNABLEALLOCATOR_HPP
+#ifndef AGRPC_UTILS_UNASSIGNABLE_ALLOCATOR_HPP
+#define AGRPC_UTILS_UNASSIGNABLE_ALLOCATOR_HPP
 
 #include <cstddef>
 #include <memory>
@@ -63,4 +63,4 @@ class UnassignableAllocator
 };
 }
 
-#endif  // AGRPC_UTILS_UNASSIGNABLEALLOCATOR_HPP
+#endif  // AGRPC_UTILS_UNASSIGNABLE_ALLOCATOR_HPP

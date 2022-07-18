@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utils/grpcContextTest.hpp"
+#include "utils/grpc_context_test.hpp"
 #include "utils/time.hpp"
 
-#include <agrpc/cancelSafe.hpp>
-#include <agrpc/grpcStream.hpp>
+#include <agrpc/cancel_safe.hpp>
+#include <agrpc/grpc_stream.hpp>
 #include <agrpc/wait.hpp>
 #include <doctest/doctest.h>
 

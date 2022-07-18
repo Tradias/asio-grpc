@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_ASIOFORWARD_HPP
-#define AGRPC_DETAIL_ASIOFORWARD_HPP
+#ifndef AGRPC_DETAIL_ASIO_FORWARD_HPP
+#define AGRPC_DETAIL_ASIO_FORWARD_HPP
 
 #include <agrpc/detail/config.hpp>
 
@@ -233,4 +233,4 @@ inline constexpr bool IS_STOP_EVER_POSSIBLE_V<T, detail::IsStopEverPossibleHelpe
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_ASIOFORWARD_HPP
+#endif  // AGRPC_DETAIL_ASIO_FORWARD_HPP

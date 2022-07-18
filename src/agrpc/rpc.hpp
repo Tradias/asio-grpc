@@ -15,13 +15,13 @@
 #ifndef AGRPC_AGRPC_RPC_HPP
 #define AGRPC_AGRPC_RPC_HPP
 
-#include <agrpc/defaultCompletionToken.hpp>
-#include <agrpc/detail/asioForward.hpp>
+#include <agrpc/default_completion_token.hpp>
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/grpcInitiate.hpp>
+#include <agrpc/detail/grpc_initiate.hpp>
 #include <agrpc/detail/memory.hpp>
 #include <agrpc/detail/rpc.hpp>
-#include <agrpc/getCompletionQueue.hpp>
+#include <agrpc/get_completion_queue.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

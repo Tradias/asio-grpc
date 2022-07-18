@@ -15,12 +15,12 @@
 #include "utils/rpc.hpp"
 
 #include "test/v1/test.grpc.pb.h"
-#include "utils/asioForward.hpp"
-#include "utils/clientContext.hpp"
+#include "utils/asio_forward.hpp"
+#include "utils/client_context.hpp"
 #include "utils/doctest.hpp"
 #include "utils/time.hpp"
 
-#include <agrpc/grpcContext.hpp>
+#include <agrpc/grpc_context.hpp>
 #include <agrpc/rpc.hpp>
 
 namespace test

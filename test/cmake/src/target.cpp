@@ -15,7 +15,7 @@
 #include "target.grpc.pb.h"
 #include "target_mock.grpc.pb.h"
 
-#include <agrpc/asioGrpc.hpp>
+#include <agrpc/asio_grpc.hpp>
 #include <grpcpp/completion_queue.h>
 
 void run_target()

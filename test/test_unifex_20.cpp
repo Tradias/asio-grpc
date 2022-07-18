@@ -13,14 +13,14 @@
 // limitations under the License.
 
 #include "test/v1/test.grpc.pb.h"
-#include "utils/asioForward.hpp"
-#include "utils/asioUtils.hpp"
-#include "utils/clientContext.hpp"
+#include "utils/asio_forward.hpp"
+#include "utils/asio_utils.hpp"
+#include "utils/client_context.hpp"
 #include "utils/doctest.hpp"
-#include "utils/grpcClientServerTest.hpp"
-#include "utils/grpcContextTest.hpp"
+#include "utils/grpc_client_server_test.hpp"
+#include "utils/grpc_context_test.hpp"
 
-#include <agrpc/asioGrpc.hpp>
+#include <agrpc/asio_grpc.hpp>
 
 #include <cstddef>
 #include <optional>

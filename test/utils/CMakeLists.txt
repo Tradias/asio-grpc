@@ -33,11 +33,11 @@ function(asio_grpc_add_test_main _asio_grpc_name _asio_grpc_cxx_standard)
     target_sources(
         ${_asio_grpc_name}
         PRIVATE # cmake-format: sort
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/clientContext.cpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/clientContext.hpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/client_context.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/client_context.hpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/doctest.hpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/freePort.cpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/freePort.hpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/free_port.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/free_port.hpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/main.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/time.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/time.hpp")
@@ -61,8 +61,8 @@ if(ASIO_GRPC_USE_BOOST_CONTAINER)
     set(ASIO_GRPC_MEMORY_RESOURCE_UTILS_INCLUDE [[#include <boost/container/pmr/monotonic_buffer_resource.hpp>
 #include <boost/container/pmr/global_resource.hpp>]])
 endif()
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/utils/memoryResource.hpp.in"
-               "${CMAKE_CURRENT_BINARY_DIR}/generated/utils/memoryResource.hpp" @ONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/utils/memory_resource.hpp.in"
+               "${CMAKE_CURRENT_BINARY_DIR}/generated/utils/memory_resource.hpp" @ONLY)
 unset(ASIO_GRPC_MEMORY_RESOURCE_UTILS_INCLUDE)
 
 function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_standard)
@@ -71,17 +71,17 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
     target_sources(
         ${_asio_grpc_name}
         PRIVATE # cmake-format: sort
-                "${CMAKE_CURRENT_BINARY_DIR}/generated/utils/memoryResource.hpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/asioSeparateCompilation.cpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/asioUtils.hpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcClientServerTest.cpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcClientServerTest.hpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcClientServerTestBase.cpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcClientServerTestBase.hpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcContextTest.cpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcContextTest.hpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcGenericClientServerTest.cpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcGenericClientServerTest.hpp")
+                "${CMAKE_CURRENT_BINARY_DIR}/generated/utils/memory_resource.hpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/asio_separate_compilation.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/asio_utils.hpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_client_server_test.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_client_server_test.hpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_client_server_test_base.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_client_server_test_base.hpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_context_test.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_context_test.hpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_generic_client_server_test.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_generic_client_server_test.hpp")
     if(NOT ${_asio_grpc_type} STREQUAL "UNIFEX")
         target_sources(
             ${_asio_grpc_name}
@@ -92,7 +92,7 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
     target_include_directories(${_asio_grpc_name} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
                                                          "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>")
 
-    target_precompile_headers(${_asio_grpc_name} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/utils/precompiledHeader.hpp")
+    target_precompile_headers(${_asio_grpc_name} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/utils/precompiled_header.hpp")
 
     if(${_asio_grpc_type} STREQUAL "BOOST_ASIO")
         target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc)

@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_ALLOCATEOPERATION_HPP
-#define AGRPC_DETAIL_ALLOCATEOPERATION_HPP
+#ifndef AGRPC_DETAIL_ALLOCATE_OPERATION_HPP
+#define AGRPC_DETAIL_ALLOCATE_OPERATION_HPP
 
 #include <agrpc/detail/allocate.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/grpcContextImplementation.hpp>
+#include <agrpc/detail/grpc_context_implementation.hpp>
 #include <agrpc/detail/operation.hpp>
 #include <agrpc/detail/utility.hpp>
-#include <agrpc/grpcContext.hpp>
+#include <agrpc/grpc_context.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -129,4 +129,4 @@ void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Comple
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_ALLOCATEOPERATION_HPP
+#endif  // AGRPC_DETAIL_ALLOCATE_OPERATION_HPP

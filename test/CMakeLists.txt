@@ -67,16 +67,16 @@ function(asio_grpc_add_test _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_stand
 endfunction()
 
 set(ASIO_GRPC_CPP17_TEST_SOURCE_FILES
-    "testAsioGrpc17.cpp"
-    "testRepeatedlyRequest17.cpp"
-    "testBindAllocator17.cpp"
-    "testGrpcContext17.cpp"
-    "testRun17.cpp"
-    "testGenericRpc17.cpp"
-    "testGrpcStream17.cpp"
-    "testTest17.cpp")
-set(ASIO_GRPC_CPP20_TEST_SOURCE_FILES "testAsioGrpc20.cpp" "testRepeatedlyRequest20.cpp" "testBindAllocator20.cpp"
-                                      "testGrpcContext20.cpp" "testGrpcStream20.cpp")
+    "test_asio_grpc_17.cpp"
+    "test_repeatedly_request_17.cpp"
+    "test_bind_allocator_17.cpp"
+    "test_grpc_context_17.cpp"
+    "test_run_17.cpp"
+    "test_generic_rpc_17.cpp"
+    "test_grpc_stream_17.cpp"
+    "test_test_17.cpp")
+set(ASIO_GRPC_CPP20_TEST_SOURCE_FILES "test_asio_grpc_20.cpp" "test_repeatedly_request_20.cpp"
+                                      "test_bind_allocator_20.cpp" "test_grpc_context_20.cpp" "test_grpc_stream_20.cpp")
 
 asio_grpc_add_test(asio-grpc-test-boost-cpp17 "BOOST_ASIO" "17" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES})
 target_compile_definitions(asio-grpc-test-boost-cpp17 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"Boost.Asio C++17\"")
@@ -97,7 +97,7 @@ if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
     target_compile_definitions(asio-grpc-test-cpp20 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"Standalone Asio C++20\"")
     target_link_libraries(asio-grpc-test-cpp20 PRIVATE Boost::coroutine Boost::thread)
 
-    asio_grpc_add_test(asio-grpc-test-unifex-cpp20 "UNIFEX" "20" "testUnifex20.cpp")
+    asio_grpc_add_test(asio-grpc-test-unifex-cpp20 "UNIFEX" "20" "test_unifex_20.cpp")
     target_compile_definitions(asio-grpc-test-unifex-cpp20 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"unifex C++20\"")
 endif()
 
@@ -108,7 +108,7 @@ unset(ASIO_GRPC_CPP20_TEST_SOURCE_FILES)
 if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
     add_executable(asio-grpc-test-examples)
 
-    target_sources(asio-grpc-test-examples PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/testExamples.cpp")
+    target_sources(asio-grpc-test-examples PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/test_examples.cpp")
 
     target_link_libraries(asio-grpc-test-examples PRIVATE asio-grpc-test-main Boost::filesystem)
 

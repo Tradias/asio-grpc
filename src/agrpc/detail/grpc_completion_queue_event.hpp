@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_GRPCCOMPLETIONQUEUEEVENT_HPP
-#define AGRPC_DETAIL_GRPCCOMPLETIONQUEUEEVENT_HPP
+#ifndef AGRPC_DETAIL_GRPC_COMPLETION_QUEUE_EVENT_HPP
+#define AGRPC_DETAIL_GRPC_COMPLETION_QUEUE_EVENT_HPP
 
 #include <agrpc/detail/config.hpp>
 
@@ -30,4 +30,4 @@ struct GrpcCompletionQueueEvent
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_GRPCCOMPLETIONQUEUEEVENT_HPP
+#endif  // AGRPC_DETAIL_GRPC_COMPLETION_QUEUE_EVENT_HPP

@@ -27,6 +27,6 @@ if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPL
     asio_grpc_add_documentation(asio-grpc-documentation-boost-asio client.cpp server.cpp)
     target_link_libraries(asio-grpc-documentation-boost-asio PRIVATE asio-grpc::asio-grpc)
 
-    asio_grpc_add_documentation(asio-grpc-documentation-unifex unifex-client.cpp unifex-server.cpp)
+    asio_grpc_add_documentation(asio-grpc-documentation-unifex unifex_client.cpp unifex_server.cpp)
     target_link_libraries(asio-grpc-documentation-unifex PRIVATE asio-grpc::asio-grpc-unifex)
 endif()

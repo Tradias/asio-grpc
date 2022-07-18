@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "utils/doctest.hpp"
-#include "utils/freePort.hpp"
+#include "utils/free_port.hpp"
 
 #include <boost/process/child.hpp>
 

@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_TYPEERASEDCOMPLETIONHANDLER_HPP
-#define AGRPC_DETAIL_TYPEERASEDCOMPLETIONHANDLER_HPP
+#ifndef AGRPC_DETAIL_TYPE_ERASED_COMPLETION_HANDLER_HPP
+#define AGRPC_DETAIL_TYPE_ERASED_COMPLETION_HANDLER_HPP
 
 #include <agrpc/detail/allocate.hpp>
-#include <agrpc/detail/asioForward.hpp>
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/voidPointerTraits.hpp>
+#include <agrpc/detail/void_pointer_traits.hpp>
 
 #include <cassert>
 
@@ -111,4 +111,4 @@ class BasicTypeErasedCompletionHandler<void(Args...), VoidPointer>
 }
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_TYPEERASEDCOMPLETIONHANDLER_HPP
+#endif  // AGRPC_DETAIL_TYPE_ERASED_COMPLETION_HANDLER_HPP

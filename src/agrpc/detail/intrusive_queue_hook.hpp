@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_INTRUSIVEQUEUEHOOK_HPP
-#define AGRPC_DETAIL_INTRUSIVEQUEUEHOOK_HPP
+#ifndef AGRPC_DETAIL_INTRUSIVE_QUEUE_HOOK_HPP
+#define AGRPC_DETAIL_INTRUSIVE_QUEUE_HOOK_HPP
 
 #include <agrpc/detail/config.hpp>
 
@@ -30,4 +30,4 @@ struct IntrusiveQueueHook
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_INTRUSIVEQUEUEHOOK_HPP
+#endif  // AGRPC_DETAIL_INTRUSIVE_QUEUE_HOOK_HPP

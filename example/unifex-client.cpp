@@ -13,10 +13,10 @@
 // limitations under the License.
 
 #include "example/v1/example.grpc.pb.h"
-#include "example/v1/exampleExt.grpc.pb.h"
+#include "example/v1/example_ext.grpc.pb.h"
 #include "helper.hpp"
 
-#include <agrpc/asioGrpc.hpp>
+#include <agrpc/asio_grpc.hpp>
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 #include <unifex/finally.hpp>

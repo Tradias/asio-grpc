@@ -13,12 +13,12 @@
 // limitations under the License.
 
 #include "buffer.hpp"
-#include "example/v1/exampleExt.grpc.pb.h"
+#include "example/v1/example_ext.grpc.pb.h"
 #include "helper.hpp"
-#include "scopeGuard.hpp"
-#include "whenBoth.hpp"
+#include "scope_guard.hpp"
+#include "when_both.hpp"
 
-#include <agrpc/asioGrpc.hpp>
+#include <agrpc/asio_grpc.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/io_context.hpp>

@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_AGRPC_GRPCINITIATE_HPP
-#define AGRPC_AGRPC_GRPCINITIATE_HPP
+#ifndef AGRPC_AGRPC_GRPC_INITIATE_HPP
+#define AGRPC_AGRPC_GRPC_INITIATE_HPP
 
-#include <agrpc/defaultCompletionToken.hpp>
-#include <agrpc/detail/asioForward.hpp>
+#include <agrpc/default_completion_token.hpp>
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/grpcInitiate.hpp>
+#include <agrpc/detail/grpc_initiate.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -62,4 +62,4 @@ inline constexpr detail::GrpcInitiateFn grpc_initiate{};
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_AGRPC_GRPCINITIATE_HPP
+#endif  // AGRPC_AGRPC_GRPC_INITIATE_HPP

@@ -15,8 +15,8 @@
 #ifndef AGRPC_HELPER_BUFFER_HPP
 #define AGRPC_HELPER_BUFFER_HPP
 
-#include <agrpc/bindAllocator.hpp>
-#include <agrpc/detail/oneShotAllocator.hpp>
+#include <agrpc/bind_allocator.hpp>
+#include <agrpc/detail/one_shot_allocator.hpp>
 
 #include <cstddef>
 #include <type_traits>

@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_IPP
-#define AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_IPP
+#ifndef AGRPC_DETAIL_GRPC_CONTEXT_IMPLEMENTATION_IPP
+#define AGRPC_DETAIL_GRPC_CONTEXT_IMPLEMENTATION_IPP
 
-#include <agrpc/detail/asioForward.hpp>
-#include <agrpc/detail/grpcCompletionQueueEvent.hpp>
-#include <agrpc/detail/grpcContextImplementation.hpp>
-#include <agrpc/detail/typeErasedOperation.hpp>
-#include <agrpc/grpcContext.hpp>
+#include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/grpc_completion_queue_event.hpp>
+#include <agrpc/detail/grpc_context_implementation.hpp>
+#include <agrpc/detail/type_erased_operation.hpp>
+#include <agrpc/grpc_context.hpp>
 #include <grpc/support/time.h>
 #include <grpcpp/completion_queue.h>
 
@@ -221,4 +221,4 @@ inline ::gpr_timespec gpr_timespec_from_now(std::chrono::nanoseconds duration) n
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_GRPCCONTEXTIMPLEMENTATION_IPP
+#endif  // AGRPC_DETAIL_GRPC_CONTEXT_IMPLEMENTATION_IPP

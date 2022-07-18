@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_GRPCINITIATE_HPP
-#define AGRPC_DETAIL_GRPCINITIATE_HPP
+#ifndef AGRPC_DETAIL_GRPC_INITIATE_HPP
+#define AGRPC_DETAIL_GRPC_INITIATE_HPP
 
-#include <agrpc/detail/asioForward.hpp>
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/grpcSender.hpp>
-#include <agrpc/detail/useSender.hpp>
+#include <agrpc/detail/grpc_sender.hpp>
+#include <agrpc/detail/use_sender.hpp>
 #include <agrpc/detail/utility.hpp>
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-#include <agrpc/detail/defaultCompletionToken.hpp>
-#include <agrpc/detail/grpcInitiator.hpp>
+#include <agrpc/detail/default_completion_token.hpp>
+#include <agrpc/detail/grpc_initiator.hpp>
 #endif
 
 AGRPC_NAMESPACE_BEGIN()
@@ -85,4 +85,4 @@ inline constexpr bool IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN =
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_GRPCINITIATE_HPP
+#endif  // AGRPC_DETAIL_GRPC_INITIATE_HPP

@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utils/freePort.hpp"
-#include "utils/grpcClientServerTestBase.hpp"
-#include "utils/grpcContextTest.hpp"
+#include "utils/grpc_client_server_test_base.hpp"
+
+#include "utils/free_port.hpp"
+#include "utils/grpc_context_test.hpp"
 #include "utils/time.hpp"
 
 #include <grpcpp/client_context.h>

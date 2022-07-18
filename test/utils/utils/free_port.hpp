@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_UTILS_FREEPORT_HPP
-#define AGRPC_UTILS_FREEPORT_HPP
+#ifndef AGRPC_UTILS_FREE_PORT_HPP
+#define AGRPC_UTILS_FREE_PORT_HPP
 
 #include <cstdint>
 
@@ -22,4 +22,4 @@ namespace test
 uint16_t get_free_port();
 }
 
-#endif  // AGRPC_UTILS_FREEPORT_HPP
+#endif  // AGRPC_UTILS_FREE_PORT_HPP

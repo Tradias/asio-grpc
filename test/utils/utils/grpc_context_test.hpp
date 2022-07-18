@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_UTILS_GRPCCONTEXTTEST_HPP
-#define AGRPC_UTILS_GRPCCONTEXTTEST_HPP
+#ifndef AGRPC_UTILS_GRPC_CONTEXT_TEST_HPP
+#define AGRPC_UTILS_GRPC_CONTEXT_TEST_HPP
 
-#include "utils/asioForward.hpp"
-#include "utils/memoryResource.hpp"
+#include "utils/asio_forward.hpp"
+#include "utils/memory_resource.hpp"
 
-#include <agrpc/grpcContext.hpp>
-#include <agrpc/grpcExecutor.hpp>
-#include <agrpc/useSender.hpp>
+#include <agrpc/grpc_context.hpp>
+#include <agrpc/grpc_executor.hpp>
+#include <agrpc/use_sender.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
@@ -63,4 +63,4 @@ struct GrpcContextTest
 };
 }  // namespace test
 
-#endif  // AGRPC_UTILS_GRPCCONTEXTTEST_HPP
+#endif  // AGRPC_UTILS_GRPC_CONTEXT_TEST_HPP

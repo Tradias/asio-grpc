@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_AGRPC_GETCOMPLETIONQUEUE_HPP
-#define AGRPC_AGRPC_GETCOMPLETIONQUEUE_HPP
+#ifndef AGRPC_AGRPC_GET_COMPLETION_QUEUE_HPP
+#define AGRPC_AGRPC_GET_COMPLETION_QUEUE_HPP
 
-#include <agrpc/detail/asioForward.hpp>
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/queryGrpcContext.hpp>
-#include <agrpc/grpcContext.hpp>
-#include <agrpc/grpcExecutor.hpp>
+#include <agrpc/detail/query_grpc_context.hpp>
+#include <agrpc/grpc_context.hpp>
+#include <agrpc/grpc_executor.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -108,4 +108,4 @@ inline constexpr detail::GetCompletionQueueFn get_completion_queue{};
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_AGRPC_GETCOMPLETIONQUEUE_HPP
+#endif  // AGRPC_AGRPC_GET_COMPLETION_QUEUE_HPP

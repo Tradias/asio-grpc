@@ -13,9 +13,9 @@
 // limitations under the License.
 
 #include "test/v1/test_mock.grpc.pb.h"
-#include "utils/asioUtils.hpp"
+#include "utils/asio_utils.hpp"
 #include "utils/doctest.hpp"
-#include "utils/grpcContextTest.hpp"
+#include "utils/grpc_context_test.hpp"
 
 #include <agrpc/rpc.hpp>
 #include <agrpc/test.hpp>

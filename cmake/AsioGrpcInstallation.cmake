@@ -46,5 +46,5 @@ install(
     PATTERN "*.hpp"
     PATTERN "*.ipp")
 
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/src/generated/agrpc/detail/memoryResource.hpp"
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/src/generated/agrpc/detail/memory_resource.hpp"
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/agrpc/detail")

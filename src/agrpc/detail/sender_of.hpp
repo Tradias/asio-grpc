@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_SENDEROF_HPP
-#define AGRPC_DETAIL_SENDEROF_HPP
+#ifndef AGRPC_DETAIL_SENDER_OF_HPP
+#define AGRPC_DETAIL_SENDER_OF_HPP
 
 #include <agrpc/detail/config.hpp>
 
@@ -38,4 +38,4 @@ struct SenderOf
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_SENDEROF_HPP
+#endif  // AGRPC_DETAIL_SENDER_OF_HPP

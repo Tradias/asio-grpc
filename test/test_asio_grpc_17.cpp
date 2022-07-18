@@ -13,14 +13,14 @@
 // limitations under the License.
 
 #include "test/v1/test.grpc.pb.h"
-#include "utils/asioUtils.hpp"
-#include "utils/countingAllocator.hpp"
+#include "utils/asio_utils.hpp"
+#include "utils/counting_allocator.hpp"
 #include "utils/doctest.hpp"
-#include "utils/grpcClientServerTest.hpp"
-#include "utils/grpcContextTest.hpp"
+#include "utils/grpc_client_server_test.hpp"
+#include "utils/grpc_context_test.hpp"
 #include "utils/rpc.hpp"
 
-#include <agrpc/grpcInitiate.hpp>
+#include <agrpc/grpc_initiate.hpp>
 #include <agrpc/rpc.hpp>
 #include <agrpc/wait.hpp>
 #include <grpcpp/create_channel.h>

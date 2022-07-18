@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_GRPCCONTEXT_HPP
-#define AGRPC_DETAIL_GRPCCONTEXT_HPP
+#ifndef AGRPC_DETAIL_GRPC_CONTEXT_HPP
+#define AGRPC_DETAIL_GRPC_CONTEXT_HPP
 
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/memoryResource.hpp>
-#include <agrpc/detail/memoryResourceAllocator.hpp>
+#include <agrpc/detail/memory_resource.hpp>
+#include <agrpc/detail/memory_resource_allocator.hpp>
 
 #include <cstddef>
 
@@ -31,4 +31,4 @@ using GrpcContextLocalAllocator = detail::MemoryResourceAllocator<std::byte, det
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_GRPCCONTEXT_HPP
+#endif  // AGRPC_DETAIL_GRPC_CONTEXT_HPP

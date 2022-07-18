@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_ONESHOTALLOCATOR_HPP
-#define AGRPC_DETAIL_ONESHOTALLOCATOR_HPP
+#ifndef AGRPC_DETAIL_ONE_SHOT_ALLOCATOR_HPP
+#define AGRPC_DETAIL_ONE_SHOT_ALLOCATOR_HPP
 
 #include <agrpc/detail/config.hpp>
 
@@ -79,4 +79,4 @@ class OneShotAllocator
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_ONESHOTALLOCATOR_HPP
+#endif  // AGRPC_DETAIL_ONE_SHOT_ALLOCATOR_HPP

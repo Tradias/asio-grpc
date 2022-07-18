@@ -14,9 +14,9 @@
 
 #include "out_var/msg/message.grpc.pb.h"
 #include "out_var/subdir/other.grpc.pb.h"
-#include "out_var/v1/outVar.grpc.pb.h"
+#include "out_var/v1/out_var.grpc.pb.h"
 
-#include <agrpc/asioGrpc.hpp>
+#include <agrpc/asio_grpc.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <grpcpp/completion_queue.h>
 

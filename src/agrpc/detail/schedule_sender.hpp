@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_SCHEDULESENDER_HPP
-#define AGRPC_DETAIL_SCHEDULESENDER_HPP
+#ifndef AGRPC_DETAIL_SCHEDULE_SENDER_HPP
+#define AGRPC_DETAIL_SCHEDULE_SENDER_HPP
 
-#include <agrpc/detail/allocateOperation.hpp>
+#include <agrpc/detail/allocate_operation.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
-#include <agrpc/detail/grpcContextImplementation.hpp>
+#include <agrpc/detail/grpc_context_implementation.hpp>
 #include <agrpc/detail/receiver.hpp>
-#include <agrpc/detail/senderOf.hpp>
+#include <agrpc/detail/sender_of.hpp>
 #include <agrpc/detail/utility.hpp>
-#include <agrpc/grpcContext.hpp>
+#include <agrpc/grpc_context.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -115,4 +115,4 @@ class ScheduleSender : public detail::SenderOf<>
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_SCHEDULESENDER_HPP
+#endif  // AGRPC_DETAIL_SCHEDULE_SENDER_HPP

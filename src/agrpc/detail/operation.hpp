@@ -17,7 +17,7 @@
 
 #include <agrpc/detail/allocate.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/typeErasedOperation.hpp>
+#include <agrpc/detail/type_erased_operation.hpp>
 #include <agrpc/detail/utility.hpp>
 
 AGRPC_NAMESPACE_BEGIN()

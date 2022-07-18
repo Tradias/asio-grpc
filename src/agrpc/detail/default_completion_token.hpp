@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_DEFAULTCOMPLETIONTOKEN_HPP
-#define AGRPC_DETAIL_DEFAULTCOMPLETIONTOKEN_HPP
+#ifndef AGRPC_DETAIL_DEFAULT_COMPLETION_TOKEN_HPP
+#define AGRPC_DETAIL_DEFAULT_COMPLETION_TOKEN_HPP
 
-#include <agrpc/detail/asioForward.hpp>
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -48,4 +48,4 @@ class agrpc::asio::async_result<agrpc::detail::DefaultCompletionTokenNotAvailabl
 
 #endif
 
-#endif  // AGRPC_DETAIL_DEFAULTCOMPLETIONTOKEN_HPP
+#endif  // AGRPC_DETAIL_DEFAULT_COMPLETION_TOKEN_HPP

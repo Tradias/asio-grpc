@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_AGRPC_REPEATEDLYREQUESTCONTEXT_HPP
-#define AGRPC_AGRPC_REPEATEDLYREQUESTCONTEXT_HPP
+#ifndef AGRPC_AGRPC_REPEATEDLY_REQUEST_CONTEXT_HPP
+#define AGRPC_AGRPC_REPEATEDLY_REQUEST_CONTEXT_HPP
 
 #include <agrpc/detail/allocate.hpp>
 #include <agrpc/detail/config.hpp>
@@ -113,4 +113,4 @@ using GenericRepeatedlyRequestContext = agrpc::RepeatedlyRequestContext<
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_AGRPC_REPEATEDLYREQUESTCONTEXT_HPP
+#endif  // AGRPC_AGRPC_REPEATEDLY_REQUEST_CONTEXT_HPP

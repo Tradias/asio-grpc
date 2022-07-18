@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_USESENDER_HPP
-#define AGRPC_DETAIL_USESENDER_HPP
+#ifndef AGRPC_DETAIL_USE_SENDER_HPP
+#define AGRPC_DETAIL_USE_SENDER_HPP
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
@@ -30,4 +30,4 @@ struct UseSender
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_USESENDER_HPP
+#endif  // AGRPC_DETAIL_USE_SENDER_HPP

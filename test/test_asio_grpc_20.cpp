@@ -13,9 +13,9 @@
 // limitations under the License.
 
 #include "test/v1/test.grpc.pb.h"
-#include "utils/asioUtils.hpp"
+#include "utils/asio_utils.hpp"
 #include "utils/doctest.hpp"
-#include "utils/grpcClientServerTest.hpp"
+#include "utils/grpc_client_server_test.hpp"
 #include "utils/rpc.hpp"
 #include "utils/time.hpp"
 

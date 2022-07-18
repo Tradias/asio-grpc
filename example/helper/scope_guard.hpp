@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_HELPER_SCOPEGUARD_HPP
-#define AGRPC_HELPER_SCOPEGUARD_HPP
+#ifndef AGRPC_HELPER_SCOPE_GUARD_HPP
+#define AGRPC_HELPER_SCOPE_GUARD_HPP
 
 namespace example
 {
@@ -28,4 +28,4 @@ struct ScopeGuard
 };
 }  // namespace example
 
-#endif  // AGRPC_HELPER_SCOPEGUARD_HPP
+#endif  // AGRPC_HELPER_SCOPE_GUARD_HPP

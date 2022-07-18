@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_REPEATEDLYREQUESTSENDER_HPP
-#define AGRPC_DETAIL_REPEATEDLYREQUESTSENDER_HPP
+#ifndef AGRPC_DETAIL_REPEATEDLY_REQUEST_SENDER_HPP
+#define AGRPC_DETAIL_REPEATEDLY_REQUEST_SENDER_HPP
 
-#include <agrpc/detail/asioForward.hpp>
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/receiver.hpp>
-#include <agrpc/detail/rpcContext.hpp>
-#include <agrpc/detail/senderOf.hpp>
-#include <agrpc/detail/typeErasedOperation.hpp>
+#include <agrpc/detail/rpc_context.hpp>
+#include <agrpc/detail/sender_of.hpp>
+#include <agrpc/detail/type_erased_operation.hpp>
 #include <agrpc/detail/utility.hpp>
-#include <agrpc/grpcContext.hpp>
+#include <agrpc/grpc_context.hpp>
 
 #include <atomic>
 #include <optional>
@@ -343,4 +343,4 @@ RepeatedlyRequestSender(agrpc::GrpcContext&, RPC, Service&, RequestHandler&&)
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_REPEATEDLYREQUESTSENDER_HPP
+#endif  // AGRPC_DETAIL_REPEATEDLY_REQUEST_SENDER_HPP

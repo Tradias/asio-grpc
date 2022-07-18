@@ -81,7 +81,7 @@ When using [standalone Asio](https://github.com/chriskohlhoff/asio) then omit th
 The library can be added to a CMake project using either `add_subdirectory` or `find_package`. Once set up, include the individual headers from the agrpc/ directory or the convenience header:
 
 ```cpp
-#include <agrpc/asioGrpc.hpp>
+#include <agrpc/asio_grpc.hpp>
 ```
 
 <details><summary><b>As a subdirectory</b></summary>

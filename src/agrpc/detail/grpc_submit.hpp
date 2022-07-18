@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_GRPCSUBMIT_HPP
-#define AGRPC_DETAIL_GRPCSUBMIT_HPP
+#ifndef AGRPC_DETAIL_GRPC_SUBMIT_HPP
+#define AGRPC_DETAIL_GRPC_SUBMIT_HPP
 
-#include <agrpc/detail/allocateOperation.hpp>
+#include <agrpc/detail/allocate_operation.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/grpcContextImplementation.hpp>
-#include <agrpc/grpcContext.hpp>
+#include <agrpc/detail/grpc_context_implementation.hpp>
+#include <agrpc/grpc_context.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -36,4 +36,4 @@ void grpc_submit(agrpc::GrpcContext& grpc_context, InitiatingFunction& initiatin
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_GRPCSUBMIT_HPP
+#endif  // AGRPC_DETAIL_GRPC_SUBMIT_HPP

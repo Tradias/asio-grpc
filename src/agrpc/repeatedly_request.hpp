@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_AGRPC_REPEATEDLYREQUEST_HPP
-#define AGRPC_AGRPC_REPEATEDLYREQUEST_HPP
+#ifndef AGRPC_AGRPC_REPEATEDLY_REQUEST_HPP
+#define AGRPC_AGRPC_REPEATEDLY_REQUEST_HPP
 
-#include <agrpc/detail/asioForward.hpp>
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/repeatedlyRequest.hpp>
-#include <agrpc/detail/repeatedlyRequestSender.hpp>
+#include <agrpc/detail/repeatedly_request.hpp>
+#include <agrpc/detail/repeatedly_request_sender.hpp>
 #include <agrpc/detail/rpc.hpp>
-#include <agrpc/detail/rpcContext.hpp>
-#include <agrpc/detail/useSender.hpp>
+#include <agrpc/detail/rpc_context.hpp>
+#include <agrpc/detail/use_sender.hpp>
 #include <agrpc/detail/utility.hpp>
-#include <agrpc/repeatedlyRequestContext.hpp>
+#include <agrpc/repeatedly_request_context.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -151,4 +151,4 @@ inline constexpr detail::RepeatedlyRequestFn repeatedly_request{};
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_AGRPC_REPEATEDLYREQUEST_HPP
+#endif  // AGRPC_AGRPC_REPEATEDLY_REQUEST_HPP

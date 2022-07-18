@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_AGRPC_USEAWAITABLE_HPP
-#define AGRPC_AGRPC_USEAWAITABLE_HPP
+#ifndef AGRPC_AGRPC_USE_AWAITABLE_HPP
+#define AGRPC_AGRPC_USE_AWAITABLE_HPP
 
-#include <agrpc/detail/asioForward.hpp>
-#include <agrpc/grpcContext.hpp>
-#include <agrpc/grpcExecutor.hpp>
+#include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/grpc_context.hpp>
+#include <agrpc/grpc_executor.hpp>
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 
@@ -62,4 +62,4 @@ AGRPC_NAMESPACE_END
 
 #endif
 
-#endif  // AGRPC_AGRPC_USEAWAITABLE_HPP
+#endif  // AGRPC_AGRPC_USE_AWAITABLE_HPP

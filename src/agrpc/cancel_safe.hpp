@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_AGRPC_CANCELSAFE_HPP
-#define AGRPC_AGRPC_CANCELSAFE_HPP
+#ifndef AGRPC_AGRPC_CANCEL_SAFE_HPP
+#define AGRPC_AGRPC_CANCEL_SAFE_HPP
 
-#include <agrpc/detail/asioForward.hpp>
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 
-#include <agrpc/detail/cancelSafe.hpp>
-#include <agrpc/detail/typeErasedCompletionHandler.hpp>
+#include <agrpc/detail/cancel_safe.hpp>
+#include <agrpc/detail/type_erased_completion_handler.hpp>
 #include <agrpc/detail/utility.hpp>
-#include <agrpc/detail/workTrackingCompletionHandler.hpp>
+#include <agrpc/detail/work_tracking_completion_handler.hpp>
 
 #include <cassert>
 #include <optional>
@@ -196,4 +196,4 @@ AGRPC_NAMESPACE_END
 
 #endif
 
-#endif  // AGRPC_AGRPC_CANCELSAFE_HPP
+#endif  // AGRPC_AGRPC_CANCEL_SAFE_HPP

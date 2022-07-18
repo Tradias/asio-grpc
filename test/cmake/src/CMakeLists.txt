@@ -51,18 +51,18 @@ asio_grpc_protobuf_generate(
     PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/proto/target.proto")
 
 # OUT_VAR option
-set(OUT_VAR_GENERATED_PROTOS_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/outVar/")
+set(OUT_VAR_GENERATED_PROTOS_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/out_var/")
 
 asio_grpc_protobuf_generate(
     GENERATE_GRPC
     OUT_VAR OUT_VAR_GENERATED_SOURCES
     OUT_DIR "${OUT_VAR_GENERATED_PROTOS_OUT_DIR}"
     IMPORT_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/proto"
-    PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/proto/out_var/v1/outVar.proto"
+    PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/proto/out_var/v1/out_var.proto"
            "${CMAKE_CURRENT_SOURCE_DIR}/proto/out_var/msg/message.proto"
            "${CMAKE_CURRENT_SOURCE_DIR}/proto/out_var/subdir/other.proto")
 
-create_object_library(out-var-option outVar.cpp ${OUT_VAR_GENERATED_SOURCES})
+create_object_library(out-var-option out_var.cpp ${OUT_VAR_GENERATED_SOURCES})
 
 target_link_libraries(out-var-option PRIVATE asio-grpc::asio-grpc)
 

@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_AGRPC_GRPCSTREAM_HPP
-#define AGRPC_AGRPC_GRPCSTREAM_HPP
+#ifndef AGRPC_AGRPC_GRPC_STREAM_HPP
+#define AGRPC_AGRPC_GRPC_STREAM_HPP
 
-#include <agrpc/detail/asioForward.hpp>
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 
-#include <agrpc/bindAllocator.hpp>
-#include <agrpc/cancelSafe.hpp>
-#include <agrpc/defaultCompletionToken.hpp>
-#include <agrpc/detail/asyncInitiate.hpp>
+#include <agrpc/bind_allocator.hpp>
+#include <agrpc/cancel_safe.hpp>
+#include <agrpc/default_completion_token.hpp>
+#include <agrpc/detail/async_initiate.hpp>
 #include <agrpc/detail/utility.hpp>
-#include <agrpc/grpcContext.hpp>
-#include <agrpc/grpcExecutor.hpp>
+#include <agrpc/grpc_context.hpp>
+#include <agrpc/grpc_executor.hpp>
 
 #include <atomic>
 
@@ -189,4 +189,4 @@ AGRPC_NAMESPACE_END
 
 #endif
 
-#endif  // AGRPC_AGRPC_GRPCSTREAM_HPP
+#endif  // AGRPC_AGRPC_GRPC_STREAM_HPP

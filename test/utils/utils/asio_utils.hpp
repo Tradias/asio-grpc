@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_UTILS_ASIOUTILS_HPP
-#define AGRPC_UTILS_ASIOUTILS_HPP
+#ifndef AGRPC_UTILS_ASIO_UTILS_HPP
+#define AGRPC_UTILS_ASIO_UTILS_HPP
 
-#include "utils/asioForward.hpp"
+#include "utils/asio_forward.hpp"
 
-#include <agrpc/grpcExecutor.hpp>
-#include <agrpc/repeatedlyRequestContext.hpp>
+#include <agrpc/grpc_executor.hpp>
+#include <agrpc/repeatedly_request_context.hpp>
 
 #include <type_traits>
 
@@ -186,4 +186,4 @@ void co_spawn_and_run(agrpc::GrpcContext& grpc_context, Functions&&... functions
 #endif
 }  // namespace test
 
-#endif  // AGRPC_UTILS_ASIOUTILS_HPP
+#endif  // AGRPC_UTILS_ASIO_UTILS_HPP

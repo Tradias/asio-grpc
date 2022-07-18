@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /**
- * @file asioGrpc.hpp
+ * @file asio_grpc.hpp
  * @brief Convenience header
  */
 
@@ -27,24 +27,24 @@
  * @brief Public namespace
  */
 
-#ifndef AGRPC_AGRPC_ASIOGRPC_HPP
-#define AGRPC_AGRPC_ASIOGRPC_HPP
+#ifndef AGRPC_AGRPC_ASIO_GRPC_HPP
+#define AGRPC_AGRPC_ASIO_GRPC_HPP
 
-#include <agrpc/bindAllocator.hpp>
-#include <agrpc/cancelSafe.hpp>
-#include <agrpc/defaultCompletionToken.hpp>
-#include <agrpc/getCompletionQueue.hpp>
-#include <agrpc/grpcContext.hpp>
-#include <agrpc/grpcExecutor.hpp>
-#include <agrpc/grpcInitiate.hpp>
-#include <agrpc/grpcStream.hpp>
-#include <agrpc/repeatedlyRequest.hpp>
-#include <agrpc/repeatedlyRequestContext.hpp>
+#include <agrpc/bind_allocator.hpp>
+#include <agrpc/cancel_safe.hpp>
+#include <agrpc/default_completion_token.hpp>
+#include <agrpc/get_completion_queue.hpp>
+#include <agrpc/grpc_context.hpp>
+#include <agrpc/grpc_executor.hpp>
+#include <agrpc/grpc_initiate.hpp>
+#include <agrpc/grpc_stream.hpp>
+#include <agrpc/repeatedly_request.hpp>
+#include <agrpc/repeatedly_request_context.hpp>
 #include <agrpc/rpc.hpp>
 #include <agrpc/run.hpp>
 #include <agrpc/test.hpp>
-#include <agrpc/useAwaitable.hpp>
-#include <agrpc/useSender.hpp>
+#include <agrpc/use_awaitable.hpp>
+#include <agrpc/use_sender.hpp>
 #include <agrpc/wait.hpp>
 
-#endif  // AGRPC_AGRPC_ASIOGRPC_HPP
+#endif  // AGRPC_AGRPC_ASIO_GRPC_HPP

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_UTILS_MANUALLIFETIME_HPP
-#define AGRPC_UTILS_MANUALLIFETIME_HPP
+#ifndef AGRPC_UTILS_MANUAL_LIFETIME_HPP
+#define AGRPC_UTILS_MANUAL_LIFETIME_HPP
 
 #include <memory>
 
@@ -43,4 +43,4 @@ class ManualLifetime
 };
 }  // namespace test
 
-#endif  // AGRPC_UTILS_MANUALLIFETIME_HPP
+#endif  // AGRPC_UTILS_MANUAL_LIFETIME_HPP

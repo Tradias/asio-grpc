@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_CANCELSAFE_HPP
-#define AGRPC_DETAIL_CANCELSAFE_HPP
+#ifndef AGRPC_DETAIL_CANCEL_SAFE_HPP
+#define AGRPC_DETAIL_CANCEL_SAFE_HPP
 
-#include <agrpc/detail/asioForward.hpp>
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/typeErasedCompletionHandler.hpp>
+#include <agrpc/detail/type_erased_completion_handler.hpp>
 #include <agrpc/detail/utility.hpp>
-#include <agrpc/detail/workTrackingCompletionHandler.hpp>
+#include <agrpc/detail/work_tracking_completion_handler.hpp>
 
 #include <tuple>
 
@@ -85,4 +85,4 @@ void complete_operation_aborted(CompletionHandler&& handler, Args&&... args)
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_CANCELSAFE_HPP
+#endif  // AGRPC_DETAIL_CANCEL_SAFE_HPP
