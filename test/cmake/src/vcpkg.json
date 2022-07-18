@@ -23,8 +23,8 @@
     "builtin-baseline": "de176433e9a8769eed0e43d61758f4cdc1dc6e20",
     "overrides": [
         {
-            "name": "doctest",
-            "version": "2.4.6"
+            "name": "protobuf",
+            "version": "3.19.4"
         }
     ]
 }
