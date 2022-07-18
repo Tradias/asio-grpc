@@ -15,7 +15,7 @@
 #ifndef AGRPC_HELPER_WHENBOTH_HPP
 #define AGRPC_HELPER_WHENBOTH_HPP
 
-#include <agrpc/useAwaitable.hpp>
+#include <agrpc/use_awaitable.hpp>
 
 #include <atomic>
 #include <cstddef>
