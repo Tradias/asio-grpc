@@ -115,15 +115,6 @@ jobs:
     - name: GCC 8 Test
       run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-8 --config Release
 
-    - name: GCC 9 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-9 -DCMAKE_CXX_COMPILER=$(which g++-9) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
-
-    - name: GCC 9 Build
-      run: cmake --build ${{ github.workspace }}/build-9 --config Release --parallel $(nproc)
-
-    - name: GCC 9 Test
-      run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-9 --config Release
-
     - name: GCC 10 Configure CMake
       run: cmake --preset default -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which g++-10) -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DASIO_GRPC_TEST_COVERAGE=on -DASIO_GRPC_GCOV_PROGRAM=$(which gcov-10) -DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build-10/sonarqube-coverage.xml -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }} -DCMAKE_BUILD_TYPE=Debug
 
@@ -198,15 +189,6 @@ jobs:
 
     - name: Clang 10 Test
       run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-10 --config Release
-
-    - name: Clang 11 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which clang++-11) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
-
-    - name: Clang 11 Build
-      run: cmake --build ${{ github.workspace }}/build-11 --config Release --parallel $(nproc)
-
-    - name: Clang 11 Test
-      run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-11 --config Release
 
     - name: Download doxygen
       working-directory: ${{ runner.workspace }}

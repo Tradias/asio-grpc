@@ -27,7 +27,8 @@ endif()
 
 target_compile_options(
     asio-grpc-compile-options
-    INTERFACE $<$<CXX_COMPILER_ID:MSVC>:/W4
+    INTERFACE # suppress warning for deprecated declarations
+              $<$<CXX_COMPILER_ID:MSVC>:/W4
               /wd4996
               /permissive-
               /Zc:preprocessor

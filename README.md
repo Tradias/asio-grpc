@@ -58,8 +58,8 @@ Tested by CI:
  * [Standalone Asio](https://github.com/chriskohlhoff/asio) 1.17.0 (min. 1.17.0)
  * [libunifex](https://github.com/facebookexperimental/libunifex) 2022-02-09
  * MSVC 19.32 (Visual Studio 17 2022)
- * GCC 8.4.0, 9.3.0, 10.3.0, 11.1.0
- * Clang 10.0.0, 11.0.0, 12.0.0
+ * GCC 8.4.0, 10.3.0, 11.1.0
+ * Clang 10.0.0, 12.0.0
  * AppleClang 13.0.0.13000029
  * C++17 and C++20
 

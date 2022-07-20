@@ -303,13 +303,13 @@ class agrpc::asio::async_result<agrpc::AllocatorBinder<CompletionToken, Allocato
 
     constexpr decltype(auto) get() { return result.get(); }
 
-    template <class Initiation, class RawCompletionToken, class... Args>
-    static decltype(auto) initiate(Initiation&& initiation, RawCompletionToken&& token, Args&&... args)
+    template <class Initiation, class BoundCompletionToken, class... Args>
+    static decltype(auto) initiate(Initiation&& initiation, BoundCompletionToken&& token, Args&&... args)
     {
         return asio::async_initiate<CompletionToken, Signature>(
             agrpc::detail::AllocatorBinderAsyncResultInitWrapper<agrpc::detail::RemoveCrefT<Initiation>, Allocator>(
                 token.get_allocator(), std::forward<Initiation>(initiation)),
-            token.get(), std::forward<Args>(args)...);
+            std::forward<BoundCompletionToken>(token).get(), std::forward<Args>(args)...);
     }
 
   private:
