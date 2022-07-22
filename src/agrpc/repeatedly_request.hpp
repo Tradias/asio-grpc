@@ -107,11 +107,10 @@ class RepeatedlyRequestFn
 #endif
 
     template <class RPC, class RequestHandler>
-    static auto impl(RPC rpc, detail::GetServiceT<RPC>& service, RequestHandler&& request_handler,
-                     detail::UseSender token)
+    static detail::RepeatedlyRequestSender<RPC, detail::RemoveCrefT<RequestHandler>> impl(
+        RPC rpc, detail::GetServiceT<RPC>& service, RequestHandler&& request_handler, detail::UseSender token)
     {
-        return detail::RepeatedlyRequestSender{token.grpc_context, rpc, service,
-                                               std::forward<RequestHandler>(request_handler)};
+        return {token.grpc_context, rpc, service, std::forward<RequestHandler>(request_handler)};
     }
 
   public:

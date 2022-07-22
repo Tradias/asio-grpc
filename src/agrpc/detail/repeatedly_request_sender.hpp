@@ -84,10 +84,12 @@ class RepeatedlyRequestStopContext<Receiver, false>
     static constexpr void reset() noexcept {}
 };
 
-template <class RPC, class Service, class RequestHandler>
+template <class RPC, class RequestHandler>
 class RepeatedlyRequestSender : public detail::SenderOf<>
 {
   private:
+    using Service = detail::GetServiceT<RPC>;
+
     template <class Receiver>
     class Operation : public detail::TypeErasedGrpcTagOperation
     {
@@ -335,10 +337,6 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
     RPC rpc;
     detail::CompressedPair<Service&, RequestHandler> impl;
 };
-
-template <class RPC, class Service, class RequestHandler>
-RepeatedlyRequestSender(agrpc::GrpcContext&, RPC, Service&, RequestHandler&&)
-    -> RepeatedlyRequestSender<RPC, Service, detail::RemoveCrefT<RequestHandler>>;
 }
 
 AGRPC_NAMESPACE_END

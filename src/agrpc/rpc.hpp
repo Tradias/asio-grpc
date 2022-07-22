@@ -153,7 +153,7 @@ struct RequestFn
         grpc::ClientContext& client_context, const Request& request, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
-        return detail::grpc_initiate_with_payload<Responder>(
+        return detail::grpc_initiate_with_payload<std::unique_ptr<Responder>>(
             detail::AsyncClientServerStreamingRequestConvenienceInitFunction<Stub, Request, Responder>{
                 rpc, detail::unwrap_unique_ptr(stub), client_context, request},
             std::forward<CompletionToken>(token));
@@ -186,7 +186,7 @@ struct RequestFn
                     grpc::ClientContext& client_context, const Request& request, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
-        return detail::grpc_initiate_with_payload<Responder>(
+        return detail::grpc_initiate_with_payload<std::unique_ptr<Responder>>(
             detail::PrepareAsyncClientServerStreamingRequestConvenienceInitFunction<Stub, Request, Responder>{
                 rpc, detail::unwrap_unique_ptr(stub), client_context, request},
             std::forward<CompletionToken>(token));
@@ -204,7 +204,7 @@ struct RequestFn
               class CompletionToken = agrpc::DefaultCompletionToken>
     [[deprecated("Use PrepareAsync overload to avoid race-conditions")]] auto operator()(
         detail::AsyncClientServerStreamingRequest<Stub, Request, Responder> rpc, DerivedStub& stub,
-        grpc::ClientContext& client_context, const Request& request, Responder& reader,
+        grpc::ClientContext& client_context, const Request& request, std::unique_ptr<Responder>& reader,
         CompletionToken&& token = {}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
@@ -231,7 +231,7 @@ struct RequestFn
     template <class Stub, class DerivedStub, class Request, class Responder,
               class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(detail::PrepareAsyncClientServerStreamingRequest<Stub, Request, Responder> rpc, DerivedStub& stub,
-                    grpc::ClientContext& client_context, const Request& request, Responder& reader,
+                    grpc::ClientContext& client_context, const Request& request, std::unique_ptr<Responder>& reader,
                     CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
@@ -256,7 +256,7 @@ struct RequestFn
         grpc::ClientContext& client_context, Response& response, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
-        return detail::grpc_initiate_with_payload<Responder>(
+        return detail::grpc_initiate_with_payload<std::unique_ptr<Responder>>(
             detail::AsyncClientClientStreamingRequestConvenienceInitFunction<Stub, Responder, Response>{
                 rpc, detail::unwrap_unique_ptr(stub), client_context, response},
             std::forward<CompletionToken>(token));
@@ -289,7 +289,7 @@ struct RequestFn
                     grpc::ClientContext& client_context, Response& response, CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
-        return detail::grpc_initiate_with_payload<Responder>(
+        return detail::grpc_initiate_with_payload<std::unique_ptr<Responder>>(
             detail::PrepareAsyncClientClientStreamingRequestConvenienceInitFunction<Stub, Responder, Response>{
                 rpc, detail::unwrap_unique_ptr(stub), client_context, response},
             std::forward<CompletionToken>(token));
@@ -307,8 +307,8 @@ struct RequestFn
               class CompletionToken = agrpc::DefaultCompletionToken>
     [[deprecated("Use PrepareAsync overload to avoid race-conditions")]] auto operator()(
         detail::AsyncClientClientStreamingRequest<Stub, Responder, Response> rpc, DerivedStub& stub,
-        grpc::ClientContext& client_context, Responder& writer, Response& response, CompletionToken&& token = {}) const
-        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
+        grpc::ClientContext& client_context, std::unique_ptr<Responder>& writer, Response& response,
+        CompletionToken&& token = {}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             detail::AsyncClientClientStreamingRequestInitFunction<Stub, Responder, Response>{
@@ -341,7 +341,7 @@ struct RequestFn
     template <class Stub, class DerivedStub, class Responder, class Response,
               class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(detail::PrepareAsyncClientClientStreamingRequest<Stub, Responder, Response> rpc, DerivedStub& stub,
-                    grpc::ClientContext& client_context, Responder& writer, Response& response,
+                    grpc::ClientContext& client_context, std::unique_ptr<Responder>& writer, Response& response,
                     CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
@@ -364,7 +364,7 @@ struct RequestFn
         detail::AsyncClientBidirectionalStreamingRequest<Stub, Responder> rpc, DerivedStub& stub,
         grpc::ClientContext& client_context, CompletionToken&& token = {}) const
     {
-        return detail::grpc_initiate_with_payload<Responder>(
+        return detail::grpc_initiate_with_payload<std::unique_ptr<Responder>>(
             detail::AsyncClientBidirectionalStreamingRequestConvenienceInitFunction<Stub, Responder>{
                 rpc, detail::unwrap_unique_ptr(stub), client_context},
             std::forward<CompletionToken>(token));
@@ -395,7 +395,7 @@ struct RequestFn
     auto operator()(detail::PrepareAsyncClientBidirectionalStreamingRequest<Stub, Responder> rpc, DerivedStub& stub,
                     grpc::ClientContext& client_context, CompletionToken&& token = {}) const
     {
-        return detail::grpc_initiate_with_payload<Responder>(
+        return detail::grpc_initiate_with_payload<std::unique_ptr<Responder>>(
             detail::PrepareAsyncClientBidirectionalStreamingRequestConvenienceInitFunction<Stub, Responder>{
                 rpc, detail::unwrap_unique_ptr(stub), client_context},
             std::forward<CompletionToken>(token));
@@ -412,8 +412,8 @@ struct RequestFn
     template <class Stub, class DerivedStub, class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
     [[deprecated("Use PrepareAsync overload to avoid race-conditions")]] auto operator()(
         detail::AsyncClientBidirectionalStreamingRequest<Stub, Responder> rpc, DerivedStub& stub,
-        grpc::ClientContext& client_context, Responder& reader_writer, CompletionToken&& token = {}) const
-        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
+        grpc::ClientContext& client_context, std::unique_ptr<Responder>& reader_writer,
+        CompletionToken&& token = {}) const noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
             detail::AsyncClientBidirectionalStreamingRequestInitFunction<Stub, Responder>{
@@ -445,7 +445,8 @@ struct RequestFn
      */
     template <class Stub, class DerivedStub, class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(detail::PrepareAsyncClientBidirectionalStreamingRequest<Stub, Responder> rpc, DerivedStub& stub,
-                    grpc::ClientContext& client_context, Responder& reader_writer, CompletionToken&& token = {}) const
+                    grpc::ClientContext& client_context, std::unique_ptr<Responder>& reader_writer,
+                    CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
