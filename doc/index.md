@@ -13,7 +13,7 @@ Feature overview, installation, performance benchmark and getting started instru
 * Looking to wait for a `grpc::Alarm`?
     * `agrpc::wait`
 * Already using an `asio::io_context`?
-    * `agrpc::run`
+    * `agrpc::run`, `agrpc::run_completion_queue`
 * Want to write Rust/Golang [select](https://go.dev/ref/spec#Select_statements)-style code?
     * `agrpc::GrpcStream`
 * Want to customize asynchronous completion?

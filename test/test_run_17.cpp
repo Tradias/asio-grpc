@@ -19,6 +19,7 @@
 #include "utils/time.hpp"
 
 #include <agrpc/run.hpp>
+#include <agrpc/wait.hpp>
 
 #include <optional>
 #include <thread>
@@ -197,5 +198,35 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "agrpc::run Traits::MAX_LATENCY is adhe
                              });
     const auto end = std::chrono::steady_clock::now();
     CHECK_LE(std::chrono::seconds{1}, end - start);
+}
+
+TEST_CASE_FIXTURE(
+    RunTest, "agrpc::run_completion_queue can process asio::post to io_context and ignores asio::post to grpc_context")
+{
+    const auto expected_thread = std::this_thread::get_id();
+    bool invoked{false};
+    bool has_posted{false};
+    grpc::Alarm alarm;
+    asio::post(io_context,
+               [&]
+               {
+                   CHECK_EQ(std::this_thread::get_id(), expected_thread);
+                   asio::post(grpc_context,
+                              [&]
+                              {
+                                  has_posted = true;
+                              });
+                   agrpc::wait(alarm, test::ten_milliseconds_from_now(),
+                               asio::bind_executor(grpc_context,
+                                                   [&](bool)
+                                                   {
+                                                       CHECK_EQ(std::this_thread::get_id(), expected_thread);
+                                                       invoked = true;
+                                                       grpc_context.stop();
+                                                   }));
+               });
+    agrpc::run_completion_queue(grpc_context, io_context);
+    CHECK(invoked);
+    CHECK_FALSE(has_posted);
 }
 }

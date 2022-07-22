@@ -45,7 +45,8 @@ struct DefaultRunTraits
     /**
      * @brief How to poll the execution context
      *
-     * This function should let the execution context process some work without sleeping.
+     * This function should let the execution context process some work without sleeping and return true if any work has
+     * been processed.
      */
     template <class ExecutionContext>
     static bool poll(ExecutionContext& execution_context)
@@ -79,6 +80,33 @@ void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context);
  */
 template <class Traits = agrpc::DefaultRunTraits, class ExecutionContext = void, class StopCondition = void>
 void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context, StopCondition stop_condition);
+
+/**
+ * @brief (experimental) Run an execution context in the same thread as a GrpcContext's completion queue
+ *
+ * The GrpcContext should be in the ready state when this function is invoked, other than that semantically identical to
+ * GrpcContext::run_completion_queue(). This function ends when both contexts are stopped.
+ *
+ * @tparam Traits See DefaultRunTraits
+ *
+ * @since 2.0.0
+ */
+template <class Traits = agrpc::DefaultRunTraits, class ExecutionContext = void>
+void run_completion_queue(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context);
+
+/**
+ * @brief (experimental) Run an execution context in the same thread as a GrpcContext's completion queue
+ *
+ * The GrpcContext should be in the ready state when this function is invoked, other than that semantically identical to
+ * GrpcContext::run_completion_queue(). This function ends when the `stop_condition` returns `true`.
+ *
+ * @tparam Traits See DefaultRunTraits
+ *
+ * @since 2.0.0
+ */
+template <class Traits = agrpc::DefaultRunTraits, class ExecutionContext = void, class StopCondition = void>
+void run_completion_queue(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context,
+                          StopCondition stop_condition);
 
 // Implementation details
 namespace detail
@@ -125,17 +153,25 @@ struct AreContextsStoppedCondition
 
     [[nodiscard]] bool operator()() const noexcept { return grpc_context.is_stopped() && execution_context.stopped(); }
 };
-}
 
-template <class Traits, class ExecutionContext>
-void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context)
+struct GrpcContextDoOne
 {
-    agrpc::run<Traits>(grpc_context, execution_context,
-                       detail::AreContextsStoppedCondition<ExecutionContext>{grpc_context, execution_context});
-}
+    static bool poll(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline)
+    {
+        return detail::GrpcContextImplementation::do_one(grpc_context, deadline);
+    }
+};
 
-template <class Traits, class ExecutionContext, class StopCondition>
-void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context, StopCondition stop_condition)
+struct GrpcContextDoOneCompletionQueue
+{
+    static bool poll(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline)
+    {
+        return detail::GrpcContextImplementation::do_one_completion_queue(grpc_context, deadline);
+    }
+};
+
+template <class GrpcContextPoller, class Traits, class ExecutionContext, class StopCondition>
+void run_impl(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context, StopCondition stop_condition)
 {
     using ResolvedTraits = detail::ResolvedRunTraits<Traits>;
     using Backoff =
@@ -149,7 +185,7 @@ void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context, 
         const auto has_polled = ResolvedTraits::poll(execution_context);
         const auto delay_timespec = detail::BackoffDelay::zero() == delay ? detail::GrpcContextImplementation::TIME_ZERO
                                                                           : detail::gpr_timespec_from_now(delay);
-        detail::GrpcContextImplementation::do_one(grpc_context, delay_timespec);
+        GrpcContextPoller::poll(grpc_context, delay_timespec);
         if (has_polled)
         {
             delay = backoff.reset();
@@ -159,6 +195,36 @@ void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context, 
             delay = backoff.next();
         }
     }
+}
+}
+
+template <class Traits, class ExecutionContext>
+void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context)
+{
+    agrpc::run<Traits>(grpc_context, execution_context,
+                       detail::AreContextsStoppedCondition<ExecutionContext>{grpc_context, execution_context});
+}
+
+template <class Traits, class ExecutionContext, class StopCondition>
+void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context, StopCondition stop_condition)
+{
+    detail::run_impl<detail::GrpcContextDoOne, Traits>(grpc_context, execution_context, std::move(stop_condition));
+}
+
+template <class Traits, class ExecutionContext>
+void run_completion_queue(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context)
+{
+    agrpc::run_completion_queue<Traits>(
+        grpc_context, execution_context,
+        detail::AreContextsStoppedCondition<ExecutionContext>{grpc_context, execution_context});
+}
+
+template <class Traits, class ExecutionContext, class StopCondition>
+void run_completion_queue(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context,
+                          StopCondition stop_condition)
+{
+    detail::run_impl<detail::GrpcContextDoOneCompletionQueue, Traits>(grpc_context, execution_context,
+                                                                      std::move(stop_condition));
 }
 
 AGRPC_NAMESPACE_END

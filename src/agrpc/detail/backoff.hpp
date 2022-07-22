@@ -37,7 +37,7 @@ class Backoff
 {
   private:
     using Delay = detail::BackoffDelay;
-    using Iteration = std::int_fast8_t;
+    using Iteration = std::ptrdiff_t;
 
   public:
     static constexpr Delay MAX_DELAY{MaxDelay};
@@ -49,7 +49,7 @@ class Backoff
         if (ITERATIONS_PER_DELAY == iterations)
         {
             iterations = Iteration{};
-            increase_delay();
+            this->increase_delay();
         }
         return delay;
     }
@@ -72,8 +72,8 @@ class Backoff
         }
     }
 
-    Iteration iterations{};
     Delay delay{Delay::zero()};
+    Iteration iterations{};
 };
 }
 

@@ -84,6 +84,16 @@ int main(int argc, const char** argv)
         },
         asio::detached);
 
+    // First, initiate the io_context's thread_local variables.
+    // Then undo the work counting of asio::post.
     // Run GrpcContext and io_context until both stop.
-    agrpc::run(grpc_context, io_context);
+    // Finally, redo the work counting.
+    asio::post(io_context,
+               [&]
+               {
+                   io_context.get_executor().on_work_finished();
+                   agrpc::run(grpc_context, io_context);
+                   io_context.get_executor().on_work_started();
+               });
+    io_context.run();
 }
