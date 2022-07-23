@@ -29,7 +29,7 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief (experimental) Test utility to manually process gRPC tags
+ * @brief Test utility to manually process gRPC tags
  *
  * This function can be used to process gRPC tags in places where the tag does not go through the
  * `grpc::CompletionQueue`, e.g. in mocked stubs. It processes the tag in a manner equivalent to `asio::post`.
@@ -55,14 +55,13 @@ inline void process_grpc_tag(agrpc::GrpcContext& grpc_context, void* tag, bool o
 
         [[nodiscard]] executor_type get_executor() const noexcept { return grpc_context.get_executor(); }
     };
-    if (!tag)
+    if (tag)
     {
-        return;
+        auto alarm = std::make_unique<grpc::Alarm>();
+        auto& alarm_ref = *alarm;
+        agrpc::wait(alarm_ref, detail::GrpcContextImplementation::TIME_ZERO,
+                    ProcessTag{grpc_context, tag, ok, std::move(alarm)});
     }
-    auto alarm = std::make_unique<grpc::Alarm>();
-    auto& alarm_ref = *alarm;
-    agrpc::wait(alarm_ref, detail::GrpcContextImplementation::TIME_ZERO,
-                ProcessTag{grpc_context, tag, ok, std::move(alarm)});
 }
 
 AGRPC_NAMESPACE_END

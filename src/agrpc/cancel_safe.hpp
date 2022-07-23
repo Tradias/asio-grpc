@@ -38,7 +38,7 @@ class CancelSafe;
  * @brief Cancellation safety for asynchronous operations
  *
  * This class provides a completion token that can be used to initiate asynchronous operations in a cancellation safe
- * manner. A second method of this class is then used to wait for the operation to complete. Cancelling said waiting
+ * manner. A second method of this class is then used to wait for the operation to complete. Cancelling the wait
  * will not cancel the underlying operation but still invoke the completion handler with
  * `asio::error::operation_aborted`. This can be useful in combination with `asio::parallel_group` or
  * `asio::awaitable_operators`, e.g. to perform an action every 100ms while waiting for a server-stream:
