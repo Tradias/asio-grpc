@@ -62,7 +62,7 @@ function(asio_grpc_add_test _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_stand
     endif()
 
     if(ASIO_GRPC_DISCOVER_TESTS)
-        doctest_discover_tests(${_asio_grpc_name} ADD_LABELS 0)
+        doctest_discover_tests(${_asio_grpc_name})
     endif()
 endfunction()
 
@@ -157,7 +157,7 @@ if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPL
     endif()
 
     if(ASIO_GRPC_DISCOVER_TESTS)
-        doctest_discover_tests(asio-grpc-test-examples ADD_LABELS 0)
+        doctest_discover_tests(asio-grpc-test-examples)
     endif()
 endif()
 

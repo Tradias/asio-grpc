@@ -15,7 +15,7 @@ on:
       - 'CMakePresets.json'
 
 env:
-  VCPKG_VERSION: 'de176433e9a8769eed0e43d61758f4cdc1dc6e20' # July 18, 2022
+  VCPKG_VERSION: 'f93ba152d55e1d243160e690bc302ffe8638358e' # July 22, 2022
   CMAKE_ARGS: '-DCMAKE_BUILD_TYPE=Release -DVCPKG_MANIFEST_INSTALL=off -DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=off'
   CTEST_ARGS: '-T test --output-on-failure --timeout 200 --no-tests=error --parallel 8'
 

@@ -14,13 +14,13 @@
 
 #include <gmock/gmock.h>
 
+#include <string_view>
+
 #define DOCTEST_CONFIG_IMPLEMENT
 #include <doctest/doctest.h>
 
 int main(int argc, char** argv)
 {
-    ::testing::InitGoogleMock(&argc, argv);
-
     auto& listeners = testing::UnitTest::GetInstance()->listeners();
     delete listeners.Release(listeners.default_result_printer());
 
@@ -35,7 +35,7 @@ int main(int argc, char** argv)
             }
             const auto file = result.file_name() ? result.file_name() : "unknown";
             const auto line = result.line_number() != -1 ? result.line_number() : 0;
-            const auto message = result.message() ? result.message() : "no message";
+            const std::string_view message = result.message() ? result.message() : "no message";
             if (result.nonfatally_failed())
             {
                 ADD_FAIL_CHECK_AT(file, line, message);
