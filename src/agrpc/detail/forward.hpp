@@ -20,6 +20,11 @@
 
 #include <memory>
 
+namespace grpc
+{
+class CompletionQueue;
+}
+
 AGRPC_NAMESPACE_BEGIN()
 
 template <class Allocator = std::allocator<void>, std::uint32_t Options = detail::GrpcExecutorOptions::DEFAULT>

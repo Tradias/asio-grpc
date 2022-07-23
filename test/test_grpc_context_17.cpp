@@ -20,6 +20,7 @@
 
 #include <agrpc/get_completion_queue.hpp>
 #include <agrpc/grpc_context.hpp>
+#include <agrpc/grpc_executor.hpp>
 #include <agrpc/wait.hpp>
 
 #include <thread>

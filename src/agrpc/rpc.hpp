@@ -21,7 +21,7 @@
 #include <agrpc/detail/grpc_initiate.hpp>
 #include <agrpc/detail/memory.hpp>
 #include <agrpc/detail/rpc.hpp>
-#include <agrpc/get_completion_queue.hpp>
+#include <agrpc/grpc_executor.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

@@ -17,6 +17,8 @@
 #include "utils/grpc_context_test.hpp"
 #include "utils/time.hpp"
 
+#include <agrpc/grpc_context.hpp>
+#include <agrpc/grpc_executor.hpp>
 #include <agrpc/use_awaitable.hpp>
 #include <agrpc/wait.hpp>
 
