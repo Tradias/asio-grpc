@@ -17,7 +17,6 @@
 #include "utils/grpc_context_test.hpp"
 #include "utils/time.hpp"
 
-#include <agrpc/get_completion_queue.hpp>
 #include <agrpc/use_awaitable.hpp>
 #include <agrpc/wait.hpp>
 
@@ -199,29 +198,6 @@ TEST_CASE_TEMPLATE("asio ScheduleSender start/submit with shutdown GrpcContext",
     }
     CHECK(state.was_done);
     CHECK_FALSE(state.exception);
-}
-
-TEST_CASE_FIXTURE(test::GrpcContextTest, "get_completion_queue")
-{
-    grpc::CompletionQueue* queue{};
-    SUBCASE("GrpcAwaitable")
-    {
-        test::co_spawn(grpc_context,
-                       [&]() -> agrpc::GrpcAwaitable<void>
-                       {
-                           queue = co_await agrpc::get_completion_queue(agrpc::GRPC_USE_AWAITABLE);
-                       });
-    }
-    SUBCASE("asio::awaitable")
-    {
-        test::co_spawn(grpc_context,
-                       [&]() -> asio::awaitable<void>
-                       {
-                           queue = co_await agrpc::get_completion_queue();
-                       });
-    }
-    grpc_context.run();
-    CHECK_EQ(grpc_context.get_completion_queue(), queue);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "co_spawn two Alarms and await their ok")

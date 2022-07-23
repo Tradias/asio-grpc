@@ -47,6 +47,11 @@ inline void drain_completion_queue(agrpc::GrpcContext& grpc_context)
         //
     }
 }
+
+inline grpc::CompletionQueue* get_completion_queue(agrpc::GrpcContext& grpc_context) noexcept
+{
+    return grpc_context.get_completion_queue();
+}
 }  // namespace detail
 
 inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue>&& completion_queue)

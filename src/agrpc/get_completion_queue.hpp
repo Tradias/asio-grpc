@@ -15,11 +15,8 @@
 #ifndef AGRPC_AGRPC_GET_COMPLETION_QUEUE_HPP
 #define AGRPC_AGRPC_GET_COMPLETION_QUEUE_HPP
 
-#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/query_grpc_context.hpp>
-#include <agrpc/grpc_context.hpp>
-#include <agrpc/grpc_executor.hpp>
+#include <agrpc/detail/forward.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -39,7 +36,7 @@ struct GetCompletionQueueFn
     [[nodiscard]] grpc::CompletionQueue* operator()(
         const agrpc::BasicGrpcExecutor<Allocator, Options>& executor) const noexcept
     {
-        return detail::query_grpc_context(executor).get_completion_queue();
+        return detail::get_completion_queue(executor);
     }
 
     /**
@@ -47,53 +44,23 @@ struct GetCompletionQueueFn
      *
      * Equivalent to `grpc_context.get_completion_queue()`
      */
-    [[nodiscard]] inline grpc::CompletionQueue* operator()(agrpc::GrpcContext& grpc_context) const noexcept
+    [[nodiscard]] grpc::CompletionQueue* operator()(agrpc::GrpcContext& grpc_context) const noexcept
     {
-        return grpc_context.get_completion_queue();
-    }
-
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    /**
-     * @brief Get `grpc::CompletionQueue*` from an `asio::any_io_executor`
-     *
-     * @attention *executor* must have been created from a GrpcExecutor
-     */
-    [[nodiscard]] inline grpc::CompletionQueue* operator()(const asio::any_io_executor& executor) const noexcept
-    {
-        return detail::query_grpc_context(executor).get_completion_queue();
+        return detail::get_completion_queue(grpc_context);
     }
 
     /**
-     * @brief Get `grpc::CompletionQueue*` from an object's associated executor
+     * @brief Get `grpc::CompletionQueue*` from a GrpcStream
      *
-     * First obtains the object's associated executor and then returns `agrpc::get_completion_queue(executor)`.
+     * Effectively calls `agrpc::get_completion_queue(grpc_stream.get_executor())`
      *
-     * @attention The associated executor must refer to a GrpcContext
+     * @since 2.0.0
      */
-    template <class Object>
-    [[nodiscard]] grpc::CompletionQueue* operator()(const Object& object) const noexcept
+    template <class Executor>
+    [[nodiscard]] grpc::CompletionQueue* operator()(const agrpc::BasicGrpcStream<Executor>& grpc_stream) const noexcept
     {
-        const auto executor = asio::get_associated_executor(object);
-        return this->operator()(executor);
+        return detail::get_completion_queue(grpc_stream);
     }
-
-#ifdef AGRPC_ASIO_HAS_CO_AWAIT
-    /**
-     * @brief Get `grpc::CompletionQueue*` from the current awaitable
-     *
-     * First awaits `asio::this_coro::executor` and then returns `agrpc::get_completion_queue(executor)`.
-     *
-     * @attention The awaitable's executor must refer to a GrpcContext
-     */
-    template <class Executor = asio::any_io_executor>
-    [[nodiscard]] auto operator()(asio::use_awaitable_t<Executor> = {}) const ->
-        typename asio::async_result<asio::use_awaitable_t<Executor>, void(grpc::CompletionQueue*)>::return_type
-    {
-        const auto executor = co_await asio::this_coro::executor;
-        co_return this->operator()(executor);
-    }
-#endif
-#endif
 };
 }
 

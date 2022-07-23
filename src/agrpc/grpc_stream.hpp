@@ -185,6 +185,16 @@ class BasicGrpcStream
  */
 using GrpcStream = agrpc::DefaultCompletionToken::as_default_on_t<agrpc::BasicGrpcStream<agrpc::GrpcExecutor>>;
 
+// Implementation details
+namespace detail
+{
+template <class Executor>
+grpc::CompletionQueue* get_completion_queue(const agrpc::BasicGrpcStream<Executor>& grpc_stream) noexcept
+{
+    return detail::get_completion_queue(grpc_stream.get_executor());
+}
+}
+
 AGRPC_NAMESPACE_END
 
 #endif

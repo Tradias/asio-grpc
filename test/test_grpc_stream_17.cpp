@@ -16,6 +16,7 @@
 #include "utils/time.hpp"
 
 #include <agrpc/cancel_safe.hpp>
+#include <agrpc/get_completion_queue.hpp>
 #include <agrpc/grpc_stream.hpp>
 #include <agrpc/wait.hpp>
 #include <doctest/doctest.h>
@@ -126,6 +127,12 @@ TEST_CASE("CancelSafe: can handle move-only completion arguments")
             CHECK_EQ(42, *actual);
         });
     io_context.run();
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcStream: get_completion_queue")
+{
+    agrpc::GrpcStream stream{grpc_context};
+    CHECK_EQ(grpc_context.get_completion_queue(), agrpc::get_completion_queue(stream));
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest,

@@ -55,6 +55,10 @@ inline void process_grpc_tag(agrpc::GrpcContext& grpc_context, void* tag, bool o
 
         [[nodiscard]] executor_type get_executor() const noexcept { return grpc_context.get_executor(); }
     };
+    if (!tag)
+    {
+        return;
+    }
     auto alarm = std::make_unique<grpc::Alarm>();
     auto& alarm_ref = *alarm;
     agrpc::wait(alarm_ref, detail::GrpcContextImplementation::TIME_ZERO,

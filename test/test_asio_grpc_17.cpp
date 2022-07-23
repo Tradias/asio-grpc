@@ -20,6 +20,7 @@
 #include "utils/grpc_context_test.hpp"
 #include "utils/rpc.hpp"
 
+#include <agrpc/get_completion_queue.hpp>
 #include <agrpc/grpc_initiate.hpp>
 #include <agrpc/rpc.hpp>
 #include <agrpc/wait.hpp>
@@ -183,7 +184,8 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "unary stackless coroutine")
     {
         reenter(coro)
         {
-            reader = stub->AsyncUnary(&client_context, client_request, agrpc::get_completion_queue(coro));
+            reader =
+                stub->AsyncUnary(&client_context, client_request, agrpc::get_completion_queue(coro.get_executor()));
             yield agrpc::finish(*reader, client_response, status, coro);
             CHECK(ok);
             CHECK(status.ok());

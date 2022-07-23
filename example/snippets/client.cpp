@@ -225,8 +225,7 @@ asio::awaitable<void> client_generic_streaming_request(grpc::GenericStub& stub)
     silence_unused(request_ok);
 }
 
-void client_generic_streaming_corked(agrpc::GrpcContext& grpc_context, grpc::GenericStub& stub,
-                                     const grpc::ByteBuffer& request)
+void client_generic_streaming_corked(agrpc::GrpcContext& grpc_context, grpc::GenericStub& stub)
 {
     /* [request-client-generic-streaming-corked] */
     grpc::ClientContext client_context;

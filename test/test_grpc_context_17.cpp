@@ -18,6 +18,7 @@
 #include "utils/time.hpp"
 #include "utils/unassignable_allocator.hpp"
 
+#include <agrpc/get_completion_queue.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/wait.hpp>
 
@@ -228,6 +229,15 @@ TEST_CASE_FIXTURE(GrpcExecutorTest, "GrpcExecutor comparison operator - differen
         CHECK_NE(default_pmr_other_executor, asio::require(default_pmr_executor, asio::execution::blocking_t::possibly,
                                                            asio::execution::allocator(get_allocator())));
     }
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext/GrpcExecutor: get_completion_queue")
+{
+    grpc::CompletionQueue* queue{};
+    SUBCASE("GrpcContext") { queue = agrpc::get_completion_queue(grpc_context); }
+    SUBCASE("GrpcExecutor") { queue = agrpc::get_completion_queue(grpc_context.get_executor()); }
+    SUBCASE("Work tracking GrpcExecutor") { queue = agrpc::get_completion_queue(get_work_tracking_executor()); }
+    CHECK_EQ(grpc_context.get_completion_queue(), queue);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::reset")

@@ -485,6 +485,18 @@ namespace pmr
 using GrpcExecutor = agrpc::BasicGrpcExecutor<agrpc::detail::pmr::polymorphic_allocator<std::byte>>;
 }
 
+// Implementation details
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+namespace detail
+{
+template <class Allocator, std::uint32_t Options>
+grpc::CompletionQueue* get_completion_queue(const agrpc::BasicGrpcExecutor<Allocator, Options>& executor) noexcept
+{
+    return asio::query(executor, asio::execution::context).get_completion_queue();
+}
+}
+#endif
+
 AGRPC_NAMESPACE_END
 
 template <class Allocator, std::uint32_t Options, class Alloc>

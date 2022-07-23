@@ -93,7 +93,7 @@ TEST_CASE_FIXTURE(test::GrpcGenericClientServerTest, "yield_context generic clie
                 {
                     client_context.set_initial_metadata_corked(true);
                     auto reader_writer = stub->PrepareCall(&client_context, "/test.v1.Test/ClientStreaming",
-                                                           agrpc::get_completion_queue(grpc_context));
+                                                           grpc_context.get_completion_queue());
                     reader_writer->StartCall(nullptr);
                     return reader_writer;
                 }
