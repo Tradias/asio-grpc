@@ -199,6 +199,20 @@ void bidirectional_streaming_corked(agrpc::GrpcContext& grpc_context, example::v
     /* [request-client-bidirectional-client-side-corked] */
 }
 
+void client_generic_unary_request(agrpc::GrpcContext& grpc_context, grpc::GenericStub& stub)
+{
+    /* [request-generic-unary-client-side] */
+    grpc::ClientContext client_context;
+    example::v1::Request request;
+    grpc::ByteBuffer buffer;
+    bool own_buffer;
+    grpc::GenericSerialize<grpc::ProtoBufferWriter, example::v1::Request>(request, &buffer, &own_buffer);
+    (void)own_buffer;
+    std::unique_ptr<grpc::GenericClientAsyncResponseReader> reader =
+        agrpc::request("/example.v1.Example/Unary", stub, client_context, buffer, grpc_context);
+    /* [request-generic-unary-client-side] */
+}
+
 asio::awaitable<void> client_generic_streaming_request(grpc::GenericStub& stub)
 {
     /* [request-generic-streaming-client-side] */
@@ -217,8 +231,9 @@ void client_generic_streaming_corked(agrpc::GrpcContext& grpc_context, grpc::Gen
     /* [request-client-generic-streaming-corked] */
     grpc::ClientContext client_context;
     client_context.set_initial_metadata_corked(true);
-    std::unique_ptr<grpc::GenericClientAsyncResponseReader> reader_writer =
-        agrpc::request("/example.v1.Example/BidirectionalStreaming", stub, client_context, request, grpc_context);
+    std::unique_ptr<grpc::GenericClientAsyncReaderWriter> reader_writer = stub.PrepareCall(
+        &client_context, "/example.v1.Example/BidirectionalStreaming", agrpc::get_completion_queue(grpc_context));
+    reader_writer->StartCall(nullptr);
     /* [request-client-generic-streaming-corked] */
 }
 

@@ -61,8 +61,11 @@ TEST_CASE_FIXTURE(test::GrpcGenericClientServerTest, "yield_context generic unar
         });
 }
 
-TEST_CASE_FIXTURE(test::GrpcGenericClientServerTest, "yield_context generic server streaming")
+TEST_CASE_FIXTURE(test::GrpcGenericClientServerTest, "yield_context generic client streaming")
 {
+    bool set_initial_metadata_corked{false};
+    SUBCASE("normal client_context") { set_initial_metadata_corked = false; }
+    SUBCASE("client set initial metadata corked") { set_initial_metadata_corked = true; }
     test::spawn_and_run(
         grpc_context,
         [&](asio::yield_context yield)
@@ -70,7 +73,7 @@ TEST_CASE_FIXTURE(test::GrpcGenericClientServerTest, "yield_context generic serv
             grpc::GenericServerContext server_context;
             grpc::GenericServerAsyncReaderWriter reader_writer{&server_context};
             CHECK(agrpc::request(service, server_context, reader_writer, yield));
-            CHECK_EQ("/test.v1.Test/ServerStreaming", server_context.method());
+            CHECK_EQ("/test.v1.Test/ClientStreaming", server_context.method());
             CHECK(agrpc::send_initial_metadata(reader_writer, yield));
             grpc::ByteBuffer buffer;
             CHECK(agrpc::read(reader_writer, buffer, yield));
@@ -84,9 +87,21 @@ TEST_CASE_FIXTURE(test::GrpcGenericClientServerTest, "yield_context generic serv
         },
         [&](asio::yield_context yield)
         {
-            std::unique_ptr<grpc::GenericClientAsyncReaderWriter> reader_writer;
-            CHECK(agrpc::request("/test.v1.Test/ServerStreaming", *stub, client_context, reader_writer, yield));
-            CHECK(agrpc::read_initial_metadata(*reader_writer, yield));
+            auto reader_writer = [&]
+            {
+                if (set_initial_metadata_corked)
+                {
+                    client_context.set_initial_metadata_corked(true);
+                    auto reader_writer = stub->PrepareCall(&client_context, "/test.v1.Test/ClientStreaming",
+                                                           agrpc::get_completion_queue(grpc_context));
+                    reader_writer->StartCall(nullptr);
+                    return reader_writer;
+                }
+                std::unique_ptr<grpc::GenericClientAsyncReaderWriter> reader_writer;
+                CHECK(agrpc::request("/test.v1.Test/ClientStreaming", *stub, client_context, reader_writer, yield));
+                CHECK(agrpc::read_initial_metadata(*reader_writer, yield));
+                return reader_writer;
+            }();
             test::msg::Request request;
             request.set_integer(42);
             const auto request_buffer = test::message_to_grpc_buffer(request);

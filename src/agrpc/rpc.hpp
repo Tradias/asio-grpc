@@ -127,9 +127,15 @@ struct RequestFn
     }
 
     /**
-     * @brief Convenience function for starting a unary request
+     * @brief Start a unary request (client-side)
      *
      * Note, this function completes immediately.
+     *
+     * Example:
+     *
+     * @snippet client.cpp request-unary-client-side
+     *
+     * @param rpc A pointer to the async version of the RPC method. The async version starts with `Async`.
      */
     template <class Stub, class DerivedStub, class Request, class Responder>
     auto operator()(detail::ClientUnaryRequest<Stub, Request, Responder> rpc, DerivedStub& stub,
@@ -142,7 +148,7 @@ struct RequestFn
     /**
      * @brief Convenience function for starting a server-streaming request (Async overload)
      *
-     * Deprecated, use the PrepareAsync overload.
+     * @deprecated Use the PrepareAsync overload.
      *
      * @param rpc A pointer to the async version of the RPC method. The async version starts with `Async`.
      */
@@ -163,14 +169,14 @@ struct RequestFn
      * @brief Convenience function for starting a server-streaming request (PrepareAsync overload)
      *
      * Sends `std::unique_ptr<grpc::ClientAsyncReader<Response>>` through the completion handler, otherwise
-     * identical to `operator()(ClientServerStreamingRequest, Stub&, ClientContext&, const Request&, Reader&,
-     * CompletionToken&&)`
+     * identical to `operator()(PrepareAsyncClientServerStreamingRequest, Stub&, ClientContext&, const Request&,
+     * Reader&, CompletionToken&&)`
      *
      * Example:
      *
      * @snippet client.cpp request-server-streaming-client-side-alt
      *
-     * @param rpc A pointer to the async version of the RPC method. The async version starts with `Async`.
+     * @param rpc A pointer to the async version of the RPC method. The async version starts with `PrepareAsync`.
      * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
      * `example::v1::Example::Stub`.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
@@ -196,7 +202,7 @@ struct RequestFn
     /**
      * @brief Start a server-streaming request (Async overload)
      *
-     * Deprecated, use the PrepareAsync overload.
+     * @deprecated Use the PrepareAsync overload.
      *
      * @param rpc A pointer to the async version of the RPC method. The async version starts with `Async`.
      */
@@ -220,7 +226,7 @@ struct RequestFn
      *
      * @snippet client.cpp request-server-streaming-client-side
      *
-     * @param rpc A pointer to the async version of the RPC method. The async version always starts with `Async`.
+     * @param rpc A pointer to the async version of the RPC method. The async version always starts with `PrepareAsync`.
      * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
      * `example::v1::Example::Stub`.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
@@ -245,7 +251,7 @@ struct RequestFn
     /**
      * @brief Convenience function for starting a client-streaming request (Async overload)
      *
-     * Deprecated, use the PrepareAsync overload.
+     * @deprecated Use the PrepareAsync overload.
      *
      * @param rpc A pointer to the async version of the RPC method. The async version starts with `Async`.
      */
@@ -266,14 +272,14 @@ struct RequestFn
      * @brief Convenience function for starting a client-streaming request (PrepareAsync overload)
      *
      * Sends `std::unique_ptr<grpc::ClientAsyncWriter<Request>>` through the completion handler, otherwise
-     * identical to `operator()(ClientClientStreamingRequest, Stub&, ClientContext&, Writer&, Response&,
+     * identical to `operator()(PrepareAsyncClientClientStreamingRequest, Stub&, ClientContext&, Writer&, Response&,
      * CompletionToken&&)`
      *
      * Example:
      *
      * @snippet client.cpp request-client-streaming-client-side-alt
      *
-     * @param rpc A pointer to the async version of the RPC method. The async version starts with `Async`.
+     * @param rpc A pointer to the async version of the RPC method. The async version starts with `PrepareAsync`.
      * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
      * `example::v1::Example::Stub`.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
@@ -299,7 +305,7 @@ struct RequestFn
     /**
      * @brief Start a client-streaming request
      *
-     * Deprecated, use the PrepareAsync overload.
+     * @deprecated Use the PrepareAsync overload.
      *
      * @param rpc A pointer to the async version of the RPC method. The async version starts with `Async`.
      */
@@ -328,7 +334,7 @@ struct RequestFn
      * option set. Call the member function directly instead:
      * @snippet client.cpp request-client-streaming-client-side-corked
      *
-     * @param rpc A pointer to the async version of the RPC method. The async version starts with `Async`.
+     * @param rpc A pointer to the async version of the RPC method. The async version starts with `PrepareAsync`.
      * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
      * `example::v1::Example::Stub`.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
@@ -355,7 +361,7 @@ struct RequestFn
     /**
      * @brief Convenience function for starting a bidirectional-streaming request (Async overload)
      *
-     * Deprecated, use the PrepareAsync overload.
+     * @deprecated Use the PrepareAsync overload.
      *
      * @param rpc A pointer to the async version of the RPC method. The async version starts with `Async`.
      */
@@ -373,8 +379,8 @@ struct RequestFn
     /**
      * @brief Convenience function for starting a bidirectional-streaming request (PrepareAsync overload)
      *
-     * Sends `std::unique_ptr<grpc::ClientAsyncWriter<Request>>` through the completion handler, otherwise
-     * identical to `operator()(ClientClientStreamingRequest, Stub&, ClientContext&, Writer&, Response&,
+     * Sends `std::unique_ptr<grpc::ClientAsyncReaderWriter<Request>>` through the completion handler, otherwise
+     * identical to `operator()(PrepareAsyncClientBidirectionalStreamingRequest, Stub&, ClientContext&, ReaderWriter&,
      * CompletionToken&&)`
      *
      * Example:
@@ -385,7 +391,7 @@ struct RequestFn
      * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
      * `example::v1::Example::Stub`.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
-     * completion signature is `void(std::pair<std::unique_ptr<grpc::ClientAsyncWriter<Request>>, bool>)`. `true`
+     * completion signature is `void(std::pair<std::unique_ptr<grpc::ClientAsyncReaderWriter<Request>>, bool>)`. `true`
      * indicates that the RPC is going to go to the wire. If it is `false`, it is not going to the wire. This would
      * happen if the channel is either permanently broken or transiently broken but with the fail-fast option.
      *
@@ -405,7 +411,7 @@ struct RequestFn
     /**
      * @brief Start a bidirectional-streaming request (Async overload)
      *
-     * Deprecated, use the PrepareAsync overload.
+     * @deprecated Use the PrepareAsync overload.
      *
      * @param rpc A pointer to the async version of the RPC method. The async version starts with `Async`.
      */
@@ -422,7 +428,7 @@ struct RequestFn
     }
 
     /**
-     * @brief Start a bidirectional-streaming request
+     * @brief Start a bidirectional-streaming request (PrepareAsync overload)
      *
      * Example:
      *
@@ -433,7 +439,7 @@ struct RequestFn
      * option set. Call the member function directly instead:
      * @snippet client.cpp request-client-bidirectional-client-side-corked
      *
-     * @param rpc A pointer to the async version of the RPC method. The async version starts with `Async`.
+     * @param rpc A pointer to the async version of the RPC method. The async version starts with `PrepareAsync`.
      * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
      * `example::v1::Example::Stub`.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
@@ -456,9 +462,13 @@ struct RequestFn
     }
 
     /**
-     * @brief Convenience function for starting a generic unary request
+     * @brief Start a generic unary request
      *
      * Note, this function completes immediately.
+     *
+     * Example:
+     *
+     * @snippet client.cpp request-generic-unary-client-side
      *
      * @param method The RPC method to call, e.g. "/test.v1.Test/Unary"
      */
@@ -821,7 +831,7 @@ struct FinishFn
     }
 
     /**
-     * @brief Finish a RPC (client-side)
+     * @brief Finish a unary RPC (client-side)
      *
      * Receive the server's response message and final status for the call.
      *
