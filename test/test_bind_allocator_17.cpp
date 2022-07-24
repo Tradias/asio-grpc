@@ -101,4 +101,13 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_allocator with yield_context")
                         });
     CHECK(allocator_has_been_used());
 }
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_allocator with asio::steady_timer")
+{
+    asio::io_context io_context;
+    asio::steady_timer timer{io_context};
+    timer.async_wait(agrpc::bind_allocator(get_allocator(), [](auto&&) {}));
+    io_context.run();
+    CHECK(allocator_has_been_used());
+}
 }

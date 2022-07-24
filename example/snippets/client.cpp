@@ -30,6 +30,8 @@
 
 namespace asio = boost::asio;
 
+static_assert(asio::is_executor<agrpc::GrpcExecutor>::value);
+
 asio::awaitable<void> unary(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
     /* [request-unary-client-side] */

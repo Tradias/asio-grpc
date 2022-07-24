@@ -255,26 +255,11 @@ struct AllocatorBinderAsyncResultReturnType<TargetAsyncResult, std::void_t<typen
 template <class Initiation, class Allocator>
 struct AllocatorBinderAsyncResultInitWrapper
 {
-    template <class Init>
-    constexpr AllocatorBinderAsyncResultInitWrapper(const Allocator& allocator, Init&& init)
-        : allocator(allocator), initiation(std::forward<Init>(init))
-    {
-    }
-
     template <class Handler, class... Args>
-    constexpr void operator()(Handler&& handler, Args&&... args)
+    constexpr void operator()(Handler&& handler, Args&&... args) &&
     {
-        std::move(initiation)(agrpc::AllocatorBinder<agrpc::detail::RemoveCrefT<Handler>, Allocator>(
-                                  allocator, std::forward<Handler>(handler)),
+        std::move(initiation)(agrpc::AllocatorBinder(allocator, std::forward<Handler>(handler)),
                               std::forward<Args>(args)...);
-    }
-
-    template <class Handler, class... Args>
-    constexpr void operator()(Handler&& handler, Args&&... args) const
-    {
-        initiation(agrpc::AllocatorBinder<agrpc::detail::RemoveCrefT<Handler>, Allocator>(
-                       allocator, std::forward<Handler>(handler)),
-                   std::forward<Args>(args)...);
     }
 
     Allocator allocator;
@@ -307,8 +292,8 @@ class agrpc::asio::async_result<agrpc::AllocatorBinder<CompletionToken, Allocato
     static decltype(auto) initiate(Initiation&& initiation, BoundCompletionToken&& token, Args&&... args)
     {
         return asio::async_initiate<CompletionToken, Signature>(
-            agrpc::detail::AllocatorBinderAsyncResultInitWrapper<agrpc::detail::RemoveCrefT<Initiation>, Allocator>(
-                token.get_allocator(), std::forward<Initiation>(initiation)),
+            agrpc::detail::AllocatorBinderAsyncResultInitWrapper<agrpc::detail::RemoveCrefT<Initiation>, Allocator>{
+                token.get_allocator(), std::forward<Initiation>(initiation)},
             std::forward<BoundCompletionToken>(token).get(), std::forward<Args>(args)...);
     }
 
