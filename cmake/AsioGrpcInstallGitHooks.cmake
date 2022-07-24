@@ -46,7 +46,7 @@ function(asio_grpc_create_init_git_hooks_target)
     configure_file("${CMAKE_CURRENT_FUNCTION_LIST_DIR}/hooks/pre-commit.in"
                    "${ASIO_GRPC_GIT_HOOKS_SOURCE_DIR}/pre-commit" @ONLY NEWLINE_STYLE UNIX)
     configure_file("${CMAKE_CURRENT_FUNCTION_LIST_DIR}/hooks/AsioGrpcPreCommit.cmake.in"
-                   "${ASIO_GRPC_GIT_HOOKS_SOURCE_DIR}/AsioGrpcPreCommit.cmake" @ONLY)
+                   "${ASIO_GRPC_GIT_HOOKS_SOURCE_DIR}/AsioGrpcPreCommit.cmake" @ONLY NEWLINE_STYLE UNIX)
 
     set(_asio_grpc_command_arguments
         "-DGIT_HOOKS_TARGET_DIR=${ASIO_GRPC_GIT_HOOKS_TARGET_DIR}"
