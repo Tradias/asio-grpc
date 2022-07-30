@@ -36,7 +36,7 @@ TEST_CASE("GrpcExecutor fulfills Executor TS concepts")
 }
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-TEST_CASE("asio-grpc fulfills unified executor concepts")
+TEST_CASE("GrpcSender and ScheduleSender fulfill unified executor concepts")
 {
     CHECK(asio::execution::is_scheduler_v<agrpc::GrpcExecutor>);
     using UseSender = decltype(agrpc::use_sender(std::declval<agrpc::GrpcExecutor>()));
@@ -51,7 +51,11 @@ TEST_CASE("asio-grpc fulfills unified executor concepts")
     CHECK(asio::execution::is_typed_sender_v<GrpcSender>);
     CHECK(asio::execution::sender_to<GrpcSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
     CHECK(asio::execution::is_sender_to_v<GrpcSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
-    CHECK(asio::execution::is_nothrow_connect_v<GrpcSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
+    CHECK(asio::execution::is_nothrow_connect_v<GrpcSender, test::ConditionallyNoexceptNoOpReceiver<true>>);
+    CHECK_FALSE(asio::execution::is_nothrow_connect_v<GrpcSender, test::ConditionallyNoexceptNoOpReceiver<false>>);
+    CHECK(asio::execution::is_nothrow_connect_v<GrpcSender, const test::ConditionallyNoexceptNoOpReceiver<true>&>);
+    CHECK_FALSE(
+        asio::execution::is_nothrow_connect_v<GrpcSender, const test::ConditionallyNoexceptNoOpReceiver<false>&>);
     using OperationState = asio::execution::connect_result_t<GrpcSender, test::InvocableArchetype>;
     CHECK(asio::execution::operation_state<OperationState>);
     CHECK(asio::execution::is_operation_state_v<OperationState>);
@@ -63,7 +67,11 @@ TEST_CASE("asio-grpc fulfills unified executor concepts")
     CHECK(asio::execution::is_typed_sender_v<ScheduleSender>);
     CHECK(asio::execution::sender_to<ScheduleSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
     CHECK(asio::execution::is_sender_to_v<ScheduleSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
-    CHECK(asio::execution::is_nothrow_connect_v<ScheduleSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
+    CHECK(asio::execution::is_nothrow_connect_v<ScheduleSender, test::ConditionallyNoexceptNoOpReceiver<true>>);
+    CHECK_FALSE(asio::execution::is_nothrow_connect_v<ScheduleSender, test::ConditionallyNoexceptNoOpReceiver<false>>);
+    CHECK(asio::execution::is_nothrow_connect_v<ScheduleSender, const test::ConditionallyNoexceptNoOpReceiver<true>&>);
+    CHECK_FALSE(
+        asio::execution::is_nothrow_connect_v<ScheduleSender, const test::ConditionallyNoexceptNoOpReceiver<false>&>);
     using ScheduleSenderOperationState = asio::execution::connect_result_t<ScheduleSender, test::InvocableArchetype>;
     CHECK(asio::execution::operation_state<ScheduleSenderOperationState>);
     CHECK(asio::execution::is_operation_state_v<ScheduleSenderOperationState>);

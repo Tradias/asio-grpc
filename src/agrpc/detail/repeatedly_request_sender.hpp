@@ -310,7 +310,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
   public:
     template <class Receiver>
     auto connect(Receiver&& receiver) const& noexcept(
-        std::is_nothrow_constructible_v<Receiver, Receiver&&>&& std::is_nothrow_copy_constructible_v<RequestHandler>)
+        detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver>&& std::is_nothrow_copy_constructible_v<RequestHandler>)
         -> Operation<detail::RemoveCrefT<Receiver>>
     {
         return {*this, std::forward<Receiver>(receiver)};
@@ -318,7 +318,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
 
     template <class Receiver>
     auto connect(Receiver&& receiver) && noexcept(
-        std::is_nothrow_constructible_v<Receiver, Receiver&&>&& std::is_nothrow_move_constructible_v<RequestHandler>)
+        detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver>&& std::is_nothrow_move_constructible_v<RequestHandler>)
         -> Operation<detail::RemoveCrefT<Receiver>>
     {
         return {std::move(*this), std::forward<Receiver>(receiver)};

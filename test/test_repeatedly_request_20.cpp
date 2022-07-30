@@ -215,6 +215,32 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request trac
 }
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+inline decltype(asio::execution::schedule(std::declval<agrpc::GrpcExecutor>())) request_handler_archetype(
+    grpc::ServerContext&, test::msg::Request&, grpc::ServerAsyncResponseWriter<test::msg::Response>&);
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "RepeatedlyRequestSender fulfills unified executor concepts")
+{
+    using RepeatedlyRequestSender = decltype(agrpc::repeatedly_request(
+        &test::v1::Test::AsyncService::RequestUnary, service, &request_handler_archetype, use_sender()));
+    CHECK(asio::execution::sender<RepeatedlyRequestSender>);
+    CHECK(asio::execution::is_sender_v<RepeatedlyRequestSender>);
+    CHECK(asio::execution::typed_sender<RepeatedlyRequestSender>);
+    CHECK(asio::execution::is_typed_sender_v<RepeatedlyRequestSender>);
+    CHECK(asio::execution::sender_to<RepeatedlyRequestSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
+    CHECK(asio::execution::is_sender_to_v<RepeatedlyRequestSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
+    CHECK(
+        asio::execution::is_nothrow_connect_v<RepeatedlyRequestSender, test::ConditionallyNoexceptNoOpReceiver<true>>);
+    CHECK_FALSE(
+        asio::execution::is_nothrow_connect_v<RepeatedlyRequestSender, test::ConditionallyNoexceptNoOpReceiver<false>>);
+    CHECK(asio::execution::is_nothrow_connect_v<RepeatedlyRequestSender,
+                                                const test::ConditionallyNoexceptNoOpReceiver<true>&>);
+    CHECK_FALSE(asio::execution::is_nothrow_connect_v<RepeatedlyRequestSender,
+                                                      const test::ConditionallyNoexceptNoOpReceiver<false>&>);
+    using OperationState = asio::execution::connect_result_t<RepeatedlyRequestSender, test::InvocableArchetype>;
+    CHECK(asio::execution::operation_state<OperationState>);
+    CHECK(asio::execution::is_operation_state_v<OperationState>);
+}
+
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "asio use_sender repeatedly_request unary")
 {
     bool is_shutdown{false};

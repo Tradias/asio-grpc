@@ -79,7 +79,7 @@ class ScheduleSender : public detail::SenderOf<>
 
   public:
     template <class Receiver>
-    auto connect(Receiver&& receiver) const noexcept(std::is_nothrow_constructible_v<Receiver, Receiver&&>)
+    auto connect(Receiver&& receiver) const noexcept(detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver>)
         -> Operation<detail::RemoveCrefT<Receiver>>
     {
         return {*this, std::forward<Receiver>(receiver)};
