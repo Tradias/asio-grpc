@@ -74,30 +74,6 @@ struct FunctionAsReceiver
 #endif
 };
 
-template <bool IsNothrow>
-struct ConditionallyNoexceptNoOpReceiver
-{
-    ConditionallyNoexceptNoOpReceiver() = default;
-
-    ConditionallyNoexceptNoOpReceiver(const ConditionallyNoexceptNoOpReceiver&) noexcept(IsNothrow) = default;
-
-    ConditionallyNoexceptNoOpReceiver(ConditionallyNoexceptNoOpReceiver&&) noexcept(IsNothrow) = default;
-
-    ConditionallyNoexceptNoOpReceiver& operator=(const ConditionallyNoexceptNoOpReceiver&) noexcept(IsNothrow) =
-        default;
-
-    ConditionallyNoexceptNoOpReceiver& operator=(ConditionallyNoexceptNoOpReceiver&&) noexcept(IsNothrow) = default;
-
-    void set_done() noexcept {}
-
-    template <class... Args>
-    void set_value(Args&&... args) noexcept
-    {
-    }
-
-    void set_error(std::exception_ptr) noexcept {}
-};
-
 struct StatefulReceiverState
 {
     std::exception_ptr exception{};
@@ -117,6 +93,33 @@ struct FunctionAsStatefulReceiver : public test::FunctionAsReceiver<Function, Al
     void set_done() noexcept { state.was_done = true; }
 
     void set_error(std::exception_ptr ptr) noexcept { state.exception = ptr; }
+};
+
+template <bool IsNothrow>
+struct ConditionallyNoexceptNoOpReceiver
+{
+    ConditionallyNoexceptNoOpReceiver(const ConditionallyNoexceptNoOpReceiver&) noexcept(IsNothrow) {}
+
+    ConditionallyNoexceptNoOpReceiver(ConditionallyNoexceptNoOpReceiver&&) noexcept(IsNothrow) {}
+
+    ConditionallyNoexceptNoOpReceiver& operator=(const ConditionallyNoexceptNoOpReceiver&) noexcept(IsNothrow)
+    {
+        return *this;
+    }
+
+    ConditionallyNoexceptNoOpReceiver& operator=(ConditionallyNoexceptNoOpReceiver&&) noexcept(IsNothrow)
+    {
+        return *this;
+    }
+
+    void set_done() noexcept {}
+
+    template <class... Args>
+    void set_value(Args&&... args) noexcept
+    {
+    }
+
+    void set_error(std::exception_ptr) noexcept {}
 };
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)

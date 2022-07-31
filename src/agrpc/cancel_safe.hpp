@@ -69,11 +69,11 @@ class CancelSafe<void(CompletionArgs...)>
         {
             if (auto ch = self.completion_handler.release())
             {
-                detail::complete_successfully(std::move(ch), std::move(completion_args)...);
+                detail::complete_successfully(std::move(ch), static_cast<CompletionArgs&&>(completion_args)...);
             }
             else
             {
-                this->self.result.emplace(std::move(completion_args)...);
+                this->self.result.emplace(static_cast<CompletionArgs&&>(completion_args)...);
             }
         }
 

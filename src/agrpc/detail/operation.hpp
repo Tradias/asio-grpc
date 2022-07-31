@@ -75,7 +75,7 @@ class LocalOperation<IsIntrusivelyListable, Handler, void(Signature...)>
         {
             auto handler{std::move(self->completion_handler())};
             ptr.reset();
-            std::move(handler)(detail::forward_as<Signature>(args)...);
+            std::move(handler)(static_cast<Signature&&>(args)...);
         }
     }
 

@@ -50,7 +50,7 @@ struct GetCompletionQueueFn
     }
 
     /**
-     * @brief Get `grpc::CompletionQueue*` from a GrpcStream
+     * @brief (experimental) Get `grpc::CompletionQueue*` from a GrpcStream
      *
      * Effectively calls `agrpc::get_completion_queue(grpc_stream.get_executor())`
      *

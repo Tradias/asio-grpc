@@ -302,19 +302,6 @@ struct InplaceWithFunctionWrapper
 
 template <class T>
 inline constexpr bool IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V = std::is_nothrow_constructible_v<detail::RemoveCrefT<T>, T>;
-
-template <class T>
-constexpr T forward_as(std::add_lvalue_reference_t<std::remove_reference_t<T>> value)
-{
-    if constexpr (std::is_rvalue_reference_v<T> || !std::is_reference_v<T>)
-    {
-        return std::move(value);
-    }
-    else
-    {
-        return value;
-    }
-}
 }
 
 AGRPC_NAMESPACE_END

@@ -41,7 +41,7 @@ class TypeErasedOperation
   public:
     void complete(detail::InvokeHandler invoke_handler, Signature... args)
     {
-        this->on_complete(this, invoke_handler, detail::forward_as<Signature>(args)...);
+        this->on_complete(this, invoke_handler, static_cast<Signature&&>(args)...);
     }
 
   protected:
@@ -66,7 +66,7 @@ void default_do_complete(Base* op, detail::InvokeHandler invoke_handler, Args...
     {
         auto handler{std::move(self->completion_handler())};
         ptr.reset();
-        std::move(handler)(detail::forward_as<Args>(args)...);
+        std::move(handler)(static_cast<Args&&>(args)...);
     }
 }
 }

@@ -219,6 +219,7 @@ asio::awaitable<void> handle_bidirectional_streaming_request(example::v1::Exampl
 //
 
 // ---------------------------------------------------
+// -Experimental-
 // A bidirectional-streaming RPC where the client subscribes to a topic and the server sends the feed for the last
 // subscribed topic every 333ms. The feed is a simple string identified by an integer in the topic.
 // ---------------------------------------------------

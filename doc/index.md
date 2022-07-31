@@ -15,7 +15,7 @@ Feature overview, installation, performance benchmark and getting started instru
 * Already using an `asio::io_context`?
     * `agrpc::run`, `agrpc::run_completion_queue`
 * Want to write Rust/Golang [select](https://go.dev/ref/spec#Select_statements)-style code?
-    * `agrpc::GrpcStream`
+    * `agrpc::GrpcStream` (experimental)
 * Want to customize asynchronous completion?
     * [Completion token](md_doc_completion_token.html)
 * Want to run `protoc` from CMake to generate gRPC source files?
