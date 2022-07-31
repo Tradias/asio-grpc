@@ -114,7 +114,7 @@ class RepeatedlyRequestOperationBase
   private:
     RequestHandler request_handler_;
     const bool is_stoppable;
-    std::atomic_bool stop_context_;
+    std::atomic_bool stop_context_{};
     RPC rpc_;
     detail::CompressedPair<Service&, CompletionHandler> impl2;
 };
@@ -291,9 +291,22 @@ struct RethrowFirstArg
 };
 
 template <class CompletionToken, class Signature, class = void>
-struct CompletionHandlerType
+struct HandlerType
 {
     using Type = char[256];
+};
+
+template <class CompletionToken, class Signature>
+struct HandlerType<CompletionToken, Signature,
+                   std::void_t<typename asio::async_result<CompletionToken, Signature>::handler_type>>
+{
+    using Type = typename asio::async_result<CompletionToken, Signature>::handler_type;
+};
+
+template <class CompletionToken, class Signature, class = void>
+struct CompletionHandlerType
+{
+    using Type = typename detail::HandlerType<CompletionToken, Signature>::Type;
 };
 
 template <class CompletionToken, class Signature>
@@ -302,13 +315,6 @@ struct CompletionHandlerType<
     std::void_t<typename asio::async_result<CompletionToken, Signature>::completion_handler_type>>
 {
     using Type = typename asio::async_result<CompletionToken, Signature>::completion_handler_type;
-};
-
-template <class CompletionToken, class Signature>
-struct CompletionHandlerType<CompletionToken, Signature,
-                             std::void_t<typename asio::async_result<CompletionToken, Signature>::handler_type>>
-{
-    using Type = typename asio::async_result<CompletionToken, Signature>::handler_type;
 };
 
 template <class CompletionToken, class Signature>
@@ -339,10 +345,7 @@ template <std::size_t BufferSize>
 auto create_allocated_buffer_operation()
 {
     using Op = detail::BufferOperation<BufferSize>;
-    auto ptr = detail::allocate<Op>(std::allocator<Op>{});
-    auto* buffer_operation_ptr = ptr.get();
-    ptr.release();
-    return buffer_operation_ptr;
+    return detail::allocate<Op>(std::allocator<Op>{}).release();
 }
 
 template <class Service, class Request, class Responder, class CompletionToken>
@@ -386,7 +389,7 @@ class RepeatedlyRequestAwaitableOperation
     static constexpr auto ON_STOP_COMPLETE =
         &detail::default_do_complete<RepeatedlyRequestAwaitableOperation, detail::TypeErasedNoArgOperation>;
     static constexpr auto BUFFER_SIZE =
-        sizeof(detail::CompletionHandlerTypeT<UseAwaitable, void()>) + 3 * sizeof(void*);
+        sizeof(detail::CompletionHandlerTypeT<UseAwaitable, void()>) + 2 * sizeof(void*);
 
     using BufferOp = detail::BufferOperation<BUFFER_SIZE>;
 
