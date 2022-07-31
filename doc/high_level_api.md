@@ -11,9 +11,16 @@ Considerations:
 * Compose with async coroutine generators like `asio::experimental::coroutine` and `std::generator`
 * Support sender/receiver
 
-# Client-side unary
+Table of contents
 
-## API
+* [Proposal 1](#proposal-1)
+* [Proposal 2](#proposal-2)
+
+# Proposal 1
+
+## Client-side unary
+
+### API
 
 ```cpp
 // It might be possible to have just one type for all client-side RPCs but then we need to make assumptions about the concrete
@@ -44,11 +51,11 @@ private:
   Executor executor;
   grpc::ClientContext context;
   std::unique_ptr<ResponseWriter<ResponseT>> responder;
-  grpc::Status; // moved on finish
+  grpc::Status status; // moved on finish
 };
 ```
 
-## Usage
+### Usage
 
 ```cpp
 using Unary = agrpc::UnaryRpc<&Stub::AsyncUnary, agrpc::GrpcExecutor>;
@@ -69,9 +76,9 @@ if (status.ok()) {
 }
 ```
 
-# Client-side server-streaming
+## Client-side server-streaming
 
-## API
+### API
 
 ```cpp
 template<auto Rpc, class Executor>
@@ -96,7 +103,7 @@ public:
   template<class CompletionToken = asio::default_completion_token_t<Executor>>
   auto start(const Request& request, CompletionToken&& token = asio::default_completion_token_t<Executor>{});
 
-  // Returns grpc::Status::FAILED_PRECONDITION if the RPC hasn't been started.
+  // Returns grpc::Status::FAILED_PRECONDITION if the RPC hasn't been started, or should we just assert?
   // Completes with grpc::Status::OK if metadata was read, otherwise with what agrpc::finish produced.
   template<class CompletionToken = asio::default_completion_token_t<Executor>>
   auto read_initial_metadata(CompletionToken&& token = asio::default_completion_token_t<Executor>{});
@@ -115,11 +122,11 @@ private:
   Executor executor;
   grpc::ClientContext context;
   std::unique_ptr<Reader<ResponseT>> responder;
-  grpc::Status;
+  grpc::Status status;
 };
 ```
 
-## Usage
+### Usage
 
 ```cpp
 using Streaming = agrpc::StreamingRpc<&Stub::PrepareAsyncServerStreaming, agrpc::GrpcExecutor>;
@@ -147,9 +154,9 @@ if (!status.ok()) {
 }
 ```
 
-# Client-side client-streaming
+## Client-side client-streaming
 
-## API
+### API
 
 ```cpp
 template<class Stub, class RequestT, template<class> class Writer, class ResponseT,
@@ -201,12 +208,12 @@ private:
   Executor executor;
   grpc::ClientContext context;
   std::unique_ptr<Writer<RequestT>> responder;
-  grpc::Status;
+  grpc::Status status;
   bool is_writes_done;
 };
 ```
 
-## Usage
+### Usage
 
 ```cpp
 using Streaming = agrpc::StreamingRpc<&Stub::PrepareAsyncClientStreaming, agrpc::GrpcExecutor>;
@@ -237,9 +244,9 @@ if (status = co_await streaming.finish(asio::use_awaitable); status.ok()) {
 ```
 
 
-# Client-side bidirectional-streaming
+## Client-side bidirectional-streaming
 
-## API
+### API
 
 ```cpp
 template<class Stub, class RequestT, template<class, class> class ReaderWriter, class ResponseT,
@@ -299,12 +306,12 @@ private:
   Executor executor;
   grpc::ClientContext context;
   std::unique_ptr<ReaderWriter<RequestT, ResponseT>> responder;
-  grpc::Status;
+  grpc::Status status;
   bool is_writes_done;
 };
 ```
 
-## Usage
+### Usage
 
 ```cpp
 using Streaming = agrpc::StreamingRpc<&Stub::PrepareAsyncBidiStreaming, agrpc::GrpcExecutor>;
@@ -331,6 +338,105 @@ while (fill_request(request)) {
 
 if (status = co_await streaming.finish(asio::use_awaitable); !status.ok()) {
   // Server finished the stream with non-ok status or the connection got interrupted
+}
+```
+
+# Proposal 2
+
+Prevents the user from interacting with unstarted RPCs and therefore avoids the need for `grpc::Status::FAILED_PRECONDITION`.
+
+## Client-side server-streaming
+
+### API
+
+```cpp
+// Should we really try to have one type for all kinds of RPCs?
+template<auto Rpc, class Executor>
+class Call;
+
+template<class Stub, class RequestT, class ResponseT,
+    std::unique_ptr<grpc::ClientAsyncReaderInterface<ResponseT>>(Stub::*PrepareAsync)(grpc::ClientContext*, const RequestT&, grpc::CompletionQueue*),
+    class Executor>
+class Call<PrepareAsync, Executor> {
+public:
+  using Request = RequestT;
+  using Response = ResponseT;
+
+  // Automatically call ClientContext::TryCancel() if not finished
+  ~Call();
+
+  // Completes with grpc::Status::OK if metadata was read, otherwise with what agrpc::finish produced.
+  template<class CompletionToken = asio::default_completion_token_t<Executor>>
+  auto read_initial_metadata(CompletionToken&& token = asio::default_completion_token_t<Executor>{});
+
+  // Reads from the RPC and finishes it if agrpc::read returned `false`.
+  // Completes with a wrapper around grpc::Status that differentiates between the stati returned from the server
+  // and the successful end of the stream.
+  template<class CompletionToken = asio::default_completion_token_t<Executor>>
+  auto read(Response& response, CompletionToken&& token = asio::default_completion_token_t<Executor>{});
+
+  bool ok() const noexcept { return status_.ok(); }
+
+  grpc::Status& status() noexcept { return status_; }
+
+private:
+  Call(Stub&, Executor);
+
+  Stub& stub;
+  Executor executor;
+  // The user must not move the Call during reads, stub.call() could allocate memory to avoid that. 
+  // Would that be helpful?
+  std::unique_ptr<grpc::ClientAsyncReaderInterface<ResponseT>> responder;
+  grpc::Status status_;
+};
+
+template<class StubT, class Executor>
+class Stub {
+public:
+  Stub(StubT&, Executor);
+
+  // Requests the RPC and finishes it if agrpc::request returned `false`.
+  // Returns immediately if ClientContext.initial_metadata_corked is set.
+  // Completes with some from of `std::expected<Call<Rpc, Executor>, grpc::Status>` or
+  // should Call expose grpc::Status' API?
+  // Some RPCs are made without an initial request, so we need another overload, is that intuitive?
+  // Maybe this function should be called `unary` and then have variations: `client_streaming` and so on.
+  template<auto Rpc, class CompletionToken = asio::default_completion_token_t<Executor>>
+  auto call(grpc::ClientContext& context, const Request& request, CompletionToken&& token = asio::default_completion_token_t<Executor>{});
+
+private:
+  StubT* stub; // Stub could be `void` since .call<auto Rpc>() provides the concrete Stub type for the RPC.
+  Executor executor;
+};
+```
+
+### Usage
+
+```cpp
+using Stub = agrpc::Stub<helloworld::Greeter::Stub, agrpc::GrpcExecutor>;
+Stub stub{greeter_stub, grpc_context};
+
+// ClientContext and Call are two objects that must stay alive for the duration of the RPC.
+// That seems less convenient than the first proposal.
+grpc::ClientContext context;
+agrpc::Call<&Stub::PrepareAsyncServerStreaming, agrpc::GrpcExecutor> call = 
+  co_await stub.template call<&Stub::PrepareAsyncServerStreaming>(context, hellworld::Request{}, asio::use_awaitable);
+if (!call.ok()) {
+  // Server is unreachable, example:
+  // UNAVAILABLE (14) "failed to connect to all addresses; last error: UNAVAILABLE: WSA Error"
+}
+
+hellworld::Response response;
+
+agrpc::ReadStatus status;
+// Should we really promote assignment in conditions?
+// Also, inconsistency between boolean-test and .ok()
+// Boolean-test true means that we got a response, false that we reached the end of the stream.
+while (status = co_await call.read(response, asio::use_awaitable)) {
+  // Use response.
+} 
+if (!status.ok()) {
+  // agrpc::read returned false and agrpc::finish produced non-ok status
 }
 ```
 
