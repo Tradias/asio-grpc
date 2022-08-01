@@ -33,7 +33,7 @@ namespace detail
  * [Sender](https://brycelelbach.github.io/wg21_p2300_std_execution/std_execution.html#design-senders). This is
  * particularly useful for libunifex where senders are also awaitable:
  *
- * @snippet unifex-client.cpp unifex-server-streaming-client-side
+ * @snippet unifex_client.cpp unifex-server-streaming-client-side
  */
 struct UseSenderFn
 {
