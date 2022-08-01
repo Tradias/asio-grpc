@@ -1,5 +1,7 @@
 # High-level API design
 
+@tableofcontents
+
 This API has not been implemented yet.
 
 Considerations:
@@ -11,16 +13,11 @@ Considerations:
 * Compose with async coroutine generators like `asio::experimental::coroutine` and `std::generator`
 * Support sender/receiver
 
-Table of contents
-
-* [Proposal 1](#proposal-1)
-* [Proposal 2](#proposal-2)
-
 # Proposal 1
 
 ## Client-side unary
 
-### API
+**API**
 
 ```cpp
 // It might be possible to have just one type for all client-side RPCs but then we need to make assumptions about the concrete
@@ -55,7 +52,7 @@ private:
 };
 ```
 
-### Usage
+**Usage**
 
 ```cpp
 using Unary = agrpc::UnaryRpc<&Stub::AsyncUnary, agrpc::GrpcExecutor>;
@@ -78,7 +75,7 @@ if (status.ok()) {
 
 ## Client-side server-streaming
 
-### API
+**API**
 
 ```cpp
 template<auto Rpc, class Executor>
@@ -126,7 +123,7 @@ private:
 };
 ```
 
-### Usage
+**Usage**
 
 ```cpp
 using Streaming = agrpc::StreamingRpc<&Stub::PrepareAsyncServerStreaming, agrpc::GrpcExecutor>;
@@ -156,7 +153,7 @@ if (!status.ok()) {
 
 ## Client-side client-streaming
 
-### API
+**API**
 
 ```cpp
 template<class Stub, class RequestT, template<class> class Writer, class ResponseT,
@@ -213,7 +210,7 @@ private:
 };
 ```
 
-### Usage
+**Usage**
 
 ```cpp
 using Streaming = agrpc::StreamingRpc<&Stub::PrepareAsyncClientStreaming, agrpc::GrpcExecutor>;
@@ -246,7 +243,7 @@ if (status = co_await streaming.finish(asio::use_awaitable); status.ok()) {
 
 ## Client-side bidirectional-streaming
 
-### API
+**API**
 
 ```cpp
 template<class Stub, class RequestT, template<class, class> class ReaderWriter, class ResponseT,
@@ -311,7 +308,7 @@ private:
 };
 ```
 
-### Usage
+**Usage**
 
 ```cpp
 using Streaming = agrpc::StreamingRpc<&Stub::PrepareAsyncBidiStreaming, agrpc::GrpcExecutor>;
@@ -347,7 +344,7 @@ Prevents the user from interacting with unstarted RPCs and therefore avoids the 
 
 ## Client-side server-streaming
 
-### API
+**API**
 
 ```cpp
 // Should we really try to have one type for all kinds of RPCs?
@@ -410,7 +407,7 @@ private:
 };
 ```
 
-### Usage
+**Usage**
 
 ```cpp
 using Stub = agrpc::Stub<helloworld::Greeter::Stub, agrpc::GrpcExecutor>;
