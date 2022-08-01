@@ -23,9 +23,14 @@ if(TARGET Doxygen::doxygen)
     set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "doc/index.md")
     set(DOXYGEN_VERBATIM_HEADERS "NO")
     set(DOXYGEN_HTML_OUTPUT "docs")
+
+    # `doxygen -w html header.html delete_me.html delete_me.css`
     set(DOXYGEN_HTML_HEADER "${CMAKE_CURRENT_LIST_DIR}/header.html")
+
+    set(DOXYGEN_HTML_EXTRA_FILES "${CMAKE_CURRENT_LIST_DIR}/doxygen-awesome-darkmode-toggle.js")
     set(DOXYGEN_HTML_EXTRA_STYLESHEET
         "${CMAKE_CURRENT_LIST_DIR}/doxygen-awesome.css" "${CMAKE_CURRENT_LIST_DIR}/doxygen-awesome-sidebar-only.css"
+        "${CMAKE_CURRENT_LIST_DIR}/doxygen-awesome-sidebar-only-darkmode-toggle.css"
         "${CMAKE_CURRENT_LIST_DIR}/custom.css")
     set(DOXYGEN_HTML_COLORSTYLE_HUE "209")
     set(DOXYGEN_HTML_COLORSTYLE_SAT "255")
