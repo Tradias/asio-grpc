@@ -280,7 +280,7 @@ Request scenario: string_100B
 
 # Documentation
 
-[**API reference**](https://tradias.github.io/asio-grpc/)
+[**Documentation**](https://tradias.github.io/asio-grpc/)
 
 The main workhorses of this library are the `agrpc::GrpcContext` and its `executor_type` - `agrpc::GrpcExecutor`. 
 
@@ -346,7 +346,7 @@ std::optional guard{asio::require(grpc_context.get_executor(), asio::execution::
 
 ## Where to go from here?
 
-Check out the [examples](/example) and the [API documentation](https://tradias.github.io/asio-grpc/).
+Check out the [examples](/example) and the [documentation](https://tradias.github.io/asio-grpc/).
 
 </p>
 </details>
