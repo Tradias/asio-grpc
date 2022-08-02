@@ -1,0 +1,4 @@
+html {
+    --content-maxwidth: 75%;
+    --side-nav-fixed-width: 310px;
+}
