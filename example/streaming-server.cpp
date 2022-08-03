@@ -113,14 +113,14 @@ asio::awaitable<void> handle_client_streaming_request(
     } while (read_ok);
 
     example::v1::Response response;
-    bool finish_ok = co_await agrpc::finish(reader, response, grpc::Status::OK);
+    co_await agrpc::finish(reader, response, grpc::Status::OK);
 
     // Or finish with an error
-    // bool finish_with_error_ok = co_await agrpc::finish_with_error(reader, grpc::Status::CANCELLED);
+    // co_await agrpc::finish_with_error(reader, grpc::Status::CANCELLED);
 
     // See documentation for the meaning of the bool values
 
-    silence_unused(send_ok, finish_ok);
+    silence_unused(send_ok);
 }
 
 void register_client_streaming_handler(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
@@ -211,9 +211,7 @@ asio::awaitable<void> handle_bidirectional_streaming_request(example::v1::Exampl
         co_return;
     }
 
-    bool finish_ok = co_await agrpc::finish(reader_writer, grpc::Status::OK);
-
-    silence_unused(finish_ok);
+    co_await agrpc::finish(reader_writer, grpc::Status::OK);
 }
 // ---------------------------------------------------
 //

@@ -55,14 +55,14 @@ asio::awaitable<void> make_client_streaming_request(example::v1::Example::Stub& 
 
     // Wait for the server to recieve all our messages.
     grpc::Status status;
-    bool finish_ok = co_await agrpc::finish(writer, status);
+    co_await agrpc::finish(writer, status);
 
     // The above three steps can also be combined into one using `agrpc::write_and_finish`.
 
     // See documentation for the meaning of the bool values.
 
     abort_if_not(status.ok());
-    silence_unused(request_ok, read_ok, write_ok, writes_done_ok, finish_ok);
+    silence_unused(request_ok, read_ok, write_ok, writes_done_ok);
 }
 // ---------------------------------------------------
 //
@@ -107,10 +107,9 @@ asio::awaitable<void> make_bidirectional_streaming_request(example::v1::Example:
     co_await agrpc::writes_done(reader_writer);
 
     grpc::Status status;
-    bool finish_ok = co_await agrpc::finish(reader_writer, status);
+    co_await agrpc::finish(reader_writer, status);
 
     abort_if_not(status.ok());
-    silence_unused(finish_ok);
 }
 // ---------------------------------------------------
 //

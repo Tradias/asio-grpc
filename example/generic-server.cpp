@@ -15,14 +15,19 @@
 #include "example/v1/example.grpc.pb.h"
 #include "example/v1/example_ext.grpc.pb.h"
 #include "helper.hpp"
+#include "yield_helper.hpp"
 
 #include <agrpc/asio_grpc.hpp>
 #include <boost/asio/bind_executor.hpp>
+#include <boost/asio/detached.hpp>
+#include <boost/asio/experimental/channel.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/thread_pool.hpp>
 #include <grpcpp/generic/async_generic_service.h>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <thread>
@@ -31,46 +36,145 @@ namespace asio = boost::asio;
 
 // Example showing how to write to generic server that handles a single unary request.
 
+void process_request(grpc::ByteBuffer& buffer)
+{
+    // -- Deserialize the request message
+    example::v1::Request request;
+    const auto deserialize_status =
+        grpc::GenericDeserialize<grpc::ProtoBufferReader, example::v1::Request>(&buffer, &request);
+
+    abort_if_not(deserialize_status.ok());
+
+    // -- Serialize the response message
+    example::v1::Response response;
+    response.set_integer(request.integer() * 2);
+    bool own_buffer;
+    grpc::GenericSerialize<grpc::ProtoBufferWriter, example::v1::Response>(response, &buffer, &own_buffer);
+}
+
+void handle_generic_unary_request(grpc::GenericServerAsyncReaderWriter& reader_writer, const asio::yield_context& yield)
+{
+    grpc::ByteBuffer buffer;
+
+    // -- Wait for the request message
+    agrpc::read(reader_writer, buffer, yield);
+
+    process_request(buffer);
+
+    // -- Write the response message and finish this RPC with OK
+    agrpc::write_and_finish(reader_writer, buffer, {}, grpc::Status::OK, yield);
+}
+
+using Channel = asio::experimental::channel<void(boost::system::error_code, grpc::ByteBuffer)>;
+
+template <class Handler>
+void reader(grpc::GenericServerAsyncReaderWriter& reader_writer, Channel& channel,
+            const asio::basic_yield_context<Handler>& yield)
+{
+    while (true)
+    {
+        grpc::ByteBuffer buffer;
+
+        if (!agrpc::read(reader_writer, buffer, yield))
+        {
+            std::cout << "Generic: Client is done writing." << std::endl;
+            break;
+        }
+        // Send request to writer. Using detached as completion token since we do
+        // not want to wait until the writer has picked up the request.
+        channel.async_send(boost::system::error_code{}, std::move(buffer), asio::detached);
+    }
+    // Signal the writer to complete.
+    channel.close();
+}
+
+// The writer will pick up reads from the reader through the channel and switch
+// to the thread_pool to compute their response.
+template <class Handler>
+bool writer(grpc::GenericServerAsyncReaderWriter& reader_writer, Channel& channel, asio::thread_pool& thread_pool,
+            const asio::basic_yield_context<Handler>& yield)
+{
+    bool ok{true};
+    while (ok)
+    {
+        boost::system::error_code ec;
+        auto buffer = channel.async_receive(yield[ec]);
+        if (ec)
+        {
+            break;
+        }
+        auto main_thread = std::this_thread::get_id();
+
+        // Switch to the thread_pool.
+        asio::post(asio::bind_executor(thread_pool, yield));
+
+        auto thread_pool_thread = std::this_thread::get_id();
+        abort_if_not(main_thread != thread_pool_thread);
+
+        // Compute the response.
+        process_request(buffer);
+
+        // reader_writer is thread-safe so we can just interact with it from the thread_pool.
+        ok = agrpc::write(reader_writer, buffer, yield);
+        // Now we are back on the main thread.
+    }
+    std::cout << "Generic: Server writes completed with: " << std::boolalpha << ok << std::endl;
+    return ok;
+}
+
+void handle_generic_bidistream_request(agrpc::GrpcContext& grpc_context,
+                                       grpc::GenericServerAsyncReaderWriter& reader_writer,
+                                       asio::thread_pool& thread_pool, const asio::yield_context& yield)
+{
+    Channel channel{grpc_context};
+
+    bool ok{};
+
+    example::yield_spawn_all(
+        grpc_context, yield,
+        [&](const auto& yield)
+        {
+            reader(reader_writer, channel, yield);
+        },
+        [&](const auto& yield)
+        {
+            ok = writer(reader_writer, channel, thread_pool, yield);
+        });
+
+    if (!ok)
+    {
+        std::cout << "Client has disconnected or server is shutting down." << std::endl;
+        return;
+    }
+
+    agrpc::finish(reader_writer, grpc::Status::OK, yield);
+}
+
 struct GenericRequestHandler
 {
     using executor_type = agrpc::GrpcContext::executor_type;
 
     agrpc::GrpcContext& grpc_context;
-
-    static void handle_generic_request(grpc::GenericServerContext& server_context,
-                                       grpc::GenericServerAsyncReaderWriter& reader_writer,
-                                       const asio::yield_context& yield)
-    {
-        abort_if_not("/test.v1.Test/Unary" == server_context.method());
-
-        grpc::ByteBuffer buffer;
-
-        // -- Wait for the request message
-        agrpc::read(reader_writer, buffer, yield);
-
-        // -- Deserialize the request message
-        example::v1::Request request;
-        const auto deserialize_status =
-            grpc::GenericDeserialize<grpc::ProtoBufferReader, example::v1::Request>(&buffer, &request);
-        abort_if_not(deserialize_status.ok());
-        abort_if_not(42 == request.integer());
-
-        // -- Serialize the response message
-        example::v1::Response response;
-        response.set_integer(21);
-        bool own_buffer;
-        grpc::GenericSerialize<grpc::ProtoBufferWriter, example::v1::Response>(response, &buffer, &own_buffer);
-
-        // -- Write the response message and finish this RPC with OK
-        agrpc::write_and_finish(reader_writer, buffer, {}, grpc::Status::OK, yield);
-    }
+    asio::thread_pool& thread_pool;
 
     void operator()(agrpc::GenericRepeatedlyRequestContext<>&& context) const
     {
         asio::spawn(grpc_context,
-                    [context = std::move(context)](asio::yield_context yield)
+                    [&, context = std::move(context)](asio::yield_context yield)
                     {
-                        handle_generic_request(context.server_context(), context.responder(), yield);
+                        const auto& method = context.server_context().method();
+                        if ("/example.v1.Example/Unary" == method)
+                        {
+                            handle_generic_unary_request(context.responder(), yield);
+                        }
+                        else if ("/example.v1.Example/BidirectionalStreaming" == method)
+                        {
+                            handle_generic_bidistream_request(grpc_context, context.responder(), thread_pool, yield);
+                        }
+                        else
+                        {
+                            throw std::runtime_error("Unsupport method!");
+                        }
                     });
     }
 
@@ -122,7 +226,8 @@ int main(int argc, const char** argv)
                     handle_shutdown_request(shutdown_service, *server, shutdown_thread, yield);
                 });
 
-    agrpc::repeatedly_request(service, GenericRequestHandler{grpc_context});
+    asio::thread_pool thread_pool;
+    agrpc::repeatedly_request(service, GenericRequestHandler{grpc_context, thread_pool});
 
     grpc_context.run();
     if (shutdown_thread && shutdown_thread->joinable())
