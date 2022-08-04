@@ -34,7 +34,7 @@
 
 namespace asio = boost::asio;
 
-// Example showing how to write to generic server that handles a single unary request.
+// Example showing how to write to generic server for a unary and a bidirectional streaming RPC.
 
 void process_request(grpc::ByteBuffer& buffer)
 {
@@ -52,6 +52,9 @@ void process_request(grpc::ByteBuffer& buffer)
     grpc::GenericSerialize<grpc::ProtoBufferWriter, example::v1::Response>(response, &buffer, &own_buffer);
 }
 
+// ---------------------------------------------------
+// Handle a simple generic unary request with Boost.Coroutine.
+// ---------------------------------------------------
 void handle_generic_unary_request(grpc::GenericServerAsyncReaderWriter& reader_writer, const asio::yield_context& yield)
 {
     grpc::ByteBuffer buffer;
@@ -64,7 +67,13 @@ void handle_generic_unary_request(grpc::GenericServerAsyncReaderWriter& reader_w
     // -- Write the response message and finish this RPC with OK
     agrpc::write_and_finish(reader_writer, buffer, {}, grpc::Status::OK, yield);
 }
+// ---------------------------------------------------
+//
 
+// ---------------------------------------------------
+// A bidirectional-streaming example that shows how to dispatch requests to a thread_pool and write responses
+// back to the client.
+// ---------------------------------------------------
 using Channel = asio::experimental::channel<agrpc::GrpcExecutor, void(boost::system::error_code, grpc::ByteBuffer)>;
 
 template <class Handler>
@@ -88,8 +97,8 @@ void reader(grpc::GenericServerAsyncReaderWriter& reader_writer, Channel& channe
     channel.close();
 }
 
-// GCC and Clang optimize around the fact that a normal function cannot suddendly switch to a different thread and
-// they merge the two calls to `std::this_thread::get_id` in the `writer` below.
+// When switching threads in a Boost.Coroutine calls to `std::this_thread::get_id` before and after the switch can
+// produce unexpected results. Disabling optimizations seems to correct that.
 auto
 #if defined(__clang__)
     __attribute__((optnone))
@@ -143,7 +152,7 @@ void handle_generic_bidistream_request(agrpc::GrpcContext& grpc_context,
 
     bool ok{};
 
-    example::yield_spawn_all(
+    example::spawn_all_void(
         grpc_context, yield,
         [&](const auto& yield)
         {
@@ -162,6 +171,8 @@ void handle_generic_bidistream_request(agrpc::GrpcContext& grpc_context,
 
     agrpc::finish(reader_writer, grpc::Status::OK, yield);
 }
+// ---------------------------------------------------
+//
 
 struct GenericRequestHandler
 {

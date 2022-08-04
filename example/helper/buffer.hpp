@@ -26,20 +26,19 @@ namespace example
 template <std::size_t Capacity>
 struct Buffer
 {
-    std::byte buffer[Capacity];
+    // You should copy the implementation of OneShotAllocator into your code if you intent to use it. Do not worry,
+    // it is very simple!
+    using allocator_type = agrpc::detail::OneShotAllocator<std::byte, Capacity>;
 
-    auto allocator() noexcept
-    {
-        // You should copy the implementation of OneShotAllocator into your code if you intent to use it. Do not worry,
-        // it is very simple!
-        return agrpc::detail::OneShotAllocator<std::byte, Capacity>{buffer};
-    }
+    [[nodiscard]] allocator_type allocator() noexcept { return allocator_type{buffer}; }
 
     template <class Target>
-    auto bind_allocator(Target&& target) noexcept
+    [[nodiscard]] auto bind_allocator(Target&& target) noexcept
     {
         return agrpc::bind_allocator(this->allocator(), std::forward<Target>(target));
     }
+
+    alignas(std::max_align_t) std::byte buffer[Capacity];
 };
 }
 

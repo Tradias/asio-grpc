@@ -18,15 +18,18 @@
 #include "yield_helper.hpp"
 
 #include <agrpc/asio_grpc.hpp>
+#include <boost/asio/compose.hpp>
+#include <boost/asio/coroutine.hpp>
 #include <boost/asio/spawn.hpp>
 #include <grpcpp/create_channel.h>
 #include <grpcpp/generic/generic_stub.h>
 
+#include <functional>
 #include <iostream>
 
 namespace asio = boost::asio;
 
-// Example showing how to write to generic client that sends a single unary request.
+// Example showing how to write a generic client for a unary and a bidirectional streaming RPC.
 
 template <class Message>
 auto serialize(const Message& message)
@@ -43,6 +46,9 @@ bool deserialize(grpc::ByteBuffer& buffer, Message& message)
     return grpc::GenericDeserialize<grpc::ProtoBufferReader, example::v1::Response>(&buffer, &message).ok();
 }
 
+// ---------------------------------------------------
+// A simple generic unary with Boost.Coroutine.
+// ---------------------------------------------------
 void make_generic_unary_request(agrpc::GrpcContext& grpc_context, grpc::GenericStub& stub,
                                 const asio::yield_context& yield)
 {
@@ -73,76 +79,127 @@ void make_generic_unary_request(agrpc::GrpcContext& grpc_context, grpc::GenericS
     abort_if_not(deserialize(buffer, response));
     abort_if_not(2 == response.integer());
 }
+// ---------------------------------------------------
+//
 
-void make_bidirectional_streaming_request(agrpc::GrpcContext& grpc_context, grpc::GenericStub& stub,
-                                          const asio::yield_context& yield)
+// ---------------------------------------------------
+// A generic bidirectional-streaming request that simply sends the response from the server back to it.
+// Here we are using stackless coroutines.
+// ---------------------------------------------------
+struct BidirectionalStreamingRequest
 {
-    grpc::ClientContext client_context;
-    client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
-
-    std::unique_ptr<grpc::GenericClientAsyncReaderWriter> reader_writer;
-    bool request_ok =
-        agrpc::request("/example.v1.Example/BidirectionalStreaming", stub, client_context, reader_writer, yield);
-    if (!request_ok)
+    struct Context
     {
-        // Channel is either permanently broken or transiently broken but with the fail-fast option.
-        return;
-    }
-
-    // Let's perform a request/response ping-pong.
-    example::v1::Request request;
-    request.set_integer(1);
-    bool write_ok{true};
-    bool read_ok{true};
-    int count{};
-    while (read_ok && write_ok && count < 10)
-    {
-        auto request_buffer = serialize(request);
-
-        example::v1::Response response;
+        grpc::GenericStub& stub;
+        grpc::ClientContext client_context;
+        std::unique_ptr<grpc::GenericClientAsyncReaderWriter> reader_writer;
+        grpc::Status status;
+        example::v1::Request request;
         grpc::ByteBuffer response_buffer;
+        int count{};
+        bool write_ok{true};
+        bool read_ok{true};
 
-        // Reads and writes can be performed simultaneously.
-        example::yield_when_all(
-            grpc_context, yield,
-            [&](bool is_read_ok, bool is_write_ok)
-            {
-                read_ok = is_read_ok;
-                write_ok = is_write_ok;
-            },
-            [&](auto&& token)
-            {
-                return agrpc::read(reader_writer, response_buffer, std::move(token));
-            },
-            [&](auto&& token)
-            {
-                return agrpc::write(reader_writer, request_buffer, std::move(token));
-            });
+        explicit Context(grpc::GenericStub& stub) : stub(stub) {}
+    };
 
-        abort_if_not(deserialize(response_buffer, response));
+    std::unique_ptr<Context> context;
+    asio::coroutine coro;
 
-        std::cout << "Generic: bidirectional streaming: " << response.integer() << '\n';
-        request.set_integer(response.integer());
-        ++count;
+    explicit BidirectionalStreamingRequest(grpc::GenericStub& stub) : context(std::make_unique<Context>(stub)) {}
+
+    template <class Self>
+    void operator()(Self& self, const std::array<std::size_t, 2>&, bool read_ok, bool write_ok)
+    {
+        (*this)(self, read_ok, write_ok);
     }
 
-    // Do not forget to signal that we are done writing before finishing.
-    agrpc::writes_done(reader_writer, yield);
+    template <class Self>
+    void operator()(Self& self, bool ok = {}, bool write_ok = {})
+    {
+        auto& c = *context;
+        BOOST_ASIO_CORO_REENTER(coro)
+        {
+            c.client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
 
-    grpc::Status status;
-    agrpc::finish(reader_writer, status, yield);
+            BOOST_ASIO_CORO_YIELD agrpc::request("/example.v1.Example/BidirectionalStreaming", c.stub, c.client_context,
+                                                 c.reader_writer, std::move(self));
 
-    abort_if_not(status.ok());
-}
+            if (!ok)
+            {
+                // Channel is either permanently broken or transiently broken but with the fail-fast option.
+                return;
+            }
 
-void make_shutdown_request(agrpc::GrpcContext& grpc_context, example::v1::ExampleExt::Stub& stub,
-                           const asio::yield_context& yield)
+            // Let's perform a request/response ping-pong.
+            c.request.set_integer(1);
+            while (c.read_ok && c.write_ok && c.count < 10)
+            {
+                BOOST_ASIO_CORO_YIELD
+                {
+                    auto request_buffer = serialize(c.request);
+                    auto executor = asio::get_associated_executor(self);
+
+                    // Reads and writes can be performed simultaneously.
+                    example::when_all_bind_executor(
+                        std::move(executor), std::move(self),
+                        [&](auto&& token)
+                        {
+                            return agrpc::read(c.reader_writer, c.response_buffer, std::move(token));
+                        },
+                        [&](auto&& token)
+                        {
+                            return agrpc::write(c.reader_writer, request_buffer, std::move(token));
+                        });
+                }
+                c.read_ok = ok;
+                c.write_ok = write_ok;
+
+                example::v1::Response response;
+                abort_if_not(deserialize(c.response_buffer, response));
+
+                std::cout << "Generic: bidirectional streaming: " << response.integer() << '\n';
+                c.request.set_integer(response.integer());
+                ++c.count;
+            }
+
+            // Do not forget to signal that we are done writing before finishing.
+            BOOST_ASIO_CORO_YIELD agrpc::writes_done(c.reader_writer, std::move(self));
+
+            BOOST_ASIO_CORO_YIELD agrpc::finish(c.reader_writer, c.status, std::move(self));
+
+            abort_if_not(c.status.ok());
+
+            context.reset();
+            self.complete();
+        }
+    }
+};
+
+template <class CompletionToken>
+auto make_bidirectional_streaming_request(agrpc::GrpcContext& grpc_context, grpc::GenericStub& stub,
+                                          CompletionToken&& token)
 {
-    grpc::ClientContext client_context;
-    const auto reader = stub.AsyncShutdown(&client_context, {}, agrpc::get_completion_queue(grpc_context));
-    google::protobuf::Empty response;
-    grpc::Status status;
-    agrpc::finish(*reader, response, status, yield);
+    return asio::async_compose<CompletionToken, void()>(BidirectionalStreamingRequest{stub}, token, grpc_context);
+}
+// ---------------------------------------------------
+//
+
+void make_shutdown_request(agrpc::GrpcContext& grpc_context, example::v1::ExampleExt::Stub& stub)
+{
+    struct Context
+    {
+        grpc::ClientContext client_context;
+        google::protobuf::Empty response;
+        grpc::Status status;
+    };
+    auto context = std::make_unique<Context>();
+    auto& c = *context;
+    auto reader =
+        agrpc::request(&example::v1::ExampleExt::Stub::AsyncShutdown, stub, c.client_context, {}, grpc_context);
+    auto& r = *reader;
+    agrpc::finish(r, c.response, c.status,
+                  asio::bind_executor(grpc_context, [c = std::move(context), r = std::move(reader)](bool) {}));
 }
 
 int main(int argc, const char** argv)
@@ -162,9 +219,16 @@ int main(int argc, const char** argv)
     asio::spawn(grpc_context,
                 [&](asio::yield_context yield)
                 {
+                    // First we perform the unary request using Boost.Coroutine
                     make_generic_unary_request(grpc_context, generic_stub, yield);
-                    make_bidirectional_streaming_request(grpc_context, generic_stub, yield);
-                    make_shutdown_request(grpc_context, stub, yield);
+                    // Then we do the bidirectional streaming request using stackless coroutines.
+                    make_bidirectional_streaming_request(grpc_context, generic_stub,
+                                                         [&]
+                                                         {
+                                                             // And finally the shutdown request using
+                                                             // callbacks.
+                                                             make_shutdown_request(grpc_context, stub);
+                                                         });
                 });
 
     grpc_context.run();

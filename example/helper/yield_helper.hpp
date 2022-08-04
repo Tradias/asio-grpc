@@ -17,87 +17,83 @@
 
 #include <agrpc/grpc_context.hpp>
 #include <boost/asio/bind_executor.hpp>
+#include <boost/asio/compose.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/asio/spawn.hpp>
 
+#include <tuple>
+
 namespace example
 {
-template <class Function, class Token>
-auto async_initiate_void(Function&& init_function, Token& token)
+template <class Function, class CompletionToken>
+auto initiate_spawn(Function&& function, CompletionToken&& token)
 {
-    return boost::asio::async_initiate<Token, void()>(std::forward<Function>(init_function), token);
-}
-
-template <class Function, class Token>
-auto async_initiate_and_spawn(agrpc::GrpcContext& grpc_context, Function&& function, Token& token)
-{
-    return example::async_initiate_void(
-        [&](auto&& completion_handler)
+    return boost::asio::async_initiate<CompletionToken, void()>(
+        [&](auto&& completion_handler, auto&& f)
         {
-            auto completion_handler_with_executor =
-                boost::asio::bind_executor(grpc_context, std::move(completion_handler));
-            boost::asio::spawn(std::move(completion_handler_with_executor),
-                               [&, f = std::forward<Function>(function)](const auto& yield) mutable
-                               {
-                                   std::move(f)(yield);
-                               });
+            boost::asio::spawn(std::move(completion_handler), std::forward<decltype(f)>(f));
         },
-        token);
+        token, std::forward<Function>(function));
 }
 
-template <class Handler, class... Function>
-void yield_spawn_all(agrpc::GrpcContext& grpc_context, const boost::asio::basic_yield_context<Handler>& yield,
-                     Function&&... function)
+template <class... Function>
+struct SpawnAllVoid
 {
-    example::async_initiate_void(
-        [&](auto&& ch)
-        {
-            boost::asio::experimental::make_parallel_group(
-                [&](auto& f)
-                {
-                    return [&](auto&& token)
+    std::tuple<Function...> functions;
+
+    explicit SpawnAllVoid(Function... function) : functions(std::move(function)...) {}
+
+    template <class Self>
+    void operator()(Self& self)
+    {
+        std::apply(
+            [&](Function&&... function)
+            {
+                const auto executor = boost::asio::get_associated_executor(self);
+                boost::asio::experimental::make_parallel_group(
+                    [&](auto& f)
                     {
-                        return example::async_initiate_and_spawn(
-                            grpc_context,
-                            [&, f = std::forward<Function>(f)](const auto& yield) mutable
-                            {
-                                std::move(f)(yield);
-                            },
-                            token);
-                    };
-                }(function)...)
-                .async_wait(boost::asio::experimental::wait_for_all(),
-                            [ch = std::move(ch)](auto&&...) mutable
-                            {
-                                std::move(ch)();
-                            });
-        },
-        yield);
+                        return [&](auto&& t)
+                        {
+                            return example::initiate_spawn(
+                                [&, f = std::forward<Function>(f)](const auto& yield) mutable
+                                {
+                                    std::move(f)(yield);
+                                },
+                                boost::asio::bind_executor(executor, t));
+                        };
+                    }(function)...)
+                    .async_wait(boost::asio::experimental::wait_for_all(), std::move(self));
+            },
+            std::move(functions));
+    }
+
+    template <class Self, std::size_t N>
+    void operator()(Self& self, const std::array<std::size_t, N>&)
+    {
+        self.complete();
+    }
+};
+
+template <class CompletionToken, class... Function>
+auto spawn_all_void(agrpc::GrpcContext& grpc_context, CompletionToken&& token, Function... function)
+{
+    return boost::asio::async_compose<CompletionToken, void()>(SpawnAllVoid{std::move(function)...}, token,
+                                                               grpc_context);
 }
 
-template <class Handler, class Completion, class... Function>
-void yield_when_all(agrpc::GrpcContext& grpc_context, const boost::asio::basic_yield_context<Handler>& yield,
-                    Completion&& completion, Function&&... function)
+template <class Executor, class CompletionToken, class... Function>
+auto when_all_bind_executor(Executor&& executor, CompletionToken&& token, Function&&... function)
 {
-    example::async_initiate_void(
-        [&](auto&& ch)
-        {
-            boost::asio::experimental::make_parallel_group(
-                [&](auto& f)
-                {
-                    return [&](auto&& token)
-                    {
-                        return f(boost::asio::bind_executor(grpc_context, std::move(token)));
-                    };
-                }(function)...)
-                .async_wait(boost::asio::experimental::wait_for_all(),
-                            [&, ch = std::move(ch)](auto /*completion_order*/, auto&&... result) mutable
-                            {
-                                completion(result...);
-                                std::move(ch)();
-                            });
-        },
-        yield);
+    return boost::asio::experimental::make_parallel_group(
+               [&](auto& f)
+               {
+                   return [&](auto&& t)
+                   {
+                       return f(boost::asio::bind_executor(std::forward<Executor>(executor), std::move(t)));
+                   };
+               }(function)...)
+        .async_wait(boost::asio::experimental::wait_for_all(), std::forward<CompletionToken>(token));
 }
 }  // namespace example
 
