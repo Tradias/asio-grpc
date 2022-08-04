@@ -115,7 +115,7 @@ struct ConditionallyNoexceptNoOpReceiver
     void set_done() noexcept {}
 
     template <class... Args>
-    void set_value(Args&&... args) noexcept
+    void set_value(Args&&...) noexcept
     {
     }
 

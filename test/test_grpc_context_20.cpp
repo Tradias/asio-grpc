@@ -385,7 +385,16 @@ TEST_CASE_FIXTURE(test::GrpcContextTest,
     CHECK_EQ(expected_thread_id, actual_thread_id);
 }
 
-#if !defined(__clang__) || __clang_major__ >= 14
+// Clang struggles to correctly optimize around thread switches on suspension points.
+auto
+#if defined(__clang__)
+    __attribute__((optnone))
+#endif
+    get_thread_id()
+{
+    return std::this_thread::get_id();
+}
+
 TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_executor can be used to switch to thread_pool and back to GrpcContext")
 {
     std::thread::id actual_grpc_context_thread_id{};
@@ -395,17 +404,16 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_executor can be used to switch to
                    [&]() -> asio::awaitable<void>
                    {
                        co_await asio::post(asio::bind_executor(thread_pool, asio::use_awaitable));
-                       thread_pool_thread_id = std::this_thread::get_id();
+                       thread_pool_thread_id = get_thread_id();
                        co_await asio::post(asio::use_awaitable);
-                       actual_grpc_context_thread_id = std::this_thread::get_id();
+                       actual_grpc_context_thread_id = get_thread_id();
                    });
-    const auto grpc_context_thread_id = std::this_thread::get_id();
+    const auto expected_grpc_context_thread_id = std::this_thread::get_id();
     grpc_context.run();
     thread_pool.join();
-    CHECK_NE(grpc_context_thread_id, thread_pool_thread_id);
-    CHECK_EQ(grpc_context_thread_id, actual_grpc_context_thread_id);
+    CHECK_NE(expected_grpc_context_thread_id, thread_pool_thread_id);
+    CHECK_EQ(expected_grpc_context_thread_id, actual_grpc_context_thread_id);
 }
-#endif
 #endif
 #endif
 }

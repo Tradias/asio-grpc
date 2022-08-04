@@ -65,7 +65,7 @@ void handle_generic_unary_request(grpc::GenericServerAsyncReaderWriter& reader_w
     agrpc::write_and_finish(reader_writer, buffer, {}, grpc::Status::OK, yield);
 }
 
-using Channel = asio::experimental::channel<void(boost::system::error_code, grpc::ByteBuffer)>;
+using Channel = asio::experimental::channel<agrpc::GrpcExecutor, void(boost::system::error_code, grpc::ByteBuffer)>;
 
 template <class Handler>
 void reader(grpc::GenericServerAsyncReaderWriter& reader_writer, Channel& channel,
@@ -88,6 +88,19 @@ void reader(grpc::GenericServerAsyncReaderWriter& reader_writer, Channel& channe
     channel.close();
 }
 
+// GCC and Clang optimize around the fact that a normal function cannot suddendly switch to a different thread and
+// they merge the two calls to `std::this_thread::get_id` in the `writer` below.
+auto
+#if defined(__clang__)
+    __attribute__((optnone))
+#elif defined(__GNUC__)
+    __attribute__((optimize("O0")))
+#endif
+    get_thread_id()
+{
+    return std::this_thread::get_id();
+}
+
 // The writer will pick up reads from the reader through the channel and switch
 // to the thread_pool to compute their response.
 template <class Handler>
@@ -108,7 +121,7 @@ bool writer(grpc::GenericServerAsyncReaderWriter& reader_writer, Channel& channe
         // Switch to the thread_pool.
         asio::post(asio::bind_executor(thread_pool, yield));
 
-        auto thread_pool_thread = std::this_thread::get_id();
+        auto thread_pool_thread = get_thread_id();
         abort_if_not(main_thread != thread_pool_thread);
 
         // Compute the response.
@@ -226,7 +239,7 @@ int main(int argc, const char** argv)
                     handle_shutdown_request(shutdown_service, *server, shutdown_thread, yield);
                 });
 
-    asio::thread_pool thread_pool;
+    asio::thread_pool thread_pool{1};
     agrpc::repeatedly_request(service, GenericRequestHandler{grpc_context, thread_pool});
 
     grpc_context.run();
