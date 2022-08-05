@@ -15,6 +15,7 @@
 #ifndef AGRPC_AGRPC_GRPC_EXECUTOR_HPP
 #define AGRPC_AGRPC_GRPC_EXECUTOR_HPP
 
+#include <agrpc/bind_allocator.hpp>
 #include <agrpc/detail/allocate_operation.hpp>
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
@@ -172,8 +173,8 @@ class BasicGrpcExecutor
     template <class Function, class OtherAllocator>
     void dispatch(Function&& function, const OtherAllocator& other_allocator) const
     {
-        detail::create_and_submit_no_arg_operation<false>(this->context(), std::forward<Function>(function),
-                                                          other_allocator);
+        detail::create_and_submit_no_arg_operation<false>(
+            this->context(), agrpc::AllocatorBinder(other_allocator, std::forward<Function>(function)));
     }
 
     /**
@@ -190,8 +191,8 @@ class BasicGrpcExecutor
     template <class Function, class OtherAllocator>
     void post(Function&& function, const OtherAllocator& other_allocator) const
     {
-        detail::create_and_submit_no_arg_operation<true>(this->context(), std::forward<Function>(function),
-                                                         other_allocator);
+        detail::create_and_submit_no_arg_operation<true>(
+            this->context(), agrpc::AllocatorBinder(other_allocator, std::forward<Function>(function)));
     }
 
     /**
@@ -208,8 +209,8 @@ class BasicGrpcExecutor
     template <class Function, class OtherAllocator>
     void defer(Function&& function, const OtherAllocator& other_allocator) const
     {
-        detail::create_and_submit_no_arg_operation<true>(this->context(), std::forward<Function>(function),
-                                                         other_allocator);
+        detail::create_and_submit_no_arg_operation<true>(
+            this->context(), agrpc::AllocatorBinder(other_allocator, std::forward<Function>(function)));
     }
 #endif
 
@@ -226,8 +227,16 @@ class BasicGrpcExecutor
     template <class Function>
     void execute(Function&& function) const
     {
-        detail::create_and_submit_no_arg_operation<detail::is_blocking_never(Options)>(
-            *this->grpc_context(), std::forward<Function>(function), this->allocator());
+        if constexpr (detail::IS_STD_ALLOCATOR<Allocator>)
+        {
+            detail::create_and_submit_no_arg_operation<detail::is_blocking_never(Options)>(
+                *this->grpc_context(), std::forward<Function>(function));
+        }
+        else
+        {
+            detail::create_and_submit_no_arg_operation<detail::is_blocking_never(Options)>(
+                *this->grpc_context(), agrpc::AllocatorBinder(this->allocator(), std::forward<Function>(function)));
+        }
     }
 #endif
 
@@ -483,7 +492,7 @@ namespace pmr
  * uses the `pmr::polymorphic_allocator` allocator.
  */
 using GrpcExecutor = agrpc::BasicGrpcExecutor<agrpc::detail::pmr::polymorphic_allocator<std::byte>>;
-}
+}  // namespace pmr
 
 // Implementation details
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
@@ -494,7 +503,7 @@ grpc::CompletionQueue* get_completion_queue(const agrpc::BasicGrpcExecutor<Alloc
 {
     return asio::query(executor, asio::execution::context).get_completion_queue();
 }
-}
+}  // namespace detail
 #endif
 
 AGRPC_NAMESPACE_END

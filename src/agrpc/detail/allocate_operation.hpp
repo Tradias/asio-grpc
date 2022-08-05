@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_ALLOCATE_OPERATION_HPP
 
 #include <agrpc/detail/allocate.hpp>
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
 #include <agrpc/detail/operation.hpp>
@@ -26,59 +27,61 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <bool IsIntrusivelyListable, class Signature, class CompletionHandler, class Allocator>
-detail::AllocatedPointerT<
-    detail::Operation<IsIntrusivelyListable, detail::RemoveCrefT<CompletionHandler>, Allocator, Signature>, Allocator>
-allocate_operation(CompletionHandler&& completion_handler, const Allocator& allocator)
+template <class T>
+inline constexpr bool IS_STD_ALLOCATOR = false;
+
+template <class T>
+inline constexpr bool IS_STD_ALLOCATOR<std::allocator<T>> = true;
+
+template <bool IsIntrusivelyListable, class Signature, class CompletionHandler>
+detail::AllocatedPointerT<detail::Operation<IsIntrusivelyListable, detail::RemoveCrefT<CompletionHandler>, Signature>,
+                          detail::AssociatedAllocatorT<CompletionHandler>>
+allocate_operation(CompletionHandler&& completion_handler)
 
 {
-    using Operation =
-        detail::Operation<IsIntrusivelyListable, detail::RemoveCrefT<CompletionHandler>, Allocator, Signature>;
-    return detail::allocate<Operation>(allocator, allocator, std::forward<CompletionHandler>(completion_handler));
+    using Operation = detail::Operation<IsIntrusivelyListable, detail::RemoveCrefT<CompletionHandler>, Signature>;
+    const auto allocator = detail::exec::get_allocator(completion_handler);
+    return detail::allocate<Operation>(allocator, std::forward<CompletionHandler>(completion_handler));
 }
 
-template <bool IsIntrusivelyListable, class Signature, class CompletionHandler, class Allocator>
-detail::AllocatedPointerT<
-    detail::Operation<IsIntrusivelyListable, detail::RemoveCrefT<CompletionHandler>, Allocator, Signature>, Allocator>
-allocate_local_operation(const agrpc::GrpcContext&, CompletionHandler&& completion_handler, const Allocator& allocator)
+template <bool IsIntrusivelyListable, class Signature, class CompletionHandler>
+auto allocate_local_operation(agrpc::GrpcContext& grpc_context, CompletionHandler&& completion_handler)
 
 {
-    return detail::allocate_operation<IsIntrusivelyListable, Signature>(
-        std::forward<CompletionHandler>(completion_handler), allocator);
-}
-
-template <bool IsIntrusivelyListable, class Signature, class CompletionHandler, class T>
-detail::AllocatedPointerT<
-    detail::LocalOperation<IsIntrusivelyListable, detail::RemoveCrefT<CompletionHandler>, Signature>,
-    detail::GrpcContextLocalAllocator>
-allocate_local_operation(agrpc::GrpcContext& grpc_context, CompletionHandler&& completion_handler,
-                         const std::allocator<T>&)
-
-{
-    using Operation = detail::LocalOperation<IsIntrusivelyListable, detail::RemoveCrefT<CompletionHandler>, Signature>;
-    return detail::allocate<Operation>(grpc_context.get_allocator(),
-                                       std::forward<CompletionHandler>(completion_handler));
+    auto allocator = detail::exec::get_allocator(completion_handler);
+    if constexpr (detail::IS_STD_ALLOCATOR<decltype(allocator)>)
+    {
+        using Operation =
+            detail::LocalOperation<IsIntrusivelyListable, detail::RemoveCrefT<CompletionHandler>, Signature>;
+        return detail::allocate<Operation>(grpc_context.get_allocator(),
+                                           std::forward<CompletionHandler>(completion_handler));
+    }
+    else
+    {
+        return detail::allocate_operation<IsIntrusivelyListable, Signature>(
+            std::forward<CompletionHandler>(completion_handler));
+    }
 }
 
 template <bool IsIntrusivelyListable, class Signature, class CompletionHandler, class OnLocalOperation,
-          class OnRemoteOperation, class Allocator>
+          class OnRemoteOperation>
 void allocate_operation_and_invoke(agrpc::GrpcContext& grpc_context, bool is_running_in_this_thread,
                                    CompletionHandler&& completion_handler, OnLocalOperation& on_local_operation,
-                                   OnRemoteOperation& on_remote_operation, const Allocator& allocator)
+                                   OnRemoteOperation& on_remote_operation)
 {
     grpc_context.work_started();
     detail::WorkFinishedOnExit on_exit{grpc_context};
     if (is_running_in_this_thread)
     {
         auto operation = detail::allocate_local_operation<IsIntrusivelyListable, Signature>(
-            grpc_context, std::forward<CompletionHandler>(completion_handler), allocator);
+            grpc_context, std::forward<CompletionHandler>(completion_handler));
         on_local_operation(grpc_context, operation.get());
         operation.release();
     }
     else
     {
         auto operation = detail::allocate_operation<IsIntrusivelyListable, Signature>(
-            std::forward<CompletionHandler>(completion_handler), allocator);
+            std::forward<CompletionHandler>(completion_handler));
         on_remote_operation(grpc_context, operation.get());
         operation.release();
     }
@@ -101,9 +104,8 @@ struct GrpcContextAddRemoteOperation
     }
 };
 
-template <bool IsBlockingNever, class CompletionHandler, class Allocator>
-void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, CompletionHandler&& completion_handler,
-                                        const Allocator& allocator)
+template <bool IsBlockingNever, class CompletionHandler>
+void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, CompletionHandler&& completion_handler)
 {
     if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context))
     {
@@ -123,7 +125,7 @@ void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Comple
     detail::GrpcContextAddRemoteOperation on_remote_operation{};
     detail::allocate_operation_and_invoke<true, void()>(grpc_context, is_running_in_this_thread,
                                                         std::forward<CompletionHandler>(completion_handler),
-                                                        on_local_operation, on_remote_operation, allocator);
+                                                        on_local_operation, on_remote_operation);
 }
 }
 

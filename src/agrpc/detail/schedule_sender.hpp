@@ -15,6 +15,7 @@
 #ifndef AGRPC_DETAIL_SCHEDULE_SENDER_HPP
 #define AGRPC_DETAIL_SCHEDULE_SENDER_HPP
 
+#include <agrpc/bind_allocator.hpp>
 #include <agrpc/detail/allocate_operation.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
@@ -95,12 +96,11 @@ class ScheduleSender : public detail::SenderOf<>
         }
         auto allocator = detail::exec::get_allocator(receiver);
         detail::create_and_submit_no_arg_operation<true>(
-            this->grpc_context,
-            [receiver = std::forward<Receiver>(receiver)]() mutable
-            {
-                detail::satisfy_receiver(std::move(receiver));
-            },
-            allocator);
+            this->grpc_context, agrpc::AllocatorBinder(allocator,
+                                                       [receiver = std::forward<Receiver>(receiver)]() mutable
+                                                       {
+                                                           detail::satisfy_receiver(std::move(receiver));
+                                                       }));
     }
 
   private:

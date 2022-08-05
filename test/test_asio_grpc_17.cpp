@@ -494,20 +494,28 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "agrpc::wait correctly unbinds exe
     grpc::Alarm alarm;
     std::size_t bytes_allocated{};
     test::CountingAllocator<std::byte> allocator{bytes_allocated};
+    auto test = [&](auto token)
+    {
+        agrpc::wait(alarm, test::ten_milliseconds_from_now(), token);
+        grpc_context.run();
+        auto expected = sizeof(void*) * 4;
+        CHECK_LT(expected, sizeof(token));
+        CHECK_GE(expected, bytes_allocated);
+    };
 #ifdef AGRPC_ASIO_HAS_BIND_ALLOCATOR
-    auto token = asio::bind_allocator(
-        allocator,
-        agrpc::bind_allocator(allocator,
-                              asio::bind_executor(asio::any_io_executor{grpc_context.get_executor()}, [](auto&&) {})));
-#else
-    auto token = agrpc::bind_allocator(
-        allocator, asio::bind_executor(asio::any_io_executor{grpc_context.get_executor()}, [](auto&&) {}));
+    SUBCASE("asio::bind_allocator")
+    {
+        test(asio::bind_allocator(
+            allocator, asio::bind_executor(asio::any_io_executor{grpc_context.get_executor()}, [](auto&&) {})));
+    }
+    SUBCASE("agrpc::bind_allocator")
+    {
 #endif
-    agrpc::wait(alarm, test::ten_milliseconds_from_now(), token);
-    grpc_context.run();
-    auto expected = sizeof(void*) * 4;
-    CHECK_LT(expected, sizeof(token));
-    CHECK_GE(expected, bytes_allocated);
+        test(agrpc::bind_allocator(
+            allocator, asio::bind_executor(asio::any_io_executor{grpc_context.get_executor()}, [](auto&&) {})));
+#ifdef AGRPC_ASIO_HAS_BIND_ALLOCATOR
+    }
+#endif
 }
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest,

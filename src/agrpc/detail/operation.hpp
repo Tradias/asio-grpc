@@ -18,17 +18,16 @@
 #include <agrpc/detail/allocate.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/type_erased_operation.hpp>
-#include <agrpc/detail/utility.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <bool IsIntrusivelyListable, class Handler, class Allocator, class Signature>
+template <bool IsIntrusivelyListable, class Handler, class Signature>
 class Operation;
 
-template <bool IsIntrusivelyListable, class Handler, class Allocator, class... Signature>
-class Operation<IsIntrusivelyListable, Handler, Allocator, void(Signature...)>
+template <bool IsIntrusivelyListable, class Handler, class... Signature>
+class Operation<IsIntrusivelyListable, Handler, void(Signature...)>
     : public detail::TypeErasedOperation<IsIntrusivelyListable, Signature..., detail::GrpcContextLocalAllocator>
 {
   private:
@@ -36,18 +35,17 @@ class Operation<IsIntrusivelyListable, Handler, Allocator, void(Signature...)>
 
   public:
     template <class... Args>
-    explicit Operation(const Allocator& allocator, Args&&... args)
-        : Base(&detail::default_do_complete<Operation, Base, Signature...>),
-          impl(detail::SecondThenVariadic{}, allocator, std::forward<Args>(args)...)
+    explicit Operation(Args&&... args)
+        : Base(&detail::default_do_complete<Operation, Base, Signature...>), handler(std::forward<Args>(args)...)
     {
     }
 
-    [[nodiscard]] Handler& completion_handler() noexcept { return impl.first(); }
+    [[nodiscard]] Handler& completion_handler() noexcept { return handler; }
 
-    [[nodiscard]] Allocator& get_allocator() noexcept { return impl.second(); }
+    [[nodiscard]] auto get_allocator() noexcept { return detail::exec::get_allocator(handler); }
 
   private:
-    detail::CompressedPair<Handler, Allocator> impl;
+    Handler handler;
 };
 
 template <bool IsIntrusivelyListable, class Handler, class Signature>

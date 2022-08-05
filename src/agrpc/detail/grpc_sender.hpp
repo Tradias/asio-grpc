@@ -15,6 +15,7 @@
 #ifndef AGRPC_DETAIL_GRPC_SENDER_HPP
 #define AGRPC_DETAIL_GRPC_SENDER_HPP
 
+#include <agrpc/bind_allocator.hpp>
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
@@ -44,52 +45,24 @@ class GrpcSender : public detail::SenderOf<bool>
 {
   private:
     template <class Receiver>
-    class Operation : private detail::TypeErasedGrpcTagOperation
+    struct RunningOperation : detail::TypeErasedGrpcTagOperation
     {
-      private:
         static constexpr bool HAS_STOP_CALLBACK = detail::GRPC_SENDER_HAS_STOP_CALLBACK<Receiver, StopFunction>;
 
         using StopCallbackLifetime =
             detail::ConditionalT<HAS_STOP_CALLBACK, std::optional<detail::StopCallbackTypeT<Receiver&, StopFunction>>,
                                  detail::Empty>;
 
-      public:
         template <class Receiver2>
-        Operation(const GrpcSender& sender, Receiver2&& receiver)
-            : detail::TypeErasedGrpcTagOperation(&Operation::on_complete),
-              impl(sender.grpc_context, std::forward<Receiver2>(receiver)),
-              functions(sender.initiating_function)
+        explicit RunningOperation(Receiver2&& receiver)
+            : detail::TypeErasedGrpcTagOperation(&on_complete), impl(std::forward<Receiver>(receiver))
         {
         }
 
-        void start() noexcept
-        {
-            if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(this->grpc_context()))
-            {
-                detail::exec::set_done(std::move(this->receiver()));
-                return;
-            }
-            auto stop_token = detail::exec::get_stop_token(this->receiver());
-            if (stop_token.stop_requested())
-            {
-                detail::exec::set_done(std::move(this->receiver()));
-                return;
-            }
-            if constexpr (HAS_STOP_CALLBACK)
-            {
-                this->stop_callback().emplace(std::move(stop_token), StopFunction{this->initiating_function()});
-            }
-            this->grpc_context().work_started();
-            detail::WorkFinishedOnExit on_exit{this->grpc_context()};
-            this->initiating_function()(this->grpc_context(), this);
-            on_exit.release();
-        }
-
-      private:
         static void on_complete(detail::TypeErasedGrpcTagOperation* op, detail::InvokeHandler invoke_handler, bool ok,
                                 detail::GrpcContextLocalAllocator) noexcept
         {
-            auto& self = *static_cast<Operation*>(op);
+            auto& self = *static_cast<RunningOperation*>(op);
             if constexpr (HAS_STOP_CALLBACK)
             {
                 self.stop_callback().reset();
@@ -104,16 +77,59 @@ class GrpcSender : public detail::SenderOf<bool>
             }
         }
 
-        agrpc::GrpcContext& grpc_context() noexcept { return impl.first(); }
+        Receiver& receiver() noexcept { return impl.first(); }
 
-        Receiver& receiver() noexcept { return impl.second(); }
+        StopCallbackLifetime& stop_callback() noexcept { return impl.second(); }
 
-        InitiatingFunction& initiating_function() noexcept { return functions.first(); }
+        detail::CompressedPair<Receiver, StopCallbackLifetime> impl;
+    };
 
-        StopCallbackLifetime& stop_callback() noexcept { return functions.second(); }
+    template <class Receiver>
+    class Operation
+    {
+      private:
+        static constexpr bool HAS_STOP_CALLBACK = detail::GRPC_SENDER_HAS_STOP_CALLBACK<Receiver, StopFunction>;
 
-        detail::CompressedPair<agrpc::GrpcContext&, Receiver> impl;
-        detail::CompressedPair<InitiatingFunction, StopCallbackLifetime> functions;
+      public:
+        template <class Receiver2>
+        Operation(const GrpcSender& sender, Receiver2&& receiver)
+            : grpc_context(sender.grpc_context),
+              initiating_function(sender.initiating_function),
+              running(std::forward<Receiver2>(receiver))
+        {
+        }
+
+        void start() noexcept
+        {
+            if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context))
+            {
+                detail::exec::set_done(std::move(this->receiver()));
+                return;
+            }
+            auto stop_token = detail::exec::get_stop_token(this->receiver());
+            if (stop_token.stop_requested())
+            {
+                detail::exec::set_done(std::move(this->receiver()));
+                return;
+            }
+            if constexpr (HAS_STOP_CALLBACK)
+            {
+                this->stop_callback().emplace(std::move(stop_token), StopFunction{initiating_function});
+            }
+            grpc_context.work_started();
+            detail::WorkFinishedOnExit on_exit{grpc_context};
+            initiating_function(grpc_context, &running);
+            on_exit.release();
+        }
+
+      private:
+        Receiver& receiver() noexcept { return running.receiver(); }
+
+        auto& stop_callback() noexcept { return running.stop_callback(); }
+
+        agrpc::GrpcContext& grpc_context;
+        InitiatingFunction initiating_function;
+        RunningOperation<Receiver> running;
     };
 
   public:
@@ -133,13 +149,12 @@ class GrpcSender : public detail::SenderOf<bool>
             return;
         }
         auto allocator = detail::exec::get_allocator(receiver);
-        detail::grpc_submit(
-            this->grpc_context, this->initiating_function,
-            [receiver = std::forward<Receiver>(receiver)](bool ok) mutable
-            {
-                detail::satisfy_receiver(std::move(receiver), ok);
-            },
-            allocator);
+        detail::grpc_submit(this->grpc_context, this->initiating_function,
+                            agrpc::AllocatorBinder(allocator,
+                                                   [receiver = std::forward<Receiver>(receiver)](bool ok) mutable
+                                                   {
+                                                       detail::satisfy_receiver(std::move(receiver), ok);
+                                                   }));
     }
 
   private:

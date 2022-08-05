@@ -134,19 +134,19 @@ namespace exec
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class Object>
-auto get_scheduler(Object& object)
+auto get_scheduler(const Object& object)
 {
     return asio::get_associated_executor(object);
 }
 
 template <class Object>
-auto get_executor(Object& object)
+auto get_executor(const Object& object)
 {
     return asio::get_associated_executor(object);
 }
 
 template <class Object>
-auto get_allocator(Object& object)
+auto get_allocator(const Object& object)
 {
     return asio::get_associated_allocator(object);
 }
@@ -196,13 +196,32 @@ using ::unifex::set_value;
 using ::unifex::start;
 using ::unifex::stop_token_type_t;
 
+template <class T, class = void>
+inline constexpr bool HAS_GET_SCHEDULER = false;
+
+template <class T>
+inline constexpr bool HAS_GET_SCHEDULER<T, decltype((void)exec::get_scheduler(std::declval<const T&>()))> = true;
+
 template <class Object>
-auto get_executor(Object& object)
+auto get_executor(const Object& object)
 {
-    return exec::get_scheduler(object);
+    if constexpr (exec::HAS_GET_SCHEDULER<Object>)
+    {
+        return exec::get_scheduler(object);
+    }
+    else
+    {
+        return;
+    }
 }
 #endif
 }  // namespace exec
+
+template <class T>
+using AssociatedAllocatorT = decltype(detail::exec::get_allocator(std::declval<const T&>()));
+
+template <class T>
+using AssociatedExecutorT = decltype(detail::exec::get_executor(std::declval<const T&>()));
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class Executor, class Function, class Allocator>

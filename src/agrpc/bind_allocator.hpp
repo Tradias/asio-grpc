@@ -15,8 +15,6 @@
 #ifndef AGRPC_AGRPC_BIND_ALLOCATOR_HPP
 #define AGRPC_AGRPC_BIND_ALLOCATOR_HPP
 
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/memory_resource.hpp>
@@ -51,7 +49,7 @@ class AllocatorBinder
     /**
      * @brief The target's associated executor type
      */
-    using executor_type = asio::associated_executor_t<Target>;
+    using executor_type = detail::AssociatedExecutorT<Target>;
 
     /**
      * @brief The bound allocator type
@@ -157,12 +155,19 @@ class AllocatorBinder
     /**
      * @brief Get the target's associated executor
      */
-    executor_type get_executor() const noexcept { return asio::get_associated_executor(this->get()); }
+    constexpr executor_type get_executor() const noexcept { return detail::exec::get_executor(this->get()); }
 
     /**
      * @brief Get the bound allocator
      */
-    constexpr allocator_type get_allocator() const noexcept { return impl.second(); }
+    constexpr Allocator get_allocator() const noexcept { return impl.second(); }
+
+#ifdef AGRPC_UNIFEX
+    friend Allocator tag_invoke(unifex::tag_t<unifex::get_allocator>, const AllocatorBinder& binder) noexcept
+    {
+        return binder.get_allocator();
+    }
+#endif
 
     /**
      * @brief Invoke target with arguments (rvalue overload)
@@ -214,6 +219,8 @@ constexpr agrpc::AllocatorBinder<detail::RemoveCrefT<Target>, Allocator> bind_al
 }
 
 // Implementation details
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+
 namespace detail
 {
 template <class TargetAsyncResult, class Allocator, class = void>
@@ -267,12 +274,11 @@ struct AllocatorBinderAsyncResultInitWrapper
 };
 }  // namespace detail
 
+#endif
+
 AGRPC_NAMESPACE_END
 
-template <class Allocator, class Target, class Alloc>
-struct agrpc::detail::container::uses_allocator<agrpc::AllocatorBinder<Allocator, Target>, Alloc> : std::false_type
-{
-};
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 
 template <class CompletionToken, class Allocator, class Signature>
 class agrpc::asio::async_result<agrpc::AllocatorBinder<CompletionToken, Allocator>, Signature>
@@ -330,5 +336,10 @@ struct agrpc::asio::associator<Associator, agrpc::AllocatorBinder<Target, Alloca
 #endif
 
 #endif
+
+template <class Allocator, class Target, class Alloc>
+struct agrpc::detail::container::uses_allocator<agrpc::AllocatorBinder<Allocator, Target>, Alloc> : std::false_type
+{
+};
 
 #endif  // AGRPC_AGRPC_BIND_ALLOCATOR_HPP

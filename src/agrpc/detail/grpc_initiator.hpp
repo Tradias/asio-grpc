@@ -65,7 +65,7 @@ class GrpcInitiator
         }
 #endif
         detail::grpc_submit(grpc_context, this->initiating_function,
-                            std::forward<CompletionHandler>(completion_handler), unbound.allocator());
+                            std::forward<CompletionHandler>(completion_handler));
     }
 
   private:

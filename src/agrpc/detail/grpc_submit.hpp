@@ -24,13 +24,13 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class InitiatingFunction, class CompletionHandler, class Allocator>
+template <class InitiatingFunction, class CompletionHandler>
 void grpc_submit(agrpc::GrpcContext& grpc_context, InitiatingFunction& initiating_function,
-                 CompletionHandler&& completion_handler, const Allocator& allocator)
+                 CompletionHandler&& completion_handler)
 {
     detail::allocate_operation_and_invoke<false, void(bool)>(
         grpc_context, detail::GrpcContextImplementation::running_in_this_thread(grpc_context),
-        std::forward<CompletionHandler>(completion_handler), initiating_function, initiating_function, allocator);
+        std::forward<CompletionHandler>(completion_handler), initiating_function, initiating_function);
 }
 }
 
