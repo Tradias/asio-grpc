@@ -463,7 +463,8 @@ TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex::task unary")
                 test::FunctionAsReceiver receiver{[&, context = context](bool ok)
                                                   {
                                                       server_finish_ok = ok;
-                                                  }};
+                                                  },
+                                                  get_allocator()};
                 unifex::submit(agrpc::finish(context->writer, context->response, grpc::Status::OK, use_sender()),
                                std::move(receiver));
             }
@@ -485,6 +486,10 @@ TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex::task unary")
         }());
     CHECK(server_finish_ok);
     CHECK(client_finish_ok);
+    if (use_submit)
+    {
+        CHECK(allocator_has_been_used());
+    }
 }
 
 TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex repeatedly_request client streaming")

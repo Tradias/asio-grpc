@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_OPERATION_HPP
 
 #include <agrpc/detail/allocate.hpp>
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/type_erased_operation.hpp>
 

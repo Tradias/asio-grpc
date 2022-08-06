@@ -18,7 +18,9 @@
 #include "utils/grpc_client_server_test.hpp"
 #include "utils/rpc.hpp"
 
-#include <agrpc/client_call.hpp>
+#include <agrpc/high_level_client.hpp>
+
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 
 DOCTEST_TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION);
 
@@ -38,22 +40,22 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "rpc")
     // agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
     // Stub stub{grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials())};
 
-    bool use_write_and_finish{false};
-    SUBCASE("server write_and_finish") { use_write_and_finish = true; }
-    bool use_write_last{false};
-    SUBCASE("server write_last") { use_write_last = true; }
-    bool use_client_convenience{false};
-    SUBCASE("client use convenience") { use_client_convenience = true; }
+    // bool use_write_and_finish{false};
+    // SUBCASE("server write_and_finish") { use_write_and_finish = true; }
+    // bool use_write_last{false};
+    // SUBCASE("server write_last") { use_write_last = true; }
+    // bool use_client_convenience{false};
+    // SUBCASE("client use convenience") { use_client_convenience = true; }
     test::spawn_and_run(
         grpc_context,
         [&](asio::yield_context yield)
         {
-            // test::msg::Request request;
-            // grpc::ServerAsyncWriter<test::msg::Response> writer{&server_context};
-            // CHECK(agrpc::request(&test::v1::Test::AsyncService::RequestServerStreaming, service, server_context,
-            //                      request, writer, yield));
-            // test::ServerAsyncWriter<false> writer_ref = writer;
-            // CHECK(agrpc::send_initial_metadata(writer_ref, yield));
+            test::msg::Request request;
+            grpc::ServerAsyncWriter<test::msg::Response> writer{&server_context};
+            CHECK(agrpc::request(&test::v1::Test::AsyncService::RequestServerStreaming, service, server_context,
+                                 request, writer, yield));
+            test::ServerAsyncWriter<false> writer_ref = writer;
+            CHECK(agrpc::send_initial_metadata(writer_ref, yield));
             // CHECK_EQ(42, request.integer());
             // test::msg::Response response;
             // response.set_integer(21);
@@ -72,30 +74,33 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "rpc")
             //     {
             //         CHECK(agrpc::write(writer_ref, response, yield));
             //     }
-            //     CHECK(agrpc::finish(writer_ref, grpc::Status::OK, yield));
+            CHECK(agrpc::finish(writer_ref, grpc::Status::OK, yield));
             // }
         },
         [&](asio::yield_context yield)
         {
-            test::msg::Response response;
-            agrpc::Rpc<&Stub::PrepareAsyncClientStreaming>::start(grpc_context, *stub, client_context, response, yield);
-
             test::msg::Request request;
             request.set_integer(42);
             using Rpc = agrpc::Rpc<&Stub::PrepareAsyncServerStreaming>;
             auto call = Rpc::start(grpc_context, *stub, client_context, request, yield);
             CHECK(a(call));
+            agrpc::request(&Stub::PrepareAsyncServerStreaming, stub, client_context, request, call.responder, yield);
+            // test::msg::Response response;
+
             // CHECK(ok);
             CHECK(call.read_initial_metadata(yield));
-            agrpc::Rpc<&Stub::PrepareAsyncBidirectionalStreaming>::start(grpc_context, *stub, client_context, yield);
-            // test::msg::Response response;
-            // CHECK(agrpc::read(*reader, response, yield));
-            // CHECK(agrpc::read(reader, response, yield));
-            // grpc::Status status;
-            // CHECK(agrpc::finish(*reader, status, yield));
-            // CHECK(status.ok());
-            // CHECK_EQ(21, response.integer());
+            // agrpc::Rpc<&Stub::PrepareAsyncBidirectionalStreaming>::start(grpc_context, *stub, client_context, yield);
+            // agrpc::Rpc<&Stub::PrepareAsyncUnary>::start(grpc_context, *stub, client_context, request, yield);
+            //  test::msg::Response response;
+            //  CHECK(agrpc::read(*reader, response, yield));
+            //  CHECK(agrpc::read(reader, response, yield));
+            //  grpc::Status status;
+            //  CHECK(agrpc::finish(*reader, status, yield));
+            //  CHECK(status.ok());
+            //  CHECK_EQ(21, response.integer());
         });
 }
 
 DOCTEST_TEST_SUITE_END;
+
+#endif

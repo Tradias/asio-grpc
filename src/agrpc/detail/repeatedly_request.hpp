@@ -225,8 +225,7 @@ struct BasicRepeatedlyRequestInitiator
         const auto executor = detail::exec::get_executor(request_handler);
         const auto allocator = detail::exec::get_allocator(request_handler);
         auto& grpc_context = detail::query_grpc_context(executor);
-        grpc_context.work_started();
-        detail::WorkFinishedOnExit on_exit{grpc_context};
+        detail::StartWorkAndGuard guard{grpc_context};
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
         if (auto cancellation_slot = asio::get_associated_cancellation_slot(completion_handler);
             cancellation_slot.is_connected())
@@ -247,7 +246,7 @@ struct BasicRepeatedlyRequestInitiator
             detail::initiate_repeatedly_request(grpc_context, *operation);
             operation.release();
         }
-        on_exit.release();
+        guard.release();
     }
 };
 

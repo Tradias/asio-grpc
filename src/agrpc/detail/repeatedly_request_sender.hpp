@@ -186,19 +186,19 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
       private:
         friend RepeatedlyRequestSender;
 
-        template <class Receiver2>
-        Operation(const RepeatedlyRequestSender& sender, Receiver2&& receiver)
+        template <class R>
+        Operation(const RepeatedlyRequestSender& sender, R&& receiver)
             : GrpcBase(&Operation::on_request_complete),
-              impl0(sender.grpc_context, std::forward<Receiver2>(receiver)),
+              impl0(sender.grpc_context, std::forward<R>(receiver)),
               impl1(sender.rpc),
               impl2(sender.impl)
         {
         }
 
-        template <class Receiver2>
-        Operation(RepeatedlyRequestSender&& sender, Receiver2&& receiver)
+        template <class R>
+        Operation(RepeatedlyRequestSender&& sender, R&& receiver)
             : GrpcBase(&Operation::on_request_complete),
-              impl0(sender.grpc_context, std::forward<Receiver2>(receiver)),
+              impl0(sender.grpc_context, std::forward<R>(receiver)),
               impl1(sender.rpc),
               impl2(std::move(sender.impl))
         {

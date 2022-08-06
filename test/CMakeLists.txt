@@ -74,10 +74,10 @@ set(ASIO_GRPC_CPP17_TEST_SOURCE_FILES
     "test_run_17.cpp"
     "test_generic_rpc_17.cpp"
     "test_grpc_stream_17.cpp"
-    "test_test_17.cpp"
-    "test_high_level_client_17.cpp")
-set(ASIO_GRPC_CPP20_TEST_SOURCE_FILES "test_asio_grpc_20.cpp" "test_repeatedly_request_20.cpp"
-                                      "test_bind_allocator_20.cpp" "test_grpc_context_20.cpp" "test_grpc_stream_20.cpp")
+    "test_test_17.cpp")
+set(ASIO_GRPC_CPP20_TEST_SOURCE_FILES
+    "test_asio_grpc_20.cpp" "test_repeatedly_request_20.cpp" "test_bind_allocator_20.cpp" "test_grpc_context_20.cpp"
+    "test_grpc_stream_20.cpp" "test_high_level_client_17.cpp")
 
 asio_grpc_add_test(asio-grpc-test-boost-cpp17 "BOOST_ASIO" "17" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES})
 target_compile_definitions(asio-grpc-test-boost-cpp17 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"Boost.Asio C++17\"")

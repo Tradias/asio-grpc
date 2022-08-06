@@ -48,12 +48,12 @@ class ScheduleSender : public detail::SenderOf<>
         }
 
       private:
-        friend detail::ScheduleSender;
+        friend ScheduleSender;
 
-        template <class Receiver2>
-        Operation(const ScheduleSender& sender, Receiver2&& receiver)
+        template <class R>
+        Operation(const ScheduleSender& sender, R&& receiver)
             : detail::TypeErasedNoArgOperation(&Operation::on_complete),
-              impl(sender.grpc_context, std::forward<Receiver2>(receiver))
+              impl(sender.grpc_context, std::forward<R>(receiver))
         {
         }
 
