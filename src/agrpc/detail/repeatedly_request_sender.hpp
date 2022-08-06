@@ -18,6 +18,7 @@
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
+#include <agrpc/detail/no_op_stop_callback.hpp>
 #include <agrpc/detail/receiver.hpp>
 #include <agrpc/detail/rpc_context.hpp>
 #include <agrpc/detail/sender_of.hpp>
@@ -71,17 +72,8 @@ class RepeatedlyRequestStopContext
 };
 
 template <class Receiver>
-class RepeatedlyRequestStopContext<Receiver, false>
+class RepeatedlyRequestStopContext<Receiver, false> : public detail::NoOpStopCallback
 {
-  public:
-    template <class StopToken>
-    static constexpr void emplace(StopToken&&) noexcept
-    {
-    }
-
-    [[nodiscard]] static constexpr bool is_stopped() noexcept { return false; }
-
-    static constexpr void reset() noexcept {}
 };
 
 template <class RPC, class RequestHandler>

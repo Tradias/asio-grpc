@@ -39,7 +39,7 @@ void grpc_submit(agrpc::GrpcContext& grpc_context, InitiatingFunction& initiatin
 {
     detail::StartWorkAndGuard guard{grpc_context};
     detail::allocate_operation_and_invoke<GrpcTagOperationAllocationTraits>(
-        grpc_context, std::forward<CompletionHandler>(completion_handler), initiating_function);
+        grpc_context, initiating_function, std::forward<CompletionHandler>(completion_handler));
     guard.release();
 }
 }

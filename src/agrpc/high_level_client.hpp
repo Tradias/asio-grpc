@@ -19,6 +19,8 @@
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/completion_handler_receiver.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/high_level_client_sender.hpp>
+#include <agrpc/detail/rpc_type.hpp>
 #include <agrpc/detail/work_tracking_completion_handler.hpp>
 #include <agrpc/grpc_executor.hpp>
 #include <agrpc/rpc.hpp>
@@ -34,14 +36,6 @@ struct ExecutorArg
     ExecutorArg(agrpc::GrpcContext& grpc_context) : executor(grpc_context.get_executor()) {}
     ExecutorArg(Executor executor) : executor(executor) {}
     Executor executor;
-};
-
-enum class RpcType
-{
-    CLIENT_UNARY,
-    CLIENT_SERVER_STREAMING,
-    CLIENT_CLIENT_STREAMING,
-    CLIENT_BIDI_STREAMING
 };
 
 template <auto PrepareAsync>
@@ -66,6 +60,33 @@ template <class Stub, class RequestT, class ResponseT, template <class, class> c
           std::unique_ptr<ReaderWriter<RequestT, ResponseT>> (Stub::*PrepareAsync)(grpc::ClientContext*,
                                                                                    grpc::CompletionQueue*)>
 inline constexpr auto RPC_TYPE<PrepareAsync> = RpcType::CLIENT_BIDI_STREAMING;
+
+template <class Sender, class CompletionToken>
+auto async_initiate_high_level_sender(Sender&& sender, CompletionToken& token)
+{
+    return asio::async_initiate<CompletionToken, void(bool)>(
+        [&](auto&& completion_handler, auto&& sender)
+        {
+            using CH = decltype(completion_handler);
+            sender.submit(
+                detail::CompletionHandlerReceiver<detail::WorkTrackingCompletionHandler<detail::RemoveCrefT<CH>>>(
+                    std::forward<CH>(completion_handler)));
+        },
+        token, std::forward<Sender>(sender));
+}
+
+template <class Sender>
+decltype(auto) async_initiate_high_level_sender(Sender&& sender, agrpc::UseSender)
+{
+    return std::forward<Sender>(sender);
+}
+
+template <class Implementation, class CompletionToken>
+decltype(auto) create_high_level_sender(Implementation&& implementation, CompletionToken& token)
+{
+    return detail::async_initiate_high_level_sender(detail::BasicGrpcSenderAccess::create(std::move(implementation)),
+                                                    token);
+}
 }
 
 class RpcStatus
@@ -84,7 +105,7 @@ class RpcStatus
     /// Is the status OK?
     [[nodiscard]] bool ok() const noexcept { return status.ok(); }
 
-  private:
+  protected:
     grpc::Status status;
 };
 
@@ -94,14 +115,15 @@ class BasicRpc;
 // template <class GrpcStub, class Executor>
 // class Stub;
 
-template <class Executor, class Stub, class RequestT, class ResponseT, template <class> class Responder,
-          std::unique_ptr<Responder<ResponseT>> (Stub::*PrepareAsync)(grpc::ClientContext*, const RequestT&,
-                                                                      grpc::CompletionQueue*)>
+template <class Executor, class Stub, class RequestT, class ResponseT, template <class> class ResponderT,
+          std::unique_ptr<ResponderT<ResponseT>> (Stub::*PrepareAsync)(grpc::ClientContext*, const RequestT&,
+                                                                       grpc::CompletionQueue*)>
 class BasicRpc<PrepareAsync, Executor, detail::RpcType::CLIENT_SERVER_STREAMING> : public RpcStatus
 {
   public:
     using Request = RequestT;
     using Response = ResponseT;
+    using Responder = ResponderT<ResponseT>;
     using executor_type = Executor;
 
     template <class OtherExecutor>
@@ -119,15 +141,15 @@ class BasicRpc<PrepareAsync, Executor, detail::RpcType::CLIENT_SERVER_STREAMING>
     // Some RPCs are made without an initial request, so we need another overload, is that intuitive?
     // Maybe this function should be called `unary` and then have variations: `client_streaming` and so on.
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
-    static BasicRpc start(Executor executor, Stub& stub, grpc::ClientContext& context, const RequestT& request,
-                          CompletionToken&& token = asio::default_completion_token_t<Executor>{})
+    static BasicRpc request(Executor executor, Stub& stub, grpc::ClientContext& context, const RequestT& request,
+                            CompletionToken&& token = asio::default_completion_token_t<Executor>{})
     {
         return BasicRpc(context, executor);
     }
 
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
-    static BasicRpc start(agrpc::GrpcContext& grpc_context, Stub&, grpc::ClientContext& context, const RequestT&,
-                          CompletionToken&& = asio::default_completion_token_t<Executor>{})
+    static BasicRpc request(agrpc::GrpcContext& grpc_context, Stub&, grpc::ClientContext& context, const RequestT&,
+                            CompletionToken&& = asio::default_completion_token_t<Executor>{})
     {
         return BasicRpc(context, grpc_context.get_executor());
     }
@@ -136,16 +158,8 @@ class BasicRpc<PrepareAsync, Executor, detail::RpcType::CLIENT_SERVER_STREAMING>
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
     auto read_initial_metadata(CompletionToken&& token = asio::default_completion_token_t<Executor>{})
     {
-        auto sender = agrpc::read_initial_metadata(*responder, agrpc::use_sender(detail::query_grpc_context(executor)));
-        return asio::async_initiate<detail::RemoveCrefT<CompletionToken>, void(bool)>(
-            [&](auto&& completion_handler, auto&& sender)
-            {
-                using CH = decltype(completion_handler);
-                sender.submit(
-                    detail::CompletionHandlerReceiver<detail::WorkTrackingCompletionHandler<detail::RemoveCrefT<CH>>>(
-                        std::forward<CH>(completion_handler)));
-            },
-            token, std::move(sender));
+        return detail::create_high_level_sender<detail::ReadInitiateMetadataSenderImplementation<Responder>>(
+            {grpc_context(), *responder, this->status}, token);
     }
 
     // Reads from the RPC and finishes it if agrpc::read returned `false`.
@@ -159,9 +173,11 @@ class BasicRpc<PrepareAsync, Executor, detail::RpcType::CLIENT_SERVER_STREAMING>
     // private:
     explicit BasicRpc(grpc::ClientContext& context, Executor executor) : context(context), executor(executor) {}
 
+    auto& grpc_context() const noexcept { return detail::query_grpc_context(executor); }
+
     grpc::ClientContext& context;
     Executor executor;
-    std::unique_ptr<Responder<ResponseT>> responder;
+    std::unique_ptr<Responder> responder;
 };
 
 template <class Stub, class RequestT, class ResponseT, template <class> class Responder,

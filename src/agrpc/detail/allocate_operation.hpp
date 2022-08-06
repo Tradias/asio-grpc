@@ -33,63 +33,65 @@ inline constexpr bool IS_STD_ALLOCATOR = false;
 template <class T>
 inline constexpr bool IS_STD_ALLOCATOR<std::allocator<T>> = true;
 
-template <template <class> class Operation, class CompletionHandler>
-detail::AllocatedPointerT<Operation<detail::RemoveCrefT<CompletionHandler>>,
-                          detail::AssociatedAllocatorT<CompletionHandler>>
-allocate_operation(CompletionHandler&& completion_handler)
+template <template <class> class OperationTemplate, class Operation, class... Args>
+detail::AllocatedPointerT<OperationTemplate<detail::RemoveCrefT<Operation>>, detail::AssociatedAllocatorT<Operation>>
+allocate_operation(Operation&& operation, Args&&... args)
 
 {
-    const auto allocator = detail::exec::get_allocator(completion_handler);
-    return detail::allocate<Operation<detail::RemoveCrefT<CompletionHandler>>>(
-        allocator, std::forward<CompletionHandler>(completion_handler));
+    const auto allocator = detail::exec::get_allocator(operation);
+    return detail::allocate<OperationTemplate<detail::RemoveCrefT<Operation>>>(
+        allocator, std::forward<Operation>(operation), std::forward<Args>(args)...);
 }
 
-template <template <class> class Local, template <class> class Remote, class CompletionHandler>
-auto allocate_local_operation(agrpc::GrpcContext& grpc_context, CompletionHandler&& completion_handler)
+template <class AllocationTraits, class Operation, class... Args>
+auto allocate_local_operation(agrpc::GrpcContext& grpc_context, Operation&& operation, Args&&... args)
 
 {
-    using CH = detail::RemoveCrefT<CompletionHandler>;
-    auto allocator = detail::exec::get_allocator(completion_handler);
+    using DecayedOperation = detail::RemoveCrefT<Operation>;
+    auto allocator = detail::exec::get_allocator(operation);
     if constexpr (detail::IS_STD_ALLOCATOR<decltype(allocator)>)
     {
-        return detail::allocate<Local<CH>>(grpc_context.get_allocator(),
-                                           std::forward<CompletionHandler>(completion_handler));
+        return detail::allocate<typename AllocationTraits::template Local<DecayedOperation>>(
+            grpc_context.get_allocator(), std::forward<Operation>(operation), std::forward<Args>(args)...);
     }
     else
     {
-        return detail::allocate<Remote<CH>>(allocator, std::forward<CompletionHandler>(completion_handler));
+        return detail::allocate<typename AllocationTraits::template Remote<DecayedOperation>>(
+            allocator, std::forward<Operation>(operation), std::forward<Args>(args)...);
     }
 }
 
-template <class AllocationTraits, class CompletionHandler, class OnOperation>
-void allocate_operation_and_invoke(agrpc::GrpcContext& grpc_context, CompletionHandler&& completion_handler,
-                                   OnOperation& on_operation)
+template <class AllocationTraits, class OnOperation, class Operation, class... Args>
+void allocate_operation_and_invoke(agrpc::GrpcContext& grpc_context, OnOperation& on_operation, Operation&& operation,
+                                   Args&&... args)
 {
     if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
     {
-        auto operation =
-            detail::allocate_local_operation<AllocationTraits::template Local, AllocationTraits::template Remote>(
-                grpc_context, std::forward<CompletionHandler>(completion_handler));
-        on_operation(grpc_context, operation.get());
-        operation.release();
+        auto allocated_operation = detail::allocate_local_operation<AllocationTraits>(
+            grpc_context, std::forward<Operation>(operation), std::forward<Args>(args)...);
+        on_operation(grpc_context, allocated_operation.get());
+        allocated_operation.release();
     }
     else
     {
-        auto operation = detail::allocate_operation<AllocationTraits::template Remote>(
-            std::forward<CompletionHandler>(completion_handler));
-        on_operation(grpc_context, operation.get());
-        operation.release();
+        auto allocated_operation = detail::allocate_operation<AllocationTraits::template Remote>(
+            std::forward<Operation>(operation), std::forward<Args>(args)...);
+        on_operation(grpc_context, allocated_operation.get());
+        allocated_operation.release();
     }
 }
 
-template <class CompletionHandler>
-using NoArgLocalOperationTemplate = detail::LocalOperation<true, CompletionHandler, void()>;
+struct NoArgOperationAllocationTraits
+{
+    template <class Operation>
+    using Local = detail::LocalOperation<true, Operation, void()>;
 
-template <class CompletionHandler>
-using NoArgRemoteOperationTemplate = detail::Operation<true, CompletionHandler, void()>;
+    template <class Operation>
+    using Remote = detail::Operation<true, Operation, void()>;
+};
 
-template <bool IsBlockingNever, class CompletionHandler>
-void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, CompletionHandler&& completion_handler)
+template <bool IsBlockingNever, class Operation>
+void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Operation&& operation)
 {
     if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context))
     {
@@ -100,24 +102,24 @@ void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Comple
     {
         if (is_running_in_this_thread)
         {
-            auto ch{std::forward<CompletionHandler>(completion_handler)};
-            ch();
+            auto op{std::forward<Operation>(operation)};
+            std::move(op)();
             return;
         }
     }
     if (is_running_in_this_thread)
     {
-        auto operation = detail::allocate_local_operation<NoArgLocalOperationTemplate, NoArgRemoteOperationTemplate>(
-            grpc_context, std::forward<CompletionHandler>(completion_handler));
+        auto allocated_operation = detail::allocate_local_operation<NoArgOperationAllocationTraits>(
+            grpc_context, std::forward<Operation>(operation));
         grpc_context.work_started();
-        detail::GrpcContextImplementation::add_local_operation(grpc_context, operation.release());
+        detail::GrpcContextImplementation::add_local_operation(grpc_context, allocated_operation.release());
     }
     else
     {
-        auto operation = detail::allocate_operation<NoArgRemoteOperationTemplate>(
-            std::forward<CompletionHandler>(completion_handler));
+        auto allocated_operation = detail::allocate_operation<NoArgOperationAllocationTraits::template Remote>(
+            std::forward<Operation>(operation));
         grpc_context.work_started();
-        detail::GrpcContextImplementation::add_remote_operation(grpc_context, operation.release());
+        detail::GrpcContextImplementation::add_remote_operation(grpc_context, allocated_operation.release());
     }
 }
 }

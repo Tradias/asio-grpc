@@ -24,8 +24,6 @@
 
 AGRPC_NAMESPACE_BEGIN()
 
-namespace detail
-{
 /**
  * @brief Function object to create sender completion tokens
  *
@@ -35,7 +33,7 @@ namespace detail
  *
  * @snippet unifex_client.cpp unifex-server-streaming-client-side
  */
-struct UseSenderFn
+struct UseSender
 {
     /**
      * @brief Overload for BasicGrpcExecutor
@@ -55,7 +53,6 @@ struct UseSenderFn
         return detail::UseSender{context};
     }
 };
-}  // namespace detail
 
 /**
  * @brief Create sender completion token
@@ -64,7 +61,7 @@ struct UseSenderFn
  * Function to create sender completion tokens.
  * @endlink
  */
-inline constexpr detail::UseSenderFn use_sender{};
+inline constexpr agrpc::UseSender use_sender{};
 
 AGRPC_NAMESPACE_END
 
