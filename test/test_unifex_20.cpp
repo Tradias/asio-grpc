@@ -26,8 +26,6 @@
 #include <optional>
 #include <thread>
 
-DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
-{
 struct UnifexTest : virtual test::GrpcContextTest
 {
     template <class... Sender>
@@ -537,4 +535,3 @@ TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex repeatedly_request client stre
     CHECK_EQ(4, request_count);
 }
 #endif
-}

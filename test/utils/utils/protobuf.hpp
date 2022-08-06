@@ -15,8 +15,7 @@
 #ifndef AGRPC_UTILS_PROTOBUF_HPP
 #define AGRPC_UTILS_PROTOBUF_HPP
 
-#include "utils/doctest.hpp"
-
+#include <doctest/doctest.h>
 #include <grpcpp/support/proto_buffer_reader.h>
 #include <grpcpp/support/proto_buffer_writer.h>
 

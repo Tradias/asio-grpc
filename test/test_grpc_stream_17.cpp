@@ -24,8 +24,6 @@
 #include <cstddef>
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
-{
 TEST_CASE_FIXTURE(test::GrpcContextTest, "CancelSafe: cancel wait for alarm and wait again")
 {
     bool done{};
@@ -202,6 +200,5 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcStream: can change default complet
     stream.cleanup();
     grpc_context.run();
     CHECK(is_ok);
-}
 }
 #endif

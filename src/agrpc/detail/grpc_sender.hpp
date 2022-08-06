@@ -35,9 +35,9 @@ struct RunningOperationTemplate
     using Receiver = ReceiverT;
     using StopFunction = StopFunctionT;
 
-    struct Impl : detail::GrpcTagSenderOperation<RunningOperationTemplate>
+    struct Impl : detail::SenderOperation<RunningOperationTemplate, void(bool)>
     {
-        using detail::GrpcTagSenderOperation<RunningOperationTemplate>::SenderOperation;
+        using detail::SenderOperation<RunningOperationTemplate, void(bool)>::SenderOperation;
 
         template <class OnDone>
         void on_complete(OnDone on_done, bool ok)

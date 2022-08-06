@@ -20,8 +20,6 @@
 #include <agrpc/rpc.hpp>
 #include <agrpc/test.hpp>
 
-DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
-{
 struct MockTest : test::GrpcContextTest
 {
     testing::NiceMock<test::v1::MockTestStub> stub;
@@ -96,5 +94,4 @@ TEST_CASE_FIXTURE(MockTest, "mock server streaming request")
                             agrpc::read(writer, response, yield);
                             CHECK_EQ(42, response.integer());
                         });
-}
 }

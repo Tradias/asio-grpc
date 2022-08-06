@@ -12,15 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utils/doctest.hpp"
 #include "utils/free_port.hpp"
 
 #include <boost/process/child.hpp>
+#include <doctest/doctest.h>
 
 #include <thread>
 
-DOCTEST_TEST_SUITE("Examples")
-{
 TEST_CASE("examples")
 {
     std::vector<std::string> args{std::to_string(test::get_free_port())};
@@ -74,5 +72,4 @@ TEST_CASE("examples")
     client.join();
     CHECK_EQ(0, server.exit_code());
     CHECK_EQ(0, client.exit_code());
-}
 }

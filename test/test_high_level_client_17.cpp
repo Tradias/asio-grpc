@@ -22,8 +22,6 @@
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 
-DOCTEST_TEST_SUITE_BEGIN(ASIO_GRPC_TEST_CPP_VERSION);
-
 template <auto RPC, class Executor>
 bool a(agrpc::BasicRpc<RPC, Executor>& c)
 {
@@ -100,7 +98,5 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "rpc")
             //  CHECK_EQ(21, response.integer());
         });
 }
-
-DOCTEST_TEST_SUITE_END;
 
 #endif

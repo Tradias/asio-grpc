@@ -85,8 +85,6 @@ struct GenericRequestHandler
 
 TYPE_TO_STRING(GenericRequestHandler);
 
-DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
-{
 TEST_CASE_TEMPLATE("yield_context repeatedly_request unary", T, TypedRequestHandler, GenericRequestHandler)
 {
     typename T::Test test;
@@ -333,4 +331,3 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "repeatedly_request cancellation")
     CHECK_EQ(1, count);
 }
 #endif
-}

@@ -80,8 +80,6 @@ struct GenericAwaitableRequestHandler
 
 TYPE_TO_STRING(GenericAwaitableRequestHandler);
 
-DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
-{
 TEST_CASE_TEMPLATE("awaitable repeatedly_request unary", UsePmrExecutor, std::true_type, std::false_type)
 {
     test::GrpcClientServerTest self;
@@ -339,5 +337,4 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request thro
     CHECK_THROWS_WITH_AS(grpc_context.run(), "test", std::invalid_argument);
 }
 #endif
-}
 #endif

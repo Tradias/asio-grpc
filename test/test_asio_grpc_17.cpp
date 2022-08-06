@@ -33,8 +33,6 @@
 TYPE_TO_STRING(test::v1::Test::Stub);
 TYPE_TO_STRING(test::v1::Test::StubInterface);
 
-DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
-{
 TEST_CASE("agrpc::request and agrpc::wait are noexcept for use_sender")
 {
     using UseSender = decltype(agrpc::use_sender(std::declval<agrpc::GrpcContext&>()));
@@ -697,4 +695,3 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with parallel_group
     CHECK_FALSE(ok);
 }
 #endif
-}

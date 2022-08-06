@@ -25,8 +25,6 @@
 
 #include <thread>
 
-DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
-{
 TEST_CASE("GrpcExecutor fulfills Executor TS traits")
 {
     using Exec = agrpc::GrpcContext::executor_type;
@@ -689,5 +687,4 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() times out corr
     agrpc::wait(alarm, test::one_seconds_from_now(), asio::bind_executor(grpc_context, [](bool) {}));
     CHECK_FALSE(grpc_context.run_until(test::now()));
     CHECK_FALSE(grpc_context.run_until(test::ten_milliseconds_from_now()));
-}
 }

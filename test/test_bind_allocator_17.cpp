@@ -23,8 +23,6 @@
 
 #include <optional>
 
-DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
-{
 TEST_CASE_FIXTURE(test::GrpcContextTest, "AllocatorBinder constructor and member function")
 {
     agrpc::detail::pmr::polymorphic_allocator<std::byte> default_allocator{};
@@ -109,5 +107,4 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_allocator with asio::steady_timer
     timer.async_wait(agrpc::bind_allocator(get_allocator(), [](auto&&) {}));
     io_context.run();
     CHECK(allocator_has_been_used());
-}
 }

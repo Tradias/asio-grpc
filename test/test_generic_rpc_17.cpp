@@ -22,8 +22,6 @@
 
 #include <cstddef>
 
-DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
-{
 TEST_CASE_FIXTURE(test::GrpcGenericClientServerTest, "yield_context generic unary")
 {
     test::spawn_and_run(
@@ -114,5 +112,4 @@ TEST_CASE_FIXTURE(test::GrpcGenericClientServerTest, "yield_context generic clie
             CHECK(status.ok());
             CHECK_EQ(21, response.integer());
         });
-}
 }

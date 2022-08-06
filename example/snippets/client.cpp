@@ -238,7 +238,7 @@ void client_generic_streaming_corked(agrpc::GrpcContext& grpc_context, grpc::Gen
     /* [request-client-generic-streaming-corked] */
 }
 
-void create_grpc_context()
+void create_client_grpc_context()
 {
     /* [create-grpc_context-client-side] */
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
@@ -347,7 +347,7 @@ asio::awaitable<void> mock_stub(agrpc::GrpcContext& grpc_context)
     /* [mock-stub] */
 }
 
-int main()
+void client_main()
 {
     auto stub =
         example::v1::Example::NewStub(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));

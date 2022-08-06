@@ -24,8 +24,6 @@
 #include <optional>
 #include <thread>
 
-DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
-{
 struct RunTest : test::GrpcContextTest
 {
     asio::io_context io_context;
@@ -228,5 +226,4 @@ TEST_CASE_FIXTURE(
     agrpc::run_completion_queue(grpc_context, io_context);
     CHECK(invoked);
     CHECK_FALSE(has_posted);
-}
 }

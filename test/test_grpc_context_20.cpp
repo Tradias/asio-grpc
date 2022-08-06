@@ -26,8 +26,6 @@
 #include <thread>
 #include <vector>
 
-DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
-{
 #ifdef AGRPC_ASIO_HAS_CONCEPTS
 TEST_CASE("GrpcExecutor fulfills Executor TS concepts")
 {
@@ -416,4 +414,3 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_executor can be used to switch to
 }
 #endif
 #endif
-}
