@@ -52,6 +52,9 @@ struct BasicGrpcSenderStarter
     }
 };
 
+template <class Implementation, class Receiver>
+class BasicGrpcSenderOperationState;
+
 template <class Implementation>
 class BasicGrpcSender : public detail::SenderOf<detail::GetSignatureT<Implementation, void(bool)>>
 {
@@ -61,28 +64,13 @@ class BasicGrpcSender : public detail::SenderOf<detail::GetSignatureT<Implementa
     template <class Receiver, AllocationType AllocType>
     class RunningOperation;
 
-    template <class Receiver>
-    class OperationState
-    {
-      public:
-        template <class R>
-        OperationState(R&& receiver, agrpc::GrpcContext& grpc_context, Implementation&& implementation)
-            : grpc_context(grpc_context), running(std::forward<R>(receiver), std::move(implementation))
-        {
-        }
-
-        void start() noexcept { running.start(grpc_context); }
-
-        agrpc::GrpcContext& grpc_context;
-        RunningOperation<Receiver, AllocationType::NONE> running;
-    };
-
   public:
     using Signature = detail::GetSignatureT<Implementation, void(bool)>;
 
     template <class Receiver>
-    OperationState<detail::RemoveCrefT<Receiver>> connect(Receiver&& receiver) && noexcept(
-        detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver>&& std::is_nothrow_copy_constructible_v<Implementation>)
+    detail::BasicGrpcSenderOperationState<Implementation, detail::RemoveCrefT<Receiver>>
+    connect(Receiver&& receiver) && noexcept(
+        detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver>&& std::is_nothrow_move_constructible_v<Implementation>)
     {
         return {std::forward<Receiver>(receiver), grpc_context, std::move(implementation)};
     }
@@ -97,6 +85,9 @@ class BasicGrpcSender : public detail::SenderOf<detail::GetSignatureT<Implementa
 
   private:
     friend detail::BasicGrpcSenderAccess;
+
+    template <class Implementation, class Receiver>
+    friend class BasicGrpcSenderOperationState;
 
     explicit BasicGrpcSender(agrpc::GrpcContext& grpc_context, Implementation&& implementation) noexcept
         : grpc_context(grpc_context), implementation{std::move(implementation)}
@@ -209,6 +200,25 @@ class BasicGrpcSender<Implementation>::RunningOperation
     Implementation implementation;
 };
 
+template <class Implementation, class Receiver>
+class BasicGrpcSenderOperationState
+{
+  public:
+    void start() noexcept { running.start(grpc_context); }
+
+  private:
+    friend detail::BasicGrpcSender<Implementation>;
+
+    template <class R>
+    BasicGrpcSenderOperationState(R&& receiver, agrpc::GrpcContext& grpc_context, Implementation&& implementation)
+        : grpc_context(grpc_context), running(std::forward<R>(receiver), std::move(implementation))
+    {
+    }
+
+    agrpc::GrpcContext& grpc_context;
+    typename detail::BasicGrpcSender<Implementation>::template RunningOperation<Receiver, AllocationType::NONE> running;
+};
+
 template <class InitiatingFunction, class StopFunctionT>
 struct SingleRpcStepSenderImplementation
 {
@@ -232,5 +242,42 @@ using GrpcSender = detail::BasicGrpcSender<detail::SingleRpcStepSenderImplementa
 }
 
 AGRPC_NAMESPACE_END
+
+#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_CONNECT_MEMBER_TRAIT) && \
+    !defined(ASIO_HAS_DEDUCED_CONNECT_MEMBER_TRAIT)
+template <class Implementation, class R>
+struct agrpc::asio::traits::connect_member<agrpc::detail::BasicGrpcSender<Implementation>, R>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept =
+        noexcept(std::declval<agrpc::detail::BasicGrpcSender<Implementation>&&>().connect(std::declval<R&&>()));
+
+    using result_type = agrpc::detail::BasicGrpcSenderOperationState<Implementation, R>;
+};
+#endif
+
+#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_SUBMIT_MEMBER_TRAIT) && \
+    !defined(ASIO_HAS_DEDUCED_SUBMIT_MEMBER_TRAIT)
+template <class Implementation, class R>
+struct agrpc::asio::traits::submit_member<agrpc::detail::BasicGrpcSender<Implementation>, R>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = false;
+
+    using result_type = void;
+};
+#endif
+
+#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_START_MEMBER_TRAIT) && \
+    !defined(ASIO_HAS_DEDUCED_START_MEMBER_TRAIT)
+template <class Implementation, class Receiver>
+struct agrpc::asio::traits::start_member<agrpc::detail::BasicGrpcSenderOperationState<Implementation, Receiver>>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+
+    using result_type = void;
+};
+#endif
 
 #endif  // AGRPC_DETAIL_GRPC_SENDER_HPP

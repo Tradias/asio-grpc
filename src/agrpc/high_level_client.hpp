@@ -152,7 +152,7 @@ class BasicRPC<PrepareAsync, Executor, detail::RpcType::CLIENT_SERVER_STREAMING>
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
     auto read(Response& response, CompletionToken token = asio::default_completion_token_t<Executor>{});
 
-    //   private:
+  private:
     friend detail::ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor>;
 
     using agrpc::BasicRPCBase<Request, Response, Responder<Response>, Executor>::BasicRPCBase;

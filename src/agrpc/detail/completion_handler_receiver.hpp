@@ -71,4 +71,40 @@ struct agrpc::asio::associator<Associator, agrpc::detail::CompletionHandlerRecei
 
 #endif
 
+#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_SET_DONE_MEMBER_TRAIT) && \
+    !defined(ASIO_HAS_DEDUCED_SET_DONE_MEMBER_TRAIT)
+template <class CompletionHandler>
+struct agrpc::asio::traits::set_done_member<agrpc::detail::CompletionHandlerReceiver<CompletionHandler>>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+
+    using result_type = void;
+};
+#endif
+
+#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_SET_VALUE_MEMBER_TRAIT) && \
+    !defined(ASIO_HAS_DEDUCED_SET_VALUE_MEMBER_TRAIT)
+template <class CompletionHandler, class Vs>
+struct agrpc::asio::traits::set_value_member<agrpc::detail::CompletionHandlerReceiver<CompletionHandler>, Vs>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = false;
+
+    using result_type = void;
+};
+#endif
+
+#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_SET_ERROR_MEMBER_TRAIT) && \
+    !defined(ASIO_HAS_DEDUCED_SET_ERROR_MEMBER_TRAIT)
+template <class CompletionHandler, class E>
+struct agrpc::asio::traits::set_error_member<agrpc::detail::CompletionHandlerReceiver<CompletionHandler>, E>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = false;
+
+    using result_type = void;
+};
+#endif
+
 #endif  // AGRPC_DETAIL_COMPLETION_HANDLER_RECEIVER_HPP

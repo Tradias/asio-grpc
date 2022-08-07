@@ -213,4 +213,40 @@ void co_spawn_and_run(agrpc::GrpcContext& grpc_context, Functions&&... functions
 #endif
 }  // namespace test
 
+#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_SET_DONE_MEMBER_TRAIT) && \
+    !defined(ASIO_HAS_DEDUCED_SET_DONE_MEMBER_TRAIT)
+template <class Function, class Allocator>
+struct agrpc::asio::traits::set_done_member<test::FunctionAsReceiver<Function, Allocator>>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+
+    using result_type = void;
+};
+#endif
+
+#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_SET_VALUE_MEMBER_TRAIT) && \
+    !defined(ASIO_HAS_DEDUCED_SET_VALUE_MEMBER_TRAIT)
+template <class Function, class Allocator, class Vs>
+struct agrpc::asio::traits::set_value_member<test::FunctionAsReceiver<Function, Allocator>, Vs>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = false;
+
+    using result_type = void;
+};
+#endif
+
+#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_SET_ERROR_MEMBER_TRAIT) && \
+    !defined(ASIO_HAS_DEDUCED_SET_ERROR_MEMBER_TRAIT)
+template <class Function, class Allocator, class E>
+struct agrpc::asio::traits::set_error_member<test::FunctionAsReceiver<Function, Allocator>, E>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+
+    using result_type = void;
+};
+#endif
+
 #endif  // AGRPC_UTILS_ASIO_UTILS_HPP
