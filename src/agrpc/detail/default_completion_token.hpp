@@ -17,35 +17,19 @@
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/use_sender.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-struct DefaultCompletionTokenNotAvailable
-{
-    template <class T>
-    using as_default_on_t = typename T::template rebind_executor<typename T::executor_type>::other;
-
-    DefaultCompletionTokenNotAvailable() = delete;
-};
-
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 using DefaultCompletionToken = asio::use_awaitable_t<>;
 #else
-using DefaultCompletionToken = detail::DefaultCompletionTokenNotAvailable;
+using DefaultCompletionToken = agrpc::UseSender;
 #endif
 }
 
 AGRPC_NAMESPACE_END
-
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-
-template <class Signature>
-class agrpc::asio::async_result<agrpc::detail::DefaultCompletionTokenNotAvailable, Signature>
-{
-};
-
-#endif
 
 #endif  // AGRPC_DETAIL_DEFAULT_COMPLETION_TOKEN_HPP

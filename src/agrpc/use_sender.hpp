@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/executor_with_default.hpp>
 #include <agrpc/detail/query_grpc_context.hpp>
 #include <agrpc/detail/use_sender.hpp>
 #include <agrpc/grpc_context.hpp>
@@ -35,6 +36,10 @@ AGRPC_NAMESPACE_BEGIN()
  */
 struct UseSender
 {
+    template <class T>
+    using as_default_on_t =
+        typename T::template rebind_executor<detail::ExecutorWithDefault<UseSender, typename T::executor_type>>::other;
+
     /**
      * @brief Overload for BasicGrpcExecutor
      */
