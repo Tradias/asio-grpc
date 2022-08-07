@@ -26,10 +26,10 @@ template <class CompletionHandler>
 class CompletionHandlerReceiver
 {
   public:
-    using allocator_type = decltype(detail::exec::get_allocator(std::declval<const CompletionHandler&>()));
+    using allocator_type = detail::AssociatedAllocatorT<CompletionHandler>;
 
     template <class Ch>
-    explicit CompletionHandlerReceiver(Ch&& ch) : completion_handler(std::forward<Ch>(ch))
+    explicit CompletionHandlerReceiver(Ch&& ch) : completion_handler_(std::forward<Ch>(ch))
     {
     }
 
@@ -38,18 +38,37 @@ class CompletionHandlerReceiver
     template <class... Args>
     void set_value(Args&&... args)
     {
-        std::move(completion_handler)(std::forward<Args>(args)...);
+        std::move(completion_handler_)(std::forward<Args>(args)...);
     }
 
     static void set_error(std::exception_ptr ep) { std::rethrow_exception(ep); }
 
-    auto get_allocator() const noexcept { return detail::exec::get_allocator(completion_handler); }
+    allocator_type get_allocator() const noexcept { return detail::exec::get_allocator(completion_handler_); }
+
+    const CompletionHandler& completion_handler() const noexcept { return completion_handler_; }
 
   private:
-    CompletionHandler completion_handler;
+    CompletionHandler completion_handler_;
 };
 }
 
 AGRPC_NAMESPACE_END
+
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+
+template <template <class, class> class Associator, class CompletionHandler, class DefaultCandidate>
+struct agrpc::asio::associator<Associator, agrpc::detail::CompletionHandlerReceiver<CompletionHandler>,
+                               DefaultCandidate>
+{
+    using type = typename Associator<CompletionHandler, DefaultCandidate>::type;
+
+    static constexpr type get(const agrpc::detail::CompletionHandlerReceiver<CompletionHandler>& b,
+                              const DefaultCandidate& c = DefaultCandidate()) noexcept
+    {
+        return Associator<CompletionHandler, DefaultCandidate>::get(b.completion_handler(), c);
+    }
+};
+
+#endif
 
 #endif  // AGRPC_DETAIL_COMPLETION_HANDLER_RECEIVER_HPP

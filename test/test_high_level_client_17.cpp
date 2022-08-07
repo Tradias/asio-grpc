@@ -39,8 +39,8 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "RPC::read_initial_metadata automa
         [&](asio::yield_context yield)
         {
             test::msg::Request request;
-            using Rpc = agrpc::Rpc<&test::v1::Test::Stub::PrepareAsyncServerStreaming>;
-            auto call = Rpc::request(grpc_context, *stub, client_context, request, yield);
+            using RPC = agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncServerStreaming>;
+            auto call = RPC::request(grpc_context, *stub, client_context, request, yield);
             CHECK(call.ok());
             agrpc::request(&test::v1::Test::Stub::PrepareAsyncServerStreaming, stub, client_context, request,
                            call.responder, yield);
@@ -50,6 +50,40 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "RPC::read_initial_metadata automa
             CHECK_FALSE(call.read_initial_metadata(yield));
             CHECK_EQ(grpc::StatusCode::CANCELLED, call.error_code());
         });
+}
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTest,
+                  "RPC::read_initial_metadata can have UseSender as default completion token")
+{
+    using RPC = agrpc::UseSender::as_default_on_t<
+        agrpc::BasicRPC<&test::v1::Test::Stub::PrepareAsyncUnary, agrpc::GrpcExecutor>>;
+    bool ok{};
+    RPC::Response response;
+    test::spawn_and_run(
+        grpc_context,
+        [&](asio::yield_context yield)
+        {
+            test::msg::Request request;
+            grpc::ServerAsyncResponseWriter<test::msg::Response> writer{&server_context};
+            CHECK(agrpc::request(&test::v1::Test::AsyncService::RequestUnary, service, server_context, request, writer,
+                                 yield));
+            CHECK_EQ(42, request.integer());
+            test::msg::Response response;
+            response.set_integer(21);
+            CHECK(agrpc::finish(writer, response, grpc::Status::OK, yield));
+        },
+        [&](auto&&)
+        {
+            RPC::Request request;
+            request.set_integer(42);
+            auto sender = RPC::request(grpc_context, *stub, client_context, request, response);
+            asio::execution::submit(std::move(sender), test::FunctionAsReceiver{[&](RPC&& call)
+                                                                                {
+                                                                                    ok = call.ok();
+                                                                                }});
+        });
+    CHECK(ok);
+    CHECK_EQ(21, response.integer());
 }
 
 // TEST_CASE_FIXTURE(test::GrpcClientServerTest, "rpc")

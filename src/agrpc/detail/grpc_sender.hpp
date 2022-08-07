@@ -22,6 +22,7 @@
 #include <agrpc/detail/receiver.hpp>
 #include <agrpc/detail/receiver_and_stop_callback.hpp>
 #include <agrpc/detail/sender_allocation_traits.hpp>
+#include <agrpc/detail/sender_implementation.hpp>
 #include <agrpc/detail/sender_of.hpp>
 #include <agrpc/grpc_context.hpp>
 
@@ -29,96 +30,117 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class Implementation, class StopFunction = detail::Empty>
+template <class Implementation>
 class BasicGrpcSender;
 
 struct BasicGrpcSenderAccess
 {
     template <class Implementation>
-    static auto create(Implementation&& implementation)
+    static auto create(agrpc::GrpcContext& grpc_context, Implementation&& implementation)
     {
         return detail::BasicGrpcSender<detail::RemoveCrefT<Implementation>>(
-            std::forward<Implementation>(implementation));
+            grpc_context, std::forward<Implementation>(implementation));
     }
 };
 
 struct BasicGrpcSenderStarter
 {
     template <class Operation>
-    void operator()(agrpc::GrpcContext&, Operation* operation)
+    void operator()(agrpc::GrpcContext& grpc_context, Operation* operation)
     {
-        operation->start();
+        operation->start(grpc_context);
     }
 };
 
-template <class Implementation, class StopFunction>
-class BasicGrpcSender : public detail::SenderOf<bool>
+template <class Implementation>
+class BasicGrpcSender : public detail::SenderOf<detail::GetSignatureT<Implementation, void(bool)>>
 {
   private:
+    using StopFunction = detail::GetStopFunctionT<Implementation, detail::Empty>;
+
     template <class Receiver, AllocationType AllocType>
-    class Operation;
+    class RunningOperation;
+
+    template <class Receiver>
+    class OperationState
+    {
+      public:
+        template <class R>
+        OperationState(R&& receiver, agrpc::GrpcContext& grpc_context, Implementation&& implementation)
+            : grpc_context(grpc_context), running(std::forward<R>(receiver), std::move(implementation))
+        {
+        }
+
+        void start() noexcept { running.start(grpc_context); }
+
+        agrpc::GrpcContext& grpc_context;
+        RunningOperation<Receiver, AllocationType::NONE> running;
+    };
 
   public:
+    using Signature = detail::GetSignatureT<Implementation, void(bool)>;
+
     template <class Receiver>
-    auto connect(Receiver&& receiver) const noexcept(
+    auto connect(Receiver&& receiver) && noexcept(
         detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver>&& std::is_nothrow_copy_constructible_v<Implementation>)
-        -> Operation<detail::RemoveCrefT<Receiver>, AllocationType::NONE>
+        -> OperationState<detail::RemoveCrefT<Receiver>>
     {
-        return {std::forward<Receiver>(receiver), implementation};
+        return {std::forward<Receiver>(receiver), grpc_context, std::move(implementation)};
     }
 
     template <class Receiver>
-    void submit(Receiver&& receiver) const
+    void submit(Receiver&& receiver) &&
     {
         detail::BasicGrpcSenderStarter starter;
-        detail::allocate_operation_and_invoke<detail::SenderOperationAllocationTraits<Operation>>(
-            implementation.grpc_context, starter, std::forward<Receiver>(receiver), implementation);
+        detail::allocate_operation_and_invoke<detail::SenderOperationAllocationTraits<RunningOperation>>(
+            grpc_context, starter, std::forward<Receiver>(receiver), std::move(implementation));
     }
 
   private:
     template <class... Args>
-    explicit BasicGrpcSender(Args&&... args) noexcept : implementation{std::forward<Args>(args)...}
+    explicit BasicGrpcSender(agrpc::GrpcContext& grpc_context, Args&&... args) noexcept
+        : grpc_context(grpc_context), implementation{std::forward<Args>(args)...}
     {
     }
 
     friend detail::BasicGrpcSenderAccess;
     friend detail::GrpcInitiateImplFn;
 
+    agrpc::GrpcContext& grpc_context;
     Implementation implementation;
 };
 
-template <class Implementation, class StopFunction>
+template <class Implementation>
 template <class Receiver, AllocationType AllocType>
-class BasicGrpcSender<Implementation, StopFunction>::Operation
+class BasicGrpcSender<Implementation>::RunningOperation
     : public detail::TypeErasedOperation<false, bool, detail::GrpcContextLocalAllocator>
 {
   public:
     template <class R>
-    Operation(R&& receiver, const Implementation& implementation)
+    RunningOperation(R&& receiver, Implementation&& implementation)
         : detail::TypeErasedOperation<false, bool, detail::GrpcContextLocalAllocator>(
-              &Operation::operation_on_complete),
+              &RunningOperation::operation_on_complete),
           receiver_and_stop_callback(std::forward<R>(receiver)),
-          implementation{implementation}
+          implementation{std::move(implementation)}
     {
     }
 
-    void start() noexcept
+    void start(agrpc::GrpcContext& grpc_context) noexcept
     {
-        agrpc::GrpcContext& grpc_context = implementation.grpc_context;
         if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context))
         {
-            detail::exec::set_done(this->extract_receiver_and_optionally_deallocate());
+            detail::exec::set_done(this->extract_receiver_and_optionally_deallocate(grpc_context.get_allocator()));
             return;
         }
         auto stop_token = detail::exec::get_stop_token(receiver());
         if (stop_token.stop_requested())
         {
-            detail::exec::set_done(this->extract_receiver_and_optionally_deallocate());
+            detail::exec::set_done(this->extract_receiver_and_optionally_deallocate(grpc_context.get_allocator()));
             return;
         }
         receiver_and_stop_callback.emplace_stop_callback(std::move(stop_token), implementation);
         detail::StartWorkAndGuard guard{grpc_context};
-        implementation.initiate(this);
+        implementation.initiate(grpc_context, this);
         guard.release();
     }
 
@@ -129,7 +151,7 @@ class BasicGrpcSender<Implementation, StopFunction>::Operation
         void operator()(Args&&... args)
         {
             self_.receiver_and_stop_callback.reset_stop_callback();
-            auto receiver = self_.extract_receiver_and_optionally_deallocate();
+            auto receiver = self_.extract_receiver_and_optionally_deallocate(local_allocator);
             if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
             {
                 detail::satisfy_receiver(std::move(receiver), std::forward<Args>(args)...);
@@ -140,26 +162,27 @@ class BasicGrpcSender<Implementation, StopFunction>::Operation
             }
         }
 
-        [[nodiscard]] Operation* self() const noexcept { return &self_; }
+        [[nodiscard]] RunningOperation* self() const noexcept { return &self_; }
 
-        Operation& self_;
+        RunningOperation& self_;
         detail::InvokeHandler invoke_handler;
+        detail::GrpcContextLocalAllocator local_allocator;
     };
 
     static void operation_on_complete(detail::TypeErasedGrpcTagOperation* op, detail::InvokeHandler invoke_handler,
-                                      bool ok, detail::GrpcContextLocalAllocator) noexcept
+                                      bool ok, detail::GrpcContextLocalAllocator local_allocator) noexcept
     {
-        auto& self = *static_cast<Operation*>(op);
-        self.implementation.done(Done{self, invoke_handler}, ok);
+        auto& self = *static_cast<RunningOperation*>(op);
+        self.implementation.done(Done{self, invoke_handler, local_allocator}, ok);
     }
 
-    auto extract_receiver_and_deallocate() noexcept
+    auto extract_receiver_and_deallocate(detail::GrpcContextLocalAllocator local_allocator) noexcept
     {
         const auto& allocator = [&]
         {
             if constexpr (AllocType == AllocationType::LOCAL)
             {
-                return grpc_context().get_allocator();
+                return local_allocator;
             }
             else
             {
@@ -171,19 +194,17 @@ class BasicGrpcSender<Implementation, StopFunction>::Operation
         return local_receiver;
     }
 
-    auto extract_receiver_and_optionally_deallocate() noexcept
+    auto extract_receiver_and_optionally_deallocate(detail::GrpcContextLocalAllocator local_allocator) noexcept
     {
-        if constexpr (AllocType != AllocationType::NONE)
-        {
-            return this->extract_receiver_and_deallocate();
-        }
-        else
+        if constexpr (AllocType == AllocationType::NONE)
         {
             return std::move(receiver());
         }
+        else
+        {
+            return this->extract_receiver_and_deallocate(local_allocator);
+        }
     }
-
-    agrpc::GrpcContext& grpc_context() const noexcept { return implementation.grpc_context; }
 
     Receiver& receiver() noexcept { return receiver_and_stop_callback.receiver(); }
 
@@ -191,21 +212,14 @@ class BasicGrpcSender<Implementation, StopFunction>::Operation
     Implementation implementation;
 };
 
-template <class InitiatingFunction>
+template <class InitiatingFunction, class StopFunctionT>
 struct SingleRpcStepSenderImplementation
 {
-    SingleRpcStepSenderImplementation(agrpc::GrpcContext& grpc_context, const InitiatingFunction& initiating_function)
-        : grpc_context(grpc_context), initiating_function(initiating_function)
-    {
-    }
+    using StopFunction = StopFunctionT;
 
-    template <class StopFunction>
-    auto create_stop_function() noexcept
-    {
-        return StopFunction{initiating_function};
-    }
+    auto create_stop_function() noexcept { return StopFunction{initiating_function}; }
 
-    void initiate(void* self) { initiating_function(grpc_context, self); }
+    void initiate(agrpc::GrpcContext& grpc_context, void* self) { initiating_function(grpc_context, self); }
 
     template <class OnDone>
     void done(OnDone on_done, bool ok)
@@ -213,12 +227,11 @@ struct SingleRpcStepSenderImplementation
         on_done(ok);
     }
 
-    agrpc::GrpcContext& grpc_context;
     InitiatingFunction initiating_function;
 };
 
 template <class InitiatingFunction, class StopFunction = detail::Empty>
-using GrpcSender = detail::BasicGrpcSender<detail::SingleRpcStepSenderImplementation<InitiatingFunction>, StopFunction>;
+using GrpcSender = detail::BasicGrpcSender<detail::SingleRpcStepSenderImplementation<InitiatingFunction, StopFunction>>;
 }
 
 AGRPC_NAMESPACE_END

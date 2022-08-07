@@ -56,7 +56,7 @@ auto allocate_local_operation(agrpc::GrpcContext& grpc_context, Operation&& oper
     }
     else
     {
-        return detail::allocate<typename AllocationTraits::template Remote<DecayedOperation>>(
+        return detail::allocate<typename AllocationTraits::template Custom<DecayedOperation>>(
             allocator, std::forward<Operation>(operation), std::forward<Args>(args)...);
     }
 }
@@ -74,7 +74,7 @@ void allocate_operation_and_invoke(agrpc::GrpcContext& grpc_context, OnOperation
     }
     else
     {
-        auto allocated_operation = detail::allocate_operation<AllocationTraits::template Remote>(
+        auto allocated_operation = detail::allocate_operation<AllocationTraits::template Custom>(
             std::forward<Operation>(operation), std::forward<Args>(args)...);
         on_operation(grpc_context, allocated_operation.get());
         allocated_operation.release();
@@ -87,7 +87,7 @@ struct NoArgOperationAllocationTraits
     using Local = detail::LocalOperation<true, Operation, void()>;
 
     template <class Operation>
-    using Remote = detail::Operation<true, Operation, void()>;
+    using Custom = detail::Operation<true, Operation, void()>;
 };
 
 template <bool IsBlockingNever, class Operation>
@@ -116,7 +116,7 @@ void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Operat
     }
     else
     {
-        auto allocated_operation = detail::allocate_operation<NoArgOperationAllocationTraits::template Remote>(
+        auto allocated_operation = detail::allocate_operation<NoArgOperationAllocationTraits::template Custom>(
             std::forward<Operation>(operation));
         grpc_context.work_started();
         detail::GrpcContextImplementation::add_remote_operation(grpc_context, allocated_operation.release());

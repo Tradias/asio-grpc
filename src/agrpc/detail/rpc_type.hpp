@@ -16,6 +16,8 @@
 #define AGRPC_DETAIL_RPC_TYPE_HPP
 
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/forward.hpp>
+#include <grpcpp/support/async_stream.h>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -29,6 +31,63 @@ enum class RpcType
     CLIENT_BIDI_STREAMING
 };
 
+template <class Stub, class Request, class Responder>
+using ClientUnaryRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*, const Request&,
+                                                                grpc::CompletionQueue*);
+
+template <class Stub, class Request, class Responder>
+using AsyncClientServerStreamingRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*, const Request&,
+                                                                               grpc::CompletionQueue*, void*);
+
+template <class Stub, class Request, class Responder>
+using PrepareAsyncClientServerStreamingRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*,
+                                                                                      const Request&,
+                                                                                      grpc::CompletionQueue*);
+
+template <class Stub, class Responder, class Response>
+using AsyncClientClientStreamingRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*, Response*,
+                                                                               grpc::CompletionQueue*, void*);
+
+template <class Stub, class Responder, class Response>
+using PrepareAsyncClientClientStreamingRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*, Response*,
+                                                                                      grpc::CompletionQueue*);
+
+template <class Stub, class Responder>
+using AsyncClientBidirectionalStreamingRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*,
+                                                                                      grpc::CompletionQueue*, void*);
+
+template <class Stub, class Responder>
+using PrepareAsyncClientBidirectionalStreamingRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*,
+                                                                                             grpc::CompletionQueue*);
+
+template <class Service, class Request, class Responder>
+using ServerMultiArgRequest = void (Service::*)(grpc::ServerContext*, Request*, Responder*, grpc::CompletionQueue*,
+                                                grpc::ServerCompletionQueue*, void*);
+
+template <class Service, class Responder>
+using ServerSingleArgRequest = void (Service::*)(grpc::ServerContext*, Responder*, grpc::CompletionQueue*,
+                                                 grpc::ServerCompletionQueue*, void*);
+
+template <auto PrepareAsync>
+inline constexpr auto RPC_TYPE = RpcType::CLIENT_UNARY;
+
+template <class Stub, class RequestT, class ResponseT,
+          std::unique_ptr<grpc::ClientAsyncReader<ResponseT>> (Stub::*PrepareAsync)(
+              grpc::ClientContext*, const RequestT&, grpc::CompletionQueue*)>
+inline constexpr auto RPC_TYPE<PrepareAsync> = RpcType::CLIENT_SERVER_STREAMING;
+
+template <class Stub, class RequestT, class ResponseT,
+          std::unique_ptr<grpc::ClientAsyncReaderInterface<ResponseT>> (Stub::*PrepareAsync)(
+              grpc::ClientContext*, const RequestT&, grpc::CompletionQueue*)>
+inline constexpr auto RPC_TYPE<PrepareAsync> = RpcType::CLIENT_SERVER_STREAMING;
+
+template <class Stub, class Request, class Response, template <class> class Writer,
+          detail::PrepareAsyncClientClientStreamingRequest<Stub, Request, Writer<Response>> PrepareAsync>
+inline constexpr auto RPC_TYPE<PrepareAsync> = RpcType::CLIENT_CLIENT_STREAMING;
+
+template <class Stub, class Request, class Response, template <class, class> class ReaderWriter,
+          detail::PrepareAsyncClientBidirectionalStreamingRequest<Stub, ReaderWriter<Request, Response>> PrepareAsync>
+inline constexpr auto RPC_TYPE<PrepareAsync> = RpcType::CLIENT_BIDI_STREAMING;
 }
 
 AGRPC_NAMESPACE_END

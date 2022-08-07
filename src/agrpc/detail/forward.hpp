@@ -17,13 +17,11 @@
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_executor_options.hpp>
-#include <agrpc/detail/rpc_type.hpp>
-
-#include <memory>
 
 namespace grpc
 {
 class CompletionQueue;
+class ClientContext;
 }
 
 AGRPC_NAMESPACE_BEGIN()
@@ -35,6 +33,8 @@ class GrpcContext;
 
 template <class Executor>
 class BasicGrpcStream;
+
+struct UseSender;
 
 namespace detail
 {

@@ -30,7 +30,7 @@ struct GrpcTagOperationAllocationTraits
     using Local = detail::LocalOperation<false, CompletionHandler, void(bool)>;
 
     template <class CompletionHandler>
-    using Remote = detail::Operation<false, CompletionHandler, void(bool)>;
+    using Custom = detail::Operation<false, CompletionHandler, void(bool)>;
 };
 
 template <class InitiatingFunction, class CompletionHandler>

@@ -25,7 +25,7 @@ enum class AllocationType
 {
     NONE,
     LOCAL,
-    REMOTE
+    CUSTOM
 };
 
 template <template <class, AllocationType> class Operation>
@@ -35,7 +35,7 @@ struct SenderOperationAllocationTraits
     using Local = Operation<Receiver, AllocationType::LOCAL>;
 
     template <class Receiver>
-    using Remote = Operation<Receiver, AllocationType::REMOTE>;
+    using Custom = Operation<Receiver, AllocationType::CUSTOM>;
 };
 }
 

@@ -130,6 +130,9 @@ using ErrorCode = std::error_code;
 using ErrorCode = boost::system::error_code;
 #endif
 
+template <class Slot>
+class CancellationSlotAsStopToken;
+
 namespace exec
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
@@ -173,9 +176,21 @@ struct unstoppable_token
 };
 
 template <class Receiver>
-constexpr unstoppable_token get_stop_token(Receiver&&) noexcept
+auto get_stop_token(Receiver&& receiver) noexcept
 {
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+    auto slot = asio::get_associated_cancellation_slot(std::forward<Receiver>(receiver), unstoppable_token{});
+    if constexpr (std::is_same_v<unstoppable_token, decltype(slot)>)
+    {
+        return slot;
+    }
+    else
+    {
+        return detail::CancellationSlotAsStopToken<decltype(slot)>{std::move(slot)};
+    }
+#else
     return unstoppable_token{};
+#endif
 }
 
 template <class>
@@ -222,6 +237,32 @@ using AssociatedAllocatorT = decltype(detail::exec::get_allocator(std::declval<c
 
 template <class T>
 using AssociatedExecutorT = decltype(detail::exec::get_executor(std::declval<const T&>()));
+
+template <class Slot>
+class CancellationSlotAsStopToken
+{
+  public:
+    explicit CancellationSlotAsStopToken(Slot&& slot) : slot(std::move(slot)) {}
+
+    template <class StopFunction>
+    struct callback_type
+    {
+        explicit callback_type(CancellationSlotAsStopToken token, StopFunction&& function) noexcept
+        {
+            if (token.slot.is_connected())
+            {
+                token.slot.template emplace<StopFunction>(static_cast<StopFunction&&>(function));
+            }
+        }
+    };
+
+    [[nodiscard]] static constexpr bool stop_requested() noexcept { return false; }
+
+    [[nodiscard]] static constexpr bool stop_possible() noexcept { return true; }
+
+  private:
+    Slot slot;
+};
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class Executor, class Function, class Allocator>
