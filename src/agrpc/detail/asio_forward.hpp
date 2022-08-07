@@ -176,7 +176,7 @@ struct unstoppable_token
 };
 
 template <class Receiver>
-auto get_stop_token(Receiver&& receiver) noexcept
+auto get_stop_token([[maybe_unused]] Receiver&& receiver) noexcept
 {
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
     auto slot = asio::get_associated_cancellation_slot(std::forward<Receiver>(receiver), unstoppable_token{});

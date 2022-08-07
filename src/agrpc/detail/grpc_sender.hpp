@@ -81,9 +81,8 @@ class BasicGrpcSender : public detail::SenderOf<detail::GetSignatureT<Implementa
     using Signature = detail::GetSignatureT<Implementation, void(bool)>;
 
     template <class Receiver>
-    auto connect(Receiver&& receiver) && noexcept(
+    OperationState<detail::RemoveCrefT<Receiver>> connect(Receiver&& receiver) && noexcept(
         detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver>&& std::is_nothrow_copy_constructible_v<Implementation>)
-        -> OperationState<detail::RemoveCrefT<Receiver>>
     {
         return {std::forward<Receiver>(receiver), grpc_context, std::move(implementation)};
     }
@@ -97,14 +96,12 @@ class BasicGrpcSender : public detail::SenderOf<detail::GetSignatureT<Implementa
     }
 
   private:
-    template <class... Args>
-    explicit BasicGrpcSender(agrpc::GrpcContext& grpc_context, Args&&... args) noexcept
-        : grpc_context(grpc_context), implementation{std::forward<Args>(args)...}
+    friend detail::BasicGrpcSenderAccess;
+
+    explicit BasicGrpcSender(agrpc::GrpcContext& grpc_context, Implementation&& implementation) noexcept
+        : grpc_context(grpc_context), implementation{std::move(implementation)}
     {
     }
-
-    friend detail::BasicGrpcSenderAccess;
-    friend detail::GrpcInitiateImplFn;
 
     agrpc::GrpcContext& grpc_context;
     Implementation implementation;

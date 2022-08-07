@@ -18,6 +18,8 @@
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_executor_options.hpp>
 
+#include <memory>
+
 namespace grpc
 {
 class CompletionQueue;
@@ -38,7 +40,7 @@ struct UseSender;
 
 namespace detail
 {
-struct GrpcInitiateImplFn;
+struct BasicGrpcSenderAccess;
 
 class RepeatedlyRequestFn;
 

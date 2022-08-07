@@ -54,17 +54,18 @@ struct ReadInitiateMetadataSenderImplementation
 };
 
 template <auto PrepareAsync, class Executor>
-struct UnaryRequestSenderImplementation;
+struct ClientUnaryRequestSenderImplementation;
 
 template <class Stub, class Request, class Response, template <class> class Responder,
           detail::ClientUnaryRequest<Stub, Request, Responder<Response>> PrepareAsync, class Executor>
-struct UnaryRequestSenderImplementation<PrepareAsync, Executor>
+struct ClientUnaryRequestSenderImplementation<PrepareAsync, Executor>
 {
     using RPC = agrpc::BasicRPC<PrepareAsync, Executor, detail::RpcType::CLIENT_UNARY>;
     using Signature = void(RPC);
 
-    UnaryRequestSenderImplementation(agrpc::GrpcContext& grpc_context, Stub& stub, grpc::ClientContext& client_context,
-                                     const Request& req, Response& response)
+    ClientUnaryRequestSenderImplementation(agrpc::GrpcContext& grpc_context, Stub& stub,
+                                           grpc::ClientContext& client_context, const Request& req,
+                                           Response& response) noexcept
         : response(response),
           rpc(grpc_context.get_executor()),
           responder((stub.*PrepareAsync)(&client_context, req, grpc_context.get_completion_queue()))
@@ -86,6 +87,42 @@ struct UnaryRequestSenderImplementation<PrepareAsync, Executor>
     Response& response;
     RPC rpc;
     std::unique_ptr<Responder<Response>> responder;
+};
+
+template <auto PrepareAsync, class Executor>
+struct ClientServerStreamingRequestSenderImplementation;
+
+template <class Stub, class Request, class Response, template <class> class Responder,
+          detail::PrepareAsyncClientServerStreamingRequest<Stub, Request, Responder<Response>> PrepareAsync,
+          class Executor>
+struct ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor>
+{
+    using RPC = agrpc::BasicRPC<PrepareAsync, Executor, detail::RpcType::CLIENT_SERVER_STREAMING>;
+    using Signature = void(RPC);
+
+    ClientServerStreamingRequestSenderImplementation(agrpc::GrpcContext& grpc_context, Stub& stub,
+                                                     grpc::ClientContext& client_context, const Request& req) noexcept
+        : rpc(grpc_context.get_executor())
+    {
+        rpc.responder = (stub.*PrepareAsync)(&client_context, req, grpc_context.get_completion_queue());
+    }
+
+    void initiate(const agrpc::GrpcContext&, void* self) noexcept { rpc.responder->StartCall(self); }
+
+    template <class OnDone>
+    void done(OnDone on_done, bool ok)
+    {
+        if (ok)
+        {
+            on_done(std::move(rpc));
+        }
+        else
+        {
+            rpc.responder->Finish(&rpc.status, on_done.self());
+        }
+    }
+
+    RPC rpc;
 };
 }
 

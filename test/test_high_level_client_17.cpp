@@ -35,20 +35,26 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "RPC::read_initial_metadata automa
             CHECK(agrpc::request(&test::v1::Test::AsyncService::RequestServerStreaming, service, server_context,
                                  request, writer, yield));
             server_context.TryCancel();
+            agrpc::finish(writer, grpc::Status::CANCELLED, yield);
         },
         [&](asio::yield_context yield)
         {
-            test::msg::Request request;
             using RPC = agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncServerStreaming>;
-            auto call = RPC::request(grpc_context, *stub, client_context, request, yield);
-            CHECK(call.ok());
-            agrpc::request(&test::v1::Test::Stub::PrepareAsyncServerStreaming, stub, client_context, request,
-                           call.responder, yield);
+            RPC::Request request;
+            auto rpc = RPC::request(grpc_context, *stub, client_context, request, yield);
+            CHECK(rpc.ok());
+            // auto [responder2, ok2] = agrpc::request(&test::v1::Test::Stub::PrepareAsyncServerStreaming, stub,
+            //                                         client_context, request, yield);
+            // grpc::ClientContext context;
+            // auto [responder, ok] =
+            //     agrpc::request(&test::v1::Test::Stub::PrepareAsyncServerStreaming, stub, context, request, yield);
+            // rpc.responder = std::move(responder);
             client_context.TryCancel();
             grpc::Alarm alarm;
             agrpc::wait(alarm, test::hundred_milliseconds_from_now(), yield);
-            CHECK_FALSE(call.read_initial_metadata(yield));
-            CHECK_EQ(grpc::StatusCode::CANCELLED, call.error_code());
+            // agrpc::read_initial_metadata(responder, yield);
+            CHECK_FALSE(rpc.read_initial_metadata(yield));
+            CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.error_code());
         });
 }
 
@@ -59,6 +65,9 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest,
         agrpc::BasicRPC<&test::v1::Test::Stub::PrepareAsyncUnary, agrpc::GrpcExecutor>>;
     bool ok{};
     RPC::Response response;
+    bool use_submit{};
+    SUBCASE("submit") { use_submit = true; }
+    SUBCASE("yield") {}
     test::spawn_and_run(
         grpc_context,
         [&](asio::yield_context yield)
@@ -72,15 +81,23 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest,
             response.set_integer(21);
             CHECK(agrpc::finish(writer, response, grpc::Status::OK, yield));
         },
-        [&](auto&&)
+        [&](auto&& yield)
         {
             RPC::Request request;
             request.set_integer(42);
-            auto sender = RPC::request(grpc_context, *stub, client_context, request, response);
-            asio::execution::submit(std::move(sender), test::FunctionAsReceiver{[&](RPC&& call)
-                                                                                {
-                                                                                    ok = call.ok();
-                                                                                }});
+            if (use_submit)
+            {
+                auto sender = RPC::request(grpc_context, *stub, client_context, request, response);
+                asio::execution::submit(std::move(sender), test::FunctionAsReceiver{[&](RPC&& rpc)
+                                                                                    {
+                                                                                        ok = rpc.ok();
+                                                                                    }});
+            }
+            else
+            {
+                auto rpc = RPC::request(grpc_context, *stub, client_context, request, response, yield);
+                ok = rpc.ok();
+            }
         });
     CHECK(ok);
     CHECK_EQ(21, response.integer());
@@ -138,13 +155,13 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest,
 //             test::msg::Request request;
 //             request.set_integer(42);
 //             using Rpc = agrpc::Rpc<&Stub::PrepareAsyncServerStreaming>;
-//             auto call = Rpc::start(grpc_context, *stub, client_context, request, yield);
-//             CHECK(a(call));
-//             agrpc::request(&Stub::PrepareAsyncServerStreaming, stub, client_context, request, call.responder, yield);
+//             auto rpc = Rpc::start(grpc_context, *stub, client_context, request, yield);
+//             CHECK(a(rpc));
+//             agrpc::request(&Stub::PrepareAsyncServerStreaming, stub, client_context, request, rpc.responder, yield);
 //             // test::msg::Response response;
 
 //             // CHECK(ok);
-//             CHECK(call.read_initial_metadata(yield));
+//             CHECK(rpc.read_initial_metadata(yield));
 //             // agrpc::Rpc<&Stub::PrepareAsyncBidirectionalStreaming>::start(grpc_context, *stub, client_context,
 //             yield);
 //             // agrpc::Rpc<&Stub::PrepareAsyncUnary>::start(grpc_context, *stub, client_context, request, yield);

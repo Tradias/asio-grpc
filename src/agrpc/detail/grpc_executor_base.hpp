@@ -30,6 +30,8 @@ template <class Allocator>
 class GrpcExecutorBase
 {
   protected:
+    GrpcExecutorBase() = default;
+
     GrpcExecutorBase(agrpc::GrpcContext* grpc_context, const Allocator& allocator) noexcept
         : impl(grpc_context, allocator)
     {
@@ -109,6 +111,8 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
     }
 
   protected:
+    GrpcExecutorWorkTrackerBase() = default;
+
     GrpcExecutorWorkTrackerBase(agrpc::GrpcContext* grpc_context, const Allocator& allocator) noexcept
         : Base(grpc_context, allocator)
     {

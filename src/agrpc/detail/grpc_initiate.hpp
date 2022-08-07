@@ -55,7 +55,9 @@ struct GrpcInitiateImplFn
     auto operator()(const detail::GrpcInitiateTemplateArgs<StopFunction>, InitiatingFunction initiating_function,
                     detail::UseSender token) const noexcept
     {
-        return detail::GrpcSender<InitiatingFunction, StopFunction>{token.grpc_context, std::move(initiating_function)};
+        return detail::BasicGrpcSenderAccess::create(
+            token.grpc_context, detail::SingleRpcStepSenderImplementation<InitiatingFunction, StopFunction>{
+                                    std::move(initiating_function)});
     }
 };
 
