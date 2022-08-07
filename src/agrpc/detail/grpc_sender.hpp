@@ -145,13 +145,13 @@ class BasicGrpcSender<Implementation>::RunningOperation
     struct Done
     {
         template <class... Args>
-        void operator()(Args&&... args)
+        void operator()(Args... args)
         {
             self_.receiver_and_stop_callback.reset_stop_callback();
             auto receiver = self_.extract_receiver_and_optionally_deallocate(local_allocator);
             if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
             {
-                detail::satisfy_receiver(std::move(receiver), std::forward<Args>(args)...);
+                detail::satisfy_receiver(std::move(receiver), static_cast<Args&&>(args)...);
             }
             else
             {

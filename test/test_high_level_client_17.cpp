@@ -34,8 +34,6 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "RPC::read_initial_metadata automa
             grpc::ServerAsyncWriter<test::msg::Response> writer{&server_context};
             CHECK(agrpc::request(&test::v1::Test::AsyncService::RequestServerStreaming, service, server_context,
                                  request, writer, yield));
-            server_context.TryCancel();
-            agrpc::finish(writer, grpc::Status::CANCELLED, yield);
         },
         [&](asio::yield_context yield)
         {
@@ -43,16 +41,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "RPC::read_initial_metadata automa
             RPC::Request request;
             auto rpc = RPC::request(grpc_context, *stub, client_context, request, yield);
             CHECK(rpc.ok());
-            // auto [responder2, ok2] = agrpc::request(&test::v1::Test::Stub::PrepareAsyncServerStreaming, stub,
-            //                                         client_context, request, yield);
-            // grpc::ClientContext context;
-            // auto [responder, ok] =
-            //     agrpc::request(&test::v1::Test::Stub::PrepareAsyncServerStreaming, stub, context, request, yield);
-            // rpc.responder = std::move(responder);
             client_context.TryCancel();
-            grpc::Alarm alarm;
-            agrpc::wait(alarm, test::hundred_milliseconds_from_now(), yield);
-            // agrpc::read_initial_metadata(responder, yield);
             CHECK_FALSE(rpc.read_initial_metadata(yield));
             CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.error_code());
         });

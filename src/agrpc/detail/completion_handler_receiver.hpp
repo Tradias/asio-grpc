@@ -36,7 +36,7 @@ class CompletionHandlerReceiver
     static void set_done() noexcept {}
 
     template <class... Args>
-    void set_value(Args&&... args)
+    void set_value(Args&&... args) &&
     {
         std::move(completion_handler_)(std::forward<Args>(args)...);
     }

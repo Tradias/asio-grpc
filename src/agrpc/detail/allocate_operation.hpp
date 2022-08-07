@@ -107,20 +107,20 @@ void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Operat
             return;
         }
     }
+    detail::StartWorkAndGuard guard{grpc_context};
     if (is_running_in_this_thread)
     {
         auto allocated_operation = detail::allocate_local_operation<NoArgOperationAllocationTraits>(
             grpc_context, std::forward<Operation>(operation));
-        grpc_context.work_started();
         detail::GrpcContextImplementation::add_local_operation(grpc_context, allocated_operation.release());
     }
     else
     {
         auto allocated_operation = detail::allocate_operation<NoArgOperationAllocationTraits::template Custom>(
             std::forward<Operation>(operation));
-        grpc_context.work_started();
         detail::GrpcContextImplementation::add_remote_operation(grpc_context, allocated_operation.release());
     }
+    guard.release();
 }
 }
 

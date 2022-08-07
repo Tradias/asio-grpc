@@ -18,6 +18,7 @@
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/rpc_type.hpp>
 #include <agrpc/grpc_context.hpp>
+#include <agrpc/grpc_executor.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -45,9 +46,11 @@ struct ReadInitiateMetadataSenderImplementation
             return;
         }
         is_finished = true;
+        grpc_context.work_started();
         responder.Finish(&status, on_done.self());
     }
 
+    agrpc::GrpcContext& grpc_context;
     Responder& responder;
     grpc::Status& status;
     bool is_finished{};
@@ -118,6 +121,7 @@ struct ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor>
         }
         else
         {
+            rpc.grpc_context().work_started();
             rpc.responder->Finish(&rpc.status, on_done.self());
         }
     }
