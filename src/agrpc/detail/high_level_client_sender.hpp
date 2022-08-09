@@ -17,19 +17,26 @@
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/rpc_type.hpp>
+#include <agrpc/detail/utility.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
-template <auto PrepareAsync, class Executor, detail::RpcType = detail::RPC_TYPE<PrepareAsync>>
+template <auto PrepareAsync, class Executor = agrpc::GrpcExecutor, agrpc::RPCType = detail::RPC_TYPE<PrepareAsync>>
 class BasicRPC;
 
 namespace detail
 {
 template <class Responder>
-struct ReadInitiateMetadataSenderImplementation
+struct ReadInitiateMetadataSenderImplementation : detail::DefaultGrpcSenderTraits
 {
+    ReadInitiateMetadataSenderImplementation(agrpc::GrpcContext& grpc_context, Responder& responder,
+                                             grpc::Status& status)
+        : grpc_context(grpc_context), responder(responder), status(status)
+    {
+    }
+
     void initiate(const agrpc::GrpcContext&, void* self) noexcept { responder.ReadInitialMetadata(self); }
 
     template <class OnDone>
@@ -61,9 +68,9 @@ struct ClientUnaryRequestSenderImplementation;
 
 template <class Stub, class Request, class Response, template <class> class Responder,
           detail::ClientUnaryRequest<Stub, Request, Responder<Response>> PrepareAsync, class Executor>
-struct ClientUnaryRequestSenderImplementation<PrepareAsync, Executor>
+struct ClientUnaryRequestSenderImplementation<PrepareAsync, Executor> : detail::DefaultGrpcSenderTraits
 {
-    using RPC = agrpc::BasicRPC<PrepareAsync, Executor, detail::RpcType::CLIENT_UNARY>;
+    using RPC = agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>;
     using Signature = void(RPC);
 
     ClientUnaryRequestSenderImplementation(agrpc::GrpcContext& grpc_context, Stub& stub,
@@ -78,7 +85,7 @@ struct ClientUnaryRequestSenderImplementation<PrepareAsync, Executor>
     void initiate(const agrpc::GrpcContext&, void* self) noexcept
     {
         responder->StartCall();
-        responder->Finish(&response, &rpc.status, self);
+        responder->Finish(&response, &rpc.status(), self);
     }
 
     template <class OnDone>
@@ -98,9 +105,9 @@ struct ClientServerStreamingRequestSenderImplementation;
 template <class Stub, class Request, class Response, template <class> class Responder,
           detail::PrepareAsyncClientServerStreamingRequest<Stub, Request, Responder<Response>> PrepareAsync,
           class Executor>
-struct ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor>
+struct ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor> : detail::DefaultGrpcSenderTraits
 {
-    using RPC = agrpc::BasicRPC<PrepareAsync, Executor, detail::RpcType::CLIENT_SERVER_STREAMING>;
+    using RPC = agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>;
     using Signature = void(RPC);
 
     ClientServerStreamingRequestSenderImplementation(agrpc::GrpcContext& grpc_context, Stub& stub,
@@ -122,7 +129,7 @@ struct ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor>
         else
         {
             rpc.grpc_context().work_started();
-            rpc.responder->Finish(&rpc.status, on_done.self());
+            rpc.responder->Finish(&rpc.status(), on_done.self());
         }
     }
 

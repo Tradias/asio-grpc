@@ -210,6 +210,7 @@ using ::unifex::set_error;
 using ::unifex::set_value;
 using ::unifex::start;
 using ::unifex::stop_token_type_t;
+using ::unifex::unstoppable_token;
 
 template <class T, class = void>
 inline constexpr bool HAS_GET_SCHEDULER = false;

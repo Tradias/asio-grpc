@@ -17,20 +17,13 @@
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
+#include <agrpc/rpc_type.hpp>
 #include <grpcpp/support/async_stream.h>
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-enum class RpcType
-{
-    CLIENT_UNARY,
-    CLIENT_SERVER_STREAMING,
-    CLIENT_CLIENT_STREAMING,
-    CLIENT_BIDI_STREAMING
-};
-
 template <class Stub, class Request, class Responder>
 using ClientUnaryRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*, const Request&,
                                                                 grpc::CompletionQueue*);
@@ -69,25 +62,25 @@ using ServerSingleArgRequest = void (Service::*)(grpc::ServerContext*, Responder
                                                  grpc::ServerCompletionQueue*, void*);
 
 template <auto PrepareAsync>
-inline constexpr auto RPC_TYPE = RpcType::CLIENT_UNARY;
+inline constexpr auto RPC_TYPE = agrpc::RPCType::CLIENT_UNARY;
 
-template <class Stub, class RequestT, class ResponseT,
-          std::unique_ptr<grpc::ClientAsyncReader<ResponseT>> (Stub::*PrepareAsync)(
-              grpc::ClientContext*, const RequestT&, grpc::CompletionQueue*)>
-inline constexpr auto RPC_TYPE<PrepareAsync> = RpcType::CLIENT_SERVER_STREAMING;
+template <class Stub, class Request, class Response,
+          std::unique_ptr<grpc::ClientAsyncReader<Response>> (Stub::*PrepareAsync)(grpc::ClientContext*, const Request&,
+                                                                                   grpc::CompletionQueue*)>
+inline constexpr auto RPC_TYPE<PrepareAsync> = agrpc::RPCType::CLIENT_SERVER_STREAMING;
 
-template <class Stub, class RequestT, class ResponseT,
-          std::unique_ptr<grpc::ClientAsyncReaderInterface<ResponseT>> (Stub::*PrepareAsync)(
-              grpc::ClientContext*, const RequestT&, grpc::CompletionQueue*)>
-inline constexpr auto RPC_TYPE<PrepareAsync> = RpcType::CLIENT_SERVER_STREAMING;
+template <class Stub, class Request, class Response,
+          std::unique_ptr<grpc::ClientAsyncReaderInterface<Response>> (Stub::*PrepareAsync)(
+              grpc::ClientContext*, const Request&, grpc::CompletionQueue*)>
+inline constexpr auto RPC_TYPE<PrepareAsync> = agrpc::RPCType::CLIENT_SERVER_STREAMING;
 
 template <class Stub, class Request, class Response, template <class> class Writer,
-          detail::PrepareAsyncClientClientStreamingRequest<Stub, Request, Writer<Response>> PrepareAsync>
-inline constexpr auto RPC_TYPE<PrepareAsync> = RpcType::CLIENT_CLIENT_STREAMING;
+          detail::PrepareAsyncClientClientStreamingRequest<Stub, Writer<Request>, Response> PrepareAsync>
+inline constexpr auto RPC_TYPE<PrepareAsync> = agrpc::RPCType::CLIENT_CLIENT_STREAMING;
 
 template <class Stub, class Request, class Response, template <class, class> class ReaderWriter,
           detail::PrepareAsyncClientBidirectionalStreamingRequest<Stub, ReaderWriter<Request, Response>> PrepareAsync>
-inline constexpr auto RPC_TYPE<PrepareAsync> = RpcType::CLIENT_BIDI_STREAMING;
+inline constexpr auto RPC_TYPE<PrepareAsync> = agrpc::RPCType::CLIENT_BIDI_STREAMING;
 }
 
 AGRPC_NAMESPACE_END

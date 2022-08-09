@@ -15,102 +15,34 @@
 #ifndef AGRPC_DETAIL_SCHEDULE_SENDER_HPP
 #define AGRPC_DETAIL_SCHEDULE_SENDER_HPP
 
-#include <agrpc/bind_allocator.hpp>
-#include <agrpc/detail/allocate_operation.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
-#include <agrpc/detail/receiver.hpp>
-#include <agrpc/detail/sender_of.hpp>
-#include <agrpc/detail/utility.hpp>
-#include <agrpc/grpc_context.hpp>
+#include <agrpc/detail/grpc_sender.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-class ScheduleSender : public detail::SenderOf<>
+struct ScheduleSenderImplementation
 {
-  private:
-    template <class Receiver>
-    class Operation : private detail::TypeErasedNoArgOperation
+    static constexpr auto TYPE = detail::SenderImplementationType::NO_ARG;
+
+    using Signature = void();
+    using StopFunction = detail::Empty;
+
+    void initiate(agrpc::GrpcContext& grpc_context, detail::TypeErasedNoArgOperation* self)
     {
-      public:
-        void start() noexcept
-        {
-            if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(this->grpc_context()))
-            {
-                detail::exec::set_done(std::move(this->receiver()));
-                return;
-            }
-            this->grpc_context().work_started();
-            detail::GrpcContextImplementation::add_operation(this->grpc_context(), this);
-        }
-
-      private:
-        friend ScheduleSender;
-
-        template <class R>
-        Operation(const ScheduleSender& sender, R&& receiver)
-            : detail::TypeErasedNoArgOperation(&Operation::on_complete),
-              impl(sender.grpc_context, std::forward<R>(receiver))
-        {
-        }
-
-        static void on_complete(detail::TypeErasedNoArgOperation* op, detail::InvokeHandler invoke_handler,
-                                detail::GrpcContextLocalAllocator) noexcept
-        {
-            auto& self = *static_cast<Operation*>(op);
-            if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
-            {
-                detail::satisfy_receiver(std::move(self.receiver()));
-            }
-            else
-            {
-                detail::exec::set_done(std::move(self.receiver()));
-            }
-        }
-
-        agrpc::GrpcContext& grpc_context() noexcept { return impl.first(); }
-
-        Receiver& receiver() noexcept { return impl.second(); }
-
-        detail::CompressedPair<agrpc::GrpcContext&, Receiver> impl;
-    };
-
-  public:
-    template <class Receiver>
-    auto connect(Receiver&& receiver) const noexcept(detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver>)
-        -> Operation<detail::RemoveCrefT<Receiver>>
-    {
-        return {*this, std::forward<Receiver>(receiver)};
+        detail::GrpcContextImplementation::add_operation(grpc_context, self);
     }
 
-    template <class Receiver>
-    void submit(Receiver&& receiver) const
+    template <class OnDone>
+    void done(OnDone on_done)
     {
-        if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(this->grpc_context))
-        {
-            detail::exec::set_done(std::forward<Receiver>(receiver));
-            return;
-        }
-        auto allocator = detail::exec::get_allocator(receiver);
-        detail::create_and_submit_no_arg_operation<true>(
-            this->grpc_context, agrpc::AllocatorBinder(allocator,
-                                                       [receiver = std::forward<Receiver>(receiver)]() mutable
-                                                       {
-                                                           detail::satisfy_receiver(std::move(receiver));
-                                                       }));
+        on_done();
     }
-
-  private:
-    explicit ScheduleSender(agrpc::GrpcContext& grpc_context) noexcept : grpc_context(grpc_context) {}
-
-    template <class Allocator, std::uint32_t Options>
-    friend class agrpc::BasicGrpcExecutor;
-
-    agrpc::GrpcContext& grpc_context;
 };
+
+using ScheduleSender = detail::BasicGrpcSender<detail::ScheduleSenderImplementation>;
 }
 
 AGRPC_NAMESPACE_END

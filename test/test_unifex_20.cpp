@@ -16,6 +16,7 @@
 #include "utils/asio_forward.hpp"
 #include "utils/asio_utils.hpp"
 #include "utils/client_context.hpp"
+#include "utils/delete_guard.hpp"
 #include "utils/doctest.hpp"
 #include "utils/grpc_client_server_test.hpp"
 #include "utils/grpc_context_test.hpp"
@@ -70,18 +71,22 @@ TEST_CASE("unifex asio-grpc fulfills unified executor concepts")
 TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::schedule")
 {
     bool is_invoked{false};
-    auto sender = unifex::schedule(get_executor());
+    test::DeleteGuard guard{};
+    const auto sender = unifex::schedule(get_executor());
     test::StatefulReceiverState state;
     test::FunctionAsStatefulReceiver receiver{[&]
                                               {
                                                   is_invoked = true;
                                               },
                                               state};
-    std::optional<unifex::connect_result_t<decltype(sender), decltype(receiver)>> operation_state;
     SUBCASE("connect")
     {
-        operation_state.emplace(unifex::connect(sender, receiver));
-        unifex::start(*operation_state);
+        auto& operation_state = guard.emplace_with(
+            [&]
+            {
+                return unifex::connect(sender, receiver);
+            });
+        unifex::start(operation_state);
     }
     SUBCASE("submit") { unifex::submit(sender, receiver); }
     CHECK_FALSE(is_invoked);

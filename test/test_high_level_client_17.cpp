@@ -14,76 +14,138 @@
 
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asio_utils.hpp"
+#include "utils/delete_guard.hpp"
 #include "utils/doctest.hpp"
 #include "utils/grpc_client_server_test.hpp"
 #include "utils/rpc.hpp"
+#include "utils/test_server.hpp"
 #include "utils/time.hpp"
 
 #include <agrpc/high_level_client.hpp>
 #include <agrpc/wait.hpp>
 
-TEST_CASE_FIXTURE(test::GrpcClientServerTest, "RPC::read_initial_metadata automatically finishes RPC on error")
+TYPE_TO_STRING(agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncUnary>);
+TYPE_TO_STRING(agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncClientStreaming>);
+TYPE_TO_STRING(agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncServerStreaming>);
+TYPE_TO_STRING(agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncBidirectionalStreaming>);
+
+using UnaryRPC = agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncUnary>;
+using ClientStreamingRPC = agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncClientStreaming>;
+using ServerStreamingRPC = agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncServerStreaming>;
+using BidiStreamingRPC = agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncBidirectionalStreaming>;
+
+template <class RPC>
+struct IntrospectRPC;
+
+template <auto PrepareAsync, class Executor>
+struct IntrospectRPC<agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>>
 {
-    test::spawn_and_run(
-        grpc_context,
+    static constexpr auto CLIENT_REQUEST = PrepareAsync;
+    static constexpr auto SERVER_REQUEST = &test::v1::Test::AsyncService::RequestUnary;
+
+    using RPC = agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>;
+
+    template <class Stub, class CompletionToken>
+    static auto request(agrpc::GrpcContext& grpc_context, Stub& stub, grpc::ClientContext& context,
+                        const typename RPC::Request& request, const typename RPC::Response&, CompletionToken&& token)
+    {
+        return RPC::request(grpc_context, stub, context, request, token);
+    }
+};
+
+template <auto PrepareAsync, class Executor>
+struct IntrospectRPC<agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>>
+{
+    static constexpr auto CLIENT_REQUEST = PrepareAsync;
+    static constexpr auto SERVER_REQUEST = &test::v1::Test::AsyncService::RequestServerStreaming;
+
+    using RPC = agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>;
+
+    template <class Stub, class CompletionToken>
+    static auto request(agrpc::GrpcContext& grpc_context, Stub& stub, grpc::ClientContext& context,
+                        const typename RPC::Request& request, typename RPC::Response&, CompletionToken&& token)
+    {
+        return RPC::request(grpc_context, stub, context, request, token);
+    }
+};
+
+template <class RPC>
+struct HighLevelClientTest : test::GrpcClientServerTest
+{
+    static constexpr auto SERVER_REQUEST = IntrospectRPC<RPC>::SERVER_REQUEST;
+
+    template <class... Functions>
+    void spawn_and_run(Functions&&... functions)
+    {
+        (asio::spawn(grpc_context, std::forward<Functions>(functions)), ...);
+        grpc_context.run();
+    }
+
+    template <class CompletionToken>
+    auto request_rpc(CompletionToken&& token)
+    {
+        return IntrospectRPC<RPC>::request(grpc_context, *stub, client_context, request, response, token);
+    }
+
+    typename RPC::Request request;
+    typename RPC::Response response;
+    test::TestServer<SERVER_REQUEST> test_server{service, server_context};
+};
+
+TEST_CASE_TEMPLATE("RPC::read_initial_metadata automatically finishes RPC on error", RPC, ServerStreamingRPC)
+{
+    HighLevelClientTest<RPC> test;
+    test.spawn_and_run(
         [&](asio::yield_context yield)
         {
-            test::msg::Request request;
-            grpc::ServerAsyncWriter<test::msg::Response> writer{&server_context};
-            CHECK(agrpc::request(&test::v1::Test::AsyncService::RequestServerStreaming, service, server_context,
-                                 request, writer, yield));
+            CHECK(test.test_server.request_rpc(yield));
         },
         [&](asio::yield_context yield)
         {
-            using RPC = agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncServerStreaming>;
-            RPC::Request request;
-            auto rpc = RPC::request(grpc_context, *stub, client_context, request, yield);
+            auto rpc = test.request_rpc(yield);
             CHECK(rpc.ok());
-            client_context.TryCancel();
+            test.client_context.TryCancel();
             CHECK_FALSE(rpc.read_initial_metadata(yield));
             CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.error_code());
         });
 }
 
-TEST_CASE_FIXTURE(test::GrpcClientServerTest,
-                  "RPC::read_initial_metadata can have UseSender as default completion token")
+TEST_CASE_FIXTURE(HighLevelClientTest<UnaryRPC>, "RPC::request can have UseSender as default completion token")
 {
-    using RPC = agrpc::UseSender::as_default_on_t<
-        agrpc::BasicRPC<&test::v1::Test::Stub::PrepareAsyncUnary, agrpc::GrpcExecutor>>;
+    using RPC = agrpc::UseSender::as_default_on_t<agrpc::BasicRPC<&test::v1::Test::Stub::PrepareAsyncUnary>>;
     bool ok{};
-    RPC::Response response;
+    test::DeleteGuard guard{};
     bool use_submit{};
     SUBCASE("submit") { use_submit = true; }
-    SUBCASE("yield") {}
-    test::spawn_and_run(
-        grpc_context,
+    SUBCASE("start") {}
+    spawn_and_run(
         [&](asio::yield_context yield)
         {
-            test::msg::Request request;
-            grpc::ServerAsyncResponseWriter<test::msg::Response> writer{&server_context};
-            CHECK(agrpc::request(&test::v1::Test::AsyncService::RequestUnary, service, server_context, request, writer,
-                                 yield));
-            CHECK_EQ(42, request.integer());
-            test::msg::Response response;
-            response.set_integer(21);
-            CHECK(agrpc::finish(writer, response, grpc::Status::OK, yield));
+            CHECK(test_server.request_rpc(yield));
+            CHECK_EQ(42, test_server.request.integer());
+            test_server.response.set_integer(21);
+            CHECK(agrpc::finish(test_server.responder, test_server.response, grpc::Status::OK, yield));
         },
-        [&](auto&& yield)
+        [&](auto&&)
         {
-            RPC::Request request;
             request.set_integer(42);
+            auto sender = RPC::request(grpc_context, *stub, client_context, request, response);
+            const auto receiver = test::FunctionAsReceiver{[&](RPC&& rpc)
+                                                           {
+                                                               ok = rpc.ok();
+                                                           }};
             if (use_submit)
             {
-                auto sender = RPC::request(grpc_context, *stub, client_context, request, response);
-                asio::execution::submit(std::move(sender), test::FunctionAsReceiver{[&](RPC&& rpc)
-                                                                                    {
-                                                                                        ok = rpc.ok();
-                                                                                    }});
+                asio::execution::submit(std::move(sender), receiver);
             }
             else
             {
-                auto rpc = RPC::request(grpc_context, *stub, client_context, request, response, yield);
-                ok = rpc.ok();
+                auto& operation_state = guard.emplace_with(
+                    [&]
+                    {
+                        return asio::execution::connect(std::move(sender), receiver);
+                    });
+                asio::execution::start(operation_state);
             }
         });
     CHECK(ok);

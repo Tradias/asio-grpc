@@ -15,49 +15,62 @@
 #ifndef AGRPC_DETAIL_SENDER_IMPLEMENTATION_HPP
 #define AGRPC_DETAIL_SENDER_IMPLEMENTATION_HPP
 
-#include <agrpc/detail/allocate_operation.hpp>
-#include <agrpc/detail/asio_forward.hpp>
-#include <agrpc/detail/config.hpp>
-#include <agrpc/detail/forward.hpp>
-#include <agrpc/detail/receiver.hpp>
-#include <agrpc/detail/receiver_and_stop_callback.hpp>
-#include <agrpc/detail/sender_allocation_traits.hpp>
-#include <agrpc/detail/sender_of.hpp>
-#include <agrpc/grpc_context.hpp>
+#include <agrpc/detail/type_erased_operation.hpp>
+
+#include <type_traits>
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class Implementation, class Default, class = void>
-struct GetStopFunction
+enum class SenderImplementationType
+{
+    NO_ARG,
+    GRPC_TAG,
+    BOTH
+};
+
+template <class Implementation, class Default, detail::SenderImplementationType = Implementation::TYPE>
+struct GetNoArgTypeErasedBase
 {
     using Type = Default;
 };
 
 template <class Implementation, class Default>
-struct GetStopFunction<Implementation, Default, std::void_t<typename Implementation::StopFunction>>
+struct GetNoArgTypeErasedBase<Implementation, Default, detail::SenderImplementationType::NO_ARG>
 {
-    using Type = typename Implementation::StopFunction;
+    using Type = detail::TypeErasedNoArgOperation;
 };
 
 template <class Implementation, class Default>
-using GetStopFunctionT = typename detail::GetStopFunction<Implementation, Default>::Type;
+struct GetNoArgTypeErasedBase<Implementation, Default, detail::SenderImplementationType::BOTH>
+{
+    using Type = detail::TypeErasedNoArgOperation;
+};
 
-template <class Implementation, class Default, class = void>
-struct GetSignature
+template <class Implementation, class Default>
+using GetNoArgTypeErasedBaseT = typename detail::GetNoArgTypeErasedBase<Implementation, Default>::Type;
+
+template <class Implementation, class Default, detail::SenderImplementationType = Implementation::TYPE>
+struct GetGrpcTagTypeErasedBase
 {
     using Type = Default;
 };
 
 template <class Implementation, class Default>
-struct GetSignature<Implementation, Default, std::void_t<typename Implementation::Signature>>
+struct GetGrpcTagTypeErasedBase<Implementation, Default, detail::SenderImplementationType::GRPC_TAG>
 {
-    using Type = typename Implementation::Signature;
+    using Type = detail::TypeErasedGrpcTagOperation;
 };
 
 template <class Implementation, class Default>
-using GetSignatureT = typename detail::GetSignature<Implementation, Default>::Type;
+struct GetGrpcTagTypeErasedBase<Implementation, Default, detail::SenderImplementationType::BOTH>
+{
+    using Type = detail::TypeErasedGrpcTagOperation;
+};
+
+template <class Implementation, class Default>
+using GetGrpcTagTypeErasedBaseT = typename detail::GetGrpcTagTypeErasedBase<Implementation, Default>::Type;
 }
 
 AGRPC_NAMESPACE_END

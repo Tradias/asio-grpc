@@ -251,7 +251,10 @@ class BasicGrpcExecutor
      *
      * Thread-safe
      */
-    [[nodiscard]] constexpr auto schedule() const noexcept { return detail::ScheduleSender{*this->grpc_context()}; }
+    [[nodiscard]] constexpr auto schedule() const noexcept
+    {
+        return detail::BasicGrpcSenderAccess::create<detail::ScheduleSenderImplementation>(*this->grpc_context(), {});
+    }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     /**
