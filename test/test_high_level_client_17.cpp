@@ -136,10 +136,12 @@ TEST_CASE_FIXTURE(HighLevelClientTest<UnaryRPC>, "RPC::request can have UseSende
                                                            }};
             if (use_submit)
             {
+                CHECK_FALSE(asio::execution::can_submit_v<std::add_const_t<decltype(sender)>, decltype(receiver)>);
                 asio::execution::submit(std::move(sender), receiver);
             }
             else
             {
+                CHECK_FALSE(asio::execution::can_connect_v<std::add_const_t<decltype(sender)>, decltype(receiver)>);
                 auto& operation_state = guard.emplace_with(
                     [&]
                     {

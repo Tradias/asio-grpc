@@ -19,7 +19,6 @@
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/completion_handler_receiver.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/grpc_sender.hpp>
 #include <agrpc/detail/high_level_client_sender.hpp>
 #include <agrpc/detail/rpc_type.hpp>
 #include <agrpc/detail/work_tracking_completion_handler.hpp>
@@ -55,7 +54,7 @@ auto async_initiate_sender_implementation(agrpc::GrpcContext& grpc_context, Impl
                                           CompletionToken& token)
 {
     return detail::async_initiate_sender(
-        detail::BasicGrpcSenderAccess::create(grpc_context, std::forward<Implementation>(implementation)), token);
+        detail::BasicSenderAccess::create(grpc_context, std::forward<Implementation>(implementation)), token);
 }
 }
 

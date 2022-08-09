@@ -40,7 +40,7 @@ struct UseSender;
 
 namespace detail
 {
-struct BasicGrpcSenderAccess;
+struct BasicSenderAccess;
 
 class RepeatedlyRequestFn;
 

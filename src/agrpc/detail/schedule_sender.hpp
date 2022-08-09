@@ -15,9 +15,9 @@
 #ifndef AGRPC_DETAIL_SCHEDULE_SENDER_HPP
 #define AGRPC_DETAIL_SCHEDULE_SENDER_HPP
 
+#include <agrpc/detail/basic_sender.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
-#include <agrpc/detail/grpc_sender.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -30,9 +30,10 @@ struct ScheduleSenderImplementation
     using Signature = void();
     using StopFunction = detail::Empty;
 
-    void initiate(agrpc::GrpcContext& grpc_context, detail::TypeErasedNoArgOperation* self)
+    template <class OnDone>
+    void initiate(agrpc::GrpcContext& grpc_context, OnDone on_done)
     {
-        detail::GrpcContextImplementation::add_operation(grpc_context, self);
+        detail::GrpcContextImplementation::add_operation(grpc_context, on_done.self());
     }
 
     template <class OnDone>
@@ -42,7 +43,7 @@ struct ScheduleSenderImplementation
     }
 };
 
-using ScheduleSender = detail::BasicGrpcSender<detail::ScheduleSenderImplementation>;
+using ScheduleSender = detail::BasicSender<detail::ScheduleSenderImplementation>;
 }
 
 AGRPC_NAMESPACE_END

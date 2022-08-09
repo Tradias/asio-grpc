@@ -20,7 +20,6 @@
 #include <agrpc/detail/associated_completion_handler.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
-#include <agrpc/detail/grpc_sender.hpp>
 #include <agrpc/detail/grpc_submit.hpp>
 #include <agrpc/detail/query_grpc_context.hpp>
 #include <agrpc/detail/unbind.hpp>

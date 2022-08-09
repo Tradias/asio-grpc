@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_HIGH_LEVEL_CLIENT_SENDER_HPP
 
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/grpc_sender.hpp>
 #include <agrpc/detail/rpc_type.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/grpc_context.hpp>
@@ -29,7 +30,7 @@ class BasicRPC;
 namespace detail
 {
 template <class Responder>
-struct ReadInitiateMetadataSenderImplementation : detail::DefaultGrpcSenderTraits
+struct ReadInitiateMetadataSenderImplementation : detail::GrpcSenderImplementationBase
 {
     ReadInitiateMetadataSenderImplementation(agrpc::GrpcContext& grpc_context, Responder& responder,
                                              grpc::Status& status)
@@ -68,7 +69,7 @@ struct ClientUnaryRequestSenderImplementation;
 
 template <class Stub, class Request, class Response, template <class> class Responder,
           detail::ClientUnaryRequest<Stub, Request, Responder<Response>> PrepareAsync, class Executor>
-struct ClientUnaryRequestSenderImplementation<PrepareAsync, Executor> : detail::DefaultGrpcSenderTraits
+struct ClientUnaryRequestSenderImplementation<PrepareAsync, Executor> : detail::GrpcSenderImplementationBase
 {
     using RPC = agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>;
     using Signature = void(RPC);
@@ -105,7 +106,7 @@ struct ClientServerStreamingRequestSenderImplementation;
 template <class Stub, class Request, class Response, template <class> class Responder,
           detail::PrepareAsyncClientServerStreamingRequest<Stub, Request, Responder<Response>> PrepareAsync,
           class Executor>
-struct ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor> : detail::DefaultGrpcSenderTraits
+struct ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor> : detail::GrpcSenderImplementationBase
 {
     using RPC = agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>;
     using Signature = void(RPC);
