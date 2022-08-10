@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_sender.hpp>
+#include <agrpc/detail/high_level_client.hpp>
 #include <agrpc/detail/rpc_type.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/grpc_context.hpp>
@@ -29,40 +30,17 @@ class BasicRPC;
 
 namespace detail
 {
-template <class Responder>
-struct ReadInitiateMetadataSenderImplementation : detail::GrpcSenderImplementationBase
+struct GenericRPCTypes
 {
-    ReadInitiateMetadataSenderImplementation(agrpc::GrpcContext& grpc_context, Responder& responder,
-                                             grpc::Status& status)
-        : grpc_context(grpc_context), responder(responder), status(status)
-    {
-    }
+    using Unary = std::unique_ptr<grpc::GenericClientAsyncResponseReader> (grpc::GenericStub::*)(
+        grpc::ClientContext*, const grpc::ByteBuffer&, grpc::CompletionQueue*);
 
-    void initiate(const agrpc::GrpcContext&, void* self) noexcept { responder.ReadInitialMetadata(self); }
-
-    template <class OnDone>
-    void done(OnDone on_done, bool ok)
-    {
-        if (is_finished)
-        {
-            on_done(false);
-            return;
-        }
-        if (ok)
-        {
-            on_done(ok);
-            return;
-        }
-        is_finished = true;
-        grpc_context.work_started();
-        responder.Finish(&status, on_done.self());
-    }
-
-    agrpc::GrpcContext& grpc_context;
-    Responder& responder;
-    grpc::Status& status;
-    bool is_finished{};
+    using Streaming = std::unique_ptr<grpc::GenericClientAsyncReaderWriter> (grpc::GenericStub::*)(
+        grpc::ClientContext*, grpc::CompletionQueue*);
 };
+
+static constexpr GenericRPCTypes::Unary GENERIC_UNARY_RPC{};
+static constexpr GenericRPCTypes::Streaming GENERIC_STREAMING_RPC{};
 
 template <auto PrepareAsync, class Executor>
 struct ClientUnaryRequestSenderImplementation;
@@ -74,19 +52,23 @@ struct ClientUnaryRequestSenderImplementation<PrepareAsync, Executor> : detail::
     using RPC = agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>;
     using Signature = void(RPC);
 
+    struct Initiation
+    {
+        Response& response;
+    };
+
     ClientUnaryRequestSenderImplementation(agrpc::GrpcContext& grpc_context, Stub& stub,
-                                           grpc::ClientContext& client_context, const Request& req,
-                                           Response& response) noexcept
-        : response(response),
-          rpc(grpc_context.get_executor()),
+                                           grpc::ClientContext& client_context, const Request& req) noexcept
+        : rpc(grpc_context.get_executor()),
           responder((stub.*PrepareAsync)(&client_context, req, grpc_context.get_completion_queue()))
     {
     }
 
-    void initiate(const agrpc::GrpcContext&, void* self) noexcept
+    template <class OnDone>
+    void initiate(const agrpc::GrpcContext&, OnDone on_done) noexcept
     {
         responder->StartCall();
-        responder->Finish(&response, &rpc.status(), self);
+        responder->Finish(&on_done->response, &rpc.status(), on_done.self());
     }
 
     template <class OnDone>
@@ -95,9 +77,82 @@ struct ClientUnaryRequestSenderImplementation<PrepareAsync, Executor> : detail::
         on_done(std::move(rpc));
     }
 
-    Response& response;
     RPC rpc;
     std::unique_ptr<Responder<Response>> responder;
+};
+
+template <class Executor>
+struct GenericClientUnaryRequestSenderImplementation : detail::GrpcSenderImplementationBase
+{
+    using RPC = agrpc::BasicRPC<detail::GENERIC_UNARY_RPC, Executor, agrpc::RPCType::CLIENT_UNARY>;
+    using Signature = void(RPC);
+
+    struct Initiation
+    {
+        grpc::ByteBuffer& response;
+    };
+
+    GenericClientUnaryRequestSenderImplementation(agrpc::GrpcContext& grpc_context, const std::string& method,
+                                                  grpc::GenericStub& stub, grpc::ClientContext& client_context,
+                                                  const grpc::ByteBuffer& req) noexcept
+        : rpc(grpc_context.get_executor()),
+          responder(stub.PrepareUnaryCall(&client_context, method, req, grpc_context.get_completion_queue()))
+    {
+    }
+
+    template <class OnDone>
+    void initiate(const agrpc::GrpcContext&, OnDone on_done) noexcept
+    {
+        responder->StartCall();
+        responder->Finish(&on_done->response, &rpc.status(), on_done.self());
+    }
+
+    template <class OnDone>
+    void done(OnDone on_done, bool)
+    {
+        on_done(std::move(rpc));
+    }
+
+    RPC rpc;
+    std::unique_ptr<grpc::GenericClientAsyncResponseReader> responder;
+};
+
+template <auto PrepareAsync, class Executor>
+struct ClientClientStreamingRequestSenderImplementation;
+
+template <class Stub, class Request, class Response, template <class> class Responder,
+          detail::PrepareAsyncClientClientStreamingRequest<Stub, Responder<Request>, Response> PrepareAsync,
+          class Executor>
+struct ClientClientStreamingRequestSenderImplementation<PrepareAsync, Executor> : detail::GrpcSenderImplementationBase
+{
+    using RPC = agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>;
+    using Signature = void(RPC);
+    using Initiation = detail::Empty;
+
+    ClientClientStreamingRequestSenderImplementation(agrpc::GrpcContext& grpc_context, Stub& stub,
+                                                     grpc::ClientContext& client_context, Response& response) noexcept
+        : rpc(grpc_context.get_executor())
+    {
+        rpc.responder() = (stub.*PrepareAsync)(&client_context, &response, grpc_context.get_completion_queue());
+    }
+
+    void initiate(const agrpc::GrpcContext&, void* self) noexcept { rpc.responder()->StartCall(self); }
+
+    template <class OnDone>
+    void done(OnDone on_done, bool ok)
+    {
+        if (ok)
+        {
+            on_done(std::move(rpc));
+        }
+        else
+        {
+            rpc.grpc_context().work_started();
+            rpc.responder()->Finish(&rpc.status(), on_done.self());
+        }
+    }
+
+    RPC rpc;
 };
 
 template <auto PrepareAsync, class Executor>
@@ -110,15 +165,16 @@ struct ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor> 
 {
     using RPC = agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>;
     using Signature = void(RPC);
+    using Initiation = detail::Empty;
 
     ClientServerStreamingRequestSenderImplementation(agrpc::GrpcContext& grpc_context, Stub& stub,
                                                      grpc::ClientContext& client_context, const Request& req) noexcept
         : rpc(grpc_context.get_executor())
     {
-        rpc.responder = (stub.*PrepareAsync)(&client_context, req, grpc_context.get_completion_queue());
+        rpc.responder() = (stub.*PrepareAsync)(&client_context, req, grpc_context.get_completion_queue());
     }
 
-    void initiate(const agrpc::GrpcContext&, void* self) noexcept { rpc.responder->StartCall(self); }
+    void initiate(const agrpc::GrpcContext&, void* self) noexcept { rpc.responder()->StartCall(self); }
 
     template <class OnDone>
     void done(OnDone on_done, bool ok)
@@ -130,11 +186,132 @@ struct ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor> 
         else
         {
             rpc.grpc_context().work_started();
-            rpc.responder->Finish(&rpc.status(), on_done.self());
+            rpc.responder()->Finish(&rpc.status(), on_done.self());
         }
     }
 
     RPC rpc;
+};
+
+template <class BasicRPCBase>
+struct ReadInitiateMetadataSenderImplementation : detail::GrpcSenderImplementationBase
+{
+    using Initiation = detail::Empty;
+
+    ReadInitiateMetadataSenderImplementation(BasicRPCBase& rpc) : rpc(rpc) {}
+
+    void initiate(const agrpc::GrpcContext&, void* self) noexcept { rpc.responder()->ReadInitialMetadata(self); }
+
+    template <class OnDone>
+    void done(OnDone on_done, bool ok)
+    {
+        if (is_finished)
+        {
+            on_done(false);
+            return;
+        }
+        if (ok)
+        {
+            on_done(true);
+            return;
+        }
+        is_finished = true;
+        rpc.grpc_context().work_started();
+        rpc.responder()->Finish(&rpc.status(), on_done.self());
+    }
+
+    BasicRPCBase& rpc;
+    bool is_finished{};
+};
+
+template <class Request, class Responder, class Executor>
+struct ReadServerStreamingSenderImplementation;
+
+template <class Request, template <class> class Responder, class Response, class Executor>
+struct ReadServerStreamingSenderImplementation<Request, Responder<Response>, Executor>
+    : detail::GrpcSenderImplementationBase
+{
+    using RPC = detail::BasicRPCClientServerStreamingBase<Request, Responder<Response>, Executor>;
+
+    struct Initiation
+    {
+        Response& response;
+    };
+
+    ReadServerStreamingSenderImplementation(RPC& rpc) : rpc(rpc) {}
+
+    template <class OnDone>
+    void initiate(const agrpc::GrpcContext&, OnDone on_done) noexcept
+    {
+        rpc.responder()->Read(&on_done->response, on_done.self());
+    }
+
+    template <class OnDone>
+    void done(OnDone on_done, bool ok)
+    {
+        if (is_finished)
+        {
+            on_done(false);
+            return;
+        }
+        if (ok)
+        {
+            on_done(true);
+            return;
+        }
+        is_finished = true;
+        rpc.grpc_context().work_started();
+        rpc.responder()->Finish(&rpc.status(), on_done.self());
+    }
+
+    RPC& rpc;
+    bool is_finished{};
+};
+
+template <class Responder, class Response, class Executor>
+struct WriteClientStreamingSenderImplementation;
+
+template <class Request, template <class> class Responder, class Response, class Executor>
+struct WriteClientStreamingSenderImplementation<Responder<Request>, Response, Executor>
+    : detail::GrpcSenderImplementationBase
+{
+    using RPC = detail::BasicRPCClientClientStreamingBase<Response, Responder<Request>, Executor>;
+
+    struct Initiation
+    {
+        const Request& req;
+        grpc::WriteOptions options;
+    };
+
+    WriteClientStreamingSenderImplementation(RPC& rpc) : rpc(rpc) {}
+
+    template <class OnDone>
+    void initiate(const agrpc::GrpcContext&, OnDone on_done) noexcept
+    {
+        auto& [req, options] = on_done.initiation();
+        rpc.responder()->Write(req, options, on_done.self());
+    }
+
+    template <class OnDone>
+    void done(OnDone on_done, bool ok)
+    {
+        if (is_finished)
+        {
+            on_done(false);
+            return;
+        }
+        if (ok)
+        {
+            on_done(true);
+            return;
+        }
+        is_finished = true;
+        rpc.grpc_context().work_started();
+        rpc.responder()->Finish(&rpc.status(), on_done.self());
+    }
+
+    RPC& rpc;
+    bool is_finished{};
 };
 }
 

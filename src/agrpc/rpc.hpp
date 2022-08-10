@@ -501,14 +501,14 @@ struct RequestFn
      * it is not going to the wire. This would happen if the channel is either permanently broken or transiently broken
      * but with the fail-fast option.
      */
-    template <class ReaderWriter, class CompletionToken = agrpc::DefaultCompletionToken>
+    template <class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(const std::string& method, grpc::GenericStub& stub, grpc::ClientContext& client_context,
-                    std::unique_ptr<ReaderWriter>& reader_writer, CompletionToken&& token = {}) const
+                    std::unique_ptr<grpc::GenericClientAsyncReaderWriter>& reader_writer,
+                    CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
-            detail::ClientGenericStreamingRequestInitFunction<ReaderWriter>{method, stub, client_context,
-                                                                            reader_writer},
+            detail::ClientGenericStreamingRequestInitFunction{method, stub, client_context, reader_writer},
             std::forward<CompletionToken>(token));
     }
 };

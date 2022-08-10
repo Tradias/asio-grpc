@@ -95,6 +95,7 @@ if(ASIO_GRPC_BUILD_TESTS AND ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpc_initiator.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpc_sender.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpc_submit.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/high_level_client.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/high_level_client_sender.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/intrusive_queue.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/intrusive_queue_hook.hpp"

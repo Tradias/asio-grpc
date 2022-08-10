@@ -31,30 +31,32 @@ struct GrpcSenderImplementationBase
 };
 
 template <class InitiatingFunction, class StopFunctionT>
-struct SingleRpcStepSenderImplementation : detail::GrpcSenderImplementationBase
+struct GrpcSenderImplementation : detail::GrpcSenderImplementationBase
 {
     using StopFunction = StopFunctionT;
 
-    explicit SingleRpcStepSenderImplementation(InitiatingFunction&& initiating_function)
-        : initiating_function(std::move(initiating_function))
+    struct Initiation
     {
+        auto create_stop_function() noexcept { return StopFunction{initiating_function}; }
+
+        InitiatingFunction initiating_function;
+    };
+
+    template <class OnDone>
+    void initiate(agrpc::GrpcContext& grpc_context, OnDone on_done)
+    {
+        on_done->initiating_function(grpc_context, on_done.self());
     }
-
-    auto create_stop_function() noexcept { return StopFunction{initiating_function}; }
-
-    void initiate(agrpc::GrpcContext& grpc_context, void* self) { initiating_function(grpc_context, self); }
 
     template <class OnDone>
     void done(OnDone on_done, bool ok)
     {
         on_done(ok);
     }
-
-    InitiatingFunction initiating_function;
 };
 
 template <class InitiatingFunction, class StopFunction = detail::Empty>
-using GrpcSender = detail::BasicSender<detail::SingleRpcStepSenderImplementation<InitiatingFunction, StopFunction>>;
+using GrpcSender = detail::BasicSender<detail::GrpcSenderImplementation<InitiatingFunction, StopFunction>>;
 }
 
 AGRPC_NAMESPACE_END

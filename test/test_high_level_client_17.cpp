@@ -17,6 +17,7 @@
 #include "utils/delete_guard.hpp"
 #include "utils/doctest.hpp"
 #include "utils/grpc_client_server_test.hpp"
+#include "utils/protobuf.hpp"
 #include "utils/rpc.hpp"
 #include "utils/test_server.hpp"
 #include "utils/time.hpp"
@@ -47,9 +48,25 @@ struct IntrospectRPC<agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLI
 
     template <class Stub, class CompletionToken>
     static auto request(agrpc::GrpcContext& grpc_context, Stub& stub, grpc::ClientContext& context,
-                        const typename RPC::Request& request, const typename RPC::Response&, CompletionToken&& token)
+                        const typename RPC::Request& request, typename RPC::Response& response, CompletionToken&& token)
     {
-        return RPC::request(grpc_context, stub, context, request, token);
+        return RPC::request(grpc_context, stub, context, request, response, token);
+    }
+};
+
+template <auto PrepareAsync, class Executor>
+struct IntrospectRPC<agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>>
+{
+    static constexpr auto CLIENT_REQUEST = PrepareAsync;
+    static constexpr auto SERVER_REQUEST = &test::v1::Test::AsyncService::RequestClientStreaming;
+
+    using RPC = agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>;
+
+    template <class Stub, class CompletionToken>
+    static auto request(agrpc::GrpcContext& grpc_context, Stub& stub, grpc::ClientContext& context,
+                        const typename RPC::Request&, typename RPC::Response& response, CompletionToken&& token)
+    {
+        return RPC::request(grpc_context, stub, context, response, token);
     }
 };
 
@@ -63,7 +80,7 @@ struct IntrospectRPC<agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLI
 
     template <class Stub, class CompletionToken>
     static auto request(agrpc::GrpcContext& grpc_context, Stub& stub, grpc::ClientContext& context,
-                        const typename RPC::Request& request, typename RPC::Response&, CompletionToken&& token)
+                        const typename RPC::Request& request, const typename RPC::Response&, CompletionToken&& token)
     {
         return RPC::request(grpc_context, stub, context, request, token);
     }
@@ -91,6 +108,21 @@ struct HighLevelClientTest : test::GrpcClientServerTest
     typename RPC::Response response;
     test::TestServer<SERVER_REQUEST> test_server{service, server_context};
 };
+
+TEST_CASE_TEMPLATE("RPC::request automatically finishes RPC on error", RPC, UnaryRPC, ClientStreamingRPC,
+                   ServerStreamingRPC)
+{
+    HighLevelClientTest<RPC> test;
+    test.server->Shutdown();
+    test.client_context.set_deadline(test::ten_milliseconds_from_now());
+    test.request_rpc(
+        [](RPC&& rpc)
+        {
+            CHECK_FALSE(rpc.ok());
+            CHECK_EQ(grpc::StatusCode::DEADLINE_EXCEEDED, rpc.error_code());
+        });
+    test.grpc_context.run();
+}
 
 TEST_CASE_TEMPLATE("RPC::read_initial_metadata automatically finishes RPC on error", RPC, ServerStreamingRPC)
 {
@@ -152,4 +184,121 @@ TEST_CASE_FIXTURE(HighLevelClientTest<UnaryRPC>, "RPC::request can have UseSende
         });
     CHECK(ok);
     CHECK_EQ(21, response.integer());
+}
+
+TEST_CASE_FIXTURE(HighLevelClientTest<ServerStreamingRPC>, "ServerStreamingRPC::read")
+{
+    bool success{};
+    SUBCASE("success") {}
+    SUBCASE("cancel") { success = true; }
+    spawn_and_run(
+        [&](asio::yield_context yield)
+        {
+            CHECK(test_server.request_rpc(yield));
+            CHECK_EQ(42, test_server.request.integer());
+            if (success)
+            {
+                test_server.response.set_integer(1);
+                CHECK(
+                    agrpc::write_and_finish(test_server.responder, test_server.response, {}, grpc::Status::OK, yield));
+            }
+        },
+        [&](asio::yield_context yield)
+        {
+            request.set_integer(42);
+            auto rpc = ServerStreamingRPC::request(grpc_context, *stub, client_context, request, yield);
+            if (success)
+            {
+                CHECK(rpc.read(response, yield));
+                CHECK_EQ(1, response.integer());
+                CHECK_FALSE(rpc.read(response, yield));
+                CHECK(rpc.ok());
+            }
+            else
+            {
+                client_context.TryCancel();
+                CHECK_FALSE(rpc.read(response, yield));
+                CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.error_code());
+            }
+        });
+}
+
+TEST_CASE_FIXTURE(HighLevelClientTest<ClientStreamingRPC>, "ClientStreamingRPC::write")
+{
+    bool success{};
+    SUBCASE("success") {}
+    SUBCASE("cancel") { success = true; }
+    spawn_and_run(
+        [&](asio::yield_context yield)
+        {
+            CHECK(test_server.request_rpc(yield));
+            if (success)
+            {
+                CHECK(agrpc::read(test_server.responder, test_server.request, yield));
+                CHECK_EQ(42, test_server.request.integer());
+                test_server.response.set_integer(1);
+                CHECK_FALSE(agrpc::read(test_server.responder, test_server.request, yield));
+                CHECK(agrpc::finish(test_server.responder, test_server.response, grpc::Status::OK, yield));
+            }
+        },
+        [&](asio::yield_context yield)
+        {
+            auto rpc = ClientStreamingRPC::request(grpc_context, *stub, client_context, response, yield);
+            if (success)
+            {
+                request.set_integer(42);
+                grpc::WriteOptions options{};
+                CHECK(rpc.write(request, options.set_last_message(), yield));
+                CHECK(rpc.ok());
+            }
+            else
+            {
+                client_context.TryCancel();
+                CHECK_FALSE(rpc.write(request, yield));
+                CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.error_code());
+            }
+        });
+}
+
+TEST_CASE_FIXTURE(HighLevelClientTest<UnaryRPC>, "RPC::request generic unary RPC")
+{
+    constexpr auto METHOD = "/test.v1.Test/Unary";
+    bool success{};
+    SUBCASE("success") {}
+    SUBCASE("cancel") { success = true; }
+    spawn_and_run(
+        [&](asio::yield_context yield)
+        {
+            if (success)
+            {
+                CHECK(test_server.request_rpc(yield));
+                CHECK_EQ(42, test_server.request.integer());
+                test_server.response.set_integer(24);
+                CHECK(agrpc::finish(test_server.responder, test_server.response, grpc::Status::OK, yield));
+            }
+        },
+        [&](asio::yield_context yield)
+        {
+            using RPC = agrpc::RPC<agrpc::GENERIC_UNARY_RPC>;
+            grpc::GenericStub generic_stub{channel};
+            request.set_integer(42);
+            auto request_buf = test::message_to_grpc_buffer(request);
+            grpc::ByteBuffer response_buf;
+            if (success)
+            {
+                auto rpc =
+                    RPC::request(grpc_context, METHOD, generic_stub, client_context, request_buf, response_buf, yield);
+                CHECK(rpc.ok());
+                response = test::grpc_buffer_to_message<decltype(response)>(response_buf);
+                CHECK_EQ(24, response.integer());
+            }
+            else
+            {
+                client_context.set_deadline(test::now());
+                auto rpc =
+                    RPC::request(grpc_context, METHOD, generic_stub, client_context, request_buf, response_buf, yield);
+                CHECK_FALSE(rpc.ok());
+                CHECK_EQ(grpc::StatusCode::DEADLINE_EXCEEDED, rpc.error_code());
+            }
+        });
 }

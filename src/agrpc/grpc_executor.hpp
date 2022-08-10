@@ -253,7 +253,7 @@ class BasicGrpcExecutor
      */
     [[nodiscard]] constexpr auto schedule() const noexcept
     {
-        return detail::BasicSenderAccess::create<detail::ScheduleSenderImplementation>(*this->grpc_context(), {});
+        return detail::BasicSenderAccess::create<detail::ScheduleSenderImplementation>(*this->grpc_context(), {}, {});
     }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)

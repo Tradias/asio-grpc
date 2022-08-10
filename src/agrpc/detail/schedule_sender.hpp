@@ -18,6 +18,7 @@
 #include <agrpc/detail/basic_sender.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
+#include <agrpc/detail/utility.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -29,6 +30,7 @@ struct ScheduleSenderImplementation
 
     using Signature = void();
     using StopFunction = detail::Empty;
+    using Initiation = detail::Empty;
 
     template <class OnDone>
     void initiate(agrpc::GrpcContext& grpc_context, OnDone on_done)

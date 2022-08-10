@@ -48,10 +48,10 @@ class ReceiverAndStopCallback
 
     void reset_stop_callback() noexcept { stop_callback_.reset(); }
 
-    template <class StopToken, class Implementation>
-    void emplace_stop_callback(StopToken&& stop_token, Implementation& implementation) noexcept
+    template <class StopToken, class Initiation>
+    void emplace_stop_callback(StopToken&& stop_token, Initiation& initiation) noexcept
     {
-        stop_callback_.emplace(std::forward<StopToken>(stop_token), implementation.create_stop_function());
+        stop_callback_.emplace(std::forward<StopToken>(stop_token), initiation.create_stop_function());
     }
 
   private:
