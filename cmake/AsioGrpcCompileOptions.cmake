@@ -63,6 +63,8 @@ target_sources(asio-grpc-compile-options
 
 if(ASIO_GRPC_USE_BOOST_CONTAINER)
     target_link_libraries(asio-grpc-compile-options INTERFACE Boost::container)
+
+    target_compile_definitions(asio-grpc-compile-options INTERFACE AGRPC_USE_BOOST_CONTAINER)
 endif()
 
 # C++20 compile options

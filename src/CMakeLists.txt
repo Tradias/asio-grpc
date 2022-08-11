@@ -19,10 +19,8 @@ function(asio_grpc_create_interface_target _asio_grpc_name)
 
     target_compile_features(${_asio_grpc_name} INTERFACE cxx_std_17)
 
-    target_include_directories(
-        ${_asio_grpc_name}
-        INTERFACE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
-                  "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>" $<INSTALL_INTERFACE:include>)
+    target_include_directories(${_asio_grpc_name} INTERFACE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
+                                                            $<INSTALL_INTERFACE:include>)
 
     if(ASIO_GRPC_USE_BOOST_CONTAINER)
         set(ASIO_GRPC_MEMORY_RESOURCE_INDLUCES
@@ -94,6 +92,7 @@ if(ASIO_GRPC_BUILD_TESTS AND ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpc_submit.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/intrusive_queue.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/intrusive_queue_hook.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/memory_resource.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/memory_resource_allocator.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/one_shot_allocator.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/operation.hpp"
