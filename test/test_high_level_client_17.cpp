@@ -126,13 +126,14 @@ TEST_CASE_TEMPLATE("RPC::request automatically finishes RPC on error", RPC, Unar
     test.grpc_context.run();
 }
 
-TEST_CASE_TEMPLATE("RPC::read_initial_metadata automatically finishes RPC on error", RPC, ServerStreamingRPC)
+TEST_CASE_TEMPLATE("RPC::read_initial_metadata automatically finishes RPC on error", RPC, ClientStreamingRPC,
+                   ServerStreamingRPC)
 {
     HighLevelClientTest<RPC> test;
     test.spawn_and_run(
         [&](asio::yield_context yield)
         {
-            CHECK(test.test_server.request_rpc(yield));
+            test.test_server.request_rpc(yield);
         },
         [&](asio::yield_context yield)
         {
@@ -141,6 +142,7 @@ TEST_CASE_TEMPLATE("RPC::read_initial_metadata automatically finishes RPC on err
             test.client_context.TryCancel();
             CHECK_FALSE(rpc.read_initial_metadata(yield));
             CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.error_code());
+            test.server->Shutdown();
         });
 }
 
@@ -188,96 +190,92 @@ TEST_CASE_FIXTURE(HighLevelClientTest<UnaryRPC>, "RPC::request can have UseSende
     CHECK_EQ(21, response.integer());
 }
 
-TEST_CASE_FIXTURE(HighLevelClientTest<ServerStreamingRPC>, "ServerStreamingRPC::read")
+TEST_CASE_FIXTURE(HighLevelClientTest<ServerStreamingRPC>, "ServerStreamingRPC::read successfully")
 {
-    bool success{};
-    SUBCASE("success") {}
-    SUBCASE("cancel") { success = true; }
     spawn_and_run(
         [&](asio::yield_context yield)
         {
             CHECK(test_server.request_rpc(yield));
             CHECK_EQ(42, test_server.request.integer());
-            if (success)
-            {
-                test_server.response.set_integer(1);
-                CHECK(
-                    agrpc::write_and_finish(test_server.responder, test_server.response, {}, grpc::Status::OK, yield));
-            }
+            test_server.response.set_integer(1);
+            CHECK(agrpc::write_and_finish(test_server.responder, test_server.response, {}, grpc::Status::OK, yield));
         },
         [&](asio::yield_context yield)
         {
             request.set_integer(42);
             auto rpc = ServerStreamingRPC::request(grpc_context, *stub, client_context, request, yield);
-            if (success)
-            {
-                CHECK(rpc.read(response, yield));
-                CHECK_EQ(1, response.integer());
-                CHECK_FALSE(rpc.read(response, yield));
-                CHECK(rpc.ok());
-            }
-            else
-            {
-                client_context.TryCancel();
-                CHECK_FALSE(rpc.read(response, yield));
-                CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.error_code());
-            }
+            CHECK(rpc.read(response, yield));
+            CHECK_EQ(1, response.integer());
+            CHECK_FALSE(rpc.read(response, yield));
+            CHECK(rpc.ok());
         });
 }
 
-TEST_CASE_FIXTURE(HighLevelClientTest<ClientStreamingRPC>, "ClientStreamingRPC::write")
+TEST_CASE_FIXTURE(HighLevelClientTest<ServerStreamingRPC>, "ServerStreamingRPC::read automatically finishes on error")
 {
-    bool success{};
-    SUBCASE("success") {}
-    SUBCASE("cancel") { success = true; }
+    spawn_and_run(
+        [&](asio::yield_context yield)
+        {
+            test_server.request_rpc(yield);
+        },
+        [&](asio::yield_context yield)
+        {
+            auto rpc = ServerStreamingRPC::request(grpc_context, *stub, client_context, request, yield);
+            client_context.TryCancel();
+            CHECK_FALSE(rpc.read(response, yield));
+            CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.error_code());
+            server->Shutdown();
+        });
+}
+
+TEST_CASE_FIXTURE(HighLevelClientTest<ClientStreamingRPC>, "ClientStreamingRPC::write successfully")
+{
     spawn_and_run(
         [&](asio::yield_context yield)
         {
             CHECK(test_server.request_rpc(yield));
-            if (success)
-            {
-                CHECK(agrpc::read(test_server.responder, test_server.request, yield));
-                CHECK_EQ(42, test_server.request.integer());
-                test_server.response.set_integer(1);
-                CHECK_FALSE(agrpc::read(test_server.responder, test_server.request, yield));
-                CHECK(agrpc::finish(test_server.responder, test_server.response, grpc::Status::OK, yield));
-            }
+            CHECK(agrpc::read(test_server.responder, test_server.request, yield));
+            CHECK_EQ(42, test_server.request.integer());
+            test_server.response.set_integer(1);
+            CHECK_FALSE(agrpc::read(test_server.responder, test_server.request, yield));
+            CHECK(agrpc::finish(test_server.responder, test_server.response, grpc::Status::OK, yield));
         },
         [&](asio::yield_context yield)
         {
             auto rpc = ClientStreamingRPC::request(grpc_context, *stub, client_context, response, yield);
-            if (success)
-            {
-                request.set_integer(42);
-                grpc::WriteOptions options{};
-                CHECK(rpc.write(request, options.set_last_message(), yield));
-                CHECK(rpc.ok());
-            }
-            else
-            {
-                client_context.TryCancel();
-                CHECK_FALSE(rpc.write(request, yield));
-                CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.error_code());
-            }
+            request.set_integer(42);
+            grpc::WriteOptions options{};
+            CHECK(rpc.write(request, options.set_last_message(), yield));
+            CHECK(rpc.ok());
         });
 }
 
-TEST_CASE_FIXTURE(HighLevelClientTest<UnaryRPC>, "RPC::request generic unary RPC")
+TEST_CASE_FIXTURE(HighLevelClientTest<ClientStreamingRPC>, "ClientStreamingRPC::write automatically finishes on error")
 {
-    constexpr auto METHOD = "/test.v1.Test/Unary";
-    bool success{};
-    SUBCASE("success") {}
-    SUBCASE("cancel") { success = true; }
     spawn_and_run(
         [&](asio::yield_context yield)
         {
-            if (success)
-            {
-                CHECK(test_server.request_rpc(yield));
-                CHECK_EQ(42, test_server.request.integer());
-                test_server.response.set_integer(24);
-                CHECK(agrpc::finish(test_server.responder, test_server.response, grpc::Status::OK, yield));
-            }
+            test_server.request_rpc(yield);
+        },
+        [&](asio::yield_context yield)
+        {
+            auto rpc = ClientStreamingRPC::request(grpc_context, *stub, client_context, response, yield);
+            client_context.TryCancel();
+            CHECK_FALSE(rpc.write(request, yield));
+            CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.error_code());
+            server->Shutdown();
+        });
+}
+
+TEST_CASE_FIXTURE(HighLevelClientTest<UnaryRPC>, "RPC::request generic unary RPC successfully")
+{
+    spawn_and_run(
+        [&](asio::yield_context yield)
+        {
+            CHECK(test_server.request_rpc(yield));
+            CHECK_EQ(42, test_server.request.integer());
+            test_server.response.set_integer(24);
+            CHECK(agrpc::finish(test_server.responder, test_server.response, grpc::Status::OK, yield));
         },
         [&](asio::yield_context yield)
         {
@@ -286,21 +284,28 @@ TEST_CASE_FIXTURE(HighLevelClientTest<UnaryRPC>, "RPC::request generic unary RPC
             request.set_integer(42);
             auto request_buf = test::message_to_grpc_buffer(request);
             grpc::ByteBuffer response_buf;
-            if (success)
-            {
-                auto rpc =
-                    RPC::request(grpc_context, METHOD, generic_stub, client_context, request_buf, response_buf, yield);
-                CHECK(rpc.ok());
-                response = test::grpc_buffer_to_message<decltype(response)>(response_buf);
-                CHECK_EQ(24, response.integer());
-            }
-            else
-            {
-                client_context.set_deadline(test::now());
-                auto rpc =
-                    RPC::request(grpc_context, METHOD, generic_stub, client_context, request_buf, response_buf, yield);
-                CHECK_FALSE(rpc.ok());
-                CHECK_EQ(grpc::StatusCode::DEADLINE_EXCEEDED, rpc.error_code());
-            }
+            auto rpc = RPC::request(grpc_context, "/test.v1.Test/Unary", generic_stub, client_context, request_buf,
+                                    response_buf, yield);
+            CHECK(rpc.ok());
+            response = test::grpc_buffer_to_message<decltype(response)>(response_buf);
+            CHECK_EQ(24, response.integer());
         });
+}
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTestBase,
+                  "RPC::request generic unary RPC automatically retrieves grpc::Status on error")
+{
+    test::spawn_and_run(grpc_context,
+                        [&](asio::yield_context yield)
+                        {
+                            using RPC = agrpc::RPC<agrpc::GENERIC_UNARY_RPC>;
+                            grpc::GenericStub generic_stub{channel};
+                            grpc::ByteBuffer request_buf;
+                            grpc::ByteBuffer response_buf;
+                            client_context.set_deadline(test::now());
+                            auto rpc = RPC::request(grpc_context, "/test.v1.Test/Unary", generic_stub, client_context,
+                                                    request_buf, response_buf, yield);
+                            CHECK_FALSE(rpc.ok());
+                            CHECK_EQ(grpc::StatusCode::DEADLINE_EXCEEDED, rpc.error_code());
+                        });
 }
