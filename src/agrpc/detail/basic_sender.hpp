@@ -98,11 +98,11 @@ class BasicSender : public detail::SenderOf<typename Implementation::Signature>
         return {std::forward<Receiver>(receiver), grpc_context, initiation, std::move(implementation)};
     }
 
-    template <class Receiver, class = std::enable_if_t<std::is_copy_constructible_v<Implementation>>>
-    detail::BasicSenderOperationState<Implementation, detail::RemoveCrefT<Receiver>> connect(Receiver&& receiver) const
-        noexcept((detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver> &&
-                  std::is_nothrow_copy_constructible_v<Initiation> &&
-                  std::is_nothrow_copy_constructible_v<Implementation>))
+    template <class Receiver, class Impl = Implementation, class = std::enable_if_t<std::is_copy_constructible_v<Impl>>>
+    detail::BasicSenderOperationState<Implementation, detail::RemoveCrefT<Receiver>> connect(
+        Receiver&& receiver) const& noexcept((detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver> &&
+                                              std::is_nothrow_copy_constructible_v<Initiation> &&
+                                              std::is_nothrow_copy_constructible_v<Implementation>))
     {
         return {std::forward<Receiver>(receiver), grpc_context, initiation, implementation};
     }
@@ -115,8 +115,8 @@ class BasicSender : public detail::SenderOf<typename Implementation::Signature>
             grpc_context, starter, std::forward<Receiver>(receiver), std::move(implementation));
     }
 
-    template <class Receiver, class = std::enable_if_t<std::is_copy_constructible_v<Implementation>>>
-    void submit(Receiver&& receiver) const
+    template <class Receiver, class Impl = Implementation, class = std::enable_if_t<std::is_copy_constructible_v<Impl>>>
+    void submit(Receiver&& receiver) const&
     {
         detail::BasicSenderStarter<Initiation> starter{initiation};
         detail::allocate_operation_and_invoke<detail::BasicSenderOperationAllocationTraits<RunningOperation>>(

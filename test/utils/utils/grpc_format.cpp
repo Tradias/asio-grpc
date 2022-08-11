@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utils/grpcFormat.hpp"
+#include "utils/grpc_format.hpp"
 
 #include <doctest/doctest.h>
 #include <grpcpp/support/status_code_enum.h>
@@ -57,7 +57,9 @@ doctest::String toString(const StatusCode& value)
             return "UNAVAILABLE";
         case grpc::StatusCode::DATA_LOSS:
             return "DATA_LOSS";
+        case grpc::StatusCode::DO_NOT_USE:
+            return "DO_NOT_USE";
     }
-    return "DO_NOT_USE";
+    return "UNKNOWN";
 }
 }  // namespace grpc

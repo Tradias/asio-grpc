@@ -38,8 +38,8 @@ function(asio_grpc_add_test_main _asio_grpc_name _asio_grpc_cxx_standard)
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/doctest.hpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/free_port.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/free_port.hpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcFormat.cpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpcFormat.hpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_format.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_format.hpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/main.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/time.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/time.hpp")

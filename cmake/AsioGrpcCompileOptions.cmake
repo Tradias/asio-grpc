@@ -47,7 +47,7 @@ target_compile_options(
               /Zc:externConstexpr
               /Zc:lambda
               /Zc:throwingNew>
-              $<$<OR:$<CXX_COMPILER_ID:GNU>,$<STREQUAL:${CMAKE_CXX_COMPILER_FRONTEND_VARIANT},GNU>>:
+              $<$<OR:$<CXX_COMPILER_ID:GNU,AppleClang>,$<STREQUAL:${CMAKE_CXX_COMPILER_FRONTEND_VARIANT},GNU>>:
               -Wall
               -Wextra
               -Wno-deprecated-declarations

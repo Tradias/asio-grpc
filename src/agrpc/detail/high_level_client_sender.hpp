@@ -39,8 +39,8 @@ struct GenericRPCTypes
         grpc::ClientContext*, grpc::CompletionQueue*);
 };
 
-static constexpr GenericRPCTypes::Unary GENERIC_UNARY_RPC = nullptr;
-static constexpr GenericRPCTypes::Streaming GENERIC_STREAMING_RPC = nullptr;
+static constexpr auto GENERIC_UNARY_RPC = static_cast<GenericRPCTypes::Unary>(nullptr);
+static constexpr auto GENERIC_STREAMING_RPC = static_cast<GenericRPCTypes::Streaming>(nullptr);
 
 template <auto PrepareAsync, class Executor>
 struct ClientUnaryRequestSenderImplementation;

@@ -262,7 +262,8 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
   private:
     friend detail::ClientClientStreamingRequestSenderImplementation<PrepareAsync, Executor>;
 
-    using Base::BasicRPCClientClientStreamingBase;
+    using detail::BasicRPCClientClientStreamingBase<Response, Responder<Request>,
+                                                    Executor>::BasicRPCClientClientStreamingBase;
 };
 
 template <class Stub, class Request, class Response, template <class> class Responder,
@@ -323,7 +324,8 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>
   private:
     friend detail::ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor>;
 
-    using Base::BasicRPCClientServerStreamingBase;
+    using detail::BasicRPCClientServerStreamingBase<Request, Responder<Response>,
+                                                    Executor>::BasicRPCClientServerStreamingBase;
 };
 
 template <class Stub, class Request, class Response, template <class, class> class Responder,
@@ -352,7 +354,8 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDI_STREAMING>
   private:
     // friend detail::ClientUnaryRequestSenderImplementation<PrepareAsync, Executor>;
 
-    using Base::BasicRPCBidirectionalStreamingBase;
+    using detail::BasicRPCBidirectionalStreamingBase<Responder<Request, Response>,
+                                                     Executor>::BasicRPCBidirectionalStreamingBase;
 
     std::unique_ptr<Responder<Request, Response>> responder;
 };
