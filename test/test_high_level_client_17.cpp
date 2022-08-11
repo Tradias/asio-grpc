@@ -119,7 +119,9 @@ TEST_CASE_TEMPLATE("RPC::request automatically finishes RPC on error", RPC, Unar
         [](RPC&& rpc)
         {
             CHECK_FALSE(rpc.ok());
-            CHECK_EQ(grpc::StatusCode::DEADLINE_EXCEEDED, rpc.error_code());
+            CHECK_MESSAGE((grpc::StatusCode::DEADLINE_EXCEEDED == rpc.error_code() ||
+                           grpc::StatusCode::UNAVAILABLE == rpc.error_code()),
+                          rpc.error_code());
         });
     test.grpc_context.run();
 }

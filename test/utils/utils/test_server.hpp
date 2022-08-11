@@ -36,8 +36,8 @@ struct TestServer<&test::v1::Test::AsyncService::RequestUnary>
 
     test::v1::Test::AsyncService& service;
     grpc::ServerContext& server_context;
-    test::msg::Request request;
-    test::msg::Response response;
+    test::msg::Request request{};
+    test::msg::Response response{};
     grpc::ServerAsyncResponseWriter<test::msg::Response> responder{&server_context};
 };
 
@@ -53,8 +53,8 @@ struct TestServer<&test::v1::Test::AsyncService::RequestClientStreaming>
 
     test::v1::Test::AsyncService& service;
     grpc::ServerContext& server_context;
-    test::msg::Request request;
-    test::msg::Response response;
+    test::msg::Request request{};
+    test::msg::Response response{};
     grpc::ServerAsyncReader<test::msg::Response, test::msg::Request> responder{&server_context};
 };
 
@@ -71,8 +71,8 @@ struct TestServer<&test::v1::Test::AsyncService::RequestServerStreaming>
 
     test::v1::Test::AsyncService& service;
     grpc::ServerContext& server_context;
-    test::msg::Request request;
-    test::msg::Response response;
+    test::msg::Request request{};
+    test::msg::Response response{};
     grpc::ServerAsyncWriter<test::msg::Response> responder{&server_context};
 };
 
@@ -88,8 +88,8 @@ struct TestServer<&test::v1::Test::AsyncService::RequestBidirectionalStreaming>
 
     test::v1::Test::AsyncService& service;
     grpc::ServerContext& server_context;
-    test::msg::Request request;
-    test::msg::Response response;
+    test::msg::Request request{};
+    test::msg::Response response{};
     grpc::ServerAsyncReaderWriter<test::msg::Request, test::msg::Response> responder{&server_context};
 };
 }

@@ -192,8 +192,8 @@ class BasicSender<Implementation>::RunningOperation
         template <class... Args>
         void operator()(Args... args)
         {
-            self_.reset_stop_callback();
-            auto receiver = self_.extract_receiver_and_optionally_deallocate(grpc_context.get_allocator());
+            self_->reset_stop_callback();
+            auto receiver = self_->extract_receiver_and_optionally_deallocate(grpc_context.get_allocator());
             self_ = nullptr;
             detail::satisfy_receiver(std::move(receiver), static_cast<Args&&>(args)...);
         }

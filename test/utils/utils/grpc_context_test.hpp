@@ -16,6 +16,7 @@
 #define AGRPC_UTILS_GRPC_CONTEXT_TEST_HPP
 
 #include "utils/asio_forward.hpp"
+#include "utils/grpcFormat.hpp"
 #include "utils/memory_resource.hpp"
 
 #include <agrpc/grpc_context.hpp>

@@ -18,6 +18,7 @@
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asio_forward.hpp"
 #include "utils/client_context.hpp"
+#include "utils/grpcFormat.hpp"
 #include "utils/time.hpp"
 
 #include <agrpc/grpc_context.hpp>
