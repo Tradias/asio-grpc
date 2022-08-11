@@ -44,7 +44,8 @@ install(
     TYPE INCLUDE
     FILES_MATCHING
     PATTERN "*.hpp"
-    PATTERN "*.ipp")
+    PATTERN "*.ipp"
+    PATTERN ".*memory_resource.hpp" EXCLUDE)
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/src/generated/agrpc/detail/memory_resource.hpp"
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/agrpc/detail")

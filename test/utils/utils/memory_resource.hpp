@@ -12,9 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_UTILS_MEMORYRESOURCE_HPP
-#define AGRPC_UTILS_MEMORYRESOURCE_HPP
+#ifndef AGRPC_UTILS_MEMORY_RESOURCE_HPP
+#define AGRPC_UTILS_MEMORY_RESOURCE_HPP
 
-@ASIO_GRPC_MEMORY_RESOURCE_UTILS_INCLUDE@
+#ifdef AGRPC_USE_BOOST_CONTAINER
+#include <boost/container/pmr/global_resource.hpp>
+#include <boost/container/pmr/monotonic_buffer_resource.hpp>
+#endif
 
-#endif  // AGRPC_UTILS_MEMORYRESOURCE_HPP
+#endif  // AGRPC_UTILS_MEMORY_RESOURCE_HPP
