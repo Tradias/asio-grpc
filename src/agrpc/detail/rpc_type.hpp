@@ -80,7 +80,7 @@ inline constexpr auto RPC_TYPE<PrepareAsync> = agrpc::RPCType::CLIENT_CLIENT_STR
 
 template <class Stub, class Request, class Response, template <class, class> class ReaderWriter,
           detail::PrepareAsyncClientBidirectionalStreamingRequest<Stub, ReaderWriter<Request, Response>> PrepareAsync>
-inline constexpr auto RPC_TYPE<PrepareAsync> = agrpc::RPCType::CLIENT_BIDI_STREAMING;
+inline constexpr auto RPC_TYPE<PrepareAsync> = agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING;
 }
 
 AGRPC_NAMESPACE_END

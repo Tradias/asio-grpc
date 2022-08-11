@@ -15,19 +15,19 @@
 #ifndef AGRPC_DETAIL_HIGH_LEVEL_CLIENT_HPP
 #define AGRPC_DETAIL_HIGH_LEVEL_CLIENT_HPP
 
-#include <agrpc/default_completion_token.hpp>
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/completion_handler_receiver.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/rpc_type.hpp>
 #include <agrpc/detail/work_tracking_completion_handler.hpp>
-#include <agrpc/grpc_executor.hpp>
+#include <agrpc/grpc_context.hpp>
 #include <agrpc/use_sender.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class Sender, class CompletionToken>
 auto async_initiate_sender(Sender&& sender, CompletionToken& token)
 {
@@ -41,6 +41,7 @@ auto async_initiate_sender(Sender&& sender, CompletionToken& token)
         },
         token, std::forward<Sender>(sender));
 }
+#endif
 
 template <class Sender>
 auto async_initiate_sender(Sender&& sender, agrpc::UseSender)
