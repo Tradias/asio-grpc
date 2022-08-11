@@ -244,11 +244,6 @@ class BasicSender<Implementation>::RunningOperation
     {
     }
 
-    RunningOperation(const RunningOperation&) = delete;
-    RunningOperation(RunningOperation&&) = delete;
-    RunningOperation& operator=(const RunningOperation&) = delete;
-    RunningOperation& operator=(RunningOperation&&) = delete;
-
     void start(agrpc::GrpcContext& grpc_context, Initiation& initiation) noexcept
     {
         if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context))

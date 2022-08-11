@@ -131,7 +131,6 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
 
   protected:
     friend detail::ReadInitiateMetadataSenderImplementation<BasicRPCBidirectionalStreamingBase>;
-    // friend detail::ReadServerStreamingSenderImplementation<RequestT, ResponderT<RequestT, ResponseT>, Executor>;
 
     using detail::BasicRPCExecutorBase<Executor>::BasicRPCExecutorBase;
 
@@ -139,8 +138,8 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
 };
 }
 
-static constexpr auto GENERIC_UNARY_RPC = detail::GENERIC_UNARY_RPC;
-static constexpr auto GENERIC_STREAMING_RPC = detail::GENERIC_STREAMING_RPC;
+static constexpr auto GENERIC_UNARY_RPC = detail::GenericRPCType::UNARY;
+static constexpr auto GENERIC_STREAMING_RPC = detail::GenericRPCType::STREAMING;
 
 template <class Stub, class Request, class Response, template <class> class Responder,
           detail::ClientUnaryRequest<Stub, Request, Responder<Response>> PrepareAsync, class Executor>
@@ -171,6 +170,23 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
         return BasicRPC::request(detail::query_grpc_context(executor), stub, context, request, response, token);
     }
 
+  private:
+    friend detail::ClientUnaryRequestSenderImplementation<PrepareAsync, Executor>;
+
+    using detail::BasicRPCUnaryBase<Request, Response, Executor>::BasicRPCUnaryBase;
+};
+
+template <class Executor>
+class BasicRPC<detail::GenericRPCType::UNARY, Executor, agrpc::RPCType::CLIENT_UNARY>
+    : public detail::BasicRPCUnaryBase<grpc::ByteBuffer, grpc::ByteBuffer, Executor>
+{
+  public:
+    template <class OtherExecutor>
+    struct rebind_executor
+    {
+        using other = BasicRPC<detail::GenericRPCType::UNARY, OtherExecutor, agrpc::RPCType::CLIENT_UNARY>;
+    };
+
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
     static auto request(agrpc::GrpcContext& grpc_context, const std::string& method, grpc::GenericStub& stub,
                         grpc::ClientContext& context, const grpc::ByteBuffer& request, grpc::ByteBuffer& response,
@@ -182,10 +198,9 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
     }
 
   private:
-    friend detail::ClientUnaryRequestSenderImplementation<PrepareAsync, Executor>;
     friend detail::GenericClientUnaryRequestSenderImplementation<Executor>;
 
-    using detail::BasicRPCUnaryBase<Request, Response, Executor>::BasicRPCUnaryBase;
+    using detail::BasicRPCUnaryBase<grpc::ByteBuffer, grpc::ByteBuffer, Executor>::BasicRPCUnaryBase;
 };
 
 template <class Stub, class Request, class Response, template <class> class Responder,

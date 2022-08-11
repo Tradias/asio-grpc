@@ -30,17 +30,11 @@ class BasicRPC;
 
 namespace detail
 {
-struct GenericRPCTypes
+enum class GenericRPCType
 {
-    using Unary = std::unique_ptr<grpc::GenericClientAsyncResponseReader> (grpc::GenericStub::*)(
-        grpc::ClientContext*, const grpc::ByteBuffer&, grpc::CompletionQueue*);
-
-    using Streaming = std::unique_ptr<grpc::GenericClientAsyncReaderWriter> (grpc::GenericStub::*)(
-        grpc::ClientContext*, grpc::CompletionQueue*);
+    UNARY,
+    STREAMING
 };
-
-static constexpr auto GENERIC_UNARY_RPC = static_cast<GenericRPCTypes::Unary>(nullptr);
-static constexpr auto GENERIC_STREAMING_RPC = static_cast<GenericRPCTypes::Streaming>(nullptr);
 
 template <auto PrepareAsync, class Executor>
 struct ClientUnaryRequestSenderImplementation;
@@ -84,7 +78,7 @@ struct ClientUnaryRequestSenderImplementation<PrepareAsync, Executor> : detail::
 template <class Executor>
 struct GenericClientUnaryRequestSenderImplementation : detail::GrpcSenderImplementationBase
 {
-    using RPC = agrpc::BasicRPC<detail::GENERIC_UNARY_RPC, Executor, agrpc::RPCType::CLIENT_UNARY>;
+    using RPC = agrpc::BasicRPC<detail::GenericRPCType::UNARY, Executor, agrpc::RPCType::CLIENT_UNARY>;
     using Signature = void(RPC);
 
     struct Initiation

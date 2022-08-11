@@ -147,8 +147,8 @@ class CompressedPair final : private Second
     {
     }
 
-    template <class T>
-    constexpr explicit CompressedPair(T&& first) : Second(), first_(std::forward<T>(first))
+    template <class T, class = std::enable_if_t<(!std::is_same_v<CompressedPair, detail::RemoveCrefT<T>>)>>
+    constexpr explicit CompressedPair(T&& first) : Second{}, first_(std::forward<T>(first))
     {
     }
 
@@ -181,8 +181,8 @@ class CompressedPair<First, Second, false> final
     {
     }
 
-    template <class T>
-    constexpr explicit CompressedPair(T&& first) : first_(std::forward<T>(first)), second_()
+    template <class T, class = std::enable_if_t<(!std::is_same_v<CompressedPair, detail::RemoveCrefT<T>>)>>
+    constexpr explicit CompressedPair(T&& first) : first_(std::forward<T>(first)), second_{}
     {
     }
 
