@@ -124,7 +124,7 @@ class BasicRPCClientClientStreamingBase<ResponseT, ResponderT<RequestT>, Executo
     {
         return detail::async_initiate_conditional_sender_implementation<
             detail::FinishClientStreamingSenderImplementation<ResponderT<RequestT>, ResponseT, Executor>>(
-            this->grpc_context(), {}, {*this}, bool{responder_}, token);
+            this->grpc_context(), {}, {*this}, bool{responder_}, token, this->ok());
     }
 
     std::unique_ptr<ResponderT<RequestT>>& responder() noexcept { return responder_; }
@@ -205,8 +205,8 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
 };
 }
 
-static constexpr auto GENERIC_UNARY_RPC = detail::GenericRPCType::UNARY;
-static constexpr auto GENERIC_STREAMING_RPC = detail::GenericRPCType::STREAMING;
+[[maybe_unused]] static constexpr auto GENERIC_UNARY_RPC = detail::GenericRPCType::UNARY;
+[[maybe_unused]] static constexpr auto GENERIC_STREAMING_RPC = detail::GenericRPCType::STREAMING;
 
 template <class Stub, class Request, class Response, template <class> class Responder,
           detail::ClientUnaryRequest<Stub, Request, Responder<Response>> PrepareAsync, class Executor>

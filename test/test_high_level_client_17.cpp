@@ -114,7 +114,8 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>, "ServerSt
             CHECK(test_server.request_rpc(yield));
             CHECK_EQ(42, test_server.request.integer());
             test_server.response.set_integer(1);
-            CHECK(agrpc::write_and_finish(test_server.responder, test_server.response, {}, grpc::Status::OK, yield));
+            CHECK(agrpc::write_and_finish(test_server.responder, test_server.response, {},
+                                          grpc::Status{grpc::StatusCode::ALREADY_EXISTS, ""}, yield));
         },
         [&](asio::yield_context yield)
         {
@@ -123,7 +124,7 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>, "ServerSt
             CHECK(rpc.read(response, yield));
             CHECK_EQ(1, response.integer());
             CHECK_FALSE(rpc.read(response, yield));
-            CHECK(rpc.ok());
+            CHECK_EQ(grpc::StatusCode::ALREADY_EXISTS, rpc.error_code());
         });
 }
 
@@ -199,8 +200,7 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>,
             auto rpc = test::ClientStreamingRPC::request(grpc_context, *stub, client_context, response, yield);
             CHECK(rpc.finish(yield));
             CHECK_EQ(grpc::StatusCode::OK, rpc.error_code());
-            // TODO: finish with `true`
-            CHECK_FALSE(rpc.finish(yield));
+            CHECK(rpc.finish(yield));
             CHECK_EQ(grpc::StatusCode::OK, rpc.error_code());
         });
 }
@@ -219,10 +219,9 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>,
         {
             auto rpc = test::ClientStreamingRPC::request(grpc_context, *stub, client_context, response, yield);
             CHECK(rpc.write(request, grpc::WriteOptions{}.set_last_message(), yield));
-            // TODO: finish with `true`
-            CHECK_FALSE(rpc.finish(yield));
+            CHECK(rpc.finish(yield));
             CHECK_EQ(grpc::StatusCode::OK, rpc.error_code());
-            CHECK_FALSE(rpc.finish(yield));
+            CHECK(rpc.finish(yield));
             CHECK_EQ(grpc::StatusCode::OK, rpc.error_code());
         });
 }
@@ -248,31 +247,46 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>,
 }
 
 TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>,
-                  "ClientStreamingRPC::finish can be called multiple times on a failed RPC using sender")
+                  "ClientStreamingRPC::finish can be called multiple times using sender")
 {
+    bool expected_ok = true;
+    auto expected_status_code = grpc::StatusCode::OK;
+    SUBCASE("success") {}
+    SUBCASE("failure")
+    {
+        expected_ok = false;
+        expected_status_code = grpc::StatusCode::CANCELLED;
+    }
     spawn_and_run(
         [&](asio::yield_context yield)
         {
             test_server.request_rpc(yield);
+            if (expected_ok)
+            {
+                CHECK(agrpc::finish(test_server.responder, test_server.response, grpc::Status::OK, yield));
+            }
         },
         [&](asio::yield_context yield)
         {
             auto rpc = std::make_unique<test::ClientStreamingRPC>(
                 test::ClientStreamingRPC::request(grpc_context, *stub, client_context, response, yield));
-            client_context.TryCancel();
+            if (!expected_ok)
+            {
+                client_context.TryCancel();
+            }
             auto& rpc_ref = *rpc;
             asio::execution::submit(
                 rpc_ref.finish(agrpc::use_sender),
                 test::FunctionAsReceiver{[&, rpc = std::move(rpc)](bool ok) mutable
                                          {
-                                             CHECK_FALSE(ok);
-                                             CHECK_EQ(grpc::StatusCode::CANCELLED, rpc->error_code());
+                                             CHECK_EQ(expected_ok, ok);
+                                             CHECK_EQ(expected_status_code, rpc->error_code());
                                              asio::execution::submit(
                                                  rpc_ref.finish(agrpc::use_sender),
                                                  test::FunctionAsReceiver{[&, rpc = std::move(rpc)](bool ok)
                                                                           {
-                                                                              CHECK_FALSE(ok);
-                                                                              CHECK_EQ(grpc::StatusCode::CANCELLED,
+                                                                              CHECK_EQ(expected_ok, ok);
+                                                                              CHECK_EQ(expected_status_code,
                                                                                        rpc->error_code());
                                                                               server->Shutdown();
                                                                           }});

@@ -66,11 +66,11 @@ auto async_initiate_sender_implementation(agrpc::GrpcContext& grpc_context,
     }
 }
 
-template <class Implementation, class CompletionToken>
+template <class Implementation, class CompletionToken, class... Args>
 auto async_initiate_conditional_sender_implementation(agrpc::GrpcContext& grpc_context,
                                                       const typename Implementation::Initiation& initiation,
                                                       Implementation implementation, bool condition,
-                                                      CompletionToken& token)
+                                                      CompletionToken& token, Args&&... args)
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     if constexpr (!std::is_same_v<agrpc::UseSender, CompletionToken>)
@@ -84,7 +84,8 @@ auto async_initiate_conditional_sender_implementation(agrpc::GrpcContext& grpc_c
         }
         else
         {
-            return detail::async_initiate_immediate_completion<Signature>(std::move(token));
+            return detail::async_initiate_immediate_completion<Signature>(std::move(token),
+                                                                          std::forward<Args>(args)...);
         }
     }
     else
@@ -92,7 +93,7 @@ auto async_initiate_conditional_sender_implementation(agrpc::GrpcContext& grpc_c
     {
         return detail::ConditionalSenderAccess::create(
             detail::BasicSenderAccess::create<Implementation>(grpc_context, initiation, std::move(implementation)),
-            condition);
+            condition, std::forward<Args>(args)...);
     }
 }
 }

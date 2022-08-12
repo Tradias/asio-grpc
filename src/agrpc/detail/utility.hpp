@@ -210,6 +210,9 @@ class CompressedPair<First, Second, false> final
     Second second_;
 };
 
+template <class First, class Second>
+CompressedPair(First, Second) -> CompressedPair<First, Second>;
+
 struct InplaceWithFunction
 {
 };

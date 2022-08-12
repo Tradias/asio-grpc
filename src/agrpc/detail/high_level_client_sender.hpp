@@ -286,6 +286,7 @@ struct ReadServerStreamingSenderImplementation<Request, Responder<Response>, Exe
     {
         if (is_finished)
         {
+            // TODO: does server-streaming have finish function?
             rpc.responder().reset();
             on_done(false);
             return;

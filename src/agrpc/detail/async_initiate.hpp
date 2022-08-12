@@ -17,6 +17,8 @@
 
 #include "agrpc/detail/asio_forward.hpp"
 #include "agrpc/detail/config.hpp"
+#include "agrpc/detail/tuple.hpp"
+#include "agrpc/detail/utility.hpp"
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 
@@ -30,25 +32,34 @@ struct InitiateImmediateCompletion;
 template <class... Args>
 struct InitiateImmediateCompletion<void(Args...)>
 {
-    template <class CompletionHandler>
-    void operator()(CompletionHandler&& ch) const
+    template <class CompletionHandler, class... T>
+    void operator()(CompletionHandler&& ch, T&&... t) const
     {
         auto executor = asio::get_associated_executor(ch);
         const auto allocator = asio::get_associated_allocator(ch);
         detail::post_with_allocator(
             std::move(executor),
-            [ch = std::forward<CompletionHandler>(ch)]() mutable
+            [impl = detail::CompressedPair(std::forward<CompletionHandler>(ch),
+                                           detail::Tuple{std::forward<T>(t)...})]() mutable
             {
-                std::move(ch)(Args{}...);
+                if constexpr (0 == sizeof...(T))
+                {
+                    std::move(impl.first())(Args{}...);
+                }
+                else
+                {
+                    detail::apply(std::move(impl.first()), std::move(impl.second()));
+                }
             },
             allocator);
     }
 };
 
-template <class Signature, class CompletionToken>
-auto async_initiate_immediate_completion(CompletionToken token)
+template <class Signature, class CompletionToken, class... Args>
+auto async_initiate_immediate_completion(CompletionToken token, Args&&... args)
 {
-    return asio::async_initiate<CompletionToken, Signature>(detail::InitiateImmediateCompletion<Signature>{}, token);
+    return asio::async_initiate<CompletionToken, Signature>(detail::InitiateImmediateCompletion<Signature>{}, token,
+                                                            std::forward<Args>(args)...);
 }
 }
 

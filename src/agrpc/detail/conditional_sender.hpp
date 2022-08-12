@@ -18,6 +18,7 @@
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/receiver.hpp>
+#include <agrpc/detail/tuple.hpp>
 #include <agrpc/detail/utility.hpp>
 
 #include <optional>
@@ -26,22 +27,23 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class Sender>
+template <class Sender, class... CompletionArgs>
 class ConditionalSender;
 
 struct ConditionalSenderAccess
 {
-    template <class Sender>
-    static auto create(Sender&& sender, bool condition)
+    template <class Sender, class... CompletionArgs>
+    static auto create(Sender&& sender, bool condition, CompletionArgs&&... args)
     {
-        return detail::ConditionalSender<detail::RemoveCrefT<Sender>>(std::forward<Sender>(sender), condition);
+        return detail::ConditionalSender(std::forward<Sender>(sender), condition,
+                                         std::forward<CompletionArgs>(args)...);
     }
 };
 
-template <class Sender, class Receiver>
+template <class Sender, class Receiver, class... CompletionArgs>
 class ConditionalSenderOperationState;
 
-template <class Sender>
+template <class Sender, class... CompletionArgs>
 class ConditionalSender
 {
   public:
@@ -54,29 +56,36 @@ class ConditionalSender
     static constexpr bool sends_done = Sender::sends_done;
 
     template <class Receiver>
-    detail::ConditionalSenderOperationState<Sender, detail::RemoveCrefT<Receiver>> connect(
+    detail::ConditionalSenderOperationState<Sender, detail::RemoveCrefT<Receiver>, CompletionArgs...> connect(
         Receiver&& receiver) && noexcept((detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver> &&
                                           std::is_nothrow_move_constructible_v<Sender>))
     {
-        return {std::forward<Receiver>(receiver), std::move(sender), condition};
+        return {std::forward<Receiver>(receiver), std::move(sender), condition, std::move(args)};
     }
 
     template <class Receiver, class S = Sender, class = std::enable_if_t<std::is_copy_constructible_v<S>>>
-    detail::ConditionalSenderOperationState<Sender, detail::RemoveCrefT<Receiver>> connect(
+    detail::ConditionalSenderOperationState<Sender, detail::RemoveCrefT<Receiver>, CompletionArgs...> connect(
         Receiver&& receiver) const& noexcept((detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver> &&
                                               std::is_nothrow_copy_constructible_v<Sender>))
     {
-        return {std::forward<Receiver>(receiver), sender, condition};
+        return {std::forward<Receiver>(receiver), sender, condition, args};
     }
 
   private:
     friend detail::ConditionalSenderAccess;
 
-    ConditionalSender(Sender&& sender, bool condition) : sender{std::move(sender)}, condition(condition) {}
+    ConditionalSender(Sender&& sender, bool condition, CompletionArgs&&... args)
+        : sender{std::move(sender)}, condition(condition), args{std::move(args)...}
+    {
+    }
 
     Sender sender;
+    detail::Tuple<CompletionArgs...> args;
     bool condition;
 };
+
+template <class Sender, class... CompletionArgs>
+ConditionalSender(Sender, CompletionArgs...) -> ConditionalSender<Sender, CompletionArgs...>;
 
 template <class Variant>
 struct ConditionalSenderSatisfyReceiver;
@@ -84,14 +93,27 @@ struct ConditionalSenderSatisfyReceiver;
 template <class... T, class... Tuple>
 struct ConditionalSenderSatisfyReceiver<detail::TypeList<detail::TypeList<T...>, Tuple...>>
 {
+    template <class Receiver, class... Args, size_t... I>
+    static auto satisfy_impl(Receiver&& receiver, detail::Tuple<Args...>&& tuple, std::index_sequence<I...>)
+    {
+        detail::satisfy_receiver(std::forward<Receiver>(receiver), detail::get<I>(std::move(tuple))...);
+    }
+
+    template <class Receiver, class... Args>
+    static auto satisfy(Receiver&& receiver, detail::Tuple<Args...>&& tuple)
+    {
+        ConditionalSenderSatisfyReceiver::satisfy_impl(std::forward<Receiver>(receiver), std::move(tuple),
+                                                       std::make_index_sequence<sizeof...(Args)>{});
+    }
+
     template <class Receiver>
-    static auto satisfy(Receiver&& receiver)
+    static auto satisfy(Receiver&& receiver, detail::Tuple<>&&)
     {
         detail::satisfy_receiver(std::forward<Receiver>(receiver), T{}...);
     }
 };
 
-template <class Sender, class Receiver>
+template <class Sender, class Receiver, class... CompletionArgs>
 class ConditionalSenderOperationState
 {
   public:
@@ -104,26 +126,32 @@ class ConditionalSenderOperationState
         else
         {
             using CompletionValues = typename Sender::template value_types<detail::TypeList, detail::TypeList>;
-            detail::ConditionalSenderSatisfyReceiver<CompletionValues>::satisfy(std::move(operation_state.receiver()));
+            detail::ConditionalSenderSatisfyReceiver<CompletionValues>::satisfy(std::move(operation_state.receiver()),
+                                                                                std::move(args));
         }
     }
 
   private:
-    friend detail::ConditionalSender<Sender>;
+    friend detail::ConditionalSender<Sender, CompletionArgs...>;
 
     template <class R>
-    ConditionalSenderOperationState(R&& receiver, Sender&& sender, bool condition)
-        : operation_state(detail::exec::connect(std::move(sender), std::forward<R>(receiver))), condition(condition)
+    ConditionalSenderOperationState(R&& receiver, Sender&& sender, bool condition,
+                                    detail::Tuple<CompletionArgs...>&& args)
+        : operation_state(detail::exec::connect(std::move(sender), std::forward<R>(receiver))),
+          condition(condition),
+          args(std::move(args))
     {
     }
 
     template <class R>
-    ConditionalSenderOperationState(R&& receiver, const Sender& sender, bool condition)
-        : operation_state(detail::exec::connect(sender, std::forward<R>(receiver))), condition(condition)
+    ConditionalSenderOperationState(R&& receiver, const Sender& sender, bool condition,
+                                    const detail::Tuple<CompletionArgs...>& args)
+        : operation_state(detail::exec::connect(sender, std::forward<R>(receiver))), condition(condition), args(args)
     {
     }
 
     detail::exec::connect_result_t<Sender, Receiver> operation_state;
+    detail::Tuple<CompletionArgs...> args;
     bool condition;
 };
 }
@@ -132,21 +160,23 @@ AGRPC_NAMESPACE_END
 
 #if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_CONNECT_MEMBER_TRAIT) && \
     !defined(ASIO_HAS_DEDUCED_CONNECT_MEMBER_TRAIT)
-template <class Sender, class R>
-struct agrpc::asio::traits::connect_member<agrpc::detail::ConditionalSender<Sender>, R>
+template <class Sender, class Receiver, class... CompletionArgs>
+struct agrpc::asio::traits::connect_member<agrpc::detail::ConditionalSender<Sender, CompletionArgs...>, Receiver>
 {
     static constexpr bool is_valid = true;
-    static constexpr bool is_noexcept =
-        noexcept(std::declval<agrpc::detail::ConditionalSender<Sender>>().connect(std::declval<R>()));
+    static constexpr bool is_noexcept = noexcept(
+        std::declval<agrpc::detail::ConditionalSender<Sender, CompletionArgs...>>().connect(std::declval<Receiver>()));
 
-    using result_type = decltype(std::declval<agrpc::detail::ConditionalSender<Sender>>().connect(std::declval<R>()));
+    using result_type = decltype(std::declval<agrpc::detail::ConditionalSender<Sender, CompletionArgs...>>().connect(
+        std::declval<Receiver>()));
 };
 #endif
 
 #if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_START_MEMBER_TRAIT) && \
     !defined(ASIO_HAS_DEDUCED_START_MEMBER_TRAIT)
-template <class Sender, class Receiver>
-struct agrpc::asio::traits::start_member<agrpc::detail::ConditionalSenderOperationState<Sender, Receiver>>
+template <class Sender, class Receiver, class... CompletionArgs>
+struct agrpc::asio::traits::start_member<
+    agrpc::detail::ConditionalSenderOperationState<Sender, Receiver, CompletionArgs...>>
 {
     static constexpr bool is_valid = true;
     static constexpr bool is_noexcept = true;
