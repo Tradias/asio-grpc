@@ -61,7 +61,7 @@ void default_do_complete(Base* op, detail::InvokeHandler invoke_handler, Args...
                          detail::GrpcContextLocalAllocator)
 {
     auto* self = static_cast<Operation*>(op);
-    detail::AllocatedPointer ptr{self, self->get_allocator()};
+    detail::AllocationGuard ptr{self, self->get_allocator()};
     if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
     {
         auto handler{std::move(self->completion_handler())};

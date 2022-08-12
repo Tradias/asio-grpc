@@ -69,7 +69,7 @@ class LocalOperation<IsIntrusivelyListable, Handler, void(Signature...)>
                             detail::GrpcContextLocalAllocator allocator)
     {
         auto* self = static_cast<LocalOperation*>(op);
-        detail::AllocatedPointer ptr{self, allocator};
+        detail::AllocationGuard ptr{self, allocator};
         if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
         {
             auto handler{std::move(self->completion_handler())};

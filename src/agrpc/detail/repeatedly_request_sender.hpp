@@ -197,14 +197,6 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
 
         bool is_stopped() noexcept { return this->stop_context().is_stopped(); }
 
-        auto allocate_request_handler_operation()
-        {
-            const auto allocator = this->get_allocator();
-            auto ptr = detail::allocate<RequestHandlerOperation>(allocator, this->grpc_context(), allocator);
-            this->request_handler_operation = ptr.get();
-            return ptr;
-        }
-
         bool initiate_repeatedly_request()
         {
             auto& local_grpc_context = this->grpc_context();
@@ -212,11 +204,15 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
             {
                 return false;
             }
-            auto ptr = this->allocate_request_handler_operation();
+            const auto allocator = this->get_allocator();
+            auto next_request_handler_operation =
+                detail::allocate<RequestHandlerOperation>(allocator, this->grpc_context(), allocator);
+            this->request_handler_operation = next_request_handler_operation.get();
             auto* cq = local_grpc_context.get_server_completion_queue();
             local_grpc_context.work_started();
-            detail::initiate_request_from_rpc_context(this->rpc(), this->service(), ptr->rpc_context(), cq, this);
-            ptr.release();
+            detail::initiate_request_from_rpc_context(this->rpc(), this->service(),
+                                                      request_handler_operation->rpc_context(), cq, this);
+            next_request_handler_operation.release();
             return true;
         }
 
@@ -224,7 +220,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
                                         detail::GrpcContextLocalAllocator)
         {
             auto* self = static_cast<Operation*>(op);
-            detail::AllocatedPointer ptr{self->request_handler_operation, self->get_allocator()};
+            detail::AllocationGuard ptr{self->request_handler_operation, self->get_allocator()};
             if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler && ok)
             {
                 if (auto exception_ptr = self->emplace_request_handler_operation(*ptr))

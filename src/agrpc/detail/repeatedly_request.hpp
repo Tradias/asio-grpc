@@ -146,10 +146,11 @@ class RepeatedlyRequestOperation : public detail::TypeErasedGrpcTagOperation,
         {
             return false;
         }
-        auto next_rpc_context = this->allocate_rpc_context();
+        auto next_rpc_context = detail::allocate<RPCContext>(this->get_allocator());
+        this->rpc_context = next_rpc_context.get();
         auto* cq = local_grpc_context.get_server_completion_queue();
         local_grpc_context.work_started();
-        detail::initiate_request_from_rpc_context(this->rpc(), this->service(), *next_rpc_context, cq, this);
+        detail::initiate_request_from_rpc_context(this->rpc(), this->service(), *rpc_context, cq, this);
         next_rpc_context.release();
         return true;
     }
@@ -190,13 +191,6 @@ class RepeatedlyRequestOperation : public detail::TypeErasedGrpcTagOperation,
             detail::WorkFinishedOnExit on_exit{grpc_context};
             detail::destroy_deallocate(self, allocator);
         }
-    }
-
-    auto allocate_rpc_context()
-    {
-        auto new_rpc_context = detail::allocate<RPCContext>(this->get_allocator());
-        this->rpc_context = new_rpc_context.get();
-        return new_rpc_context;
     }
 
     RPCContext* rpc_context;

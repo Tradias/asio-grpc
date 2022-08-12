@@ -34,8 +34,7 @@ template <class T>
 inline constexpr bool IS_STD_ALLOCATOR<std::allocator<T>> = true;
 
 template <template <class> class OperationTemplate, class Operation, class... Args>
-detail::AllocatedPointerT<OperationTemplate<detail::RemoveCrefT<Operation>>, detail::AssociatedAllocatorT<Operation>>
-allocate_operation(Operation&& operation, Args&&... args)
+auto allocate_operation(Operation&& operation, Args&&... args)
 
 {
     const auto allocator = detail::exec::get_allocator(operation);
