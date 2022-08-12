@@ -24,6 +24,11 @@
 #include <cstddef>
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+struct IoContextTest
+{
+    asio::io_context io_context;
+};
+
 TEST_CASE_FIXTURE(test::GrpcContextTest, "CancelSafe: cancel wait for alarm and wait again")
 {
     bool done{};
@@ -85,9 +90,8 @@ TEST_CASE_TEMPLATE("CancelSafe: wait for already completed operation", T, bool, 
     CHECK(ok);
 }
 
-TEST_CASE("CancelSafe: wait for asio::steady_timer")
+TEST_CASE_FIXTURE(IoContextTest, "CancelSafe: wait for asio::steady_timer")
 {
-    asio::io_context io_context;
     agrpc::CancelSafe<void(boost::system::error_code)> safe;
     asio::steady_timer timer{io_context, std::chrono::seconds(5)};
     timer.async_wait(safe.token());
@@ -103,9 +107,8 @@ TEST_CASE("CancelSafe: wait for asio::steady_timer")
     io_context.run();
 }
 
-TEST_CASE("CancelSafe: can handle move-only completion arguments")
+TEST_CASE_FIXTURE(IoContextTest, "CancelSafe: can handle move-only completion arguments")
 {
-    asio::io_context io_context;
     agrpc::CancelSafe<void(std::unique_ptr<int>)> safe;
     auto token = safe.token();
     asio::async_initiate<decltype(token), void(std::unique_ptr<int> &&)>(
@@ -200,5 +203,30 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcStream: can change default complet
     stream.cleanup();
     grpc_context.run();
     CHECK(is_ok);
+}
+
+TEST_CASE_FIXTURE(IoContextTest, "CancelSafe: can handle lots of completion arguments")
+{
+    using Signature = void(int, int, bool, double, float, char);
+    agrpc::CancelSafe<Signature> safe;
+    auto token = safe.token();
+    asio::async_initiate<decltype(token), Signature>(
+        [&](auto ch)
+        {
+            asio::post(io_context,
+                       [&, ch = std::move(ch)]() mutable
+                       {
+                           std::move(ch)(42, 1, true, 0.5, 0.25f, 'a');
+                       });
+        },
+        token);
+    safe.wait(
+        [&](test::ErrorCode ec, int a, int, bool, double, float, char c)
+        {
+            CHECK_FALSE(ec);
+            CHECK_EQ(42, a);
+            CHECK_EQ('a', c);
+        });
+    io_context.run();
 }
 #endif

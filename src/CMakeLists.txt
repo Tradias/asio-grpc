@@ -113,6 +113,7 @@ if(ASIO_GRPC_BUILD_TESTS AND ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/schedule_sender.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/sender_implementation.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/sender_of.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/tuple.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/type_erased_completion_handler.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/type_erased_operation.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/unbind.hpp"

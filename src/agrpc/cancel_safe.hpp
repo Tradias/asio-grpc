@@ -21,13 +21,13 @@
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 
 #include <agrpc/detail/cancel_safe.hpp>
+#include <agrpc/detail/tuple.hpp>
 #include <agrpc/detail/type_erased_completion_handler.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/detail/work_tracking_completion_handler.hpp>
 
 #include <cassert>
 #include <optional>
-#include <tuple>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -55,6 +55,7 @@ class CancelSafe<void(CompletionArgs...)>
 {
   private:
     using CompletionSignature = detail::PrependErrorCodeToSignatureT<void(CompletionArgs...)>;
+    using Result = detail::Tuple<CompletionArgs...>;
 
     struct Initiator;
 
@@ -73,7 +74,7 @@ class CancelSafe<void(CompletionArgs...)>
             }
             else
             {
-                this->self.result.emplace(static_cast<CompletionArgs&&>(completion_args)...);
+                this->self.result.emplace(Result{static_cast<CompletionArgs&&>(completion_args)...});
             }
         }
 
@@ -184,7 +185,7 @@ class CancelSafe<void(CompletionArgs...)>
     }
 
     detail::AtomicTypeErasedCompletionHandler<CompletionSignature> completion_handler{};
-    std::optional<std::tuple<CompletionArgs...>> result;
+    std::optional<Result> result;
 };
 
 /**

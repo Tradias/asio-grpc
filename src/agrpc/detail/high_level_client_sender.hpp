@@ -22,6 +22,7 @@
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
+#include <grpcpp/generic/generic_stub.h>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -324,7 +325,7 @@ struct WriteClientStreamingSenderImplementation<Responder<Request>, Response, Ex
     void initiate(const agrpc::GrpcContext&, Init init) noexcept
     {
         auto& [req, options] = init.initiation();
-        last_message = options.is_last_message();
+        is_last_message = options.is_last_message();
         rpc.responder()->Write(req, options, init.self());
     }
 
@@ -337,12 +338,10 @@ struct WriteClientStreamingSenderImplementation<Responder<Request>, Response, Ex
             on_done(rpc.ok());
             return;
         }
-        if (last_message)
+        if (is_last_message)
         {
-            last_message = false;
-            is_finished = true;
-            rpc.grpc_context().work_started();
-            rpc.responder()->Finish(&rpc.status(), on_done.self());
+            is_last_message = false;
+            this->initiate_finish(on_done.self());
             return;
         }
         if (ok)
@@ -350,14 +349,19 @@ struct WriteClientStreamingSenderImplementation<Responder<Request>, Response, Ex
             on_done(true);
             return;
         }
+        this->initiate_finish(on_done.self());
+    }
+
+    void initiate_finish(void* self)
+    {
         is_finished = true;
         rpc.grpc_context().work_started();
-        rpc.responder()->Finish(&rpc.status(), on_done.self());
+        rpc.responder()->Finish(&rpc.status(), self);
     }
 
     BasicRPCBase& rpc;
     bool is_finished{};
-    bool last_message{};
+    bool is_last_message{};
 };
 
 template <class Responder, class Response, class Executor>

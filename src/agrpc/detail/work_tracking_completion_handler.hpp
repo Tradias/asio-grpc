@@ -21,10 +21,10 @@
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 
 #include <agrpc/detail/memory_resource.hpp>
+#include <agrpc/detail/tuple.hpp>
 #include <agrpc/detail/utility.hpp>
 
 #include <memory>
-#include <tuple>
 #include <utility>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -96,9 +96,9 @@ class WorkTrackingCompletionHandler : private detail::EmptyBaseOptimization<Comp
         auto executor = asio::prefer(asio::get_associated_executor(ch), asio::execution::blocking_t::possibly,
                                      asio::execution::allocator(asio::get_associated_allocator(ch)));
         asio::execution::execute(std::move(executor),
-                                 [ch = std::move(ch), args = std::make_tuple(std::forward<Args>(args)...)]() mutable
+                                 [ch = std::move(ch), args = detail::Tuple{std::forward<Args>(args)...}]() mutable
                                  {
-                                     std::apply(std::move(ch), std::move(args));
+                                     detail::apply(std::move(ch), std::move(args));
                                  });
     }
 
