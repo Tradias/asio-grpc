@@ -16,7 +16,9 @@
 #define AGRPC_DETAIL_HIGH_LEVEL_CLIENT_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/async_initiate.hpp>
 #include <agrpc/detail/completion_handler_receiver.hpp>
+#include <agrpc/detail/conditional_sender.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/rpc_type.hpp>
 #include <agrpc/detail/work_tracking_completion_handler.hpp>
@@ -27,35 +29,71 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-template <class Sender, class CompletionToken>
-auto async_initiate_sender(Sender&& sender, CompletionToken& token)
+struct SubmitSenderToWorkTrackingCompletionHandler
 {
-    return asio::async_initiate<CompletionToken, typename detail::RemoveCrefT<Sender>::Signature>(
-        [&](auto&& completion_handler, auto&& sender)
-        {
-            using CH = decltype(completion_handler);
-            std::move(sender).submit(
-                detail::CompletionHandlerReceiver<detail::WorkTrackingCompletionHandler<detail::RemoveCrefT<CH>>>(
-                    std::forward<CH>(completion_handler)));
-        },
-        token, std::forward<Sender>(sender));
-}
-#endif
+    template <class CompletionHandler, class Implementation>
+    void operator()(CompletionHandler&& completion_handler,
+                    const typename detail::RemoveCrefT<Implementation>::Initiation& initiation,
+                    Implementation&& implementation)
+    {
+        detail::submit_basic_sender_running_operation(
+            grpc_context,
+            detail::CompletionHandlerReceiver<
+                detail::WorkTrackingCompletionHandler<detail::RemoveCrefT<CompletionHandler>>>(
+                std::forward<CompletionHandler>(completion_handler)),
+            initiation, std::forward<Implementation>(implementation));
+    }
 
-template <class Sender>
-auto async_initiate_sender(Sender&& sender, agrpc::UseSender)
-{
-    return std::forward<Sender>(sender);
-}
+    agrpc::GrpcContext& grpc_context;
+};
 
 template <class Implementation, class CompletionToken>
 auto async_initiate_sender_implementation(agrpc::GrpcContext& grpc_context,
                                           const typename Implementation::Initiation& initiation,
                                           Implementation implementation, CompletionToken& token)
 {
-    return detail::async_initiate_sender(
-        detail::BasicSenderAccess::create<Implementation>(grpc_context, initiation, std::move(implementation)), token);
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+    if constexpr (!std::is_same_v<agrpc::UseSender, CompletionToken>)
+    {
+        return asio::async_initiate<CompletionToken, typename Implementation::Signature>(
+            detail::SubmitSenderToWorkTrackingCompletionHandler{grpc_context}, token, initiation,
+            std::move(implementation));
+    }
+    else
+#endif
+    {
+        return detail::BasicSenderAccess::create<Implementation>(grpc_context, initiation, std::move(implementation));
+    }
+}
+
+template <class Implementation, class CompletionToken>
+auto async_initiate_conditional_sender_implementation(agrpc::GrpcContext& grpc_context,
+                                                      const typename Implementation::Initiation& initiation,
+                                                      Implementation implementation, bool condition,
+                                                      CompletionToken& token)
+{
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+    if constexpr (!std::is_same_v<agrpc::UseSender, CompletionToken>)
+    {
+        using Signature = typename Implementation::Signature;
+        if (condition)
+        {
+            return asio::async_initiate<CompletionToken, Signature>(
+                detail::SubmitSenderToWorkTrackingCompletionHandler{grpc_context}, token, initiation,
+                std::move(implementation));
+        }
+        else
+        {
+            return detail::async_initiate_immediate_completion<Signature>(std::move(token));
+        }
+    }
+    else
+#endif
+    {
+        return detail::ConditionalSenderAccess::create(
+            detail::BasicSenderAccess::create<Implementation>(grpc_context, initiation, std::move(implementation)),
+            condition);
+    }
 }
 }
 

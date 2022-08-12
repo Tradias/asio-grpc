@@ -18,6 +18,8 @@
 #include "agrpc/detail/asio_forward.hpp"
 #include "agrpc/detail/config.hpp"
 
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
@@ -51,5 +53,7 @@ auto async_initiate_immediate_completion(CompletionToken token)
 }
 
 AGRPC_NAMESPACE_END
+
+#endif
 
 #endif  // AGRPC_DETAIL_ASYNC_INITIATE_HPP

@@ -185,6 +185,101 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>,
         });
 }
 
+TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>,
+                  "ClientStreamingRPC::finish can be called multiple times on a successful RPC")
+{
+    spawn_and_run(
+        [&](asio::yield_context yield)
+        {
+            CHECK(test_server.request_rpc(yield));
+            CHECK(agrpc::finish(test_server.responder, test_server.response, grpc::Status::OK, yield));
+        },
+        [&](asio::yield_context yield)
+        {
+            auto rpc = test::ClientStreamingRPC::request(grpc_context, *stub, client_context, response, yield);
+            CHECK(rpc.finish(yield));
+            CHECK_EQ(grpc::StatusCode::OK, rpc.error_code());
+            // TODO: finish with `true`
+            CHECK_FALSE(rpc.finish(yield));
+            CHECK_EQ(grpc::StatusCode::OK, rpc.error_code());
+        });
+}
+
+TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>,
+                  "ClientStreamingRPC::finish can be called after set_last_message")
+{
+    spawn_and_run(
+        [&](asio::yield_context yield)
+        {
+            CHECK(test_server.request_rpc(yield));
+            CHECK(agrpc::read(test_server.responder, test_server.request, yield));
+            CHECK(agrpc::finish(test_server.responder, test_server.response, grpc::Status::OK, yield));
+        },
+        [&](asio::yield_context yield)
+        {
+            auto rpc = test::ClientStreamingRPC::request(grpc_context, *stub, client_context, response, yield);
+            CHECK(rpc.write(request, grpc::WriteOptions{}.set_last_message(), yield));
+            // TODO: finish with `true`
+            CHECK_FALSE(rpc.finish(yield));
+            CHECK_EQ(grpc::StatusCode::OK, rpc.error_code());
+            CHECK_FALSE(rpc.finish(yield));
+            CHECK_EQ(grpc::StatusCode::OK, rpc.error_code());
+        });
+}
+
+TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>,
+                  "ClientStreamingRPC::finish can be called multiple times on a failed RPC")
+{
+    spawn_and_run(
+        [&](asio::yield_context yield)
+        {
+            test_server.request_rpc(yield);
+        },
+        [&](asio::yield_context yield)
+        {
+            auto rpc = test::ClientStreamingRPC::request(grpc_context, *stub, client_context, response, yield);
+            client_context.TryCancel();
+            CHECK_FALSE(rpc.finish(yield));
+            CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.error_code());
+            CHECK_FALSE(rpc.finish(yield));
+            CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.error_code());
+            server->Shutdown();
+        });
+}
+
+TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>,
+                  "ClientStreamingRPC::finish can be called multiple times on a failed RPC using sender")
+{
+    spawn_and_run(
+        [&](asio::yield_context yield)
+        {
+            test_server.request_rpc(yield);
+        },
+        [&](asio::yield_context yield)
+        {
+            auto rpc = std::make_unique<test::ClientStreamingRPC>(
+                test::ClientStreamingRPC::request(grpc_context, *stub, client_context, response, yield));
+            client_context.TryCancel();
+            auto& rpc_ref = *rpc;
+            asio::execution::submit(
+                rpc_ref.finish(agrpc::use_sender),
+                test::FunctionAsReceiver{[&, rpc = std::move(rpc)](bool ok) mutable
+                                         {
+                                             CHECK_FALSE(ok);
+                                             CHECK_EQ(grpc::StatusCode::CANCELLED, rpc->error_code());
+                                             asio::execution::submit(
+                                                 rpc_ref.finish(agrpc::use_sender),
+                                                 test::FunctionAsReceiver{[&, rpc = std::move(rpc)](bool ok)
+                                                                          {
+                                                                              CHECK_FALSE(ok);
+                                                                              CHECK_EQ(grpc::StatusCode::CANCELLED,
+                                                                                       rpc->error_code());
+                                                                              server->Shutdown();
+                                                                          }});
+                                         }});
+        });
+}
+
 TEST_CASE_FIXTURE(test::HighLevelClientTest<test::UnaryRPC>, "RPC::request generic unary RPC successfully")
 {
     spawn_and_run(

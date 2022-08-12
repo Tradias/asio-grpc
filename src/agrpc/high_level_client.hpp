@@ -119,14 +119,20 @@ class BasicRPCClientClientStreamingBase<ResponseT, ResponderT<RequestT>, Executo
     // // Calls agrpc::writes_done if not already done by a write with WriteOptions::set_last_message()
     // // Completes with grpc::Status.
     // // Returns grpc::Status::FAILED_PRECONDITION if the RPC hasn't been started.
-    // template <class CompletionToken = asio::default_completion_token_t<Executor>>
-    // auto finish(CompletionToken token = asio::default_completion_token_t<Executor>{});
+    template <class CompletionToken = asio::default_completion_token_t<Executor>>
+    auto finish(CompletionToken token = asio::default_completion_token_t<Executor>{})
+    {
+        return detail::async_initiate_conditional_sender_implementation<
+            detail::FinishClientStreamingSenderImplementation<ResponderT<RequestT>, ResponseT, Executor>>(
+            this->grpc_context(), {}, {*this}, bool{responder_}, token);
+    }
 
     std::unique_ptr<ResponderT<RequestT>>& responder() noexcept { return responder_; }
 
   protected:
     friend detail::ReadInitiateMetadataSenderImplementation<BasicRPCClientClientStreamingBase>;
     friend detail::WriteClientStreamingSenderImplementation<ResponderT<RequestT>, ResponseT, Executor>;
+    friend detail::FinishClientStreamingSenderImplementation<ResponderT<RequestT>, ResponseT, Executor>;
 
     using detail::BasicRPCExecutorBase<Executor>::BasicRPCExecutorBase;
 

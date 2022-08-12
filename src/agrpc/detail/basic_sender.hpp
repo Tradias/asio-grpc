@@ -56,6 +56,9 @@ struct BasicSenderStarter
     Initiation initiation;
 };
 
+template <class Initiation>
+BasicSenderStarter(const Initiation&) -> BasicSenderStarter<Initiation>;
+
 enum class AllocationType
 {
     NONE,
@@ -63,15 +66,29 @@ enum class AllocationType
     CUSTOM
 };
 
-template <template <class, AllocationType> class Operation>
-struct BasicSenderOperationAllocationTraits
+template <class Implementation, class Receiver, AllocationType AllocType>
+class BasicSenderRunningOperation;
+
+template <class Implementation>
+struct BasicSenderRunningOperationAllocationTraits
 {
     template <class Receiver>
-    using Local = Operation<Receiver, AllocationType::LOCAL>;
+    using Local = detail::BasicSenderRunningOperation<Implementation, Receiver, AllocationType::LOCAL>;
 
     template <class Receiver>
-    using Custom = Operation<Receiver, AllocationType::CUSTOM>;
+    using Custom = detail::BasicSenderRunningOperation<Implementation, Receiver, AllocationType::CUSTOM>;
 };
+
+template <class Receiver, class Implementation>
+void submit_basic_sender_running_operation(agrpc::GrpcContext& grpc_context, Receiver&& receiver,
+                                           const typename detail::RemoveCrefT<Implementation>::Initiation& initiation,
+                                           Implementation&& implementation)
+{
+    detail::BasicSenderStarter starter{initiation};
+    detail::allocate_operation_and_invoke<
+        detail::BasicSenderRunningOperationAllocationTraits<detail::RemoveCrefT<Implementation>>>(
+        grpc_context, starter, std::forward<Receiver>(receiver), std::forward<Implementation>(implementation));
+}
 
 template <class Implementation, class Receiver>
 class BasicSenderOperationState;
@@ -80,15 +97,9 @@ template <class Implementation>
 class BasicSender : public detail::SenderOf<typename Implementation::Signature>
 {
   private:
-    using StopFunction = typename Implementation::StopFunction;
     using Initiation = typename Implementation::Initiation;
 
-    template <class Receiver, AllocationType AllocType>
-    class RunningOperation;
-
   public:
-    using Signature = typename Implementation::Signature;
-
     template <class Receiver>
     detail::BasicSenderOperationState<Implementation, detail::RemoveCrefT<Receiver>> connect(
         Receiver&& receiver) && noexcept((detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver> &&
@@ -110,17 +121,15 @@ class BasicSender : public detail::SenderOf<typename Implementation::Signature>
     template <class Receiver>
     void submit(Receiver&& receiver) &&
     {
-        detail::BasicSenderStarter<Initiation> starter{initiation};
-        detail::allocate_operation_and_invoke<detail::BasicSenderOperationAllocationTraits<RunningOperation>>(
-            grpc_context, starter, std::forward<Receiver>(receiver), std::move(implementation));
+        detail::submit_basic_sender_running_operation(grpc_context, std::forward<Receiver>(receiver), initiation,
+                                                      std::move(implementation));
     }
 
     template <class Receiver, class Impl = Implementation, class = std::enable_if_t<std::is_copy_constructible_v<Impl>>>
     void submit(Receiver&& receiver) const&
     {
-        detail::BasicSenderStarter<Initiation> starter{initiation};
-        detail::allocate_operation_and_invoke<detail::BasicSenderOperationAllocationTraits<RunningOperation>>(
-            grpc_context, starter, std::forward<Receiver>(receiver), implementation);
+        detail::submit_basic_sender_running_operation(grpc_context, std::forward<Receiver>(receiver), initiation,
+                                                      implementation);
     }
 
   private:
@@ -129,8 +138,7 @@ class BasicSender : public detail::SenderOf<typename Implementation::Signature>
     template <class, class>
     friend class BasicSenderOperationState;
 
-    BasicSender(agrpc::GrpcContext& grpc_context, const Initiation& initiation,
-                Implementation&& implementation) noexcept
+    BasicSender(agrpc::GrpcContext& grpc_context, const Initiation& initiation, Implementation&& implementation)
         : grpc_context(grpc_context), initiation(initiation), implementation{std::move(implementation)}
     {
     }
@@ -156,49 +164,20 @@ struct EmptyNoArgTypeErasedBase
     }
 };
 
-template <class Implementation>
-template <class Receiver, AllocationType AllocType>
-class BasicSender<Implementation>::RunningOperation
+template <class Implementation, class Receiver, AllocationType AllocType>
+class BasicSenderRunningOperation
     : public detail::GetGrpcTagTypeErasedBaseT<Implementation, detail::EmptyGrpcTagTypeErasedBase>,
       public detail::GetNoArgTypeErasedBaseT<Implementation, detail::EmptyNoArgTypeErasedBase>
 {
   private:
     using GrpcTagBase = detail::GetGrpcTagTypeErasedBaseT<Implementation, detail::EmptyGrpcTagTypeErasedBase>;
     using NoArgBase = detail::GetNoArgTypeErasedBaseT<Implementation, detail::EmptyNoArgTypeErasedBase>;
+    using Initiation = typename Implementation::Initiation;
+    using StopFunction = typename Implementation::StopFunction;
 
-    struct DoneDuringInitiate
+    struct Init
     {
-        DoneDuringInitiate(RunningOperation* self_, agrpc::GrpcContext& grpc_context, Initiation& initiation)
-            : self_(self_), grpc_context(grpc_context), initiation_(initiation)
-        {
-            grpc_context.work_started();
-        }
-
-        DoneDuringInitiate(DoneDuringInitiate&& other)
-            : self_(std::exchange(other.self_, nullptr)), grpc_context(grpc_context)
-        {
-        }
-
-        DoneDuringInitiate& operator=(DoneDuringInitiate&&) = delete;
-
-        ~DoneDuringInitiate()
-        {
-            if (!self_)
-            {
-                grpc_context.work_finished();
-            }
-        }
-
-        template <class... Args>
-        void operator()(Args... args)
-        {
-            self_->reset_stop_callback();
-            auto receiver = self_->extract_receiver_and_optionally_deallocate(grpc_context.get_allocator());
-            self_ = nullptr;
-            detail::satisfy_receiver(std::move(receiver), static_cast<Args&&>(args)...);
-        }
-
-        [[nodiscard]] RunningOperation* self() const noexcept { return self_; }
+        [[nodiscard]] BasicSenderRunningOperation* self() const noexcept { return self_; }
 
         [[nodiscard]] Initiation& initiation() const noexcept { return initiation_; }
 
@@ -206,8 +185,7 @@ class BasicSender<Implementation>::RunningOperation
 
         [[nodiscard]] operator void*() const noexcept { return static_cast<void*>(self_); }
 
-        RunningOperation* self_;
-        agrpc::GrpcContext& grpc_context;
+        BasicSenderRunningOperation* self_;
         Initiation& initiation_;
     };
 
@@ -221,25 +199,25 @@ class BasicSender<Implementation>::RunningOperation
             detail::satisfy_receiver(std::move(receiver), static_cast<Args&&>(args)...);
         }
 
-        [[nodiscard]] RunningOperation* self() const noexcept { return &self_; }
+        [[nodiscard]] BasicSenderRunningOperation* self() const noexcept { return &self_; }
 
-        RunningOperation& self_;
+        BasicSenderRunningOperation& self_;
         detail::GrpcContextLocalAllocator local_allocator;
     };
 
   public:
     template <class R>
-    RunningOperation(R&& receiver, Implementation&& implementation)
-        : GrpcTagBase(&RunningOperation::grpc_tag_on_complete),
-          NoArgBase(&RunningOperation::no_arg_on_complete),
+    BasicSenderRunningOperation(R&& receiver, Implementation&& implementation)
+        : GrpcTagBase(&BasicSenderRunningOperation::grpc_tag_on_complete),
+          NoArgBase(&BasicSenderRunningOperation::no_arg_on_complete),
           impl(std::forward<R>(receiver), std::move(implementation))
     {
     }
 
     template <class R>
-    RunningOperation(R&& receiver, const Implementation& implementation)
-        : GrpcTagBase(&RunningOperation::grpc_tag_on_complete),
-          NoArgBase(&RunningOperation::no_arg_on_complete),
+    BasicSenderRunningOperation(R&& receiver, const Implementation& implementation)
+        : GrpcTagBase(&BasicSenderRunningOperation::grpc_tag_on_complete),
+          NoArgBase(&BasicSenderRunningOperation::no_arg_on_complete),
           impl(std::forward<R>(receiver), implementation)
     {
     }
@@ -261,13 +239,16 @@ class BasicSender<Implementation>::RunningOperation
             }
             this->emplace_stop_callback(std::move(stop_token), initiation);
         }
-        implementation().initiate(grpc_context, DoneDuringInitiate{this, grpc_context, initiation});
+        grpc_context.work_started();
+        implementation().initiate(grpc_context, Init{this, initiation});
     }
+
+    Receiver& receiver() noexcept { return impl.first().receiver(); }
 
   private:
     template <class... Args>
-    static void on_complete_impl(RunningOperation& self, detail::InvokeHandler invoke_handler,
-                                 detail::GrpcContextLocalAllocator local_allocator, Args&&... args) noexcept
+    static void on_complete_impl(BasicSenderRunningOperation& self, detail::InvokeHandler invoke_handler,
+                                 detail::GrpcContextLocalAllocator local_allocator, Args&&... args)
     {
         if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
         {
@@ -281,25 +262,27 @@ class BasicSender<Implementation>::RunningOperation
 
     static void grpc_tag_on_complete([[maybe_unused]] detail::TypeErasedGrpcTagOperation* op,
                                      [[maybe_unused]] detail::InvokeHandler invoke_handler, [[maybe_unused]] bool ok,
-                                     [[maybe_unused]] detail::GrpcContextLocalAllocator local_allocator) noexcept
+                                     [[maybe_unused]] detail::GrpcContextLocalAllocator local_allocator)
     {
         if constexpr (!std::is_same_v<EmptyGrpcTagTypeErasedBase, GrpcTagBase>)
         {
-            on_complete_impl(*static_cast<RunningOperation*>(op), invoke_handler, local_allocator, ok);
+            BasicSenderRunningOperation::on_complete_impl(*static_cast<BasicSenderRunningOperation*>(op),
+                                                          invoke_handler, local_allocator, ok);
         }
     }
 
     static void no_arg_on_complete([[maybe_unused]] detail::TypeErasedNoArgOperation* op,
                                    [[maybe_unused]] detail::InvokeHandler invoke_handler,
-                                   [[maybe_unused]] detail::GrpcContextLocalAllocator local_allocator) noexcept
+                                   [[maybe_unused]] detail::GrpcContextLocalAllocator local_allocator)
     {
         if constexpr (!std::is_same_v<EmptyNoArgTypeErasedBase, NoArgBase>)
         {
-            on_complete_impl(*static_cast<RunningOperation*>(op), invoke_handler, local_allocator);
+            BasicSenderRunningOperation::on_complete_impl(*static_cast<BasicSenderRunningOperation*>(op),
+                                                          invoke_handler, local_allocator);
         }
     }
 
-    auto extract_receiver_and_deallocate(detail::GrpcContextLocalAllocator local_allocator) noexcept
+    auto extract_receiver_and_deallocate(detail::GrpcContextLocalAllocator local_allocator)
     {
         const auto& allocator = [&]
         {
@@ -317,7 +300,7 @@ class BasicSender<Implementation>::RunningOperation
         return local_receiver;
     }
 
-    auto extract_receiver_and_optionally_deallocate(detail::GrpcContextLocalAllocator local_allocator) noexcept
+    auto extract_receiver_and_optionally_deallocate(detail::GrpcContextLocalAllocator local_allocator)
     {
         if constexpr (AllocType == AllocationType::NONE)
         {
@@ -328,8 +311,6 @@ class BasicSender<Implementation>::RunningOperation
             return this->extract_receiver_and_deallocate(local_allocator);
         }
     }
-
-    Receiver& receiver() noexcept { return impl.first().receiver(); }
 
     Implementation& implementation() noexcept { return impl.second(); }
 
@@ -349,6 +330,8 @@ class BasicSenderOperationState
 {
   public:
     void start() noexcept { impl.first().start(grpc_context, impl.second()); }
+
+    Receiver& receiver() noexcept { return impl.first().receiver(); }
 
   private:
     using Initiation = typename Implementation::Initiation;
@@ -372,9 +355,8 @@ class BasicSenderOperationState
     }
 
     agrpc::GrpcContext& grpc_context;
-    detail::CompressedPair<
-        typename detail::BasicSender<Implementation>::template RunningOperation<Receiver, AllocationType::NONE>,
-        Initiation>
+    detail::CompressedPair<detail::BasicSenderRunningOperation<Implementation, Receiver, AllocationType::NONE>,
+                           Initiation>
         impl;
 };
 }

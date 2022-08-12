@@ -25,6 +25,11 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+template <class...>
+struct TypeList
+{
+};
+
 template <class T>
 struct RemoveCref
 {
