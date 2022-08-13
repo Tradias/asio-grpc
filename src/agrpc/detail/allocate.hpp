@@ -56,6 +56,7 @@ class AllocatedPointer
     {
     }
 
+    template <class Alloc = Allocator, class = std::enable_if_t<std::allocator_traits<Alloc>::is_always_equal::value>>
     AllocatedPointer& operator=(AllocatedPointer&& other) noexcept
     {
         if (this != &other)
@@ -79,11 +80,7 @@ class AllocatedPointer
 
     Allocator& get_allocator() noexcept { return this->impl.second(); }
 
-    const Allocator& get_allocator() const noexcept { return this->impl.second(); }
-
     Pointer operator->() const noexcept { return this->get(); }
-
-    Value& operator*() const noexcept { return *this->get(); }
 
     Pointer release() noexcept { return std::exchange(this->get(), nullptr); }
 

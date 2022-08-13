@@ -216,7 +216,7 @@ template <class T, class = void>
 inline constexpr bool HAS_GET_SCHEDULER = false;
 
 template <class T>
-inline constexpr bool HAS_GET_SCHEDULER<T, decltype((void)exec::get_scheduler(std::declval<const T&>()))> = true;
+inline constexpr bool HAS_GET_SCHEDULER<T, decltype((void)exec::get_scheduler(std::declval<T>()))> = true;
 
 template <class Object>
 auto get_executor(const Object& object)
@@ -234,10 +234,10 @@ auto get_executor(const Object& object)
 }  // namespace exec
 
 template <class T>
-using AssociatedAllocatorT = decltype(detail::exec::get_allocator(std::declval<const T&>()));
+using AssociatedAllocatorT = decltype(detail::exec::get_allocator(std::declval<T>()));
 
 template <class T>
-using AssociatedExecutorT = decltype(detail::exec::get_executor(std::declval<const T&>()));
+using AssociatedExecutorT = decltype(detail::exec::get_executor(std::declval<T>()));
 
 template <class Slot>
 class CancellationSlotAsStopToken

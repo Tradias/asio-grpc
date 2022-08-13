@@ -75,7 +75,7 @@ class ConditionalSender
     friend detail::ConditionalSenderAccess;
 
     ConditionalSender(Sender&& sender, bool condition, CompletionArgs&&... args)
-        : sender{std::move(sender)}, condition(condition), args{std::move(args)...}
+        : sender{std::move(sender)}, args{std::move(args)...}, condition(condition)
     {
     }
 
@@ -138,15 +138,15 @@ class ConditionalSenderOperationState
     ConditionalSenderOperationState(R&& receiver, Sender&& sender, bool condition,
                                     detail::Tuple<CompletionArgs...>&& args)
         : operation_state(detail::exec::connect(std::move(sender), std::forward<R>(receiver))),
-          condition(condition),
-          args(std::move(args))
+          args(std::move(args)),
+          condition(condition)
     {
     }
 
     template <class R>
     ConditionalSenderOperationState(R&& receiver, const Sender& sender, bool condition,
                                     const detail::Tuple<CompletionArgs...>& args)
-        : operation_state(detail::exec::connect(sender, std::forward<R>(receiver))), condition(condition), args(args)
+        : operation_state(detail::exec::connect(sender, std::forward<R>(receiver))), args(args), condition(condition)
     {
     }
 
