@@ -388,14 +388,7 @@ class BasicGrpcExecutor
      */
     [[nodiscard]] static constexpr asio::execution::blocking_t query(asio::execution::blocking_t) noexcept
     {
-        if constexpr (detail::is_blocking_never(Options))
-        {
-            return asio::execution::blocking_t::never;
-        }
-        else
-        {
-            return asio::execution::blocking_t::possibly;
-        }
+        return detail::QueryStaticBlocking<detail::is_blocking_never(Options)>::result_type();
     }
 
     /**
@@ -409,7 +402,7 @@ class BasicGrpcExecutor
      */
     [[nodiscard]] static constexpr asio::execution::mapping_t query(asio::execution::mapping_t) noexcept
     {
-        return asio::execution::mapping_t::thread;
+        return detail::QueryStaticMapping::result_type();
     }
 
     /**
@@ -438,7 +431,7 @@ class BasicGrpcExecutor
     [[nodiscard]] static constexpr asio::execution::relationship_t::fork_t query(
         asio::execution::relationship_t) noexcept
     {
-        return asio::execution::relationship_t::fork;
+        return detail::QueryStaticRelationship::result_type();
     }
 
     /**
@@ -453,14 +446,7 @@ class BasicGrpcExecutor
     [[nodiscard]] static constexpr asio::execution::outstanding_work_t query(
         asio::execution::outstanding_work_t) noexcept
     {
-        if constexpr (detail::is_outstanding_work_tracked(Options))
-        {
-            return asio::execution::outstanding_work_t::tracked;
-        }
-        else
-        {
-            return asio::execution::outstanding_work_t::untracked;
-        }
+        return detail::QueryStaticWorkTracked<detail::is_outstanding_work_tracked(Options)>::result_type();
     }
 
     /**
@@ -628,67 +614,37 @@ struct agrpc::asio::traits::prefer_member<agrpc::BasicGrpcExecutor<Allocator, Op
 };
 #endif
 
-#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_QUERY_STATIC_CONSTEXPR_MEMBER_TRAIT) && \
-    !defined(ASIO_HAS_DEDUCED_QUERY_STATIC_CONSTEXPR_MEMBER_TRAIT)
+#if !defined(AGRPC_UNIFEX)
 template <class Allocator, std::uint32_t Options, class Property>
 struct agrpc::asio::traits::query_static_constexpr_member<
     agrpc::BasicGrpcExecutor<Allocator, Options>, Property,
     typename std::enable_if_t<std::is_convertible_v<Property, agrpc::asio::execution::blocking_t>>>
+    : agrpc::detail::QueryStaticBlocking<agrpc::detail::is_blocking_never(Options)>
 {
-    static constexpr bool is_valid = true;
-    static constexpr bool is_noexcept = true;
-
-    static constexpr auto value() noexcept
-    {
-        return agrpc::BasicGrpcExecutor<Allocator, Options>::query(agrpc::asio::execution::blocking);
-    }
-
-    using result_type = decltype(value());
 };
 
 template <class Allocator, std::uint32_t Options, class Property>
 struct agrpc::asio::traits::query_static_constexpr_member<
     agrpc::BasicGrpcExecutor<Allocator, Options>, Property,
     typename std::enable_if_t<std::is_convertible_v<Property, agrpc::asio::execution::relationship_t>>>
+    : agrpc::detail::QueryStaticRelationship
 {
-    static constexpr bool is_valid = true;
-    static constexpr bool is_noexcept = true;
-
-    static constexpr auto value() noexcept
-    {
-        return agrpc::BasicGrpcExecutor<Allocator, Options>::query(agrpc::asio::execution::relationship);
-    }
-
-    using result_type = decltype(value());
 };
 
 template <class Allocator, std::uint32_t Options, class Property>
 struct agrpc::asio::traits::query_static_constexpr_member<
     agrpc::BasicGrpcExecutor<Allocator, Options>, Property,
     typename std::enable_if_t<std::is_convertible_v<Property, agrpc::asio::execution::outstanding_work_t>>>
+    : agrpc::detail::QueryStaticWorkTracked<agrpc::detail::is_outstanding_work_tracked(Options)>
 {
-    static constexpr bool is_valid = true;
-    static constexpr bool is_noexcept = true;
-
-    static constexpr auto value() noexcept
-    {
-        return agrpc::BasicGrpcExecutor<Allocator, Options>::query(agrpc::asio::execution::outstanding_work);
-    }
-
-    using result_type = decltype(value());
 };
 
 template <class Allocator, std::uint32_t Options, class Property>
 struct agrpc::asio::traits::query_static_constexpr_member<
     agrpc::BasicGrpcExecutor<Allocator, Options>, Property,
     typename std::enable_if_t<std::is_convertible_v<Property, agrpc::asio::execution::mapping_t>>>
+    : agrpc::detail::QueryStaticMapping
 {
-    static constexpr bool is_valid = true;
-    static constexpr bool is_noexcept = true;
-
-    using result_type = agrpc::asio::execution::mapping_t::thread_t;
-
-    static constexpr result_type value() noexcept { return result_type(); }
 };
 #endif
 

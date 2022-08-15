@@ -119,6 +119,70 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
         this->grpc_context()->work_started();
     }
 };
+
+#if !defined(AGRPC_UNIFEX)
+template <bool IsBlockingNever>
+struct QueryStaticBlocking
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+
+    [[nodiscard]] static constexpr auto value() noexcept
+    {
+        if constexpr (IsBlockingNever)
+        {
+            return asio::execution::blocking_t::never;
+        }
+        else
+        {
+            return asio::execution::blocking_t::possibly;
+        }
+    }
+
+    using result_type = decltype(QueryStaticBlocking::value());
+};
+
+template <bool IsWorkTracked>
+struct QueryStaticWorkTracked
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+
+    [[nodiscard]] static constexpr auto value() noexcept
+    {
+        if constexpr (IsWorkTracked)
+        {
+            return asio::execution::outstanding_work_t::tracked;
+        }
+        else
+        {
+            return asio::execution::outstanding_work_t::untracked;
+        }
+    }
+
+    using result_type = decltype(QueryStaticWorkTracked::value());
+};
+
+struct QueryStaticMapping
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+
+    using result_type = agrpc::asio::execution::mapping_t::thread_t;
+
+    static constexpr auto value() noexcept { return result_type(); }
+};
+
+struct QueryStaticRelationship
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+
+    using result_type = agrpc::asio::execution::relationship_t::fork_t;
+
+    static constexpr auto value() noexcept { return result_type(); }
+};
+#endif
 }
 
 AGRPC_NAMESPACE_END

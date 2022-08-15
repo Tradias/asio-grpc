@@ -103,8 +103,8 @@ class BasicRPCClientClientStreamingBase<ResponderT<RequestT>, Executor> : public
     auto read_initial_metadata(CompletionToken token = asio::default_completion_token_t<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
-            detail::ReadInitiateMetadataSenderImplementation<BasicRPCClientClientStreamingBase>>(this->grpc_context(),
-                                                                                                 {}, {*this}, token);
+            detail::ReadInitialMetadataSenderImplementation<BasicRPCClientClientStreamingBase>>(this->grpc_context(),
+                                                                                                {}, {*this}, token);
     }
 
     // // WriteOptions::set_last_message() can be used to get the behavior of agrpc::write_last
@@ -136,18 +136,21 @@ class BasicRPCClientClientStreamingBase<ResponderT<RequestT>, Executor> : public
             this->grpc_context(), {}, {*this}, !this->is_finished(), token, this->ok());
     }
 
-    [[nodiscard]] std::unique_ptr<ResponderT<RequestT>>& responder() noexcept { return responder_; }
+    [[nodiscard]] ResponderT<RequestT>& responder() noexcept { return *responder_; }
 
   protected:
-    friend detail::ReadInitiateMetadataSenderImplementation<BasicRPCClientClientStreamingBase>;
+    friend detail::ReadInitialMetadataSenderImplementation<BasicRPCClientClientStreamingBase>;
     friend detail::WriteClientStreamingSenderImplementation<ResponderT<RequestT>, Executor>;
     friend detail::ClientFinishSenderImplementation<BasicRPCClientClientStreamingBase>;
     friend detail::BasicRPCAccess;
 
     BasicRPCClientClientStreamingBase() = default;
 
-    BasicRPCClientClientStreamingBase(const Executor& executor, grpc::ClientContext& client_context)
-        : detail::BasicRPCExecutorBase<Executor>(executor), detail::BasicRPCClientContextBase(client_context)
+    BasicRPCClientClientStreamingBase(const Executor& executor, grpc::ClientContext& client_context,
+                                      std::unique_ptr<ResponderT<RequestT>>&& responder)
+        : detail::BasicRPCExecutorBase<Executor>(executor),
+          detail::BasicRPCClientContextBase(client_context),
+          responder_(std::move(responder))
     {
     }
 
@@ -170,8 +173,8 @@ class BasicRPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
     auto read_initial_metadata(CompletionToken token = asio::default_completion_token_t<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
-            detail::ReadInitiateMetadataSenderImplementation<BasicRPCClientServerStreamingBase>>(this->grpc_context(),
-                                                                                                 {}, {*this}, token);
+            detail::ReadInitialMetadataSenderImplementation<BasicRPCClientServerStreamingBase>>(this->grpc_context(),
+                                                                                                {}, {*this}, token);
     }
 
     // Reads from the RPC and finishes it if agrpc::read returned `false`.
@@ -185,17 +188,20 @@ class BasicRPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
             this->grpc_context(), {response}, {*this}, token);
     }
 
-    [[nodiscard]] std::unique_ptr<ResponderT<ResponseT>>& responder() noexcept { return responder_; }
+    [[nodiscard]] ResponderT<ResponseT>& responder() noexcept { return *responder_; }
 
   protected:
-    friend detail::ReadInitiateMetadataSenderImplementation<BasicRPCClientServerStreamingBase>;
+    friend detail::ReadInitialMetadataSenderImplementation<BasicRPCClientServerStreamingBase>;
     friend detail::ReadServerStreamingSenderImplementation<ResponderT<ResponseT>, Executor>;
     friend detail::BasicRPCAccess;
 
     BasicRPCClientServerStreamingBase() = default;
 
-    BasicRPCClientServerStreamingBase(const Executor& executor, grpc::ClientContext& client_context)
-        : detail::BasicRPCExecutorBase<Executor>(executor), detail::BasicRPCClientContextBase(client_context)
+    BasicRPCClientServerStreamingBase(const Executor& executor, grpc::ClientContext& client_context,
+                                      std::unique_ptr<ResponderT<ResponseT>>&& responder)
+        : detail::BasicRPCExecutorBase<Executor>(executor),
+          detail::BasicRPCClientContextBase(client_context),
+          responder_(std::move(responder))
     {
     }
 
@@ -217,8 +223,8 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
     auto read_initial_metadata(CompletionToken token = asio::default_completion_token_t<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
-            detail::ReadInitiateMetadataSenderImplementation<BasicRPCBidirectionalStreamingBase>>(this->grpc_context(),
-                                                                                                  {}, {*this}, token);
+            detail::ReadInitialMetadataSenderImplementation<BasicRPCBidirectionalStreamingBase>>(this->grpc_context(),
+                                                                                                 {}, {*this}, token);
     }
 
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
@@ -245,6 +251,14 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
     }
 
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
+    auto writes_done(CompletionToken&& token = asio::default_completion_token_t<Executor>{})
+    {
+        return detail::async_initiate_conditional_sender_implementation<
+            detail::ClientWritesDoneSenderImplementation<ResponderT<RequestT, ResponseT>, Executor>>(
+            this->grpc_context(), {}, {*this}, !is_writes_done && !this->is_finished(), token, this->ok());
+    }
+
+    template <class CompletionToken = asio::default_completion_token_t<Executor>>
     auto finish(CompletionToken token = asio::default_completion_token_t<Executor>{})
     {
         return detail::async_initiate_conditional_sender_implementation<
@@ -252,19 +266,23 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
             this->grpc_context(), {}, {*this}, !this->is_finished(), token, this->ok());
     }
 
-    [[nodiscard]] std::unique_ptr<ResponderT<RequestT, ResponseT>>& responder() noexcept { return responder_; }
+    [[nodiscard]] ResponderT<RequestT, ResponseT>& responder() noexcept { return *responder_; }
 
   protected:
-    friend detail::ReadInitiateMetadataSenderImplementation<BasicRPCBidirectionalStreamingBase>;
+    friend detail::ReadInitialMetadataSenderImplementation<BasicRPCBidirectionalStreamingBase>;
     friend detail::ClientReadBidiStreamingSenderImplementation<ResponderT<RequestT, ResponseT>, Executor>;
     friend detail::ClientWriteBidiStreamingSenderImplementation<ResponderT<RequestT, ResponseT>, Executor>;
+    friend detail::ClientWritesDoneSenderImplementation<ResponderT<RequestT, ResponseT>, Executor>;
     friend detail::ClientFinishSenderImplementation<BasicRPCBidirectionalStreamingBase>;
     friend detail::BasicRPCAccess;
 
     BasicRPCBidirectionalStreamingBase() = default;
 
-    BasicRPCBidirectionalStreamingBase(const Executor& executor, grpc::ClientContext& client_context)
-        : detail::BasicRPCExecutorBase<Executor>(executor), detail::BasicRPCClientContextBase(client_context)
+    BasicRPCBidirectionalStreamingBase(const Executor& executor, grpc::ClientContext& client_context,
+                                       std::unique_ptr<ResponderT<RequestT, ResponseT>>&& responder)
+        : detail::BasicRPCExecutorBase<Executor>(executor),
+          detail::BasicRPCClientContextBase(client_context),
+          responder_(std::move(responder))
     {
     }
 
@@ -439,7 +457,6 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STRE
         using other = BasicRPC<PrepareAsync, OtherExecutor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>;
     };
 
-    // Requests the RPC and finishes it if agrpc::request returned `false`.
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
     static auto request(agrpc::GrpcContext& grpc_context, StubT& stub, grpc::ClientContext& context,
                         CompletionToken token = asio::default_completion_token_t<Executor>{})

@@ -369,6 +369,7 @@ TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC success")
             CHECK(test_server.request_rpc(yield));
             test_server.response.set_integer(1);
             CHECK(agrpc::read(test_server.responder, test_server.request, yield));
+            CHECK_FALSE(agrpc::read(test_server.responder, test_server.request, yield));
             CHECK_EQ(42, test_server.request.integer());
             CHECK(agrpc::write(test_server.responder, test_server.response, yield));
             CHECK(agrpc::finish(test_server.responder, grpc::Status::OK, yield));
@@ -378,9 +379,11 @@ TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC success")
             auto rpc = test::BidirectionalStreamingRPC::request(grpc_context, *stub, client_context, yield);
             request.set_integer(42);
             CHECK(rpc.write(request, yield));
+            CHECK(rpc.writes_done(yield));
             CHECK(rpc.read(response, yield));
             CHECK_EQ(1, response.integer());
             CHECK_FALSE(rpc.write(request, yield));
+            CHECK(rpc.writes_done(yield));
             CHECK_FALSE(rpc.read(response, yield));
             CHECK_EQ(1, response.integer());
             CHECK(rpc.finish(yield));
@@ -453,44 +456,5 @@ TEST_CASE_FIXTURE(HighLevelClientBidiTest,
             promise.get_future().get();
             CHECK_FALSE(rpc.finish(yield));
             CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.status_code());
-        });
-}
-
-TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC can finish on failed write while reading")
-{
-    run_server_client_on_separate_threads(
-        [&](const asio::yield_context& yield)
-        {
-            CHECK(test_server.request_rpc(yield));
-            // test_server.response.set_integer(1);
-            // CHECK(agrpc::read(test_server.responder, test_server.request, yield));
-            // CHECK_EQ(42, test_server.request.integer());
-            // CHECK(agrpc::write(test_server.responder, test_server.response, yield));
-            // agrpc::write_last(test_server.responder, test_server.response, {},
-            //                   asio::bind_executor(grpc_context, [](bool) {}));
-            // CHECK(agrpc::read(test_server.responder, test_server.request, yield));
-            CHECK(agrpc::finish(test_server.responder, grpc::Status::OK, yield));
-        },
-        [&](const asio::yield_context& yield)
-        {
-            auto rpc = test::BidirectionalStreamingRPC::request(grpc_context, *stub, client_context, yield);
-            client_context.TryCancel();
-            std::promise<void> promise;
-            rpc.read(response,
-                     [&](bool ok)
-                     {
-                         CHECK_FALSE(ok);
-                         promise.set_value();
-                     });
-            CHECK_FALSE(rpc.write(request, yield));
-            promise.get_future().get();
-            CHECK_FALSE(rpc.finish(yield));
-            // CHECK(rpc.write(request, yield));
-            // CHECK(rpc.read(response, yield));
-            // CHECK_EQ(1, response.integer());
-            // CHECK(rpc.finish(yield));
-            CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.status_code());
-            // CHECK(rpc.finish(yield));
-            // CHECK_EQ(grpc::StatusCode::OK, rpc.status_code());
         });
 }
