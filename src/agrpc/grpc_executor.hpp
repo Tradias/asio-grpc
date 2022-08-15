@@ -388,7 +388,7 @@ class BasicGrpcExecutor
      */
     [[nodiscard]] static constexpr asio::execution::blocking_t query(asio::execution::blocking_t) noexcept
     {
-        return detail::QueryStaticBlocking<detail::is_blocking_never(Options)>::result_type();
+        return typename detail::QueryStaticBlocking<detail::is_blocking_never(Options)>::result_type();
     }
 
     /**
@@ -446,7 +446,7 @@ class BasicGrpcExecutor
     [[nodiscard]] static constexpr asio::execution::outstanding_work_t query(
         asio::execution::outstanding_work_t) noexcept
     {
-        return detail::QueryStaticWorkTracked<detail::is_outstanding_work_tracked(Options)>::result_type();
+        return typename detail::QueryStaticWorkTracked<detail::is_outstanding_work_tracked(Options)>::result_type();
     }
 
     /**

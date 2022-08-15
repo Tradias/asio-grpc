@@ -75,6 +75,10 @@ class BasicRPCClientContextBase
 
     void set_finished() noexcept { client_context.release(); }
 
+    bool is_writes_done() const noexcept { return client_context.has_bit<0>(); }
+
+    void set_writes_done() noexcept { client_context.set_bit<0>(); }
+
   private:
     detail::AutoCancelClientContext client_context;
 };
@@ -156,7 +160,6 @@ class BasicRPCClientClientStreamingBase<ResponderT<RequestT>, Executor> : public
 
   private:
     std::unique_ptr<ResponderT<RequestT>> responder_;
-    bool is_writes_done{};
 };
 
 template <class ResponseT, template <class> class ResponderT, class Executor>
@@ -255,7 +258,7 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
     {
         return detail::async_initiate_conditional_sender_implementation<
             detail::ClientWritesDoneSenderImplementation<ResponderT<RequestT, ResponseT>, Executor>>(
-            this->grpc_context(), {}, {*this}, !is_writes_done && !this->is_finished(), token, this->ok());
+            this->grpc_context(), {}, {*this}, !this->is_writes_done() && !this->is_finished(), token, this->ok());
     }
 
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
@@ -288,7 +291,6 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
 
   private:
     std::unique_ptr<ResponderT<RequestT, ResponseT>> responder_;
-    bool is_writes_done{};
 };
 }
 

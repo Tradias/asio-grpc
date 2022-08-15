@@ -21,6 +21,7 @@
 #include <agrpc/detail/conditional_sender.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/rpc_type.hpp>
+#include <agrpc/detail/tagged_ptr.hpp>
 #include <agrpc/detail/work_tracking_completion_handler.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/use_sender.hpp>
@@ -35,7 +36,7 @@ class AutoCancelClientContext
   public:
     AutoCancelClientContext() = default;
 
-    explicit AutoCancelClientContext(grpc::ClientContext& context) noexcept : context(&context) {}
+    explicit AutoCancelClientContext(grpc::ClientContext& context) noexcept : context(context) {}
 
     AutoCancelClientContext(const AutoCancelClientContext&) = delete;
 
@@ -43,9 +44,10 @@ class AutoCancelClientContext
 
     ~AutoCancelClientContext() noexcept
     {
-        if (context)
+        const auto context_ptr = context.get();
+        if (context_ptr)
         {
-            context->TryCancel();
+            context_ptr->TryCancel();
         }
     }
 
@@ -57,12 +59,24 @@ class AutoCancelClientContext
         return *this;
     }
 
-    grpc::ClientContext* release() noexcept { return std::exchange(context, nullptr); }
+    detail::TaggedPtr<grpc::ClientContext> release() noexcept { return std::exchange(context, nullptr); }
 
-    [[nodiscard]] explicit operator bool() const noexcept { return context != nullptr; }
+    [[nodiscard]] explicit operator bool() const noexcept { return !context.is_null(); }
+
+    template <std::uintptr_t Bit>
+    [[nodiscard]] bool has_bit() const noexcept
+    {
+        return context.template has_bit<Bit>();
+    }
+
+    template <std::uintptr_t Bit>
+    void set_bit() noexcept
+    {
+        context.template set_bit<Bit>();
+    }
 
   private:
-    grpc::ClientContext* context{};
+    detail::TaggedPtr<grpc::ClientContext> context{};
 };
 
 struct SubmitSenderToWorkTrackingCompletionHandler
