@@ -12,23 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_EXAMPLE_HELPER_H
-#define AGRPC_EXAMPLE_HELPER_H
+#include "utils/io_context_test.hpp"
 
-#include <cstdlib>
+#include "utils/asio_forward.hpp"
 
-inline void abort_if_not(bool condition)
+#include <thread>
+
+namespace test
 {
-    if (!condition)
+IoContextTest::~IoContextTest()
+{
+    if (io_context_run_thread.joinable())
     {
-        std::abort();
+        io_context_run_thread.join();
     }
 }
 
-template <class... Args>
-void silence_unused(Args&&... args)
+void IoContextTest::run_io_context_detached()
 {
-    ((void)args, ...);
+    io_context_run_thread = std::thread{[&]
+                                        {
+                                            io_context.run();
+                                        }};
 }
-
-#endif  // AGRPC_EXAMPLE_HELPER_H
+}  // namespace test

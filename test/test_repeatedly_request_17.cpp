@@ -18,6 +18,7 @@
 #include "utils/grpc_client_server_test.hpp"
 #include "utils/grpc_context_test.hpp"
 #include "utils/grpc_generic_client_server_test.hpp"
+#include "utils/io_context_test.hpp"
 #include "utils/protobuf.hpp"
 #include "utils/rpc.hpp"
 
@@ -139,7 +140,7 @@ TEST_CASE_TEMPLATE("yield_context repeatedly_request unary", T, TypedRequestHand
     CHECK_EQ(0, completion_order[2]);
 }
 
-struct GrpcRepeatedlyRequestTest : test::GrpcClientServerTest
+struct GrpcRepeatedlyRequestTest : test::GrpcClientServerTest, test::IoContextTest
 {
     template <class RPC, class Service, class ServerFunction, class ClientFunction, class Allocator>
     auto test(RPC rpc, Service& service, ServerFunction server_function, ClientFunction client_function,
@@ -274,7 +275,6 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "repeatedly_request tracks work of 
     int order{};
     std::thread::id expected_thread_id{};
     std::thread::id actual_thread_id{};
-    asio::io_context io_context;
     agrpc::repeatedly_request(&test::v1::Test::AsyncService::RequestUnary, service,
                               asio::bind_executor(grpc_context, [&](auto&&) {}),
                               asio::bind_executor(asio::any_io_executor(io_context.get_executor()),

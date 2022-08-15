@@ -61,6 +61,12 @@ template <class Service, class Responder>
 using ServerSingleArgRequest = void (Service::*)(grpc::ServerContext*, Responder*, grpc::CompletionQueue*,
                                                  grpc::ServerCompletionQueue*, void*);
 
+enum class GenericRPCType
+{
+    CLIENT_UNARY,
+    CLIENT_STREAMING
+};
+
 template <auto PrepareAsync>
 inline constexpr auto RPC_TYPE = agrpc::RPCType::CLIENT_UNARY;
 
@@ -81,6 +87,10 @@ inline constexpr auto RPC_TYPE<PrepareAsync> = agrpc::RPCType::CLIENT_CLIENT_STR
 template <class Stub, class Request, class Response, template <class, class> class ReaderWriter,
           detail::PrepareAsyncClientBidirectionalStreamingRequest<Stub, ReaderWriter<Request, Response>> PrepareAsync>
 inline constexpr auto RPC_TYPE<PrepareAsync> = agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING;
+
+template <>
+inline constexpr auto RPC_TYPE<detail::GenericRPCType::CLIENT_STREAMING> =
+    agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING;
 }
 
 AGRPC_NAMESPACE_END

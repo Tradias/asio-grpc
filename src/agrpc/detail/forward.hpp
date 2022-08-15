@@ -48,10 +48,10 @@ struct RepeatedlyRequestContextAccess;
 
 class GenericRPCContext;
 
-template <class Request, class Responder, class Executor>
+template <class Responder, class Executor>
 class BasicRPCClientClientStreamingBase;
 
-template <class Request, class Responder, class Executor>
+template <class Responder, class Executor>
 class BasicRPCClientServerStreamingBase;
 
 template <class Responder, class Executor>

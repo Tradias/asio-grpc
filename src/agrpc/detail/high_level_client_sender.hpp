@@ -31,10 +31,15 @@ class BasicRPC;
 
 namespace detail
 {
-enum class GenericRPCType
+struct BasicRPCAccess
 {
-    UNARY,
-    STREAMING
+    template <class BasicRPC>
+    static void client_initiate_finish(BasicRPC& rpc, void* tag)
+    {
+        rpc.grpc_context().work_started();
+        rpc.responder()->Finish(&rpc.status(), tag);
+        rpc.set_finished();
+    }
 };
 
 template <auto PrepareAsync, class Executor>
@@ -79,7 +84,7 @@ struct ClientUnaryRequestSenderImplementation<PrepareAsync, Executor> : detail::
 template <class Executor>
 struct GenericClientUnaryRequestSenderImplementation : detail::GrpcSenderImplementationBase
 {
-    using RPC = agrpc::BasicRPC<detail::GenericRPCType::UNARY, Executor, agrpc::RPCType::CLIENT_UNARY>;
+    using RPC = agrpc::BasicRPC<detail::GenericRPCType::CLIENT_UNARY, Executor, agrpc::RPCType::CLIENT_UNARY>;
     using Signature = void(RPC);
 
     struct Initiation
@@ -126,7 +131,7 @@ struct ClientClientStreamingRequestSenderImplementation<PrepareAsync, Executor> 
 
     ClientClientStreamingRequestSenderImplementation(agrpc::GrpcContext& grpc_context, Stub& stub,
                                                      grpc::ClientContext& client_context, Response& response)
-        : rpc(grpc_context.get_executor())
+        : rpc(grpc_context.get_executor(), client_context)
     {
         rpc.responder() = (stub.*PrepareAsync)(&client_context, &response, grpc_context.get_completion_queue());
     }
@@ -142,8 +147,7 @@ struct ClientClientStreamingRequestSenderImplementation<PrepareAsync, Executor> 
         }
         else
         {
-            rpc.grpc_context().work_started();
-            rpc.responder()->Finish(&rpc.status(), on_done.self());
+            detail::BasicRPCAccess::client_initiate_finish(rpc, on_done.self());
         }
     }
 
@@ -164,7 +168,7 @@ struct ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor> 
 
     ClientServerStreamingRequestSenderImplementation(agrpc::GrpcContext& grpc_context, Stub& stub,
                                                      grpc::ClientContext& client_context, const Request& req)
-        : rpc(grpc_context.get_executor())
+        : rpc(grpc_context.get_executor(), client_context)
     {
         rpc.responder() = (stub.*PrepareAsync)(&client_context, req, grpc_context.get_completion_queue());
     }
@@ -180,8 +184,7 @@ struct ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor> 
         }
         else
         {
-            rpc.grpc_context().work_started();
-            rpc.responder()->Finish(&rpc.status(), on_done.self());
+            detail::BasicRPCAccess::client_initiate_finish(rpc, on_done.self());
         }
     }
 
@@ -203,7 +206,7 @@ struct ClientBidirectionalStreamingRequestSenderImplementation<PrepareAsync, Exe
 
     ClientBidirectionalStreamingRequestSenderImplementation(agrpc::GrpcContext& grpc_context, Stub& stub,
                                                             grpc::ClientContext& client_context)
-        : rpc(grpc_context.get_executor())
+        : rpc(grpc_context.get_executor(), client_context)
     {
         rpc.responder() = (stub.*PrepareAsync)(&client_context, grpc_context.get_completion_queue());
     }
@@ -219,8 +222,7 @@ struct ClientBidirectionalStreamingRequestSenderImplementation<PrepareAsync, Exe
         }
         else
         {
-            rpc.grpc_context().work_started();
-            rpc.responder()->Finish(&rpc.status(), on_done.self());
+            detail::BasicRPCAccess::client_initiate_finish(rpc, on_done.self());
         }
     }
 
@@ -251,22 +253,20 @@ struct ReadInitiateMetadataSenderImplementation : detail::GrpcSenderImplementati
             return;
         }
         is_finished = true;
-        rpc.grpc_context().work_started();
-        rpc.responder()->Finish(&rpc.status(), on_done.self());
+        detail::BasicRPCAccess::client_initiate_finish(rpc, on_done.self());
     }
 
     BasicRPCBase& rpc;
     bool is_finished{};
 };
 
-template <class Request, class Responder, class Executor>
+template <class Responder, class Executor>
 struct ReadServerStreamingSenderImplementation;
 
-template <class Request, template <class> class Responder, class Response, class Executor>
-struct ReadServerStreamingSenderImplementation<Request, Responder<Response>, Executor>
-    : detail::GrpcSenderImplementationBase
+template <template <class> class Responder, class Response, class Executor>
+struct ReadServerStreamingSenderImplementation<Responder<Response>, Executor> : detail::GrpcSenderImplementationBase
 {
-    using BasicRPCBase = detail::BasicRPCClientServerStreamingBase<Request, Responder<Response>, Executor>;
+    using BasicRPCBase = detail::BasicRPCClientServerStreamingBase<Responder<Response>, Executor>;
 
     struct Initiation
     {
@@ -286,7 +286,6 @@ struct ReadServerStreamingSenderImplementation<Request, Responder<Response>, Exe
     {
         if (is_finished)
         {
-            // TODO: does server-streaming have finish function?
             rpc.responder().reset();
             on_done(false);
             return;
@@ -297,22 +296,20 @@ struct ReadServerStreamingSenderImplementation<Request, Responder<Response>, Exe
             return;
         }
         is_finished = true;
-        rpc.grpc_context().work_started();
-        rpc.responder()->Finish(&rpc.status(), on_done.self());
+        detail::BasicRPCAccess::client_initiate_finish(rpc, on_done.self());
     }
 
     BasicRPCBase& rpc;
     bool is_finished{};
 };
 
-template <class Responder, class Response, class Executor>
+template <class Responder, class Executor>
 struct WriteClientStreamingSenderImplementation;
 
-template <class Request, template <class> class Responder, class Response, class Executor>
-struct WriteClientStreamingSenderImplementation<Responder<Request>, Response, Executor>
-    : detail::GrpcSenderImplementationBase
+template <class Request, template <class> class Responder, class Executor>
+struct WriteClientStreamingSenderImplementation<Responder<Request>, Executor> : detail::GrpcSenderImplementationBase
 {
-    using BasicRPCBase = detail::BasicRPCClientClientStreamingBase<Response, Responder<Request>, Executor>;
+    using BasicRPCBase = detail::BasicRPCClientClientStreamingBase<Responder<Request>, Executor>;
 
     struct Initiation
     {
@@ -327,6 +324,7 @@ struct WriteClientStreamingSenderImplementation<Responder<Request>, Response, Ex
     {
         auto& [req, options] = init.initiation();
         is_last_message = options.is_last_message();
+        rpc.is_writes_done = is_last_message;
         rpc.responder()->Write(req, options, init.self());
     }
 
@@ -336,12 +334,12 @@ struct WriteClientStreamingSenderImplementation<Responder<Request>, Response, Ex
         if (is_finished)
         {
             rpc.responder().reset();
-            on_done(rpc.ok());
+            on_done(is_last_message);
             return;
         }
         if (is_last_message)
         {
-            is_last_message = false;
+            is_last_message = ok;
             this->initiate_finish(on_done.self());
             return;
         }
@@ -356,8 +354,7 @@ struct WriteClientStreamingSenderImplementation<Responder<Request>, Response, Ex
     void initiate_finish(void* self)
     {
         is_finished = true;
-        rpc.grpc_context().work_started();
-        rpc.responder()->Finish(&rpc.status(), self);
+        detail::BasicRPCAccess::client_initiate_finish(rpc, self);
     }
 
     BasicRPCBase& rpc;
@@ -365,32 +362,136 @@ struct WriteClientStreamingSenderImplementation<Responder<Request>, Response, Ex
     bool is_last_message{};
 };
 
-template <class Responder, class Response, class Executor>
-struct FinishClientStreamingSenderImplementation;
-
-template <class Request, template <class> class Responder, class Response, class Executor>
-struct FinishClientStreamingSenderImplementation<Responder<Request>, Response, Executor>
-    : detail::GrpcSenderImplementationBase
+template <class BasicRPCBase>
+struct ClientFinishSenderImplementation : detail::GrpcSenderImplementationBase
 {
-    using BasicRPCBase = detail::BasicRPCClientClientStreamingBase<Response, Responder<Request>, Executor>;
     using Initiation = detail::Empty;
 
-    FinishClientStreamingSenderImplementation(BasicRPCBase& rpc) : rpc(rpc) {}
+    ClientFinishSenderImplementation(BasicRPCBase& rpc) : rpc(rpc) {}
 
-    void initiate(const agrpc::GrpcContext&, void* self) noexcept { rpc.responder()->WritesDone(self); }
+    void initiate(const agrpc::GrpcContext&, void* self) noexcept
+    {
+        if (rpc.is_writes_done)
+        {
+            is_finished = true;
+            rpc.responder()->Finish(&rpc.status(), self);
+            rpc.set_finished();
+        }
+        else
+        {
+            rpc.responder()->WritesDone(self);
+        }
+    }
 
     template <class OnDone>
     void done(OnDone on_done, bool)
     {
         if (is_finished)
         {
-            rpc.responder().reset();
             on_done(rpc.ok());
             return;
         }
         is_finished = true;
-        rpc.grpc_context().work_started();
-        rpc.responder()->Finish(&rpc.status(), on_done.self());
+        detail::BasicRPCAccess::client_initiate_finish(rpc, on_done.self());
+    }
+
+    BasicRPCBase& rpc;
+    bool is_finished{};
+};
+
+template <class Responder, class Executor>
+struct ClientReadBidiStreamingSenderImplementation;
+
+template <template <class, class> class Responder, class Request, class Response, class Executor>
+struct ClientReadBidiStreamingSenderImplementation<Responder<Request, Response>, Executor>
+    : detail::GrpcSenderImplementationBase
+{
+    using BasicRPCBase = detail::BasicRPCBidirectionalStreamingBase<Responder<Request, Response>, Executor>;
+
+    struct Initiation
+    {
+        Response& response;
+    };
+
+    ClientReadBidiStreamingSenderImplementation(BasicRPCBase& rpc) : rpc(rpc) {}
+
+    template <class Init>
+    void initiate(const agrpc::GrpcContext&, Init init) noexcept
+    {
+        rpc.responder()->Read(&init->response, init.self());
+    }
+
+    template <class OnDone>
+    void done(OnDone on_done, bool ok)
+    {
+        if (is_finished)
+        {
+            on_done(false);
+            return;
+        }
+        if (ok)
+        {
+            on_done(true);
+            return;
+        }
+        if (!rpc.is_finished())
+        {
+            is_finished = true;
+            detail::BasicRPCAccess::client_initiate_finish(rpc, on_done.self());
+            return;
+        }
+        on_done(false);
+    }
+
+    BasicRPCBase& rpc;
+    bool is_finished{};
+};
+
+template <class Responder, class Executor>
+struct ClientWriteBidiStreamingSenderImplementation;
+
+template <template <class, class> class Responder, class Request, class Response, class Executor>
+struct ClientWriteBidiStreamingSenderImplementation<Responder<Request, Response>, Executor>
+    : detail::GrpcSenderImplementationBase
+{
+    using BasicRPCBase = detail::BasicRPCBidirectionalStreamingBase<Responder<Request, Response>, Executor>;
+
+    struct Initiation
+    {
+        const Request& req;
+        grpc::WriteOptions options;
+    };
+
+    ClientWriteBidiStreamingSenderImplementation(BasicRPCBase& rpc) : rpc(rpc) {}
+
+    template <class Init>
+    void initiate(const agrpc::GrpcContext&, Init init) noexcept
+    {
+        auto& [req, options] = init.initiation();
+        rpc.is_writes_done = options.is_last_message();
+        rpc.responder()->Write(req, options, init.self());
+    }
+
+    template <class OnDone>
+    void done(OnDone on_done, bool ok)
+    {
+        if (is_finished)
+        {
+            on_done(false);
+            return;
+        }
+        if (ok)
+        {
+            on_done(true);
+            return;
+        }
+        if (!rpc.is_finished())
+        {
+            is_finished = true;
+            detail::BasicRPCAccess::client_initiate_finish(rpc, on_done.self());
+            return;
+        }
+        on_done(false);
     }
 
     BasicRPCBase& rpc;

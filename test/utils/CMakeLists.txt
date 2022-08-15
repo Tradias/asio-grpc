@@ -75,6 +75,8 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_context_test.hpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_generic_client_server_test.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_generic_client_server_test.hpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/io_context_test.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/io_context_test.hpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/memory_resource.hpp")
     if(NOT ${_asio_grpc_type} STREQUAL "UNIFEX")
         target_sources(

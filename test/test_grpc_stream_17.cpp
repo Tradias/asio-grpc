@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "utils/grpc_context_test.hpp"
+#include "utils/io_context_test.hpp"
 #include "utils/time.hpp"
 
 #include <agrpc/cancel_safe.hpp>
@@ -24,11 +25,6 @@
 #include <cstddef>
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-struct IoContextTest
-{
-    asio::io_context io_context;
-};
-
 TEST_CASE_FIXTURE(test::GrpcContextTest, "CancelSafe: cancel wait for alarm and wait again")
 {
     bool done{};
@@ -90,7 +86,7 @@ TEST_CASE_TEMPLATE("CancelSafe: wait for already completed operation", T, bool, 
     CHECK(ok);
 }
 
-TEST_CASE_FIXTURE(IoContextTest, "CancelSafe: wait for asio::steady_timer")
+TEST_CASE_FIXTURE(test::IoContextTest, "CancelSafe: wait for asio::steady_timer")
 {
     agrpc::CancelSafe<void(boost::system::error_code)> safe;
     asio::steady_timer timer{io_context, std::chrono::seconds(5)};
@@ -107,7 +103,7 @@ TEST_CASE_FIXTURE(IoContextTest, "CancelSafe: wait for asio::steady_timer")
     io_context.run();
 }
 
-TEST_CASE_FIXTURE(IoContextTest, "CancelSafe: can handle move-only completion arguments")
+TEST_CASE_FIXTURE(test::IoContextTest, "CancelSafe: can handle move-only completion arguments")
 {
     agrpc::CancelSafe<void(std::unique_ptr<int>)> safe;
     auto token = safe.token();
@@ -205,7 +201,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcStream: can change default complet
     CHECK(is_ok);
 }
 
-TEST_CASE_FIXTURE(IoContextTest, "CancelSafe: can handle lots of completion arguments")
+TEST_CASE_FIXTURE(test::IoContextTest, "CancelSafe: can handle lots of completion arguments")
 {
     using Signature = void(int, int, bool, double, float, char);
     agrpc::CancelSafe<Signature> safe;

@@ -90,7 +90,7 @@ struct TestServer<&test::v1::Test::AsyncService::RequestBidirectionalStreaming>
     grpc::ServerContext& server_context;
     test::msg::Request request{};
     test::msg::Response response{};
-    grpc::ServerAsyncReaderWriter<test::msg::Request, test::msg::Response> responder{&server_context};
+    grpc::ServerAsyncReaderWriter<test::msg::Response, test::msg::Request> responder{&server_context};
 };
 }
 

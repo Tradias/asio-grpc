@@ -15,6 +15,7 @@
 #include "utils/asio_utils.hpp"
 #include "utils/doctest.hpp"
 #include "utils/grpc_context_test.hpp"
+#include "utils/io_context_test.hpp"
 #include "utils/time.hpp"
 #include "utils/unassignable_allocator.hpp"
 
@@ -505,10 +506,13 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post with throwing completion ha
     CHECK_THROWS_AS(grpc_context.run(), Exception);
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll() with asio::post")
+struct GrpcContextAndIoContextTest : test::GrpcContextTest, test::IoContextTest
+{
+};
+
+TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll() with asio::post")
 {
     bool invoked{false};
-    asio::io_context io_context;
     asio::post(io_context,
                [&]()
                {
@@ -525,10 +529,9 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll() with asio::post")
     CHECK(invoked);
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll() with grpc::Alarm")
+TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll() with grpc::Alarm")
 {
     bool invoked{false};
-    asio::io_context io_context;
     grpc::Alarm alarm;
     asio::steady_timer timer{io_context};
     asio::post(io_context,
@@ -552,11 +555,10 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll() with grpc::Alarm")
     CHECK(invoked);
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll_completion_queue()")
+TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll_completion_queue()")
 {
     bool post_completed{false};
     bool alarm_completed{false};
-    asio::io_context io_context;
     grpc::Alarm alarm;
     asio::steady_timer timer{io_context};
     asio::post(io_context,

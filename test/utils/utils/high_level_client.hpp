@@ -41,8 +41,8 @@ struct IntrospectRPC<agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLI
 
     using RPC = agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>;
 
-    template <class Stub, class CompletionToken>
-    static auto request(agrpc::GrpcContext& grpc_context, Stub& stub, grpc::ClientContext& context,
+    template <class CompletionToken>
+    static auto request(agrpc::GrpcContext& grpc_context, typename RPC::Stub& stub, grpc::ClientContext& context,
                         const typename RPC::Request& request, typename RPC::Response& response, CompletionToken&& token)
     {
         return RPC::request(grpc_context, stub, context, request, response, token);
@@ -57,8 +57,8 @@ struct IntrospectRPC<agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLI
 
     using RPC = agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>;
 
-    template <class Stub, class CompletionToken>
-    static auto request(agrpc::GrpcContext& grpc_context, Stub& stub, grpc::ClientContext& context,
+    template <class CompletionToken>
+    static auto request(agrpc::GrpcContext& grpc_context, typename RPC::Stub& stub, grpc::ClientContext& context,
                         const typename RPC::Request&, typename RPC::Response& response, CompletionToken&& token)
     {
         return RPC::request(grpc_context, stub, context, response, token);
@@ -73,8 +73,8 @@ struct IntrospectRPC<agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLI
 
     using RPC = agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>;
 
-    template <class Stub, class CompletionToken>
-    static auto request(agrpc::GrpcContext& grpc_context, Stub& stub, grpc::ClientContext& context,
+    template <class CompletionToken>
+    static auto request(agrpc::GrpcContext& grpc_context, typename RPC::Stub& stub, grpc::ClientContext& context,
                         const typename RPC::Request& request, const typename RPC::Response&, CompletionToken&& token)
     {
         return RPC::request(grpc_context, stub, context, request, token);
@@ -89,8 +89,8 @@ struct IntrospectRPC<agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLI
 
     using RPC = agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>;
 
-    template <class Stub, class CompletionToken>
-    static auto request(agrpc::GrpcContext& grpc_context, Stub& stub, grpc::ClientContext& context,
+    template <class CompletionToken>
+    static auto request(agrpc::GrpcContext& grpc_context, typename RPC::Stub& stub, grpc::ClientContext& context,
                         const typename RPC::Request&, const typename RPC::Response&, CompletionToken&& token)
     {
         return RPC::request(grpc_context, stub, context, token);

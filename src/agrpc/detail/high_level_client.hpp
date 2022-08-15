@@ -24,11 +24,47 @@
 #include <agrpc/detail/work_tracking_completion_handler.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/use_sender.hpp>
+#include <grpcpp/client_context.h>
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+class AutoCancelClientContext
+{
+  public:
+    AutoCancelClientContext() = default;
+
+    explicit AutoCancelClientContext(grpc::ClientContext& context) noexcept : context(&context) {}
+
+    AutoCancelClientContext(const AutoCancelClientContext&) = delete;
+
+    AutoCancelClientContext(AutoCancelClientContext&& other) noexcept : context(other.release()) {}
+
+    ~AutoCancelClientContext() noexcept
+    {
+        if (context)
+        {
+            context->TryCancel();
+        }
+    }
+
+    AutoCancelClientContext& operator=(const AutoCancelClientContext&) = delete;
+
+    AutoCancelClientContext& operator=(AutoCancelClientContext&& other) noexcept
+    {
+        context = other.release();
+        return *this;
+    }
+
+    grpc::ClientContext* release() noexcept { return std::exchange(context, nullptr); }
+
+    [[nodiscard]] explicit operator bool() const noexcept { return context != nullptr; }
+
+  private:
+    grpc::ClientContext* context{};
+};
+
 struct SubmitSenderToWorkTrackingCompletionHandler
 {
     template <class CompletionHandler, class Implementation>
