@@ -382,10 +382,10 @@ TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC success")
             CHECK(rpc.writes_done(yield));
             CHECK(rpc.read(response, yield));
             CHECK_EQ(1, response.integer());
-            CHECK_FALSE(rpc.write(request, yield));
             CHECK(rpc.writes_done(yield));
             CHECK_FALSE(rpc.read(response, yield));
             CHECK_EQ(1, response.integer());
+            CHECK(rpc.writes_done(yield));
             CHECK(rpc.finish(yield));
             CHECK_EQ(grpc::StatusCode::OK, rpc.status_code());
             CHECK(rpc.finish(yield));
@@ -439,7 +439,7 @@ TEST_CASE_FIXTURE(HighLevelClientBidiTest,
         [&](const asio::yield_context& yield)
         {
             CHECK(test_server.request_rpc(yield));
-            CHECK(agrpc::finish(test_server.responder, grpc::Status::OK, yield));
+            agrpc::finish(test_server.responder, grpc::Status::OK, yield);
         },
         [&](const asio::yield_context& yield)
         {

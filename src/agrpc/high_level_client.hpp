@@ -18,6 +18,7 @@
 #include <agrpc/default_completion_token.hpp>
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/copyable_atomic.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/high_level_client.hpp>
 #include <agrpc/detail/high_level_client_sender.hpp>
@@ -222,6 +223,22 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
     using Request = RequestT;
     using Response = ResponseT;
 
+    BasicRPCBidirectionalStreamingBase(const BasicRPCBidirectionalStreamingBase&) = delete;
+
+    BasicRPCBidirectionalStreamingBase(BasicRPCBidirectionalStreamingBase&&) = default;
+
+    ~BasicRPCBidirectionalStreamingBase()
+    {
+        if (finished.load())
+        {
+            detail::BasicRPCClientContextBase::set_finished();
+        }
+    }
+
+    BasicRPCBidirectionalStreamingBase& operator=(const BasicRPCBidirectionalStreamingBase&) = delete;
+
+    BasicRPCBidirectionalStreamingBase& operator=(BasicRPCBidirectionalStreamingBase&&) = default;
+
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
     auto read_initial_metadata(CompletionToken token = asio::default_completion_token_t<Executor>{})
     {
@@ -289,8 +306,13 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
     {
     }
 
+    [[nodiscard]] bool is_finished() const noexcept { return finished.load(std::memory_order_relaxed); }
+
+    bool set_finished() noexcept { return finished.exchange(true, std::memory_order_relaxed); }
+
   private:
     std::unique_ptr<ResponderT<RequestT, ResponseT>> responder_;
+    detail::CopyableAtomic<bool> finished{};
 };
 }
 
