@@ -40,7 +40,10 @@ class AutoCancelClientContext
 
     AutoCancelClientContext(const AutoCancelClientContext&) = delete;
 
-    AutoCancelClientContext(AutoCancelClientContext&& other) noexcept : context(other.release()) {}
+    AutoCancelClientContext(AutoCancelClientContext&& other) noexcept : context(other.context)
+    {
+        other.context.clear();
+    }
 
     ~AutoCancelClientContext() noexcept
     {
@@ -55,13 +58,22 @@ class AutoCancelClientContext
 
     AutoCancelClientContext& operator=(AutoCancelClientContext&& other) noexcept
     {
-        context = other.release();
+        if (this != &other)
+        {
+            const auto context_ptr = context.get();
+            if (context_ptr)
+            {
+                context_ptr->TryCancel();
+            }
+            context = other.context;
+            other.context.clear();
+        }
         return *this;
     }
 
-    detail::TaggedPtr<grpc::ClientContext> release() noexcept { return std::exchange(context, nullptr); }
+    void clear() noexcept { context.clear(); }
 
-    [[nodiscard]] explicit operator bool() const noexcept { return !context.is_null(); }
+    [[nodiscard]] bool is_null() const noexcept { return context.is_null(); }
 
     template <std::uintptr_t Bit>
     [[nodiscard]] bool has_bit() const noexcept
@@ -77,6 +89,25 @@ class AutoCancelClientContext
 
   private:
     detail::TaggedPtr<grpc::ClientContext> context{};
+};
+
+class BasicRPCClientContextBase
+{
+  protected:
+    BasicRPCClientContextBase() = default;
+
+    BasicRPCClientContextBase(grpc::ClientContext& client_context) : client_context(client_context) {}
+
+    [[nodiscard]] bool is_finished() const noexcept { return client_context.is_null(); }
+
+    void set_finished() noexcept { client_context.clear(); }
+
+    bool is_writes_done() const noexcept { return client_context.has_bit<0>(); }
+
+    void set_writes_done() noexcept { client_context.set_bit<0>(); }
+
+  private:
+    detail::AutoCancelClientContext client_context;
 };
 
 struct SubmitSenderToWorkTrackingCompletionHandler

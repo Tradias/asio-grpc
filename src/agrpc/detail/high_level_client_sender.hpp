@@ -41,30 +41,6 @@ struct BasicRPCAccess
         rpc.grpc_context().work_started();
         rpc.responder().Finish(&rpc.status(), tag);
     }
-
-    template <class BasicRPC, class OnDone>
-    static void bidi_done(detail::TaggedPtr<BasicRPC>& rpc, OnDone on_done, bool ok)
-    {
-        if (rpc.template has_bit<0>())
-        {
-            on_done(false);
-            return;
-        }
-        if (ok)
-        {
-            on_done(true);
-            return;
-        }
-        if (!rpc->set_finished())
-        {
-            rpc.template set_bit<0>();
-            auto& rpc_ref = *rpc;
-            rpc_ref.grpc_context().work_started();
-            rpc_ref.responder().Finish(&rpc_ref.status(), on_done.self());
-            return;
-        }
-        on_done(false);
-    }
 };
 
 template <auto PrepareAsync, class Executor>
@@ -449,7 +425,7 @@ struct ClientReadBidiStreamingSenderImplementation<Responder<Request, Response>,
     template <class OnDone>
     void done(OnDone on_done, bool ok)
     {
-        detail::BasicRPCAccess::bidi_done(rpc, on_done, ok);
+        on_done(ok);
     }
 
     detail::TaggedPtr<BasicRPCBase> rpc;
@@ -486,7 +462,7 @@ struct ClientWriteBidiStreamingSenderImplementation<Responder<Request, Response>
     template <class OnDone>
     void done(OnDone on_done, bool ok)
     {
-        detail::BasicRPCAccess::bidi_done(rpc, on_done, ok);
+        on_done(ok);
     }
 
     detail::TaggedPtr<BasicRPCBase> rpc;
@@ -510,7 +486,7 @@ struct ClientWritesDoneSenderImplementation<Responder<Request, Response>, Execut
     void done(OnDone on_done, bool ok)
     {
         rpc->set_writes_done();
-        detail::BasicRPCAccess::bidi_done(rpc, on_done, ok);
+        on_done(ok);
     }
 
     detail::TaggedPtr<BasicRPCBase> rpc;

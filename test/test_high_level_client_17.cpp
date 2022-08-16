@@ -385,7 +385,6 @@ TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC success")
             CHECK(rpc.writes_done(yield));
             CHECK_FALSE(rpc.read(response, yield));
             CHECK_EQ(1, response.integer());
-            CHECK(rpc.writes_done(yield));
             CHECK(rpc.finish(yield));
             CHECK_EQ(grpc::StatusCode::OK, rpc.status_code());
             CHECK(rpc.finish(yield));
@@ -393,11 +392,8 @@ TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC success")
         });
 }
 
-TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC automatically finishes when read returns false")
+TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC concurrent read+write")
 {
-    bool concurrent_write{};
-    SUBCASE("no concurrent write") {}
-    SUBCASE("concurrent write") { concurrent_write = true; }
     run_server_client_on_separate_threads(
         [&](const asio::yield_context& yield)
         {
@@ -411,29 +407,22 @@ TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC automatica
             auto rpc = test::BidirectionalStreamingRPC::request(grpc_context, *stub, client_context, yield);
             CHECK(rpc.read(response, yield));
             std::promise<void> promise;
-            if (concurrent_write)
-            {
-                rpc.write(request,
-                          [&](bool ok)
-                          {
-                              CHECK_FALSE(ok);
-                              promise.set_value();
-                          });
-            }
-            else
-            {
-                promise.set_value();
-            }
+            rpc.write(request,
+                      [&](bool ok)
+                      {
+                          CHECK_FALSE(ok);
+                          promise.set_value();
+                      });
             CHECK_FALSE(rpc.read(response, yield));
             promise.get_future().get();
+            CHECK_FALSE(rpc.finish(yield));
             CHECK_EQ(grpc::StatusCode::ALREADY_EXISTS, rpc.status_code());
             CHECK_FALSE(rpc.finish(yield));
             CHECK_EQ(grpc::StatusCode::ALREADY_EXISTS, rpc.status_code());
         });
 }
 
-TEST_CASE_FIXTURE(HighLevelClientBidiTest,
-                  "BidirectionalStreamingRPC automatically finishes when TryCancel before write+read")
+TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC TryCancel before write+read")
 {
     run_server_client_on_separate_threads(
         [&](const asio::yield_context& yield)
@@ -454,7 +443,5 @@ TEST_CASE_FIXTURE(HighLevelClientBidiTest,
                      });
             CHECK_FALSE(rpc.write(request, yield));
             promise.get_future().get();
-            CHECK_FALSE(rpc.finish(yield));
-            CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.status_code());
         });
 }

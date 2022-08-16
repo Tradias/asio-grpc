@@ -18,7 +18,6 @@
 #include <agrpc/default_completion_token.hpp>
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/copyable_atomic.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/high_level_client.hpp>
 #include <agrpc/detail/high_level_client_sender.hpp>
@@ -29,10 +28,15 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+/**
+ * @brief BasicRPC status base
+ */
 class BasicRPCStatusBase
 {
   public:
-    /// Return the instance's error code.
+    /**
+     * @brief The RPC's status code
+     */
     [[nodiscard]] grpc::StatusCode status_code() const noexcept { return status_.error_code(); }
 
     /// Is the status OK?
@@ -46,10 +50,16 @@ class BasicRPCStatusBase
     grpc::Status status_;
 };
 
+/**
+ * @brief BasicRPC executor base
+ */
 template <class Executor>
 class BasicRPCExecutorBase
 {
   public:
+    /**
+     * @brief Executor type
+     */
     using executor_type = Executor;
 
     [[nodiscard]] executor_type get_executor() const noexcept { return executor; }
@@ -63,25 +73,6 @@ class BasicRPCExecutorBase
 
   private:
     Executor executor;
-};
-
-class BasicRPCClientContextBase
-{
-  protected:
-    BasicRPCClientContextBase() = default;
-
-    BasicRPCClientContextBase(grpc::ClientContext& client_context) : client_context(client_context) {}
-
-    [[nodiscard]] bool is_finished() const noexcept { return !bool{client_context}; }
-
-    void set_finished() noexcept { client_context.release(); }
-
-    bool is_writes_done() const noexcept { return client_context.has_bit<0>(); }
-
-    void set_writes_done() noexcept { client_context.set_bit<0>(); }
-
-  private:
-    detail::AutoCancelClientContext client_context;
 };
 
 template <class RequestT, class ResponseT, class Executor>
@@ -213,6 +204,9 @@ class BasicRPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
     std::unique_ptr<ResponderT<ResponseT>> responder_;
 };
 
+/**
+ * @brief BasicRPC client-side bidirectional streaming base
+ */
 template <class RequestT, class ResponseT, template <class, class> class ResponderT, class Executor>
 class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
     : public detail::BasicRPCStatusBase,
@@ -220,24 +214,11 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
       private detail::BasicRPCClientContextBase
 {
   public:
+    /**
+     * @brief Request type
+     */
     using Request = RequestT;
     using Response = ResponseT;
-
-    BasicRPCBidirectionalStreamingBase(const BasicRPCBidirectionalStreamingBase&) = delete;
-
-    BasicRPCBidirectionalStreamingBase(BasicRPCBidirectionalStreamingBase&&) = default;
-
-    ~BasicRPCBidirectionalStreamingBase()
-    {
-        if (finished.load())
-        {
-            detail::BasicRPCClientContextBase::set_finished();
-        }
-    }
-
-    BasicRPCBidirectionalStreamingBase& operator=(const BasicRPCBidirectionalStreamingBase&) = delete;
-
-    BasicRPCBidirectionalStreamingBase& operator=(BasicRPCBidirectionalStreamingBase&&) = default;
 
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
     auto read_initial_metadata(CompletionToken token = asio::default_completion_token_t<Executor>{})
@@ -306,19 +287,17 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
     {
     }
 
-    [[nodiscard]] bool is_finished() const noexcept { return finished.load(std::memory_order_relaxed); }
-
-    bool set_finished() noexcept { return finished.exchange(true, std::memory_order_relaxed); }
-
   private:
     std::unique_ptr<ResponderT<RequestT, ResponseT>> responder_;
-    detail::CopyableAtomic<bool> finished{};
 };
 }
 
 inline constexpr auto CLIENT_GENERIC_UNARY_RPC = detail::GenericRPCType::CLIENT_UNARY;
 inline constexpr auto CLIENT_GENERIC_STREAMING_RPC = detail::GenericRPCType::CLIENT_STREAMING;
 
+/**
+ * @brief BasicRPC for client-side unary calls
+ */
 template <class StubT, class Request, class Response, template <class> class Responder,
           detail::ClientUnaryRequest<StubT, Request, Responder<Response>> PrepareAsync, class Executor>
 class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
@@ -356,6 +335,9 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
     using detail::BasicRPCUnaryBase<Request, Response, Executor>::BasicRPCUnaryBase;
 };
 
+/**
+ * @brief BasicRPC for client-side generic unary calls
+ */
 template <class Executor>
 class BasicRPC<detail::GenericRPCType::CLIENT_UNARY, Executor, agrpc::RPCType::CLIENT_UNARY>
     : public detail::BasicRPCUnaryBase<grpc::ByteBuffer, grpc::ByteBuffer, Executor>
@@ -385,6 +367,9 @@ class BasicRPC<detail::GenericRPCType::CLIENT_UNARY, Executor, agrpc::RPCType::C
     using detail::BasicRPCUnaryBase<grpc::ByteBuffer, grpc::ByteBuffer, Executor>::BasicRPCUnaryBase;
 };
 
+/**
+ * @brief BasicRPC for client-side client streams
+ */
 template <class StubT, class Request, class ResponseT, template <class> class Responder,
           detail::PrepareAsyncClientClientStreamingRequest<StubT, Responder<Request>, ResponseT> PrepareAsync,
           class Executor>
@@ -427,6 +412,9 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
     using detail::BasicRPCClientClientStreamingBase<Responder<Request>, Executor>::BasicRPCClientClientStreamingBase;
 };
 
+/**
+ * @brief BasicRPC for client-side server streams
+ */
 template <class StubT, class RequestT, class Response, template <class> class Responder,
           detail::PrepareAsyncClientServerStreamingRequest<StubT, RequestT, Responder<Response>> PrepareAsync,
           class Executor>
@@ -466,6 +454,9 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>
     using detail::BasicRPCClientServerStreamingBase<Responder<Response>, Executor>::BasicRPCClientServerStreamingBase;
 };
 
+/**
+ * @brief BasicRPC for client-side bidirectional streams
+ */
 template <class StubT, class Request, class Response, template <class, class> class Responder,
           detail::PrepareAsyncClientBidirectionalStreamingRequest<StubT, Responder<Request, Response>> PrepareAsync,
           class Executor>
@@ -481,6 +472,9 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STRE
         using other = BasicRPC<PrepareAsync, OtherExecutor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>;
     };
 
+    /**
+     * @brief Request
+     */
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
     static auto request(agrpc::GrpcContext& grpc_context, StubT& stub, grpc::ClientContext& context,
                         CompletionToken token = asio::default_completion_token_t<Executor>{})

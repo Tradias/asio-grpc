@@ -54,11 +54,7 @@ class TaggedPtr
 
     explicit TaggedPtr(T& t) noexcept : TaggedPtr(std::addressof(t)) {}
 
-    TaggedPtr& operator=(std::nullptr_t) noexcept
-    {
-        ptr &= AVAILABLE_BITS;
-        return *this;
-    }
+    void clear() noexcept { ptr = std::uintptr_t{}; }
 
     [[nodiscard]] T* get() const noexcept { return reinterpret_cast<T*>(ptr & PTR_MASK); }
 
