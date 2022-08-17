@@ -66,8 +66,8 @@ template <class InitiatingFunction, class CompletionToken>
 auto grpc_initiate(InitiatingFunction&& initiating_function, CompletionToken&& token)
 {
     return detail::grpc_initiate_impl(detail::GrpcInitiateTemplateArgs<detail::Empty>{},
-                                      std::forward<InitiatingFunction>(initiating_function),
-                                      std::forward<CompletionToken>(token));
+                                      static_cast<InitiatingFunction&&>(initiating_function),
+                                      static_cast<CompletionToken&&>(token));
 }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)

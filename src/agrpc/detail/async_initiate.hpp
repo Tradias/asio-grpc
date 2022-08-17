@@ -39,8 +39,8 @@ struct InitiateImmediateCompletion<void(Args...)>
         const auto allocator = asio::get_associated_allocator(ch);
         detail::post_with_allocator(
             std::move(executor),
-            [impl = detail::CompressedPair(std::forward<CompletionHandler>(ch),
-                                           detail::Tuple{std::forward<T>(t)...})]() mutable
+            [impl = detail::CompressedPair(static_cast<CompletionHandler&&>(ch),
+                                           detail::Tuple{static_cast<T&&>(t)...})]() mutable
             {
                 if constexpr (0 == sizeof...(T))
                 {
@@ -59,7 +59,7 @@ template <class Signature, class CompletionToken, class... Args>
 auto async_initiate_immediate_completion(CompletionToken token, Args&&... args)
 {
     return asio::async_initiate<CompletionToken, Signature>(detail::InitiateImmediateCompletion<Signature>{}, token,
-                                                            std::forward<Args>(args)...);
+                                                            static_cast<Args&&>(args)...);
 }
 }
 

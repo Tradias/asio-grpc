@@ -68,7 +68,7 @@ struct UnbindResult
 template <class CompletionHandler>
 decltype(auto) unbind_recursively(CompletionHandler&& completion_handler)
 {
-    return std::forward<CompletionHandler>(completion_handler);
+    return static_cast<CompletionHandler&&>(completion_handler);
 }
 
 template <class CompletionHandler, class Executor>
@@ -116,10 +116,10 @@ auto unbind_and_get_associates(CompletionHandler&& completion_handler)
     auto executor = detail::exec::get_executor(completion_handler);
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
     auto cancellation_slot = asio::get_associated_cancellation_slot(completion_handler);
-    return UnbindResult{detail::unbind_recursively(std::forward<CompletionHandler>(completion_handler)),
+    return UnbindResult{detail::unbind_recursively(static_cast<CompletionHandler&&>(completion_handler)),
                         std::move(executor), std::move(cancellation_slot)};
 #else
-    return UnbindResult{detail::unbind_recursively(std::forward<CompletionHandler>(completion_handler)),
+    return UnbindResult{detail::unbind_recursively(static_cast<CompletionHandler&&>(completion_handler)),
                         std::move(executor)};
 #endif
 }

@@ -138,7 +138,7 @@ class CancelSafe<void(CompletionArgs...)>
                 self.result.reset();
                 detail::post_with_allocator(
                     std::move(executor),
-                    [local_result = std::move(local_result), ch = std::forward<CompletionHandler>(ch)]() mutable
+                    [local_result = std::move(local_result), ch = static_cast<CompletionHandler&&>(ch)]() mutable
                     {
                         detail::invoke_successfully_from_tuple(std::move(ch), std::move(local_result));
                     },
@@ -146,7 +146,7 @@ class CancelSafe<void(CompletionArgs...)>
                 return;
             }
             auto cancellation_slot = asio::get_associated_cancellation_slot(ch);
-            self.emplace_completion_handler(std::forward<CompletionHandler>(ch));
+            self.emplace_completion_handler(static_cast<CompletionHandler&&>(ch));
             self.install_cancellation_handler(cancellation_slot);
         }
     };
@@ -172,7 +172,7 @@ class CancelSafe<void(CompletionArgs...)>
     {
         completion_handler
             .template emplace<detail::WorkTrackingCompletionHandler<detail::RemoveCrefT<CompletionHandler>>>(
-                std::forward<CompletionHandler>(ch));
+                static_cast<CompletionHandler&&>(ch));
     }
 
     template <class CancellationSlot>

@@ -67,7 +67,7 @@ class BasicGrpcStream
      * @brief Construct from an executor
      */
     template <class Exec>
-    explicit BasicGrpcStream(Exec&& executor) noexcept : executor(std::forward<Exec>(executor))
+    explicit BasicGrpcStream(Exec&& executor) noexcept : executor(static_cast<Exec&&>(executor))
     {
     }
 
@@ -102,7 +102,7 @@ class BasicGrpcStream
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
     auto next(CompletionToken&& token = asio::default_completion_token_t<Executor>{})
     {
-        return this->safe.wait(std::forward<CompletionToken>(token));
+        return this->safe.wait(static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -114,7 +114,7 @@ class BasicGrpcStream
     BasicGrpcStream& initiate(std::allocator_arg_t, Allocator allocator, Function&& function, Args&&... args)
     {
         this->running.store(true, std::memory_order_relaxed);
-        std::invoke(std::forward<Function>(function), std::forward<Args>(args)...,
+        std::invoke(static_cast<Function&&>(function), static_cast<Args&&>(args)...,
                     agrpc::bind_allocator(allocator, CompletionHandler{*this}));
         return *this;
     }
@@ -128,7 +128,7 @@ class BasicGrpcStream
     BasicGrpcStream& initiate(Function&& function, Args&&... args)
     {
         this->running.store(true, std::memory_order_relaxed);
-        std::invoke(std::forward<Function>(function), std::forward<Args>(args)..., CompletionHandler{*this});
+        std::invoke(static_cast<Function&&>(function), static_cast<Args&&>(args)..., CompletionHandler{*this});
         return *this;
     }
 
@@ -147,10 +147,10 @@ class BasicGrpcStream
     {
         if (this->is_running())
         {
-            return this->safe.wait(std::forward<CompletionToken>(token));
+            return this->safe.wait(static_cast<CompletionToken&&>(token));
         }
         return detail::async_initiate_immediate_completion<void(detail::ErrorCode, bool)>(
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 
   private:

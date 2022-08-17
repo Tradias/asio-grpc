@@ -121,8 +121,8 @@ struct SubmitSenderToWorkTrackingCompletionHandler
             grpc_context,
             detail::CompletionHandlerReceiver<
                 detail::WorkTrackingCompletionHandler<detail::RemoveCrefT<CompletionHandler>>>(
-                std::forward<CompletionHandler>(completion_handler)),
-            initiation, std::forward<Implementation>(implementation));
+                static_cast<CompletionHandler&&>(completion_handler)),
+            initiation, static_cast<Implementation&&>(implementation));
     }
 
     agrpc::GrpcContext& grpc_context;
@@ -166,7 +166,7 @@ auto async_initiate_conditional_sender_implementation(agrpc::GrpcContext& grpc_c
         else
         {
             return detail::async_initiate_immediate_completion<Signature>(std::move(token),
-                                                                          std::forward<Args>(args)...);
+                                                                          static_cast<Args&&>(args)...);
         }
     }
     else
@@ -174,7 +174,7 @@ auto async_initiate_conditional_sender_implementation(agrpc::GrpcContext& grpc_c
     {
         return detail::ConditionalSenderAccess::create(
             detail::BasicSenderAccess::create<Implementation>(grpc_context, initiation, std::move(implementation)),
-            condition, std::forward<Args>(args)...);
+            condition, static_cast<Args&&>(args)...);
     }
 }
 }

@@ -27,14 +27,14 @@ namespace detail
 template <class Receiver, class... Args>
 void satisfy_receiver(Receiver&& receiver, Args&&... args) noexcept
 {
-    if constexpr (noexcept(detail::exec::set_value(std::forward<Receiver>(receiver), std::forward<Args>(args)...)))
+    if constexpr (noexcept(detail::exec::set_value(static_cast<Receiver&&>(receiver), static_cast<Args&&>(args)...)))
     {
-        detail::exec::set_value(std::forward<Receiver>(receiver), std::forward<Args>(args)...);
+        detail::exec::set_value(static_cast<Receiver&&>(receiver), static_cast<Args&&>(args)...);
     }
     else
     {
-        AGRPC_TRY { detail::exec::set_value(std::forward<Receiver>(receiver), std::forward<Args>(args)...); }
-        AGRPC_CATCH(...) { detail::exec::set_error(std::forward<Receiver>(receiver), std::current_exception()); }
+        AGRPC_TRY { detail::exec::set_value(static_cast<Receiver&&>(receiver), static_cast<Args&&>(args)...); }
+        AGRPC_CATCH(...) { detail::exec::set_error(static_cast<Receiver&&>(receiver), std::current_exception()); }
     }
 }
 }

@@ -37,7 +37,7 @@ class Operation<IsIntrusivelyListable, Handler, void(Signature...)>
   public:
     template <class... Args>
     explicit Operation(Args&&... args)
-        : Base(&detail::default_do_complete<Operation, Base, Signature...>), handler(std::forward<Args>(args)...)
+        : Base(&detail::default_do_complete<Operation, Base, Signature...>), handler(static_cast<Args&&>(args)...)
     {
     }
 
@@ -61,7 +61,7 @@ class LocalOperation<IsIntrusivelyListable, Handler, void(Signature...)>
 
   public:
     template <class... Args>
-    explicit LocalOperation(Args&&... args) : Base(&LocalOperation::do_complete), handler_(std::forward<Args>(args)...)
+    explicit LocalOperation(Args&&... args) : Base(&LocalOperation::do_complete), handler_(static_cast<Args&&>(args)...)
     {
     }
 

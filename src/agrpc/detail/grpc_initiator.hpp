@@ -41,7 +41,7 @@ class GrpcInitiator
     template <class CompletionHandler>
     void operator()(CompletionHandler&& completion_handler)
     {
-        auto unbound = detail::unbind_and_get_associates(std::forward<CompletionHandler>(completion_handler));
+        auto unbound = detail::unbind_and_get_associates(static_cast<CompletionHandler&&>(completion_handler));
         this->submit(unbound, std::move(unbound.completion_handler()));
     }
 
@@ -64,7 +64,7 @@ class GrpcInitiator
         }
 #endif
         detail::grpc_submit(grpc_context, this->initiating_function,
-                            std::forward<CompletionHandler>(completion_handler));
+                            static_cast<CompletionHandler&&>(completion_handler));
     }
 
   private:
@@ -79,7 +79,7 @@ class GrpcCompletionHandlerWithPayload : public detail::AssociatedCompletionHand
 
   public:
     template <class... Args>
-    explicit GrpcCompletionHandlerWithPayload(Args&&... args) : Base(std::forward<Args>(args)...)
+    explicit GrpcCompletionHandlerWithPayload(Args&&... args) : Base(static_cast<Args&&>(args)...)
     {
     }
 
@@ -103,7 +103,7 @@ class GrpcWithPayloadInitiator : public detail::GrpcInitiator<InitiatingFunction
     template <class CompletionHandler>
     void operator()(CompletionHandler&& completion_handler)
     {
-        auto unbound = detail::unbind_and_get_associates(std::forward<CompletionHandler>(completion_handler));
+        auto unbound = detail::unbind_and_get_associates(static_cast<CompletionHandler&&>(completion_handler));
         using UnboundCompletionHandler = typename decltype(unbound)::CompletionHandlerT;
         detail::GrpcCompletionHandlerWithPayload<UnboundCompletionHandler, Payload>
             unbound_completion_handler_with_payload{std::move(unbound.completion_handler())};

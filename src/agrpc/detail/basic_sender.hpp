@@ -40,7 +40,7 @@ struct BasicSenderAccess
                        Implementation&& implementation)
     {
         return detail::BasicSender<detail::RemoveCrefT<Implementation>>(grpc_context, initiation,
-                                                                        std::forward<Implementation>(implementation));
+                                                                        static_cast<Implementation&&>(implementation));
     }
 };
 
@@ -87,7 +87,7 @@ void submit_basic_sender_running_operation(agrpc::GrpcContext& grpc_context, Rec
     detail::BasicSenderStarter starter{initiation};
     detail::allocate_operation_and_invoke<
         detail::BasicSenderRunningOperationAllocationTraits<detail::RemoveCrefT<Implementation>>>(
-        grpc_context, starter, std::forward<Receiver>(receiver), std::forward<Implementation>(implementation));
+        grpc_context, starter, static_cast<Receiver&&>(receiver), static_cast<Implementation&&>(implementation));
 }
 
 template <class Implementation, class Receiver>
@@ -106,7 +106,7 @@ class BasicSender : public detail::SenderOf<typename Implementation::Signature>
                                           std::is_nothrow_copy_constructible_v<Initiation> &&
                                           std::is_nothrow_move_constructible_v<Implementation>))
     {
-        return {std::forward<Receiver>(receiver), grpc_context, initiation, std::move(implementation)};
+        return {static_cast<Receiver&&>(receiver), grpc_context, initiation, std::move(implementation)};
     }
 
     template <class Receiver, class Impl = Implementation, class = std::enable_if_t<std::is_copy_constructible_v<Impl>>>
@@ -115,20 +115,20 @@ class BasicSender : public detail::SenderOf<typename Implementation::Signature>
                                               std::is_nothrow_copy_constructible_v<Initiation> &&
                                               std::is_nothrow_copy_constructible_v<Implementation>))
     {
-        return {std::forward<Receiver>(receiver), grpc_context, initiation, implementation};
+        return {static_cast<Receiver&&>(receiver), grpc_context, initiation, implementation};
     }
 
     template <class Receiver>
     void submit(Receiver&& receiver) &&
     {
-        detail::submit_basic_sender_running_operation(grpc_context, std::forward<Receiver>(receiver), initiation,
+        detail::submit_basic_sender_running_operation(grpc_context, static_cast<Receiver&&>(receiver), initiation,
                                                       std::move(implementation));
     }
 
     template <class Receiver, class Impl = Implementation, class = std::enable_if_t<std::is_copy_constructible_v<Impl>>>
     void submit(Receiver&& receiver) const&
     {
-        detail::submit_basic_sender_running_operation(grpc_context, std::forward<Receiver>(receiver), initiation,
+        detail::submit_basic_sender_running_operation(grpc_context, static_cast<Receiver&&>(receiver), initiation,
                                                       implementation);
     }
 
@@ -148,6 +148,21 @@ class BasicSender : public detail::SenderOf<typename Implementation::Signature>
     Implementation implementation;
 };
 
+template <class Initiation, detail::SenderImplementationType Type>
+struct BasicSenderRunningOperationInit
+{
+    [[nodiscard]] auto* self() const noexcept { return self_; }
+
+    [[nodiscard]] Initiation& initiation() const noexcept { return initiation_; }
+
+    [[nodiscard]] Initiation* operator->() const noexcept { return &initiation_; }
+
+    [[nodiscard]] operator void*() const noexcept { return static_cast<void*>(self_); }
+
+    detail::BasicSenderRunningOperationBase<Type>* self_;
+    Initiation& initiation_;
+};
+
 template <class Implementation, class Receiver, AllocationType AllocType>
 class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBase<Implementation::TYPE>
 {
@@ -155,20 +170,6 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
     using Base = detail::BasicSenderRunningOperationBase<Implementation::TYPE>;
     using Initiation = typename Implementation::Initiation;
     using StopFunction = typename Implementation::StopFunction;
-
-    struct Init
-    {
-        [[nodiscard]] Base* self() const noexcept { return self_; }
-
-        [[nodiscard]] Initiation& initiation() const noexcept { return initiation_; }
-
-        [[nodiscard]] Initiation* operator->() const noexcept { return &initiation_; }
-
-        [[nodiscard]] operator void*() const noexcept { return static_cast<void*>(self_); }
-
-        Base* self_;
-        Initiation& initiation_;
-    };
 
     struct Done
     {
@@ -190,14 +191,14 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
     template <class R>
     BasicSenderRunningOperation(R&& receiver, Implementation&& implementation)
         : Base(&BasicSenderRunningOperation::no_arg_on_complete, &BasicSenderRunningOperation::grpc_tag_on_complete),
-          impl(std::forward<R>(receiver), std::move(implementation))
+          impl(static_cast<R&&>(receiver), std::move(implementation))
     {
     }
 
     template <class R>
     BasicSenderRunningOperation(R&& receiver, const Implementation& implementation)
         : Base(&BasicSenderRunningOperation::no_arg_on_complete, &BasicSenderRunningOperation::grpc_tag_on_complete),
-          impl(std::forward<R>(receiver), implementation)
+          impl(static_cast<R&&>(receiver), implementation)
     {
     }
 
@@ -219,7 +220,8 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
             this->emplace_stop_callback(std::move(stop_token), initiation);
         }
         grpc_context.work_started();
-        implementation().initiate(grpc_context, Init{this, initiation});
+        implementation().initiate(grpc_context,
+                                  BasicSenderRunningOperationInit<Initiation, Implementation::TYPE>{this, initiation});
     }
 
     Receiver& receiver() noexcept { return impl.first().receiver(); }
@@ -263,7 +265,7 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
         }
     }
 
-    auto extract_receiver_and_deallocate(detail::GrpcContextLocalAllocator local_allocator)
+    Receiver extract_receiver_and_deallocate(detail::GrpcContextLocalAllocator local_allocator)
     {
         const auto& allocator = [&]
         {
@@ -281,7 +283,7 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
         return local_receiver;
     }
 
-    auto extract_receiver_and_optionally_deallocate(detail::GrpcContextLocalAllocator local_allocator)
+    Receiver extract_receiver_and_optionally_deallocate(detail::GrpcContextLocalAllocator local_allocator)
     {
         if constexpr (AllocType == AllocationType::NONE)
         {
@@ -298,7 +300,7 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
     template <class StopToken>
     void emplace_stop_callback(StopToken&& stop_token, Initiation& initiation) noexcept
     {
-        impl.first().emplace_stop_callback(std::forward<StopToken>(stop_token), initiation);
+        impl.first().emplace_stop_callback(static_cast<StopToken&&>(stop_token), initiation);
     }
 
     void reset_stop_callback() noexcept { impl.first().reset_stop_callback(); }
@@ -323,7 +325,7 @@ class BasicSenderOperationState
     BasicSenderOperationState(R&& receiver, agrpc::GrpcContext& grpc_context, const Initiation& initiation,
                               Implementation&& implementation)
         : grpc_context(grpc_context),
-          impl(detail::SecondThenVariadic{}, initiation, std::forward<R>(receiver), std::move(implementation))
+          impl(detail::SecondThenVariadic{}, initiation, static_cast<R&&>(receiver), std::move(implementation))
     {
     }
 
@@ -331,7 +333,7 @@ class BasicSenderOperationState
     BasicSenderOperationState(R&& receiver, agrpc::GrpcContext& grpc_context, const Initiation& initiation,
                               const Implementation& implementation)
         : grpc_context(grpc_context),
-          impl(detail::SecondThenVariadic{}, initiation, std::forward<R>(receiver), implementation)
+          impl(detail::SecondThenVariadic{}, initiation, static_cast<R&&>(receiver), implementation)
     {
     }
 

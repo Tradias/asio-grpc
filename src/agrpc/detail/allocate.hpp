@@ -185,7 +185,7 @@ detail::AllocationGuard<detail::RebindAllocatorTraits<T, Allocator>> allocate(co
     ReboundAllocator rebound_allocator{allocator};
     auto* ptr = Traits::allocate(rebound_allocator, 1);
     detail::UninitializedAllocationGuard<Traits> guard{ptr, rebound_allocator};
-    Traits::construct(rebound_allocator, ptr, std::forward<Args>(args)...);
+    Traits::construct(rebound_allocator, ptr, static_cast<Args&&>(args)...);
     return guard.release();
 }
 

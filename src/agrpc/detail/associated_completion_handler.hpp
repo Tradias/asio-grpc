@@ -36,7 +36,7 @@ class AssociatedCompletionHandler
 #endif
 
     template <class... Args>
-    explicit AssociatedCompletionHandler(Args&&... args) : completion_handler_(std::forward<Args>(args)...)
+    explicit AssociatedCompletionHandler(Args&&... args) : completion_handler_(static_cast<Args&&>(args)...)
     {
     }
 
@@ -47,13 +47,13 @@ class AssociatedCompletionHandler
     template <class... Args>
     decltype(auto) operator()(Args&&... args) &&
     {
-        return std::move(this->completion_handler_)(std::forward<Args>(args)...);
+        return std::move(this->completion_handler_)(static_cast<Args&&>(args)...);
     }
 
     template <class... Args>
     decltype(auto) operator()(Args&&... args) const&
     {
-        return this->completion_handler_(std::forward<Args>(args)...);
+        return this->completion_handler_(static_cast<Args&&>(args)...);
     }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)

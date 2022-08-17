@@ -40,7 +40,7 @@ class ReceiverAndStopCallback
 
   public:
     template <class R>
-    explicit ReceiverAndStopCallback(R&& receiver) : receiver_(std::forward<R>(receiver))
+    explicit ReceiverAndStopCallback(R&& receiver) : receiver_(static_cast<R&&>(receiver))
     {
     }
 
@@ -51,7 +51,7 @@ class ReceiverAndStopCallback
     template <class StopToken, class Initiation>
     void emplace_stop_callback(StopToken&& stop_token, Initiation& initiation) noexcept
     {
-        stop_callback_.emplace(std::forward<StopToken>(stop_token), initiation.create_stop_function());
+        stop_callback_.emplace(static_cast<StopToken&&>(stop_token), initiation.create_stop_function());
     }
 
   private:
@@ -64,7 +64,7 @@ class ReceiverAndStopCallback<Receiver, StopFunction, false>
 {
   public:
     template <class R>
-    explicit ReceiverAndStopCallback(R&& receiver) : receiver_(std::forward<R>(receiver))
+    explicit ReceiverAndStopCallback(R&& receiver) : receiver_(static_cast<R&&>(receiver))
     {
     }
 

@@ -47,38 +47,38 @@ using PrependErrorCodeToSignatureT = typename detail::PrependErrorCodeToSignatur
 template <class CompletionHandler, class... Args>
 void complete_successfully(CompletionHandler&& handler, detail::ErrorCode ec, Args&&... args)
 {
-    std::forward<CompletionHandler>(handler).complete(ec, std::forward<Args>(args)...);
+    static_cast<CompletionHandler&&>(handler).complete(ec, static_cast<Args&&>(args)...);
 }
 
 template <class CompletionHandler, class... Args>
 void complete_successfully(CompletionHandler&& handler, Args&&... args)
 {
-    std::forward<CompletionHandler>(handler).complete(detail::ErrorCode{}, std::forward<Args>(args)...);
+    static_cast<CompletionHandler&&>(handler).complete(detail::ErrorCode{}, static_cast<Args&&>(args)...);
 }
 
 template <class CompletionHandler, class... Args>
 void invoke_successfully_from_tuple(CompletionHandler&& handler, detail::Tuple<detail::ErrorCode, Args...>&& args)
 {
-    detail::apply(std::forward<CompletionHandler>(handler), std::move(args));
+    detail::apply(static_cast<CompletionHandler&&>(handler), std::move(args));
 }
 
 template <class CompletionHandler, class... Args>
 void invoke_successfully_from_tuple(CompletionHandler&& handler, detail::Tuple<Args...>&& args)
 {
-    detail::apply(std::forward<CompletionHandler>(handler),
+    detail::apply(static_cast<CompletionHandler&&>(handler),
                   detail::prepend_to_tuple(detail::ErrorCode{}, std::move(args)));
 }
 
 template <class CompletionHandler, class... Args>
 void complete_operation_aborted(CompletionHandler&& handler, detail::ErrorCode, Args&&... args)
 {
-    std::forward<CompletionHandler>(handler).complete(asio::error::operation_aborted, std::forward<Args>(args)...);
+    static_cast<CompletionHandler&&>(handler).complete(asio::error::operation_aborted, static_cast<Args&&>(args)...);
 }
 
 template <class CompletionHandler, class... Args>
 void complete_operation_aborted(CompletionHandler&& handler, Args&&... args)
 {
-    std::forward<CompletionHandler>(handler).complete(asio::error::operation_aborted, std::forward<Args>(args)...);
+    static_cast<CompletionHandler&&>(handler).complete(asio::error::operation_aborted, static_cast<Args&&>(args)...);
 }
 }
 

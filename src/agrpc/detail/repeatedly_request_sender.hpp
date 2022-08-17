@@ -52,7 +52,7 @@ class RepeatedlyRequestStopContext
     template <class StopToken>
     void emplace(StopToken&& stop_token) noexcept
     {
-        this->stop_callback.emplace(std::forward<StopToken>(stop_token), StopFunction{*this});
+        this->stop_callback.emplace(static_cast<StopToken&&>(stop_token), StopFunction{*this});
     }
 
     [[nodiscard]] bool is_stopped() const noexcept { return this->stopped.load(std::memory_order_relaxed); }
@@ -180,7 +180,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
         template <class R>
         Operation(const RepeatedlyRequestSender& sender, R&& receiver)
             : GrpcBase(&Operation::on_request_complete),
-              impl0(sender.grpc_context, std::forward<R>(receiver)),
+              impl0(sender.grpc_context, static_cast<R&&>(receiver)),
               impl1(sender.rpc),
               impl2(sender.impl)
         {
@@ -189,7 +189,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
         template <class R>
         Operation(RepeatedlyRequestSender&& sender, R&& receiver)
             : GrpcBase(&Operation::on_request_complete),
-              impl0(sender.grpc_context, std::forward<R>(receiver)),
+              impl0(sender.grpc_context, static_cast<R&&>(receiver)),
               impl1(sender.rpc),
               impl2(std::move(sender.impl))
         {
@@ -300,7 +300,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
         detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver>&& std::is_nothrow_copy_constructible_v<RequestHandler>)
         -> Operation<detail::RemoveCrefT<Receiver>>
     {
-        return {*this, std::forward<Receiver>(receiver)};
+        return {*this, static_cast<Receiver&&>(receiver)};
     }
 
     template <class Receiver>
@@ -308,13 +308,13 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
         detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver>&& std::is_nothrow_move_constructible_v<RequestHandler>)
         -> Operation<detail::RemoveCrefT<Receiver>>
     {
-        return {std::move(*this), std::forward<Receiver>(receiver)};
+        return {std::move(*this), static_cast<Receiver&&>(receiver)};
     }
 
   private:
     template <class Rh>
     RepeatedlyRequestSender(agrpc::GrpcContext& grpc_context, RPC rpc, Service& service, Rh&& request_handler)
-        : grpc_context(grpc_context), rpc(rpc), impl(service, std::forward<Rh>(request_handler))
+        : grpc_context(grpc_context), rpc(rpc), impl(service, static_cast<Rh&&>(request_handler))
     {
     }
 

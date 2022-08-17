@@ -179,7 +179,7 @@ template <class Receiver>
 auto get_stop_token([[maybe_unused]] Receiver&& receiver) noexcept
 {
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-    auto slot = asio::get_associated_cancellation_slot(std::forward<Receiver>(receiver), unstoppable_token{});
+    auto slot = asio::get_associated_cancellation_slot(static_cast<Receiver&&>(receiver), unstoppable_token{});
     if constexpr (std::is_same_v<unstoppable_token, decltype(slot)>)
     {
         return slot;
@@ -270,9 +270,9 @@ template <class Executor, class Function, class Allocator>
 void post_with_allocator(Executor&& executor, Function&& function, const Allocator& allocator)
 {
     asio::execution::execute(
-        asio::prefer(asio::require(std::forward<Executor>(executor), asio::execution::blocking_t::never),
+        asio::prefer(asio::require(static_cast<Executor&&>(executor), asio::execution::blocking_t::never),
                      asio::execution::relationship_t::fork, asio::execution::allocator(allocator)),
-        std::forward<Function>(function));
+        static_cast<Function&&>(function));
 }
 #endif
 

@@ -46,7 +46,7 @@ struct GrpcInitiateFn
     template <class InitiatingFunction, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(InitiatingFunction initiating_function, CompletionToken&& token = {}) const
     {
-        return detail::grpc_initiate(std::move(initiating_function), std::forward<CompletionToken>(token));
+        return detail::grpc_initiate(std::move(initiating_function), static_cast<CompletionToken&&>(token));
     }
 };
 }  // namespace detail

@@ -176,7 +176,7 @@ class BasicGrpcExecutor
     void dispatch(Function&& function, const OtherAllocator& other_allocator) const
     {
         detail::create_and_submit_no_arg_operation<false>(
-            this->context(), agrpc::AllocatorBinder(other_allocator, std::forward<Function>(function)));
+            this->context(), agrpc::AllocatorBinder(other_allocator, static_cast<Function&&>(function)));
     }
 
     /**
@@ -194,7 +194,7 @@ class BasicGrpcExecutor
     void post(Function&& function, const OtherAllocator& other_allocator) const
     {
         detail::create_and_submit_no_arg_operation<true>(
-            this->context(), agrpc::AllocatorBinder(other_allocator, std::forward<Function>(function)));
+            this->context(), agrpc::AllocatorBinder(other_allocator, static_cast<Function&&>(function)));
     }
 
     /**
@@ -212,7 +212,7 @@ class BasicGrpcExecutor
     void defer(Function&& function, const OtherAllocator& other_allocator) const
     {
         detail::create_and_submit_no_arg_operation<true>(
-            this->context(), agrpc::AllocatorBinder(other_allocator, std::forward<Function>(function)));
+            this->context(), agrpc::AllocatorBinder(other_allocator, static_cast<Function&&>(function)));
     }
 #endif
 
@@ -232,12 +232,12 @@ class BasicGrpcExecutor
         if constexpr (detail::IS_STD_ALLOCATOR<Allocator>)
         {
             detail::create_and_submit_no_arg_operation<detail::is_blocking_never(Options)>(
-                *this->grpc_context(), std::forward<Function>(function));
+                *this->grpc_context(), static_cast<Function&&>(function));
         }
         else
         {
             detail::create_and_submit_no_arg_operation<detail::is_blocking_never(Options)>(
-                *this->grpc_context(), agrpc::AllocatorBinder(this->allocator(), std::forward<Function>(function)));
+                *this->grpc_context(), agrpc::AllocatorBinder(this->allocator(), static_cast<Function&&>(function)));
         }
     }
 #endif

@@ -68,7 +68,7 @@ class AllocatorBinder
      */
     template <class... Args>
     constexpr explicit AllocatorBinder(const Allocator& allocator, Args&&... args)
-        : impl(detail::SecondThenVariadic{}, allocator, std::forward<Args>(args)...)
+        : impl(detail::SecondThenVariadic{}, allocator, static_cast<Args&&>(args)...)
     {
     }
 
@@ -175,7 +175,7 @@ class AllocatorBinder
     template <class... Args>
     constexpr decltype(auto) operator()(Args&&... args) &&
     {
-        return std::move(this->get())(std::forward<Args>(args)...);
+        return std::move(this->get())(static_cast<Args&&>(args)...);
     }
 
     /**
@@ -184,7 +184,7 @@ class AllocatorBinder
     template <class... Args>
     constexpr decltype(auto) operator()(Args&&... args) &
     {
-        return this->get()(std::forward<Args>(args)...);
+        return this->get()(static_cast<Args&&>(args)...);
     }
 
     /**
@@ -193,7 +193,7 @@ class AllocatorBinder
     template <class... Args>
     constexpr decltype(auto) operator()(Args&&... args) const&
     {
-        return this->get()(std::forward<Args>(args)...);
+        return this->get()(static_cast<Args&&>(args)...);
     }
 
   private:
@@ -215,7 +215,7 @@ template <class Allocator, class Target>
 constexpr agrpc::AllocatorBinder<detail::RemoveCrefT<Target>, Allocator> bind_allocator(const Allocator& allocator,
                                                                                         Target&& target)
 {
-    return agrpc::AllocatorBinder{allocator, std::forward<Target>(target)};
+    return agrpc::AllocatorBinder{allocator, static_cast<Target&&>(target)};
 }
 
 // Implementation details
@@ -265,8 +265,8 @@ struct AllocatorBinderAsyncResultInitWrapper
     template <class Handler, class... Args>
     constexpr void operator()(Handler&& handler, Args&&... args) &&
     {
-        std::move(initiation)(agrpc::AllocatorBinder(allocator, std::forward<Handler>(handler)),
-                              std::forward<Args>(args)...);
+        std::move(initiation)(agrpc::AllocatorBinder(allocator, static_cast<Handler&&>(handler)),
+                              static_cast<Args&&>(args)...);
     }
 
     Allocator allocator;
@@ -299,8 +299,8 @@ class agrpc::asio::async_result<agrpc::AllocatorBinder<CompletionToken, Allocato
     {
         return asio::async_initiate<CompletionToken, Signature>(
             agrpc::detail::AllocatorBinderAsyncResultInitWrapper<agrpc::detail::RemoveCrefT<Initiation>, Allocator>{
-                token.get_allocator(), std::forward<Initiation>(initiation)},
-            std::forward<BoundCompletionToken>(token).get(), std::forward<Args>(args)...);
+                token.get_allocator(), static_cast<Initiation&&>(initiation)},
+            static_cast<BoundCompletionToken&&>(token).get(), static_cast<Args&&>(args)...);
     }
 
   private:

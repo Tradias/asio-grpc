@@ -29,7 +29,7 @@ class CompletionHandlerReceiver
     using allocator_type = detail::AssociatedAllocatorT<CompletionHandler>;
 
     template <class Ch>
-    explicit CompletionHandlerReceiver(Ch&& ch) : completion_handler_(std::forward<Ch>(ch))
+    explicit CompletionHandlerReceiver(Ch&& ch) : completion_handler_(static_cast<Ch&&>(ch))
     {
     }
 
@@ -38,7 +38,7 @@ class CompletionHandlerReceiver
     template <class... Args>
     void set_value(Args&&... args) &&
     {
-        std::move(completion_handler_)(std::forward<Args>(args)...);
+        std::move(completion_handler_)(static_cast<Args&&>(args)...);
     }
 
     static void set_error(std::exception_ptr ep) { std::rethrow_exception(ep); }

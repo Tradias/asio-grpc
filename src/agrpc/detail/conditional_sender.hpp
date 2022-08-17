@@ -35,8 +35,8 @@ struct ConditionalSenderAccess
     template <class Sender, class... CompletionArgs>
     static auto create(Sender&& sender, bool condition, CompletionArgs&&... args)
     {
-        return detail::ConditionalSender(std::forward<Sender>(sender), condition,
-                                         std::forward<CompletionArgs>(args)...);
+        return detail::ConditionalSender(static_cast<Sender&&>(sender), condition,
+                                         static_cast<CompletionArgs&&>(args)...);
     }
 };
 
@@ -60,7 +60,7 @@ class ConditionalSender
         Receiver&& receiver) && noexcept((detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver> &&
                                           std::is_nothrow_move_constructible_v<Sender>))
     {
-        return {std::forward<Receiver>(receiver), std::move(sender), condition, std::move(args)};
+        return {static_cast<Receiver&&>(receiver), std::move(sender), condition, std::move(args)};
     }
 
     template <class Receiver, class S = Sender, class = std::enable_if_t<std::is_copy_constructible_v<S>>>
@@ -68,7 +68,7 @@ class ConditionalSender
         Receiver&& receiver) const& noexcept((detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver> &&
                                               std::is_nothrow_copy_constructible_v<Sender>))
     {
-        return {std::forward<Receiver>(receiver), sender, condition, args};
+        return {static_cast<Receiver&&>(receiver), sender, condition, args};
     }
 
   private:
@@ -96,20 +96,20 @@ struct ConditionalSenderSatisfyReceiver<detail::TypeList<detail::TypeList<T...>,
     template <class Receiver, class... Args, size_t... I>
     static auto satisfy_impl(Receiver&& receiver, detail::Tuple<Args...>&& tuple, std::index_sequence<I...>)
     {
-        detail::satisfy_receiver(std::forward<Receiver>(receiver), detail::get<I>(std::move(tuple))...);
+        detail::satisfy_receiver(static_cast<Receiver&&>(receiver), detail::get<I>(std::move(tuple))...);
     }
 
     template <class Receiver, class... Args>
     static auto satisfy(Receiver&& receiver, detail::Tuple<Args...>&& tuple)
     {
-        ConditionalSenderSatisfyReceiver::satisfy_impl(std::forward<Receiver>(receiver), std::move(tuple),
+        ConditionalSenderSatisfyReceiver::satisfy_impl(static_cast<Receiver&&>(receiver), std::move(tuple),
                                                        std::make_index_sequence<sizeof...(Args)>{});
     }
 
     template <class Receiver>
     static auto satisfy(Receiver&& receiver, detail::Tuple<>&&)
     {
-        detail::satisfy_receiver(std::forward<Receiver>(receiver), T{}...);
+        detail::satisfy_receiver(static_cast<Receiver&&>(receiver), T{}...);
     }
 };
 
@@ -137,7 +137,7 @@ class ConditionalSenderOperationState
     template <class R>
     ConditionalSenderOperationState(R&& receiver, Sender&& sender, bool condition,
                                     detail::Tuple<CompletionArgs...>&& args)
-        : operation_state(detail::exec::connect(std::move(sender), std::forward<R>(receiver))),
+        : operation_state(detail::exec::connect(std::move(sender), static_cast<R&&>(receiver))),
           args(std::move(args)),
           condition(condition)
     {
@@ -146,7 +146,7 @@ class ConditionalSenderOperationState
     template <class R>
     ConditionalSenderOperationState(R&& receiver, const Sender& sender, bool condition,
                                     const detail::Tuple<CompletionArgs...>& args)
-        : operation_state(detail::exec::connect(sender, std::forward<R>(receiver))), args(args), condition(condition)
+        : operation_state(detail::exec::connect(sender, static_cast<R&&>(receiver))), args(args), condition(condition)
     {
     }
 

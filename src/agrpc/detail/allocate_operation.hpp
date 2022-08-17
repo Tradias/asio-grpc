@@ -39,7 +39,7 @@ auto allocate_operation(Operation&& operation, Args&&... args)
 {
     const auto allocator = detail::exec::get_allocator(operation);
     return detail::allocate<OperationTemplate<detail::RemoveCrefT<Operation>>>(
-        allocator, std::forward<Operation>(operation), std::forward<Args>(args)...);
+        allocator, static_cast<Operation&&>(operation), static_cast<Args&&>(args)...);
 }
 
 template <class AllocationTraits, class Operation, class... Args>
@@ -51,12 +51,12 @@ auto allocate_local_operation(agrpc::GrpcContext& grpc_context, Operation&& oper
     if constexpr (detail::IS_STD_ALLOCATOR<decltype(allocator)>)
     {
         return detail::allocate<typename AllocationTraits::template Local<DecayedOperation>>(
-            grpc_context.get_allocator(), std::forward<Operation>(operation), std::forward<Args>(args)...);
+            grpc_context.get_allocator(), static_cast<Operation&&>(operation), static_cast<Args&&>(args)...);
     }
     else
     {
         return detail::allocate<typename AllocationTraits::template Custom<DecayedOperation>>(
-            allocator, std::forward<Operation>(operation), std::forward<Args>(args)...);
+            allocator, static_cast<Operation&&>(operation), static_cast<Args&&>(args)...);
     }
 }
 
@@ -67,14 +67,14 @@ void allocate_operation_and_invoke(agrpc::GrpcContext& grpc_context, OnOperation
     if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
     {
         auto allocated_operation = detail::allocate_local_operation<AllocationTraits>(
-            grpc_context, std::forward<Operation>(operation), std::forward<Args>(args)...);
+            grpc_context, static_cast<Operation&&>(operation), static_cast<Args&&>(args)...);
         on_operation(grpc_context, allocated_operation.get());
         allocated_operation.release();
     }
     else
     {
         auto allocated_operation = detail::allocate_operation<AllocationTraits::template Custom>(
-            std::forward<Operation>(operation), std::forward<Args>(args)...);
+            static_cast<Operation&&>(operation), static_cast<Args&&>(args)...);
         on_operation(grpc_context, allocated_operation.get());
         allocated_operation.release();
     }
@@ -101,7 +101,7 @@ void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Operat
     {
         if (is_running_in_this_thread)
         {
-            auto op{std::forward<Operation>(operation)};
+            auto op{static_cast<Operation&&>(operation)};
             std::move(op)();
             return;
         }
@@ -110,13 +110,13 @@ void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Operat
     if (is_running_in_this_thread)
     {
         auto allocated_operation = detail::allocate_local_operation<NoArgOperationAllocationTraits>(
-            grpc_context, std::forward<Operation>(operation));
+            grpc_context, static_cast<Operation&&>(operation));
         detail::GrpcContextImplementation::add_local_operation(grpc_context, allocated_operation.release());
     }
     else
     {
         auto allocated_operation = detail::allocate_operation<NoArgOperationAllocationTraits::template Custom>(
-            std::forward<Operation>(operation));
+            static_cast<Operation&&>(operation));
         detail::GrpcContextImplementation::add_remote_operation(grpc_context, allocated_operation.release());
     }
     guard.release();

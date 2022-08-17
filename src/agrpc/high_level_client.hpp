@@ -107,7 +107,7 @@ class BasicRPCClientClientStreamingBase<ResponderT<RequestT>, Executor> : public
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
     auto write(const RequestT& request, CompletionToken&& token = asio::default_completion_token_t<Executor>{})
     {
-        return this->write(request, grpc::WriteOptions{}, std::forward<CompletionToken>(token));
+        return this->write(request, grpc::WriteOptions{}, static_cast<CompletionToken&&>(token));
     }
 
     // // Calls agrpc::writes_done if not already done by a write with WriteOptions::set_last_message()
@@ -237,7 +237,7 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
     auto write(const RequestT& request, CompletionToken&& token = asio::default_completion_token_t<Executor>{})
     {
-        return this->write(request, grpc::WriteOptions{}, std::forward<CompletionToken>(token));
+        return this->write(request, grpc::WriteOptions{}, static_cast<CompletionToken&&>(token));
     }
 
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
@@ -318,7 +318,7 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY> : public de
                         ResponseT& response, CompletionToken&& token = asio::default_completion_token_t<Executor>{})
     {
         return BasicRPC::request(detail::query_grpc_context(executor), stub, context, request, response,
-                                 std::forward<CompletionToken>(token));
+                                 static_cast<CompletionToken&&>(token));
     }
 
   private:
@@ -361,7 +361,7 @@ class BasicRPC<detail::GenericRPCType::CLIENT_UNARY, Executor, agrpc::RPCType::C
                         CompletionToken&& token = asio::default_completion_token_t<Executor>{})
     {
         return BasicRPC::request(detail::query_grpc_context(executor), stub, context, request, response,
-                                 std::forward<CompletionToken>(token));
+                                 static_cast<CompletionToken&&>(token));
     }
 
   private:
@@ -406,7 +406,7 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
                         CompletionToken&& token = asio::default_completion_token_t<Executor>{})
     {
         return BasicRPC::request(detail::query_grpc_context(executor), stub, context, response,
-                                 std::forward<CompletionToken>(token));
+                                 static_cast<CompletionToken&&>(token));
     }
 
   private:
@@ -449,7 +449,7 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>
                         CompletionToken&& token = asio::default_completion_token_t<Executor>{})
     {
         return BasicRPC::request(detail::query_grpc_context(executor), stub, context, request,
-                                 std::forward<CompletionToken>(token));
+                                 static_cast<CompletionToken&&>(token));
     }
 
   private:
@@ -493,7 +493,7 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STRE
                         CompletionToken&& token = asio::default_completion_token_t<Executor>{})
     {
         return BasicRPC::request(detail::query_grpc_context(executor), stub, context,
-                                 std::forward<CompletionToken>(token));
+                                 static_cast<CompletionToken&&>(token));
     }
 
   private:

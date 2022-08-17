@@ -77,7 +77,7 @@ class BasicTypeErasedCompletionHandler<void(Args...), VoidPointer>
     void emplace(CompletionHandler&& ch)
     {
         auto allocator = asio::get_associated_allocator(ch);
-        completion_handler = detail::allocate<Target>(allocator, std::forward<CompletionHandler>(ch)).release();
+        completion_handler = detail::allocate<Target>(allocator, static_cast<CompletionHandler&&>(ch)).release();
         complete_ = &detail::deallocate_and_invoke<Target, Args...>;
     }
 
@@ -91,7 +91,7 @@ class BasicTypeErasedCompletionHandler<void(Args...), VoidPointer>
     template <class... CompletionArgs>
     void complete(CompletionArgs&&... args) &&
     {
-        complete_(this->release_completion_handler(), std::forward<CompletionArgs>(args)...);
+        complete_(this->release_completion_handler(), static_cast<CompletionArgs&&>(args)...);
     }
 
   private:

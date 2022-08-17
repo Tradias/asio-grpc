@@ -74,10 +74,10 @@ class RepeatedlyRequestOperationBase
     template <class Ch, class Rh>
     RepeatedlyRequestOperationBase(Rh&& request_handler, RPC rpc, Service& service, Ch&& completion_handler,
                                    bool is_stoppable)
-        : request_handler_(std::forward<Rh>(request_handler)),
+        : request_handler_(static_cast<Rh&&>(request_handler)),
           is_stoppable(is_stoppable),
           rpc_(rpc),
-          impl2(service, std::forward<Ch>(completion_handler))
+          impl2(service, static_cast<Ch&&>(completion_handler))
     {
     }
 
@@ -135,7 +135,7 @@ class RepeatedlyRequestOperation : public detail::TypeErasedGrpcTagOperation,
         : GrpcBase(&RepeatedlyRequestOperation::on_request_complete),
           NoArgBase(&detail::default_do_complete<RepeatedlyRequestOperation, detail::TypeErasedNoArgOperation>),
           detail::RepeatedlyRequestOperationBase<RequestHandler, RPC, CompletionHandler>(
-              std::forward<Rh>(request_handler), rpc, service, std::forward<Ch>(completion_handler), is_stoppable)
+              static_cast<Rh&&>(request_handler), rpc, service, static_cast<Ch&&>(completion_handler), is_stoppable)
     {
     }
 
@@ -223,8 +223,8 @@ struct BasicRepeatedlyRequestInitiator
             cancellation_slot.is_connected())
         {
             auto operation = detail::allocate<Operation<DecayedRequestHandler, RPC, TrackingCompletionHandler>>(
-                allocator, std::forward<RequestHandler>(request_handler), rpc, service,
-                std::forward<CompletionHandler>(completion_handler), true);
+                allocator, static_cast<RequestHandler&&>(request_handler), rpc, service,
+                static_cast<CompletionHandler&&>(completion_handler), true);
             cancellation_slot.template emplace<detail::RepeatedlyRequestStopFunction>(operation->stop_context());
             detail::initiate_repeatedly_request(grpc_context, *operation);
             operation.release();
@@ -233,8 +233,8 @@ struct BasicRepeatedlyRequestInitiator
 #endif
         {
             auto operation = detail::allocate<Operation<DecayedRequestHandler, RPC, TrackingCompletionHandler>>(
-                allocator, std::forward<RequestHandler>(request_handler), rpc, service,
-                std::forward<CompletionHandler>(completion_handler), false);
+                allocator, static_cast<RequestHandler&&>(request_handler), rpc, service,
+                static_cast<CompletionHandler&&>(completion_handler), false);
             detail::initiate_repeatedly_request(grpc_context, *operation);
             operation.release();
         }
@@ -345,7 +345,7 @@ auto initiate_request_from_rpc_context(detail::ServerMultiArgRequest<Service, Re
                                        CompletionToken&& token)
 {
     return agrpc::request(rpc, service, rpc_context.server_context(), rpc_context.request(), rpc_context.responder(),
-                          std::forward<CompletionToken>(token));
+                          static_cast<CompletionToken&&>(token));
 }
 
 template <class Service, class Responder, class CompletionToken>
@@ -353,7 +353,7 @@ auto initiate_request_from_rpc_context(detail::ServerSingleArgRequest<Service, R
                                        detail::SingleArgRPCContext<Responder>& rpc_context, CompletionToken&& token)
 {
     return agrpc::request(rpc, service, rpc_context.server_context(), rpc_context.responder(),
-                          std::forward<CompletionToken>(token));
+                          static_cast<CompletionToken&&>(token));
 }
 
 template <class CompletionToken>
@@ -361,7 +361,7 @@ auto initiate_request_from_rpc_context(detail::GenericRPCMarker, grpc::AsyncGene
                                        detail::GenericRPCContext& rpc_context, CompletionToken&& token)
 {
     return agrpc::request(service, rpc_context.server_context(), rpc_context.responder(),
-                          std::forward<CompletionToken>(token));
+                          static_cast<CompletionToken&&>(token));
 }
 
 template <class RequestHandler, class RPC, class CompletionHandler>
@@ -390,7 +390,7 @@ class RepeatedlyRequestAwaitableOperation
                                         bool is_stoppable)
         : NoArgBase(ON_STOP_COMPLETE),
           detail::RepeatedlyRequestOperationBase<RequestHandler, RPC, CompletionHandler>(
-              std::forward<Rh>(request_handler), rpc, service, std::forward<Ch>(completion_handler), is_stoppable),
+              static_cast<Rh&&>(request_handler), rpc, service, static_cast<Ch&&>(completion_handler), is_stoppable),
           buffer_operation(detail::create_allocated_buffer_operation<BUFFER_SIZE>())
     {
         // Count buffer_operation

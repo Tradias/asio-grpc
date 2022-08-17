@@ -58,7 +58,7 @@ struct Tuple<T0, T1, T2, T...>
 {
     template <class Arg1, class Arg2, class... Args>
     Tuple(Arg1&& arg1, Arg2&& arg2, Args&&... args)
-        : impl(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2), std::forward<Args>(args)...)
+        : impl(static_cast<Arg1&&>(arg1), static_cast<Arg2&&>(arg2), static_cast<Args&&>(args)...)
     {
     }
 
@@ -80,27 +80,27 @@ decltype(auto) get(Tuple&& tuple) noexcept
     {
         if constexpr (I == 0)
         {
-            return (std::forward<Tuple>(tuple).v0);
+            return (static_cast<Tuple&&>(tuple).v0);
         }
         else if constexpr (I == 1)
         {
-            return (std::forward<Tuple>(tuple).v1);
+            return (static_cast<Tuple&&>(tuple).v1);
         }
         else if constexpr (I == 2)
         {
-            return (std::forward<Tuple>(tuple).v2);
+            return (static_cast<Tuple&&>(tuple).v2);
         }
     }
     else
     {
-        return std::get<I>(std::forward<Tuple>(tuple).impl);
+        return std::get<I>(static_cast<Tuple&&>(tuple).impl);
     }
 }
 
 template <class F, class Tuple, std::size_t... I>
 decltype(auto) apply_impl(F&& f, Tuple&& t, std::index_sequence<I...>)
 {
-    return std::forward<F>(f)(detail::get<I>(std::forward<Tuple>(t))...);
+    return static_cast<F&&>(f)(detail::get<I>(static_cast<Tuple&&>(t))...);
 }
 
 template <class F, class Tuple>
@@ -109,24 +109,24 @@ decltype(auto) apply(F&& f, Tuple&& t)
     static constexpr auto SIZE = detail::DECAY_TUPLE_SIZE<Tuple>;
     if constexpr (SIZE <= 3)
     {
-        return detail::apply_impl(std::forward<F>(f), std::forward<Tuple>(t), std::make_index_sequence<SIZE>{});
+        return detail::apply_impl(static_cast<F&&>(f), static_cast<Tuple&&>(t), std::make_index_sequence<SIZE>{});
     }
     else
     {
-        return std::apply(std::forward<F>(f), std::forward<Tuple>(t).impl);
+        return std::apply(static_cast<F&&>(f), static_cast<Tuple&&>(t).impl);
     }
 }
 
 template <class Arg, class Tuple, std::size_t... I>
 auto prepend_to_tuple_impl(Arg&& arg, Tuple&& t, std::index_sequence<I...>)
 {
-    return detail::Tuple{std::forward<Arg>(arg), detail::get<I>(std::forward<Tuple>(t))...};
+    return detail::Tuple{static_cast<Arg&&>(arg), detail::get<I>(static_cast<Tuple&&>(t))...};
 }
 
 template <class Arg, class Tuple>
 auto prepend_to_tuple(Arg&& arg, Tuple&& t)
 {
-    return detail::prepend_to_tuple_impl(std::forward<Arg>(arg), std::forward<Tuple>(t),
+    return detail::prepend_to_tuple_impl(static_cast<Arg&&>(arg), static_cast<Tuple&&>(t),
                                          std::make_index_sequence<detail::DECAY_TUPLE_SIZE<Tuple>>{});
 }
 }
