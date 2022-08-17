@@ -208,7 +208,8 @@ void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context)
 template <class Traits, class ExecutionContext, class StopCondition>
 void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context, StopCondition stop_condition)
 {
-    detail::run_impl<detail::GrpcContextDoOne, Traits>(grpc_context, execution_context, std::move(stop_condition));
+    detail::run_impl<detail::GrpcContextDoOne, Traits>(grpc_context, execution_context,
+                                                       static_cast<StopCondition&&>(stop_condition));
 }
 
 template <class Traits, class ExecutionContext>
@@ -224,7 +225,7 @@ void run_completion_queue(agrpc::GrpcContext& grpc_context, ExecutionContext& ex
                           StopCondition stop_condition)
 {
     detail::run_impl<detail::GrpcContextDoOneCompletionQueue, Traits>(grpc_context, execution_context,
-                                                                      std::move(stop_condition));
+                                                                      static_cast<StopCondition&&>(stop_condition));
 }
 
 AGRPC_NAMESPACE_END

@@ -161,13 +161,13 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
         {
             if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(this->grpc_context()))
             {
-                detail::exec::set_done(std::move(this->receiver()));
+                detail::exec::set_done(static_cast<Receiver&&>(this->receiver()));
                 return;
             }
             auto stop_token = detail::exec::get_stop_token(this->receiver());
             if (stop_token.stop_requested())
             {
-                detail::exec::set_done(std::move(this->receiver()));
+                detail::exec::set_done(static_cast<Receiver&&>(this->receiver()));
                 return;
             }
             this->stop_context().emplace(std::move(stop_token));
@@ -227,7 +227,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
                 {
                     self->stop_context().reset();
                     ptr.reset();
-                    detail::exec::set_error(std::move(self->receiver()), std::move(exception_ptr));
+                    detail::exec::set_error(static_cast<Receiver&&>(self->receiver()), std::move(exception_ptr));
                     return;
                 }
                 const auto is_repeated = self->initiate_repeatedly_request();
@@ -265,13 +265,13 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
         void finish()
         {
             this->stop_context().reset();
-            detail::satisfy_receiver(std::move(receiver()));
+            detail::satisfy_receiver(static_cast<Receiver&&>(receiver()));
         }
 
         void done() noexcept
         {
             this->stop_context().reset();
-            detail::exec::set_done(std::move(receiver()));
+            detail::exec::set_done(static_cast<Receiver&&>(receiver()));
         }
 
         agrpc::GrpcContext& grpc_context() noexcept { return impl0.first(); }

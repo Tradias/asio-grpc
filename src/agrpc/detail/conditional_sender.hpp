@@ -60,7 +60,7 @@ class ConditionalSender
         Receiver&& receiver) && noexcept((detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver> &&
                                           std::is_nothrow_move_constructible_v<Sender>))
     {
-        return {static_cast<Receiver&&>(receiver), std::move(sender), condition, std::move(args)};
+        return {static_cast<Receiver&&>(receiver), static_cast<Sender&&>(sender), condition, std::move(args)};
     }
 
     template <class Receiver, class S = Sender, class = std::enable_if_t<std::is_copy_constructible_v<S>>>
@@ -75,7 +75,7 @@ class ConditionalSender
     friend detail::ConditionalSenderAccess;
 
     ConditionalSender(Sender&& sender, bool condition, CompletionArgs&&... args)
-        : sender{std::move(sender)}, args{std::move(args)...}, condition(condition)
+        : sender{static_cast<Sender&&>(sender)}, args{std::move(args)...}, condition(condition)
     {
     }
 
@@ -126,8 +126,8 @@ class ConditionalSenderOperationState
         else
         {
             using CompletionValues = typename Sender::template value_types<detail::TypeList, detail::TypeList>;
-            detail::ConditionalSenderSatisfyReceiver<CompletionValues>::satisfy(std::move(operation_state.receiver()),
-                                                                                std::move(args));
+            detail::ConditionalSenderSatisfyReceiver<CompletionValues>::satisfy(
+                static_cast<Receiver&&>(operation_state.receiver()), std::move(args));
         }
     }
 
@@ -137,7 +137,7 @@ class ConditionalSenderOperationState
     template <class R>
     ConditionalSenderOperationState(R&& receiver, Sender&& sender, bool condition,
                                     detail::Tuple<CompletionArgs...>&& args)
-        : operation_state(detail::exec::connect(std::move(sender), static_cast<R&&>(receiver))),
+        : operation_state(detail::exec::connect(static_cast<Sender&&>(sender), static_cast<R&&>(receiver))),
           args(std::move(args)),
           condition(condition)
     {

@@ -106,7 +106,8 @@ class BasicSender : public detail::SenderOf<typename Implementation::Signature>
                                           std::is_nothrow_copy_constructible_v<Initiation> &&
                                           std::is_nothrow_move_constructible_v<Implementation>))
     {
-        return {static_cast<Receiver&&>(receiver), grpc_context, initiation, std::move(implementation)};
+        return {static_cast<Receiver&&>(receiver), grpc_context, initiation,
+                static_cast<Implementation&&>(implementation)};
     }
 
     template <class Receiver, class Impl = Implementation, class = std::enable_if_t<std::is_copy_constructible_v<Impl>>>
@@ -122,7 +123,7 @@ class BasicSender : public detail::SenderOf<typename Implementation::Signature>
     void submit(Receiver&& receiver) &&
     {
         detail::submit_basic_sender_running_operation(grpc_context, static_cast<Receiver&&>(receiver), initiation,
-                                                      std::move(implementation));
+                                                      static_cast<Implementation&&>(implementation));
     }
 
     template <class Receiver, class Impl = Implementation, class = std::enable_if_t<std::is_copy_constructible_v<Impl>>>
@@ -139,7 +140,9 @@ class BasicSender : public detail::SenderOf<typename Implementation::Signature>
     friend class BasicSenderOperationState;
 
     BasicSender(agrpc::GrpcContext& grpc_context, const Initiation& initiation, Implementation&& implementation)
-        : grpc_context(grpc_context), initiation(initiation), implementation{std::move(implementation)}
+        : grpc_context(grpc_context),
+          initiation(initiation),
+          implementation{static_cast<Implementation&&>(implementation)}
     {
     }
 
@@ -178,7 +181,7 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
         {
             self_.reset_stop_callback();
             auto receiver = self_.extract_receiver_and_optionally_deallocate(local_allocator);
-            detail::satisfy_receiver(std::move(receiver), static_cast<Args&&>(args)...);
+            detail::satisfy_receiver(static_cast<Receiver&&>(receiver), static_cast<Args&&>(args)...);
         }
 
         [[nodiscard]] Base* self() const noexcept { return &self_; }
@@ -191,7 +194,7 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
     template <class R>
     BasicSenderRunningOperation(R&& receiver, Implementation&& implementation)
         : Base(&BasicSenderRunningOperation::no_arg_on_complete, &BasicSenderRunningOperation::grpc_tag_on_complete),
-          impl(static_cast<R&&>(receiver), std::move(implementation))
+          impl(static_cast<R&&>(receiver), static_cast<Implementation&&>(implementation))
     {
     }
 
@@ -237,7 +240,7 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
         }
         else
         {
-            detail::exec::set_done(std::move(self.receiver()));
+            detail::exec::set_done(static_cast<Receiver&&>(self.receiver()));
         }
     }
 
@@ -278,7 +281,7 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
                 return detail::exec::get_allocator(receiver());
             }
         }();
-        auto local_receiver{std::move(receiver())};
+        Receiver local_receiver{static_cast<Receiver&&>(receiver())};
         detail::destroy_deallocate(this, allocator);
         return local_receiver;
     }
@@ -287,7 +290,7 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
     {
         if constexpr (AllocType == AllocationType::NONE)
         {
-            return std::move(receiver());
+            return static_cast<Receiver&&>(receiver());
         }
         else
         {
@@ -325,7 +328,8 @@ class BasicSenderOperationState
     BasicSenderOperationState(R&& receiver, agrpc::GrpcContext& grpc_context, const Initiation& initiation,
                               Implementation&& implementation)
         : grpc_context(grpc_context),
-          impl(detail::SecondThenVariadic{}, initiation, static_cast<R&&>(receiver), std::move(implementation))
+          impl(detail::SecondThenVariadic{}, initiation, static_cast<R&&>(receiver),
+               static_cast<Implementation&&>(implementation))
     {
     }
 

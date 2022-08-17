@@ -47,11 +47,11 @@ struct UnbindResult
                  CancellationSlot&& cancellation_slot
 #endif
                  )
-        : completion_handler_(std::move(completion_handler)),
-          executor_(std::move(executor))
+        : completion_handler_(static_cast<CompletionHandler&&>(completion_handler)),
+          executor_(static_cast<Executor&&>(executor))
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
           ,
-          cancellation_slot_(std::move(cancellation_slot))
+          cancellation_slot_(static_cast<CancellationSlot&&>(cancellation_slot))
 #endif
     {
     }

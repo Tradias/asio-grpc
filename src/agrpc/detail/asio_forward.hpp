@@ -243,7 +243,7 @@ template <class Slot>
 class CancellationSlotAsStopToken
 {
   public:
-    explicit CancellationSlotAsStopToken(Slot&& slot) : slot(std::move(slot)) {}
+    explicit CancellationSlotAsStopToken(Slot&& slot) : slot(static_cast<Slot&&>(slot)) {}
 
     template <class StopFunction>
     struct callback_type

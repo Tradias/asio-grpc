@@ -78,7 +78,7 @@ struct ClientUnaryRequestSenderImplementation<PrepareAsync, Executor> : detail::
     template <class OnDone>
     void done(OnDone on_done, bool)
     {
-        on_done(std::move(rpc));
+        on_done(static_cast<RPC&&>(rpc));
     }
 
     RPC rpc;
@@ -114,7 +114,7 @@ struct GenericClientUnaryRequestSenderImplementation : detail::GrpcSenderImpleme
     template <class OnDone>
     void done(OnDone on_done, bool)
     {
-        on_done(std::move(rpc));
+        on_done(static_cast<RPC&&>(rpc));
     }
 
     RPC rpc;
@@ -147,7 +147,7 @@ struct ClientClientStreamingRequestSenderImplementation<PrepareAsync, Executor> 
     {
         if (ok)
         {
-            on_done(std::move(rpc));
+            on_done(static_cast<RPC&&>(rpc));
         }
         else
         {
@@ -184,7 +184,7 @@ struct ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor> 
     {
         if (ok)
         {
-            on_done(std::move(rpc));
+            on_done(static_cast<RPC&&>(rpc));
         }
         else
         {
@@ -222,7 +222,7 @@ struct ClientBidirectionalStreamingRequestSenderImplementation<PrepareAsync, Exe
     {
         if (ok)
         {
-            on_done(std::move(rpc));
+            on_done(static_cast<RPC&&>(rpc));
         }
         else
         {

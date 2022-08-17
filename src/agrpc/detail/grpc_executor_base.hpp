@@ -104,7 +104,7 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
             this->grpc_context() = std::exchange(other.grpc_context(), nullptr);
             if constexpr (std::is_assignable_v<Allocator&, Allocator&&>)
             {
-                this->allocator() = std::move(other.allocator());
+                this->allocator() = static_cast<Allocator&&>(other.allocator());
             }
         }
         return *this;

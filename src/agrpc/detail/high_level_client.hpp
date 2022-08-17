@@ -131,27 +131,28 @@ struct SubmitSenderToWorkTrackingCompletionHandler
 template <class Implementation, class CompletionToken>
 auto async_initiate_sender_implementation(agrpc::GrpcContext& grpc_context,
                                           const typename Implementation::Initiation& initiation,
-                                          Implementation implementation, CompletionToken& token)
+                                          Implementation&& implementation, [[maybe_unused]] CompletionToken& token)
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     if constexpr (!std::is_same_v<agrpc::UseSender, CompletionToken>)
     {
         return asio::async_initiate<CompletionToken, typename Implementation::Signature>(
             detail::SubmitSenderToWorkTrackingCompletionHandler{grpc_context}, token, initiation,
-            std::move(implementation));
+            static_cast<Implementation&&>(implementation));
     }
     else
 #endif
     {
-        return detail::BasicSenderAccess::create<Implementation>(grpc_context, initiation, std::move(implementation));
+        return detail::BasicSenderAccess::create<Implementation>(grpc_context, initiation,
+                                                                 static_cast<Implementation&&>(implementation));
     }
 }
 
 template <class Implementation, class CompletionToken, class... Args>
 auto async_initiate_conditional_sender_implementation(agrpc::GrpcContext& grpc_context,
                                                       const typename Implementation::Initiation& initiation,
-                                                      Implementation implementation, bool condition,
-                                                      CompletionToken& token, Args&&... args)
+                                                      Implementation&& implementation, bool condition,
+                                                      [[maybe_unused]] CompletionToken& token, Args&&... args)
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     if constexpr (!std::is_same_v<agrpc::UseSender, CompletionToken>)
@@ -161,11 +162,11 @@ auto async_initiate_conditional_sender_implementation(agrpc::GrpcContext& grpc_c
         {
             return asio::async_initiate<CompletionToken, Signature>(
                 detail::SubmitSenderToWorkTrackingCompletionHandler{grpc_context}, token, initiation,
-                std::move(implementation));
+                static_cast<Implementation&&>(implementation));
         }
         else
         {
-            return detail::async_initiate_immediate_completion<Signature>(std::move(token),
+            return detail::async_initiate_immediate_completion<Signature>(static_cast<CompletionToken&&>(token),
                                                                           static_cast<Args&&>(args)...);
         }
     }
@@ -173,7 +174,8 @@ auto async_initiate_conditional_sender_implementation(agrpc::GrpcContext& grpc_c
 #endif
     {
         return detail::ConditionalSenderAccess::create(
-            detail::BasicSenderAccess::create<Implementation>(grpc_context, initiation, std::move(implementation)),
+            detail::BasicSenderAccess::create<Implementation>(grpc_context, initiation,
+                                                              static_cast<Implementation&&>(implementation)),
             condition, static_cast<Args&&>(args)...);
     }
 }

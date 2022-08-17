@@ -265,8 +265,8 @@ struct AllocatorBinderAsyncResultInitWrapper
     template <class Handler, class... Args>
     constexpr void operator()(Handler&& handler, Args&&... args) &&
     {
-        std::move(initiation)(agrpc::AllocatorBinder(allocator, static_cast<Handler&&>(handler)),
-                              static_cast<Args&&>(args)...);
+        static_cast<Initiation&&>(initiation)(agrpc::AllocatorBinder(allocator, static_cast<Handler&&>(handler)),
+                                              static_cast<Args&&>(args)...);
     }
 
     Allocator allocator;

@@ -47,7 +47,9 @@ struct GrpcInitiateImplFn
                     CompletionToken token) const
     {
         return asio::async_initiate<CompletionToken, void(bool)>(
-            detail::GrpcInitiator<InitiatingFunction, StopFunction>{std::move(initiating_function)}, token);
+            detail::GrpcInitiator<InitiatingFunction, StopFunction>{
+                static_cast<InitiatingFunction&&>(initiating_function)},
+            token);
     }
 #endif
 
@@ -56,7 +58,7 @@ struct GrpcInitiateImplFn
                     detail::UseSender token) const noexcept
     {
         return detail::BasicSenderAccess::create<detail::GrpcSenderImplementation<InitiatingFunction, StopFunction>>(
-            token.grpc_context, {std::move(initiating_function)}, {});
+            token.grpc_context, {static_cast<InitiatingFunction&&>(initiating_function)}, {});
     }
 };
 
@@ -75,7 +77,9 @@ template <class Payload, class InitiatingFunction, class CompletionToken>
 auto grpc_initiate_with_payload(InitiatingFunction initiating_function, CompletionToken token)
 {
     return asio::async_initiate<CompletionToken, void(std::pair<Payload, bool>)>(
-        detail::GrpcWithPayloadInitiator<Payload, InitiatingFunction>{std::move(initiating_function)}, token);
+        detail::GrpcWithPayloadInitiator<Payload, InitiatingFunction>{
+            static_cast<InitiatingFunction&&>(initiating_function)},
+        token);
 }
 #endif
 

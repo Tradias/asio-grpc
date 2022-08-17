@@ -264,7 +264,7 @@ template <class OnExit>
 class ScopeGuard
 {
   public:
-    constexpr explicit ScopeGuard(OnExit on_exit) : on_exit(std::move(on_exit)) {}
+    constexpr explicit ScopeGuard(OnExit on_exit) : on_exit(static_cast<OnExit&&>(on_exit)) {}
 
     template <class... Args>
     constexpr explicit ScopeGuard(Args&&... args) : on_exit(static_cast<Args&&>(args)...)

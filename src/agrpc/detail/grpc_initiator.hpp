@@ -34,7 +34,8 @@ template <class InitiatingFunction, class StopFunction = detail::Empty>
 class GrpcInitiator
 {
   public:
-    explicit GrpcInitiator(InitiatingFunction initiating_function) : initiating_function(std::move(initiating_function))
+    explicit GrpcInitiator(InitiatingFunction initiating_function)
+        : initiating_function(static_cast<InitiatingFunction&&>(initiating_function))
     {
     }
 
