@@ -32,6 +32,9 @@ class BasicRPC;
 
 namespace detail
 {
+static constexpr std::uintptr_t FINISHED_BIT = 0u;
+static constexpr std::uintptr_t LAST_MESSAGE_BIT = 1u;
+
 struct BasicRPCAccess
 {
     template <class BasicRPC>
@@ -242,7 +245,7 @@ struct ReadInitialMetadataSenderImplementation : detail::GrpcSenderImplementatio
     template <class OnDone>
     void done(OnDone on_done, bool ok)
     {
-        if (rpc.template has_bit<0>())
+        if (rpc.template has_bit<FINISHED_BIT>())
         {
             on_done(false);
             return;
@@ -252,7 +255,7 @@ struct ReadInitialMetadataSenderImplementation : detail::GrpcSenderImplementatio
             on_done(true);
             return;
         }
-        rpc.template set_bit<0>();
+        rpc.template set_bit<FINISHED_BIT>();
         detail::BasicRPCAccess::client_initiate_finish(*rpc, on_done.self());
     }
 
@@ -283,7 +286,7 @@ struct ReadServerStreamingSenderImplementation<Responder<Response>, Executor> : 
     template <class OnDone>
     void done(OnDone on_done, bool ok)
     {
-        if (rpc.template has_bit<0>())
+        if (rpc.template has_bit<FINISHED_BIT>())
         {
             on_done(false);
             return;
@@ -293,7 +296,7 @@ struct ReadServerStreamingSenderImplementation<Responder<Response>, Executor> : 
             on_done(true);
             return;
         }
-        rpc.template set_bit<0>();
+        rpc.template set_bit<FINISHED_BIT>();
         detail::BasicRPCAccess::client_initiate_finish(*rpc, on_done.self());
     }
 
@@ -306,9 +309,6 @@ struct WriteClientStreamingSenderImplementation;
 template <class Request, template <class> class Responder, class Executor>
 struct WriteClientStreamingSenderImplementation<Responder<Request>, Executor> : detail::GrpcSenderImplementationBase
 {
-    static constexpr auto FINISHED_BIT = 0u;
-    static constexpr auto LAST_MESSAGE_BIT = 1u;
-
     using BasicRPCBase = detail::BasicRPCClientClientStreamingBase<Responder<Request>, Executor>;
 
     struct Initiation
@@ -375,7 +375,7 @@ struct ClientFinishSenderImplementation : detail::GrpcSenderImplementationBase
         auto& rpc_ref = *rpc;
         if (rpc_ref.is_writes_done())
         {
-            rpc.template set_bit<0>();
+            rpc.template set_bit<FINISHED_BIT>();
             rpc_ref.responder().Finish(&rpc_ref.status(), self);
             rpc_ref.set_finished();
         }
@@ -388,12 +388,12 @@ struct ClientFinishSenderImplementation : detail::GrpcSenderImplementationBase
     template <class OnDone>
     void done(OnDone on_done, bool)
     {
-        if (rpc.template has_bit<0>())
+        if (rpc.template has_bit<FINISHED_BIT>())
         {
             on_done(rpc->ok());
             return;
         }
-        rpc.template set_bit<0>();
+        rpc.template set_bit<FINISHED_BIT>();
         detail::BasicRPCAccess::client_initiate_finish(*rpc, on_done.self());
     }
 
@@ -419,7 +419,7 @@ struct ClientReadBidiStreamingSenderImplementation<Responder<Request, Response>,
     template <class Init>
     void initiate(const agrpc::GrpcContext&, Init init) noexcept
     {
-        rpc->responder().Read(&init->response, init.self());
+        rpc.responder().Read(&init->response, init.self());
     }
 
     template <class OnDone>
@@ -428,7 +428,7 @@ struct ClientReadBidiStreamingSenderImplementation<Responder<Request, Response>,
         on_done(ok);
     }
 
-    detail::TaggedPtr<BasicRPCBase> rpc;
+    BasicRPCBase& rpc;
 };
 
 template <class Responder, class Executor>
@@ -454,9 +454,9 @@ struct ClientWriteBidiStreamingSenderImplementation<Responder<Request, Response>
         auto& [req, options] = init.initiation();
         if (options.is_last_message())
         {
-            rpc->set_writes_done();
+            rpc.set_writes_done();
         }
-        rpc->responder().Write(req, options, init.self());
+        rpc.responder().Write(req, options, init.self());
     }
 
     template <class OnDone>
@@ -465,7 +465,7 @@ struct ClientWriteBidiStreamingSenderImplementation<Responder<Request, Response>
         on_done(ok);
     }
 
-    detail::TaggedPtr<BasicRPCBase> rpc;
+    BasicRPCBase& rpc;
 };
 
 template <class Responder, class Executor>
@@ -480,16 +480,16 @@ struct ClientWritesDoneSenderImplementation<Responder<Request, Response>, Execut
 
     ClientWritesDoneSenderImplementation(BasicRPCBase& rpc) : rpc(rpc) {}
 
-    void initiate(const agrpc::GrpcContext&, void* self) noexcept { rpc->responder().WritesDone(self); }
+    void initiate(const agrpc::GrpcContext&, void* self) noexcept { rpc.responder().WritesDone(self); }
 
     template <class OnDone>
     void done(OnDone on_done, bool ok)
     {
-        rpc->set_writes_done();
+        rpc.set_writes_done();
         on_done(ok);
     }
 
-    detail::TaggedPtr<BasicRPCBase> rpc;
+    BasicRPCBase& rpc;
 };
 }
 

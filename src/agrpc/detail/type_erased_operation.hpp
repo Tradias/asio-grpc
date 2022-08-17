@@ -39,22 +39,25 @@ class TypeErasedOperation
 
 {
   public:
+    using OnComplete = void (*)(TypeErasedOperation*, detail::InvokeHandler, Signature...);
+
     void complete(detail::InvokeHandler invoke_handler, Signature... args)
     {
         this->on_complete(this, invoke_handler, static_cast<Signature&&>(args)...);
     }
 
   protected:
-    using OnCompleteFunction = void (*)(TypeErasedOperation*, detail::InvokeHandler, Signature...);
-
-    explicit TypeErasedOperation(OnCompleteFunction on_complete) noexcept : on_complete(on_complete) {}
+    explicit TypeErasedOperation(OnComplete on_complete) noexcept : on_complete(on_complete) {}
 
   private:
-    OnCompleteFunction on_complete;
+    OnComplete on_complete;
 };
 
 using TypeErasedNoArgOperation = detail::TypeErasedOperation<true, detail::GrpcContextLocalAllocator>;
 using TypeErasedGrpcTagOperation = detail::TypeErasedOperation<false, bool, detail::GrpcContextLocalAllocator>;
+
+using TypeErasedNoArgOnComplete = detail::TypeErasedNoArgOperation::OnComplete;
+using TypeErasedGrpcTagOnComplete = detail::TypeErasedGrpcTagOperation::OnComplete;
 
 template <class Operation, class Base, class... Args>
 void default_do_complete(Base* op, detail::InvokeHandler invoke_handler, Args... args,

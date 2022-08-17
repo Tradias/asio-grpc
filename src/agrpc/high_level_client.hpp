@@ -75,17 +75,6 @@ class BasicRPCExecutorBase
     Executor executor;
 };
 
-template <class RequestT, class ResponseT, class Executor>
-class BasicRPCUnaryBase : public detail::BasicRPCStatusBase, public detail::BasicRPCExecutorBase<Executor>
-{
-  public:
-    using Request = RequestT;
-    using Response = ResponseT;
-
-  protected:
-    using detail::BasicRPCExecutorBase<Executor>::BasicRPCExecutorBase;
-};
-
 template <class RequestT, template <class> class ResponderT, class Executor>
 class BasicRPCClientClientStreamingBase<ResponderT<RequestT>, Executor> : public detail::BasicRPCStatusBase,
                                                                           public detail::BasicRPCExecutorBase<Executor>,
@@ -298,13 +287,15 @@ inline constexpr auto CLIENT_GENERIC_STREAMING_RPC = detail::GenericRPCType::CLI
 /**
  * @brief BasicRPC for client-side unary calls
  */
-template <class StubT, class Request, class Response, template <class> class Responder,
-          detail::ClientUnaryRequest<StubT, Request, Responder<Response>> PrepareAsync, class Executor>
-class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
-    : public detail::BasicRPCUnaryBase<Request, Response, Executor>
+template <class StubT, class RequestT, class ResponseT, template <class> class ResponderT,
+          detail::ClientUnaryRequest<StubT, RequestT, ResponderT<ResponseT>> PrepareAsync, class Executor>
+class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY> : public detail::BasicRPCStatusBase,
+                                                                       public detail::BasicRPCExecutorBase<Executor>
 {
   public:
     using Stub = StubT;
+    using Request = RequestT;
+    using Response = ResponseT;
 
     template <class OtherExecutor>
     struct rebind_executor
@@ -314,7 +305,7 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
 
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
     static auto request(agrpc::GrpcContext& grpc_context, StubT& stub, grpc::ClientContext& context,
-                        const Request& request, Response& response,
+                        const RequestT& request, ResponseT& response,
                         CompletionToken token = asio::default_completion_token_t<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
@@ -323,16 +314,17 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
     }
 
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
-    static auto request(const Executor& executor, StubT& stub, grpc::ClientContext& context, const Request& request,
-                        Response& response, CompletionToken token = asio::default_completion_token_t<Executor>{})
+    static auto request(const Executor& executor, StubT& stub, grpc::ClientContext& context, const RequestT& request,
+                        ResponseT& response, CompletionToken&& token = asio::default_completion_token_t<Executor>{})
     {
-        return BasicRPC::request(detail::query_grpc_context(executor), stub, context, request, response, token);
+        return BasicRPC::request(detail::query_grpc_context(executor), stub, context, request, response,
+                                 std::forward<CompletionToken>(token));
     }
 
   private:
     friend detail::ClientUnaryRequestSenderImplementation<PrepareAsync, Executor>;
 
-    using detail::BasicRPCUnaryBase<Request, Response, Executor>::BasicRPCUnaryBase;
+    using detail::BasicRPCExecutorBase<Executor>::BasicRPCExecutorBase;
 };
 
 /**
@@ -340,10 +332,12 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
  */
 template <class Executor>
 class BasicRPC<detail::GenericRPCType::CLIENT_UNARY, Executor, agrpc::RPCType::CLIENT_UNARY>
-    : public detail::BasicRPCUnaryBase<grpc::ByteBuffer, grpc::ByteBuffer, Executor>
+    : public detail::BasicRPCStatusBase, public detail::BasicRPCExecutorBase<Executor>
 {
   public:
     using Stub = grpc::GenericStub;
+    using Request = grpc::ByteBuffer;
+    using Response = grpc::ByteBuffer;
 
     template <class OtherExecutor>
     struct rebind_executor
@@ -361,20 +355,29 @@ class BasicRPC<detail::GenericRPCType::CLIENT_UNARY, Executor, agrpc::RPCType::C
             grpc_context, {response}, {grpc_context, method, stub, context, request}, token);
     }
 
+    template <class CompletionToken = asio::default_completion_token_t<Executor>>
+    static auto request(const Executor& executor, const std::string& method, grpc::GenericStub& stub,
+                        grpc::ClientContext& context, const grpc::ByteBuffer& request, grpc::ByteBuffer& response,
+                        CompletionToken&& token = asio::default_completion_token_t<Executor>{})
+    {
+        return BasicRPC::request(detail::query_grpc_context(executor), stub, context, request, response,
+                                 std::forward<CompletionToken>(token));
+    }
+
   private:
     friend detail::GenericClientUnaryRequestSenderImplementation<Executor>;
 
-    using detail::BasicRPCUnaryBase<grpc::ByteBuffer, grpc::ByteBuffer, Executor>::BasicRPCUnaryBase;
+    using detail::BasicRPCExecutorBase<Executor>::BasicRPCExecutorBase;
 };
 
 /**
  * @brief BasicRPC for client-side client streams
  */
-template <class StubT, class Request, class ResponseT, template <class> class Responder,
-          detail::PrepareAsyncClientClientStreamingRequest<StubT, Responder<Request>, ResponseT> PrepareAsync,
+template <class StubT, class RequestT, class ResponseT, template <class> class ResponderT,
+          detail::PrepareAsyncClientClientStreamingRequest<StubT, ResponderT<RequestT>, ResponseT> PrepareAsync,
           class Executor>
 class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
-    : public detail::BasicRPCClientClientStreamingBase<Responder<Request>, Executor>
+    : public detail::BasicRPCClientClientStreamingBase<ResponderT<RequestT>, Executor>
 {
   public:
     using Stub = StubT;
@@ -409,17 +412,17 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
   private:
     friend detail::ClientClientStreamingRequestSenderImplementation<PrepareAsync, Executor>;
 
-    using detail::BasicRPCClientClientStreamingBase<Responder<Request>, Executor>::BasicRPCClientClientStreamingBase;
+    using detail::BasicRPCClientClientStreamingBase<ResponderT<RequestT>, Executor>::BasicRPCClientClientStreamingBase;
 };
 
 /**
  * @brief BasicRPC for client-side server streams
  */
-template <class StubT, class RequestT, class Response, template <class> class Responder,
-          detail::PrepareAsyncClientServerStreamingRequest<StubT, RequestT, Responder<Response>> PrepareAsync,
+template <class StubT, class RequestT, class ResponseT, template <class> class ResponderT,
+          detail::PrepareAsyncClientServerStreamingRequest<StubT, RequestT, ResponderT<ResponseT>> PrepareAsync,
           class Executor>
 class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>
-    : public detail::BasicRPCClientServerStreamingBase<Responder<Response>, Executor>
+    : public detail::BasicRPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
 {
   public:
     using Stub = StubT;
@@ -443,25 +446,26 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>
 
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
     static auto request(const Executor& executor, StubT& stub, grpc::ClientContext& context, const RequestT& request,
-                        CompletionToken token = asio::default_completion_token_t<Executor>{})
+                        CompletionToken&& token = asio::default_completion_token_t<Executor>{})
     {
-        return BasicRPC::request(detail::query_grpc_context(executor), stub, context, request, token);
+        return BasicRPC::request(detail::query_grpc_context(executor), stub, context, request,
+                                 std::forward<CompletionToken>(token));
     }
 
   private:
     friend detail::ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor>;
 
-    using detail::BasicRPCClientServerStreamingBase<Responder<Response>, Executor>::BasicRPCClientServerStreamingBase;
+    using detail::BasicRPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>::BasicRPCClientServerStreamingBase;
 };
 
 /**
  * @brief BasicRPC for client-side bidirectional streams
  */
-template <class StubT, class Request, class Response, template <class, class> class Responder,
-          detail::PrepareAsyncClientBidirectionalStreamingRequest<StubT, Responder<Request, Response>> PrepareAsync,
+template <class StubT, class RequestT, class ResponseT, template <class, class> class ResponderT,
+          detail::PrepareAsyncClientBidirectionalStreamingRequest<StubT, ResponderT<RequestT, ResponseT>> PrepareAsync,
           class Executor>
 class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>
-    : public detail::BasicRPCBidirectionalStreamingBase<Responder<Request, Response>, Executor>
+    : public detail::BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
 {
   public:
     using Stub = StubT;
@@ -486,15 +490,16 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STRE
 
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
     static auto request(const Executor& executor, StubT& stub, grpc::ClientContext& context,
-                        CompletionToken token = asio::default_completion_token_t<Executor>{})
+                        CompletionToken&& token = asio::default_completion_token_t<Executor>{})
     {
-        return BasicRPC::request(detail::query_grpc_context(executor), stub, context, token);
+        return BasicRPC::request(detail::query_grpc_context(executor), stub, context,
+                                 std::forward<CompletionToken>(token));
     }
 
   private:
     friend detail::ClientBidirectionalStreamingRequestSenderImplementation<PrepareAsync, Executor>;
 
-    using detail::BasicRPCBidirectionalStreamingBase<Responder<Request, Response>,
+    using detail::BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>,
                                                      Executor>::BasicRPCBidirectionalStreamingBase;
 };
 

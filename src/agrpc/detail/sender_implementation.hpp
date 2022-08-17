@@ -30,47 +30,41 @@ enum class SenderImplementationType
     BOTH
 };
 
-template <class Implementation, class Default, detail::SenderImplementationType = Implementation::TYPE>
-struct GetNoArgTypeErasedBase
+template <detail::SenderImplementationType>
+struct BasicSenderRunningOperationBase
 {
-    using Type = Default;
+    explicit BasicSenderRunningOperationBase(void*, void*) noexcept {}
 };
 
-template <class Implementation, class Default>
-struct GetNoArgTypeErasedBase<Implementation, Default, detail::SenderImplementationType::NO_ARG>
+template <>
+struct BasicSenderRunningOperationBase<detail::SenderImplementationType::NO_ARG> : detail::TypeErasedNoArgOperation
 {
-    using Type = detail::TypeErasedNoArgOperation;
+    explicit BasicSenderRunningOperationBase(detail::TypeErasedNoArgOnComplete no_arg_on_complete, void*) noexcept
+        : detail::TypeErasedNoArgOperation(no_arg_on_complete)
+    {
+    }
 };
 
-template <class Implementation, class Default>
-struct GetNoArgTypeErasedBase<Implementation, Default, detail::SenderImplementationType::BOTH>
+template <>
+struct BasicSenderRunningOperationBase<detail::SenderImplementationType::GRPC_TAG> : detail::TypeErasedGrpcTagOperation
 {
-    using Type = detail::TypeErasedNoArgOperation;
+    explicit BasicSenderRunningOperationBase(void*, detail::TypeErasedGrpcTagOnComplete grpc_tag_on_complete) noexcept
+        : detail::TypeErasedGrpcTagOperation(grpc_tag_on_complete)
+    {
+    }
 };
 
-template <class Implementation, class Default>
-using GetNoArgTypeErasedBaseT = typename detail::GetNoArgTypeErasedBase<Implementation, Default>::Type;
+template <>
+struct BasicSenderRunningOperationBase<detail::SenderImplementationType::BOTH> : detail::TypeErasedNoArgOperation,
+                                                                                 detail::TypeErasedGrpcTagOperation
 
-template <class Implementation, class Default, detail::SenderImplementationType = Implementation::TYPE>
-struct GetGrpcTagTypeErasedBase
 {
-    using Type = Default;
+    explicit BasicSenderRunningOperationBase(detail::TypeErasedNoArgOnComplete no_arg_on_complete,
+                                             detail::TypeErasedGrpcTagOnComplete grpc_tag_on_complete) noexcept
+        : detail::TypeErasedNoArgOperation(no_arg_on_complete), detail::TypeErasedGrpcTagOperation(grpc_tag_on_complete)
+    {
+    }
 };
-
-template <class Implementation, class Default>
-struct GetGrpcTagTypeErasedBase<Implementation, Default, detail::SenderImplementationType::GRPC_TAG>
-{
-    using Type = detail::TypeErasedGrpcTagOperation;
-};
-
-template <class Implementation, class Default>
-struct GetGrpcTagTypeErasedBase<Implementation, Default, detail::SenderImplementationType::BOTH>
-{
-    using Type = detail::TypeErasedGrpcTagOperation;
-};
-
-template <class Implementation, class Default>
-using GetGrpcTagTypeErasedBaseT = typename detail::GetGrpcTagTypeErasedBase<Implementation, Default>::Type;
 }
 
 AGRPC_NAMESPACE_END

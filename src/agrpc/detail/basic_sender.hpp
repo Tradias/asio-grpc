@@ -148,36 +148,17 @@ class BasicSender : public detail::SenderOf<typename Implementation::Signature>
     Implementation implementation;
 };
 
-struct EmptyGrpcTagTypeErasedBase
-{
-    template <class Arg1>
-    constexpr explicit EmptyGrpcTagTypeErasedBase(Arg1&&) noexcept
-    {
-    }
-};
-
-struct EmptyNoArgTypeErasedBase
-{
-    template <class Arg1>
-    constexpr explicit EmptyNoArgTypeErasedBase(Arg1&&) noexcept
-    {
-    }
-};
-
 template <class Implementation, class Receiver, AllocationType AllocType>
-class BasicSenderRunningOperation
-    : public detail::GetGrpcTagTypeErasedBaseT<Implementation, detail::EmptyGrpcTagTypeErasedBase>,
-      public detail::GetNoArgTypeErasedBaseT<Implementation, detail::EmptyNoArgTypeErasedBase>
+class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBase<Implementation::TYPE>
 {
   private:
-    using GrpcTagBase = detail::GetGrpcTagTypeErasedBaseT<Implementation, detail::EmptyGrpcTagTypeErasedBase>;
-    using NoArgBase = detail::GetNoArgTypeErasedBaseT<Implementation, detail::EmptyNoArgTypeErasedBase>;
+    using Base = detail::BasicSenderRunningOperationBase<Implementation::TYPE>;
     using Initiation = typename Implementation::Initiation;
     using StopFunction = typename Implementation::StopFunction;
 
     struct Init
     {
-        [[nodiscard]] BasicSenderRunningOperation* self() const noexcept { return self_; }
+        [[nodiscard]] Base* self() const noexcept { return self_; }
 
         [[nodiscard]] Initiation& initiation() const noexcept { return initiation_; }
 
@@ -185,7 +166,7 @@ class BasicSenderRunningOperation
 
         [[nodiscard]] operator void*() const noexcept { return static_cast<void*>(self_); }
 
-        BasicSenderRunningOperation* self_;
+        Base* self_;
         Initiation& initiation_;
     };
 
@@ -199,7 +180,7 @@ class BasicSenderRunningOperation
             detail::satisfy_receiver(std::move(receiver), static_cast<Args&&>(args)...);
         }
 
-        [[nodiscard]] BasicSenderRunningOperation* self() const noexcept { return &self_; }
+        [[nodiscard]] Base* self() const noexcept { return &self_; }
 
         BasicSenderRunningOperation& self_;
         detail::GrpcContextLocalAllocator local_allocator;
@@ -208,16 +189,14 @@ class BasicSenderRunningOperation
   public:
     template <class R>
     BasicSenderRunningOperation(R&& receiver, Implementation&& implementation)
-        : GrpcTagBase(&BasicSenderRunningOperation::grpc_tag_on_complete),
-          NoArgBase(&BasicSenderRunningOperation::no_arg_on_complete),
+        : Base(&BasicSenderRunningOperation::no_arg_on_complete, &BasicSenderRunningOperation::grpc_tag_on_complete),
           impl(std::forward<R>(receiver), std::move(implementation))
     {
     }
 
     template <class R>
     BasicSenderRunningOperation(R&& receiver, const Implementation& implementation)
-        : GrpcTagBase(&BasicSenderRunningOperation::grpc_tag_on_complete),
-          NoArgBase(&BasicSenderRunningOperation::no_arg_on_complete),
+        : Base(&BasicSenderRunningOperation::no_arg_on_complete, &BasicSenderRunningOperation::grpc_tag_on_complete),
           impl(std::forward<R>(receiver), implementation)
     {
     }
@@ -264,7 +243,8 @@ class BasicSenderRunningOperation
                                      [[maybe_unused]] detail::InvokeHandler invoke_handler, [[maybe_unused]] bool ok,
                                      [[maybe_unused]] detail::GrpcContextLocalAllocator local_allocator)
     {
-        if constexpr (!std::is_same_v<EmptyGrpcTagTypeErasedBase, GrpcTagBase>)
+        if constexpr (Implementation::TYPE == detail::SenderImplementationType::GRPC_TAG ||
+                      Implementation::TYPE == detail::SenderImplementationType::BOTH)
         {
             BasicSenderRunningOperation::on_complete_impl(*static_cast<BasicSenderRunningOperation*>(op),
                                                           invoke_handler, local_allocator, ok);
@@ -275,7 +255,8 @@ class BasicSenderRunningOperation
                                    [[maybe_unused]] detail::InvokeHandler invoke_handler,
                                    [[maybe_unused]] detail::GrpcContextLocalAllocator local_allocator)
     {
-        if constexpr (!std::is_same_v<EmptyNoArgTypeErasedBase, NoArgBase>)
+        if constexpr (Implementation::TYPE == detail::SenderImplementationType::NO_ARG ||
+                      Implementation::TYPE == detail::SenderImplementationType::BOTH)
         {
             BasicSenderRunningOperation::on_complete_impl(*static_cast<BasicSenderRunningOperation*>(op),
                                                           invoke_handler, local_allocator);

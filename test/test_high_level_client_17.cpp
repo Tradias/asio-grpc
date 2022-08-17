@@ -109,6 +109,51 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::UnaryRPC>,
     CHECK_EQ(21, response.integer());
 }
 
+TEST_CASE_FIXTURE(test::HighLevelClientTest<test::UnaryRPC>, "RPC::request generic unary RPC successfully")
+{
+    spawn_and_run(
+        [&](const asio::yield_context& yield)
+        {
+            CHECK(test_server.request_rpc(yield));
+            CHECK_EQ(42, test_server.request.integer());
+            test_server.response.set_integer(24);
+            CHECK(agrpc::finish(test_server.responder, test_server.response, grpc::Status::OK, yield));
+        },
+        [&](const asio::yield_context& yield)
+        {
+            using RPC = agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC>;
+            grpc::GenericStub generic_stub{channel};
+            request.set_integer(42);
+            auto request_buf = test::message_to_grpc_buffer(request);
+            grpc::ByteBuffer response_buf;
+            auto rpc = RPC::request(grpc_context, "/test.v1.Test/Unary", generic_stub, client_context, request_buf,
+                                    response_buf, yield);
+            CHECK(rpc.ok());
+            response = test::grpc_buffer_to_message<decltype(response)>(response_buf);
+            CHECK_EQ(24, response.integer());
+        });
+}
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTestBase,
+                  "RPC::request generic unary RPC automatically retrieves grpc::Status on error")
+{
+    test::spawn_and_run(grpc_context,
+                        [&](const asio::yield_context& yield)
+                        {
+                            using RPC = agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC>;
+                            grpc::GenericStub generic_stub{channel};
+                            grpc::ByteBuffer request_buf;
+                            grpc::ByteBuffer response_buf;
+                            client_context.set_deadline(test::now());
+                            auto rpc = RPC::request(grpc_context, "/test.v1.Test/Unary", generic_stub, client_context,
+                                                    request_buf, response_buf, yield);
+                            CHECK_FALSE(rpc.ok());
+                            CHECK_MESSAGE((grpc::StatusCode::DEADLINE_EXCEEDED == rpc.status_code() ||
+                                           grpc::StatusCode::UNAVAILABLE == rpc.status_code()),
+                                          rpc.status_code());
+                        });
+}
+
 TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>, "ServerStreamingRPC::read successfully")
 {
     spawn_and_run(
@@ -295,51 +340,6 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>,
                                                                           }});
                                          }});
         });
-}
-
-TEST_CASE_FIXTURE(test::HighLevelClientTest<test::UnaryRPC>, "RPC::request generic unary RPC successfully")
-{
-    spawn_and_run(
-        [&](const asio::yield_context& yield)
-        {
-            CHECK(test_server.request_rpc(yield));
-            CHECK_EQ(42, test_server.request.integer());
-            test_server.response.set_integer(24);
-            CHECK(agrpc::finish(test_server.responder, test_server.response, grpc::Status::OK, yield));
-        },
-        [&](const asio::yield_context& yield)
-        {
-            using RPC = agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC>;
-            grpc::GenericStub generic_stub{channel};
-            request.set_integer(42);
-            auto request_buf = test::message_to_grpc_buffer(request);
-            grpc::ByteBuffer response_buf;
-            auto rpc = RPC::request(grpc_context, "/test.v1.Test/Unary", generic_stub, client_context, request_buf,
-                                    response_buf, yield);
-            CHECK(rpc.ok());
-            response = test::grpc_buffer_to_message<decltype(response)>(response_buf);
-            CHECK_EQ(24, response.integer());
-        });
-}
-
-TEST_CASE_FIXTURE(test::GrpcClientServerTestBase,
-                  "RPC::request generic unary RPC automatically retrieves grpc::Status on error")
-{
-    test::spawn_and_run(grpc_context,
-                        [&](const asio::yield_context& yield)
-                        {
-                            using RPC = agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC>;
-                            grpc::GenericStub generic_stub{channel};
-                            grpc::ByteBuffer request_buf;
-                            grpc::ByteBuffer response_buf;
-                            client_context.set_deadline(test::now());
-                            auto rpc = RPC::request(grpc_context, "/test.v1.Test/Unary", generic_stub, client_context,
-                                                    request_buf, response_buf, yield);
-                            CHECK_FALSE(rpc.ok());
-                            CHECK_MESSAGE((grpc::StatusCode::DEADLINE_EXCEEDED == rpc.status_code() ||
-                                           grpc::StatusCode::UNAVAILABLE == rpc.status_code()),
-                                          rpc.status_code());
-                        });
 }
 
 struct HighLevelClientBidiTest : test::HighLevelClientTest<test::BidirectionalStreamingRPC>, test::IoContextTest
