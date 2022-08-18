@@ -28,6 +28,14 @@ using DefaultCompletionToken = asio::use_awaitable_t<>;
 #else
 using DefaultCompletionToken = agrpc::UseSender;
 #endif
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+template <class Executor>
+using DefaultCompletionTokenT = asio::default_completion_token_t<Executor>;
+#else
+template <class>
+using DefaultCompletionTokenT = detail::DefaultCompletionToken;
+#endif
 }
 
 AGRPC_NAMESPACE_END

@@ -33,13 +33,17 @@ enum class SenderImplementationType
 template <detail::SenderImplementationType>
 struct BasicSenderRunningOperationBase
 {
-    explicit BasicSenderRunningOperationBase(void*, void*) noexcept {}
+    explicit BasicSenderRunningOperationBase(detail::TypeErasedNoArgOnComplete,
+                                             detail::TypeErasedGrpcTagOnComplete) noexcept
+    {
+    }
 };
 
 template <>
 struct BasicSenderRunningOperationBase<detail::SenderImplementationType::NO_ARG> : detail::TypeErasedNoArgOperation
 {
-    explicit BasicSenderRunningOperationBase(detail::TypeErasedNoArgOnComplete no_arg_on_complete, void*) noexcept
+    explicit BasicSenderRunningOperationBase(detail::TypeErasedNoArgOnComplete no_arg_on_complete,
+                                             detail::TypeErasedGrpcTagOnComplete) noexcept
         : detail::TypeErasedNoArgOperation(no_arg_on_complete)
     {
     }
@@ -48,7 +52,8 @@ struct BasicSenderRunningOperationBase<detail::SenderImplementationType::NO_ARG>
 template <>
 struct BasicSenderRunningOperationBase<detail::SenderImplementationType::GRPC_TAG> : detail::TypeErasedGrpcTagOperation
 {
-    explicit BasicSenderRunningOperationBase(void*, detail::TypeErasedGrpcTagOnComplete grpc_tag_on_complete) noexcept
+    explicit BasicSenderRunningOperationBase(detail::TypeErasedNoArgOnComplete,
+                                             detail::TypeErasedGrpcTagOnComplete grpc_tag_on_complete) noexcept
         : detail::TypeErasedGrpcTagOperation(grpc_tag_on_complete)
     {
     }

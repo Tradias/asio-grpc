@@ -408,9 +408,8 @@ TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC concurrent
             CHECK(rpc.read(response, yield));
             std::promise<void> promise;
             rpc.write(request,
-                      [&](bool ok)
+                      [&](bool)
                       {
-                          CHECK_FALSE(ok);
                           promise.set_value();
                       });
             CHECK_FALSE(rpc.read(response, yield));

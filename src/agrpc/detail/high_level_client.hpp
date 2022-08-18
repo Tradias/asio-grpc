@@ -110,6 +110,7 @@ class BasicRPCClientContextBase
     detail::AutoCancelClientContext client_context;
 };
 
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 struct SubmitSenderToWorkTrackingCompletionHandler
 {
     template <class CompletionHandler, class Implementation>
@@ -127,6 +128,7 @@ struct SubmitSenderToWorkTrackingCompletionHandler
 
     agrpc::GrpcContext& grpc_context;
 };
+#endif
 
 template <class Implementation, class CompletionToken>
 auto async_initiate_sender_implementation(agrpc::GrpcContext& grpc_context,

@@ -84,8 +84,8 @@ class BasicRPCClientClientStreamingBase<ResponderT<RequestT>, Executor> : public
     using Request = RequestT;
 
     // Completes with grpc::Status::OK if metadata was read, otherwise with what agrpc::finish produced.
-    template <class CompletionToken = asio::default_completion_token_t<Executor>>
-    auto read_initial_metadata(CompletionToken token = asio::default_completion_token_t<Executor>{})
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    auto read_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
             detail::ReadInitialMetadataSenderImplementation<BasicRPCClientClientStreamingBase>>(this->grpc_context(),
@@ -95,17 +95,17 @@ class BasicRPCClientClientStreamingBase<ResponderT<RequestT>, Executor> : public
     // // WriteOptions::set_last_message() can be used to get the behavior of agrpc::write_last
     // // Completes with grpc::Status.
     // // Returns grpc::Status::FAILED_PRECONDITION if the RPC hasn't been started.
-    template <class CompletionToken = asio::default_completion_token_t<Executor>>
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto write(const RequestT& request, grpc::WriteOptions options,
-               CompletionToken token = asio::default_completion_token_t<Executor>{})
+               CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
             detail::WriteClientStreamingSenderImplementation<ResponderT<RequestT>, Executor>>(
             this->grpc_context(), {request, options}, {*this}, token);
     }
 
-    template <class CompletionToken = asio::default_completion_token_t<Executor>>
-    auto write(const RequestT& request, CompletionToken&& token = asio::default_completion_token_t<Executor>{})
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    auto write(const RequestT& request, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return this->write(request, grpc::WriteOptions{}, static_cast<CompletionToken&&>(token));
     }
@@ -113,8 +113,8 @@ class BasicRPCClientClientStreamingBase<ResponderT<RequestT>, Executor> : public
     // // Calls agrpc::writes_done if not already done by a write with WriteOptions::set_last_message()
     // // Completes with grpc::Status.
     // // Returns grpc::Status::FAILED_PRECONDITION if the RPC hasn't been started.
-    template <class CompletionToken = asio::default_completion_token_t<Executor>>
-    auto finish(CompletionToken token = asio::default_completion_token_t<Executor>{})
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    auto finish(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_conditional_sender_implementation<
             detail::ClientFinishSenderImplementation<BasicRPCClientClientStreamingBase>>(
@@ -153,8 +153,8 @@ class BasicRPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
     using Response = ResponseT;
 
     // Completes with grpc::Status::OK if metadata was read, otherwise with what agrpc::finish produced.
-    template <class CompletionToken = asio::default_completion_token_t<Executor>>
-    auto read_initial_metadata(CompletionToken token = asio::default_completion_token_t<Executor>{})
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    auto read_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
             detail::ReadInitialMetadataSenderImplementation<BasicRPCClientServerStreamingBase>>(this->grpc_context(),
@@ -164,8 +164,8 @@ class BasicRPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
     // Reads from the RPC and finishes it if agrpc::read returned `false`.
     // Completes with a wrapper around grpc::Status that differentiates between the stati returned from the server
     // and the successful end of the stream.
-    template <class CompletionToken = asio::default_completion_token_t<Executor>>
-    auto read(ResponseT& response, CompletionToken token = asio::default_completion_token_t<Executor>{})
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    auto read(ResponseT& response, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
             detail::ReadServerStreamingSenderImplementation<ResponderT<ResponseT>, Executor>>(
@@ -209,47 +209,47 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
     using Request = RequestT;
     using Response = ResponseT;
 
-    template <class CompletionToken = asio::default_completion_token_t<Executor>>
-    auto read_initial_metadata(CompletionToken token = asio::default_completion_token_t<Executor>{})
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    auto read_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
             detail::ReadInitialMetadataSenderImplementation<BasicRPCBidirectionalStreamingBase>>(this->grpc_context(),
                                                                                                  {}, {*this}, token);
     }
 
-    template <class CompletionToken = asio::default_completion_token_t<Executor>>
-    auto read(ResponseT& response, CompletionToken token = asio::default_completion_token_t<Executor>{})
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    auto read(ResponseT& response, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
             detail::ClientReadBidiStreamingSenderImplementation<ResponderT<RequestT, ResponseT>, Executor>>(
             this->grpc_context(), {response}, {*this}, token);
     }
 
-    template <class CompletionToken = asio::default_completion_token_t<Executor>>
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto write(const RequestT& request, grpc::WriteOptions options,
-               CompletionToken token = asio::default_completion_token_t<Executor>{})
+               CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
             detail::ClientWriteBidiStreamingSenderImplementation<ResponderT<RequestT, ResponseT>, Executor>>(
             this->grpc_context(), {request, options}, {*this}, token);
     }
 
-    template <class CompletionToken = asio::default_completion_token_t<Executor>>
-    auto write(const RequestT& request, CompletionToken&& token = asio::default_completion_token_t<Executor>{})
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    auto write(const RequestT& request, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return this->write(request, grpc::WriteOptions{}, static_cast<CompletionToken&&>(token));
     }
 
-    template <class CompletionToken = asio::default_completion_token_t<Executor>>
-    auto writes_done(CompletionToken&& token = asio::default_completion_token_t<Executor>{})
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    auto writes_done(CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_conditional_sender_implementation<
             detail::ClientWritesDoneSenderImplementation<ResponderT<RequestT, ResponseT>, Executor>>(
             this->grpc_context(), {}, {*this}, !this->is_writes_done() && !this->is_finished(), token, this->ok());
     }
 
-    template <class CompletionToken = asio::default_completion_token_t<Executor>>
-    auto finish(CompletionToken token = asio::default_completion_token_t<Executor>{})
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    auto finish(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_conditional_sender_implementation<
             detail::ClientFinishSenderImplementation<BasicRPCBidirectionalStreamingBase>>(
@@ -303,19 +303,19 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY> : public de
         using other = BasicRPC<PrepareAsync, OtherExecutor, agrpc::RPCType::CLIENT_UNARY>;
     };
 
-    template <class CompletionToken = asio::default_completion_token_t<Executor>>
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     static auto request(agrpc::GrpcContext& grpc_context, StubT& stub, grpc::ClientContext& context,
                         const RequestT& request, ResponseT& response,
-                        CompletionToken token = asio::default_completion_token_t<Executor>{})
+                        CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
             detail::ClientUnaryRequestSenderImplementation<PrepareAsync, Executor>>(
             grpc_context, {response}, {grpc_context, stub, context, request}, token);
     }
 
-    template <class CompletionToken = asio::default_completion_token_t<Executor>>
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     static auto request(const Executor& executor, StubT& stub, grpc::ClientContext& context, const RequestT& request,
-                        ResponseT& response, CompletionToken&& token = asio::default_completion_token_t<Executor>{})
+                        ResponseT& response, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return BasicRPC::request(detail::query_grpc_context(executor), stub, context, request, response,
                                  static_cast<CompletionToken&&>(token));
@@ -345,22 +345,22 @@ class BasicRPC<detail::GenericRPCType::CLIENT_UNARY, Executor, agrpc::RPCType::C
         using other = BasicRPC<detail::GenericRPCType::CLIENT_UNARY, OtherExecutor, agrpc::RPCType::CLIENT_UNARY>;
     };
 
-    template <class CompletionToken = asio::default_completion_token_t<Executor>>
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     static auto request(agrpc::GrpcContext& grpc_context, const std::string& method, grpc::GenericStub& stub,
                         grpc::ClientContext& context, const grpc::ByteBuffer& request, grpc::ByteBuffer& response,
-                        CompletionToken token = asio::default_completion_token_t<Executor>{})
+                        CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
             detail::GenericClientUnaryRequestSenderImplementation<Executor>>(
             grpc_context, {response}, {grpc_context, method, stub, context, request}, token);
     }
 
-    template <class CompletionToken = asio::default_completion_token_t<Executor>>
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     static auto request(const Executor& executor, const std::string& method, grpc::GenericStub& stub,
                         grpc::ClientContext& context, const grpc::ByteBuffer& request, grpc::ByteBuffer& response,
-                        CompletionToken&& token = asio::default_completion_token_t<Executor>{})
+                        CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
-        return BasicRPC::request(detail::query_grpc_context(executor), stub, context, request, response,
+        return BasicRPC::request(detail::query_grpc_context(executor), method, stub, context, request, response,
                                  static_cast<CompletionToken&&>(token));
     }
 
@@ -392,18 +392,18 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
     // Requests the RPC and finishes it if agrpc::request returned `false`.
     // Return immediately if ClientContext.initial_metadata_corked is set.
     // Completes with grpc::Status.
-    template <class CompletionToken = asio::default_completion_token_t<Executor>>
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     static auto request(agrpc::GrpcContext& grpc_context, StubT& stub, grpc::ClientContext& context,
-                        ResponseT& response, CompletionToken token = asio::default_completion_token_t<Executor>{})
+                        ResponseT& response, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
             detail::ClientClientStreamingRequestSenderImplementation<PrepareAsync, Executor>>(
             grpc_context, {}, {grpc_context, stub, context, response}, token);
     }
 
-    template <class CompletionToken = asio::default_completion_token_t<Executor>>
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     static auto request(const Executor& executor, StubT& stub, grpc::ClientContext& context, ResponseT& response,
-                        CompletionToken&& token = asio::default_completion_token_t<Executor>{})
+                        CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return BasicRPC::request(detail::query_grpc_context(executor), stub, context, response,
                                  static_cast<CompletionToken&&>(token));
@@ -435,18 +435,18 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>
     };
 
     // Requests the RPC and finishes it if agrpc::request returned `false`.
-    template <class CompletionToken = asio::default_completion_token_t<Executor>>
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     static auto request(agrpc::GrpcContext& grpc_context, StubT& stub, grpc::ClientContext& context,
-                        const RequestT& request, CompletionToken token = asio::default_completion_token_t<Executor>{})
+                        const RequestT& request, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
             detail::ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor>>(
             grpc_context, {}, {grpc_context, stub, context, request}, token);
     }
 
-    template <class CompletionToken = asio::default_completion_token_t<Executor>>
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     static auto request(const Executor& executor, StubT& stub, grpc::ClientContext& context, const RequestT& request,
-                        CompletionToken&& token = asio::default_completion_token_t<Executor>{})
+                        CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return BasicRPC::request(detail::query_grpc_context(executor), stub, context, request,
                                  static_cast<CompletionToken&&>(token));
@@ -479,18 +479,18 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STRE
     /**
      * @brief Request
      */
-    template <class CompletionToken = asio::default_completion_token_t<Executor>>
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     static auto request(agrpc::GrpcContext& grpc_context, StubT& stub, grpc::ClientContext& context,
-                        CompletionToken token = asio::default_completion_token_t<Executor>{})
+                        CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
             detail::ClientBidirectionalStreamingRequestSenderImplementation<PrepareAsync, Executor>>(
             grpc_context, {}, {grpc_context, stub, context}, token);
     }
 
-    template <class CompletionToken = asio::default_completion_token_t<Executor>>
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     static auto request(const Executor& executor, StubT& stub, grpc::ClientContext& context,
-                        CompletionToken&& token = asio::default_completion_token_t<Executor>{})
+                        CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return BasicRPC::request(detail::query_grpc_context(executor), stub, context,
                                  static_cast<CompletionToken&&>(token));

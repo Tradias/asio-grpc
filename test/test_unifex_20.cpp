@@ -20,6 +20,7 @@
 #include "utils/doctest.hpp"
 #include "utils/grpc_client_server_test.hpp"
 #include "utils/grpc_context_test.hpp"
+#include "utils/high_level_client.hpp"
 
 #include <agrpc/asio_grpc.hpp>
 
@@ -538,5 +539,85 @@ TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex repeatedly_request client stre
             server->Shutdown();
         }());
     CHECK_EQ(4, request_count);
+}
+
+TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex repeatedly_request client streaming")
+{
+    bool is_shutdown{false};
+    auto request_count{0};
+    run(agrpc::repeatedly_request(
+            &test::v1::Test::AsyncService::RequestClientStreaming, service,
+            [&](grpc::ServerContext&,
+                grpc::ServerAsyncReader<test::msg::Response, test::msg::Request>& reader) -> unifex::task<void>
+            {
+                test::msg::Request request{};
+                CHECK(co_await agrpc::read(reader, request, use_sender()));
+                CHECK_EQ(42, request.integer());
+                test::msg::Response response{};
+                response.set_integer(21);
+                ++request_count;
+                if (request_count > 3)
+                {
+                    is_shutdown = true;
+                }
+                CHECK(co_await agrpc::finish(reader, response, grpc::Status::OK, use_sender()));
+            },
+            use_sender()),
+        [&]() -> unifex::task<void>
+        {
+            while (!is_shutdown)
+            {
+                test::msg::Response response;
+                grpc::ClientContext new_client_context;
+                std::unique_ptr<grpc::ClientAsyncWriter<test::msg::Request>> writer;
+                CHECK(co_await agrpc::request(&test::v1::Test::Stub::PrepareAsyncClientStreaming, *stub,
+                                              new_client_context, writer, response, use_sender()));
+                test::msg::Request request;
+                request.set_integer(42);
+                CHECK(co_await agrpc::write(*writer, request, use_sender()));
+                CHECK(co_await agrpc::writes_done(*writer, use_sender()));
+                grpc::Status status;
+                CHECK(co_await agrpc::finish(*writer, status, use_sender()));
+                CHECK(status.ok());
+                CHECK_EQ(21, response.integer());
+            }
+            server->Shutdown();
+        }());
+    CHECK_EQ(4, request_count);
+}
+
+struct UnifexHighLevelTest : test::HighLevelClientTest<test::BidirectionalStreamingRPC>, UnifexTest
+{
+};
+
+TEST_CASE_FIXTURE(UnifexHighLevelTest, "unifex high-level client BidirectionalStreamingRPC success")
+{
+    run(
+        [&]() -> unifex::task<void>
+        {
+            CHECK(co_await test_server.request_rpc(use_sender()));
+            test_server.response.set_integer(1);
+            CHECK(co_await agrpc::read(test_server.responder, test_server.request, use_sender()));
+            CHECK_FALSE(co_await agrpc::read(test_server.responder, test_server.request, use_sender()));
+            CHECK_EQ(42, test_server.request.integer());
+            CHECK(co_await agrpc::write(test_server.responder, test_server.response, use_sender()));
+            CHECK(co_await agrpc::finish(test_server.responder, grpc::Status::OK, use_sender()));
+        }(),
+        [&]() -> unifex::task<void>
+        {
+            auto rpc = co_await test::BidirectionalStreamingRPC::request(grpc_context, *stub, client_context);
+            request.set_integer(42);
+            CHECK(co_await rpc.write(request));
+            CHECK(co_await rpc.writes_done());
+            CHECK(co_await rpc.read(response));
+            CHECK_EQ(1, response.integer());
+            CHECK(co_await rpc.writes_done());
+            CHECK_FALSE(co_await rpc.read(response));
+            CHECK_EQ(1, response.integer());
+            CHECK(co_await rpc.finish());
+            CHECK_EQ(grpc::StatusCode::OK, rpc.status_code());
+            CHECK(co_await rpc.finish());
+            CHECK_EQ(grpc::StatusCode::OK, rpc.status_code());
+        }());
 }
 #endif
