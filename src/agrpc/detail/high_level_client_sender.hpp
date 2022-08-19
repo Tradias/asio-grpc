@@ -54,7 +54,7 @@ template <class Stub, class Request, class Response, template <class> class Resp
 struct ClientUnaryRequestSenderImplementation<PrepareAsync, Executor> : detail::GrpcSenderImplementationBase
 {
     using RPC = agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>;
-    using Signature = void(RPC);
+    using Signature = void(grpc::Status);
 
     struct Initiation
     {
@@ -63,8 +63,7 @@ struct ClientUnaryRequestSenderImplementation<PrepareAsync, Executor> : detail::
 
     ClientUnaryRequestSenderImplementation(agrpc::GrpcContext& grpc_context, Stub& stub,
                                            grpc::ClientContext& client_context, const Request& req)
-        : rpc(grpc_context.get_executor()),
-          responder((stub.*PrepareAsync)(&client_context, req, grpc_context.get_completion_queue()))
+        : responder((stub.*PrepareAsync)(&client_context, req, grpc_context.get_completion_queue()))
     {
     }
 
@@ -72,16 +71,16 @@ struct ClientUnaryRequestSenderImplementation<PrepareAsync, Executor> : detail::
     void initiate(const agrpc::GrpcContext&, Init init) noexcept
     {
         responder->StartCall();
-        responder->Finish(&init->response, &rpc.status(), init.self());
+        responder->Finish(&init->response, &status, init.self());
     }
 
     template <class OnDone>
     void done(OnDone on_done, bool)
     {
-        on_done(static_cast<RPC&&>(rpc));
+        on_done(static_cast<grpc::Status&&>(status));
     }
 
-    RPC rpc;
+    grpc::Status status;
     std::unique_ptr<Responder<Response>> responder;
 };
 
@@ -89,7 +88,7 @@ template <class Executor>
 struct GenericClientUnaryRequestSenderImplementation : detail::GrpcSenderImplementationBase
 {
     using RPC = agrpc::BasicRPC<detail::GenericRPCType::CLIENT_UNARY, Executor, agrpc::RPCType::CLIENT_UNARY>;
-    using Signature = void(RPC);
+    using Signature = void(grpc::Status);
 
     struct Initiation
     {
@@ -99,8 +98,7 @@ struct GenericClientUnaryRequestSenderImplementation : detail::GrpcSenderImpleme
     GenericClientUnaryRequestSenderImplementation(agrpc::GrpcContext& grpc_context, const std::string& method,
                                                   grpc::GenericStub& stub, grpc::ClientContext& client_context,
                                                   const grpc::ByteBuffer& req)
-        : rpc(grpc_context.get_executor()),
-          responder(stub.PrepareUnaryCall(&client_context, method, req, grpc_context.get_completion_queue()))
+        : responder(stub.PrepareUnaryCall(&client_context, method, req, grpc_context.get_completion_queue()))
     {
     }
 
@@ -108,16 +106,16 @@ struct GenericClientUnaryRequestSenderImplementation : detail::GrpcSenderImpleme
     void initiate(const agrpc::GrpcContext&, Init init) noexcept
     {
         responder->StartCall();
-        responder->Finish(&init->response, &rpc.status(), init.self());
+        responder->Finish(&init->response, &status, init.self());
     }
 
     template <class OnDone>
     void done(OnDone on_done, bool)
     {
-        on_done(static_cast<RPC&&>(rpc));
+        on_done(static_cast<grpc::Status&&>(status));
     }
 
-    RPC rpc;
+    grpc::Status status;
     std::unique_ptr<grpc::GenericClientAsyncResponseReader> responder;
 };
 

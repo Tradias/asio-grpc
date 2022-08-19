@@ -27,7 +27,25 @@
 
 #include <future>
 
-TEST_CASE_TEMPLATE("RPC::request automatically finishes RPC on error", RPC, test::UnaryRPC, test::ClientStreamingRPC,
+TEST_CASE_FIXTURE(test::HighLevelClientTest<test::UnaryRPC>, "UnaryRPC::request automatically finishes RPC on error")
+{
+    bool use_executor_overload{};
+    SUBCASE("executor overload") {}
+    SUBCASE("GrpcContext overload") { use_executor_overload = true; }
+    server->Shutdown();
+    client_context.set_deadline(test::ten_milliseconds_from_now());
+    const auto check = [](grpc::Status&& status)
+    {
+        CHECK_FALSE(status.ok());
+        CHECK_MESSAGE((grpc::StatusCode::DEADLINE_EXCEEDED == status.error_code() ||
+                       grpc::StatusCode::UNAVAILABLE == status.error_code()),
+                      status.error_code());
+    };
+    request_rpc(use_executor_overload, check);
+    grpc_context.run();
+}
+
+TEST_CASE_TEMPLATE("Streaming RPC::request automatically finishes RPC on error", RPC, test::ClientStreamingRPC,
                    test::ServerStreamingRPC, test::BidirectionalStreamingRPC)
 {
     test::HighLevelClientTest<RPC> test;
@@ -85,9 +103,9 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::UnaryRPC>,
         {
             request.set_integer(42);
             auto sender = RPC::request(grpc_context, *stub, client_context, request, response);
-            const auto receiver = test::FunctionAsReceiver{[&](RPC&& rpc)
+            const auto receiver = test::FunctionAsReceiver{[&](grpc::Status&& status)
                                                            {
-                                                               ok = rpc.ok();
+                                                               ok = status.ok();
                                                            }};
             if (use_submit)
             {
@@ -111,6 +129,9 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::UnaryRPC>,
 
 TEST_CASE_FIXTURE(test::HighLevelClientTest<test::UnaryRPC>, "RPC::request generic unary RPC successfully")
 {
+    bool use_executor_overload{};
+    SUBCASE("executor overload") {}
+    SUBCASE("GrpcContext overload") { use_executor_overload = true; }
     spawn_and_run(
         [&](const asio::yield_context& yield)
         {
@@ -126,9 +147,20 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::UnaryRPC>, "RPC::request gener
             request.set_integer(42);
             auto request_buf = test::message_to_grpc_buffer(request);
             grpc::ByteBuffer response_buf;
-            auto rpc = RPC::request(grpc_context, "/test.v1.Test/Unary", generic_stub, client_context, request_buf,
-                                    response_buf, yield);
-            CHECK(rpc.ok());
+            auto status = [&]
+            {
+                if (use_executor_overload)
+                {
+                    return RPC::request(get_executor(), "/test.v1.Test/Unary", generic_stub, client_context,
+                                        request_buf, response_buf, yield);
+                }
+                else
+                {
+                    return RPC::request(grpc_context, "/test.v1.Test/Unary", generic_stub, client_context, request_buf,
+                                        response_buf, yield);
+                }
+            }();
+            CHECK(status.ok());
             response = test::grpc_buffer_to_message<decltype(response)>(response_buf);
             CHECK_EQ(24, response.integer());
         });
@@ -145,17 +177,20 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTestBase,
                             grpc::ByteBuffer request_buf;
                             grpc::ByteBuffer response_buf;
                             client_context.set_deadline(test::now());
-                            auto rpc = RPC::request(grpc_context, "/test.v1.Test/Unary", generic_stub, client_context,
-                                                    request_buf, response_buf, yield);
-                            CHECK_FALSE(rpc.ok());
-                            CHECK_MESSAGE((grpc::StatusCode::DEADLINE_EXCEEDED == rpc.status_code() ||
-                                           grpc::StatusCode::UNAVAILABLE == rpc.status_code()),
-                                          rpc.status_code());
+                            auto status = RPC::request(grpc_context, "/test.v1.Test/Unary", generic_stub,
+                                                       client_context, request_buf, response_buf, yield);
+                            CHECK_FALSE(status.ok());
+                            CHECK_MESSAGE((grpc::StatusCode::DEADLINE_EXCEEDED == status.error_code() ||
+                                           grpc::StatusCode::UNAVAILABLE == status.error_code()),
+                                          status.error_code());
                         });
 }
 
 TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>, "ServerStreamingRPC::read successfully")
 {
+    bool use_executor_overload{};
+    SUBCASE("executor overload") {}
+    SUBCASE("GrpcContext overload") { use_executor_overload = true; }
     spawn_and_run(
         [&](const asio::yield_context& yield)
         {
@@ -168,7 +203,7 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>, "ServerSt
         [&](const asio::yield_context& yield)
         {
             request.set_integer(42);
-            auto rpc = test::ServerStreamingRPC::request(grpc_context, *stub, client_context, request, yield);
+            auto rpc = request_rpc(use_executor_overload, yield);
             CHECK(rpc.read(response, yield));
             CHECK_EQ(1, response.integer());
             CHECK_FALSE(rpc.read(response, yield));
@@ -196,6 +231,9 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>,
 
 TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>, "ClientStreamingRPC::write successfully")
 {
+    bool use_executor_overload{};
+    SUBCASE("executor overload") {}
+    SUBCASE("GrpcContext overload") { use_executor_overload = true; }
     spawn_and_run(
         [&](const asio::yield_context& yield)
         {
@@ -208,7 +246,7 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>, "ClientSt
         },
         [&](const asio::yield_context& yield)
         {
-            auto rpc = test::ClientStreamingRPC::request(grpc_context, *stub, client_context, response, yield);
+            auto rpc = request_rpc(use_executor_overload, yield);
             request.set_integer(42);
             grpc::WriteOptions options{};
             CHECK(rpc.write(request, options.set_last_message(), yield));
@@ -363,6 +401,9 @@ struct HighLevelClientBidiTest : test::HighLevelClientTest<test::BidirectionalSt
 
 TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC success")
 {
+    bool use_executor_overload{};
+    SUBCASE("executor overload") {}
+    SUBCASE("GrpcContext overload") { use_executor_overload = true; }
     run_server_client_on_separate_threads(
         [&](const asio::yield_context& yield)
         {
@@ -376,7 +417,7 @@ TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC success")
         },
         [&](const asio::yield_context& yield)
         {
-            auto rpc = test::BidirectionalStreamingRPC::request(grpc_context, *stub, client_context, yield);
+            auto rpc = request_rpc(use_executor_overload, yield);
             request.set_integer(42);
             CHECK(rpc.write(request, yield));
             CHECK(rpc.writes_done(yield));

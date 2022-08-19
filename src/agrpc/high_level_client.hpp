@@ -289,13 +289,13 @@ inline constexpr auto CLIENT_GENERIC_STREAMING_RPC = detail::GenericRPCType::CLI
  */
 template <class StubT, class RequestT, class ResponseT, template <class> class ResponderT,
           detail::ClientUnaryRequest<StubT, RequestT, ResponderT<ResponseT>> PrepareAsync, class Executor>
-class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY> : public detail::BasicRPCStatusBase,
-                                                                       public detail::BasicRPCExecutorBase<Executor>
+class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
 {
   public:
     using Stub = StubT;
     using Request = RequestT;
     using Response = ResponseT;
+    using executor_type = Executor;
 
     template <class OtherExecutor>
     struct rebind_executor
@@ -320,11 +320,6 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY> : public de
         return BasicRPC::request(detail::query_grpc_context(executor), stub, context, request, response,
                                  static_cast<CompletionToken&&>(token));
     }
-
-  private:
-    friend detail::ClientUnaryRequestSenderImplementation<PrepareAsync, Executor>;
-
-    using detail::BasicRPCExecutorBase<Executor>::BasicRPCExecutorBase;
 };
 
 /**
@@ -332,12 +327,12 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY> : public de
  */
 template <class Executor>
 class BasicRPC<detail::GenericRPCType::CLIENT_UNARY, Executor, agrpc::RPCType::CLIENT_UNARY>
-    : public detail::BasicRPCStatusBase, public detail::BasicRPCExecutorBase<Executor>
 {
   public:
     using Stub = grpc::GenericStub;
     using Request = grpc::ByteBuffer;
     using Response = grpc::ByteBuffer;
+    using executor_type = Executor;
 
     template <class OtherExecutor>
     struct rebind_executor
@@ -363,11 +358,6 @@ class BasicRPC<detail::GenericRPCType::CLIENT_UNARY, Executor, agrpc::RPCType::C
         return BasicRPC::request(detail::query_grpc_context(executor), method, stub, context, request, response,
                                  static_cast<CompletionToken&&>(token));
     }
-
-  private:
-    friend detail::GenericClientUnaryRequestSenderImplementation<Executor>;
-
-    using detail::BasicRPCExecutorBase<Executor>::BasicRPCExecutorBase;
 };
 
 /**
