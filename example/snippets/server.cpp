@@ -308,7 +308,7 @@ void register_client_streaming_handler(agrpc::GrpcContext& grpc_context, example
 }
 /* [repeatedly-request-awaitable] */
 
-void create_grpc_context()
+void create_grpc_context_server_side()
 {
     /* [create-grpc_context-server-side] */
     grpc::ServerBuilder builder;
@@ -316,7 +316,7 @@ void create_grpc_context()
     /* [create-grpc_context-server-side] */
 }
 
-int main()
+void server_main()
 {
     std::unique_ptr<grpc::Server> server;
     example::v1::Example::AsyncService service;

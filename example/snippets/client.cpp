@@ -347,7 +347,7 @@ asio::awaitable<void> mock_stub(agrpc::GrpcContext& grpc_context)
     /* [mock-stub] */
 }
 
-int main()
+void client_main()
 {
     auto stub =
         example::v1::Example::NewStub(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));

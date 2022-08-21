@@ -22,7 +22,7 @@
 namespace asio = boost::asio;
 
 // client
-asio::awaitable<void> unary(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
+asio::awaitable<void> unary_rpc(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
     /* [full-unary-client-side] */
     grpc::ClientContext client_context;
@@ -47,7 +47,7 @@ asio::awaitable<void> unary(agrpc::GrpcContext& grpc_context, example::v1::Examp
     silence_unused(read_ok);
 }
 
-asio::awaitable<void> client_streaming(example::v1::Example::Stub& stub)
+asio::awaitable<void> client_streaming_rpc(example::v1::Example::Stub& stub)
 {
     /* [full-client-streaming-client-side] */
     grpc::ClientContext client_context;
@@ -81,7 +81,7 @@ asio::awaitable<void> client_streaming(example::v1::Example::Stub& stub)
     /* [full-client-streaming-client-side] */
 }
 
-asio::awaitable<void> server_streaming(example::v1::Example::Stub& stub)
+asio::awaitable<void> server_streaming_rpc(example::v1::Example::Stub& stub)
 {
     /* [full-server-streaming-client-side] */
     grpc::ClientContext client_context;
@@ -105,7 +105,7 @@ asio::awaitable<void> server_streaming(example::v1::Example::Stub& stub)
     /* [full-server-streaming-client-side] */
 }
 
-asio::awaitable<void> bidirectional_streaming(example::v1::Example::Stub& stub)
+asio::awaitable<void> bidirectional_streaming_rpc(example::v1::Example::Stub& stub)
 {
     /* [full-bidirectional-client-side] */
     grpc::ClientContext client_context;
@@ -145,7 +145,7 @@ asio::awaitable<void> bidirectional_streaming(example::v1::Example::Stub& stub)
 }
 
 // server
-void unary(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
+void unary_rpc(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
 {
     /* [full-unary-server-side] */
     agrpc::repeatedly_request(
@@ -163,7 +163,7 @@ void unary(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService&
     /* [full-unary-server-side] */
 }
 
-void client_streaming(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
+void client_streaming_rpc(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
 {
     /* [full-client-streaming-server-side] */
     agrpc::repeatedly_request(
@@ -191,7 +191,7 @@ void client_streaming(agrpc::GrpcContext& grpc_context, example::v1::Example::As
     /* [full-client-streaming-server-side] */
 }
 
-void server_streaming(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
+void server_streaming_rpc(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
 {
     /* [full-server-streaming-server-side] */
     agrpc::repeatedly_request(
@@ -219,7 +219,7 @@ void server_streaming(agrpc::GrpcContext& grpc_context, example::v1::Example::As
     /* [full-server-streaming-server-side] */
 }
 
-void bidirectional_streaming(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
+void bidirectional_streaming_rpc(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
 {
     /* [full-bidirectional-streaming-server-side] */
     agrpc::repeatedly_request(

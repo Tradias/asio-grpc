@@ -17,7 +17,7 @@
 
 #include <cstdlib>
 
-void abort_if_not(bool condition)
+inline void abort_if_not(bool condition)
 {
     if (!condition)
     {
