@@ -382,8 +382,8 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>,
 
 struct HighLevelClientBidiTest : test::HighLevelClientTest<test::BidirectionalStreamingRPC>, test::IoContextTest
 {
-    template <class ServerFunc, class ClientFunc>
-    void run_server_client_on_separate_threads(ServerFunc server_func, ClientFunc client_func)
+    void run_server_client_on_separate_threads(std::function<void(const asio::yield_context&)> server_func,
+                                               std::function<void(const asio::yield_context&)> client_func)
     {
         asio::spawn(io_context,
                     [client_func, g = get_work_tracking_executor()](const asio::yield_context& yield)

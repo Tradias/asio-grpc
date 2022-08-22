@@ -411,7 +411,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn with yield_context")
 {
     bool ok{false};
     test::spawn_and_run(grpc_context,
-                        [&](asio::yield_context yield)
+                        [&](const asio::yield_context& yield)
                         {
                             grpc::Alarm alarm;
                             ok = agrpc::wait(alarm, test::ten_milliseconds_from_now(), yield);

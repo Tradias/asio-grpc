@@ -118,7 +118,7 @@ TEST_CASE_TEMPLATE("yield_context repeatedly_request unary", T, TypedRequestHand
     for (size_t i = 0; i < 3; ++i)
     {
         asio::spawn(test.grpc_context,
-                    [&](asio::yield_context yield)
+                    [&](const asio::yield_context& yield)
                     {
                         test::PerformUnarySuccessOptions options;
                         options.request_payload = request_send_count;
@@ -174,7 +174,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request c
             response.set_integer(21);
             CHECK(agrpc::finish(reader, response, grpc::Status::OK, yield));
         },
-        [&](asio::yield_context yield)
+        [&](const asio::yield_context& yield)
         {
             while (!is_shutdown)
             {

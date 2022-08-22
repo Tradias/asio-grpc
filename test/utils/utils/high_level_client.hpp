@@ -17,11 +17,14 @@
 
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asio_forward.hpp"
+#include "utils/asio_utils.hpp"
 #include "utils/grpc_client_server_test.hpp"
 #include "utils/test_server.hpp"
 
 #include <agrpc/high_level_client.hpp>
 #include <doctest/doctest.h>
+
+#include <functional>
 
 namespace test
 {
@@ -41,8 +44,8 @@ struct IntrospectRPC<agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLI
 
     using RPC = agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>;
 
-    template <class Executor, class CompletionToken>
-    static auto request(Executor&& executor, typename RPC::Stub& stub, grpc::ClientContext& context,
+    template <class ExecOrContext, class CompletionToken>
+    static auto request(ExecOrContext&& executor, typename RPC::Stub& stub, grpc::ClientContext& context,
                         const typename RPC::Request& request, typename RPC::Response& response, CompletionToken&& token)
     {
         return RPC::request(executor, stub, context, request, response, token);
@@ -57,8 +60,8 @@ struct IntrospectRPC<agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLI
 
     using RPC = agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>;
 
-    template <class Executor, class CompletionToken>
-    static auto request(Executor&& executor, typename RPC::Stub& stub, grpc::ClientContext& context,
+    template <class ExecOrContext, class CompletionToken>
+    static auto request(ExecOrContext&& executor, typename RPC::Stub& stub, grpc::ClientContext& context,
                         const typename RPC::Request&, typename RPC::Response& response, CompletionToken&& token)
     {
         return RPC::request(executor, stub, context, response, token);
@@ -73,8 +76,8 @@ struct IntrospectRPC<agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLI
 
     using RPC = agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>;
 
-    template <class Executor, class CompletionToken>
-    static auto request(Executor&& executor, typename RPC::Stub& stub, grpc::ClientContext& context,
+    template <class ExecOrContext, class CompletionToken>
+    static auto request(ExecOrContext&& executor, typename RPC::Stub& stub, grpc::ClientContext& context,
                         const typename RPC::Request& request, const typename RPC::Response&, CompletionToken&& token)
     {
         return RPC::request(executor, stub, context, request, token);
@@ -89,8 +92,8 @@ struct IntrospectRPC<agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLI
 
     using RPC = agrpc::BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>;
 
-    template <class Executor, class CompletionToken>
-    static auto request(Executor&& executor, typename RPC::Stub& stub, grpc::ClientContext& context,
+    template <class ExecOrContext, class CompletionToken>
+    static auto request(ExecOrContext&& executor, typename RPC::Stub& stub, grpc::ClientContext& context,
                         const typename RPC::Request&, const typename RPC::Response&, CompletionToken&& token)
     {
         return RPC::request(executor, stub, context, token);
@@ -106,7 +109,7 @@ struct HighLevelClientTest : test::GrpcClientServerTest
     template <class... Functions>
     void spawn_and_run(Functions&&... functions)
     {
-        (asio::spawn(grpc_context, std::forward<Functions>(functions)), ...);
+        (test::spawn(grpc_context, std::forward<Functions>(functions)), ...);
         grpc_context.run();
     }
 #endif

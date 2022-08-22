@@ -26,7 +26,7 @@ TEST_CASE_FIXTURE(test::GrpcGenericClientServerTest, "yield_context generic unar
 {
     test::spawn_and_run(
         grpc_context,
-        [&](asio::yield_context yield)
+        [&](const asio::yield_context& yield)
         {
             grpc::GenericServerContext server_context;
             grpc::GenericServerAsyncReaderWriter reader_writer{&server_context};
@@ -43,7 +43,7 @@ TEST_CASE_FIXTURE(test::GrpcGenericClientServerTest, "yield_context generic unar
             CHECK(agrpc::write(reader_writer, response_buffer, yield));
             CHECK(agrpc::finish(reader_writer, grpc::Status::OK, yield));
         },
-        [&](asio::yield_context yield)
+        [&](const asio::yield_context& yield)
         {
             test::msg::Request request;
             request.set_integer(42);
@@ -66,7 +66,7 @@ TEST_CASE_FIXTURE(test::GrpcGenericClientServerTest, "yield_context generic clie
     SUBCASE("client set initial metadata corked") { set_initial_metadata_corked = true; }
     test::spawn_and_run(
         grpc_context,
-        [&](asio::yield_context yield)
+        [&](const asio::yield_context& yield)
         {
             grpc::GenericServerContext server_context;
             grpc::GenericServerAsyncReaderWriter reader_writer{&server_context};
@@ -83,7 +83,7 @@ TEST_CASE_FIXTURE(test::GrpcGenericClientServerTest, "yield_context generic clie
             CHECK(agrpc::write(reader_writer, response_buffer, yield));
             CHECK(agrpc::finish(reader_writer, grpc::Status::OK, yield));
         },
-        [&](asio::yield_context yield)
+        [&](const asio::yield_context& yield)
         {
             auto reader_writer = [&]
             {

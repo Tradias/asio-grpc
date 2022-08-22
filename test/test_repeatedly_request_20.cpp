@@ -117,8 +117,8 @@ TEST_CASE_TEMPLATE("awaitable repeatedly_request unary", UsePmrExecutor, std::tr
                 response.set_integer(21);
                 co_await agrpc::finish(writer, response, grpc::Status::OK, asio::use_awaitable_t<Executor>{});
             }));
-    asio::spawn(self.grpc_context,
-                [&](auto&& yield)
+    test::spawn(self.grpc_context,
+                [&](const asio::yield_context& yield)
                 {
                     while (!is_shutdown)
                     {
@@ -164,8 +164,8 @@ TEST_CASE_TEMPLATE("awaitable repeatedly_request client streaming", T, TypedAwai
                                      request_handler);
     }
     test::v1::Test::Stub test_stub{test.channel};
-    asio::spawn(test.grpc_context,
-                [&](auto&& yield)
+    test::spawn(test.grpc_context,
+                [&](const asio::yield_context& yield)
                 {
                     while (!is_shutdown)
                     {
@@ -262,8 +262,8 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "asio use_sender repeatedly_reques
                                  {
                                      CHECK_EQ(4, request_count);
                                  }});
-    asio::spawn(grpc_context,
-                [&](auto&& yield)
+    test::spawn(grpc_context,
+                [&](const asio::yield_context& yield)
                 {
                     while (!is_shutdown)
                     {
@@ -306,8 +306,8 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request canc
                                                                is_repeatedly_request_completed = true;
                                                            }));
     signal.emit(asio::cancellation_type::all);
-    asio::spawn(grpc_context,
-                [&](auto&& yield)
+    test::spawn(grpc_context,
+                [&](const asio::yield_context& yield)
                 {
                     test::client_perform_unary_success(grpc_context, *stub, yield);
                 });
@@ -327,8 +327,8 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request thro
                                 co_return;
                             }),
         asio::bind_cancellation_slot(signal.slot(), test::NoOp{}));
-    asio::spawn(grpc_context,
-                [&](auto&& yield)
+    test::spawn(grpc_context,
+                [&](const asio::yield_context& yield)
                 {
                     signal.emit(asio::cancellation_type::all);
                     test::client_perform_unary_unchecked(grpc_context, *stub, yield,

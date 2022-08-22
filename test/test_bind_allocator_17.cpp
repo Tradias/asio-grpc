@@ -91,7 +91,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_allocator with old async_completi
 TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_allocator with yield_context")
 {
     test::spawn_and_run(grpc_context,
-                        [&](asio::yield_context yield)
+                        [&](const asio::yield_context& yield)
                         {
                             grpc::Alarm alarm;
                             agrpc::wait(alarm, test::ten_milliseconds_from_now(),
