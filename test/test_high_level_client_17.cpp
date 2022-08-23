@@ -229,6 +229,28 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>,
         });
 }
 
+TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>,
+                  "ServerStreamingRPC can handle ClientContext.TryCancel")
+{
+    bool explicit_try_cancel{};
+    SUBCASE("automatic TryCancel on destruction") {}
+    SUBCASE("explicit TryCancel") { explicit_try_cancel = true; }
+    spawn_and_run(
+        [&](const asio::yield_context& yield)
+        {
+            test_server.request_rpc(yield);
+            CHECK_FALSE(agrpc::finish(test_server.responder, grpc::Status::OK, yield));
+        },
+        [&](const asio::yield_context& yield)
+        {
+            auto rpc = test::ServerStreamingRPC::request(grpc_context, *stub, client_context, request, yield);
+            if (explicit_try_cancel)
+            {
+                client_context.TryCancel();
+            }
+        });
+}
+
 TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>, "ClientStreamingRPC::write successfully")
 {
     bool use_executor_overload{};

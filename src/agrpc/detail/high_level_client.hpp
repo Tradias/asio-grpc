@@ -47,8 +47,7 @@ class AutoCancelClientContext
 
     ~AutoCancelClientContext() noexcept
     {
-        const auto context_ptr = context.get();
-        if (context_ptr)
+        if (const auto context_ptr = context.get())
         {
             context_ptr->TryCancel();
         }
@@ -60,8 +59,7 @@ class AutoCancelClientContext
     {
         if (this != &other)
         {
-            const auto context_ptr = context.get();
-            if (context_ptr)
+            if (const auto context_ptr = context.get())
             {
                 context_ptr->TryCancel();
             }
