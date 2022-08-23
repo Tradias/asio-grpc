@@ -103,10 +103,10 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::UnaryRPC>,
         {
             request.set_integer(42);
             auto sender = RPC::request(grpc_context, *stub, client_context, request, response);
-            const auto receiver = test::FunctionAsReceiver{[&](grpc::Status&& status)
-                                                           {
-                                                               ok = status.ok();
-                                                           }};
+            const test::FunctionAsReceiver receiver{[&](grpc::Status&& status)
+                                                    {
+                                                        ok = status.ok();
+                                                    }};
             if (use_submit)
             {
                 CHECK_FALSE(asio::execution::can_submit_v<std::add_const_t<decltype(sender)>, decltype(receiver)>);

@@ -66,17 +66,17 @@ enum class AllocationType
     CUSTOM
 };
 
-template <class Implementation, class Receiver, AllocationType AllocType>
+template <class Implementation, class Receiver, detail::AllocationType AllocType>
 class BasicSenderRunningOperation;
 
 template <class Implementation>
 struct BasicSenderRunningOperationAllocationTraits
 {
     template <class Receiver>
-    using Local = detail::BasicSenderRunningOperation<Implementation, Receiver, AllocationType::LOCAL>;
+    using Local = detail::BasicSenderRunningOperation<Implementation, Receiver, detail::AllocationType::LOCAL>;
 
     template <class Receiver>
-    using Custom = detail::BasicSenderRunningOperation<Implementation, Receiver, AllocationType::CUSTOM>;
+    using Custom = detail::BasicSenderRunningOperation<Implementation, Receiver, detail::AllocationType::CUSTOM>;
 };
 
 template <class Receiver, class Implementation>
@@ -166,7 +166,7 @@ struct BasicSenderRunningOperationInit
     Initiation& initiation_;
 };
 
-template <class Implementation, class Receiver, AllocationType AllocType>
+template <class Implementation, class Receiver, detail::AllocationType AllocType>
 class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBase<Implementation::TYPE>
 {
   private:
@@ -212,9 +212,9 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
             detail::exec::set_done(this->extract_receiver_and_optionally_deallocate(grpc_context.get_allocator()));
             return;
         }
-        auto stop_token = detail::exec::get_stop_token(receiver());
-        if constexpr (!std::is_same_v<detail::exec::unstoppable_token, decltype(stop_token)>)
+        if constexpr (!std::is_same_v<detail::exec::unstoppable_token, detail::exec::stop_token_type_t<Receiver>>)
         {
+            auto stop_token = detail::exec::get_stop_token(receiver());
             if (stop_token.stop_requested())
             {
                 detail::exec::set_done(this->extract_receiver_and_optionally_deallocate(grpc_context.get_allocator()));
@@ -268,27 +268,24 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
         }
     }
 
-    Receiver extract_receiver_and_deallocate(detail::GrpcContextLocalAllocator local_allocator)
+    Receiver extract_receiver_and_deallocate([[maybe_unused]] detail::GrpcContextLocalAllocator local_allocator)
     {
-        const auto& allocator = [&]
-        {
-            if constexpr (AllocType == AllocationType::LOCAL)
-            {
-                return local_allocator;
-            }
-            else
-            {
-                return detail::exec::get_allocator(receiver());
-            }
-        }();
         Receiver local_receiver{static_cast<Receiver&&>(receiver())};
-        detail::destroy_deallocate(this, allocator);
+        if constexpr (AllocType == detail::AllocationType::LOCAL)
+        {
+            detail::destroy_deallocate(this, local_allocator);
+        }
+        else
+        {
+            detail::destroy_deallocate(this, detail::exec::get_allocator(local_receiver));
+        }
         return local_receiver;
     }
 
-    Receiver extract_receiver_and_optionally_deallocate(detail::GrpcContextLocalAllocator local_allocator)
+    Receiver extract_receiver_and_optionally_deallocate(
+        [[maybe_unused]] detail::GrpcContextLocalAllocator local_allocator)
     {
-        if constexpr (AllocType == AllocationType::NONE)
+        if constexpr (AllocType == detail::AllocationType::NONE)
         {
             return static_cast<Receiver&&>(receiver());
         }
@@ -317,12 +314,13 @@ class BasicSenderOperationState
   public:
     void start() noexcept { impl.first().start(grpc_context, impl.second()); }
 
-    Receiver& receiver() noexcept { return impl.first().receiver(); }
-
   private:
     using Initiation = typename Implementation::Initiation;
 
     friend detail::BasicSender<Implementation>;
+
+    template <class, class, class...>
+    friend class ConditionalSenderOperationState;
 
     template <class R>
     BasicSenderOperationState(R&& receiver, agrpc::GrpcContext& grpc_context, const Initiation& initiation,
@@ -341,8 +339,10 @@ class BasicSenderOperationState
     {
     }
 
+    Receiver& receiver() noexcept { return impl.first().receiver(); }
+
     agrpc::GrpcContext& grpc_context;
-    detail::CompressedPair<detail::BasicSenderRunningOperation<Implementation, Receiver, AllocationType::NONE>,
+    detail::CompressedPair<detail::BasicSenderRunningOperation<Implementation, Receiver, detail::AllocationType::NONE>,
                            Initiation>
         impl;
 };

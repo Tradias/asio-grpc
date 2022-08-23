@@ -94,13 +94,13 @@ class BasicRPCClientContextBase
   protected:
     BasicRPCClientContextBase() = default;
 
-    BasicRPCClientContextBase(grpc::ClientContext& client_context) : client_context(client_context) {}
+    explicit BasicRPCClientContextBase(grpc::ClientContext& client_context) : client_context(client_context) {}
 
     [[nodiscard]] bool is_finished() const noexcept { return client_context.is_null(); }
 
     void set_finished() noexcept { client_context.clear(); }
 
-    bool is_writes_done() const noexcept { return client_context.has_bit<0>(); }
+    [[nodiscard]] bool is_writes_done() const noexcept { return client_context.has_bit<0>(); }
 
     void set_writes_done() noexcept { client_context.set_bit<0>(); }
 

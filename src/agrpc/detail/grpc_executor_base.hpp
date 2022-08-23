@@ -170,7 +170,7 @@ struct QueryStaticMapping
 
     using result_type = agrpc::asio::execution::mapping_t::thread_t;
 
-    static constexpr auto value() noexcept { return result_type(); }
+    [[nodiscard]] static constexpr auto value() noexcept { return result_type(); }
 };
 
 struct QueryStaticRelationship
@@ -180,7 +180,7 @@ struct QueryStaticRelationship
 
     using result_type = agrpc::asio::execution::relationship_t::fork_t;
 
-    static constexpr auto value() noexcept { return result_type(); }
+    [[nodiscard]] static constexpr auto value() noexcept { return result_type(); }
 };
 #endif
 }

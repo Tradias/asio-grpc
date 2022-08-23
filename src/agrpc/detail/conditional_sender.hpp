@@ -85,7 +85,7 @@ class ConditionalSender
 };
 
 template <class Sender, class... CompletionArgs>
-ConditionalSender(Sender, CompletionArgs...) -> ConditionalSender<Sender, CompletionArgs...>;
+ConditionalSender(Sender, bool, CompletionArgs...) -> ConditionalSender<Sender, CompletionArgs...>;
 
 template <class Variant>
 struct ConditionalSenderSatisfyReceiver;
@@ -94,20 +94,20 @@ template <class... T, class... Tuple>
 struct ConditionalSenderSatisfyReceiver<detail::TypeList<detail::TypeList<T...>, Tuple...>>
 {
     template <class Receiver, class... Args, size_t... I>
-    static auto satisfy_impl(Receiver&& receiver, detail::Tuple<Args...>&& tuple, std::index_sequence<I...>)
+    static void satisfy_impl(Receiver&& receiver, detail::Tuple<Args...>&& tuple, std::index_sequence<I...>)
     {
         detail::satisfy_receiver(static_cast<Receiver&&>(receiver), detail::get<I>(std::move(tuple))...);
     }
 
     template <class Receiver, class... Args>
-    static auto satisfy(Receiver&& receiver, detail::Tuple<Args...>&& tuple)
+    static void satisfy(Receiver&& receiver, detail::Tuple<Args...>&& tuple)
     {
         ConditionalSenderSatisfyReceiver::satisfy_impl(static_cast<Receiver&&>(receiver), std::move(tuple),
                                                        std::make_index_sequence<sizeof...(Args)>{});
     }
 
     template <class Receiver>
-    static auto satisfy(Receiver&& receiver, detail::Tuple<>&&)
+    static void satisfy(Receiver&& receiver, detail::Tuple<>&&)
     {
         detail::satisfy_receiver(static_cast<Receiver&&>(receiver), T{}...);
     }

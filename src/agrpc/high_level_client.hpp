@@ -241,7 +241,7 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
     }
 
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto writes_done(CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
+    auto writes_done(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_conditional_sender_implementation<
             detail::ClientWritesDoneSenderImplementation<ResponderT<RequestT, ResponseT>, Executor>>(

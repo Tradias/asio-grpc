@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "test/v1/test.grpc.pb.h"
+
 #include <agrpc/detail/memory_resource.hpp>
 #include <doctest/doctest.h>
 #include <google/protobuf/arena.h>
@@ -23,8 +25,6 @@
 #include <grpcpp/generic/async_generic_service.h>
 #include <grpcpp/generic/generic_stub.h>
 #include <grpcpp/grpcpp.h>
-#include <grpcpp/impl/codegen/proto_utils.h>
-#include <grpcpp/support/method_handler.h>
 
 #ifdef AGRPC_STANDALONE_ASIO
 //

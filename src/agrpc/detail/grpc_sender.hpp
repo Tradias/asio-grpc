@@ -37,19 +37,19 @@ struct GrpcSenderImplementation : detail::GrpcSenderImplementationBase
 
     struct Initiation
     {
-        auto create_stop_function() noexcept { return StopFunction{initiating_function}; }
+        auto create_stop_function() const noexcept { return StopFunction{initiating_function}; }
 
         InitiatingFunction initiating_function;
     };
 
     template <class OnDone>
-    void initiate(agrpc::GrpcContext& grpc_context, OnDone on_done)
+    void initiate(agrpc::GrpcContext& grpc_context, OnDone on_done) const
     {
         on_done->initiating_function(grpc_context, on_done.self());
     }
 
     template <class OnDone>
-    void done(OnDone on_done, bool ok)
+    void done(OnDone on_done, bool ok) const
     {
         on_done(ok);
     }

@@ -321,8 +321,7 @@ struct WriteClientStreamingSenderImplementation<Responder<Request>, Executor> : 
     void initiate(const agrpc::GrpcContext&, Init init) noexcept
     {
         auto& [req, options] = init.initiation();
-        const auto is_last_message = options.is_last_message();
-        if (is_last_message)
+        if (options.is_last_message())
         {
             rpc.template set_bit<LAST_MESSAGE_BIT>();
             rpc->set_writes_done();
@@ -421,7 +420,7 @@ struct ClientReadBidiStreamingSenderImplementation<Responder<Request, Response>,
     }
 
     template <class OnDone>
-    void done(OnDone on_done, bool ok)
+    void done(OnDone on_done, bool ok) const
     {
         on_done(ok);
     }
@@ -458,7 +457,7 @@ struct ClientWriteBidiStreamingSenderImplementation<Responder<Request, Response>
     }
 
     template <class OnDone>
-    void done(OnDone on_done, bool ok)
+    void done(OnDone on_done, bool ok) const
     {
         on_done(ok);
     }
