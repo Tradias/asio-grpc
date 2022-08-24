@@ -17,6 +17,7 @@
 #include "utils/delete_guard.hpp"
 #include "utils/doctest.hpp"
 #include "utils/high_level_client.hpp"
+#include "utils/inline_executor.hpp"
 #include "utils/io_context_test.hpp"
 #include "utils/protobuf.hpp"
 #include "utils/rpc.hpp"
@@ -60,6 +61,45 @@ TEST_CASE_TEMPLATE("Streaming RPC::request automatically finishes RPC on error",
                           rpc.status_code());
         });
     test.grpc_context.run();
+}
+
+TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>,
+                  "UnaryRPC::request exception thrown from completion handler rethrows from GrpcContext.run()")
+{
+    CHECK_THROWS_AS(spawn_and_run(
+                        [&](const asio::yield_context& yield)
+                        {
+                            test_server.request_rpc(yield);
+                            agrpc::finish(test_server.responder, grpc::Status::OK, yield);
+                        },
+                        [&](const asio::yield_context& yield)
+                        {
+                            auto rpc = std::make_unique<test::ServerStreamingRPC>(request_rpc(yield));
+                            auto& rpc_ref = *rpc;
+                            rpc_ref.read(response, asio::bind_executor(test::InlineExecutor{},
+                                                                       [&, rpc = std::move(rpc)](bool)
+                                                                       {
+                                                                           throw std::runtime_error("test");
+                                                                       }));
+                        }),
+                    std::runtime_error);
+}
+
+TEST_CASE_TEMPLATE("RPC::read_initial_metadata successfully", RPC, test::ClientStreamingRPC, test::ServerStreamingRPC,
+                   test::BidirectionalStreamingRPC)
+{
+    test::HighLevelClientTest<RPC> test;
+    test.spawn_and_run(
+        [&](const asio::yield_context& yield)
+        {
+            test.test_server.request_rpc(yield);
+            agrpc::send_initial_metadata(test.test_server.responder, yield);
+        },
+        [&](const asio::yield_context& yield)
+        {
+            auto rpc = test.request_rpc(yield);
+            CHECK(rpc.read_initial_metadata(yield));
+        });
 }
 
 TEST_CASE_TEMPLATE("RPC::read_initial_metadata automatically finishes RPC on error", RPC, test::ClientStreamingRPC,
@@ -239,15 +279,17 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>,
         [&](const asio::yield_context& yield)
         {
             test_server.request_rpc(yield);
-            CHECK_FALSE(agrpc::finish(test_server.responder, grpc::Status::OK, yield));
         },
         [&](const asio::yield_context& yield)
         {
-            auto rpc = test::ServerStreamingRPC::request(grpc_context, *stub, client_context, request, yield);
-            if (explicit_try_cancel)
             {
-                client_context.TryCancel();
+                auto rpc = test::ServerStreamingRPC::request(grpc_context, *stub, client_context, request, yield);
+                if (explicit_try_cancel)
+                {
+                    client_context.TryCancel();
+                }
             }
+            server->Shutdown();
         });
 }
 
@@ -256,6 +298,9 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>, "ClientSt
     bool use_executor_overload{};
     SUBCASE("executor overload") {}
     SUBCASE("GrpcContext overload") { use_executor_overload = true; }
+    bool set_last_message{};
+    SUBCASE("write and finish separately") {}
+    SUBCASE("set_last_message") { set_last_message = true; }
     spawn_and_run(
         [&](const asio::yield_context& yield)
         {
@@ -270,8 +315,16 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>, "ClientSt
         {
             auto rpc = request_rpc(use_executor_overload, yield);
             request.set_integer(42);
-            grpc::WriteOptions options{};
-            CHECK(rpc.write(request, options.set_last_message(), yield));
+            if (set_last_message)
+            {
+                grpc::WriteOptions options{};
+                CHECK(rpc.write(request, options.set_last_message(), yield));
+            }
+            else
+            {
+                CHECK(rpc.write(request, yield));
+                CHECK_FALSE(rpc.finish(yield));
+            }
             CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.status_code());
         });
 }
@@ -396,7 +449,6 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>,
                                                                               CHECK_EQ(expected_ok, ok);
                                                                               CHECK_EQ(expected_status_code,
                                                                                        rpc->status_code());
-                                                                              server->Shutdown();
                                                                           }});
                                          }});
         });
@@ -457,26 +509,37 @@ TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC success")
 
 TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC concurrent read+write")
 {
+    bool set_last_message{};
+    SUBCASE("no WriteOptions") {}
+    SUBCASE("set_last_message") { set_last_message = true; }
     run_server_client_on_separate_threads(
         [&](const asio::yield_context& yield)
         {
             CHECK(test_server.request_rpc(yield));
-            agrpc::write_last(test_server.responder, test_server.response, {},
-                              asio::bind_executor(grpc_context, [](bool) {}));
+            CHECK(agrpc::write(test_server.responder, test_server.response, {}, yield));
+            CHECK(agrpc::read(test_server.responder, test_server.request, yield));
             CHECK(agrpc::finish(test_server.responder, grpc::Status{grpc::StatusCode::ALREADY_EXISTS, ""}, yield));
         },
         [&](const asio::yield_context& yield)
         {
             auto rpc = test::BidirectionalStreamingRPC::request(grpc_context, *stub, client_context, yield);
             CHECK(rpc.read(response, yield));
-            std::promise<void> promise;
-            rpc.write(request,
-                      [&](bool)
-                      {
-                          promise.set_value();
-                      });
+            std::promise<bool> promise;
+            const auto fulfill_promise = [&](bool ok)
+            {
+                promise.set_value(ok);
+            };
+            if (set_last_message)
+            {
+                grpc::WriteOptions options{};
+                rpc.write(request, options.set_last_message(), fulfill_promise);
+            }
+            else
+            {
+                rpc.write(request, fulfill_promise);
+            }
             CHECK_FALSE(rpc.read(response, yield));
-            promise.get_future().get();
+            CHECK(promise.get_future().get());
             CHECK_FALSE(rpc.finish(yield));
             CHECK_EQ(grpc::StatusCode::ALREADY_EXISTS, rpc.status_code());
             CHECK_FALSE(rpc.finish(yield));
@@ -496,14 +559,13 @@ TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC TryCancel 
         {
             auto rpc = test::BidirectionalStreamingRPC::request(grpc_context, *stub, client_context, yield);
             client_context.TryCancel();
-            std::promise<void> promise;
+            std::promise<bool> promise;
             rpc.read(response,
                      [&](bool ok)
                      {
-                         CHECK_FALSE(ok);
-                         promise.set_value();
+                         promise.set_value(ok);
                      });
             CHECK_FALSE(rpc.write(request, yield));
-            promise.get_future().get();
+            CHECK_FALSE(promise.get_future().get());
         });
 }

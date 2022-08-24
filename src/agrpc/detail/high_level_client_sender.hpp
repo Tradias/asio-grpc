@@ -339,7 +339,7 @@ struct WriteClientStreamingSenderImplementation<Responder<Request>, Executor> : 
         }
         if (rpc.template has_bit<LAST_MESSAGE_BIT>())
         {
-            rpc.template set_bit<LAST_MESSAGE_BIT>(ok);
+            rpc.template set_bit<LAST_MESSAGE_BIT>();
             this->initiate_finish(on_done.self());
             return;
         }

@@ -81,24 +81,11 @@ class TaggedPtr
     }
 
     template <std::uintptr_t Bit>
-    void set_bit(bool value) noexcept
-    {
-        static_assert(Bit < AVAILABLE_BITS, "TaggedPtr has insufficient available bits");
-        if (value)
-        {
-            static constexpr auto SHIFT = std::uintptr_t{1} << Bit;
-            ptr |= SHIFT;
-        }
-        else
-        {
-            unset_bit<Bit>();
-        }
-    }
-
-    template <std::uintptr_t Bit>
     void set_bit() noexcept
     {
-        set_bit<Bit>(true);
+        static_assert(Bit < AVAILABLE_BITS, "TaggedPtr has insufficient available bits");
+        static constexpr auto SHIFT = std::uintptr_t{1} << Bit;
+        ptr |= SHIFT;
     }
 
   private:

@@ -25,7 +25,7 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class Receiver, class... Args>
-void satisfy_receiver(Receiver&& receiver, Args&&... args) noexcept
+void satisfy_receiver(Receiver&& receiver, Args&&... args)
 {
     if constexpr (noexcept(detail::exec::set_value(static_cast<Receiver&&>(receiver), static_cast<Args&&>(args)...)))
     {
