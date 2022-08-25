@@ -32,8 +32,8 @@ class BasicRPC;
 
 namespace detail
 {
-static constexpr std::uintptr_t FINISHED_BIT = 0u;
-static constexpr std::uintptr_t LAST_MESSAGE_BIT = 1u;
+inline constexpr std::uintptr_t FINISHED_BIT = 0u;
+inline constexpr std::uintptr_t LAST_MESSAGE_BIT = 1u;
 
 struct BasicRPCAccess
 {

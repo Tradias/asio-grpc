@@ -1209,8 +1209,12 @@ struct ReadInitialMetadataFn
      *
      * @snippet client.cpp read_initial_metadata-unary-client-side
      *
+     * @attention For client-streaming and bidirectional-streaming RPCs: If the server does not explicitly send initial
+     * metadata (e.g. by calling `agrpc::send_initial_metadata`) but waits for a message from the client instead then
+     * this function won't complete until `agrpc::write` is called.
+     *
      * @param responder `grpc::ClientAsyncResponseReader`, `grpc::ClientAsyncReader`, `grpc::ClientAsyncWriter` or
-     * `grpc::ClientAsyncReaderWriter`
+     * `grpc::ClientAsyncReaderWriter` (or a unique_ptr of them or their -Interface variants).
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. `true` indicates that the metadata was read, `false` when the call is
      * dead.

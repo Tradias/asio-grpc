@@ -108,12 +108,12 @@ class CancelSafe<void(CompletionArgs...)>
      *
      * Thread-unsafe with regards to successful completion of the asynchronous operation.
      *
+     * @param token Completion token that matches the completion args. Either `void(error_code, CompletionArgs...)` if
+     * the first argument in CompletionArgs is not `error_code` or `void(CompletionArgs...)` otherwise.
+     *
      * **Per-Operation Cancellation**
      *
      * All. Upon cancellation, the asynchronous operation continues to run.
-     *
-     * @param token Completion token that matches the completion args. Either `void(error_code, CompletionArgs...)` if
-     * the first argument in CompletionArgs is not `error_code` or `void(CompletionArgs...)` otherwise.
      */
     template <class CompletionToken>
     auto wait(CompletionToken token)
