@@ -569,3 +569,77 @@ TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC TryCancel 
             CHECK_FALSE(promise.get_future().get());
         });
 }
+TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC generic success")
+{
+    bool use_executor_overload{};
+    SUBCASE("executor overload") {}
+    SUBCASE("GrpcContext overload") { use_executor_overload = true; }
+    run_server_client_on_separate_threads(
+        [&](const asio::yield_context& yield)
+        {
+            CHECK(test_server.request_rpc(yield));
+            test_server.response.set_integer(1);
+            CHECK(agrpc::read(test_server.responder, test_server.request, yield));
+            CHECK_FALSE(agrpc::read(test_server.responder, test_server.request, yield));
+            CHECK_EQ(42, test_server.request.integer());
+            CHECK(agrpc::write(test_server.responder, test_server.response, yield));
+            CHECK(agrpc::finish(test_server.responder, grpc::Status::OK, yield));
+        },
+        [&](const asio::yield_context& yield)
+        {
+            using RPC = agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC>;
+            grpc::GenericStub generic_stub{channel};
+            auto rpc = [&]
+            {
+                if (use_executor_overload)
+                {
+                    return RPC::request(get_executor(), "/test.v1.Test/BidirectionalStreaming", generic_stub,
+                                        client_context, yield);
+                }
+                else
+                {
+                    return RPC::request(grpc_context, "/test.v1.Test/BidirectionalStreaming", generic_stub,
+                                        client_context, yield);
+                }
+            }();
+            CHECK(rpc.ok());
+
+            request.set_integer(42);
+            auto request_buf = test::message_to_grpc_buffer(request);
+            CHECK(rpc.write(request_buf, yield));
+            CHECK(rpc.writes_done(yield));
+
+            grpc::ByteBuffer response_buf;
+            CHECK(rpc.read(response_buf, yield));
+            response = test::grpc_buffer_to_message<decltype(response)>(response_buf);
+            CHECK_EQ(1, response.integer());
+
+            CHECK(rpc.writes_done(yield));
+
+            response_buf.Clear();
+            CHECK_FALSE(rpc.read(response_buf, yield));
+
+            CHECK(rpc.finish(yield));
+            CHECK_EQ(grpc::StatusCode::OK, rpc.status_code());
+            CHECK(rpc.finish(yield));
+            CHECK_EQ(grpc::StatusCode::OK, rpc.status_code());
+        });
+}
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTestBase,
+                  "RPC::request generic streaming RPC automatically retrieves grpc::Status on error")
+{
+    test::spawn_and_run(grpc_context,
+                        [&](const asio::yield_context& yield)
+                        {
+                            using RPC = agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC>;
+                            grpc::GenericStub generic_stub{channel};
+                            client_context.set_deadline(test::now());
+                            auto rpc = RPC::request(grpc_context, "/test.v1.Test/BidirectionalStreaming", generic_stub,
+                                                    client_context, yield);
+                            CHECK_FALSE(rpc.ok());
+                            CHECK_MESSAGE((grpc::StatusCode::DEADLINE_EXCEEDED == rpc.status_code() ||
+                                           grpc::StatusCode::UNAVAILABLE == rpc.status_code()),
+                                          rpc.status_code());
+                        });
+}

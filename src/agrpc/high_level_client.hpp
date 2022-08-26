@@ -962,6 +962,82 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STRE
 };
 
 /**
+ * @brief (experimental) I/O object for client-side generic streaming RPCs
+ *
+ * @tparam Executor The executor type, must refer to a `agrpc::GrpcContext`.
+ *
+ * **Per-Operation Cancellation**
+ *
+ * None. Operations will be cancelled when the deadline of the RPC has been reached
+ * (see
+ * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6))
+ * or the call has been cancelled
+ * (see
+ * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984)).
+ *
+ * @since 2.1.0
+ */
+template <class Executor>
+class BasicRPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>
+    : public detail::BasicRPCBidirectionalStreamingBase<grpc::GenericClientAsyncReaderWriter, Executor>
+{
+  public:
+    /**
+     * @brief The stub type
+     */
+    using Stub = grpc::GenericStub;
+
+    /**
+     * @brief Rebind the BasicRPC to another executor
+     */
+    template <class OtherExecutor>
+    struct rebind_executor
+    {
+        /**
+         * @brief The BasicRPC type when rebound to the specified executor
+         */
+        using other = BasicRPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, OtherExecutor,
+                               agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>;
+    };
+
+    /**
+     * @brief Start a generic streaming request
+     *
+     * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
+     * `void(BasicRPC)`. Use `ok()` to check whether the request was successful.
+     */
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    static auto request(agrpc::GrpcContext& grpc_context, const std::string& method, grpc::GenericStub& stub,
+                        grpc::ClientContext& context,
+                        CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+    {
+        return detail::async_initiate_sender_implementation<
+            detail::ClientBidirectionalStreamingRequestSenderImplementation<agrpc::CLIENT_GENERIC_STREAMING_RPC,
+                                                                            Executor>>(
+            grpc_context, {}, {grpc_context, method, stub, context}, token);
+    }
+
+    /**
+     * @brief Start a generic streaming request (executor overload)
+     */
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    static auto request(const Executor& executor, const std::string& method, grpc::GenericStub& stub,
+                        grpc::ClientContext& context,
+                        CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+    {
+        return BasicRPC::request(detail::query_grpc_context(executor), method, stub, context,
+                                 static_cast<CompletionToken&&>(token));
+    }
+
+  private:
+    friend detail::ClientBidirectionalStreamingRequestSenderImplementation<agrpc::CLIENT_GENERIC_STREAMING_RPC,
+                                                                           Executor>;
+
+    using detail::BasicRPCBidirectionalStreamingBase<grpc::GenericClientAsyncReaderWriter,
+                                                     Executor>::BasicRPCBidirectionalStreamingBase;
+};
+
+/**
  * @brief (experimental) A BasicRPC that uses `agrpc::DefaultCompletionToken`
  *
  * This is the main entrypoint into the high-level client API. See BasicRPC for details.

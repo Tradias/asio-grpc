@@ -243,6 +243,41 @@ struct ClientBidirectionalStreamingRequestSenderImplementation<PrepareAsync, Exe
     RPC rpc;
 };
 
+template <class Executor>
+struct ClientBidirectionalStreamingRequestSenderImplementation<detail::GenericRPCType::CLIENT_STREAMING, Executor>
+    : detail::GrpcSenderImplementationBase
+{
+    using RPC = agrpc::BasicRPC<detail::GenericRPCType::CLIENT_STREAMING, Executor,
+                                agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>;
+    using Signature = void(RPC);
+    using Initiation = detail::Empty;
+
+    ClientBidirectionalStreamingRequestSenderImplementation(agrpc::GrpcContext& grpc_context, const std::string& method,
+                                                            grpc::GenericStub& stub,
+                                                            grpc::ClientContext& client_context)
+        : rpc(grpc_context.get_executor(), client_context,
+              stub.PrepareCall(&client_context, method, grpc_context.get_completion_queue()))
+    {
+    }
+
+    void initiate(const agrpc::GrpcContext&, void* self) noexcept { rpc.responder().StartCall(self); }
+
+    template <class OnDone>
+    void done(OnDone on_done, bool ok)
+    {
+        if (ok)
+        {
+            on_done(static_cast<RPC&&>(rpc));
+        }
+        else
+        {
+            detail::BasicRPCAccess::client_initiate_finish(rpc, on_done.self());
+        }
+    }
+
+    RPC rpc;
+};
+
 template <class BasicRPCBase>
 struct ReadInitialMetadataSenderImplementation : detail::GrpcSenderImplementationBase
 {
