@@ -604,8 +604,8 @@ struct WriteFn
     /**
      * @brief Write to a streaming RPC
      *
-     * Only one write may be outstanding at any given time. This is thread-safe with respect to read. gRPC does not
-     * take ownership or a reference to `response`, so it is safe to to deallocate once write returns.
+     * Only one write may be outstanding at any given time. This is thread-safe with respect to `agrpc::read`. gRPC does
+     * not take ownership or a reference to `response`, so it is safe to to deallocate once write returns.
      *
      * Example server-side server-streaming:
      *
@@ -869,7 +869,7 @@ struct FinishFn
     }
 
     /**
-     * @brief Finish a RPC (server-side)
+     * @brief Finish a unary/streaming RPC (server-side)
      *
      * Indicate that the RPC is to be finished and request notification when the server has sent the appropriate
      * signals to the client to end the call. Should not be used concurrently with other operations.

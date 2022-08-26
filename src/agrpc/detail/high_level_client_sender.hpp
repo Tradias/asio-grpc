@@ -27,6 +27,18 @@
 
 AGRPC_NAMESPACE_BEGIN()
 
+/**
+ * @brief (experimental) Primary BasicRPC template
+ *
+ * @see
+ * @c agrpc::BasicRPC<PrepareAsync,Executor,agrpc::RPCType::CLIENT_UNARY> <br>
+ * @c agrpc::BasicRPC<agrpc::CLIENT_GENERIC_UNARY_RPC,Executor,agrpc::RPCType::CLIENT_UNARY> <br>
+ * @c agrpc::BasicRPC<PrepareAsync,Executor,agrpc::RPCType::CLIENT_CLIENT_STREAMING> <br>
+ * @c agrpc::BasicRPC<PrepareAsync,Executor,agrpc::RPCType::CLIENT_SERVER_STREAMING> <br>
+ * @c agrpc::BasicRPC<PrepareAsync,Executor,agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING> <br>
+ *
+ * @since 2.1.0
+ */
 template <auto PrepareAsync, class Executor = agrpc::GrpcExecutor, agrpc::RPCType = detail::RPC_TYPE<PrepareAsync>>
 class BasicRPC;
 

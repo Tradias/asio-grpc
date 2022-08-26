@@ -19,11 +19,31 @@
 
 AGRPC_NAMESPACE_BEGIN()
 
+/**
+ * @brief (experimental) The type of a BasicRPC
+ *
+ * @since 2.1.0
+ */
 enum class RPCType
 {
+    /**
+     * @brief Client-side unary RPC
+     */
     CLIENT_UNARY,
+
+    /**
+     * @brief Client-side server-streaming RPC
+     */
     CLIENT_SERVER_STREAMING,
+
+    /**
+     * @brief Client-side client-streaming RPC
+     */
     CLIENT_CLIENT_STREAMING,
+
+    /**
+     * @brief Client-side bidirectional-streaming RPC
+     */
     CLIENT_BIDIRECTIONAL_STREAMING
 };
 
