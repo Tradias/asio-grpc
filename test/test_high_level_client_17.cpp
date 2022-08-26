@@ -23,10 +23,31 @@
 #include "utils/rpc.hpp"
 #include "utils/time.hpp"
 
+#include <agrpc/grpc_initiate.hpp>
 #include <agrpc/high_level_client.hpp>
 #include <agrpc/wait.hpp>
 
 #include <future>
+
+template <class RPC>
+struct HighLevelClientIoContextTest : test::HighLevelClientTest<RPC>, test::IoContextTest
+{
+    void run_server_client_on_separate_threads(std::function<void(const asio::yield_context&)> server_func,
+                                               std::function<void(const asio::yield_context&)> client_func)
+    {
+        asio::spawn(io_context,
+                    [client_func, g = this->get_work_tracking_executor()](const asio::yield_context& yield)
+                    {
+                        client_func(yield);
+                    });
+        this->run_io_context_detached();
+        this->spawn_and_run(
+            [server_func](const asio::yield_context& yield)
+            {
+                server_func(yield);
+            });
+    }
+};
 
 TEST_CASE_FIXTURE(test::HighLevelClientTest<test::UnaryRPC>, "UnaryRPC::request automatically finishes RPC on error")
 {
@@ -293,29 +314,55 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>,
         });
 }
 
-TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>,
-                  "ServerStreamingRPC assigning to an active RPC cancels it")
+auto create_is_cancelled_future(agrpc::GrpcContext& grpc_context, grpc::ServerContext& server_context)
 {
-    spawn_and_run(
+    std::promise<bool> is_cancelled_promise;
+    auto future = is_cancelled_promise.get_future();
+    agrpc::grpc_initiate(
+        [&](const agrpc::GrpcContext&, void* tag)
+        {
+            server_context.AsyncNotifyWhenDone(tag);
+        },
+        asio::bind_executor(grpc_context,
+                            [&, promise = std::move(is_cancelled_promise)](bool) mutable
+                            {
+                                promise.set_value(server_context.IsCancelled());
+                            }));
+    return future;
+}
+
+TEST_CASE_FIXTURE(HighLevelClientIoContextTest<test::ClientStreamingRPC>,
+                  "ClientStreamingRPC assigning to an active RPC cancels it")
+{
+    run_server_client_on_separate_threads(
         [&](const asio::yield_context& yield)
         {
+            auto is_cancelled_future = create_is_cancelled_future(grpc_context, server_context);
             CHECK(test_server.request_rpc(yield));
-            CHECK_FALSE(agrpc::finish(test_server.responder, grpc::Status::OK, yield));
+            agrpc::read(test_server.responder, test_server.request, yield);
+
+            // start and finish second request
             grpc::ServerContext new_server_context;
-            grpc::ServerAsyncWriter<test::msg::Response> responder{&new_server_context};
-            CHECK(agrpc::request(&test::v1::Test::AsyncService::RequestServerStreaming, test_server.service,
-                                 new_server_context, test_server.request, responder, yield));
-            CHECK(agrpc::write_and_finish(responder, test_server.response, {}, grpc::Status::OK, yield));
+            grpc::ServerAsyncReader<test::msg::Response, test::msg::Request> responder{&new_server_context};
+            CHECK(agrpc::request(&test::v1::Test::AsyncService::RequestClientStreaming, test_server.service,
+                                 new_server_context, responder, yield));
+            CHECK(agrpc::finish(responder, test_server.response, grpc::Status::OK, yield));
+
+            // finish first request
+            agrpc::read(test_server.responder, test_server.request, yield);
+            agrpc::finish(test_server.responder, test_server.response, grpc::Status::OK, yield);
+            CHECK(is_cancelled_future.get());
         },
         [&](const asio::yield_context& yield)
         {
             grpc::ClientContext new_client_context;
             new_client_context.set_deadline(test::five_seconds_from_now());
-            test::ServerStreamingRPC rpc;
+            test::ClientStreamingRPC rpc;
             rpc = request_rpc(yield);
-            rpc = test::ServerStreamingRPC::request(grpc_context, *stub, new_client_context, request, yield);
+            rpc.write(request, yield);
+            rpc = test::ClientStreamingRPC::request(grpc_context, *stub, new_client_context, response, yield);
             CHECK(rpc.ok());
-            CHECK(rpc.read(response, yield));
+            CHECK(rpc.finish(yield));
         });
 }
 
@@ -480,26 +527,7 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>,
         });
 }
 
-struct HighLevelClientBidiTest : test::HighLevelClientTest<test::BidirectionalStreamingRPC>, test::IoContextTest
-{
-    void run_server_client_on_separate_threads(std::function<void(const asio::yield_context&)> server_func,
-                                               std::function<void(const asio::yield_context&)> client_func)
-    {
-        asio::spawn(io_context,
-                    [client_func, g = get_work_tracking_executor()](const asio::yield_context& yield)
-                    {
-                        client_func(yield);
-                    });
-        run_io_context_detached();
-        spawn_and_run(
-            [server_func](const asio::yield_context& yield)
-            {
-                server_func(yield);
-            });
-    }
-};
-
-TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC success")
+TEST_CASE_FIXTURE(HighLevelClientIoContextTest<test::BidirectionalStreamingRPC>, "BidirectionalStreamingRPC success")
 {
     bool use_executor_overload{};
     SUBCASE("executor overload") {}
@@ -533,7 +561,8 @@ TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC success")
         });
 }
 
-TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC concurrent read+write")
+TEST_CASE_FIXTURE(HighLevelClientIoContextTest<test::BidirectionalStreamingRPC>,
+                  "BidirectionalStreamingRPC concurrent read+write")
 {
     bool set_last_message{};
     SUBCASE("no WriteOptions") {}
@@ -573,7 +602,8 @@ TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC concurrent
         });
 }
 
-TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC TryCancel before write+read")
+TEST_CASE_FIXTURE(HighLevelClientIoContextTest<test::BidirectionalStreamingRPC>,
+                  "BidirectionalStreamingRPC TryCancel before write+read")
 {
     run_server_client_on_separate_threads(
         [&](const asio::yield_context& yield)
@@ -595,7 +625,8 @@ TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC TryCancel 
             CHECK_FALSE(promise.get_future().get());
         });
 }
-TEST_CASE_FIXTURE(HighLevelClientBidiTest, "BidirectionalStreamingRPC generic success")
+TEST_CASE_FIXTURE(HighLevelClientIoContextTest<test::BidirectionalStreamingRPC>,
+                  "BidirectionalStreamingRPC generic success")
 {
     bool use_executor_overload{};
     SUBCASE("executor overload") {}
