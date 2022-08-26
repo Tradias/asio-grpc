@@ -21,6 +21,7 @@
 #include "utils/io_context_test.hpp"
 #include "utils/protobuf.hpp"
 #include "utils/rpc.hpp"
+#include "utils/server_shutdown_initiator.hpp"
 
 #include <agrpc/repeatedly_request.hpp>
 #include <agrpc/rpc.hpp>
@@ -155,7 +156,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request c
 {
     bool is_shutdown{false};
     auto request_count{0};
-    std::optional<std::thread> server_shutdown_thread;
+    test::ServerShutdownInitiator server_shutdown{*server};
     this->test(
         &test::v1::Test::AsyncService::RequestClientStreaming, service,
         [&](grpc::ServerContext&, grpc::ServerAsyncReader<test::msg::Response, test::msg::Request>& reader,
@@ -180,14 +181,9 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request c
             {
                 test::client_perform_client_streaming_success(*stub, yield);
             }
-            server_shutdown_thread.emplace(
-                [&]
-                {
-                    server->Shutdown();
-                });
+            server_shutdown.initiate();
         },
         get_allocator());
-    server_shutdown_thread->join();
     CHECK_EQ(4, request_count);
     CHECK(allocator_has_been_used());
 }

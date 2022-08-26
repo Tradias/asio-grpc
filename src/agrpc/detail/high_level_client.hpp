@@ -31,21 +31,21 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-class AutoCancelClientContext
+class AutoCancelClientContextRef
 {
   public:
-    AutoCancelClientContext() = default;
+    AutoCancelClientContextRef() = default;
 
-    explicit AutoCancelClientContext(grpc::ClientContext& context) noexcept : context(context) {}
+    explicit AutoCancelClientContextRef(grpc::ClientContext& context) noexcept : context(context) {}
 
-    AutoCancelClientContext(const AutoCancelClientContext&) = delete;
+    AutoCancelClientContextRef(const AutoCancelClientContextRef&) = delete;
 
-    AutoCancelClientContext(AutoCancelClientContext&& other) noexcept : context(other.context)
+    AutoCancelClientContextRef(AutoCancelClientContextRef&& other) noexcept : context(other.context)
     {
         other.context.clear();
     }
 
-    ~AutoCancelClientContext() noexcept
+    ~AutoCancelClientContextRef() noexcept
     {
         if (const auto context_ptr = context.get())
         {
@@ -53,9 +53,9 @@ class AutoCancelClientContext
         }
     }
 
-    AutoCancelClientContext& operator=(const AutoCancelClientContext&) = delete;
+    AutoCancelClientContextRef& operator=(const AutoCancelClientContextRef&) = delete;
 
-    AutoCancelClientContext& operator=(AutoCancelClientContext&& other) noexcept
+    AutoCancelClientContextRef& operator=(AutoCancelClientContextRef&& other) noexcept
     {
         if (this != &other)
         {
@@ -105,7 +105,7 @@ class BasicRPCClientContextBase
     void set_writes_done() noexcept { client_context.set_bit<0>(); }
 
   private:
-    detail::AutoCancelClientContext client_context;
+    detail::AutoCancelClientContextRef client_context;
 };
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)

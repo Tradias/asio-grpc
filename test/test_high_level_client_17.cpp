@@ -118,7 +118,7 @@ TEST_CASE_TEMPLATE("RPC::read_initial_metadata automatically finishes RPC on err
             test.client_context.TryCancel();
             CHECK_FALSE(rpc.read_initial_metadata(yield));
             CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.status_code());
-            test.server->Shutdown();
+            test.server_shutdown.initiate();
         });
 }
 
@@ -265,7 +265,7 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>,
             client_context.TryCancel();
             CHECK_FALSE(rpc.read(response, yield));
             CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.status_code());
-            server->Shutdown();
+            server_shutdown.initiate();
         });
 }
 
@@ -289,7 +289,33 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>,
                     client_context.TryCancel();
                 }
             }
-            server->Shutdown();
+            server_shutdown.initiate();
+        });
+}
+
+TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>,
+                  "ServerStreamingRPC assigning to an active RPC cancels it")
+{
+    spawn_and_run(
+        [&](const asio::yield_context& yield)
+        {
+            CHECK(test_server.request_rpc(yield));
+            CHECK_FALSE(agrpc::finish(test_server.responder, grpc::Status::OK, yield));
+            grpc::ServerContext new_server_context;
+            grpc::ServerAsyncWriter<test::msg::Response> responder{&new_server_context};
+            CHECK(agrpc::request(&test::v1::Test::AsyncService::RequestServerStreaming, test_server.service,
+                                 new_server_context, test_server.request, responder, yield));
+            CHECK(agrpc::write_and_finish(responder, test_server.response, {}, grpc::Status::OK, yield));
+        },
+        [&](const asio::yield_context& yield)
+        {
+            grpc::ClientContext new_client_context;
+            new_client_context.set_deadline(test::five_seconds_from_now());
+            test::ServerStreamingRPC rpc;
+            rpc = request_rpc(yield);
+            rpc = test::ServerStreamingRPC::request(grpc_context, *stub, new_client_context, request, yield);
+            CHECK(rpc.ok());
+            CHECK(rpc.read(response, yield));
         });
 }
 
@@ -343,7 +369,7 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>,
             client_context.TryCancel();
             CHECK_FALSE(rpc.write(request, yield));
             CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.status_code());
-            server->Shutdown();
+            server_shutdown.initiate();
         });
 }
 
@@ -403,7 +429,7 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>,
             CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.status_code());
             CHECK_FALSE(rpc.finish(yield));
             CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.status_code());
-            server->Shutdown();
+            server_shutdown.initiate();
         });
 }
 

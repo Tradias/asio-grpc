@@ -19,6 +19,7 @@
 #include "utils/asio_forward.hpp"
 #include "utils/asio_utils.hpp"
 #include "utils/grpc_client_server_test.hpp"
+#include "utils/server_shutdown_initiator.hpp"
 #include "utils/test_server.hpp"
 
 #include <agrpc/high_level_client.hpp>
@@ -136,6 +137,7 @@ struct HighLevelClientTest : test::GrpcClientServerTest
     typename RPC::Request request;
     typename RPC::Response response;
     test::TestServer<SERVER_REQUEST> test_server{service, server_context};
+    test::ServerShutdownInitiator server_shutdown{*server};
 };
 }
 
