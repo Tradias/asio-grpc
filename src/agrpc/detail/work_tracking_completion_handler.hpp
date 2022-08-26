@@ -95,11 +95,12 @@ class WorkTrackingCompletionHandler : private detail::EmptyBaseOptimization<Comp
         auto& ch = this->completion_handler();
         auto executor = asio::prefer(asio::get_associated_executor(ch), asio::execution::blocking_t::possibly,
                                      asio::execution::allocator(asio::get_associated_allocator(ch)));
-        asio::execution::execute(std::move(executor),
-                                 [ch = std::move(ch), args = detail::Tuple{static_cast<Args&&>(args)...}]() mutable
-                                 {
-                                     detail::apply(std::move(ch), std::move(args));
-                                 });
+        asio::execution::execute(
+            std::move(executor),
+            [ch = static_cast<CompletionHandler&&>(ch), args = detail::Tuple{static_cast<Args&&>(args)...}]() mutable
+            {
+                detail::apply(static_cast<CompletionHandler&&>(ch), std::move(args));
+            });
     }
 
     [[nodiscard]] executor_type get_executor() const noexcept

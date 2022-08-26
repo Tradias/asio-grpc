@@ -47,7 +47,7 @@ class AssociatedCompletionHandler
     template <class... Args>
     decltype(auto) operator()(Args&&... args) &&
     {
-        return std::move(this->completion_handler_)(static_cast<Args&&>(args)...);
+        return static_cast<CompletionHandler&&>(this->completion_handler_)(static_cast<Args&&>(args)...);
     }
 
     template <class... Args>

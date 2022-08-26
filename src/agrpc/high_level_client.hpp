@@ -122,6 +122,11 @@ class BasicRPCClientClientStreamingBase<ResponderT<RequestT>, Executor> : public
     using Request = RequestT;
 
     /**
+     * @brief The underlying `grpc::ClientAsyncWriter/Interface` type
+     */
+    using Responder = ResponderT<RequestT>;
+
+    /**
      * @brief Read initial metadata
      *
      * Request notification of the reading of the initial metadata.
@@ -161,8 +166,8 @@ class BasicRPCClientClientStreamingBase<ResponderT<RequestT>, Executor> : public
                CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
-            detail::WriteClientStreamingSenderImplementation<ResponderT<RequestT>, Executor>>(
-            this->grpc_context(), {request, options}, {*this}, token);
+            detail::WriteClientStreamingSenderImplementation<Responder, Executor>>(this->grpc_context(),
+                                                                                   {request, options}, {*this}, token);
     }
 
     /**
@@ -222,26 +227,26 @@ class BasicRPCClientClientStreamingBase<ResponderT<RequestT>, Executor> : public
     /**
      * @brief The underlying `grpc::ClientAsyncWriter/Interface`
      */
-    [[nodiscard]] ResponderT<RequestT>& responder() noexcept { return *responder_; }
+    [[nodiscard]] Responder& responder() noexcept { return *responder_; }
 
   protected:
     friend detail::ReadInitialMetadataSenderImplementation<BasicRPCClientClientStreamingBase>;
-    friend detail::WriteClientStreamingSenderImplementation<ResponderT<RequestT>, Executor>;
+    friend detail::WriteClientStreamingSenderImplementation<Responder, Executor>;
     friend detail::ClientFinishSenderImplementation<BasicRPCClientClientStreamingBase>;
     friend detail::BasicRPCAccess;
 
     BasicRPCClientClientStreamingBase() = default;
 
     BasicRPCClientClientStreamingBase(const Executor& executor, grpc::ClientContext& client_context,
-                                      std::unique_ptr<ResponderT<RequestT>>&& responder)
+                                      std::unique_ptr<Responder>&& responder)
         : detail::BasicRPCExecutorBase<Executor>(executor),
           detail::BasicRPCClientContextBase(client_context),
-          responder_(std::move(responder))
+          responder_(static_cast<std::unique_ptr<Responder>&&>(responder))
     {
     }
 
   private:
-    std::unique_ptr<ResponderT<RequestT>> responder_;
+    std::unique_ptr<Responder> responder_;
 };
 
 /**
@@ -269,6 +274,11 @@ class BasicRPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
      * @brief The response message type
      */
     using Response = ResponseT;
+
+    /**
+     * @brief The underlying `grpc::ClientAsyncReader/Interface` type
+     */
+    using Responder = ResponderT<ResponseT>;
 
     /**
      * @brief Read initial metadata
@@ -310,32 +320,32 @@ class BasicRPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
     auto read(ResponseT& response, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
-            detail::ReadServerStreamingSenderImplementation<ResponderT<ResponseT>, Executor>>(
-            this->grpc_context(), {response}, {*this}, token);
+            detail::ReadServerStreamingSenderImplementation<Responder, Executor>>(this->grpc_context(), {response},
+                                                                                  {*this}, token);
     }
 
     /**
      * @brief The underlying `grpc::ClientAsyncReader/Interface`
      */
-    [[nodiscard]] ResponderT<ResponseT>& responder() noexcept { return *responder_; }
+    [[nodiscard]] Responder& responder() noexcept { return *responder_; }
 
   protected:
     friend detail::ReadInitialMetadataSenderImplementation<BasicRPCClientServerStreamingBase>;
-    friend detail::ReadServerStreamingSenderImplementation<ResponderT<ResponseT>, Executor>;
+    friend detail::ReadServerStreamingSenderImplementation<Responder, Executor>;
     friend detail::BasicRPCAccess;
 
     BasicRPCClientServerStreamingBase() = default;
 
     BasicRPCClientServerStreamingBase(const Executor& executor, grpc::ClientContext& client_context,
-                                      std::unique_ptr<ResponderT<ResponseT>>&& responder)
+                                      std::unique_ptr<Responder>&& responder)
         : detail::BasicRPCExecutorBase<Executor>(executor),
           detail::BasicRPCClientContextBase(client_context),
-          responder_(std::move(responder))
+          responder_(static_cast<std::unique_ptr<Responder>&&>(responder))
     {
     }
 
   private:
-    std::unique_ptr<ResponderT<ResponseT>> responder_;
+    std::unique_ptr<Responder> responder_;
 };
 
 /**
@@ -368,6 +378,11 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
      * @brief The response message type
      */
     using Response = ResponseT;
+
+    /**
+     * @brief The underlying `grpc::ClientAsyncReaderWriter/Interface` type
+     */
+    using Responder = ResponderT<RequestT, ResponseT>;
 
     /**
      * @brief Read initial metadata
@@ -409,8 +424,8 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
     auto read(ResponseT& response, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
-            detail::ClientReadBidiStreamingSenderImplementation<ResponderT<RequestT, ResponseT>, Executor>>(
-            this->grpc_context(), {response}, {*this}, token);
+            detail::ClientReadBidiStreamingSenderImplementation<Responder, Executor>>(this->grpc_context(), {response},
+                                                                                      {*this}, token);
     }
 
     /**
@@ -431,7 +446,7 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
                CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
-            detail::ClientWriteBidiStreamingSenderImplementation<ResponderT<RequestT, ResponseT>, Executor>>(
+            detail::ClientWriteBidiStreamingSenderImplementation<Responder, Executor>>(
             this->grpc_context(), {request, options}, {*this}, token);
     }
 
@@ -462,7 +477,7 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
     auto writes_done(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_conditional_sender_implementation<
-            detail::ClientWritesDoneSenderImplementation<ResponderT<RequestT, ResponseT>, Executor>>(
+            detail::ClientWritesDoneSenderImplementation<Responder, Executor>>(
             this->grpc_context(), {}, {*this}, !this->is_writes_done() && !this->is_finished(), token, this->ok());
     }
 
@@ -507,28 +522,28 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
     /**
      * @brief The underlying `grpc::ClientAsyncReaderWriter/Interface`
      */
-    [[nodiscard]] ResponderT<RequestT, ResponseT>& responder() noexcept { return *responder_; }
+    [[nodiscard]] Responder& responder() noexcept { return *responder_; }
 
   protected:
     friend detail::ReadInitialMetadataSenderImplementation<BasicRPCBidirectionalStreamingBase>;
-    friend detail::ClientReadBidiStreamingSenderImplementation<ResponderT<RequestT, ResponseT>, Executor>;
-    friend detail::ClientWriteBidiStreamingSenderImplementation<ResponderT<RequestT, ResponseT>, Executor>;
-    friend detail::ClientWritesDoneSenderImplementation<ResponderT<RequestT, ResponseT>, Executor>;
+    friend detail::ClientReadBidiStreamingSenderImplementation<Responder, Executor>;
+    friend detail::ClientWriteBidiStreamingSenderImplementation<Responder, Executor>;
+    friend detail::ClientWritesDoneSenderImplementation<Responder, Executor>;
     friend detail::ClientFinishSenderImplementation<BasicRPCBidirectionalStreamingBase>;
     friend detail::BasicRPCAccess;
 
     BasicRPCBidirectionalStreamingBase() = default;
 
     BasicRPCBidirectionalStreamingBase(const Executor& executor, grpc::ClientContext& client_context,
-                                       std::unique_ptr<ResponderT<RequestT, ResponseT>>&& responder)
+                                       std::unique_ptr<Responder>&& responder)
         : detail::BasicRPCExecutorBase<Executor>(executor),
           detail::BasicRPCClientContextBase(client_context),
-          responder_(std::move(responder))
+          responder_(static_cast<std::unique_ptr<Responder>&&>(responder))
     {
     }
 
   private:
-    std::unique_ptr<ResponderT<RequestT, ResponseT>> responder_;
+    std::unique_ptr<Responder> responder_;
 };
 }
 
@@ -582,6 +597,11 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
      * @brief The request message type
      */
     using Response = ResponseT;
+
+    /**
+     * @brief The underlying `grpc::ClientAsyncResponseReader/Interface` type
+     */
+    using Responder = ResponderT<ResponseT>;
 
     /**
      * @brief The executor type
@@ -667,6 +687,11 @@ class BasicRPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor, agrpc::RPCType::CLIENT
      * @brief The request message type
      */
     using Response = grpc::ByteBuffer;
+
+    /**
+     * @brief The underlying `grpc::GenericClientAsyncResponseReader` type
+     */
+    using Responder = grpc::GenericClientAsyncResponseReader;
 
     /**
      * @brief The executor type

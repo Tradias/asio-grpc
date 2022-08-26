@@ -252,7 +252,7 @@ class CancellationSlotAsStopToken
         {
             if (token.slot.is_connected())
             {
-                token.slot.template emplace<StopFunction>(static_cast<StopFunction&&>(function));
+                token.slot.assign(static_cast<StopFunction&&>(function));
             }
         }
     };

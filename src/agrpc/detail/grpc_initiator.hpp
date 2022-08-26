@@ -86,7 +86,7 @@ class GrpcCompletionHandlerWithPayload : public detail::AssociatedCompletionHand
 
     decltype(auto) operator()(bool ok) &&
     {
-        return static_cast<Base&&>(*this)(std::pair{std::move(this->payload_), ok});
+        return static_cast<Base&&>(*this)(std::pair{static_cast<Payload&&>(this->payload_), ok});
     }
 
     [[nodiscard]] auto& payload() noexcept { return payload_; }

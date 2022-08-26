@@ -308,7 +308,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<>
         detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver>&& std::is_nothrow_move_constructible_v<RequestHandler>)
         -> Operation<detail::RemoveCrefT<Receiver>>
     {
-        return {std::move(*this), static_cast<Receiver&&>(receiver)};
+        return {static_cast<RepeatedlyRequestSender&&>(*this), static_cast<Receiver&&>(receiver)};
     }
 
   private:

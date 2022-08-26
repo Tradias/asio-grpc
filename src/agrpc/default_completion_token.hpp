@@ -23,7 +23,8 @@ AGRPC_NAMESPACE_BEGIN()
 /**
  * @brief Default completion token for all asynchronous functions
  *
- * Only available for Boost.Asio and standalone Asio: `asio::use_awaitable`
+ * For Boost.Asio and standalone Asio: `asio::use_awaitable`
+ * For libunifex: `agrpc::use_sender`
  */
 using DefaultCompletionToken = detail::DefaultCompletionToken;
 

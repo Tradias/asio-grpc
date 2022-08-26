@@ -114,7 +114,7 @@ class AllocatorBinder
      */
     template <class OtherTarget, class OtherAllocator>
     constexpr explicit AllocatorBinder(AllocatorBinder<OtherTarget, OtherAllocator>&& other)
-        : impl(std::move(other.get()), std::move(other.impl.second()))
+        : impl(static_cast<OtherTarget&&>(other.get()), static_cast<OtherAllocator&&>(other.impl.second()))
     {
     }
 
@@ -123,7 +123,7 @@ class AllocatorBinder
      */
     template <class OtherTarget, class OtherAllocator>
     constexpr AllocatorBinder(const Allocator& allocator, AllocatorBinder<OtherTarget, OtherAllocator>&& other)
-        : impl(std::move(other.get()), allocator)
+        : impl(static_cast<OtherTarget&&>(other.get()), allocator)
     {
     }
 
@@ -175,7 +175,7 @@ class AllocatorBinder
     template <class... Args>
     constexpr decltype(auto) operator()(Args&&... args) &&
     {
-        return std::move(this->get())(static_cast<Args&&>(args)...);
+        return static_cast<Target&&>(this->get())(static_cast<Args&&>(args)...);
     }
 
     /**

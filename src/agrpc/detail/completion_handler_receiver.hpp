@@ -38,7 +38,7 @@ class CompletionHandlerReceiver
     template <class... Args>
     void set_value(Args&&... args) &&
     {
-        std::move(completion_handler_)(static_cast<Args&&>(args)...);
+        static_cast<CompletionHandler&&>(completion_handler_)(static_cast<Args&&>(args)...);
     }
 
     static void set_error(std::exception_ptr ep) { std::rethrow_exception(ep); }

@@ -46,6 +46,9 @@ class ConditionalSenderOperationState;
 template <class Sender, class... CompletionArgs>
 class ConditionalSender
 {
+  private:
+    using ArgsTuple = detail::Tuple<CompletionArgs...>;
+
   public:
     template <template <class...> class Variant, template <class...> class Tuple>
     using value_types = typename Sender::template value_types<Variant, Tuple>;
@@ -60,7 +63,8 @@ class ConditionalSender
         Receiver&& receiver) && noexcept((detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver> &&
                                           std::is_nothrow_move_constructible_v<Sender>))
     {
-        return {static_cast<Receiver&&>(receiver), static_cast<Sender&&>(sender), condition, std::move(args)};
+        return {static_cast<Receiver&&>(receiver), static_cast<Sender&&>(sender), condition,
+                static_cast<ArgsTuple&&>(args)};
     }
 
     template <class Receiver, class S = Sender, class = std::enable_if_t<std::is_copy_constructible_v<S>>>
@@ -75,12 +79,12 @@ class ConditionalSender
     friend detail::ConditionalSenderAccess;
 
     ConditionalSender(Sender&& sender, bool condition, CompletionArgs&&... args)
-        : sender{static_cast<Sender&&>(sender)}, args{std::move(args)...}, condition(condition)
+        : sender{static_cast<Sender&&>(sender)}, args{static_cast<CompletionArgs&&>(args)...}, condition(condition)
     {
     }
 
     Sender sender;
-    detail::Tuple<CompletionArgs...> args;
+    ArgsTuple args;
     bool condition;
 };
 
@@ -96,13 +100,15 @@ struct ConditionalSenderSatisfyReceiver<detail::TypeList<detail::TypeList<T...>,
     template <class Receiver, class... Args, size_t... I>
     static void satisfy_impl(Receiver&& receiver, detail::Tuple<Args...>&& tuple, std::index_sequence<I...>)
     {
-        detail::satisfy_receiver(static_cast<Receiver&&>(receiver), detail::get<I>(std::move(tuple))...);
+        detail::satisfy_receiver(static_cast<Receiver&&>(receiver),
+                                 detail::get<I>(static_cast<detail::Tuple<Args...>&&>(tuple))...);
     }
 
     template <class Receiver, class... Args>
     static void satisfy(Receiver&& receiver, detail::Tuple<Args...>&& tuple)
     {
-        ConditionalSenderSatisfyReceiver::satisfy_impl(static_cast<Receiver&&>(receiver), std::move(tuple),
+        ConditionalSenderSatisfyReceiver::satisfy_impl(static_cast<Receiver&&>(receiver),
+                                                       static_cast<detail::Tuple<Args...>&&>(tuple),
                                                        std::make_index_sequence<sizeof...(Args)>{});
     }
 
@@ -116,6 +122,9 @@ struct ConditionalSenderSatisfyReceiver<detail::TypeList<detail::TypeList<T...>,
 template <class Sender, class Receiver, class... CompletionArgs>
 class ConditionalSenderOperationState
 {
+  private:
+    using ArgsTuple = detail::Tuple<CompletionArgs...>;
+
   public:
     void start() noexcept
     {
@@ -127,7 +136,7 @@ class ConditionalSenderOperationState
         {
             using CompletionValues = typename Sender::template value_types<detail::TypeList, detail::TypeList>;
             detail::ConditionalSenderSatisfyReceiver<CompletionValues>::satisfy(
-                static_cast<Receiver&&>(operation_state.receiver()), std::move(args));
+                static_cast<Receiver&&>(operation_state.receiver()), static_cast<ArgsTuple&&>(args));
         }
     }
 
@@ -135,23 +144,21 @@ class ConditionalSenderOperationState
     friend detail::ConditionalSender<Sender, CompletionArgs...>;
 
     template <class R>
-    ConditionalSenderOperationState(R&& receiver, Sender&& sender, bool condition,
-                                    detail::Tuple<CompletionArgs...>&& args)
+    ConditionalSenderOperationState(R&& receiver, Sender&& sender, bool condition, ArgsTuple&& args)
         : operation_state(detail::exec::connect(static_cast<Sender&&>(sender), static_cast<R&&>(receiver))),
-          args(std::move(args)),
+          args(static_cast<ArgsTuple&&>(args)),
           condition(condition)
     {
     }
 
     template <class R>
-    ConditionalSenderOperationState(R&& receiver, const Sender& sender, bool condition,
-                                    const detail::Tuple<CompletionArgs...>& args)
+    ConditionalSenderOperationState(R&& receiver, const Sender& sender, bool condition, const ArgsTuple& args)
         : operation_state(detail::exec::connect(sender, static_cast<R&&>(receiver))), args(args), condition(condition)
     {
     }
 
     detail::exec::connect_result_t<Sender, Receiver> operation_state;
-    detail::Tuple<CompletionArgs...> args;
+    ArgsTuple args;
     bool condition;
 };
 }

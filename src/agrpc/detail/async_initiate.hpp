@@ -18,7 +18,6 @@
 #include "agrpc/detail/asio_forward.hpp"
 #include "agrpc/detail/config.hpp"
 #include "agrpc/detail/tuple.hpp"
-#include "agrpc/detail/utility.hpp"
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 
@@ -29,6 +28,41 @@ namespace detail
 template <class Signature>
 struct InitiateImmediateCompletion;
 
+template <bool>
+struct SelectInvokeWithArgs
+{
+    template <class CompletionHandler, class... Args>
+    struct Type
+    {
+        explicit Type(CompletionHandler&& ch) : ch(static_cast<CompletionHandler&&>(ch)) {}
+
+        void operator()() { static_cast<CompletionHandler&&>(ch)(Args{}...); }
+
+        CompletionHandler ch;
+    };
+};
+
+template <>
+struct SelectInvokeWithArgs<false>
+{
+    template <class CompletionHandler, class... Args>
+    struct Type
+    {
+        using ArgsTuple = detail::Tuple<Args...>;
+
+        template <class... U>
+        explicit Type(CompletionHandler&& ch, U&&... u)
+            : ch(static_cast<CompletionHandler&&>(ch)), args{static_cast<U&&>(u)...}
+        {
+        }
+
+        void operator()() { detail::apply(static_cast<CompletionHandler&&>(ch), static_cast<ArgsTuple&&>(args)); }
+
+        CompletionHandler ch;
+        ArgsTuple args;
+    };
+};
+
 template <class... Args>
 struct InitiateImmediateCompletion<void(Args...)>
 {
@@ -37,21 +71,10 @@ struct InitiateImmediateCompletion<void(Args...)>
     {
         auto executor = asio::get_associated_executor(ch);
         const auto allocator = asio::get_associated_allocator(ch);
-        detail::post_with_allocator(
-            std::move(executor),
-            [impl = detail::CompressedPair(static_cast<CompletionHandler&&>(ch),
-                                           detail::Tuple{static_cast<T&&>(t)...})]() mutable
-            {
-                if constexpr (0 == sizeof...(T))
-                {
-                    std::move(impl.first())(Args{}...);
-                }
-                else
-                {
-                    detail::apply(std::move(impl.first()), std::move(impl.second()));
-                }
-            },
-            allocator);
+        using Invoker = typename detail::SelectInvokeWithArgs<(
+            0 == sizeof...(T))>::template Type<detail::RemoveCrefT<CompletionHandler>, Args...>;
+        detail::post_with_allocator(std::move(executor),
+                                    Invoker{static_cast<CompletionHandler&&>(ch), static_cast<T&&>(t)...}, allocator);
     }
 };
 

@@ -134,12 +134,12 @@ class CancelSafe<void(CompletionArgs...)>
             {
                 auto executor = asio::get_associated_executor(ch);
                 const auto allocator = asio::get_associated_allocator(ch);
-                Result local_result{std::move(*self.result)};
+                auto local_result{static_cast<Result&&>(*self.result)};
                 self.result.reset();
                 detail::post_with_allocator(
                     std::move(executor),
-                    [local_result = static_cast<Result&&>(local_result),
-                     ch = static_cast<CompletionHandler&&>(ch)]() mutable
+                    [ch = static_cast<CompletionHandler&&>(ch),
+                     local_result = static_cast<Result&&>(local_result)]() mutable
                     {
                         detail::invoke_successfully_from_tuple(std::move(ch), static_cast<Result&&>(local_result));
                     },

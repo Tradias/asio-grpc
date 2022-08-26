@@ -59,14 +59,15 @@ void complete_successfully(CompletionHandler&& handler, Args&&... args)
 template <class CompletionHandler, class... Args>
 void invoke_successfully_from_tuple(CompletionHandler&& handler, detail::Tuple<detail::ErrorCode, Args...>&& args)
 {
-    detail::apply(static_cast<CompletionHandler&&>(handler), std::move(args));
+    detail::apply(static_cast<CompletionHandler&&>(handler),
+                  static_cast<detail::Tuple<detail::ErrorCode, Args...>&&>(args));
 }
 
 template <class CompletionHandler, class... Args>
 void invoke_successfully_from_tuple(CompletionHandler&& handler, detail::Tuple<Args...>&& args)
 {
     detail::apply(static_cast<CompletionHandler&&>(handler),
-                  detail::prepend_to_tuple(detail::ErrorCode{}, std::move(args)));
+                  detail::prepend_to_tuple(detail::ErrorCode{}, static_cast<detail::Tuple<Args...>&&>(args)));
 }
 
 template <class CompletionHandler, class... Args>

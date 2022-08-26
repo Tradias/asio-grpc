@@ -60,7 +60,7 @@ inline void process_grpc_tag(agrpc::GrpcContext& grpc_context, void* tag, bool o
         auto alarm = std::make_unique<grpc::Alarm>();
         auto& alarm_ref = *alarm;
         agrpc::wait(alarm_ref, detail::GrpcContextImplementation::TIME_ZERO,
-                    ProcessTag{grpc_context, tag, ok, std::move(alarm)});
+                    ProcessTag{grpc_context, tag, ok, static_cast<std::unique_ptr<grpc::Alarm>&&>(alarm)});
     }
 }
 
