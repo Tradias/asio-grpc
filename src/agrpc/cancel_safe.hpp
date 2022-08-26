@@ -21,13 +21,13 @@
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 
 #include <agrpc/detail/cancel_safe.hpp>
+#include <agrpc/detail/tuple.hpp>
 #include <agrpc/detail/type_erased_completion_handler.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/detail/work_tracking_completion_handler.hpp>
 
 #include <cassert>
 #include <optional>
-#include <tuple>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -55,6 +55,7 @@ class CancelSafe<void(CompletionArgs...)>
 {
   private:
     using CompletionSignature = detail::PrependErrorCodeToSignatureT<void(CompletionArgs...)>;
+    using Result = detail::Tuple<CompletionArgs...>;
 
     struct Initiator;
 
@@ -73,7 +74,7 @@ class CancelSafe<void(CompletionArgs...)>
             }
             else
             {
-                this->self.result.emplace(static_cast<CompletionArgs&&>(completion_args)...);
+                this->self.result.emplace(Result{static_cast<CompletionArgs&&>(completion_args)...});
             }
         }
 
@@ -107,12 +108,12 @@ class CancelSafe<void(CompletionArgs...)>
      *
      * Thread-unsafe with regards to successful completion of the asynchronous operation.
      *
+     * @param token Completion token that matches the completion args. Either `void(error_code, CompletionArgs...)` if
+     * the first argument in CompletionArgs is not `error_code` or `void(CompletionArgs...)` otherwise.
+     *
      * **Per-Operation Cancellation**
      *
      * All. Upon cancellation, the asynchronous operation continues to run.
-     *
-     * @param token Completion token that matches the completion args. Either `void(error_code, CompletionArgs...)` if
-     * the first argument in CompletionArgs is not `error_code` or `void(CompletionArgs...)` otherwise.
      */
     template <class CompletionToken>
     auto wait(CompletionToken token)
@@ -133,19 +134,20 @@ class CancelSafe<void(CompletionArgs...)>
             {
                 auto executor = asio::get_associated_executor(ch);
                 const auto allocator = asio::get_associated_allocator(ch);
-                auto local_result{std::move(*self.result)};
+                auto local_result{static_cast<Result&&>(*self.result)};
                 self.result.reset();
                 detail::post_with_allocator(
                     std::move(executor),
-                    [local_result = std::move(local_result), ch = std::forward<CompletionHandler>(ch)]() mutable
+                    [ch = static_cast<CompletionHandler&&>(ch),
+                     local_result = static_cast<Result&&>(local_result)]() mutable
                     {
-                        detail::invoke_successfully_from_tuple(std::move(ch), std::move(local_result));
+                        detail::invoke_successfully_from_tuple(std::move(ch), static_cast<Result&&>(local_result));
                     },
                     allocator);
                 return;
             }
             auto cancellation_slot = asio::get_associated_cancellation_slot(ch);
-            self.emplace_completion_handler(std::forward<CompletionHandler>(ch));
+            self.emplace_completion_handler(static_cast<CompletionHandler&&>(ch));
             self.install_cancellation_handler(cancellation_slot);
         }
     };
@@ -171,7 +173,7 @@ class CancelSafe<void(CompletionArgs...)>
     {
         completion_handler
             .template emplace<detail::WorkTrackingCompletionHandler<detail::RemoveCrefT<CompletionHandler>>>(
-                std::forward<CompletionHandler>(ch));
+                static_cast<CompletionHandler&&>(ch));
     }
 
     template <class CancellationSlot>
@@ -184,7 +186,7 @@ class CancelSafe<void(CompletionArgs...)>
     }
 
     detail::AtomicTypeErasedCompletionHandler<CompletionSignature> completion_handler{};
-    std::optional<std::tuple<CompletionArgs...>> result;
+    std::optional<Result> result;
 };
 
 /**

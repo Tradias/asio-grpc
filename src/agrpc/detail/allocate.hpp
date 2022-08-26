@@ -24,6 +24,19 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+template <class T, class Allocator>
+using RebindAllocator = typename std::allocator_traits<Allocator>::template rebind_alloc<T>;
+
+template <class T, class Allocator>
+using RebindAllocatorTraits = typename std::allocator_traits<Allocator>::template rebind_traits<T>;
+
+template <class Traits>
+void destroy_deallocate_using_traits(typename Traits::allocator_type& allocator, typename Traits::pointer ptr) noexcept
+{
+    Traits::destroy(allocator, ptr);
+    Traits::deallocate(allocator, ptr, 1);
+}
+
 template <class Allocator>
 class AllocatedPointer
 {
@@ -43,6 +56,7 @@ class AllocatedPointer
     {
     }
 
+    template <class Alloc = Allocator, class = std::enable_if_t<std::allocator_traits<Alloc>::is_always_equal::value>>
     AllocatedPointer& operator=(AllocatedPointer&& other) noexcept
     {
         if (this != &other)
@@ -56,7 +70,7 @@ class AllocatedPointer
     {
         if (this->get())
         {
-            AllocatedPointer::destroy_deallocate(this->get_allocator(), this->get());
+            detail::destroy_deallocate_using_traits<Traits>(this->get_allocator(), this->get());
         }
     }
 
@@ -66,90 +80,119 @@ class AllocatedPointer
 
     Allocator& get_allocator() noexcept { return this->impl.second(); }
 
-    const Allocator& get_allocator() const noexcept { return this->impl.second(); }
-
     Pointer operator->() const noexcept { return this->get(); }
-
-    Value& operator*() const noexcept { return *this->get(); }
 
     Pointer release() noexcept { return std::exchange(this->get(), nullptr); }
 
     void reset() noexcept
     {
-        AllocatedPointer::destroy_deallocate(this->get_allocator(), this->get());
+        detail::destroy_deallocate_using_traits<Traits>(this->get_allocator(), this->get());
         this->release();
     }
 
   private:
-    static void destroy_deallocate(Allocator& allocator, Pointer ptr) noexcept
-    {
-        Traits::destroy(allocator, ptr);
-        Traits::deallocate(allocator, ptr, 1);
-    }
-
     detail::CompressedPair<Pointer, Allocator> impl;
 };
 
 template <class T, class Allocator>
-AllocatedPointer(T*, const Allocator&)
-    -> AllocatedPointer<typename std::allocator_traits<Allocator>::template rebind_alloc<T>>;
+AllocatedPointer(T*, const Allocator&) -> AllocatedPointer<detail::RebindAllocator<T, Allocator>>;
 
-template <class T, class Allocator>
-using AllocatedPointerT = detail::AllocatedPointer<typename std::allocator_traits<Allocator>::template rebind_alloc<T>>;
-
-template <class Allocator>
+template <class Traits>
 class AllocationGuard
 {
   private:
-    using Traits = std::allocator_traits<Allocator>;
+    using Allocator = typename Traits::allocator_type;
     using Pointer = typename Traits::pointer;
 
   public:
-    AllocationGuard(Pointer ptr, Allocator& allocator) noexcept : ptr(ptr), allocator(allocator) {}
+    AllocationGuard(Pointer ptr, const Allocator& allocator) noexcept : ptr(ptr), allocator(allocator) {}
 
     AllocationGuard(const AllocationGuard&) = delete;
-    AllocationGuard(AllocationGuard&&) = delete;
     AllocationGuard& operator=(const AllocationGuard&) = delete;
+    AllocationGuard(AllocationGuard&&) = delete;
     AllocationGuard& operator=(AllocationGuard&&) = delete;
 
     ~AllocationGuard() noexcept
     {
-        if (this->is_allocated)
+        if (ptr)
+        {
+            detail::destroy_deallocate_using_traits<Traits>(allocator, ptr);
+        }
+    }
+
+    Pointer get() const noexcept { return ptr; }
+
+    Allocator get_allocator() const noexcept { return allocator; }
+
+    Pointer operator->() const noexcept { return ptr; }
+
+    auto& operator*() const noexcept { return *ptr; }
+
+    Pointer release() noexcept { return std::exchange(ptr, nullptr); }
+
+    void reset() noexcept
+    {
+        detail::destroy_deallocate_using_traits<Traits>(allocator, ptr);
+        this->release();
+    }
+
+  private:
+    Pointer ptr;
+    Allocator allocator;
+};
+
+template <class T, class Allocator>
+AllocationGuard(T*, const Allocator&) -> AllocationGuard<detail::RebindAllocatorTraits<T, Allocator>>;
+
+template <class Traits>
+class UninitializedAllocationGuard
+{
+  private:
+    using Allocator = typename Traits::allocator_type;
+    using Pointer = typename Traits::pointer;
+
+  public:
+    UninitializedAllocationGuard(Pointer ptr, Allocator& allocator) noexcept : ptr(ptr), allocator(allocator) {}
+
+    UninitializedAllocationGuard(const UninitializedAllocationGuard&) = delete;
+    UninitializedAllocationGuard(UninitializedAllocationGuard&&) = delete;
+    UninitializedAllocationGuard& operator=(const UninitializedAllocationGuard&) = delete;
+    UninitializedAllocationGuard& operator=(UninitializedAllocationGuard&&) = delete;
+
+    ~UninitializedAllocationGuard() noexcept
+    {
+        if (this->ptr)
         {
             Traits::deallocate(this->allocator, this->ptr, 1);
         }
     }
 
-    detail::AllocatedPointer<Allocator> release() noexcept
-    {
-        this->is_allocated = false;
-        return {this->ptr, this->allocator};
-    }
+    detail::AllocationGuard<Traits> release() noexcept { return {std::exchange(this->ptr, nullptr), this->allocator}; }
 
     Allocator& get_allocator() noexcept { return allocator; }
 
   private:
     Pointer ptr;
     Allocator& allocator;
-    bool is_allocated{true};
 };
 
 template <class T, class Allocator, class... Args>
-detail::AllocatedPointerT<T, Allocator> allocate(const Allocator& allocator, Args&&... args)
+detail::AllocationGuard<detail::RebindAllocatorTraits<T, Allocator>> allocate(const Allocator& allocator,
+                                                                              Args&&... args)
 {
-    using Traits = typename std::allocator_traits<Allocator>::template rebind_traits<T>;
+    using Traits = detail::RebindAllocatorTraits<T, Allocator>;
     using ReboundAllocator = typename Traits::allocator_type;
     ReboundAllocator rebound_allocator{allocator};
     auto* ptr = Traits::allocate(rebound_allocator, 1);
-    detail::AllocationGuard<ReboundAllocator> guard{ptr, rebound_allocator};
-    Traits::construct(rebound_allocator, ptr, std::forward<Args>(args)...);
+    detail::UninitializedAllocationGuard<Traits> guard{ptr, rebound_allocator};
+    Traits::construct(rebound_allocator, ptr, static_cast<Args&&>(args)...);
     return guard.release();
 }
 
 template <class T, class Allocator>
 void destroy_deallocate(T* ptr, const Allocator& allocator) noexcept
 {
-    using Traits = typename std::allocator_traits<Allocator>::template rebind_traits<T>;
+    using Traits = detail::RebindAllocatorTraits<T, Allocator>;
     using ReboundAllocator = typename Traits::allocator_type;
     ReboundAllocator rebound_allocator{allocator};
     Traits::destroy(rebound_allocator, ptr);

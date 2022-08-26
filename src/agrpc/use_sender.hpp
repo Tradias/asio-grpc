@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/executor_with_default.hpp>
 #include <agrpc/detail/query_grpc_context.hpp>
 #include <agrpc/detail/use_sender.hpp>
 #include <agrpc/grpc_context.hpp>
@@ -24,19 +25,31 @@
 
 AGRPC_NAMESPACE_BEGIN()
 
-namespace detail
-{
 /**
- * @brief Function object to create sender completion tokens
+ * @brief Sender completion token
  *
- * The completion token created by this function causes other asynchronous functions in this library to return a
- * [Sender](https://brycelelbach.github.io/wg21_p2300_std_execution/std_execution.html#design-senders). This is
+ * This function object can be used to create completion tokens that cause free functions in this library to return a
+ * [sender](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#typedsender-concept). This is
  * particularly useful for libunifex where senders are also awaitable:
  *
  * @snippet unifex_client.cpp unifex-server-streaming-client-side
+ *
+ * For member functions in this library the `agrpc::UseSender` object must be used directly:
+ * @code{cpp}
+ * agrpc::RPC<...>::request(..., agrpc::use_sender);
+ * @endcode
  */
-struct UseSenderFn
+struct UseSender
 {
+    /**
+     * @brief Type alias to adapt an I/O object to use `agrpc::UseSender` as its default completion token type
+     *
+     * Only applicable to I/O objects of this library.
+     */
+    template <class T>
+    using as_default_on_t =
+        typename T::template rebind_executor<detail::ExecutorWithDefault<UseSender, typename T::executor_type>>::other;
+
     /**
      * @brief Overload for BasicGrpcExecutor
      */
@@ -55,16 +68,15 @@ struct UseSenderFn
         return detail::UseSender{context};
     }
 };
-}  // namespace detail
 
 /**
- * @brief Create sender completion token
+ * @brief Instance and factory for sender completion tokens
  *
- * @link detail::UseSenderFn
- * Function to create sender completion tokens.
+ * @link agrpc::UseSender
+ * Sender completion token.
  * @endlink
  */
-inline constexpr detail::UseSenderFn use_sender{};
+inline constexpr agrpc::UseSender use_sender{};
 
 AGRPC_NAMESPACE_END
 

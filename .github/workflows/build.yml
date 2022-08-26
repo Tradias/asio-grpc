@@ -159,6 +159,9 @@ jobs:
       CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-clang-release -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-10/include/c++/v1/ -Wno-unused-command-line-argument" -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld'
 
     steps:
+    - name: Install dot for doxygen
+      run: sudo apt-get install graphviz
+
     - name: Make clang-10 default compiler
       run: |
         sudo update-alternatives --install /usr/bin/cc cc $(which clang-10) 50 &&\

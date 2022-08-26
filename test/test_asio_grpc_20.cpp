@@ -25,8 +25,6 @@
 #include <cstddef>
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
-DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
-{
 TEST_CASE_TEMPLATE("awaitable server streaming", Stub, test::v1::Test::Stub, test::v1::Test::StubInterface)
 {
     constexpr bool IS_STUB_INTERFACE = std::is_same_v<test::v1::Test::StubInterface, Stub>;
@@ -291,5 +289,4 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline and c
     CHECK_FALSE(server_finish_ok);
 }
 #endif
-}
 #endif

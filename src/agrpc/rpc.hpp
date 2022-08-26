@@ -71,7 +71,7 @@ struct RequestFn
         return detail::grpc_initiate(
             detail::ServerMultiArgRequestInitFunction<Service, Request, Responder>{rpc, service, server_context,
                                                                                    request, responder},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -99,7 +99,7 @@ struct RequestFn
     {
         return detail::grpc_initiate(
             detail::ServerSingleArgRequestInitFunction<Service, Responder>{rpc, service, server_context, responder},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -123,7 +123,7 @@ struct RequestFn
     {
         return detail::grpc_initiate(
             detail::ServerGenericRequestInitFunction<ReaderWriter>{service, server_context, reader_writer},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -162,7 +162,7 @@ struct RequestFn
         return detail::grpc_initiate_with_payload<std::unique_ptr<Responder>>(
             detail::AsyncClientServerStreamingRequestConvenienceInitFunction<Stub, Request, Responder>{
                 rpc, detail::unwrap_unique_ptr(stub), client_context, request},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -195,7 +195,7 @@ struct RequestFn
         return detail::grpc_initiate_with_payload<std::unique_ptr<Responder>>(
             detail::PrepareAsyncClientServerStreamingRequestConvenienceInitFunction<Stub, Request, Responder>{
                 rpc, detail::unwrap_unique_ptr(stub), client_context, request},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 #endif
 
@@ -216,7 +216,7 @@ struct RequestFn
         return detail::grpc_initiate(
             detail::AsyncClientServerStreamingRequestInitFunction<Stub, Request, Responder>{
                 rpc, detail::unwrap_unique_ptr(stub), client_context, request, reader},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -244,7 +244,7 @@ struct RequestFn
         return detail::grpc_initiate(
             detail::PrepareAsyncClientServerStreamingRequestInitFunction<Stub, Request, Responder>{
                 rpc, detail::unwrap_unique_ptr(stub), client_context, request, reader},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
@@ -265,7 +265,7 @@ struct RequestFn
         return detail::grpc_initiate_with_payload<std::unique_ptr<Responder>>(
             detail::AsyncClientClientStreamingRequestConvenienceInitFunction<Stub, Responder, Response>{
                 rpc, detail::unwrap_unique_ptr(stub), client_context, response},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -298,7 +298,7 @@ struct RequestFn
         return detail::grpc_initiate_with_payload<std::unique_ptr<Responder>>(
             detail::PrepareAsyncClientClientStreamingRequestConvenienceInitFunction<Stub, Responder, Response>{
                 rpc, detail::unwrap_unique_ptr(stub), client_context, response},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 #endif
 
@@ -319,7 +319,7 @@ struct RequestFn
         return detail::grpc_initiate(
             detail::AsyncClientClientStreamingRequestInitFunction<Stub, Responder, Response>{
                 rpc, detail::unwrap_unique_ptr(stub), client_context, writer, response},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -354,7 +354,7 @@ struct RequestFn
         return detail::grpc_initiate(
             detail::PrepareAsyncClientClientStreamingRequestInitFunction<Stub, Responder, Response>{
                 rpc, detail::unwrap_unique_ptr(stub), client_context, writer, response},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
@@ -373,7 +373,7 @@ struct RequestFn
         return detail::grpc_initiate_with_payload<std::unique_ptr<Responder>>(
             detail::AsyncClientBidirectionalStreamingRequestConvenienceInitFunction<Stub, Responder>{
                 rpc, detail::unwrap_unique_ptr(stub), client_context},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -404,7 +404,7 @@ struct RequestFn
         return detail::grpc_initiate_with_payload<std::unique_ptr<Responder>>(
             detail::PrepareAsyncClientBidirectionalStreamingRequestConvenienceInitFunction<Stub, Responder>{
                 rpc, detail::unwrap_unique_ptr(stub), client_context},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 #endif
 
@@ -424,7 +424,7 @@ struct RequestFn
         return detail::grpc_initiate(
             detail::AsyncClientBidirectionalStreamingRequestInitFunction<Stub, Responder>{
                 rpc, detail::unwrap_unique_ptr(stub), client_context, reader_writer},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -458,7 +458,7 @@ struct RequestFn
         return detail::grpc_initiate(
             detail::PrepareAsyncClientBidirectionalStreamingRequestInitFunction<Stub, Responder>{
                 rpc, detail::unwrap_unique_ptr(stub), client_context, reader_writer},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -501,15 +501,15 @@ struct RequestFn
      * it is not going to the wire. This would happen if the channel is either permanently broken or transiently broken
      * but with the fail-fast option.
      */
-    template <class ReaderWriter, class CompletionToken = agrpc::DefaultCompletionToken>
+    template <class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(const std::string& method, grpc::GenericStub& stub, grpc::ClientContext& client_context,
-                    std::unique_ptr<ReaderWriter>& reader_writer, CompletionToken&& token = {}) const
+                    std::unique_ptr<grpc::GenericClientAsyncReaderWriter>& reader_writer,
+                    CompletionToken&& token = {}) const
         noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
     {
         return detail::grpc_initiate(
-            detail::ClientGenericStreamingRequestInitFunction<ReaderWriter>{method, stub, client_context,
-                                                                            reader_writer},
-            std::forward<CompletionToken>(token));
+            detail::ClientGenericStreamingRequestInitFunction{method, stub, client_context, reader_writer},
+            static_cast<CompletionToken&&>(token));
     }
 };
 
@@ -573,7 +573,7 @@ struct ReadFn
         return detail::grpc_initiate(
             detail::ReadInitFunction<Response, detail::UnwrapUniquePtrT<Reader>>{detail::unwrap_unique_ptr(reader),
                                                                                  response},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 };
 
@@ -604,8 +604,8 @@ struct WriteFn
     /**
      * @brief Write to a streaming RPC
      *
-     * Only one write may be outstanding at any given time. This is thread-safe with respect to read. gRPC does not
-     * take ownership or a reference to `response`, so it is safe to to deallocate once write returns.
+     * Only one write may be outstanding at any given time. This is thread-safe with respect to `agrpc::read`. gRPC does
+     * not take ownership or a reference to `response`, so it is safe to to deallocate once write returns.
      *
      * Example server-side server-streaming:
      *
@@ -635,7 +635,7 @@ struct WriteFn
         return detail::grpc_initiate(
             detail::WriteInitFunction<Response, detail::UnwrapUniquePtrT<Writer>>{detail::unwrap_unique_ptr(writer),
                                                                                   response},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -652,7 +652,7 @@ struct WriteFn
         return detail::grpc_initiate(
             detail::WriteWithOptionsInitFunction<Response, detail::UnwrapUniquePtrT<Writer>>{
                 detail::unwrap_unique_ptr(writer), response, options},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 };
 
@@ -704,7 +704,7 @@ struct WritesDoneFn
     {
         return detail::grpc_initiate(
             detail::ClientWritesDoneInitFunction<detail::UnwrapUniquePtrT<Writer>>{detail::unwrap_unique_ptr(writer)},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 };
 
@@ -784,7 +784,7 @@ struct FinishFn
         return detail::grpc_initiate(
             detail::FinishInitFunction<detail::UnwrapUniquePtrT<Responder>>{detail::unwrap_unique_ptr(responder),
                                                                             status},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -827,7 +827,7 @@ struct FinishFn
         return detail::grpc_initiate(
             detail::FinishInitFunction<detail::UnwrapUniquePtrT<Responder>>{detail::unwrap_unique_ptr(responder),
                                                                             status},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -865,11 +865,11 @@ struct FinishFn
         return detail::grpc_initiate(
             detail::FinishWithMessageInitFunction<detail::UnwrapUniquePtrT<Responder>>{
                 detail::unwrap_unique_ptr(responder), message, status},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 
     /**
-     * @brief Finish a RPC (server-side)
+     * @brief Finish a unary/streaming RPC (server-side)
      *
      * Indicate that the RPC is to be finished and request notification when the server has sent the appropriate
      * signals to the client to end the call. Should not be used concurrently with other operations.
@@ -909,7 +909,7 @@ struct FinishFn
         return detail::grpc_initiate(
             detail::FinishWithMessageInitFunction<detail::UnwrapUniquePtrT<Responder>>{
                 detail::unwrap_unique_ptr(responder), message, status},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 };
 
@@ -986,7 +986,7 @@ struct WriteLastFn
         return detail::grpc_initiate(
             detail::WriteLastInitFunction<Message, detail::UnwrapUniquePtrT<Writer>>{detail::unwrap_unique_ptr(writer),
                                                                                      message, options},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 };
 
@@ -1053,7 +1053,7 @@ struct WriteAndFinishFn
         return detail::grpc_initiate(
             detail::ServerWriteAndFinishInitFunction<Response, detail::UnwrapUniquePtrT<Writer>>{
                 detail::unwrap_unique_ptr(writer), response, options, status},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 };
 
@@ -1116,7 +1116,7 @@ struct FinishWithErrorFn
         return detail::grpc_initiate(
             detail::ServerFinishWithErrorInitFunction<detail::UnwrapUniquePtrT<Responder>>{
                 detail::unwrap_unique_ptr(responder), status},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 };
 
@@ -1169,7 +1169,7 @@ struct SendInitialMetadataFn
         return detail::grpc_initiate(
             detail::SendInitialMetadataInitFunction<detail::UnwrapUniquePtrT<Responder>>{
                 detail::unwrap_unique_ptr(responder)},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 };
 
@@ -1213,8 +1213,12 @@ struct ReadInitialMetadataFn
      *
      * @snippet client.cpp read_initial_metadata-unary-client-side
      *
+     * @attention For client-streaming and bidirectional-streaming RPCs: If the server does not explicitly send initial
+     * metadata (e.g. by calling `agrpc::send_initial_metadata`) but waits for a message from the client instead then
+     * this function won't complete until `agrpc::write` is called.
+     *
      * @param responder `grpc::ClientAsyncResponseReader`, `grpc::ClientAsyncReader`, `grpc::ClientAsyncWriter` or
-     * `grpc::ClientAsyncReaderWriter`
+     * `grpc::ClientAsyncReaderWriter` (or a unique_ptr of them or their -Interface variants).
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. `true` indicates that the metadata was read, `false` when the call is
      * dead.
@@ -1226,7 +1230,7 @@ struct ReadInitialMetadataFn
         return detail::grpc_initiate(
             detail::ReadInitialMetadataInitFunction<detail::UnwrapUniquePtrT<Responder>>{
                 detail::unwrap_unique_ptr(responder)},
-            std::forward<CompletionToken>(token));
+            static_cast<CompletionToken&&>(token));
     }
 };
 }  // namespace detail

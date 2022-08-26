@@ -12,15 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utils/doctest.hpp"
 #include "utils/free_port.hpp"
 
 #include <boost/process/child.hpp>
+#include <doctest/doctest.h>
 
 #include <thread>
 
-DOCTEST_TEST_SUITE("Examples")
-{
 TEST_CASE("examples")
 {
     std::vector<std::string> args{std::to_string(test::get_free_port())};
@@ -65,6 +63,11 @@ TEST_CASE("examples")
         client_program = ASIO_GRPC_EXAMPLE_MULTI_THREADED_CLIENT;
         server_program = ASIO_GRPC_EXAMPLE_MULTI_THREADED_SERVER;
     }
+    SUBCASE("High-level streaming")
+    {
+        client_program = ASIO_GRPC_EXAMPLE_HIGH_LEVEL_CLIENT;
+        server_program = ASIO_GRPC_EXAMPLE_STREAMING_SERVER;
+    }
     boost::process::child server(server_program, args);
     REQUIRE(server.valid());
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -74,5 +77,4 @@ TEST_CASE("examples")
     client.join();
     CHECK_EQ(0, server.exit_code());
     CHECK_EQ(0, client.exit_code());
-}
 }

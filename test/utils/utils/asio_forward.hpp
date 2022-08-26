@@ -21,6 +21,7 @@
 #include <asio/coroutine.hpp>
 #include <asio/execution.hpp>
 #include <asio/execution/submit.hpp>
+#include <asio/io_context.hpp>
 #include <asio/post.hpp>
 #include <asio/spawn.hpp>
 #include <asio/steady_timer.hpp>
@@ -51,6 +52,7 @@
 #include <boost/asio/coroutine.hpp>
 #include <boost/asio/execution.hpp>
 #include <boost/asio/execution/submit.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/steady_timer.hpp>

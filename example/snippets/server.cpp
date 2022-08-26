@@ -308,7 +308,7 @@ void register_client_streaming_handler(agrpc::GrpcContext& grpc_context, example
 }
 /* [repeatedly-request-awaitable] */
 
-void create_grpc_context_server_side()
+void create_server_grpc_context()
 {
     /* [create-grpc_context-server-side] */
     grpc::ServerBuilder builder;

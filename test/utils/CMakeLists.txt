@@ -38,7 +38,11 @@ function(asio_grpc_add_test_main _asio_grpc_name _asio_grpc_cxx_standard)
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/doctest.hpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/free_port.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/free_port.hpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_format.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_format.hpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/main.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/server_shutdown_initiator.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/server_shutdown_initiator.hpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/time.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/time.hpp")
 
@@ -88,13 +92,26 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
     if(${_asio_grpc_type} STREQUAL "BOOST_ASIO")
         target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc)
 
-        target_compile_definitions(${_asio_grpc_name} PUBLIC BOOST_ASIO_SEPARATE_COMPILATION BOOST_ASIO_NO_TS_EXECUTORS)
+        target_compile_definitions(
+            ${_asio_grpc_name} PUBLIC "ASIO_GRPC_TEST_CPP_VERSION=\"Boost.Asio C++${_asio_grpc_cxx_standard}\""
+                                      BOOST_ASIO_SEPARATE_COMPILATION BOOST_ASIO_NO_TS_EXECUTORS)
+
+        target_sources(${_asio_grpc_name} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/utils/io_context_test.cpp"
+                                                  "${CMAKE_CURRENT_SOURCE_DIR}/utils/io_context_test.hpp")
     elseif(${_asio_grpc_type} STREQUAL "STANDALONE_ASIO")
         target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc-standalone-asio)
 
-        target_compile_definitions(${_asio_grpc_name} PUBLIC ASIO_SEPARATE_COMPILATION ASIO_NO_TS_EXECUTORS)
+        target_compile_definitions(
+            ${_asio_grpc_name} PUBLIC "ASIO_GRPC_TEST_CPP_VERSION=\"Standalone Asio C++${_asio_grpc_cxx_standard}\""
+                                      ASIO_SEPARATE_COMPILATION ASIO_NO_TS_EXECUTORS)
+
+        target_sources(${_asio_grpc_name} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/utils/io_context_test.cpp"
+                                                  "${CMAKE_CURRENT_SOURCE_DIR}/utils/io_context_test.hpp")
     elseif(${_asio_grpc_type} STREQUAL "UNIFEX")
         target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc-unifex)
+
+        target_compile_definitions(${_asio_grpc_name}
+                                   PUBLIC "ASIO_GRPC_TEST_CPP_VERSION=\"unifex C++${_asio_grpc_cxx_standard}\"")
     endif()
 
     convert_to_cpp_suffix(${_asio_grpc_cxx_standard})

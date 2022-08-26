@@ -41,6 +41,12 @@ inline ThreadLocalGrpcContextGuard::~ThreadLocalGrpcContextGuard()
 
 inline void WorkFinishedOnExitFunctor::operator()() const noexcept { grpc_context.work_finished(); }
 
+inline StartWorkAndGuard::StartWorkAndGuard(agrpc::GrpcContext& grpc_context) noexcept
+    : detail::WorkFinishedOnExit(grpc_context)
+{
+    grpc_context.work_started();
+}
+
 inline bool IsGrpcContextStoppedPredicate::operator()(const agrpc::GrpcContext& grpc_context) const noexcept
 {
     return grpc_context.is_stopped();

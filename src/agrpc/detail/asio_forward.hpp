@@ -130,23 +130,26 @@ using ErrorCode = std::error_code;
 using ErrorCode = boost::system::error_code;
 #endif
 
+template <class Slot>
+class CancellationSlotAsStopToken;
+
 namespace exec
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class Object>
-auto get_scheduler(Object& object)
+auto get_scheduler(const Object& object)
 {
     return asio::get_associated_executor(object);
 }
 
 template <class Object>
-auto get_executor(Object& object)
+auto get_executor(const Object& object)
 {
     return asio::get_associated_executor(object);
 }
 
 template <class Object>
-auto get_allocator(Object& object)
+auto get_allocator(const Object& object)
 {
     return asio::get_associated_allocator(object);
 }
@@ -173,9 +176,21 @@ struct unstoppable_token
 };
 
 template <class Receiver>
-constexpr unstoppable_token get_stop_token(Receiver&&) noexcept
+auto get_stop_token([[maybe_unused]] Receiver&& receiver) noexcept
 {
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+    auto slot = asio::get_associated_cancellation_slot(static_cast<Receiver&&>(receiver), unstoppable_token{});
+    if constexpr (std::is_same_v<unstoppable_token, decltype(slot)>)
+    {
+        return slot;
+    }
+    else
+    {
+        return detail::CancellationSlotAsStopToken<decltype(slot)>{std::move(slot)};
+    }
+#else
     return unstoppable_token{};
+#endif
 }
 
 template <class>
@@ -195,23 +210,69 @@ using ::unifex::set_error;
 using ::unifex::set_value;
 using ::unifex::start;
 using ::unifex::stop_token_type_t;
+using ::unifex::unstoppable_token;
+
+template <class T, class = void>
+inline constexpr bool HAS_GET_SCHEDULER = false;
+
+template <class T>
+inline constexpr bool HAS_GET_SCHEDULER<T, decltype((void)exec::get_scheduler(std::declval<T>()))> = true;
 
 template <class Object>
-auto get_executor(Object& object)
+auto get_executor(const Object& object)
 {
-    return exec::get_scheduler(object);
+    if constexpr (exec::HAS_GET_SCHEDULER<Object>)
+    {
+        return exec::get_scheduler(object);
+    }
+    else
+    {
+        return;
+    }
 }
 #endif
 }  // namespace exec
+
+template <class T>
+using AssociatedAllocatorT = decltype(detail::exec::get_allocator(std::declval<T>()));
+
+template <class T>
+using AssociatedExecutorT = decltype(detail::exec::get_executor(std::declval<T>()));
+
+template <class Slot>
+class CancellationSlotAsStopToken
+{
+  public:
+    explicit CancellationSlotAsStopToken(Slot&& slot) : slot(static_cast<Slot&&>(slot)) {}
+
+    template <class StopFunction>
+    struct callback_type
+    {
+        explicit callback_type(CancellationSlotAsStopToken token, StopFunction&& function) noexcept
+        {
+            if (token.slot.is_connected())
+            {
+                token.slot.assign(static_cast<StopFunction&&>(function));
+            }
+        }
+    };
+
+    [[nodiscard]] static constexpr bool stop_requested() noexcept { return false; }
+
+    [[nodiscard]] static constexpr bool stop_possible() noexcept { return true; }
+
+  private:
+    Slot slot;
+};
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class Executor, class Function, class Allocator>
 void post_with_allocator(Executor&& executor, Function&& function, const Allocator& allocator)
 {
     asio::execution::execute(
-        asio::prefer(asio::require(std::forward<Executor>(executor), asio::execution::blocking_t::never),
+        asio::prefer(asio::require(static_cast<Executor&&>(executor), asio::execution::blocking_t::never),
                      asio::execution::relationship_t::fork, asio::execution::allocator(allocator)),
-        std::forward<Function>(function));
+        static_cast<Function&&>(function));
 }
 #endif
 

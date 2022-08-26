@@ -12,8 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "test/v1/test.grpc.pb.h"
+
+#include <agrpc/detail/memory_resource.hpp>
 #include <doctest/doctest.h>
+#include <google/protobuf/arena.h>
+#include <google/protobuf/extension_set.h>
+#include <google/protobuf/generated_message_reflection.h>
+#include <google/protobuf/generated_message_util.h>
+#include <google/protobuf/io/coded_stream.h>
 #include <grpcpp/alarm.h>
+#include <grpcpp/generic/async_generic_service.h>
+#include <grpcpp/generic/generic_stub.h>
 #include <grpcpp/grpcpp.h>
 
 #ifdef AGRPC_STANDALONE_ASIO
@@ -120,9 +130,12 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
+#include <future>
 #include <iterator>
 #include <limits>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <thread>

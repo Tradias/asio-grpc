@@ -34,5 +34,11 @@ GrpcClientServerTestBase::GrpcClientServerTestBase()
     client_context.set_deadline(test::five_seconds_from_now());
 }
 
-GrpcClientServerTestBase::~GrpcClientServerTestBase() { server->Shutdown(test::one_seconds_from_now()); }
+GrpcClientServerTestBase::~GrpcClientServerTestBase()
+{
+    if (server)
+    {
+        server->Shutdown(test::one_seconds_from_now());
+    }
+}
 }  // namespace test

@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/rpc_type.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <grpcpp/client_context.h>
 #include <grpcpp/completion_queue.h>
@@ -30,43 +31,6 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class Stub, class Request, class Responder>
-using ClientUnaryRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*, const Request&,
-                                                                grpc::CompletionQueue*);
-
-template <class Stub, class Request, class Responder>
-using AsyncClientServerStreamingRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*, const Request&,
-                                                                               grpc::CompletionQueue*, void*);
-
-template <class Stub, class Request, class Responder>
-using PrepareAsyncClientServerStreamingRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*,
-                                                                                      const Request&,
-                                                                                      grpc::CompletionQueue*);
-
-template <class Stub, class Responder, class Response>
-using AsyncClientClientStreamingRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*, Response*,
-                                                                               grpc::CompletionQueue*, void*);
-
-template <class Stub, class Responder, class Response>
-using PrepareAsyncClientClientStreamingRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*, Response*,
-                                                                                      grpc::CompletionQueue*);
-
-template <class Stub, class Responder>
-using AsyncClientBidirectionalStreamingRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*,
-                                                                                      grpc::CompletionQueue*, void*);
-
-template <class Stub, class Responder>
-using PrepareAsyncClientBidirectionalStreamingRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*,
-                                                                                             grpc::CompletionQueue*);
-
-template <class Service, class Request, class Responder>
-using ServerMultiArgRequest = void (Service::*)(grpc::ServerContext*, Request*, Responder*, grpc::CompletionQueue*,
-                                                grpc::ServerCompletionQueue*, void*);
-
-template <class Service, class Responder>
-using ServerSingleArgRequest = void (Service::*)(grpc::ServerContext*, Responder*, grpc::CompletionQueue*,
-                                                 grpc::ServerCompletionQueue*, void*);
-
 struct GenericRPCMarker
 {
 };
@@ -423,13 +387,12 @@ struct PrepareAsyncClientBidirectionalStreamingRequestConvenienceInitFunction
     }
 };
 
-template <class ReaderWriter>
 struct ClientGenericStreamingRequestInitFunction
 {
     const std::string& method;
     grpc::GenericStub& stub;
     grpc::ClientContext& client_context;
-    std::unique_ptr<ReaderWriter>& reader_writer;
+    std::unique_ptr<grpc::GenericClientAsyncReaderWriter>& reader_writer;
 
     void operator()(agrpc::GrpcContext& grpc_context, void* tag) const
     {

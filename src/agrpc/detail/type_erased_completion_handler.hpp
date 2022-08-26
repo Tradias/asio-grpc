@@ -29,7 +29,7 @@ namespace detail
 template <class CompletionHandler>
 CompletionHandler deallocate_completion_handler(CompletionHandler* completion_handler) noexcept
 {
-    auto local_completion_handler{std::move(*completion_handler)};
+    auto local_completion_handler{static_cast<CompletionHandler&&>(*completion_handler)};
     detail::destroy_deallocate(completion_handler, asio::get_associated_allocator(local_completion_handler));
     return local_completion_handler;
 }
@@ -39,7 +39,7 @@ void deallocate_and_invoke(void* data, Args... args)
 {
     auto* completion_handler = static_cast<CompletionHandler*>(data);
     auto local_completion_handler = detail::deallocate_completion_handler(completion_handler);
-    std::move(local_completion_handler)(std::move(args)...);
+    static_cast<CompletionHandler&&>(local_completion_handler)(static_cast<Args&&>(args)...);
 }
 
 template <class Signature, class VoidPointer>
@@ -77,7 +77,7 @@ class BasicTypeErasedCompletionHandler<void(Args...), VoidPointer>
     void emplace(CompletionHandler&& ch)
     {
         auto allocator = asio::get_associated_allocator(ch);
-        completion_handler = detail::allocate<Target>(allocator, std::forward<CompletionHandler>(ch)).release();
+        completion_handler = detail::allocate<Target>(allocator, static_cast<CompletionHandler&&>(ch)).release();
         complete_ = &detail::deallocate_and_invoke<Target, Args...>;
     }
 
@@ -91,7 +91,7 @@ class BasicTypeErasedCompletionHandler<void(Args...), VoidPointer>
     template <class... CompletionArgs>
     void complete(CompletionArgs&&... args) &&
     {
-        complete_(this->release_completion_handler(), std::forward<CompletionArgs>(args)...);
+        complete_(this->release_completion_handler(), static_cast<CompletionArgs&&>(args)...);
     }
 
   private:

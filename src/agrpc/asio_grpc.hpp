@@ -38,9 +38,11 @@
 #include <agrpc/grpc_executor.hpp>
 #include <agrpc/grpc_initiate.hpp>
 #include <agrpc/grpc_stream.hpp>
+#include <agrpc/high_level_client.hpp>
 #include <agrpc/repeatedly_request.hpp>
 #include <agrpc/repeatedly_request_context.hpp>
 #include <agrpc/rpc.hpp>
+#include <agrpc/rpc_type.hpp>
 #include <agrpc/run.hpp>
 #include <agrpc/test.hpp>
 #include <agrpc/use_awaitable.hpp>

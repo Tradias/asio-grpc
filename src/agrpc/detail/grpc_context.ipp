@@ -55,7 +55,7 @@ inline grpc::CompletionQueue* get_completion_queue(agrpc::GrpcContext& grpc_cont
 }  // namespace detail
 
 inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue>&& completion_queue)
-    : completion_queue(std::move(completion_queue))
+    : completion_queue(static_cast<std::unique_ptr<grpc::CompletionQueue>&&>(completion_queue))
 {
 }
 

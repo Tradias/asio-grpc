@@ -25,6 +25,11 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+template <class...>
+struct TypeList
+{
+};
+
 template <class T>
 struct RemoveCref
 {
@@ -143,18 +148,18 @@ class CompressedPair final : private Second
     CompressedPair() = default;
 
     template <class T, class U>
-    constexpr CompressedPair(T&& first, U&& second) : Second(std::forward<U>(second)), first_(std::forward<T>(first))
+    constexpr CompressedPair(T&& first, U&& second) : Second(static_cast<U&&>(second)), first_(static_cast<T&&>(first))
     {
     }
 
-    template <class T>
-    constexpr explicit CompressedPair(T&& first) : Second(), first_(std::forward<T>(first))
+    template <class T, class = std::enable_if_t<(!std::is_same_v<CompressedPair, detail::RemoveCrefT<T>>)>>
+    constexpr explicit CompressedPair(T&& first) : Second{}, first_(static_cast<T&&>(first))
     {
     }
 
     template <class U, class... Args>
     constexpr CompressedPair(detail::SecondThenVariadic, U&& second, Args&&... args)
-        : Second(std::forward<U>(second)), first_(std::forward<Args>(args)...)
+        : Second(static_cast<U&&>(second)), first_(static_cast<Args&&>(args)...)
     {
     }
 
@@ -177,18 +182,18 @@ class CompressedPair<First, Second, false> final
     CompressedPair() = default;
 
     template <class T, class U>
-    constexpr CompressedPair(T&& first, U&& second) : first_(std::forward<T>(first)), second_(std::forward<U>(second))
+    constexpr CompressedPair(T&& first, U&& second) : first_(static_cast<T&&>(first)), second_(static_cast<U&&>(second))
     {
     }
 
-    template <class T>
-    constexpr explicit CompressedPair(T&& first) : first_(std::forward<T>(first)), second_()
+    template <class T, class = std::enable_if_t<(!std::is_same_v<CompressedPair, detail::RemoveCrefT<T>>)>>
+    constexpr explicit CompressedPair(T&& first) : first_(static_cast<T&&>(first)), second_{}
     {
     }
 
     template <class U, class... Args>
     constexpr CompressedPair(detail::SecondThenVariadic, U&& second, Args&&... args)
-        : first_(std::forward<Args>(args)...), second_(std::forward<U>(second))
+        : first_(static_cast<Args&&>(args)...), second_(static_cast<U&&>(second))
     {
     }
 
@@ -205,6 +210,9 @@ class CompressedPair<First, Second, false> final
     Second second_;
 };
 
+template <class First, class Second>
+CompressedPair(First, Second) -> CompressedPair<First, Second>;
+
 struct InplaceWithFunction
 {
 };
@@ -214,13 +222,13 @@ class EmptyBaseOptimization : private T
 {
   public:
     template <class... Args>
-    constexpr explicit EmptyBaseOptimization(Args&&... args) : T(std::forward<Args>(args)...)
+    constexpr explicit EmptyBaseOptimization(Args&&... args) : T(static_cast<Args&&>(args)...)
     {
     }
 
     template <class Function>
     constexpr EmptyBaseOptimization(detail::InplaceWithFunction, Function&& function)
-        : T(std::forward<Function>(function)())
+        : T(static_cast<Function&&>(function)())
     {
     }
 
@@ -234,13 +242,13 @@ class EmptyBaseOptimization<T, false>
 {
   public:
     template <class... Args>
-    constexpr explicit EmptyBaseOptimization(Args&&... args) : value(std::forward<Args>(args)...)
+    constexpr explicit EmptyBaseOptimization(Args&&... args) : value(static_cast<Args&&>(args)...)
     {
     }
 
     template <class Function>
     constexpr EmptyBaseOptimization(detail::InplaceWithFunction, Function&& function)
-        : value(std::forward<Function>(function)())
+        : value(static_cast<Function&&>(function)())
     {
     }
 
@@ -256,10 +264,10 @@ template <class OnExit>
 class ScopeGuard
 {
   public:
-    constexpr explicit ScopeGuard(OnExit on_exit) : on_exit(std::move(on_exit)) {}
+    constexpr explicit ScopeGuard(OnExit on_exit) : on_exit(static_cast<OnExit&&>(on_exit)) {}
 
     template <class... Args>
-    constexpr explicit ScopeGuard(Args&&... args) : on_exit(std::forward<Args>(args)...)
+    constexpr explicit ScopeGuard(Args&&... args) : on_exit(static_cast<Args&&>(args)...)
     {
     }
 
@@ -287,13 +295,13 @@ template <class T>
 struct InplaceWithFunctionWrapper
 {
     template <class... Args>
-    constexpr explicit InplaceWithFunctionWrapper(Args&&... args) : value(std::forward<Args>(args)...)
+    constexpr explicit InplaceWithFunctionWrapper(Args&&... args) : value(static_cast<Args&&>(args)...)
     {
     }
 
     template <class Function>
     constexpr InplaceWithFunctionWrapper(detail::InplaceWithFunction, Function&& function)
-        : value(std::forward<Function>(function)())
+        : value(static_cast<Function&&>(function)())
     {
     }
 

@@ -11,6 +11,8 @@ Feature overview, installation, performance benchmark and getting started instru
 * Want to run RPCs asynchronously?
     * [RPC cheat sheet](md_doc_rpc_cheat_sheet.html)
     * `agrpc::finish`, `agrpc::finish_with_error`, `agrpc::read`, `agrpc::read_initial_metadata`, `agrpc::request`, `agrpc::repeatedly_request`, `agrpc::send_initial_metadata`, `agrpc::write`, `agrpc::write_and_finish`, `agrpc::write_last`, `agrpc::writes_done`
+* Looking for a convenient way to implement asynchronous gRPC clients?
+    * `agrpc::RPC`
 * Looking to wait for a `grpc::Alarm`?
     * `agrpc::wait`
 * Already using an `asio::io_context`?

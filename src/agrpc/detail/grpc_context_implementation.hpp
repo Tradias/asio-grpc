@@ -46,6 +46,16 @@ struct WorkFinishedOnExitFunctor
 
 using WorkFinishedOnExit = detail::ScopeGuard<detail::WorkFinishedOnExitFunctor>;
 
+struct StartWorkAndGuard : detail::WorkFinishedOnExit
+{
+    explicit StartWorkAndGuard(agrpc::GrpcContext& grpc_context) noexcept;
+
+    StartWorkAndGuard(const StartWorkAndGuard&) = delete;
+    StartWorkAndGuard(StartWorkAndGuard&&) = delete;
+    StartWorkAndGuard& operator=(const StartWorkAndGuard&) = delete;
+    StartWorkAndGuard& operator=(StartWorkAndGuard&&) = delete;
+};
+
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 struct GrpcContextThreadInfo : asio::detail::thread_info_base
 {

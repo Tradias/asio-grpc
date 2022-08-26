@@ -33,11 +33,17 @@ class MemoryResourceAllocator
 
     explicit MemoryResourceAllocator(Resource* resource) noexcept : resource(resource) {}
 
+    MemoryResourceAllocator(const MemoryResourceAllocator&) = default;
+
     template <class U>
     MemoryResourceAllocator(const detail::MemoryResourceAllocator<U, Resource>& other) noexcept
         : resource(other.resource)
     {
     }
+
+    MemoryResourceAllocator& operator=(const MemoryResourceAllocator& other) = delete;
+
+    MemoryResourceAllocator& operator=(MemoryResourceAllocator&& other) = delete;
 
     [[nodiscard]] T* allocate(std::size_t n)
     {

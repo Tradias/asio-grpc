@@ -64,7 +64,7 @@ struct WaitFn
     {
         return detail::grpc_initiate_impl(detail::GrpcInitiateTemplateArgs<detail::AlarmCancellationHandler>{},
                                           detail::AlarmInitFunction{alarm, deadline},
-                                          std::forward<CompletionToken>(token));
+                                          static_cast<CompletionToken&&>(token));
     }
 };
 }

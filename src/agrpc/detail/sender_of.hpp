@@ -23,8 +23,11 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+template <class Signature = void()>
+struct SenderOf;
+
 template <class... Values>
-struct SenderOf
+struct SenderOf<void(Values...)>
 {
     template <template <class...> class Variant, template <class...> class Tuple>
     using value_types = Variant<Tuple<Values...>>;

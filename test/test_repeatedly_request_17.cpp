@@ -18,8 +18,10 @@
 #include "utils/grpc_client_server_test.hpp"
 #include "utils/grpc_context_test.hpp"
 #include "utils/grpc_generic_client_server_test.hpp"
+#include "utils/io_context_test.hpp"
 #include "utils/protobuf.hpp"
 #include "utils/rpc.hpp"
+#include "utils/server_shutdown_initiator.hpp"
 
 #include <agrpc/repeatedly_request.hpp>
 #include <agrpc/rpc.hpp>
@@ -85,8 +87,6 @@ struct GenericRequestHandler
 
 TYPE_TO_STRING(GenericRequestHandler);
 
-DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
-{
 TEST_CASE_TEMPLATE("yield_context repeatedly_request unary", T, TypedRequestHandler, GenericRequestHandler)
 {
     typename T::Test test;
@@ -119,7 +119,7 @@ TEST_CASE_TEMPLATE("yield_context repeatedly_request unary", T, TypedRequestHand
     for (size_t i = 0; i < 3; ++i)
     {
         asio::spawn(test.grpc_context,
-                    [&](asio::yield_context yield)
+                    [&](const asio::yield_context& yield)
                     {
                         test::PerformUnarySuccessOptions options;
                         options.request_payload = request_send_count;
@@ -141,7 +141,7 @@ TEST_CASE_TEMPLATE("yield_context repeatedly_request unary", T, TypedRequestHand
     CHECK_EQ(0, completion_order[2]);
 }
 
-struct GrpcRepeatedlyRequestTest : test::GrpcClientServerTest
+struct GrpcRepeatedlyRequestTest : test::GrpcClientServerTest, test::IoContextTest
 {
     template <class RPC, class Service, class ServerFunction, class ClientFunction, class Allocator>
     auto test(RPC rpc, Service& service, ServerFunction server_function, ClientFunction client_function,
@@ -156,7 +156,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request c
 {
     bool is_shutdown{false};
     auto request_count{0};
-    std::optional<std::thread> server_shutdown_thread;
+    test::ServerShutdownInitiator server_shutdown{*server};
     this->test(
         &test::v1::Test::AsyncService::RequestClientStreaming, service,
         [&](grpc::ServerContext&, grpc::ServerAsyncReader<test::msg::Response, test::msg::Request>& reader,
@@ -175,20 +175,15 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "yield_context repeatedly_request c
             response.set_integer(21);
             CHECK(agrpc::finish(reader, response, grpc::Status::OK, yield));
         },
-        [&](asio::yield_context yield)
+        [&](const asio::yield_context& yield)
         {
             while (!is_shutdown)
             {
                 test::client_perform_client_streaming_success(*stub, yield);
             }
-            server_shutdown_thread.emplace(
-                [&]
-                {
-                    server->Shutdown();
-                });
+            server_shutdown.initiate();
         },
         get_allocator());
-    server_shutdown_thread->join();
     CHECK_EQ(4, request_count);
     CHECK(allocator_has_been_used());
 }
@@ -276,7 +271,6 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "repeatedly_request tracks work of 
     int order{};
     std::thread::id expected_thread_id{};
     std::thread::id actual_thread_id{};
-    asio::io_context io_context;
     agrpc::repeatedly_request(&test::v1::Test::AsyncService::RequestUnary, service,
                               asio::bind_executor(grpc_context, [&](auto&&) {}),
                               asio::bind_executor(asio::any_io_executor(io_context.get_executor()),
@@ -333,4 +327,3 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "repeatedly_request cancellation")
     CHECK_EQ(1, count);
 }
 #endif
-}

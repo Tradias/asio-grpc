@@ -16,9 +16,11 @@
 #include "utils/asio_forward.hpp"
 #include "utils/asio_utils.hpp"
 #include "utils/client_context.hpp"
+#include "utils/delete_guard.hpp"
 #include "utils/doctest.hpp"
 #include "utils/grpc_client_server_test.hpp"
 #include "utils/grpc_context_test.hpp"
+#include "utils/high_level_client.hpp"
 
 #include <agrpc/asio_grpc.hpp>
 
@@ -26,8 +28,6 @@
 #include <optional>
 #include <thread>
 
-DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
-{
 struct UnifexTest : virtual test::GrpcContextTest
 {
     template <class... Sender>
@@ -72,18 +72,22 @@ TEST_CASE("unifex asio-grpc fulfills unified executor concepts")
 TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::schedule")
 {
     bool is_invoked{false};
-    auto sender = unifex::schedule(get_executor());
+    test::DeleteGuard guard{};
+    const auto sender = unifex::schedule(get_executor());
     test::StatefulReceiverState state;
     test::FunctionAsStatefulReceiver receiver{[&]
                                               {
                                                   is_invoked = true;
                                               },
                                               state};
-    std::optional<unifex::connect_result_t<decltype(sender), decltype(receiver)>> operation_state;
     SUBCASE("connect")
     {
-        operation_state.emplace(unifex::connect(sender, receiver));
-        unifex::start(*operation_state);
+        auto& operation_state = guard.emplace_with(
+            [&]
+            {
+                return unifex::connect(sender, receiver);
+            });
+        unifex::start(operation_state);
     }
     SUBCASE("submit") { unifex::submit(sender, receiver); }
     CHECK_FALSE(is_invoked);
@@ -463,7 +467,8 @@ TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex::task unary")
                 test::FunctionAsReceiver receiver{[&, context = context](bool ok)
                                                   {
                                                       server_finish_ok = ok;
-                                                  }};
+                                                  },
+                                                  get_allocator()};
                 unifex::submit(agrpc::finish(context->writer, context->response, grpc::Status::OK, use_sender()),
                                std::move(receiver));
             }
@@ -485,6 +490,10 @@ TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex::task unary")
         }());
     CHECK(server_finish_ok);
     CHECK(client_finish_ok);
+    if (use_submit)
+    {
+        CHECK(allocator_has_been_used());
+    }
 }
 
 TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex repeatedly_request client streaming")
@@ -531,5 +540,39 @@ TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex repeatedly_request client stre
         }());
     CHECK_EQ(4, request_count);
 }
-#endif
+
+struct UnifexHighLevelTest : test::HighLevelClientTest<test::BidirectionalStreamingRPC>, UnifexTest
+{
+};
+
+TEST_CASE_FIXTURE(UnifexHighLevelTest, "unifex high-level client BidirectionalStreamingRPC success")
+{
+    run(
+        [&]() -> unifex::task<void>
+        {
+            CHECK(co_await test_server.request_rpc(use_sender()));
+            test_server.response.set_integer(1);
+            CHECK(co_await agrpc::read(test_server.responder, test_server.request, use_sender()));
+            CHECK_FALSE(co_await agrpc::read(test_server.responder, test_server.request, use_sender()));
+            CHECK_EQ(42, test_server.request.integer());
+            CHECK(co_await agrpc::write(test_server.responder, test_server.response, use_sender()));
+            CHECK(co_await agrpc::finish(test_server.responder, grpc::Status::OK, use_sender()));
+        }(),
+        [&]() -> unifex::task<void>
+        {
+            auto rpc = co_await test::BidirectionalStreamingRPC::request(grpc_context, *stub, client_context);
+            request.set_integer(42);
+            CHECK(co_await rpc.write(request));
+            CHECK(co_await rpc.writes_done());
+            CHECK(co_await rpc.read(response));
+            CHECK_EQ(1, response.integer());
+            CHECK(co_await rpc.writes_done());
+            CHECK_FALSE(co_await rpc.read(response));
+            CHECK_EQ(1, response.integer());
+            CHECK(co_await rpc.finish());
+            CHECK_EQ(grpc::StatusCode::OK, rpc.status_code());
+            CHECK(co_await rpc.finish());
+            CHECK_EQ(grpc::StatusCode::OK, rpc.status_code());
+        }());
 }
+#endif

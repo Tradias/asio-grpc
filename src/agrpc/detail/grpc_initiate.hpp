@@ -47,7 +47,9 @@ struct GrpcInitiateImplFn
                     CompletionToken token) const
     {
         return asio::async_initiate<CompletionToken, void(bool)>(
-            detail::GrpcInitiator<InitiatingFunction, StopFunction>{std::move(initiating_function)}, token);
+            detail::GrpcInitiator<InitiatingFunction, StopFunction>{
+                static_cast<InitiatingFunction&&>(initiating_function)},
+            token);
     }
 #endif
 
@@ -55,7 +57,8 @@ struct GrpcInitiateImplFn
     auto operator()(const detail::GrpcInitiateTemplateArgs<StopFunction>, InitiatingFunction initiating_function,
                     detail::UseSender token) const noexcept
     {
-        return detail::GrpcSender<InitiatingFunction, StopFunction>{token.grpc_context, std::move(initiating_function)};
+        return detail::BasicSenderAccess::create<detail::GrpcSenderImplementation<InitiatingFunction, StopFunction>>(
+            token.grpc_context, {static_cast<InitiatingFunction&&>(initiating_function)}, {});
     }
 };
 
@@ -65,8 +68,8 @@ template <class InitiatingFunction, class CompletionToken>
 auto grpc_initiate(InitiatingFunction&& initiating_function, CompletionToken&& token)
 {
     return detail::grpc_initiate_impl(detail::GrpcInitiateTemplateArgs<detail::Empty>{},
-                                      std::forward<InitiatingFunction>(initiating_function),
-                                      std::forward<CompletionToken>(token));
+                                      static_cast<InitiatingFunction&&>(initiating_function),
+                                      static_cast<CompletionToken&&>(token));
 }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
@@ -74,7 +77,9 @@ template <class Payload, class InitiatingFunction, class CompletionToken>
 auto grpc_initiate_with_payload(InitiatingFunction initiating_function, CompletionToken token)
 {
     return asio::async_initiate<CompletionToken, void(std::pair<Payload, bool>)>(
-        detail::GrpcWithPayloadInitiator<Payload, InitiatingFunction>{std::move(initiating_function)}, token);
+        detail::GrpcWithPayloadInitiator<Payload, InitiatingFunction>{
+            static_cast<InitiatingFunction&&>(initiating_function)},
+        token);
 }
 #endif
 

@@ -22,8 +22,6 @@
 
 #include <vector>
 
-DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
-{
 TEST_CASE(
     "AllocatorBinder can be constructed using allocator_traits<polymorphic_allocator>::construct with expected "
     "arguments")
@@ -50,4 +48,3 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_allocator with awaitable")
     CHECK(allocator_has_been_used());
 }
 #endif
-}

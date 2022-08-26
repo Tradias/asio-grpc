@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_ALLOCATE_OPERATION_HPP
 
 #include <agrpc/detail/allocate.hpp>
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
 #include <agrpc/detail/operation.hpp>
@@ -26,84 +27,70 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <bool IsIntrusivelyListable, class Signature, class CompletionHandler, class Allocator>
-detail::AllocatedPointerT<
-    detail::Operation<IsIntrusivelyListable, detail::RemoveCrefT<CompletionHandler>, Allocator, Signature>, Allocator>
-allocate_operation(CompletionHandler&& completion_handler, const Allocator& allocator)
+template <class T>
+inline constexpr bool IS_STD_ALLOCATOR = false;
+
+template <class T>
+inline constexpr bool IS_STD_ALLOCATOR<std::allocator<T>> = true;
+
+template <template <class> class OperationTemplate, class Operation, class... Args>
+auto allocate_operation(Operation&& operation, Args&&... args)
 
 {
-    using Operation =
-        detail::Operation<IsIntrusivelyListable, detail::RemoveCrefT<CompletionHandler>, Allocator, Signature>;
-    return detail::allocate<Operation>(allocator, allocator, std::forward<CompletionHandler>(completion_handler));
+    const auto allocator = detail::exec::get_allocator(operation);
+    return detail::allocate<OperationTemplate<detail::RemoveCrefT<Operation>>>(
+        allocator, static_cast<Operation&&>(operation), static_cast<Args&&>(args)...);
 }
 
-template <bool IsIntrusivelyListable, class Signature, class CompletionHandler, class Allocator>
-detail::AllocatedPointerT<
-    detail::Operation<IsIntrusivelyListable, detail::RemoveCrefT<CompletionHandler>, Allocator, Signature>, Allocator>
-allocate_local_operation(const agrpc::GrpcContext&, CompletionHandler&& completion_handler, const Allocator& allocator)
+template <class AllocationTraits, class Operation, class... Args>
+auto allocate_local_operation(agrpc::GrpcContext& grpc_context, Operation&& operation, Args&&... args)
 
 {
-    return detail::allocate_operation<IsIntrusivelyListable, Signature>(
-        std::forward<CompletionHandler>(completion_handler), allocator);
-}
-
-template <bool IsIntrusivelyListable, class Signature, class CompletionHandler, class T>
-detail::AllocatedPointerT<
-    detail::LocalOperation<IsIntrusivelyListable, detail::RemoveCrefT<CompletionHandler>, Signature>,
-    detail::GrpcContextLocalAllocator>
-allocate_local_operation(agrpc::GrpcContext& grpc_context, CompletionHandler&& completion_handler,
-                         const std::allocator<T>&)
-
-{
-    using Operation = detail::LocalOperation<IsIntrusivelyListable, detail::RemoveCrefT<CompletionHandler>, Signature>;
-    return detail::allocate<Operation>(grpc_context.get_allocator(),
-                                       std::forward<CompletionHandler>(completion_handler));
-}
-
-template <bool IsIntrusivelyListable, class Signature, class CompletionHandler, class OnLocalOperation,
-          class OnRemoteOperation, class Allocator>
-void allocate_operation_and_invoke(agrpc::GrpcContext& grpc_context, bool is_running_in_this_thread,
-                                   CompletionHandler&& completion_handler, OnLocalOperation& on_local_operation,
-                                   OnRemoteOperation& on_remote_operation, const Allocator& allocator)
-{
-    grpc_context.work_started();
-    detail::WorkFinishedOnExit on_exit{grpc_context};
-    if (is_running_in_this_thread)
+    using DecayedOperation = detail::RemoveCrefT<Operation>;
+    auto allocator = detail::exec::get_allocator(operation);
+    if constexpr (detail::IS_STD_ALLOCATOR<decltype(allocator)>)
     {
-        auto operation = detail::allocate_local_operation<IsIntrusivelyListable, Signature>(
-            grpc_context, std::forward<CompletionHandler>(completion_handler), allocator);
-        on_local_operation(grpc_context, operation.get());
-        operation.release();
+        return detail::allocate<typename AllocationTraits::template Local<DecayedOperation>>(
+            grpc_context.get_allocator(), static_cast<Operation&&>(operation), static_cast<Args&&>(args)...);
     }
     else
     {
-        auto operation = detail::allocate_operation<IsIntrusivelyListable, Signature>(
-            std::forward<CompletionHandler>(completion_handler), allocator);
-        on_remote_operation(grpc_context, operation.get());
-        operation.release();
+        return detail::allocate<typename AllocationTraits::template Custom<DecayedOperation>>(
+            allocator, static_cast<Operation&&>(operation), static_cast<Args&&>(args)...);
     }
-    on_exit.release();
 }
 
-struct GrpcContextAddLocalOperation
+template <class AllocationTraits, class OnOperation, class Operation, class... Args>
+void allocate_operation_and_invoke(agrpc::GrpcContext& grpc_context, OnOperation& on_operation, Operation&& operation,
+                                   Args&&... args)
 {
-    void operator()(agrpc::GrpcContext& grpc_context, detail::TypeErasedNoArgOperation* operation) const noexcept
+    if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
     {
-        detail::GrpcContextImplementation::add_local_operation(grpc_context, operation);
+        auto allocated_operation = detail::allocate_local_operation<AllocationTraits>(
+            grpc_context, static_cast<Operation&&>(operation), static_cast<Args&&>(args)...);
+        on_operation(grpc_context, allocated_operation.get());
+        allocated_operation.release();
     }
+    else
+    {
+        auto allocated_operation = detail::allocate_operation<AllocationTraits::template Custom>(
+            static_cast<Operation&&>(operation), static_cast<Args&&>(args)...);
+        on_operation(grpc_context, allocated_operation.get());
+        allocated_operation.release();
+    }
+}
+
+struct NoArgOperationAllocationTraits
+{
+    template <class Operation>
+    using Local = detail::LocalOperation<true, Operation, void()>;
+
+    template <class Operation>
+    using Custom = detail::Operation<true, Operation, void()>;
 };
 
-struct GrpcContextAddRemoteOperation
-{
-    void operator()(agrpc::GrpcContext& grpc_context, detail::TypeErasedNoArgOperation* operation) const noexcept
-    {
-        detail::GrpcContextImplementation::add_remote_operation(grpc_context, operation);
-    }
-};
-
-template <bool IsBlockingNever, class CompletionHandler, class Allocator>
-void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, CompletionHandler&& completion_handler,
-                                        const Allocator& allocator)
+template <bool IsBlockingNever, class Operation>
+void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Operation&& operation)
 {
     if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context))
     {
@@ -114,16 +101,25 @@ void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Comple
     {
         if (is_running_in_this_thread)
         {
-            auto ch{std::forward<CompletionHandler>(completion_handler)};
-            ch();
+            auto op{static_cast<Operation&&>(operation)};
+            std::move(op)();
             return;
         }
     }
-    detail::GrpcContextAddLocalOperation on_local_operation{};
-    detail::GrpcContextAddRemoteOperation on_remote_operation{};
-    detail::allocate_operation_and_invoke<true, void()>(grpc_context, is_running_in_this_thread,
-                                                        std::forward<CompletionHandler>(completion_handler),
-                                                        on_local_operation, on_remote_operation, allocator);
+    detail::StartWorkAndGuard guard{grpc_context};
+    if (is_running_in_this_thread)
+    {
+        auto allocated_operation = detail::allocate_local_operation<NoArgOperationAllocationTraits>(
+            grpc_context, static_cast<Operation&&>(operation));
+        detail::GrpcContextImplementation::add_local_operation(grpc_context, allocated_operation.release());
+    }
+    else
+    {
+        auto allocated_operation = detail::allocate_operation<NoArgOperationAllocationTraits::template Custom>(
+            static_cast<Operation&&>(operation));
+        detail::GrpcContextImplementation::add_remote_operation(grpc_context, allocated_operation.release());
+    }
+    guard.release();
 }
 }
 

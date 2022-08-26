@@ -23,6 +23,7 @@
 namespace grpc
 {
 class CompletionQueue;
+class ClientContext;
 }
 
 AGRPC_NAMESPACE_BEGIN()
@@ -35,15 +36,26 @@ class GrpcContext;
 template <class Executor>
 class BasicGrpcStream;
 
+struct UseSender;
+
 namespace detail
 {
-struct GrpcInitiateImplFn;
+struct BasicSenderAccess;
 
 class RepeatedlyRequestFn;
 
 struct RepeatedlyRequestContextAccess;
 
 class GenericRPCContext;
+
+template <class Responder, class Executor>
+class BasicRPCClientClientStreamingBase;
+
+template <class Responder, class Executor>
+class BasicRPCClientServerStreamingBase;
+
+template <class Responder, class Executor>
+class BasicRPCBidirectionalStreamingBase;
 
 template <class Allocator, std::uint32_t Options>
 grpc::CompletionQueue* get_completion_queue(const agrpc::BasicGrpcExecutor<Allocator, Options>&) noexcept;

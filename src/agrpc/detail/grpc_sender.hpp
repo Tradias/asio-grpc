@@ -15,144 +15,48 @@
 #ifndef AGRPC_DETAIL_GRPC_SENDER_HPP
 #define AGRPC_DETAIL_GRPC_SENDER_HPP
 
-#include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/basic_sender.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/forward.hpp>
-#include <agrpc/detail/grpc_context.hpp>
-#include <agrpc/detail/grpc_submit.hpp>
-#include <agrpc/detail/receiver.hpp>
-#include <agrpc/detail/sender_of.hpp>
-#include <agrpc/detail/type_erased_operation.hpp>
-#include <agrpc/detail/utility.hpp>
-#include <agrpc/grpc_context.hpp>
-
-#include <optional>
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class Receiver, class StopFunction>
-inline constexpr bool GRPC_SENDER_HAS_STOP_CALLBACK =
-    detail::IS_STOP_EVER_POSSIBLE_V<detail::exec::stop_token_type_t<Receiver&>>;
-
-template <class Receiver>
-inline constexpr bool GRPC_SENDER_HAS_STOP_CALLBACK<Receiver, detail::Empty> = false;
-
-template <class InitiatingFunction, class StopFunction = detail::Empty>
-class GrpcSender : public detail::SenderOf<bool>
+struct GrpcSenderImplementationBase
 {
-  private:
-    template <class Receiver>
-    class Operation : private detail::TypeErasedGrpcTagOperation
+    static constexpr auto TYPE = detail::SenderImplementationType::GRPC_TAG;
+
+    using Signature = void(bool);
+    using StopFunction = detail::Empty;
+};
+
+template <class InitiatingFunction, class StopFunctionT>
+struct GrpcSenderImplementation : detail::GrpcSenderImplementationBase
+{
+    using StopFunction = StopFunctionT;
+
+    struct Initiation
     {
-      private:
-        static constexpr bool HAS_STOP_CALLBACK = detail::GRPC_SENDER_HAS_STOP_CALLBACK<Receiver, StopFunction>;
+        auto create_stop_function() const noexcept { return StopFunction{initiating_function}; }
 
-        using StopCallbackLifetime =
-            detail::ConditionalT<HAS_STOP_CALLBACK, std::optional<detail::StopCallbackTypeT<Receiver&, StopFunction>>,
-                                 detail::Empty>;
-
-      public:
-        template <class Receiver2>
-        Operation(const GrpcSender& sender, Receiver2&& receiver)
-            : detail::TypeErasedGrpcTagOperation(&Operation::on_complete),
-              impl(sender.grpc_context, std::forward<Receiver2>(receiver)),
-              functions(sender.initiating_function)
-        {
-        }
-
-        void start() noexcept
-        {
-            if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(this->grpc_context()))
-            {
-                detail::exec::set_done(std::move(this->receiver()));
-                return;
-            }
-            auto stop_token = detail::exec::get_stop_token(this->receiver());
-            if (stop_token.stop_requested())
-            {
-                detail::exec::set_done(std::move(this->receiver()));
-                return;
-            }
-            if constexpr (HAS_STOP_CALLBACK)
-            {
-                this->stop_callback().emplace(std::move(stop_token), StopFunction{this->initiating_function()});
-            }
-            this->grpc_context().work_started();
-            detail::WorkFinishedOnExit on_exit{this->grpc_context()};
-            this->initiating_function()(this->grpc_context(), this);
-            on_exit.release();
-        }
-
-      private:
-        static void on_complete(detail::TypeErasedGrpcTagOperation* op, detail::InvokeHandler invoke_handler, bool ok,
-                                detail::GrpcContextLocalAllocator) noexcept
-        {
-            auto& self = *static_cast<Operation*>(op);
-            if constexpr (HAS_STOP_CALLBACK)
-            {
-                self.stop_callback().reset();
-            }
-            if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
-            {
-                detail::satisfy_receiver(std::move(self.receiver()), ok);
-            }
-            else
-            {
-                detail::exec::set_done(std::move(self.receiver()));
-            }
-        }
-
-        agrpc::GrpcContext& grpc_context() noexcept { return impl.first(); }
-
-        Receiver& receiver() noexcept { return impl.second(); }
-
-        InitiatingFunction& initiating_function() noexcept { return functions.first(); }
-
-        StopCallbackLifetime& stop_callback() noexcept { return functions.second(); }
-
-        detail::CompressedPair<agrpc::GrpcContext&, Receiver> impl;
-        detail::CompressedPair<InitiatingFunction, StopCallbackLifetime> functions;
+        InitiatingFunction initiating_function;
     };
 
-  public:
-    template <class Receiver>
-    auto connect(Receiver&& receiver) const noexcept(detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver>)
-        -> Operation<detail::RemoveCrefT<Receiver>>
+    template <class OnDone>
+    void initiate(agrpc::GrpcContext& grpc_context, OnDone on_done) const
     {
-        return {*this, std::forward<Receiver>(receiver)};
+        on_done->initiating_function(grpc_context, on_done.self());
     }
 
-    template <class Receiver>
-    void submit(Receiver&& receiver) const
+    template <class OnDone>
+    void done(OnDone on_done, bool ok) const
     {
-        if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(this->grpc_context))
-        {
-            detail::exec::set_done(std::forward<Receiver>(receiver));
-            return;
-        }
-        auto allocator = detail::exec::get_allocator(receiver);
-        detail::grpc_submit(
-            this->grpc_context, this->initiating_function,
-            [receiver = std::forward<Receiver>(receiver)](bool ok) mutable
-            {
-                detail::satisfy_receiver(std::move(receiver), ok);
-            },
-            allocator);
+        on_done(ok);
     }
-
-  private:
-    explicit GrpcSender(agrpc::GrpcContext& grpc_context, InitiatingFunction initiating_function) noexcept
-        : grpc_context(grpc_context), initiating_function(std::move(initiating_function))
-    {
-    }
-
-    friend detail::GrpcInitiateImplFn;
-
-    agrpc::GrpcContext& grpc_context;
-    InitiatingFunction initiating_function;
 };
+
+template <class InitiatingFunction, class StopFunction = detail::Empty>
+using GrpcSender = detail::BasicSender<detail::GrpcSenderImplementation<InitiatingFunction, StopFunction>>;
 }
 
 AGRPC_NAMESPACE_END

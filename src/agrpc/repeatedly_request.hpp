@@ -93,14 +93,14 @@ class RepeatedlyRequestFn
                                                             typename RPCContext::Signature>)
         {
             return asio::async_initiate<CompletionToken, void()>(detail::RepeatedlyRequestAwaitableInitiator{}, token,
-                                                                 std::forward<RequestHandler>(request_handler), rpc,
+                                                                 static_cast<RequestHandler&&>(request_handler), rpc,
                                                                  service);
         }
         else
 #endif
         {
             return asio::async_initiate<CompletionToken, void()>(detail::RepeatedlyRequestInitiator{}, token,
-                                                                 std::forward<RequestHandler>(request_handler), rpc,
+                                                                 static_cast<RequestHandler&&>(request_handler), rpc,
                                                                  service);
         }
     }
@@ -110,7 +110,7 @@ class RepeatedlyRequestFn
     static detail::RepeatedlyRequestSender<RPC, detail::RemoveCrefT<RequestHandler>> impl(
         RPC rpc, detail::GetServiceT<RPC>& service, RequestHandler&& request_handler, detail::UseSender token)
     {
-        return {token.grpc_context, rpc, service, std::forward<RequestHandler>(request_handler)};
+        return {token.grpc_context, rpc, service, static_cast<RequestHandler&&>(request_handler)};
     }
 
   public:
@@ -121,8 +121,8 @@ class RepeatedlyRequestFn
     auto operator()(RPC rpc, detail::GetServiceT<RPC>& service, RequestHandler&& request_handler,
                     CompletionToken&& token = {}) const
     {
-        return RepeatedlyRequestFn::impl(rpc, service, std::forward<RequestHandler>(request_handler),
-                                         std::forward<CompletionToken>(token));
+        return RepeatedlyRequestFn::impl(rpc, service, static_cast<RequestHandler&&>(request_handler),
+                                         static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -133,8 +133,8 @@ class RepeatedlyRequestFn
                     CompletionToken&& token = {}) const
     {
         return RepeatedlyRequestFn::impl(detail::GenericRPCMarker{}, service,
-                                         std::forward<RequestHandler>(request_handler),
-                                         std::forward<CompletionToken>(token));
+                                         static_cast<RequestHandler&&>(request_handler),
+                                         static_cast<CompletionToken&&>(token));
     }
 };
 }  // namespace detail

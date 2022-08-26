@@ -21,10 +21,10 @@
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 
 #include <agrpc/detail/memory_resource.hpp>
+#include <agrpc/detail/tuple.hpp>
 #include <agrpc/detail/utility.hpp>
 
 #include <memory>
-#include <tuple>
 #include <utility>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -81,7 +81,7 @@ class WorkTrackingCompletionHandler : private detail::EmptyBaseOptimization<Comp
   public:
     template <class Ch>
     explicit WorkTrackingCompletionHandler(Ch&& ch)
-        : CompletionHandlerBase(std::forward<Ch>(ch)), WorkTrackerBase(this->completion_handler())
+        : CompletionHandlerBase(static_cast<Ch&&>(ch)), WorkTrackerBase(this->completion_handler())
     {
     }
 
@@ -95,11 +95,12 @@ class WorkTrackingCompletionHandler : private detail::EmptyBaseOptimization<Comp
         auto& ch = this->completion_handler();
         auto executor = asio::prefer(asio::get_associated_executor(ch), asio::execution::blocking_t::possibly,
                                      asio::execution::allocator(asio::get_associated_allocator(ch)));
-        asio::execution::execute(std::move(executor),
-                                 [ch = std::move(ch), args = std::make_tuple(std::forward<Args>(args)...)]() mutable
-                                 {
-                                     std::apply(std::move(ch), std::move(args));
-                                 });
+        asio::execution::execute(
+            std::move(executor),
+            [ch = static_cast<CompletionHandler&&>(ch), args = detail::Tuple{static_cast<Args&&>(args)...}]() mutable
+            {
+                detail::apply(static_cast<CompletionHandler&&>(ch), std::move(args));
+            });
     }
 
     [[nodiscard]] executor_type get_executor() const noexcept

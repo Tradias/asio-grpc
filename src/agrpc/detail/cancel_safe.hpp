@@ -17,11 +17,10 @@
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/tuple.hpp>
 #include <agrpc/detail/type_erased_completion_handler.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/detail/work_tracking_completion_handler.hpp>
-
-#include <tuple>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -48,38 +47,39 @@ using PrependErrorCodeToSignatureT = typename detail::PrependErrorCodeToSignatur
 template <class CompletionHandler, class... Args>
 void complete_successfully(CompletionHandler&& handler, detail::ErrorCode ec, Args&&... args)
 {
-    std::forward<CompletionHandler>(handler).complete(ec, std::forward<Args>(args)...);
+    static_cast<CompletionHandler&&>(handler).complete(ec, static_cast<Args&&>(args)...);
 }
 
 template <class CompletionHandler, class... Args>
 void complete_successfully(CompletionHandler&& handler, Args&&... args)
 {
-    std::forward<CompletionHandler>(handler).complete(detail::ErrorCode{}, std::forward<Args>(args)...);
+    static_cast<CompletionHandler&&>(handler).complete(detail::ErrorCode{}, static_cast<Args&&>(args)...);
 }
 
 template <class CompletionHandler, class... Args>
-void invoke_successfully_from_tuple(CompletionHandler&& handler, std::tuple<detail::ErrorCode, Args...>&& args)
+void invoke_successfully_from_tuple(CompletionHandler&& handler, detail::Tuple<detail::ErrorCode, Args...>&& args)
 {
-    std::apply(std::forward<CompletionHandler>(handler), std::move(args));
+    detail::apply(static_cast<CompletionHandler&&>(handler),
+                  static_cast<detail::Tuple<detail::ErrorCode, Args...>&&>(args));
 }
 
 template <class CompletionHandler, class... Args>
-void invoke_successfully_from_tuple(CompletionHandler&& handler, std::tuple<Args...>&& args)
+void invoke_successfully_from_tuple(CompletionHandler&& handler, detail::Tuple<Args...>&& args)
 {
-    std::apply(std::forward<CompletionHandler>(handler),
-               std::tuple_cat(std::forward_as_tuple(detail::ErrorCode{}), std::move(args)));
+    detail::apply(static_cast<CompletionHandler&&>(handler),
+                  detail::prepend_to_tuple(detail::ErrorCode{}, static_cast<detail::Tuple<Args...>&&>(args)));
 }
 
 template <class CompletionHandler, class... Args>
 void complete_operation_aborted(CompletionHandler&& handler, detail::ErrorCode, Args&&... args)
 {
-    std::forward<CompletionHandler>(handler).complete(asio::error::operation_aborted, std::forward<Args>(args)...);
+    static_cast<CompletionHandler&&>(handler).complete(asio::error::operation_aborted, static_cast<Args&&>(args)...);
 }
 
 template <class CompletionHandler, class... Args>
 void complete_operation_aborted(CompletionHandler&& handler, Args&&... args)
 {
-    std::forward<CompletionHandler>(handler).complete(asio::error::operation_aborted, std::forward<Args>(args)...);
+    static_cast<CompletionHandler&&>(handler).complete(asio::error::operation_aborted, static_cast<Args&&>(args)...);
 }
 }
 

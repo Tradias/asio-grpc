@@ -94,14 +94,13 @@ class RepeatedlyRequestContext
     [[nodiscard]] decltype(auto) responder() const noexcept { return impl->responder(); }
 
   private:
+    using Impl = detail::AllocatedPointer<ImplementationAllocator>;
+
     friend detail::RepeatedlyRequestContextAccess;
 
-    detail::AllocatedPointer<ImplementationAllocator> impl;
+    Impl impl;
 
-    explicit RepeatedlyRequestContext(detail::AllocatedPointer<ImplementationAllocator>&& impl) noexcept
-        : impl(std::move(impl))
-    {
-    }
+    explicit RepeatedlyRequestContext(Impl&& impl) noexcept : impl(static_cast<Impl&&>(impl)) {}
 };
 
 /**

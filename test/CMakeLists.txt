@@ -74,31 +74,27 @@ set(ASIO_GRPC_CPP17_TEST_SOURCE_FILES
     "test_run_17.cpp"
     "test_generic_rpc_17.cpp"
     "test_grpc_stream_17.cpp"
-    "test_test_17.cpp")
+    "test_test_17.cpp"
+    "test_high_level_client_17.cpp")
 set(ASIO_GRPC_CPP20_TEST_SOURCE_FILES "test_asio_grpc_20.cpp" "test_repeatedly_request_20.cpp"
                                       "test_bind_allocator_20.cpp" "test_grpc_context_20.cpp" "test_grpc_stream_20.cpp")
 
 asio_grpc_add_test(asio-grpc-test-boost-cpp17 "BOOST_ASIO" "17" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES})
-target_compile_definitions(asio-grpc-test-boost-cpp17 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"Boost.Asio C++17\"")
 target_link_libraries(asio-grpc-test-boost-cpp17 PRIVATE Boost::coroutine Boost::thread)
 
 asio_grpc_add_test(asio-grpc-test-cpp17 "STANDALONE_ASIO" "17" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES})
-target_compile_definitions(asio-grpc-test-cpp17 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"Standalone Asio C++17\"")
 target_link_libraries(asio-grpc-test-cpp17 PRIVATE Boost::coroutine Boost::thread)
 
 if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
     asio_grpc_add_test(asio-grpc-test-boost-cpp20 "BOOST_ASIO" "20" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES}
                        ${ASIO_GRPC_CPP20_TEST_SOURCE_FILES})
-    target_compile_definitions(asio-grpc-test-boost-cpp20 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"Boost.Asio C++20\"")
     target_link_libraries(asio-grpc-test-boost-cpp20 PRIVATE Boost::coroutine Boost::thread)
 
     asio_grpc_add_test(asio-grpc-test-cpp20 "STANDALONE_ASIO" "20" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES}
                        ${ASIO_GRPC_CPP20_TEST_SOURCE_FILES})
-    target_compile_definitions(asio-grpc-test-cpp20 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"Standalone Asio C++20\"")
     target_link_libraries(asio-grpc-test-cpp20 PRIVATE Boost::coroutine Boost::thread)
 
     asio_grpc_add_test(asio-grpc-test-unifex-cpp20 "UNIFEX" "20" "test_unifex_20.cpp")
-    target_compile_definitions(asio-grpc-test-unifex-cpp20 PRIVATE "ASIO_GRPC_TEST_CPP_VERSION=\"unifex C++20\"")
 endif()
 
 unset(ASIO_GRPC_CPP17_TEST_SOURCE_FILES)
@@ -125,7 +121,8 @@ if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPL
         asio-grpc-example-generic-client
         asio-grpc-example-generic-server
         asio-grpc-example-multi-threaded-client
-        asio-grpc-example-multi-threaded-server)
+        asio-grpc-example-multi-threaded-server
+        asio-grpc-example-high-level-client)
 
     set(ASIO_GRPC_TEMP_DIR "${CMAKE_CURRENT_BINARY_DIR}/temp")
     make_directory("${ASIO_GRPC_TEMP_DIR}")
@@ -144,7 +141,8 @@ if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPL
                 "ASIO_GRPC_EXAMPLE_GENERIC_CLIENT=\"$<TARGET_FILE:asio-grpc-example-generic-client>\""
                 "ASIO_GRPC_EXAMPLE_GENERIC_SERVER=\"$<TARGET_FILE:asio-grpc-example-generic-server>\""
                 "ASIO_GRPC_EXAMPLE_MULTI_THREADED_CLIENT=\"$<TARGET_FILE:asio-grpc-example-multi-threaded-client>\""
-                "ASIO_GRPC_EXAMPLE_MULTI_THREADED_SERVER=\"$<TARGET_FILE:asio-grpc-example-multi-threaded-server>\"")
+                "ASIO_GRPC_EXAMPLE_MULTI_THREADED_SERVER=\"$<TARGET_FILE:asio-grpc-example-multi-threaded-server>\""
+                "ASIO_GRPC_EXAMPLE_HIGH_LEVEL_CLIENT=\"$<TARGET_FILE:asio-grpc-example-high-level-client>\"")
 
     if(ASIO_GRPC_ENABLE_IO_URING_EXAMPLES OR ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
         add_dependencies(asio-grpc-test-examples asio-grpc-example-file-transfer-client

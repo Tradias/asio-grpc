@@ -33,8 +33,6 @@
 TYPE_TO_STRING(test::v1::Test::Stub);
 TYPE_TO_STRING(test::v1::Test::StubInterface);
 
-DOCTEST_TEST_SUITE(ASIO_GRPC_TEST_CPP_VERSION)
-{
 TEST_CASE("agrpc::request and agrpc::wait are noexcept for use_sender")
 {
     using UseSender = decltype(agrpc::use_sender(std::declval<agrpc::GrpcContext&>()));
@@ -237,7 +235,7 @@ TEST_CASE_TEMPLATE("yield_context server streaming", Stub, test::v1::Test::Stub,
     SUBCASE("client use convenience") { use_client_convenience = true; }
     test::spawn_and_run(
         test.grpc_context,
-        [&](asio::yield_context yield)
+        [&](const asio::yield_context& yield)
         {
             test::msg::Request request;
             grpc::ServerAsyncWriter<test::msg::Response> writer{&test.server_context};
@@ -266,7 +264,7 @@ TEST_CASE_TEMPLATE("yield_context server streaming", Stub, test::v1::Test::Stub,
                 CHECK(agrpc::finish(writer_ref, grpc::Status::OK, yield));
             }
         },
-        [&](asio::yield_context yield)
+        [&](const asio::yield_context& yield)
         {
             test::msg::Request request;
             request.set_integer(42);
@@ -307,7 +305,7 @@ TEST_CASE_TEMPLATE("yield_context client streaming", Stub, test::v1::Test::Stub,
     SUBCASE("server finish_with_error") { use_finish_with_error = true; }
     test::spawn_and_run(
         test.grpc_context,
-        [&](asio::yield_context yield)
+        [&](const asio::yield_context& yield)
         {
             grpc::ServerAsyncReader<test::msg::Response, test::msg::Request> reader{&test.server_context};
             CHECK(agrpc::request(&test::v1::Test::AsyncService::RequestClientStreaming, test.service,
@@ -331,7 +329,7 @@ TEST_CASE_TEMPLATE("yield_context client streaming", Stub, test::v1::Test::Stub,
                 CHECK(agrpc::finish(reader_ref, response, grpc::Status::OK, yield));
             }
         },
-        [&](asio::yield_context yield)
+        [&](const asio::yield_context& yield)
         {
             test::msg::Response response;
             auto [writer, ok] = [&]
@@ -359,7 +357,7 @@ TEST_CASE_TEMPLATE("yield_context unary", Stub, test::v1::Test::Stub, test::v1::
     SUBCASE("server finish with OK") {}
     test::spawn_and_run(
         test.grpc_context,
-        [&](asio::yield_context yield)
+        [&](const asio::yield_context& yield)
         {
             test::msg::Request request;
             grpc::ServerAsyncResponseWriter<test::msg::Response> writer{&test.server_context};
@@ -378,7 +376,7 @@ TEST_CASE_TEMPLATE("yield_context unary", Stub, test::v1::Test::Stub, test::v1::
                 CHECK(agrpc::finish(writer, response, grpc::Status::OK, yield));
             }
         },
-        [&](asio::yield_context yield)
+        [&](const asio::yield_context& yield)
         {
             test::client_perform_unary_success(test.grpc_context, test_stub, yield, {use_finish_with_error});
         });
@@ -401,7 +399,7 @@ TEST_CASE_TEMPLATE("yield_context bidirectional streaming", Stub, test::v1::Test
     SUBCASE("client set initial metadata corked") { set_initial_metadata_corked = true; }
     test::spawn_and_run(
         test.grpc_context,
-        [&](asio::yield_context yield)
+        [&](const asio::yield_context& yield)
         {
             grpc::ServerAsyncReaderWriter<test::msg::Response, test::msg::Request> reader_writer{&test.server_context};
             CHECK(agrpc::request(&test::v1::Test::AsyncService::RequestBidirectionalStreaming, test.service,
@@ -433,7 +431,7 @@ TEST_CASE_TEMPLATE("yield_context bidirectional streaming", Stub, test::v1::Test
                 CHECK(agrpc::finish(reader_writer_ref, status, yield));
             }
         },
-        [&](asio::yield_context yield)
+        [&](const asio::yield_context& yield)
         {
             auto [reader_writer, ok] = [&]
             {
@@ -494,20 +492,28 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "agrpc::wait correctly unbinds exe
     grpc::Alarm alarm;
     std::size_t bytes_allocated{};
     test::CountingAllocator<std::byte> allocator{bytes_allocated};
+    auto test = [&](auto token)
+    {
+        agrpc::wait(alarm, test::ten_milliseconds_from_now(), token);
+        grpc_context.run();
+        auto expected = sizeof(void*) * 4;
+        CHECK_LT(expected, sizeof(token));
+        CHECK_GE(expected, bytes_allocated);
+    };
 #ifdef AGRPC_ASIO_HAS_BIND_ALLOCATOR
-    auto token = asio::bind_allocator(
-        allocator,
-        agrpc::bind_allocator(allocator,
-                              asio::bind_executor(asio::any_io_executor{grpc_context.get_executor()}, [](auto&&) {})));
-#else
-    auto token = agrpc::bind_allocator(
-        allocator, asio::bind_executor(asio::any_io_executor{grpc_context.get_executor()}, [](auto&&) {}));
+    SUBCASE("asio::bind_allocator")
+    {
+        test(asio::bind_allocator(
+            allocator, asio::bind_executor(asio::any_io_executor{grpc_context.get_executor()}, [](auto&&) {})));
+    }
+    SUBCASE("agrpc::bind_allocator")
+    {
 #endif
-    agrpc::wait(alarm, test::ten_milliseconds_from_now(), token);
-    grpc_context.run();
-    auto expected = sizeof(void*) * 4;
-    CHECK_LT(expected, sizeof(token));
-    CHECK_GE(expected, bytes_allocated);
+        test(agrpc::bind_allocator(
+            allocator, asio::bind_executor(asio::any_io_executor{grpc_context.get_executor()}, [](auto&&) {})));
+#ifdef AGRPC_ASIO_HAS_BIND_ALLOCATOR
+    }
+#endif
 }
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest,
@@ -541,7 +547,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "RPC step after grpc_context stop"
 {
     std::optional<bool> ok;
     test::spawn_and_run(grpc_context,
-                        [&](asio::yield_context yield)
+                        [&](const asio::yield_context& yield)
                         {
                             grpc_context.stop();
                             test::msg::Request request;
@@ -689,4 +695,3 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with parallel_group
     CHECK_FALSE(ok);
 }
 #endif
-}

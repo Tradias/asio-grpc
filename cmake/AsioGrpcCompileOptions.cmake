@@ -17,10 +17,17 @@ add_library(asio-grpc-compile-options INTERFACE)
 
 if(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS)
     target_compile_options(
-        asio-grpc-compile-options INTERFACE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fsanitize=undefined,leak
-                                            -fno-omit-frame-pointer> $<$<CXX_COMPILER_ID:MSVC>:/fsanitize=address>)
+        asio-grpc-compile-options
+        INTERFACE
+            $<$<OR:$<CXX_COMPILER_ID:GNU,AppleClang>,$<STREQUAL:${CMAKE_CXX_COMPILER_FRONTEND_VARIANT},GNU>>:-fsanitize=undefined,address
+            -fno-omit-frame-pointer>
+            $<$<OR:$<CXX_COMPILER_ID:MSVC>,$<STREQUAL:${CMAKE_CXX_COMPILER_FRONTEND_VARIANT},MSVC>>:/fsanitize=address>)
 
-    target_link_options(asio-grpc-compile-options INTERFACE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fsanitize=undefined,leak>)
+    target_link_options(
+        asio-grpc-compile-options
+        INTERFACE
+        $<$<OR:$<CXX_COMPILER_ID:GNU,AppleClang>,$<STREQUAL:${CMAKE_CXX_COMPILER_FRONTEND_VARIANT},GNU>>:-fsanitize=undefined,address>
+    )
 
     target_compile_definitions(asio-grpc-compile-options INTERFACE GRPC_ASAN_SUPPRESSED GRPC_TSAN_SUPPRESSED)
 endif()
@@ -28,20 +35,23 @@ endif()
 target_compile_options(
     asio-grpc-compile-options
     INTERFACE # suppress warning for deprecated declarations
-              $<$<CXX_COMPILER_ID:MSVC>:/W4
+              $<$<OR:$<CXX_COMPILER_ID:MSVC>,$<STREQUAL:${CMAKE_CXX_COMPILER_FRONTEND_VARIANT},MSVC>>:
+              /W4
               /wd4996
               /permissive-
-              /Zc:preprocessor
               /Zc:__cplusplus
               /Zc:inline
+              /Zc:sizedDealloc>
+              $<$<CXX_COMPILER_ID:MSVC>:
+              /Zc:preprocessor
               /Zc:externConstexpr
               /Zc:lambda
-              /Zc:sizedDealloc
               /Zc:throwingNew>
-              $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall
+              $<$<OR:$<CXX_COMPILER_ID:GNU,AppleClang>,$<STREQUAL:${CMAKE_CXX_COMPILER_FRONTEND_VARIANT},GNU>>:
+              -Wall
               -Wextra
-              -pedantic-errors
-              -Wno-deprecated-declarations>
+              -Wno-deprecated-declarations
+              -pedantic-errors>
               $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-self-move>)
 
 if("${CMAKE_GENERATOR}" STRGREATER_EQUAL "Visual Studio")
