@@ -14,11 +14,8 @@
 
 #include "utils/server_shutdown_initiator.hpp"
 
-#include <grpcpp/server.h>
-
 namespace test
 {
-
 ServerShutdownInitiator::ServerShutdownInitiator(grpc::Server& server) : server(server) {}
 
 void ServerShutdownInitiator::initiate()

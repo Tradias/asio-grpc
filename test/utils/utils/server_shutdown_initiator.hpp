@@ -17,6 +17,8 @@
 
 #include <grpcpp/server.h>
 
+#include <thread>
+
 namespace test
 {
 struct ServerShutdownInitiator
