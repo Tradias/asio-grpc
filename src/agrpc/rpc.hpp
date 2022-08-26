@@ -953,6 +953,10 @@ struct WriteLastFn
      * gRPC does not take ownership or a reference to the message, so it is safe to
      * to deallocate once `write_last` returns.
      *
+     * @attention For server-side RPCs this function does not complete until `finish` is called unless the
+     * initial metadata has already been send to the client, e.g. by an earlier call to `write` or
+     * `send_initial_metadata`.
+     *
      * Example server-side server-streaming:
      *
      * @snippet server.cpp write_last-server-streaming-server-side
