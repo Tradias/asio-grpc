@@ -2,18 +2,23 @@
 
 @tableofcontents
 
-This API has not been implemented yet.
+The client-side of this API is available since 2.1.0, see `agrpc::RPC`.
 
-Considerations:
+Considerations that went into the design of the API:
 
-* Decent default allocation strategy, especially for users of coroutines
-* Support `googe::protobuf::Arena`
-* Automatic cancellation on destruction without prior call to finish
+* Support `googe::protobuf::Arena`, either implicitly or explicitly
+* Automatic cancellation on destruction if the RPC isn't finished
 * Compose with `agrpc::CancelSafe`
 * Compose with async coroutine generators like `asio::experimental::coroutine` and `std::generator`
 * Support sender/receiver
+* Decent default allocation strategy, especially for users of coroutines
 
 # Proposal 1
+
+The original client-side proposal.
+
+<details><summary><b>Description</b></summary>
+<p>
 
 ## Client-side unary
 
@@ -338,9 +343,15 @@ if (status = co_await streaming.finish(asio::use_awaitable); !status.ok()) {
 }
 ```
 
+</p>
+</details>
+
 # Proposal 2
 
-Prevents the user from interacting with unstarted RPCs and therefore avoids the need for `grpc::Status::FAILED_PRECONDITION`.
+Updated proposal that prevents users from interacting with unstarted RPCs and therefore avoids the need for `grpc::Status::FAILED_PRECONDITION`.
+
+<details><summary><b>Description</b></summary>
+<p>
 
 ## Client-side server-streaming
 
@@ -436,6 +447,9 @@ if (!status.ok()) {
   // agrpc::read returned false and agrpc::finish produced non-ok status
 }
 ```
+
+</p>
+</details>
 
 # References
 
