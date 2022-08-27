@@ -31,13 +31,13 @@ asio::co_spawn(
     grpc_context,
     [&]() -> asio::awaitable<void>
     {
+        using RPC = agrpc::RPC<&helloworld::Greeter::Stub::PrepareAsyncSayHello>;
         grpc::ClientContext client_context;
         helloworld::HelloRequest request;
         request.set_name("world");
-        const auto reader =
-            agrpc::request(&helloworld::Greeter::Stub::AsyncSayHello, stub, client_context, request, grpc_context);
         helloworld::HelloReply response;
-        co_await agrpc::finish(reader, response, status, asio::use_awaitable);
+        status = co_await RPC::request(grpc_context, stub, client_context, request, response, asio::use_awaitable);
+        std::cout << status.ok() << " response: " << response.message() << std::endl;
     },
     asio::detached);
 
