@@ -17,13 +17,16 @@
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/repeatedly_request.hpp>
 #include <agrpc/detail/repeatedly_request_sender.hpp>
 #include <agrpc/detail/rpc.hpp>
 #include <agrpc/detail/rpc_context.hpp>
 #include <agrpc/detail/use_sender.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/repeatedly_request_context.hpp>
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+#include <agrpc/detail/repeatedly_request.hpp>
+#endif
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -92,7 +95,7 @@ class RepeatedlyRequestFn
         if constexpr (detail::INVOKE_RESULT_IS_CO_SPAWNABLE<detail::RemoveCrefT<RequestHandler>&,
                                                             typename RPCContext::Signature>)
         {
-            return asio::async_initiate<CompletionToken, void()>(detail::RepeatedlyRequestAwaitableInitiator{}, token,
+            return asio::async_initiate<CompletionToken, void()>(detail::RepeatedlyRequestCoroutineInitiator{}, token,
                                                                  static_cast<RequestHandler&&>(request_handler), rpc,
                                                                  service);
         }

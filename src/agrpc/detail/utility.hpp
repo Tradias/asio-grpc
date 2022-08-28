@@ -286,6 +286,12 @@ class ScopeGuard
 
     constexpr void release() noexcept { is_armed = false; }
 
+    constexpr void fire() noexcept
+    {
+        this->release();
+        on_exit();
+    }
+
   private:
     OnExit on_exit;
     bool is_armed{true};

@@ -61,6 +61,18 @@ auto& unwrap_unique_ptr(const std::unique_ptr<T>& t) noexcept
 {
     return *t;
 }
+
+template <class T, class... Args>
+T* construct_at(T* p, Args&&... args)
+{
+    return ::new (const_cast<void*>(static_cast<const void*>(p))) T(static_cast<Args&&>(args)...);
+}
+
+template <class T>
+constexpr void destruct(void* p)
+{
+    static_cast<T*>(p)->~T();
+}
 }
 
 AGRPC_NAMESPACE_END

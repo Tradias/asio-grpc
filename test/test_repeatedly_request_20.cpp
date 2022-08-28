@@ -145,7 +145,7 @@ TEST_CASE_TEMPLATE("awaitable repeatedly_request client streaming", T, TypedAwai
     auto request_count{0};
     {
         const auto request_handler =
-            asio::bind_executor(asio::require(test.get_executor(), asio::execution::allocator(test.get_allocator())),
+            asio::bind_executor(test.get_executor(),
                                 [&](auto& server_context, auto& reader) -> asio::awaitable<void>
                                 {
                                     CHECK(co_await agrpc::send_initial_metadata(reader));
@@ -175,7 +175,6 @@ TEST_CASE_TEMPLATE("awaitable repeatedly_request client streaming", T, TypedAwai
                 });
     test.grpc_context.run();
     CHECK_EQ(4, request_count);
-    CHECK(test.allocator_has_been_used());
 }
 
 template <class Awaitable = asio::awaitable<void>>
