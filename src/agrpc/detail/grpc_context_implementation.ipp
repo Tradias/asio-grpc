@@ -55,6 +55,13 @@ inline FinishWorkAndGuard::FinishWorkAndGuard(agrpc::GrpcContext& grpc_context) 
     detail::GrpcContextImplementation::finish_work_unstoppable(grpc_context);
 }
 
+#ifdef AGRPC_ASIO_HAS_CO_AWAIT
+inline detail::CoroutinePool& GrpcContextImplementation::get_coroutine_pool(agrpc::GrpcContext& grpc_context) noexcept
+{
+    return grpc_context.coroutine_pool;
+}
+#endif
+
 inline bool IsGrpcContextStoppedPredicate::operator()(const agrpc::GrpcContext& grpc_context) const noexcept
 {
     return grpc_context.is_stopped();

@@ -136,6 +136,8 @@ struct GrpcContextImplementation
 
     static void finish_work_unstoppable(agrpc::GrpcContext& grpc_context) noexcept;
 
+    static detail::CoroutinePool& get_coroutine_pool(agrpc::GrpcContext& grpc_context) noexcept;
+
     static bool handle_next_completion_queue_event(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline,
                                                    detail::InvokeHandler invoke);
 

@@ -16,7 +16,9 @@
 #define AGRPC_DETAIL_MEMORY_HPP
 
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/utility.hpp>
 
+#include <cstddef>
 #include <memory>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -68,11 +70,22 @@ T* construct_at(T* p, Args&&... args)
     return ::new (const_cast<void*>(static_cast<const void*>(p))) T(static_cast<Args&&>(args)...);
 }
 
-template <class T>
-constexpr void destruct(void* p)
+template <std::size_t Size>
+class StackBuffer
 {
-    static_cast<T*>(p)->~T();
-}
+  public:
+    template <class T>
+    auto assign(T&& t)
+    {
+        using Tunref = detail::RemoveCrefT<T>;
+        return detail::construct_at(reinterpret_cast<Tunref*>(&buffer_), static_cast<T&&>(t));
+    }
+
+    void* get() noexcept { return buffer_; }
+
+  private:
+    alignas(std::max_align_t) std::byte buffer_[Size];
+};
 }
 
 AGRPC_NAMESPACE_END

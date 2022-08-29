@@ -192,43 +192,6 @@ struct NoOpCoroutinePoolOperation : TypeErasedCoroutinePoolOperation<Coroutine>
 template <class Coroutine>
 inline constexpr NoOpCoroutinePoolOperation<Coroutine> NO_OP_COROUTINE_POOL_OPERATION{};
 
-template <std::size_t Size>
-class GuardedBuffer
-{
-  public:
-    GuardedBuffer() = default;
-    GuardedBuffer(const GuardedBuffer& other) = delete;
-    GuardedBuffer(GuardedBuffer&& other) = delete;
-    GuardedBuffer& operator=(const GuardedBuffer& other) = delete;
-    GuardedBuffer& operator=(GuardedBuffer&& other) = delete;
-
-    ~GuardedBuffer() noexcept
-    {
-        if (destructor)
-        {
-            destructor(&buffer_);
-        }
-    }
-
-    template <class T>
-    void assign(T&& t)
-    {
-        using Tunref = detail::RemoveCrefT<T>;
-        detail::construct_at(reinterpret_cast<Tunref*>(&buffer_), static_cast<T&&>(t));
-        destructor = &detail::destruct<Tunref>;
-    }
-
-    void release() noexcept { destructor = nullptr; }
-
-    void* get() noexcept { return buffer_; }
-
-  private:
-    using Destructor = void (*)(void*);
-
-    alignas(std::max_align_t) std::byte buffer_[Size];
-    Destructor destructor{};
-};
-
 template <class Coroutine>
 class CoroutineSubPool : public detail::CoroutineSubPoolBase
 {
@@ -240,13 +203,14 @@ class CoroutineSubPool : public detail::CoroutineSubPoolBase
     using Operation = detail::TypeErasedCoroutinePoolOperation<Coroutine>;
     using ExecuteFunction = void (*)(void*, Operation*);
     using CoroutineSignature = void(Operation*);
-    using Buffer = detail::GuardedBuffer<sizeof(detail::CompletionHandlerTypeT<UseCoroutine, CoroutineSignature>)>;
+    using CompletionHandlerBuffer =
+        detail::StackBuffer<sizeof(detail::CompletionHandlerTypeT<UseCoroutine, CoroutineSignature>)>;
 
     struct CoroutineContext : detail::IntrusiveQueueHook<CoroutineContext>
     {
-        void execute(Operation* operation) { execute_(completion_handler->get(), operation); }
+        void execute(Operation* operation) { execute_(completion_handler, operation); }
 
-        Buffer* completion_handler;
+        void* completion_handler;
         ExecuteFunction execute_;
     };
 
@@ -255,14 +219,13 @@ class CoroutineSubPool : public detail::CoroutineSubPoolBase
 
     ~CoroutineSubPool() noexcept
     {
-        // auto& grpc_context = detail::query_grpc_context(executor);
-        // is_stopped = true;
-        // while (!coroutine_contexts.empty())
-        // {
-        //     CoroutineContext* context = coroutine_contexts.pop_front();
-        //     context->execute(
-        //         const_cast<NoOpCoroutinePoolOperation<Coroutine>*>(&NO_OP_COROUTINE_POOL_OPERATION<Coroutine>));
-        // }
+        is_stopped = true;
+        while (!coroutine_contexts.empty())
+        {
+            CoroutineContext* context = coroutine_contexts.pop_front();
+            context->execute(
+                const_cast<NoOpCoroutinePoolOperation<Coroutine>*>(&NO_OP_COROUTINE_POOL_OPERATION<Coroutine>));
+        }
     }
 
     void execute(Operation* operation)
@@ -294,7 +257,7 @@ class CoroutineSubPool : public detail::CoroutineSubPoolBase
         static_cast<CompletionHandler&&>(ch)(operation);
     }
 
-    static auto initiate_wait(Buffer& buffer, CoroutineContext& context)
+    static auto initiate_wait(CompletionHandlerBuffer& buffer, CoroutineContext& context)
     {
         return asio::async_initiate<UseCoroutine, CoroutineSignature>(
             [&](auto&& completion_handler)
@@ -310,16 +273,15 @@ class CoroutineSubPool : public detail::CoroutineSubPoolBase
 
     Coroutine coroutine_function()
     {
-        Buffer completion_handler_buffer;
+        CompletionHandlerBuffer completion_handler_buffer;
         CoroutineContext context;
         context.completion_handler = &completion_handler_buffer;
-        while (true)
+        while (!is_stopped.load(std::memory_order_relaxed))
         {
             coroutine_contexts.push_back(&context);
             auto& grpc_context = detail::query_grpc_context(executor);
             detail::FinishWorkAndGuard on_exit{grpc_context};
             auto* operation = co_await CoroutineSubPool::initiate_wait(completion_handler_buffer, context);
-            completion_handler_buffer.release();
             on_exit.fire();
             co_await operation->complete();
         }
@@ -336,6 +298,7 @@ class CoroutineSubPool : public detail::CoroutineSubPoolBase
     Executor executor;
     detail::IntrusiveQueue<CoroutineContext> coroutine_contexts;
     std::size_t coroutine_count{};
+    std::atomic_bool is_stopped{};
 };
 
 template <class Coroutine>

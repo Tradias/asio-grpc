@@ -112,8 +112,6 @@ auto initiate_request_from_rpc_context(detail::GenericRPCMarker, grpc::AsyncGene
                           static_cast<CompletionToken&&>(token));
 }
 
-static detail::CoroutinePool coroutine_pool;
-
 template <class RequestHandler, class RPC, class CompletionHandler>
 class RepeatedlyRequestCoroutineOperation
     : public detail::TypeErasedNoArgOperation,
@@ -150,7 +148,8 @@ class RepeatedlyRequestCoroutineOperation
           detail::RepeatedlyRequestOperationBase<RequestHandler, RPC, CompletionHandler>(
               static_cast<Rh&&>(request_handler), rpc, service, static_cast<Ch&&>(completion_handler), is_stoppable),
           buffer_operation(detail::create_allocated_buffer_operation<BUFFER_SIZE>()),
-          pool(coroutine_pool.get_or_create_sub_pool<Coroutine>(this->get_executor()))
+          pool(detail::GrpcContextImplementation::get_coroutine_pool(this->grpc_context())
+                   .template get_or_create_sub_pool<Coroutine>(this->get_executor()))
     {
         // Count buffer_operation
         this->grpc_context().work_started();

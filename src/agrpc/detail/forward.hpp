@@ -48,6 +48,8 @@ struct RepeatedlyRequestContextAccess;
 
 class GenericRPCContext;
 
+class CoroutinePool;
+
 template <class Responder, class Executor>
 class BasicRPCClientClientStreamingBase;
 
