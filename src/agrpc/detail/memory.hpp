@@ -74,10 +74,13 @@ template <std::size_t Size>
 class StackBuffer
 {
   public:
+    static constexpr auto SIZE = Size;
+
     template <class T>
     auto assign(T&& t)
     {
         using Tunref = detail::RemoveCrefT<T>;
+        static_assert(alignof(std::max_align_t) >= alignof(Tunref), "Overaligned types are not supported");
         return detail::construct_at(reinterpret_cast<Tunref*>(&buffer_), static_cast<T&&>(t));
     }
 
@@ -85,6 +88,41 @@ class StackBuffer
 
   private:
     alignas(std::max_align_t) std::byte buffer_[Size];
+};
+
+class DelayedBuffer
+{
+  private:
+    struct alignas(std::max_align_t) Buffer
+    {
+        std::byte data;
+    };
+
+  public:
+    template <class T>
+    auto assign(T&& t)
+    {
+        using Tunref = detail::RemoveCrefT<T>;
+        static_assert(alignof(std::max_align_t) >= alignof(Tunref), "Overaligned types are not supported");
+        if (buffer)
+        {
+            return detail::construct_at(get<Tunref>(), static_cast<T&&>(t));
+        }
+        else
+        {
+            buffer = std::make_unique<Buffer[]>(sizeof(Tunref));
+            return detail::construct_at(get<Tunref>(), static_cast<T&&>(t));
+        }
+    }
+
+    template <class T = void>
+    T* get() noexcept
+    {
+        return reinterpret_cast<T*>(buffer.get());
+    }
+
+  private:
+    std::unique_ptr<Buffer[]> buffer;
 };
 }
 

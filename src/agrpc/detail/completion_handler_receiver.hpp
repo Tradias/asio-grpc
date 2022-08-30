@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/memory_resource.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -54,6 +55,26 @@ class CompletionHandlerReceiver
 
 AGRPC_NAMESPACE_END
 
+template <class CompletionHandler, class Alloc>
+struct agrpc::detail::container::uses_allocator<agrpc::detail::CompletionHandlerReceiver<CompletionHandler>, Alloc>
+    : std::false_type
+{
+};
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+
+template <class CompletionHandler, class Allocator1>
+struct agrpc::asio::associated_allocator<agrpc::detail::CompletionHandlerReceiver<CompletionHandler>, Allocator1>
+{
+    using type = asio::associated_allocator_t<CompletionHandler, Allocator1>;
+
+    static constexpr type get(const agrpc::detail::CompletionHandlerReceiver<CompletionHandler>& b,
+                              const Allocator1& allocator = Allocator1()) noexcept
+    {
+        return asio::get_associated_allocator(b.completion_handler(), allocator);
+    }
+};
+
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 
 template <template <class, class> class Associator, class CompletionHandler, class DefaultCandidate>
@@ -68,6 +89,8 @@ struct agrpc::asio::associator<Associator, agrpc::detail::CompletionHandlerRecei
         return Associator<CompletionHandler, DefaultCandidate>::get(b.completion_handler(), c);
     }
 };
+
+#endif
 
 #endif
 

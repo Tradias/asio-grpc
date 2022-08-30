@@ -326,13 +326,18 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request thro
                                 co_return;
                             }),
         asio::bind_cancellation_slot(signal.slot(), test::NoOp{}));
-    test::spawn(grpc_context,
-                [&](const asio::yield_context& yield)
-                {
-                    signal.emit(asio::cancellation_type::all);
-                    test::client_perform_unary_unchecked(grpc_context, *stub, yield,
-                                                         test::hundred_milliseconds_from_now());
-                });
+    test::co_spawn(grpc_context,
+                   [&]() -> asio::awaitable<void>
+                   {
+                       signal.emit(asio::cancellation_type::all);
+                       test::msg::Request request;
+                       client_context.set_deadline(test::hundred_milliseconds_from_now());
+                       auto reader = agrpc::request(&test::v1::Test::Stub::AsyncUnary, stub, client_context, request,
+                                                    grpc_context);
+                       test::msg::Response response;
+                       grpc::Status status;
+                       co_await agrpc::finish(reader, response, status);
+                   });
     CHECK_THROWS_WITH_AS(grpc_context.run(), "test", std::invalid_argument);
 }
 #endif

@@ -24,6 +24,7 @@
 #include <cstddef>
 
 #if defined(AGRPC_ASIO_HAS_CANCELLATION_SLOT) && defined(AGRPC_ASIO_HAS_CO_AWAIT)
+#ifdef ASIO_HAS_FIXED_DEFERRED
 TEST_CASE_FIXTURE(test::GrpcContextTest, "CancelSafe: co_await for a CancelSafe and an alarm parallel_group")
 {
     test::co_spawn_and_run(grpc_context,
@@ -51,6 +52,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "CancelSafe: co_await for a CancelSafe 
                                CHECK(co_await safe.wait(agrpc::DefaultCompletionToken{}));
                            });
 }
+#endif
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcStream: next can be interrupted without cancelling initiated operation")
 {

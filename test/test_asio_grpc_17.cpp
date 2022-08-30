@@ -668,6 +668,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with cancellation_t
     CHECK(ok);
 }
 
+#ifdef ASIO_HAS_FIXED_DEFERRED
 TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with parallel_group")
 {
     std::array<std::size_t, 2> completion_order;
@@ -694,4 +695,5 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with parallel_group
     CHECK_EQ(test::ErrorCode{}, error_code);
     CHECK_FALSE(ok);
 }
+#endif
 #endif

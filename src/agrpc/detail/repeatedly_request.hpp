@@ -46,6 +46,10 @@ class RepeatedlyRequestStopFunction
   private:
     std::atomic_bool& stopped;
 };
+#else
+class RepeatedlyRequestStopFunction
+{
+};
 #endif
 
 template <class Operation>
@@ -66,31 +70,25 @@ struct BasicRepeatedlyRequestInitiator
     {
         using TrackingCompletionHandler = detail::WorkTrackingCompletionHandler<CompletionHandler>;
         using DecayedRequestHandler = detail::RemoveCrefT<RequestHandler>;
+
         const auto executor = detail::exec::get_executor(request_handler);
-        const auto allocator = detail::exec::get_allocator(request_handler);
         auto& grpc_context = detail::query_grpc_context(executor);
-        detail::StartWorkAndGuard guard{grpc_context};
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-        if (auto cancellation_slot = asio::get_associated_cancellation_slot(completion_handler);
-            cancellation_slot.is_connected())
+        const auto allocator = detail::exec::get_allocator(request_handler);
+        auto cancellation_slot = detail::get_associated_cancellation_slot(completion_handler);
+        const bool cancellation_is_connected = cancellation_slot.is_connected();
+
+        auto operation = detail::allocate<Operation<DecayedRequestHandler, RPC, TrackingCompletionHandler>>(
+            allocator, static_cast<RequestHandler&&>(request_handler), rpc, service,
+            static_cast<CompletionHandler&&>(completion_handler), cancellation_is_connected);
+
+        if (cancellation_is_connected)
         {
-            auto operation = detail::allocate<Operation<DecayedRequestHandler, RPC, TrackingCompletionHandler>>(
-                allocator, static_cast<RequestHandler&&>(request_handler), rpc, service,
-                static_cast<CompletionHandler&&>(completion_handler), true);
             cancellation_slot.template emplace<detail::RepeatedlyRequestStopFunction>(operation->stop_context());
-            detail::initiate_repeatedly_request(grpc_context, *operation);
-            operation.release();
         }
-        else
-#endif
-        {
-            auto operation = detail::allocate<Operation<DecayedRequestHandler, RPC, TrackingCompletionHandler>>(
-                allocator, static_cast<RequestHandler&&>(request_handler), rpc, service,
-                static_cast<CompletionHandler&&>(completion_handler), false);
-            detail::initiate_repeatedly_request(grpc_context, *operation);
-            operation.release();
-        }
+        detail::StartWorkAndGuard guard{grpc_context};
+        detail::initiate_repeatedly_request(grpc_context, *operation);
         guard.release();
+        operation.release();
     }
 };
 

@@ -46,10 +46,15 @@ struct RethrowFirstArg
     }
 };
 
+struct CompletionHandlerUnknown
+{
+    char d[256];
+};
+
 template <class CompletionToken, class Signature, class = void>
 struct HandlerType
 {
-    using Type = char[256];
+    using Type = CompletionHandlerUnknown;
 };
 
 template <class CompletionToken, class Signature>
@@ -203,8 +208,10 @@ class CoroutineSubPool : public detail::CoroutineSubPoolBase
     using Operation = detail::TypeErasedCoroutinePoolOperation<Coroutine>;
     using ExecuteFunction = void (*)(void*, Operation*);
     using CoroutineSignature = void(Operation*);
+    using CompletionHandler = detail::CompletionHandlerTypeT<UseCoroutine, CoroutineSignature>;
     using CompletionHandlerBuffer =
-        detail::StackBuffer<sizeof(detail::CompletionHandlerTypeT<UseCoroutine, CoroutineSignature>)>;
+        detail::ConditionalT<std::is_same_v<detail::CompletionHandlerUnknown, CompletionHandler>, detail::DelayedBuffer,
+                             detail::StackBuffer<sizeof(CompletionHandler)>>;
 
     struct CoroutineContext : detail::IntrusiveQueueHook<CoroutineContext>
     {
@@ -230,6 +237,7 @@ class CoroutineSubPool : public detail::CoroutineSubPoolBase
 
     void execute(Operation* operation)
     {
+#ifdef AGRPC_ASIO_HAS_FIXED_AWAITABLES
         if (coroutine_contexts.empty())
         {
             if (coroutine_count < MAX_COROUTINES)
@@ -239,7 +247,9 @@ class CoroutineSubPool : public detail::CoroutineSubPoolBase
             }
             else
             {
+#endif
                 asio::co_spawn(executor, operation->complete(), detail::RethrowFirstArg{});
+#ifdef AGRPC_ASIO_HAS_FIXED_AWAITABLES
             }
         }
         else
@@ -247,6 +257,7 @@ class CoroutineSubPool : public detail::CoroutineSubPoolBase
             CoroutineContext* context = coroutine_contexts.pop_front();
             context->execute(operation);
         }
+#endif
     }
 
   private:
@@ -263,9 +274,8 @@ class CoroutineSubPool : public detail::CoroutineSubPoolBase
             [&](auto&& completion_handler)
             {
                 using CH = detail::RemoveCrefT<decltype(completion_handler)>;
-                static_assert(alignof(std::max_align_t) >= alignof(CH),
-                              "Overaligned completion handlers are not supported");
                 buffer.assign(static_cast<CH&&>(completion_handler));
+                context.completion_handler = buffer.get();
                 context.execute_ = &CoroutineSubPool::invoke_completion_handler<CH>;
             },
             detail::USE_COROUTINE<Coroutine>);
@@ -275,7 +285,6 @@ class CoroutineSubPool : public detail::CoroutineSubPoolBase
     {
         CompletionHandlerBuffer completion_handler_buffer;
         CoroutineContext context;
-        context.completion_handler = &completion_handler_buffer;
         while (!is_stopped.load(std::memory_order_relaxed))
         {
             coroutine_contexts.push_back(&context);

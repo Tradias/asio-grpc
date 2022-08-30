@@ -48,11 +48,15 @@
 #define AGRPC_ASIO_HAS_CO_AWAIT
 #endif
 
-#if (ASIO_VERSION >= 102000)
+#if (ASIO_VERSION >= 101900)
 #include <asio/associated_cancellation_slot.hpp>
 #include <asio/bind_cancellation_slot.hpp>
 
 #define AGRPC_ASIO_HAS_CANCELLATION_SLOT
+#endif
+
+#if (ASIO_VERSION >= 101902)
+#define AGRPC_ASIO_HAS_FIXED_AWAITABLES
 #endif
 
 #if (ASIO_VERSION >= 102201)
@@ -96,6 +100,7 @@
 #include <boost/asio/bind_cancellation_slot.hpp>
 
 #define AGRPC_ASIO_HAS_CANCELLATION_SLOT
+#define AGRPC_ASIO_HAS_FIXED_AWAITABLES
 #endif
 
 #if (BOOST_VERSION >= 107900)
@@ -273,6 +278,40 @@ void post_with_allocator(Executor&& executor, Function&& function, const Allocat
         asio::prefer(asio::require(static_cast<Executor&&>(executor), asio::execution::blocking_t::never),
                      asio::execution::relationship_t::fork, asio::execution::allocator(allocator)),
         static_cast<Function&&>(function));
+}
+
+struct UncancellableSlot
+{
+    template <class CancellationHandler, class... Args>
+    static constexpr void emplace(Args&&...) noexcept
+    {
+    }
+
+    template <class CancellationHandler>
+    static constexpr void assign(CancellationHandler&&) noexcept
+    {
+    }
+
+    static constexpr void clear() noexcept {}
+
+    static constexpr bool is_connected() noexcept { return false; }
+
+    static constexpr bool has_handler() noexcept { return false; }
+
+    friend constexpr bool operator==(const UncancellableSlot&, const UncancellableSlot&) noexcept { return true; }
+
+    friend constexpr bool operator!=(const UncancellableSlot&, const UncancellableSlot&) noexcept { return false; }
+};
+
+template <class Object, class Default = UncancellableSlot>
+auto get_associated_cancellation_slot([[maybe_unused]] const Object& object,
+                                      const Default& default_slot = Default{}) noexcept
+{
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+    return asio::get_associated_cancellation_slot(object, default_slot);
+#else
+    return default_slot;
+#endif
 }
 #endif
 
