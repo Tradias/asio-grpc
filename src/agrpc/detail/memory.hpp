@@ -93,9 +93,11 @@ class StackBuffer
 class DelayedBuffer
 {
   private:
-    struct alignas(std::max_align_t) Buffer
+    static constexpr auto CHUNK_SIZE = alignof(std::max_align_t);
+
+    struct Data
     {
-        std::byte data;
+        alignas(std::max_align_t) std::byte data[CHUNK_SIZE];
     };
 
   public:
@@ -110,7 +112,7 @@ class DelayedBuffer
         }
         else
         {
-            buffer = std::make_unique<Buffer[]>(sizeof(Tunref));
+            buffer = std::make_unique<Data[]>(sizeof(Tunref) / CHUNK_SIZE + 1);
             return detail::construct_at(get<Tunref>(), static_cast<T&&>(t));
         }
     }
@@ -122,7 +124,7 @@ class DelayedBuffer
     }
 
   private:
-    std::unique_ptr<Buffer[]> buffer;
+    std::unique_ptr<Data[]> buffer;
 };
 }
 

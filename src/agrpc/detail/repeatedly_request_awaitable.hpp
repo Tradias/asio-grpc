@@ -39,7 +39,7 @@ namespace detail
 template <class Executor, class T>
 concept IS_CO_SPAWNABLE = requires(Executor executor, T t)
 {
-    {asio::co_spawn(executor, static_cast<T&&>(t), detail::NoOp{})};
+    asio::co_spawn(executor, static_cast<T&&>(t), detail::NoOp{});
 };
 #else
 template <class Executor, class T, class = void>

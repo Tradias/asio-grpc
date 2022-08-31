@@ -88,41 +88,30 @@ struct CoroutineTypeTag
 template <class Coroutine>
 inline constexpr CoroutineTypeTag COROUTINE_TYPE_TAG{};
 
-template <class Coroutine, class ReturnType>
-struct RebindCoroutine
-{
-    using Type = Coroutine;
-};
-
-template <class T, class Executor, class ReturnType>
-struct RebindCoroutine<asio::awaitable<T, Executor>, ReturnType>
-{
-    using Type = asio::awaitable<void, Executor>;
-};
-
-template <class Coroutine, class ReturnType>
-using RebindCoroutineT = typename detail::RebindCoroutine<Coroutine, ReturnType>::Type;
-
 template <class Coroutine>
-struct CoroutineCompletionToken
-{
-    using Type = Coroutine;
-};
+struct CoroutineTraits;
 
 template <class T, class Executor>
-struct CoroutineCompletionToken<asio::awaitable<T, Executor>>
+struct CoroutineTraits<asio::awaitable<T, Executor>>
 {
-    using Type = asio::use_awaitable_t<Executor>;
+    using ExecutorType = Executor;
+    using CompletionToken = asio::use_awaitable_t<Executor>;
+
+    template <class U>
+    using Rebind = asio::awaitable<U, Executor>;
 };
 
+template <class Coroutine, class ReturnType>
+using RebindCoroutineT = typename detail::CoroutineTraits<Coroutine>::template Rebind<ReturnType>;
+
 template <class Coroutine>
-using CoroutineCompletionTokenT = typename detail::CoroutineCompletionToken<Coroutine>::Type;
+using CoroutineCompletionTokenT = typename detail::CoroutineTraits<Coroutine>::CompletionToken;
 
 template <class Coroutine>
 inline constexpr CoroutineCompletionTokenT<Coroutine> USE_COROUTINE{};
 
 template <class Coroutine>
-using CoroutineExecutorT = typename Coroutine::executor_type;
+using CoroutineExecutorT = typename detail::CoroutineTraits<Coroutine>::ExecutorType;
 
 template <class Coroutine>
 class CoroutineSubPool;
@@ -203,8 +192,9 @@ class CoroutineSubPool : public detail::CoroutineSubPoolBase
   private:
     static constexpr std::size_t MAX_COROUTINES = 250;
 
-    using Executor = detail::CoroutineExecutorT<Coroutine>;
-    using UseCoroutine = const detail::CoroutineCompletionTokenT<Coroutine>;
+    using CoroTraits = detail::CoroutineTraits<Coroutine>;
+    using Executor = typename CoroTraits::ExecutorType;
+    using UseCoroutine = const typename CoroTraits::CompletionToken;
     using Operation = detail::TypeErasedCoroutinePoolOperation<Coroutine>;
     using ExecuteFunction = void (*)(void*, Operation*);
     using CoroutineSignature = void(Operation*);
@@ -222,6 +212,8 @@ class CoroutineSubPool : public detail::CoroutineSubPoolBase
     };
 
   public:
+    using executor_type = Executor;
+
     explicit CoroutineSubPool(const Executor& executor) noexcept : executor(executor) {}
 
     ~CoroutineSubPool() noexcept
@@ -303,6 +295,8 @@ class CoroutineSubPool : public detail::CoroutineSubPoolBase
         detail::FinishWorkAndGuard on_exit{grpc_context};
         co_await this->coroutine_function();
     }
+
+    [[nodiscard]] executor_type get_executor() const noexcept { return executor; }
 
     Executor executor;
     detail::IntrusiveQueue<CoroutineContext> coroutine_contexts;

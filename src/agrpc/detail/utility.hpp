@@ -82,8 +82,8 @@ using TypeIdentityT = typename detail::TypeIdentity<T>::Type;
 template <class T>
 concept IS_EQUALITY_COMPARABLE = requires(const T& lhs, const T& rhs)
 {
-    {static_cast<bool>(lhs == rhs)};
-    {static_cast<bool>(lhs != rhs)};
+    static_cast<bool>(lhs == rhs);
+    static_cast<bool>(lhs != rhs);
 };
 #else
 template <class T, class = void>
