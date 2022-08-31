@@ -23,8 +23,8 @@ function(asio_grpc_add_test_proto_target _asio_grpc_name _asio_grpc_cxx_standard
                                                      asio-grpc-coverage-options)
 endfunction()
 
-asio_grpc_add_test_proto_target(asio-grpc-test-protobuf "17")
-asio_grpc_add_test_proto_target(asio-grpc-test-protobuf-cpp20 "20")
+asio_grpc_add_test_proto_target(asio-grpc-test-protos "17")
+asio_grpc_add_test_proto_target(asio-grpc-test-protos-cpp20 "20")
 
 # test main
 function(asio_grpc_add_test_main _asio_grpc_name _asio_grpc_cxx_standard)
@@ -53,7 +53,7 @@ function(asio_grpc_add_test_main _asio_grpc_name _asio_grpc_cxx_standard)
     target_link_libraries(
         ${_asio_grpc_name}
         PUBLIC doctest::doctest GTest::gmock asio-grpc-compile-options${_asio_grpc_cxx_standard}
-               asio-grpc-test-protobuf${_asio_grpc_cxx_standard} asio-grpc-coverage-options
+               asio-grpc-test-protos${_asio_grpc_cxx_standard} asio-grpc-coverage-options
         PRIVATE Boost::headers Boost::filesystem)
 endfunction()
 
@@ -118,7 +118,7 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
 
     target_link_libraries(
         ${_asio_grpc_name} PUBLIC asio-grpc-test-main${_asio_grpc_cxx_standard}
-                                  asio-grpc-test-protobuf${_asio_grpc_cxx_standard} asio-grpc-coverage-options)
+                                  asio-grpc-test-protos${_asio_grpc_cxx_standard} asio-grpc-coverage-options)
 endfunction()
 
 asio_grpc_add_test_util(asio-grpc-test-util-boost-asio "BOOST_ASIO" "17")
