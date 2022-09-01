@@ -29,7 +29,7 @@ namespace detail
 {
     if (val == 1)
     {
-        return 0;
+        return std::uintptr_t{};
     }
     std::uintptr_t ret{};
     while (val > 1)
@@ -40,11 +40,14 @@ namespace detail
     return ret;
 }
 
+template <std::uintptr_t Value>
+inline constexpr std::uintptr_t LOG_2 = detail::log2_ct(Value);
+
 template <class T>
 class TaggedPtr
 {
   private:
-    static constexpr std::uintptr_t AVAILABLE_BITS{detail::log2_ct(alignof(T))};
+    static constexpr std::uintptr_t AVAILABLE_BITS = detail::LOG_2<alignof(T)>;
     static constexpr std::uintptr_t PTR_MASK{std::numeric_limits<std::uintptr_t>::max() & ~AVAILABLE_BITS};
 
   public:
