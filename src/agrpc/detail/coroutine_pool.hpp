@@ -190,6 +190,7 @@ template <class Coroutine>
 class CoroutineSubPool : public detail::CoroutineSubPoolBase
 {
   private:
+    // Make sure to adjust the test when changing this value
     static constexpr std::size_t MAX_COROUTINES = 250;
 
     using CoroTraits = detail::CoroutineTraits<Coroutine>;
@@ -230,7 +231,8 @@ class CoroutineSubPool : public detail::CoroutineSubPoolBase
     void execute(Operation* operation)
     {
 #ifdef AGRPC_ASIO_HAS_FIXED_AWAITABLES
-        if (coroutine_contexts.empty())
+        auto* context = pop_coroutine_context();
+        if (!context)
         {
             if (coroutine_count < MAX_COROUTINES)
             {
@@ -246,7 +248,6 @@ class CoroutineSubPool : public detail::CoroutineSubPoolBase
         }
         else
         {
-            CoroutineContext* context = coroutine_contexts.pop_front();
             context->execute(operation);
         }
 #endif
@@ -260,7 +261,7 @@ class CoroutineSubPool : public detail::CoroutineSubPoolBase
         static_cast<CompletionHandler&&>(ch)(operation);
     }
 
-    static auto initiate_wait(CompletionHandlerBuffer& buffer, CoroutineContext& context)
+    auto initiate_wait(CompletionHandlerBuffer& buffer, CoroutineContext& context)
     {
         return asio::async_initiate<UseCoroutine, CoroutineSignature>(
             [&](auto&& completion_handler)
@@ -269,6 +270,7 @@ class CoroutineSubPool : public detail::CoroutineSubPoolBase
                 buffer.assign(static_cast<CH&&>(completion_handler));
                 context.completion_handler = buffer.get();
                 context.execute_ = &CoroutineSubPool::invoke_completion_handler<CH>;
+                push_coroutine_context(context);
             },
             detail::USE_COROUTINE<Coroutine>);
     }
@@ -279,10 +281,8 @@ class CoroutineSubPool : public detail::CoroutineSubPoolBase
         CoroutineContext context;
         while (!is_stopped.load(std::memory_order_relaxed))
         {
-            coroutine_contexts.push_back(&context);
-            auto& grpc_context = detail::query_grpc_context(executor);
-            detail::FinishWorkAndGuard on_exit{grpc_context};
-            auto* operation = co_await CoroutineSubPool::initiate_wait(completion_handler_buffer, context);
+            detail::FinishWorkAndGuard on_exit{get_grpc_context()};
+            auto* operation = co_await initiate_wait(completion_handler_buffer, context);
             on_exit.fire();
             co_await operation->complete();
         }
@@ -291,17 +291,35 @@ class CoroutineSubPool : public detail::CoroutineSubPoolBase
     Coroutine coroutine_function(Operation* operation)
     {
         co_await operation->complete();
-        auto& grpc_context = detail::query_grpc_context(executor);
-        detail::FinishWorkAndGuard on_exit{grpc_context};
+        detail::FinishWorkAndGuard on_exit{get_grpc_context()};
         co_await this->coroutine_function();
     }
 
     [[nodiscard]] executor_type get_executor() const noexcept { return executor; }
 
-    Executor executor;
+    [[nodiscard]] agrpc::GrpcContext& get_grpc_context() const noexcept { return detail::query_grpc_context(executor); }
+
+    void push_coroutine_context(CoroutineContext& context)
+    {
+        std::unique_lock lock{contexts_mutex};
+        coroutine_contexts.push_back(&context);
+    }
+
+    [[nodiscard]] CoroutineContext* pop_coroutine_context()
+    {
+        std::unique_lock lock{contexts_mutex};
+        if (coroutine_contexts.empty())
+        {
+            return nullptr;
+        }
+        return coroutine_contexts.pop_front();
+    }
+
+    std::atomic_bool is_stopped{};
+    std::mutex contexts_mutex{};
     detail::IntrusiveQueue<CoroutineContext> coroutine_contexts;
     std::size_t coroutine_count{};
-    std::atomic_bool is_stopped{};
+    Executor executor;
 };
 
 template <class Coroutine>

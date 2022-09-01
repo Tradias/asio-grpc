@@ -84,7 +84,7 @@ class StackBuffer
         return detail::construct_at(reinterpret_cast<Tunref*>(&buffer_), static_cast<T&&>(t));
     }
 
-    void* get() noexcept { return buffer_; }
+    [[nodiscard]] void* get() noexcept { return buffer_; }
 
   private:
     alignas(std::max_align_t) std::byte buffer_[Size];
@@ -118,7 +118,7 @@ class DelayedBuffer
     }
 
     template <class T = void>
-    T* get() noexcept
+    [[nodiscard]] T* get() noexcept
     {
         return reinterpret_cast<T*>(buffer.get());
     }

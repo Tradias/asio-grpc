@@ -137,6 +137,48 @@ TEST_CASE_TEMPLATE("awaitable repeatedly_request unary", UsePmrExecutor, std::tr
     CHECK_EQ(4, request_count);
 }
 
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request unary concurrent requests")
+{
+    static constexpr auto REQUEST_COUNT = 300;
+    auto request_received_count{0};
+    auto request_send_count{0};
+    std::vector<size_t> completion_order;
+    asio::thread_pool thread_pool{4};
+    agrpc::repeatedly_request(
+        &test::v1::Test::AsyncService::RequestUnary, service,
+        asio::bind_executor(grpc_context,
+                            [&](grpc::ServerContext&, test::msg::Request&,
+                                grpc::ServerAsyncResponseWriter<test::msg::Response>& writer) -> asio::awaitable<void>
+                            {
+                                ++request_received_count;
+                                grpc::Alarm alarm;
+                                co_await agrpc::wait(alarm, test::five_hundred_milliseconds_from_now());
+                                test::msg::Response response;
+                                response.set_integer(21);
+                                CHECK(co_await agrpc::finish(writer, response, grpc::Status::OK));
+                                co_await asio::post(asio::bind_executor(thread_pool, asio::use_awaitable));
+                            }));
+    for (size_t i = 0; i < REQUEST_COUNT; ++i)
+    {
+        asio::spawn(grpc_context,
+                    [&](const asio::yield_context& yield)
+                    {
+                        test::PerformUnarySuccessOptions options;
+                        options.request_payload = request_send_count;
+                        ++request_send_count;
+                        test::client_perform_unary_success(grpc_context, *stub, yield, options);
+                        completion_order.emplace_back(options.request_payload);
+                        if (REQUEST_COUNT == completion_order.size())
+                        {
+                            grpc_context.stop();
+                        }
+                    });
+    }
+    grpc_context.run();
+    CHECK_EQ(REQUEST_COUNT, request_received_count);
+    REQUIRE_EQ(REQUEST_COUNT, completion_order.size());
+}
+
 TEST_CASE_TEMPLATE("awaitable repeatedly_request client streaming", T, TypedAwaitableRequestHandler,
                    GenericAwaitableRequestHandler)
 {

@@ -294,9 +294,9 @@ struct UncancellableSlot
 
     static constexpr void clear() noexcept {}
 
-    static constexpr bool is_connected() noexcept { return false; }
+    [[nodiscard]] static constexpr bool is_connected() noexcept { return false; }
 
-    static constexpr bool has_handler() noexcept { return false; }
+    [[nodiscard]] static constexpr bool has_handler() noexcept { return false; }
 
     friend constexpr bool operator==(const UncancellableSlot&, const UncancellableSlot&) noexcept { return true; }
 
