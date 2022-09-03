@@ -60,7 +60,7 @@ asio_grpc_protobuf_generate(
     IMPORT_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/proto"
     PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/proto/out_var/v1/out_var.proto"
            "${CMAKE_CURRENT_SOURCE_DIR}/proto/out_var/msg/message.proto"
-           "${CMAKE_CURRENT_SOURCE_DIR}/proto/out_var/subdir/other.proto")
+           "${CMAKE_CURRENT_SOURCE_DIR}/proto/out_var/subdir/other.1.proto")
 
 create_object_library(out-var-option out_var.cpp ${OUT_VAR_GENERATED_SOURCES})
 

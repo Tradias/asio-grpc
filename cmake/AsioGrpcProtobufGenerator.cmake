@@ -139,35 +139,46 @@ function(asio_grpc_protobuf_generate)
     set(_asio_grpc_generated_srcs)
     foreach(_asio_grpc_proto ${asio_grpc_protobuf_generate_PROTOS})
         get_filename_component(_asio_grpc_abs_file "${_asio_grpc_proto}" ABSOLUTE)
-        get_filename_component(_asio_grpc_basename "${_asio_grpc_proto}" NAME_WE)
+
+        # Get .proto base name
+        get_filename_component(_asio_grpc_full_name ${_asio_grpc_abs_file} NAME)
+        string(FIND "${_asio_grpc_full_name}" "." _asio_grpc_file_last_ext_pos REVERSE)
+        string(SUBSTRING "${_asio_grpc_full_name}" 0 ${_asio_grpc_file_last_ext_pos} _asio_grpc_basename)
 
         list(APPEND _asio_grpc_abs_input_files "${_asio_grpc_abs_file}")
 
-        # Compute generated file output directory
-        set(_asio_grpc_proto_dir_lowest_path_count 999999999999)
-        set(_asio_grpc_actual_our_dir)
-        foreach(_asio_grpc_dir ${asio_grpc_protobuf_generate_IMPORT_DIRS})
-            file(RELATIVE_PATH _asio_grpc_proto_file_relative_path "${_asio_grpc_dir}" "${_asio_grpc_abs_file}")
-            file(TO_CMAKE_PATH "${_asio_grpc_proto_file_relative_path}" _asio_grpc_proto_file_relative_cmake_path)
-            get_filename_component(_asio_grpc_proto_dir_relative_cmake_path
-                                   "${_asio_grpc_proto_file_relative_cmake_path}" PATH)
-            string(REGEX MATCHALL "/" _asio_grpc_proto_dir_path_list "${_asio_grpc_proto_dir_relative_cmake_path}")
-            list(LENGTH _asio_grpc_proto_dir_path_list _asio_grpc_proto_dir_path_count)
-            if(${_asio_grpc_proto_dir_path_count} LESS ${_asio_grpc_proto_dir_lowest_path_count})
-                set(_asio_grpc_proto_dir_lowest_path_count ${_asio_grpc_proto_dir_path_count})
-                set(_asio_grpc_actual_our_dir
-                    "${asio_grpc_protobuf_generate_OUT_DIR}/${_asio_grpc_proto_dir_relative_cmake_path}")
+        # Compute generated file output directory by checking that the .proto file is not in a parent directory of all
+        # import directories.
+        get_filename_component(_asio_grpc_abs_dir ${_asio_grpc_abs_file} DIRECTORY)
+        set(_asio_grpc_suitable_include_found off)
+        foreach(_asio_grpc_dir ${_asio_grpc_protobuf_include_args})
+            if(NOT _asio_grpc_dir STREQUAL "-I")
+                file(RELATIVE_PATH _asio_grpc_rel_out_dir ${_asio_grpc_dir} ${_asio_grpc_abs_dir})
+                string(FIND "${_asio_grpc_rel_out_dir}" "../" _asio_grpc_is_in_parent_folder)
+                if(NOT ${_asio_grpc_is_in_parent_folder} EQUAL 0)
+                    set(_asio_grpc_suitable_include_found on)
+                    break()
+                endif()
             endif()
         endforeach()
+        if(NOT _asio_grpc_suitable_include_found)
+            string(REPLACE ";" " " _asio_grpc_pretty_import_dirs "${asio_grpc_protobuf_generate_IMPORT_DIRS}")
+            message(
+                SEND_ERROR
+                    "None of the IMPORT_DIRS passed to asio_grpc_protobuf_generate contain the proto file: \"${_asio_grpc_abs_file}\".\nIMPORT_DIRS: ${_asio_grpc_pretty_import_dirs}"
+            )
+            return()
+        endif()
+        set(_asio_grpc_actual_out_dir "${asio_grpc_protobuf_generate_OUT_DIR}/${_asio_grpc_rel_out_dir}")
 
         # Collect generated files
         foreach(_asio_grpc_ext ${_asio_grpc_generated_extensions})
             list(APPEND _asio_grpc_generated_srcs
-                 "${_asio_grpc_actual_our_dir}/${_asio_grpc_basename}${_asio_grpc_ext}")
+                 "${_asio_grpc_actual_out_dir}/${_asio_grpc_basename}${_asio_grpc_ext}")
         endforeach()
 
         if(asio_grpc_protobuf_generate_GENERATE_DESCRIPTORS)
-            set(_asio_grpc_descriptor_file "${_asio_grpc_actual_our_dir}/${_asio_grpc_basename}.desc")
+            set(_asio_grpc_descriptor_file "${_asio_grpc_actual_out_dir}/${_asio_grpc_basename}.desc")
             set(_asio_grpc_descriptor_command "--descriptor_set_out=${_asio_grpc_descriptor_file}")
             list(APPEND _asio_grpc_generated_srcs "${_asio_grpc_descriptor_file}")
         endif()
