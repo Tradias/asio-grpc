@@ -49,7 +49,7 @@ struct GrpcSenderImplementation : detail::GrpcSenderImplementationBase
     }
 
     template <class OnDone>
-    void done(OnDone on_done, bool ok) const
+    static void done(OnDone on_done, bool ok)
     {
         on_done(ok);
     }

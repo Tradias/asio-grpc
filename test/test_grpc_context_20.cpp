@@ -36,43 +36,22 @@ TEST_CASE("GrpcExecutor fulfills Executor TS concepts")
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 TEST_CASE("GrpcSender and ScheduleSender fulfill unified executor concepts")
 {
-    CHECK(asio::execution::is_scheduler_v<agrpc::GrpcExecutor>);
     using UseSender = decltype(agrpc::use_sender(std::declval<agrpc::GrpcExecutor>()));
-    using UseSenderFromGrpcContext = decltype(agrpc::use_sender(std::declval<agrpc::GrpcContext&>()));
-    CHECK(std::is_same_v<UseSender, UseSenderFromGrpcContext>);
     using GrpcSender =
         decltype(agrpc::wait(std::declval<grpc::Alarm&>(), std::declval<std::chrono::system_clock::time_point>(),
                              std::declval<UseSender>()));
     CHECK(asio::execution::sender<GrpcSender>);
-    CHECK(asio::execution::is_sender_v<GrpcSender>);
     CHECK(asio::execution::typed_sender<GrpcSender>);
-    CHECK(asio::execution::is_typed_sender_v<GrpcSender>);
     CHECK(asio::execution::sender_to<GrpcSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
-    CHECK(asio::execution::is_sender_to_v<GrpcSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
-    CHECK(asio::execution::is_nothrow_connect_v<GrpcSender, test::ConditionallyNoexceptNoOpReceiver<true>>);
-    CHECK_FALSE(asio::execution::is_nothrow_connect_v<GrpcSender, test::ConditionallyNoexceptNoOpReceiver<false>>);
-    CHECK(asio::execution::is_nothrow_connect_v<GrpcSender, const test::ConditionallyNoexceptNoOpReceiver<true>&>);
-    CHECK_FALSE(
-        asio::execution::is_nothrow_connect_v<GrpcSender, const test::ConditionallyNoexceptNoOpReceiver<false>&>);
     using OperationState = asio::execution::connect_result_t<GrpcSender, test::InvocableArchetype>;
     CHECK(asio::execution::operation_state<OperationState>);
-    CHECK(asio::execution::is_operation_state_v<OperationState>);
 
     using ScheduleSender = decltype(asio::execution::schedule(std::declval<agrpc::GrpcExecutor>()));
     CHECK(asio::execution::sender<ScheduleSender>);
-    CHECK(asio::execution::is_sender_v<ScheduleSender>);
     CHECK(asio::execution::typed_sender<ScheduleSender>);
-    CHECK(asio::execution::is_typed_sender_v<ScheduleSender>);
     CHECK(asio::execution::sender_to<ScheduleSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
-    CHECK(asio::execution::is_sender_to_v<ScheduleSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
-    CHECK(asio::execution::is_nothrow_connect_v<ScheduleSender, test::ConditionallyNoexceptNoOpReceiver<true>>);
-    CHECK_FALSE(asio::execution::is_nothrow_connect_v<ScheduleSender, test::ConditionallyNoexceptNoOpReceiver<false>>);
-    CHECK(asio::execution::is_nothrow_connect_v<ScheduleSender, const test::ConditionallyNoexceptNoOpReceiver<true>&>);
-    CHECK_FALSE(
-        asio::execution::is_nothrow_connect_v<ScheduleSender, const test::ConditionallyNoexceptNoOpReceiver<false>&>);
     using ScheduleSenderOperationState = asio::execution::connect_result_t<ScheduleSender, test::InvocableArchetype>;
     CHECK(asio::execution::operation_state<ScheduleSenderOperationState>);
-    CHECK(asio::execution::is_operation_state_v<ScheduleSenderOperationState>);
 }
 #endif
 #endif
@@ -87,85 +66,6 @@ TEST_CASE_FIXTURE(
     vector.emplace_back(grpc_context, get_allocator());
     CHECK_EQ(get_allocator(), vector.front().get_allocator());
 }
-
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::schedule")
-{
-    bool is_invoked{false};
-    test::StatefulReceiverState state;
-    test::FunctionAsStatefulReceiver receiver{[&]
-                                              {
-                                                  is_invoked = true;
-                                              },
-                                              state};
-    auto operation_state = asio::execution::connect(asio::execution::schedule(get_executor()), receiver);
-    asio::execution::start(operation_state);
-    CHECK_FALSE(is_invoked);
-    grpc_context.run();
-    CHECK(is_invoked);
-    CHECK_FALSE(state.was_done);
-    CHECK_FALSE(state.exception);
-}
-
-TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::schedule with throwing receiver")
-{
-    test::StatefulReceiverState state;
-    test::FunctionAsStatefulReceiver receiver{[&]
-                                              {
-                                                  throw std::invalid_argument{"test"};
-                                              },
-                                              state};
-    auto operation_state = asio::execution::connect(asio::execution::schedule(get_executor()), receiver);
-    asio::execution::start(operation_state);
-    grpc_context.run();
-    CHECK_FALSE(state.was_done);
-    REQUIRE(state.exception);
-    CHECK_THROWS_WITH_AS(std::rethrow_exception(state.exception), "test", std::invalid_argument);
-}
-
-TEST_CASE("asio GrpcExecutor::schedule on shutdown GrpcContext")
-{
-    bool is_invoked{false};
-    test::StatefulReceiverState state;
-    test::FunctionAsStatefulReceiver receiver{[&]
-                                              {
-                                                  is_invoked = true;
-                                              },
-                                              state};
-    {
-        agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
-        auto operation_state =
-            asio::execution::connect(asio::execution::schedule(grpc_context.get_scheduler()), receiver);
-        asio::execution::start(operation_state);
-    }
-    CHECK_FALSE(is_invoked);
-    CHECK_FALSE(state.exception);
-    CHECK(state.was_done);
-}
-
-TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::submit with allocator")
-{
-    asio::execution::submit(asio::execution::schedule(get_executor()),
-                            test::FunctionAsReceiver{[] {}, get_allocator()});
-    grpc_context.run();
-    CHECK(allocator_has_been_used());
-}
-
-TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::execution connect and start Alarm")
-{
-    bool ok{false};
-    grpc::Alarm alarm;
-    auto wait_sender = agrpc::wait(alarm, test::ten_milliseconds_from_now(), use_sender());
-    test::FunctionAsReceiver receiver{[&](bool wait_ok)
-                                      {
-                                          ok = wait_ok;
-                                      }};
-    auto operation_state = asio::execution::connect(std::move(wait_sender), std::move(receiver));
-    asio::execution::start(operation_state);
-    grpc_context.run();
-    CHECK(ok);
-}
-#endif
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 TEST_CASE_TEMPLATE("asio ScheduleSender start/submit with shutdown GrpcContext", T, std::true_type, std::false_type)
