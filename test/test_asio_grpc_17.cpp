@@ -668,7 +668,20 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with cancellation_t
     CHECK(ok);
 }
 
-#ifdef ASIO_HAS_FIXED_DEFERRED
+template <class Executor, class CompletionToken, class... Function>
+auto when_one_bind_executor(const Executor& executor, CompletionToken&& token, Function&&... function)
+{
+    return asio::experimental::make_parallel_group(
+               [&](auto& f)
+               {
+                   return [&](auto&& t)
+                   {
+                       return f(asio::bind_executor(executor, std::move(t)));
+                   };
+               }(function)...)
+        .async_wait(asio::experimental::wait_for_one(), std::forward<CompletionToken>(token));
+}
+
 TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with parallel_group")
 {
     std::array<std::size_t, 2> completion_order;
@@ -677,17 +690,22 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with parallel_group
     grpc::Alarm alarm;
     asio::steady_timer timer{get_executor(), std::chrono::milliseconds(100)};
     const auto not_too_exceed = std::chrono::steady_clock::now() + std::chrono::seconds(5);
-    asio::experimental::make_parallel_group(
-        timer.async_wait(asio::experimental::deferred),
-        agrpc::wait(alarm, test::five_seconds_from_now(),
-                    asio::bind_executor(get_executor(), asio::experimental::deferred)))
-        .async_wait(asio::experimental::wait_for_one(),
-                    [&](std::array<std::size_t, 2> actual_completion_order, test::ErrorCode timer_ec, bool wait_ok)
-                    {
-                        completion_order = actual_completion_order;
-                        error_code.emplace(timer_ec);
-                        ok = wait_ok;
-                    });
+    when_one_bind_executor(
+        get_executor(),
+        [&](std::array<std::size_t, 2> actual_completion_order, test::ErrorCode timer_ec, bool wait_ok)
+        {
+            completion_order = actual_completion_order;
+            error_code.emplace(timer_ec);
+            ok = wait_ok;
+        },
+        [&](auto&& t)
+        {
+            return timer.async_wait(std::move(t));
+        },
+        [&](auto&& t)
+        {
+            return agrpc::wait(alarm, test::five_seconds_from_now(), std::move(t));
+        });
     grpc_context.run();
     CHECK_GT(not_too_exceed, std::chrono::steady_clock::now());
     CHECK_EQ(0, completion_order[0]);
@@ -695,5 +713,4 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with parallel_group
     CHECK_EQ(test::ErrorCode{}, error_code);
     CHECK_FALSE(ok);
 }
-#endif
 #endif

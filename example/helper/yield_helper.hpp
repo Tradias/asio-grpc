@@ -47,7 +47,7 @@ struct SpawnAllVoid
     void operator()(Self& self)
     {
         std::apply(
-            [&](Function&&... function)
+            [&](Function&... function)
             {
                 const auto executor = boost::asio::get_associated_executor(self);
                 boost::asio::experimental::make_parallel_group(
@@ -56,16 +56,17 @@ struct SpawnAllVoid
                         return [&](auto&& t)
                         {
                             return example::initiate_spawn(
-                                [&, f = std::forward<Function>(f)](const auto& yield) mutable
+                                [f = std::move(f)](const auto& yield) mutable
                                 {
-                                    std::move(f)(yield);
+                                    auto local_f = std::move(f);
+                                    std::move(local_f)(yield);
                                 },
                                 boost::asio::bind_executor(executor, t));
                         };
                     }(function)...)
                     .async_wait(boost::asio::experimental::wait_for_all(), std::move(self));
             },
-            std::move(functions));
+            functions);
     }
 
     template <class Self, std::size_t N>
@@ -83,14 +84,14 @@ auto spawn_all_void(agrpc::GrpcContext& grpc_context, CompletionToken&& token, F
 }
 
 template <class Executor, class CompletionToken, class... Function>
-auto when_all_bind_executor(Executor&& executor, CompletionToken&& token, Function&&... function)
+auto when_all_bind_executor(const Executor& executor, CompletionToken&& token, Function&&... function)
 {
     return boost::asio::experimental::make_parallel_group(
                [&](auto& f)
                {
                    return [&](auto&& t)
                    {
-                       return f(boost::asio::bind_executor(std::forward<Executor>(executor), std::move(t)));
+                       return f(boost::asio::bind_executor(executor, std::move(t)));
                    };
                }(function)...)
         .async_wait(boost::asio::experimental::wait_for_all(), std::forward<CompletionToken>(token));
