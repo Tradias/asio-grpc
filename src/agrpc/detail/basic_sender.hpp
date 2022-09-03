@@ -160,7 +160,7 @@ struct BasicSenderRunningOperationInit
 
     [[nodiscard]] Initiation* operator->() const noexcept { return &initiation_; }
 
-    [[nodiscard]] operator void*() const noexcept { return static_cast<void*>(self_); }
+    [[nodiscard]] operator void*() const noexcept { return self_; }
 
     detail::BasicSenderRunningOperationBase<Type>* self_;
     Initiation& initiation_;

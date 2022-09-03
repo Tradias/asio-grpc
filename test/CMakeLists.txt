@@ -43,7 +43,7 @@ function(asio_grpc_add_test _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_stand
     convert_to_cpp_suffix(${_asio_grpc_cxx_standard})
 
     target_link_libraries(${_asio_grpc_name} PRIVATE "asio-grpc-test-main${_asio_grpc_cxx_standard}"
-                                                     "asio-grpc-test-protobuf${_asio_grpc_cxx_standard}")
+                                                     "asio-grpc-test-protos${_asio_grpc_cxx_standard}")
     if(${_asio_grpc_type} STREQUAL "BOOST_ASIO")
         target_link_libraries(${_asio_grpc_name} PRIVATE "asio-grpc-test-util-boost-asio${_asio_grpc_cxx_standard}")
 

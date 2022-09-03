@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "out_var/msg/message.grpc.pb.h"
-#include "out_var/subdir/other.grpc.pb.h"
+#include "out_var/subdir/other.1.grpc.pb.h"
 #include "out_var/v1/out_var.grpc.pb.h"
 
 #include <agrpc/asio_grpc.hpp>

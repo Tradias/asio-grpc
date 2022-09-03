@@ -17,9 +17,6 @@ Considerations that went into the design of the API:
 
 The original client-side proposal.
 
-<details><summary><b>Description</b></summary>
-<p>
-
 ## Client-side unary
 
 **API**
@@ -343,15 +340,9 @@ if (status = co_await streaming.finish(asio::use_awaitable); !status.ok()) {
 }
 ```
 
-</p>
-</details>
-
 # Proposal 2
 
 Updated proposal that prevents users from interacting with unstarted RPCs and therefore avoids the need for `grpc::Status::FAILED_PRECONDITION`.
-
-<details><summary><b>Description</b></summary>
-<p>
 
 ## Client-side server-streaming
 
@@ -447,9 +438,6 @@ if (!status.ok()) {
   // agrpc::read returned false and agrpc::finish produced non-ok status
 }
 ```
-
-</p>
-</details>
 
 # References
 

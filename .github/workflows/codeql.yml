@@ -37,16 +37,8 @@ jobs:
     - name: Configure CMake
       run: cmake --preset default -DCMAKE_BUILD_TYPE=Release -DVCPKG_TARGET_TRIPLET=x64-windows-release -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed -DVCPKG_MANIFEST_INSTALL=off -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on -DASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET=off
 
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
-      with:
-        languages: 'cpp'
-
     - name: Build
-      run: cmake --build --preset default --config Release --parallel 1
-
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      run: cmake --build --preset default --config Release --parallel 1 --target asio-grpc-example-protos asio-grpc-test-protos
 
     - name: Initialize MSVC Code Analysis
       uses: microsoft/msvc-code-analysis-action@v0.1.0
