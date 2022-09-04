@@ -70,7 +70,7 @@ class StackBuffer
   public:
     [[nodiscard]] static constexpr std::size_t max_size() noexcept { return Size; }
 
-    void* allocate(std::size_t) { return buffer; }
+    [[nodiscard]] void* allocate(std::size_t) noexcept { return buffer; }
 
   private:
     alignas(std::max_align_t) std::byte buffer[Size];
@@ -92,7 +92,7 @@ class DelayedBuffer
         return std::numeric_limits<std::size_t>::max() - (CHUNK_SIZE - 1);
     }
 
-    void* allocate(std::size_t size)
+    [[nodiscard]] void* allocate(std::size_t size)
     {
         if AGRPC_LIKELY (buffer)
         {

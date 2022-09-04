@@ -40,7 +40,7 @@ class RepeatedlyRequestCancellationContext
     template <class CancellationFunction, class CancellationSlot>
     void emplace(CancellationSlot&& cancellation_slot) noexcept
     {
-        cancellation_slot.template emplace<CancellationFunction>(stopped);
+        static_cast<CancellationSlot&&>(cancellation_slot).template emplace<CancellationFunction>(stopped);
     }
 
   private:
