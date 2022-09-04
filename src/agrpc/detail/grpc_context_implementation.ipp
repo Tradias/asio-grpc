@@ -47,21 +47,6 @@ inline StartWorkAndGuard::StartWorkAndGuard(agrpc::GrpcContext& grpc_context) no
     grpc_context.work_started();
 }
 
-inline void WorkStartedOnExitFunctor::operator()() const noexcept { grpc_context.work_started(); }
-
-inline FinishWorkAndGuard::FinishWorkAndGuard(agrpc::GrpcContext& grpc_context) noexcept
-    : detail::WorkStartedOnExit(grpc_context)
-{
-    detail::GrpcContextImplementation::finish_work_unstoppable(grpc_context);
-}
-
-#ifdef AGRPC_ASIO_HAS_CO_AWAIT
-inline detail::CoroutinePool& GrpcContextImplementation::get_coroutine_pool(agrpc::GrpcContext& grpc_context) noexcept
-{
-    return grpc_context.coroutine_pool;
-}
-#endif
-
 inline bool IsGrpcContextStoppedPredicate::operator()(const agrpc::GrpcContext& grpc_context) const noexcept
 {
     return grpc_context.is_stopped();
@@ -104,11 +89,6 @@ inline void GrpcContextImplementation::add_operation(agrpc::GrpcContext& grpc_co
     {
         detail::GrpcContextImplementation::add_remote_operation(grpc_context, op);
     }
-}
-
-inline void GrpcContextImplementation::finish_work_unstoppable(agrpc::GrpcContext& grpc_context) noexcept
-{
-    grpc_context.outstanding_work.fetch_sub(1, std::memory_order_relaxed);
 }
 
 inline bool GrpcContextImplementation::running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept

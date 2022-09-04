@@ -18,7 +18,6 @@
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/atomic_intrusive_queue.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/coroutine_pool.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/grpc_context.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
@@ -274,9 +273,6 @@ class GrpcContext
     detail::GrpcContextLocalMemoryResource local_resource{detail::pmr::new_delete_resource()};
     LocalWorkQueue local_work_queue;
     RemoteWorkQueue remote_work_queue{false};
-#ifdef AGRPC_ASIO_HAS_CO_AWAIT
-    detail::CoroutinePool coroutine_pool;
-#endif
 };
 
 AGRPC_NAMESPACE_END

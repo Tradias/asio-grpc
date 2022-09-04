@@ -21,7 +21,7 @@
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 
 #include <agrpc/bind_allocator.hpp>
-#include <agrpc/detail/coroutine_pool.hpp>
+#include <agrpc/detail/coroutine_traits.hpp>
 #include <agrpc/detail/one_shot_allocator.hpp>
 #include <agrpc/detail/query_grpc_context.hpp>
 #include <agrpc/detail/repeatedly_request_base.hpp>
@@ -115,9 +115,6 @@ auto initiate_request_from_rpc_context(detail::GenericRPCMarker, grpc::AsyncGene
 template <class RequestHandler, class RPC, class CompletionHandler>
 class RepeatedlyRequestCoroutineOperation
     : public detail::TypeErasedNoArgOperation,
-      public detail::TypeErasedCoroutinePoolOperation<detail::RebindCoroutineT<
-          detail::InvokeResultFromSignatureT<RequestHandler&, typename detail::RPCContextForRPCT<RPC>::Signature>,
-          void>>,
       public detail::RepeatedlyRequestOperationBase<RequestHandler, RPC, CompletionHandler>
 {
   private:
@@ -129,8 +126,6 @@ class RepeatedlyRequestCoroutineOperation
         detail::RebindCoroutineT<detail::InvokeResultFromSignatureT<RequestHandler&, typename RPCContext::Signature>,
                                  void>;
     using UseCoroutine = detail::CoroutineCompletionTokenT<Coroutine>;
-    using Pool = detail::CoroutineSubPool<Coroutine>;
-    using PoolOperationBase = detail::TypeErasedCoroutinePoolOperation<Coroutine>;
 
     static constexpr auto ON_STOP_COMPLETE =
         &detail::default_do_complete<RepeatedlyRequestCoroutineOperation, detail::TypeErasedNoArgOperation>;
@@ -144,12 +139,9 @@ class RepeatedlyRequestCoroutineOperation
     RepeatedlyRequestCoroutineOperation(Rh&& request_handler, RPC rpc, Service& service, Ch&& completion_handler,
                                         bool is_stoppable)
         : NoArgBase(ON_STOP_COMPLETE),
-          PoolOperationBase(&perform_request_and_repeat),
           detail::RepeatedlyRequestOperationBase<RequestHandler, RPC, CompletionHandler>(
               static_cast<Rh&&>(request_handler), rpc, service, static_cast<Ch&&>(completion_handler), is_stoppable),
-          buffer_operation(detail::create_allocated_buffer_operation<BUFFER_SIZE>()),
-          pool(detail::GrpcContextImplementation::get_coroutine_pool(this->grpc_context())
-                   .template get_or_create_sub_pool<Coroutine>(this->get_executor()))
+          buffer_operation(detail::create_allocated_buffer_operation<BUFFER_SIZE>())
     {
         // Count buffer_operation
         this->grpc_context().work_started();
@@ -166,55 +158,39 @@ class RepeatedlyRequestCoroutineOperation
         {
             return false;
         }
-        asio::post(this->get_executor(),
-                   [&]
-                   {
-                       pool.execute(this);
-                   });
+        asio::co_spawn(this->get_executor(), perform_request_and_repeat(), detail::RethrowFirstArg{});
         return true;
     }
 
   private:
-    bool initiate_next_repeatedly_request()
+    Coroutine perform_request_and_repeat()
     {
-        if AGRPC_UNLIKELY (this->is_stopped())
-        {
-            return false;
-        }
-        pool.execute(this);
-        return true;
-    }
-
-    static Coroutine perform_request_and_repeat(PoolOperationBase* base)
-    {
-        auto& self = *static_cast<RepeatedlyRequestCoroutineOperation*>(base);
         RPCContext rpc_context;
         detail::ScopeGuard guard{[&]
                                  {
-                                     detail::WorkFinishedOnExit on_exit{self.grpc_context()};
-                                     ON_STOP_COMPLETE(&self, detail::InvokeHandler::NO, {});
+                                     detail::WorkFinishedOnExit on_exit{this->grpc_context()};
+                                     ON_STOP_COMPLETE(this, detail::InvokeHandler::NO, {});
                                  }};
         const auto ok = co_await detail::initiate_request_from_rpc_context(
-            self.rpc(), self.service(), rpc_context,
-            agrpc::AllocatorBinder(self.buffer_operation->one_shot_allocator(), UseCoroutine{}));
+            this->rpc(), this->service(), rpc_context,
+            agrpc::AllocatorBinder(this->buffer_operation->one_shot_allocator(), UseCoroutine{}));
         guard.release();
         if AGRPC_LIKELY (ok)
         {
-            auto local_request_handler = self.request_handler();
-            if AGRPC_UNLIKELY (!self.initiate_next_repeatedly_request())
+            auto local_request_handler = this->request_handler();
+            if AGRPC_UNLIKELY (!this->initiate_repeatedly_request())
             {
-                detail::GrpcContextImplementation::add_local_operation(self.grpc_context(), &self);
+                detail::GrpcContextImplementation::add_local_operation(this->grpc_context(), this);
             }
             co_await std::apply(static_cast<RequestHandler&&>(local_request_handler), rpc_context.args());
         }
         else
         {
-            detail::GrpcContextImplementation::add_local_operation(self.grpc_context(), &self);
+            detail::GrpcContextImplementation::add_local_operation(this->grpc_context(), this);
         }
     }
 
     BufferOp* buffer_operation;
-    Pool& pool;
 };
 }
 

@@ -56,32 +56,6 @@ struct StartWorkAndGuard : detail::WorkFinishedOnExit
     StartWorkAndGuard& operator=(StartWorkAndGuard&&) = delete;
 };
 
-struct WorkStartedOnExitFunctor
-{
-    agrpc::GrpcContext& grpc_context;
-
-    explicit WorkStartedOnExitFunctor(agrpc::GrpcContext& grpc_context) noexcept : grpc_context(grpc_context) {}
-
-    void operator()() const noexcept;
-
-    WorkStartedOnExitFunctor(const WorkStartedOnExitFunctor&) = delete;
-    WorkStartedOnExitFunctor(WorkStartedOnExitFunctor&&) = delete;
-    WorkStartedOnExitFunctor& operator=(const WorkStartedOnExitFunctor&) = delete;
-    WorkStartedOnExitFunctor& operator=(WorkStartedOnExitFunctor&&) = delete;
-};
-
-using WorkStartedOnExit = detail::ScopeGuard<detail::WorkStartedOnExitFunctor>;
-
-struct FinishWorkAndGuard : detail::WorkStartedOnExit
-{
-    explicit FinishWorkAndGuard(agrpc::GrpcContext& grpc_context) noexcept;
-
-    FinishWorkAndGuard(const FinishWorkAndGuard&) = delete;
-    FinishWorkAndGuard(FinishWorkAndGuard&&) = delete;
-    FinishWorkAndGuard& operator=(const FinishWorkAndGuard&) = delete;
-    FinishWorkAndGuard& operator=(FinishWorkAndGuard&&) = delete;
-};
-
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 struct GrpcContextThreadInfo : asio::detail::thread_info_base
 {
@@ -133,10 +107,6 @@ struct GrpcContextImplementation
     static void add_local_operation(agrpc::GrpcContext& grpc_context, detail::TypeErasedNoArgOperation* op) noexcept;
 
     static void add_operation(agrpc::GrpcContext& grpc_context, detail::TypeErasedNoArgOperation* op) noexcept;
-
-    static void finish_work_unstoppable(agrpc::GrpcContext& grpc_context) noexcept;
-
-    static detail::CoroutinePool& get_coroutine_pool(agrpc::GrpcContext& grpc_context) noexcept;
 
     static bool handle_next_completion_queue_event(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline,
                                                    detail::InvokeHandler invoke);

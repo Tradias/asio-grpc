@@ -80,7 +80,7 @@ if(ASIO_GRPC_BUILD_TESTS AND ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/completion_handler_receiver.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/conditional_sender.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/config.hpp"
-                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/coroutine_pool.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/coroutine_traits.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/default_completion_token.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/executor_with_default.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/forward.hpp"
