@@ -76,7 +76,7 @@ class RepeatedlyRequestStopContext<Receiver, false> : public detail::NoOpStopCal
 };
 
 template <class RPC, class RequestHandler>
-class RepeatedlyRequestSender : public detail::SenderOf<>
+class RepeatedlyRequestSender : public detail::SenderOf<void()>
 {
   private:
     using Service = detail::GetServiceT<RPC>;

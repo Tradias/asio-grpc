@@ -23,7 +23,7 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class Signature = void()>
+template <class Signature>
 struct SenderOf;
 
 template <class... Values>

@@ -33,13 +33,13 @@ struct ScheduleSenderImplementation
     using Initiation = detail::Empty;
 
     template <class OnDone>
-    void initiate(agrpc::GrpcContext& grpc_context, OnDone on_done) const
+    static void initiate(agrpc::GrpcContext& grpc_context, OnDone on_done)
     {
         detail::GrpcContextImplementation::add_operation(grpc_context, on_done.self());
     }
 
     template <class OnDone>
-    void done(OnDone on_done) const
+    static void done(OnDone on_done)
     {
         on_done();
     }

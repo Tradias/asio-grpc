@@ -467,7 +467,7 @@ struct ClientReadBidiStreamingSenderImplementation<Responder<Request, Response>,
     }
 
     template <class OnDone>
-    void done(OnDone on_done, bool ok) const
+    static void done(OnDone on_done, bool ok)
     {
         on_done(ok);
     }
@@ -504,7 +504,7 @@ struct ClientWriteBidiStreamingSenderImplementation<Responder<Request, Response>
     }
 
     template <class OnDone>
-    void done(OnDone on_done, bool ok) const
+    static void done(OnDone on_done, bool ok)
     {
         on_done(ok);
     }

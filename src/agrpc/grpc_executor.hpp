@@ -251,7 +251,7 @@ class BasicGrpcExecutor
      *
      * Thread-safe
      */
-    [[nodiscard]] constexpr auto schedule() const noexcept
+    [[nodiscard]] detail::ScheduleSender schedule() const noexcept
     {
         return detail::BasicSenderAccess::create<detail::ScheduleSenderImplementation>(*this->grpc_context(), {}, {});
     }
@@ -668,6 +668,18 @@ struct agrpc::asio::traits::query_member<agrpc::BasicGrpcExecutor<Allocator, Opt
     static constexpr bool is_noexcept = true;
 
     using result_type = Allocator;
+};
+#endif
+
+#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_SCHEDULE_MEMBER_TRAIT) && \
+    !defined(ASIO_HAS_DEDUCED_SCHEDULE_MEMBER_TRAIT)
+template <class Allocator, std::uint32_t Options>
+struct agrpc::asio::traits::schedule_member<agrpc::BasicGrpcExecutor<Allocator, Options>>
+{
+    static constexpr bool is_valid = true;
+    static constexpr bool is_noexcept = true;
+
+    using result_type = agrpc::detail::ScheduleSender;
 };
 #endif
 
