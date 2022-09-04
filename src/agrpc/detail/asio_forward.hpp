@@ -298,7 +298,7 @@ struct UncancellableSlot
     friend constexpr bool operator!=(const UncancellableSlot&, const UncancellableSlot&) noexcept { return false; }
 };
 
-template <class Object, class Default = UncancellableSlot>
+template <class Object, class Default = detail::UncancellableSlot>
 auto get_associated_cancellation_slot([[maybe_unused]] const Object& object,
                                       const Default& default_slot = Default{}) noexcept
 {
@@ -308,6 +308,20 @@ auto get_associated_cancellation_slot([[maybe_unused]] const Object& object,
     return default_slot;
 #endif
 }
+
+template <class T>
+inline constexpr bool IS_CANCEL_EVER_POSSIBLE_V = true;
+
+template <>
+inline constexpr bool IS_CANCEL_EVER_POSSIBLE_V<detail::UncancellableSlot> = false;
+
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+template <class Object, class Default = detail::UncancellableSlot>
+using AssociatedCancellationSlotT = asio::associated_cancellation_slot_t<Object, Default>;
+#else
+template <class, class Default = detail::UncancellableSlot>
+using AssociatedCancellationSlotT = Default;
+#endif
 #endif
 
 template <class T>
@@ -324,12 +338,6 @@ using IsStopEverPossibleHelper = std::bool_constant<(T{}.stop_possible())>;
 
 template <class T>
 inline constexpr bool IS_STOP_EVER_POSSIBLE_V<T, detail::IsStopEverPossibleHelper<T>> = false;
-
-template <class T>
-inline constexpr bool IS_CANCEL_EVER_POSSIBLE_V = true;
-
-template <>
-inline constexpr bool IS_CANCEL_EVER_POSSIBLE_V<detail::UncancellableSlot> = false;
 }  // namespace detail
 
 AGRPC_NAMESPACE_END

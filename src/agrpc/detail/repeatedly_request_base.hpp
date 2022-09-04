@@ -68,7 +68,7 @@ class RepeatedlyRequestOperationBase
   private:
     using Service = detail::GetServiceT<RPC>;
     using CancellationContext = detail::RepeatedlyRequestCancellationContext<detail::IS_CANCEL_EVER_POSSIBLE_V<
-        asio::associated_cancellation_slot_t<CompletionHandler, detail::UncancellableSlot>>>;
+        detail::AssociatedCancellationSlotT<CompletionHandler, detail::UncancellableSlot>>>;
 
   public:
     template <class Ch, class Rh>
