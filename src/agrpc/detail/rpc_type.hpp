@@ -96,6 +96,34 @@ inline constexpr auto RPC_TYPE<PrepareAsync, std::void_t<decltype(PrepareAsync)>
 template <>
 inline constexpr auto RPC_TYPE<detail::GenericRPCType::CLIENT_STREAMING> =
     agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING;
+
+struct GenericRPCMarker
+{
+};
+
+template <class RPC>
+struct GetService;
+
+template <class Service, class Request, class Responder>
+struct GetService<detail::ServerMultiArgRequest<Service, Request, Responder>>
+{
+    using Type = Service;
+};
+
+template <class Service, class Responder>
+struct GetService<detail::ServerSingleArgRequest<Service, Responder>>
+{
+    using Type = Service;
+};
+
+template <>
+struct GetService<detail::GenericRPCMarker>
+{
+    using Type = grpc::AsyncGenericService;
+};
+
+template <class RPC>
+using GetServiceT = typename detail::GetService<RPC>::Type;
 }
 
 AGRPC_NAMESPACE_END

@@ -29,7 +29,7 @@ namespace detail
 template <class Context>
 concept IS_CASTABLE_TO_GRPC_CONTEXT = requires(Context& context)
 {
-    {static_cast<agrpc::GrpcContext&>(context)};
+    static_cast<agrpc::GrpcContext&>(context);
 };
 #else
 template <class Context, class = void>

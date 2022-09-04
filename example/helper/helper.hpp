@@ -15,15 +15,19 @@
 #ifndef AGRPC_EXAMPLE_HELPER_H
 #define AGRPC_EXAMPLE_HELPER_H
 
+#include <cstdio>
 #include <cstdlib>
 
-inline void abort_if_not(bool condition)
+inline void abort_if_not_impl(bool condition, const char* condition_string)
 {
     if (!condition)
     {
+        std::printf("Assertion failed: %s", condition_string);
         std::abort();
     }
 }
+
+#define abort_if_not(condition) abort_if_not_impl((condition), #condition)
 
 template <class... Args>
 void silence_unused(Args&&... args)

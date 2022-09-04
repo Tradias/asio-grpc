@@ -39,14 +39,14 @@ struct AlarmInitFunction
 template <class Deadline>
 AlarmInitFunction(grpc::Alarm&, const Deadline&) -> AlarmInitFunction<Deadline>;
 
-struct AlarmCancellationHandler
+struct AlarmCancellationFunction
 {
     grpc::Alarm& alarm;
 
-    constexpr explicit AlarmCancellationHandler(grpc::Alarm& alarm) noexcept : alarm(alarm) {}
+    constexpr explicit AlarmCancellationFunction(grpc::Alarm& alarm) noexcept : alarm(alarm) {}
 
     template <class Deadline>
-    constexpr explicit AlarmCancellationHandler(const detail::AlarmInitFunction<Deadline>& init_function) noexcept
+    constexpr explicit AlarmCancellationFunction(const detail::AlarmInitFunction<Deadline>& init_function) noexcept
         : alarm(init_function.alarm)
     {
     }

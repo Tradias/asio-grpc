@@ -64,7 +64,7 @@ void make_generic_unary_request(agrpc::GrpcContext& grpc_context, grpc::GenericS
     const auto response_writer =
         agrpc::request("/example.v1.Example/Unary", stub, client_context, buffer, grpc_context);
 
-    // -- For streaming RPC use:
+    // -- For streaming RPCs use:
     // std::unique_ptr<grpc::GenericClientAsyncReaderWriter> reader_writer;
     // agrpc::request("/example.v1.Example/ServerStreaming", stub, client_context, reader_writer, yield);
 
@@ -138,11 +138,11 @@ struct BidirectionalStreamingRequest
                 BOOST_ASIO_CORO_YIELD
                 {
                     auto request_buffer = serialize(c.request);
-                    auto executor = asio::get_associated_executor(self);
+                    const auto executor = asio::get_associated_executor(self);
 
                     // Reads and writes can be performed simultaneously.
                     example::when_all_bind_executor(
-                        std::move(executor), std::move(self),
+                        executor, std::move(self),
                         [&](auto&& token)
                         {
                             return agrpc::read(c.reader_writer, c.response_buffer, std::move(token));

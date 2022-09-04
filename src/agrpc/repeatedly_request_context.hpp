@@ -27,7 +27,7 @@ namespace detail
 template <class T>
 concept HAS_REQUEST_MEMBER_FUNCTION = requires(T& t)
 {
-    {t->request()};
+    t->request();
 };
 #else
 template <class, class = void>

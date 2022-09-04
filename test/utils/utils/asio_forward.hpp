@@ -45,6 +45,10 @@
 #ifdef ASIO_HAS_CONCEPTS
 #define AGRPC_ASIO_HAS_CONCEPTS
 #endif
+
+#if (ASIO_VERSION >= 102200)
+#define ASIO_HAS_FIXED_DEFERRED
+#endif
 #elif defined(AGRPC_BOOST_ASIO)
 //
 #include <boost/version.hpp>
@@ -75,6 +79,10 @@
 
 #ifdef BOOST_ASIO_HAS_CONCEPTS
 #define AGRPC_ASIO_HAS_CONCEPTS
+#endif
+
+#if (BOOST_VERSION >= 107800)
+#define ASIO_HAS_FIXED_DEFERRED
 #endif
 #endif
 

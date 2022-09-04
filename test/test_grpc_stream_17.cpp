@@ -88,7 +88,7 @@ TEST_CASE_TEMPLATE("CancelSafe: wait for already completed operation", T, bool, 
 
 TEST_CASE_FIXTURE(test::IoContextTest, "CancelSafe: wait for asio::steady_timer")
 {
-    agrpc::CancelSafe<void(boost::system::error_code)> safe;
+    agrpc::CancelSafe<void(test::ErrorCode)> safe;
     asio::steady_timer timer{io_context, std::chrono::seconds(5)};
     timer.async_wait(safe.token());
     asio::cancellation_signal signal;

@@ -31,34 +31,6 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-struct GenericRPCMarker
-{
-};
-
-template <class RPC>
-struct GetService;
-
-template <class Service, class Request, class Responder>
-struct GetService<detail::ServerMultiArgRequest<Service, Request, Responder>>
-{
-    using Type = Service;
-};
-
-template <class Service, class Responder>
-struct GetService<detail::ServerSingleArgRequest<Service, Responder>>
-{
-    using Type = Service;
-};
-
-template <>
-struct GetService<detail::GenericRPCMarker>
-{
-    using Type = grpc::AsyncGenericService;
-};
-
-template <class RPC>
-using GetServiceT = typename detail::GetService<RPC>::Type;
-
 template <class Message, class Responder>
 struct ReadInitFunction
 {

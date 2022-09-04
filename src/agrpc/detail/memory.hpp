@@ -17,6 +17,8 @@
 
 #include <agrpc/detail/config.hpp>
 
+#include <cstddef>
+#include <limits>
 #include <memory>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -61,6 +63,51 @@ auto& unwrap_unique_ptr(const std::unique_ptr<T>& t) noexcept
 {
     return *t;
 }
+
+template <std::size_t Size>
+class StackBuffer
+{
+  public:
+    [[nodiscard]] static constexpr std::size_t max_size() noexcept { return Size; }
+
+    void* allocate(std::size_t) { return buffer; }
+
+  private:
+    alignas(std::max_align_t) std::byte buffer[Size];
+};
+
+class DelayedBuffer
+{
+  private:
+    static constexpr auto CHUNK_SIZE = alignof(std::max_align_t);
+
+    struct Data
+    {
+        alignas(std::max_align_t) std::byte data[CHUNK_SIZE];
+    };
+
+  public:
+    [[nodiscard]] static constexpr std::size_t max_size() noexcept
+    {
+        return std::numeric_limits<std::size_t>::max() - (CHUNK_SIZE - 1);
+    }
+
+    void* allocate(std::size_t size)
+    {
+        if AGRPC_LIKELY (buffer)
+        {
+            return buffer.get();
+        }
+        else
+        {
+            buffer.reset(new Data[(size + 1) / CHUNK_SIZE]);
+            return buffer.get();
+        }
+    }
+
+  private:
+    std::unique_ptr<Data[]> buffer;
+};
 }
 
 AGRPC_NAMESPACE_END
