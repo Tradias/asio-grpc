@@ -21,8 +21,8 @@
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 
 #include <agrpc/bind_allocator.hpp>
+#include <agrpc/detail/buffer_allocator.hpp>
 #include <agrpc/detail/coroutine_traits.hpp>
-#include <agrpc/detail/one_shot_allocator.hpp>
 #include <agrpc/detail/query_grpc_context.hpp>
 #include <agrpc/detail/repeatedly_request_base.hpp>
 #include <agrpc/detail/rpc_context.hpp>
@@ -59,15 +59,15 @@ inline constexpr bool INVOKE_RESULT_IS_CO_SPAWNABLE<
     std::enable_if_t<
         detail::IS_CO_SPAWNABLE<detail::GetExecutorT<Function>, std::invoke_result_t<Function, Args...>>>> = true;
 
-template <std::size_t BufferSize>
+template <class Buffer>
 class BufferOperation : public detail::TypeErasedNoArgOperation
 {
   public:
     BufferOperation() noexcept : detail::TypeErasedNoArgOperation(&BufferOperation::do_complete) {}
 
-    detail::OneShotAllocator<std::byte, BufferSize> one_shot_allocator() noexcept
+    detail::BufferAllocator<std::byte, Buffer> allocator() noexcept
     {
-        return detail::OneShotAllocator<std::byte, BufferSize>{this->buffer};
+        return detail::BufferAllocator<std::byte, Buffer>{this->buffer};
     }
 
   private:
@@ -77,13 +77,13 @@ class BufferOperation : public detail::TypeErasedNoArgOperation
         detail::destroy_deallocate(static_cast<BufferOperation*>(op), std::allocator<BufferOperation>{});
     }
 
-    alignas(std::max_align_t) std::byte buffer[BufferSize];
+    Buffer buffer;
 };
 
-template <std::size_t BufferSize>
+template <class Buffer>
 auto create_allocated_buffer_operation()
 {
-    using Op = detail::BufferOperation<BufferSize>;
+    using Op = detail::BufferOperation<Buffer>;
     return detail::allocate<Op>(std::allocator<Op>{}).release();
 }
 
@@ -126,13 +126,16 @@ class RepeatedlyRequestCoroutineOperation
         detail::RebindCoroutineT<detail::InvokeResultFromSignatureT<RequestHandler&, typename RPCContext::Signature>,
                                  void>;
     using UseCoroutine = detail::CoroutineCompletionTokenT<Coroutine>;
+    using CoroutineCompletionHandler = detail::CompletionHandlerTypeT<UseCoroutine, void(bool)>;
 
     static constexpr auto ON_STOP_COMPLETE =
         &detail::default_do_complete<RepeatedlyRequestCoroutineOperation, detail::TypeErasedNoArgOperation>;
-    static constexpr auto BUFFER_SIZE =
-        sizeof(detail::CompletionHandlerTypeT<UseCoroutine, void(bool)>) + 2 * sizeof(void*);
+    static constexpr auto BUFFER_SIZE = sizeof(CoroutineCompletionHandler) + 2 * sizeof(void*);
 
-    using BufferOp = detail::BufferOperation<BUFFER_SIZE>;
+    using CoroutineCompletionHandlerBuffer =
+        detail::ConditionalT<std::is_same_v<detail::CompletionHandlerUnknown, CoroutineCompletionHandler>,
+                             detail::DelayedBuffer, detail::StackBuffer<BUFFER_SIZE>>;
+    using BufferOp = detail::BufferOperation<CoroutineCompletionHandlerBuffer>;
 
   public:
     template <class Ch, class Rh>
@@ -141,7 +144,7 @@ class RepeatedlyRequestCoroutineOperation
         : NoArgBase(ON_STOP_COMPLETE),
           detail::RepeatedlyRequestOperationBase<RequestHandler, RPC, CompletionHandler>(
               static_cast<Rh&&>(request_handler), rpc, service, static_cast<Ch&&>(completion_handler), is_stoppable),
-          buffer_operation(detail::create_allocated_buffer_operation<BUFFER_SIZE>())
+          buffer_operation(detail::create_allocated_buffer_operation<CoroutineCompletionHandlerBuffer>())
     {
         // Count buffer_operation
         this->grpc_context().work_started();
@@ -173,7 +176,7 @@ class RepeatedlyRequestCoroutineOperation
                                  }};
         const auto ok = co_await detail::initiate_request_from_rpc_context(
             this->rpc(), this->service(), rpc_context,
-            agrpc::AllocatorBinder(this->buffer_operation->one_shot_allocator(), UseCoroutine{}));
+            agrpc::AllocatorBinder(buffer_operation->allocator(), UseCoroutine{}));
         guard.release();
         if AGRPC_LIKELY (ok)
         {

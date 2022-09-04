@@ -19,6 +19,7 @@
 #include <agrpc/detail/utility.hpp>
 
 #include <cstddef>
+#include <limits>
 #include <memory>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -64,30 +65,16 @@ auto& unwrap_unique_ptr(const std::unique_ptr<T>& t) noexcept
     return *t;
 }
 
-template <class T, class... Args>
-T* construct_at(T* p, Args&&... args)
-{
-    return ::new (const_cast<void*>(static_cast<const void*>(p))) T(static_cast<Args&&>(args)...);
-}
-
 template <std::size_t Size>
 class StackBuffer
 {
   public:
-    static constexpr auto SIZE = Size;
+    [[nodiscard]] static constexpr std::size_t max_size() noexcept { return Size; }
 
-    template <class T>
-    auto assign(T&& t)
-    {
-        using Tunref = detail::RemoveCrefT<T>;
-        static_assert(alignof(std::max_align_t) >= alignof(Tunref), "Overaligned types are not supported");
-        return detail::construct_at(reinterpret_cast<Tunref*>(&buffer_), static_cast<T&&>(t));
-    }
-
-    [[nodiscard]] void* get() noexcept { return buffer_; }
+    void* allocate(std::size_t) { return buffer; }
 
   private:
-    alignas(std::max_align_t) std::byte buffer_[Size];
+    alignas(std::max_align_t) std::byte buffer[Size];
 };
 
 class DelayedBuffer
@@ -101,26 +88,22 @@ class DelayedBuffer
     };
 
   public:
-    template <class T>
-    auto assign(T&& t)
+    [[nodiscard]] static constexpr std::size_t max_size() noexcept
     {
-        using Tunref = detail::RemoveCrefT<T>;
-        static_assert(alignof(std::max_align_t) >= alignof(Tunref), "Overaligned types are not supported");
-        if (buffer)
+        return std::numeric_limits<std::size_t>::max() - CHUNK_SIZE - 1;
+    }
+
+    void* allocate(std::size_t size)
+    {
+        if AGRPC_LIKELY (buffer)
         {
-            return detail::construct_at(get<Tunref>(), static_cast<T&&>(t));
+            return buffer.get();
         }
         else
         {
-            buffer = std::make_unique<Data[]>(sizeof(Tunref) / CHUNK_SIZE + 1);
-            return detail::construct_at(get<Tunref>(), static_cast<T&&>(t));
+            buffer.reset(new Data[(size + 1) / CHUNK_SIZE]);
+            return buffer.get();
         }
-    }
-
-    template <class T = void>
-    [[nodiscard]] T* get() noexcept
-    {
-        return reinterpret_cast<T*>(buffer.get());
     }
 
   private:

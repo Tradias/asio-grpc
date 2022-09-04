@@ -15,8 +15,9 @@
 #ifndef AGRPC_HELPER_BUFFER_HPP
 #define AGRPC_HELPER_BUFFER_HPP
 
+#include "one_shot_allocator.hpp"
+
 #include <agrpc/bind_allocator.hpp>
-#include <agrpc/detail/one_shot_allocator.hpp>
 
 #include <cstddef>
 #include <type_traits>
@@ -26,9 +27,7 @@ namespace example
 template <std::size_t Capacity>
 struct Buffer
 {
-    // You should copy the implementation of OneShotAllocator into your code if you intent to use it. Do not worry,
-    // it is very simple!
-    using allocator_type = agrpc::detail::OneShotAllocator<std::byte, Capacity>;
+    using allocator_type = example::OneShotAllocator<std::byte, Capacity>;
 
     [[nodiscard]] allocator_type allocator() noexcept { return allocator_type{buffer}; }
 
