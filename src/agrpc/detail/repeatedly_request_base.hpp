@@ -26,26 +26,63 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+template <bool IsCancellable>
+class RepeatedlyRequestCancellationContext
+{
+  public:
+    explicit RepeatedlyRequestCancellationContext(bool is_cancellable) noexcept : is_cancellable(is_cancellable) {}
+
+    [[nodiscard]] bool is_cancelled() const noexcept
+    {
+        return is_cancellable ? stopped.load(std::memory_order_relaxed) : false;
+    }
+
+    template <class CancellationFunction, class CancellationSlot>
+    void emplace(CancellationSlot&& cancellation_slot) noexcept
+    {
+        cancellation_slot.template emplace<CancellationFunction>(stopped);
+    }
+
+  private:
+    std::atomic_bool stopped{};
+    const bool is_cancellable;
+};
+
+template <>
+class RepeatedlyRequestCancellationContext<false>
+{
+  public:
+    constexpr explicit RepeatedlyRequestCancellationContext(bool) noexcept {}
+
+    [[nodiscard]] static constexpr bool is_cancelled() noexcept { return false; }
+
+    template <class CancellationFunction, class CancellationSlot>
+    static constexpr void emplace(CancellationSlot&&) noexcept
+    {
+    }
+};
+
 template <class RequestHandler, class RPC, class CompletionHandler>
 class RepeatedlyRequestOperationBase
 {
   private:
     using Service = detail::GetServiceT<RPC>;
+    using CancellationContext = detail::RepeatedlyRequestCancellationContext<detail::IS_CANCEL_EVER_POSSIBLE_V<
+        asio::associated_cancellation_slot_t<CompletionHandler, detail::UncancellableSlot>>>;
 
   public:
     template <class Ch, class Rh>
     RepeatedlyRequestOperationBase(Rh&& request_handler, RPC rpc, Service& service, Ch&& completion_handler,
-                                   bool is_stoppable)
-        : request_handler_(static_cast<Rh&&>(request_handler)),
-          is_stoppable(is_stoppable),
-          rpc_(rpc),
-          impl2(service, static_cast<Ch&&>(completion_handler))
+                                   bool is_cancellable)
+        : impl1(service, static_cast<Ch&&>(completion_handler)),
+          impl2(rpc, is_cancellable),
+          request_handler_(static_cast<Rh&&>(request_handler))
     {
     }
 
-    [[nodiscard]] auto& stop_context() noexcept { return stop_context_; }
+    [[nodiscard]] auto& cancellation_context() noexcept { return impl2.second(); }
 
-    [[nodiscard]] auto& completion_handler() noexcept { return impl2.second(); }
+    [[nodiscard]] auto& completion_handler() noexcept { return impl1.second(); }
 
     [[nodiscard]] decltype(auto) get_allocator() noexcept
     {
@@ -53,10 +90,7 @@ class RepeatedlyRequestOperationBase
     }
 
   protected:
-    [[nodiscard]] bool is_stopped() const noexcept
-    {
-        return is_stoppable ? stop_context_.load(std::memory_order_relaxed) : false;
-    }
+    [[nodiscard]] bool is_cancelled() const noexcept { return impl2.second().is_cancelled(); }
 
     [[nodiscard]] decltype(auto) get_executor() noexcept { return detail::exec::get_executor(this->request_handler()); }
 
@@ -65,18 +99,16 @@ class RepeatedlyRequestOperationBase
         return detail::query_grpc_context(this->get_executor());
     }
 
-    [[nodiscard]] RPC rpc() noexcept { return rpc_; }
+    [[nodiscard]] RPC rpc() noexcept { return impl2.first(); }
 
-    [[nodiscard]] Service& service() noexcept { return impl2.first(); }
+    [[nodiscard]] Service& service() noexcept { return impl1.first(); }
 
     [[nodiscard]] RequestHandler& request_handler() noexcept { return request_handler_; }
 
   private:
+    detail::CompressedPair<Service&, CompletionHandler> impl1;
+    detail::CompressedPair<RPC, CancellationContext> impl2;
     RequestHandler request_handler_;
-    std::atomic_bool stop_context_{};
-    const bool is_stoppable;
-    RPC rpc_;
-    detail::CompressedPair<Service&, CompletionHandler> impl2;
 };
 }
 

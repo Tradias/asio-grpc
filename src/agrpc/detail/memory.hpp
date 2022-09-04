@@ -16,7 +16,6 @@
 #define AGRPC_DETAIL_MEMORY_HPP
 
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/utility.hpp>
 
 #include <cstddef>
 #include <limits>
@@ -90,7 +89,7 @@ class DelayedBuffer
   public:
     [[nodiscard]] static constexpr std::size_t max_size() noexcept
     {
-        return std::numeric_limits<std::size_t>::max() - CHUNK_SIZE - 1;
+        return std::numeric_limits<std::size_t>::max() - (CHUNK_SIZE - 1);
     }
 
     void* allocate(std::size_t size)

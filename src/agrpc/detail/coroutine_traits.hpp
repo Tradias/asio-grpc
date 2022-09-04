@@ -41,7 +41,6 @@ struct RethrowFirstArg
 
 struct CompletionHandlerUnknown
 {
-    char d[256];
 };
 
 template <class CompletionToken, class Signature, class = void>

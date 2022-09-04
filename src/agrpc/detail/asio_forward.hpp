@@ -55,10 +55,6 @@
 #define AGRPC_ASIO_HAS_CANCELLATION_SLOT
 #endif
 
-#if (ASIO_VERSION >= 101902)
-#define AGRPC_ASIO_HAS_FIXED_AWAITABLES
-#endif
-
 #if (ASIO_VERSION >= 102201)
 #include <asio/bind_allocator.hpp>
 
@@ -100,7 +96,6 @@
 #include <boost/asio/bind_cancellation_slot.hpp>
 
 #define AGRPC_ASIO_HAS_CANCELLATION_SLOT
-#define AGRPC_ASIO_HAS_FIXED_AWAITABLES
 #endif
 
 #if (BOOST_VERSION >= 107900)
@@ -329,6 +324,12 @@ using IsStopEverPossibleHelper = std::bool_constant<(T{}.stop_possible())>;
 
 template <class T>
 inline constexpr bool IS_STOP_EVER_POSSIBLE_V<T, detail::IsStopEverPossibleHelper<T>> = false;
+
+template <class T>
+inline constexpr bool IS_CANCEL_EVER_POSSIBLE_V = true;
+
+template <>
+inline constexpr bool IS_CANCEL_EVER_POSSIBLE_V<detail::UncancellableSlot> = false;
 }  // namespace detail
 
 AGRPC_NAMESPACE_END

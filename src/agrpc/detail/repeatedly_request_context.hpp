@@ -48,18 +48,18 @@ class RepeatedlyRequestOperation : public detail::TypeErasedGrpcTagOperation,
   public:
     template <class Ch, class Rh>
     RepeatedlyRequestOperation(Rh&& request_handler, RPC rpc, Service& service, Ch&& completion_handler,
-                               bool is_stoppable)
+                               bool is_cancellable)
         : GrpcBase(&RepeatedlyRequestOperation::on_request_complete),
           NoArgBase(&detail::default_do_complete<RepeatedlyRequestOperation, detail::TypeErasedNoArgOperation>),
           detail::RepeatedlyRequestOperationBase<RequestHandler, RPC, CompletionHandler>(
-              static_cast<Rh&&>(request_handler), rpc, service, static_cast<Ch&&>(completion_handler), is_stoppable)
+              static_cast<Rh&&>(request_handler), rpc, service, static_cast<Ch&&>(completion_handler), is_cancellable)
     {
     }
 
     bool initiate_repeatedly_request()
     {
         auto& local_grpc_context = this->grpc_context();
-        if AGRPC_UNLIKELY (this->is_stopped())
+        if AGRPC_UNLIKELY (this->is_cancelled())
         {
             return false;
         }
