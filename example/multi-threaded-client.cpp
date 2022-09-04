@@ -50,14 +50,13 @@ class RoundRobin
 
 asio::awaitable<void> make_request(agrpc::GrpcContext& grpc_context, helloworld::Greeter::Stub& stub)
 {
+    using RPC = agrpc::RPC<&helloworld::Greeter::Stub::PrepareAsyncSayHello>;
     grpc::ClientContext client_context;
-    helloworld::HelloRequest request;
+    client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
+    RPC::Request request;
     request.set_name("world");
-    const auto reader =
-        agrpc::request(&helloworld::Greeter::Stub::AsyncSayHello, stub, client_context, request, grpc_context);
-    helloworld::HelloReply response;
-    grpc::Status status;
-    co_await agrpc::finish(reader, response, status);
+    RPC::Response response;
+    const auto status = co_await RPC::request(grpc_context, stub, client_context, request, response);
 
     abort_if_not(status.ok());
 }

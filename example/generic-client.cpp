@@ -52,31 +52,30 @@ bool deserialize(grpc::ByteBuffer& buffer, Message& message)
 void make_generic_unary_request(agrpc::GrpcContext& grpc_context, grpc::GenericStub& stub,
                                 const asio::yield_context& yield)
 {
+    using RPC = agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC>;
+
     example::v1::Request request;
     request.set_integer(1);
 
     // -- Serialize the request message
-    auto buffer = serialize(request);
+    auto request_buffer = serialize(request);
 
     // -- Initiate the unary request:
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
-    const auto response_writer =
-        agrpc::request("/example.v1.Example/Unary", stub, client_context, buffer, grpc_context);
+    grpc::ByteBuffer response_buffer;
+    auto status = RPC::request(grpc_context, "/example.v1.Example/Unary", stub, client_context, request_buffer,
+                               response_buffer, yield);
+
+    abort_if_not(status.ok());
 
     // -- For streaming RPCs use:
-    // std::unique_ptr<grpc::GenericClientAsyncReaderWriter> reader_writer;
-    // agrpc::request("/example.v1.Example/ServerStreaming", stub, client_context, reader_writer, yield);
-
-    // -- Wait for the response message
-    buffer.Clear();
-    grpc::Status status;
-    agrpc::finish(response_writer, buffer, status, yield);
-    abort_if_not(status.ok());
+    // agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC>::request(grpc_context, "/example.v1.Example/ServerStreaming",
+    // stub, client_context, yield);
 
     // -- Deserialize the response message
     example::v1::Response response;
-    abort_if_not(deserialize(buffer, response));
+    abort_if_not(deserialize(response_buffer, response));
     abort_if_not(2 == response.integer());
 }
 // ---------------------------------------------------
@@ -84,7 +83,7 @@ void make_generic_unary_request(agrpc::GrpcContext& grpc_context, grpc::GenericS
 
 // ---------------------------------------------------
 // A generic bidirectional-streaming request that simply sends the response from the server back to it.
-// Here we are using stackless coroutines.
+// Here we are using stackless coroutines and the low-level gRPC client API.
 // ---------------------------------------------------
 struct BidirectionalStreamingRequest
 {

@@ -45,15 +45,13 @@ asio::awaitable<void> make_tcp_request(asio::ip::port_type port)
 // A unary RPC request that will be handled by the GrpcContext
 asio::awaitable<void> make_grpc_request(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
+    using RPC = agrpc::RPC<&example::v1::Example::Stub::PrepareAsyncUnary>;
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
-    example::v1::Request request;
+    RPC::Request request;
     request.set_integer(42);
-    const auto reader =
-        agrpc::request(&example::v1::Example::Stub::AsyncUnary, stub, client_context, request, grpc_context);
-    example::v1::Response response;
-    grpc::Status status;
-    co_await agrpc::finish(reader, response, status, asio::bind_executor(grpc_context, asio::use_awaitable));
+    RPC::Response response;
+    const auto status = co_await RPC::request(grpc_context, stub, client_context, request, response);
 
     abort_if_not(status.ok());
     abort_if_not(42 == response.integer());

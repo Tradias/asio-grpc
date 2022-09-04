@@ -34,17 +34,15 @@
 // ---------------------------------------------------
 unifex::task<void> make_unary_request(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
+    using RPC = agrpc::RPC<&example::v1::Example::Stub::PrepareAsyncUnary>;
+
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
 
     example::v1::Request request;
     request.set_integer(42);
-    const auto reader =
-        agrpc::request(&example::v1::Example::Stub::AsyncUnary, stub, client_context, request, grpc_context);
-
     example::v1::Response response;
-    grpc::Status status;
-    co_await agrpc::finish(reader, response, status, agrpc::use_sender(grpc_context));
+    const auto status = co_await RPC::request(grpc_context, stub, client_context, request, response);
 
     abort_if_not(status.ok());
 }
@@ -56,27 +54,23 @@ unifex::task<void> make_unary_request(agrpc::GrpcContext& grpc_context, example:
 // ---------------------------------------------------
 unifex::task<void> make_server_streaming_request(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
+    using RPC = agrpc::RPC<&example::v1::Example::Stub::PrepareAsyncServerStreaming>;
+
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
 
     example::v1::Request request;
     request.set_integer(10);
-    std::unique_ptr<grpc::ClientAsyncReader<example::v1::Response>> reader;
-    abort_if_not(co_await agrpc::request(&example::v1::Example::Stub::PrepareAsyncServerStreaming, stub, client_context,
-                                         request, reader, agrpc::use_sender(grpc_context)));
+    auto rpc = co_await RPC::request(grpc_context, stub, client_context, request);
+    abort_if_not(rpc.ok());
 
     example::v1::Response response;
-    bool read_ok = co_await agrpc::read(reader, response, agrpc::use_sender(grpc_context));
-    while (read_ok)
+    while (co_await rpc.read(response))
     {
         std::cout << "Server streaming: " << response.integer() << '\n';
-        read_ok = co_await agrpc::read(reader, response, agrpc::use_sender(grpc_context));
     }
 
-    grpc::Status status;
-    co_await agrpc::finish(reader, status, agrpc::use_sender(grpc_context));
-
-    abort_if_not(status.ok());
+    abort_if_not(rpc.ok());
 }
 // ---------------------------------------------------
 //
@@ -84,7 +78,7 @@ unifex::task<void> make_server_streaming_request(agrpc::GrpcContext& grpc_contex
 // ---------------------------------------------------
 // A unary request with a per-RPC step timeout. Using a unary RPC for demonstration purposes, the same mechanism can be
 // applied to streaming RPCs, where it is arguably more useful.
-// For unary RPCs, `grpc::ClientContext::set_deadline` should be preferred.
+// For unary RPCs, `grpc::ClientContext::set_deadline` is the preferred way of specifying a timeout.
 // ---------------------------------------------------
 template <class Sender>
 auto run_with_deadline(grpc::Alarm& alarm, agrpc::GrpcContext& grpc_context, grpc::ClientContext& client_context,
@@ -103,20 +97,19 @@ auto run_with_deadline(grpc::Alarm& alarm, agrpc::GrpcContext& grpc_context, grp
 
 unifex::task<void> make_and_cancel_unary_request(agrpc::GrpcContext& grpc_context, example::v1::ExampleExt::Stub& stub)
 {
+    using RPC = agrpc::RPC<&example::v1::ExampleExt::Stub::PrepareAsyncSlowUnary>;
+
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
 
     example::v1::SlowRequest request;
     request.set_delay(2000);  // tell server to delay response by 2000ms
-    const auto reader =
-        agrpc::request(&example::v1::ExampleExt::Stub::AsyncSlowUnary, stub, client_context, request, grpc_context);
-
     google::protobuf::Empty response;
-    grpc::Status status;
+
     grpc::Alarm alarm;
-    co_await run_with_deadline(alarm, grpc_context, client_context,
-                               std::chrono::system_clock::now() + std::chrono::milliseconds(100),
-                               agrpc::finish(reader, response, status, agrpc::use_sender(grpc_context)));
+    const auto status = co_await run_with_deadline(alarm, grpc_context, client_context,
+                                                   std::chrono::system_clock::now() + std::chrono::milliseconds(100),
+                                                   RPC::request(grpc_context, stub, client_context, request, response));
 
     abort_if_not(grpc::StatusCode::CANCELLED == status.error_code());
 }

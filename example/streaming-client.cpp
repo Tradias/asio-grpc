@@ -31,7 +31,7 @@ namespace asio = boost::asio;
 // Example showing some of the features of using asio-grpc with Boost.Asio.
 
 // ---------------------------------------------------
-// A simple client-streaming request with coroutines.
+// A simple client-streaming request with coroutines and the low-level client API.
 // ---------------------------------------------------
 asio::awaitable<void> make_client_streaming_request(example::v1::Example::Stub& stub)
 {

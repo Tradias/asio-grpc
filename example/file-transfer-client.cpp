@@ -42,7 +42,10 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
                                                                   example::v1::ExampleExt::Stub& stub,
                                                                   const std::string& file_path)
 {
-    // Use a larger chunk size in production code, like 64'0000
+    using RPC = agrpc::RPC<&example::v1::ExampleExt::Stub::PrepareAsyncSendFile>;
+
+    // Use a larger chunk size in production code, like 64'0000.
+    // Here we use a smaller value so that our payload needs more than one chunk.
     static constexpr std::size_t CHUNK_SIZE = 5;
 
     // These buffers are used to customize allocation of completion handlers.
@@ -52,9 +55,9 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
     google::protobuf::Empty response;
-    std::unique_ptr<grpc::ClientAsyncWriter<example::v1::SendFileRequest>> writer;
-    if (!co_await agrpc::request(&example::v1::ExampleExt::Stub::PrepareAsyncSendFile, stub, client_context, writer,
-                                 response, buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE)))
+    auto rpc = co_await RPC::request(grpc_context, stub, client_context, response,
+                                     buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
+    if (!rpc.ok())
     {
         co_return false;
     }
@@ -66,14 +69,14 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
     // more performant than the default `asio::stream_file` that is templated on `asio::any_io_executor`.
     //
     // If you get exception: io_uring_queue_init: Cannot allocate memory [system:12]
-    // here then run `ulimit -l 65535`, see also https://github.com/axboe/liburing/issues/157
+    // then run `ulimit -l 65535`, see also https://github.com/axboe/liburing/issues/157
     asio::basic_stream_file file{io_context.get_executor(), file_path, asio::stream_file::read_only};
 
     example::v1::SendFileRequest first_read_buffer;
     first_read_buffer.mutable_content()->resize(CHUNK_SIZE);
 
-    // bind_executor prevents context switching to this_coro::executor (the GrpcContext in our case) when
-    // async_read_some completes. We do not need to switch because agrpc::write is thread-safe.
+    // `asio::bind_executor` prevents context switching to this_coro::executor (the GrpcContext in our case) when
+    // async_read_some completes. We do not need to switch because rpc::write is thread-safe.
     auto bytes_read = co_await file.async_read_some(
         asio::buffer(*first_read_buffer.mutable_content()),
         buffer1.bind_allocator(asio::bind_executor(io_context, agrpc::GRPC_USE_AWAITABLE)));
@@ -97,18 +100,14 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
                 [&](auto&& completion_handler)
                 {
                     // Again using bind_executor to avoid switching contexts in case this function completes after
-                    // agrpc::write.
+                    // rpc::write.
                     file.async_read_some(
                         asio::buffer(*next->mutable_content()),
                         buffer1.bind_allocator(asio::bind_executor(io_context, std::move(completion_handler))));
                 },
                 [&](auto&& completion_handler)
                 {
-                    // Need to bind_executor here because completion_handler is a simple invocable without an associated
-                    // executor.
-                    agrpc::write(
-                        writer, *current,
-                        buffer2.bind_allocator(asio::bind_executor(grpc_context, std::move(completion_handler))));
+                    rpc.write(*current, buffer2.bind_allocator(std::move(completion_handler)));
                 });
         if (!ok)
         {
@@ -126,12 +125,12 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
     // Signal that we are done sending chunks
     current->mutable_content()->resize(bytes_read);
     current->set_finish_write(true);
-    co_await agrpc::write_last(writer, *current, {}, buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
+    co_await rpc.write(*current, grpc::WriteOptions{}.set_last_message(),
+                       buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
 
-    grpc::Status status;
-    co_await agrpc::finish(writer, status, buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
+    co_await rpc.finish(buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
 
-    co_return status.ok();
+    co_return rpc.ok();
 }
 
 void run_io_context(asio::io_context& io_context)
@@ -195,7 +194,7 @@ int main(int argc, const char** argv)
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Exception: " << e.what() << std::endl;
+        std::cerr << "Exception in main: " << e.what() << std::endl;
         return 1;
     }
     return 0;
