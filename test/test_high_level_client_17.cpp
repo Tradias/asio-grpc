@@ -259,7 +259,7 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>, "ServerSt
             CHECK_EQ(42, test_server.request.integer());
             test_server.response.set_integer(1);
             CHECK(agrpc::write(test_server.responder, test_server.response, yield));
-            CHECK(agrpc::finish(test_server.responder, grpc::Status{grpc::StatusCode::ALREADY_EXISTS, ""}, yield));
+            CHECK(agrpc::finish(test_server.responder, grpc::Status::OK, yield));
         },
         [&](const asio::yield_context& yield)
         {
@@ -268,7 +268,7 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>, "ServerSt
             CHECK(rpc.read(response, yield));
             CHECK_EQ(1, response.integer());
             CHECK_FALSE(rpc.read(response, yield));
-            CHECK_EQ(grpc::StatusCode::ALREADY_EXISTS, rpc.status_code());
+            CHECK_EQ(grpc::StatusCode::OK, rpc.status_code());
         });
 }
 
