@@ -140,10 +140,10 @@ class RepeatedlyRequestCoroutineOperation
   public:
     template <class Ch, class Rh>
     RepeatedlyRequestCoroutineOperation(Rh&& request_handler, RPC rpc, Service& service, Ch&& completion_handler,
-                                        bool is_cancellable)
+                                        bool is_stoppable)
         : NoArgBase(ON_STOP_COMPLETE),
           detail::RepeatedlyRequestOperationBase<RequestHandler, RPC, CompletionHandler>(
-              static_cast<Rh&&>(request_handler), rpc, service, static_cast<Ch&&>(completion_handler), is_cancellable),
+              static_cast<Rh&&>(request_handler), rpc, service, static_cast<Ch&&>(completion_handler), is_stoppable),
           buffer_operation(detail::create_allocated_buffer_operation<CoroutineCompletionHandlerBuffer>())
     {
         // Count buffer_operation
@@ -157,7 +157,7 @@ class RepeatedlyRequestCoroutineOperation
 
     bool initiate_repeatedly_request()
     {
-        if AGRPC_UNLIKELY (this->is_cancelled())
+        if AGRPC_UNLIKELY (this->is_stopped())
         {
             return false;
         }

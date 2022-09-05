@@ -176,10 +176,10 @@ struct unstoppable_token
 };
 
 template <class Receiver>
-auto get_stop_token([[maybe_unused]] Receiver&& receiver) noexcept
+auto get_stop_token([[maybe_unused]] const Receiver& receiver) noexcept
 {
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-    auto slot = asio::get_associated_cancellation_slot(static_cast<Receiver&&>(receiver), unstoppable_token{});
+    auto slot = asio::get_associated_cancellation_slot(receiver, unstoppable_token{});
     if constexpr (std::is_same_v<unstoppable_token, decltype(slot)>)
     {
         return slot;
@@ -193,8 +193,8 @@ auto get_stop_token([[maybe_unused]] Receiver&& receiver) noexcept
 #endif
 }
 
-template <class>
-using stop_token_type_t = detail::exec::unstoppable_token;
+template <class Receiver>
+using stop_token_type_t = decltype(exec::get_stop_token(std::declval<Receiver>()));
 #elif defined(AGRPC_UNIFEX)
 using ::unifex::get_allocator;
 using ::unifex::get_scheduler;
@@ -248,18 +248,15 @@ class CancellationSlotAsStopToken
     template <class StopFunction>
     struct callback_type
     {
-        explicit callback_type(CancellationSlotAsStopToken token, StopFunction&& function) noexcept
+        explicit callback_type(CancellationSlotAsStopToken token, StopFunction&& function)
         {
-            if (token.slot.is_connected())
-            {
-                token.slot.assign(static_cast<StopFunction&&>(function));
-            }
+            token.slot.assign(static_cast<StopFunction&&>(function));
         }
     };
 
     [[nodiscard]] static constexpr bool stop_requested() noexcept { return false; }
 
-    [[nodiscard]] static constexpr bool stop_possible() noexcept { return true; }
+    [[nodiscard]] bool stop_possible() const noexcept { return slot.is_connected(); }
 
   private:
     Slot slot;
@@ -274,54 +271,6 @@ void post_with_allocator(Executor&& executor, Function&& function, const Allocat
                      asio::execution::relationship_t::fork, asio::execution::allocator(allocator)),
         static_cast<Function&&>(function));
 }
-
-struct UncancellableSlot
-{
-    template <class CancellationHandler, class... Args>
-    static constexpr void emplace(Args&&...) noexcept
-    {
-    }
-
-    template <class CancellationHandler>
-    static constexpr void assign(CancellationHandler&&) noexcept
-    {
-    }
-
-    static constexpr void clear() noexcept {}
-
-    [[nodiscard]] static constexpr bool is_connected() noexcept { return false; }
-
-    [[nodiscard]] static constexpr bool has_handler() noexcept { return false; }
-
-    friend constexpr bool operator==(const UncancellableSlot&, const UncancellableSlot&) noexcept { return true; }
-
-    friend constexpr bool operator!=(const UncancellableSlot&, const UncancellableSlot&) noexcept { return false; }
-};
-
-template <class Object, class Default = detail::UncancellableSlot>
-auto get_associated_cancellation_slot([[maybe_unused]] const Object& object,
-                                      const Default& default_slot = Default{}) noexcept
-{
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-    return asio::get_associated_cancellation_slot(object, default_slot);
-#else
-    return default_slot;
-#endif
-}
-
-template <class T>
-inline constexpr bool IS_CANCEL_EVER_POSSIBLE_V = true;
-
-template <>
-inline constexpr bool IS_CANCEL_EVER_POSSIBLE_V<detail::UncancellableSlot> = false;
-
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-template <class Object, class Default = detail::UncancellableSlot>
-using AssociatedCancellationSlotT = asio::associated_cancellation_slot_t<Object, Default>;
-#else
-template <class, class Default = detail::UncancellableSlot>
-using AssociatedCancellationSlotT = Default;
-#endif
 #endif
 
 template <class T>

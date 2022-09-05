@@ -72,8 +72,8 @@ class ReceiverAndStopCallback<Receiver, StopFunction, false>
 
     static constexpr void reset_stop_callback() noexcept {}
 
-    template <class StopToken, class Implementation>
-    static constexpr void emplace_stop_callback(StopToken&&, Implementation&) noexcept
+    template <class StopToken, class Initiation>
+    static constexpr void emplace_stop_callback(StopToken&&, Initiation&) noexcept
     {
     }
 

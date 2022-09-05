@@ -26,38 +26,39 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <bool IsCancellable>
-class RepeatedlyRequestCancellationContext
+template <bool IsStoppable>
+class RepeatedlyRequestBaseStopContext
 {
   public:
-    explicit RepeatedlyRequestCancellationContext(bool is_cancellable) noexcept : is_cancellable(is_cancellable) {}
+    explicit RepeatedlyRequestBaseStopContext(bool is_stoppable) noexcept : is_stoppable(is_stoppable) {}
 
-    [[nodiscard]] bool is_cancelled() const noexcept
+    [[nodiscard]] bool is_stopped() const noexcept
     {
-        return is_cancellable ? stopped.load(std::memory_order_relaxed) : false;
+        return is_stoppable ? stopped.load(std::memory_order_relaxed) : false;
     }
 
-    template <class CancellationFunction, class CancellationSlot>
-    void emplace(CancellationSlot&& cancellation_slot) noexcept
+    template <class StopFunction, class StopToken>
+    void emplace(StopToken&& token)
     {
-        static_cast<CancellationSlot&&>(cancellation_slot).template emplace<CancellationFunction>(stopped);
+        using StopCallback = typename detail::RemoveCrefT<decltype(token)>::template callback_type<StopFunction>;
+        [[maybe_unused]] StopCallback s{static_cast<StopToken&&>(token), StopFunction{stopped}};
     }
 
   private:
     std::atomic_bool stopped{};
-    const bool is_cancellable;
+    const bool is_stoppable;
 };
 
 template <>
-class RepeatedlyRequestCancellationContext<false>
+class RepeatedlyRequestBaseStopContext<false>
 {
   public:
-    constexpr explicit RepeatedlyRequestCancellationContext(bool) noexcept {}
+    constexpr explicit RepeatedlyRequestBaseStopContext(bool) noexcept {}
 
-    [[nodiscard]] static constexpr bool is_cancelled() noexcept { return false; }
+    [[nodiscard]] static constexpr bool is_stopped() noexcept { return false; }
 
-    template <class CancellationFunction, class CancellationSlot>
-    static constexpr void emplace(CancellationSlot&&) noexcept
+    template <class StopFunction, class StopToken>
+    static constexpr void emplace(StopToken&&) noexcept
     {
     }
 };
@@ -67,15 +68,15 @@ class RepeatedlyRequestOperationBase
 {
   private:
     using Service = detail::GetServiceT<RPC>;
-    using CancellationContext = detail::RepeatedlyRequestCancellationContext<detail::IS_CANCEL_EVER_POSSIBLE_V<
-        detail::AssociatedCancellationSlotT<CompletionHandler, detail::UncancellableSlot>>>;
+    using StopContext = detail::RepeatedlyRequestBaseStopContext<
+        detail::IS_STOP_EVER_POSSIBLE_V<detail::exec::stop_token_type_t<CompletionHandler>>>;
 
   public:
     template <class Ch, class Rh>
     RepeatedlyRequestOperationBase(Rh&& request_handler, RPC rpc, Service& service, Ch&& completion_handler,
-                                   bool is_cancellable)
+                                   bool is_stoppable)
         : impl1(service, static_cast<Ch&&>(completion_handler)),
-          impl2(rpc, is_cancellable),
+          impl2(rpc, is_stoppable),
           request_handler_(static_cast<Rh&&>(request_handler))
     {
     }
@@ -90,7 +91,7 @@ class RepeatedlyRequestOperationBase
     }
 
   protected:
-    [[nodiscard]] bool is_cancelled() const noexcept { return impl2.second().is_cancelled(); }
+    [[nodiscard]] bool is_stopped() const noexcept { return impl2.second().is_stopped(); }
 
     [[nodiscard]] decltype(auto) get_executor() noexcept { return detail::exec::get_executor(this->request_handler()); }
 
@@ -107,7 +108,7 @@ class RepeatedlyRequestOperationBase
 
   private:
     detail::CompressedPair<Service&, CompletionHandler> impl1;
-    detail::CompressedPair<RPC, CancellationContext> impl2;
+    detail::CompressedPair<RPC, StopContext> impl2;
     RequestHandler request_handler_;
 };
 }

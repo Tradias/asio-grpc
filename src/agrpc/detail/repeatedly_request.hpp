@@ -74,17 +74,17 @@ struct BasicRepeatedlyRequestInitiator
         const auto executor = detail::exec::get_executor(request_handler);
         auto& grpc_context = detail::query_grpc_context(executor);
         const auto allocator = detail::exec::get_allocator(request_handler);
-        auto cancellation_slot = detail::get_associated_cancellation_slot(completion_handler);
-        const bool is_cancellation_possible = cancellation_slot.is_connected();
+        auto stop_token = detail::exec::get_stop_token(completion_handler);
+        const bool is_stop_possible = stop_token.stop_possible();
 
         auto operation = detail::allocate<Operation<DecayedRequestHandler, RPC, TrackingCompletionHandler>>(
             allocator, static_cast<RequestHandler&&>(request_handler), rpc, service,
-            static_cast<CompletionHandler&&>(completion_handler), is_cancellation_possible);
+            static_cast<CompletionHandler&&>(completion_handler), is_stop_possible);
 
-        if (is_cancellation_possible)
+        if (is_stop_possible)
         {
             operation->cancellation_context().template emplace<detail::RepeatedlyRequestCancellationFunction>(
-                cancellation_slot);
+                stop_token);
         }
         detail::StartWorkAndGuard guard{grpc_context};
         detail::initiate_repeatedly_request(grpc_context, *operation);
