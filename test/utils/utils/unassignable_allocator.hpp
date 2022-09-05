@@ -37,7 +37,11 @@ class UnassignableAllocator
 
     UnassignableAllocator(const UnassignableAllocator&) = default;
 
+    UnassignableAllocator(UnassignableAllocator&&) = default;
+
     UnassignableAllocator& operator=(const UnassignableAllocator&) = delete;
+
+    UnassignableAllocator& operator=(UnassignableAllocator&&) = delete;
 
     [[nodiscard]] static T* allocate(std::size_t n) { return std::allocator<T>{}.allocate(n); }
 
