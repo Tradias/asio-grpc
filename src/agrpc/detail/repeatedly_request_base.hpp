@@ -81,30 +81,24 @@ class RepeatedlyRequestOperationBase
     {
     }
 
-    [[nodiscard]] auto& cancellation_context() noexcept { return impl2.second(); }
+    auto& cancellation_context() noexcept { return impl2.second(); }
 
-    [[nodiscard]] auto& completion_handler() noexcept { return impl1.second(); }
+    auto& completion_handler() noexcept { return impl1.second(); }
 
-    [[nodiscard]] decltype(auto) get_allocator() noexcept
-    {
-        return detail::exec::get_allocator(this->request_handler());
-    }
+    decltype(auto) get_allocator() noexcept { return detail::exec::get_allocator(this->request_handler()); }
 
   protected:
     [[nodiscard]] bool is_stopped() const noexcept { return impl2.second().is_stopped(); }
 
-    [[nodiscard]] decltype(auto) get_executor() noexcept { return detail::exec::get_executor(this->request_handler()); }
+    decltype(auto) get_executor() noexcept { return detail::exec::get_executor(this->request_handler()); }
 
-    [[nodiscard]] agrpc::GrpcContext& grpc_context() noexcept
-    {
-        return detail::query_grpc_context(this->get_executor());
-    }
+    agrpc::GrpcContext& grpc_context() noexcept { return detail::query_grpc_context(this->get_executor()); }
 
-    [[nodiscard]] RPC rpc() noexcept { return impl2.first(); }
+    RPC rpc() noexcept { return impl2.first(); }
 
-    [[nodiscard]] Service& service() noexcept { return impl1.first(); }
+    Service& service() noexcept { return impl1.first(); }
 
-    [[nodiscard]] RequestHandler& request_handler() noexcept { return request_handler_; }
+    RequestHandler& request_handler() noexcept { return request_handler_; }
 
   private:
     detail::CompressedPair<Service&, CompletionHandler> impl1;

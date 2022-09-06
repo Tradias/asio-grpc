@@ -83,8 +83,8 @@ struct BasicRepeatedlyRequestInitiator
 
         if (is_stop_possible)
         {
-            operation->cancellation_context().template emplace<detail::RepeatedlyRequestCancellationFunction>(
-                stop_token);
+            auto& context = operation->cancellation_context();
+            context.template emplace<detail::RepeatedlyRequestCancellationFunction>(stop_token);
         }
         detail::StartWorkAndGuard guard{grpc_context};
         detail::initiate_repeatedly_request(grpc_context, *operation);
