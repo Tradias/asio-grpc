@@ -120,6 +120,25 @@ class GrpcContext
     }
 
     /**
+     * @brief Run ready completion handlers and `grpc::CompletionQueue` while a condition holds
+     *
+     * Runs the main event loop logic until the GrpcContext runs out of work, is stopped or the specified condition
+     * returns false. The GrpcContext will be brought into the ready state when this function is invoked.
+     *
+     * @attention Only one thread may call run*()/poll*() at a time.
+     *
+     * Thread-safe with regards to other functions except run*(), poll*() and the destructor.
+     *
+     * @tparam Condition A callable that returns false when the GrpcContext should stop.
+     *
+     * @return True if at least one operation has been processed.
+     *
+     * @since 2.2.0
+     */
+    template <class Condition>
+    bool run_while(Condition&& condition);
+
+    /**
      * @brief Run the `grpc::CompletionQueue`
      *
      * Runs the main event loop logic until the GrpcContext runs out of work or is stopped. Only events from the

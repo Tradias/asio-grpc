@@ -22,6 +22,7 @@
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
 #include <agrpc/use_sender.hpp>
+#include <agrpc/wait.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
@@ -56,6 +57,11 @@ struct GrpcContextTest
     agrpc::pmr::GrpcExecutor get_pmr_executor() noexcept;
 
     auto get_work_tracking_executor() noexcept { return test::work_tracking_executor(grpc_context); }
+
+    void wait(grpc::Alarm& alarm, std::chrono::system_clock::time_point deadline, std::function<void(bool)> callback)
+    {
+        agrpc::wait(alarm, deadline, asio::bind_executor(grpc_context, std::move(callback)));
+    }
 #endif
 
     auto use_sender() noexcept { return agrpc::use_sender(get_executor()); }
