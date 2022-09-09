@@ -196,6 +196,10 @@ void spawn_and_run(agrpc::GrpcContext& grpc_context, Functions&&... functions)
 void wait(grpc::Alarm& alarm, std::chrono::system_clock::time_point deadline,
           const asio::executor_binder<std::function<void(bool)>, agrpc::GrpcExecutor>& function);
 
+void post(agrpc::GrpcContext& grpc_context, const std::function<void()>& function);
+
+void post(const agrpc::GrpcExecutor& executor, const std::function<void()>& function);
+
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 struct RethrowFirstArg
 {

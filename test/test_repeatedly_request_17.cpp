@@ -286,15 +286,15 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "repeatedly_request tracks work of 
                                       order = 1 == order ? 2 : 0;
                                   }};
     std::optional<std::thread> server_shutdown_thread;
-    asio::post(grpc_context,
-               [&]
-               {
-                   server_shutdown_thread.emplace(
-                       [&]
-                       {
-                           server->Shutdown();
-                       });
-               });
+    post(
+        [&]
+        {
+            server_shutdown_thread.emplace(
+                [&]
+                {
+                    server->Shutdown();
+                });
+        });
     grpc_context.run();
     io_context_thread.join();
     server_shutdown_thread->join();

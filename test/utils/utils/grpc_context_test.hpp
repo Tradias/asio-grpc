@@ -64,6 +64,8 @@ struct GrpcContextTest
     {
         test::wait(alarm, deadline, asio::bind_executor(grpc_context, callback));
     }
+
+    void post(const std::function<void()>& function) { test::post(grpc_context, function); }
 #endif
 
     auto use_sender() noexcept { return agrpc::use_sender(get_executor()); }

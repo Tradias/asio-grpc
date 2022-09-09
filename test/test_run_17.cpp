@@ -43,7 +43,7 @@ TEST_CASE_FIXTURE(RunTest, "agrpc::run can process asio::post")
                [&]
                {
                    CHECK_EQ(std::this_thread::get_id(), expected_thread);
-                   asio::post(grpc_context,
+                   test::post(grpc_context,
                               [&]
                               {
                                   CHECK_EQ(std::this_thread::get_id(), expected_thread);
@@ -61,14 +61,14 @@ TEST_CASE_FIXTURE(RunTest, "agrpc::run Custom stop predicate that ends when io_c
     asio::post(io_context,
                [&, g = get_work_tracking_executor()]
                {
-                   asio::post(grpc_context,
+                   test::post(grpc_context,
                               [&, g = create_io_context_work_guard()]
                               {
                                   asio::post(io_context,
                                              [&, g = get_work_tracking_executor()]
                                              {
                                                  CHECK_FALSE(grpc_context.is_stopped());
-                                                 asio::post(grpc_context,
+                                                 test::post(grpc_context,
                                                             [&, g = create_io_context_work_guard()]
                                                             {
                                                                 invoked = true;
@@ -98,7 +98,7 @@ struct MyIntrusiveTraits : agrpc::DefaultRunTraits
 TEST_CASE_FIXTURE(RunTest, "agrpc::run Traits can specify zero max latency")
 {
     bool invoked{};
-    asio::post(grpc_context,
+    test::post(grpc_context,
                [&]
                {
                    invoked = true;
@@ -163,7 +163,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "agrpc::run Traits can use traits to cu
                              {
                                  if (count % 6 == 0)
                                  {
-                                     asio::post(grpc_context,
+                                     test::post(grpc_context,
                                                 [&]
                                                 {
                                                     ++invoked_count_grpc_context;
@@ -209,7 +209,7 @@ TEST_CASE_FIXTURE(
                [&]
                {
                    CHECK_EQ(std::this_thread::get_id(), expected_thread);
-                   asio::post(grpc_context,
+                   test::post(grpc_context,
                               [&]
                               {
                                   has_posted = true;

@@ -279,23 +279,23 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::reset")
 {
     bool ok{false};
     CHECK_FALSE(grpc_context.is_stopped());
-    asio::post(grpc_context,
-               [&]
-               {
-                   ok = true;
-                   CHECK_FALSE(grpc_context.is_stopped());
-               });
+    post(
+        [&]
+        {
+            ok = true;
+            CHECK_FALSE(grpc_context.is_stopped());
+        });
     grpc_context.run();
     CHECK(grpc_context.is_stopped());
     CHECK(ok);
     grpc_context.reset();
     CHECK_FALSE(grpc_context.is_stopped());
     grpc_context.stop();
-    asio::post(grpc_context,
-               [&]
-               {
-                   ok = false;
-               });
+    post(
+        [&]
+        {
+            ok = false;
+        });
     grpc_context.run();
     CHECK_FALSE(ok);
 }
@@ -303,16 +303,16 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::reset")
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::stop does not complete pending operations")
 {
     bool ok{false};
-    asio::post(grpc_context,
-               [&]
-               {
-                   grpc_context.stop();
-                   asio::post(grpc_context,
-                              [&]
-                              {
-                                  ok = true;
-                              });
-               });
+    post(
+        [&]
+        {
+            grpc_context.stop();
+            post(
+                [&]
+                {
+                    ok = true;
+                });
+        });
     CHECK(grpc_context.run());
     CHECK_FALSE(ok);
 }
@@ -328,7 +328,7 @@ TEST_CASE("GrpcContext::stop while waiting for Alarm will not invoke the Alarm's
         agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
         std::optional guard{test::work_tracking_executor(grpc_context)};
         grpc::Alarm alarm;
-        asio::post(grpc_context,
+        test::post(grpc_context,
                    [&]
                    {
                        test::wait(alarm, test::five_seconds_from_now(),
@@ -383,16 +383,16 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post an Alarm and check time")
     bool ok{false};
     std::chrono::system_clock::time_point start;
     grpc::Alarm alarm;
-    asio::post(grpc_context,
-               [&]()
-               {
-                   start = test::now();
-                   wait(alarm, test::hundred_milliseconds_from_now(),
-                        [&](bool)
-                        {
-                            ok = true;
-                        });
-               });
+    post(
+        [&]
+        {
+            start = test::now();
+            wait(alarm, test::hundred_milliseconds_from_now(),
+                 [&](bool)
+                 {
+                     ok = true;
+                 });
+        });
     grpc_context.run();
     CHECK_LE(std::chrono::milliseconds(100), test::now() - start);
     CHECK(ok);
@@ -427,7 +427,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post a asio::steady_timer")
 {
     std::optional<test::ErrorCode> error_code;
     asio::steady_timer timer{get_executor()};
-    asio::post(get_executor(),
+    test::post(get_executor(),
                [&]
                {
                    timer.expires_after(std::chrono::milliseconds(10));
@@ -464,14 +464,14 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post from multiple threads")
         asio::post(pool,
                    [&]
                    {
-                       asio::post(grpc_context,
-                                  [&]
-                                  {
-                                      if (++counter == THREAD_COUNT)
-                                      {
-                                          guard.reset();
-                                      }
-                                  });
+                       post(
+                           [&]
+                           {
+                               if (++counter == THREAD_COUNT)
+                               {
+                                   guard.reset();
+                               }
+                           });
                    });
     }
     asio::post(pool,
@@ -493,14 +493,14 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post/execute with allocator")
     }
     SUBCASE("asio::execute before grpc_context.run()")
     {
-        get_pmr_executor().execute([] {});
+        asio::execution::execute(get_pmr_executor(), [] {});
     }
     SUBCASE("asio::execute after grpc_context.run() from same thread")
     {
-        asio::post(grpc_context,
+        test::post(grpc_context,
                    [&, exec = get_pmr_executor()]
                    {
-                       exec.execute([] {});
+                       asio::execution::execute(exec, [] {});
                    });
     }
     grpc_context.run();
@@ -509,7 +509,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post/execute with allocator")
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "dispatch with allocator")
 {
-    asio::post(grpc_context,
+    test::post(grpc_context,
                [&]
                {
                    asio::dispatch(get_pmr_executor(), [] {});
@@ -551,11 +551,11 @@ TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll() with asio::po
                [&]()
                {
                    CHECK_FALSE(grpc_context.poll());
-                   asio::post(grpc_context,
-                              [&]
-                              {
-                                  invoked = true;
-                              });
+                   post(
+                       [&]
+                       {
+                           invoked = true;
+                       });
                    CHECK_FALSE(invoked);
                    CHECK(grpc_context.poll());
                });
@@ -597,11 +597,11 @@ TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll_completion_queu
     asio::post(io_context,
                [&]()
                {
-                   asio::post(grpc_context,
-                              [&]
-                              {
-                                  post_completed = true;
-                              });
+                   post(
+                       [&]
+                       {
+                           post_completed = true;
+                       });
                    wait(alarm, test::now(),
                         [&](bool)
                         {
@@ -629,11 +629,11 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_completion_queue()")
     bool post_completed{false};
     bool alarm_completed{false};
     grpc::Alarm alarm;
-    asio::post(grpc_context,
-               [&]
-               {
-                   post_completed = true;
-               });
+    post(
+        [&]
+        {
+            post_completed = true;
+        });
     wait(alarm, test::hundred_milliseconds_from_now(),
          [&](bool)
          {
@@ -651,29 +651,29 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_completion_queue()")
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll() within run()")
 {
     int count{};
-    asio::post(grpc_context,
-               [&]()
-               {
-                   asio::post(grpc_context,
-                              [&]
-                              {
-                                  ++count;
-                              });
-                   CHECK(grpc_context.poll());
-                   CHECK_EQ(1, count);
-                   asio::post(grpc_context,
-                              [&]
-                              {
-                                  ++count;
-                              });
-               });
+    post(
+        [&]
+        {
+            post(
+                [&]
+                {
+                    ++count;
+                });
+            CHECK(grpc_context.poll());
+            CHECK_EQ(1, count);
+            post(
+                [&]
+                {
+                    ++count;
+                });
+        });
     grpc_context.run();
     CHECK_EQ(2, count);
 }
 
 void recursively_post(agrpc::GrpcContext& grpc_context)
 {
-    asio::post(grpc_context,
+    test::post(grpc_context,
                [&]
                {
                    recursively_post(grpc_context);
@@ -685,16 +685,16 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run() is not blocked by re
     bool alarm_completed{false};
     recursively_post(grpc_context);
     grpc::Alarm alarm;
-    asio::post(grpc_context,
-               [&]()
-               {
-                   wait(alarm, test::now(),
-                        [&](bool)
-                        {
-                            alarm_completed = true;
-                            grpc_context.stop();
-                        });
-               });
+    post(
+        [&]
+        {
+            wait(alarm, test::now(),
+                 [&](bool)
+                 {
+                     alarm_completed = true;
+                     grpc_context.stop();
+                 });
+        });
     grpc_context.run();
 }
 
@@ -744,13 +744,13 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_while() runs until the
                 return !alarm2_finished;
             });
     };
-    asio::post(grpc_context,
-               [&]
-               {
-                   sync_api();
-                   CHECK_FALSE(alarm1_finished);
-                   CHECK(alarm2_finished);
-               });
+    post(
+        [&]
+        {
+            sync_api();
+            CHECK_FALSE(alarm1_finished);
+            CHECK(alarm2_finished);
+        });
     CHECK(grpc_context.run());
     CHECK(alarm2_finished);
 }

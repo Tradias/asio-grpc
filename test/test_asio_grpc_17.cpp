@@ -562,7 +562,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post an Alarm and use variadic-a
 {
     bool ok{false};
     grpc::Alarm alarm;
-    asio::post(get_executor(),
+    test::post(get_executor(),
                [&]
                {
                    agrpc::wait(alarm, test::ten_milliseconds_from_now(),
@@ -625,7 +625,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with cancellation_t
                                                                                 {
                                                                                     ok = alarm_ok;
                                                                                 })));
-    asio::post(get_executor(),
+    test::post(get_executor(),
                [&]
                {
                    signal.emit(asio::cancellation_type::total);
@@ -633,7 +633,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with cancellation_t
     SUBCASE("cancel once") {}
     SUBCASE("cancel twice has no effect")
     {
-        asio::post(get_executor(),
+        test::post(get_executor(),
                    [&]
                    {
                        signal.emit(asio::cancellation_type::total);
@@ -649,7 +649,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with cancellation_t
     bool ok{false};
     asio::cancellation_signal signal{};
     grpc::Alarm alarm;
-    asio::post(get_executor(),
+    test::post(get_executor(),
                [&]
                {
                    agrpc::wait(alarm, test::hundred_milliseconds_from_now(),
@@ -658,7 +658,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with cancellation_t
                                                                                                {
                                                                                                    ok = alarm_ok;
                                                                                                })));
-                   asio::post(get_executor(),
+                   test::post(get_executor(),
                               [&]
                               {
                                   signal.emit(asio::cancellation_type::none);

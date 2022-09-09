@@ -30,6 +30,16 @@ void wait(grpc::Alarm& alarm, std::chrono::system_clock::time_point deadline,
     agrpc::wait(alarm, deadline, function);
 }
 
+void post(agrpc::GrpcContext& grpc_context, const std::function<void()>& function)
+{
+    asio::post(grpc_context, function);
+}
+
+void post(const agrpc::GrpcExecutor& executor, const std::function<void()>& function)
+{
+    asio::post(executor, function);
+}
+
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 void co_spawn(agrpc::GrpcContext& grpc_context, const std::function<asio::awaitable<void>()>& function,
               test::RethrowFirstArg rethrow)

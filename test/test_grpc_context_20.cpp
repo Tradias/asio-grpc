@@ -137,8 +137,8 @@ TEST_CASE("destruct GrpcContext while co_await'ing an alarm")
     grpc::Alarm alarm;
     {
         agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
-        asio::post(grpc_context,
-                   [&]()
+        test::post(grpc_context,
+                   [&]
                    {
                        grpc_context.stop();
                    });
@@ -159,11 +159,11 @@ TEST_CASE_FIXTURE(test::GrpcContextTest,
                   "call agrpc::wait from destructor of an awaitable while GrpcContext is being destructed")
 {
     bool invoked{false};
-    asio::post(grpc_context,
-               [&]()
-               {
-                   grpc_context.stop();
-               });
+    post(
+        [&]()
+        {
+            grpc_context.stop();
+        });
     test::co_spawn(grpc_context,
                    [&]() -> agrpc::GrpcAwaitable<void>
                    {
