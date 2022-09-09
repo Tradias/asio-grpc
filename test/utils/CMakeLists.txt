@@ -68,6 +68,7 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
         ${_asio_grpc_name}
         PRIVATE # cmake-format: sort
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/asio_separate_compilation.cpp"
+                "${CMAKE_CURRENT_SOURCE_DIR}/utils/asio_utils.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/asio_utils.hpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_client_server_test.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_client_server_test.hpp"

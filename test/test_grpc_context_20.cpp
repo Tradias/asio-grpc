@@ -170,12 +170,11 @@ TEST_CASE_FIXTURE(test::GrpcContextTest,
                        auto alarm = std::make_shared<grpc::Alarm>();
                        agrpc::detail::ScopeGuard guard{[&, alarm]
                                                        {
-                                                           agrpc::wait(*alarm, test::one_seconds_from_now(),
-                                                                       asio::bind_executor(grpc_context,
-                                                                                           [&, alarm](bool)
-                                                                                           {
-                                                                                               invoked = true;
-                                                                                           }));
+                                                           wait(*alarm, test::one_seconds_from_now(),
+                                                                [&, alarm](bool)
+                                                                {
+                                                                    invoked = true;
+                                                                });
                                                        }};
                        co_await agrpc::wait(*alarm, test::hundred_milliseconds_from_now(), agrpc::GRPC_USE_AWAITABLE);
                    });

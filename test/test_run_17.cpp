@@ -214,14 +214,13 @@ TEST_CASE_FIXTURE(
                               {
                                   has_posted = true;
                               });
-                   agrpc::wait(alarm, test::ten_milliseconds_from_now(),
-                               asio::bind_executor(grpc_context,
-                                                   [&](bool)
-                                                   {
-                                                       CHECK_EQ(std::this_thread::get_id(), expected_thread);
-                                                       invoked = true;
-                                                       grpc_context.stop();
-                                                   }));
+                   wait(alarm, test::ten_milliseconds_from_now(),
+                        [&](bool)
+                        {
+                            CHECK_EQ(std::this_thread::get_id(), expected_thread);
+                            invoked = true;
+                            grpc_context.stop();
+                        });
                });
     agrpc::run_completion_queue(grpc_context, io_context);
     CHECK(invoked);

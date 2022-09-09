@@ -191,12 +191,11 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request trac
 {
     bool invoked{false};
     grpc::Alarm alarm;
-    agrpc::wait(alarm, test::five_seconds_from_now(),
-                asio::bind_executor(grpc_context,
-                                    [&](bool)
-                                    {
-                                        invoked = true;
-                                    }));
+    wait(alarm, test::five_seconds_from_now(),
+         [&](bool)
+         {
+             invoked = true;
+         });
     agrpc::repeatedly_request(&test::v1::Test::AsyncService::RequestUnary, service,
                               noop_awaitable_request_handler(grpc_context));
     agrpc::repeatedly_request(&test::v1::Test::AsyncService::RequestClientStreaming, service,
