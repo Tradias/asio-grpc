@@ -754,6 +754,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_while() runs until the
                [&]
                {
                    sync_api();
+                   CHECK_FALSE(alarm1_finished);
                    CHECK(alarm2_finished);
                });
     CHECK(grpc_context.run());
