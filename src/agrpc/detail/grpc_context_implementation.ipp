@@ -194,6 +194,15 @@ inline bool GrpcContextImplementation::do_one_completion_queue(agrpc::GrpcContex
 template <class LoopFunction>
 inline bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, LoopFunction loop_function)
 {
+    if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
+    {
+        bool processed{};
+        while (loop_function(grpc_context))
+        {
+            processed = true;
+        }
+        return processed;
+    }
     if (grpc_context.outstanding_work.load(std::memory_order_relaxed) == 0)
     {
         grpc_context.stopped.store(true, std::memory_order_relaxed);

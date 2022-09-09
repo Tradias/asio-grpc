@@ -726,6 +726,41 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() times out corr
     CHECK_FALSE(grpc_context.run_until(test::ten_milliseconds_from_now()));
 }
 
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_while() runs until the expected event")
+{
+    bool alarm1_finished{false};
+    grpc::Alarm alarm1;
+    wait(alarm1, test::two_hundred_milliseconds_from_now(),
+         [&](bool)
+         {
+             alarm1_finished = true;
+         });
+    bool alarm2_finished{false};
+    auto sync_api = [&]
+    {
+        grpc::Alarm alarm2;
+        wait(alarm2, test::ten_milliseconds_from_now(),
+             [&](bool)
+             {
+                 alarm2_finished = true;
+             });
+        grpc_context.run_while(
+            [&]()
+            {
+                return !alarm2_finished;
+            });
+    };
+    asio::post(grpc_context,
+               [&]
+               {
+                   sync_api();
+                   CHECK_FALSE(alarm1_finished);
+                   CHECK(alarm2_finished);
+               });
+    CHECK(grpc_context.run());
+    CHECK(alarm2_finished);
+}
+
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::schedule")
 {

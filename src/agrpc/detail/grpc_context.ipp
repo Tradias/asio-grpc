@@ -114,6 +114,18 @@ inline bool GrpcContext::run_until_impl(::gpr_timespec deadline)
                                                            });
 }
 
+template <class Condition>
+inline bool GrpcContext::run_while(Condition&& condition)
+{
+    return detail::GrpcContextImplementation::process_work(
+        *this,
+        [&](agrpc::GrpcContext& grpc_context)
+        {
+            return condition() && detail::GrpcContextImplementation::do_one(
+                                      grpc_context, detail::GrpcContextImplementation::INFINITE_FUTURE);
+        });
+}
+
 inline bool GrpcContext::poll_completion_queue()
 {
     return detail::GrpcContextImplementation::process_work(
