@@ -19,6 +19,7 @@
 
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
+#include <grpc/event_engine/event_engine.h>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
@@ -29,6 +30,16 @@
 
 namespace test
 {
+bool GrpcContextTest::init()
+{
+    grpc_event_engine::experimental::SetDefaultEventEngineFactory(
+        [&]()
+        {
+            return std::make_unique<EvEngine>();
+        });
+    return true;
+}
+
 GrpcContextTest::GrpcContextTest()
     : buffer{}, resource{buffer.data(), buffer.size()}, grpc_context{builder.AddCompletionQueue()}
 {

@@ -67,15 +67,16 @@ function(asio_grpc_add_test _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_stand
 endfunction()
 
 set(ASIO_GRPC_CPP17_TEST_SOURCE_FILES
-    "test_asio_grpc_17.cpp"
-    "test_repeatedly_request_17.cpp"
-    "test_bind_allocator_17.cpp"
-    "test_grpc_context_17.cpp"
-    "test_run_17.cpp"
-    "test_generic_rpc_17.cpp"
-    "test_grpc_stream_17.cpp"
+    # "test_asio_grpc_17.cpp"
+    # "test_repeatedly_request_17.cpp"
+    # "test_bind_allocator_17.cpp"
+    # "test_grpc_context_17.cpp"
+    # "test_run_17.cpp"
+    # "test_generic_rpc_17.cpp"
+    # "test_grpc_stream_17.cpp"
     "test_test_17.cpp"
-    "test_high_level_client_17.cpp")
+    # "test_high_level_client_17.cpp" "test_event_engine_17.cpp"
+)
 set(ASIO_GRPC_CPP20_TEST_SOURCE_FILES "test_asio_grpc_20.cpp" "test_repeatedly_request_20.cpp"
                                       "test_bind_allocator_20.cpp" "test_grpc_context_20.cpp" "test_grpc_stream_20.cpp")
 
@@ -94,7 +95,7 @@ if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
                        ${ASIO_GRPC_CPP20_TEST_SOURCE_FILES})
     target_link_libraries(asio-grpc-test-cpp20 PRIVATE Boost::coroutine Boost::thread)
 
-    asio_grpc_add_test(asio-grpc-test-unifex-cpp20 "UNIFEX" "20" "test_unifex_20.cpp")
+    asio_grpc_add_test(asio-grpc-test-unifex-cpp20 "UNIFEX" "20" "test_event_engine_17.cpp" "test_unifex_20.cpp")
 endif()
 
 unset(ASIO_GRPC_CPP17_TEST_SOURCE_FILES)

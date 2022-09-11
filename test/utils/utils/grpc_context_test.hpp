@@ -26,6 +26,7 @@
 #include <agrpc/wait.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
+#include <unifex/win32/low_latency_iocp_context.hpp>
 
 #include <array>
 #include <cstddef>
@@ -42,6 +43,8 @@ inline auto work_tracking_executor(agrpc::GrpcContext& grpc_context) noexcept
 
 struct GrpcContextTest
 {
+    unifex::win32::low_latency_iocp_context context;
+    bool a{init()};
     grpc::ServerBuilder builder;
     std::unique_ptr<grpc::Server> server;
     std::array<std::byte, 4096> buffer;
@@ -49,6 +52,8 @@ struct GrpcContextTest
     agrpc::GrpcContext grpc_context;
 
     GrpcContextTest();
+
+    bool init();
 
     agrpc::GrpcExecutor get_executor() noexcept;
 
