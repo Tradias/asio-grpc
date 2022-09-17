@@ -3,6 +3,12 @@
     "name": "asio-grpc",
     "version": "1",
     "dependencies": [
+        {
+            "name": "abseil",
+            "features": [
+                "cxx17"
+            ]
+        },
         "doctest",
         "grpc",
         "boost-coroutine",
