@@ -12,174 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# asio-grpc header check
 if(ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
-    get_target_property(_asio_grpc_headers asio-grpc-sources INTERFACE_SOURCES)
-
-    set_source_files_properties(${_asio_grpc_headers} PROPERTIES LANGUAGE CXX)
-
-    add_library(asio-grpc-check-header-syntax OBJECT)
-
-    target_sources(asio-grpc-check-header-syntax PRIVATE ${_asio_grpc_headers})
-
-    target_compile_options(
-        asio-grpc-check-header-syntax
-        PRIVATE $<IF:$<CXX_COMPILER_ID:MSVC>,/Zs;/WX,-Werror;-fsyntax-only;-Wno-unused-const-variable>)
-
-    target_link_libraries(asio-grpc-check-header-syntax PRIVATE asio-grpc-sources asio-grpc-compile-options asio-grpc)
-
-    set_target_properties(asio-grpc-check-header-syntax PROPERTIES EXCLUDE_FROM_ALL on)
+    add_subdirectory(syntax)
 endif()
 
-# utils
+add_subdirectory(proto)
+
 add_subdirectory(utils)
 
-# tests
-function(asio_grpc_add_test _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_standard)
-    add_executable(${_asio_grpc_name})
+add_subdirectory(src)
 
-    target_sources(${_asio_grpc_name} PRIVATE ${ARGN})
-
-    convert_to_cpp_suffix(${_asio_grpc_cxx_standard})
-
-    target_link_libraries(${_asio_grpc_name} PRIVATE "asio-grpc-test-main${_asio_grpc_cxx_standard}"
-                                                     "asio-grpc-test-protos${_asio_grpc_cxx_standard}")
-    if(${_asio_grpc_type} STREQUAL "BOOST_ASIO")
-        target_link_libraries(${_asio_grpc_name} PRIVATE "asio-grpc-test-util-boost-asio${_asio_grpc_cxx_standard}")
-
-        target_precompile_headers(${_asio_grpc_name} REUSE_FROM
-                                  "asio-grpc-test-util-boost-asio${_asio_grpc_cxx_standard}")
-    elseif(${_asio_grpc_type} STREQUAL "STANDALONE_ASIO")
-        target_link_libraries(${_asio_grpc_name}
-                              PRIVATE "asio-grpc-test-util-standalone-asio${_asio_grpc_cxx_standard}")
-
-        target_precompile_headers(${_asio_grpc_name} REUSE_FROM
-                                  "asio-grpc-test-util-standalone-asio${_asio_grpc_cxx_standard}")
-    elseif(${_asio_grpc_type} STREQUAL "UNIFEX")
-        target_link_libraries(${_asio_grpc_name} PRIVATE "asio-grpc-test-util-unifex${_asio_grpc_cxx_standard}")
-
-        target_precompile_headers(${_asio_grpc_name} REUSE_FROM "asio-grpc-test-util-unifex${_asio_grpc_cxx_standard}")
-    endif()
-
-    if(ASIO_GRPC_DISCOVER_TESTS)
-        doctest_discover_tests(${_asio_grpc_name})
-    endif()
-endfunction()
-
-set(ASIO_GRPC_CPP17_TEST_SOURCE_FILES
-    "test_asio_grpc_17.cpp"
-    "test_repeatedly_request_17.cpp"
-    "test_bind_allocator_17.cpp"
-    "test_grpc_context_17.cpp"
-    "test_run_17.cpp"
-    "test_generic_rpc_17.cpp"
-    "test_grpc_stream_17.cpp"
-    "test_test_17.cpp"
-    "test_high_level_client_17.cpp")
-set(ASIO_GRPC_CPP20_TEST_SOURCE_FILES "test_asio_grpc_20.cpp" "test_repeatedly_request_20.cpp"
-                                      "test_bind_allocator_20.cpp" "test_grpc_context_20.cpp" "test_grpc_stream_20.cpp")
-
-asio_grpc_add_test(asio-grpc-test-boost-cpp17 "BOOST_ASIO" "17" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES})
-target_link_libraries(asio-grpc-test-boost-cpp17 PRIVATE Boost::coroutine Boost::thread)
-
-asio_grpc_add_test(asio-grpc-test-cpp17 "STANDALONE_ASIO" "17" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES})
-target_link_libraries(asio-grpc-test-cpp17 PRIVATE Boost::coroutine Boost::thread)
-
-if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
-    asio_grpc_add_test(asio-grpc-test-boost-cpp20 "BOOST_ASIO" "20" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES}
-                       ${ASIO_GRPC_CPP20_TEST_SOURCE_FILES})
-    target_link_libraries(asio-grpc-test-boost-cpp20 PRIVATE Boost::coroutine Boost::thread)
-
-    asio_grpc_add_test(asio-grpc-test-cpp20 "STANDALONE_ASIO" "20" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES}
-                       ${ASIO_GRPC_CPP20_TEST_SOURCE_FILES})
-    target_link_libraries(asio-grpc-test-cpp20 PRIVATE Boost::coroutine Boost::thread)
-
-    asio_grpc_add_test(asio-grpc-test-unifex-cpp20 "UNIFEX" "20" "test_unifex_20.cpp")
-endif()
-
-unset(ASIO_GRPC_CPP17_TEST_SOURCE_FILES)
-unset(ASIO_GRPC_CPP20_TEST_SOURCE_FILES)
-
-# tests for examples
 if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
-    add_executable(asio-grpc-test-examples)
-
-    target_sources(asio-grpc-test-examples PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/test_examples.cpp")
-
-    target_link_libraries(asio-grpc-test-examples PRIVATE asio-grpc-test-main Boost::filesystem)
-
-    add_dependencies(
-        asio-grpc-test-examples
-        asio-grpc-example-streaming-client
-        asio-grpc-example-streaming-server
-        asio-grpc-example-share-io-context-client
-        asio-grpc-example-share-io-context-server
-        asio-grpc-example-hello-world-client
-        asio-grpc-example-hello-world-server
-        asio-grpc-example-unifex-client
-        asio-grpc-example-unifex-server
-        asio-grpc-example-generic-client
-        asio-grpc-example-generic-server
-        asio-grpc-example-multi-threaded-client
-        asio-grpc-example-multi-threaded-server
-        asio-grpc-example-high-level-client)
-
-    set(ASIO_GRPC_TEMP_DIR "${CMAKE_CURRENT_BINARY_DIR}/temp")
-    make_directory("${ASIO_GRPC_TEMP_DIR}")
-
-    target_compile_definitions(
-        asio-grpc-test-examples
-        PRIVATE "ASIO_GRPC_EXAMPLE_TEMP_DIR=\"${ASIO_GRPC_TEMP_DIR}\""
-                "ASIO_GRPC_EXAMPLE_STREAMING_CLIENT=\"$<TARGET_FILE:asio-grpc-example-streaming-client>\""
-                "ASIO_GRPC_EXAMPLE_STREAMING_SERVER=\"$<TARGET_FILE:asio-grpc-example-streaming-server>\""
-                "ASIO_GRPC_EXAMPLE_SHARE_IO_CONTEXT_CLIENT=\"$<TARGET_FILE:asio-grpc-example-share-io-context-client>\""
-                "ASIO_GRPC_EXAMPLE_SHARE_IO_CONTEXT_SERVER=\"$<TARGET_FILE:asio-grpc-example-share-io-context-server>\""
-                "ASIO_GRPC_EXAMPLE_HELLO_WORLD_CLIENT=\"$<TARGET_FILE:asio-grpc-example-hello-world-client>\""
-                "ASIO_GRPC_EXAMPLE_HELLO_WORLD_SERVER=\"$<TARGET_FILE:asio-grpc-example-hello-world-server>\""
-                "ASIO_GRPC_EXAMPLE_UNIFEX_CLIENT=\"$<TARGET_FILE:asio-grpc-example-unifex-client>\""
-                "ASIO_GRPC_EXAMPLE_UNIFEX_SERVER=\"$<TARGET_FILE:asio-grpc-example-unifex-server>\""
-                "ASIO_GRPC_EXAMPLE_GENERIC_CLIENT=\"$<TARGET_FILE:asio-grpc-example-generic-client>\""
-                "ASIO_GRPC_EXAMPLE_GENERIC_SERVER=\"$<TARGET_FILE:asio-grpc-example-generic-server>\""
-                "ASIO_GRPC_EXAMPLE_MULTI_THREADED_CLIENT=\"$<TARGET_FILE:asio-grpc-example-multi-threaded-client>\""
-                "ASIO_GRPC_EXAMPLE_MULTI_THREADED_SERVER=\"$<TARGET_FILE:asio-grpc-example-multi-threaded-server>\""
-                "ASIO_GRPC_EXAMPLE_HIGH_LEVEL_CLIENT=\"$<TARGET_FILE:asio-grpc-example-high-level-client>\"")
-
-    if(ASIO_GRPC_ENABLE_IO_URING_EXAMPLES OR ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-        add_dependencies(asio-grpc-test-examples asio-grpc-example-file-transfer-client
-                         asio-grpc-example-file-transfer-server)
-
-        target_compile_definitions(
-            asio-grpc-test-examples
-            PRIVATE "ASIO_GRPC_EXAMPLE_FILE_TRANSFER_CLIENT=\"$<TARGET_FILE:asio-grpc-example-file-transfer-client>\""
-                    "ASIO_GRPC_EXAMPLE_FILE_TRANSFER_SERVER=\"$<TARGET_FILE:asio-grpc-example-file-transfer-server>\"")
-    endif()
-
-    if(ASIO_GRPC_DISCOVER_TESTS)
-        doctest_discover_tests(asio-grpc-test-examples)
-    endif()
+    add_subdirectory(example)
 endif()
 
-# cmake install test
 if(ASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST)
-    set(ASIO_GRPC_CMAKE_INSTALL_TEST_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-    configure_file("${ASIO_GRPC_CMAKE_INSTALL_TEST_SOURCE_DIR}/CMakeLists.txt.in"
-                   "${ASIO_GRPC_CMAKE_INSTALL_TEST_SOURCE_DIR}/CMakeLists.txt" @ONLY)
-
-    if("${CMAKE_GENERATOR}" STREQUAL "Ninja Multi-Config")
-        if(WIN32)
-            set(ASIO_GRPC_CMAKE_INSTALL_TEST_GENERATOR "NMake Makefiles")
-        else()
-            set(ASIO_GRPC_CMAKE_INSTALL_TEST_GENERATOR "Unix Makefiles")
-        endif()
-    else()
-        set(ASIO_GRPC_CMAKE_INSTALL_TEST_GENERATOR "${CMAKE_GENERATOR}")
-    endif()
-
-    add_test(
-        NAME asio-grpc-cmake-test
-        COMMAND
-            "${ASIO_GRPC_CMAKE_INSTALL_TEST_CTEST_COMMAND}" "--build-and-test"
-            "${ASIO_GRPC_CMAKE_INSTALL_TEST_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/cmake-test" "--build-generator"
-            "${ASIO_GRPC_CMAKE_INSTALL_TEST_GENERATOR}" "--build-project" "asio-grpc-cmake-test-superbuild"
-            "--test-command" "${CMAKE_CURRENT_BINARY_DIR}/cmake-test/test-install/main${CMAKE_EXECUTABLE_SUFFIX}")
+    add_subdirectory(cmake)
 endif()
