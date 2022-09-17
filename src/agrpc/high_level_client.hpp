@@ -623,7 +623,6 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
     /**
      * @brief Start a unary request
      *
-     * @param response The response message, will be filled by the server upon finishing this RPC.
      * @param request The request message, save to delete when this function returns, unless a deferred completion token
      * is used like `agrpc::use_sender` or `asio::deferred`.
      * @param response The response message, will be filled by the server upon finishing this RPC. Must remain alive
@@ -714,7 +713,6 @@ class BasicRPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor, agrpc::RPCType::CLIENT
      * @brief Start a generic unary request
      *
      * @param method The RPC method to call, e.g. "/test.v1.Test/Unary"
-     * @param response The response message, will be filled by the server upon finishing this RPC.
      * @param request The request message, save to delete when this function returns, unless a deferred completion token
      * is used like `agrpc::use_sender` or `asio::deferred`.
      * @param response The response message, will be filled by the server upon finishing this RPC. Must remain alive

@@ -12,13 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#[[===
 # /* [asio_grpc_protobuf_generate] */
-#[=======================================================================[.rst:
-asio_grpc_protobuf_generate
-------------
 
-Add custom commands to process ``.proto`` files to C++::
+In the same directory that called `find_package(asio-grpc)` the following CMake function will be made available.
+It can be used to generate Protobuf/gRPC source files from `.proto` schemas.<br>
 
+If you are using [cmake-format](https://github.com/cheshirekow/cmake_format) then you can copy the `asio_grpc_protobuf_generate` section from
+[cmake-format.yaml](https://github.com/Tradias/asio-grpc/blob/v2.1.0/cmake-format.yaml#L2-L14) to get proper formatting.
+
+```cmake
 asio_grpc_protobuf_generate(PROTOS <proto_file1> [<proto_file2>...]
                             [OUT_DIR <output_directory>]
                             [OUT_VAR <output_variable>]
@@ -29,32 +32,31 @@ asio_grpc_protobuf_generate(PROTOS <proto_file1> [<proto_file2>...]
                             [GENERATE_GRPC]
                             [GENERATE_DESCRIPTORS]
                             [GENERATE_MOCK_CODE])
+```
 
-``PROTOS``
-    ``.proto`` files
-``OUT_DIR``
-    Generated files output directory. Default: CMAKE_CURRENT_BINARY_DIR
-``OUT_VAR``
-    Variable to define with generated source files
-``TARGET``
-    Add generated source files to target.
-``USAGE_REQUIREMENT``
-    How to add sources to ``<target>``: ``PRIVATE``, ``PUBLIC``, ``INTERFACE``
-    Default: ``PRIVATE``
-``IMPORT_DIRS``
-    Import directories to be added to the protoc command line. If unspecified
-    then the directory of each .proto file will be used.
-``EXTRA_ARGS``
-    Additional protoc command line arguments
-``GENERATE_GRPC``
-    Generate grpc files
-``GENERATE_DESCRIPTORS``
-    Generate descriptor files named <proto_file_base_name>.desc
-``GENERATE_MOCK_CODE``
-    Generate gRPC client stub mock files named _mock.grpc.pb.h
+__PROTOS__: Input `.proto` schema files.<br>
+<br>
+__OUT_DIR__: Generated files output directory. Default: `CMAKE_CURRENT_BINARY_DIR`.<br>
+<br>
+__OUT_VAR__: Variable to define with generated source files.<br>
+<br>
+__TARGET__: Add generated source files to target.<br>
+<br>
+__USAGE_REQUIREMENT__: How to add sources to `<target>`: `PRIVATE`, `PUBLIC`, `INTERFACE`. Default: `PRIVATE`.<br>
+<br>
+__IMPORT_DIRS__: Import directories to be added to the protoc command line. If unspecified then the directory of each .proto file will be used.<br>
+<br>
+__EXTRA_ARGS__: Additional protoc command line arguments.<br>
+<br>
+__GENERATE_GRPC__: Generate gRPC files (.grpc.pb.h and .grpc.pb.cc).<br>
+<br>
+__GENERATE_DESCRIPTORS__: Generate descriptor files named `<proto_file_base_name>.desc`.<br>
+<br>
+__GENERATE_MOCK_CODE__: Generate gRPC client stub mock files named `_mock.grpc.pb.h`.
 
-#]=======================================================================]
 # /* [asio_grpc_protobuf_generate] */
+===]]
+
 function(asio_grpc_protobuf_generate)
     include(CMakeParseArguments)
 

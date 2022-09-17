@@ -105,7 +105,7 @@ unifex::task<void> handle_server_streaming_request(agrpc::GrpcContext& grpc_cont
 //
 
 // ---------------------------------------------------
-// The SlowUnary endpoint is used by the client to demonstrate per-RPC step cancellation. See unifex-client.cpp.
+// The SlowUnary endpoint is used by the client to demonstrate per-RPC step cancellation. See unifex_client.cpp.
 // ---------------------------------------------------
 unifex::task<void> handle_slow_unary_request(agrpc::GrpcContext& grpc_context,
                                              example::v1::ExampleExt::AsyncService& service)

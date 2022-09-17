@@ -57,7 +57,7 @@ namespace detail
  * `sender auto operator()(grpc::ServerContext&, Responder&)` otherwise.<br>
  * For libunifex this is the only available overload of this function.
  *
- * @snippet unifex-server.cpp repeatedly-request-sender
+ * @snippet unifex_server.cpp repeatedly-request-sender
  *
  * Another special overload of `agrpc::repeatedly_request` can be used by passing a RequestHandler with the following
  * signature:<br>
