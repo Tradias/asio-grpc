@@ -18,37 +18,18 @@
 #include <agrpc/detail/config.hpp>
 
 #include <cstdint>
-#include <limits>
 #include <utility>
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-[[nodiscard]] constexpr std::uintptr_t log2_ct(std::uintptr_t val) noexcept
-{
-    if (val == 1)
-    {
-        return std::uintptr_t{};
-    }
-    std::uintptr_t ret{};
-    while (val > 1)
-    {
-        val >>= 1;
-        ret++;
-    }
-    return ret;
-}
-
-template <std::uintptr_t Value>
-inline constexpr std::uintptr_t LOG_2 = detail::log2_ct(Value);
-
 template <class T>
 class TaggedPtr
 {
   private:
-    static constexpr std::uintptr_t AVAILABLE_BITS = detail::LOG_2<alignof(T)>;
-    static constexpr std::uintptr_t PTR_MASK{std::numeric_limits<std::uintptr_t>::max() & ~AVAILABLE_BITS};
+    static constexpr std::uintptr_t AVAILABLE_BITS = alignof(T) >= 4 ? 2 : (alignof(T) == 2 ? 1 : 0);
+    static constexpr std::uintptr_t PTR_MASK{~(alignof(T) - 1)};
 
   public:
     TaggedPtr() = default;
@@ -71,7 +52,7 @@ class TaggedPtr
     [[nodiscard]] bool has_bit() const noexcept
     {
         static_assert(Bit < AVAILABLE_BITS, "TaggedPtr has insufficient available bits");
-        static constexpr auto SHIFT = std::uintptr_t{1} << Bit;
+        constexpr auto SHIFT = std::uintptr_t{1} << Bit;
         return (ptr & SHIFT) != std::uintptr_t{};
     }
 
@@ -79,7 +60,7 @@ class TaggedPtr
     void unset_bit() noexcept
     {
         static_assert(Bit < AVAILABLE_BITS, "TaggedPtr has insufficient available bits");
-        static constexpr auto SHIFT = std::uintptr_t{1} << Bit;
+        constexpr auto SHIFT = std::uintptr_t{1} << Bit;
         ptr &= ~SHIFT;
     }
 
@@ -87,7 +68,7 @@ class TaggedPtr
     void set_bit() noexcept
     {
         static_assert(Bit < AVAILABLE_BITS, "TaggedPtr has insufficient available bits");
-        static constexpr auto SHIFT = std::uintptr_t{1} << Bit;
+        constexpr auto SHIFT = std::uintptr_t{1} << Bit;
         ptr |= SHIFT;
     }
 
