@@ -1,7 +1,19 @@
 # CMake protobuf generate
 
-In the same directory that called `find_package(asio-grpc)` a CMake function will be made available that can be used to generate gRPC source files from .proto schemas.
+@snippet{doc} AsioGrpcProtobufGenerator.cmake asio_grpc_protobuf_generate
 
-If you are using [cmake-format](https://github.com/cheshirekow/cmake_format) then you can copy the `asio_grpc_protobuf_generate` section from [cmake-format.yaml](https://github.com/Tradias/asio-grpc/blob/master/cmake-format.yaml#L2-L13) into your cmake-format.yaml to get proper formatting.
+### Example
 
-@snippet[doc] AsioGrpcProtobufGenerator.cmake asio_grpc_protobuf_generate
+Given a CMake target called `target-option`:
+
+@snippet test/cmake/superbuild/src/CMakeLists.txt asio_grpc_protobuf_generate-example
+
+Compiling `target-option` will cause the generation and compilation of:
+
+* `${CMAKE_CURRENT_BINARY_DIR}/target/target.pb.h`
+* `${CMAKE_CURRENT_BINARY_DIR}/target/target.pb.cc`
+* `${CMAKE_CURRENT_BINARY_DIR}/target/target.grpc.pb.h`
+* `${CMAKE_CURRENT_BINARY_DIR}/target/target.grpc.pb.cc`
+* `${CMAKE_CURRENT_BINARY_DIR}/target/target_mock.grpc.pb.h`
+
+whenever `${CMAKE_CURRENT_SOURCE_DIR}/proto/target.proto` has been modified.

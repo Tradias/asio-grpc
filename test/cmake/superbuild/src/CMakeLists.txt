@@ -44,11 +44,13 @@ create_object_library(target-option target.cpp)
 
 target_link_libraries(target-option PRIVATE asio-grpc::asio-grpc-standalone-asio)
 
+# /* [asio_grpc_protobuf_generate-example] */
 asio_grpc_protobuf_generate(
     GENERATE_GRPC GENERATE_MOCK_CODE
     TARGET target-option
     OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/target"
     PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/proto/target.proto")
+# /* [asio_grpc_protobuf_generate-example] */
 
 # OUT_VAR option
 set(OUT_VAR_GENERATED_PROTOS_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/out_var/")
