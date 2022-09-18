@@ -89,12 +89,12 @@ class AutoCancelClientContextRef
     detail::TaggedPtr<grpc::ClientContext> context{};
 };
 
-class BasicRPCClientContextBase
+class RPCClientContextBase
 {
   protected:
-    BasicRPCClientContextBase() = default;
+    RPCClientContextBase() = default;
 
-    explicit BasicRPCClientContextBase(grpc::ClientContext& client_context) : client_context(client_context) {}
+    explicit RPCClientContextBase(grpc::ClientContext& client_context) : client_context(client_context) {}
 
     [[nodiscard]] bool is_finished() const noexcept { return client_context.is_null(); }
 

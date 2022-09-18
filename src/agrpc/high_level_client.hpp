@@ -29,11 +29,11 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 /**
- * @brief (experimental) BasicRPC grpc::Status base
+ * @brief (experimental) RPC's grpc::Status base
  *
  * @since 2.1.0
  */
-class BasicRPCStatusBase
+class RPCStatusBase
 {
   public:
     /**
@@ -65,12 +65,12 @@ class BasicRPCStatusBase
 };
 
 /**
- * @brief (experimental) BasicRPC executor base
+ * @brief (experimental) RPC's executor base
  *
  * @since 2.1.0
  */
 template <class Executor>
-class BasicRPCExecutorBase
+class RPCExecutorBase
 {
   public:
     /**
@@ -86,9 +86,9 @@ class BasicRPCExecutorBase
     [[nodiscard]] executor_type get_executor() const noexcept { return executor; }
 
   protected:
-    BasicRPCExecutorBase() : executor(agrpc::GrpcExecutor{}) {}
+    RPCExecutorBase() : executor(agrpc::GrpcExecutor{}) {}
 
-    explicit BasicRPCExecutorBase(const Executor& executor) : executor(executor) {}
+    explicit RPCExecutorBase(const Executor& executor) : executor(executor) {}
 
     auto& grpc_context() const noexcept { return detail::query_grpc_context(executor); }
 
@@ -97,7 +97,7 @@ class BasicRPCExecutorBase
 };
 
 /**
- * @brief (experimental) BasicRPC client-side client streaming base
+ * @brief (experimental) Client-side RPC client streaming base
  *
  * **Per-Operation Cancellation**
  *
@@ -111,9 +111,8 @@ class BasicRPCExecutorBase
  * @since 2.1.0
  */
 template <class RequestT, template <class> class ResponderT, class Executor>
-class BasicRPCClientClientStreamingBase<ResponderT<RequestT>, Executor> : public detail::BasicRPCStatusBase,
-                                                                          public detail::BasicRPCExecutorBase<Executor>,
-                                                                          private detail::BasicRPCClientContextBase
+class RPCClientClientStreamingBase<ResponderT<RequestT>, Executor>
+    : public detail::RPCStatusBase, public detail::RPCExecutorBase<Executor>, private detail::RPCClientContextBase
 {
   public:
     /**
@@ -150,8 +149,8 @@ class BasicRPCClientClientStreamingBase<ResponderT<RequestT>, Executor> : public
     auto read_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
-            detail::ReadInitialMetadataSenderImplementation<BasicRPCClientClientStreamingBase>>(this->grpc_context(),
-                                                                                                {}, {*this}, token);
+            detail::ReadInitialMetadataSenderImplementation<RPCClientClientStreamingBase>>(this->grpc_context(), {},
+                                                                                           {*this}, token);
     }
 
     /**
@@ -211,7 +210,7 @@ class BasicRPCClientClientStreamingBase<ResponderT<RequestT>, Executor> : public
      *
      * @arg The ClientContext associated with the call is updated with possible initial and trailing metadata received
      * from the server.
-     * @arg Attempts to fill in the response parameter that was passed to `BasicRPC::request`.
+     * @arg Attempts to fill in the response parameter that was passed to `RPC::request`.
      *
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. The bool is equal to `ok()` after finishing.
@@ -220,7 +219,7 @@ class BasicRPCClientClientStreamingBase<ResponderT<RequestT>, Executor> : public
     auto finish(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_conditional_sender_implementation<
-            detail::ClientFinishSenderImplementation<BasicRPCClientClientStreamingBase>>(
+            detail::ClientFinishSenderImplementation<RPCClientClientStreamingBase>>(
             this->grpc_context(), {}, {*this}, !this->is_finished(), token, this->ok());
     }
 
@@ -230,17 +229,17 @@ class BasicRPCClientClientStreamingBase<ResponderT<RequestT>, Executor> : public
     [[nodiscard]] Responder& responder() noexcept { return *responder_; }
 
   protected:
-    friend detail::ReadInitialMetadataSenderImplementation<BasicRPCClientClientStreamingBase>;
+    friend detail::ReadInitialMetadataSenderImplementation<RPCClientClientStreamingBase>;
     friend detail::WriteClientStreamingSenderImplementation<Responder, Executor>;
-    friend detail::ClientFinishSenderImplementation<BasicRPCClientClientStreamingBase>;
-    friend detail::BasicRPCAccess;
+    friend detail::ClientFinishSenderImplementation<RPCClientClientStreamingBase>;
+    friend detail::RPCAccess;
 
-    BasicRPCClientClientStreamingBase() = default;
+    RPCClientClientStreamingBase() = default;
 
-    BasicRPCClientClientStreamingBase(const Executor& executor, grpc::ClientContext& client_context,
-                                      std::unique_ptr<Responder>&& responder)
-        : detail::BasicRPCExecutorBase<Executor>(executor),
-          detail::BasicRPCClientContextBase(client_context),
+    RPCClientClientStreamingBase(const Executor& executor, grpc::ClientContext& client_context,
+                                 std::unique_ptr<Responder>&& responder)
+        : detail::RPCExecutorBase<Executor>(executor),
+          detail::RPCClientContextBase(client_context),
           responder_(static_cast<std::unique_ptr<Responder>&&>(responder))
     {
     }
@@ -250,7 +249,7 @@ class BasicRPCClientClientStreamingBase<ResponderT<RequestT>, Executor> : public
 };
 
 /**
- * @brief (experimental) BasicRPC client-side server-streaming base
+ * @brief (experimental) Client-side RPC server-streaming base
  *
  * **Per-Operation Cancellation**
  *
@@ -264,10 +263,8 @@ class BasicRPCClientClientStreamingBase<ResponderT<RequestT>, Executor> : public
  * @since 2.1.0
  */
 template <class ResponseT, template <class> class ResponderT, class Executor>
-class BasicRPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
-    : public detail::BasicRPCStatusBase,
-      public detail::BasicRPCExecutorBase<Executor>,
-      private detail::BasicRPCClientContextBase
+class RPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
+    : public detail::RPCStatusBase, public detail::RPCExecutorBase<Executor>, private detail::RPCClientContextBase
 {
   public:
     /**
@@ -300,8 +297,8 @@ class BasicRPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
     auto read_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
-            detail::ReadInitialMetadataSenderImplementation<BasicRPCClientServerStreamingBase>>(this->grpc_context(),
-                                                                                                {}, {*this}, token);
+            detail::ReadInitialMetadataSenderImplementation<RPCClientServerStreamingBase>>(this->grpc_context(), {},
+                                                                                           {*this}, token);
     }
 
     /**
@@ -330,16 +327,16 @@ class BasicRPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
     [[nodiscard]] Responder& responder() noexcept { return *responder_; }
 
   protected:
-    friend detail::ReadInitialMetadataSenderImplementation<BasicRPCClientServerStreamingBase>;
+    friend detail::ReadInitialMetadataSenderImplementation<RPCClientServerStreamingBase>;
     friend detail::ReadServerStreamingSenderImplementation<Responder, Executor>;
-    friend detail::BasicRPCAccess;
+    friend detail::RPCAccess;
 
-    BasicRPCClientServerStreamingBase() = default;
+    RPCClientServerStreamingBase() = default;
 
-    BasicRPCClientServerStreamingBase(const Executor& executor, grpc::ClientContext& client_context,
-                                      std::unique_ptr<Responder>&& responder)
-        : detail::BasicRPCExecutorBase<Executor>(executor),
-          detail::BasicRPCClientContextBase(client_context),
+    RPCClientServerStreamingBase(const Executor& executor, grpc::ClientContext& client_context,
+                                 std::unique_ptr<Responder>&& responder)
+        : detail::RPCExecutorBase<Executor>(executor),
+          detail::RPCClientContextBase(client_context),
           responder_(static_cast<std::unique_ptr<Responder>&&>(responder))
     {
     }
@@ -349,7 +346,7 @@ class BasicRPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
 };
 
 /**
- * @brief (experimental) BasicRPC client-side bidirectional-streaming base
+ * @brief (experimental) Client-side RPC bidirectional-streaming base
  *
  * **Per-Operation Cancellation**
  *
@@ -363,10 +360,8 @@ class BasicRPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
  * @since 2.1.0
  */
 template <class RequestT, class ResponseT, template <class, class> class ResponderT, class Executor>
-class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
-    : public detail::BasicRPCStatusBase,
-      public detail::BasicRPCExecutorBase<Executor>,
-      private detail::BasicRPCClientContextBase
+class RPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
+    : public detail::RPCStatusBase, public detail::RPCExecutorBase<Executor>, private detail::RPCClientContextBase
 {
   public:
     /**
@@ -404,8 +399,8 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
     auto read_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
-            detail::ReadInitialMetadataSenderImplementation<BasicRPCBidirectionalStreamingBase>>(this->grpc_context(),
-                                                                                                 {}, {*this}, token);
+            detail::ReadInitialMetadataSenderImplementation<RPCBidirectionalStreamingBase>>(this->grpc_context(), {},
+                                                                                            {*this}, token);
     }
 
     /**
@@ -515,7 +510,7 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
     auto finish(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_conditional_sender_implementation<
-            detail::ClientFinishSenderImplementation<BasicRPCBidirectionalStreamingBase>>(
+            detail::ClientFinishSenderImplementation<RPCBidirectionalStreamingBase>>(
             this->grpc_context(), {}, {*this}, !this->is_finished(), token, this->ok());
     }
 
@@ -525,19 +520,19 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
     [[nodiscard]] Responder& responder() noexcept { return *responder_; }
 
   protected:
-    friend detail::ReadInitialMetadataSenderImplementation<BasicRPCBidirectionalStreamingBase>;
+    friend detail::ReadInitialMetadataSenderImplementation<RPCBidirectionalStreamingBase>;
     friend detail::ClientReadBidiStreamingSenderImplementation<Responder, Executor>;
     friend detail::ClientWriteBidiStreamingSenderImplementation<Responder, Executor>;
     friend detail::ClientWritesDoneSenderImplementation<Responder, Executor>;
-    friend detail::ClientFinishSenderImplementation<BasicRPCBidirectionalStreamingBase>;
-    friend detail::BasicRPCAccess;
+    friend detail::ClientFinishSenderImplementation<RPCBidirectionalStreamingBase>;
+    friend detail::RPCAccess;
 
-    BasicRPCBidirectionalStreamingBase() = default;
+    RPCBidirectionalStreamingBase() = default;
 
-    BasicRPCBidirectionalStreamingBase(const Executor& executor, grpc::ClientContext& client_context,
-                                       std::unique_ptr<Responder>&& responder)
-        : detail::BasicRPCExecutorBase<Executor>(executor),
-          detail::BasicRPCClientContextBase(client_context),
+    RPCBidirectionalStreamingBase(const Executor& executor, grpc::ClientContext& client_context,
+                                  std::unique_ptr<Responder>&& responder)
+        : detail::RPCExecutorBase<Executor>(executor),
+          detail::RPCClientContextBase(client_context),
           responder_(static_cast<std::unique_ptr<Responder>&&>(responder))
     {
     }
@@ -548,14 +543,14 @@ class BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Execut
 }
 
 /**
- * @brief (experimental) A marker value to BasicRPC for generic unary RPCs
+ * @brief (experimental) A marker value to RPC for generic unary RPCs
  *
  * @since 2.1.0
  */
 inline constexpr auto CLIENT_GENERIC_UNARY_RPC = detail::GenericRPCType::CLIENT_UNARY;
 
 /**
- * @brief (experimental) A marker value to BasicRPC for generic streaming RPCs
+ * @brief (experimental) A marker value to RPC for generic streaming RPCs
  *
  * @since 2.1.0
  */
@@ -565,7 +560,7 @@ inline constexpr auto CLIENT_GENERIC_STREAMING_RPC = detail::GenericRPCType::CLI
  * @brief (experimental) I/O object for client-side unary RPCs
  *
  * @tparam PrepareAsync A pointer to the async version of the RPC method. The async version starts with `PrepareAsync`.
- * @tparam Executor The executor type, must refer to a `agrpc::GrpcContext`.
+ * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
  *
  * **Per-Operation Cancellation**
  *
@@ -580,7 +575,7 @@ inline constexpr auto CLIENT_GENERIC_STREAMING_RPC = detail::GenericRPCType::CLI
  */
 template <class StubT, class RequestT, class ResponseT, template <class> class ResponderT,
           detail::ClientUnaryRequest<StubT, RequestT, ResponderT<ResponseT>> PrepareAsync, class Executor>
-class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
+class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
 {
   public:
     /**
@@ -609,15 +604,15 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
     using executor_type = Executor;
 
     /**
-     * @brief Rebind the BasicRPC to another executor
+     * @brief Rebind the RPC to another executor
      */
     template <class OtherExecutor>
     struct rebind_executor
     {
         /**
-         * @brief The BasicRPC type when rebound to the specified executor
+         * @brief The RPC type when rebound to the specified executor
          */
-        using other = BasicRPC<PrepareAsync, OtherExecutor, agrpc::RPCType::CLIENT_UNARY>;
+        using other = RPC<PrepareAsync, OtherExecutor, agrpc::RPCType::CLIENT_UNARY>;
     };
 
     /**
@@ -647,15 +642,15 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
     static auto request(const Executor& executor, StubT& stub, grpc::ClientContext& context, const RequestT& request,
                         ResponseT& response, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
-        return BasicRPC::request(detail::query_grpc_context(executor), stub, context, request, response,
-                                 static_cast<CompletionToken&&>(token));
+        return RPC::request(detail::query_grpc_context(executor), stub, context, request, response,
+                            static_cast<CompletionToken&&>(token));
     }
 };
 
 /**
  * @brief (experimental) I/O object for client-side generic unary RPCs
  *
- * @tparam Executor The executor type, must refer to a `agrpc::GrpcContext`.
+ * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
  *
  * **Per-Operation Cancellation**
  *
@@ -669,7 +664,7 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
  * @since 2.1.0
  */
 template <class Executor>
-class BasicRPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor, agrpc::RPCType::CLIENT_UNARY>
+class RPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor, agrpc::RPCType::CLIENT_UNARY>
 {
   public:
     /**
@@ -698,15 +693,15 @@ class BasicRPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor, agrpc::RPCType::CLIENT
     using executor_type = Executor;
 
     /**
-     * @brief Rebind the BasicRPC to another executor
+     * @brief Rebind the RPC to another executor
      */
     template <class OtherExecutor>
     struct rebind_executor
     {
         /**
-         * @brief The BasicRPC type when rebound to the specified executor
+         * @brief The RPC type when rebound to the specified executor
          */
-        using other = BasicRPC<agrpc::CLIENT_GENERIC_UNARY_RPC, OtherExecutor, agrpc::RPCType::CLIENT_UNARY>;
+        using other = RPC<agrpc::CLIENT_GENERIC_UNARY_RPC, OtherExecutor, agrpc::RPCType::CLIENT_UNARY>;
     };
 
     /**
@@ -738,8 +733,8 @@ class BasicRPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor, agrpc::RPCType::CLIENT
                         grpc::ClientContext& context, const grpc::ByteBuffer& request, grpc::ByteBuffer& response,
                         CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
-        return BasicRPC::request(detail::query_grpc_context(executor), method, stub, context, request, response,
-                                 static_cast<CompletionToken&&>(token));
+        return RPC::request(detail::query_grpc_context(executor), method, stub, context, request, response,
+                            static_cast<CompletionToken&&>(token));
     }
 };
 
@@ -747,7 +742,7 @@ class BasicRPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor, agrpc::RPCType::CLIENT
  * @brief (experimental) I/O object for client-side client-streaming RPCs
  *
  * @tparam PrepareAsync A pointer to the async version of the RPC method. The async version starts with `PrepareAsync`.
- * @tparam Executor The executor type, must refer to a `agrpc::GrpcContext`.
+ * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
  *
  * **Per-Operation Cancellation**
  *
@@ -763,8 +758,8 @@ class BasicRPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor, agrpc::RPCType::CLIENT
 template <class StubT, class RequestT, class ResponseT, template <class> class ResponderT,
           detail::PrepareAsyncClientClientStreamingRequest<StubT, ResponderT<RequestT>, ResponseT> PrepareAsync,
           class Executor>
-class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
-    : public detail::BasicRPCClientClientStreamingBase<ResponderT<RequestT>, Executor>
+class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
+    : public detail::RPCClientClientStreamingBase<ResponderT<RequestT>, Executor>
 {
   public:
     /**
@@ -778,15 +773,15 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
     using Response = ResponseT;
 
     /**
-     * @brief Rebind the BasicRPC to another executor
+     * @brief Rebind the RPC to another executor
      */
     template <class OtherExecutor>
     struct rebind_executor
     {
         /**
-         * @brief The BasicRPC type when rebound to the specified executor
+         * @brief The RPC type when rebound to the specified executor
          */
-        using other = BasicRPC<PrepareAsync, OtherExecutor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>;
+        using other = RPC<PrepareAsync, OtherExecutor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>;
     };
 
     /**
@@ -800,7 +795,7 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
      * @param response The response message, will be filled by the server upon finishing this RPC. Must remain alive
      * until this RPC is finished.
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
-     * `void(BasicRPC)`. Use `ok()` to check whether the request was successful.
+     * `void(RPC)`. Use `ok()` to check whether the request was successful.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     static auto request(agrpc::GrpcContext& grpc_context, StubT& stub, grpc::ClientContext& context,
@@ -818,21 +813,21 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
     static auto request(const Executor& executor, StubT& stub, grpc::ClientContext& context, ResponseT& response,
                         CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
-        return BasicRPC::request(detail::query_grpc_context(executor), stub, context, response,
-                                 static_cast<CompletionToken&&>(token));
+        return RPC::request(detail::query_grpc_context(executor), stub, context, response,
+                            static_cast<CompletionToken&&>(token));
     }
 
   private:
     friend detail::ClientClientStreamingRequestSenderImplementation<PrepareAsync, Executor>;
 
-    using detail::BasicRPCClientClientStreamingBase<ResponderT<RequestT>, Executor>::BasicRPCClientClientStreamingBase;
+    using detail::RPCClientClientStreamingBase<ResponderT<RequestT>, Executor>::RPCClientClientStreamingBase;
 };
 
 /**
  * @brief (experimental) I/O object for client-side server-streaming RPCs
  *
  * @tparam PrepareAsync A pointer to the async version of the RPC method. The async version starts with `PrepareAsync`.
- * @tparam Executor The executor type, must refer to a `agrpc::GrpcContext`.
+ * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
  *
  * **Per-Operation Cancellation**
  *
@@ -848,8 +843,8 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
 template <class StubT, class RequestT, class ResponseT, template <class> class ResponderT,
           detail::PrepareAsyncClientServerStreamingRequest<StubT, RequestT, ResponderT<ResponseT>> PrepareAsync,
           class Executor>
-class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>
-    : public detail::BasicRPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
+class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>
+    : public detail::RPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
 {
   public:
     /**
@@ -863,15 +858,15 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>
     using Request = RequestT;
 
     /**
-     * @brief Rebind the BasicRPC to another executor
+     * @brief Rebind the RPC to another executor
      */
     template <class OtherExecutor>
     struct rebind_executor
     {
         /**
-         * @brief The BasicRPC type when rebound to the specified executor
+         * @brief The RPC type when rebound to the specified executor
          */
-        using other = BasicRPC<PrepareAsync, OtherExecutor, agrpc::RPCType::CLIENT_SERVER_STREAMING>;
+        using other = RPC<PrepareAsync, OtherExecutor, agrpc::RPCType::CLIENT_SERVER_STREAMING>;
     };
 
     /**
@@ -881,7 +876,7 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>
      * @param request The request message, save to delete when this function returns, unless a deferred completion token
      * is used like `agrpc::use_sender` or `asio::deferred`.
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
-     * `void(BasicRPC)`. Use `ok()` to check whether the request was successful.
+     * `void(RPC)`. Use `ok()` to check whether the request was successful.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     static auto request(agrpc::GrpcContext& grpc_context, StubT& stub, grpc::ClientContext& context,
@@ -899,21 +894,21 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>
     static auto request(const Executor& executor, StubT& stub, grpc::ClientContext& context, const RequestT& request,
                         CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
-        return BasicRPC::request(detail::query_grpc_context(executor), stub, context, request,
-                                 static_cast<CompletionToken&&>(token));
+        return RPC::request(detail::query_grpc_context(executor), stub, context, request,
+                            static_cast<CompletionToken&&>(token));
     }
 
   private:
     friend detail::ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor>;
 
-    using detail::BasicRPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>::BasicRPCClientServerStreamingBase;
+    using detail::RPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>::RPCClientServerStreamingBase;
 };
 
 /**
  * @brief (experimental) I/O object for client-side bidirectional-streaming RPCs
  *
  * @tparam PrepareAsync A pointer to the async version of the RPC method. The async version starts with `PrepareAsync`.
- * @tparam Executor The executor type, must refer to a `agrpc::GrpcContext`.
+ * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
  *
  * **Per-Operation Cancellation**
  *
@@ -929,8 +924,8 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>
 template <class StubT, class RequestT, class ResponseT, template <class, class> class ResponderT,
           detail::PrepareAsyncClientBidirectionalStreamingRequest<StubT, ResponderT<RequestT, ResponseT>> PrepareAsync,
           class Executor>
-class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>
-    : public detail::BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
+class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>
+    : public detail::RPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
 {
   public:
     /**
@@ -939,15 +934,15 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STRE
     using Stub = StubT;
 
     /**
-     * @brief Rebind the BasicRPC to another executor
+     * @brief Rebind the RPC to another executor
      */
     template <class OtherExecutor>
     struct rebind_executor
     {
         /**
-         * @brief The BasicRPC type when rebound to the specified executor
+         * @brief The RPC type when rebound to the specified executor
          */
-        using other = BasicRPC<PrepareAsync, OtherExecutor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>;
+        using other = RPC<PrepareAsync, OtherExecutor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>;
     };
 
     /**
@@ -955,7 +950,7 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STRE
      *
      * @param stub The Stub that corresponds to the RPC method, e.g. `example::v1::Example::Stub`.
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
-     * `void(BasicRPC)`. Use `ok()` to check whether the request was successful.
+     * `void(RPC)`. Use `ok()` to check whether the request was successful.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     static auto request(agrpc::GrpcContext& grpc_context, StubT& stub, grpc::ClientContext& context,
@@ -973,21 +968,20 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STRE
     static auto request(const Executor& executor, StubT& stub, grpc::ClientContext& context,
                         CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
-        return BasicRPC::request(detail::query_grpc_context(executor), stub, context,
-                                 static_cast<CompletionToken&&>(token));
+        return RPC::request(detail::query_grpc_context(executor), stub, context, static_cast<CompletionToken&&>(token));
     }
 
   private:
     friend detail::ClientBidirectionalStreamingRequestSenderImplementation<PrepareAsync, Executor>;
 
-    using detail::BasicRPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>,
-                                                     Executor>::BasicRPCBidirectionalStreamingBase;
+    using detail::RPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>,
+                                                Executor>::RPCBidirectionalStreamingBase;
 };
 
 /**
  * @brief (experimental) I/O object for client-side generic streaming RPCs
  *
- * @tparam Executor The executor type, must refer to a `agrpc::GrpcContext`.
+ * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
  *
  * **Per-Operation Cancellation**
  *
@@ -1001,8 +995,8 @@ class BasicRPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STRE
  * @since 2.1.0
  */
 template <class Executor>
-class BasicRPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>
-    : public detail::BasicRPCBidirectionalStreamingBase<grpc::GenericClientAsyncReaderWriter, Executor>
+class RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>
+    : public detail::RPCBidirectionalStreamingBase<grpc::GenericClientAsyncReaderWriter, Executor>
 {
   public:
     /**
@@ -1011,23 +1005,23 @@ class BasicRPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor, agrpc::RPCType::CL
     using Stub = grpc::GenericStub;
 
     /**
-     * @brief Rebind the BasicRPC to another executor
+     * @brief Rebind the RPC to another executor
      */
     template <class OtherExecutor>
     struct rebind_executor
     {
         /**
-         * @brief The BasicRPC type when rebound to the specified executor
+         * @brief The RPC type when rebound to the specified executor
          */
-        using other = BasicRPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, OtherExecutor,
-                               agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>;
+        using other =
+            RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, OtherExecutor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>;
     };
 
     /**
      * @brief Start a generic streaming request
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
-     * `void(BasicRPC)`. Use `ok()` to check whether the request was successful.
+     * `void(RPC)`. Use `ok()` to check whether the request was successful.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     static auto request(agrpc::GrpcContext& grpc_context, const std::string& method, grpc::GenericStub& stub,
@@ -1048,38 +1042,17 @@ class BasicRPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor, agrpc::RPCType::CL
                         grpc::ClientContext& context,
                         CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
-        return BasicRPC::request(detail::query_grpc_context(executor), method, stub, context,
-                                 static_cast<CompletionToken&&>(token));
+        return RPC::request(detail::query_grpc_context(executor), method, stub, context,
+                            static_cast<CompletionToken&&>(token));
     }
 
   private:
     friend detail::ClientBidirectionalStreamingRequestSenderImplementation<agrpc::CLIENT_GENERIC_STREAMING_RPC,
                                                                            Executor>;
 
-    using detail::BasicRPCBidirectionalStreamingBase<grpc::GenericClientAsyncReaderWriter,
-                                                     Executor>::BasicRPCBidirectionalStreamingBase;
+    using detail::RPCBidirectionalStreamingBase<grpc::GenericClientAsyncReaderWriter,
+                                                Executor>::RPCBidirectionalStreamingBase;
 };
-
-/**
- * @brief (experimental) A BasicRPC that uses `agrpc::DefaultCompletionToken`
- *
- * This is the main entrypoint into the high-level client API. See BasicRPC for details.
- *
- * To use a different default completion token apply the `as_default_on_t` template on `agrpc::BasicRPC`:
- *
- * @code{cpp}
- * template<auto PrepareAsync>
- * using AwaitableRPC = asio::use_awaitable_t<>::as_default_on_t<agrpc::BasicRPC<PrepareAsync>>;
- * @endcode
- *
- * @tparam PrepareAsync A pointer to the async version of the RPC method. The async version starts with `PrepareAsync`.
- * Or the special marker value `agrpc::CLIENT_GENERIC_UNARY_RPC`/`agrpc::CLIENT_GENERIC_STREAMING_RPC` for generic RPCs.
- * @tparam Executor The executor type, must refer to a `agrpc::GrpcContext`.
- *
- * @since 2.1.0
- */
-template <auto PrepareAsync, class Executor = agrpc::GrpcExecutor>
-using RPC = agrpc::DefaultCompletionToken::as_default_on_t<agrpc::BasicRPC<PrepareAsync, Executor>>;
 
 AGRPC_NAMESPACE_END
 

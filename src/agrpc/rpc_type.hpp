@@ -20,7 +20,7 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief (experimental) The type of a BasicRPC
+ * @brief (experimental) The type of an RPC
  *
  * @since 2.1.0
  */

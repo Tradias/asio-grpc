@@ -146,7 +146,7 @@ TEST_CASE_TEMPLATE("RPC::read_initial_metadata automatically finishes RPC on err
 TEST_CASE_FIXTURE(test::HighLevelClientTest<test::UnaryRPC>,
                   "RPC::request can have UseSender as default completion token")
 {
-    using RPC = agrpc::UseSender::as_default_on_t<agrpc::BasicRPC<&test::v1::Test::Stub::PrepareAsyncUnary>>;
+    using RPC = agrpc::UseSender::as_default_on_t<agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncUnary>>;
     bool ok{};
     test::DeleteGuard guard{};
     bool use_submit{};

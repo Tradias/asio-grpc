@@ -49,13 +49,13 @@ struct RepeatedlyRequestContextAccess;
 class GenericRPCContext;
 
 template <class Responder, class Executor>
-class BasicRPCClientClientStreamingBase;
+class RPCClientClientStreamingBase;
 
 template <class Responder, class Executor>
-class BasicRPCClientServerStreamingBase;
+class RPCClientServerStreamingBase;
 
 template <class Responder, class Executor>
-class BasicRPCBidirectionalStreamingBase;
+class RPCBidirectionalStreamingBase;
 
 template <class Allocator, std::uint32_t Options>
 grpc::CompletionQueue* get_completion_queue(const agrpc::BasicGrpcExecutor<Allocator, Options>&) noexcept;
