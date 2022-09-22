@@ -700,3 +700,19 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTestBase,
                                           rpc.status_code());
                         });
 }
+
+TEST_CASE("RPC::service_name/method_name")
+{
+    CHECK_EQ("test.v1.Test", test::UnaryRPC::service_name());
+    CHECK_EQ("Unary", test::UnaryRPC::method_name());
+    CHECK_EQ("test.v1.Test", test::ClientStreamingRPC::service_name());
+    CHECK_EQ("ClientStreaming", test::ClientStreamingRPC::method_name());
+    CHECK_EQ("test.v1.Test", test::ServerStreamingRPC::service_name());
+    CHECK_EQ("ServerStreaming", test::ServerStreamingRPC::method_name());
+    CHECK_EQ("test.v1.Test", test::BidirectionalStreamingRPC::service_name());
+    CHECK_EQ("BidirectionalStreaming", test::BidirectionalStreamingRPC::method_name());
+    CHECK_EQ("AsyncGenericService", agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC>::service_name());
+    CHECK_EQ("", agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC>::method_name());
+    CHECK_EQ("AsyncGenericService", agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC>::service_name());
+    CHECK_EQ("", agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC>::method_name());
+}

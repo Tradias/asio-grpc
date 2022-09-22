@@ -21,6 +21,7 @@
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/high_level_client.hpp>
 #include <agrpc/detail/high_level_client_sender.hpp>
+#include <agrpc/detail/name.hpp>
 #include <agrpc/detail/rpc_type.hpp>
 #include <agrpc/grpc_executor.hpp>
 
@@ -616,6 +617,34 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
     };
 
     /**
+     * @brief Name of the gRPC service
+     *
+     * Equivalent to the generated `Service::service_full_name()`.
+     *
+     * E.g. for the `.proto` schema
+     *
+     * @code{proto}
+     * package example.v1;
+     *
+     * service Example { ... }
+     * @endcode
+     *
+     * the return value would be `"example.v1.Example"`.
+     *
+     * @since 2.2.0
+     */
+    static constexpr std::string_view service_name() noexcept { return detail::CLIENT_SERVICE_NAME_V<PrepareAsync>; }
+
+    /**
+     * @brief Name of the RPC method
+     *
+     * E.g. for `agrpc::RPC<&example::Example::Stub::PrepareAsyncMyMethod>` the return value would be `"MyMethod"`.
+     *
+     * @since 2.2.0
+     */
+    static constexpr std::string_view method_name() noexcept { return detail::CLIENT_METHOD_NAME_V<PrepareAsync>; }
+
+    /**
      * @brief Start a unary request
      *
      * @param request The request message, save to delete when this function returns, unless a deferred completion token
@@ -705,6 +734,25 @@ class RPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor, agrpc::RPCType::CLIENT_UNAR
     };
 
     /**
+     * @brief Name of the gRPC service
+     *
+     * Returns `"AsyncGenericService"`.
+     *
+     * @since 2.2.0
+     */
+    static constexpr std::string_view service_name() noexcept { return "AsyncGenericService"; }
+
+    /**
+     * @brief Name of the RPC method
+     *
+     * Returns an empty string. This method exists to provide a consistent interface for typed and generic `agrpc::RPC`
+     * specializations.
+     *
+     * @since 2.2.0
+     */
+    static constexpr std::string_view method_name() noexcept { return {}; }
+
+    /**
      * @brief Start a generic unary request
      *
      * @param method The RPC method to call, e.g. "/test.v1.Test/Unary"
@@ -783,6 +831,34 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
          */
         using other = RPC<PrepareAsync, OtherExecutor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>;
     };
+
+    /**
+     * @brief Name of the gRPC service
+     *
+     * Equivalent to the generated `Service::service_full_name()`.
+     *
+     * E.g. for the `.proto` schema
+     *
+     * @code{proto}
+     * package example.v1;
+     *
+     * service Example { ... }
+     * @endcode
+     *
+     * the return value would be `"example.v1.Example"`.
+     *
+     * @since 2.2.0
+     */
+    static constexpr std::string_view service_name() noexcept { return detail::CLIENT_SERVICE_NAME_V<PrepareAsync>; }
+
+    /**
+     * @brief Name of the RPC method
+     *
+     * E.g. for `agrpc::RPC<&example::Example::Stub::PrepareAsyncMyMethod>` the return value would be `"MyMethod"`.
+     *
+     * @since 2.2.0
+     */
+    static constexpr std::string_view method_name() noexcept { return detail::CLIENT_METHOD_NAME_V<PrepareAsync>; }
 
     /**
      * @brief Start a client-streaming request
@@ -870,6 +946,34 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>
     };
 
     /**
+     * @brief Name of the gRPC service
+     *
+     * Equivalent to the generated `Service::service_full_name()`.
+     *
+     * E.g. for the `.proto` schema
+     *
+     * @code{proto}
+     * package example.v1;
+     *
+     * service Example { ... }
+     * @endcode
+     *
+     * the return value would be `"example.v1.Example"`.
+     *
+     * @since 2.2.0
+     */
+    static constexpr std::string_view service_name() noexcept { return detail::CLIENT_SERVICE_NAME_V<PrepareAsync>; }
+
+    /**
+     * @brief Name of the RPC method
+     *
+     * E.g. for `agrpc::RPC<&example::Example::Stub::PrepareAsyncMyMethod>` the return value would be `"MyMethod"`.
+     *
+     * @since 2.2.0
+     */
+    static constexpr std::string_view method_name() noexcept { return detail::CLIENT_METHOD_NAME_V<PrepareAsync>; }
+
+    /**
      * @brief Start a server-streaming request
      *
      * @param stub The Stub that corresponds to the RPC method, e.g. `example::v1::Example::Stub`.
@@ -946,6 +1050,34 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING
     };
 
     /**
+     * @brief Name of the gRPC service
+     *
+     * Equivalent to the generated `Service::service_full_name()`.
+     *
+     * E.g. for the `.proto` schema
+     *
+     * @code{proto}
+     * package example.v1;
+     *
+     * service Example { ... }
+     * @endcode
+     *
+     * the return value would be `"example.v1.Example"`.
+     *
+     * @since 2.2.0
+     */
+    static constexpr std::string_view service_name() noexcept { return detail::CLIENT_SERVICE_NAME_V<PrepareAsync>; }
+
+    /**
+     * @brief Name of the RPC method
+     *
+     * E.g. for `agrpc::RPC<&example::Example::Stub::PrepareAsyncMyMethod>` the return value would be `"MyMethod"`.
+     *
+     * @since 2.2.0
+     */
+    static constexpr std::string_view method_name() noexcept { return detail::CLIENT_METHOD_NAME_V<PrepareAsync>; }
+
+    /**
      * @brief Start a bidirectional-streaming request
      *
      * @param stub The Stub that corresponds to the RPC method, e.g. `example::v1::Example::Stub`.
@@ -1016,6 +1148,25 @@ class RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor, agrpc::RPCType::CLIENT_
         using other =
             RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, OtherExecutor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>;
     };
+
+    /**
+     * @brief Name of the gRPC service
+     *
+     * Returns `"AsyncGenericService"`.
+     *
+     * @since 2.2.0
+     */
+    static constexpr std::string_view service_name() noexcept { return "AsyncGenericService"; }
+
+    /**
+     * @brief Name of the RPC method
+     *
+     * Returns an empty string. This method exists to provide a consistent interface between typed and generic
+     * specializations of `agrpc::RPC`.
+     *
+     * @since 2.2.0
+     */
+    static constexpr std::string_view method_name() noexcept { return {}; }
 
     /**
      * @brief Start a generic streaming request
