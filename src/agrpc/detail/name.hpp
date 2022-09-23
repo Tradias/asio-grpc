@@ -66,7 +66,12 @@ template <class T>
 constexpr auto get_class_name() noexcept
 {
 #if defined(__clang__)
+#if __clang_major__ < 12
+    // Older versions of clang include inline namespaces in `__PRETTY_FUNCTION__`
+    return StringView{__PRETTY_FUNCTION__ + 45, sizeof(__PRETTY_FUNCTION__) - 47};
+#else
     return StringView{__PRETTY_FUNCTION__ + 42, sizeof(__PRETTY_FUNCTION__) - 44};
+#endif
 #elif defined(__GNUC__)
     return StringView{__PRETTY_FUNCTION__ + 60, sizeof(__PRETTY_FUNCTION__) - 62};
 #elif defined(_MSC_VER)
@@ -86,11 +91,17 @@ template <auto T>
 constexpr auto get_function_name() noexcept
 {
 #if defined(__clang__)
-    return StringView{__PRETTY_FUNCTION__ + 31, sizeof(__PRETTY_FUNCTION__) - 33};
+// Older versions of clang include inline namespaces in `__PRETTY_FUNCTION__`
+#if __clang_major__ < 12
+    return StringView{__PRETTY_FUNCTION__ + 49, sizeof(__PRETTY_FUNCTION__) - 51};
+#else
+    return StringView{__PRETTY_FUNCTION__ + 46, sizeof(__PRETTY_FUNCTION__) - 48};
+#endif
 #elif defined(__GNUC__)
-    return StringView{__PRETTY_FUNCTION__ + 31, sizeof(__PRETTY_FUNCTION__) - 33};
+    return StringView{__PRETTY_FUNCTION__ + 69, sizeof(__PRETTY_FUNCTION__) - 71};
 #elif defined(_MSC_VER)
-    return StringView{__FUNCSIG__ + 45, sizeof(__FUNCSIG__) - 62};
+    // MSVC returns the entire function signature
+    return StringView{__FUNCSIG__ + 49, sizeof(__FUNCSIG__) - 66};
 #else
     return StringView{};
 #endif
