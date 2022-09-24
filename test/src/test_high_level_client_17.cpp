@@ -703,16 +703,21 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTestBase,
 
 TEST_CASE("RPC::service_name/method_name")
 {
-    CHECK_EQ("test.v1.Test", test::UnaryRPC::service_name());
-    CHECK_EQ("Unary", test::UnaryRPC::method_name());
-    CHECK_EQ("test.v1.Test", test::ClientStreamingRPC::service_name());
-    CHECK_EQ("ClientStreaming", test::ClientStreamingRPC::method_name());
-    CHECK_EQ("test.v1.Test", test::ServerStreamingRPC::service_name());
-    CHECK_EQ("ServerStreaming", test::ServerStreamingRPC::method_name());
-    CHECK_EQ("test.v1.Test", test::BidirectionalStreamingRPC::service_name());
-    CHECK_EQ("BidirectionalStreaming", test::BidirectionalStreamingRPC::method_name());
-    CHECK_EQ("AsyncGenericService", agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC>::service_name());
-    CHECK_EQ("", agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC>::method_name());
-    CHECK_EQ("AsyncGenericService", agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC>::service_name());
-    CHECK_EQ("", agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC>::method_name());
+    const auto check_eq_and_null_terminated = [](std::string_view expected, std::string_view actual)
+    {
+        CHECK_EQ(expected, actual);
+        CHECK_EQ('\0', *(actual.data() + actual.size()));
+    };
+    check_eq_and_null_terminated("test.v1.Test", test::UnaryRPC::service_name());
+    check_eq_and_null_terminated("Unary", test::UnaryRPC::method_name());
+    check_eq_and_null_terminated("test.v1.Test", test::ClientStreamingRPC::service_name());
+    check_eq_and_null_terminated("ClientStreaming", test::ClientStreamingRPC::method_name());
+    check_eq_and_null_terminated("test.v1.Test", test::ServerStreamingRPC::service_name());
+    check_eq_and_null_terminated("ServerStreaming", test::ServerStreamingRPC::method_name());
+    check_eq_and_null_terminated("test.v1.Test", test::BidirectionalStreamingRPC::service_name());
+    check_eq_and_null_terminated("BidirectionalStreaming", test::BidirectionalStreamingRPC::method_name());
+    check_eq_and_null_terminated("AsyncGenericService", test::GenericUnaryRPC::service_name());
+    check_eq_and_null_terminated("", test::GenericUnaryRPC::method_name());
+    check_eq_and_null_terminated("AsyncGenericService", test::GenericStreamingRPC::service_name());
+    check_eq_and_null_terminated("", test::GenericStreamingRPC::method_name());
 }

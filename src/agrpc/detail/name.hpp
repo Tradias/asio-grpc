@@ -25,14 +25,15 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <size_t N>
-struct StaticString
+template <std::size_t N>
+struct FixedSizeString
 {
-    char data_[N];
+    // Always null-terminated
+    char data_[N + 1];
 
-    constexpr operator std::string_view() const noexcept { return {data_, N}; }
+    constexpr explicit operator std::string_view() const noexcept { return {data_, N}; }
 
-    constexpr auto size() const noexcept { return N; }
+    static constexpr auto size() noexcept { return N; }
 
     constexpr auto data() const noexcept { return data_; }
 
@@ -46,12 +47,12 @@ struct StaticString
 };
 
 template <class... U>
-StaticString(U...) -> StaticString<sizeof...(U)>;
+FixedSizeString(U...) -> FixedSizeString<sizeof...(U)>;
 
 struct StringView
 {
     const char* data_;
-    size_t size_;
+    std::size_t size_;
 
     constexpr auto size() const noexcept { return size_; }
 
@@ -59,7 +60,7 @@ struct StringView
 
     constexpr auto end() const noexcept { return data_ + size_; }
 
-    constexpr auto substr(size_t pos, size_t count) const noexcept { return StringView{data_ + pos, count}; }
+    constexpr auto substr(std::size_t pos, std::size_t count) const noexcept { return StringView{data_ + pos, count}; }
 };
 
 template <class T>
@@ -107,11 +108,23 @@ constexpr auto get_function_name() noexcept
 #endif
 }
 
-template <size_t N>
-struct PreparedServiceName
+template <std::size_t N>
+struct StaticString
 {
-    StaticString<N> string;
-    size_t size;
+    FixedSizeString<N> string;
+    std::size_t size_{N};
+
+    constexpr auto begin() noexcept { return string.begin(); }
+
+    constexpr auto begin() const noexcept { return string.begin(); }
+
+    constexpr auto end() noexcept { return string.begin() + size_; }
+
+    constexpr auto end() const noexcept { return string.begin() + size_; }
+
+    constexpr auto size() const noexcept { return size_; }
+
+    constexpr void set_size(std::size_t new_size) noexcept { size_ = new_size; }
 };
 
 template <auto PrepareAsync>
@@ -120,12 +133,12 @@ constexpr auto prepare_service_name()
     constexpr auto member_func_class_name = detail::MEMBER_FUNCTION_CLASS_NAME_V<PrepareAsync>;
     constexpr auto stub_suffix_size = sizeof("::Stub") - 1;
     constexpr auto service_name = member_func_class_name.substr(0, member_func_class_name.size() - stub_suffix_size);
-    PreparedServiceName<service_name.size()> result{};
-    const auto begin = result.string.begin();
-    const auto end = result.string.end();
+    StaticString<service_name.size()> result{};
+    const auto begin = result.begin();
+    const auto end = result.end();
     detail::copy(service_name.begin(), service_name.end(), begin);
-    const auto new_end = detail::replace_sequence_with_value(begin, end, StaticString{':', ':'}, '.');
-    result.size = new_end - begin;
+    const auto new_end = detail::replace_sequence_with_value(begin, end, FixedSizeString{':', ':'}, '.');
+    result.set_size(new_end - begin);
     return result;
 }
 
@@ -133,8 +146,8 @@ template <auto PrepareAsync>
 constexpr auto get_client_service_name()
 {
     constexpr auto prepared = detail::prepare_service_name<PrepareAsync>();
-    StaticString<prepared.size> chars{};
-    detail::copy(prepared.string.begin(), prepared.string.begin() + prepared.size, chars.begin());
+    FixedSizeString<prepared.size()> chars{};
+    detail::copy(prepared.begin(), prepared.end(), chars.begin());
     return chars;
 }
 
@@ -153,7 +166,7 @@ constexpr auto get_client_method_name()
     constexpr auto end = detail::find(begin, function_name.end(), '(');
     constexpr auto size = end - begin;
     constexpr auto method_name = function_name.substr(std::distance(function_name.begin(), begin), size);
-    StaticString<method_name.size()> result{};
+    FixedSizeString<method_name.size()> result{};
     detail::copy(method_name.begin(), method_name.end(), result.begin());
     return result;
 }

@@ -33,6 +33,8 @@ using UnaryRPC = agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncUnary>;
 using ClientStreamingRPC = agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncClientStreaming>;
 using ServerStreamingRPC = agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncServerStreaming>;
 using BidirectionalStreamingRPC = agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncBidirectionalStreaming>;
+using GenericUnaryRPC = agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC>;
+using GenericStreamingRPC = agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC>;
 
 template <class RPC>
 struct IntrospectRPC;
