@@ -154,6 +154,8 @@ constexpr auto get_client_service_name()
 template <auto PrepareAsync>
 inline constexpr auto CLIENT_SERVICE_NAME_V = detail::get_client_service_name<PrepareAsync>();
 
+inline constexpr std::string_view CLIENT_GENERIC_SERVICE_NAME = "AsyncGenericService";
+
 template <auto PrepareAsync>
 constexpr auto get_client_method_name()
 {
@@ -173,6 +175,8 @@ constexpr auto get_client_method_name()
 
 template <auto PrepareAsync>
 inline constexpr auto CLIENT_METHOD_NAME_V = detail::get_client_method_name<PrepareAsync>();
+
+inline constexpr std::string_view CLIENT_GENERIC_METHOD_NAME = "";
 }
 
 AGRPC_NAMESPACE_END

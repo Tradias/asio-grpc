@@ -746,7 +746,7 @@ class RPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor, agrpc::RPCType::CLIENT_UNAR
      *
      * @since 2.2.0
      */
-    static constexpr std::string_view service_name() noexcept { return "AsyncGenericService"; }
+    static constexpr std::string_view service_name() noexcept { return detail::CLIENT_GENERIC_SERVICE_NAME; }
 
     /**
      * @brief Name of the RPC method
@@ -756,7 +756,7 @@ class RPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor, agrpc::RPCType::CLIENT_UNAR
      *
      * @since 2.2.0
      */
-    static constexpr std::string_view method_name() noexcept { return ""; }
+    static constexpr std::string_view method_name() noexcept { return detail::CLIENT_GENERIC_METHOD_NAME; }
 
     /**
      * @brief Start a generic unary request
@@ -1180,7 +1180,7 @@ class RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor, agrpc::RPCType::CLIENT_
      *
      * @since 2.2.0
      */
-    static constexpr std::string_view service_name() noexcept { return "AsyncGenericService"; }
+    static constexpr std::string_view service_name() noexcept { return detail::CLIENT_GENERIC_SERVICE_NAME; }
 
     /**
      * @brief Name of the RPC method
@@ -1190,7 +1190,7 @@ class RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor, agrpc::RPCType::CLIENT_
      *
      * @since 2.2.0
      */
-    static constexpr std::string_view method_name() noexcept { return ""; }
+    static constexpr std::string_view method_name() noexcept { return detail::CLIENT_GENERIC_METHOD_NAME; }
 
     /**
      * @brief Start a generic streaming request
