@@ -13,9 +13,9 @@
 // limitations under the License.
 
 #include "helloworld/helloworld.grpc.pb.h"
+#include "server_shutdown.hpp"
 
 #include <agrpc/asio_grpc.hpp>
-#include <boost/asio/signal_set.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
@@ -26,58 +26,14 @@
 
 namespace asio = boost::asio;
 
-struct ServerShutdown
-{
-    grpc::Server& server;
-    asio::basic_signal_set<agrpc::GrpcContext::executor_type> signals;
-    std::atomic_bool is_shutdown{};
-    std::thread shutdown_thread;
-
-    ServerShutdown(grpc::Server& server, agrpc::GrpcContext& grpc_context)
-        : server(server), signals(grpc_context, SIGINT, SIGTERM)
-    {
-        signals.async_wait(
-            [&](auto&& ec, auto&&)
-            {
-                if (asio::error::operation_aborted != ec)
-                {
-                    shutdown();
-                }
-            });
-    }
-
-    void shutdown()
-    {
-        if (!is_shutdown.exchange(true))
-        {
-            // We cannot call server.Shutdown() on the same thread that runs a GrpcContext because that could lead to
-            // deadlock, therefore create a new thread.
-            shutdown_thread = std::thread(
-                [&]
-                {
-                    signals.cancel();
-                    server.Shutdown();
-                });
-        }
-    }
-
-    ~ServerShutdown()
-    {
-        if (shutdown_thread.joinable())
-        {
-            shutdown_thread.join();
-        }
-        else if (!is_shutdown.exchange(true))
-        {
-            server.Shutdown();
-        }
-    }
-};
-
-static std::atomic_int counter{};
+// begin-snippet: server-side-multi-threaded
+// ---------------------------------------------------
+// Multi-threaded server performing 20 unary requests
+// ---------------------------------------------------
+// end-snippet
 
 void register_request_handler(agrpc::GrpcContext& grpc_context, helloworld::Greeter::AsyncService& service,
-                              ServerShutdown& shutdown)
+                              example::ServerShutdown& shutdown)
 {
     agrpc::repeatedly_request(
         &helloworld::Greeter::AsyncService::RequestSayHello, service,
@@ -91,6 +47,7 @@ void register_request_handler(agrpc::GrpcContext& grpc_context, helloworld::Gree
                 co_await agrpc::finish(writer, response, grpc::Status::OK);
 
                 // In this example we shut down the server after 20 requests
+                static std::atomic_int counter{};
                 if (19 == counter.fetch_add(1))
                 {
                     shutdown.shutdown();
@@ -119,7 +76,7 @@ int main(int argc, const char** argv)
         server = builder.BuildAndStart();
     }
 
-    ServerShutdown shutdown{*server, grpc_contexts.front()};
+    example::ServerShutdown shutdown{*server, grpc_contexts.front()};
 
     // Create one thread per GrpcContext.
     std::vector<std::thread> threads;

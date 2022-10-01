@@ -15,6 +15,7 @@
 #include "example/v1/example.grpc.pb.h"
 #include "example/v1/example_ext.grpc.pb.h"
 #include "helper.hpp"
+#include "server_shutdown.hpp"
 
 #include <agrpc/asio_grpc.hpp>
 #include <boost/asio/bind_executor.hpp>
@@ -22,7 +23,6 @@
 #include <boost/asio/experimental/awaitable_operators.hpp>
 #include <boost/asio/experimental/channel.hpp>
 #include <boost/asio/redirect_error.hpp>
-#include <boost/asio/signal_set.hpp>
 #include <boost/asio/thread_pool.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
@@ -34,68 +34,11 @@ namespace asio = boost::asio;
 
 // Example showing some of the features of using asio-grpc with Boost.Asio.
 
-// ---------------------------------------------------
-// A helper to properly shut down a gRPC without deadlocking.
-// ---------------------------------------------------
-struct ServerShutdown
-{
-    grpc::Server& server;
-    asio::basic_signal_set<agrpc::GrpcContext::executor_type> signals;
-    std::atomic_bool is_shutdown{};
-    std::thread shutdown_thread;
-
-    ServerShutdown(grpc::Server& server, agrpc::GrpcContext& grpc_context)
-        : server(server), signals(grpc_context, SIGINT, SIGTERM)
-    {
-        signals.async_wait(
-            [&](auto&& ec, auto&&)
-            {
-                if (asio::error::operation_aborted != ec)
-                {
-                    shutdown();
-                }
-            });
-    }
-
-    void shutdown()
-    {
-        if (!is_shutdown.exchange(true))
-        {
-            // This will cause all coroutines to run to completion normally
-            // while returning `false` from RPC related steps. Also cancel the signals
-            // so that the GrpcContext will eventually run out of work and return
-            // from `run()`.
-            shutdown_thread = std::thread(
-                [&]
-                {
-                    signals.cancel();
-                    server.Shutdown();
-                });
-            // Alternatively call `grpc_context.stop()` here instead which causes all coroutines
-            // to end at their next suspension point.
-            // Then call `server->Shutdown()` after the call to `grpc_context.run()` returns
-            // or `.reset()` the grpc_context and go into another `grpc_context.run()`
-        }
-    }
-
-    ~ServerShutdown()
-    {
-        if (shutdown_thread.joinable())
-        {
-            shutdown_thread.join();
-        }
-        else if (!is_shutdown.exchange(true))
-        {
-            server.Shutdown();
-        }
-    }
-};
-// ---------------------------------------------------
-//
-
+// begin-snippet: server-side-client-streaming
 // ---------------------------------------------------
 // A simple client-streaming request handler using coroutines.
 // ---------------------------------------------------
+// end-snippet
 asio::awaitable<void> handle_client_streaming_request(
     grpc::ServerContext&, grpc::ServerAsyncReader<example::v1::Response, example::v1::Request>& reader)
 {
@@ -134,10 +77,12 @@ void register_client_streaming_handler(agrpc::GrpcContext& grpc_context, example
 // ---------------------------------------------------
 //
 
+// begin-snippet: server-side-bidirectional-streaming
 // ---------------------------------------------------
 // The following bidirectional-streaming example shows how to dispatch requests to a thread_pool and write responses
 // back to the client.
 // ---------------------------------------------------
+// end-snippet
 using Channel = asio::experimental::channel<void(boost::system::error_code, example::v1::Request)>;
 
 // This function will read one requests from the client at a time. Note that gRPC only allows calling agrpc::read after
@@ -216,11 +161,13 @@ asio::awaitable<void> handle_bidirectional_streaming_request(example::v1::Exampl
 // ---------------------------------------------------
 //
 
+// begin-snippet: server-side-grpc-stream
 // ---------------------------------------------------
 // -Experimental-
 // A bidirectional-streaming RPC where the client subscribes to a topic and the server sends the feed for the last
 // subscribed topic every 333ms. The feed is a simple string identified by an integer in the topic.
 // ---------------------------------------------------
+// end-snippet
 auto get_feed_for_topic(int32_t id)
 {
     example::v1::Feed feed;
@@ -333,7 +280,7 @@ asio::awaitable<void> handle_slow_unary_request(example::v1::ExampleExt::AsyncSe
 // The Shutdown endpoint is used by unit tests.
 // ---------------------------------------------------
 asio::awaitable<void> handle_shutdown_request(example::v1::ExampleExt::AsyncService& service,
-                                              ServerShutdown& server_shutdown)
+                                              example::ServerShutdown& server_shutdown)
 {
     grpc::ServerContext server_context;
     grpc::ServerAsyncResponseWriter<google::protobuf::Empty> writer{&server_context};
@@ -371,7 +318,7 @@ int main(int argc, const char** argv)
     server = builder.BuildAndStart();
     abort_if_not(bool{server});
 
-    ServerShutdown server_shutdown{*server, grpc_context};
+    example::ServerShutdown server_shutdown{*server, grpc_context};
 
     asio::thread_pool thread_pool{1};
 

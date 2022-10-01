@@ -49,9 +49,7 @@ class OneShotAllocator
         static_assert(Capacity >= sizeof(T), "OneShotAllocator has insufficient capacity");
         static_assert(alignof(std::max_align_t) >= alignof(T), "Overaligned types are not supported");
         assert(Capacity >= n * sizeof(T));
-        void* ptr = this->buffer;
-        assert(std::exchange(this->buffer, nullptr));
-        return static_cast<T*>(ptr);
+        return static_cast<T*>(buffer);
     }
 
     static void deallocate(T*, std::size_t) noexcept {}

@@ -30,9 +30,11 @@ namespace asio = boost::asio;
 
 // Example showing some of the features of using asio-grpc with Boost.Asio.
 
+// begin-snippet: client-side-low-level-clien-streaming
 // ---------------------------------------------------
 // A simple client-streaming request with coroutines and the low-level client API.
 // ---------------------------------------------------
+// end-snippet
 asio::awaitable<void> make_client_streaming_request(example::v1::Example::Stub& stub)
 {
     grpc::ClientContext client_context;
@@ -67,9 +69,11 @@ asio::awaitable<void> make_client_streaming_request(example::v1::Example::Stub& 
 // ---------------------------------------------------
 //
 
+// begin-snippet: client-side-low-level-bidirectional-streaming
 // ---------------------------------------------------
 // A bidirectional-streaming request that simply sends the response from the server back to it.
 // ---------------------------------------------------
+// end-snippet
 asio::awaitable<void> make_bidirectional_streaming_request(example::v1::Example::Stub& stub)
 {
     grpc::ClientContext client_context;
@@ -114,11 +118,13 @@ asio::awaitable<void> make_bidirectional_streaming_request(example::v1::Example:
 // ---------------------------------------------------
 //
 
+// begin-snippet: client-side-grpc-stream
 // ---------------------------------------------------
 // -Experimental-
 // A bidirectional-streaming RPC where the client subscribes to a topic and the server sends the feed for the last
 // subscribed topic every 333ms. The feed is a simple string identified by an integer in the topic.
 // ---------------------------------------------------
+// end-snippet
 asio::awaitable<void> make_topic_subscription_request(agrpc::GrpcContext& grpc_context,
                                                       example::v1::ExampleExt::Stub& stub)
 {
@@ -175,11 +181,13 @@ asio::awaitable<void> make_topic_subscription_request(agrpc::GrpcContext& grpc_c
 // ---------------------------------------------------
 //
 
+// begin-snippet: client-side-run-with-deadline
 // ---------------------------------------------------
 // A unary request with a per-RPC step timeout. Using a unary RPC for demonstration purposes, the same mechanism can be
 // applied to streaming RPCs, where it is arguably more useful.
 // For unary RPCs, `grpc::ClientContext::set_deadline` should be preferred.
 // ---------------------------------------------------
+// end-snippet
 template <class Function>
 asio::awaitable<void> run_with_deadline(grpc::Alarm& alarm, grpc::ClientContext& client_context,
                                         std::chrono::system_clock::time_point deadline, Function function)

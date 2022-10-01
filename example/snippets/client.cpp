@@ -349,23 +349,29 @@ asio::awaitable<void> mock_stub(agrpc::GrpcContext& grpc_context)
 
 void client_main()
 {
-    auto stub =
-        example::v1::Example::NewStub(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
-
     // begin-snippet: create-grpc_context-client-side
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+    // end-snippet
+
+    // begin-snippet: run-grpc_context-client-side
+    example::v1::Example::Stub stub(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
+    asio::co_spawn(
+        grpc_context,
+        [&]() -> asio::awaitable<void>
+        {
+            grpc::ClientContext client_context;
+            example::v1::Request request;
+            request.set_integer(42);
+            example::v1::Response response;
+            using RPC = agrpc::RPC<&example::v1::Example::Stub::PrepareAsyncUnary>;
+            grpc::Status status = co_await RPC::request(grpc_context, stub, client_context, request, response);
+            assert(status.ok());
+        },
+        asio::detached);
+    grpc_context.run();
     // end-snippet
 
     // begin-snippet: make-work-guard
     std::optional guard{asio::require(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked)};
     // end-snippet
-    asio::co_spawn(
-        grpc_context,
-        [&]()
-        {
-            return unary(grpc_context, *stub);
-        },
-        asio::detached);
-
-    grpc_context.run();
 }

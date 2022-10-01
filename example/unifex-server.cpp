@@ -31,10 +31,12 @@
 
 // Example showing some of the features of using asio-grpc with libunifex.
 
+// begin-snippet: server-side-unifex-unary
 // ---------------------------------------------------
 // Register a request handler to unary requests. A bit of boilerplate code regarding stop_source has been added to make
 // the example testable.
 // ---------------------------------------------------
+// end-snippet
 unifex::task<void> handle_unary_request(agrpc::GrpcContext& grpc_context, grpc::ServerContext&,
                                         example::v1::Request& request,
                                         grpc::ServerAsyncResponseWriter<example::v1::Response>& writer)
@@ -74,9 +76,11 @@ auto register_unary_request_handler(agrpc::GrpcContext& grpc_context, example::v
 // ---------------------------------------------------
 //
 
+// begin-snippet: server-side-unifex-server-streaming
 // ---------------------------------------------------
 // A simple server-streaming request handler using coroutines.
 // ---------------------------------------------------
+// end-snippet
 unifex::task<void> handle_server_streaming_request(agrpc::GrpcContext& grpc_context,
                                                    example::v1::Example::AsyncService& service)
 {
@@ -105,7 +109,7 @@ unifex::task<void> handle_server_streaming_request(agrpc::GrpcContext& grpc_cont
 //
 
 // ---------------------------------------------------
-// The SlowUnary endpoint is used by the client to demonstrate per-RPC step cancellation. See unifex_client.cpp.
+// The SlowUnary endpoint is used by the client to demonstrate per-RPC step cancellation. See unifex-client.cpp.
 // ---------------------------------------------------
 unifex::task<void> handle_slow_unary_request(agrpc::GrpcContext& grpc_context,
                                              example::v1::ExampleExt::AsyncService& service)

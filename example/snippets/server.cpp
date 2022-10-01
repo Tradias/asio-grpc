@@ -339,8 +339,6 @@ void server_main()
         },
         asio::detached);
 
-    // begin-snippet: run-grpc_context-server-side
     grpc_context.run();
     server->Shutdown();
-}  // grpc_context is destructed here before the server
-   // end-snippet
+}

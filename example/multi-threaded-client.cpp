@@ -28,6 +28,12 @@
 
 namespace asio = boost::asio;
 
+// begin-snippet: client-side-multi-threaded
+// ---------------------------------------------------
+// Multi-threaded client performing 20 unary requests
+// ---------------------------------------------------
+// end-snippet
+
 // A simple round robin strategy for picking the next GrpcContext to use for an RPC.
 template <class Iterator>
 class RoundRobin

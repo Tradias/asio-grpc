@@ -29,9 +29,11 @@
 
 // Example showing some of the features of using asio-grpc with libunifex.
 
+// begin-snippet: client-side-unifex-unary
 // ---------------------------------------------------
-// A simple unary request with coroutines.
+// A simple unary request with unifex coroutines.
 // ---------------------------------------------------
+// end-snippet
 unifex::task<void> make_unary_request(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
     using RPC = agrpc::RPC<&example::v1::Example::Stub::PrepareAsyncUnary>;
@@ -49,9 +51,11 @@ unifex::task<void> make_unary_request(agrpc::GrpcContext& grpc_context, example:
 // ---------------------------------------------------
 //
 
+// begin-snippet: client-side-unifex-server-streaming
 // ---------------------------------------------------
-// A simple server-streaming request with coroutines.
+// A simple server-streaming request with unifex coroutines.
 // ---------------------------------------------------
+// end-snippet
 unifex::task<void> make_server_streaming_request(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
     using RPC = agrpc::RPC<&example::v1::Example::Stub::PrepareAsyncServerStreaming>;
@@ -75,11 +79,13 @@ unifex::task<void> make_server_streaming_request(agrpc::GrpcContext& grpc_contex
 // ---------------------------------------------------
 //
 
+// begin-snippet: client-side-unifex-with-deadline
 // ---------------------------------------------------
-// A unary request with a per-RPC step timeout. Using a unary RPC for demonstration purposes, the same mechanism can be
-// applied to streaming RPCs, where it is arguably more useful.
-// For unary RPCs, `grpc::ClientContext::set_deadline` is the preferred way of specifying a timeout.
+// A unifex, unary request with a per-RPC step timeout. Using a unary RPC for demonstration purposes, the same mechanism
+// can be applied to streaming RPCs, where it is arguably more useful. For unary RPCs,
+// `grpc::ClientContext::set_deadline` is the preferred way of specifying a timeout.
 // ---------------------------------------------------
+// end-snippet
 template <class Sender>
 auto run_with_deadline(grpc::Alarm& alarm, agrpc::GrpcContext& grpc_context, grpc::ClientContext& client_context,
                        std::chrono::system_clock::time_point deadline, Sender sender)

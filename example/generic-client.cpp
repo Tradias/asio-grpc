@@ -46,9 +46,11 @@ bool deserialize(grpc::ByteBuffer& buffer, Message& message)
     return grpc::GenericDeserialize<grpc::ProtoBufferReader, example::v1::Response>(&buffer, &message).ok();
 }
 
+// begin-snippet: client-side-generic-unary-request
 // ---------------------------------------------------
 // A simple generic unary with Boost.Coroutine.
 // ---------------------------------------------------
+// end-snippet
 void make_generic_unary_request(agrpc::GrpcContext& grpc_context, grpc::GenericStub& stub,
                                 const asio::yield_context& yield)
 {
@@ -81,10 +83,12 @@ void make_generic_unary_request(agrpc::GrpcContext& grpc_context, grpc::GenericS
 // ---------------------------------------------------
 //
 
+// begin-snippet: client-side-generic-bidirectional-request
 // ---------------------------------------------------
 // A generic bidirectional-streaming request that simply sends the response from the server back to it.
 // Here we are using stackless coroutines and the low-level gRPC client API.
 // ---------------------------------------------------
+// end-snippet
 struct BidirectionalStreamingRequest
 {
     struct Context
@@ -193,11 +197,10 @@ void make_shutdown_request(agrpc::GrpcContext& grpc_context, example::v1::Exampl
         grpc::Status status;
     };
     auto context = std::make_unique<Context>();
-    auto& c = *context;
-    auto reader =
-        agrpc::request(&example::v1::ExampleExt::Stub::AsyncShutdown, stub, c.client_context, {}, grpc_context);
+    auto& [client_context, response, status] = *context;
+    auto reader = agrpc::request(&example::v1::ExampleExt::Stub::AsyncShutdown, stub, client_context, {}, grpc_context);
     auto& r = *reader;
-    agrpc::finish(r, c.response, c.status,
+    agrpc::finish(r, response, status,
                   asio::bind_executor(grpc_context, [c = std::move(context), r = std::move(reader)](bool) {}));
 }
 

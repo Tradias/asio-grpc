@@ -34,8 +34,13 @@
 
 namespace asio = boost::asio;
 
-// Example showing how to write to generic server for a unary and a bidirectional streaming RPC.
+// Examples showing how to write generic servers for unary and bidirectional streaming RPCs.
 
+// begin-snippet: server-side-generic-unary-request
+// ---------------------------------------------------
+// Handle a simple generic unary request with Boost.Coroutine.
+// ---------------------------------------------------
+// end-snippet
 void process_request(grpc::ByteBuffer& buffer)
 {
     // -- Deserialize the request message
@@ -52,9 +57,6 @@ void process_request(grpc::ByteBuffer& buffer)
     grpc::GenericSerialize<grpc::ProtoBufferWriter, example::v1::Response>(response, &buffer, &own_buffer);
 }
 
-// ---------------------------------------------------
-// Handle a simple generic unary request with Boost.Coroutine.
-// ---------------------------------------------------
 void handle_generic_unary_request(grpc::GenericServerAsyncReaderWriter& reader_writer, const asio::yield_context& yield)
 {
     grpc::ByteBuffer buffer;
@@ -70,10 +72,12 @@ void handle_generic_unary_request(grpc::GenericServerAsyncReaderWriter& reader_w
 // ---------------------------------------------------
 //
 
+// begin-snippet: server-side-generic-bidirectional-request
 // ---------------------------------------------------
 // A bidirectional-streaming example that shows how to dispatch requests to a thread_pool and write responses
 // back to the client.
 // ---------------------------------------------------
+// end-snippet
 using Channel = asio::experimental::channel<agrpc::GrpcExecutor, void(boost::system::error_code, grpc::ByteBuffer)>;
 
 template <class Handler>

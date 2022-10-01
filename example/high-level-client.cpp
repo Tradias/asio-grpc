@@ -30,9 +30,11 @@ namespace asio = boost::asio;
 
 // Example showing some of the features of the high-level client API of asio-grpc with Boost.Asio.
 
+// begin-snippet: client-side-high-level-client-streaming
 // ---------------------------------------------------
 // A simple client-streaming request with coroutines.
 // ---------------------------------------------------
+// end-snippet
 asio::awaitable<void> make_client_streaming_request(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
     using RPC = agrpc::RPC<&example::v1::Example::Stub::PrepareAsyncClientStreaming>;
@@ -65,9 +67,11 @@ asio::awaitable<void> make_client_streaming_request(agrpc::GrpcContext& grpc_con
 // ---------------------------------------------------
 //
 
+// begin-snippet: client-side-high-level-bidirectional-streaming
 // ---------------------------------------------------
 // A bidirectional-streaming request that simply sends the response from the server back to it.
 // ---------------------------------------------------
+// end-snippet
 asio::awaitable<void> make_bidirectional_streaming_request(agrpc::GrpcContext& grpc_context,
                                                            example::v1::Example::Stub& stub)
 {

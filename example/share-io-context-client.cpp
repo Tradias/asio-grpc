@@ -30,7 +30,11 @@
 
 namespace asio = boost::asio;
 
-// Example showing how to run an io_context and a GrpcContext on the same thread.
+// begin-snippet: client-side-share-io-context
+// ---------------------------------------------------
+// Example showing how to run an io_context and a GrpcContext on the same thread for gRPC clients.
+// ---------------------------------------------------
+// end-snippet
 
 // A simple tcp request that will be handled by the io_context
 asio::awaitable<void> make_tcp_request(asio::ip::port_type port)

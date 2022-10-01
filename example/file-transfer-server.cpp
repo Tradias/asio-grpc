@@ -35,10 +35,15 @@
 
 namespace asio = boost::asio;
 
+// begin-snippet: server-side-file-transfer
+// ---------------------------------------------------
 // Example showing how to transfer files over a streaming RPC. Only a fixed number of dynamic memory allocations are
-// performed. The use of `agrpc::GrpcAwaitable<bool>` is not required but `agrpc::GrpcExecutor` is slightly smaller and
-// faster to copy than the `asio::any_io_executor` of the default `asio::awaitable`.
+// performed.
+// ---------------------------------------------------
+// end-snippet
 
+// The use of `agrpc::GrpcAwaitable<bool>` is not required but `agrpc::GrpcExecutor` is slightly smaller and
+// faster to copy than the `asio::any_io_executor` of the default `asio::awaitable`.
 agrpc::GrpcAwaitable<bool> handle_send_file_request(agrpc::GrpcContext& grpc_context, asio::io_context& io_context,
                                                     example::v1::ExampleExt::AsyncService& service,
                                                     const std::string& file_path)
