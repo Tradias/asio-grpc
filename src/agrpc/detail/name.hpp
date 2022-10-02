@@ -35,8 +35,6 @@ struct FixedSizeString
 
     static constexpr auto size() noexcept { return N; }
 
-    constexpr auto data() const noexcept { return data_; }
-
     constexpr auto begin() noexcept { return data_; }
 
     constexpr auto begin() const noexcept { return data_; }
@@ -48,6 +46,25 @@ struct FixedSizeString
 
 template <class... U>
 FixedSizeString(U...) -> FixedSizeString<sizeof...(U)>;
+
+template <std::size_t N>
+struct StaticString
+{
+    char data_[N];
+    std::size_t size_{N};
+
+    constexpr auto begin() noexcept { return data_; }
+
+    constexpr auto begin() const noexcept { return data_; }
+
+    constexpr auto end() noexcept { return data_ + size_; }
+
+    constexpr auto end() const noexcept { return data_ + size_; }
+
+    constexpr auto size() const noexcept { return size_; }
+
+    constexpr void set_size(std::size_t new_size) noexcept { size_ = new_size; }
+};
 
 struct StringView
 {
@@ -64,7 +81,7 @@ struct StringView
 };
 
 template <class T>
-constexpr auto get_class_name() noexcept
+constexpr auto get_class_name()
 {
 #if defined(__clang__)
 #if __clang_major__ < 12
@@ -76,9 +93,9 @@ constexpr auto get_class_name() noexcept
 #elif defined(__GNUC__)
     return StringView{__PRETTY_FUNCTION__ + 60, sizeof(__PRETTY_FUNCTION__) - 62};
 #elif defined(_MSC_VER)
-    return StringView{__FUNCSIG__ + 52, sizeof(__FUNCSIG__) - 69};
+    return StringView{__FUNCSIG__ + 52, sizeof(__FUNCSIG__) - 60};
 #else
-    return StringView{};
+    static_assert(false, "compiler not supported");
 #endif
 }
 
@@ -89,7 +106,7 @@ template <class R, class S, class... T, R (S::*f)(T...)>
 inline constexpr auto MEMBER_FUNCTION_CLASS_NAME_V<f> = detail::get_class_name<S>();
 
 template <auto T>
-constexpr auto get_function_name() noexcept
+constexpr auto get_function_name()
 {
 #if defined(__clang__)
 // Older versions of clang include inline namespaces in `__PRETTY_FUNCTION__`
@@ -102,30 +119,11 @@ constexpr auto get_function_name() noexcept
     return StringView{__PRETTY_FUNCTION__ + 69, sizeof(__PRETTY_FUNCTION__) - 71};
 #elif defined(_MSC_VER)
     // MSVC returns the entire function signature
-    return StringView{__FUNCSIG__ + 49, sizeof(__FUNCSIG__) - 66};
+    return StringView{__FUNCSIG__ + 49, sizeof(__FUNCSIG__) - 57};
 #else
-    return StringView{};
+    static_assert(false, "compiler not supported");
 #endif
 }
-
-template <std::size_t N>
-struct StaticString
-{
-    FixedSizeString<N> string;
-    std::size_t size_{N};
-
-    constexpr auto begin() noexcept { return string.begin(); }
-
-    constexpr auto begin() const noexcept { return string.begin(); }
-
-    constexpr auto end() noexcept { return string.begin() + size_; }
-
-    constexpr auto end() const noexcept { return string.begin() + size_; }
-
-    constexpr auto size() const noexcept { return size_; }
-
-    constexpr void set_size(std::size_t new_size) noexcept { size_ = new_size; }
-};
 
 template <auto PrepareAsync>
 constexpr auto prepare_service_name()

@@ -83,21 +83,21 @@ constexpr OutputIt move(InputIt first, InputIt last, OutputIt d_first)
 }
 
 template <class InputIt, class SearchRange, class Value>
-constexpr auto replace_sequence_with_value(InputIt it, InputIt last, const SearchRange& search_range,
+constexpr auto replace_sequence_with_value(InputIt first, InputIt last, const SearchRange& search_range,
                                            const Value& replacement)
 {
     const auto elements_to_be_removed = std::distance(std::begin(search_range), std::end(search_range)) - 1;
     while (true)
     {
-        auto seq_start = detail::search(it, last, std::begin(search_range), std::end(search_range));
+        auto seq_start = detail::search(first, last, std::begin(search_range), std::end(search_range));
         if (seq_start == last)
         {
             break;
         }
         *seq_start = replacement;
-        it = seq_start;
-        ++it;
-        last = detail::move(std::next(it, elements_to_be_removed), last, it);
+        first = seq_start;
+        ++first;
+        last = detail::move(std::next(first, elements_to_be_removed), last, first);
     }
     return last;
 }
