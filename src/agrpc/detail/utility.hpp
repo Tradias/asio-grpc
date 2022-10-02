@@ -80,11 +80,10 @@ using TypeIdentityT = typename detail::TypeIdentity<T>::Type;
 
 #ifdef AGRPC_HAS_CONCEPTS
 template <class T>
-concept IS_EQUALITY_COMPARABLE = requires(const T& lhs, const T& rhs)
-{
-    static_cast<bool>(lhs == rhs);
-    static_cast<bool>(lhs != rhs);
-};
+concept IS_EQUALITY_COMPARABLE = requires(const T& lhs, const T& rhs) {
+                                     static_cast<bool>(lhs == rhs);
+                                     static_cast<bool>(lhs != rhs);
+                                 };
 #else
 template <class T, class = void>
 inline constexpr bool IS_EQUALITY_COMPARABLE = false;
@@ -264,10 +263,10 @@ template <class OnExit>
 class ScopeGuard
 {
   public:
-    constexpr explicit ScopeGuard(OnExit on_exit) : on_exit(static_cast<OnExit&&>(on_exit)) {}
+    constexpr explicit ScopeGuard(OnExit on_exit) : on_exit{static_cast<OnExit&&>(on_exit)} {}
 
     template <class... Args>
-    constexpr explicit ScopeGuard(Args&&... args) : on_exit(static_cast<Args&&>(args)...)
+    constexpr explicit ScopeGuard(Args&&... args) : on_exit{static_cast<Args&&>(args)...}
     {
     }
 

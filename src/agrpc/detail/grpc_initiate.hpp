@@ -43,7 +43,7 @@ struct GrpcInitiateImplFn
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     template <class StopFunction, class InitiatingFunction, class CompletionToken>
-    auto operator()(const detail::GrpcInitiateTemplateArgs<StopFunction>, InitiatingFunction initiating_function,
+    auto operator()(const detail::GrpcInitiateTemplateArgs<StopFunction>, InitiatingFunction&& initiating_function,
                     CompletionToken token) const
     {
         return asio::async_initiate<CompletionToken, void(bool)>(
@@ -54,7 +54,7 @@ struct GrpcInitiateImplFn
 #endif
 
     template <class StopFunction, class InitiatingFunction>
-    auto operator()(const detail::GrpcInitiateTemplateArgs<StopFunction>, InitiatingFunction initiating_function,
+    auto operator()(const detail::GrpcInitiateTemplateArgs<StopFunction>, InitiatingFunction&& initiating_function,
                     detail::UseSender token) const noexcept
     {
         return detail::BasicSenderAccess::create<detail::GrpcSenderImplementation<InitiatingFunction, StopFunction>>(
@@ -74,7 +74,7 @@ auto grpc_initiate(InitiatingFunction&& initiating_function, CompletionToken&& t
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class Payload, class InitiatingFunction, class CompletionToken>
-auto grpc_initiate_with_payload(InitiatingFunction initiating_function, CompletionToken token)
+auto grpc_initiate_with_payload(InitiatingFunction&& initiating_function, CompletionToken token)
 {
     return asio::async_initiate<CompletionToken, void(std::pair<Payload, bool>)>(
         detail::GrpcWithPayloadInitiator<Payload, InitiatingFunction>{

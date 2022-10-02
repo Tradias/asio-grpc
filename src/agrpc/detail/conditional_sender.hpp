@@ -21,8 +21,6 @@
 #include <agrpc/detail/tuple.hpp>
 #include <agrpc/detail/utility.hpp>
 
-#include <optional>
-
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail

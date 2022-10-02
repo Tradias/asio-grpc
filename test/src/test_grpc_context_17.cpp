@@ -14,6 +14,7 @@
 
 #include "utils/asio_utils.hpp"
 #include "utils/doctest.hpp"
+#include "utils/exception.hpp"
 #include "utils/grpc_context_test.hpp"
 #include "utils/io_context_test.hpp"
 #include "utils/time.hpp"
@@ -526,18 +527,14 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "execute with throwing allocator")
     CHECK_THROWS(asio::execution::execute(executor, [] {}));
 }
 
-struct Exception : std::exception
-{
-};
-
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post with throwing completion handler")
 {
     asio::post(get_executor(), asio::bind_executor(get_executor(),
                                                    []
                                                    {
-                                                       throw Exception{};
+                                                       throw test::Exception{};
                                                    }));
-    CHECK_THROWS_AS(grpc_context.run(), Exception);
+    CHECK_THROWS_AS(grpc_context.run(), test::Exception);
 }
 
 struct GrpcContextAndIoContextTest : test::GrpcContextTest, test::IoContextTest
@@ -801,9 +798,13 @@ TEST_CASE("asio GrpcExecutor::schedule on shutdown GrpcContext")
                                               state};
     {
         agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
-        auto operation_state =
-            asio::execution::connect(asio::execution::schedule(grpc_context.get_scheduler()), receiver);
-        asio::execution::start(operation_state);
+        auto sender = asio::execution::schedule(grpc_context.get_scheduler());
+        SUBCASE("connect")
+        {
+            auto operation_state = asio::execution::connect(sender, receiver);
+            asio::execution::start(operation_state);
+        }
+        SUBCASE("submit") { asio::execution::submit(sender, receiver); }
     }
     CHECK_FALSE(is_invoked);
     CHECK_FALSE(state.exception);

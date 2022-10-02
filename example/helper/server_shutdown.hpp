@@ -20,6 +20,7 @@
 #include <grpcpp/server.h>
 
 #include <atomic>
+#include <thread>
 
 namespace example
 {

@@ -30,21 +30,23 @@ enum class SenderImplementationType
     BOTH
 };
 
+struct BasicSenderRunningOperationBaseArg
+{
+    detail::TypeErasedNoArgOnComplete no_arg_on_complete;
+    detail::TypeErasedGrpcTagOnComplete grpc_tag_on_complete;
+};
+
 template <detail::SenderImplementationType>
 struct BasicSenderRunningOperationBase
 {
-    explicit BasicSenderRunningOperationBase(detail::TypeErasedNoArgOnComplete,
-                                             detail::TypeErasedGrpcTagOnComplete) noexcept
-    {
-    }
+    explicit BasicSenderRunningOperationBase(detail::BasicSenderRunningOperationBaseArg) noexcept {}
 };
 
 template <>
 struct BasicSenderRunningOperationBase<detail::SenderImplementationType::NO_ARG> : detail::TypeErasedNoArgOperation
 {
-    explicit BasicSenderRunningOperationBase(detail::TypeErasedNoArgOnComplete no_arg_on_complete,
-                                             detail::TypeErasedGrpcTagOnComplete) noexcept
-        : detail::TypeErasedNoArgOperation(no_arg_on_complete)
+    explicit BasicSenderRunningOperationBase(detail::BasicSenderRunningOperationBaseArg arg) noexcept
+        : detail::TypeErasedNoArgOperation(arg.no_arg_on_complete)
     {
     }
 };
@@ -52,9 +54,8 @@ struct BasicSenderRunningOperationBase<detail::SenderImplementationType::NO_ARG>
 template <>
 struct BasicSenderRunningOperationBase<detail::SenderImplementationType::GRPC_TAG> : detail::TypeErasedGrpcTagOperation
 {
-    explicit BasicSenderRunningOperationBase(detail::TypeErasedNoArgOnComplete,
-                                             detail::TypeErasedGrpcTagOnComplete grpc_tag_on_complete) noexcept
-        : detail::TypeErasedGrpcTagOperation(grpc_tag_on_complete)
+    explicit BasicSenderRunningOperationBase(detail::BasicSenderRunningOperationBaseArg arg) noexcept
+        : detail::TypeErasedGrpcTagOperation(arg.grpc_tag_on_complete)
     {
     }
 };
@@ -64,9 +65,9 @@ struct BasicSenderRunningOperationBase<detail::SenderImplementationType::BOTH> :
                                                                                  detail::TypeErasedGrpcTagOperation
 
 {
-    explicit BasicSenderRunningOperationBase(detail::TypeErasedNoArgOnComplete no_arg_on_complete,
-                                             detail::TypeErasedGrpcTagOnComplete grpc_tag_on_complete) noexcept
-        : detail::TypeErasedNoArgOperation(no_arg_on_complete), detail::TypeErasedGrpcTagOperation(grpc_tag_on_complete)
+    explicit BasicSenderRunningOperationBase(detail::BasicSenderRunningOperationBaseArg arg) noexcept
+        : detail::TypeErasedNoArgOperation(arg.no_arg_on_complete),
+          detail::TypeErasedGrpcTagOperation(arg.grpc_tag_on_complete)
     {
     }
 };

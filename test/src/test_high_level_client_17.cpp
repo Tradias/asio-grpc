@@ -16,6 +16,7 @@
 #include "utils/asio_utils.hpp"
 #include "utils/delete_guard.hpp"
 #include "utils/doctest.hpp"
+#include "utils/exception.hpp"
 #include "utils/high_level_client.hpp"
 #include "utils/inline_executor.hpp"
 #include "utils/io_context_test.hpp"
@@ -100,10 +101,10 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>,
                             rpc_ref.read(response, asio::bind_executor(test::InlineExecutor{},
                                                                        [&, rpc = std::move(rpc)](bool)
                                                                        {
-                                                                           throw std::runtime_error("test");
+                                                                           throw test::Exception{};
                                                                        }));
                         }),
-                    std::runtime_error);
+                    test::Exception);
 }
 
 TEST_CASE_TEMPLATE("RPC::read_initial_metadata successfully", RPC, test::ClientStreamingRPC, test::ServerStreamingRPC,

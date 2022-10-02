@@ -16,6 +16,7 @@
 #include "utils/asio_utils.hpp"
 #include "utils/counting_allocator.hpp"
 #include "utils/doctest.hpp"
+#include "utils/exception.hpp"
 #include "utils/grpc_client_server_test.hpp"
 #include "utils/grpc_context_test.hpp"
 #include "utils/rpc.hpp"
@@ -78,6 +79,29 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "grpc_initiate NotifyOnStateChange
                             }));
     grpc_context.run();
     CHECK_EQ(expected_ok, actual_ok);
+}
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "grpc_initiate throw exception from initiating function")
+{
+    auto grpc_initiate = [&]
+    {
+        agrpc::grpc_initiate(
+            [&](const agrpc::GrpcContext&, void*)
+            {
+                throw test::Exception{};
+            },
+            asio::bind_executor(grpc_context, [](bool) {}));
+    };
+    SUBCASE("remote allocation") { CHECK_THROWS_AS(grpc_initiate(), test::Exception); }
+    SUBCASE("local allocation")
+    {
+        post(
+            [&]
+            {
+                CHECK_THROWS_AS(grpc_initiate(), test::Exception);
+            });
+    }
+    CHECK_NOTHROW(grpc_context.run());
 }
 
 #ifdef AGRPC_STANDALONE_ASIO

@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_OPERATION_HPP
 
 #include <agrpc/detail/allocate.hpp>
+#include <agrpc/detail/allocation_type.hpp>
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/type_erased_operation.hpp>
@@ -36,9 +37,25 @@ class Operation<IsIntrusivelyListable, Handler, void(Signature...)>
 
   public:
     template <class... Args>
-    explicit Operation(Args&&... args)
-        : Base(&detail::default_do_complete<Operation, Base, Signature...>), handler(static_cast<Args&&>(args)...)
+    explicit Operation(detail::AllocationType allocation_type, Args&&... args)
+        : Base(detail::AllocationType::LOCAL == allocation_type
+                   ? &do_local_complete
+                   : &detail::default_do_complete<Operation, Base, Signature...>),
+          handler(static_cast<Args&&>(args)...)
     {
+    }
+
+    static void do_local_complete(Base* op, detail::InvokeHandler invoke_handler, Signature... args,
+                                  detail::GrpcContextLocalAllocator allocator)
+    {
+        auto* self = static_cast<Operation*>(op);
+        detail::AllocationGuard ptr{self, allocator};
+        if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
+        {
+            auto local_handler{static_cast<Handler&&>(self->handler)};
+            ptr.reset();
+            static_cast<Handler&&>(local_handler)(static_cast<Signature&&>(args)...);
+        }
     }
 
     [[nodiscard]] Handler& completion_handler() noexcept { return handler; }
@@ -47,41 +64,6 @@ class Operation<IsIntrusivelyListable, Handler, void(Signature...)>
 
   private:
     Handler handler;
-};
-
-template <bool IsIntrusivelyListable, class Handler, class Signature>
-class LocalOperation;
-
-template <bool IsIntrusivelyListable, class Handler, class... Signature>
-class LocalOperation<IsIntrusivelyListable, Handler, void(Signature...)>
-    : public detail::TypeErasedOperation<IsIntrusivelyListable, Signature..., detail::GrpcContextLocalAllocator>
-{
-  private:
-    using Base = detail::TypeErasedOperation<IsIntrusivelyListable, Signature..., detail::GrpcContextLocalAllocator>;
-
-  public:
-    template <class... Args>
-    explicit LocalOperation(Args&&... args) : Base(&LocalOperation::do_complete), handler_(static_cast<Args&&>(args)...)
-    {
-    }
-
-    static void do_complete(Base* op, detail::InvokeHandler invoke_handler, Signature... args,
-                            detail::GrpcContextLocalAllocator allocator)
-    {
-        auto* self = static_cast<LocalOperation*>(op);
-        detail::AllocationGuard ptr{self, allocator};
-        if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
-        {
-            auto handler{static_cast<Handler&&>(self->handler_)};
-            ptr.reset();
-            static_cast<Handler&&>(handler)(static_cast<Signature&&>(args)...);
-        }
-    }
-
-    [[nodiscard]] Handler& completion_handler() noexcept { return handler_; }
-
-  private:
-    Handler handler_;
 };
 }
 

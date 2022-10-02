@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_ALLOCATE_OPERATION_HPP
 
 #include <agrpc/detail/allocate.hpp>
+#include <agrpc/detail/allocation_type.hpp>
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
@@ -33,64 +34,67 @@ inline constexpr bool IS_STD_ALLOCATOR = false;
 template <class T>
 inline constexpr bool IS_STD_ALLOCATOR<std::allocator<T>> = true;
 
-template <template <class> class OperationTemplate, class Operation, class... Args>
-auto allocate_operation(Operation&& operation, Args&&... args)
+template <class Operation>
+struct AllocatedOperation
+{
+    Operation* operation;
+    bool is_local_allocation;
+};
+
+template <class Operation>
+AllocatedOperation(Operation*, bool) -> AllocatedOperation<Operation>;
+
+template <template <class> class OperationTemplate, class Handler, class... Args>
+auto allocate_custom_operation(Handler&& handler, Args&&... args)
 
 {
-    const auto allocator = detail::exec::get_allocator(operation);
-    return detail::allocate<OperationTemplate<detail::RemoveCrefT<Operation>>>(
-        allocator, static_cast<Operation&&>(operation), static_cast<Args&&>(args)...);
+    const auto allocator = detail::exec::get_allocator(handler);
+    auto operation = detail::allocate<OperationTemplate<detail::RemoveCrefT<Handler>>>(
+        allocator, detail::AllocationType::CUSTOM, static_cast<Handler&&>(handler), static_cast<Args&&>(args)...);
+    return AllocatedOperation{operation.release(), false};
 }
 
-template <class AllocationTraits, class Operation, class... Args>
-auto allocate_local_operation(agrpc::GrpcContext& grpc_context, Operation&& operation, Args&&... args)
+template <template <class> class OperationTemplate, class Handler, class... Args>
+auto allocate_local_operation(agrpc::GrpcContext& grpc_context, Handler&& handler, Args&&... args)
 
 {
-    using DecayedOperation = detail::RemoveCrefT<Operation>;
-    auto allocator = detail::exec::get_allocator(operation);
+    using DecayedHandler = detail::RemoveCrefT<Handler>;
+    auto allocator = detail::exec::get_allocator(handler);
     if constexpr (detail::IS_STD_ALLOCATOR<decltype(allocator)>)
     {
-        return detail::allocate<typename AllocationTraits::template Local<DecayedOperation>>(
-            grpc_context.get_allocator(), static_cast<Operation&&>(operation), static_cast<Args&&>(args)...);
+        auto operation = detail::allocate<OperationTemplate<DecayedHandler>>(
+            grpc_context.get_allocator(), detail::AllocationType::LOCAL, static_cast<Handler&&>(handler),
+            static_cast<Args&&>(args)...);
+        return AllocatedOperation{operation.release(), true};
     }
     else
     {
-        return detail::allocate<typename AllocationTraits::template Custom<DecayedOperation>>(
-            allocator, static_cast<Operation&&>(operation), static_cast<Args&&>(args)...);
+        auto operation = detail::allocate<OperationTemplate<DecayedHandler>>(
+            allocator, detail::AllocationType::CUSTOM, static_cast<Handler&&>(handler), static_cast<Args&&>(args)...);
+        return AllocatedOperation{operation.release(), false};
     }
 }
 
-template <class AllocationTraits, class OnOperation, class Operation, class... Args>
-void allocate_operation_and_invoke(agrpc::GrpcContext& grpc_context, OnOperation& on_operation, Operation&& operation,
-                                   Args&&... args)
+template <template <class> class OperationTemplate, class Handler, class... Args>
+auto allocate_operation(agrpc::GrpcContext& grpc_context, Handler&& handler, Args&&... args)
 {
     if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
     {
-        auto allocated_operation = detail::allocate_local_operation<AllocationTraits>(
-            grpc_context, static_cast<Operation&&>(operation), static_cast<Args&&>(args)...);
-        on_operation(grpc_context, allocated_operation.get());
-        allocated_operation.release();
+        return detail::allocate_local_operation<OperationTemplate>(grpc_context, static_cast<Handler&&>(handler),
+                                                                   static_cast<Args&&>(args)...);
     }
     else
     {
-        auto allocated_operation = detail::allocate_operation<AllocationTraits::template Custom>(
-            static_cast<Operation&&>(operation), static_cast<Args&&>(args)...);
-        on_operation(grpc_context, allocated_operation.get());
-        allocated_operation.release();
+        return detail::allocate_custom_operation<OperationTemplate>(static_cast<Handler&&>(handler),
+                                                                    static_cast<Args&&>(args)...);
     }
 }
 
-struct NoArgOperationAllocationTraits
-{
-    template <class Operation>
-    using Local = detail::LocalOperation<true, Operation, void()>;
+template <class Handler>
+using NoArgOperationTemplate = detail::Operation<true, Handler, void()>;
 
-    template <class Operation>
-    using Custom = detail::Operation<true, Operation, void()>;
-};
-
-template <bool IsBlockingNever, class Operation>
-void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Operation&& operation)
+template <bool IsBlockingNever, class Handler>
+void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Handler&& handler)
 {
     if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context))
     {
@@ -101,7 +105,7 @@ void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Operat
     {
         if (is_running_in_this_thread)
         {
-            auto op{static_cast<Operation&&>(operation)};
+            auto op{static_cast<Handler&&>(handler)};
             std::move(op)();
             return;
         }
@@ -109,15 +113,15 @@ void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Operat
     detail::StartWorkAndGuard guard{grpc_context};
     if (is_running_in_this_thread)
     {
-        auto allocated_operation = detail::allocate_local_operation<NoArgOperationAllocationTraits>(
-            grpc_context, static_cast<Operation&&>(operation));
-        detail::GrpcContextImplementation::add_local_operation(grpc_context, allocated_operation.release());
+        auto allocated_operation =
+            detail::allocate_local_operation<NoArgOperationTemplate>(grpc_context, static_cast<Handler&&>(handler));
+        detail::GrpcContextImplementation::add_local_operation(grpc_context, allocated_operation.operation);
     }
     else
     {
-        auto allocated_operation = detail::allocate_operation<NoArgOperationAllocationTraits::template Custom>(
-            static_cast<Operation&&>(operation));
-        detail::GrpcContextImplementation::add_remote_operation(grpc_context, allocated_operation.release());
+        auto allocated_operation =
+            detail::allocate_custom_operation<NoArgOperationTemplate>(static_cast<Handler&&>(handler));
+        detail::GrpcContextImplementation::add_remote_operation(grpc_context, allocated_operation.operation);
     }
     guard.release();
 }

@@ -24,23 +24,30 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-struct GrpcTagOperationAllocationTraits
-{
-    template <class CompletionHandler>
-    using Local = detail::LocalOperation<false, CompletionHandler, void(bool)>;
+template <class CompletionHandler>
+using GrpcOperationTemplate = detail::Operation<false, CompletionHandler, void(bool)>;
 
-    template <class CompletionHandler>
-    using Custom = detail::Operation<false, CompletionHandler, void(bool)>;
+struct DeallocateOperationFunctor
+{
+    agrpc::GrpcContext& grpc_context;
+    detail::TypeErasedGrpcTagOperation* operation;
+
+    void operator()() { operation->complete(detail::InvokeHandler::NO, false, grpc_context.get_allocator()); }
 };
+
+using OperationAllocationGuard = detail::ScopeGuard<detail::DeallocateOperationFunctor>;
 
 template <class InitiatingFunction, class CompletionHandler>
 void grpc_submit(agrpc::GrpcContext& grpc_context, InitiatingFunction& initiating_function,
                  CompletionHandler&& completion_handler)
 {
-    detail::StartWorkAndGuard guard{grpc_context};
-    detail::allocate_operation_and_invoke<GrpcTagOperationAllocationTraits>(
-        grpc_context, initiating_function, static_cast<CompletionHandler&&>(completion_handler));
-    guard.release();
+    auto [operation, is_local_allocation] = detail::allocate_operation<GrpcOperationTemplate>(
+        grpc_context, static_cast<CompletionHandler&&>(completion_handler));
+    detail::StartWorkAndGuard start_work_guard{grpc_context};
+    detail::OperationAllocationGuard allocation_guard{grpc_context, operation};
+    initiating_function(grpc_context, operation);
+    allocation_guard.release();
+    start_work_guard.release();
 }
 }
 
