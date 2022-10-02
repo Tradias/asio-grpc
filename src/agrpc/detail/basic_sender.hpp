@@ -89,7 +89,7 @@ void submit_basic_sender_running_operation(agrpc::GrpcContext& grpc_context, Rec
     auto stop_token = detail::check_start_conditions(grpc_context, receiver);
     if (stop_token)
     {
-        auto [operation, is_local_allocation] = detail::allocate_operation<
+        auto operation = detail::allocate_operation<
             detail::BasicSenderRunningOperationTemplate<detail::RemoveCrefT<Implementation>>::template Type>(
             grpc_context, static_cast<Receiver&&>(receiver), static_cast<Implementation&&>(implementation));
         operation->start(grpc_context, initiation, std::move(stop_token.value()));
@@ -213,8 +213,9 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
     }
 
     template <detail::AllocationType AllocType>
-    static void no_arg_on_complete(detail::TypeErasedNoArgOperation* op, detail::InvokeHandler invoke_handler,
-                                   detail::GrpcContextLocalAllocator local_allocator)
+    static void no_arg_on_complete([[maybe_unused]] detail::TypeErasedNoArgOperation* op,
+                                   [[maybe_unused]] detail::InvokeHandler invoke_handler,
+                                   [[maybe_unused]] detail::GrpcContextLocalAllocator local_allocator)
     {
         if constexpr (Implementation::TYPE == detail::SenderImplementationType::NO_ARG ||
                       Implementation::TYPE == detail::SenderImplementationType::BOTH)
@@ -225,8 +226,9 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
     }
 
     template <detail::AllocationType AllocType>
-    static void grpc_tag_on_complete(detail::TypeErasedGrpcTagOperation* op, detail::InvokeHandler invoke_handler,
-                                     bool ok, detail::GrpcContextLocalAllocator local_allocator)
+    static void grpc_tag_on_complete([[maybe_unused]] detail::TypeErasedGrpcTagOperation* op,
+                                     [[maybe_unused]] detail::InvokeHandler invoke_handler, [[maybe_unused]] bool ok,
+                                     [[maybe_unused]] detail::GrpcContextLocalAllocator local_allocator)
     {
         if constexpr (Implementation::TYPE == detail::SenderImplementationType::GRPC_TAG ||
                       Implementation::TYPE == detail::SenderImplementationType::BOTH)
@@ -316,8 +318,7 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
     {
         this->emplace_stop_callback(static_cast<StopToken&&>(stop_token), initiation);
         grpc_context.work_started();
-        implementation().initiate(grpc_context,
-                                  BasicSenderRunningOperationInit<Initiation, Implementation::TYPE>{this, initiation});
+        implementation().initiate(grpc_context, initiation, static_cast<Base*>(this));
     }
 
     Receiver& receiver() noexcept { return impl.first().receiver(); }

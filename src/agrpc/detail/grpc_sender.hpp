@@ -42,10 +42,10 @@ struct GrpcSenderImplementation : detail::GrpcSenderImplementationBase
         InitiatingFunction initiating_function;
     };
 
-    template <class OnDone>
-    void initiate(agrpc::GrpcContext& grpc_context, OnDone on_done) const
+    static void initiate(agrpc::GrpcContext& grpc_context, const Initiation& initiation,
+                         detail::TypeErasedGrpcTagOperation* operation)
     {
-        on_done->initiating_function(grpc_context, on_done.self());
+        initiation.initiating_function(grpc_context, operation);
     }
 
     template <class OnDone>

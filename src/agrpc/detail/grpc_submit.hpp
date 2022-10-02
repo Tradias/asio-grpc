@@ -41,7 +41,7 @@ template <class InitiatingFunction, class CompletionHandler>
 void grpc_submit(agrpc::GrpcContext& grpc_context, InitiatingFunction& initiating_function,
                  CompletionHandler&& completion_handler)
 {
-    auto [operation, is_local_allocation] = detail::allocate_operation<GrpcOperationTemplate>(
+    auto operation = detail::allocate_operation<GrpcOperationTemplate>(
         grpc_context, static_cast<CompletionHandler&&>(completion_handler));
     detail::StartWorkAndGuard start_work_guard{grpc_context};
     detail::OperationAllocationGuard allocation_guard{grpc_context, operation};

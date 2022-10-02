@@ -787,7 +787,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::schedule with throw
     CHECK_THROWS_WITH_AS(std::rethrow_exception(state.exception), "test", std::invalid_argument);
 }
 
-TEST_CASE("asio GrpcExecutor::schedule on shutdown GrpcContext")
+TEST_CASE("asio GrpcExecutor::schedule and shutdown GrpcContext")
 {
     bool is_invoked{false};
     test::StatefulReceiverState state;
@@ -797,12 +797,13 @@ TEST_CASE("asio GrpcExecutor::schedule on shutdown GrpcContext")
                                               },
                                               state};
     {
-        agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
-        auto sender = asio::execution::schedule(grpc_context.get_scheduler());
+        std::optional<agrpc::GrpcContext> grpc_context{std::make_unique<grpc::CompletionQueue>()};
+        auto sender = asio::execution::schedule(grpc_context->get_scheduler());
         SUBCASE("connect")
         {
             auto operation_state = asio::execution::connect(sender, receiver);
             asio::execution::start(operation_state);
+            grpc_context.reset();
         }
         SUBCASE("submit") { asio::execution::submit(sender, receiver); }
     }
