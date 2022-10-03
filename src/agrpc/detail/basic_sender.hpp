@@ -35,7 +35,7 @@ namespace detail
 {
 template <class Receiver>
 [[nodiscard]] std::optional<detail::exec::stop_token_type_t<Receiver>> check_start_conditions(
-    agrpc::GrpcContext& grpc_context, Receiver& receiver)
+    const agrpc::GrpcContext& grpc_context, Receiver& receiver)
 {
     if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context))
     {
@@ -155,21 +155,6 @@ class BasicSender : public detail::SenderOf<typename Implementation::Signature>
     agrpc::GrpcContext& grpc_context;
     Initiation initiation;
     Implementation implementation;
-};
-
-template <class Initiation, detail::SenderImplementationType Type>
-struct BasicSenderRunningOperationInit
-{
-    [[nodiscard]] auto* self() const noexcept { return self_; }
-
-    [[nodiscard]] auto& initiation() const noexcept { return initiation_; }
-
-    [[nodiscard]] auto* operator->() const noexcept { return &initiation_; }
-
-    [[nodiscard]] operator void*() const noexcept { return self_; }
-
-    detail::BasicSenderRunningOperationBase<Type>* self_;
-    const Initiation& initiation_;
 };
 
 template <class Implementation, class Receiver, detail::DeallocateOnComplete Deallocate>

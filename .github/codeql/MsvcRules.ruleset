@@ -3,8 +3,6 @@
   <!-- Default rules available in Visual Studio -->
   <Include Path="NativeRecommendedRules.ruleset" Action="Default" />
   <Rules AnalyzerId="Microsoft.Analyzers.NativeCodeAnalysis" RuleNamespace="Microsoft.Rules.Native">
-    <!-- Don't cast between pointer types when the conversion could be implicit. -->
-    <Rule Id="C26474" Action="Warning" />
     <!-- Do not use function style C-casts. -->
     <Rule Id="C26475" Action="Warning" />
     <!-- Unitialized Member -->
