@@ -36,7 +36,7 @@ class AutoCancelClientContextRef
   public:
     AutoCancelClientContextRef() = default;
 
-    explicit AutoCancelClientContextRef(grpc::ClientContext& context) noexcept : context(context) {}
+    explicit AutoCancelClientContextRef(grpc::ClientContext& context) noexcept : context(std::addressof(context)) {}
 
     AutoCancelClientContextRef(const AutoCancelClientContextRef&) = delete;
 

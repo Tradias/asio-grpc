@@ -297,7 +297,7 @@ struct ReadInitialMetadataSenderImplementation : detail::GrpcSenderImplementatio
 {
     using Initiation = detail::Empty;
 
-    ReadInitialMetadataSenderImplementation(RPCBase& rpc) : rpc(rpc) {}
+    ReadInitialMetadataSenderImplementation(RPCBase& rpc) : rpc(&rpc) {}
 
     void initiate(const agrpc::GrpcContext&, const Initiation&, void* self) noexcept
     {
@@ -337,7 +337,7 @@ struct ReadServerStreamingSenderImplementation<Responder<Response>, Executor> : 
         Response& response;
     };
 
-    ReadServerStreamingSenderImplementation(RPCBase& rpc) : rpc(rpc) {}
+    ReadServerStreamingSenderImplementation(RPCBase& rpc) : rpc(&rpc) {}
 
     void initiate(const agrpc::GrpcContext&, const Initiation& initiation,
                   detail::TypeErasedGrpcTagOperation* operation) noexcept
@@ -379,7 +379,7 @@ struct WriteClientStreamingSenderImplementation<Responder<Request>, Executor> : 
         grpc::WriteOptions options;
     };
 
-    WriteClientStreamingSenderImplementation(RPCBase& rpc) : rpc(rpc) {}
+    WriteClientStreamingSenderImplementation(RPCBase& rpc) : rpc(&rpc) {}
 
     void initiate(const agrpc::GrpcContext&, const Initiation& initiation,
                   detail::TypeErasedGrpcTagOperation* operation) noexcept
@@ -429,7 +429,7 @@ struct ClientFinishSenderImplementation : detail::GrpcSenderImplementationBase
 {
     using Initiation = detail::Empty;
 
-    ClientFinishSenderImplementation(RPCBase& rpc) : rpc(rpc) {}
+    ClientFinishSenderImplementation(RPCBase& rpc) : rpc(&rpc) {}
 
     void initiate(const agrpc::GrpcContext&, const Initiation&, void* self) noexcept
     {
