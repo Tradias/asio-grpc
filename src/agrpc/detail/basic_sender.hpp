@@ -279,7 +279,11 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
 
     void emplace_stop_callback(StopToken&& stop_token, const Initiation& initiation) noexcept
     {
-        impl.first().emplace_stop_callback(static_cast<StopToken&&>(stop_token), initiation);
+        if (stop_token.stop_possible())
+        {
+            impl.first().emplace_stop_callback(static_cast<StopToken&&>(stop_token), this->implementation(),
+                                               initiation);
+        }
     }
 
     void reset_stop_callback() noexcept { impl.first().reset_stop_callback(); }
@@ -301,9 +305,9 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
 
     void start(agrpc::GrpcContext& grpc_context, const Initiation& initiation, StopToken&& stop_token) noexcept
     {
-        this->emplace_stop_callback(static_cast<StopToken&&>(stop_token), initiation);
         grpc_context.work_started();
-        implementation().initiate(grpc_context, initiation, static_cast<Base*>(this));
+        this->emplace_stop_callback(static_cast<StopToken&&>(stop_token), initiation);
+        this->implementation().initiate(grpc_context, initiation, static_cast<Base*>(this));
     }
 
     Receiver& receiver() noexcept { return impl.first().receiver(); }

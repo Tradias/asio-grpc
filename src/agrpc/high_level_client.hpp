@@ -19,9 +19,10 @@
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
-#include <agrpc/detail/high_level_client.hpp>
 #include <agrpc/detail/high_level_client_sender.hpp>
+#include <agrpc/detail/initiate_sender_implementation.hpp>
 #include <agrpc/detail/name.hpp>
+#include <agrpc/detail/rpc_client_context_base.hpp>
 #include <agrpc/detail/rpc_type.hpp>
 #include <agrpc/grpc_executor.hpp>
 

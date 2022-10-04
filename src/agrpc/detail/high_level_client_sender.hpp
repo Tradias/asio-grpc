@@ -17,7 +17,6 @@
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_sender.hpp>
-#include <agrpc/detail/high_level_client.hpp>
 #include <agrpc/detail/rpc_type.hpp>
 #include <agrpc/detail/tagged_ptr.hpp>
 #include <agrpc/detail/utility.hpp>

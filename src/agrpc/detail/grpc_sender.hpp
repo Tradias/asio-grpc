@@ -34,18 +34,14 @@ template <class InitiatingFunction, class StopFunctionT>
 struct GrpcSenderImplementation : detail::GrpcSenderImplementationBase
 {
     using StopFunction = StopFunctionT;
+    using Initiation = InitiatingFunction;
 
-    struct Initiation
-    {
-        auto create_stop_function() const noexcept { return StopFunction{initiating_function}; }
-
-        InitiatingFunction initiating_function;
-    };
+    static auto& stop_function_arg(const Initiation& initiation) noexcept { return initiation; }
 
     static void initiate(agrpc::GrpcContext& grpc_context, const Initiation& initiation,
                          detail::TypeErasedGrpcTagOperation* operation)
     {
-        initiation.initiating_function(grpc_context, operation);
+        initiation(grpc_context, operation);
     }
 
     template <class OnDone>
