@@ -28,7 +28,7 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief Function object to wait for timers
+ * @brief I/O object for `grpc::Alarm`
  */
 template <class Executor>
 class BasicAlarm

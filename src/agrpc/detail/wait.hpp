@@ -43,10 +43,19 @@ struct AlarmCancellationFunction
 {
     grpc::Alarm& alarm;
 
-    constexpr explicit AlarmCancellationFunction(grpc::Alarm& alarm) noexcept : alarm(alarm) {}
+#if !defined(AGRPC_UNIFEX)
+    explicit
+#endif
+        AlarmCancellationFunction(grpc::Alarm& alarm) noexcept
+        : alarm(alarm)
+    {
+    }
 
     template <class Deadline>
-    constexpr explicit AlarmCancellationFunction(const detail::AlarmInitFunction<Deadline>& init_function) noexcept
+#if !defined(AGRPC_UNIFEX)
+    explicit
+#endif
+        AlarmCancellationFunction(const detail::AlarmInitFunction<Deadline>& init_function) noexcept
         : alarm(init_function.alarm)
     {
     }

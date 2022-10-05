@@ -18,6 +18,7 @@
 #include "utils/exception.hpp"
 #include "utils/grpc_context_test.hpp"
 #include "utils/time.hpp"
+#include "utils/utility.hpp"
 
 #include <agrpc/alarm.hpp>
 
@@ -92,19 +93,6 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "agrpc::Alarm move-overload with callba
 }
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-template <class UseMove, class T>
-auto&& move_if(T&& t)
-{
-    if constexpr (UseMove::value)
-    {
-        return std::move(t);
-    }
-    else
-    {
-        return t;
-    }
-}
-
 TEST_CASE_TEMPLATE("cancel agrpc::Alarm with cancellation_type::total", T, std::true_type, std::false_type)
 {
     test::GrpcContextTest test;
@@ -112,8 +100,8 @@ TEST_CASE_TEMPLATE("cancel agrpc::Alarm with cancellation_type::total", T, std::
     asio::cancellation_signal signal{};
     agrpc::Alarm alarm{test.grpc_context};
     const auto not_too_exceed = std::chrono::steady_clock::now() + std::chrono::seconds(5);
-    move_if<T>(alarm).wait(test::five_seconds_from_now(),
-                           asio::bind_cancellation_slot(signal.slot(), WaitOkAssigner{ok}));
+    test::move_if<T>(alarm).wait(test::five_seconds_from_now(),
+                                 asio::bind_cancellation_slot(signal.slot(), WaitOkAssigner{ok}));
     test.post(
         [&]
         {
@@ -142,9 +130,10 @@ TEST_CASE_TEMPLATE("cancel agrpc::Alarm with cancellation_type::none", T, std::t
     test.post(
         [&]
         {
-            move_if<T>(alarm).wait(test::hundred_milliseconds_from_now(),
-                                   asio::bind_cancellation_slot(
-                                       signal.slot(), asio::bind_executor(test.get_executor(), WaitOkAssigner{ok})));
+            test::move_if<T>(alarm).wait(
+                test::hundred_milliseconds_from_now(),
+                asio::bind_cancellation_slot(signal.slot(),
+                                             asio::bind_executor(test.get_executor(), WaitOkAssigner{ok})));
             test.post(
                 [&]
                 {
