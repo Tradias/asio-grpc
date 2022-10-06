@@ -36,6 +36,9 @@ class GrpcContext;
 template <class Executor>
 class BasicGrpcStream;
 
+template <class Executor>
+class BasicAlarm;
+
 struct UseSender;
 
 namespace detail
@@ -47,6 +50,9 @@ class RepeatedlyRequestFn;
 struct RepeatedlyRequestContextAccess;
 
 class GenericRPCContext;
+
+template <class Deadline, class Executor>
+struct MoveAlarmSenderImplementation;
 
 template <class Responder, class Executor>
 class RPCClientClientStreamingBase;

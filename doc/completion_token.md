@@ -25,4 +25,4 @@ The associated allocator can be customized using `agrpc::bind_allocator` (or `as
 @snippet server.cpp alarm-with-allocator-aware-awaitable
 
 **Until v2.0.0**   
-If there is no associated allocator then asio-grpc will retrieve it from the completion handler's associated executor through the [allocator property](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/execution__allocator_t.html).
+If there is no associated allocator then asio-grpc will retrieve it from the completion handler's associated executor through the [allocator property](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/execution__allocator_t.html). This fallback has been removed in 2.0.0 to align with Asio.

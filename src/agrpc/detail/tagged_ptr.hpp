@@ -36,8 +36,6 @@ class TaggedPtr
 
     explicit TaggedPtr(T* ptr) noexcept : ptr(reinterpret_cast<std::uintptr_t>(ptr)) {}
 
-    explicit TaggedPtr(T& t) noexcept : TaggedPtr(std::addressof(t)) {}
-
     void clear() noexcept { ptr = std::uintptr_t{}; }
 
     [[nodiscard]] T* get() const noexcept { return reinterpret_cast<T*>(ptr & PTR_MASK); }

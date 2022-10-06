@@ -200,6 +200,23 @@ void post(agrpc::GrpcContext& grpc_context, const std::function<void()>& functio
 
 void post(const agrpc::GrpcExecutor& executor, const std::function<void()>& function);
 
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+template <class Executor, class CancellationCondition, class CompletionToken, class... Function>
+auto parallel_group_bind_executor(const Executor& executor, CancellationCondition cancellation_condition,
+                                  CompletionToken&& token, Function&&... function)
+{
+    return asio::experimental::make_parallel_group(
+               [&](auto& f)
+               {
+                   return [&](auto&& t)
+                   {
+                       return f(asio::bind_executor(executor, std::move(t)));
+                   };
+               }(function)...)
+        .async_wait(cancellation_condition, std::forward<CompletionToken>(token));
+}
+#endif
+
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 struct RethrowFirstArg
 {

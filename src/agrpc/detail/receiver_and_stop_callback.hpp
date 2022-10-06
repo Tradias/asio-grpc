@@ -36,6 +36,7 @@ template <class Receiver, class StopFunction, bool = detail::RECEIVER_NEEDS_STOP
 class ReceiverAndStopCallback
 {
   private:
+    using StopToken = detail::exec::stop_token_type_t<Receiver>;
     using StopCallback = std::optional<detail::StopCallbackTypeT<Receiver&, StopFunction>>;
 
   public:
@@ -48,10 +49,11 @@ class ReceiverAndStopCallback
 
     void reset_stop_callback() noexcept { stop_callback_.reset(); }
 
-    template <class StopToken, class Initiation>
-    void emplace_stop_callback(StopToken&& stop_token, Initiation& initiation) noexcept
+    template <class Implementation>
+    void emplace_stop_callback(StopToken&& stop_token, Implementation& implementation,
+                               const typename Implementation::Initiation& initiation) noexcept
     {
-        stop_callback_.emplace(static_cast<StopToken&&>(stop_token), initiation.create_stop_function());
+        stop_callback_.emplace(static_cast<StopToken&&>(stop_token), implementation.stop_function_arg(initiation));
     }
 
   private:
@@ -72,8 +74,9 @@ class ReceiverAndStopCallback<Receiver, StopFunction, false>
 
     static constexpr void reset_stop_callback() noexcept {}
 
-    template <class StopToken, class Initiation>
-    static constexpr void emplace_stop_callback(StopToken&&, Initiation&) noexcept
+    template <class StopToken, class Implementation>
+    static constexpr void emplace_stop_callback(const StopToken&, const Implementation&,
+                                                const typename Implementation::Initiation&) noexcept
     {
     }
 

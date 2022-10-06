@@ -30,6 +30,7 @@
 #ifndef AGRPC_AGRPC_ASIO_GRPC_HPP
 #define AGRPC_AGRPC_ASIO_GRPC_HPP
 
+#include <agrpc/alarm.hpp>
 #include <agrpc/bind_allocator.hpp>
 #include <agrpc/cancel_safe.hpp>
 #include <agrpc/default_completion_token.hpp>

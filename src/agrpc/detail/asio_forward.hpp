@@ -248,9 +248,10 @@ class CancellationSlotAsStopToken
     template <class StopFunction>
     struct callback_type
     {
-        explicit callback_type(CancellationSlotAsStopToken token, StopFunction&& function)
+        template <class T>
+        explicit callback_type(CancellationSlotAsStopToken token, T&& arg)
         {
-            token.slot.assign(static_cast<StopFunction&&>(function));
+            token.slot.template emplace<StopFunction>(static_cast<T&&>(arg));
         }
     };
 

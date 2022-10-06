@@ -12,102 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_HIGH_LEVEL_CLIENT_HPP
-#define AGRPC_DETAIL_HIGH_LEVEL_CLIENT_HPP
+#ifndef AGRPC_DETAIL_INITIATE_SENDER_IMPLEMENTATION_HPP
+#define AGRPC_DETAIL_INITIATE_SENDER_IMPLEMENTATION_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/async_initiate.hpp>
 #include <agrpc/detail/completion_handler_receiver.hpp>
 #include <agrpc/detail/conditional_sender.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/rpc_type.hpp>
-#include <agrpc/detail/tagged_ptr.hpp>
 #include <agrpc/detail/work_tracking_completion_handler.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/use_sender.hpp>
-#include <grpcpp/client_context.h>
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-class AutoCancelClientContextRef
-{
-  public:
-    AutoCancelClientContextRef() = default;
-
-    explicit AutoCancelClientContextRef(grpc::ClientContext& context) noexcept : context(context) {}
-
-    AutoCancelClientContextRef(const AutoCancelClientContextRef&) = delete;
-
-    AutoCancelClientContextRef(AutoCancelClientContextRef&& other) noexcept : context(other.context)
-    {
-        other.context.clear();
-    }
-
-    ~AutoCancelClientContextRef() noexcept
-    {
-        if (const auto context_ptr = context.get())
-        {
-            context_ptr->TryCancel();
-        }
-    }
-
-    AutoCancelClientContextRef& operator=(const AutoCancelClientContextRef&) = delete;
-
-    AutoCancelClientContextRef& operator=(AutoCancelClientContextRef&& other) noexcept
-    {
-        if (this != &other)
-        {
-            if (const auto context_ptr = context.get())
-            {
-                context_ptr->TryCancel();
-            }
-            context = other.context;
-            other.context.clear();
-        }
-        return *this;
-    }
-
-    void clear() noexcept { context.clear(); }
-
-    [[nodiscard]] bool is_null() const noexcept { return context.is_null(); }
-
-    template <std::uintptr_t Bit>
-    [[nodiscard]] bool has_bit() const noexcept
-    {
-        return context.template has_bit<Bit>();
-    }
-
-    template <std::uintptr_t Bit>
-    void set_bit() noexcept
-    {
-        context.template set_bit<Bit>();
-    }
-
-  private:
-    detail::TaggedPtr<grpc::ClientContext> context{};
-};
-
-class RPCClientContextBase
-{
-  protected:
-    RPCClientContextBase() = default;
-
-    explicit RPCClientContextBase(grpc::ClientContext& client_context) : client_context(client_context) {}
-
-    [[nodiscard]] bool is_finished() const noexcept { return client_context.is_null(); }
-
-    void set_finished() noexcept { client_context.clear(); }
-
-    [[nodiscard]] bool is_writes_done() const noexcept { return client_context.has_bit<0>(); }
-
-    void set_writes_done() noexcept { client_context.set_bit<0>(); }
-
-  private:
-    detail::AutoCancelClientContextRef client_context;
-};
-
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 struct SubmitSenderToWorkTrackingCompletionHandler
 {
@@ -183,4 +103,4 @@ auto async_initiate_conditional_sender_implementation(agrpc::GrpcContext& grpc_c
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_HIGH_LEVEL_CLIENT_HPP
+#endif  // AGRPC_DETAIL_INITIATE_SENDER_IMPLEMENTATION_HPP

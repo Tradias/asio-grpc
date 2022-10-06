@@ -45,6 +45,7 @@ function(asio_grpc_add_test _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_stand
 endfunction()
 
 set(ASIO_GRPC_CPP17_TEST_SOURCE_FILES
+    "test_alarm_17.cpp"
     "test_asio_grpc_17.cpp"
     "test_repeatedly_request_17.cpp"
     "test_bind_allocator_17.cpp"
