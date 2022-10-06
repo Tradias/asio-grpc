@@ -15,16 +15,11 @@
 #ifndef AGRPC_AGRPC_TEST_HPP
 #define AGRPC_AGRPC_TEST_HPP
 
-#include <agrpc/detail/config.hpp>
-
-#ifndef AGRPC_UNIFEX
+#include <agrpc/alarm.hpp>
 #include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
 #include <agrpc/grpc_context.hpp>
-#include <agrpc/grpc_executor.hpp>
-#include <agrpc/wait.hpp>
-
-#include <memory>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -44,28 +39,22 @@ inline void process_grpc_tag(agrpc::GrpcContext& grpc_context, void* tag, bool o
 {
     struct ProcessTag
     {
-        using executor_type = agrpc::GrpcContext::executor_type;
-
         agrpc::GrpcContext& grpc_context;
         void* tag;
         bool ok;
-        std::unique_ptr<grpc::Alarm> alarm;
 
-        void operator()(bool) { detail::process_grpc_tag(tag, detail::InvokeHandler::YES, ok, grpc_context); }
-
-        [[nodiscard]] executor_type get_executor() const noexcept { return grpc_context.get_executor(); }
+        void operator()(agrpc::Alarm&&, bool)
+        {
+            detail::process_grpc_tag(tag, detail::InvokeHandler::YES, ok, grpc_context);
+        }
     };
     if (tag)
     {
-        auto alarm = std::make_unique<grpc::Alarm>();
-        auto& alarm_ref = *alarm;
-        agrpc::wait(alarm_ref, detail::GrpcContextImplementation::TIME_ZERO,
-                    ProcessTag{grpc_context, tag, ok, static_cast<std::unique_ptr<grpc::Alarm>&&>(alarm)});
+        agrpc::Alarm(grpc_context)
+            .wait(detail::GrpcContextImplementation::TIME_ZERO, ProcessTag{grpc_context, tag, ok});
     }
 }
 
 AGRPC_NAMESPACE_END
-
-#endif
 
 #endif  // AGRPC_AGRPC_TEST_HPP
