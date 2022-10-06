@@ -32,7 +32,7 @@
 
 namespace asio = boost::asio;
 
-asio::awaitable<void> timer()
+asio::awaitable<void> grpc_alarm(agrpc::GrpcContext& grpc_context)
 {
     /* [alarm-awaitable] */
     grpc::Alarm alarm;
@@ -41,6 +41,26 @@ asio::awaitable<void> timer()
     /* [alarm-awaitable] */
 
     silence_unused(wait_ok);
+}
+
+asio::awaitable<void> agrpc_alarm_lvalue(agrpc::GrpcContext& grpc_context)
+{
+    /* [alarm-io-object-lvalue] */
+    agrpc::Alarm alarm{grpc_context};
+    bool wait_ok = co_await alarm.wait(std::chrono::system_clock::now() + std::chrono::seconds(1), asio::use_awaitable);
+    /* [alarm-io-object-lvalue] */
+
+    silence_unused(wait_ok);
+}
+
+asio::awaitable<void> agrpc_alarm_rvalue(agrpc::GrpcContext& grpc_context)
+{
+    /* [alarm-io-object-rvalue] */
+    auto [alarm, wait_ok] = co_await agrpc::Alarm(grpc_context)
+                                .wait(std::chrono::system_clock::now() + std::chrono::seconds(1), asio::use_awaitable);
+    /* [alarm-io-object-rvalue] */
+
+    silence_unused(alarm, wait_ok);
 }
 
 asio::awaitable<void> timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context)

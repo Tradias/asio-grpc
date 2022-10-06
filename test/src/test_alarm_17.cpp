@@ -81,13 +81,13 @@ struct WaitOkAssigner
 TEST_CASE_FIXTURE(test::GrpcContextTest, "agrpc::Alarm move-overload with callback")
 {
     bool ok{false};
-    agrpc::Alarm alarm{grpc_context};
-    std::move(alarm).wait(test::ten_milliseconds_from_now(),
-                          [&](agrpc::Alarm&& alarm, bool wait_ok)
-                          {
-                              CHECK(wait_ok);
-                              std::move(alarm).wait(test::ten_milliseconds_from_now(), WaitOkAssigner{ok});
-                          });
+    agrpc::Alarm(grpc_context)
+        .wait(test::ten_milliseconds_from_now(),
+              [&](agrpc::Alarm&& alarm, bool wait_ok)
+              {
+                  CHECK(wait_ok);
+                  std::move(alarm).wait(test::ten_milliseconds_from_now(), WaitOkAssigner{ok});
+              });
     grpc_context.run();
     CHECK(ok);
 }
