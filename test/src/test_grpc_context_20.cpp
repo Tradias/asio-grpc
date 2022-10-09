@@ -117,18 +117,39 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "co_spawn two Alarms and await their ok
         [&]() -> agrpc::GrpcAwaitable<void>
         {
             grpc::Alarm alarm;
-            ok1 = co_await agrpc::wait(alarm, test::now(), agrpc::GRPC_USE_AWAITABLE);
-            co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::GRPC_USE_AWAITABLE);
-            grpc_context.stop();
+            ok1 = co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::GRPC_USE_AWAITABLE);
         },
         [&]() -> agrpc::GrpcAwaitable<void>
         {
             grpc::Alarm alarm;
-            ok2 = co_await agrpc::wait(alarm, test::now(), agrpc::GRPC_USE_AWAITABLE);
-            co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::GRPC_USE_AWAITABLE);
+            ok2 = co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::GRPC_USE_AWAITABLE);
         });
     CHECK(ok1);
     CHECK(ok2);
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "stop GrpcContext within awaitable while waiting for an Alarm")
+{
+    bool ok{true};
+    grpc::Alarm alarm;
+    const auto not_too_exceed = std::chrono::steady_clock::now() + std::chrono::seconds(4);
+    test::co_spawn_and_run(grpc_context,
+                           [&]() -> agrpc::GrpcAwaitable<void>
+                           {
+                               agrpc::wait(alarm, test::five_seconds_from_now(),
+                                           asio::bind_executor(grpc_context,
+                                                               [&](bool wait_ok)
+                                                               {
+                                                                   ok = wait_ok;
+                                                               }));
+                               grpc_context.stop();
+                               co_return;
+                           });
+    alarm.Cancel();
+    CHECK(ok);
+    grpc_context.run();
+    CHECK_FALSE(ok);
+    CHECK_GT(not_too_exceed, std::chrono::steady_clock::now());
 }
 
 TEST_CASE("destruct GrpcContext while co_await'ing an alarm")
@@ -215,7 +236,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with awaitable oper
     std::size_t result_index{};
     grpc::Alarm alarm;
     asio::steady_timer timer{get_executor(), std::chrono::milliseconds(100)};
-    const auto not_too_exceed = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    const auto not_too_exceed = std::chrono::steady_clock::now() + std::chrono::seconds(4);
     test::co_spawn(grpc_context,
                    [&]() -> asio::awaitable<void>
                    {
