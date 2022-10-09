@@ -44,7 +44,7 @@ namespace detail
  * request, it could e.g. spawn a new coroutine to process it. It must also have an associated executor that refers to a
  * `agrpc::GrpcContext`. When the client makes a request the RequestHandler is invoked with a
  * `agrpc::RepeatedlyRequestContext` - a move-only type that provides a stable address to the `grpc::ServerContext`, the
- * request (if any) and the responder that were used when requesting the RPC. It should be kept alive until the RPC is
+ * request (if any) and the responder that were used when requesting the RPC. It must be kept alive until the RPC is
  * finished. The RequestHandler's associated allocator (or the queried allocator from its associated executor [until
  * v2.0.0]) will be used for the allocations needed for each request.
  *
@@ -55,6 +55,7 @@ namespace detail
  * When using the special CompletionToken created by `agrpc::use_sender` the RequestHandler's signature must be:<br>
  * `sender auto operator()(grpc::ServerContext&, Request&, Responder&)` for unary and server-streaming requests and<br>
  * `sender auto operator()(grpc::ServerContext&, Responder&)` otherwise.<br>
+ * A copy of the RequestHandler will be made for each request to avoid lifetime surprises.
  * For libunifex this is the only available overload of this function.
  *
  * @snippet unifex_server.cpp repeatedly-request-sender
@@ -63,7 +64,8 @@ namespace detail
  * signature:<br>
  * `awaitable auto operator()(grpc::ServerContext&, Request&, Responder&)` for unary and server-streaming requests
  * and<br>
- * `awaitable auto operator()(grpc::ServerContext&, Responder&)` otherwise.
+ * `awaitable auto operator()(grpc::ServerContext&, Responder&)` otherwise.<br>
+ * A copy of the RequestHandler will be made for each request to avoid lifetime surprises.
  *
  * @snippet server.cpp repeatedly-request-awaitable
  *

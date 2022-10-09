@@ -100,6 +100,8 @@ struct FunctionAsStatefulReceiver : public test::FunctionAsReceiver<Function, Al
 template <bool IsNothrow>
 struct ConditionallyNoexceptNoOpReceiver
 {
+    ConditionallyNoexceptNoOpReceiver() noexcept(IsNothrow) {}
+
     ConditionallyNoexceptNoOpReceiver(const ConditionallyNoexceptNoOpReceiver&) noexcept(IsNothrow) {}
 
     ConditionallyNoexceptNoOpReceiver(ConditionallyNoexceptNoOpReceiver&&) noexcept(IsNothrow) {}

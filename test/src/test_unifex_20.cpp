@@ -290,6 +290,11 @@ struct UnifexRepeatedlyRequestTest : UnifexTest, test::GrpcClientServerTest
         CHECK_EQ(24, response.integer());
     }
 
+    static void check_status_not_ok(bool, const test::msg::Response&, const grpc::Status& status)
+    {
+        CHECK_FALSE(status.ok());
+    }
+
     auto make_client_unary_request_sender(int& request_count, int max_request_count)
     {
         return make_client_unary_request_sender(test::five_seconds_from_now(),
@@ -365,7 +370,7 @@ TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex repeatedly_request unary 
 {
     auto request_count{0};
     auto repeater = unifex::let_value_with_stop_source(
-        [&](auto& stop)
+        [&](unifex::inplace_stop_source& stop)
         {
             return unifex::let_done(agrpc::repeatedly_request(
                                         &test::v1::Test::AsyncService::RequestUnary, service,
@@ -400,39 +405,93 @@ TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex repeatedly_request unary 
 }
 
 TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest,
-                  "unifex repeatedly_request unary - throw exception from request handler calls set_error")
+                  "unifex repeatedly_request unary - throw exception from request handler invocation calls set_error")
 {
-    int count{};
-    auto repeater = agrpc::repeatedly_request(
+    auto repeatedly_request = agrpc::repeatedly_request(
         &test::v1::Test::AsyncService::RequestUnary, service,
-        [&](grpc::ServerContext&, test::msg::Request& request,
-            grpc::ServerAsyncResponseWriter<test::msg::Response>& writer)
+        [&](auto&&...)
         {
-            ++count;
-            if (1 == count)
-            {
-                throw std::logic_error{"excepted"};
-            }
-            return handle_unary_request_sender(request, writer);
+            throw std::logic_error{"excepted"};
+            return unifex::just();
         },
         use_sender());
-    const auto check_status_not_ok = [](auto&&, auto&&, auto&& status)
-    {
-        CHECK_FALSE(status.ok());
-    };
     std::exception_ptr error_propagation{};
-    run(unifex::sequence(make_client_unary_request_sender(test::hundred_milliseconds_from_now(), check_status_not_ok),
-                         make_client_unary_request_sender(test::hundred_milliseconds_from_now(), check_status_not_ok)),
-        unifex::let_error(std::move(repeater),
+    run(unifex::sequence(make_client_unary_request_sender(test::hundred_milliseconds_from_now(), &check_status_not_ok),
+                         make_client_unary_request_sender(test::hundred_milliseconds_from_now(), &check_status_not_ok)),
+        unifex::let_error(std::move(repeatedly_request),
                           [&](std::exception_ptr ep)
                           {
                               error_propagation = std::move(ep);
                               return unifex::just();
                           }));
-    CHECK_EQ(1, count);
     REQUIRE(error_propagation);
     CHECK_THROWS_AS(std::rethrow_exception(error_propagation), std::logic_error);
 }
+
+#if !UNIFEX_NO_COROUTINES
+TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest,
+                  "unifex repeatedly_request unary - throw exception from request handler sender")
+{
+    int count{};
+    auto repeatedly_request = unifex::let_value_with_stop_source(
+        [&](unifex::inplace_stop_source& stop)
+        {
+            return agrpc::repeatedly_request(
+                &test::v1::Test::AsyncService::RequestUnary, service,
+                [&](grpc::ServerContext&, test::msg::Request& request,
+                    grpc::ServerAsyncResponseWriter<test::msg::Response>& writer) -> unifex::task<void>
+                {
+                    ++count;
+                    if (count == 1)
+                    {
+                        throw std::logic_error{"excepted"};
+                    }
+                    stop.request_stop();
+                    co_await handle_unary_request_sender(request, writer);
+                },
+                use_sender());
+        });
+    run(unifex::sequence(make_client_unary_request_sender(test::hundred_milliseconds_from_now(), &check_status_not_ok),
+                         make_client_unary_request_sender(test::five_seconds_from_now(), &check_response_ok),
+                         make_client_unary_request_sender(test::five_seconds_from_now(), &check_response_ok)),
+        std::move(repeatedly_request));
+}
+
+TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex repeatedly_request unary - keeps request handler alive")
+{
+    int count{};
+    auto repeatedly_request = unifex::let_value_with_stop_source(
+        [&](unifex::inplace_stop_source& stop)
+        {
+            return agrpc::repeatedly_request(
+                &test::v1::Test::AsyncService::RequestUnary, service,
+                [&](grpc::ServerContext&, test::msg::Request& request,
+                    grpc::ServerAsyncResponseWriter<test::msg::Response>& writer) -> unifex::task<void>
+                {
+                    ++count;
+                    if (count == 1)
+                    {
+                        co_await agrpc::Alarm(grpc_context).wait(test::two_hundred_milliseconds_from_now());
+                        count = 42;
+                    }
+                    else
+                    {
+                        stop.request_stop();
+                    }
+                    co_await handle_unary_request_sender(request, writer);
+                },
+                use_sender());
+        });
+    unifex::submit(std::move(repeatedly_request), test::ConditionallyNoexceptNoOpReceiver<true>{});
+    run(unifex::when_all(make_client_unary_request_sender(test::five_seconds_from_now(), &check_response_ok),
+                         make_client_unary_request_sender(test::five_seconds_from_now(), &check_response_ok),
+                         make_client_unary_request_sender(test::five_seconds_from_now(), &check_response_ok)));
+    CHECK_EQ(42, count);
+}
+
+struct UnifexClientServerTest : UnifexTest, test::GrpcClientServerTest
+{
+};
 
 struct ServerUnaryRequestContext
 {
@@ -441,11 +500,6 @@ struct ServerUnaryRequestContext
     test::msg::Response response;
 
     explicit ServerUnaryRequestContext(grpc::ServerContext& context) : writer(&context) {}
-};
-
-#if !UNIFEX_NO_COROUTINES
-struct UnifexClientServerTest : UnifexTest, test::GrpcClientServerTest
-{
 };
 
 TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex::task unary")
