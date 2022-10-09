@@ -33,7 +33,7 @@ namespace
 namespace fs = boost::filesystem;
 
 constexpr auto PORT_FILE_NAME = "agrpcServerUsedTestPort";
-constexpr uint16_t START_PORT = 37385u;
+constexpr uint16_t START_PORT = 16397u;
 
 void recreate_if_old(const fs::path& port_file)
 {
