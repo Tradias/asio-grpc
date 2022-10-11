@@ -80,9 +80,6 @@ auto allocate_operation(agrpc::GrpcContext& grpc_context, Handler&& handler, Arg
     }
 }
 
-template <class Handler>
-using NoArgOperationTemplate = detail::Operation<true, Handler, void()>;
-
 template <bool IsBlockingNever, class Handler>
 void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Handler&& handler)
 {
@@ -104,12 +101,12 @@ void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Handle
     if (is_running_in_this_thread)
     {
         auto operation =
-            detail::allocate_local_operation<NoArgOperationTemplate>(grpc_context, static_cast<Handler&&>(handler));
+            detail::allocate_local_operation<detail::NoArgOperation>(grpc_context, static_cast<Handler&&>(handler));
         detail::GrpcContextImplementation::add_local_operation(grpc_context, operation);
     }
     else
     {
-        auto operation = detail::allocate_custom_operation<NoArgOperationTemplate>(static_cast<Handler&&>(handler));
+        auto operation = detail::allocate_custom_operation<detail::NoArgOperation>(static_cast<Handler&&>(handler));
         detail::GrpcContextImplementation::add_remote_operation(grpc_context, operation);
     }
     guard.release();

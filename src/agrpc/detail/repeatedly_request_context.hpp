@@ -50,7 +50,7 @@ class RepeatedlyRequestOperation : public detail::TypeErasedGrpcTagOperation,
     RepeatedlyRequestOperation(Rh&& request_handler, RPC rpc, Service& service, Ch&& completion_handler,
                                bool is_stoppable)
         : GrpcBase(&RepeatedlyRequestOperation::on_request_complete),
-          NoArgBase(&detail::default_do_complete<RepeatedlyRequestOperation, detail::TypeErasedNoArgOperation>),
+          NoArgBase(detail::DO_COMPLETE_NO_ARG_HANDLER<RepeatedlyRequestOperation>),
           detail::RepeatedlyRequestOperationBase<RequestHandler, RPC, CompletionHandler>(
               static_cast<Rh&&>(request_handler), rpc, service, static_cast<Ch&&>(completion_handler), is_stoppable)
     {

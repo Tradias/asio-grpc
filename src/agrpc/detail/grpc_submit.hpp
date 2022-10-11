@@ -24,9 +24,6 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class CompletionHandler>
-using GrpcOperationTemplate = detail::Operation<false, CompletionHandler, void(bool)>;
-
 struct DeallocateOperationFunctor
 {
     agrpc::GrpcContext& grpc_context;
@@ -41,13 +38,13 @@ template <class InitiatingFunction, class CompletionHandler>
 void grpc_submit(agrpc::GrpcContext& grpc_context, InitiatingFunction& initiating_function,
                  CompletionHandler&& completion_handler)
 {
-    auto operation = detail::allocate_operation<GrpcOperationTemplate>(
+    auto operation = detail::allocate_operation<detail::GrpcTagOperation>(
         grpc_context, static_cast<CompletionHandler&&>(completion_handler));
-    detail::StartWorkAndGuard start_work_guard{grpc_context};
     detail::OperationAllocationGuard allocation_guard{grpc_context, operation};
+    detail::StartWorkAndGuard start_work_guard{grpc_context};
     initiating_function(grpc_context, operation);
-    allocation_guard.release();
     start_work_guard.release();
+    allocation_guard.release();
 }
 }
 

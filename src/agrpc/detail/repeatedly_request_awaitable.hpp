@@ -37,10 +37,8 @@ namespace detail
 {
 #ifdef AGRPC_HAS_CONCEPTS
 template <class Executor, class T>
-concept IS_CO_SPAWNABLE = requires(Executor executor, T t)
-{
-    asio::co_spawn(executor, static_cast<T&&>(t), detail::NoOp{});
-};
+concept IS_CO_SPAWNABLE =
+    requires(Executor executor, T t) { asio::co_spawn(executor, static_cast<T&&>(t), detail::NoOp{}); };
 #else
 template <class Executor, class T, class = void>
 inline constexpr bool IS_CO_SPAWNABLE = false;
@@ -128,8 +126,7 @@ class RepeatedlyRequestCoroutineOperation
     using UseCoroutine = detail::CoroutineCompletionTokenT<Coroutine>;
     using CoroutineCompletionHandler = detail::CompletionHandlerTypeT<UseCoroutine, void(bool)>;
 
-    static constexpr auto ON_STOP_COMPLETE =
-        &detail::default_do_complete<RepeatedlyRequestCoroutineOperation, detail::TypeErasedNoArgOperation>;
+    static constexpr auto ON_STOP_COMPLETE = detail::DO_COMPLETE_NO_ARG_HANDLER<RepeatedlyRequestCoroutineOperation>;
     static constexpr auto BUFFER_SIZE = sizeof(CoroutineCompletionHandler) + 2 * sizeof(void*);
 
     using CoroutineCompletionHandlerBuffer =

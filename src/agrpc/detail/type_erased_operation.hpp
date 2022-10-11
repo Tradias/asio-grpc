@@ -31,40 +31,63 @@ enum class InvokeHandler
     YES
 };
 
-template <bool IsIntrusivelyListable, class... Signature>
-class TypeErasedOperation
-    : public detail::ConditionalT<IsIntrusivelyListable,
-                                  detail::IntrusiveQueueHook<TypeErasedOperation<IsIntrusivelyListable, Signature...>>,
-                                  detail::Empty>
+class TypeErasedNoArgOperation;
 
+using TypeErasedNoArgOnComplete = void (*)(TypeErasedNoArgOperation*, detail::InvokeHandler,
+                                           detail::GrpcContextLocalAllocator);
+
+class TypeErasedNoArgOperation : public detail::IntrusiveQueueHook<TypeErasedNoArgOperation>
 {
   public:
-    using OnComplete = void (*)(TypeErasedOperation*, detail::InvokeHandler, Signature...);
-
-    void complete(detail::InvokeHandler invoke_handler, Signature... args)
+    void complete(detail::InvokeHandler invoke_handler, detail::GrpcContextLocalAllocator allocator)
     {
-        this->on_complete(this, invoke_handler, static_cast<Signature&&>(args)...);
+        this->on_complete(this, invoke_handler, allocator);
     }
 
   protected:
-    explicit TypeErasedOperation(OnComplete on_complete) noexcept : on_complete(on_complete) {}
+    explicit TypeErasedNoArgOperation(TypeErasedNoArgOnComplete on_complete) noexcept : on_complete(on_complete) {}
 
   private:
-    OnComplete on_complete;
+    TypeErasedNoArgOnComplete on_complete;
 };
 
-using TypeErasedNoArgOperation = detail::TypeErasedOperation<true, detail::GrpcContextLocalAllocator>;
-using TypeErasedGrpcTagOperation = detail::TypeErasedOperation<false, bool, detail::GrpcContextLocalAllocator>;
+class TypeErasedGrpcTagOperation;
 
-using TypeErasedNoArgOnComplete = detail::TypeErasedNoArgOperation::OnComplete;
-using TypeErasedGrpcTagOnComplete = detail::TypeErasedGrpcTagOperation::OnComplete;
+using TypeErasedGrpcTagOnComplete = void (*)(TypeErasedGrpcTagOperation*, detail::InvokeHandler, bool,
+                                             detail::GrpcContextLocalAllocator);
 
-template <class Operation, class Base, class... Args>
-void default_do_complete(Base* op, detail::InvokeHandler invoke_handler, Args... args,
-                         detail::GrpcContextLocalAllocator)
+class TypeErasedGrpcTagOperation
+
+{
+  public:
+    void complete(detail::InvokeHandler invoke_handler, bool ok, detail::GrpcContextLocalAllocator allocator)
+    {
+        this->on_complete(this, invoke_handler, ok, allocator);
+    }
+
+  protected:
+    explicit TypeErasedGrpcTagOperation(TypeErasedGrpcTagOnComplete on_complete) noexcept : on_complete(on_complete) {}
+
+  private:
+    TypeErasedGrpcTagOnComplete on_complete;
+};
+
+template <bool UseLocalAllocator, class Operation, class Base, class... Args>
+void do_complete_handler(Base* op, detail::InvokeHandler invoke_handler, Args... args,
+                         detail::GrpcContextLocalAllocator allocator)
 {
     auto* self = static_cast<Operation*>(op);
-    detail::AllocationGuard ptr{self, self->get_allocator()};
+    detail::AllocationGuard ptr{self, [&]
+                                {
+                                    if constexpr (UseLocalAllocator)
+                                    {
+                                        return allocator;
+                                    }
+                                    else
+                                    {
+                                        return self->get_allocator();
+                                    }
+                                }()};
     if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
     {
         auto handler{std::move(self->completion_handler())};
@@ -72,6 +95,22 @@ void default_do_complete(Base* op, detail::InvokeHandler invoke_handler, Args...
         std::move(handler)(static_cast<Args&&>(args)...);
     }
 }
+
+template <class Operation>
+inline constexpr auto DO_COMPLETE_NO_ARG_HANDLER =
+    &detail::do_complete_handler<false, Operation, detail::TypeErasedNoArgOperation>;
+
+template <class Operation>
+inline constexpr auto DO_COMPLETE_LOCAL_NO_ARG_HANDLER =
+    &detail::do_complete_handler<true, Operation, detail::TypeErasedNoArgOperation>;
+
+template <class Operation>
+inline constexpr auto DO_COMPLETE_GRPC_TAG_HANDLER =
+    &detail::do_complete_handler<false, Operation, detail::TypeErasedGrpcTagOperation, bool>;
+
+template <class Operation>
+inline constexpr auto DO_COMPLETE_LOCAL_GRPC_TAG_HANDLER =
+    &detail::do_complete_handler<true, Operation, detail::TypeErasedGrpcTagOperation, bool>;
 }
 
 AGRPC_NAMESPACE_END

@@ -25,37 +25,44 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <bool IsIntrusivelyListable, class Handler, class Signature>
-class Operation;
-
-template <bool IsIntrusivelyListable, class Handler, class... Signature>
-class Operation<IsIntrusivelyListable, Handler, void(Signature...)>
-    : public detail::TypeErasedOperation<IsIntrusivelyListable, Signature..., detail::GrpcContextLocalAllocator>
+template <class Handler>
+class NoArgOperation : public detail::TypeErasedNoArgOperation
 {
   private:
-    using Base = detail::TypeErasedOperation<IsIntrusivelyListable, Signature..., detail::GrpcContextLocalAllocator>;
+    using Base = detail::TypeErasedNoArgOperation;
 
   public:
     template <class... Args>
-    explicit Operation(detail::AllocationType allocation_type, Args&&... args)
+    explicit NoArgOperation(detail::AllocationType allocation_type, Args&&... args)
         : Base(detail::AllocationType::LOCAL == allocation_type
-                   ? &do_local_complete
-                   : &detail::default_do_complete<Operation, Base, Signature...>),
+                   ? detail::DO_COMPLETE_LOCAL_NO_ARG_HANDLER<NoArgOperation>
+                   : detail::DO_COMPLETE_NO_ARG_HANDLER<NoArgOperation>),
           handler(static_cast<Args&&>(args)...)
     {
     }
 
-    static void do_local_complete(Base* op, detail::InvokeHandler invoke_handler, Signature... args,
-                                  detail::GrpcContextLocalAllocator allocator)
+    [[nodiscard]] Handler& completion_handler() noexcept { return handler; }
+
+    [[nodiscard]] auto get_allocator() noexcept { return detail::exec::get_allocator(handler); }
+
+  private:
+    Handler handler;
+};
+
+template <class Handler>
+class GrpcTagOperation : public detail::TypeErasedGrpcTagOperation
+{
+  private:
+    using Base = detail::TypeErasedGrpcTagOperation;
+
+  public:
+    template <class... Args>
+    explicit GrpcTagOperation(detail::AllocationType allocation_type, Args&&... args)
+        : Base(detail::AllocationType::LOCAL == allocation_type
+                   ? detail::DO_COMPLETE_LOCAL_GRPC_TAG_HANDLER<GrpcTagOperation>
+                   : detail::DO_COMPLETE_GRPC_TAG_HANDLER<GrpcTagOperation>),
+          handler(static_cast<Args&&>(args)...)
     {
-        auto* self = static_cast<Operation*>(op);
-        detail::AllocationGuard ptr{self, allocator};
-        if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
-        {
-            auto local_handler{static_cast<Handler&&>(self->handler)};
-            ptr.reset();
-            static_cast<Handler&&>(local_handler)(static_cast<Signature&&>(args)...);
-        }
     }
 
     [[nodiscard]] Handler& completion_handler() noexcept { return handler; }
