@@ -75,6 +75,9 @@ namespace detail
  * The following example shows how to implement a RequestHandler with a custom allocator for simple, high-performance
  * RPC processing:
  *
+ * @attention Before letting the `agrpc::RepeatedlyRequestContext` go out-of-scope ensure that the RPC has been
+ * completed or cancelled.
+ *
  * @snippet server.cpp repeatedly-request-callback
  *
  * @param request_handler Any exception thrown by the invocation of the request handler will be rethrown by

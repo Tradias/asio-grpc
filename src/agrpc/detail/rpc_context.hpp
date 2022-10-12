@@ -132,6 +132,19 @@ inline void initiate_request_from_rpc_context(detail::GenericRPCMarker, grpc::As
 {
     service.RequestCall(&rpc_context.server_context(), &rpc_context.responder(), cq, cq, tag);
 }
+
+template <class Function, class Request, class Responder>
+decltype(auto) invoke_from_rpc_context(Function&& function, detail::MultiArgRPCContext<Request, Responder>& rpc_context)
+{
+    return static_cast<Function&&>(function)(rpc_context.server_context(), rpc_context.request(),
+                                             rpc_context.responder());
+}
+
+template <class Function, class RPCContext>
+decltype(auto) invoke_from_rpc_context(Function&& function, RPCContext& rpc_context)
+{
+    return static_cast<Function&&>(function)(rpc_context.server_context(), rpc_context.responder());
+}
 }
 
 AGRPC_NAMESPACE_END

@@ -25,10 +25,7 @@ namespace detail
 {
 #ifdef AGRPC_HAS_CONCEPTS
 template <class T>
-concept HAS_REQUEST_MEMBER_FUNCTION = requires(T& t)
-{
-    t->request();
-};
+concept HAS_REQUEST_MEMBER_FUNCTION = requires(T& t) { t->request(); };
 #else
 template <class, class = void>
 inline constexpr bool HAS_REQUEST_MEMBER_FUNCTION = false;
@@ -44,7 +41,7 @@ inline constexpr bool HAS_REQUEST_MEMBER_FUNCTION<T, decltype((void)std::declval
  * A move-only type that provides a stable address to the `grpc::ServerContext`, the request (if any) and the responder
  * of one request made by repeatedly_request.
  */
-template <class ImplementationAllocator>
+template <class Allocator>
 class RepeatedlyRequestContext
 {
   public:
@@ -75,7 +72,7 @@ class RepeatedlyRequestContext
     [[nodiscard]] decltype(auto) request() const noexcept
     {
         static_assert(
-            detail::HAS_REQUEST_MEMBER_FUNCTION<detail::AllocatedPointer<ImplementationAllocator>>,
+            detail::HAS_REQUEST_MEMBER_FUNCTION<detail::AllocatedPointer<Allocator>>,
             "Client-streaming, bidirectional-streaming and generic requests are made without an initial request by "
             "the client. The .request() member function is therefore not available.");
         return impl->request();
@@ -94,7 +91,7 @@ class RepeatedlyRequestContext
     [[nodiscard]] decltype(auto) responder() const noexcept { return impl->responder(); }
 
   private:
-    using Impl = detail::AllocatedPointer<ImplementationAllocator>;
+    using Impl = detail::AllocatedPointer<Allocator>;
 
     friend detail::RepeatedlyRequestContextAccess;
 

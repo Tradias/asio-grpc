@@ -306,9 +306,17 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "RepeatedlyRequestContext throw exc
 {
     agrpc::repeatedly_request(&test::v1::Test::AsyncService::RequestUnary, service,
                               asio::bind_executor(get_executor(),
-                                                  [&](auto&&)
+                                                  [&](auto&& context)
                                                   {
-                                                      throw std::invalid_argument{"test"};
+                                                      try
+                                                      {
+                                                          throw std::invalid_argument{"test"};
+                                                      }
+                                                      catch (...)
+                                                      {
+                                                          context.server_context().TryCancel();
+                                                          throw;
+                                                      }
                                                   }));
     agrpc::GrpcContext client_grpc_context{std::make_unique<grpc::CompletionQueue>()};
     test::spawn_and_run(client_grpc_context,

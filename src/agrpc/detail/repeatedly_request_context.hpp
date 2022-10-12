@@ -27,8 +27,8 @@ namespace detail
 {
 struct RepeatedlyRequestContextAccess
 {
-    template <class ImplementationAllocator>
-    static auto create(detail::AllocatedPointer<ImplementationAllocator>&& allocated_pointer) noexcept
+    template <class Allocator>
+    static auto create(detail::AllocatedPointer<Allocator>&& allocated_pointer) noexcept
     {
         return agrpc::RepeatedlyRequestContext{std::move(allocated_pointer)};
     }

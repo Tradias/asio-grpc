@@ -182,7 +182,7 @@ class RepeatedlyRequestCoroutineOperation
             {
                 detail::GrpcContextImplementation::add_local_operation(this->grpc_context(), this);
             }
-            co_await std::apply(static_cast<RequestHandler&&>(local_request_handler), rpc_context.args());
+            co_await detail::invoke_from_rpc_context(static_cast<RequestHandler&&>(local_request_handler), rpc_context);
         }
         else
         {

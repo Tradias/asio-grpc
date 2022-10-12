@@ -144,7 +144,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
                                         [&]
                                         {
                                             return detail::exec::connect(
-                                                std::apply(request_handler, rpc_context().args()),
+                                                detail::invoke_from_rpc_context(request_handler, rpc_context()),
                                                 DeallocateRequestHandlerOperationReceiver{*this});
                                         });
             }
