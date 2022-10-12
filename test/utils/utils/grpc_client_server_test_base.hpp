@@ -20,6 +20,7 @@
 #include <grpcpp/client_context.h>
 
 #include <cstdint>
+#include <optional>
 #include <string>
 
 namespace test
@@ -29,7 +30,8 @@ struct GrpcClientServerTestBase : virtual test::GrpcContextTest
     uint16_t port;
     std::string address;
     std::shared_ptr<grpc::Channel> channel;
-    grpc::ClientContext client_context;
+    std::optional<grpc::ClientContext> client_context_lifetime;
+    grpc::ClientContext& client_context;
 
     GrpcClientServerTestBase();
 

@@ -228,26 +228,6 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::UnaryRPC>, "RPC::request gener
         });
 }
 
-TEST_CASE_FIXTURE(test::GrpcClientServerTestBase,
-                  "RPC::request generic unary RPC automatically retrieves grpc::Status on error")
-{
-    test::spawn_and_run(grpc_context,
-                        [&](const asio::yield_context& yield)
-                        {
-                            using RPC = agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC>;
-                            grpc::GenericStub generic_stub{channel};
-                            grpc::ByteBuffer request_buf;
-                            grpc::ByteBuffer response_buf;
-                            client_context.set_deadline(test::now());
-                            auto status = RPC::request(grpc_context, "/test.v1.Test/Unary", generic_stub,
-                                                       client_context, request_buf, response_buf, yield);
-                            CHECK_FALSE(status.ok());
-                            CHECK_MESSAGE((grpc::StatusCode::DEADLINE_EXCEEDED == status.error_code() ||
-                                           grpc::StatusCode::UNAVAILABLE == status.error_code()),
-                                          status.error_code());
-                        });
-}
-
 TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>, "ServerStreamingRPC::read successfully")
 {
     bool use_executor_overload{};
@@ -684,14 +664,39 @@ TEST_CASE_FIXTURE(HighLevelClientIoContextTest<test::BidirectionalStreamingRPC>,
         });
 }
 
-TEST_CASE_FIXTURE(test::GrpcClientServerTestBase,
+struct HighLevelGenericErrorTest : test::GrpcClientServerTestBase
+{
+    grpc::GenericStub generic_stub{channel};
+
+    ~HighLevelGenericErrorTest() { client_context_lifetime.reset(); }
+};
+
+TEST_CASE_FIXTURE(HighLevelGenericErrorTest,
+                  "RPC::request generic unary RPC automatically retrieves grpc::Status on error")
+{
+    test::spawn_and_run(grpc_context,
+                        [&](const asio::yield_context& yield)
+                        {
+                            using RPC = agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC>;
+                            grpc::ByteBuffer request_buf;
+                            grpc::ByteBuffer response_buf;
+                            client_context.set_deadline(test::now());
+                            auto status = RPC::request(grpc_context, "/test.v1.Test/Unary", generic_stub,
+                                                       client_context, request_buf, response_buf, yield);
+                            CHECK_FALSE(status.ok());
+                            CHECK_MESSAGE((grpc::StatusCode::DEADLINE_EXCEEDED == status.error_code() ||
+                                           grpc::StatusCode::UNAVAILABLE == status.error_code()),
+                                          status.error_code());
+                        });
+}
+
+TEST_CASE_FIXTURE(HighLevelGenericErrorTest,
                   "RPC::request generic streaming RPC automatically retrieves grpc::Status on error")
 {
     test::spawn_and_run(grpc_context,
                         [&](const asio::yield_context& yield)
                         {
                             using RPC = agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC>;
-                            grpc::GenericStub generic_stub{channel};
                             client_context.set_deadline(test::now());
                             auto rpc = RPC::request(grpc_context, "/test.v1.Test/BidirectionalStreaming", generic_stub,
                                                     client_context, yield);

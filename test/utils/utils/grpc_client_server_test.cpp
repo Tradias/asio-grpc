@@ -21,11 +21,23 @@
 namespace test
 {
 GrpcClientServerTest::GrpcClientServerTest()
+    : server_context_lifetime(std::in_place), server_context(*server_context_lifetime)
 {
     builder.RegisterService(&service);
     this->server = builder.BuildAndStart();
     stub = test::v1::Test::NewStub(this->channel);
 }
 
-GrpcClientServerTest::~GrpcClientServerTest() { stub.reset(); }
+GrpcClientServerTest::~GrpcClientServerTest()
+{
+    client_context_lifetime.reset();
+    stub.reset();
+    server_context_lifetime.reset();
+    if (server)
+    {
+        server->Shutdown();
+    }
+    grpc_context_lifetime.reset();
+    server.reset();
+}
 }  // namespace test

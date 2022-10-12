@@ -319,10 +319,18 @@ void register_client_streaming_handler(agrpc::GrpcContext& grpc_context, example
         &example::v1::Example::AsyncService::RequestClientStreaming, service,
         asio::bind_executor(
             grpc_context,
-            [&](grpc::ServerContext&,
+            [&](grpc::ServerContext& server_context,
                 grpc::ServerAsyncReader<example::v1::Response, example::v1::Request>&) -> asio::awaitable<void>
             {
-                // ...
+                try
+                {
+                    // ...
+                }
+                catch (...)
+                {
+                    server_context.TryCancel();
+                    throw;
+                }
                 co_return;
             }));
 }

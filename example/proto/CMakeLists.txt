@@ -25,16 +25,15 @@ function(asio_grpc_add_example_proto_target _asio_grpc_name)
 
     target_sources(${_asio_grpc_name} PRIVATE ${ASIO_GRPC_EXAMPLE_PROTO_SOURCES})
 
-    target_link_libraries(${_asio_grpc_name} PUBLIC protobuf::libprotobuf)
+    target_link_libraries(${_asio_grpc_name} PUBLIC protobuf::libprotobuf asio-grpc-compile-options)
 
     target_include_directories(${_asio_grpc_name} SYSTEM
                                PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>")
 endfunction()
 
 asio_grpc_add_example_proto_target(asio-grpc-example-protos)
-target_compile_features(asio-grpc-example-protos PUBLIC cxx_std_17)
 
 if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
     asio_grpc_add_example_proto_target(asio-grpc-example-protos-cpp20)
-    target_compile_features(asio-grpc-example-protos-cpp20 PUBLIC cxx_std_20)
+    target_link_libraries(asio-grpc-example-protos-cpp20 PUBLIC asio-grpc-compile-options-cpp20)
 endif()

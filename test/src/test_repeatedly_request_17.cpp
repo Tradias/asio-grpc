@@ -207,7 +207,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "RepeatedlyRequestContext member fu
                               asio::bind_executor(get_executor(), [c = std::move(rpc_context)](bool) {}));
             }));
     test::spawn_and_run(grpc_context,
-                        [&](asio::yield_context yield)
+                        [&](const asio::yield_context& yield)
                         {
                             CHECK(test::client_perform_unary_unchecked(grpc_context, *stub, yield));
                             grpc_context.stop();
@@ -232,7 +232,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "RepeatedlyRequestContext member fu
                                     asio::bind_executor(get_executor(), [c = std::move(rpc_context)](bool) {}));
                             }));
     test::spawn_and_run(grpc_context,
-                        [&](asio::yield_context yield)
+                        [&](const asio::yield_context& yield)
                         {
                             test::msg::Response response;
                             auto [writer, ok] = agrpc::request(&test::v1::Test::Stub::PrepareAsyncClientStreaming,
@@ -258,7 +258,7 @@ TEST_CASE_FIXTURE(test::GrpcGenericClientServerTest, "RepeatedlyRequestContext m
                             }));
     test::v1::Test::Stub test_stub{channel};
     test::spawn_and_run(grpc_context,
-                        [&](asio::yield_context yield)
+                        [&](const asio::yield_context& yield)
                         {
                             CHECK(test::client_perform_unary_unchecked(grpc_context, test_stub, yield,
                                                                        test::ten_milliseconds_from_now()));
@@ -302,6 +302,26 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "repeatedly_request tracks work of 
     CHECK_EQ(expected_thread_id, actual_thread_id);
 }
 
+TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "RepeatedlyRequestContext throw exception from request handler")
+{
+    agrpc::repeatedly_request(&test::v1::Test::AsyncService::RequestUnary, service,
+                              asio::bind_executor(get_executor(),
+                                                  [&](auto&&)
+                                                  {
+                                                      throw std::invalid_argument{"test"};
+                                                  }));
+    agrpc::GrpcContext client_grpc_context{std::make_unique<grpc::CompletionQueue>()};
+    test::spawn_and_run(client_grpc_context,
+                        [&](const asio::yield_context& yield)
+                        {
+                            test::client_perform_unary_unchecked(client_grpc_context, *stub, yield,
+                                                                 test::hundred_milliseconds_from_now());
+                        });
+    std::thread t{&agrpc::GrpcContext::run, std::ref(client_grpc_context)};
+    CHECK_THROWS_WITH_AS(grpc_context.run(), "test", std::invalid_argument);
+    t.join();
+}
+
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "repeatedly_request cancellation")
 {
@@ -319,7 +339,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "repeatedly_request cancellation")
                          }},
         asio::bind_cancellation_slot(signal.slot(), test::NoOp{}));
     test::spawn_and_run(grpc_context,
-                        [&](auto&& yield)
+                        [&](const asio::yield_context& yield)
                         {
                             signal.emit(asio::cancellation_type::all);
                             CHECK(test::client_perform_unary_unchecked(grpc_context, *stub, yield));

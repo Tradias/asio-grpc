@@ -21,13 +21,14 @@ if(ASIO_GRPC_ENABLE_DYNAMIC_ANALYSIS)
         INTERFACE
             $<$<OR:$<CXX_COMPILER_ID:GNU,AppleClang>,$<STREQUAL:${CMAKE_CXX_COMPILER_FRONTEND_VARIANT},GNU>>:-fsanitize=undefined,address
             -fno-omit-frame-pointer>
-            $<$<OR:$<CXX_COMPILER_ID:MSVC>,$<STREQUAL:${CMAKE_CXX_COMPILER_FRONTEND_VARIANT},MSVC>>:/fsanitize=address>)
+            $<$<CXX_COMPILER_ID:MSVC>:/fsanitize=address
+            /Zi>)
 
     target_link_options(
         asio-grpc-compile-options
         INTERFACE
         $<$<OR:$<CXX_COMPILER_ID:GNU,AppleClang>,$<STREQUAL:${CMAKE_CXX_COMPILER_FRONTEND_VARIANT},GNU>>:-fsanitize=undefined,address>
-    )
+        $<$<CXX_COMPILER_ID:MSVC>:/DEBUG>)
 
     target_compile_definitions(asio-grpc-compile-options INTERFACE GRPC_ASAN_SUPPRESSED GRPC_TSAN_SUPPRESSED)
 endif()

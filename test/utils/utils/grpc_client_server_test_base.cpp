@@ -27,7 +27,10 @@
 namespace test
 {
 GrpcClientServerTestBase::GrpcClientServerTestBase()
-    : port(test::get_free_port()), address(std::string{"0.0.0.0:"} + std::to_string(port))
+    : port(test::get_free_port()),
+      address(std::string{"0.0.0.0:"} + std::to_string(port)),
+      client_context_lifetime(std::in_place),
+      client_context(*client_context_lifetime)
 {
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());
     channel = grpc::CreateChannel(std::string{"localhost:"} + std::to_string(port), grpc::InsecureChannelCredentials());
@@ -36,9 +39,12 @@ GrpcClientServerTestBase::GrpcClientServerTestBase()
 
 GrpcClientServerTestBase::~GrpcClientServerTestBase()
 {
+    client_context_lifetime.reset();
+    channel.reset();
     if (server)
     {
-        server->Shutdown(test::one_seconds_from_now());
+        server->Shutdown();
     }
+    grpc_context_lifetime.reset();
 }
 }  // namespace test

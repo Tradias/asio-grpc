@@ -30,7 +30,10 @@
 namespace test
 {
 GrpcContextTest::GrpcContextTest()
-    : buffer{}, resource{buffer.data(), buffer.size()}, grpc_context{builder.AddCompletionQueue()}
+    : buffer{},
+      resource{buffer.data(), buffer.size()},
+      grpc_context_lifetime{builder.AddCompletionQueue()},
+      grpc_context{*grpc_context_lifetime}
 {
 }
 

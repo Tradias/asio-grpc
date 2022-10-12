@@ -26,7 +26,8 @@ struct GrpcClientServerTest : virtual test::GrpcClientServerTestBase
 {
     test::v1::Test::AsyncService service;
     std::unique_ptr<test::v1::Test::Stub> stub;
-    grpc::ServerContext server_context;
+    std::optional<grpc::ServerContext> server_context_lifetime;
+    grpc::ServerContext& server_context;
 
     GrpcClientServerTest();
 

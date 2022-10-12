@@ -19,11 +19,25 @@
 
 namespace test
 {
-GrpcGenericClientServerTest::GrpcGenericClientServerTest() : stub{std::make_unique<grpc::GenericStub>(this->channel)}
+GrpcGenericClientServerTest::GrpcGenericClientServerTest()
+    : stub{std::make_unique<grpc::GenericStub>(this->channel)},
+      server_context_lifetime(std::in_place),
+      server_context(*server_context_lifetime)
 {
     builder.RegisterAsyncGenericService(&service);
     this->server = builder.BuildAndStart();
 }
 
-GrpcGenericClientServerTest::~GrpcGenericClientServerTest() { stub.reset(); }
+GrpcGenericClientServerTest::~GrpcGenericClientServerTest()
+{
+    client_context_lifetime.reset();
+    stub.reset();
+    server_context_lifetime.reset();
+    if (server)
+    {
+        server->Shutdown();
+    }
+    grpc_context_lifetime.reset();
+    server.reset();
+}
 }  // namespace test

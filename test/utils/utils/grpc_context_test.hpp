@@ -30,6 +30,7 @@
 #include <array>
 #include <cstddef>
 #include <memory>
+#include <optional>
 
 namespace test
 {
@@ -46,7 +47,8 @@ struct GrpcContextTest
     std::unique_ptr<grpc::Server> server;
     std::array<std::byte, 4096> buffer;
     agrpc::detail::pmr::monotonic_buffer_resource resource;
-    agrpc::GrpcContext grpc_context;
+    std::optional<agrpc::GrpcContext> grpc_context_lifetime;
+    agrpc::GrpcContext& grpc_context;
 
     GrpcContextTest();
 

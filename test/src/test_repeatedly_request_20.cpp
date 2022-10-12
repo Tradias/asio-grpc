@@ -356,21 +356,26 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request canc
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request throw exception from request handler")
 {
-    asio::cancellation_signal signal;
     agrpc::repeatedly_request(
         &test::v1::Test::AsyncService::RequestUnary, service,
         asio::bind_executor(grpc_context,
-                            [&](grpc::ServerContext&, test::msg::Request&,
+                            [&](grpc::ServerContext& context, test::msg::Request&,
                                 grpc::ServerAsyncResponseWriter<test::msg::Response>&) -> asio::awaitable<void>
                             {
-                                throw std::invalid_argument{"test"};
+                                try
+                                {
+                                    throw std::invalid_argument{"test"};
+                                }
+                                catch (...)
+                                {
+                                    context.TryCancel();
+                                    throw;
+                                }
                                 co_return;
-                            }),
-        asio::bind_cancellation_slot(signal.slot(), test::NoOp{}));
+                            }));
     test::co_spawn(grpc_context,
                    [&]() -> asio::awaitable<void>
                    {
-                       signal.emit(asio::cancellation_type::all);
                        test::msg::Request request;
                        client_context.set_deadline(test::hundred_milliseconds_from_now());
                        auto reader = agrpc::request(&test::v1::Test::Stub::AsyncUnary, stub, client_context, request,
