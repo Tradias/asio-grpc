@@ -131,7 +131,7 @@ TEST_CASE_TEMPLATE("RPC::read_initial_metadata automatically finishes RPC on err
     test.spawn_and_run(
         [&](const asio::yield_context& yield)
         {
-            test.test_server.request_rpc(yield);
+            test.server_request_rpc_and_cancel(yield);
         },
         [&](const asio::yield_context& yield)
         {
@@ -259,7 +259,7 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>,
     spawn_and_run(
         [&](const asio::yield_context& yield)
         {
-            test_server.request_rpc(yield);
+            server_request_rpc_and_cancel(yield);
         },
         [&](const asio::yield_context& yield)
         {
@@ -280,18 +280,15 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>,
     spawn_and_run(
         [&](const asio::yield_context& yield)
         {
-            test_server.request_rpc(yield);
+            server_request_rpc_and_cancel(yield);
         },
         [&](const asio::yield_context& yield)
         {
+            auto rpc = test::ServerStreamingRPC::request(grpc_context, *stub, client_context, request, yield);
+            if (explicit_try_cancel)
             {
-                auto rpc = test::ServerStreamingRPC::request(grpc_context, *stub, client_context, request, yield);
-                if (explicit_try_cancel)
-                {
-                    client_context.TryCancel();
-                }
+                client_context.TryCancel();
             }
-            server_shutdown.initiate();
         });
 }
 
@@ -389,7 +386,7 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>,
     spawn_and_run(
         [&](const asio::yield_context& yield)
         {
-            test_server.request_rpc(yield);
+            server_request_rpc_and_cancel(yield);
         },
         [&](const asio::yield_context& yield)
         {
@@ -447,7 +444,7 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>,
     spawn_and_run(
         [&](const asio::yield_context& yield)
         {
-            test_server.request_rpc(yield);
+            server_request_rpc_and_cancel(yield);
         },
         [&](const asio::yield_context& yield)
         {
@@ -479,6 +476,10 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>,
             if (expected_ok)
             {
                 CHECK(agrpc::finish(test_server.responder, test_server.response, grpc::Status::OK, yield));
+            }
+            else
+            {
+                server_context.TryCancel();
             }
         },
         [&](asio::yield_context yield)
