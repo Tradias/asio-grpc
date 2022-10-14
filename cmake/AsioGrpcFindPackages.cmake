@@ -19,9 +19,9 @@ unset(FPHSA_NAME_MISMATCHED)
 
 find_package(gRPC)
 if(ASIO_GRPC_USE_BOOST_CONTAINER)
-    find_package(Boost REQUIRED COMPONENTS coroutine thread filesystem container)
+    find_package(Boost REQUIRED COMPONENTS coroutine thread filesystem container chrono)
 else()
-    find_package(Boost REQUIRED COMPONENTS coroutine thread filesystem)
+    find_package(Boost REQUIRED COMPONENTS coroutine thread filesystem chrono)
 endif()
 find_package(asio)
 

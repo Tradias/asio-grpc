@@ -35,7 +35,7 @@ GrpcClientServerTestBase::GrpcClientServerTestBase()
       client_context(*client_context_lifetime)
 {
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());
-    channel = grpc::CreateChannel(std::string{"localhost:"} + std::to_string(port), grpc::InsecureChannelCredentials());
+    channel = grpc::CreateChannel(std::string{"127.0.0.1:"} + std::to_string(port), grpc::InsecureChannelCredentials());
     client_context.set_deadline(test::five_seconds_from_now());
 }
 
