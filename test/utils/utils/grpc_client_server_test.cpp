@@ -38,6 +38,8 @@ GrpcClientServerTest::~GrpcClientServerTest()
     std::cout << boost::chrono::steady_clock::now() << "~GrpcClientServerTest()::client_context_lifetime" << std::endl;
     stub.reset();
     std::cout << boost::chrono::steady_clock::now() << "~GrpcClientServerTest()::stub" << std::endl;
+    channel.reset();
+    std::cout << boost::chrono::steady_clock::now() << "~GrpcClientServerTest()::channel" << std::endl;
     server_context_lifetime.reset();
     std::cout << boost::chrono::steady_clock::now() << "~GrpcClientServerTest()::server_context_lifetime" << std::endl;
     if (server)

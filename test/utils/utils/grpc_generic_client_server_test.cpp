@@ -39,6 +39,8 @@ GrpcGenericClientServerTest::~GrpcGenericClientServerTest()
               << std::endl;
     stub.reset();
     std::cout << boost::chrono::steady_clock::now() << "~GrpcGenericClientServerTest()::stub" << std::endl;
+    channel.reset();
+    std::cout << boost::chrono::steady_clock::now() << "~GrpcGenericClientServerTest()::channel" << std::endl;
     server_context_lifetime.reset();
     std::cout << boost::chrono::steady_clock::now() << "~GrpcGenericClientServerTest()::server_context_lifetime"
               << std::endl;
