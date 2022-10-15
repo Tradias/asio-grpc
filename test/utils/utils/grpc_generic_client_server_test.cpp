@@ -32,6 +32,7 @@ GrpcGenericClientServerTest::~GrpcGenericClientServerTest()
 {
     client_context_lifetime.reset();
     stub.reset();
+    channel.reset();
     server_context_lifetime.reset();
     if (server)
     {

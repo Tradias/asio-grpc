@@ -36,8 +36,8 @@ jobs:
             parallel: 1,
           }
           - {
-            name: 'MacOSX/11/AppleClang',
-            os: macos-11,
+            name: 'MacOSX/12/AppleClang',
+            os: macos-12,
             triplet: 'x64-osx-release',
             build-type: 'Debug',
             cmake-extra-args: '-DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-osx-release',

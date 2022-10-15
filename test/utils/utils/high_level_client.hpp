@@ -136,6 +136,15 @@ struct HighLevelClientTest : test::GrpcClientServerTest
         }
     }
 
+    template <class CompletionToken>
+    void server_request_rpc_and_cancel(CompletionToken&& token)
+    {
+        if (test_server.request_rpc(token))
+        {
+            server_context.TryCancel();
+        }
+    }
+
     typename RPC::Request request;
     typename RPC::Response response;
     test::TestServer<SERVER_REQUEST> test_server{service, server_context};

@@ -306,25 +306,17 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "RepeatedlyRequestContext throw exc
 {
     agrpc::repeatedly_request(&test::v1::Test::AsyncService::RequestUnary, service,
                               asio::bind_executor(get_executor(),
-                                                  [&](auto&& context)
+                                                  [&](auto&&)
                                                   {
-                                                      try
-                                                      {
-                                                          throw std::invalid_argument{"test"};
-                                                      }
-                                                      catch (...)
-                                                      {
-                                                          context.server_context().TryCancel();
-                                                          throw;
-                                                      }
+                                                      throw std::invalid_argument{"test"};
                                                   }));
     agrpc::GrpcContext client_grpc_context{std::make_unique<grpc::CompletionQueue>()};
-    test::spawn_and_run(client_grpc_context,
-                        [&](const asio::yield_context& yield)
-                        {
-                            test::client_perform_unary_unchecked(client_grpc_context, *stub, yield,
-                                                                 test::hundred_milliseconds_from_now());
-                        });
+    test::spawn(client_grpc_context,
+                [&](const asio::yield_context& yield)
+                {
+                    test::client_perform_unary_unchecked(client_grpc_context, *stub, yield,
+                                                         test::two_hundred_milliseconds_from_now());
+                });
     std::thread t{&agrpc::GrpcContext::run, std::ref(client_grpc_context)};
     CHECK_THROWS_WITH_AS(grpc_context.run(), "test", std::invalid_argument);
     t.join();
