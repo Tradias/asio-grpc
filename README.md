@@ -65,7 +65,7 @@ Versions tested by Github Actions:
  * MSVC 19.33 (Visual Studio 17 2022)
  * GCC 8.4.0, 10.3.0, 11.1.0
  * Clang 10.0.0, 12.0.0
- * AppleClang 13.0.0.13000029
+ * AppleClang 14
  * C++17 and C++20
 
 # Usage
