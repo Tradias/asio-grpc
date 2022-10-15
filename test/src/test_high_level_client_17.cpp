@@ -280,7 +280,11 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>,
     spawn_and_run(
         [&](const asio::yield_context& yield)
         {
-            server_request_rpc_and_cancel(yield);
+            if (test_server.request_rpc(yield))
+            {
+                grpc::Status status;
+                CHECK_FALSE(agrpc::finish(test_server.responder, status, yield));
+            }
         },
         [&](const asio::yield_context& yield)
         {
