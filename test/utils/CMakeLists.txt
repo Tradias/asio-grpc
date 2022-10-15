@@ -39,7 +39,7 @@ function(asio_grpc_add_test_main _asio_grpc_name _asio_grpc_cxx_standard)
     target_link_libraries(
         ${_asio_grpc_name}
         PUBLIC doctest::doctest GTest::gmock asio-grpc-compile-options${_asio_grpc_cxx_standard}
-               asio-grpc-test-protos${_asio_grpc_cxx_standard} asio-grpc-coverage-options Boost::chrono
+               asio-grpc-test-protos${_asio_grpc_cxx_standard} asio-grpc-coverage-options
         PRIVATE Boost::headers Boost::filesystem)
 endfunction()
 

@@ -280,19 +280,18 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>,
     spawn_and_run(
         [&](const asio::yield_context& yield)
         {
-            if (test_server.request_rpc(yield))
-            {
-                grpc::Status status;
-                CHECK_FALSE(agrpc::finish(test_server.responder, status, yield));
-            }
+            server_request_rpc_and_cancel(yield);
         },
         [&](const asio::yield_context& yield)
         {
-            auto rpc = test::ServerStreamingRPC::request(grpc_context, *stub, client_context, request, yield);
-            if (explicit_try_cancel)
             {
-                client_context.TryCancel();
+                auto rpc = test::ServerStreamingRPC::request(grpc_context, *stub, client_context, request, yield);
+                if (explicit_try_cancel)
+                {
+                    client_context.TryCancel();
+                }
             }
+            server_shutdown.initiate();
         });
 }
 

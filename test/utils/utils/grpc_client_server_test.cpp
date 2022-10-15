@@ -16,10 +16,7 @@
 
 #include "test/v1/test.grpc.pb.h"
 
-#include <boost/chrono.hpp>
 #include <grpcpp/server_context.h>
-
-#include <iostream>
 
 namespace test
 {
@@ -33,23 +30,15 @@ GrpcClientServerTest::GrpcClientServerTest()
 
 GrpcClientServerTest::~GrpcClientServerTest()
 {
-    std::cout << boost::chrono::steady_clock::now() << "~GrpcClientServerTest()" << std::endl;
     client_context_lifetime.reset();
-    std::cout << boost::chrono::steady_clock::now() << "~GrpcClientServerTest()::client_context_lifetime" << std::endl;
     stub.reset();
-    std::cout << boost::chrono::steady_clock::now() << "~GrpcClientServerTest()::stub" << std::endl;
     channel.reset();
-    std::cout << boost::chrono::steady_clock::now() << "~GrpcClientServerTest()::channel" << std::endl;
     server_context_lifetime.reset();
-    std::cout << boost::chrono::steady_clock::now() << "~GrpcClientServerTest()::server_context_lifetime" << std::endl;
     if (server)
     {
         server->Shutdown();
-        std::cout << boost::chrono::steady_clock::now() << "~GrpcClientServerTest()::Shutdown" << std::endl;
     }
     grpc_context_lifetime.reset();
-    std::cout << boost::chrono::steady_clock::now() << "~GrpcClientServerTest()::grpc_context_lifetime" << std::endl;
     server.reset();
-    std::cout << boost::chrono::steady_clock::now() << "~GrpcClientServerTest()::server" << std::endl;
 }
 }  // namespace test

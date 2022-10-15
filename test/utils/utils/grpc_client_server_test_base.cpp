@@ -18,12 +18,10 @@
 #include "utils/grpc_context_test.hpp"
 #include "utils/time.hpp"
 
-#include <boost/chrono.hpp>
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 
 #include <cstdint>
-#include <iostream>
 #include <string>
 
 namespace test
@@ -41,19 +39,12 @@ GrpcClientServerTestBase::GrpcClientServerTestBase()
 
 GrpcClientServerTestBase::~GrpcClientServerTestBase()
 {
-    std::cout << boost::chrono::steady_clock::now() << "~GrpcClientServerTestBase()" << std::endl;
     client_context_lifetime.reset();
-    std::cout << boost::chrono::steady_clock::now() << "~GrpcClientServerTestBase()::client_context_lifetime"
-              << std::endl;
     channel.reset();
-    std::cout << boost::chrono::steady_clock::now() << "~GrpcClientServerTestBase()::channel" << std::endl;
     if (server)
     {
         server->Shutdown();
-        std::cout << boost::chrono::steady_clock::now() << "~GrpcClientServerTestBase()::Shutdown" << std::endl;
     }
     grpc_context_lifetime.reset();
-    std::cout << boost::chrono::steady_clock::now() << "~GrpcClientServerTestBase()::grpc_context_lifetime"
-              << std::endl;
 }
 }  // namespace test

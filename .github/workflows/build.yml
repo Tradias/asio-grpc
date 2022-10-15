@@ -17,7 +17,7 @@ on:
 env:
   VCPKG_VERSION: 'f93ba152d55e1d243160e690bc302ffe8638358e' # July 22, 2022
   CMAKE_ARGS: '-DCMAKE_BUILD_TYPE=Release -DVCPKG_MANIFEST_INSTALL=off -DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=off'
-  CTEST_ARGS: '-T test --output-on-failure --timeout 200 --verbose --no-tests=error --parallel 8'
+  CTEST_ARGS: '-T test --output-on-failure --timeout 200 --no-tests=error --parallel 8'
 
 jobs:
   build:
@@ -65,7 +65,7 @@ jobs:
       run: cmake --build --preset default --config ${{ matrix.config.build-type }} --parallel ${{ matrix.config.parallel }}
 
     - name: Test
-      run: ctest --preset default --verbose --build-config ${{ matrix.config.build-type }}
+      run: ctest --preset default --build-config ${{ matrix.config.build-type }}
 
 
   multi-gcc-build:
@@ -264,4 +264,4 @@ jobs:
       run: cmake --build --preset default --config Release --parallel $(nproc)
 
     - name: Test
-      run: ctest --preset default --verbose --config Release
+      run: ctest --preset default --config Release
