@@ -190,7 +190,7 @@ struct RpcSpawner
     void operator()(agrpc::RepeatedlyRequestContext<T>&& context)
     {
         test::typed_spawn(grpc_context,
-                          [h = handler, context = std::move(context)](auto&& yield_context) mutable
+                          [h = handler, context = std::move(context)](const asio::yield_context& yield_context) mutable
                           {
                               std::apply(std::move(h),
                                          std::tuple_cat(context.args(), std::forward_as_tuple(yield_context)));
