@@ -359,32 +359,26 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request thro
     agrpc::repeatedly_request(
         &test::v1::Test::AsyncService::RequestUnary, service,
         asio::bind_executor(grpc_context,
-                            [&](grpc::ServerContext& context, test::msg::Request&,
+                            [&](grpc::ServerContext&, test::msg::Request&,
                                 grpc::ServerAsyncResponseWriter<test::msg::Response>&) -> asio::awaitable<void>
                             {
-                                try
-                                {
-                                    throw std::invalid_argument{"test"};
-                                }
-                                catch (...)
-                                {
-                                    context.TryCancel();
-                                    throw;
-                                }
-                                co_return;
+                                throw std::invalid_argument{"test"};
                             }));
-    test::co_spawn(grpc_context,
+    agrpc::GrpcContext client_grpc_context{std::make_unique<grpc::CompletionQueue>()};
+    test::co_spawn(client_grpc_context,
                    [&]() -> asio::awaitable<void>
                    {
                        test::msg::Request request;
                        client_context.set_deadline(test::hundred_milliseconds_from_now());
                        auto reader = agrpc::request(&test::v1::Test::Stub::AsyncUnary, stub, client_context, request,
-                                                    grpc_context);
+                                                    client_grpc_context);
                        test::msg::Response response;
                        grpc::Status status;
                        co_await agrpc::finish(reader, response, status);
                    });
+    std::thread t{&agrpc::GrpcContext::run, std::ref(client_grpc_context)};
     CHECK_THROWS_WITH_AS(grpc_context.run(), "test", std::invalid_argument);
+    t.join();
 }
 #endif
 #endif

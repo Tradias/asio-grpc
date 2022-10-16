@@ -285,11 +285,11 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "repeatedly_request tracks work of 
                                       io_context.run();
                                       order = 1 == order ? 2 : 0;
                                   }};
-    std::optional<std::thread> server_shutdown_thread;
+    std::thread server_shutdown_thread;
     post(
         [&]
         {
-            server_shutdown_thread.emplace(
+            server_shutdown_thread = std::thread(
                 [&]
                 {
                     server->Shutdown();
@@ -297,7 +297,7 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "repeatedly_request tracks work of 
         });
     grpc_context.run();
     io_context_thread.join();
-    server_shutdown_thread->join();
+    server_shutdown_thread.join();
     CHECK_EQ(2, order);
     CHECK_EQ(expected_thread_id, actual_thread_id);
 }

@@ -67,16 +67,10 @@ namespace detail
  * `awaitable auto operator()(grpc::ServerContext&, Responder&)` otherwise.<br>
  * A copy of the RequestHandler will be made for each request to avoid lifetime surprises.
  *
- * @attention Before letting exceptions escape from an awaitable RequestHandler ensure that the RPC has been completed
- * or cancelled.
- *
  * @snippet server.cpp repeatedly-request-awaitable
  *
  * The following example shows how to implement a RequestHandler with a custom allocator for simple, high-performance
  * RPC processing:
- *
- * @attention Before letting the `agrpc::RepeatedlyRequestContext` go out-of-scope ensure that the RPC has been
- * completed or cancelled.
  *
  * @snippet server.cpp repeatedly-request-callback
  *
