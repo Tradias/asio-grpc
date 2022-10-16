@@ -218,20 +218,20 @@ int main(int argc, const char** argv)
 
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
-    asio::spawn(grpc_context,
-                [&](asio::yield_context yield)
-                {
-                    // First we perform the unary request using Boost.Coroutine
-                    make_generic_unary_request(grpc_context, generic_stub, yield);
-                    // Then we do the bidirectional streaming request using stackless coroutines.
-                    make_bidirectional_streaming_request(grpc_context, generic_stub,
-                                                         [&]
-                                                         {
-                                                             // And finally the shutdown request using
-                                                             // callbacks.
-                                                             make_shutdown_request(grpc_context, stub);
-                                                         });
-                });
+    example::spawn(grpc_context,
+                   [&](asio::yield_context yield)
+                   {
+                       // First we perform the unary request using Boost.Coroutine
+                       make_generic_unary_request(grpc_context, generic_stub, yield);
+                       // Then we do the bidirectional streaming request using stackless coroutines.
+                       make_bidirectional_streaming_request(grpc_context, generic_stub,
+                                                            [&]
+                                                            {
+                                                                // And finally the shutdown request using
+                                                                // callbacks.
+                                                                make_shutdown_request(grpc_context, stub);
+                                                            });
+                   });
 
     grpc_context.run();
 }

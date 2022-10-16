@@ -19,6 +19,7 @@
 
 #ifdef AGRPC_STANDALONE_ASIO
 #include <asio/coroutine.hpp>
+#include <asio/error.hpp>
 #include <asio/execution.hpp>
 #include <asio/execution/submit.hpp>
 #include <asio/io_context.hpp>
@@ -38,22 +39,30 @@
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 #include <asio/bind_cancellation_slot.hpp>
 #include <asio/cancellation_signal.hpp>
-#include <asio/experimental/deferred.hpp>
 #include <asio/experimental/parallel_group.hpp>
 #endif
 
 #ifdef ASIO_HAS_CONCEPTS
-#define AGRPC_ASIO_HAS_CONCEPTS
+#define AGRPC_TEST_ASIO_HAS_CONCEPTS
 #endif
 
 #if (ASIO_VERSION >= 102200)
-#define ASIO_HAS_FIXED_DEFERRED
+#define AGRPC_TEST_ASIO_HAS_FIXED_DEFERRED
+#endif
+
+#if (ASIO_VERSION >= 102400)
+#include <asio/deferred.hpp>
+
+#define AGRPC_TEST_ASIO_HAS_NEW_SPAWN
+#elif defined(AGRPC_ASIO_HAS_CANCELLATION_SLOT)
+#include <asio/experimental/deferred.hpp>
 #endif
 #elif defined(AGRPC_BOOST_ASIO)
 //
 #include <boost/version.hpp>
 //
 #include <boost/asio/coroutine.hpp>
+#include <boost/asio/error.hpp>
 #include <boost/asio/execution.hpp>
 #include <boost/asio/execution/submit.hpp>
 #include <boost/asio/io_context.hpp>
@@ -73,16 +82,23 @@
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/cancellation_signal.hpp>
-#include <boost/asio/experimental/deferred.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
 #endif
 
 #ifdef BOOST_ASIO_HAS_CONCEPTS
-#define AGRPC_ASIO_HAS_CONCEPTS
+#define AGRPC_TEST_ASIO_HAS_CONCEPTS
 #endif
 
 #if (BOOST_VERSION >= 107800)
-#define ASIO_HAS_FIXED_DEFERRED
+#define AGRPC_TEST_ASIO_HAS_FIXED_DEFERRED
+#endif
+
+#if (BOOST_VERSION >= 108000)
+#include <boost/asio/deferred.hpp>
+
+#define AGRPC_TEST_ASIO_HAS_NEW_SPAWN
+#elif defined(AGRPC_ASIO_HAS_CANCELLATION_SLOT)
+#include <boost/asio/experimental/deferred.hpp>
 #endif
 #endif
 
@@ -112,6 +128,10 @@
 #endif
 #endif
 
+#if defined(AGRPC_BOOST_ASIO)
+namespace asio = ::boost::asio;
+#endif
+
 namespace test
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_UNIFEX)
@@ -119,10 +139,12 @@ using ErrorCode = std::error_code;
 #elif defined(AGRPC_BOOST_ASIO)
 using ErrorCode = boost::system::error_code;
 #endif
-}  // namespace test
 
-#if defined(AGRPC_BOOST_ASIO)
-namespace asio = ::boost::asio;
+#ifdef AGRPC_TEST_ASIO_HAS_NEW_SPAWN
+inline constexpr auto ASIO_DEFERRED = asio::deferred;
+#elif defined(AGRPC_ASIO_HAS_CANCELLATION_SLOT)
+inline constexpr auto ASIO_DEFERRED = asio::experimental::deferred;
 #endif
+}  // namespace test
 
 #endif  // AGRPC_UTILS_ASIO_FORWARD_HPP

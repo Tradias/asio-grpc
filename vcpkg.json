@@ -1,5 +1,5 @@
 {
-    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/f93ba152d55e1d243160e690bc302ffe8638358e/scripts/vcpkg.schema.json",
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/a2261f65ea979eebf56074f604776160f0074b09/scripts/vcpkg.schema.json",
     "name": "asio-grpc",
     "version": "1",
     "dependencies": [
@@ -26,5 +26,5 @@
         "libunifex",
         "gtest"
     ],
-    "builtin-baseline": "f93ba152d55e1d243160e690bc302ffe8638358e"
+    "builtin-baseline": "a2261f65ea979eebf56074f604776160f0074b09"
 }

@@ -42,6 +42,17 @@ struct NoOp
     }
 };
 
+struct RethrowFirstArg
+{
+    void operator()(std::exception_ptr ep)
+    {
+        if (ep)
+        {
+            std::rethrow_exception(ep);
+        }
+    }
+};
+
 template <class Function, class Allocator = std::allocator<void>>
 struct FunctionAsReceiver
 {
@@ -150,6 +161,16 @@ struct HandlerWithAssociatedAllocator
 
 void spawn(agrpc::GrpcContext& grpc_context, const std::function<void(const asio::yield_context&)>& function);
 
+template <class Executor, class Function>
+void typed_spawn(Executor&& executor, Function&& function)
+{
+#ifdef AGRPC_TEST_ASIO_HAS_NEW_SPAWN
+    asio::spawn(std::forward<Executor>(executor), std::forward<Function>(function), test::RethrowFirstArg{});
+#else
+    asio::spawn(std::forward<Executor>(executor), std::forward<Function>(function));
+#endif
+}
+
 template <class Handler, class Allocator = std::allocator<void>>
 struct RpcSpawner
 {
@@ -168,11 +189,12 @@ struct RpcSpawner
     template <class T>
     void operator()(agrpc::RepeatedlyRequestContext<T>&& context)
     {
-        asio::spawn(grpc_context,
-                    [h = handler, context = std::move(context)](auto&& yield_context) mutable
-                    {
-                        std::apply(std::move(h), std::tuple_cat(context.args(), std::forward_as_tuple(yield_context)));
-                    });
+        test::typed_spawn(grpc_context,
+                          [h = handler, context = std::move(context)](auto&& yield_context) mutable
+                          {
+                              std::apply(std::move(h),
+                                         std::tuple_cat(context.args(), std::forward_as_tuple(yield_context)));
+                          });
     }
 
     [[nodiscard]] executor_type get_executor() const noexcept { return grpc_context.get_executor(); }
@@ -180,19 +202,19 @@ struct RpcSpawner
     [[nodiscard]] allocator_type get_allocator() const noexcept { return allocator; }
 };
 
+template <class... Functions>
+void spawn_and_run(agrpc::GrpcContext& grpc_context, Functions&&... functions)
+{
+    (test::spawn(grpc_context, std::forward<Functions>(functions)), ...);
+    grpc_context.run();
+}
+
 template <class CompletionToken, class Signature, class Initiation, class RawCompletionToken, class... Args>
 decltype(auto) initiate_using_async_completion(Initiation&& initiation, RawCompletionToken&& token, Args&&... args)
 {
     asio::async_completion<CompletionToken, Signature> completion(token);
     std::forward<Initiation>(initiation)(std::move(completion.completion_handler), std::forward<Args>(args)...);
     return completion.result.get();
-}
-
-template <class... Functions>
-void spawn_and_run(agrpc::GrpcContext& grpc_context, Functions&&... functions)
-{
-    (test::spawn(grpc_context, std::forward<Functions>(functions)), ...);
-    grpc_context.run();
 }
 
 void wait(grpc::Alarm& alarm, std::chrono::system_clock::time_point deadline,
@@ -220,25 +242,12 @@ auto parallel_group_bind_executor(const Executor& executor, CancellationConditio
 #endif
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
-struct RethrowFirstArg
-{
-    void operator()(std::exception_ptr ep)
-    {
-        if (ep)
-        {
-            std::rethrow_exception(ep);
-        }
-    }
-};
-
-void co_spawn(agrpc::GrpcContext& grpc_context, const std::function<asio::awaitable<void>()>& function,
-              test::RethrowFirstArg rethrow);
+void co_spawn(agrpc::GrpcContext& grpc_context, const std::function<asio::awaitable<void>()>& function);
 
 template <class Executor>
-void co_spawn(Executor&& executor, const std::function<asio::awaitable<void>()>& function,
-              test::RethrowFirstArg rethrow)
+void co_spawn(Executor&& executor, const std::function<asio::awaitable<void>()>& function)
 {
-    asio::co_spawn(std::forward<Executor>(executor), function, rethrow);
+    asio::co_spawn(std::forward<Executor>(executor), function, test::RethrowFirstArg{});
 }
 
 template <class Executor, class Function>
@@ -247,7 +256,7 @@ void co_spawn(Executor&& executor, Function function)
     using Erased = std::function<asio::awaitable<void>()>;
     if constexpr (std::is_constructible_v<Erased, Function>)
     {
-        test::co_spawn(std::forward<Executor>(executor), Erased(function), test::RethrowFirstArg{});
+        test::co_spawn(std::forward<Executor>(executor), Erased(function));
     }
     else
     {

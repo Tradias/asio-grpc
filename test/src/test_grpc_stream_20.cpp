@@ -24,7 +24,7 @@
 #include <cstddef>
 
 #if defined(AGRPC_ASIO_HAS_CANCELLATION_SLOT) && defined(AGRPC_ASIO_HAS_CO_AWAIT)
-#ifdef ASIO_HAS_FIXED_DEFERRED
+#ifdef AGRPC_TEST_ASIO_HAS_FIXED_DEFERRED
 TEST_CASE_FIXTURE(test::GrpcContextTest, "CancelSafe: co_await for a CancelSafe and an alarm parallel_group")
 {
     test::co_spawn_and_run(grpc_context,
@@ -40,8 +40,8 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "CancelSafe: co_await for a CancelSafe 
                                    auto [completion_order, alarm2_ok, alarm1_ec, alarm1_ok] =
                                        co_await asio::experimental::make_parallel_group(
                                            agrpc::wait(alarm2, test::ten_milliseconds_from_now(),
-                                                       asio::bind_executor(grpc_context, asio::experimental::deferred)),
-                                           safe.wait(asio::experimental::deferred))
+                                                       asio::bind_executor(grpc_context, test::ASIO_DEFERRED)),
+                                           safe.wait(test::ASIO_DEFERRED))
                                            .async_wait(asio::experimental::wait_for_one(), asio::use_awaitable);
                                    CHECK_EQ(0, completion_order[0]);
                                    CHECK_EQ(1, completion_order[1]);

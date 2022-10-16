@@ -187,23 +187,23 @@ struct GenericRequestHandler
 
     void operator()(agrpc::GenericRepeatedlyRequestContext<>&& context) const
     {
-        asio::spawn(grpc_context,
-                    [&, context = std::move(context)](asio::yield_context yield)
-                    {
-                        const auto& method = context.server_context().method();
-                        if ("/example.v1.Example/Unary" == method)
-                        {
-                            handle_generic_unary_request(context.responder(), yield);
-                        }
-                        else if ("/example.v1.Example/BidirectionalStreaming" == method)
-                        {
-                            handle_generic_bidistream_request(grpc_context, context.responder(), thread_pool, yield);
-                        }
-                        else
-                        {
-                            throw std::runtime_error("Unsupport method!");
-                        }
-                    });
+        example::spawn(grpc_context,
+                       [&, context = std::move(context)](asio::yield_context yield)
+                       {
+                           const auto& method = context.server_context().method();
+                           if ("/example.v1.Example/Unary" == method)
+                           {
+                               handle_generic_unary_request(context.responder(), yield);
+                           }
+                           else if ("/example.v1.Example/BidirectionalStreaming" == method)
+                           {
+                               handle_generic_bidistream_request(grpc_context, context.responder(), thread_pool, yield);
+                           }
+                           else
+                           {
+                               throw std::runtime_error("Unsupport method!");
+                           }
+                       });
     }
 
     auto get_executor() const noexcept { return grpc_context.get_executor(); }
@@ -248,11 +248,11 @@ int main(int argc, const char** argv)
     server = builder.BuildAndStart();
     abort_if_not(bool{server});
 
-    asio::spawn(grpc_context,
-                [&](asio::yield_context yield)
-                {
-                    handle_shutdown_request(shutdown_service, *server, shutdown_thread, yield);
-                });
+    example::spawn(grpc_context,
+                   [&](asio::yield_context yield)
+                   {
+                       handle_shutdown_request(shutdown_service, *server, shutdown_thread, yield);
+                   });
 
     asio::thread_pool thread_pool{1};
     agrpc::repeatedly_request(service, GenericRequestHandler{grpc_context, thread_pool});

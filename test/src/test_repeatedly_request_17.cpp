@@ -118,7 +118,7 @@ TEST_CASE_TEMPLATE("yield_context repeatedly_request unary", T, TypedRequestHand
     test::v1::Test::Stub test_stub{test.channel};
     for (size_t i = 0; i < 3; ++i)
     {
-        asio::spawn(test.grpc_context,
+        test::spawn(test.grpc_context,
                     [&](const asio::yield_context& yield)
                     {
                         test::PerformUnarySuccessOptions options;

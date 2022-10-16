@@ -36,11 +36,11 @@ struct HighLevelClientIoContextTest : test::HighLevelClientTest<RPC>, test::IoCo
     void run_server_client_on_separate_threads(std::function<void(const asio::yield_context&)> server_func,
                                                std::function<void(const asio::yield_context&)> client_func)
     {
-        asio::spawn(io_context,
-                    [client_func, g = this->get_work_tracking_executor()](const asio::yield_context& yield)
-                    {
-                        client_func(yield);
-                    });
+        test::typed_spawn(io_context,
+                          [client_func, g = this->get_work_tracking_executor()](const asio::yield_context& yield)
+                          {
+                              client_func(yield);
+                          });
         this->run_io_context_detached();
         this->spawn_and_run(
             [server_func](const asio::yield_context& yield)
