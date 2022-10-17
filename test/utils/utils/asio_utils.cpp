@@ -21,11 +21,7 @@ namespace test
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 void spawn(agrpc::GrpcContext& grpc_context, const std::function<void(const asio::yield_context&)>& function)
 {
-#ifdef AGRPC_TEST_ASIO_HAS_NEW_SPAWN
-    asio::spawn(grpc_context, function, test::RethrowFirstArg{});
-#else
-    asio::spawn(grpc_context, function);
-#endif
+    test::typed_spawn(grpc_context, function);
 }
 
 void wait(grpc::Alarm& alarm, std::chrono::system_clock::time_point deadline,

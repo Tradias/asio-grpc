@@ -54,25 +54,25 @@ auto initiate_spawn(Executor&& executor, Function&& function, CompletionToken&& 
 #endif
 }
 
+inline void rethrow_exception_ptr(std::exception_ptr ep)
+{
+    if (ep)
+    {
+        std::rethrow_exception(ep);
+    }
+}
+
+template <class T>
+void rethrow_exception_ptr(T&&)
+{
+}
+
 template <class... Function>
 struct SpawnAllVoid
 {
     std::tuple<Function...> functions;
 
     explicit SpawnAllVoid(Function... function) : functions(std::move(function)...) {}
-
-    static void rethrow_exception_ptr(std::exception_ptr ep)
-    {
-        if (ep)
-        {
-            std::rethrow_exception(ep);
-        }
-    }
-
-    template <class T>
-    static void rethrow_exception_ptr(T&&)
-    {
-    }
 
     template <class Self>
     void operator()(Self& self)
@@ -93,7 +93,7 @@ struct SpawnAllVoid
                                     auto local_f = std::move(f);
                                     std::move(local_f)(yield);
                                 },
-                                t);
+                                std::forward<decltype(t)>(t));
                         };
                     }(function)...)
                     .async_wait(boost::asio::experimental::wait_for_all(), std::move(self));
@@ -104,7 +104,7 @@ struct SpawnAllVoid
     template <class Self, class... T>
     void operator()(Self& self, T&&... t)
     {
-        (rethrow_exception_ptr(t), ...);
+        (example::rethrow_exception_ptr(t), ...);
         self.complete();
     }
 };
@@ -124,7 +124,7 @@ auto when_all_bind_executor(const Executor& executor, CompletionToken&& token, F
                {
                    return [&](auto&& t)
                    {
-                       return f(boost::asio::bind_executor(executor, std::move(t)));
+                       return f(boost::asio::bind_executor(executor, std::forward<decltype(t)>(t)));
                    };
                }(function)...)
         .async_wait(boost::asio::experimental::wait_for_all(), std::forward<CompletionToken>(token));

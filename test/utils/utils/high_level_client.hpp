@@ -112,8 +112,7 @@ struct HighLevelClientTest : test::GrpcClientServerTest
     template <class... Functions>
     void spawn_and_run(Functions&&... functions)
     {
-        (test::spawn(grpc_context, std::forward<Functions>(functions)), ...);
-        grpc_context.run();
+        test::spawn_and_run(grpc_context, std::forward<Functions>(functions)...);
     }
 #endif
 
