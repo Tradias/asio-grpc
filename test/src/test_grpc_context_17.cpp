@@ -367,13 +367,17 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wai
 {
     bool ok{false};
     std::chrono::system_clock::time_point start;
-    asio::spawn(asio::bind_executor(get_executor(), [] {}),
-                [&](auto&& yield)
-                {
-                    grpc::Alarm alarm;
-                    start = test::now();
-                    ok = agrpc::wait(alarm, test::hundred_milliseconds_from_now(), yield);
-                });
+    auto handler = [&](auto&& yield)
+    {
+        grpc::Alarm alarm;
+        start = test::now();
+        ok = agrpc::wait(alarm, test::hundred_milliseconds_from_now(), yield);
+    };
+#ifdef AGRPC_TEST_ASIO_HAS_NEW_SPAWN
+    test::typed_spawn(get_executor(), handler);
+#else
+    test::typed_spawn(asio::bind_executor(get_executor(), [] {}), handler);
+#endif
     grpc_context.run();
     CHECK_LE(std::chrono::milliseconds(100), test::now() - start);
     CHECK(ok);
@@ -400,18 +404,18 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post an Alarm and check time")
 }
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-TEST_CASE_FIXTURE(test::GrpcContextTest, "experimental::deferred with Alarm")
+TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::deferred with Alarm")
 {
     bool ok1{false};
     bool ok2{false};
     grpc::Alarm alarm;
     auto deferred_op =
         agrpc::wait(alarm, test::ten_milliseconds_from_now(),
-                    asio::experimental::deferred(
+                    test::ASIO_DEFERRED(
                         [&](bool wait_ok)
                         {
                             ok1 = wait_ok;
-                            return agrpc::wait(alarm, test::ten_milliseconds_from_now(), asio::experimental::deferred);
+                            return agrpc::wait(alarm, test::ten_milliseconds_from_now(), test::ASIO_DEFERRED);
                         }));
     std::move(deferred_op)(asio::bind_executor(grpc_context,
                                                [&](bool wait_ok)

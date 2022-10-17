@@ -18,6 +18,7 @@
 #include <agrpc/grpc_context.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/compose.hpp>
+#include <boost/asio/detached.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/asio/spawn.hpp>
 
@@ -25,15 +26,45 @@
 
 namespace example
 {
-template <class Function, class CompletionToken>
-auto initiate_spawn(Function&& function, CompletionToken&& token)
+template <class Executor, class Function>
+void spawn(Executor&& executor, Function&& function)
 {
-    return boost::asio::async_initiate<CompletionToken, void()>(
+#if (BOOST_VERSION >= 108000)
+    boost::asio::spawn(std::forward<Executor>(executor), std::forward<Function>(function), boost::asio::detached);
+#else
+    boost::asio::spawn(std::forward<Executor>(executor), std::forward<Function>(function));
+#endif
+}
+
+template <class Executor, class Function, class CompletionToken>
+auto initiate_spawn(Executor&& executor, Function&& function, CompletionToken&& token)
+{
+#if (BOOST_VERSION >= 108000)
+    return boost::asio::spawn(std::forward<Executor>(executor), std::forward<Function>(function),
+                              std::forward<CompletionToken>(token));
+#else
+    auto bound_token =
+        boost::asio::bind_executor(std::forward<Executor>(executor), std::forward<CompletionToken>(token));
+    return boost::asio::async_initiate<decltype(bound_token), void()>(
         [&](auto&& completion_handler, auto&& f)
         {
             boost::asio::spawn(std::move(completion_handler), std::forward<decltype(f)>(f));
         },
-        token, std::forward<Function>(function));
+        bound_token, std::forward<Function>(function));
+#endif
+}
+
+inline void rethrow_exception_ptr(std::exception_ptr ep)
+{
+    if (ep)
+    {
+        std::rethrow_exception(ep);
+    }
+}
+
+template <class T>
+void rethrow_exception_ptr(T&&)
+{
 }
 
 template <class... Function>
@@ -56,12 +87,13 @@ struct SpawnAllVoid
                         return [&](auto&& t)
                         {
                             return example::initiate_spawn(
+                                executor,
                                 [f = std::move(f)](const auto& yield) mutable
                                 {
                                     auto local_f = std::move(f);
                                     std::move(local_f)(yield);
                                 },
-                                boost::asio::bind_executor(executor, t));
+                                std::forward<decltype(t)>(t));
                         };
                     }(function)...)
                     .async_wait(boost::asio::experimental::wait_for_all(), std::move(self));
@@ -69,9 +101,10 @@ struct SpawnAllVoid
             functions);
     }
 
-    template <class Self, std::size_t N>
-    void operator()(Self& self, const std::array<std::size_t, N>&)
+    template <class Self, class... T>
+    void operator()(Self& self, T&&... t)
     {
+        (example::rethrow_exception_ptr(t), ...);
         self.complete();
     }
 };
@@ -91,7 +124,7 @@ auto when_all_bind_executor(const Executor& executor, CompletionToken&& token, F
                {
                    return [&](auto&& t)
                    {
-                       return f(boost::asio::bind_executor(executor, std::move(t)));
+                       return f(boost::asio::bind_executor(executor, std::forward<decltype(t)>(t)));
                    };
                }(function)...)
         .async_wait(boost::asio::experimental::wait_for_all(), std::forward<CompletionToken>(token));

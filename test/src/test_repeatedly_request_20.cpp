@@ -24,6 +24,8 @@
 #include <agrpc/rpc.hpp>
 #include <agrpc/wait.hpp>
 
+#include <thread>
+
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 struct TypedAwaitableRequestHandler
 {
@@ -260,7 +262,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request unar
                             }));
     for (size_t i = 0; i < REQUEST_COUNT; ++i)
     {
-        asio::spawn(grpc_context,
+        test::spawn(grpc_context,
                     [&](const asio::yield_context& yield)
                     {
                         test::PerformUnarySuccessOptions options;

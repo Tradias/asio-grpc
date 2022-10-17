@@ -51,7 +51,7 @@ More examples for things like streaming RPCs, double-buffered file transfer with
 
 # Requirements
 
-Asio-grpc requires [gRPC](https://grpc.io/) and either [Boost.Asio](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio.html) (min. 1.74.0), [standalone Asio](https://github.com/chriskohlhoff/asio) (min. 1.17.0) or [libunifex](https://github.com/facebookexperimental/libunifex).
+Asio-grpc requires [gRPC](https://grpc.io/) and either [Boost.Asio](https://www.boost.org/doc/libs/1_80_0/doc/html/boost_asio.html) (min. 1.74.0), [standalone Asio](https://github.com/chriskohlhoff/asio) (min. 1.17.0) or [libunifex](https://github.com/facebookexperimental/libunifex).
 
 CMake version 3.14 is required to install project, but the `src/` directory may also be copied and used directly.
 
@@ -59,7 +59,7 @@ Versions tested by Github Actions:
 
  * CMake 3.16.3
  * gRPC 1.46.3, 1.16.1 (older versions might work as well)
- * Boost 1.79.0
+ * Boost 1.80.0
  * Standalone Asio 1.17.0
  * libunifex 2022-02-09
  * MSVC 19.33 (Visual Studio 17 2022)

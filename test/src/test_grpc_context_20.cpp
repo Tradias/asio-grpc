@@ -26,7 +26,7 @@
 #include <thread>
 #include <vector>
 
-#ifdef AGRPC_ASIO_HAS_CONCEPTS
+#ifdef AGRPC_TEST_ASIO_HAS_CONCEPTS
 TEST_CASE("GrpcExecutor fulfills Executor TS concepts")
 {
     CHECK(asio::execution::executor<agrpc::GrpcExecutor>);

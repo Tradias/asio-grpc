@@ -118,7 +118,7 @@ TEST_CASE_TEMPLATE("yield_context repeatedly_request unary", T, TypedRequestHand
     test::v1::Test::Stub test_stub{test.channel};
     for (size_t i = 0; i < 3; ++i)
     {
-        asio::spawn(test.grpc_context,
+        test::spawn(test.grpc_context,
                     [&](const asio::yield_context& yield)
                     {
                         test::PerformUnarySuccessOptions options;
@@ -327,17 +327,17 @@ TEST_CASE_FIXTURE(GrpcRepeatedlyRequestTest, "repeatedly_request cancellation")
 {
     int count{};
     asio::cancellation_signal signal;
-    agrpc::repeatedly_request(
-        &test::v1::Test::AsyncService::RequestUnary, service,
-        test::RpcSpawner{grpc_context,
-                         [&](grpc::ServerContext&, test::msg::Request&,
-                             grpc::ServerAsyncResponseWriter<test::msg::Response>& writer, asio::yield_context yield)
-                         {
-                             test::msg::Response response;
-                             CHECK(agrpc::finish(writer, response, grpc::Status::OK, yield));
-                             ++count;
-                         }},
-        asio::bind_cancellation_slot(signal.slot(), test::NoOp{}));
+    agrpc::repeatedly_request(&test::v1::Test::AsyncService::RequestUnary, service,
+                              test::RpcSpawner{grpc_context,
+                                               [&](grpc::ServerContext&, test::msg::Request&,
+                                                   grpc::ServerAsyncResponseWriter<test::msg::Response>& writer,
+                                                   const asio::yield_context& yield)
+                                               {
+                                                   test::msg::Response response;
+                                                   CHECK(agrpc::finish(writer, response, grpc::Status::OK, yield));
+                                                   ++count;
+                                               }},
+                              asio::bind_cancellation_slot(signal.slot(), test::NoOp{}));
     test::spawn_and_run(grpc_context,
                         [&](const asio::yield_context& yield)
                         {

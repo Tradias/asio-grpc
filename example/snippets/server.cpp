@@ -32,7 +32,7 @@
 
 namespace asio = boost::asio;
 
-asio::awaitable<void> grpc_alarm(agrpc::GrpcContext& grpc_context)
+asio::awaitable<void> grpc_alarm()
 {
     /* [alarm-awaitable] */
     grpc::Alarm alarm;

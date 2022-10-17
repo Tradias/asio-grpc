@@ -35,6 +35,7 @@
 #include <asio/associated_executor.hpp>
 #include <asio/async_result.hpp>
 #include <asio/coroutine.hpp>
+#include <asio/error.hpp>
 #include <asio/execution.hpp>
 #include <asio/execution_context.hpp>
 #include <asio/post.hpp>
@@ -70,6 +71,7 @@
 #include <boost/asio/associated_executor.hpp>
 #include <boost/asio/async_result.hpp>
 #include <boost/asio/coroutine.hpp>
+#include <boost/asio/error.hpp>
 #include <boost/asio/execution.hpp>
 #include <boost/asio/execution_context.hpp>
 #include <boost/asio/post.hpp>
