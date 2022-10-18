@@ -73,7 +73,7 @@ struct WaitOkAssigner
 {
     void operator()(bool wait_ok) const noexcept { ok = wait_ok; }
 
-    void operator()(agrpc::Alarm&&, bool wait_ok) const noexcept { ok = wait_ok; }
+    void operator()(bool wait_ok, agrpc::Alarm&&) const noexcept { ok = wait_ok; }
 
     bool& ok;
 };
@@ -83,7 +83,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "agrpc::Alarm move-overload with callba
     bool ok{false};
     agrpc::Alarm(grpc_context)
         .wait(test::ten_milliseconds_from_now(),
-              [&](agrpc::Alarm&& alarm, bool wait_ok)
+              [&](bool wait_ok, agrpc::Alarm&& alarm)
               {
                   CHECK(wait_ok);
                   std::move(alarm).wait(test::ten_milliseconds_from_now(), WaitOkAssigner{ok});

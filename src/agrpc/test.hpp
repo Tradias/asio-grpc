@@ -43,7 +43,7 @@ inline void process_grpc_tag(agrpc::GrpcContext& grpc_context, void* tag, bool o
         void* tag;
         bool ok;
 
-        void operator()(agrpc::Alarm&&, bool)
+        void operator()(bool, agrpc::Alarm&&)
         {
             detail::process_grpc_tag(tag, detail::InvokeHandler::YES, ok, grpc_context);
         }

@@ -32,7 +32,7 @@ struct MoveAlarmSenderImplementation
     static constexpr auto TYPE = detail::SenderImplementationType::GRPC_TAG;
 
     using Alarm = agrpc::BasicAlarm<Executor>;
-    using Signature = void(Alarm, bool);
+    using Signature = void(bool, Alarm);
     using StopFunction = detail::AlarmCancellationFunction;
 
     struct Initiation
@@ -64,7 +64,7 @@ struct MoveAlarmSenderImplementation
     template <class OnDone>
     void done(OnDone on_done, bool ok)
     {
-        on_done(static_cast<Alarm&&>(alarm.value()), ok);
+        on_done(ok, static_cast<Alarm&&>(alarm.value()));
     }
 
     std::optional<Alarm> alarm;

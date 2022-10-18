@@ -363,7 +363,7 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>, "ClientSt
             CHECK_EQ(42, test_server.request.integer());
             test_server.response.set_integer(1);
             CHECK_FALSE(agrpc::read(test_server.responder, test_server.request, yield));
-            CHECK(agrpc::finish(test_server.responder, test_server.response, grpc::Status::CANCELLED, yield));
+            CHECK(agrpc::finish(test_server.responder, test_server.response, grpc::Status::OK, yield));
         },
         [&](const asio::yield_context& yield)
         {
@@ -377,9 +377,9 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>, "ClientSt
             else
             {
                 CHECK(rpc.write(request, yield));
-                CHECK_FALSE(rpc.finish(yield));
+                CHECK(rpc.finish(yield));
             }
-            CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.status_code());
+            CHECK_EQ(grpc::StatusCode::OK, rpc.status_code());
         });
 }
 
