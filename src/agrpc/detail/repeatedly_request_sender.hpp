@@ -231,7 +231,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
             detail::AllocationGuard ptr{self->request_handler_operation, self->get_allocator()};
             if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler && ok)
             {
-                if (auto exception_ptr = self->emplace_request_handler_operation(*ptr))
+                if (auto exception_ptr = emplace_request_handler_operation(*ptr))
                 {
                     self->stop_context().reset();
                     ptr.reset();
@@ -260,7 +260,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
             }
         }
 
-        std::exception_ptr emplace_request_handler_operation(RequestHandlerOperation& operation)
+        static std::exception_ptr emplace_request_handler_operation(RequestHandlerOperation& operation)
         {
             AGRPC_TRY
             {

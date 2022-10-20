@@ -58,7 +58,7 @@ CMake version 3.14 is required to install project, but the `src/` directory may 
 Versions tested by Github Actions:
 
  * CMake 3.16.3
- * gRPC 1.46.3, 1.16.1 (older versions might work as well)
+ * gRPC 1.49.0, 1.16.1 (older versions might work as well)
  * Boost 1.80.0
  * Standalone Asio 1.17.0
  * libunifex 2022-02-09
@@ -231,7 +231,7 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
 asio-grpc is part of [grpc_bench](https://github.com/Tradias/grpc_bench). Head over there to compare its performance against other libraries and languages.
 
 Results from the helloworld unary RPC   
-Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz, Linux, GCC 12.1.0, Boost 1.79.0, gRPC 1.48.0, asio-grpc v2.0.0, jemalloc 5.2.1   
+Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz, Linux, GCC 12.2.0, Boost 1.80.0, gRPC 1.50.0, asio-grpc v2.2.0, jemalloc 5.2.1   
 Request scenario: string_100B
 
 <details><summary><b>Results</b></summary>
@@ -241,31 +241,31 @@ Request scenario: string_100B
 
 | name                        |   req/s |   avg. latency |        90 % in |        95 % in |        99 % in | avg. cpu |   avg. memory |
 |-----------------------------|--------:|---------------:|---------------:|---------------:|---------------:|---------:|--------------:|
-| go_grpc                     |   48414 |       19.93 ms |       30.18 ms |       33.47 ms |       39.95 ms |  100.86% |     25.06 MiB |
-| rust_thruster_mt            |   45317 |       21.87 ms |        9.70 ms |       11.11 ms |      641.64 ms |  102.59% |     11.67 MiB |
-| rust_tonic_mt               |   40461 |       24.54 ms |       10.77 ms |       11.74 ms |      655.83 ms |   102.5% |     13.12 MiB |
-| cpp_grpc_mt                 |   35571 |       27.98 ms |       29.67 ms |       30.08 ms |       31.35 ms |  103.07% |       5.1 MiB |
-| rust_grpcio                 |   35451 |       28.08 ms |       29.79 ms |       30.35 ms |       31.21 ms |  102.48% |     18.08 MiB |
-| cpp_asio_grpc_unifex        |   33908 |       29.36 ms |       31.24 ms |       31.68 ms |       32.93 ms |  103.81% |      5.52 MiB |
-| cpp_asio_grpc_callback      |   33155 |       30.03 ms |       31.93 ms |       32.43 ms |       34.03 ms |  103.35% |      6.46 MiB |
-| cpp_asio_grpc_coroutine     |   31175 |       31.95 ms |       34.03 ms |       34.56 ms |       36.05 ms |  101.82% |      5.07 MiB |
-| cpp_asio_grpc_io_context_coro |   29658 |       33.58 ms |       35.93 ms |       36.38 ms |       37.71 ms |   77.96% |      5.62 MiB |
-| cpp_grpc_callback           |   10057 |       91.56 ms |      137.04 ms |      166.93 ms |      179.02 ms |  101.51% |     47.08 MiB |
+| rust_thruster_mt            |   49994 |       19.73 ms |        8.95 ms |       10.77 ms |      515.24 ms |   105.0% |     12.15 MiB |
+| rust_tonic_mt               |   43996 |       22.53 ms |       10.17 ms |       10.90 ms |      658.49 ms |  103.34% |     14.65 MiB |
+| go_grpc                     |   39365 |       24.71 ms |       37.52 ms |       41.89 ms |       51.94 ms |   99.48% |     24.83 MiB |
+| rust_grpcio                 |   36516 |       27.27 ms |       29.24 ms |       29.75 ms |       30.84 ms |  103.41% |     18.36 MiB |
+| cpp_grpc_mt                 |   34849 |       28.57 ms |       30.34 ms |       30.86 ms |       32.30 ms |  102.56% |      5.77 MiB |
+| cpp_asio_grpc_unifex        |   34065 |       29.22 ms |       31.12 ms |       31.70 ms |       33.13 ms |  102.71% |      5.55 MiB |
+| cpp_asio_grpc_callback      |   33322 |       29.88 ms |       31.73 ms |       32.15 ms |       33.17 ms |  103.08% |      5.47 MiB |
+| cpp_asio_grpc_cpp20_coroutine |   32543 |       30.60 ms |       32.53 ms |       33.05 ms |       34.23 ms |  102.98% |      5.55 MiB |
+| cpp_asio_grpc_io_context_coro |   29236 |       34.07 ms |       36.60 ms |       37.07 ms |       38.22 ms |   77.59% |      5.55 MiB |
+| cpp_grpc_callback           |    9712 |       94.97 ms |      159.10 ms |      167.45 ms |      179.10 ms |  100.64% |     39.83 MiB |
 
 ### 2 CPU server
 
 | name                        |   req/s |   avg. latency |        90 % in |        95 % in |        99 % in | avg. cpu |   avg. memory |
 |-----------------------------|--------:|---------------:|---------------:|---------------:|---------------:|---------:|--------------:|
-| cpp_asio_grpc_unifex        |   81705 |       10.40 ms |       15.91 ms |       18.98 ms |       27.27 ms |  210.83% |     26.59 MiB |
-| cpp_grpc_mt                 |   81053 |       10.41 ms |       16.32 ms |       19.70 ms |       28.66 ms |  206.76% |     26.28 MiB |
-| cpp_asio_grpc_callback      |   79425 |       10.73 ms |       16.54 ms |       19.81 ms |       28.51 ms |  208.81% |      23.9 MiB |
-| cpp_asio_grpc_coroutine     |   73646 |       11.81 ms |       19.23 ms |       22.44 ms |       30.80 ms |  210.83% |     24.79 MiB |
-| cpp_asio_grpc_io_context_coro |   70568 |       12.41 ms |       20.43 ms |       24.03 ms |       33.61 ms |  160.64% |     24.76 MiB |
-| go_grpc                     |   65692 |       13.24 ms |       20.63 ms |       23.63 ms |       30.85 ms |  194.68% |     25.44 MiB |
-| rust_thruster_mt            |   65361 |       13.87 ms |       36.33 ms |       59.45 ms |       81.96 ms |  193.87% |      13.4 MiB |
-| cpp_grpc_callback           |   64623 |       12.64 ms |       24.25 ms |       29.55 ms |       42.64 ms |  206.96% |     55.59 MiB |
-| rust_tonic_mt               |   58563 |       16.01 ms |       41.97 ms |       63.81 ms |       98.95 ms |  201.64% |     15.45 MiB |
-| rust_grpcio                 |   57612 |       16.40 ms |       24.81 ms |       27.37 ms |       32.15 ms |  215.98% |     29.94 MiB |
+| cpp_grpc_mt                 |   83032 |       10.14 ms |       15.84 ms |       18.80 ms |       26.93 ms |  204.45% |     26.31 MiB |
+| cpp_asio_grpc_unifex        |   82886 |       10.27 ms |       16.13 ms |       19.21 ms |       28.12 ms |  207.27% |     28.87 MiB |
+| cpp_asio_grpc_callback      |   81464 |       10.51 ms |       16.56 ms |       19.62 ms |       27.60 ms |  208.05% |     28.76 MiB |
+| cpp_asio_grpc_cpp20_coroutine |   80176 |       10.68 ms |       16.83 ms |       19.83 ms |       27.57 ms |  205.33% |     30.79 MiB |
+| rust_thruster_mt            |   72647 |       12.27 ms |       28.15 ms |       41.74 ms |       63.25 ms |   189.5% |     14.56 MiB |
+| cpp_asio_grpc_io_context_coro |   71029 |       12.34 ms |       19.96 ms |       23.51 ms |       32.72 ms |  159.03% |     22.65 MiB |
+| cpp_grpc_callback           |   66411 |       12.31 ms |       23.51 ms |       28.43 ms |       40.44 ms |  205.36% |     59.76 MiB |
+| rust_tonic_mt               |   66068 |       14.04 ms |       34.90 ms |       47.45 ms |       71.99 ms |  207.32% |     17.56 MiB |
+| rust_grpcio                 |   59409 |       15.90 ms |       23.30 ms |       25.64 ms |       30.70 ms |  216.12% |     31.65 MiB |
+| go_grpc                     |   58654 |       15.65 ms |       24.06 ms |       26.83 ms |       32.26 ms |   197.8% |     25.15 MiB |
 
 </p>
 </details>
