@@ -329,10 +329,18 @@ TEST_CASE_FIXTURE(HighLevelClientIoContextTest<test::ClientStreamingRPC>,
                                  new_server_context, responder, yield));
             CHECK(agrpc::finish(responder, test_server.response, grpc::Status::OK, yield));
 
-            // finish first request
-            agrpc::read(test_server.responder, test_server.request, yield);
-            agrpc::finish(test_server.responder, test_server.response, grpc::Status::OK, yield);
-            CHECK(is_cancelled_future.get());
+            // wait for cancellation signal from first request
+            grpc::Alarm alarm;
+            for (int i{}; i < 50; ++i)
+            {
+                agrpc::wait(alarm, test::ten_milliseconds_from_now(), yield);
+                if (is_cancelled_future.wait_for(std::chrono::milliseconds(1)) == std::future_status::ready)
+                {
+                    CHECK(is_cancelled_future.get());
+                    return;
+                }
+            }
+            FAIL("timeout reached while waiting for cancellation signal");
         },
         [&](const asio::yield_context& yield)
         {
