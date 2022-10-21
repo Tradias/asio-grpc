@@ -21,6 +21,7 @@
 #include "utils/grpc_context_test.hpp"
 #include "utils/rpc.hpp"
 
+#include <agrpc/detail/algorithm.hpp>
 #include <agrpc/get_completion_queue.hpp>
 #include <agrpc/grpc_initiate.hpp>
 #include <agrpc/rpc.hpp>
@@ -52,6 +53,49 @@ TEST_CASE("agrpc::request and agrpc::wait are noexcept for use_sender")
                              std::declval<asio::yield_context>())));
     CHECK(noexcept(agrpc::wait(std::declval<grpc::Alarm&>(), std::declval<std::chrono::system_clock::time_point>(),
                                std::declval<UseSender&&>())));
+}
+
+TEST_CASE("constexpr algorithm: search")
+{
+    std::string_view text{"find this needle in the haystack"};
+    std::string_view needle{"needle"};
+    CHECK_EQ(std::search(text.begin(), text.end(), needle.begin(), needle.end()),
+             agrpc::detail::search(text.begin(), text.end(), needle.begin(), needle.end()));
+}
+
+TEST_CASE("constexpr algorithm: find")
+{
+    std::string_view text{"find this needle in the haystack"};
+    CHECK_EQ(std::find(text.begin(), text.end(), 'y'), agrpc::detail::find(text.begin(), text.end(), 'y'));
+}
+
+TEST_CASE("constexpr algorithm: copy")
+{
+    std::string_view text{"find this needle in the haystack"};
+    std::string out(text.size(), '\0');
+    const auto copy = agrpc::detail::copy(text.begin(), text.end(), out.begin());
+    CHECK_EQ(text, out);
+    CHECK_EQ(std::copy(text.begin(), text.end(), out.begin()), copy);
+}
+
+TEST_CASE("constexpr algorithm: move")
+{
+    std::vector<std::unique_ptr<int>> vector;
+    vector.emplace_back(std::make_unique<int>(1));
+    vector.emplace_back(std::make_unique<int>(2));
+    const auto move = agrpc::detail::move(vector.begin(), vector.begin() + 1, vector.begin() + 1);
+    CHECK_EQ(vector.end(), move);
+    CHECK_EQ(nullptr, vector.front());
+    CHECK_EQ(1, *vector.back());
+}
+
+TEST_CASE("constexpr algorithm: replace_sequence_with_value")
+{
+    std::string text{"find this needle in the haystack"};
+    std::string_view needle{"needle"};
+    const auto new_end = agrpc::detail::replace_sequence_with_value(text.begin(), text.end(), needle, 'x');
+    std::string result(text.begin(), new_end);
+    CHECK_EQ("find this x in the haystack", result);
 }
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "grpc_initiate NotifyOnStateChange")
