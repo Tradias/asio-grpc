@@ -241,31 +241,31 @@ Request scenario: string_100B
 
 | name                        |   req/s |   avg. latency |        90 % in |        95 % in |        99 % in | avg. cpu |   avg. memory |
 |-----------------------------|--------:|---------------:|---------------:|---------------:|---------------:|---------:|--------------:|
-| rust_thruster_mt            |   49994 |       19.73 ms |        8.95 ms |       10.77 ms |      515.24 ms |   105.0% |     12.15 MiB |
-| rust_tonic_mt               |   43996 |       22.53 ms |       10.17 ms |       10.90 ms |      658.49 ms |  103.34% |     14.65 MiB |
-| go_grpc                     |   39365 |       24.71 ms |       37.52 ms |       41.89 ms |       51.94 ms |   99.48% |     24.83 MiB |
-| rust_grpcio                 |   36516 |       27.27 ms |       29.24 ms |       29.75 ms |       30.84 ms |  103.41% |     18.36 MiB |
-| cpp_grpc_mt                 |   34849 |       28.57 ms |       30.34 ms |       30.86 ms |       32.30 ms |  102.56% |      5.77 MiB |
-| cpp_asio_grpc_unifex        |   34065 |       29.22 ms |       31.12 ms |       31.70 ms |       33.13 ms |  102.71% |      5.55 MiB |
-| cpp_asio_grpc_callback      |   33322 |       29.88 ms |       31.73 ms |       32.15 ms |       33.17 ms |  103.08% |      5.47 MiB |
-| cpp_asio_grpc_cpp20_coroutine |   32543 |       30.60 ms |       32.53 ms |       33.05 ms |       34.23 ms |  102.98% |      5.55 MiB |
-| cpp_asio_grpc_io_context_coro |   29236 |       34.07 ms |       36.60 ms |       37.07 ms |       38.22 ms |   77.59% |      5.55 MiB |
-| cpp_grpc_callback           |    9712 |       94.97 ms |      159.10 ms |      167.45 ms |      179.10 ms |  100.64% |     39.83 MiB |
+| rust_thruster_mt            |   51918 |       19.03 ms |        8.66 ms |       10.26 ms |      499.22 ms |  103.22% |     11.69 MiB |
+| rust_tonic_mt               |   46671 |       21.24 ms |        9.61 ms |       10.35 ms |      604.04 ms |  101.72% |     14.04 MiB |
+| go_grpc                     |   40699 |       23.97 ms |       36.68 ms |       40.75 ms |       50.16 ms |   98.72% |     25.28 MiB |
+| rust_grpcio                 |   38222 |       26.06 ms |       27.90 ms |       28.39 ms |       29.43 ms |  102.23% |     17.89 MiB |
+| cpp_grpc_mt                 |   36133 |       27.55 ms |       29.28 ms |       29.75 ms |       31.31 ms |   102.0% |       5.2 MiB |
+| cpp_asio_grpc_callback      |   33796 |       29.47 ms |       31.47 ms |       31.89 ms |       33.01 ms |  102.74% |      5.39 MiB |
+| cpp_asio_grpc_unifex        |   33781 |       29.48 ms |       31.36 ms |       31.78 ms |       33.41 ms |  103.35% |      5.33 MiB |
+| cpp_asio_grpc_io_context_coro |   30706 |       32.44 ms |       34.68 ms |       35.14 ms |       36.44 ms |    77.5% |      5.69 MiB |
+| cpp_asio_grpc_coroutine     |   30687 |       32.46 ms |       34.94 ms |       35.47 ms |       37.00 ms |  102.17% |      5.63 MiB |
+| cpp_grpc_callback           |   10022 |       92.43 ms |      145.80 ms |      168.15 ms |      179.91 ms |  101.33% |     51.37 MiB |
 
 ### 2 CPU server
 
 | name                        |   req/s |   avg. latency |        90 % in |        95 % in |        99 % in | avg. cpu |   avg. memory |
 |-----------------------------|--------:|---------------:|---------------:|---------------:|---------------:|---------:|--------------:|
-| cpp_grpc_mt                 |   83032 |       10.14 ms |       15.84 ms |       18.80 ms |       26.93 ms |  204.45% |     26.31 MiB |
-| cpp_asio_grpc_unifex        |   82886 |       10.27 ms |       16.13 ms |       19.21 ms |       28.12 ms |  207.27% |     28.87 MiB |
-| cpp_asio_grpc_callback      |   81464 |       10.51 ms |       16.56 ms |       19.62 ms |       27.60 ms |  208.05% |     28.76 MiB |
-| cpp_asio_grpc_cpp20_coroutine |   80176 |       10.68 ms |       16.83 ms |       19.83 ms |       27.57 ms |  205.33% |     30.79 MiB |
-| rust_thruster_mt            |   72647 |       12.27 ms |       28.15 ms |       41.74 ms |       63.25 ms |   189.5% |     14.56 MiB |
-| cpp_asio_grpc_io_context_coro |   71029 |       12.34 ms |       19.96 ms |       23.51 ms |       32.72 ms |  159.03% |     22.65 MiB |
-| cpp_grpc_callback           |   66411 |       12.31 ms |       23.51 ms |       28.43 ms |       40.44 ms |  205.36% |     59.76 MiB |
-| rust_tonic_mt               |   66068 |       14.04 ms |       34.90 ms |       47.45 ms |       71.99 ms |  207.32% |     17.56 MiB |
-| rust_grpcio                 |   59409 |       15.90 ms |       23.30 ms |       25.64 ms |       30.70 ms |  216.12% |     31.65 MiB |
-| go_grpc                     |   58654 |       15.65 ms |       24.06 ms |       26.83 ms |       32.26 ms |   197.8% |     25.15 MiB |
+| cpp_asio_grpc_unifex        |   89159 |        9.64 ms |       15.43 ms |       18.27 ms |       25.87 ms |  208.59% |     29.07 MiB |
+| cpp_grpc_mt                 |   88992 |        9.60 ms |       15.18 ms |       18.22 ms |       25.32 ms |   208.7% |     23.78 MiB |
+| cpp_asio_grpc_callback      |   88078 |        9.67 ms |       15.25 ms |       18.31 ms |       26.06 ms |  212.87% |     28.64 MiB |
+| cpp_asio_grpc_coroutine     |   79508 |       10.83 ms |       18.09 ms |       21.45 ms |       28.30 ms |  211.46% |     29.47 MiB |
+| rust_thruster_mt            |   76600 |       11.69 ms |       28.52 ms |       44.30 ms |       64.47 ms |  188.57% |     14.48 MiB |
+| cpp_asio_grpc_io_context_coro |   75468 |       11.67 ms |       20.31 ms |       23.45 ms |       31.33 ms |  159.76% |     25.69 MiB |
+| rust_tonic_mt               |   70692 |       13.11 ms |       32.60 ms |       44.63 ms |       69.52 ms |  205.38% |     17.48 MiB |
+| cpp_grpc_callback           |   66659 |       12.40 ms |       25.75 ms |       30.73 ms |       45.06 ms |  205.51% |     62.18 MiB |
+| rust_grpcio                 |   65566 |       14.32 ms |       21.37 ms |       23.68 ms |       28.48 ms |  215.38% |     32.33 MiB |
+| go_grpc                     |   61824 |       14.87 ms |       22.80 ms |       25.62 ms |       30.65 ms |  200.74% |     26.94 MiB |
 
 </p>
 </details>
