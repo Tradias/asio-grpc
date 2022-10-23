@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_GRPC_CONTEXT_IMPLEMENTATION_IPP
 
 #include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/async_notify_when_done.hpp>
 #include <agrpc/detail/grpc_completion_queue_event.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
 #include <agrpc/detail/type_erased_operation.hpp>
@@ -88,6 +89,28 @@ inline void GrpcContextImplementation::add_operation(agrpc::GrpcContext& grpc_co
     else
     {
         detail::GrpcContextImplementation::add_remote_operation(grpc_context, op);
+    }
+}
+
+inline void GrpcContextImplementation::add_async_notify_when_done_operation(
+    agrpc::GrpcContext& grpc_context, detail::AsyncNotfiyWhenDoneSenderImplementation* implementation) noexcept
+{
+    grpc_context.async_notify_when_done_list.push_back(implementation);
+}
+
+inline void GrpcContextImplementation::remove_async_notify_when_done_operation(
+    agrpc::GrpcContext& grpc_context, detail::AsyncNotfiyWhenDoneSenderImplementation* implementation) noexcept
+{
+    grpc_context.async_notify_when_done_list.remove(implementation);
+}
+
+inline void GrpcContextImplementation::deallocate_async_notify_when_done_list(agrpc::GrpcContext& grpc_context)
+{
+    auto& list = grpc_context.async_notify_when_done_list;
+    while (!list.empty())
+    {
+        auto* implementation = list.pop_front();
+        implementation->complete(detail::InvokeHandler::NO, grpc_context.get_allocator());
     }
 }
 

@@ -13,10 +13,10 @@
 // limitations under the License.
 
 #include "utils/asio_utils.hpp"
-#include "utils/counting_allocator.hpp"
 #include "utils/doctest.hpp"
 #include "utils/grpc_context_test.hpp"
 #include "utils/time.hpp"
+#include "utils/tracking_allocator.hpp"
 
 #include <agrpc/bind_allocator.hpp>
 #include <agrpc/wait.hpp>
@@ -66,7 +66,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "AllocatorBinder constructor and member
     auto move_invocable_binder = agrpc::bind_allocator(default_allocator, MoveInvocable{});
     CHECK(std::move(move_invocable_binder)(true));
 
-    static constexpr auto ALLOCATOR_BINDER = agrpc::bind_allocator(test::CountingAllocator<std::byte>{},
+    static constexpr auto ALLOCATOR_BINDER = agrpc::bind_allocator(test::TrackingAllocator<std::byte>{},
                                                                    []
                                                                    {
                                                                        return 42;

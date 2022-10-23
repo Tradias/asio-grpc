@@ -69,6 +69,7 @@ inline GrpcContext::~GrpcContext()
     asio::execution_context::shutdown();
     asio::execution_context::destroy();
 #endif
+    detail::GrpcContextImplementation::deallocate_async_notify_when_done_list(*this);
 }
 
 inline bool GrpcContext::run()

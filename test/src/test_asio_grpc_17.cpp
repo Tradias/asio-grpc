@@ -14,12 +14,12 @@
 
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asio_utils.hpp"
-#include "utils/counting_allocator.hpp"
 #include "utils/doctest.hpp"
 #include "utils/exception.hpp"
 #include "utils/grpc_client_server_test.hpp"
 #include "utils/grpc_context_test.hpp"
 #include "utils/rpc.hpp"
+#include "utils/tracking_allocator.hpp"
 
 #include <agrpc/detail/algorithm.hpp>
 #include <agrpc/get_completion_queue.hpp>
@@ -558,15 +558,15 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "agrpc::request for unary RPCs can be c
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "agrpc::wait correctly unbinds executor_binder and allocator_binder")
 {
     grpc::Alarm alarm;
-    std::size_t bytes_allocated{};
-    test::CountingAllocator<std::byte> allocator{bytes_allocated};
+    test::TrackedAllocation tracked{};
+    test::TrackingAllocator<std::byte> allocator{tracked};
     auto test = [&](auto token)
     {
         agrpc::wait(alarm, test::ten_milliseconds_from_now(), token);
         grpc_context.run();
         auto expected = sizeof(void*) * 4;
         CHECK_LT(expected, sizeof(token));
-        CHECK_GE(expected, bytes_allocated);
+        CHECK_GE(expected, tracked.bytes_allocated);
     };
 #ifdef AGRPC_ASIO_HAS_BIND_ALLOCATOR
     SUBCASE("asio::bind_allocator")
@@ -599,8 +599,8 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest,
                                 agrpc::finish(writer, grpc::Status::OK, asio::bind_executor(grpc_context, [](bool) {}));
                             }));
     // Perform test
-    std::size_t bytes_allocated{};
-    test::CountingAllocator<std::byte> allocator{bytes_allocated};
+    test::TrackedAllocation tracked{};
+    test::TrackingAllocator<std::byte> allocator{tracked};
     auto token = agrpc::bind_allocator(
         allocator, asio::bind_executor(asio::any_io_executor{grpc_context.get_executor()}, [](auto&&) {}));
     test::msg::Request request;
@@ -608,7 +608,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest,
     grpc_context.run();
     auto expected = sizeof(void*) * 4;
     CHECK_LT(expected, sizeof(token));
-    CHECK_GE(expected, bytes_allocated);
+    CHECK_GE(expected, tracked.bytes_allocated);
 }
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "RPC step after grpc_context stop")

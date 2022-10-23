@@ -51,6 +51,8 @@ struct RepeatedlyRequestContextAccess;
 
 class GenericRPCContext;
 
+class AsyncNotfiyWhenDoneSenderImplementation;
+
 template <class Deadline, class Executor>
 struct MoveAlarmSenderImplementation;
 

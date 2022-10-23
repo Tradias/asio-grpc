@@ -47,6 +47,7 @@ endfunction()
 set(ASIO_GRPC_CPP17_TEST_SOURCE_FILES
     "test_alarm_17.cpp"
     "test_asio_grpc_17.cpp"
+    "test_async_notify_when_done_17.cpp"
     "test_repeatedly_request_17.cpp"
     "test_bind_allocator_17.cpp"
     "test_grpc_context_17.cpp"
