@@ -24,9 +24,22 @@ namespace test
 template <auto Request>
 struct TestServer;
 
-template <>
-struct TestServer<&test::v1::Test::AsyncService::RequestUnary>
+struct TestServerBase
 {
+    TestServerBase(test::v1::Test::AsyncService& service, grpc::ServerContext& server_context)
+        : service(service), server_context(server_context)
+    {
+    }
+
+    test::v1::Test::AsyncService& service;
+    grpc::ServerContext& server_context;
+};
+
+template <>
+struct TestServer<&test::v1::Test::AsyncService::RequestUnary> : test::TestServerBase
+{
+    using test::TestServerBase::TestServerBase;
+
     template <class CompletionToken>
     auto request_rpc(CompletionToken&& token)
     {
@@ -34,16 +47,16 @@ struct TestServer<&test::v1::Test::AsyncService::RequestUnary>
                               this->request, this->responder, std::forward<CompletionToken>(token));
     }
 
-    test::v1::Test::AsyncService& service;
-    grpc::ServerContext& server_context;
     test::msg::Request request{};
     test::msg::Response response{};
     grpc::ServerAsyncResponseWriter<test::msg::Response> responder{&server_context};
 };
 
 template <>
-struct TestServer<&test::v1::Test::AsyncService::RequestClientStreaming>
+struct TestServer<&test::v1::Test::AsyncService::RequestClientStreaming> : test::TestServerBase
 {
+    using test::TestServerBase::TestServerBase;
+
     template <class CompletionToken>
     auto request_rpc(CompletionToken&& token)
     {
@@ -51,16 +64,16 @@ struct TestServer<&test::v1::Test::AsyncService::RequestClientStreaming>
                               this->server_context, this->responder, std::forward<CompletionToken>(token));
     }
 
-    test::v1::Test::AsyncService& service;
-    grpc::ServerContext& server_context;
     test::msg::Request request{};
     test::msg::Response response{};
     grpc::ServerAsyncReader<test::msg::Response, test::msg::Request> responder{&server_context};
 };
 
 template <>
-struct TestServer<&test::v1::Test::AsyncService::RequestServerStreaming>
+struct TestServer<&test::v1::Test::AsyncService::RequestServerStreaming> : test::TestServerBase
 {
+    using test::TestServerBase::TestServerBase;
+
     template <class CompletionToken>
     auto request_rpc(CompletionToken&& token)
     {
@@ -69,16 +82,16 @@ struct TestServer<&test::v1::Test::AsyncService::RequestServerStreaming>
                               std::forward<CompletionToken>(token));
     }
 
-    test::v1::Test::AsyncService& service;
-    grpc::ServerContext& server_context;
     test::msg::Request request{};
     test::msg::Response response{};
     grpc::ServerAsyncWriter<test::msg::Response> responder{&server_context};
 };
 
 template <>
-struct TestServer<&test::v1::Test::AsyncService::RequestBidirectionalStreaming>
+struct TestServer<&test::v1::Test::AsyncService::RequestBidirectionalStreaming> : test::TestServerBase
 {
+    using test::TestServerBase::TestServerBase;
+
     template <class CompletionToken>
     auto request_rpc(CompletionToken&& token)
     {
@@ -86,8 +99,6 @@ struct TestServer<&test::v1::Test::AsyncService::RequestBidirectionalStreaming>
                               this->server_context, this->responder, std::forward<CompletionToken>(token));
     }
 
-    test::v1::Test::AsyncService& service;
-    grpc::ServerContext& server_context;
     test::msg::Request request{};
     test::msg::Response response{};
     grpc::ServerAsyncReaderWriter<test::msg::Response, test::msg::Request> responder{&server_context};

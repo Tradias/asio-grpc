@@ -759,18 +759,18 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_while() runs until the
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::schedule")
 {
-    bool is_invoked{false};
+    bool invoked{false};
     test::StatefulReceiverState state;
     test::FunctionAsStatefulReceiver receiver{[&]
                                               {
-                                                  is_invoked = true;
+                                                  invoked = true;
                                               },
                                               state};
     auto operation_state = asio::execution::connect(asio::execution::schedule(get_executor()), receiver);
     asio::execution::start(operation_state);
-    CHECK_FALSE(is_invoked);
+    CHECK_FALSE(invoked);
     grpc_context.run();
-    CHECK(is_invoked);
+    CHECK(invoked);
     CHECK_FALSE(state.was_done);
     CHECK_FALSE(state.exception);
 }
@@ -793,11 +793,11 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::schedule with throw
 
 TEST_CASE("asio GrpcExecutor::schedule and shutdown GrpcContext")
 {
-    bool is_invoked{false};
+    bool invoked{false};
     test::StatefulReceiverState state;
     test::FunctionAsStatefulReceiver receiver{[&]
                                               {
-                                                  is_invoked = true;
+                                                  invoked = true;
                                               },
                                               state};
     {
@@ -811,7 +811,7 @@ TEST_CASE("asio GrpcExecutor::schedule and shutdown GrpcContext")
         }
         SUBCASE("submit") { asio::execution::submit(sender, receiver); }
     }
-    CHECK_FALSE(is_invoked);
+    CHECK_FALSE(invoked);
     CHECK_FALSE(state.exception);
     CHECK(state.was_done);
 }

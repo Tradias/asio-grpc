@@ -20,6 +20,7 @@
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/coroutine.hpp>
 #include <boost/asio/detached.hpp>
+#include <boost/asio/experimental/promise.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/use_awaitable.hpp>
@@ -343,6 +344,34 @@ void create_server_grpc_context()
     agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
     /* [create-grpc_context-server-side] */
 }
+
+/* [async-notify-when-done-request-loop] */
+template <class RequestHandler>
+asio::awaitable<void> request_loop(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service,
+                                   RequestHandler request_handler)
+{
+    grpc::ServerContext server_context;
+    auto on_done = agrpc::async_notify_when_done(grpc_context, server_context, asio::experimental::use_promise);
+    asio::post(grpc_context,
+               [&]
+               {
+                   // Discount the work of async_notify_when_done until the rpc starts
+                   grpc_context.work_finished();
+               });
+    example::v1::Request request;
+    grpc::ServerAsyncResponseWriter<example::v1::Response> writer{&server_context};
+    const bool ok = co_await agrpc::request(&example::v1::Example::AsyncService::RequestUnary, service, server_context,
+                                            request, writer, asio::use_awaitable);
+    if (!ok)
+    {
+        co_return;
+    }
+    // Undo the discount
+    grpc_context.work_started();
+    asio::co_spawn(grpc_context, request_loop(grpc_context, service, request_handler), asio::detached);
+    co_await request_handler(server_context, request, writer, std::move(on_done));
+}
+/* [async-notify-when-done-request-loop] */
 
 void server_main()
 {

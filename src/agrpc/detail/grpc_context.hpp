@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_GRPC_CONTEXT_HPP
 
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/memory_resource.hpp>
 #include <agrpc/detail/memory_resource_allocator.hpp>
 
@@ -27,6 +28,8 @@ namespace detail
 {
 using GrpcContextLocalMemoryResource = detail::pmr::unsynchronized_pool_resource;
 using GrpcContextLocalAllocator = detail::MemoryResourceAllocator<std::byte, detail::GrpcContextLocalMemoryResource>;
+
+detail::GrpcContextLocalAllocator get_local_allocator(agrpc::GrpcContext& grpc_context) noexcept;
 }
 
 AGRPC_NAMESPACE_END

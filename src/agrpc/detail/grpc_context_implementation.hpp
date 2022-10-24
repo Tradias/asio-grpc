@@ -102,11 +102,21 @@ struct GrpcContextImplementation
 
     static void trigger_work_alarm(agrpc::GrpcContext& grpc_context) noexcept;
 
+    static void work_started(agrpc::GrpcContext& grpc_context) noexcept;
+
     static void add_remote_operation(agrpc::GrpcContext& grpc_context, detail::TypeErasedNoArgOperation* op) noexcept;
 
     static void add_local_operation(agrpc::GrpcContext& grpc_context, detail::TypeErasedNoArgOperation* op) noexcept;
 
     static void add_operation(agrpc::GrpcContext& grpc_context, detail::TypeErasedNoArgOperation* op) noexcept;
+
+    static void add_async_notify_when_done_operation(
+        agrpc::GrpcContext& grpc_context, detail::AsyncNotfiyWhenDoneSenderImplementation* implementation) noexcept;
+
+    static void remove_async_notify_when_done_operation(
+        agrpc::GrpcContext& grpc_context, detail::AsyncNotfiyWhenDoneSenderImplementation* implementation) noexcept;
+
+    static void deallocate_async_notify_when_done_list(agrpc::GrpcContext& grpc_context);
 
     static bool handle_next_completion_queue_event(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline,
                                                    detail::InvokeHandler invoke);
@@ -133,6 +143,8 @@ struct GrpcContextImplementation
 void process_grpc_tag(void* tag, detail::InvokeHandler invoke, bool ok, agrpc::GrpcContext& grpc_context);
 
 ::gpr_timespec gpr_timespec_from_now(std::chrono::nanoseconds duration) noexcept;
+
+detail::GrpcContextLocalAllocator get_local_allocator(agrpc::GrpcContext& grpc_context) noexcept;
 }
 
 AGRPC_NAMESPACE_END

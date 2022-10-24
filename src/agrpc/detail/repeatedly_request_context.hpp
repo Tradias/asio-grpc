@@ -74,12 +74,11 @@ class RepeatedlyRequestOperation : public detail::TypeErasedGrpcTagOperation,
 
   private:
     static void on_request_complete(GrpcBase* op, detail::InvokeHandler invoke_handler, bool ok,
-                                    detail::GrpcContextLocalAllocator)
+                                    agrpc::GrpcContext& grpc_context)
     {
         auto* self = static_cast<RepeatedlyRequestOperation*>(op);
         const auto allocator = self->get_allocator();
         detail::AllocatedPointer ptr{self->rpc_context, allocator};
-        auto& grpc_context = self->grpc_context();
         auto& request_handler = self->request_handler();
         if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
         {
