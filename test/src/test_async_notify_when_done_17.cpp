@@ -28,7 +28,7 @@
 
 TEST_CASE("async_notify_when_done: deallocates unstarted operation on destruction")
 {
-    bool ok{false};
+    bool invoked{false};
     test::TrackedAllocation tracked{};
     {
         test::GrpcContextTest test;
@@ -38,15 +38,15 @@ TEST_CASE("async_notify_when_done: deallocates unstarted operation on destructio
                    {
                        agrpc::async_notify_when_done(test.grpc_context, server_context,
                                                      agrpc::bind_allocator(test::TrackingAllocator<std::byte>{tracked},
-                                                                           [&](bool done)
+                                                                           [&]
                                                                            {
-                                                                               ok = done;
+                                                                               invoked = true;
                                                                            }));
                        test.grpc_context.stop();
                    });
         test.grpc_context.run();
     }
-    CHECK_FALSE(ok);
+    CHECK_FALSE(invoked);
     CHECK_LT(0, tracked.bytes_allocated);
     CHECK_EQ(tracked.bytes_allocated, tracked.bytes_deallocated);
 }
@@ -75,7 +75,7 @@ TEST_CASE("async_notify_when_done: is completed on RPC success")
             {
                 agrpc::async_notify_when_done(test.grpc_context(), test.test.server_context,
                                               agrpc::bind_allocator(test::TrackingAllocator<std::byte>{tracked},
-                                                                    [&](bool)
+                                                                    [&]
                                                                     {
                                                                         ok = test.test.server_context.IsCancelled();
                                                                     }));
@@ -105,7 +105,7 @@ TEST_CASE("async_notify_when_done: manually discount work")
         AsnycNotifyWhenDoneTest test;
         agrpc::async_notify_when_done(test.grpc_context(), test.test.server_context,
                                       agrpc::bind_allocator(test::TrackingAllocator<std::byte>{tracked},
-                                                            [&](bool)
+                                                            [&]
                                                             {
                                                                 invoked = true;
                                                             }));
@@ -114,11 +114,7 @@ TEST_CASE("async_notify_when_done: manually discount work")
                                                           {
                                                               ok = request_ok;
                                                           }));
-        test::post(test.grpc_context(),
-                   [&]
-                   {
-                       test.grpc_context().work_finished();
-                   });
+        test.grpc_context().work_finished();
         test::post(test.grpc_context(),
                    [&]
                    {

@@ -29,7 +29,7 @@ class AsyncNotfiyWhenDoneSenderImplementation
   public:
     static constexpr auto TYPE = detail::SenderImplementationType::BOTH;
 
-    using Signature = void(bool);
+    using Signature = void();
     using StopFunction = detail::Empty;
     using Initiation = detail::Empty;
 
@@ -63,10 +63,10 @@ class AsyncNotfiyWhenDoneSenderImplementation
     }
 
     template <class OnDone>
-    void done(OnDone on_done, bool ok)
+    void done(OnDone on_done, bool)
     {
         detail::GrpcContextImplementation::remove_async_notify_when_done_operation(grpc_context, this);
-        on_done(ok);
+        on_done();
     }
 
     void complete(detail::InvokeHandler invoke_handler, detail::GrpcContextLocalAllocator allocator)

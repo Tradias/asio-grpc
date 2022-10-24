@@ -26,7 +26,7 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 /**
- * @brief Server-side function to set notification for RPC completion
+ * @brief Server-side function to set notification for rpc completion
  *
  * The examples below are based on the following .proto file:
  *
@@ -39,30 +39,20 @@ namespace detail
 struct AsyncNotfiyWhenDoneFn
 {
     /**
-     * @brief Read initial metadata
+     * @brief Set notification for rpc completion
      *
-     * Request notification of the reading of the initial metadata.
+     * Has to be called before the rpc starts. Upon completion, `grpc::ServerContext::IsCancelled()` can be called to
+     * check whether the rpc was cancelled.
      *
-     * This call is optional, but if it is used, it cannot be used concurrently with or after the read method.
-     *
-     * Side effect:
-     *
-     * @arg Upon receiving initial metadata from the server, the ClientContext associated with this call is updated, and
-     * the calling code can access the received metadata through the ClientContext.
+     * @note Due to https://github.com/grpc/grpc/issues/10136 there are work-tracking issues during server shutdown. See
+     * below example for a workaround.
      *
      * Example:
      *
-     * @snippet client.cpp read_initial_metadata-unary-client-side
+     * @snippet server.cpp async-notify-when-done-request-loop
      *
-     * @attention For client-streaming and bidirectional-streaming RPCs: If the server does not explicitly send initial
-     * metadata (e.g. by calling `agrpc::send_initial_metadata`) but waits for a message from the client instead then
-     * this function won't complete until `agrpc::write` is called.
-     *
-     * @param responder `grpc::ClientAsyncResponseReader`, `grpc::ClientAsyncReader`, `grpc::ClientAsyncWriter` or
-     * `grpc::ClientAsyncReaderWriter` (or a unique_ptr of them or their -Interface variants).
-     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
-     * completion signature is `void(bool)`. `true` indicates that the metadata was read, `false` when the call is
-     * dead.
+     * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
+     * `void()`.
      */
     template <class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(agrpc::GrpcContext& grpc_context, grpc::ServerContext& server_context,
@@ -76,10 +66,10 @@ struct AsyncNotfiyWhenDoneFn
 }  // namespace detail
 
 /**
- * @brief Set notification for server-side RPC completion
+ * @brief Set notification for server-side rpc completion
  *
  * @link detail::AsyncNotfiyWhenDoneFn
- * Server-side function to set notification for RPC completion.
+ * Server-side function to set notification for rpc completion.
  * @endlink
  */
 inline constexpr detail::AsyncNotfiyWhenDoneFn async_notify_when_done{};
