@@ -29,7 +29,7 @@ struct DeallocateOperationFunctor
     agrpc::GrpcContext& grpc_context;
     detail::TypeErasedGrpcTagOperation* operation;
 
-    void operator()() { operation->complete(detail::InvokeHandler::NO, false, grpc_context.get_allocator()); }
+    void operator()() { operation->complete(detail::InvokeHandler::NO, false, grpc_context); }
 };
 
 using OperationAllocationGuard = detail::ScopeGuard<detail::DeallocateOperationFunctor>;

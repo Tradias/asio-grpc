@@ -37,17 +37,14 @@ class AsyncNotfiyWhenDoneSenderImplementation
     using Self = detail::BasicSenderRunningOperationBase<TYPE>;
 
   public:
-    AsyncNotfiyWhenDoneSenderImplementation(agrpc::GrpcContext& grpc_context, grpc::ServerContext& server_context)
-        : grpc_context(grpc_context), server_context(server_context)
-    {
-    }
+    AsyncNotfiyWhenDoneSenderImplementation(grpc::ServerContext& server_context) : server_context(server_context) {}
 
-    void initiate(const agrpc::GrpcContext&, const Initiation&, Self* self)
+    void initiate(agrpc::GrpcContext& grpc_context, const Initiation&, Self* self)
     {
         operation = self;
         if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
         {
-            init(self);
+            init(grpc_context, self);
         }
         else
         {
@@ -59,32 +56,31 @@ class AsyncNotfiyWhenDoneSenderImplementation
     template <class OnDone>
     void done(OnDone on_done)
     {
-        init(on_done.self());
+        init(on_done.grpc_context(), on_done.self());
     }
 
     template <class OnDone>
     void done(OnDone on_done, bool)
     {
-        detail::GrpcContextImplementation::remove_async_notify_when_done_operation(grpc_context, this);
+        detail::GrpcContextImplementation::remove_async_notify_when_done_operation(on_done.grpc_context(), this);
         on_done();
     }
 
-    void complete(detail::InvokeHandler invoke_handler, detail::GrpcContextLocalAllocator allocator)
+    void complete(detail::InvokeHandler invoke_handler, agrpc::GrpcContext& grpc_context)
     {
-        operation->complete(invoke_handler, allocator);
+        operation->complete(invoke_handler, grpc_context);
     }
 
     AsyncNotfiyWhenDoneSenderImplementation* next;
     AsyncNotfiyWhenDoneSenderImplementation* prev;
 
   private:
-    void init(detail::TypeErasedGrpcTagOperation* self)
+    void init(agrpc::GrpcContext& grpc_context, detail::TypeErasedGrpcTagOperation* self)
     {
         detail::GrpcContextImplementation::add_async_notify_when_done_operation(grpc_context, this);
         server_context.AsyncNotifyWhenDone(self);
     }
 
-    agrpc::GrpcContext& grpc_context;
     grpc::ServerContext& server_context;
     detail::TypeErasedNoArgOperation* operation;
 };

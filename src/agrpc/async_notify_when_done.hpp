@@ -60,7 +60,7 @@ struct AsyncNotfiyWhenDoneFn
         noexcept(std::is_same_v<agrpc::UseSender, detail::RemoveCrefT<CompletionToken>>)
     {
         return detail::async_initiate_sender_implementation<detail::AsyncNotfiyWhenDoneSenderImplementation>(
-            grpc_context, {}, {grpc_context, server_context}, token);
+            grpc_context, {}, {server_context}, token);
     }
 };
 }  // namespace detail

@@ -225,7 +225,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
         }
 
         static void on_request_complete(GrpcBase* op, detail::InvokeHandler invoke_handler, bool ok,
-                                        detail::GrpcContextLocalAllocator)
+                                        agrpc::GrpcContext&)
         {
             auto* self = static_cast<Operation*>(op);
             detail::AllocationGuard ptr{self->request_handler_operation, self->get_allocator()};

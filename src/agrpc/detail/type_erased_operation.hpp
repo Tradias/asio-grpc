@@ -33,15 +33,14 @@ enum class InvokeHandler
 
 class TypeErasedNoArgOperation;
 
-using TypeErasedNoArgOnComplete = void (*)(TypeErasedNoArgOperation*, detail::InvokeHandler,
-                                           detail::GrpcContextLocalAllocator);
+using TypeErasedNoArgOnComplete = void (*)(TypeErasedNoArgOperation*, detail::InvokeHandler, agrpc::GrpcContext&);
 
 class TypeErasedNoArgOperation : public detail::IntrusiveQueueHook<TypeErasedNoArgOperation>
 {
   public:
-    void complete(detail::InvokeHandler invoke_handler, detail::GrpcContextLocalAllocator allocator)
+    void complete(detail::InvokeHandler invoke_handler, agrpc::GrpcContext& grpc_context)
     {
-        this->on_complete(this, invoke_handler, allocator);
+        this->on_complete(this, invoke_handler, grpc_context);
     }
 
   protected:
@@ -54,15 +53,15 @@ class TypeErasedNoArgOperation : public detail::IntrusiveQueueHook<TypeErasedNoA
 class TypeErasedGrpcTagOperation;
 
 using TypeErasedGrpcTagOnComplete = void (*)(TypeErasedGrpcTagOperation*, detail::InvokeHandler, bool,
-                                             detail::GrpcContextLocalAllocator);
+                                             agrpc::GrpcContext&);
 
 class TypeErasedGrpcTagOperation
 
 {
   public:
-    void complete(detail::InvokeHandler invoke_handler, bool ok, detail::GrpcContextLocalAllocator allocator)
+    void complete(detail::InvokeHandler invoke_handler, bool ok, agrpc::GrpcContext& grpc_context)
     {
-        this->on_complete(this, invoke_handler, ok, allocator);
+        this->on_complete(this, invoke_handler, ok, grpc_context);
     }
 
   protected:
@@ -73,15 +72,14 @@ class TypeErasedGrpcTagOperation
 };
 
 template <bool UseLocalAllocator, class Operation, class Base, class... Args>
-void do_complete_handler(Base* op, detail::InvokeHandler invoke_handler, Args... args,
-                         detail::GrpcContextLocalAllocator allocator)
+void do_complete_handler(Base* op, detail::InvokeHandler invoke_handler, Args... args, agrpc::GrpcContext& grpc_context)
 {
     auto* self = static_cast<Operation*>(op);
     detail::AllocationGuard ptr{self, [&]
                                 {
                                     if constexpr (UseLocalAllocator)
                                     {
-                                        return allocator;
+                                        return detail::get_local_allocator(grpc_context);
                                     }
                                     else
                                     {

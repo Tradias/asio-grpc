@@ -69,8 +69,7 @@ class BufferOperation : public detail::TypeErasedNoArgOperation
     }
 
   private:
-    static void do_complete(detail::TypeErasedNoArgOperation* op, detail::InvokeHandler,
-                            detail::GrpcContextLocalAllocator) noexcept
+    static void do_complete(detail::TypeErasedNoArgOperation* op, detail::InvokeHandler, agrpc::GrpcContext&) noexcept
     {
         detail::destroy_deallocate(static_cast<BufferOperation*>(op), std::allocator<BufferOperation>{});
     }
@@ -168,8 +167,9 @@ class RepeatedlyRequestCoroutineOperation
         RPCContext rpc_context;
         detail::ScopeGuard guard{[&]
                                  {
-                                     detail::WorkFinishedOnExit on_exit{this->grpc_context()};
-                                     ON_STOP_COMPLETE(this, detail::InvokeHandler::NO, {});
+                                     auto& grpc_context = this->grpc_context();
+                                     detail::WorkFinishedOnExit on_exit{grpc_context};
+                                     ON_STOP_COMPLETE(this, detail::InvokeHandler::NO, grpc_context);
                                  }};
         const auto ok = co_await detail::initiate_request_from_rpc_context(
             this->rpc(), this->service(), rpc_context,
