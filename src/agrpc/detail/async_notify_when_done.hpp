@@ -34,7 +34,7 @@ class AsyncNotfiyWhenDoneSenderImplementation
     using Initiation = detail::Empty;
 
   private:
-    using Operation = detail::BasicSenderRunningOperationBase<TYPE>;
+    using Self = detail::BasicSenderRunningOperationBase<TYPE>;
 
   public:
     AsyncNotfiyWhenDoneSenderImplementation(agrpc::GrpcContext& grpc_context, grpc::ServerContext& server_context)
@@ -42,7 +42,7 @@ class AsyncNotfiyWhenDoneSenderImplementation
     {
     }
 
-    void initiate(const agrpc::GrpcContext&, const Initiation&, Operation* self)
+    void initiate(const agrpc::GrpcContext&, const Initiation&, Self* self)
     {
         operation = self;
         if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
@@ -51,6 +51,7 @@ class AsyncNotfiyWhenDoneSenderImplementation
         }
         else
         {
+            detail::GrpcContextImplementation::work_started(grpc_context);
             detail::GrpcContextImplementation::add_remote_operation(grpc_context, self);
         }
     }

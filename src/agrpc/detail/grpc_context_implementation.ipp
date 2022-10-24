@@ -64,6 +64,11 @@ inline void GrpcContextImplementation::trigger_work_alarm(agrpc::GrpcContext& gr
                                 detail::GrpcContextImplementation::HAS_REMOTE_WORK_TAG);
 }
 
+inline void GrpcContextImplementation::work_started(agrpc::GrpcContext& grpc_context) noexcept
+{
+    grpc_context.work_started();
+}
+
 inline void GrpcContextImplementation::add_remote_operation(agrpc::GrpcContext& grpc_context,
                                                             detail::TypeErasedNoArgOperation* op) noexcept
 {
