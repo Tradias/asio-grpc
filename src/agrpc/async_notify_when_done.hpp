@@ -35,6 +35,8 @@ namespace detail
  * **Per-Operation Cancellation**
  *
  * None.
+ *
+ * @since 2.3.0
  */
 struct AsyncNotfiyWhenDoneFn
 {
@@ -71,6 +73,8 @@ struct AsyncNotfiyWhenDoneFn
  * @link detail::AsyncNotfiyWhenDoneFn
  * Server-side function to set notification for rpc completion.
  * @endlink
+ *
+ * @since 2.3.0
  */
 inline constexpr detail::AsyncNotfiyWhenDoneFn async_notify_when_done{};
 
