@@ -54,6 +54,7 @@ set(ASIO_GRPC_CPP17_TEST_SOURCE_FILES
     "test_run_17.cpp"
     "test_generic_rpc_17.cpp"
     "test_grpc_stream_17.cpp"
+    "test_health_check_service_17.cpp"
     "test_test_17.cpp"
     "test_high_level_client_17.cpp")
 set(ASIO_GRPC_CPP20_TEST_SOURCE_FILES "test_asio_grpc_20.cpp" "test_repeatedly_request_20.cpp"
