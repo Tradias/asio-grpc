@@ -54,11 +54,7 @@ struct HealthCheckServiceTest : test::GrpcContextTest
         server_shutdown.emplace(*server);
     }
 
-    ~HealthCheckServiceTest()
-    {
-        stub.reset();
-        server->Shutdown();
-    }
+    ~HealthCheckServiceTest() { stub.reset(); }
 
     void shutdown() { server_shutdown->initiate(); }
 };
@@ -91,6 +87,57 @@ TEST_CASE_FIXTURE(HealthCheckServiceTest, "health_check_service: watch default s
                             server->GetHealthCheckService()->SetServingStatus(false);
                             CHECK(rpc.read(response, yield));
                             CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_NOT_SERVING, response.status());
+                            shutdown();
+                        });
+}
+
+TEST_CASE_FIXTURE(HealthCheckServiceTest, "health_check_service: watch non-existent service")
+{
+    bool add_service{false};
+    SUBCASE("always non-existent") {}
+    SUBCASE("added later") { add_service = true; }
+    test::spawn_and_run(grpc_context,
+                        [&](const asio::yield_context& yield)
+                        {
+                            request.set_service("non-existent");
+                            auto rpc = WatchRPC::request(grpc_context, *stub, client_context, request, yield);
+                            CHECK(rpc.ok());
+                            CHECK(rpc.read(response, yield));
+                            CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_SERVICE_UNKNOWN, response.status());
+                            if (add_service)
+                            {
+                                server->GetHealthCheckService()->SetServingStatus("non-existent", true);
+                                CHECK(rpc.read(response, yield));
+                                CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_SERVING, response.status());
+                            }
+                            shutdown();
+                        });
+}
+
+TEST_CASE_FIXTURE(HealthCheckServiceTest, "health_check_service: watch default service and shutdown HealthCheckService")
+{
+    test::spawn_and_run(grpc_context,
+                        [&](const asio::yield_context& yield)
+                        {
+                            auto rpc = WatchRPC::request(grpc_context, *stub, client_context, request, yield);
+                            CHECK(rpc.read(response, yield));
+                            server->GetHealthCheckService()->Shutdown();
+                            CHECK_FALSE(rpc.read(response, yield));
+                            CHECK_EQ("not writing due to shutdown", rpc.status().error_message());
+                            shutdown();
+                        });
+}
+
+TEST_CASE_FIXTURE(HealthCheckServiceTest, "health_check_service: watch default service and cancel")
+{
+    test::spawn_and_run(grpc_context,
+                        [&](const asio::yield_context& yield)
+                        {
+                            auto rpc = WatchRPC::request(grpc_context, *stub, client_context, request, yield);
+                            CHECK(rpc.read(response, yield));
+                            client_context.TryCancel();
+                            CHECK_FALSE(rpc.read(response, yield));
+                            CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.status_code());
                             shutdown();
                         });
 }

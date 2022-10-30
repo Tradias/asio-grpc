@@ -25,6 +25,13 @@
 #include <grpcpp/server_builder.h>
 
 #include <map>
+#include <string>
+
+#ifdef __has_include
+#if __has_include("grpc/health/v1/health.grpc.pb.h")
+#include <grpc/health/v1/health.grpc.pb.h>
+#endif
+#endif
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -46,7 +53,7 @@ class HealthCheckService final : public grpc::HealthCheckServiceInterface
 
     /// Set all registered service names to not serving and prevent future
     /// state changes.
-    void Shutdown() override;
+    void Shutdown();
 
     friend void start_health_check_service(grpc::HealthCheckServiceInterface* service,
                                            agrpc::GrpcContext& grpc_context);
@@ -61,7 +68,7 @@ class HealthCheckService final : public grpc::HealthCheckServiceInterface
 
     agrpc::GrpcContext* grpc_context;
     grpc::health::v1::Health::AsyncService service;
-    std::map<std::string, detail::HealthCheckServiceData> services_map_;
+    std::map<std::string, detail::HealthCheckServiceData> services_map;
     detail::HealthCheckRepeatedlyRequestWatch repeatedly_request_watch;
     detail::HealthCheckRepeatedlyRequestCheck repeatedly_request_check;
     bool is_shutdown{false};

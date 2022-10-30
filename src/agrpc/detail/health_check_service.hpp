@@ -18,6 +18,7 @@
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/intrusive_list.hpp>
 #include <agrpc/detail/sender_implementation.hpp>
+#include <agrpc/detail/server_write_reactor.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
 #include <agrpc/health_check_service.hpp>
@@ -50,31 +51,30 @@ inline auto to_grpc_serving_status(detail::ServingStatus status)
                : grpc::health::v1::HealthCheckResponse_ServingStatus::HealthCheckResponse_ServingStatus_NOT_SERVING;
 }
 
-class HealthCheckWatcher : public detail::TypeErasedGrpcTagOperation, public detail::IntrusiveListHook
+class HealthCheckWatcher : public detail::IntrusiveListHook,
+                           public detail::ServerWriteReactor<HealthCheckWatcher, grpc::health::v1::HealthCheckResponse>
 {
   private:
-    using GrpcBase = detail::TypeErasedGrpcTagOperation;
+    using Base = detail::ServerWriteReactor<HealthCheckWatcher, grpc::health::v1::HealthCheckResponse>;
 
   public:
-    explicit HealthCheckWatcher(agrpc::HealthCheckService& service)
-        : GrpcBase(&HealthCheckWatcher::on_complete), service(service)
-    {
-    }
+    explicit HealthCheckWatcher(agrpc::HealthCheckService& service) : Base(*service.grpc_context), service(service) {}
 
     void run()
     {
-        auto& service_data = service.services_map_[request.service()];
+        this->accept_request();
+        auto& service_data = service.services_map[request.service()];
         service_data.watchers.push_back(this);
         send_health(service_data.status);
     }
 
     void send_health(detail::ServingStatus status)
     {
-        if (write_pending)
+        if (this->is_writing())
         {
             pending_status = status;
         }
-        else if (!finish_called)
+        else if (!this->is_finished())
         {
             send_health_impl(status);
         }
@@ -83,91 +83,57 @@ class HealthCheckWatcher : public detail::TypeErasedGrpcTagOperation, public det
     static auto create_and_initiate(agrpc::HealthCheckService& service, void* tag)
     {
         auto& grpc_context = *service.grpc_context;
-        auto watcher = detail::allocate<HealthCheckWatcher>(grpc_context.get_allocator(), service);
-        grpc_context.work_started();
-        watcher->initiate_request(tag);
-        return watcher.release();
+        auto* const watcher = Base::create(grpc_context, service);
+        watcher->initiate_request(&grpc::health::v1::Health::AsyncService::RequestWatch, watcher->service.service,
+                                  watcher->request, tag);
+        return watcher;
     }
 
-    void deallocate() { detail::destroy_deallocate(this, get_allocator()); }
-
   private:
-    agrpc::GrpcContext& grpc_context() const noexcept { return *service.grpc_context; }
+    friend Base;
 
-    agrpc::GrpcContext::allocator_type get_allocator() const noexcept { return grpc_context().get_allocator(); }
-
-    static void on_complete(GrpcBase* op, detail::InvokeHandler invoke_handler, bool ok, agrpc::GrpcContext&)
+    void on_write_done(bool ok)
     {
-        auto* self = static_cast<HealthCheckWatcher*>(op);
-        detail::ScopeGuard guard{[&]
-                                 {
-                                     auto& service_data =
-                                         self->service.services_map_.find(self->request.service())->second;
-                                     service_data.watchers.remove(self);
-                                     self->deallocate();
-                                 }};
-        if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
+        if (ok)
         {
-            const auto write_pending = std::exchange(self->write_pending, false);
-            if (write_pending)
+            if (pending_status != detail::ServingStatus::NOT_FOUND)
             {
-                guard.release();
+                const auto status = std::exchange(pending_status, detail::ServingStatus::NOT_FOUND);
+                send_health_impl(status);
             }
-            if (ok)
-            {
-                if (!self->finish_called && self->pending_status != detail::ServingStatus::NOT_FOUND)
-                {
-                    const auto status = std::exchange(self->pending_status, detail::ServingStatus::NOT_FOUND);
-                    self->send_health_impl(status);
-                    guard.release();
-                }
-            }
-            else if (write_pending && !self->finish_called)
-            {
-                self->finish(grpc::Status(grpc::StatusCode::CANCELLED, "OnWriteDone() ok=false"));
-            }
+        }
+        else
+        {
+            this->finish(grpc::Status(grpc::StatusCode::CANCELLED, "OnWriteDone() ok=false"));
         }
     }
 
-    void initiate_request(void* tag)
+    void on_done()
     {
-        auto* const cq = grpc_context().get_server_completion_queue();
-        service.service.RequestWatch(&server_context, &request, &writer, cq, cq, tag);
+        const auto it = service.services_map.find(request.service());
+        auto& [status, watchers] = it->second;
+        watchers.remove(this);
+        if (status == detail::ServingStatus::NOT_FOUND && watchers.empty())
+        {
+            service.services_map.erase(it);
+        }
     }
 
     void send_health_impl(detail::ServingStatus status)
     {
         if (service.is_shutdown)
         {
-            finish(grpc::Status(grpc::StatusCode::CANCELLED, "not writing due to shutdown"));
+            this->finish(grpc::Status(grpc::StatusCode::CANCELLED, "not writing due to shutdown"));
             return;
         }
-        write(status);
-    }
-
-    void write(detail::ServingStatus status)
-    {
-        write_pending = true;
         response.set_status(detail::to_grpc_serving_status(status));
-        grpc_context().work_started();
-        writer.Write(response, static_cast<GrpcBase*>(this));
-    }
-
-    void finish(const grpc::Status& status)
-    {
-        finish_called = true;
-        grpc_context().work_started();
-        writer.Finish(status, static_cast<GrpcBase*>(this));
+        this->write(response);
     }
 
     agrpc::HealthCheckService& service;
-    grpc::ServerContext server_context;
     grpc::health::v1::HealthCheckRequest request;
     grpc::health::v1::HealthCheckResponse response;
-    grpc::ServerAsyncWriter<grpc::health::v1::HealthCheckResponse> writer{&server_context};
     detail::ServingStatus pending_status{detail::ServingStatus::NOT_FOUND};
-    bool write_pending{};
-    bool finish_called{};
 };
 
 class HealthCheckChecker : public detail::TypeErasedGrpcTagOperation
@@ -181,11 +147,7 @@ class HealthCheckChecker : public detail::TypeErasedGrpcTagOperation
     {
     }
 
-    void run()
-    {
-        const auto status = service.get_serving_status(request.service());
-        finish(status);
-    }
+    void run() { finish(service.get_serving_status(request.service())); }
 
     static auto create_and_initiate(agrpc::HealthCheckService& service, void* tag)
     {
@@ -277,7 +239,7 @@ inline void set_serving_status(detail::HealthCheckServiceData& service_data, det
 inline HealthCheckService::HealthCheckService(grpc::ServerBuilder& builder)
     : repeatedly_request_watch(*this), repeatedly_request_check(*this)
 {
-    services_map_[""].status = detail::ServingStatus::SERVING;
+    services_map[""].status = detail::ServingStatus::SERVING;
     builder.RegisterService(&service);
 }
 
@@ -292,7 +254,7 @@ inline void HealthCheckService::SetServingStatus(const std::string& service_name
                 // Set to NOT_SERVING in case service_name is not in the map.
                 serving = false;
             }
-            detail::set_serving_status(services_map_[service_name],
+            detail::set_serving_status(services_map[service_name],
                                        serving ? detail::ServingStatus::SERVING : detail::ServingStatus::NOT_SERVING);
         });
 }
@@ -308,7 +270,7 @@ inline void HealthCheckService::SetServingStatus(bool serving)
                 return;
             }
             const auto status = serving ? detail::ServingStatus::SERVING : detail::ServingStatus::NOT_SERVING;
-            for (auto& p : services_map_)
+            for (auto& p : services_map)
             {
                 detail::set_serving_status(p.second, status);
             }
@@ -325,7 +287,7 @@ inline void HealthCheckService::Shutdown()
                                                               return;
                                                           }
                                                           is_shutdown = true;
-                                                          for (auto& p : services_map_)
+                                                          for (auto& p : services_map)
                                                           {
                                                               detail::set_serving_status(
                                                                   p.second, detail::ServingStatus::NOT_SERVING);
@@ -335,8 +297,8 @@ inline void HealthCheckService::Shutdown()
 
 detail::ServingStatus HealthCheckService::get_serving_status(const std::string& service_name) const
 {
-    const auto it = services_map_.find(service_name);
-    return it == services_map_.end() ? detail::ServingStatus::NOT_FOUND : it->second.status;
+    const auto it = services_map.find(service_name);
+    return it == services_map.end() ? detail::ServingStatus::NOT_FOUND : it->second.status;
 }
 
 inline grpc::ServerBuilder& add_health_check_service(grpc::ServerBuilder& builder)
