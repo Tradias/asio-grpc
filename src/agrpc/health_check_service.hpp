@@ -36,7 +36,19 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief CompletionQueue implementation of grpc::HealthCheckServiceInterface
+ * @brief CompletionQueue-based implementation of grpc::HealthCheckServiceInterface
+ *
+ * This class is a drop-in replacement for the `grpc::DefaultHealthCheckService`. It should be added to a
+ * `grpc::ServerBuilder` using `agrpc::add_health_check_service`.
+ *
+ * **Motivation**: `grpc::DefaultHealthCheckService` is implemented in terms of gRPC's generic callback API. Mixing
+ * callback services and CompletionQueue-based services in one `grpc::Server` leads to significant performance
+ * degradation.
+ *
+ * @note In order to use this class you must compile and link with
+ * [health.proto](https://github.com/grpc/grpc/blob/v1.50.1/src/proto/grpc/health/v1/health.proto). If your compiler
+ * does not support `__has_include` then you must also include `health.grpc.pb.h` before including
+ * `agrpc/health_check_service.hpp`.
  *
  * @since 2.3.0
  */
@@ -45,14 +57,25 @@ class HealthCheckService final : public grpc::HealthCheckServiceInterface
   public:
     HealthCheckService(grpc::ServerBuilder& builder);
 
-    /// Set or change the serving status of the given \a service_name.
+    /**
+     * @brief Set or change the serving status of the given @a service_name
+     *
+     * Thread-safe
+     */
     void SetServingStatus(const std::string& service_name, bool serving) override;
 
-    /// Apply to all registered service names.
+    /**
+     * @brief Apply a serving status to all registered service names
+     *
+     * Thread-safe
+     */
     void SetServingStatus(bool serving) override;
 
-    /// Set all registered service names to not serving and prevent future
-    /// state changes.
+    /**
+     * @brief Set all registered service names to not serving and prevent future state changes.
+     *
+     * Thread-safe
+     */
     void Shutdown();
 
     friend void start_health_check_service(grpc::HealthCheckServiceInterface* service,
@@ -75,12 +98,31 @@ class HealthCheckService final : public grpc::HealthCheckServiceInterface
 };
 
 /**
- * @brief CompletionQueue implementation of grpc::HealthCheckServiceInterface
+ * @brief Add a HealthCheckService to a `grpc::Server`
+ *
+ * The service must be started using `agrpc::start_health_check_service` after `builder.BuildAndStart()` has been
+ * called.
+ *
+ * Example:
+ *
+ * @snippet server.cpp add-health-check-service
  *
  * @since 2.3.0
+ *
+ * @relates HealthCheckService
  */
 grpc::ServerBuilder& add_health_check_service(grpc::ServerBuilder& builder);
 
+/**
+ * @brief Start a previously added HealthCheckService
+ *
+ * The service must have been added using `agrpc::add_health_check_service()`. May not be called concurrently with
+ * `GrpcContext::run/poll`.
+ *
+ * @since 2.3.0
+ *
+ * @relates HealthCheckService
+ */
 void start_health_check_service(grpc::HealthCheckServiceInterface* service, agrpc::GrpcContext& grpc_context);
 
 AGRPC_NAMESPACE_END

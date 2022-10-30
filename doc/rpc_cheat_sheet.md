@@ -12,7 +12,7 @@ must have an associated executor that refers to a GrpcContext:
 
 ## Client
 
-**Since asio-grpc v2.1.0 the recommended API is implemented through `agrpc::RPC`. It provides a customizable default completion token and always uses the correct associated executor. The old, low-level API works as follows.**
+**Since asio-grpc v2.1.0, the recommended gRPC client API is `agrpc::RPC`. It provides a customizable default completion token and always uses the correct associated executor. The old, low-level API is documented below.**
 
 All RPC types support retrieving initial metadata immediately. This is optional step. Completes with `false` if the call is dead.
 

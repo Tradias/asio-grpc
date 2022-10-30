@@ -121,7 +121,7 @@ TEST_CASE_FIXTURE(HealthCheckServiceTest, "health_check_service: watch default s
                         {
                             auto rpc = WatchRPC::request(grpc_context, *stub, client_context, request, yield);
                             CHECK(rpc.read(response, yield));
-                            server->GetHealthCheckService()->Shutdown();
+                            static_cast<agrpc::HealthCheckService*>(server->GetHealthCheckService())->Shutdown();
                             CHECK_FALSE(rpc.read(response, yield));
                             CHECK_EQ("not writing due to shutdown", rpc.status().error_message());
                             shutdown();

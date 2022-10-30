@@ -17,7 +17,8 @@ asio_grpc_protobuf_generate(
     OUT_VAR "ASIO_GRPC_EXAMPLE_PROTO_SOURCES"
     OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated"
     IMPORT_DIRS "${CMAKE_CURRENT_LIST_DIR}"
-    PROTOS "${CMAKE_CURRENT_LIST_DIR}/helloworld/helloworld.proto" "${CMAKE_CURRENT_LIST_DIR}/example/v1/example.proto"
+    PROTOS "${CMAKE_CURRENT_LIST_DIR}/helloworld/helloworld.proto"
+           "${CMAKE_CURRENT_LIST_DIR}/grpc/health/v1/health.proto" "${CMAKE_CURRENT_LIST_DIR}/example/v1/example.proto"
            "${CMAKE_CURRENT_LIST_DIR}/example/v1/example_ext.proto")
 
 function(asio_grpc_add_example_proto_target _asio_grpc_name)
