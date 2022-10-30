@@ -121,11 +121,6 @@ class HealthCheckWatcher : public detail::IntrusiveListHook,
 
     void send_health_impl(detail::ServingStatus status)
     {
-        if (service.is_shutdown)
-        {
-            this->finish(grpc::Status(grpc::StatusCode::CANCELLED, "not writing due to shutdown"));
-            return;
-        }
         response.set_status(detail::to_grpc_serving_status(status));
         this->write(response);
     }

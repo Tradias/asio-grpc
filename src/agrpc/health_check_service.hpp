@@ -55,7 +55,7 @@ AGRPC_NAMESPACE_BEGIN()
 class HealthCheckService final : public grpc::HealthCheckServiceInterface
 {
   public:
-    HealthCheckService(grpc::ServerBuilder& builder);
+    explicit HealthCheckService(grpc::ServerBuilder& builder);
 
     /**
      * @brief Set or change the serving status of the given @a service_name

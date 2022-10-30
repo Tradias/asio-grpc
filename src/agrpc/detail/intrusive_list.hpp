@@ -41,7 +41,7 @@ class IntrusiveList
 
         iterator() = default;
 
-        iterator(T* item) : item(item) {}
+        explicit iterator(T* item) : item(item) {}
 
         reference operator*() noexcept { return *item; }
 

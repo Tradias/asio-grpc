@@ -30,7 +30,7 @@ class HealthCheckRepeatedlyRequest : public detail::TypeErasedGrpcTagOperation
     using GrpcBase = detail::TypeErasedGrpcTagOperation;
 
   public:
-    HealthCheckRepeatedlyRequest(agrpc::HealthCheckService& service);
+    explicit HealthCheckRepeatedlyRequest(agrpc::HealthCheckService& service);
 
     void start();
 
