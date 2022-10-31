@@ -113,6 +113,9 @@ struct HealthCheckServiceTest : test::GrpcContextTest
                                 CHECK(rpc.read(response, yield));
                                 CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_SERVING, response.status());
                                 server->GetHealthCheckService()->SetServingStatus(false);
+                                server->GetHealthCheckService()->SetServingStatus(false);
+                                CHECK(rpc.read(response, yield));
+                                CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_NOT_SERVING, response.status());
                                 server->GetHealthCheckService()->SetServingStatus(true);
                                 CHECK(rpc.read(response, yield));
                                 CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_NOT_SERVING, response.status());
@@ -146,15 +149,16 @@ struct HealthCheckServiceTest : test::GrpcContextTest
                             });
     }
 
-    template <class T = grpc::HealthCheckServiceInterface, class = decltype(std::declval<T&>().Shutdown())>
-    void test_watch_and_shutdown_health_check_service()
+    // Older versions of gRPC do not have `HealthCheckServiceInterface::Shutdown()`
+    template <class T, class = decltype(std::declval<T&>().Shutdown())>
+    void test_watch_and_shutdown_health_check_service(T* health_check_service)
     {
         test::spawn_and_run(grpc_context,
                             [&](const asio::yield_context& yield)
                             {
                                 auto rpc = WatchRPC::request(grpc_context, *stub, client_context, request, yield);
                                 CHECK(rpc.read(response, yield));
-                                server->GetHealthCheckService()->Shutdown();
+                                health_check_service->Shutdown();
                                 CHECK(rpc.read(response, yield));
                                 CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_NOT_SERVING, response.status());
                                 shutdown();
@@ -162,7 +166,7 @@ struct HealthCheckServiceTest : test::GrpcContextTest
     }
 
     template <class... T>
-    void test_watch_and_shutdown_health_check_service(T...)
+    void test_watch_and_shutdown_health_check_service(T&&...)
     {
     }
 
@@ -214,7 +218,8 @@ TEST_CASE_TEMPLATE("health_check_service: watch non-existent service", T, Health
 TEST_CASE_TEMPLATE("health_check_service: watch default service and shutdown HealthCheckService", T,
                    HealthCheckServiceAgrpcTest, HealthCheckServiceGrpcTest)
 {
-    T{}.test_watch_and_shutdown_health_check_service();
+    T test{};
+    test.test_watch_and_shutdown_health_check_service(test.server->GetHealthCheckService());
 }
 
 TEST_CASE_TEMPLATE("health_check_service: watch default service and cancel", T, HealthCheckServiceAgrpcTest,
