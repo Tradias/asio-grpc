@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "grpc/health/v1/health.grpc.pb.h"
 #include "helloworld/helloworld.grpc.pb.h"
 #include "server_shutdown.hpp"
 
 #include <agrpc/asio_grpc.hpp>
+#include <agrpc/health_check_service.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
@@ -73,7 +75,9 @@ int main(int argc, const char** argv)
         }
         builder.AddListeningPort(host, grpc::InsecureServerCredentials());
         builder.RegisterService(&service);
+        agrpc::add_health_check_service(builder);
         server = builder.BuildAndStart();
+        agrpc::start_health_check_service(server->GetHealthCheckService(), grpc_contexts.front());
     }
 
     example::ServerShutdown shutdown{*server, grpc_contexts.front()};

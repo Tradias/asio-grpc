@@ -35,7 +35,6 @@ struct HealthCheckServiceTest : test::GrpcContextTest
     grpc::ServerContext server_context;
     std::shared_ptr<grpc::Channel> channel;
     std::unique_ptr<grpc_health::Health::Stub> stub;
-    std::optional<test::ServerShutdownInitiator> server_shutdown;
     grpc::ClientContext client_context;
     grpc_health::HealthCheckRequest request;
     grpc_health::HealthCheckResponse response;
@@ -62,7 +61,6 @@ struct HealthCheckServiceTest : test::GrpcContextTest
             grpc::CreateChannel(std::string{"127.0.0.1:"} + std::to_string(port), grpc::InsecureChannelCredentials());
         stub = grpc_health::Health::NewStub(channel);
         client_context.set_deadline(test::five_seconds_from_now());
-        server_shutdown.emplace(*server);
     }
 
     ~HealthCheckServiceTest()
@@ -70,8 +68,6 @@ struct HealthCheckServiceTest : test::GrpcContextTest
         stub.reset();
         server->Shutdown();
     }
-
-    void shutdown() { server_shutdown->initiate(); }
 
     void test_check_default_service()
     {
@@ -85,7 +81,6 @@ struct HealthCheckServiceTest : test::GrpcContextTest
                 grpc::ClientContext client_context2;
                 CHECK(CheckRPC::request(grpc_context, *stub, client_context2, request, response, yield).ok());
                 CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_NOT_SERVING, response.status());
-                shutdown();
             });
     }
 
@@ -99,7 +94,6 @@ struct HealthCheckServiceTest : test::GrpcContextTest
                                     CheckRPC::request(grpc_context, *stub, client_context, request, response, yield);
                                 CHECK_EQ(grpc::StatusCode::NOT_FOUND, status.error_code());
                                 CHECK_EQ("service name unknown", status.error_message());
-                                shutdown();
                             });
     }
 
@@ -121,7 +115,6 @@ struct HealthCheckServiceTest : test::GrpcContextTest
                                 CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_NOT_SERVING, response.status());
                                 CHECK(rpc.read(response, yield));
                                 CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_SERVING, response.status());
-                                shutdown();
                             });
     }
 
@@ -145,7 +138,6 @@ struct HealthCheckServiceTest : test::GrpcContextTest
                                     CHECK(rpc.read(response, yield));
                                     CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_SERVING, response.status());
                                 }
-                                shutdown();
                             });
     }
 
@@ -161,7 +153,6 @@ struct HealthCheckServiceTest : test::GrpcContextTest
                                 health_check_service->Shutdown();
                                 CHECK(rpc.read(response, yield));
                                 CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_NOT_SERVING, response.status());
-                                shutdown();
                             });
     }
 
@@ -180,7 +171,6 @@ struct HealthCheckServiceTest : test::GrpcContextTest
                                 client_context.TryCancel();
                                 CHECK_FALSE(rpc.read(response, yield));
                                 CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.status_code());
-                                shutdown();
                             });
     }
 };

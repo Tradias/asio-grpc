@@ -60,16 +60,9 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
     template <class RPC, class Service, class Request>
     void initiate_request(RPC rpc, Service& service, Request& request, void* tag)
     {
-        grpc_context.work_started();
         server_context.AsyncNotifyWhenDone(static_cast<DoneBase*>(this));
         auto* const cq = grpc_context.get_server_completion_queue();
         (service.*rpc)(&server_context, &request, &writer, cq, cq, tag);
-    }
-
-    void accept_request() noexcept
-    {
-        // Count AsyncNotifyWhenDone
-        grpc_context.work_started();
     }
 
     [[nodiscard]] bool is_writing() const noexcept { return write_pending; }
@@ -77,7 +70,6 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
     void write(const Response& response)
     {
         write_pending = true;
-        grpc_context.work_started();
         writer.Write(response, static_cast<StepBase*>(this));
     }
 
@@ -86,7 +78,6 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
     void finish(const grpc::Status& status)
     {
         finish_called = true;
-        grpc_context.work_started();
         writer.Finish(status, static_cast<StepBase*>(this));
     }
 
@@ -98,6 +89,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
     static void handle_step(GrpcBase* op, detail::InvokeHandler invoke_handler, bool ok, agrpc::GrpcContext&)
     {
         auto* self = static_cast<Derived*>(static_cast<StepBase*>(op));
+        self->grpc_context.work_started();
         detail::AllocationGuard guard{self, self->get_allocator()};
         if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
         {
@@ -126,6 +118,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
     static void handle_done(GrpcBase* op, detail::InvokeHandler invoke_handler, bool, agrpc::GrpcContext&)
     {
         auto* self = static_cast<Derived*>(static_cast<DoneBase*>(op));
+        self->grpc_context.work_started();
         const auto completed = std::exchange(self->completed, true);
         if (completed || !self->finish_called)
         {

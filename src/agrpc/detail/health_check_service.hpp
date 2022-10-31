@@ -24,6 +24,8 @@
 #include <agrpc/health_check_service.hpp>
 #include <grpcpp/server_context.h>
 
+#include <cassert>
+
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
@@ -62,7 +64,6 @@ class HealthCheckWatcher : public detail::IntrusiveListHook,
 
     void run()
     {
-        this->accept_request();
         auto& service_data = service.services_map[request.service()];
         service_data.watchers.push_back(this);
         send_health(service_data.status);
@@ -147,10 +148,9 @@ class HealthCheckChecker : public detail::TypeErasedGrpcTagOperation
     static auto create_and_initiate(agrpc::HealthCheckService& service, void* tag)
     {
         auto& grpc_context = *service.grpc_context;
-        auto watcher = detail::allocate<HealthCheckChecker>(grpc_context.get_allocator(), service);
-        grpc_context.work_started();
-        watcher->initiate_request(tag);
-        return watcher.release();
+        auto checker = detail::allocate<HealthCheckChecker>(grpc_context.get_allocator(), service);
+        checker->initiate_request(tag);
+        return checker.release();
     }
 
     void deallocate() { detail::destroy_deallocate(this, get_allocator()); }
@@ -163,6 +163,7 @@ class HealthCheckChecker : public detail::TypeErasedGrpcTagOperation
     static void on_complete(GrpcBase* op, detail::InvokeHandler, bool, agrpc::GrpcContext&)
     {
         auto* self = static_cast<HealthCheckChecker*>(op);
+        self->grpc_context().work_started();
         self->deallocate();
     }
 
@@ -174,7 +175,6 @@ class HealthCheckChecker : public detail::TypeErasedGrpcTagOperation
 
     void finish(detail::ServingStatus status)
     {
-        grpc_context().work_started();
         if (detail::ServingStatus::NOT_FOUND == status)
         {
             writer.FinishWithError(grpc::Status(grpc::StatusCode::NOT_FOUND, "service name unknown"), this);
@@ -209,6 +209,7 @@ inline void HealthCheckRepeatedlyRequest<Implementation>::on_request_complete(Gr
                                                                               bool ok, agrpc::GrpcContext&)
 {
     auto* self = static_cast<HealthCheckRepeatedlyRequest*>(op);
+    self->service.grpc_context->work_started();
     auto* const impl = self->impl;
     if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler && ok)
     {
@@ -304,6 +305,13 @@ inline grpc::ServerBuilder& add_health_check_service(grpc::ServerBuilder& builde
 
 inline void start_health_check_service(grpc::HealthCheckServiceInterface* service, agrpc::GrpcContext& grpc_context)
 {
+    assert(service &&
+           "Use `agrpc::add_health_check_service` to add the HealthCheckService to a ServerBuilder before calling this "
+           "function");
+    if (service == nullptr)
+    {
+        return;
+    }
     auto& impl = *static_cast<agrpc::HealthCheckService*>(service);
     impl.grpc_context = &grpc_context;
     impl.repeatedly_request_watch.start();
