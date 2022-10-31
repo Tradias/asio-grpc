@@ -311,7 +311,7 @@ For clients only:
 ```cpp
 agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 ```
-<sup><a href='/example/snippets/client.cpp#L352-L354' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-client-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/snippets/client.cpp#L364-L366' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-client-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 Add some work to the `grpc_context` and run it. As an example, a simple unary request using [asio::use_awaitable](https://www.boost.org/doc/libs/1_80_0/doc/html/boost_asio/reference/use_awaitable.html) (the default completion token):
@@ -335,7 +335,7 @@ asio::co_spawn(
     asio::detached);
 grpc_context.run();
 ```
-<sup><a href='/example/snippets/client.cpp#L356-L372' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-client-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/snippets/client.cpp#L368-L384' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-client-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 It might also be helpful to create a work guard before running the `agrpc::GrpcContext` to prevent `grpc_context.run()` from returning early.
@@ -345,7 +345,7 @@ It might also be helpful to create a work guard before running the `agrpc::GrpcC
 ```cpp
 std::optional guard{asio::require(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked)};
 ```
-<sup><a href='/example/snippets/client.cpp#L374-L376' title='Snippet source file'>snippet source</a> | <a href='#snippet-make-work-guard' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/snippets/client.cpp#L386-L388' title='Snippet source file'>snippet source</a> | <a href='#snippet-make-work-guard' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Where to go from here?
