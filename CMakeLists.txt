@@ -67,6 +67,7 @@ option(
     ASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST
     "Add test to ctest that will verify installability of ${PROJECT_NAME} and its CMake function asio_grpc_protobuf_generate"
     on)
+option(ASIO_GRPC_ENABLE_HEALTH_CHECK_SERVICE_TEST "Compile `agrpc::HealthCheckService` tests" on)
 set(ASIO_GRPC_CMAKE_INSTALL_TEST_CTEST_COMMAND
     "${CMAKE_CTEST_COMMAND}"
     CACHE FILEPATH "CMake executable used in cmake install test")

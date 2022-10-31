@@ -17,7 +17,6 @@
 #include "utils/doctest.hpp"
 #include "utils/free_port.hpp"
 #include "utils/grpc_context_test.hpp"
-#include "utils/server_shutdown_initiator.hpp"
 #include "utils/time.hpp"
 
 #include <agrpc/health_check_service.hpp>
@@ -32,7 +31,6 @@ struct HealthCheckServiceTest : test::GrpcContextTest
     using CheckRPC = agrpc::RPC<&grpc_health::Health::Stub::PrepareAsyncCheck>;
     using WatchRPC = agrpc::RPC<&grpc_health::Health::Stub::PrepareAsyncWatch>;
 
-    grpc::ServerContext server_context;
     std::shared_ptr<grpc::Channel> channel;
     std::unique_ptr<grpc_health::Health::Stub> stub;
     grpc::ClientContext client_context;
@@ -49,25 +47,19 @@ struct HealthCheckServiceTest : test::GrpcContextTest
         {
             grpc::EnableDefaultHealthCheckService(true);
         }
-        const auto port = test::get_free_port();
-        const auto address = std::string{"0.0.0.0:"} + std::to_string(port);
-        builder.AddListeningPort(address, grpc::InsecureServerCredentials());
+        const auto port = std::to_string(test::get_free_port());
+        builder.AddListeningPort("0.0.0.0:" + port, grpc::InsecureServerCredentials());
         server = builder.BuildAndStart();
         if constexpr (UseAgrpc)
         {
             agrpc::start_health_check_service(server->GetHealthCheckService(), grpc_context);
         }
-        channel =
-            grpc::CreateChannel(std::string{"127.0.0.1:"} + std::to_string(port), grpc::InsecureChannelCredentials());
+        channel = grpc::CreateChannel("127.0.0.1:" + port, grpc::InsecureChannelCredentials());
         stub = grpc_health::Health::NewStub(channel);
         client_context.set_deadline(test::five_seconds_from_now());
     }
 
-    ~HealthCheckServiceTest()
-    {
-        stub.reset();
-        server->Shutdown();
-    }
+    ~HealthCheckServiceTest() { server->Shutdown(); }
 
     void test_check_default_service()
     {
@@ -99,6 +91,7 @@ struct HealthCheckServiceTest : test::GrpcContextTest
 
     void test_watch_default_service_and_change_serving_status()
     {
+        client_context.set_deadline(test::one_seconds_from_now());
         test::spawn_and_run(grpc_context,
                             [&](const asio::yield_context& yield)
                             {
@@ -111,9 +104,8 @@ struct HealthCheckServiceTest : test::GrpcContextTest
                                 CHECK(rpc.read(response, yield));
                                 CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_NOT_SERVING, response.status());
                                 server->GetHealthCheckService()->SetServingStatus(true);
-                                CHECK(rpc.read(response, yield));
-                                CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_NOT_SERVING, response.status());
-                                CHECK(rpc.read(response, yield));
+                                while (rpc.read(response, yield))
+                                    ;
                                 CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_SERVING, response.status());
                             });
     }
