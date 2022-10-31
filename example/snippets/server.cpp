@@ -13,9 +13,11 @@
 // limitations under the License.
 
 #include "example/v1/example.grpc.pb.h"
+#include "grpc/health/v1/health.grpc.pb.h"
 #include "helper.hpp"
 
 #include <agrpc/asio_grpc.hpp>
+#include <agrpc/health_check_service.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/coroutine.hpp>
@@ -372,6 +374,18 @@ asio::awaitable<void> request_loop(agrpc::GrpcContext& grpc_context, example::v1
     co_await request_handler(server_context, request, writer, std::move(on_done));
 }
 /* [async-notify-when-done-request-loop] */
+
+void health_check_service()
+{
+    /* [add-health-check-service] */
+    std::unique_ptr<grpc::Server> server;
+    grpc::ServerBuilder builder;
+    agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
+    agrpc::add_health_check_service(builder);
+    server = builder.BuildAndStart();
+    agrpc::start_health_check_service(server->GetHealthCheckService(), grpc_context);
+    /* [add-health-check-service] */
+}
 
 void server_main()
 {

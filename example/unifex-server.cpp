@@ -14,9 +14,11 @@
 
 #include "example/v1/example.grpc.pb.h"
 #include "example/v1/example_ext.grpc.pb.h"
+#include "grpc/health/v1/health.grpc.pb.h"
 #include "helper.hpp"
 
 #include <agrpc/asio_grpc.hpp>
+#include <agrpc/health_check_service.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 #include <unifex/finally.hpp>
@@ -146,8 +148,10 @@ int main(int argc, const char** argv)
     builder.RegisterService(&service);
     example::v1::ExampleExt::AsyncService service_ext;
     builder.RegisterService(&service_ext);
+    agrpc::add_health_check_service(builder);
     server = builder.BuildAndStart();
     abort_if_not(bool{server});
+    agrpc::start_health_check_service(server->GetHealthCheckService(), grpc_context);
 
     grpc_context.work_started();
     unifex::sync_wait(

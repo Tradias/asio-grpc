@@ -46,6 +46,9 @@ struct AsyncNotfiyWhenDoneFn
      * Has to be called before the rpc starts. Upon completion, `grpc::ServerContext::IsCancelled()` can be called to
      * check whether the rpc was cancelled.
      *
+     * @attention This function does not work with `GrpcContext::run_completion_queue/poll_completion_queue()`. Use
+     * `GrpcContext::run/poll()` instead.
+     *
      * @note Due to https://github.com/grpc/grpc/issues/10136 there are work-tracking issues during server shutdown. See
      * below example for a workaround.
      *

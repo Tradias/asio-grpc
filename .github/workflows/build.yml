@@ -65,7 +65,7 @@ jobs:
       run: cmake --build --preset default --config ${{ matrix.config.build-type }} --parallel ${{ matrix.config.parallel }}
 
     - name: Test
-      run: ctest --preset default --build-config ${{ matrix.config.build-type }}
+      run: ctest --preset default --parallel 25 --build-config ${{ matrix.config.build-type }}
 
 
   multi-gcc-build:

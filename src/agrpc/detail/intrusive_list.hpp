@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/config.hpp>
 
+#include <iterator>
 #include <utility>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -29,6 +30,42 @@ template <class T>
 class IntrusiveList
 {
   public:
+    class iterator
+    {
+      public:
+        using value_type = T;
+        using difference_type = std::ptrdiff_t;
+        using reference = T&;
+        using pointer = T*;
+        using iterator_category = std::forward_iterator_tag;
+
+        iterator() = default;
+
+        explicit iterator(T* item) : item(item) {}
+
+        reference operator*() noexcept { return *item; }
+
+        iterator& operator++() noexcept
+        {
+            item = item->next;
+            return *this;
+        }
+
+        iterator operator++(int) noexcept
+        {
+            auto self = *this;
+            item = item->next;
+            return self;
+        }
+
+        friend bool operator==(const iterator& lhs, const iterator& rhs) { return lhs.item == rhs.item; }
+
+        friend bool operator!=(const iterator& lhs, const iterator& rhs) { return lhs.item != rhs.item; }
+
+      private:
+        T* item{};
+    };
+
     IntrusiveList() noexcept : head(nullptr), tail(nullptr) {}
 
     IntrusiveList(const IntrusiveList&) = delete;
@@ -44,6 +81,10 @@ class IntrusiveList
     IntrusiveList& operator=(IntrusiveList&&) = delete;
 
     [[nodiscard]] bool empty() const noexcept { return head == nullptr; }
+
+    [[nodiscard]] iterator begin() noexcept { return iterator(head); }
+
+    [[nodiscard]] iterator end() noexcept { return iterator(); }
 
     void push_back(T* item) noexcept
     {

@@ -33,6 +33,8 @@ class BasicGrpcExecutor;
 
 class GrpcContext;
 
+class HealthCheckService;
+
 template <class Executor>
 class BasicGrpcStream;
 
@@ -52,6 +54,12 @@ struct RepeatedlyRequestContextAccess;
 class GenericRPCContext;
 
 class AsyncNotfiyWhenDoneSenderImplementation;
+
+struct HealthCheckServiceData;
+
+class HealthCheckWatcher;
+
+class HealthCheckChecker;
 
 template <class Deadline, class Executor>
 struct MoveAlarmSenderImplementation;
