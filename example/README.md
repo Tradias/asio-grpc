@@ -127,7 +127,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // Multi-threaded server performing 20 unary requests
 // ---------------------------------------------------
 ```
-<sup><a href='/example/multi-threaded-server.cpp#L29-L33' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-multi-threaded' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/multi-threaded-server.cpp#L31-L35' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-multi-threaded' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Share io_context
@@ -268,7 +268,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // the example testable.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/unifex-server.cpp#L34-L39' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-unifex-unary' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/unifex-server.cpp#L36-L41' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-unifex-unary' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: server-side-unifex-server-streaming -->
@@ -278,5 +278,5 @@ Click on `snippet source` to jump to the code of an individual example.
 // A simple server-streaming request handler using coroutines.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/unifex-server.cpp#L79-L83' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-unifex-server-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/unifex-server.cpp#L81-L85' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-unifex-server-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
