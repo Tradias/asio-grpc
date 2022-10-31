@@ -347,17 +347,17 @@ void create_server_grpc_context()
     /* [create-grpc_context-server-side] */
 }
 
-/* [async-notify-when-done-request-loop] */
+/* [notify-when-done-request-loop] */
 template <class RequestHandler>
 asio::awaitable<void> request_loop(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service,
                                    RequestHandler request_handler)
 {
     grpc::ServerContext server_context;
-    auto on_done = agrpc::async_notify_when_done(grpc_context, server_context, asio::experimental::use_promise);
+    auto on_done = agrpc::notify_when_done(grpc_context, server_context, asio::experimental::use_promise);
     asio::post(grpc_context,
                [&]
                {
-                   // Discount the work of async_notify_when_done until the rpc starts
+                   // Discount the work of notify_when_done until the rpc starts
                    grpc_context.work_finished();
                });
     example::v1::Request request;
@@ -373,7 +373,7 @@ asio::awaitable<void> request_loop(agrpc::GrpcContext& grpc_context, example::v1
     asio::co_spawn(grpc_context, request_loop(grpc_context, service, request_handler), asio::detached);
     co_await request_handler(server_context, request, writer, std::move(on_done));
 }
-/* [async-notify-when-done-request-loop] */
+/* [notify-when-done-request-loop] */
 
 void health_check_service()
 {

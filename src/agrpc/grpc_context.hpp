@@ -16,7 +16,6 @@
 #define AGRPC_AGRPC_GRPC_CONTEXT_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
-#include <agrpc/detail/async_notify_when_done.hpp>
 #include <agrpc/detail/atomic_intrusive_queue.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
@@ -26,6 +25,7 @@
 #include <agrpc/detail/intrusive_list.hpp>
 #include <agrpc/detail/intrusive_queue.hpp>
 #include <agrpc/detail/memory_resource.hpp>
+#include <agrpc/detail/notify_when_done.hpp>
 #include <agrpc/detail/type_erased_operation.hpp>
 #include <grpcpp/alarm.h>
 #include <grpcpp/completion_queue.h>
@@ -280,7 +280,7 @@ class GrpcContext
   private:
     using RemoteWorkQueue = detail::AtomicIntrusiveQueue<detail::TypeErasedNoArgOperation>;
     using LocalWorkQueue = detail::IntrusiveQueue<detail::TypeErasedNoArgOperation>;
-    using AsyncNotifyWhenDoneList = detail::IntrusiveList<detail::AsyncNotfiyWhenDoneSenderImplementation>;
+    using AsyncNotifyWhenDoneList = detail::IntrusiveList<detail::NotfiyWhenDoneSenderImplementation>;
 
     friend detail::GrpcContextImplementation;
 
@@ -294,7 +294,7 @@ class GrpcContext
     std::unique_ptr<grpc::CompletionQueue> completion_queue;
     detail::GrpcContextLocalMemoryResource local_resource{detail::pmr::new_delete_resource()};
     LocalWorkQueue local_work_queue;
-    AsyncNotifyWhenDoneList async_notify_when_done_list;
+    AsyncNotifyWhenDoneList notify_when_done_list;
     RemoteWorkQueue remote_work_queue{false};
 };
 

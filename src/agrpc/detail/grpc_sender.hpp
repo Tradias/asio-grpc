@@ -30,7 +30,7 @@ struct GrpcSenderImplementationBase
     using StopFunction = detail::Empty;
 };
 
-template <class InitiatingFunction, class StopFunctionT>
+template <class InitiatingFunction, class StopFunctionT = detail::Empty>
 struct GrpcSenderImplementation : detail::GrpcSenderImplementationBase
 {
     using StopFunction = StopFunctionT;

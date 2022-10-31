@@ -110,13 +110,13 @@ struct GrpcContextImplementation
 
     static void add_operation(agrpc::GrpcContext& grpc_context, detail::TypeErasedNoArgOperation* op) noexcept;
 
-    static void add_async_notify_when_done_operation(
-        agrpc::GrpcContext& grpc_context, detail::AsyncNotfiyWhenDoneSenderImplementation* implementation) noexcept;
+    static void add_notify_when_done_operation(agrpc::GrpcContext& grpc_context,
+                                               detail::NotfiyWhenDoneSenderImplementation* implementation) noexcept;
 
-    static void remove_async_notify_when_done_operation(
-        agrpc::GrpcContext& grpc_context, detail::AsyncNotfiyWhenDoneSenderImplementation* implementation) noexcept;
+    static void remove_notify_when_done_operation(agrpc::GrpcContext& grpc_context,
+                                                  detail::NotfiyWhenDoneSenderImplementation* implementation) noexcept;
 
-    static void deallocate_async_notify_when_done_list(agrpc::GrpcContext& grpc_context);
+    static void deallocate_notify_when_done_list(agrpc::GrpcContext& grpc_context);
 
     static bool handle_next_completion_queue_event(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline,
                                                    detail::InvokeHandler invoke);

@@ -703,7 +703,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() can wait for g
 {
     bool invoked{false};
     grpc::Alarm alarm;
-    wait(alarm, test::ten_milliseconds_from_now(),
+    wait(alarm, test::now(),
          [&](bool)
          {
              invoked = true;

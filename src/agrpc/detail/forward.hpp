@@ -53,7 +53,7 @@ struct RepeatedlyRequestContextAccess;
 
 class GenericRPCContext;
 
-class AsyncNotfiyWhenDoneSenderImplementation;
+class NotfiyWhenDoneSenderImplementation;
 
 struct HealthCheckServiceData;
 

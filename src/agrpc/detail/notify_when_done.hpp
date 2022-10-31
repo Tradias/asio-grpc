@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_ASYNC_NOTIFY_WHEN_DONE_HPP
-#define AGRPC_DETAIL_ASYNC_NOTIFY_WHEN_DONE_HPP
+#ifndef AGRPC_DETAIL_NOTIFY_WHEN_DONE_HPP
+#define AGRPC_DETAIL_NOTIFY_WHEN_DONE_HPP
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
@@ -24,7 +24,7 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-class AsyncNotfiyWhenDoneSenderImplementation
+class NotfiyWhenDoneSenderImplementation
 {
   public:
     static constexpr auto TYPE = detail::SenderImplementationType::BOTH;
@@ -37,7 +37,7 @@ class AsyncNotfiyWhenDoneSenderImplementation
     using Self = detail::BasicSenderRunningOperationBase<TYPE>;
 
   public:
-    AsyncNotfiyWhenDoneSenderImplementation(grpc::ServerContext& server_context) : server_context(server_context) {}
+    NotfiyWhenDoneSenderImplementation(grpc::ServerContext& server_context) : server_context(server_context) {}
 
     void initiate(agrpc::GrpcContext& grpc_context, const Initiation&, Self* self)
     {
@@ -62,7 +62,7 @@ class AsyncNotfiyWhenDoneSenderImplementation
     template <class OnDone>
     void done(OnDone on_done, bool)
     {
-        detail::GrpcContextImplementation::remove_async_notify_when_done_operation(on_done.grpc_context(), this);
+        detail::GrpcContextImplementation::remove_notify_when_done_operation(on_done.grpc_context(), this);
         on_done();
     }
 
@@ -71,13 +71,13 @@ class AsyncNotfiyWhenDoneSenderImplementation
         operation->complete(invoke_handler, grpc_context);
     }
 
-    AsyncNotfiyWhenDoneSenderImplementation* next;
-    AsyncNotfiyWhenDoneSenderImplementation* prev;
+    NotfiyWhenDoneSenderImplementation* next;
+    NotfiyWhenDoneSenderImplementation* prev;
 
   private:
     void init(agrpc::GrpcContext& grpc_context, detail::TypeErasedGrpcTagOperation* self)
     {
-        detail::GrpcContextImplementation::add_async_notify_when_done_operation(grpc_context, this);
+        detail::GrpcContextImplementation::add_notify_when_done_operation(grpc_context, this);
         server_context.AsyncNotifyWhenDone(self);
     }
 
@@ -88,4 +88,4 @@ class AsyncNotfiyWhenDoneSenderImplementation
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_ASYNC_NOTIFY_WHEN_DONE_HPP
+#endif  // AGRPC_DETAIL_NOTIFY_WHEN_DONE_HPP

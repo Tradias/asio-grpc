@@ -254,13 +254,13 @@ asio::awaitable<void> bind_allocator(std::allocator<void> my_allocator)
     /* [bind_allocator-client-side] */
 }
 
-asio::awaitable<void> async_notify_on_state_change(const std::string& host)
+asio::awaitable<void> grpc_initate_notify_on_state_change(const std::string& host)
 {
     /* [grpc_initiate-NotifyOnStateChange] */
-    auto channel = grpc::CreateChannel(host, grpc::InsecureChannelCredentials());
-    auto state = channel->GetState(true);
-    auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(5);
-    bool is_deadline_not_expired = co_await agrpc::grpc_initiate(
+    const auto channel = grpc::CreateChannel(host, grpc::InsecureChannelCredentials());
+    const auto state = channel->GetState(true);
+    const auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(5);
+    bool has_state_changed = co_await agrpc::grpc_initiate(
         [&](agrpc::GrpcContext& grpc_context, void* tag)
         {
             channel->NotifyOnStateChange(state, deadline, agrpc::get_completion_queue(grpc_context), tag);
@@ -268,7 +268,19 @@ asio::awaitable<void> async_notify_on_state_change(const std::string& host)
         asio::use_awaitable);
     /* [grpc_initiate-NotifyOnStateChange] */
 
-    silence_unused(is_deadline_not_expired);
+    silence_unused(has_state_changed);
+}
+
+asio::awaitable<void> agrpc_notify_on_state_change(agrpc::GrpcContext& grpc_context, const std::string& host)
+{
+    /* [notify_on_state_change] */
+    const auto channel = grpc::CreateChannel(host, grpc::InsecureChannelCredentials());
+    const auto state = channel->GetState(true);
+    const auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(5);
+    bool has_state_changed = co_await agrpc::notify_on_state_change(grpc_context, *channel, state, deadline);
+    /* [notify_on_state_change] */
+
+    silence_unused(has_state_changed);
 }
 
 auto hundred_milliseconds_from_now() { return std::chrono::system_clock::now() + std::chrono::milliseconds(100); }

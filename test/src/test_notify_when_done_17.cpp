@@ -22,11 +22,11 @@
 #include "utils/test_server.hpp"
 #include "utils/tracking_allocator.hpp"
 
-#include <agrpc/async_notify_when_done.hpp>
 #include <agrpc/bind_allocator.hpp>
+#include <agrpc/notify_when_done.hpp>
 #include <agrpc/rpc.hpp>
 
-TEST_CASE("async_notify_when_done: deallocates unstarted operation on destruction")
+TEST_CASE("notify_when_done: deallocates unstarted operation on destruction")
 {
     bool invoked{false};
     test::TrackedAllocation tracked{};
@@ -36,12 +36,12 @@ TEST_CASE("async_notify_when_done: deallocates unstarted operation on destructio
         test::post(test.grpc_context,
                    [&]
                    {
-                       agrpc::async_notify_when_done(test.grpc_context, server_context,
-                                                     agrpc::bind_allocator(test::TrackingAllocator<std::byte>{tracked},
-                                                                           [&]
-                                                                           {
-                                                                               invoked = true;
-                                                                           }));
+                       agrpc::notify_when_done(test.grpc_context, server_context,
+                                               agrpc::bind_allocator(test::TrackingAllocator<std::byte>{tracked},
+                                                                     [&]
+                                                                     {
+                                                                         invoked = true;
+                                                                     }));
                        test.grpc_context.stop();
                    });
         test.grpc_context.run();
@@ -51,34 +51,34 @@ TEST_CASE("async_notify_when_done: deallocates unstarted operation on destructio
     CHECK_EQ(tracked.bytes_allocated, tracked.bytes_deallocated);
 }
 
-struct AsnycNotifyWhenDoneTest
+struct NotifyWhenDoneTest
 {
     std::optional<test::TestServer<&test::v1::Test::AsyncService::RequestUnary>> test_server;
     test::GrpcClientServerTest test;
     test::ServerShutdownInitiator server_shutdown{*test.server};
 
-    AsnycNotifyWhenDoneTest() { test_server.emplace(test.service, test.server_context); }
+    NotifyWhenDoneTest() { test_server.emplace(test.service, test.server_context); }
 
     auto& grpc_context() { return test.grpc_context; }
 };
 
-TEST_CASE("async_notify_when_done: is completed on RPC success")
+TEST_CASE("notify_when_done: is completed on RPC success")
 {
     bool ok{true};
     test::TrackedAllocation tracked{};
     test::TrackedAllocation tracked2{};
     {
-        AsnycNotifyWhenDoneTest test;
+        NotifyWhenDoneTest test;
         test::spawn_and_run(
             test.grpc_context(),
             [&](const asio::yield_context& yield)
             {
-                agrpc::async_notify_when_done(test.grpc_context(), test.test.server_context,
-                                              agrpc::bind_allocator(test::TrackingAllocator<std::byte>{tracked},
-                                                                    [&]
-                                                                    {
-                                                                        ok = test.test.server_context.IsCancelled();
-                                                                    }));
+                agrpc::notify_when_done(test.grpc_context(), test.test.server_context,
+                                        agrpc::bind_allocator(test::TrackingAllocator<std::byte>{tracked},
+                                                              [&]
+                                                              {
+                                                                  ok = test.test.server_context.IsCancelled();
+                                                              }));
                 CHECK(test.test_server->request_rpc(yield));
                 test.test_server->response.set_integer(21);
                 CHECK(agrpc::finish(test.test_server->responder, test.test_server->response, grpc::Status::OK, yield));
@@ -96,19 +96,19 @@ TEST_CASE("async_notify_when_done: is completed on RPC success")
     CHECK_EQ(tracked2.bytes_deallocated, tracked.bytes_deallocated);
 }
 
-TEST_CASE("async_notify_when_done: manually discount work")
+TEST_CASE("notify_when_done: manually discount work")
 {
     bool invoked{false};
     bool ok{true};
     test::TrackedAllocation tracked{};
     {
-        AsnycNotifyWhenDoneTest test;
-        agrpc::async_notify_when_done(test.grpc_context(), test.test.server_context,
-                                      agrpc::bind_allocator(test::TrackingAllocator<std::byte>{tracked},
-                                                            [&]
-                                                            {
-                                                                invoked = true;
-                                                            }));
+        NotifyWhenDoneTest test;
+        agrpc::notify_when_done(test.grpc_context(), test.test.server_context,
+                                agrpc::bind_allocator(test::TrackingAllocator<std::byte>{tracked},
+                                                      [&]
+                                                      {
+                                                          invoked = true;
+                                                      }));
         test.test_server->request_rpc(asio::bind_executor(test.grpc_context(),
                                                           [&](bool request_ok)
                                                           {

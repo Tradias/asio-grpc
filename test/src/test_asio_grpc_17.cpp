@@ -24,6 +24,7 @@
 #include <agrpc/detail/algorithm.hpp>
 #include <agrpc/get_completion_queue.hpp>
 #include <agrpc/grpc_initiate.hpp>
+#include <agrpc/notify_on_state_change.hpp>
 #include <agrpc/rpc.hpp>
 #include <agrpc/wait.hpp>
 #include <grpcpp/create_channel.h>
@@ -98,10 +99,11 @@ TEST_CASE("constexpr algorithm: replace_sequence_with_value")
     CHECK_EQ("find this x in the haystack", result);
 }
 
-TEST_CASE_FIXTURE(test::GrpcClientServerTest, "grpc_initiate NotifyOnStateChange")
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "grpc_initiate NotifyOnStateChange + agrpc::notify_on_state_change")
 {
     bool actual_ok{false};
     bool expected_ok{true};
+    bool use_grpc_initiate{true};
     auto deadline = test::five_seconds_from_now();
     SUBCASE("success") {}
     SUBCASE("deadline expires")
@@ -110,17 +112,26 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "grpc_initiate NotifyOnStateChange
         expected_ok = false;
         deadline = test::now() - std::chrono::seconds(5);
     }
+    SUBCASE("grpc_initiate") {}
+    SUBCASE("notify_on_state_change") { use_grpc_initiate = false; }
     const auto state = channel->GetState(true);
-    agrpc::grpc_initiate(
-        [&](agrpc::GrpcContext& context, void* tag)
-        {
-            channel->NotifyOnStateChange(state, deadline, agrpc::get_completion_queue(context), tag);
-        },
-        asio::bind_executor(grpc_context,
-                            [&](bool ok)
-                            {
-                                actual_ok = ok;
-                            }));
+    const auto callback = [&](bool ok)
+    {
+        actual_ok = ok;
+    };
+    if (use_grpc_initiate)
+    {
+        agrpc::grpc_initiate(
+            [&](agrpc::GrpcContext& context, void* tag)
+            {
+                channel->NotifyOnStateChange(state, deadline, agrpc::get_completion_queue(context), tag);
+            },
+            asio::bind_executor(grpc_context, callback));
+    }
+    else
+    {
+        agrpc::notify_on_state_change(grpc_context, *channel, state, deadline, callback);
+    }
     grpc_context.run();
     CHECK_EQ(expected_ok, actual_ok);
 }

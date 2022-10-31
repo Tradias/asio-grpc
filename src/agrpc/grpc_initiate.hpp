@@ -44,7 +44,9 @@ struct GrpcInitiateFn
      * completion signature is `void(bool)`.
      */
     template <class InitiatingFunction, class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(InitiatingFunction initiating_function, CompletionToken&& token = {}) const
+    [[deprecated(
+        "Use the dedicated free functions like `agrpc::notify_when_done` and `agrpc::notify_on_state_change`")]] auto
+    operator()(InitiatingFunction initiating_function, CompletionToken&& token = {}) const
     {
         return detail::grpc_initiate(static_cast<InitiatingFunction&&>(initiating_function),
                                      static_cast<CompletionToken&&>(token));

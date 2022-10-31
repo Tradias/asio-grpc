@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_AGRPC_ASYNC_NOTIFY_WHEN_DONE_HPP
-#define AGRPC_AGRPC_ASYNC_NOTIFY_WHEN_DONE_HPP
+#ifndef AGRPC_AGRPC_NOTIFY_WHEN_DONE_HPP
+#define AGRPC_AGRPC_NOTIFY_WHEN_DONE_HPP
 
 #include <agrpc/default_completion_token.hpp>
-#include <agrpc/detail/async_notify_when_done.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/initiate_sender_implementation.hpp>
+#include <agrpc/detail/notify_when_done.hpp>
 #include <agrpc/grpc_context.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -38,7 +38,7 @@ namespace detail
  *
  * @since 2.3.0
  */
-struct AsyncNotfiyWhenDoneFn
+struct NotfiyWhenDoneFn
 {
     /**
      * @brief Set notification for rpc completion
@@ -54,7 +54,7 @@ struct AsyncNotfiyWhenDoneFn
      *
      * Example:
      *
-     * @snippet server.cpp async-notify-when-done-request-loop
+     * @snippet server.cpp notify-when-done-request-loop
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void()`.
@@ -64,7 +64,7 @@ struct AsyncNotfiyWhenDoneFn
                     CompletionToken&& token = {}) const
         noexcept(std::is_same_v<agrpc::UseSender, detail::RemoveCrefT<CompletionToken>>)
     {
-        return detail::async_initiate_sender_implementation<detail::AsyncNotfiyWhenDoneSenderImplementation>(
+        return detail::async_initiate_sender_implementation<detail::NotfiyWhenDoneSenderImplementation>(
             grpc_context, {}, {server_context}, token);
     }
 };
@@ -73,14 +73,14 @@ struct AsyncNotfiyWhenDoneFn
 /**
  * @brief Set notification for server-side rpc completion
  *
- * @link detail::AsyncNotfiyWhenDoneFn
+ * @link detail::NotfiyWhenDoneFn
  * Server-side function to set notification for rpc completion.
  * @endlink
  *
  * @since 2.3.0
  */
-inline constexpr detail::AsyncNotfiyWhenDoneFn async_notify_when_done{};
+inline constexpr detail::NotfiyWhenDoneFn notify_when_done{};
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_AGRPC_ASYNC_NOTIFY_WHEN_DONE_HPP
+#endif  // AGRPC_AGRPC_NOTIFY_WHEN_DONE_HPP

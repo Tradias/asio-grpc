@@ -31,7 +31,6 @@
 #define AGRPC_AGRPC_ASIO_GRPC_HPP
 
 #include <agrpc/alarm.hpp>
-#include <agrpc/async_notify_when_done.hpp>
 #include <agrpc/bind_allocator.hpp>
 #include <agrpc/cancel_safe.hpp>
 #include <agrpc/default_completion_token.hpp>
@@ -41,6 +40,8 @@
 #include <agrpc/grpc_initiate.hpp>
 #include <agrpc/grpc_stream.hpp>
 #include <agrpc/high_level_client.hpp>
+#include <agrpc/notify_on_state_change.hpp>
+#include <agrpc/notify_when_done.hpp>
 #include <agrpc/repeatedly_request.hpp>
 #include <agrpc/repeatedly_request_context.hpp>
 #include <agrpc/rpc.hpp>
