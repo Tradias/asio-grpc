@@ -24,11 +24,12 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+template <class Deadline>
 struct NotifyOnStateChangeInitFunction
 {
     grpc::ChannelInterface& channel;
+    Deadline deadline;
     ::grpc_connectivity_state last_observed;
-    ::gpr_timespec deadline;
 
     void operator()(agrpc::GrpcContext& grpc_context, void* tag) const
     {

@@ -24,8 +24,8 @@
 #include "utils/rpc.hpp"
 #include "utils/time.hpp"
 
-#include <agrpc/grpc_initiate.hpp>
 #include <agrpc/high_level_client.hpp>
+#include <agrpc/notify_when_done.hpp>
 #include <agrpc/wait.hpp>
 
 #include <future>
@@ -299,16 +299,11 @@ auto create_is_cancelled_future(agrpc::GrpcContext& grpc_context, grpc::ServerCo
 {
     std::promise<bool> is_cancelled_promise;
     auto future = is_cancelled_promise.get_future();
-    agrpc::grpc_initiate(
-        [&](const agrpc::GrpcContext&, void* tag)
-        {
-            server_context.AsyncNotifyWhenDone(tag);
-        },
-        asio::bind_executor(grpc_context,
-                            [&, promise = std::move(is_cancelled_promise)](bool) mutable
+    agrpc::notify_when_done(grpc_context, server_context,
+                            [&, promise = std::move(is_cancelled_promise)]() mutable
                             {
                                 promise.set_value(server_context.IsCancelled());
-                            }));
+                            });
     return future;
 }
 

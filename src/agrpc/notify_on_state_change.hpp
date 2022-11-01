@@ -47,18 +47,20 @@ struct NotifyOnStateChangeFn
      *
      * @snippet client.cpp notify_on_state_change
      *
+     * @param deadline By default gRPC supports two types of deadlines: `gpr_timespec` and
+     * `std::chrono::system_clock::time_point`. More types can be added by specializing
+     * [grpc::TimePoint](https://grpc.github.io/grpc/cpp/classgrpc_1_1_time_point.html).
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` if the state changed, `false` if the deadline expired.
      */
     template <class Deadline, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(agrpc::GrpcContext& grpc_context, grpc::ChannelInterface& channel,
-                    ::grpc_connectivity_state last_observed, const Deadline& deadline,
-                    CompletionToken&& token = {}) const
+                    ::grpc_connectivity_state last_observed, Deadline deadline, CompletionToken&& token = {}) const
         noexcept(std::is_same_v<agrpc::UseSender, detail::RemoveCrefT<CompletionToken>>)
     {
         return detail::async_initiate_sender_implementation<
-            detail::GrpcSenderImplementation<detail::NotifyOnStateChangeInitFunction>>(
-            grpc_context, {channel, last_observed, grpc::TimePoint<Deadline>(deadline).raw_time()}, {}, token);
+            detail::GrpcSenderImplementation<detail::NotifyOnStateChangeInitFunction<Deadline>>>(
+            grpc_context, {channel, deadline, last_observed}, {}, token);
     }
 };
 }  // namespace detail

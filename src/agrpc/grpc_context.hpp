@@ -280,7 +280,7 @@ class GrpcContext
   private:
     using RemoteWorkQueue = detail::AtomicIntrusiveQueue<detail::TypeErasedNoArgOperation>;
     using LocalWorkQueue = detail::IntrusiveQueue<detail::TypeErasedNoArgOperation>;
-    using AsyncNotifyWhenDoneList = detail::IntrusiveList<detail::NotfiyWhenDoneSenderImplementation>;
+    using NotifyWhenDoneList = detail::IntrusiveList<detail::NotfiyWhenDoneSenderImplementation>;
 
     friend detail::GrpcContextImplementation;
 
@@ -294,7 +294,7 @@ class GrpcContext
     std::unique_ptr<grpc::CompletionQueue> completion_queue;
     detail::GrpcContextLocalMemoryResource local_resource{detail::pmr::new_delete_resource()};
     LocalWorkQueue local_work_queue;
-    AsyncNotifyWhenDoneList notify_when_done_list;
+    NotifyWhenDoneList notify_when_done_list;
     RemoteWorkQueue remote_work_queue{false};
 };
 
