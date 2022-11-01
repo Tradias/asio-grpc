@@ -36,7 +36,7 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief CompletionQueue-based implementation of grpc::HealthCheckServiceInterface
+ * @brief (experimental) CompletionQueue-based implementation of grpc::HealthCheckServiceInterface
  *
  * This class is a drop-in replacement for the `grpc::DefaultHealthCheckService`. It should be added to a
  * `grpc::ServerBuilder` using `agrpc::add_health_check_service`.
@@ -98,7 +98,7 @@ class HealthCheckService final : public grpc::HealthCheckServiceInterface
 };
 
 /**
- * @brief Add a HealthCheckService to a `grpc::Server`
+ * @brief (experimental) Add a HealthCheckService to a `grpc::Server`
  *
  * The service must be started using `agrpc::start_health_check_service` after `builder.BuildAndStart()` has been
  * called.
@@ -114,7 +114,7 @@ class HealthCheckService final : public grpc::HealthCheckServiceInterface
 grpc::ServerBuilder& add_health_check_service(grpc::ServerBuilder& builder);
 
 /**
- * @brief Start a previously added HealthCheckService
+ * @brief (experimental) Start a previously added HealthCheckService
  *
  * The service must have been added using `agrpc::add_health_check_service()`. May not be called concurrently with
  * `GrpcContext::run/poll`.
