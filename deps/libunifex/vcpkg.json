@@ -1,6 +1,6 @@
 {
   "name": "libunifex",
-  "version-date": "2022-04-30",
+  "version-date": "2022-10-10",
   "description": "Unified Executors",
   "homepage": "https://github.com/facebookexperimental/libunifex",
   "license": "Apache-2.0",

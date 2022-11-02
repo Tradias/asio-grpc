@@ -15,9 +15,9 @@ on:
       - 'CMakePresets.json'
 
 env:
-  VCPKG_VERSION: 'a2261f65ea979eebf56074f604776160f0074b09' # Oct 15, 2022
+  VCPKG_VERSION: 'cafd398be781144787573ca78390e951673c7055' # Nov 02, 2022
   CMAKE_ARGS: '-DCMAKE_BUILD_TYPE=Release -DVCPKG_MANIFEST_INSTALL=off -DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=off'
-  CTEST_ARGS: '-T test --output-on-failure --timeout 200 --no-tests=error --parallel 8'
+  CTEST_ARGS: '-T test --output-on-failure --timeout 200 --no-tests=error --parallel 25'
 
 jobs:
   build:
@@ -107,7 +107,7 @@ jobs:
       run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
 
     - name: GCC 8 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-8 -DCMAKE_CXX_COMPILER=$(which g++-8) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
+      run: cmake --preset default -B ${{ github.workspace }}/build-8 -DCMAKE_CXX_COMPILER=$(which g++-8) -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
 
     - name: GCC 8 Build
       run: cmake --build ${{ github.workspace }}/build-8 --config Release --parallel $(nproc)
@@ -116,7 +116,7 @@ jobs:
       run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-8 --build-config Release
 
     - name: GCC 10 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which g++-10) -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DASIO_GRPC_TEST_COVERAGE=on -DASIO_GRPC_GCOV_PROGRAM=$(which gcov-10) -DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build-10/sonarqube-coverage.xml -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }} -DCMAKE_BUILD_TYPE=Debug
+      run: cmake --preset default -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which g++-10) -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DASIO_GRPC_TEST_COVERAGE=on -DASIO_GRPC_GCOV_PROGRAM=$(which gcov-10) -DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build-10/sonarqube-coverage.xml -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }} -DCMAKE_BUILD_TYPE=Debug
 
     - name: GCC 10 Build
       run: cmake --build ${{ github.workspace }}/build-10 --config Debug --parallel $(nproc)
@@ -185,7 +185,7 @@ jobs:
       run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
 
     - name: Clang 10 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which clang++-10) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
+      run: cmake --preset default -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which clang++-10) -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
 
     - name: Clang 10 Build
       run: cmake --build ${{ github.workspace }}/build-10 --config Release --parallel $(nproc)
@@ -202,7 +202,7 @@ jobs:
         tar xf doxygen-1.9.4.linux.bin.tar.gz --strip-components=1
 
     - name: Clang 12 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-12 -DCMAKE_CXX_COMPILER=$(which clang++-12) -DDOXYGEN_EXECUTABLE=${{ runner.workspace }}/doxygen/bin/doxygen -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
+      run: cmake --preset default -B ${{ github.workspace }}/build-12 -DCMAKE_CXX_COMPILER=$(which clang++-12) -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DDOXYGEN_EXECUTABLE=${{ runner.workspace }}/doxygen/bin/doxygen -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
 
     - name: Clang 12 Build
       run: cmake --build ${{ github.workspace }}/build-12 --config Release --parallel $(nproc) --target asio-grpc-check-header-syntax all

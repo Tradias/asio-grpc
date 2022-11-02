@@ -1,5 +1,5 @@
 {
-    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/a2261f65ea979eebf56074f604776160f0074b09/scripts/vcpkg.schema.json",
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/cafd398be781144787573ca78390e951673c7055/scripts/vcpkg.schema.json",
     "name": "asio-grpc-cmake-test",
     "version": "1",
     "dependencies": [
@@ -26,5 +26,5 @@
         "libunifex",
         "gtest"
     ],
-    "builtin-baseline": "a2261f65ea979eebf56074f604776160f0074b09"
+    "builtin-baseline": "cafd398be781144787573ca78390e951673c7055"
 }

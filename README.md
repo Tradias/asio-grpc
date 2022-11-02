@@ -58,10 +58,10 @@ CMake version 3.14 is required to install project, but the `src/` directory may 
 Versions tested by Github Actions:
 
  * CMake 3.16.3
- * gRPC 1.49.0, 1.16.1 (older versions might work as well)
+ * gRPC 1.50.1, 1.16.1 (older versions might work as well)
  * Boost 1.80.0
  * Standalone Asio 1.17.0
- * libunifex 2022-02-09
+ * libunifex 2022-10-10
  * MSVC 19.33 (Visual Studio 17 2022)
  * GCC 8.4.0, 10.3.0, 11.1.0
  * Clang 10.0.0, 12.0.0
