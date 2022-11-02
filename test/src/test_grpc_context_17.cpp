@@ -708,7 +708,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() can wait for g
          {
              invoked = true;
          });
-    CHECK(grpc_context.run_until(test::hundred_milliseconds_from_now()));
+    CHECK(grpc_context.run_until(test::one_seconds_from_now()));
     CHECK(grpc_context.is_stopped());
     CHECK(invoked);
 }

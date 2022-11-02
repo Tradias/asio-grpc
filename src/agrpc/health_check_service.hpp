@@ -62,14 +62,14 @@ class HealthCheckService final : public grpc::HealthCheckServiceInterface
      *
      * Thread-safe
      */
-    void SetServingStatus(const std::string& service_name, bool serving) override;
+    void SetServingStatus(const std::string& service_name, bool serving);
 
     /**
      * @brief Apply a serving status to all registered service names
      *
      * Thread-safe
      */
-    void SetServingStatus(bool serving) override;
+    void SetServingStatus(bool serving);
 
     /**
      * @brief Set all registered service names to not serving and prevent future state changes.
