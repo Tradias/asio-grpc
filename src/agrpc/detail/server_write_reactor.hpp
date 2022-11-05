@@ -106,12 +106,9 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
             self->completed = true;
             guard.release();
         }
-        else if (self->finish_called && self->completed)
+        else if (self->finish_called && self->completed && detail::InvokeHandler::YES == invoke_handler)
         {
-            if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
-            {
-                self->on_done();
-            }
+            self->on_done();
         }
     }
 

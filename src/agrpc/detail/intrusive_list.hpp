@@ -66,7 +66,7 @@ class IntrusiveList
         T* item{};
     };
 
-    IntrusiveList() noexcept : head(nullptr), tail(nullptr) {}
+    IntrusiveList() = default;
 
     IntrusiveList(const IntrusiveList&) = delete;
 
@@ -139,8 +139,8 @@ class IntrusiveList
     }
 
   private:
-    T* head;
-    T* tail;
+    T* head{nullptr};
+    T* tail{nullptr};
 };
 }
 

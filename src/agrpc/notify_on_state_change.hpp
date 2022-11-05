@@ -55,7 +55,7 @@ struct NotifyOnStateChangeFn
      */
     template <class Deadline, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(agrpc::GrpcContext& grpc_context, grpc::ChannelInterface& channel,
-                    ::grpc_connectivity_state last_observed, Deadline deadline, CompletionToken&& token = {}) const
+                    ::grpc_connectivity_state last_observed, Deadline deadline, CompletionToken token = {}) const
         noexcept(std::is_same_v<agrpc::UseSender, detail::RemoveCrefT<CompletionToken>>)
     {
         return detail::async_initiate_sender_implementation<

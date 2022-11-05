@@ -52,7 +52,7 @@ struct MoveAlarmSenderImplementation
         Alarm* emplaced_alarm;
         if (alarm)
         {
-            emplaced_alarm = &alarm.value();
+            emplaced_alarm = &*alarm;
         }
         else
         {
@@ -64,7 +64,7 @@ struct MoveAlarmSenderImplementation
     template <class OnDone>
     void done(OnDone on_done, bool ok)
     {
-        on_done(ok, static_cast<Alarm&&>(alarm.value()));
+        on_done(ok, static_cast<Alarm&&>(*alarm));
     }
 
     std::optional<Alarm> alarm;

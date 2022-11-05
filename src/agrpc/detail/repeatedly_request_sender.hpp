@@ -107,9 +107,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
 
                 void deallocate() noexcept
                 {
-                    auto& local_grpc_context = repeat_operation.grpc_context;
                     detail::destroy_deallocate(&repeat_operation, repeat_operation.get_allocator());
-                    local_grpc_context.work_finished();
                 }
 
                 void set_done() noexcept { deallocate(); }
@@ -149,11 +147,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
                                         });
             }
 
-            void start_request_handler_operation()
-            {
-                grpc_context.work_started();
-                detail::exec::start(operation_state->value);
-            }
+            void start_request_handler_operation() { detail::exec::start(operation_state->value); }
 
             auto& rpc_context() noexcept { return impl.first(); }
 

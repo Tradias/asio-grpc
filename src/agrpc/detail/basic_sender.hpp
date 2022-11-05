@@ -86,13 +86,12 @@ void submit_basic_sender_running_operation(agrpc::GrpcContext& grpc_context, Rec
                                            const typename detail::RemoveCrefT<Implementation>::Initiation& initiation,
                                            Implementation&& implementation)
 {
-    auto stop_token = detail::check_start_conditions(grpc_context, receiver);
-    if (stop_token)
+    if (auto stop_token = detail::check_start_conditions(grpc_context, receiver))
     {
         auto operation = detail::allocate_operation<
             detail::BasicSenderRunningOperationTemplate<detail::RemoveCrefT<Implementation>>::template Type>(
             grpc_context, static_cast<Receiver&&>(receiver), static_cast<Implementation&&>(implementation));
-        operation->start(grpc_context, initiation, std::move(stop_token.value()));
+        operation->start(grpc_context, initiation, std::move(*stop_token));
     }
 }
 
@@ -325,7 +324,7 @@ class BasicSenderOperationState
         auto stop_token = detail::check_start_conditions(grpc_context, receiver());
         if (stop_token)
         {
-            impl.first().start(grpc_context, impl.second(), std::move(stop_token.value()));
+            impl.first().start(grpc_context, impl.second(), std::move(*stop_token));
         }
     }
 

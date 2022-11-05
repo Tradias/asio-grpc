@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
+#include <agrpc/detail/intrusive_list_hook.hpp>
 #include <agrpc/detail/sender_implementation.hpp>
 #include <grpcpp/server_context.h>
 
@@ -24,7 +25,7 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-class NotfiyWhenDoneSenderImplementation
+class NotfiyWhenDoneSenderImplementation : public detail::IntrusiveListHook<NotfiyWhenDoneSenderImplementation>
 {
   public:
     static constexpr auto TYPE = detail::SenderImplementationType::BOTH;
@@ -70,9 +71,6 @@ class NotfiyWhenDoneSenderImplementation
     {
         operation->complete(invoke_handler, grpc_context);
     }
-
-    NotfiyWhenDoneSenderImplementation* next;
-    NotfiyWhenDoneSenderImplementation* prev;
 
   private:
     void init(agrpc::GrpcContext& grpc_context, detail::TypeErasedGrpcTagOperation* self)

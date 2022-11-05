@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/intrusive_list.hpp>
+#include <agrpc/detail/intrusive_list_hook.hpp>
 #include <agrpc/detail/sender_implementation.hpp>
 #include <agrpc/detail/server_write_reactor.hpp>
 #include <agrpc/grpc_context.hpp>
@@ -30,13 +31,7 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-struct IntrusiveListHook
-{
-    detail::IntrusiveListHook* next;
-    detail::IntrusiveListHook* prev;
-};
-
-using HealthCheckWatcherList = detail::IntrusiveList<detail::IntrusiveListHook>;
+using HealthCheckWatcherList = detail::IntrusiveList<detail::HealthCheckWatcher>;
 
 struct HealthCheckServiceData
 {
@@ -53,7 +48,7 @@ inline auto to_grpc_serving_status(detail::ServingStatus status)
                : grpc::health::v1::HealthCheckResponse_ServingStatus::HealthCheckResponse_ServingStatus_NOT_SERVING;
 }
 
-class HealthCheckWatcher : public detail::IntrusiveListHook,
+class HealthCheckWatcher : public detail::IntrusiveListHook<detail::HealthCheckWatcher>,
                            public detail::ServerWriteReactor<HealthCheckWatcher, grpc::health::v1::HealthCheckResponse>
 {
   private:
@@ -225,9 +220,9 @@ inline void HealthCheckRepeatedlyRequest<Implementation>::on_request_complete(Gr
 inline void set_serving_status(detail::HealthCheckServiceData& service_data, detail::ServingStatus status)
 {
     service_data.status = status;
-    for (auto& p : service_data.watchers)
+    for (auto& watcher : service_data.watchers)
     {
-        static_cast<detail::HealthCheckWatcher&>(p).send_health(status);
+        watcher.send_health(status);
     }
 }
 }
