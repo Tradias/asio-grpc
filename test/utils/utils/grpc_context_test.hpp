@@ -39,6 +39,8 @@ inline auto work_tracking_executor(agrpc::GrpcContext& grpc_context) noexcept
 {
     return asio::require(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked);
 }
+
+using GrpcContextWorkTrackingExecutor = decltype(test::work_tracking_executor(std::declval<agrpc::GrpcContext&>()));
 #endif
 
 struct GrpcContextTest

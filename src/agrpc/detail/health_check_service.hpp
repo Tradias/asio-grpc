@@ -206,10 +206,13 @@ inline void HealthCheckRepeatedlyRequest<Implementation>::on_request_complete(Gr
     auto* self = static_cast<HealthCheckRepeatedlyRequest*>(op);
     self->service.grpc_context->work_started();
     auto* const impl = self->impl;
-    if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler && ok)
+    if AGRPC_LIKELY (ok)
     {
-        self->start();
-        impl->run();
+        if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
+        {
+            self->start();
+            impl->run();
+        }
     }
     else
     {

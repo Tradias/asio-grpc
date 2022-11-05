@@ -21,6 +21,7 @@
 
 #include <agrpc/health_check_service.hpp>
 #include <agrpc/high_level_client.hpp>
+#include <agrpc/rpc.hpp>
 #include <grpcpp/create_channel.h>
 #include <grpcpp/grpcpp.h>
 
@@ -37,6 +38,7 @@ struct HealthCheckServiceTest : test::GrpcContextTest
     grpc::ClientContext client_context;
     grpc_health::HealthCheckRequest request;
     grpc_health::HealthCheckResponse response;
+    std::optional<test::GrpcContextWorkTrackingExecutor> guard;
 
     HealthCheckServiceTest()
     {
@@ -174,6 +176,62 @@ struct HealthCheckServiceTest : test::GrpcContextTest
                 server->GetHealthCheckService()->SetServingStatus(false);
             });
     }
+
+    static auto not_true(bool& boolean)
+    {
+        return [&]
+        {
+            return !boolean;
+        };
+    }
+
+    void test_watch_and_cause_serving_status_update_to_fail()
+    {
+        bool read_initiated{};
+        agrpc::GrpcContext client_grpc_context{std::make_unique<grpc::CompletionQueue>()};
+        client_context.set_deadline(test::hundred_milliseconds_from_now());
+        std::unique_ptr<grpc::ClientAsyncReader<grpc_health::HealthCheckResponse>> reader;
+        agrpc::request(&grpc_health::Health::Stub::PrepareAsyncWatch, stub, client_context, request, reader,
+                       asio::bind_executor(client_grpc_context,
+                                           [&](bool)
+                                           {
+                                               agrpc::read(reader, response,
+                                                           asio::bind_executor(client_grpc_context, [&](bool) {}));
+                                               read_initiated = true;
+                                           }));
+        client_grpc_context.run_while(not_true(read_initiated));
+        std::this_thread::sleep_for(std::chrono::milliseconds(110));  // wait for deadline to expire
+        grpc::Alarm alarm;
+        wait(alarm, test::hundred_milliseconds_from_now(), [](bool) {});  // wait for the server to finish the Watch
+        grpc_context.run();
+        client_grpc_context.run();
+    }
+
+    void test_watch_and_accept_rpc_then_destruct()
+    {
+        bool read_initiated{};
+        agrpc::GrpcContext client_grpc_context{std::make_unique<grpc::CompletionQueue>()};
+        client_context.set_deadline(test::hundred_milliseconds_from_now());
+        std::unique_ptr<grpc::ClientAsyncReader<grpc_health::HealthCheckResponse>> reader;
+        agrpc::request(&grpc_health::Health::Stub::PrepareAsyncWatch, stub, client_context, request, reader,
+                       asio::bind_executor(client_grpc_context,
+                                           [&](bool)
+                                           {
+                                               agrpc::read(reader, response,
+                                                           asio::bind_executor(client_grpc_context,
+                                                                               [&](bool)
+                                                                               {
+                                                                                   guard.reset();
+                                                                               }));
+                                               read_initiated = true;
+                                           }));
+        client_grpc_context.run_while(not_true(read_initiated));
+        std::this_thread::sleep_for(std::chrono::milliseconds(110));  // wait for deadline to expire
+        guard.emplace(get_work_tracking_executor());
+        std::thread t{&agrpc::GrpcContext::run, std::ref(client_grpc_context)};
+        grpc_context.run();
+        t.join();
+    }
 };
 
 using HealthCheckServiceAgrpcTest = HealthCheckServiceTest<true>;
@@ -217,4 +275,16 @@ TEST_CASE_TEMPLATE("health_check_service: watch default service and cancel", T, 
                    HealthCheckServiceGrpcTest)
 {
     T{}.test_watch_and_client_cancel();
+}
+
+TEST_CASE_TEMPLATE("health_check_service: watch default service and cause serving status update to fail", T,
+                   HealthCheckServiceAgrpcTest, HealthCheckServiceGrpcTest)
+{
+    T{}.test_watch_and_cause_serving_status_update_to_fail();
+}
+
+TEST_CASE_TEMPLATE("health_check_service: watch default service, accept rpc then destruct", T,
+                   HealthCheckServiceAgrpcTest, HealthCheckServiceGrpcTest)
+{
+    T{}.test_watch_and_accept_rpc_then_destruct();
 }

@@ -101,6 +101,10 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
             {
                 self->on_write_done(ok);
             }
+            if (self->finish_called)
+            {
+                guard.release();
+            }
             return;
         }
         if (self->finish_called)
