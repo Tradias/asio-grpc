@@ -91,24 +91,29 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
         auto* self = static_cast<Derived*>(static_cast<StepBase*>(op));
         self->grpc_context.work_started();
         detail::AllocationGuard guard{self, self->get_allocator()};
-        if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
+        if (std::exchange(self->write_pending, false))
         {
-            const auto write_pending = std::exchange(self->write_pending, false);
-            if (write_pending)
+            if (!self->completed)
             {
                 guard.release();
-                self->on_write_done(ok);
-                return;
             }
+            if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
+            {
+                self->on_write_done(ok);
+            }
+            return;
         }
-        if (self->finish_called && !self->completed)
+        if (self->finish_called)
         {
-            self->completed = true;
-            guard.release();
-        }
-        else if (self->finish_called && self->completed && detail::InvokeHandler::YES == invoke_handler)
-        {
-            self->on_done();
+            if (!self->completed)
+            {
+                self->completed = true;
+                guard.release();
+            }
+            else if (detail::InvokeHandler::YES == invoke_handler)
+            {
+                self->on_done();
+            }
         }
     }
 
@@ -117,7 +122,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
         auto* self = static_cast<Derived*>(static_cast<DoneBase*>(op));
         self->grpc_context.work_started();
         const auto completed = std::exchange(self->completed, true);
-        if (completed || !self->finish_called)
+        if (completed || (!self->finish_called && !self->write_pending))
         {
             detail::AllocationGuard guard{self, self->get_allocator()};
             if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)

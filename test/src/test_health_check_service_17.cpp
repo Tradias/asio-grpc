@@ -171,6 +171,7 @@ struct HealthCheckServiceTest : test::GrpcContextTest
                 client_context.TryCancel();
                 CHECK_FALSE(rpc.read(response, yield));
                 CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.status_code());
+                server->GetHealthCheckService()->SetServingStatus(false);
             });
     }
 };
