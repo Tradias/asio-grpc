@@ -25,6 +25,8 @@
 #include <grpcpp/create_channel.h>
 #include <grpcpp/grpcpp.h>
 
+#include <thread>
+
 namespace grpc_health = grpc::health::v1;
 
 template <bool UseAgrpc>
