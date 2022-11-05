@@ -78,8 +78,7 @@ class HealthCheckService final : public grpc::HealthCheckServiceInterface
      */
     void Shutdown();
 
-    friend void start_health_check_service(grpc::HealthCheckServiceInterface* service,
-                                           agrpc::GrpcContext& grpc_context);
+    friend void start_health_check_service(agrpc::HealthCheckService& service, agrpc::GrpcContext& grpc_context);
 
   private:
     friend detail::HealthCheckRepeatedlyRequestWatch;
@@ -116,14 +115,35 @@ grpc::ServerBuilder& add_health_check_service(grpc::ServerBuilder& builder);
 /**
  * @brief (experimental) Start a previously added HealthCheckService
  *
- * The service must have been added using `agrpc::add_health_check_service()`. May not be called concurrently with
+ * Does not contribute to the work tracking of the GrpcContext. May not be called concurrently with
  * `GrpcContext::run/poll`.
+ *
+ * @note When using `GrpcContext::run/poll_completion_queue` then none of the member functions of the service may be
+ * used.
  *
  * @since 2.3.0
  *
  * @relates HealthCheckService
  */
-void start_health_check_service(grpc::HealthCheckServiceInterface* service, agrpc::GrpcContext& grpc_context);
+void start_health_check_service(agrpc::HealthCheckService& service, agrpc::GrpcContext& grpc_context);
+
+/**
+ * @brief (experimental) Start a previously added HealthCheckService (`grpc::Server` overload)
+ *
+ * The service must have been added using `agrpc::add_health_check_service()`.
+ *
+ * Effectively performs:
+ *
+ * @code{cpp}
+ * auto* service = static_cast<agrpc::HealthCheckService*>(server.GetHealthCheckService());
+ * agrpc::start_health_check_service(*service, grpc_context);
+ * @endcode
+ *
+ * @since 2.3.0
+ *
+ * @relates HealthCheckService
+ */
+void start_health_check_service(grpc::Server& server, agrpc::GrpcContext& grpc_context);
 
 AGRPC_NAMESPACE_END
 

@@ -77,7 +77,7 @@ int main(int argc, const char** argv)
         builder.RegisterService(&service);
         agrpc::add_health_check_service(builder);
         server = builder.BuildAndStart();
-        agrpc::start_health_check_service(server->GetHealthCheckService(), grpc_contexts.front());
+        agrpc::start_health_check_service(*server, grpc_contexts.front());
     }
 
     example::ServerShutdown shutdown{*server, grpc_contexts.front()};

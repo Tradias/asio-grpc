@@ -151,7 +151,7 @@ int main(int argc, const char** argv)
     agrpc::add_health_check_service(builder);
     server = builder.BuildAndStart();
     abort_if_not(bool{server});
-    agrpc::start_health_check_service(server->GetHealthCheckService(), grpc_context);
+    agrpc::start_health_check_service(*server, grpc_context);
 
     grpc_context.work_started();
     unifex::sync_wait(

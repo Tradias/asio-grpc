@@ -301,8 +301,16 @@ inline grpc::ServerBuilder& add_health_check_service(grpc::ServerBuilder& builde
         std::make_unique<agrpc::HealthCheckService>(builder)));
 }
 
-inline void start_health_check_service(grpc::HealthCheckServiceInterface* service, agrpc::GrpcContext& grpc_context)
+inline void start_health_check_service(agrpc::HealthCheckService& service, agrpc::GrpcContext& grpc_context)
 {
+    service.grpc_context = &grpc_context;
+    service.repeatedly_request_watch.start();
+    service.repeatedly_request_check.start();
+}
+
+inline void start_health_check_service(grpc::Server& server, agrpc::GrpcContext& grpc_context)
+{
+    auto* const service = server.GetHealthCheckService();
     assert(service &&
            "Use `agrpc::add_health_check_service` to add the HealthCheckService to a ServerBuilder before calling this "
            "function");
@@ -310,10 +318,7 @@ inline void start_health_check_service(grpc::HealthCheckServiceInterface* servic
     {
         return;
     }
-    auto& impl = *static_cast<agrpc::HealthCheckService*>(service);
-    impl.grpc_context = &grpc_context;
-    impl.repeatedly_request_watch.start();
-    impl.repeatedly_request_check.start();
+    agrpc::start_health_check_service(*static_cast<agrpc::HealthCheckService*>(service), grpc_context);
 }
 
 AGRPC_NAMESPACE_END

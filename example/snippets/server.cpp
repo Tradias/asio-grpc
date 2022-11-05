@@ -383,7 +383,7 @@ void health_check_service()
     agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
     agrpc::add_health_check_service(builder);
     server = builder.BuildAndStart();
-    agrpc::start_health_check_service(server->GetHealthCheckService(), grpc_context);
+    agrpc::start_health_check_service(*server, grpc_context);
     /* [add-health-check-service] */
 }
 

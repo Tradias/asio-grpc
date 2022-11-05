@@ -57,7 +57,7 @@ struct HealthCheckServiceTest : test::GrpcContextTest
         server = builder.BuildAndStart();
         if constexpr (UseAgrpc)
         {
-            agrpc::start_health_check_service(server->GetHealthCheckService(), grpc_context);
+            agrpc::start_health_check_service(*server, grpc_context);
         }
         channel = grpc::CreateChannel("127.0.0.1:" + port, grpc::InsecureChannelCredentials());
         stub = grpc_health::Health::NewStub(channel);
