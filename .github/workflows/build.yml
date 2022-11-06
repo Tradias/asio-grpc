@@ -130,7 +130,7 @@ jobs:
     - name: Download sonar-scanner
       uses: warchant/setup-sonar-scanner@v3
       with:
-        version: 4.6.2.2472
+        version: 4.7.0.2747
 
     - name: Run sonar-scanner
       env:
