@@ -120,7 +120,7 @@ TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::submit from Grpc::Context::r
 
 TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::submit with allocator")
 {
-    unifex::submit(unifex::schedule(get_executor()), test::FunctionAsReceiver{[] {}, get_allocator()});
+    unifex::submit(unifex::schedule(get_executor()), test::FunctionAsReceiver{test::NoOp{}, get_allocator()});
     grpc_context.run();
     CHECK(allocator_has_been_used());
 }

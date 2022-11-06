@@ -145,7 +145,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "grpc_initiate throw exception fro
             {
                 throw test::Exception{};
             },
-            asio::bind_executor(grpc_context, [](bool) {}));
+            asio::bind_executor(grpc_context, test::NoOp{}));
     };
     SUBCASE("remote allocation") { CHECK_THROWS_AS(grpc_initiate(), test::Exception); }
     SUBCASE("local allocation")
@@ -602,13 +602,14 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest,
     test::msg::Response response;
     test::msg::Request client_request;
     grpc::ServerAsyncWriter<test::msg::Response> writer{&server_context};
-    agrpc::request(
-        &test::v1::Test::AsyncService::RequestServerStreaming, service, server_context, client_request, writer,
-        asio::bind_executor(grpc_context,
-                            [&](bool)
-                            {
-                                agrpc::finish(writer, grpc::Status::OK, asio::bind_executor(grpc_context, [](bool) {}));
-                            }));
+    agrpc::request(&test::v1::Test::AsyncService::RequestServerStreaming, service, server_context, client_request,
+                   writer,
+                   asio::bind_executor(grpc_context,
+                                       [&](bool)
+                                       {
+                                           agrpc::finish(writer, grpc::Status::OK,
+                                                         asio::bind_executor(grpc_context, test::NoOp{}));
+                                       }));
     // Perform test
     test::TrackedAllocation tracked{};
     test::TrackingAllocator<std::byte> allocator{tracked};

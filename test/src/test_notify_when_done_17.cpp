@@ -44,6 +44,9 @@ TEST_CASE("notify_when_done: deallocates unstarted operation on destruction")
                                                                      }));
                        test.grpc_context.stop();
                    });
+        grpc::ServerContext server_context2;
+        agrpc::notify_when_done(test.grpc_context, server_context2,
+                                agrpc::bind_allocator(test::TrackingAllocator<std::byte>{tracked}, test::NoOp{}));
         test.grpc_context.run();
     }
     CHECK_FALSE(invoked);

@@ -14,6 +14,7 @@
 
 #include "grpc/health/v1/health.grpc.pb.h"
 #include "utils/asio_utils.hpp"
+#include "utils/client_context.hpp"
 #include "utils/doctest.hpp"
 #include "utils/free_port.hpp"
 #include "utils/grpc_context_test.hpp"
@@ -41,6 +42,7 @@ struct HealthCheckServiceTest : test::GrpcContextTest
     grpc_health::HealthCheckRequest request;
     grpc_health::HealthCheckResponse response;
     std::optional<test::GrpcContextWorkTrackingExecutor> guard;
+    grpc::Alarm alarm;
 
     HealthCheckServiceTest()
     {
@@ -142,6 +144,10 @@ struct HealthCheckServiceTest : test::GrpcContextTest
                     CHECK(rpc.read(response, yield));
                     CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_SERVING, response.status());
                 }
+                client_context.TryCancel();
+                rpc.read(response, yield);
+                // wait for the server to receive the cancellation
+                wait(alarm, test::hundred_milliseconds_from_now(), test::NoOp{});
             });
     }
 
@@ -156,6 +162,11 @@ struct HealthCheckServiceTest : test::GrpcContextTest
                 CHECK(rpc.read(response, yield));
                 health_check_service->Shutdown();
                 CHECK(rpc.read(response, yield));
+                CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_NOT_SERVING, response.status());
+                response.Clear();
+                server->GetHealthCheckService()->SetServingStatus("service", true);
+                auto client_context2 = test::create_client_context();
+                CHECK(CheckRPC::request(grpc_context, *stub, *client_context2, request, response, yield).ok());
                 CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_NOT_SERVING, response.status());
             });
     }
@@ -202,9 +213,8 @@ struct HealthCheckServiceTest : test::GrpcContextTest
                                                read_initiated = true;
                                            }));
         client_grpc_context.run_while(not_true(read_initiated));
-        std::this_thread::sleep_for(std::chrono::milliseconds(110));  // wait for deadline to expire
-        grpc::Alarm alarm;
-        wait(alarm, test::hundred_milliseconds_from_now(), [](bool) {});  // wait for the server to finish the Watch
+        std::this_thread::sleep_for(std::chrono::milliseconds(110));       // wait for deadline to expire
+        wait(alarm, test::hundred_milliseconds_from_now(), test::NoOp{});  // wait for the server to finish the Watch
         grpc_context.run();
         client_grpc_context.run();
     }

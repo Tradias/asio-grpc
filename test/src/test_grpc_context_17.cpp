@@ -492,20 +492,16 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post/execute with allocator")
 {
     SUBCASE("asio::post")
     {
-        asio::post(grpc_context,
-                   test::HandlerWithAssociatedAllocator{
-                       [] {}, agrpc::detail::pmr::polymorphic_allocator<std::byte>(&resource)});
+        asio::post(grpc_context, test::HandlerWithAssociatedAllocator{
+                                     test::NoOp{}, agrpc::detail::pmr::polymorphic_allocator<std::byte>(&resource)});
     }
-    SUBCASE("asio::execute before grpc_context.run()")
-    {
-        asio::execution::execute(get_pmr_executor(), [] {});
-    }
+    SUBCASE("asio::execute before grpc_context.run()") { asio::execution::execute(get_pmr_executor(), test::NoOp{}); }
     SUBCASE("asio::execute after grpc_context.run() from same thread")
     {
         test::post(grpc_context,
                    [&, exec = get_pmr_executor()]
                    {
-                       asio::execution::execute(exec, [] {});
+                       asio::execution::execute(exec, test::NoOp{});
                    });
     }
     grpc_context.run();
@@ -517,7 +513,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "dispatch with allocator")
     test::post(grpc_context,
                [&]
                {
-                   asio::dispatch(get_pmr_executor(), [] {});
+                   asio::dispatch(get_pmr_executor(), test::NoOp{});
                });
     grpc_context.run();
     CHECK_FALSE(allocator_has_been_used());
@@ -528,7 +524,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "execute with throwing allocator")
     const auto executor =
         asio::require(get_executor(), asio::execution::allocator(agrpc::detail::pmr::polymorphic_allocator<std::byte>(
                                           agrpc::detail::pmr::null_memory_resource())));
-    CHECK_THROWS(asio::execution::execute(executor, [] {}));
+    CHECK_THROWS(asio::execution::execute(executor, test::NoOp{}));
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post with throwing completion handler")
@@ -716,7 +712,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() can wait for g
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() times out correctly")
 {
     grpc::Alarm alarm;
-    wait(alarm, test::one_seconds_from_now(), [](bool) {});
+    wait(alarm, test::one_seconds_from_now(), test::NoOp{});
     CHECK_FALSE(grpc_context.run_until(test::now()));
     CHECK_FALSE(grpc_context.run_until(test::ten_milliseconds_from_now()));
 }
@@ -819,7 +815,7 @@ TEST_CASE("asio GrpcExecutor::schedule and shutdown GrpcContext")
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::submit with allocator")
 {
     asio::execution::submit(asio::execution::schedule(get_executor()),
-                            test::FunctionAsReceiver{[] {}, get_allocator()});
+                            test::FunctionAsReceiver{test::NoOp{}, get_allocator()});
     grpc_context.run();
     CHECK(allocator_has_been_used());
 }
