@@ -19,18 +19,18 @@ function(asio_grpc_add_test_main _asio_grpc_name _asio_grpc_cxx_standard)
     target_sources(
         ${_asio_grpc_name}
         PRIVATE # cmake-format: sort
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/client_context.cpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/client_context.hpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/doctest.hpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/free_port.cpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/free_port.hpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_format.cpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_format.hpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/main.cpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/server_shutdown_initiator.cpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/server_shutdown_initiator.hpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/time.cpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/time.hpp")
+                "utils/client_context.cpp"
+                "utils/client_context.hpp"
+                "utils/doctest.hpp"
+                "utils/free_port.cpp"
+                "utils/free_port.hpp"
+                "utils/grpc_format.cpp"
+                "utils/grpc_format.hpp"
+                "utils/main.cpp"
+                "utils/server_shutdown_initiator.cpp"
+                "utils/server_shutdown_initiator.hpp"
+                "utils/time.cpp"
+                "utils/time.hpp")
 
     target_include_directories(${_asio_grpc_name} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
 
@@ -43,6 +43,8 @@ function(asio_grpc_add_test_main _asio_grpc_name _asio_grpc_cxx_standard)
         PRIVATE Boost::headers Boost::filesystem)
 endfunction()
 
+set_source_files_properties("utils/main.cpp" PROPERTIES SKIP_UNITY_BUILD_INCLUSION on)
+
 asio_grpc_add_test_main(asio-grpc-test-main "17")
 asio_grpc_add_test_main(asio-grpc-test-main-cpp20 "20")
 
@@ -53,28 +55,26 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
     target_sources(
         ${_asio_grpc_name}
         PRIVATE # cmake-format: sort
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/asio_separate_compilation.cpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/asio_utils.cpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/asio_utils.hpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_client_server_test.cpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_client_server_test.hpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_client_server_test_base.cpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_client_server_test_base.hpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_context_test.cpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_context_test.hpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_generic_client_server_test.cpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/grpc_generic_client_server_test.hpp"
-                "${CMAKE_CURRENT_SOURCE_DIR}/utils/memory_resource.hpp")
+                "utils/asio_separate_compilation.cpp"
+                "utils/asio_utils.cpp"
+                "utils/asio_utils.hpp"
+                "utils/grpc_client_server_test.cpp"
+                "utils/grpc_client_server_test.hpp"
+                "utils/grpc_client_server_test_base.cpp"
+                "utils/grpc_client_server_test_base.hpp"
+                "utils/grpc_context_test.cpp"
+                "utils/grpc_context_test.hpp"
+                "utils/grpc_generic_client_server_test.cpp"
+                "utils/grpc_generic_client_server_test.hpp"
+                "utils/memory_resource.hpp")
     if(NOT ${_asio_grpc_type} STREQUAL "UNIFEX")
-        target_sources(
-            ${_asio_grpc_name}
-            PRIVATE # cmake-format: sort
-                    "${CMAKE_CURRENT_SOURCE_DIR}/utils/rpc.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/utils/rpc.hpp")
+        target_sources(${_asio_grpc_name} PRIVATE # cmake-format: sort
+                                                  "utils/rpc.cpp" "utils/rpc.hpp")
     endif()
 
     target_include_directories(${_asio_grpc_name} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
 
-    target_precompile_headers(${_asio_grpc_name} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/utils/precompiled_header.hpp")
+    target_precompile_headers(${_asio_grpc_name} PRIVATE "utils/precompiled_header.hpp")
 
     if(${_asio_grpc_type} STREQUAL "BOOST_ASIO")
         target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc)
@@ -83,8 +83,7 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
             ${_asio_grpc_name} PUBLIC "ASIO_GRPC_TEST_CPP_VERSION=\"Boost.Asio C++${_asio_grpc_cxx_standard}\""
                                       BOOST_ASIO_SEPARATE_COMPILATION BOOST_ASIO_NO_TS_EXECUTORS)
 
-        target_sources(${_asio_grpc_name} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/utils/io_context_test.cpp"
-                                                  "${CMAKE_CURRENT_SOURCE_DIR}/utils/io_context_test.hpp")
+        target_sources(${_asio_grpc_name} PRIVATE "utils/io_context_test.cpp" "utils/io_context_test.hpp")
     elseif(${_asio_grpc_type} STREQUAL "STANDALONE_ASIO")
         target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc-standalone-asio)
 
@@ -92,8 +91,7 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
             ${_asio_grpc_name} PUBLIC "ASIO_GRPC_TEST_CPP_VERSION=\"Standalone Asio C++${_asio_grpc_cxx_standard}\""
                                       ASIO_SEPARATE_COMPILATION ASIO_NO_TS_EXECUTORS)
 
-        target_sources(${_asio_grpc_name} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/utils/io_context_test.cpp"
-                                                  "${CMAKE_CURRENT_SOURCE_DIR}/utils/io_context_test.hpp")
+        target_sources(${_asio_grpc_name} PRIVATE "utils/io_context_test.cpp" "utils/io_context_test.hpp")
     elseif(${_asio_grpc_type} STREQUAL "UNIFEX")
         target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc-unifex)
 

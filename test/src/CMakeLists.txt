@@ -78,5 +78,7 @@ if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
     asio_grpc_add_test(asio-grpc-test-unifex-cpp20 "UNIFEX" "20" "test_unifex_20.cpp")
 endif()
 
+set_source_files_properties("test_test_17.cpp" PROPERTIES SKIP_UNITY_BUILD_INCLUSION on)
+
 unset(ASIO_GRPC_CPP17_TEST_SOURCE_FILES)
 unset(ASIO_GRPC_CPP20_TEST_SOURCE_FILES)
