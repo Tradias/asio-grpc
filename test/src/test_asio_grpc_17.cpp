@@ -556,14 +556,18 @@ TEST_CASE_TEMPLATE("yield_context bidirectional streaming", Stub, test::v1::Test
         });
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "agrpc::request for unary RPCs can be called with a unique_ptr<Stub>")
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "agrpc::request for unary RPCs can be called with a unique_ptr<Stub>")
 {
-    const auto stub =
-        test::v1::Test::NewStub(grpc::CreateChannel("localhost:5049", grpc::InsecureChannelCredentials()));
-    grpc::ClientContext client_context;
+    client_context.set_deadline(test::hundred_milliseconds_from_now());
+    const auto stub_ptr = test::v1::Test::NewStub(channel);
     test::msg::Request request;
-    const auto reader = agrpc::request(&test::v1::Test::Stub::AsyncUnary, stub, client_context, request, grpc_context);
+    const auto reader =
+        agrpc::request(&test::v1::Test::Stub::AsyncUnary, stub_ptr, client_context, request, grpc_context);
     CHECK(reader);
+    test::msg::Response response;
+    grpc::Status status;
+    agrpc::finish(reader, response, status, asio::bind_executor(grpc_context, test::NoOp{}));
+    grpc_context.run();
 }
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "agrpc::wait correctly unbinds executor_binder and allocator_binder")
