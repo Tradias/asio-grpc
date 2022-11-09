@@ -109,7 +109,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
         auto* const self = static_cast<ServerWriteReactor*>(static_cast<StepBase*>(op));
         self->set_step_done();
         self->grpc_context->work_started();
-        detail::AllocationGuard guard{self, self->get_allocator()};
+        detail::AllocationGuard guard{static_cast<Derived*>(self), self->get_allocator()};
         if (!self->is_completed())
         {
             guard.release();
@@ -129,7 +129,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
         auto* const self = static_cast<ServerWriteReactor*>(static_cast<StepBase*>(op));
         self->set_step_done();
         self->grpc_context->work_started();
-        detail::AllocationGuard guard{self, self->get_allocator()};
+        detail::AllocationGuard guard{static_cast<Derived*>(self), self->get_allocator()};
         if (!self->is_completed())
         {
             self->set_completed();
@@ -148,7 +148,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
         const bool completed = self->set_completed();
         if (completed || !self->is_finishing_or_writing())
         {
-            detail::AllocationGuard guard{self, self->get_allocator()};
+            detail::AllocationGuard guard{static_cast<Derived*>(self), self->get_allocator()};
             if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
             {
                 static_cast<Derived*>(self)->on_done();
