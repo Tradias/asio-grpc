@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/allocate.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/grpc_context.hpp>
 #include <agrpc/detail/intrusive_queue_hook.hpp>
 #include <agrpc/detail/utility.hpp>
@@ -68,6 +69,9 @@ class TypeErasedGrpcTagOperation
     explicit TypeErasedGrpcTagOperation(TypeErasedGrpcTagOnComplete on_complete) noexcept : on_complete(on_complete) {}
 
   private:
+    template <class Derived, class Response>
+    friend class detail::ServerWriteReactor;
+
     TypeErasedGrpcTagOnComplete on_complete;
 };
 

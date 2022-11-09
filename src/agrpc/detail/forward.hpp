@@ -61,6 +61,9 @@ class HealthCheckWatcher;
 
 class HealthCheckChecker;
 
+template <class Derived, class Response>
+class ServerWriteReactor;
+
 template <class Deadline, class Executor>
 struct MoveAlarmSenderImplementation;
 

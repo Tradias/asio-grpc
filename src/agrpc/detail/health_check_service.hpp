@@ -55,7 +55,12 @@ class HealthCheckWatcher : public detail::IntrusiveListHook<detail::HealthCheckW
     using Base = detail::ServerWriteReactor<HealthCheckWatcher, grpc::health::v1::HealthCheckResponse>;
 
   public:
-    explicit HealthCheckWatcher(agrpc::HealthCheckService& service) : Base(*service.grpc_context), service(service) {}
+    explicit HealthCheckWatcher(agrpc::HealthCheckService& service, void* tag)
+        : Base(*service.grpc_context, &grpc::health::v1::Health::AsyncService::RequestWatch, service.service, request,
+               tag),
+          service(service)
+    {
+    }
 
     void run()
     {
@@ -79,10 +84,7 @@ class HealthCheckWatcher : public detail::IntrusiveListHook<detail::HealthCheckW
     static auto create_and_initiate(agrpc::HealthCheckService& service, void* tag)
     {
         auto& grpc_context = *service.grpc_context;
-        auto* const watcher = Base::create(grpc_context, service);
-        watcher->initiate_request(&grpc::health::v1::Health::AsyncService::RequestWatch, watcher->service.service,
-                                  watcher->request, tag);
-        return watcher;
+        return Base::create(grpc_context, service, tag);
     }
 
   private:
@@ -133,9 +135,11 @@ class HealthCheckChecker : public detail::TypeErasedGrpcTagOperation
     using GrpcBase = detail::TypeErasedGrpcTagOperation;
 
   public:
-    explicit HealthCheckChecker(agrpc::HealthCheckService& service)
+    explicit HealthCheckChecker(agrpc::HealthCheckService& service, void* tag)
         : GrpcBase(&HealthCheckChecker::on_complete), service(service)
     {
+        auto* const cq = grpc_context().get_server_completion_queue();
+        service.service.RequestCheck(&server_context, &request, &writer, cq, cq, tag);
     }
 
     void run() { finish(service.get_serving_status(request.service())); }
@@ -143,9 +147,7 @@ class HealthCheckChecker : public detail::TypeErasedGrpcTagOperation
     static auto create_and_initiate(agrpc::HealthCheckService& service, void* tag)
     {
         auto& grpc_context = *service.grpc_context;
-        auto checker = detail::allocate<HealthCheckChecker>(grpc_context.get_allocator(), service);
-        checker->initiate_request(tag);
-        return checker.release();
+        return detail::allocate<HealthCheckChecker>(grpc_context.get_allocator(), service, tag).release();
     }
 
     void deallocate() { detail::destroy_deallocate(this, get_allocator()); }
@@ -160,12 +162,6 @@ class HealthCheckChecker : public detail::TypeErasedGrpcTagOperation
         auto* self = static_cast<HealthCheckChecker*>(op);
         self->grpc_context().work_started();
         self->deallocate();
-    }
-
-    void initiate_request(void* tag)
-    {
-        auto* const cq = grpc_context().get_server_completion_queue();
-        service.service.RequestCheck(&server_context, &request, &writer, cq, cq, tag);
     }
 
     void finish(detail::ServingStatus status)
