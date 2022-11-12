@@ -62,28 +62,20 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
         return detail::allocate<Derived>(grpc_context.get_allocator(), static_cast<Args&&>(args)...).release();
     }
 
-    [[nodiscard]] bool is_writing() const noexcept
-    {
-        return &ServerWriteReactor::handle_write == static_cast<const StepBase*>(this)->on_complete;
-    }
+    [[nodiscard]] bool is_writing() const noexcept { return &ServerWriteReactor::handle_write == get_on_complete(); }
 
     void write(const Response& response)
     {
-        auto* const base = static_cast<StepBase*>(this);
-        base->on_complete = &ServerWriteReactor::handle_write;
-        writer.Write(response, base);
+        get_on_complete() = &ServerWriteReactor::handle_write;
+        writer.Write(response, static_cast<StepBase*>(this));
     }
 
-    [[nodiscard]] bool is_finished() const noexcept
-    {
-        return &ServerWriteReactor::handle_finish == static_cast<const StepBase*>(this)->on_complete;
-    }
+    [[nodiscard]] bool is_finished() const noexcept { return &ServerWriteReactor::handle_finish == get_on_complete(); }
 
     void finish(const grpc::Status& status)
     {
-        auto* const base = static_cast<StepBase*>(this);
-        base->on_complete = &ServerWriteReactor::handle_finish;
-        writer.Finish(status, base);
+        get_on_complete() = &ServerWriteReactor::handle_finish;
+        writer.Finish(status, static_cast<StepBase*>(this));
     }
 
     void deallocate() { detail::destroy_deallocate(static_cast<Derived*>(this), get_allocator()); }
@@ -91,9 +83,19 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
   private:
     auto get_allocator() const noexcept { return grpc_context->get_allocator(); }
 
-    void set_step_done() noexcept { static_cast<StepBase*>(this)->on_complete = nullptr; }
+    auto& get_on_complete() noexcept
+    {
+        return detail::TypeErasedOperationAccess::get_on_complete(*static_cast<StepBase*>(this));
+    }
 
-    bool is_finishing_or_writing() const noexcept { return nullptr != static_cast<const StepBase*>(this)->on_complete; }
+    auto get_on_complete() const noexcept
+    {
+        return detail::TypeErasedOperationAccess::get_on_complete(*static_cast<const StepBase*>(this));
+    }
+
+    void set_step_done() noexcept { get_on_complete() = nullptr; }
+
+    bool is_finishing_or_writing() const noexcept { return nullptr != get_on_complete(); }
 
     bool is_completed() const noexcept { return grpc_context.has_bit<0>(); }
 

@@ -37,10 +37,7 @@ struct BasicSenderRunningOperationBaseArg
 };
 
 template <detail::SenderImplementationType>
-struct BasicSenderRunningOperationBase
-{
-    explicit BasicSenderRunningOperationBase(detail::BasicSenderRunningOperationBaseArg) noexcept {}
-};
+struct BasicSenderRunningOperationBase;
 
 template <>
 struct BasicSenderRunningOperationBase<detail::SenderImplementationType::NO_ARG> : detail::TypeErasedNoArgOperation
@@ -48,6 +45,11 @@ struct BasicSenderRunningOperationBase<detail::SenderImplementationType::NO_ARG>
     explicit BasicSenderRunningOperationBase(detail::BasicSenderRunningOperationBaseArg arg) noexcept
         : detail::TypeErasedNoArgOperation(arg.no_arg_on_complete)
     {
+    }
+
+    void set_on_complete(detail::BasicSenderRunningOperationBaseArg arg) noexcept
+    {
+        detail::TypeErasedOperationAccess::get_on_complete(*this) = arg.no_arg_on_complete;
     }
 };
 
@@ -57,6 +59,11 @@ struct BasicSenderRunningOperationBase<detail::SenderImplementationType::GRPC_TA
     explicit BasicSenderRunningOperationBase(detail::BasicSenderRunningOperationBaseArg arg) noexcept
         : detail::TypeErasedGrpcTagOperation(arg.grpc_tag_on_complete)
     {
+    }
+
+    void set_on_complete(detail::BasicSenderRunningOperationBaseArg arg) noexcept
+    {
+        detail::TypeErasedOperationAccess::get_on_complete(*this) = arg.grpc_tag_on_complete;
     }
 };
 
@@ -69,6 +76,14 @@ struct BasicSenderRunningOperationBase<detail::SenderImplementationType::BOTH> :
         : detail::TypeErasedNoArgOperation(arg.no_arg_on_complete),
           detail::TypeErasedGrpcTagOperation(arg.grpc_tag_on_complete)
     {
+    }
+
+    void set_on_complete(detail::BasicSenderRunningOperationBaseArg arg) noexcept
+    {
+        detail::TypeErasedOperationAccess::get_on_complete(*static_cast<detail::TypeErasedNoArgOperation*>(this)) =
+            arg.no_arg_on_complete;
+        detail::TypeErasedOperationAccess::get_on_complete(*static_cast<detail::TypeErasedGrpcTagOperation*>(this)) =
+            arg.grpc_tag_on_complete;
     }
 };
 }

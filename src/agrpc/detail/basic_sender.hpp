@@ -168,83 +168,33 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
     template <detail::AllocationType AllocType>
     struct Done
     {
-        template <class... Args>
-        void operator()(Args... args)
+        template <int Id>
+        struct Type
         {
-            self_.reset_stop_callback();
-            auto receiver = self_.extract_receiver_and_optionally_deallocate<AllocType>(grpc_context_);
-            detail::satisfy_receiver(static_cast<Receiver&&>(receiver), static_cast<Args&&>(args)...);
-        }
+            template <class... Args>
+            void operator()(Args... args)
+            {
+                self_.reset_stop_callback();
+                auto receiver = self_.extract_receiver_and_optionally_deallocate<AllocType>(grpc_context_);
+                detail::satisfy_receiver(static_cast<Receiver&&>(receiver), static_cast<Args&&>(args)...);
+            }
 
-        [[nodiscard]] Base* self() const noexcept { return &self_; }
+            template <int NextId = Id>
+            [[nodiscard]] Base* self() const noexcept
+            {
+                if constexpr (NextId != Id)
+                {
+                    self_.set_on_complete(BasicSenderRunningOperation::get_on_complete_impl<AllocType, NextId>());
+                }
+                return &self_;
+            }
 
-        [[nodiscard]] agrpc::GrpcContext& grpc_context() const noexcept { return grpc_context_; }
+            [[nodiscard]] agrpc::GrpcContext& grpc_context() const noexcept { return grpc_context_; }
 
-        BasicSenderRunningOperation& self_;
-        agrpc::GrpcContext& grpc_context_;
+            BasicSenderRunningOperation& self_;
+            agrpc::GrpcContext& grpc_context_;
+        };
     };
-
-    template <detail::AllocationType AllocType, class... Args>
-    static void on_complete_impl(BasicSenderRunningOperation& self, detail::InvokeHandler invoke_handler,
-                                 agrpc::GrpcContext& grpc_context, Args&&... args)
-    {
-        if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
-        {
-            self.implementation().done(Done<AllocType>{self, grpc_context}, static_cast<Args&&>(args)...);
-        }
-        else
-        {
-            detail::exec::set_done(self.extract_receiver_and_optionally_deallocate<AllocType>(grpc_context));
-        }
-    }
-
-    template <detail::AllocationType AllocType>
-    static void no_arg_on_complete([[maybe_unused]] detail::TypeErasedNoArgOperation* op,
-                                   [[maybe_unused]] detail::InvokeHandler invoke_handler,
-                                   [[maybe_unused]] agrpc::GrpcContext& grpc_context)
-    {
-        if constexpr (Implementation::TYPE == detail::SenderImplementationType::NO_ARG ||
-                      Implementation::TYPE == detail::SenderImplementationType::BOTH)
-        {
-            on_complete_impl<AllocType>(*static_cast<BasicSenderRunningOperation*>(op), invoke_handler, grpc_context);
-        }
-    }
-
-    template <detail::AllocationType AllocType>
-    static void grpc_tag_on_complete([[maybe_unused]] detail::TypeErasedGrpcTagOperation* op,
-                                     [[maybe_unused]] detail::InvokeHandler invoke_handler, [[maybe_unused]] bool ok,
-                                     [[maybe_unused]] agrpc::GrpcContext& grpc_context)
-    {
-        if constexpr (Implementation::TYPE == detail::SenderImplementationType::GRPC_TAG ||
-                      Implementation::TYPE == detail::SenderImplementationType::BOTH)
-        {
-            on_complete_impl<AllocType>(*static_cast<BasicSenderRunningOperation*>(op), invoke_handler, grpc_context,
-                                        ok);
-        }
-    }
-
-    static detail::BasicSenderRunningOperationBaseArg get_on_complete(
-        [[maybe_unused]] detail::AllocationType allocation_type)
-    {
-        if constexpr (Deallocate == detail::DeallocateOnComplete::YES)
-        {
-            if (allocation_type == detail::AllocationType::LOCAL)
-            {
-                return {&no_arg_on_complete<detail::AllocationType::LOCAL>,
-                        &grpc_tag_on_complete<detail::AllocationType::LOCAL>};
-            }
-            else
-            {
-                return {&no_arg_on_complete<detail::AllocationType::CUSTOM>,
-                        &grpc_tag_on_complete<detail::AllocationType::CUSTOM>};
-            }
-        }
-        else
-        {
-            return {&no_arg_on_complete<detail::AllocationType::NONE>,
-                    &grpc_tag_on_complete<detail::AllocationType::NONE>};
-        }
-    }
 
     template <detail::AllocationType AllocType>
     Receiver extract_receiver_and_deallocate([[maybe_unused]] agrpc::GrpcContext& grpc_context)
@@ -271,6 +221,60 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
         else
         {
             return extract_receiver_and_deallocate<AllocType>(grpc_context);
+        }
+    }
+
+    template <detail::AllocationType AllocType, int Id, class TypeErasedOperation, class... Args>
+    static void on_complete_impl(TypeErasedOperation* op, detail::InvokeHandler invoke_handler, Args... args,
+                                 agrpc::GrpcContext& grpc_context)
+    {
+        auto& self = *static_cast<BasicSenderRunningOperation*>(op);
+        if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
+        {
+            self.implementation().done(typename Done<AllocType>::template Type<Id>{self, grpc_context},
+                                       static_cast<Args&&>(args)...);
+        }
+        else
+        {
+            detail::exec::set_done(self.extract_receiver_and_optionally_deallocate<AllocType>(grpc_context));
+        }
+    }
+
+    template <detail::AllocationType AllocType, int Id = 0>
+    static detail::BasicSenderRunningOperationBaseArg get_on_complete_impl()
+    {
+        if constexpr (Implementation::TYPE == detail::SenderImplementationType::BOTH)
+        {
+            return {&on_complete_impl<AllocType, Id, detail::TypeErasedNoArgOperation>,
+                    &on_complete_impl<AllocType, Id, detail::TypeErasedGrpcTagOperation, bool>};
+        }
+        else if constexpr (Implementation::TYPE == detail::SenderImplementationType::NO_ARG)
+        {
+            return {&on_complete_impl<AllocType, Id, detail::TypeErasedNoArgOperation>, nullptr};
+        }
+        else
+        {
+            return {nullptr, &on_complete_impl<AllocType, Id, detail::TypeErasedGrpcTagOperation, bool>};
+        }
+    }
+
+    static detail::BasicSenderRunningOperationBaseArg get_on_complete(
+        [[maybe_unused]] detail::AllocationType allocation_type)
+    {
+        if constexpr (Deallocate == detail::DeallocateOnComplete::YES)
+        {
+            if (allocation_type == detail::AllocationType::LOCAL)
+            {
+                return get_on_complete_impl<detail::AllocationType::LOCAL>();
+            }
+            else
+            {
+                return get_on_complete_impl<detail::AllocationType::CUSTOM>();
+            }
+        }
+        else
+        {
+            return get_on_complete_impl<detail::AllocationType::NONE>();
         }
     }
 

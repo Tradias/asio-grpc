@@ -37,6 +37,7 @@ AGRPC_NAMESPACE_BEGIN()
  * @c agrpc::RPC<PrepareAsync,Executor,agrpc::RPCType::CLIENT_CLIENT_STREAMING> <br>
  * @c agrpc::RPC<PrepareAsync,Executor,agrpc::RPCType::CLIENT_SERVER_STREAMING> <br>
  * @c agrpc::RPC<PrepareAsync,Executor,agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING> <br>
+ * @c agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC,Executor,agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING> <br>
  *
  * @since 2.1.0
  */
@@ -296,31 +297,33 @@ struct ReadInitialMetadataSenderImplementation : detail::GrpcSenderImplementatio
 {
     using Initiation = detail::Empty;
 
-    ReadInitialMetadataSenderImplementation(RPCBase& rpc) : rpc(&rpc) {}
+    ReadInitialMetadataSenderImplementation(RPCBase& rpc) : rpc(rpc) {}
 
     void initiate(const agrpc::GrpcContext&, const Initiation&, void* self) noexcept
     {
-        rpc->responder().ReadInitialMetadata(self);
+        rpc.responder().ReadInitialMetadata(self);
     }
 
-    template <class OnDone>
-    void done(OnDone on_done, bool ok)
+    template <template <int> class OnDone>
+    void done(OnDone<0> on_done, bool ok)
     {
-        if (rpc.template has_bit<FINISHED_BIT>())
-        {
-            on_done(false);
-            return;
-        }
         if (ok)
         {
             on_done(true);
-            return;
         }
-        rpc.template set_bit<FINISHED_BIT>();
-        detail::RPCAccess::client_initiate_finish(*rpc, on_done.self());
+        else
+        {
+            detail::RPCAccess::client_initiate_finish(rpc, on_done.template self<1>());
+        }
     }
 
-    detail::TaggedPtr<RPCBase> rpc;
+    template <template <int> class OnDone>
+    void done(OnDone<1> on_done, bool)
+    {
+        on_done(false);
+    }
+
+    RPCBase& rpc;
 };
 
 template <class Responder, class Executor>
@@ -336,32 +339,34 @@ struct ReadServerStreamingSenderImplementation<Responder<Response>, Executor> : 
         Response& response;
     };
 
-    ReadServerStreamingSenderImplementation(RPCBase& rpc) : rpc(&rpc) {}
+    ReadServerStreamingSenderImplementation(RPCBase& rpc) : rpc(rpc) {}
 
     void initiate(const agrpc::GrpcContext&, const Initiation& initiation,
                   detail::TypeErasedGrpcTagOperation* operation) noexcept
     {
-        rpc->responder().Read(&initiation.response, operation);
+        rpc.responder().Read(&initiation.response, operation);
     }
 
-    template <class OnDone>
-    void done(OnDone on_done, bool ok)
+    template <template <int> class OnDone>
+    void done(OnDone<0> on_done, bool ok)
     {
-        if (rpc.template has_bit<FINISHED_BIT>())
-        {
-            on_done(false);
-            return;
-        }
         if (ok)
         {
             on_done(true);
-            return;
         }
-        rpc.template set_bit<FINISHED_BIT>();
-        detail::RPCAccess::client_initiate_finish(*rpc, on_done.self());
+        else
+        {
+            detail::RPCAccess::client_initiate_finish(rpc, on_done.template self<1>());
+        }
     }
 
-    detail::TaggedPtr<RPCBase> rpc;
+    template <template <int> class OnDone>
+    void done(OnDone<1> on_done, bool)
+    {
+        on_done(false);
+    }
+
+    RPCBase& rpc;
 };
 
 template <class Responder, class Executor>
@@ -392,18 +397,12 @@ struct WriteClientStreamingSenderImplementation<Responder<Request>, Executor> : 
         rpc->responder().Write(req, options, operation);
     }
 
-    template <class OnDone>
-    void done(OnDone on_done, bool ok)
+    template <template <int> class OnDone>
+    void done(OnDone<0> on_done, bool ok)
     {
-        if (rpc.template has_bit<FINISHED_BIT>())
-        {
-            on_done(rpc.template has_bit<LAST_MESSAGE_BIT>());
-            return;
-        }
         if (rpc.template has_bit<LAST_MESSAGE_BIT>())
         {
-            rpc.template set_bit<LAST_MESSAGE_BIT>();
-            this->initiate_finish(on_done.self());
+            detail::RPCAccess::client_initiate_finish(*rpc, on_done.template self<1>());
             return;
         }
         if (ok)
@@ -411,13 +410,13 @@ struct WriteClientStreamingSenderImplementation<Responder<Request>, Executor> : 
             on_done(true);
             return;
         }
-        this->initiate_finish(on_done.self());
+        detail::RPCAccess::client_initiate_finish(*rpc, on_done.template self<1>());
     }
 
-    void initiate_finish(void* self)
+    template <template <int> class OnDone>
+    void done(OnDone<1> on_done, bool)
     {
-        rpc.template set_bit<FINISHED_BIT>();
-        detail::RPCAccess::client_initiate_finish(*rpc, self);
+        on_done(rpc->ok());
     }
 
     detail::TaggedPtr<RPCBase> rpc;

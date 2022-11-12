@@ -32,6 +32,8 @@ enum class InvokeHandler
     YES
 };
 
+struct TypeErasedOperationAccess;
+
 class TypeErasedNoArgOperation;
 
 using TypeErasedNoArgOnComplete = void (*)(TypeErasedNoArgOperation*, detail::InvokeHandler, agrpc::GrpcContext&);
@@ -48,6 +50,8 @@ class TypeErasedNoArgOperation : public detail::IntrusiveQueueHook<TypeErasedNoA
     explicit TypeErasedNoArgOperation(TypeErasedNoArgOnComplete on_complete) noexcept : on_complete(on_complete) {}
 
   private:
+    friend detail::TypeErasedOperationAccess;
+
     TypeErasedNoArgOnComplete on_complete;
 };
 
@@ -69,10 +73,29 @@ class TypeErasedGrpcTagOperation
     explicit TypeErasedGrpcTagOperation(TypeErasedGrpcTagOnComplete on_complete) noexcept : on_complete(on_complete) {}
 
   private:
-    template <class Derived, class Response>
-    friend class detail::ServerWriteReactor;
+    friend detail::TypeErasedOperationAccess;
 
     TypeErasedGrpcTagOnComplete on_complete;
+};
+
+struct TypeErasedOperationAccess
+{
+    static auto& get_on_complete(detail::TypeErasedNoArgOperation& operation) noexcept { return operation.on_complete; }
+
+    static auto get_on_complete(const detail::TypeErasedNoArgOperation& operation) noexcept
+    {
+        return operation.on_complete;
+    }
+
+    static auto& get_on_complete(detail::TypeErasedGrpcTagOperation& operation) noexcept
+    {
+        return operation.on_complete;
+    }
+
+    static auto get_on_complete(const detail::TypeErasedGrpcTagOperation& operation) noexcept
+    {
+        return operation.on_complete;
+    }
 };
 
 template <bool UseLocalAllocator, class Operation, class Base, class... Args>
