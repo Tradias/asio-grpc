@@ -317,9 +317,9 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
         }
     }
 
-    template <class = decltype((void)std::declval<Implementation&>().initiate(
-                  std::declval<agrpc::GrpcContext&>(), std::declval<const Initiation&>(), static_cast<Base*>(nullptr)))>
-    void initiate(agrpc::GrpcContext& grpc_context, const Initiation& initiation)
+    template <class Impl = Implementation>
+    auto initiate(agrpc::GrpcContext& grpc_context, const Initiation& initiation)
+        -> decltype((void)std::declval<Impl&>().initiate(grpc_context, initiation, static_cast<Base*>(nullptr)))
     {
         this->implementation().initiate(grpc_context, initiation, static_cast<Base*>(this));
     }
