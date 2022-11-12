@@ -51,6 +51,11 @@ struct BasicSenderRunningOperationBase<detail::SenderImplementationType::NO_ARG>
     {
         detail::TypeErasedOperationAccess::get_on_complete(*this) = arg.no_arg_on_complete;
     }
+
+    bool on_complete_equals(detail::BasicSenderRunningOperationBaseArg arg) const noexcept
+    {
+        return detail::TypeErasedOperationAccess::get_on_complete(*this) == arg.no_arg_on_complete;
+    }
 };
 
 template <>
@@ -64,6 +69,11 @@ struct BasicSenderRunningOperationBase<detail::SenderImplementationType::GRPC_TA
     void set_on_complete(detail::BasicSenderRunningOperationBaseArg arg) noexcept
     {
         detail::TypeErasedOperationAccess::get_on_complete(*this) = arg.grpc_tag_on_complete;
+    }
+
+    bool on_complete_equals(detail::BasicSenderRunningOperationBaseArg arg) const noexcept
+    {
+        return detail::TypeErasedOperationAccess::get_on_complete(*this) == arg.grpc_tag_on_complete;
     }
 };
 
@@ -84,6 +94,12 @@ struct BasicSenderRunningOperationBase<detail::SenderImplementationType::BOTH> :
             arg.no_arg_on_complete;
         detail::TypeErasedOperationAccess::get_on_complete(*static_cast<detail::TypeErasedGrpcTagOperation*>(this)) =
             arg.grpc_tag_on_complete;
+    }
+
+    bool on_complete_equals(detail::BasicSenderRunningOperationBaseArg arg) const noexcept
+    {
+        return detail::TypeErasedOperationAccess::get_on_complete(
+                   *static_cast<const detail::TypeErasedNoArgOperation*>(this)) == arg.no_arg_on_complete;
     }
 };
 }

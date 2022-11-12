@@ -18,7 +18,6 @@
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_sender.hpp>
 #include <agrpc/detail/rpc_type.hpp>
-#include <agrpc/detail/tagged_ptr.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
@@ -383,43 +382,49 @@ struct WriteClientStreamingSenderImplementation<Responder<Request>, Executor> : 
         grpc::WriteOptions options;
     };
 
-    WriteClientStreamingSenderImplementation(RPCBase& rpc) : rpc(&rpc) {}
+    WriteClientStreamingSenderImplementation(RPCBase& rpc) : rpc(rpc) {}
 
-    void initiate(const agrpc::GrpcContext&, const Initiation& initiation,
-                  detail::TypeErasedGrpcTagOperation* operation) noexcept
+    template <class Init>
+    void initiate(Init init, const Initiation& initiation) noexcept
     {
         auto& [req, options] = initiation;
         if (options.is_last_message())
         {
-            rpc.template set_bit<LAST_MESSAGE_BIT>();
-            rpc->set_writes_done();
+            rpc.set_writes_done();
+            rpc.responder().Write(req, options, init.template self<1>());
         }
-        rpc->responder().Write(req, options, operation);
+        else
+        {
+            rpc.responder().Write(req, options, init.template self<0>());
+        }
     }
 
     template <template <int> class OnDone>
     void done(OnDone<0> on_done, bool ok)
     {
-        if (rpc.template has_bit<LAST_MESSAGE_BIT>())
-        {
-            detail::RPCAccess::client_initiate_finish(*rpc, on_done.template self<1>());
-            return;
-        }
         if (ok)
         {
             on_done(true);
-            return;
         }
-        detail::RPCAccess::client_initiate_finish(*rpc, on_done.template self<1>());
+        else
+        {
+            detail::RPCAccess::client_initiate_finish(rpc, on_done.template self<2>());
+        }
     }
 
     template <template <int> class OnDone>
     void done(OnDone<1> on_done, bool)
     {
-        on_done(rpc->ok());
+        detail::RPCAccess::client_initiate_finish(rpc, on_done.template self<2>());
     }
 
-    detail::TaggedPtr<RPCBase> rpc;
+    template <template <int> class OnDone>
+    void done(OnDone<2> on_done, bool)
+    {
+        on_done(rpc.ok());
+    }
+
+    RPCBase& rpc;
 };
 
 template <class RPCBase>
@@ -427,36 +432,35 @@ struct ClientFinishSenderImplementation : detail::GrpcSenderImplementationBase
 {
     using Initiation = detail::Empty;
 
-    ClientFinishSenderImplementation(RPCBase& rpc) : rpc(&rpc) {}
+    ClientFinishSenderImplementation(RPCBase& rpc) : rpc(rpc) {}
 
-    void initiate(const agrpc::GrpcContext&, const Initiation&, void* self) noexcept
+    template <class Init>
+    void initiate(Init init, const Initiation&) noexcept
     {
-        auto& rpc_ref = *rpc;
-        if (rpc_ref.is_writes_done())
+        if (rpc.is_writes_done())
         {
-            rpc.template set_bit<FINISHED_BIT>();
-            rpc_ref.responder().Finish(&rpc_ref.status(), self);
-            rpc_ref.set_finished();
+            rpc.set_finished();
+            rpc.responder().Finish(&rpc.status(), init.template self<1>());
         }
         else
         {
-            rpc_ref.responder().WritesDone(self);
+            rpc.responder().WritesDone(init.template self<0>());
         }
     }
 
-    template <class OnDone>
-    void done(OnDone on_done, bool)
+    template <template <int> class OnDone>
+    void done(OnDone<0> on_done, bool)
     {
-        if (rpc.template has_bit<FINISHED_BIT>())
-        {
-            on_done(rpc->ok());
-            return;
-        }
-        rpc.template set_bit<FINISHED_BIT>();
-        detail::RPCAccess::client_initiate_finish(*rpc, on_done.self());
+        detail::RPCAccess::client_initiate_finish(rpc, on_done.template self<1>());
     }
 
-    detail::TaggedPtr<RPCBase> rpc;
+    template <template <int> class OnDone>
+    void done(OnDone<1> on_done, bool)
+    {
+        on_done(rpc.ok());
+    }
+
+    RPCBase& rpc;
 };
 
 template <class Responder, class Executor>

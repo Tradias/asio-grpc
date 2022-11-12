@@ -389,6 +389,9 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>, "ClientSt
 TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>,
                   "ClientStreamingRPC::write automatically finishes on error")
 {
+    grpc::WriteOptions options{};
+    SUBCASE("") {}
+    SUBCASE("set_last_message") { options.set_last_message(); }
     spawn_and_run(
         [&](const asio::yield_context& yield)
         {
@@ -398,7 +401,7 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>,
         {
             auto rpc = test::ClientStreamingRPC::request(grpc_context, *stub, client_context, response, yield);
             client_context.TryCancel();
-            CHECK_FALSE(rpc.write(request, yield));
+            CHECK_FALSE(rpc.write(request, options, yield));
             CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.status_code());
             server_shutdown.initiate();
         });
