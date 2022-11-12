@@ -236,7 +236,7 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
         }
         else
         {
-            detail::exec::set_done(self.extract_receiver_and_optionally_deallocate<AllocType>(grpc_context));
+            detail::exec::set_done(self.template extract_receiver_and_optionally_deallocate<AllocType>(grpc_context));
         }
     }
 
