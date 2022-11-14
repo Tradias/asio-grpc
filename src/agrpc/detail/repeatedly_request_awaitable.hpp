@@ -69,7 +69,7 @@ class BufferOperation : public detail::TypeErasedNoArgOperation
     }
 
   private:
-    static void do_complete(detail::TypeErasedNoArgOperation* op, detail::InvokeHandler, agrpc::GrpcContext&) noexcept
+    static void do_complete(detail::TypeErasedNoArgOperation* op, detail::OperationResult, agrpc::GrpcContext&) noexcept
     {
         detail::destroy_deallocate(static_cast<BufferOperation*>(op), std::allocator<BufferOperation>{});
     }
@@ -169,7 +169,7 @@ class RepeatedlyRequestCoroutineOperation
                                  {
                                      auto& grpc_context = this->grpc_context();
                                      detail::WorkFinishedOnExit on_exit{grpc_context};
-                                     ON_STOP_COMPLETE(this, detail::InvokeHandler::NO, grpc_context);
+                                     ON_STOP_COMPLETE(this, detail::OperationResult::SHUTDOWN_NOT_OK, grpc_context);
                                  }};
         const auto ok = co_await detail::initiate_request_from_rpc_context(
             this->rpc(), this->service(), rpc_context,

@@ -24,8 +24,8 @@ namespace detail
 template <class Derived>
 struct IntrusiveListHook
 {
-    Derived* next;
-    Derived* prev;
+    Derived* list_next;
+    Derived* list_prev;
 };
 }
 

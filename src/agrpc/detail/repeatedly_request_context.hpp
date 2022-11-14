@@ -73,16 +73,15 @@ class RepeatedlyRequestOperation : public detail::TypeErasedGrpcTagOperation,
     }
 
   private:
-    static void on_request_complete(GrpcBase* op, detail::InvokeHandler invoke_handler, bool ok,
-                                    agrpc::GrpcContext& grpc_context)
+    static void on_request_complete(GrpcBase* op, detail::OperationResult result, agrpc::GrpcContext& grpc_context)
     {
         auto* self = static_cast<RepeatedlyRequestOperation*>(op);
         const auto allocator = self->get_allocator();
         detail::AllocatedPointer ptr{self->rpc_context, allocator};
         auto& request_handler = self->request_handler();
-        if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
+        if AGRPC_LIKELY (!detail::is_shutdown(result))
         {
-            if AGRPC_LIKELY (ok)
+            if AGRPC_LIKELY (detail::is_ok(result))
             {
                 const auto is_repeated = self->initiate_repeatedly_request();
                 detail::ScopeGuard guard{[&]

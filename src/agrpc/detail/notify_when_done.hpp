@@ -67,9 +67,9 @@ class NotfiyWhenDoneSenderImplementation : public detail::IntrusiveListHook<Notf
         on_done();
     }
 
-    void complete(detail::InvokeHandler invoke_handler, agrpc::GrpcContext& grpc_context)
+    void complete(detail::OperationResult result, agrpc::GrpcContext& grpc_context)
     {
-        operation->complete(invoke_handler, grpc_context);
+        operation->complete(result, grpc_context);
     }
 
   private:
@@ -80,7 +80,7 @@ class NotfiyWhenDoneSenderImplementation : public detail::IntrusiveListHook<Notf
     }
 
     grpc::ServerContext& server_context;
-    detail::TypeErasedNoArgOperation* operation;
+    detail::TypeErasedGrpcTagOperation* operation;
 };
 }
 

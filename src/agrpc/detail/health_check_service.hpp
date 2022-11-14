@@ -157,10 +157,10 @@ class HealthCheckChecker : public detail::TypeErasedGrpcTagOperation
 
     agrpc::GrpcContext::allocator_type get_allocator() const noexcept { return grpc_context().get_allocator(); }
 
-    static void on_complete(GrpcBase* op, detail::InvokeHandler, bool, agrpc::GrpcContext&)
+    static void on_complete(GrpcBase* op, detail::OperationResult, agrpc::GrpcContext& grpc_context)
     {
         auto* self = static_cast<HealthCheckChecker*>(op);
-        self->grpc_context().work_started();
+        grpc_context.work_started();
         self->deallocate();
     }
 
@@ -196,15 +196,15 @@ inline void HealthCheckRepeatedlyRequest<Implementation>::start()
 
 template <class Implementation>
 inline void HealthCheckRepeatedlyRequest<Implementation>::on_request_complete(GrpcBase* op,
-                                                                              detail::InvokeHandler invoke_handler,
-                                                                              bool ok, agrpc::GrpcContext&)
+                                                                              detail::OperationResult result,
+                                                                              agrpc::GrpcContext&)
 {
     auto* self = static_cast<HealthCheckRepeatedlyRequest*>(op);
     self->service.grpc_context->work_started();
     auto* const impl = self->impl;
-    if AGRPC_LIKELY (ok)
+    if AGRPC_LIKELY (detail::OperationResult::OK == result || detail::OperationResult::SHUTDOWN_OK == result)
     {
-        if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
+        if AGRPC_LIKELY (detail::OperationResult::OK == result)
         {
             self->start();
             impl->run();

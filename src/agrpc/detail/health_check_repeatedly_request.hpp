@@ -35,7 +35,7 @@ class HealthCheckRepeatedlyRequest : public detail::TypeErasedGrpcTagOperation
     void start();
 
   private:
-    static void on_request_complete(GrpcBase* op, detail::InvokeHandler invoke_handler, bool ok, agrpc::GrpcContext&);
+    static void on_request_complete(GrpcBase* op, detail::OperationResult result, agrpc::GrpcContext&);
 
     agrpc::HealthCheckService& service;
     Implementation* impl;

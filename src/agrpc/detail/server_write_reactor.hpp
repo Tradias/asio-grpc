@@ -106,7 +106,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
         return old_value;
     }
 
-    static void handle_write(GrpcBase* op, detail::InvokeHandler invoke_handler, bool ok, agrpc::GrpcContext&)
+    static void handle_write(GrpcBase* op, detail::OperationResult result, agrpc::GrpcContext&)
     {
         auto* const self = static_cast<ServerWriteReactor*>(static_cast<StepBase*>(op));
         self->set_step_done();
@@ -116,9 +116,9 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
         {
             guard.release();
         }
-        if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
+        if AGRPC_LIKELY (!detail::is_shutdown(result))
         {
-            static_cast<Derived*>(self)->on_write_done(ok);
+            static_cast<Derived*>(self)->on_write_done(detail::is_ok(result));
         }
         if (self->is_finished())
         {
@@ -126,7 +126,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
         }
     }
 
-    static void handle_finish(GrpcBase* op, detail::InvokeHandler invoke_handler, bool, agrpc::GrpcContext&)
+    static void handle_finish(GrpcBase* op, detail::OperationResult result, agrpc::GrpcContext&)
     {
         auto* const self = static_cast<ServerWriteReactor*>(static_cast<StepBase*>(op));
         self->set_step_done();
@@ -137,13 +137,13 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
             self->set_completed();
             guard.release();
         }
-        else if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
+        else if AGRPC_LIKELY (!detail::is_shutdown(result))
         {
             static_cast<Derived*>(self)->on_done();
         }
     }
 
-    static void handle_done(GrpcBase* op, detail::InvokeHandler invoke_handler, bool, agrpc::GrpcContext&)
+    static void handle_done(GrpcBase* op, detail::OperationResult result, agrpc::GrpcContext&)
     {
         auto* const self = static_cast<ServerWriteReactor*>(static_cast<DoneBase*>(op));
         self->grpc_context->work_started();
@@ -151,7 +151,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
         if (completed || !self->is_finishing_or_writing())
         {
             detail::AllocationGuard guard{static_cast<Derived*>(self), self->get_allocator()};
-            if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
+            if AGRPC_LIKELY (!detail::is_shutdown(result))
             {
                 static_cast<Derived*>(self)->on_done();
             }

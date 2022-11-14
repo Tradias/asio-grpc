@@ -32,18 +32,26 @@ enum class InvokeHandler
     YES
 };
 
+enum class OperationResult
+{
+    SHUTDOWN_NOT_OK,
+    SHUTDOWN_OK,
+    NOT_OK,
+    OK
+};
+
 struct TypeErasedOperationAccess;
 
 class TypeErasedNoArgOperation;
 
-using TypeErasedNoArgOnComplete = void (*)(TypeErasedNoArgOperation*, detail::InvokeHandler, agrpc::GrpcContext&);
+using TypeErasedNoArgOnComplete = void (*)(TypeErasedNoArgOperation*, detail::OperationResult, agrpc::GrpcContext&);
 
 class TypeErasedNoArgOperation : public detail::IntrusiveQueueHook<TypeErasedNoArgOperation>
 {
   public:
-    void complete(detail::InvokeHandler invoke_handler, agrpc::GrpcContext& grpc_context)
+    void complete(detail::OperationResult result, agrpc::GrpcContext& grpc_context)
     {
-        this->on_complete(this, invoke_handler, grpc_context);
+        this->on_complete(this, result, grpc_context);
     }
 
   protected:
@@ -57,16 +65,15 @@ class TypeErasedNoArgOperation : public detail::IntrusiveQueueHook<TypeErasedNoA
 
 class TypeErasedGrpcTagOperation;
 
-using TypeErasedGrpcTagOnComplete = void (*)(TypeErasedGrpcTagOperation*, detail::InvokeHandler, bool,
-                                             agrpc::GrpcContext&);
+using TypeErasedGrpcTagOnComplete = void (*)(TypeErasedGrpcTagOperation*, detail::OperationResult, agrpc::GrpcContext&);
 
 class TypeErasedGrpcTagOperation
 
 {
   public:
-    void complete(detail::InvokeHandler invoke_handler, bool ok, agrpc::GrpcContext& grpc_context)
+    void complete(detail::OperationResult result, agrpc::GrpcContext& grpc_context)
     {
-        this->on_complete(this, invoke_handler, ok, grpc_context);
+        this->on_complete(this, result, grpc_context);
     }
 
   protected:
@@ -98,8 +105,15 @@ struct TypeErasedOperationAccess
     }
 };
 
-template <bool UseLocalAllocator, class Operation, class Base, class... Args>
-void do_complete_handler(Base* op, detail::InvokeHandler invoke_handler, Args... args, agrpc::GrpcContext& grpc_context)
+[[nodiscard]] constexpr bool is_ok(OperationResult result) noexcept { return result == OperationResult::OK; }
+
+[[nodiscard]] constexpr bool is_shutdown(OperationResult result) noexcept
+{
+    return result == OperationResult::SHUTDOWN_NOT_OK || result == OperationResult::SHUTDOWN_OK;
+}
+
+template <bool UseLocalAllocator, class Operation, class Base>
+void do_complete_handler(Base* op, OperationResult result, agrpc::GrpcContext& grpc_context)
 {
     auto* self = static_cast<Operation*>(op);
     detail::AllocationGuard ptr{self, [&]
@@ -113,11 +127,18 @@ void do_complete_handler(Base* op, detail::InvokeHandler invoke_handler, Args...
                                         return self->get_allocator();
                                     }
                                 }()};
-    if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
+    if AGRPC_LIKELY (!detail::is_shutdown(result))
     {
         auto handler{std::move(self->completion_handler())};
         ptr.reset();
-        std::move(handler)(static_cast<Args&&>(args)...);
+        if constexpr (std::is_same_v<detail::TypeErasedGrpcTagOperation, Base>)
+        {
+            std::move(handler)(detail::is_ok(result));
+        }
+        else
+        {
+            std::move(handler)();
+        }
     }
 }
 
@@ -131,11 +152,11 @@ inline constexpr auto DO_COMPLETE_LOCAL_NO_ARG_HANDLER =
 
 template <class Operation>
 inline constexpr auto DO_COMPLETE_GRPC_TAG_HANDLER =
-    &detail::do_complete_handler<false, Operation, detail::TypeErasedGrpcTagOperation, bool>;
+    &detail::do_complete_handler<false, Operation, detail::TypeErasedGrpcTagOperation>;
 
 template <class Operation>
 inline constexpr auto DO_COMPLETE_LOCAL_GRPC_TAG_HANDLER =
-    &detail::do_complete_handler<true, Operation, detail::TypeErasedGrpcTagOperation, bool>;
+    &detail::do_complete_handler<true, Operation, detail::TypeErasedGrpcTagOperation>;
 }
 
 AGRPC_NAMESPACE_END

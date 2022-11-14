@@ -47,14 +47,14 @@ class IntrusiveList
 
         iterator& operator++() noexcept
         {
-            item = item->next;
+            item = item->list_next;
             return *this;
         }
 
         iterator operator++(int) noexcept
         {
             auto self = *this;
-            item = item->next;
+            item = item->list_next;
             return self;
         }
 
@@ -88,15 +88,15 @@ class IntrusiveList
 
     void push_back(T* item) noexcept
     {
-        item->prev = tail;
-        item->next = nullptr;
+        item->list_prev = tail;
+        item->list_next = nullptr;
         if (tail == nullptr)
         {
             head = item;
         }
         else
         {
-            tail->next = item;
+            tail->list_next = item;
         }
         tail = item;
     }
@@ -104,10 +104,10 @@ class IntrusiveList
     [[nodiscard]] T* pop_front() noexcept
     {
         auto* item = head;
-        head = item->next;
+        head = item->list_next;
         if (head != nullptr)
         {
-            head->prev = nullptr;
+            head->list_prev = nullptr;
         }
         else
         {
@@ -118,11 +118,11 @@ class IntrusiveList
 
     void remove(T* item) noexcept
     {
-        auto* const prev = item->prev;
-        auto* const next = item->next;
+        auto* const prev = item->list_prev;
+        auto* const next = item->list_next;
         if (prev != nullptr)
         {
-            prev->next = next;
+            prev->list_next = next;
         }
         else
         {
@@ -130,7 +130,7 @@ class IntrusiveList
         }
         if (next != nullptr)
         {
-            next->prev = prev;
+            next->list_prev = prev;
         }
         else
         {

@@ -116,7 +116,7 @@ inline void GrpcContextImplementation::deallocate_notify_when_done_list(agrpc::G
     while (!list.empty())
     {
         auto* implementation = list.pop_front();
-        implementation->complete(detail::InvokeHandler::NO, grpc_context);
+        implementation->complete(detail::OperationResult::SHUTDOWN_NOT_OK, grpc_context);
     }
 }
 
@@ -146,13 +146,15 @@ inline bool GrpcContextImplementation::process_local_queue(agrpc::GrpcContext& g
                                                            detail::InvokeHandler invoke)
 {
     bool processed{};
+    const auto result =
+        detail::InvokeHandler::NO == invoke ? detail::OperationResult::SHUTDOWN_NOT_OK : detail::OperationResult::OK;
     auto queue{std::move(grpc_context.local_work_queue)};
     while (!queue.empty())
     {
         processed = true;
         detail::WorkFinishedOnExit on_exit{grpc_context};
         auto* operation = queue.pop_front();
-        operation->complete(invoke, grpc_context);
+        operation->complete(result, grpc_context);
     }
     return processed;
 }
@@ -176,7 +178,11 @@ inline bool GrpcContextImplementation::handle_next_completion_queue_event(agrpc:
         }
         else
         {
-            detail::process_grpc_tag(event.tag, invoke, event.ok, grpc_context);
+            const auto result =
+                detail::InvokeHandler::NO == invoke
+                    ? (event.ok ? detail::OperationResult::SHUTDOWN_OK : detail::OperationResult::SHUTDOWN_NOT_OK)
+                    : (event.ok ? detail::OperationResult::OK : detail::OperationResult::NOT_OK);
+            detail::process_grpc_tag(event.tag, result, grpc_context);
         }
         return true;
     }
@@ -248,11 +254,11 @@ inline bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_con
     return processed;
 }
 
-inline void process_grpc_tag(void* tag, detail::InvokeHandler invoke, bool ok, agrpc::GrpcContext& grpc_context)
+inline void process_grpc_tag(void* tag, detail::OperationResult result, agrpc::GrpcContext& grpc_context)
 {
     detail::WorkFinishedOnExit on_exit{grpc_context};
     auto* operation = static_cast<detail::TypeErasedGrpcTagOperation*>(tag);
-    operation->complete(invoke, ok, grpc_context);
+    operation->complete(result, grpc_context);
 }
 
 inline ::gpr_timespec gpr_timespec_from_now(std::chrono::nanoseconds duration) noexcept

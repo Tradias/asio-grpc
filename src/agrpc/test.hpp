@@ -45,7 +45,8 @@ inline void process_grpc_tag(agrpc::GrpcContext& grpc_context, void* tag, bool o
 
         void operator()(bool, agrpc::Alarm&&)
         {
-            detail::process_grpc_tag(tag, detail::InvokeHandler::YES, ok, grpc_context);
+            detail::process_grpc_tag(tag, ok ? detail::OperationResult::OK : detail::OperationResult::NOT_OK,
+                                     grpc_context);
         }
     };
     if (tag)

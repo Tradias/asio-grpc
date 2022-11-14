@@ -218,12 +218,11 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
             return true;
         }
 
-        static void on_request_complete(GrpcBase* op, detail::InvokeHandler invoke_handler, bool ok,
-                                        agrpc::GrpcContext&)
+        static void on_request_complete(GrpcBase* op, detail::OperationResult result, agrpc::GrpcContext&)
         {
             auto* self = static_cast<Operation*>(op);
             detail::AllocationGuard ptr{self->request_handler_operation, self->get_allocator()};
-            if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler && ok)
+            if AGRPC_LIKELY (detail::OperationResult::OK == result)
             {
                 if (auto exception_ptr = emplace_request_handler_operation(*ptr))
                 {
@@ -243,7 +242,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
             else
             {
                 ptr.reset();
-                if (detail::InvokeHandler::YES == invoke_handler && !ok)  // server shutdown
+                if (detail::OperationResult::NOT_OK == result)  // server shutdown
                 {
                     self->finish();
                 }

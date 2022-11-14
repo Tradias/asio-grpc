@@ -224,15 +224,22 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
         }
     }
 
-    template <detail::AllocationType AllocType, int Id, class TypeErasedOperation, class... Args>
-    static void on_complete_impl(TypeErasedOperation* op, detail::InvokeHandler invoke_handler, Args... args,
+    template <detail::AllocationType AllocType, int Id, class TypeErasedOperation>
+    static void on_complete_impl(TypeErasedOperation* op, detail::OperationResult result,
                                  agrpc::GrpcContext& grpc_context)
     {
         auto& self = *static_cast<BasicSenderRunningOperation*>(op);
-        if AGRPC_LIKELY (detail::InvokeHandler::YES == invoke_handler)
+        if AGRPC_LIKELY (!detail::is_shutdown(result))
         {
-            self.implementation().done(typename OnDone<AllocType>::template Type<Id>{self, grpc_context},
-                                       static_cast<Args&&>(args)...);
+            if constexpr (std::is_same_v<detail::TypeErasedGrpcTagOperation, TypeErasedOperation>)
+            {
+                self.implementation().done(typename OnDone<AllocType>::template Type<Id>{self, grpc_context},
+                                           detail::is_ok(result));
+            }
+            else
+            {
+                self.implementation().done(typename OnDone<AllocType>::template Type<Id>{self, grpc_context});
+            }
         }
         else
         {
@@ -246,7 +253,7 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
         if constexpr (Implementation::TYPE == detail::SenderImplementationType::BOTH)
         {
             return {&on_complete_impl<AllocType, Id, detail::TypeErasedNoArgOperation>,
-                    &on_complete_impl<AllocType, Id, detail::TypeErasedGrpcTagOperation, bool>};
+                    &on_complete_impl<AllocType, Id, detail::TypeErasedGrpcTagOperation>};
         }
         else if constexpr (Implementation::TYPE == detail::SenderImplementationType::NO_ARG)
         {
@@ -254,7 +261,7 @@ class BasicSenderRunningOperation : public detail::BasicSenderRunningOperationBa
         }
         else
         {
-            return {nullptr, &on_complete_impl<AllocType, Id, detail::TypeErasedGrpcTagOperation, bool>};
+            return {nullptr, &on_complete_impl<AllocType, Id, detail::TypeErasedGrpcTagOperation>};
         }
     }
 
