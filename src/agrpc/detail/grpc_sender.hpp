@@ -50,9 +50,6 @@ struct GrpcSenderImplementation : detail::GrpcSenderImplementationBase
         on_done(ok);
     }
 };
-
-template <class InitiatingFunction, class StopFunction = detail::Empty>
-using GrpcSender = detail::BasicSender<detail::GrpcSenderImplementation<InitiatingFunction, StopFunction>>;
 }
 
 AGRPC_NAMESPACE_END

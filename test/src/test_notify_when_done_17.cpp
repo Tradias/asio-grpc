@@ -26,44 +26,29 @@
 #include <agrpc/notify_when_done.hpp>
 #include <agrpc/rpc.hpp>
 
-TEST_CASE("notify_when_done: deallocates unstarted operation on destruction")
-{
-    bool invoked{false};
-    test::TrackedAllocation tracked{};
-    {
-        test::GrpcContextTest test;
-        grpc::ServerContext server_context;
-        test::post(test.grpc_context,
-                   [&]
-                   {
-                       agrpc::notify_when_done(test.grpc_context, server_context,
-                                               agrpc::bind_allocator(test::TrackingAllocator<std::byte>{tracked},
-                                                                     [&]
-                                                                     {
-                                                                         invoked = true;
-                                                                     }));
-                       test.grpc_context.stop();
-                   });
-        grpc::ServerContext server_context2;
-        agrpc::notify_when_done(test.grpc_context, server_context2,
-                                agrpc::bind_allocator(test::TrackingAllocator<std::byte>{tracked}, test::NoOp{}));
-        test.grpc_context.run();
-    }
-    CHECK_FALSE(invoked);
-    CHECK_LT(0, tracked.bytes_allocated);
-    CHECK_EQ(tracked.bytes_allocated, tracked.bytes_deallocated);
-}
-
 struct NotifyWhenDoneTest
 {
     std::optional<test::TestServer<&test::v1::Test::AsyncService::RequestUnary>> test_server;
+    agrpc::GrpcContext client_grpc_context{std::make_unique<grpc::CompletionQueue>()};
     test::GrpcClientServerTest test;
     test::ServerShutdownInitiator server_shutdown{*test.server};
 
     NotifyWhenDoneTest() { test_server.emplace(test.service, test.server_context); }
 
     auto& grpc_context() { return test.grpc_context; }
+
+    template <class CompletionToken>
+    auto bind_grpc_context(const CompletionToken& token)
+    {
+        return asio::bind_executor(grpc_context(), token);
+    }
 };
+
+template <class Function>
+auto track_allocation(test::TrackedAllocation& tracked, Function function)
+{
+    return agrpc::bind_allocator(test::TrackingAllocator<std::byte>{tracked}, function);
+}
 
 TEST_CASE("notify_when_done: is completed on RPC success")
 {
@@ -72,24 +57,38 @@ TEST_CASE("notify_when_done: is completed on RPC success")
     test::TrackedAllocation tracked2{};
     {
         NotifyWhenDoneTest test;
+        agrpc::GrpcContext* grpc_context;
+        SUBCASE("initiate from GrpcContext thread") { grpc_context = &test.grpc_context(); }
+        SUBCASE("initiate from remote thread") { grpc_context = &test.client_grpc_context; }
+        test.grpc_context().work_started();
+        std::thread t{[&]
+                      {
+                          if (grpc_context == &test.client_grpc_context)
+                          {
+                              test.grpc_context().run();
+                          }
+                      }};
         test::spawn_and_run(
-            test.grpc_context(),
+            *grpc_context,
             [&](const asio::yield_context& yield)
             {
                 agrpc::notify_when_done(test.grpc_context(), test.test.server_context,
-                                        agrpc::bind_allocator(test::TrackingAllocator<std::byte>{tracked},
-                                                              [&]
-                                                              {
-                                                                  ok = test.test.server_context.IsCancelled();
-                                                              }));
-                CHECK(test.test_server->request_rpc(yield));
+                                        track_allocation(tracked,
+                                                         [&]
+                                                         {
+                                                             ok = test.test.server_context.IsCancelled();
+                                                         }));
+                CHECK(test.test_server->request_rpc(test.bind_grpc_context(yield)));
                 test.test_server->response.set_integer(21);
-                CHECK(agrpc::finish(test.test_server->responder, test.test_server->response, grpc::Status::OK, yield));
+                CHECK(agrpc::finish(test.test_server->responder, test.test_server->response, grpc::Status::OK,
+                                    test.bind_grpc_context(yield)));
             },
             [&](const asio::yield_context& yield)
             {
-                test::client_perform_unary_success(test.grpc_context(), *test.test.stub, yield);
+                test::client_perform_unary_success(*grpc_context, *test.test.stub, yield);
+                test.grpc_context().work_finished();
             });
+        t.join();
         tracked2 = tracked;
         CHECK_LT(0, tracked.bytes_allocated);
         CHECK_EQ(tracked.bytes_allocated, tracked.bytes_deallocated);
@@ -107,16 +106,20 @@ TEST_CASE("notify_when_done: manually discount work")
     {
         NotifyWhenDoneTest test;
         agrpc::notify_when_done(test.grpc_context(), test.test.server_context,
-                                agrpc::bind_allocator(test::TrackingAllocator<std::byte>{tracked},
-                                                      [&]
-                                                      {
-                                                          invoked = true;
-                                                      }));
-        test.test_server->request_rpc(asio::bind_executor(test.grpc_context(),
-                                                          [&](bool request_ok)
-                                                          {
-                                                              ok = request_ok;
-                                                          }));
+                                track_allocation(tracked,
+                                                 [&]
+                                                 {
+                                                     invoked = true;
+                                                 }));
+        test.test_server->request_rpc(test.bind_grpc_context(
+            [&](bool request_ok)
+            {
+                ok = request_ok;
+                if (request_ok)
+                {
+                    test.grpc_context().work_started();
+                }
+            }));
         test.grpc_context().work_finished();
         test::post(test.grpc_context(),
                    [&]
@@ -127,5 +130,28 @@ TEST_CASE("notify_when_done: manually discount work")
     }
     CHECK_FALSE(invoked);
     CHECK_FALSE(ok);
+    CHECK_EQ(tracked.bytes_allocated, tracked.bytes_deallocated);
+}
+
+TEST_CASE("notify_when_done: deallocates unstarted operation on destruction")
+{
+    bool invoked{false};
+    test::TrackedAllocation tracked{};
+    {
+        NotifyWhenDoneTest test;
+        agrpc::notify_when_done(test.grpc_context(), test.test.server_context,
+                                track_allocation(tracked,
+                                                 [&]
+                                                 {
+                                                     invoked = true;
+                                                 }));
+        test.test_server->request_rpc(test.bind_grpc_context(
+            [&](bool)
+            {
+                invoked = true;
+            }));
+        test.grpc_context().poll();
+    }
+    CHECK_FALSE(invoked);
     CHECK_EQ(tracked.bytes_allocated, tracked.bytes_deallocated);
 }
