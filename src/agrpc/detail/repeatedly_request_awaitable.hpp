@@ -23,10 +23,10 @@
 #include <agrpc/bind_allocator.hpp>
 #include <agrpc/detail/buffer_allocator.hpp>
 #include <agrpc/detail/coroutine_traits.hpp>
+#include <agrpc/detail/operation_base.hpp>
 #include <agrpc/detail/query_grpc_context.hpp>
 #include <agrpc/detail/repeatedly_request_base.hpp>
 #include <agrpc/detail/rpc_context.hpp>
-#include <agrpc/detail/type_erased_operation.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/repeatedly_request_context.hpp>
 #include <agrpc/rpc.hpp>
@@ -58,10 +58,10 @@ inline constexpr bool INVOKE_RESULT_IS_CO_SPAWNABLE<
         detail::IS_CO_SPAWNABLE<detail::GetExecutorT<Function>, std::invoke_result_t<Function, Args...>>>> = true;
 
 template <class Buffer>
-class BufferOperation : public detail::TypeErasedNoArgOperation
+class BufferOperation : public detail::QueueableOperationBase
 {
   public:
-    BufferOperation() noexcept : detail::TypeErasedNoArgOperation(&BufferOperation::do_complete) {}
+    BufferOperation() noexcept : detail::QueueableOperationBase(&BufferOperation::do_complete) {}
 
     detail::BufferAllocator<std::byte, Buffer> allocator() noexcept
     {
@@ -69,7 +69,7 @@ class BufferOperation : public detail::TypeErasedNoArgOperation
     }
 
   private:
-    static void do_complete(detail::TypeErasedNoArgOperation* op, detail::OperationResult, agrpc::GrpcContext&) noexcept
+    static void do_complete(detail::OperationBase* op, detail::OperationResult, agrpc::GrpcContext&) noexcept
     {
         detail::destroy_deallocate(static_cast<BufferOperation*>(op), std::allocator<BufferOperation>{});
     }
@@ -111,12 +111,12 @@ auto initiate_request_from_rpc_context(detail::GenericRPCMarker, grpc::AsyncGene
 
 template <class RequestHandler, class RPC, class CompletionHandler>
 class RepeatedlyRequestCoroutineOperation
-    : public detail::TypeErasedNoArgOperation,
+    : public detail::QueueableOperationBase,
       public detail::RepeatedlyRequestOperationBase<RequestHandler, RPC, CompletionHandler>
 {
   private:
     using Base = detail::RepeatedlyRequestOperationBase<RequestHandler, RPC, CompletionHandler>;
-    using NoArgBase = detail::TypeErasedNoArgOperation;
+    using NoArgBase = detail::QueueableOperationBase;
     using Service = detail::GetServiceT<RPC>;
     using RPCContext = detail::RPCContextForRPCT<RPC>;
     using Coroutine =

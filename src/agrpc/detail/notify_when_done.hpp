@@ -34,34 +34,35 @@ class NotfiyWhenDoneSenderImplementation : public detail::IntrusiveListHook<Notf
     using StopFunction = detail::Empty;
     using Initiation = detail::Empty;
 
-  private:
-    using Self = detail::BasicSenderRunningOperationBase<TYPE>;
-
   public:
     NotfiyWhenDoneSenderImplementation(grpc::ServerContext& server_context) : server_context(server_context) {}
 
-    void initiate(agrpc::GrpcContext& grpc_context, const Initiation&, Self* self)
+    template <class Init>
+    void initiate(Init init, const Initiation&)
     {
-        operation = self;
+        auto& grpc_context = init.grpc_context();
         if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
         {
-            init(grpc_context, self);
+            operation = init.template self<1>();
+            initiate_async_notify_when_done(grpc_context, operation);
         }
         else
         {
-            detail::GrpcContextImplementation::work_started(grpc_context);
+            auto* const self = init.template self<0>();
+            operation = self;
             detail::GrpcContextImplementation::add_remote_operation(grpc_context, self);
         }
     }
 
-    template <class OnDone>
-    void done(OnDone on_done)
+    template <template <int> class OnDone>
+    void done(OnDone<0> on_done, bool)
     {
-        init(on_done.grpc_context(), on_done.self());
+        detail::GrpcContextImplementation::work_started(on_done.grpc_context());
+        initiate_async_notify_when_done(on_done.grpc_context(), on_done.template self<1>());
     }
 
-    template <class OnDone>
-    void done(OnDone on_done, bool)
+    template <template <int> class OnDone>
+    void done(OnDone<1> on_done, bool)
     {
         detail::GrpcContextImplementation::remove_notify_when_done_operation(on_done.grpc_context(), this);
         on_done();
@@ -73,14 +74,14 @@ class NotfiyWhenDoneSenderImplementation : public detail::IntrusiveListHook<Notf
     }
 
   private:
-    void init(agrpc::GrpcContext& grpc_context, detail::TypeErasedGrpcTagOperation* self)
+    void initiate_async_notify_when_done(agrpc::GrpcContext& grpc_context, detail::OperationBase* self)
     {
         detail::GrpcContextImplementation::add_notify_when_done_operation(grpc_context, this);
         server_context.AsyncNotifyWhenDone(self);
     }
 
     grpc::ServerContext& server_context;
-    detail::TypeErasedGrpcTagOperation* operation;
+    detail::OperationBase* operation;
 };
 }
 

@@ -39,7 +39,7 @@ struct GrpcSenderImplementation : detail::GrpcSenderImplementationBase
     static auto& stop_function_arg(const Initiation& initiation) noexcept { return initiation; }
 
     static void initiate(agrpc::GrpcContext& grpc_context, const Initiation& initiation,
-                         detail::TypeErasedGrpcTagOperation* operation)
+                         detail::OperationBase* operation)
     {
         initiation(grpc_context, operation);
     }

@@ -50,54 +50,6 @@ auto track_allocation(test::TrackedAllocation& tracked, Function function)
     return agrpc::bind_allocator(test::TrackingAllocator<std::byte>{tracked}, function);
 }
 
-TEST_CASE("notify_when_done: is completed on RPC success")
-{
-    bool ok{true};
-    test::TrackedAllocation tracked{};
-    test::TrackedAllocation tracked2{};
-    {
-        NotifyWhenDoneTest test;
-        agrpc::GrpcContext* grpc_context;
-        SUBCASE("initiate from GrpcContext thread") { grpc_context = &test.grpc_context(); }
-        SUBCASE("initiate from remote thread") { grpc_context = &test.client_grpc_context; }
-        test.grpc_context().work_started();
-        std::thread t{[&]
-                      {
-                          if (grpc_context == &test.client_grpc_context)
-                          {
-                              test.grpc_context().run();
-                          }
-                      }};
-        test::spawn_and_run(
-            *grpc_context,
-            [&](const asio::yield_context& yield)
-            {
-                agrpc::notify_when_done(test.grpc_context(), test.test.server_context,
-                                        track_allocation(tracked,
-                                                         [&]
-                                                         {
-                                                             ok = test.test.server_context.IsCancelled();
-                                                         }));
-                CHECK(test.test_server->request_rpc(test.bind_grpc_context(yield)));
-                test.test_server->response.set_integer(21);
-                CHECK(agrpc::finish(test.test_server->responder, test.test_server->response, grpc::Status::OK,
-                                    test.bind_grpc_context(yield)));
-            },
-            [&](const asio::yield_context& yield)
-            {
-                test::client_perform_unary_success(*grpc_context, *test.test.stub, yield);
-                test.grpc_context().work_finished();
-            });
-        t.join();
-        tracked2 = tracked;
-        CHECK_LT(0, tracked.bytes_allocated);
-        CHECK_EQ(tracked.bytes_allocated, tracked.bytes_deallocated);
-    }
-    CHECK_FALSE(ok);
-    CHECK_EQ(tracked2.bytes_allocated, tracked.bytes_allocated);
-    CHECK_EQ(tracked2.bytes_deallocated, tracked.bytes_deallocated);
-}
-
 TEST_CASE("notify_when_done: manually discount work")
 {
     bool invoked{false};
@@ -155,3 +107,53 @@ TEST_CASE("notify_when_done: deallocates unstarted operation on destruction")
     CHECK_FALSE(invoked);
     CHECK_EQ(tracked.bytes_allocated, tracked.bytes_deallocated);
 }
+
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+TEST_CASE("notify_when_done: is completed on RPC success")
+{
+    bool ok{true};
+    test::TrackedAllocation tracked{};
+    test::TrackedAllocation tracked2{};
+    {
+        NotifyWhenDoneTest test;
+        agrpc::GrpcContext* grpc_context;
+        SUBCASE("initiate from GrpcContext thread") { grpc_context = &test.grpc_context(); }
+        SUBCASE("initiate from remote thread") { grpc_context = &test.client_grpc_context; }
+        test.grpc_context().work_started();
+        std::thread t{[&]
+                      {
+                          if (grpc_context == &test.client_grpc_context)
+                          {
+                              test.grpc_context().run();
+                          }
+                      }};
+        test::spawn_and_run(
+            *grpc_context,
+            [&](const asio::yield_context& yield)
+            {
+                agrpc::notify_when_done(test.grpc_context(), test.test.server_context,
+                                        track_allocation(tracked,
+                                                         [&]
+                                                         {
+                                                             ok = test.test.server_context.IsCancelled();
+                                                         }));
+                CHECK(test.test_server->request_rpc(test.bind_grpc_context(yield)));
+                test.test_server->response.set_integer(21);
+                CHECK(agrpc::finish(test.test_server->responder, test.test_server->response, grpc::Status::OK,
+                                    test.bind_grpc_context(yield)));
+            },
+            [&](const asio::yield_context& yield)
+            {
+                test::client_perform_unary_success(*grpc_context, *test.test.stub, yield);
+                test.grpc_context().work_finished();
+            });
+        t.join();
+        tracked2 = tracked;
+        CHECK_LT(0, tracked.bytes_allocated);
+        CHECK_EQ(tracked.bytes_allocated, tracked.bytes_deallocated);
+    }
+    CHECK_FALSE(ok);
+    CHECK_EQ(tracked2.bytes_allocated, tracked.bytes_allocated);
+    CHECK_EQ(tracked2.bytes_deallocated, tracked.bytes_deallocated);
+}
+#endif

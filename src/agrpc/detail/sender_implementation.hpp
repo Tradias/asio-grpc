@@ -15,7 +15,7 @@
 #ifndef AGRPC_DETAIL_SENDER_IMPLEMENTATION_HPP
 #define AGRPC_DETAIL_SENDER_IMPLEMENTATION_HPP
 
-#include <agrpc/detail/type_erased_operation.hpp>
+#include <agrpc/detail/operation_base.hpp>
 
 #include <type_traits>
 
@@ -30,78 +30,29 @@ enum class SenderImplementationType
     BOTH
 };
 
-struct BasicSenderRunningOperationBaseArg
-{
-    detail::TypeErasedNoArgOnComplete no_arg_on_complete;
-    detail::TypeErasedGrpcTagOnComplete grpc_tag_on_complete;
-};
-
 template <detail::SenderImplementationType>
-struct BasicSenderRunningOperationBase;
+struct BaseForSenderImplementationType;
 
 template <>
-struct BasicSenderRunningOperationBase<detail::SenderImplementationType::NO_ARG> : detail::TypeErasedNoArgOperation
+struct BaseForSenderImplementationType<detail::SenderImplementationType::NO_ARG>
 {
-    explicit BasicSenderRunningOperationBase(detail::BasicSenderRunningOperationBaseArg arg) noexcept
-        : detail::TypeErasedNoArgOperation(arg.no_arg_on_complete)
-    {
-    }
-
-    void set_on_complete(detail::BasicSenderRunningOperationBaseArg arg) noexcept
-    {
-        detail::TypeErasedOperationAccess::get_on_complete(*this) = arg.no_arg_on_complete;
-    }
-
-    bool on_complete_equals(detail::BasicSenderRunningOperationBaseArg arg) const noexcept
-    {
-        return detail::TypeErasedOperationAccess::get_on_complete(*this) == arg.no_arg_on_complete;
-    }
+    using Type = detail::QueueableOperationBase;
 };
 
 template <>
-struct BasicSenderRunningOperationBase<detail::SenderImplementationType::GRPC_TAG> : detail::TypeErasedGrpcTagOperation
+struct BaseForSenderImplementationType<detail::SenderImplementationType::GRPC_TAG>
 {
-    explicit BasicSenderRunningOperationBase(detail::BasicSenderRunningOperationBaseArg arg) noexcept
-        : detail::TypeErasedGrpcTagOperation(arg.grpc_tag_on_complete)
-    {
-    }
-
-    void set_on_complete(detail::BasicSenderRunningOperationBaseArg arg) noexcept
-    {
-        detail::TypeErasedOperationAccess::get_on_complete(*this) = arg.grpc_tag_on_complete;
-    }
-
-    bool on_complete_equals(detail::BasicSenderRunningOperationBaseArg arg) const noexcept
-    {
-        return detail::TypeErasedOperationAccess::get_on_complete(*this) == arg.grpc_tag_on_complete;
-    }
+    using Type = detail::OperationBase;
 };
 
 template <>
-struct BasicSenderRunningOperationBase<detail::SenderImplementationType::BOTH> : detail::TypeErasedNoArgOperation,
-                                                                                 detail::TypeErasedGrpcTagOperation
-
+struct BaseForSenderImplementationType<detail::SenderImplementationType::BOTH>
 {
-    explicit BasicSenderRunningOperationBase(detail::BasicSenderRunningOperationBaseArg arg) noexcept
-        : detail::TypeErasedNoArgOperation(arg.no_arg_on_complete),
-          detail::TypeErasedGrpcTagOperation(arg.grpc_tag_on_complete)
-    {
-    }
-
-    void set_on_complete(detail::BasicSenderRunningOperationBaseArg arg) noexcept
-    {
-        detail::TypeErasedOperationAccess::get_on_complete(*static_cast<detail::TypeErasedNoArgOperation*>(this)) =
-            arg.no_arg_on_complete;
-        detail::TypeErasedOperationAccess::get_on_complete(*static_cast<detail::TypeErasedGrpcTagOperation*>(this)) =
-            arg.grpc_tag_on_complete;
-    }
-
-    bool on_complete_equals(detail::BasicSenderRunningOperationBaseArg arg) const noexcept
-    {
-        return detail::TypeErasedOperationAccess::get_on_complete(
-                   *static_cast<const detail::TypeErasedNoArgOperation*>(this)) == arg.no_arg_on_complete;
-    }
+    using Type = detail::QueueableOperationBase;
 };
+
+template <detail::SenderImplementationType ImplementationType>
+using BaseForSenderImplementationTypeT = typename detail::BaseForSenderImplementationType<ImplementationType>::Type;
 }
 
 AGRPC_NAMESPACE_END

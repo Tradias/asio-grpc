@@ -129,14 +129,14 @@ class HealthCheckWatcher : public detail::IntrusiveListHook<detail::HealthCheckW
     detail::ServingStatus pending_status{detail::ServingStatus::NOT_FOUND};
 };
 
-class HealthCheckChecker : public detail::TypeErasedGrpcTagOperation
+class HealthCheckChecker : public detail::OperationBase
 {
   private:
-    using GrpcBase = detail::TypeErasedGrpcTagOperation;
+    using Base = detail::OperationBase;
 
   public:
     explicit HealthCheckChecker(agrpc::HealthCheckService& service, void* tag)
-        : GrpcBase(&HealthCheckChecker::on_complete), service(service)
+        : Base(&HealthCheckChecker::do_complete), service(service)
     {
         auto* const cq = grpc_context().get_server_completion_queue();
         service.service.RequestCheck(&server_context, &request, &writer, cq, cq, tag);
@@ -157,7 +157,7 @@ class HealthCheckChecker : public detail::TypeErasedGrpcTagOperation
 
     agrpc::GrpcContext::allocator_type get_allocator() const noexcept { return grpc_context().get_allocator(); }
 
-    static void on_complete(GrpcBase* op, detail::OperationResult, agrpc::GrpcContext& grpc_context)
+    static void do_complete(Base* op, detail::OperationResult, agrpc::GrpcContext& grpc_context)
     {
         auto* self = static_cast<HealthCheckChecker*>(op);
         grpc_context.work_started();
@@ -184,7 +184,7 @@ class HealthCheckChecker : public detail::TypeErasedGrpcTagOperation
 
 template <class Implementation>
 inline HealthCheckRepeatedlyRequest<Implementation>::HealthCheckRepeatedlyRequest(agrpc::HealthCheckService& service)
-    : GrpcBase(&HealthCheckRepeatedlyRequest::on_request_complete), service(service)
+    : Base(&HealthCheckRepeatedlyRequest::do_request_complete), service(service)
 {
 }
 
@@ -195,8 +195,7 @@ inline void HealthCheckRepeatedlyRequest<Implementation>::start()
 }
 
 template <class Implementation>
-inline void HealthCheckRepeatedlyRequest<Implementation>::on_request_complete(GrpcBase* op,
-                                                                              detail::OperationResult result,
+inline void HealthCheckRepeatedlyRequest<Implementation>::do_request_complete(Base* op, detail::OperationResult result,
                                                                               agrpc::GrpcContext&)
 {
     auto* self = static_cast<HealthCheckRepeatedlyRequest*>(op);

@@ -45,6 +45,12 @@ struct UseSender;
 
 namespace detail
 {
+template <class Item>
+class IntrusiveQueue;
+
+template <class Item>
+class AtomicIntrusiveQueue;
+
 struct BasicSenderAccess;
 
 class RepeatedlyRequestFn;

@@ -19,7 +19,7 @@
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/grpc_completion_queue_event.hpp>
-#include <agrpc/detail/type_erased_operation.hpp>
+#include <agrpc/detail/operation_base.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <grpcpp/completion_queue.h>
 
@@ -104,11 +104,11 @@ struct GrpcContextImplementation
 
     static void work_started(agrpc::GrpcContext& grpc_context) noexcept;
 
-    static void add_remote_operation(agrpc::GrpcContext& grpc_context, detail::TypeErasedNoArgOperation* op) noexcept;
+    static void add_remote_operation(agrpc::GrpcContext& grpc_context, detail::QueueableOperationBase* op) noexcept;
 
-    static void add_local_operation(agrpc::GrpcContext& grpc_context, detail::TypeErasedNoArgOperation* op) noexcept;
+    static void add_local_operation(agrpc::GrpcContext& grpc_context, detail::QueueableOperationBase* op) noexcept;
 
-    static void add_operation(agrpc::GrpcContext& grpc_context, detail::TypeErasedNoArgOperation* op) noexcept;
+    static void add_operation(agrpc::GrpcContext& grpc_context, detail::QueueableOperationBase* op) noexcept;
 
     static void add_notify_when_done_operation(agrpc::GrpcContext& grpc_context,
                                                detail::NotfiyWhenDoneSenderImplementation* implementation) noexcept;

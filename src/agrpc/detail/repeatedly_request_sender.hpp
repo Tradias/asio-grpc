@@ -19,10 +19,10 @@
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/no_op_stop_callback.hpp>
+#include <agrpc/detail/operation_base.hpp>
 #include <agrpc/detail/receiver.hpp>
 #include <agrpc/detail/rpc_context.hpp>
 #include <agrpc/detail/sender_of.hpp>
-#include <agrpc/detail/type_erased_operation.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/grpc_context.hpp>
 
@@ -82,10 +82,10 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
     using Service = detail::GetServiceT<RPC>;
 
     template <class Receiver>
-    class Operation : public detail::TypeErasedGrpcTagOperation
+    class Operation : public detail::OperationBase
     {
       private:
-        using GrpcBase = detail::TypeErasedGrpcTagOperation;
+        using Base = detail::OperationBase;
         using Allocator = detail::RemoveCrefT<decltype(detail::exec::get_allocator(std::declval<Receiver&>()))>;
         using RPCContext = detail::RPCContextForRPCT<RPC>;
         using RequestHandlerSender =
@@ -177,7 +177,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
 
         template <class R>
         Operation(const RepeatedlyRequestSender& sender, R&& receiver)
-            : GrpcBase(&Operation::on_request_complete),
+            : Base(&Operation::do_request_complete),
               grpc_context(sender.grpc_context),
               receiver(static_cast<R&&>(receiver)),
               impl1(sender.rpc),
@@ -188,7 +188,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
 
         template <class R>
         Operation(RepeatedlyRequestSender&& sender, R&& receiver)
-            : GrpcBase(&Operation::on_request_complete),
+            : Base(&Operation::do_request_complete),
               grpc_context(sender.grpc_context),
               receiver(static_cast<R&&>(receiver)),
               impl1(sender.rpc),
@@ -218,7 +218,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
             return true;
         }
 
-        static void on_request_complete(GrpcBase* op, detail::OperationResult result, agrpc::GrpcContext&)
+        static void do_request_complete(detail::OperationBase* op, detail::OperationResult result, agrpc::GrpcContext&)
         {
             auto* self = static_cast<Operation*>(op);
             detail::AllocationGuard ptr{self->request_handler_operation, self->get_allocator()};

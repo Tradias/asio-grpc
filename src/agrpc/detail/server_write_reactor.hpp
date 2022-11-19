@@ -17,8 +17,8 @@
 
 #include <agrpc/detail/allocate.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/operation_base.hpp>
 #include <agrpc/detail/tagged_ptr.hpp>
-#include <agrpc/detail/type_erased_operation.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
 
@@ -26,21 +26,20 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-struct ServerWriteReactorStepBase : detail::TypeErasedGrpcTagOperation
+struct ServerWriteReactorStepBase : detail::OperationBase
 {
-    using detail::TypeErasedGrpcTagOperation::TypeErasedGrpcTagOperation;
+    using detail::OperationBase::OperationBase;
 };
 
-struct ServerWriteReactorDoneBase : detail::TypeErasedGrpcTagOperation
+struct ServerWriteReactorDoneBase : detail::OperationBase
 {
-    using detail::TypeErasedGrpcTagOperation::TypeErasedGrpcTagOperation;
+    using detail::OperationBase::OperationBase;
 };
 
 template <class Derived, class Response>
 class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public detail::ServerWriteReactorDoneBase
 {
   private:
-    using GrpcBase = detail::TypeErasedGrpcTagOperation;
     using StepBase = detail::ServerWriteReactorStepBase;
     using DoneBase = detail::ServerWriteReactorDoneBase;
 
@@ -48,7 +47,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
     template <class RPC, class Service, class Request>
     ServerWriteReactor(agrpc::GrpcContext& grpc_context, RPC rpc, Service& service, Request& request, void* tag)
         : detail::ServerWriteReactorStepBase(nullptr),
-          detail::ServerWriteReactorDoneBase(&ServerWriteReactor::handle_done),
+          detail::ServerWriteReactorDoneBase(&ServerWriteReactor::do_done_notified),
           grpc_context(&grpc_context)
     {
         server_context.AsyncNotifyWhenDone(static_cast<DoneBase*>(this));
@@ -62,19 +61,19 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
         return detail::allocate<Derived>(grpc_context.get_allocator(), static_cast<Args&&>(args)...).release();
     }
 
-    [[nodiscard]] bool is_writing() const noexcept { return &ServerWriteReactor::handle_write == get_on_complete(); }
+    [[nodiscard]] bool is_writing() const noexcept { return &ServerWriteReactor::do_write_done == get_on_complete(); }
 
     void write(const Response& response)
     {
-        get_on_complete() = &ServerWriteReactor::handle_write;
+        get_on_complete() = &ServerWriteReactor::do_write_done;
         writer.Write(response, static_cast<StepBase*>(this));
     }
 
-    [[nodiscard]] bool is_finished() const noexcept { return &ServerWriteReactor::handle_finish == get_on_complete(); }
+    [[nodiscard]] bool is_finished() const noexcept { return &ServerWriteReactor::do_finish_done == get_on_complete(); }
 
     void finish(const grpc::Status& status)
     {
-        get_on_complete() = &ServerWriteReactor::handle_finish;
+        get_on_complete() = &ServerWriteReactor::do_finish_done;
         writer.Finish(status, static_cast<StepBase*>(this));
     }
 
@@ -85,12 +84,12 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
 
     auto& get_on_complete() noexcept
     {
-        return detail::TypeErasedOperationAccess::get_on_complete(*static_cast<StepBase*>(this));
+        return detail::OperationBaseAccess::get_on_complete(*static_cast<StepBase*>(this));
     }
 
     auto get_on_complete() const noexcept
     {
-        return detail::TypeErasedOperationAccess::get_on_complete(*static_cast<const StepBase*>(this));
+        return detail::OperationBaseAccess::get_on_complete(*static_cast<const StepBase*>(this));
     }
 
     void set_step_done() noexcept { get_on_complete() = nullptr; }
@@ -106,7 +105,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
         return old_value;
     }
 
-    static void handle_write(GrpcBase* op, detail::OperationResult result, agrpc::GrpcContext&)
+    static void do_write_done(detail::OperationBase* op, detail::OperationResult result, agrpc::GrpcContext&)
     {
         auto* const self = static_cast<ServerWriteReactor*>(static_cast<StepBase*>(op));
         self->set_step_done();
@@ -126,7 +125,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
         }
     }
 
-    static void handle_finish(GrpcBase* op, detail::OperationResult result, agrpc::GrpcContext&)
+    static void do_finish_done(detail::OperationBase* op, detail::OperationResult result, agrpc::GrpcContext&)
     {
         auto* const self = static_cast<ServerWriteReactor*>(static_cast<StepBase*>(op));
         self->set_step_done();
@@ -143,7 +142,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
         }
     }
 
-    static void handle_done(GrpcBase* op, detail::OperationResult result, agrpc::GrpcContext&)
+    static void do_done_notified(detail::OperationBase* op, detail::OperationResult result, agrpc::GrpcContext&)
     {
         auto* const self = static_cast<ServerWriteReactor*>(static_cast<DoneBase*>(op));
         self->grpc_context->work_started();

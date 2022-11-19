@@ -46,8 +46,7 @@ struct MoveAlarmSenderImplementation
         return alarm.emplace(static_cast<Alarm&&>(initiation.alarm)).alarm;
     }
 
-    void initiate(agrpc::GrpcContext& grpc_context, const Initiation& initiation,
-                  detail::TypeErasedGrpcTagOperation* operation)
+    void initiate(agrpc::GrpcContext& grpc_context, const Initiation& initiation, detail::OperationBase* operation)
     {
         Alarm* emplaced_alarm;
         if (alarm)

@@ -41,7 +41,7 @@ ctest --preset default
 
 ## Install git hooks
 
-Before making a commit, install [clang-format](https://github.com/llvm/llvm-project/releases) (part of clang-tools-extra) and [cmake-format](https://pypi.org/project/cmake-format/). 
+Before making a commit, install the latest version of [clang-format](https://github.com/llvm/llvm-project/releases) (part of clang-tools-extra) and [cmake-format](https://pypi.org/project/cmake-format/). 
 Re-run the CMake configure step and finally run:
 
 ```sh

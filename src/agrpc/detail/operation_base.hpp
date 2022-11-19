@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_TYPE_ERASED_OPERATION_HPP
-#define AGRPC_DETAIL_TYPE_ERASED_OPERATION_HPP
+#ifndef AGRPC_DETAIL_OPERATION_BASE_HPP
+#define AGRPC_DETAIL_OPERATION_BASE_HPP
 
 #include <agrpc/detail/allocate.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/grpc_context.hpp>
-#include <agrpc/detail/intrusive_queue_hook.hpp>
 #include <agrpc/detail/utility.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -40,69 +39,47 @@ enum class OperationResult
     OK
 };
 
-struct TypeErasedOperationAccess;
+struct OperationBaseAccess;
 
-class TypeErasedNoArgOperation;
+class OperationBase;
 
-using TypeErasedNoArgOnComplete = void (*)(TypeErasedNoArgOperation*, detail::OperationResult, agrpc::GrpcContext&);
+using OperationOnComplete = void (*)(detail::OperationBase*, detail::OperationResult, agrpc::GrpcContext&);
 
-class TypeErasedNoArgOperation : public detail::IntrusiveQueueHook<TypeErasedNoArgOperation>
+class OperationBase
 {
   public:
     void complete(detail::OperationResult result, agrpc::GrpcContext& grpc_context)
     {
-        this->on_complete(this, result, grpc_context);
+        on_complete(this, result, grpc_context);
     }
 
   protected:
-    explicit TypeErasedNoArgOperation(TypeErasedNoArgOnComplete on_complete) noexcept : on_complete(on_complete) {}
+    explicit OperationBase(OperationOnComplete on_complete) noexcept : on_complete(on_complete) {}
 
   private:
-    friend detail::TypeErasedOperationAccess;
+    friend detail::OperationBaseAccess;
 
-    TypeErasedNoArgOnComplete on_complete;
+    OperationOnComplete on_complete;
 };
 
-class TypeErasedGrpcTagOperation;
-
-using TypeErasedGrpcTagOnComplete = void (*)(TypeErasedGrpcTagOperation*, detail::OperationResult, agrpc::GrpcContext&);
-
-class TypeErasedGrpcTagOperation
-
+class QueueableOperationBase : public detail::OperationBase
 {
-  public:
-    void complete(detail::OperationResult result, agrpc::GrpcContext& grpc_context)
-    {
-        this->on_complete(this, result, grpc_context);
-    }
-
   protected:
-    explicit TypeErasedGrpcTagOperation(TypeErasedGrpcTagOnComplete on_complete) noexcept : on_complete(on_complete) {}
+    using detail::OperationBase::OperationBase;
 
   private:
-    friend detail::TypeErasedOperationAccess;
+    friend detail::OperationBaseAccess;
+    friend detail::IntrusiveQueue<QueueableOperationBase>;
+    friend detail::AtomicIntrusiveQueue<QueueableOperationBase>;
 
-    TypeErasedGrpcTagOnComplete on_complete;
+    QueueableOperationBase* next;
 };
 
-struct TypeErasedOperationAccess
+struct OperationBaseAccess
 {
-    static auto& get_on_complete(detail::TypeErasedNoArgOperation& operation) noexcept { return operation.on_complete; }
+    static auto& get_on_complete(detail::OperationBase& operation) noexcept { return operation.on_complete; }
 
-    static auto get_on_complete(const detail::TypeErasedNoArgOperation& operation) noexcept
-    {
-        return operation.on_complete;
-    }
-
-    static auto& get_on_complete(detail::TypeErasedGrpcTagOperation& operation) noexcept
-    {
-        return operation.on_complete;
-    }
-
-    static auto get_on_complete(const detail::TypeErasedGrpcTagOperation& operation) noexcept
-    {
-        return operation.on_complete;
-    }
+    static auto get_on_complete(const detail::OperationBase& operation) noexcept { return operation.on_complete; }
 };
 
 [[nodiscard]] constexpr bool is_ok(OperationResult result) noexcept { return result == OperationResult::OK; }
@@ -113,9 +90,9 @@ struct TypeErasedOperationAccess
 }
 
 template <bool UseLocalAllocator, class Operation, class Base>
-void do_complete_handler(Base* op, OperationResult result, agrpc::GrpcContext& grpc_context)
+void do_complete_handler(detail::OperationBase* op, OperationResult result, agrpc::GrpcContext& grpc_context)
 {
-    auto* self = static_cast<Operation*>(op);
+    auto* self = static_cast<Operation*>(static_cast<Base*>(op));
     detail::AllocationGuard ptr{self, [&]
                                 {
                                     if constexpr (UseLocalAllocator)
@@ -131,7 +108,7 @@ void do_complete_handler(Base* op, OperationResult result, agrpc::GrpcContext& g
     {
         auto handler{std::move(self->completion_handler())};
         ptr.reset();
-        if constexpr (std::is_same_v<detail::TypeErasedGrpcTagOperation, Base>)
+        if constexpr (std::is_same_v<detail::OperationBase, Base>)
         {
             std::move(handler)(detail::is_ok(result));
         }
@@ -144,21 +121,21 @@ void do_complete_handler(Base* op, OperationResult result, agrpc::GrpcContext& g
 
 template <class Operation>
 inline constexpr auto DO_COMPLETE_NO_ARG_HANDLER =
-    &detail::do_complete_handler<false, Operation, detail::TypeErasedNoArgOperation>;
+    &detail::do_complete_handler<false, Operation, detail::QueueableOperationBase>;
 
 template <class Operation>
 inline constexpr auto DO_COMPLETE_LOCAL_NO_ARG_HANDLER =
-    &detail::do_complete_handler<true, Operation, detail::TypeErasedNoArgOperation>;
+    &detail::do_complete_handler<true, Operation, detail::QueueableOperationBase>;
 
 template <class Operation>
 inline constexpr auto DO_COMPLETE_GRPC_TAG_HANDLER =
-    &detail::do_complete_handler<false, Operation, detail::TypeErasedGrpcTagOperation>;
+    &detail::do_complete_handler<false, Operation, detail::OperationBase>;
 
 template <class Operation>
 inline constexpr auto DO_COMPLETE_LOCAL_GRPC_TAG_HANDLER =
-    &detail::do_complete_handler<true, Operation, detail::TypeErasedGrpcTagOperation>;
+    &detail::do_complete_handler<true, Operation, detail::OperationBase>;
 }
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_TYPE_ERASED_OPERATION_HPP
+#endif  // AGRPC_DETAIL_OPERATION_BASE_HPP

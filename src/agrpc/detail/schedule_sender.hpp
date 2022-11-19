@@ -32,8 +32,7 @@ struct ScheduleSenderImplementation
     using StopFunction = detail::Empty;
     using Initiation = detail::Empty;
 
-    static void initiate(agrpc::GrpcContext& grpc_context, const Initiation&,
-                         detail::TypeErasedNoArgOperation* operation)
+    static void initiate(agrpc::GrpcContext& grpc_context, const Initiation&, detail::QueueableOperationBase* operation)
     {
         detail::GrpcContextImplementation::add_operation(grpc_context, operation);
     }

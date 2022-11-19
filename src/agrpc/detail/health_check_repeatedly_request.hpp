@@ -17,17 +17,17 @@
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
-#include <agrpc/detail/type_erased_operation.hpp>
+#include <agrpc/detail/operation_base.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
 template <class Implementation>
-class HealthCheckRepeatedlyRequest : public detail::TypeErasedGrpcTagOperation
+class HealthCheckRepeatedlyRequest : public detail::OperationBase
 {
   private:
-    using GrpcBase = detail::TypeErasedGrpcTagOperation;
+    using Base = detail::OperationBase;
 
   public:
     explicit HealthCheckRepeatedlyRequest(agrpc::HealthCheckService& service);
@@ -35,7 +35,7 @@ class HealthCheckRepeatedlyRequest : public detail::TypeErasedGrpcTagOperation
     void start();
 
   private:
-    static void on_request_complete(GrpcBase* op, detail::OperationResult result, agrpc::GrpcContext&);
+    static void do_request_complete(Base* op, detail::OperationResult result, agrpc::GrpcContext&);
 
     agrpc::HealthCheckService& service;
     Implementation* impl;

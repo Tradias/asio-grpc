@@ -20,7 +20,7 @@
 #include <agrpc/detail/grpc_context.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
 #include <agrpc/detail/notify_when_done.hpp>
-#include <agrpc/detail/type_erased_operation.hpp>
+#include <agrpc/detail/operation_base.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <grpc/support/time.h>
 #include <grpcpp/completion_queue.h>
@@ -71,7 +71,7 @@ inline void GrpcContextImplementation::work_started(agrpc::GrpcContext& grpc_con
 }
 
 inline void GrpcContextImplementation::add_remote_operation(agrpc::GrpcContext& grpc_context,
-                                                            detail::TypeErasedNoArgOperation* op) noexcept
+                                                            detail::QueueableOperationBase* op) noexcept
 {
     if (grpc_context.remote_work_queue.enqueue(op))
     {
@@ -80,13 +80,13 @@ inline void GrpcContextImplementation::add_remote_operation(agrpc::GrpcContext& 
 }
 
 inline void GrpcContextImplementation::add_local_operation(agrpc::GrpcContext& grpc_context,
-                                                           detail::TypeErasedNoArgOperation* op) noexcept
+                                                           detail::QueueableOperationBase* op) noexcept
 {
     grpc_context.local_work_queue.push_back(op);
 }
 
 inline void GrpcContextImplementation::add_operation(agrpc::GrpcContext& grpc_context,
-                                                     detail::TypeErasedNoArgOperation* op) noexcept
+                                                     detail::QueueableOperationBase* op) noexcept
 {
     if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
     {
@@ -257,7 +257,7 @@ inline bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_con
 inline void process_grpc_tag(void* tag, detail::OperationResult result, agrpc::GrpcContext& grpc_context)
 {
     detail::WorkFinishedOnExit on_exit{grpc_context};
-    auto* operation = static_cast<detail::TypeErasedGrpcTagOperation*>(tag);
+    auto* operation = static_cast<detail::OperationBase*>(tag);
     operation->complete(result, grpc_context);
 }
 

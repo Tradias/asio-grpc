@@ -26,7 +26,7 @@
 #include <agrpc/detail/intrusive_queue.hpp>
 #include <agrpc/detail/memory_resource.hpp>
 #include <agrpc/detail/notify_when_done.hpp>
-#include <agrpc/detail/type_erased_operation.hpp>
+#include <agrpc/detail/operation_base.hpp>
 #include <grpcpp/alarm.h>
 #include <grpcpp/completion_queue.h>
 
@@ -278,8 +278,8 @@ class GrpcContext
     [[nodiscard]] grpc::ServerCompletionQueue* get_server_completion_queue() noexcept;
 
   private:
-    using RemoteWorkQueue = detail::AtomicIntrusiveQueue<detail::TypeErasedNoArgOperation>;
-    using LocalWorkQueue = detail::IntrusiveQueue<detail::TypeErasedNoArgOperation>;
+    using RemoteWorkQueue = detail::AtomicIntrusiveQueue<detail::QueueableOperationBase>;
+    using LocalWorkQueue = detail::IntrusiveQueue<detail::QueueableOperationBase>;
     using NotifyWhenDoneList = detail::IntrusiveList<detail::NotfiyWhenDoneSenderImplementation>;
 
     friend detail::GrpcContextImplementation;

@@ -77,8 +77,7 @@ struct ClientUnaryRequestSenderImplementation<PrepareAsync, Executor> : detail::
     {
     }
 
-    void initiate(const agrpc::GrpcContext&, const Initiation& initiation,
-                  detail::TypeErasedGrpcTagOperation* operation) noexcept
+    void initiate(const agrpc::GrpcContext&, const Initiation& initiation, detail::OperationBase* operation) noexcept
     {
         responder->StartCall();
         responder->Finish(&initiation.response, &status, operation);
@@ -112,8 +111,7 @@ struct GenericClientUnaryRequestSenderImplementation : detail::GrpcSenderImpleme
     {
     }
 
-    void initiate(const agrpc::GrpcContext&, const Initiation& initiation,
-                  detail::TypeErasedGrpcTagOperation* operation) noexcept
+    void initiate(const agrpc::GrpcContext&, const Initiation& initiation, detail::OperationBase* operation) noexcept
     {
         responder->StartCall();
         responder->Finish(&initiation.response, &status, operation);
@@ -337,8 +335,7 @@ struct ReadServerStreamingSenderImplementation<Responder<Response>, Executor> : 
 
     ReadServerStreamingSenderImplementation(RPCBase& rpc) : rpc(rpc) {}
 
-    void initiate(const agrpc::GrpcContext&, const Initiation& initiation,
-                  detail::TypeErasedGrpcTagOperation* operation) noexcept
+    void initiate(const agrpc::GrpcContext&, const Initiation& initiation, detail::OperationBase* operation) noexcept
     {
         rpc.responder().Read(&initiation.response, operation);
     }
@@ -476,8 +473,7 @@ struct ClientReadBidiStreamingSenderImplementation<Responder<Request, Response>,
 
     ClientReadBidiStreamingSenderImplementation(RPCBase& rpc) : rpc(rpc) {}
 
-    void initiate(const agrpc::GrpcContext&, const Initiation& initiation,
-                  detail::TypeErasedGrpcTagOperation* operation) noexcept
+    void initiate(const agrpc::GrpcContext&, const Initiation& initiation, detail::OperationBase* operation) noexcept
     {
         rpc.responder().Read(&initiation.response, operation);
     }
@@ -508,8 +504,7 @@ struct ClientWriteBidiStreamingSenderImplementation<Responder<Request, Response>
 
     ClientWriteBidiStreamingSenderImplementation(RPCBase& rpc) : rpc(rpc) {}
 
-    void initiate(const agrpc::GrpcContext&, const Initiation& initiation,
-                  detail::TypeErasedGrpcTagOperation* operation) noexcept
+    void initiate(const agrpc::GrpcContext&, const Initiation& initiation, detail::OperationBase* operation) noexcept
     {
         auto& [req, options] = initiation;
         if (options.is_last_message())

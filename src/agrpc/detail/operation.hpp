@@ -19,17 +19,17 @@
 #include <agrpc/detail/allocation_type.hpp>
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/type_erased_operation.hpp>
+#include <agrpc/detail/operation_base.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
 template <class Handler>
-class NoArgOperation : public detail::TypeErasedNoArgOperation
+class NoArgOperation : public detail::QueueableOperationBase
 {
   private:
-    using Base = detail::TypeErasedNoArgOperation;
+    using Base = detail::QueueableOperationBase;
 
   public:
     template <class... Args>
@@ -50,10 +50,10 @@ class NoArgOperation : public detail::TypeErasedNoArgOperation
 };
 
 template <class Handler>
-class GrpcTagOperation : public detail::TypeErasedGrpcTagOperation
+class GrpcTagOperation : public detail::OperationBase
 {
   private:
-    using Base = detail::TypeErasedGrpcTagOperation;
+    using Base = detail::OperationBase;
 
   public:
     template <class... Args>

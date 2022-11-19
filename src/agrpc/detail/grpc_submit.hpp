@@ -27,7 +27,7 @@ namespace detail
 struct DeallocateOperationFunctor
 {
     agrpc::GrpcContext& grpc_context;
-    detail::TypeErasedGrpcTagOperation* operation;
+    detail::OperationBase* operation;
 
     void operator()() { operation->complete(detail::OperationResult::SHUTDOWN_NOT_OK, grpc_context); }
 };

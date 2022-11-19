@@ -35,13 +35,11 @@ struct RepeatedlyRequestContextAccess
 };
 
 template <class RequestHandler, class RPC, class CompletionHandler>
-class RepeatedlyRequestOperation : public detail::TypeErasedGrpcTagOperation,
-                                   public detail::TypeErasedNoArgOperation,
+class RepeatedlyRequestOperation : public detail::QueueableOperationBase,
                                    public detail::RepeatedlyRequestOperationBase<RequestHandler, RPC, CompletionHandler>
 {
   private:
-    using GrpcBase = detail::TypeErasedGrpcTagOperation;
-    using NoArgBase = detail::TypeErasedNoArgOperation;
+    using Base = detail::QueueableOperationBase;
     using Service = detail::GetServiceT<RPC>;
     using RPCContext = detail::RPCContextForRPCT<RPC>;
 
@@ -49,8 +47,7 @@ class RepeatedlyRequestOperation : public detail::TypeErasedGrpcTagOperation,
     template <class Ch, class Rh>
     RepeatedlyRequestOperation(Rh&& request_handler, RPC rpc, Service& service, Ch&& completion_handler,
                                bool is_stoppable)
-        : GrpcBase(&RepeatedlyRequestOperation::on_request_complete),
-          NoArgBase(detail::DO_COMPLETE_NO_ARG_HANDLER<RepeatedlyRequestOperation>),
+        : Base(&RepeatedlyRequestOperation::do_request_complete),
           detail::RepeatedlyRequestOperationBase<RequestHandler, RPC, CompletionHandler>(
               static_cast<Rh&&>(request_handler), rpc, service, static_cast<Ch&&>(completion_handler), is_stoppable)
     {
@@ -73,7 +70,8 @@ class RepeatedlyRequestOperation : public detail::TypeErasedGrpcTagOperation,
     }
 
   private:
-    static void on_request_complete(GrpcBase* op, detail::OperationResult result, agrpc::GrpcContext& grpc_context)
+    static void do_request_complete(detail::OperationBase* op, detail::OperationResult result,
+                                    agrpc::GrpcContext& grpc_context)
     {
         auto* self = static_cast<RepeatedlyRequestOperation*>(op);
         const auto allocator = self->get_allocator();
@@ -88,8 +86,7 @@ class RepeatedlyRequestOperation : public detail::TypeErasedGrpcTagOperation,
                                          {
                                              if AGRPC_UNLIKELY (!is_repeated)
                                              {
-                                                 detail::GrpcContextImplementation::add_local_operation(grpc_context,
-                                                                                                        self);
+                                                 self->add_completing_operation(grpc_context);
                                              }
                                          }};
                 request_handler(detail::RepeatedlyRequestContextAccess::create(std::move(ptr)));
@@ -97,7 +94,7 @@ class RepeatedlyRequestOperation : public detail::TypeErasedGrpcTagOperation,
             else
             {
                 ptr.reset();
-                detail::GrpcContextImplementation::add_local_operation(grpc_context, self);
+                self->add_completing_operation(grpc_context);
             }
         }
         else
@@ -106,6 +103,13 @@ class RepeatedlyRequestOperation : public detail::TypeErasedGrpcTagOperation,
             detail::WorkFinishedOnExit on_exit{grpc_context};
             detail::destroy_deallocate(self, allocator);
         }
+    }
+
+    void add_completing_operation(agrpc::GrpcContext& grpc_context)
+    {
+        detail::OperationBaseAccess::get_on_complete(*this) =
+            detail::DO_COMPLETE_NO_ARG_HANDLER<RepeatedlyRequestOperation>;
+        detail::GrpcContextImplementation::add_local_operation(grpc_context, this);
     }
 
     RPCContext* rpc_context;
