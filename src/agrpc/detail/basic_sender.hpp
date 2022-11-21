@@ -367,7 +367,7 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
 
     [[nodiscard]] void* get_scratch_space() const noexcept
     {
-        return detail::OperationBaseAccess::get_on_complete(*this);
+        return reinterpret_cast<void*>(detail::OperationBaseAccess::get_on_complete(*this));
     }
 
     void restore_scratch_space(detail::AllocationType allocation_type) noexcept
