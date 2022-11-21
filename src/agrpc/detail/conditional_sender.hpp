@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/receiver.hpp>
 #include <agrpc/detail/tuple.hpp>
 #include <agrpc/detail/utility.hpp>
@@ -37,9 +38,6 @@ struct ConditionalSenderAccess
                                          static_cast<CompletionArgs&&>(args)...);
     }
 };
-
-template <class Sender, class Receiver, class... CompletionArgs>
-class ConditionalSenderOperationState;
 
 template <class Sender, class... CompletionArgs>
 class ConditionalSender

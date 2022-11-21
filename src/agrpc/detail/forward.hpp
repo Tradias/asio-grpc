@@ -53,6 +53,9 @@ class AtomicIntrusiveQueue;
 
 struct BasicSenderAccess;
 
+template <class Sender, class Receiver, class... CompletionArgs>
+class ConditionalSenderOperationState;
+
 class RepeatedlyRequestFn;
 
 struct RepeatedlyRequestContextAccess;
