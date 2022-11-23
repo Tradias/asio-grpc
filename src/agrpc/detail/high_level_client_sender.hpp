@@ -312,7 +312,7 @@ struct ReadInitialMetadataSenderImplementation : detail::GrpcSenderImplementatio
     }
 
     template <template <int> class OnDone>
-    void done(OnDone<1> on_done, bool)
+    static void done(OnDone<1> on_done, bool)
     {
         on_done(false);
     }
@@ -354,7 +354,7 @@ struct ReadServerStreamingSenderImplementation<Responder<Response>, Executor> : 
     }
 
     template <template <int> class OnDone>
-    void done(OnDone<1> on_done, bool)
+    static void done(OnDone<1> on_done, bool)
     {
         on_done(false);
     }
@@ -449,7 +449,7 @@ struct ClientFinishSenderImplementation : detail::GrpcSenderImplementationBase
     }
 
     template <template <int> class OnDone>
-    void done(OnDone<1> on_done, bool)
+    void done(OnDone<1> on_done, bool) const
     {
         on_done(rpc.ok());
     }

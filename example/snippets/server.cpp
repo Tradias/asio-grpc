@@ -354,22 +354,16 @@ asio::awaitable<void> request_loop(agrpc::GrpcContext& grpc_context, example::v1
 {
     grpc::ServerContext server_context;
     auto on_done = agrpc::notify_when_done(grpc_context, server_context, asio::experimental::use_promise);
-    asio::post(grpc_context,
-               [&]
-               {
-                   // Discount the work of notify_when_done until the rpc starts
-                   grpc_context.work_finished();
-               });
     example::v1::Request request;
     grpc::ServerAsyncResponseWriter<example::v1::Response> writer{&server_context};
     const bool ok = co_await agrpc::request(&example::v1::Example::AsyncService::RequestUnary, service, server_context,
                                             request, writer, asio::use_awaitable);
     if (!ok)
     {
+        // At this point, `agrpc::notify_when_done` will never complete.
+        grpc_context.work_finished();
         co_return;
     }
-    // Undo the discount
-    grpc_context.work_started();
     asio::co_spawn(grpc_context, request_loop(grpc_context, service, request_handler), asio::detached);
     co_await request_handler(server_context, request, writer, std::move(on_done));
 }

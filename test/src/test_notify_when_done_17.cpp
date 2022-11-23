@@ -67,12 +67,11 @@ TEST_CASE("notify_when_done: manually discount work")
             [&](bool request_ok)
             {
                 ok = request_ok;
-                if (request_ok)
+                if (!request_ok)
                 {
-                    test.grpc_context().work_started();
+                    test.grpc_context().work_finished();
                 }
             }));
-        test.grpc_context().work_finished();
         test::post(test.grpc_context(),
                    [&]
                    {

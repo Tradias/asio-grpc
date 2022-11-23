@@ -34,7 +34,6 @@ class NotfiyWhenDoneSenderImplementation : public detail::IntrusiveListHook<Notf
     using StopFunction = detail::Empty;
     using Initiation = detail::Empty;
 
-  public:
     NotfiyWhenDoneSenderImplementation(grpc::ServerContext& server_context) : server_context(server_context) {}
 
     template <class Init>
