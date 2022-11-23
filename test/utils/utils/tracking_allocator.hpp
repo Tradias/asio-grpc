@@ -26,7 +26,7 @@ struct TrackedAllocation
     std::size_t bytes_deallocated;
 };
 
-template <class T>
+template <class T = std::byte>
 class TrackingAllocator
 {
   public:

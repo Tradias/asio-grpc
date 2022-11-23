@@ -66,7 +66,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "AllocatorBinder constructor and member
     auto move_invocable_binder = agrpc::bind_allocator(default_allocator, MoveInvocable{});
     CHECK(std::move(move_invocable_binder)(true));
 
-    static constexpr auto ALLOCATOR_BINDER = agrpc::bind_allocator(test::TrackingAllocator<std::byte>{},
+    static constexpr auto ALLOCATOR_BINDER = agrpc::bind_allocator(test::TrackingAllocator{},
                                                                    []
                                                                    {
                                                                        return 42;

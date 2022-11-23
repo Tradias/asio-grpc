@@ -171,6 +171,8 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
         template <int Id>
         struct Type
         {
+            static constexpr auto ALLOCATION_TYPE = AllocType;
+
             template <class... Args>
             void operator()(Args... args)
             {
@@ -281,6 +283,8 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
     template <detail::AllocationType AllocType>
     struct Init
     {
+        static constexpr auto ALLOCATION_TYPE = AllocType;
+
         template <int NextId = 0>
         [[nodiscard]] Base* self() const noexcept
         {

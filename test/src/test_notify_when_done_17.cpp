@@ -14,6 +14,7 @@
 
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asio_utils.hpp"
+#include "utils/destruction_tracker.hpp"
 #include "utils/doctest.hpp"
 #include "utils/grpc_client_server_test.hpp"
 #include "utils/grpc_context_test.hpp"
@@ -47,7 +48,7 @@ struct NotifyWhenDoneTest
 template <class Function>
 auto track_allocation(test::TrackedAllocation& tracked, Function function)
 {
-    return agrpc::bind_allocator(test::TrackingAllocator<std::byte>{tracked}, function);
+    return agrpc::bind_allocator(test::TrackingAllocator{tracked}, std::move(function));
 }
 
 TEST_CASE("notify_when_done: manually discount work")
@@ -84,15 +85,16 @@ TEST_CASE("notify_when_done: manually discount work")
     CHECK_EQ(tracked.bytes_allocated, tracked.bytes_deallocated);
 }
 
-TEST_CASE("notify_when_done: deallocates unstarted operation on destruction")
+TEST_CASE("notify_when_done: destructs and deallocates unstarted, remote operation on GrpcContext destruction")
 {
+    bool destructed{false};
     bool invoked{false};
     test::TrackedAllocation tracked{};
     {
         NotifyWhenDoneTest test;
         agrpc::notify_when_done(test.grpc_context(), test.test.server_context,
                                 track_allocation(tracked,
-                                                 [&]
+                                                 [&, d = test::DestructionTracker::make(destructed)]
                                                  {
                                                      invoked = true;
                                                  }));
@@ -103,11 +105,88 @@ TEST_CASE("notify_when_done: deallocates unstarted operation on destruction")
             }));
         test.grpc_context().poll();
     }
+    CHECK(destructed);
     CHECK_FALSE(invoked);
     CHECK_EQ(tracked.bytes_allocated, tracked.bytes_deallocated);
 }
 
+TEST_CASE("notify_when_done: destructs and deallocates unstarted, local operation on GrpcContext destruction")
+{
+    bool destructed{false};
+    bool invoked{false};
+    {
+        NotifyWhenDoneTest test;
+        test::spawn_and_run(test.grpc_context(),
+                            [&](const asio::yield_context& yield)
+                            {
+                                agrpc::notify_when_done(test.grpc_context(), test.test.server_context,
+                                                        [&, d = test::DestructionTracker::make(destructed)]
+                                                        {
+                                                            invoked = true;
+                                                        });
+                                asio::post(test.grpc_context(),
+                                           [&]
+                                           {
+                                               test.grpc_context().stop();
+                                           });
+                                test.test_server->request_rpc(yield);
+                                invoked = true;
+                            });
+    }
+    CHECK(destructed);
+    CHECK_FALSE(invoked);
+}
+
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+TEST_CASE("notify_when_done: deallocates sender operation states only when necessary")
+{
+    bool use_submit{false};
+    bool invoked{false};
+    test::TrackedAllocation tracked{};
+    const auto receiver_function = [&]
+    {
+        invoked = true;
+    };
+    SUBCASE("connect") {}
+    SUBCASE("submit") { use_submit = true; }
+    {
+        NotifyWhenDoneTest test;
+        auto notify_when_done_sender =
+            agrpc::notify_when_done(test.grpc_context(), test.test.server_context, agrpc::use_sender);
+        const auto connect = [&]
+        {
+            return asio::execution::connect(notify_when_done_sender, test::FunctionAsReceiver{receiver_function});
+        };
+        test::spawn_and_run(test.grpc_context(),
+                            [&](const asio::yield_context& yield)
+                            {
+                                std::optional<decltype(connect())> when_done_operation_state;
+                                if (use_submit)
+                                {
+                                    asio::execution::submit(
+                                        notify_when_done_sender,
+                                        test::FunctionAsReceiver{receiver_function, test::TrackingAllocator{tracked}});
+                                }
+                                else
+                                {
+                                    when_done_operation_state.emplace(connect());
+                                    asio::execution::start(*when_done_operation_state);
+                                }
+                                test::post(test.grpc_context(),
+                                           [&]
+                                           {
+                                               test.server_shutdown.initiate();
+                                           });
+                                if (!test.test_server->request_rpc(yield))
+                                {
+                                    test.grpc_context().work_finished();
+                                }
+                            });
+    }
+    CHECK_FALSE(invoked);
+    CHECK_EQ(tracked.bytes_allocated, tracked.bytes_deallocated);
+}
+
 TEST_CASE("notify_when_done: is completed on RPC success")
 {
     bool ok{true};

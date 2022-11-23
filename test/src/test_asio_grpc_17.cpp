@@ -574,7 +574,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "agrpc::wait correctly unbinds exe
 {
     grpc::Alarm alarm;
     test::TrackedAllocation tracked{};
-    test::TrackingAllocator<std::byte> allocator{tracked};
+    test::TrackingAllocator allocator{tracked};
     auto test = [&](auto token)
     {
         agrpc::wait(alarm, test::ten_milliseconds_from_now(), token);
@@ -616,7 +616,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest,
                                        }));
     // Perform test
     test::TrackedAllocation tracked{};
-    test::TrackingAllocator<std::byte> allocator{tracked};
+    test::TrackingAllocator allocator{tracked};
     auto token = agrpc::bind_allocator(
         allocator, asio::bind_executor(asio::any_io_executor{grpc_context.get_executor()}, [](auto&&) {}));
     test::msg::Request request;
