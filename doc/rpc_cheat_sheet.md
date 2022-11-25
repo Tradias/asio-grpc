@@ -12,9 +12,9 @@ must have an associated executor that refers to a GrpcContext:
 
 ## Client
 
-**Since asio-grpc v2.1.0, the recommended gRPC client API is `agrpc::RPC`. It provides a customizable default completion token and always uses the correct associated executor. The old, low-level API is documented below.**
+**Since asio-grpc v2.1.0, the recommended gRPC client API is `agrpc::RPC`. It provides a customizable default completion token and always uses the correct I/O executor. The old, low-level API is documented below.**
 
-All RPC types support retrieving initial metadata immediately. This is optional step. Completes with `false` if the call is dead.
+All RPC types support retrieving initial metadata immediately. This step is optional. It completes with `false` if the call is dead.
 
 @snippet client.cpp read_initial_metadata-unary-client-side
 
@@ -36,7 +36,7 @@ All RPC types support retrieving initial metadata immediately. This is optional 
 
 ## Server
 
-All RPC types support sending initial metadata immediately. This is optional step. Completes with `false` if the call is dead.
+All RPC types support sending initial metadata immediately. This step is optional. It completes with `false` if the call is dead.
 
 @snippet server.cpp send_initial_metadata-unary-server-side
 

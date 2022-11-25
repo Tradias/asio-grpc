@@ -21,7 +21,7 @@ git clone https://github.com/microsoft/vcpkg
 From the root of the repository run:
 
 ```sh
-# Make sure the VCPKG_ROOT env variable points to the to the cloned vcpkg repository
+# Make sure the VCPKG_ROOT env variable points to the cloned vcpkg repository
 cmake --preset default
 ```
 
