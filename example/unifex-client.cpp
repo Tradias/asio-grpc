@@ -128,23 +128,23 @@ int main(int argc, const char** argv)
     const auto host = std::string("localhost:") + port;
 
     const auto channel = grpc::CreateChannel(host, grpc::InsecureChannelCredentials());
-    const auto stub = example::v1::Example::NewStub(channel);
-    const auto stub_ext = example::v1::ExampleExt::NewStub(channel);
+    example::v1::Example::Stub stub{channel};
+    example::v1::ExampleExt::Stub stub_ext{channel};
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
     grpc_context.work_started();
-    unifex::sync_wait(
-        unifex::when_all(unifex::finally(unifex::when_all(make_unary_request(grpc_context, *stub),
-                                                          make_server_streaming_request(grpc_context, *stub),
-                                                          make_and_cancel_unary_request(grpc_context, *stub_ext)),
-                                         unifex::then(unifex::just(),
-                                                      [&]
-                                                      {
-                                                          grpc_context.work_finished();
-                                                      })),
-                         unifex::then(unifex::just(),
-                                      [&]
-                                      {
-                                          grpc_context.run();
-                                      })));
+    unifex::sync_wait(unifex::when_all(
+        unifex::finally(
+            unifex::when_all(make_unary_request(grpc_context, stub), make_server_streaming_request(grpc_context, stub),
+                             make_and_cancel_unary_request(grpc_context, stub_ext)),
+            unifex::then(unifex::just(),
+                         [&]
+                         {
+                             grpc_context.work_finished();
+                         })),
+        unifex::then(unifex::just(),
+                     [&]
+                     {
+                         grpc_context.run();
+                     })));
 }

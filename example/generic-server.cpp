@@ -131,13 +131,12 @@ bool writer(grpc::GenericServerAsyncReaderWriter& reader_writer, Channel& channe
         }
         auto main_thread = std::this_thread::get_id();
 
-        // Switch to the thread_pool.
+        // In this example we switch to the thread_pool to compute the response.
         asio::post(asio::bind_executor(thread_pool, yield));
 
         auto thread_pool_thread = get_thread_id();
         abort_if_not(main_thread != thread_pool_thread);
 
-        // Compute the response.
         process_request(buffer);
 
         // reader_writer is thread-safe so we can just interact with it from the thread_pool.

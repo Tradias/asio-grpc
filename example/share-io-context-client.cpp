@@ -69,8 +69,7 @@ int main(int argc, const char** argv)
 
     asio::io_context io_context{1};
 
-    const auto channel = grpc::CreateChannel(host, grpc::InsecureChannelCredentials());
-    const auto stub = example::v1::Example::NewStub(channel);
+    example::v1::Example::Stub stub{grpc::CreateChannel(host, grpc::InsecureChannelCredentials())};
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
     std::optional grpc_context_work_guard{
         asio::prefer(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked)};
@@ -81,7 +80,7 @@ int main(int argc, const char** argv)
         {
             // The two operations below will run concurrently on the same thread.
             using namespace asio::experimental::awaitable_operators;
-            co_await (make_grpc_request(grpc_context, *stub) && make_tcp_request(tcp_port));
+            co_await (make_grpc_request(grpc_context, stub) && make_tcp_request(tcp_port));
             grpc_context_work_guard.reset();
         },
         asio::detached);

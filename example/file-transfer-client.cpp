@@ -133,8 +133,6 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
     co_await rpc.write(*current, grpc::WriteOptions{}.set_last_message(),
                        buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
 
-    co_await rpc.finish(buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
-
     co_return rpc.ok();
 }
 
@@ -156,8 +154,7 @@ int main(int argc, const char** argv)
     const auto port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("localhost:") + port;
 
-    const auto channel = grpc::CreateChannel(host, grpc::InsecureChannelCredentials());
-    const auto stub_ext = example::v1::ExampleExt::NewStub(channel);
+    example::v1::ExampleExt::Stub stub_ext{grpc::CreateChannel(host, grpc::InsecureChannelCredentials())};
     agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
 
     asio::io_context io_context{1};
@@ -179,7 +176,7 @@ int main(int argc, const char** argv)
             [&]() -> agrpc::GrpcAwaitable<void>
             {
                 abort_if_not(
-                    co_await make_double_buffered_send_file_request(grpc_context, io_context, *stub_ext, file_path));
+                    co_await make_double_buffered_send_file_request(grpc_context, io_context, stub_ext, file_path));
             },
             [](auto&& ep)
             {
