@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(ASIO_GRPC_CMAKE_INSTALL_TEST_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/superbuild")
-
-configure_file("${ASIO_GRPC_CMAKE_INSTALL_TEST_SOURCE_DIR}/CMakeLists.txt.in"
-               "${ASIO_GRPC_CMAKE_INSTALL_TEST_SOURCE_DIR}/CMakeLists.txt" @ONLY)
-
 if("${CMAKE_GENERATOR}" STREQUAL "Ninja Multi-Config")
     if(WIN32)
         set(ASIO_GRPC_CMAKE_INSTALL_TEST_GENERATOR "NMake Makefiles")
@@ -27,10 +22,20 @@ else()
     set(ASIO_GRPC_CMAKE_INSTALL_TEST_GENERATOR "${CMAKE_GENERATOR}")
 endif()
 
-add_test(
-    NAME asio-grpc-cmake-test
-    COMMAND
-        "${ASIO_GRPC_CMAKE_INSTALL_TEST_CTEST_COMMAND}" "--build-and-test" "${ASIO_GRPC_CMAKE_INSTALL_TEST_SOURCE_DIR}"
-        "${CMAKE_CURRENT_BINARY_DIR}/cmake-test" "--build-generator" "${ASIO_GRPC_CMAKE_INSTALL_TEST_GENERATOR}"
-        "--build-project" "asio-grpc-cmake-test-superbuild" "--test-command"
-        "${CMAKE_CURRENT_BINARY_DIR}/cmake-test/test-install/main${CMAKE_EXECUTABLE_SUFFIX}")
+function(add_cmake_test _name)
+    set(ASIO_GRPC_CMAKE_INSTALL_TEST_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${_name}")
+
+    configure_file("${ASIO_GRPC_CMAKE_INSTALL_TEST_SOURCE_DIR}/CMakeLists.txt.in"
+                   "${ASIO_GRPC_CMAKE_INSTALL_TEST_SOURCE_DIR}/CMakeLists.txt" @ONLY)
+
+    add_test(
+        NAME asio-grpc-cmake-test-${_name}
+        COMMAND
+            "${ASIO_GRPC_CMAKE_INSTALL_TEST_CTEST_COMMAND}" "--build-and-test"
+            "${ASIO_GRPC_CMAKE_INSTALL_TEST_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/${_name}" "--build-generator"
+            "${ASIO_GRPC_CMAKE_INSTALL_TEST_GENERATOR}" "--build-project" "asio-grpc-cmake-test-${_name}"
+            "--test-command" "${CMAKE_CURRENT_BINARY_DIR}/${_name}/test-install/main${CMAKE_EXECUTABLE_SUFFIX}")
+endfunction()
+
+add_cmake_test(superbuild)
+add_cmake_test(subdirectory)

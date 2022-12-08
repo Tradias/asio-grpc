@@ -75,3 +75,4 @@ ClangBuildAnalyzer.ini
 # asio-grpc specific
 docs/
 test/cmake/superbuild/CMakeLists.txt
+test/cmake/subdirectory/CMakeLists.txt

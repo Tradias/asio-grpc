@@ -1,0 +1,30 @@
+{
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/cafd398be781144787573ca78390e951673c7055/scripts/vcpkg.schema.json",
+    "name": "asio-grpc-cmake-test",
+    "version": "1",
+    "dependencies": [
+        {
+            "name": "abseil",
+            "features": [
+                "cxx17"
+            ]
+        },
+        "doctest",
+        "grpc",
+        "boost-coroutine",
+        "boost-asio",
+        "boost-interprocess",
+        "boost-thread",
+        "boost-container",
+        "boost-process",
+        {
+            "name": "asio",
+            "features": [
+                "coroutine"
+            ]
+        },
+        "libunifex",
+        "gtest"
+    ],
+    "builtin-baseline": "cafd398be781144787573ca78390e951673c7055"
+}

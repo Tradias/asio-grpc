@@ -22,21 +22,27 @@ function(asio_grpc_create_interface_target _asio_grpc_name)
     target_include_directories(${_asio_grpc_name} INTERFACE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
                                                             $<INSTALL_INTERFACE:include>)
 
-    if(ASIO_GRPC_USE_BOOST_CONTAINER)
-        set(ASIO_GRPC_MEMORY_RESOURCE_INDLUCES
-            [[#include <boost/container/pmr/memory_resource.hpp>
+    if(ASIO_GRPC_USE_BOOST_CONTAINER AND (NOT ASIO_GRPC_PROJECT_IS_TOP_LEVEL OR ASIO_GRPC_BUILD_TESTS))
+        target_compile_definitions(${_asio_grpc_name} INTERFACE AGRPC_USE_BOOST_CONTAINER)
+    endif()
+
+    if(ASIO_GRPC_INSTALL)
+        if(ASIO_GRPC_USE_BOOST_CONTAINER)
+            set(ASIO_GRPC_MEMORY_RESOURCE_INDLUCES
+                [[#include <boost/container/pmr/memory_resource.hpp>
 #include <boost/container/pmr/polymorphic_allocator.hpp>
 #include <boost/container/pmr/unsynchronized_pool_resource.hpp>
 #include <boost/container/uses_allocator.hpp>]])
-        set(ASIO_GRPC_MEMORY_RESOURCE_NAMESPACE_ALIAS [[namespace pmr = boost::container::pmr;
+            set(ASIO_GRPC_MEMORY_RESOURCE_NAMESPACE_ALIAS [[namespace pmr = boost::container::pmr;
 namespace container = boost::container;]])
-    else()
-        set(ASIO_GRPC_MEMORY_RESOURCE_INDLUCES "#include <memory_resource>")
-        set(ASIO_GRPC_MEMORY_RESOURCE_NAMESPACE_ALIAS [[namespace pmr = std::pmr;
+        else()
+            set(ASIO_GRPC_MEMORY_RESOURCE_INDLUCES "#include <memory_resource>")
+            set(ASIO_GRPC_MEMORY_RESOURCE_NAMESPACE_ALIAS [[namespace pmr = std::pmr;
 namespace container = std;]])
+        endif()
+        configure_file("${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/memory_resource.hpp.in"
+                       "${CMAKE_CURRENT_BINARY_DIR}/generated/agrpc/detail/memory_resource.hpp" @ONLY)
     endif()
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/memory_resource.hpp.in"
-                   "${CMAKE_CURRENT_BINARY_DIR}/generated/agrpc/detail/memory_resource.hpp" @ONLY)
 endfunction()
 
 asio_grpc_create_interface_target(asio-grpc)
