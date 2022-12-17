@@ -60,9 +60,9 @@ TEST_CASE_FIXTURE(
     test::GrpcContextTest,
     "asio BasicGrpcExecutor<PmrAllocator> can be constructed using allocator_traits<polymorphic_allocator>::construct")
 {
-    using PmrAllocator = agrpc::detail::pmr::polymorphic_allocator<std::byte>;
+    using PmrAllocator = test::TrackingAllocator<>;
     using Executor = agrpc::BasicGrpcExecutor<PmrAllocator>;
-    std::vector<Executor, agrpc::detail::pmr::polymorphic_allocator<Executor>> vector;
+    std::vector<Executor, test::TrackingAllocator<Executor>> vector;
     vector.emplace_back(grpc_context, get_allocator());
     CHECK_EQ(get_allocator(), vector.front().get_allocator());
 }
@@ -204,31 +204,35 @@ TEST_CASE_FIXTURE(test::GrpcContextTest,
     grpc_context.reset();
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "co_await for Alarm with special awaitable")
+TEST_CASE_FIXTURE(test::GrpcContextTest, "co_await Alarm with asio::awaitable<>")
 {
     bool ok{false};
-    SUBCASE("pmr::GRPC_USE_AWAITABLE")
-    {
-        test::co_spawn(get_pmr_executor(),
-                       [&]() -> agrpc::pmr::GrpcAwaitable<void>
-                       {
-                           grpc::Alarm alarm;
-                           ok = co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(),
-                                                     agrpc::pmr::GRPC_USE_AWAITABLE);
-                       });
-    }
-    SUBCASE("asio::awaitable<>")
-    {
-        test::co_spawn(get_executor(),
-                       [&]() -> asio::awaitable<void>
-                       {
-                           grpc::Alarm alarm;
-                           ok = co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), asio::use_awaitable);
-                       });
-    }
+    test::co_spawn(get_executor(),
+                   [&]() -> asio::awaitable<void>
+                   {
+                       grpc::Alarm alarm;
+                       ok = co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(), asio::use_awaitable);
+                   });
     grpc_context.run();
     CHECK(ok);
 }
+
+#ifndef AGRPC_USE_RECYCLING_ALLOCATOR
+TEST_CASE_FIXTURE(test::GrpcContextTest, "co_await Alarm with pmr::GRPC_USE_AWAITABLE")
+{
+    bool ok{false};
+    test::co_spawn(asio::require(get_executor(),
+                                 asio::execution::allocator(agrpc::detail::pmr::polymorphic_allocator<std::byte>())),
+                   [&]() -> agrpc::pmr::GrpcAwaitable<void>
+                   {
+                       grpc::Alarm alarm;
+                       ok = co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(),
+                                                 agrpc::pmr::GRPC_USE_AWAITABLE);
+                   });
+    grpc_context.run();
+    CHECK(ok);
+}
+#endif
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with awaitable operators")

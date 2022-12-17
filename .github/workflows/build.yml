@@ -142,7 +142,7 @@ jobs:
           -Dsonar.coverageReportPaths=${{ github.workspace }}/build-10/sonarqube-coverage.xml
 
     - name: GCC 11 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which g++-11) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
+      run: cmake --preset default -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which g++-11) -DASIO_GRPC_USE_RECYCLING_ALLOCATOR=on -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
 
     - name: GCC 11 Build
       run: cmake --build ${{ github.workspace }}/build-11 --config Release --parallel $(nproc) --target asio-grpc-check-header-syntax all

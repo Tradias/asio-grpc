@@ -573,7 +573,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "agrpc::request for unary RPCs can
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "agrpc::wait correctly unbinds executor_binder and allocator_binder")
 {
     grpc::Alarm alarm;
-    test::TrackedAllocation tracked{};
+    test::TrackedAllocation tracked;
     test::TrackingAllocator allocator{tracked};
     auto test = [&](auto token)
     {
@@ -615,7 +615,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest,
                                                          asio::bind_executor(grpc_context, test::NoOp{}));
                                        }));
     // Perform test
-    test::TrackedAllocation tracked{};
+    test::TrackedAllocation tracked;
     test::TrackingAllocator allocator{tracked};
     auto token = agrpc::bind_allocator(
         allocator, asio::bind_executor(asio::any_io_executor{grpc_context.get_executor()}, [](auto&&) {}));

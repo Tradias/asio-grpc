@@ -55,7 +55,7 @@ TEST_CASE("notify_when_done: manually discount work")
 {
     bool invoked{false};
     bool ok{true};
-    test::TrackedAllocation tracked{};
+    test::TrackedAllocation tracked;
     {
         NotifyWhenDoneTest test;
         agrpc::notify_when_done(test.grpc_context(), test.test.server_context,
@@ -89,7 +89,7 @@ TEST_CASE("notify_when_done: destructs and deallocates unstarted, remote operati
 {
     bool destructed{false};
     bool invoked{false};
-    test::TrackedAllocation tracked{};
+    test::TrackedAllocation tracked;
     {
         NotifyWhenDoneTest test;
         agrpc::notify_when_done(test.grpc_context(), test.test.server_context,
@@ -142,7 +142,7 @@ TEST_CASE("notify_when_done: deallocates sender operation states only when neces
 {
     bool use_submit{false};
     bool invoked{false};
-    test::TrackedAllocation tracked{};
+    test::TrackedAllocation tracked;
     const auto receiver_function = [&]
     {
         invoked = true;
@@ -190,8 +190,8 @@ TEST_CASE("notify_when_done: deallocates sender operation states only when neces
 TEST_CASE("notify_when_done: is completed on RPC success")
 {
     bool ok{true};
-    test::TrackedAllocation tracked{};
-    test::TrackedAllocation tracked2{};
+    test::TrackedAllocation tracked;
+    test::TrackedAllocation tracked2;
     {
         NotifyWhenDoneTest test;
         agrpc::GrpcContext* grpc_context;

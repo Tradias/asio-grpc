@@ -25,7 +25,7 @@
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "AllocatorBinder constructor and member function")
 {
-    agrpc::detail::pmr::polymorphic_allocator<std::byte> default_allocator{};
+    test::TrackingAllocator<> default_allocator{};
 
     agrpc::AllocatorBinder int_binder{get_allocator(), 1};
     CHECK_EQ(1, int_binder.get());

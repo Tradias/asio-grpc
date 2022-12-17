@@ -17,6 +17,7 @@
 #include "utils/exception.hpp"
 #include "utils/grpc_context_test.hpp"
 #include "utils/io_context_test.hpp"
+#include "utils/throwing_allocator.hpp"
 #include "utils/time.hpp"
 #include "utils/unassignable_allocator.hpp"
 
@@ -38,7 +39,7 @@ TEST_CASE("GrpcExecutor fulfills Executor TS traits")
     CHECK(asio::can_prefer_v<Exec, asio::execution::relationship_t::continuation_t>);
     CHECK(asio::can_prefer_v<Exec, asio::execution::outstanding_work_t::tracked_t>);
     CHECK(asio::can_prefer_v<Exec, asio::execution::outstanding_work_t::untracked_t>);
-    CHECK(asio::can_prefer_v<Exec, asio::execution::allocator_t<agrpc::detail::pmr::polymorphic_allocator<std::byte>>>);
+    CHECK(asio::can_prefer_v<Exec, asio::execution::allocator_t<test::TrackingAllocator<>>>);
     CHECK(asio::can_query_v<Exec, asio::execution::blocking_t>);
     CHECK(asio::can_query_v<Exec, asio::execution::relationship_t>);
     CHECK(asio::can_query_v<Exec, asio::execution::outstanding_work_t>);
@@ -242,10 +243,9 @@ TEST_CASE_FIXTURE(GrpcExecutorTest, "GrpcExecutor comparison operator - differen
 TEST_CASE_FIXTURE(GrpcExecutorTest, "GrpcExecutor comparison operator - different allocator")
 {
     CHECK_EQ(get_executor(), asio::require(get_executor(), asio::execution::allocator));
-    auto default_pmr_executor = asio::require(
-        get_executor(), asio::execution::allocator(agrpc::detail::pmr::polymorphic_allocator<std::byte>()));
-    auto default_pmr_other_executor = asio::require(
-        other_executor(), asio::execution::allocator(agrpc::detail::pmr::polymorphic_allocator<std::byte>()));
+    auto default_pmr_executor = asio::require(get_executor(), asio::execution::allocator(test::TrackingAllocator<>()));
+    auto default_pmr_other_executor =
+        asio::require(other_executor(), asio::execution::allocator(test::TrackingAllocator<>()));
     SUBCASE("same options")
     {
         CHECK_EQ(default_pmr_executor, default_pmr_executor);
@@ -492,14 +492,16 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post/execute with allocator")
 {
     SUBCASE("asio::post")
     {
-        asio::post(grpc_context, test::HandlerWithAssociatedAllocator{
-                                     test::NoOp{}, agrpc::detail::pmr::polymorphic_allocator<std::byte>(&resource)});
+        asio::post(grpc_context, test::HandlerWithAssociatedAllocator{test::NoOp{}, get_allocator()});
     }
-    SUBCASE("asio::execute before grpc_context.run()") { asio::execution::execute(get_pmr_executor(), test::NoOp{}); }
+    SUBCASE("asio::execute before grpc_context.run()")
+    {
+        asio::execution::execute(get_tracking_allocator_executor(), test::NoOp{});
+    }
     SUBCASE("asio::execute after grpc_context.run() from same thread")
     {
         test::post(grpc_context,
-                   [&, exec = get_pmr_executor()]
+                   [&, exec = get_tracking_allocator_executor()]
                    {
                        asio::execution::execute(exec, test::NoOp{});
                    });
@@ -513,7 +515,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "dispatch with allocator")
     test::post(grpc_context,
                [&]
                {
-                   asio::dispatch(get_pmr_executor(), test::NoOp{});
+                   asio::dispatch(get_tracking_allocator_executor(), test::NoOp{});
                });
     grpc_context.run();
     CHECK_FALSE(allocator_has_been_used());
@@ -521,9 +523,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "dispatch with allocator")
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "execute with throwing allocator")
 {
-    const auto executor =
-        asio::require(get_executor(), asio::execution::allocator(agrpc::detail::pmr::polymorphic_allocator<std::byte>(
-                                          agrpc::detail::pmr::null_memory_resource())));
+    const auto executor = asio::require(get_executor(), asio::execution::allocator(test::ThrowingAllocator<>{}));
     CHECK_THROWS(asio::execution::execute(executor, test::NoOp{}));
 }
 

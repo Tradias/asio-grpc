@@ -19,6 +19,7 @@
 #include "utils/asio_utils.hpp"
 #include "utils/grpc_format.hpp"
 #include "utils/memory_resource.hpp"
+#include "utils/tracking_allocator.hpp"
 
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
@@ -41,14 +42,21 @@ inline auto work_tracking_executor(agrpc::GrpcContext& grpc_context) noexcept
 }
 
 using GrpcContextWorkTrackingExecutor = decltype(test::work_tracking_executor(std::declval<agrpc::GrpcContext&>()));
+
+inline auto tracking_allocator_executor(agrpc::GrpcContext& grpc_context, test::TrackingAllocator<> allocator) noexcept
+{
+    return asio::require(grpc_context.get_executor(), asio::execution::allocator(allocator));
+}
+
+using GrpcContextTrackingAllocatorExecutor =
+    decltype(test::tracking_allocator_executor(std::declval<agrpc::GrpcContext&>(), test::TrackingAllocator<>{}));
 #endif
 
 struct GrpcContextTest
 {
     grpc::ServerBuilder builder;
     std::unique_ptr<grpc::Server> server;
-    std::array<std::byte, 4096> buffer;
-    agrpc::detail::pmr::monotonic_buffer_resource resource;
+    test::TrackedAllocation resource;
     std::optional<agrpc::GrpcContext> grpc_context_lifetime;
     agrpc::GrpcContext& grpc_context;
 
@@ -56,25 +64,22 @@ struct GrpcContextTest
 
     agrpc::GrpcExecutor get_executor() noexcept;
 
-    agrpc::detail::pmr::polymorphic_allocator<std::byte> get_allocator() noexcept;
-
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    agrpc::pmr::GrpcExecutor get_pmr_executor() noexcept;
-
-    auto get_work_tracking_executor() noexcept { return test::work_tracking_executor(grpc_context); }
-
-    void wait(grpc::Alarm& alarm, std::chrono::system_clock::time_point deadline,
-              const std::function<void(bool)>& callback)
-    {
-        test::wait(alarm, deadline, asio::bind_executor(grpc_context, callback));
-    }
-
-    void post(const std::function<void()>& function) { test::post(grpc_context, function); }
-#endif
+    test::TrackingAllocator<> get_allocator() noexcept;
 
     auto use_sender() noexcept { return agrpc::use_sender(get_executor()); }
 
     bool allocator_has_been_used() noexcept;
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+    GrpcContextTrackingAllocatorExecutor get_tracking_allocator_executor() noexcept;
+
+    GrpcContextWorkTrackingExecutor get_work_tracking_executor() noexcept;
+
+    void wait(grpc::Alarm& alarm, std::chrono::system_clock::time_point deadline,
+              const std::function<void(bool)>& callback);
+
+    void post(const std::function<void()>& function);
+#endif
 };
 }  // namespace test
 

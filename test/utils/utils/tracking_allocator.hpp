@@ -22,8 +22,8 @@ namespace test
 {
 struct TrackedAllocation
 {
-    std::size_t bytes_allocated;
-    std::size_t bytes_deallocated;
+    std::size_t bytes_allocated{};
+    std::size_t bytes_deallocated{};
 };
 
 template <class T = std::byte>
@@ -43,13 +43,19 @@ class TrackingAllocator
 
     [[nodiscard]] T* allocate(std::size_t n)
     {
-        tracked->bytes_allocated += n * sizeof(T);
+        if (tracked)
+        {
+            tracked->bytes_allocated += n * sizeof(T);
+        }
         return std::allocator<T>{}.allocate(n);
     }
 
     void deallocate(T* p, std::size_t n)
     {
-        tracked->bytes_deallocated += n * sizeof(T);
+        if (tracked)
+        {
+            tracked->bytes_deallocated += n * sizeof(T);
+        }
         std::allocator<T>{}.deallocate(p, n);
     }
 
@@ -69,7 +75,7 @@ class TrackingAllocator
     template <class>
     friend class test::TrackingAllocator;
 
-    TrackedAllocation* tracked;
+    TrackedAllocation* tracked{};
 };
 }
 

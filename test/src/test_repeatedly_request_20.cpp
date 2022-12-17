@@ -82,9 +82,9 @@ struct GenericAwaitableRequestHandler
 
 TYPE_TO_STRING(GenericAwaitableRequestHandler);
 
-TEST_CASE_TEMPLATE("awaitable repeatedly_request unary", UsePmrExecutor, std::true_type, std::false_type)
+TEST_CASE_TEMPLATE("awaitable repeatedly_request unary", UseTrackingAllocator, std::true_type, std::false_type)
 {
-    test::GrpcClientServerTest self;
+    test::GrpcClientServerTest test;
     bool use_server_shutdown{false};
     SUBCASE("shutdown server") { use_server_shutdown = true; }
     SUBCASE("stop GrpcContext") {}
@@ -92,18 +92,18 @@ TEST_CASE_TEMPLATE("awaitable repeatedly_request unary", UsePmrExecutor, std::tr
     auto request_count{0};
     auto executor = [&]
     {
-        if constexpr (UsePmrExecutor::value)
+        if constexpr (UseTrackingAllocator::value)
         {
-            return self.get_pmr_executor();
+            return test.get_tracking_allocator_executor();
         }
         else
         {
-            return self.get_executor();
+            return test.get_executor();
         }
     }();
     using Executor = decltype(executor);
     agrpc::repeatedly_request(
-        &test::v1::Test::AsyncService::RequestUnary, self.service,
+        &test::v1::Test::AsyncService::RequestUnary, test.service,
         asio::bind_executor(
             executor,
             [&](grpc::ServerContext&, test::msg::Request& request,
@@ -119,24 +119,25 @@ TEST_CASE_TEMPLATE("awaitable repeatedly_request unary", UsePmrExecutor, std::tr
                 response.set_integer(21);
                 co_await agrpc::finish(writer, response, grpc::Status::OK, asio::use_awaitable_t<Executor>{});
             }));
-    test::spawn(self.grpc_context,
+    test::spawn(test.grpc_context,
                 [&](const asio::yield_context& yield)
                 {
                     while (!is_shutdown)
                     {
-                        test::client_perform_unary_success(self.grpc_context, *self.stub, yield);
+                        test::client_perform_unary_success(test.grpc_context, *test.stub, yield);
                     }
                     if (use_server_shutdown)
                     {
-                        self.server->Shutdown();
+                        test.server->Shutdown();
                     }
                     else
                     {
-                        self.grpc_context.stop();
+                        test.grpc_context.stop();
                     }
                 });
-    self.grpc_context.run();
+    test.grpc_context.run();
     CHECK_EQ(4, request_count);
+    CHECK_FALSE(test.allocator_has_been_used());
 }
 
 TEST_CASE_TEMPLATE("awaitable repeatedly_request client streaming", T, TypedAwaitableRequestHandler,

@@ -26,11 +26,11 @@ TEST_CASE(
     "AllocatorBinder can be constructed using allocator_traits<polymorphic_allocator>::construct with expected "
     "arguments")
 {
-    using PmrAllocator = agrpc::detail::pmr::polymorphic_allocator<std::byte>;
+    using PmrAllocator = test::TrackingAllocator<>;
     using Binder = agrpc::AllocatorBinder<int, PmrAllocator>;
-    agrpc::detail::pmr::monotonic_buffer_resource resource;
-    PmrAllocator expected_allocator{&resource};
-    std::vector<Binder, agrpc::detail::pmr::polymorphic_allocator<Binder>> vector;
+    test::TrackedAllocation tracked;
+    PmrAllocator expected_allocator{tracked};
+    std::vector<Binder, test::TrackingAllocator<Binder>> vector;
     vector.emplace_back(expected_allocator);
     CHECK_EQ(expected_allocator, asio::get_associated_allocator(vector.front()));
 }

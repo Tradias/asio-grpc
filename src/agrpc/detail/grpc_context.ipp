@@ -157,7 +157,7 @@ inline GrpcContext::executor_type GrpcContext::get_scheduler() noexcept { return
 
 inline GrpcContext::allocator_type GrpcContext::get_allocator() noexcept
 {
-    return GrpcContext::allocator_type{&this->local_resource};
+    return detail::create_local_allocator(this->local_resource);
 }
 
 inline void GrpcContext::work_started() noexcept { this->outstanding_work.fetch_add(1, std::memory_order_relaxed); }

@@ -19,6 +19,13 @@ include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcOptionDefaults.cmake")
 # user options
 option(ASIO_GRPC_USE_BOOST_CONTAINER "Use Boost.Container instead of <memory_resource>"
        ${ASIO_GRPC_DEFAULT_USE_BOOST_CONTAINER})
+option(ASIO_GRPC_USE_RECYCLING_ALLOCATOR "Use asio::recycling_allocator instead of <memory_resource>" off)
+
+if(ASIO_GRPC_USE_BOOST_CONTAINER AND ASIO_GRPC_USE_RECYCLING_ALLOCATOR)
+    message(
+        FATAL_ERROR
+            "The options ASIO_GRPC_USE_BOOST_CONTAINER and ASIO_GRPC_USE_RECYCLING_ALLOCATOR are mutually exclusive.")
+endif()
 
 # Hunter package manager options
 option(HUNTER_ENABLED "Enable Hunter package manager" off)
