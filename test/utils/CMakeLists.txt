@@ -112,5 +112,8 @@ asio_grpc_add_test_util(asio-grpc-test-util-standalone-asio "STANDALONE_ASIO" "1
 if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
     asio_grpc_add_test_util(asio-grpc-test-util-boost-asio-cpp20 "BOOST_ASIO" "20")
     asio_grpc_add_test_util(asio-grpc-test-util-standalone-asio-cpp20 "STANDALONE_ASIO" "20")
-    asio_grpc_add_test_util(asio-grpc-test-util-unifex-cpp20 "UNIFEX" "20")
+
+    if(NOT ASIO_GRPC_USE_RECYCLING_ALLOCATOR)
+        asio_grpc_add_test_util(asio-grpc-test-util-unifex-cpp20 "UNIFEX" "20")
+    endif()
 endif()

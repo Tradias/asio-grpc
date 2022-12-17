@@ -45,7 +45,7 @@ project(
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcProjectTopLevel.cmake")
 include(GNUInstallDirs)
 
-# user options
+# more user options
 option(ASIO_GRPC_INSTALL "Create the install target" ${ASIO_GRPC_PROJECT_IS_TOP_LEVEL})
 set(ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR
     "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"

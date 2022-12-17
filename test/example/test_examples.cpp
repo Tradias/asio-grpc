@@ -48,11 +48,13 @@ TEST_CASE("examples")
         args.emplace_back(ASIO_GRPC_EXAMPLE_TEMP_DIR);
     }
 #endif
+#ifdef ASIO_GRPC_EXAMPLE_UNIFEX_CLIENT
     SUBCASE("unifex")
     {
         client_program = ASIO_GRPC_EXAMPLE_UNIFEX_CLIENT;
         server_program = ASIO_GRPC_EXAMPLE_UNIFEX_SERVER;
     }
+#endif
     SUBCASE("generic")
     {
         client_program = ASIO_GRPC_EXAMPLE_GENERIC_CLIENT;

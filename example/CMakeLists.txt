@@ -82,11 +82,13 @@ if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPL
                                    PRIVATE $<$<PLATFORM_ID:Linux>:BOOST_ASIO_HAS_IO_URING BOOST_ASIO_DISABLE_EPOLL>)
     endif()
 
-    asio_grpc_add_example(unifex-server "20")
-    target_link_libraries(asio-grpc-example-unifex-server PRIVATE asio-grpc::asio-grpc-unifex)
+    if(NOT ASIO_GRPC_USE_RECYCLING_ALLOCATOR)
+        asio_grpc_add_example(unifex-server "20")
+        target_link_libraries(asio-grpc-example-unifex-server PRIVATE asio-grpc::asio-grpc-unifex)
 
-    asio_grpc_add_example(unifex-client "20")
-    target_link_libraries(asio-grpc-example-unifex-client PRIVATE asio-grpc::asio-grpc-unifex)
+        asio_grpc_add_example(unifex-client "20")
+        target_link_libraries(asio-grpc-example-unifex-client PRIVATE asio-grpc::asio-grpc-unifex)
+    endif()
 endif()
 
 # documentation snippets

@@ -35,6 +35,8 @@
 
 #endif
 
+#include <cstddef>
+
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
@@ -70,7 +72,7 @@ using GrpcContextLocalAllocator =
     ::boost::asio::detail::
 #endif
 #endif
-        recycling_allocator<void>;
+        recycling_allocator<std::byte>;
 
 inline auto create_local_allocator(const detail::GrpcContextLocalMemoryResource&) noexcept
 {
