@@ -111,13 +111,20 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-unifex)
 # Boost::container (if ASIO_GRPC_USE_BOOST_CONTAINER has been set)
 ```
 
+Set [optional options](#cmake-options) before calling `add_subdirectory`. Example:
+
+```cmake
+set(ASIO_GRPC_USE_BOOST_CONTAINER on)
+add_subdirectory(/path/to/asio-grpc)
+```
+
 </p>
 </details>
 
 <details><summary><b>As a CMake package</b></summary>
 <p>
 
-Clone the repository and install it.
+Clone the repository and install it. Append any [optional options](#cmake-options) like `-DASIO_GRPC_USE_BOOST_CONTAINER=on` to the cmake configure call.
 
 ```shell
 cmake -B build -DCMAKE_INSTALL_PREFIX=/desired/installation/directory .
@@ -224,8 +231,6 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
 </details>
 
 ## CMake Options
-
-Set these before using `find_package(asio-grpc)`/`add_subdirectory(/path/to/asio-grpc)`. They only apply to the **CMake package** and **subdirectory** consumption of asio-grpc. For package managers use the manager-specific options instead.
 
 `ASIO_GRPC_USE_BOOST_CONTAINER` - Use Boost.Container instead of `<memory_resource>`. Mutually exclusive with `ASIO_GRPC_USE_RECYCLING_ALLOCATOR`.
 
