@@ -30,7 +30,7 @@ namespace asio = boost::asio;
 
 // Example showing some of the features of using asio-grpc with Boost.Asio.
 
-// begin-snippet: client-side-low-level-clien-streaming
+// begin-snippet: client-side-low-level-client-streaming
 // ---------------------------------------------------
 // A simple client-streaming request with coroutines and the low-level client API.
 // ---------------------------------------------------

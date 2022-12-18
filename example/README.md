@@ -98,6 +98,16 @@ Click on `snippet source` to jump to the code of an individual example.
 <sup><a href='/example/high-level-client.cpp#L33-L37' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-high-level-client-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
+<!-- snippet: client-side-high-level-server-streaming -->
+<a id='snippet-client-side-high-level-server-streaming'></a>
+```cpp
+// ---------------------------------------------------
+// A simple server-streaming request with coroutines.
+// ---------------------------------------------------
+```
+<sup><a href='/example/high-level-client.cpp#L70-L74' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-high-level-server-streaming' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
 <!-- snippet: client-side-high-level-bidirectional-streaming -->
 <a id='snippet-client-side-high-level-bidirectional-streaming'></a>
 ```cpp
@@ -105,7 +115,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // A bidirectional-streaming request that simply sends the response from the server back to it.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/high-level-client.cpp#L70-L74' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-high-level-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/high-level-client.cpp#L106-L110' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-high-level-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Multi-threaded client
@@ -156,14 +166,14 @@ Click on `snippet source` to jump to the code of an individual example.
 
 ## Client-side streaming RPCs
 
-<!-- snippet: client-side-low-level-clien-streaming -->
-<a id='snippet-client-side-low-level-clien-streaming'></a>
+<!-- snippet: client-side-low-level-client-streaming -->
+<a id='snippet-client-side-low-level-client-streaming'></a>
 ```cpp
 // ---------------------------------------------------
 // A simple client-streaming request with coroutines and the low-level client API.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/streaming-client.cpp#L33-L37' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-low-level-clien-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-client.cpp#L33-L37' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-low-level-client-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: client-side-low-level-bidirectional-streaming -->
@@ -212,6 +222,16 @@ Click on `snippet source` to jump to the code of an individual example.
 <sup><a href='/example/streaming-server.cpp#L37-L41' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-client-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
+<!-- snippet: server-side-server-streaming -->
+<a id='snippet-server-side-server-streaming'></a>
+```cpp
+// ---------------------------------------------------
+// A simple server-streaming request handler using coroutines.
+// ---------------------------------------------------
+```
+<sup><a href='/example/streaming-server.cpp#L80-L84' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-server-streaming' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
 <!-- snippet: server-side-grpc-stream -->
 <a id='snippet-server-side-grpc-stream'></a>
 ```cpp
@@ -221,7 +241,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // subscribed topic every 333ms. The feed is a simple string identified by an integer in the topic.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/streaming-server.cpp#L164-L170' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-grpc-stream' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-server.cpp#L191-L197' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-grpc-stream' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Client-side libunifex

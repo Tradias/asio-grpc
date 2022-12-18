@@ -77,6 +77,33 @@ void register_client_streaming_handler(agrpc::GrpcContext& grpc_context, example
 // ---------------------------------------------------
 //
 
+// begin-snippet: server-side-server-streaming
+// ---------------------------------------------------
+// A simple server-streaming request handler using coroutines.
+// ---------------------------------------------------
+// end-snippet
+void register_server_streaming_handler(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
+{
+    auto request_handler = [](grpc::ServerContext&, example::v1::Request& request,
+                              grpc::ServerAsyncWriter<example::v1::Response>& writer) -> asio::awaitable<void>
+    {
+        example::v1::Response response;
+        response.set_integer(request.integer());
+        while (co_await agrpc::write(writer, response) && response.integer() > 0)
+        {
+            response.set_integer(response.integer() - 1);
+        }
+        co_await agrpc::finish(writer, grpc::Status::OK);
+    };
+
+    // Register a handler for all incoming RPCs of this method (Example::ServerStreaming) until the server is being
+    // shut down.
+    agrpc::repeatedly_request(&example::v1::Example::AsyncService::RequestServerStreaming, service,
+                              asio::bind_executor(grpc_context, request_handler));
+}
+// ---------------------------------------------------
+//
+
 // begin-snippet: server-side-bidirectional-streaming
 // ---------------------------------------------------
 // The following bidirectional-streaming example shows how to dispatch requests to a thread_pool and write responses
@@ -323,6 +350,7 @@ int main(int argc, const char** argv)
     asio::thread_pool thread_pool{1};
 
     register_client_streaming_handler(grpc_context, service);
+    register_server_streaming_handler(grpc_context, service);
     register_subscription_handler(grpc_context, service_ext);
     asio::co_spawn(
         grpc_context,

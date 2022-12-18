@@ -67,6 +67,42 @@ asio::awaitable<void> make_client_streaming_request(agrpc::GrpcContext& grpc_con
 // ---------------------------------------------------
 //
 
+// begin-snippet: client-side-high-level-server-streaming
+// ---------------------------------------------------
+// A simple server-streaming request with coroutines.
+// ---------------------------------------------------
+// end-snippet
+asio::awaitable<void> make_server_streaming_request(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
+{
+    using RPC = agrpc::RPC<&example::v1::Example::Stub::PrepareAsyncServerStreaming>;
+
+    grpc::ClientContext client_context;
+    client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
+
+    example::v1::Request request;
+    request.set_integer(5);
+    RPC rpc = co_await RPC::request(grpc_context, stub, client_context, request);
+    abort_if_not(rpc.ok());
+
+    example::v1::Response response;
+
+    while (co_await rpc.read(response))
+    {
+        std::cout << "High-level: Server streaming: " << response.integer() << "\n";
+    }
+
+    if (!rpc.ok())
+    {
+        // In case of an error inspect the status for details.
+        grpc::Status& status = rpc.status();
+        abort_if_not(status.ok());
+    }
+
+    std::cout << "High-level: Server streaming completed\n";
+}
+// ---------------------------------------------------
+//
+
 // begin-snippet: client-side-high-level-bidirectional-streaming
 // ---------------------------------------------------
 // A bidirectional-streaming request that simply sends the response from the server back to it.
@@ -154,6 +190,7 @@ int main(int argc, const char** argv)
         [&]() -> asio::awaitable<void>
         {
             co_await make_client_streaming_request(grpc_context, stub);
+            co_await make_server_streaming_request(grpc_context, stub);
             co_await make_bidirectional_streaming_request(grpc_context, stub);
             co_await make_shutdown_request(grpc_context, stub_ext);
         },
