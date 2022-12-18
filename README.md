@@ -225,7 +225,11 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
 
 ## CMake Options
 
-`ASIO_GRPC_USE_BOOST_CONTAINER` - Use Boost.Container instead of `<memory_resource>`.
+Set these before using `find_package(asio-grpc)`/`add_subdirectory(/path/to/asio-grpc)`. They only apply to the **CMake package** and **subdirectory** consumption of asio-grpc. For package managers use the manager-specific options instead.
+
+`ASIO_GRPC_USE_BOOST_CONTAINER` - Use Boost.Container instead of `<memory_resource>`. Mutually exclusive with `ASIO_GRPC_USE_RECYCLING_ALLOCATOR`.
+
+`ASIO_GRPC_USE_RECYCLING_ALLOCATOR` - Use [asio::recycling_allocator](https://think-async.com/Asio/asio-1.24.0/doc/asio/reference/recycling_allocator.html) instead of `<memory_resource>`. Mutually exclusive with `ASIO_GRPC_USE_BOOST_CONTAINER`.
 
 `ASIO_GRPC_DISABLE_AUTOLINK` - Set before using `find_package(asio-grpc)` to prevent `asio-grpcConfig.cmake` from finding and setting up interface link libraries.
 
