@@ -56,6 +56,23 @@ struct RPCAccess
     }
 };
 
+struct ClientContextCancellationFunction
+{
+    grpc::ClientContext& client_context;
+
+    void operator()() const { client_context.TryCancel(); }
+
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+    void operator()(asio::cancellation_type type) const
+    {
+        if (static_cast<bool>(type & (asio::cancellation_type::terminal | asio::cancellation_type::partial)))
+        {
+            this->operator()();
+        }
+    }
+#endif
+};
+
 template <auto PrepareAsync, class Executor>
 struct ClientUnaryRequestSenderImplementation;
 
@@ -65,9 +82,11 @@ struct ClientUnaryRequestSenderImplementation<PrepareAsync, Executor> : detail::
 {
     using RPC = agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>;
     using Signature = void(grpc::Status);
+    using StopFunction = ClientContextCancellationFunction;
 
     struct Initiation
     {
+        grpc::ClientContext& client_context;
         Response& response;
     };
 
@@ -76,6 +95,8 @@ struct ClientUnaryRequestSenderImplementation<PrepareAsync, Executor> : detail::
         : responder((stub.*PrepareAsync)(&client_context, req, grpc_context.get_completion_queue()))
     {
     }
+
+    auto& stop_function_arg(const Initiation& initiation) noexcept { return initiation.client_context; }
 
     void initiate(const agrpc::GrpcContext&, const Initiation& initiation, detail::OperationBase* operation) noexcept
     {

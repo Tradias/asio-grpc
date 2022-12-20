@@ -564,15 +564,6 @@ inline constexpr auto CLIENT_GENERIC_STREAMING_RPC = detail::GenericRPCType::CLI
  * @tparam PrepareAsync A pointer to the async version of the RPC method. The async version starts with `PrepareAsync`.
  * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
  *
- * **Per-Operation Cancellation**
- *
- * None. Operations will be cancelled when the deadline of the RPC has been reached
- * (see
- * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6))
- * or the call has been cancelled
- * (see
- * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984)).
- *
  * @since 2.1.0
  */
 template <class StubT, class RequestT, class ResponseT, template <class> class ResponderT,
@@ -660,6 +651,12 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
      * until this RPC is finished.
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(grpc::Status)`. Use `grpc::Status::ok()` to check whether the request was successful.
+     *
+     * **Per-Operation Cancellation**
+     *
+     * Partial and terminal. Operations will also be cancelled when the deadline of the RPC has been reached
+     * (see
+     * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6)).
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     static auto request(agrpc::GrpcContext& grpc_context, StubT& stub, grpc::ClientContext& context,
@@ -668,7 +665,7 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
     {
         return detail::async_initiate_sender_implementation<
             detail::ClientUnaryRequestSenderImplementation<PrepareAsync, Executor>>(
-            grpc_context, {response}, {grpc_context, stub, context, request}, token);
+            grpc_context, {context, response}, {grpc_context, stub, context, request}, token);
     }
 
     /**

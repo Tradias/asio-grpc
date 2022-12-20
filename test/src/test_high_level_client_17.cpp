@@ -107,6 +107,46 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ServerStreamingRPC>,
                     test::Exception);
 }
 
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+TEST_CASE_FIXTURE(test::HighLevelClientTest<test::UnaryRPC>, "UnaryRPC::request can be cancelled")
+{
+    const auto not_too_exceed = test::one_seconds_from_now();
+    grpc::Alarm alarm;
+    bool is_cancel_immediately{false};
+    SUBCASE("cancel delayed") {}
+    SUBCASE("cancel immediately") { is_cancel_immediately = true; }
+    spawn_and_run(
+        [&](const asio::yield_context& yield)
+        {
+            test_server.request_rpc(yield);
+        },
+        [&](const asio::yield_context& yield)
+        {
+            asio::cancellation_signal signal;
+            if (is_cancel_immediately)
+            {
+                post(
+                    [&]
+                    {
+                        signal.emit(asio::cancellation_type_t::partial);
+                    });
+            }
+            else
+            {
+                wait(alarm, test::hundred_milliseconds_from_now(),
+                     [&](bool)
+                     {
+                         signal.emit(asio::cancellation_type_t::terminal);
+                     });
+            }
+            const auto status = request_rpc(asio::bind_cancellation_slot(signal.slot(), yield));
+            CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
+            server_shutdown.initiate();
+        });
+    CHECK_LT(test::now(), not_too_exceed);
+}
+#endif
+
 TEST_CASE_TEMPLATE("RPC::read_initial_metadata successfully", RPC, test::ClientStreamingRPC, test::ServerStreamingRPC,
                    test::BidirectionalStreamingRPC)
 {

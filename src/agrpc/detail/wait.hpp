@@ -67,7 +67,7 @@ struct AlarmCancellationFunction
     {
         if (static_cast<bool>(type & asio::cancellation_type::all))
         {
-            (*this)();
+            this->operator()();
         }
     }
 #endif
