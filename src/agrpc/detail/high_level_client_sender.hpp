@@ -60,7 +60,10 @@ struct ClientContextCancellationFunction
 {
     grpc::ClientContext& client_context;
 
-    explicit ClientContextCancellationFunction(grpc::ClientContext& client_context) noexcept
+#if !defined(AGRPC_UNIFEX)
+    explicit
+#endif
+        ClientContextCancellationFunction(grpc::ClientContext& client_context) noexcept
         : client_context(client_context)
     {
     }
