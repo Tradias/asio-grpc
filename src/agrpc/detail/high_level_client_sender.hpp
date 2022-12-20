@@ -60,6 +60,11 @@ struct ClientContextCancellationFunction
 {
     grpc::ClientContext& client_context;
 
+    explicit ClientContextCancellationFunction(grpc::ClientContext& client_context) noexcept
+        : client_context(client_context)
+    {
+    }
+
     void operator()() const { client_context.TryCancel(); }
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
