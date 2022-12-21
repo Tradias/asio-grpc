@@ -137,19 +137,19 @@ namespace exec
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class Object>
-auto get_scheduler(const Object& object)
+decltype(auto) get_scheduler(const Object& object)
 {
     return asio::get_associated_executor(object);
 }
 
 template <class Object>
-auto get_executor(const Object& object)
+decltype(auto) get_executor(const Object& object)
 {
     return asio::get_associated_executor(object);
 }
 
 template <class Object>
-auto get_allocator(const Object& object)
+decltype(auto) get_allocator(const Object& object)
 {
     return asio::get_associated_allocator(object);
 }
@@ -176,17 +176,18 @@ struct unstoppable_token
 };
 
 template <class Receiver>
-auto get_stop_token([[maybe_unused]] const Receiver& receiver) noexcept
+decltype(auto) get_stop_token([[maybe_unused]] const Receiver& receiver) noexcept
 {
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-    auto slot = asio::get_associated_cancellation_slot(receiver, unstoppable_token{});
-    if constexpr (std::is_same_v<unstoppable_token, decltype(slot)>)
+    using Slot = std::remove_const_t<
+        std::remove_reference_t<decltype(asio::get_associated_cancellation_slot(receiver, unstoppable_token{}))>>;
+    if constexpr (std::is_same_v<unstoppable_token, Slot>)
     {
-        return slot;
+        return unstoppable_token{};
     }
     else
     {
-        return detail::CancellationSlotAsStopToken<decltype(slot)>{std::move(slot)};
+        return detail::CancellationSlotAsStopToken<Slot>{asio::get_associated_cancellation_slot(receiver)};
     }
 #else
     return unstoppable_token{};
@@ -219,15 +220,11 @@ template <class T>
 inline constexpr bool HAS_GET_SCHEDULER<T, decltype((void)exec::get_scheduler(std::declval<T>()))> = true;
 
 template <class Object>
-auto get_executor(const Object& object)
+decltype(auto) get_executor(const Object& object)
 {
     if constexpr (exec::HAS_GET_SCHEDULER<Object>)
     {
         return exec::get_scheduler(object);
-    }
-    else
-    {
-        return;
     }
 }
 #endif

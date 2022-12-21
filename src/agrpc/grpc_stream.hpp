@@ -81,7 +81,7 @@ class BasicGrpcStream
      *
      * Thread-safe
      */
-    [[nodiscard]] executor_type get_executor() const noexcept { return this->executor; }
+    [[nodiscard]] const executor_type& get_executor() const noexcept { return this->executor; }
 
     /**
      * @brief Is an operation currently running?
@@ -167,7 +167,7 @@ class BasicGrpcStream
             this->self.safe.token()(ok);
         }
 
-        [[nodiscard]] executor_type get_executor() const noexcept { return self.executor; }
+        [[nodiscard]] const executor_type& get_executor() const noexcept { return self.executor; }
 
       private:
         BasicGrpcStream& self;

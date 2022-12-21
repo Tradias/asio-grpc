@@ -103,7 +103,7 @@ class WorkTrackingCompletionHandler : private detail::EmptyBaseOptimization<Comp
             });
     }
 
-    [[nodiscard]] executor_type get_executor() const noexcept
+    [[nodiscard]] decltype(auto) get_executor() const noexcept
     {
         return asio::get_associated_executor(this->completion_handler());
     }

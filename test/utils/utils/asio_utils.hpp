@@ -154,7 +154,7 @@ struct HandlerWithAssociatedAllocator
 
     decltype(auto) operator()() { return handler(); }
 
-    [[nodiscard]] executor_type get_executor() const noexcept { return asio::get_associated_executor(handler); }
+    [[nodiscard]] decltype(auto) get_executor() const noexcept { return asio::get_associated_executor(handler); }
 
     [[nodiscard]] allocator_type get_allocator() const noexcept { return allocator; }
 };
@@ -197,7 +197,7 @@ struct RpcSpawner
                           });
     }
 
-    [[nodiscard]] executor_type get_executor() const noexcept { return grpc_context.get_executor(); }
+    [[nodiscard]] decltype(auto) get_executor() const noexcept { return grpc_context.get_executor(); }
 
     [[nodiscard]] allocator_type get_allocator() const noexcept { return allocator; }
 };

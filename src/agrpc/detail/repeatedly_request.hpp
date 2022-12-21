@@ -71,7 +71,7 @@ struct BasicRepeatedlyRequestInitiator
         using TrackingCompletionHandler = detail::WorkTrackingCompletionHandler<CompletionHandler>;
         using DecayedRequestHandler = detail::RemoveCrefT<RequestHandler>;
 
-        const auto executor = detail::exec::get_executor(request_handler);
+        const auto& executor = detail::exec::get_executor(request_handler);
         auto& grpc_context = detail::query_grpc_context(executor);
         const auto allocator = detail::exec::get_allocator(request_handler);
         auto stop_token = detail::exec::get_stop_token(completion_handler);

@@ -40,7 +40,7 @@ namespace asio = boost::asio;
 //  A simple tcp request that will be handled by the io_context
 asio::awaitable<void> handle_tcp_request(asio::ip::port_type port)
 {
-    const auto executor = co_await asio::this_coro::executor;
+    const auto& executor = co_await asio::this_coro::executor;
     asio::ip::tcp::acceptor acceptor(executor, {asio::ip::make_address_v4("127.0.0.1"), port});
     asio::ip::tcp::socket socket = co_await acceptor.async_accept(asio::use_awaitable);
     char data[128];

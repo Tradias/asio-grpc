@@ -155,7 +155,7 @@ class AllocatorBinder
     /**
      * @brief Get the target's associated executor
      */
-    constexpr executor_type get_executor() const noexcept { return detail::exec::get_executor(this->get()); }
+    constexpr decltype(auto) get_executor() const noexcept { return detail::exec::get_executor(this->get()); }
 
     /**
      * @brief Get the bound allocator

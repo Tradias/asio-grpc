@@ -112,7 +112,7 @@ class BasicAlarm
      *
      * Thread-safe
      */
-    [[nodiscard]] executor_type get_executor() const noexcept { return executor; }
+    [[nodiscard]] const executor_type& get_executor() const noexcept { return executor; }
 
   private:
     template <class, class>

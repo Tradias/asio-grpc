@@ -85,7 +85,7 @@ class RPCExecutorBase
      *
      * Thread-safe
      */
-    [[nodiscard]] executor_type get_executor() const noexcept { return executor; }
+    [[nodiscard]] const executor_type& get_executor() const noexcept { return executor; }
 
   protected:
     RPCExecutorBase() : executor(agrpc::GrpcExecutor{}) {}
