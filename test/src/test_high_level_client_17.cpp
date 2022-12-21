@@ -50,6 +50,14 @@ struct HighLevelClientIoContextTest : test::HighLevelClientTest<RPC>, test::IoCo
     }
 };
 
+template <class RPC>
+auto get_status_code(const RPC& rpc)
+{
+    return rpc.status_code();
+}
+
+auto get_status_code(const grpc::Status& status) { return status.error_code(); }
+
 TEST_CASE_FIXTURE(test::HighLevelClientTest<test::UnaryRPC>, "UnaryRPC::request automatically finishes RPC on error")
 {
     bool use_executor_overload{};
@@ -614,6 +622,8 @@ TEST_CASE_FIXTURE(HighLevelClientIoContextTest<test::BidirectionalStreamingRPC>,
                      });
             CHECK_FALSE(rpc.write(request, yield));
             CHECK_FALSE(promise.get_future().get());
+            CHECK_FALSE(rpc.finish(yield));
+            CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.status_code());
         });
 }
 TEST_CASE_FIXTURE(HighLevelClientIoContextTest<test::BidirectionalStreamingRPC>,
@@ -739,41 +749,39 @@ TEST_CASE("RPC::service_name/method_name")
 }
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-TEST_CASE_FIXTURE(test::HighLevelClientTest<test::UnaryRPC>, "UnaryRPC::request can be cancelled")
+TEST_CASE_TEMPLATE("RPC::request can be cancelled", RPC, test::UnaryRPC, test::GenericUnaryRPC,
+                   test::ClientStreamingRPC, test::ServerStreamingRPC, test::BidirectionalStreamingRPC,
+                   test::GenericStreamingRPC)
 {
+    test::HighLevelClientTest<RPC> test;
+    test.server->Shutdown();
     const auto not_to_exceed = test::one_second_from_now();
     grpc::Alarm alarm;
-    bool is_cancel_immediately{false};
-    SUBCASE("cancel delayed") {}
-    SUBCASE("cancel immediately") { is_cancel_immediately = true; }
-    spawn_and_run(
-        [&](const asio::yield_context& yield)
-        {
-            test_server.request_rpc(yield);
-        },
-        [&](const asio::yield_context& yield)
-        {
-            asio::cancellation_signal signal;
-            if (is_cancel_immediately)
+    asio::cancellation_signal signal;
+    SUBCASE("cancel delayed")
+    {
+        test.wait(alarm, test::hundred_milliseconds_from_now(),
+                  [&](bool)
+                  {
+                      signal.emit(asio::cancellation_type_t::terminal);
+                  });
+    }
+    SUBCASE("cancel immediately")
+    {
+        test.post(
+            [&]
             {
-                post(
-                    [&]
-                    {
-                        signal.emit(asio::cancellation_type_t::partial);
-                    });
-            }
-            else
-            {
-                wait(alarm, test::hundred_milliseconds_from_now(),
-                     [&](bool)
-                     {
-                         signal.emit(asio::cancellation_type_t::terminal);
-                     });
-            }
-            const auto status = request_rpc(asio::bind_cancellation_slot(signal.slot(), yield));
-            CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
-            server_shutdown.initiate();
-        });
+                signal.emit(asio::cancellation_type_t::partial);
+            });
+    }
+    test.request_rpc(asio::bind_cancellation_slot(signal.slot(),
+                                                  [&](auto&& rpc)
+                                                  {
+                                                      CHECK_FALSE(rpc.ok());
+                                                      CHECK_EQ(grpc::StatusCode::CANCELLED, get_status_code(rpc));
+                                                      test.server_shutdown.initiate();
+                                                  }));
+    test.grpc_context.run();
     CHECK_LT(test::now(), not_to_exceed);
 }
 #endif

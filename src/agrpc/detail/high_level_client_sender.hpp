@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_sender.hpp>
+#include <agrpc/detail/rpc_client_context_base.hpp>
 #include <agrpc/detail/rpc_type.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/grpc_context.hpp>
@@ -81,6 +82,31 @@ struct ClientContextCancellationFunction
 #endif
 };
 
+struct RPCCancellationFunction
+{
+    detail::RPCClientContextBase& rpc;
+
+#if !defined(AGRPC_UNIFEX)
+    explicit
+#endif
+        RPCCancellationFunction(detail::RPCClientContextBase& rpc) noexcept
+        : rpc(rpc)
+    {
+    }
+
+    void operator()() const { rpc.cancel(); }
+
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+    void operator()(asio::cancellation_type type) const
+    {
+        if (static_cast<bool>(type & (asio::cancellation_type::terminal | asio::cancellation_type::partial)))
+        {
+            this->operator()();
+        }
+    }
+#endif
+};
+
 template <auto PrepareAsync, class Executor>
 struct ClientUnaryRequestSenderImplementation;
 
@@ -127,9 +153,11 @@ struct GenericClientUnaryRequestSenderImplementation : detail::GrpcSenderImpleme
 {
     using RPC = agrpc::RPC<detail::GenericRPCType::CLIENT_UNARY, Executor, agrpc::RPCType::CLIENT_UNARY>;
     using Signature = void(grpc::Status);
+    using StopFunction = ClientContextCancellationFunction;
 
     struct Initiation
     {
+        grpc::ClientContext& client_context;
         grpc::ByteBuffer& response;
     };
 
@@ -139,6 +167,8 @@ struct GenericClientUnaryRequestSenderImplementation : detail::GrpcSenderImpleme
         : responder(stub.PrepareUnaryCall(&client_context, method, req, grpc_context.get_completion_queue()))
     {
     }
+
+    auto& stop_function_arg(const Initiation& initiation) noexcept { return initiation.client_context; }
 
     void initiate(const agrpc::GrpcContext&, const Initiation& initiation, detail::OperationBase* operation) noexcept
     {
@@ -167,6 +197,7 @@ struct ClientClientStreamingRequestSenderImplementation<PrepareAsync, Executor> 
     using RPC = agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>;
     using Signature = void(RPC);
     using Initiation = detail::Empty;
+    using StopFunction = detail::RPCCancellationFunction;
 
     ClientClientStreamingRequestSenderImplementation(agrpc::GrpcContext& grpc_context, Stub& stub,
                                                      grpc::ClientContext& client_context, Response& response)
@@ -174,6 +205,8 @@ struct ClientClientStreamingRequestSenderImplementation<PrepareAsync, Executor> 
               (stub.*PrepareAsync)(&client_context, &response, grpc_context.get_completion_queue()))
     {
     }
+
+    detail::RPCClientContextBase& stop_function_arg(const Initiation&) noexcept { return rpc; }
 
     void initiate(const agrpc::GrpcContext&, const Initiation&, void* self) noexcept
     {
@@ -207,6 +240,7 @@ struct ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor> 
     using RPC = agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>;
     using Signature = void(RPC);
     using Initiation = detail::Empty;
+    using StopFunction = detail::RPCCancellationFunction;
 
     ClientServerStreamingRequestSenderImplementation(agrpc::GrpcContext& grpc_context, Stub& stub,
                                                      grpc::ClientContext& client_context, const Request& req)
@@ -214,6 +248,8 @@ struct ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor> 
               (stub.*PrepareAsync)(&client_context, req, grpc_context.get_completion_queue()))
     {
     }
+
+    detail::RPCClientContextBase& stop_function_arg(const Initiation&) noexcept { return rpc; }
 
     void initiate(const agrpc::GrpcContext&, const Initiation&, void* self) noexcept
     {
@@ -248,6 +284,7 @@ struct ClientBidirectionalStreamingRequestSenderImplementation<PrepareAsync, Exe
     using RPC = agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>;
     using Signature = void(RPC);
     using Initiation = detail::Empty;
+    using StopFunction = detail::RPCCancellationFunction;
 
     ClientBidirectionalStreamingRequestSenderImplementation(agrpc::GrpcContext& grpc_context, Stub& stub,
                                                             grpc::ClientContext& client_context)
@@ -255,6 +292,8 @@ struct ClientBidirectionalStreamingRequestSenderImplementation<PrepareAsync, Exe
               (stub.*PrepareAsync)(&client_context, grpc_context.get_completion_queue()))
     {
     }
+
+    detail::RPCClientContextBase& stop_function_arg(const Initiation&) noexcept { return rpc; }
 
     void initiate(const agrpc::GrpcContext&, const Initiation&, void* self) noexcept
     {
@@ -285,6 +324,7 @@ struct ClientBidirectionalStreamingRequestSenderImplementation<detail::GenericRP
         agrpc::RPC<detail::GenericRPCType::CLIENT_STREAMING, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>;
     using Signature = void(RPC);
     using Initiation = detail::Empty;
+    using StopFunction = detail::RPCCancellationFunction;
 
     ClientBidirectionalStreamingRequestSenderImplementation(agrpc::GrpcContext& grpc_context, const std::string& method,
                                                             grpc::GenericStub& stub,
@@ -293,6 +333,8 @@ struct ClientBidirectionalStreamingRequestSenderImplementation<detail::GenericRP
               stub.PrepareCall(&client_context, method, grpc_context.get_completion_queue()))
     {
     }
+
+    detail::RPCClientContextBase& stop_function_arg(const Initiation&) noexcept { return rpc; }
 
     void initiate(const agrpc::GrpcContext&, const Initiation&, void* self) noexcept
     {

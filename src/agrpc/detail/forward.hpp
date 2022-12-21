@@ -85,6 +85,8 @@ class RPCClientServerStreamingBase;
 template <class Responder, class Executor>
 class RPCBidirectionalStreamingBase;
 
+struct RPCCancellationFunction;
+
 template <class Allocator, std::uint32_t Options>
 grpc::CompletionQueue* get_completion_queue(const agrpc::BasicGrpcExecutor<Allocator, Options>&) noexcept;
 

@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_RPC_CLIENT_CONTEXT_BASE_HPP
 
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/tagged_ptr.hpp>
 #include <grpcpp/client_context.h>
 
@@ -63,6 +64,8 @@ class AutoCancelClientContextRef
 
     void clear() noexcept { context.clear(); }
 
+    void cancel() { context->TryCancel(); }
+
     [[nodiscard]] bool is_null() const noexcept { return context.is_null(); }
 
     template <std::uintptr_t Bit>
@@ -92,11 +95,15 @@ class RPCClientContextBase
 
     void set_finished() noexcept { client_context.clear(); }
 
+    void cancel() { client_context.cancel(); }
+
     [[nodiscard]] bool is_writes_done() const noexcept { return client_context.has_bit<0>(); }
 
     void set_writes_done() noexcept { client_context.set_bit<0>(); }
 
   private:
+    friend detail::RPCCancellationFunction;
+
     detail::AutoCancelClientContextRef client_context;
 };
 }

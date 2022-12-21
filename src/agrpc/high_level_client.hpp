@@ -101,20 +101,11 @@ class RPCExecutorBase
 /**
  * @brief (experimental) Client-side RPC client streaming base
  *
- * **Per-Operation Cancellation**
- *
- * None. Operations will be cancelled when the deadline of the RPC has been reached
- * (see
- * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6))
- * or the call has been cancelled
- * (see
- * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984)).
- *
  * @since 2.1.0
  */
 template <class RequestT, template <class> class ResponderT, class Executor>
 class RPCClientClientStreamingBase<ResponderT<RequestT>, Executor>
-    : public detail::RPCStatusBase, public detail::RPCExecutorBase<Executor>, private detail::RPCClientContextBase
+    : public detail::RPCStatusBase, public detail::RPCExecutorBase<Executor>, public detail::RPCClientContextBase
 {
   public:
     /**
@@ -253,20 +244,11 @@ class RPCClientClientStreamingBase<ResponderT<RequestT>, Executor>
 /**
  * @brief (experimental) Client-side RPC server-streaming base
  *
- * **Per-Operation Cancellation**
- *
- * None. Operations will be cancelled when the deadline of the RPC has been reached
- * (see
- * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6))
- * or the call has been cancelled
- * (see
- * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984)).
- *
  * @since 2.1.0
  */
 template <class ResponseT, template <class> class ResponderT, class Executor>
 class RPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
-    : public detail::RPCStatusBase, public detail::RPCExecutorBase<Executor>, private detail::RPCClientContextBase
+    : public detail::RPCStatusBase, public detail::RPCExecutorBase<Executor>, public detail::RPCClientContextBase
 {
   public:
     /**
@@ -350,20 +332,11 @@ class RPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
 /**
  * @brief (experimental) Client-side RPC bidirectional-streaming base
  *
- * **Per-Operation Cancellation**
- *
- * None. Operations will be cancelled when the deadline of the RPC has been reached
- * (see
- * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6))
- * or the call has been cancelled
- * (see
- * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984)).
- *
  * @since 2.1.0
  */
 template <class RequestT, class ResponseT, template <class, class> class ResponderT, class Executor>
 class RPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
-    : public detail::RPCStatusBase, public detail::RPCExecutorBase<Executor>, private detail::RPCClientContextBase
+    : public detail::RPCStatusBase, public detail::RPCExecutorBase<Executor>, public detail::RPCClientContextBase
 {
   public:
     /**
@@ -564,6 +537,14 @@ inline constexpr auto CLIENT_GENERIC_STREAMING_RPC = detail::GenericRPCType::CLI
  * @tparam PrepareAsync A pointer to the async version of the RPC method. The async version starts with `PrepareAsync`.
  * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
  *
+ * **Per-Operation Cancellation**
+ *
+ * Terminal and partial. Cancellation is performed by invoking
+ * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984).
+ * After successful cancellation no further operations may be started on the RPC. Operations are also cancelled when the
+ * deadline of the RPC has been reached (see
+ * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6)).
+ *
  * @since 2.1.0
  */
 template <class StubT, class RequestT, class ResponseT, template <class> class ResponderT,
@@ -651,12 +632,6 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
      * until this RPC is finished.
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(grpc::Status)`. Use `grpc::Status::ok()` to check whether the request was successful.
-     *
-     * **Per-Operation Cancellation**
-     *
-     * Partial and terminal. Operations will also be cancelled when the deadline of the RPC has been reached
-     * (see
-     * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6)).
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     static auto request(agrpc::GrpcContext& grpc_context, StubT& stub, grpc::ClientContext& context,
@@ -687,12 +662,11 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
  *
  * **Per-Operation Cancellation**
  *
- * None. Operations will be cancelled when the deadline of the RPC has been reached
- * (see
- * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6))
- * or the call has been cancelled
- * (see
- * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984)).
+ * Terminal and partial. Cancellation is performed by invoking
+ * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984).
+ * After successful cancellation no further operations may be started on the RPC. Operations are also cancelled when the
+ * deadline of the RPC has been reached (see
+ * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6)).
  *
  * @since 2.1.0
  */
@@ -774,7 +748,7 @@ class RPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor, agrpc::RPCType::CLIENT_UNAR
     {
         return detail::async_initiate_sender_implementation<
             detail::GenericClientUnaryRequestSenderImplementation<Executor>>(
-            grpc_context, {response}, {grpc_context, method, stub, context, request}, token);
+            grpc_context, {context, response}, {grpc_context, method, stub, context, request}, token);
     }
 
     /**
@@ -798,12 +772,11 @@ class RPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor, agrpc::RPCType::CLIENT_UNAR
  *
  * **Per-Operation Cancellation**
  *
- * None. Operations will be cancelled when the deadline of the RPC has been reached
- * (see
- * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6))
- * or the call has been cancelled
- * (see
- * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984)).
+ * Terminal and partial. Cancellation is performed by invoking
+ * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984).
+ * After successful cancellation no further operations may be started on the RPC. Operations are also cancelled when the
+ * deadline of the RPC has been reached (see
+ * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6)).
  *
  * @since 2.1.0
  */
@@ -917,12 +890,11 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
  *
  * **Per-Operation Cancellation**
  *
- * None. Operations will be cancelled when the deadline of the RPC has been reached
- * (see
- * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6))
- * or the call has been cancelled
- * (see
- * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984)).
+ * Terminal and partial. Cancellation is performed by invoking
+ * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984).
+ * After successful cancellation no further operations may be started on the RPC. Operations are also cancelled when the
+ * deadline of the RPC has been reached (see
+ * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6)).
  *
  * @since 2.1.0
  */
@@ -1032,12 +1004,11 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>
  *
  * **Per-Operation Cancellation**
  *
- * None. Operations will be cancelled when the deadline of the RPC has been reached
- * (see
- * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6))
- * or the call has been cancelled
- * (see
- * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984)).
+ * Terminal and partial. Cancellation is performed by invoking
+ * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984).
+ * After successful cancellation no further operations may be started on the RPC. Operations are also cancelled when the
+ * deadline of the RPC has been reached (see
+ * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6)).
  *
  * @since 2.1.0
  */
@@ -1139,12 +1110,11 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING
  *
  * **Per-Operation Cancellation**
  *
- * None. Operations will be cancelled when the deadline of the RPC has been reached
- * (see
- * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6))
- * or the call has been cancelled
- * (see
- * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984)).
+ * Terminal and partial. Cancellation is performed by invoking
+ * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984).
+ * After successful cancellation no further operations may be started on the RPC. Operations are also cancelled when the
+ * deadline of the RPC has been reached (see
+ * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6)).
  *
  * @since 2.1.0
  */
