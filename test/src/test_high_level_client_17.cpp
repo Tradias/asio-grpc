@@ -753,34 +753,8 @@ template <class RPC>
 struct HighLevelClientCancellationTest : test::HighLevelClientTest<RPC>, test::IoContextTest
 {
     asio::steady_timer timer{io_context};
-    asio::cancellation_signal signal;
 
     HighLevelClientCancellationTest() { run_io_context_detached(); }
-
-    template <class Target>
-    auto bind_cancellation_slot(Target&& target)
-    {
-        return asio::bind_cancellation_slot(signal.slot(), std::forward<Target>(target));
-    }
-
-    void delayed_cancel()
-    {
-        timer.expires_after(std::chrono::milliseconds(100));
-        timer.async_wait(
-            [&](auto&&)
-            {
-                signal.emit(asio::cancellation_type_t::terminal);
-            });
-    }
-
-    void immediate_cancel()
-    {
-        this->post(
-            [&]
-            {
-                signal.emit(asio::cancellation_type_t::partial);
-            });
-    }
 };
 
 TEST_CASE_TEMPLATE("RPC::request can be cancelled", RPC, test::UnaryRPC, test::GenericUnaryRPC,
@@ -788,17 +762,17 @@ TEST_CASE_TEMPLATE("RPC::request can be cancelled", RPC, test::UnaryRPC, test::G
                    test::GenericStreamingRPC)
 {
     HighLevelClientCancellationTest<RPC> test;
-    test.server->Shutdown();
     const auto not_to_exceed = test::one_second_from_now();
-    SUBCASE("cancel delayed") { test.delayed_cancel(); }
-    SUBCASE("cancel immediately") { test.immediate_cancel(); }
-    test.request_rpc(test.bind_cancellation_slot(
-        [&](auto&& rpc)
-        {
-            CHECK_FALSE(rpc.ok());
-            CHECK_EQ(grpc::StatusCode::CANCELLED, get_status_code(rpc));
-            test.server_shutdown.initiate();
-        }));
+    test.timer.expires_at({});
+    asio::experimental::make_parallel_group(test.request_rpc(test::ASIO_DEFERRED),
+                                            test.timer.async_wait(test::ASIO_DEFERRED))
+        .async_wait(asio::experimental::wait_for_one(),
+                    [&](auto&&, auto&& rpc, auto&&...)
+                    {
+                        CHECK_FALSE(rpc.ok());
+                        CHECK_EQ(grpc::StatusCode::CANCELLED, get_status_code(rpc));
+                        test.server_shutdown.initiate();
+                    });
     test.grpc_context.run();
     CHECK_LT(test::now(), not_to_exceed);
 }
@@ -816,7 +790,7 @@ TEST_CASE_FIXTURE(HighLevelClientCancellationTest<test::ClientStreamingRPC>,
         [&](const asio::yield_context& yield)
         {
             auto rpc = test::ClientStreamingRPC::request(grpc_context, *stub, client_context, response, yield);
-            timer.expires_at(decltype(timer)::clock_type::time_point{});
+            timer.expires_at({});
             asio::experimental::make_parallel_group(
                 timer.async_wait(test::ASIO_DEFERRED),
                 rpc.write(request, grpc::WriteOptions{}.set_last_message(), test::ASIO_DEFERRED))
