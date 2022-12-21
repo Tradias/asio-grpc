@@ -99,7 +99,7 @@ TEST_CASE_TEMPLATE("cancel agrpc::Alarm with cancellation_type::total", T, std::
     bool ok{true};
     asio::cancellation_signal signal{};
     agrpc::Alarm alarm{test.grpc_context};
-    const auto not_too_exceed = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    const auto not_to_exceed = std::chrono::steady_clock::now() + std::chrono::seconds(5);
     test::move_if<T>(alarm).wait(test::five_seconds_from_now(),
                                  asio::bind_cancellation_slot(signal.slot(), WaitOkAssigner{ok}));
     test.post(
@@ -117,7 +117,7 @@ TEST_CASE_TEMPLATE("cancel agrpc::Alarm with cancellation_type::total", T, std::
             });
     }
     test.grpc_context.run();
-    CHECK_GT(not_too_exceed, std::chrono::steady_clock::now());
+    CHECK_GT(not_to_exceed, std::chrono::steady_clock::now());
     CHECK_FALSE(ok);
 }
 
@@ -151,7 +151,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel agrpc::Alarm with parallel_grou
     bool ok{true};
     agrpc::Alarm alarm{grpc_context};
     asio::steady_timer timer{get_executor(), std::chrono::milliseconds(100)};
-    const auto not_too_exceed = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    const auto not_to_exceed = std::chrono::steady_clock::now() + std::chrono::seconds(5);
     test::parallel_group_bind_executor(
         get_executor(), asio::experimental::wait_for_one(),
         [&](std::array<std::size_t, 2> actual_completion_order, test::ErrorCode timer_ec, bool wait_ok)
@@ -169,7 +169,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel agrpc::Alarm with parallel_grou
             return alarm.wait(test::five_seconds_from_now(), std::move(t));
         });
     grpc_context.run();
-    CHECK_GT(not_too_exceed, std::chrono::steady_clock::now());
+    CHECK_GT(not_to_exceed, std::chrono::steady_clock::now());
     CHECK_EQ(0, completion_order[0]);
     CHECK_EQ(1, completion_order[1]);
     CHECK_EQ(test::ErrorCode{}, error_code);

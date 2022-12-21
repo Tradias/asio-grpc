@@ -241,13 +241,13 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline no ca
                 agrpc::request(&test::v1::Test::Stub::AsyncUnary, *stub, client_context, request, grpc_context);
             test::msg::Response response;
             grpc::Alarm alarm;
-            const auto not_too_exceed = test::one_seconds_from_now();
-            co_await run_with_deadline(alarm, client_context, not_too_exceed,
+            const auto not_to_exceed = test::one_second_from_now();
+            co_await run_with_deadline(alarm, client_context, not_to_exceed,
                                        [&]() -> asio::awaitable<void>
                                        {
                                            CHECK(co_await agrpc::finish(*reader, response, status));
                                        });
-            CHECK_LT(test::now(), not_too_exceed);
+            CHECK_LT(test::now(), not_to_exceed);
         });
     CHECK_EQ(grpc::StatusCode::OK, status.error_code());
     CHECK(server_finish_ok);
@@ -266,7 +266,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline and c
             CHECK(co_await agrpc::request(&test::v1::Test::AsyncService::RequestUnary, service, server_context, request,
                                           writer));
             grpc::Alarm alarm;
-            co_await agrpc::wait(alarm, test::one_seconds_from_now());
+            co_await agrpc::wait(alarm, test::one_second_from_now());
             test::msg::Response response;
             server_finish_ok = co_await agrpc::finish(writer, response, grpc::Status::OK);
         },
@@ -277,13 +277,13 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline and c
                 agrpc::request(&test::v1::Test::Stub::AsyncUnary, stub, client_context, request, grpc_context);
             test::msg::Response response;
             grpc::Alarm alarm;
-            const auto not_too_exceed = test::one_seconds_from_now();
+            const auto not_to_exceed = test::one_second_from_now();
             co_await run_with_deadline(alarm, client_context, test::hundred_milliseconds_from_now(),
                                        [&]() -> asio::awaitable<void>
                                        {
                                            CHECK(co_await agrpc::finish(*reader, response, status));
                                        });
-            CHECK_LT(test::now(), not_too_exceed);
+            CHECK_LT(test::now(), not_to_exceed);
         });
     CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
     CHECK_FALSE(server_finish_ok);

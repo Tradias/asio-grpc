@@ -704,7 +704,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() can wait for g
          {
              invoked = true;
          });
-    CHECK(grpc_context.run_until(test::one_seconds_from_now()));
+    CHECK(grpc_context.run_until(test::one_second_from_now()));
     CHECK(grpc_context.is_stopped());
     CHECK(invoked);
 }
@@ -712,7 +712,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() can wait for g
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() times out correctly")
 {
     grpc::Alarm alarm;
-    wait(alarm, test::one_seconds_from_now(), test::NoOp{});
+    wait(alarm, test::one_second_from_now(), test::NoOp{});
     CHECK_FALSE(grpc_context.run_until(test::now()));
     CHECK_FALSE(grpc_context.run_until(test::ten_milliseconds_from_now()));
 }

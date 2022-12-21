@@ -106,7 +106,7 @@ struct HealthCheckServiceTest : test::GrpcContextTest
 
     void test_watch_default_service_and_change_serving_status()
     {
-        client_context.set_deadline(test::one_seconds_from_now());
+        client_context.set_deadline(test::one_second_from_now());
         run(
             [&](const asio::yield_context& yield)
             {
