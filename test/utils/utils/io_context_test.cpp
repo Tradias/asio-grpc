@@ -22,14 +22,20 @@ namespace test
 {
 IoContextTest::~IoContextTest()
 {
+    io_context_guard.reset();
     if (io_context_run_thread.joinable())
     {
         io_context_run_thread.join();
     }
 }
 
-void IoContextTest::run_io_context_detached()
+void IoContextTest::run_io_context_detached(bool use_work_guard)
 {
+    if (use_work_guard)
+    {
+        io_context_guard.emplace(
+            asio::require(io_context.get_executor(), asio::execution::outstanding_work_t::tracked));
+    }
     io_context_run_thread = std::thread{[&]
                                         {
                                             io_context.run();

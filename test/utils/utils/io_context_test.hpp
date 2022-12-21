@@ -26,10 +26,13 @@ struct IoContextTest
 {
     asio::io_context io_context;
     std::thread io_context_run_thread;
+    std::optional<typename asio::require_result<asio::io_context::executor_type,
+                                                asio::execution::outstanding_work_t::tracked_t>::type>
+        io_context_guard;
 
     ~IoContextTest();
 
-    void run_io_context_detached();
+    void run_io_context_detached(bool use_work_guard = true);
 };
 }  // namespace test
 

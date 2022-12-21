@@ -165,7 +165,7 @@ class RPCClientClientStreamingBase<ResponderT<RequestT>, Executor>
     /**
      * @brief Send a message to the server
      *
-     * Only one write may be outstanding at any given time. This is thread-safe with respect to
+     * Only one write may be outstanding at any given time. May not be called concurrently with
      * `read_initial_metadata()`. gRPC does not take ownership or a reference to `request`, so it is safe to to
      * deallocate once write returns (unless a deferred completion token is used like `agrpc::use_sender` or
      * `asio::deferred`).
@@ -359,7 +359,8 @@ class RPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
      *
      * Request notification of the reading of the initial metadata.
      *
-     * This call is optional, but if it is used, it cannot be used concurrently with or after the `read()` method.
+     * This call is optional, but if it is used, it cannot be used concurrently with or after the `read()` or `write()`
+     * method.
      *
      * Side effect:
      *
@@ -382,8 +383,8 @@ class RPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
      * @brief Receive a message from the server
      *
      * This is thread-safe with respect to `write()` or `writes_done()` methods. It should not be called concurrently
-     * with other streaming APIs on the same stream. It is not meaningful to call it concurrently with another read on
-     * the same stream since reads on the same stream are delivered in order.
+     * with other operations. It is not meaningful to call it concurrently with another read on the same stream since
+     * reads on the same stream are delivered in order.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` indicates that a valid message was read. `false` when
@@ -401,9 +402,9 @@ class RPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
     /**
      * @brief Send a message to the server
      *
-     * Only one write may be outstanding at any given time. This is thread-safe with respect to
-     * `read_initial_metadata()`. gRPC does not take ownership or a reference to `request`, so it is safe to to
-     * deallocate once write returns (unless a deferred completion token is used like `agrpc::use_sender` or
+     * Only one write may be outstanding at any given time. This is thread-safe with respect to `read()`. It should not
+     * be called concurrently with other operations. gRPC does not take ownership or a reference to `request`, so it is
+     * safe to to deallocate once write returns (unless a deferred completion token is used like `agrpc::use_sender` or
      * `asio::deferred`).
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
