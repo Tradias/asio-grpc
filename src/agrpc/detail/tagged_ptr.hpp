@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/config.hpp>
 
+#include <atomic>
 #include <cstdint>
 #include <utility>
 
@@ -24,17 +25,25 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class T>
-class TaggedPtr
+template <class T, class StorageType>
+class BasicTaggedPtr
 {
   private:
     static constexpr std::uintptr_t AVAILABLE_BITS = alignof(T) >= 4 ? 2 : (alignof(T) == 2 ? 1 : 0);
     static constexpr std::uintptr_t PTR_MASK{~(alignof(T) - 1)};
 
   public:
-    TaggedPtr() = default;
+    BasicTaggedPtr() = default;
 
-    explicit TaggedPtr(T* ptr) noexcept : ptr(reinterpret_cast<std::uintptr_t>(ptr)) {}
+    explicit BasicTaggedPtr(T* ptr) noexcept : ptr(reinterpret_cast<std::uintptr_t>(ptr)) {}
+
+    BasicTaggedPtr(const BasicTaggedPtr& other) noexcept : ptr(static_cast<std::uintptr_t>(other.ptr)) {}
+
+    BasicTaggedPtr& operator=(const BasicTaggedPtr& other) noexcept
+    {
+        ptr = static_cast<std::uintptr_t>(other.ptr);
+        return *this;
+    }
 
     void clear() noexcept { ptr = std::uintptr_t{}; }
 
@@ -71,8 +80,14 @@ class TaggedPtr
     }
 
   private:
-    std::uintptr_t ptr{};
+    StorageType ptr{};
 };
+
+template <class T>
+using TaggedPtr = BasicTaggedPtr<T, std::uintptr_t>;
+
+template <class T>
+using AtomicTaggedPtr = BasicTaggedPtr<T, std::atomic<std::uintptr_t>>;
 }
 
 AGRPC_NAMESPACE_END

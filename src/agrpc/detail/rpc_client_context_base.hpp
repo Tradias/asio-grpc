@@ -38,13 +38,7 @@ class AutoCancelClientContextRef
         other.context.clear();
     }
 
-    ~AutoCancelClientContextRef() noexcept
-    {
-        if (const auto context_ptr = context.get())
-        {
-            context_ptr->TryCancel();
-        }
-    }
+    ~AutoCancelClientContextRef() noexcept { cancel(); }
 
     AutoCancelClientContextRef& operator=(const AutoCancelClientContextRef&) = delete;
 
@@ -52,10 +46,7 @@ class AutoCancelClientContextRef
     {
         if (this != &other)
         {
-            if (const auto context_ptr = context.get())
-            {
-                context_ptr->TryCancel();
-            }
+            cancel();
             context = other.context;
             other.context.clear();
         }
@@ -64,7 +55,13 @@ class AutoCancelClientContextRef
 
     void clear() noexcept { context.clear(); }
 
-    void cancel() { context->TryCancel(); }
+    void cancel()
+    {
+        if (const auto context_ptr = context.get())
+        {
+            context_ptr->TryCancel();
+        }
+    }
 
     [[nodiscard]] bool is_null() const noexcept { return context.is_null(); }
 
@@ -81,7 +78,7 @@ class AutoCancelClientContextRef
     }
 
   private:
-    detail::TaggedPtr<grpc::ClientContext> context{};
+    detail::AtomicTaggedPtr<grpc::ClientContext> context{};
 };
 
 class RPCClientContextBase

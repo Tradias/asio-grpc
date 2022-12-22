@@ -757,11 +757,13 @@ struct HighLevelClientCancellationTest : test::HighLevelClientTest<RPC>, test::I
     HighLevelClientCancellationTest() { run_io_context_detached(); }
 };
 
+#ifdef _WIN32
 TEST_CASE_TEMPLATE("RPC::request can be cancelled", RPC, test::UnaryRPC, test::GenericUnaryRPC,
                    test::ClientStreamingRPC, test::ServerStreamingRPC, test::BidirectionalStreamingRPC,
                    test::GenericStreamingRPC)
 {
     HighLevelClientCancellationTest<RPC> test;
+    test.server->Shutdown();
     const auto not_to_exceed = test::one_second_from_now();
     test.timer.expires_at({});
     asio::experimental::make_parallel_group(test.request_rpc(test::ASIO_DEFERRED),
@@ -776,9 +778,10 @@ TEST_CASE_TEMPLATE("RPC::request can be cancelled", RPC, test::UnaryRPC, test::G
     test.grpc_context.run();
     CHECK_LT(test::now(), not_to_exceed);
 }
+#endif
 
 TEST_CASE_FIXTURE(HighLevelClientCancellationTest<test::ClientStreamingRPC>,
-                  "ClientStreamingRPC::write with set_last_message can be cancelled" * doctest::skip())
+                  "ClientStreamingRPC::write with set_last_message can be cancelled")
 {
     const auto not_to_exceed = test::one_second_from_now();
     grpc::WriteOptions options{};

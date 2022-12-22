@@ -195,5 +195,7 @@ TYPE_TO_STRING(test::UnaryRPC);
 TYPE_TO_STRING(test::ClientStreamingRPC);
 TYPE_TO_STRING(test::ServerStreamingRPC);
 TYPE_TO_STRING(test::BidirectionalStreamingRPC);
+TYPE_TO_STRING(test::GenericUnaryRPC);
+TYPE_TO_STRING(test::GenericStreamingRPC);
 
 #endif  // AGRPC_UTILS_HIGH_LEVEL_CLIENT_HPP
