@@ -757,6 +757,7 @@ struct HighLevelClientCancellationTest : test::HighLevelClientTest<RPC>, test::I
     HighLevelClientCancellationTest() { run_io_context_detached(); }
 };
 
+// gRPC requests seem to be uncancellable on platforms other than Windows
 #ifdef _WIN32
 TEST_CASE_TEMPLATE("RPC::request can be cancelled", RPC, test::UnaryRPC, test::GenericUnaryRPC,
                    test::ClientStreamingRPC, test::ServerStreamingRPC, test::BidirectionalStreamingRPC,

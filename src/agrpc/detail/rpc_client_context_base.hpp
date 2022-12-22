@@ -33,10 +33,7 @@ class AutoCancelClientContextRef
 
     AutoCancelClientContextRef(const AutoCancelClientContextRef&) = delete;
 
-    AutoCancelClientContextRef(AutoCancelClientContextRef&& other) noexcept : context(other.context)
-    {
-        other.context.clear();
-    }
+    AutoCancelClientContextRef(AutoCancelClientContextRef&& other) noexcept : context(other.context.clear()) {}
 
     ~AutoCancelClientContextRef() noexcept { cancel(); }
 
@@ -47,8 +44,7 @@ class AutoCancelClientContextRef
         if (this != &other)
         {
             cancel();
-            context = other.context;
-            other.context.clear();
+            context = other.context.clear();
         }
         return *this;
     }

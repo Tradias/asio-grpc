@@ -51,7 +51,6 @@ struct RPCAccess
     template <class RPC>
     static void client_initiate_finish(RPC& rpc, void* tag)
     {
-        rpc.set_finished();
         rpc.grpc_context().work_started();
         rpc.responder().Finish(&rpc.status(), tag);
     }
@@ -213,8 +212,8 @@ struct ClientClientStreamingRequestSenderImplementation<PrepareAsync, Executor> 
         rpc.responder().StartCall(self);
     }
 
-    template <class OnDone>
-    void done(OnDone on_done, bool ok)
+    template <template <int> class OnDone>
+    void done(OnDone<0> on_done, bool ok)
     {
         if (ok)
         {
@@ -222,8 +221,15 @@ struct ClientClientStreamingRequestSenderImplementation<PrepareAsync, Executor> 
         }
         else
         {
-            detail::RPCAccess::client_initiate_finish(rpc, on_done.self());
+            detail::RPCAccess::client_initiate_finish(rpc, on_done.template self<1>());
         }
+    }
+
+    template <template <int> class OnDone>
+    void done(OnDone<1> on_done, bool)
+    {
+        rpc.set_finished();
+        on_done(static_cast<RPC&&>(rpc));
     }
 
     RPC rpc;
@@ -256,8 +262,8 @@ struct ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor> 
         rpc.responder().StartCall(self);
     }
 
-    template <class OnDone>
-    void done(OnDone on_done, bool ok)
+    template <template <int> class OnDone>
+    void done(OnDone<0> on_done, bool ok)
     {
         if (ok)
         {
@@ -265,8 +271,15 @@ struct ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor> 
         }
         else
         {
-            detail::RPCAccess::client_initiate_finish(rpc, on_done.self());
+            detail::RPCAccess::client_initiate_finish(rpc, on_done.template self<1>());
         }
+    }
+
+    template <template <int> class OnDone>
+    void done(OnDone<1> on_done, bool)
+    {
+        rpc.set_finished();
+        on_done(static_cast<RPC&&>(rpc));
     }
 
     RPC rpc;
@@ -300,8 +313,8 @@ struct ClientBidirectionalStreamingRequestSenderImplementation<PrepareAsync, Exe
         rpc.responder().StartCall(self);
     }
 
-    template <class OnDone>
-    void done(OnDone on_done, bool ok)
+    template <template <int> class OnDone>
+    void done(OnDone<0> on_done, bool ok)
     {
         if (ok)
         {
@@ -309,8 +322,15 @@ struct ClientBidirectionalStreamingRequestSenderImplementation<PrepareAsync, Exe
         }
         else
         {
-            detail::RPCAccess::client_initiate_finish(rpc, on_done.self());
+            detail::RPCAccess::client_initiate_finish(rpc, on_done.template self<1>());
         }
+    }
+
+    template <template <int> class OnDone>
+    void done(OnDone<1> on_done, bool)
+    {
+        rpc.set_finished();
+        on_done(static_cast<RPC&&>(rpc));
     }
 
     RPC rpc;
@@ -341,8 +361,8 @@ struct ClientBidirectionalStreamingRequestSenderImplementation<detail::GenericRP
         rpc.responder().StartCall(self);
     }
 
-    template <class OnDone>
-    void done(OnDone on_done, bool ok)
+    template <template <int> class OnDone>
+    void done(OnDone<0> on_done, bool ok)
     {
         if (ok)
         {
@@ -350,8 +370,15 @@ struct ClientBidirectionalStreamingRequestSenderImplementation<detail::GenericRP
         }
         else
         {
-            detail::RPCAccess::client_initiate_finish(rpc, on_done.self());
+            detail::RPCAccess::client_initiate_finish(rpc, on_done.template self<1>());
         }
+    }
+
+    template <template <int> class OnDone>
+    void done(OnDone<1> on_done, bool)
+    {
+        rpc.set_finished();
+        on_done(static_cast<RPC&&>(rpc));
     }
 
     RPC rpc;
@@ -386,8 +413,9 @@ struct ReadInitialMetadataSenderImplementation : detail::GrpcSenderImplementatio
     }
 
     template <template <int> class OnDone>
-    static void done(OnDone<1> on_done, bool)
+    void done(OnDone<1> on_done, bool)
     {
+        rpc.set_finished();
         on_done(false);
     }
 
@@ -431,8 +459,9 @@ struct ReadServerStreamingSenderImplementation<Responder<Response>, Executor> : 
     }
 
     template <template <int> class OnDone>
-    static void done(OnDone<1> on_done, bool)
+    void done(OnDone<1> on_done, bool)
     {
+        rpc.set_finished();
         on_done(false);
     }
 
@@ -495,6 +524,7 @@ struct WriteClientStreamingSenderImplementation<Responder<Request>, Executor> : 
     template <template <int> class OnDone>
     void done(OnDone<2> on_done, bool)
     {
+        rpc.set_finished();
         on_done(rpc.ok());
     }
 
@@ -516,7 +546,6 @@ struct ClientFinishSenderImplementation : detail::GrpcSenderImplementationBase
     {
         if (rpc.is_writes_done())
         {
-            rpc.set_finished();
             rpc.responder().Finish(&rpc.status(), init.template self<1>());
         }
         else
@@ -534,6 +563,7 @@ struct ClientFinishSenderImplementation : detail::GrpcSenderImplementationBase
     template <template <int> class OnDone>
     void done(OnDone<1> on_done, bool) const
     {
+        rpc.set_finished();
         on_done(rpc.ok());
     }
 

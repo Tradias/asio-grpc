@@ -17,8 +17,8 @@
 
 #include <agrpc/detail/allocate.hpp>
 #include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/atomic.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/void_pointer_traits.hpp>
 
 #include <cassert>
 
@@ -56,7 +56,6 @@ class BasicTypeErasedCompletionHandler<void(Args...), VoidPointer>
 {
   private:
     using Complete = void (*)(void*, Args...);
-    using VoidPointerTraits = detail::VoidPointerTraits<VoidPointer>;
 
   public:
     BasicTypeErasedCompletionHandler() = default;
@@ -103,7 +102,7 @@ class BasicTypeErasedCompletionHandler<void(Args...), VoidPointer>
     {
     }
 
-    void* release_completion_handler() noexcept { return VoidPointerTraits::exchange(completion_handler, nullptr); }
+    void* release_completion_handler() noexcept { return detail::exchange(completion_handler, nullptr); }
 
     VoidPointer completion_handler{};
     Complete complete_;

@@ -187,7 +187,7 @@ class RPCClientClientStreamingBase<ResponderT<RequestT>, Executor>
      *
      * Indicate that the stream is to be finished and request notification for when the call has been ended.
      *
-     * Should not be used concurrently with other operations.
+     * May not be used concurrently with other operations.
      *
      * This function may be called multiple times, but subsequent calls have no effect.
      *
@@ -457,7 +457,7 @@ class RPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
      *
      * Indicate that the stream is to be finished and request notification for when the call has been ended.
      *
-     * Should not be used concurrently with other operations.
+     * May not be used concurrently with other operations.
      *
      * This function may be called multiple times, but subsequent calls have no effect.
      *

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_VOID_POINTER_TRAITS_HPP
-#define AGRPC_DETAIL_VOID_POINTER_TRAITS_HPP
+#ifndef AGRPC_DETAIL_ATOMIC_HPP
+#define AGRPC_DETAIL_ATOMIC_HPP
 
 #include <agrpc/detail/config.hpp>
 
@@ -24,24 +24,18 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class T>
-struct VoidPointerTraits;
-
-template <>
-struct VoidPointerTraits<void*>
+template <class T, class Other>
+T exchange(T& old_value, Other&& new_value) noexcept
 {
-    static void* exchange(void*& old_value, void* new_value) noexcept { return std::exchange(old_value, new_value); }
-};
+    return std::exchange(old_value, static_cast<Other&&>(new_value));
+}
 
-template <>
-struct VoidPointerTraits<std::atomic<void*>>
+template <class T, class Other>
+T exchange(std::atomic<T>& old_value, Other&& new_value) noexcept
 {
-    static void* exchange(std::atomic<void*>& old_value, void* new_value) noexcept
-    {
-        return old_value.exchange(new_value);
-    }
-};
+    return old_value.exchange(static_cast<Other&&>(new_value));
+}
 }
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_VOID_POINTER_TRAITS_HPP
+#endif  // AGRPC_DETAIL_ATOMIC_HPP

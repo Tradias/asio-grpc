@@ -15,6 +15,7 @@
 #ifndef AGRPC_DETAIL_TAGGED_PTR_HPP
 #define AGRPC_DETAIL_TAGGED_PTR_HPP
 
+#include <agrpc/detail/atomic.hpp>
 #include <agrpc/detail/config.hpp>
 
 #include <atomic>
@@ -37,15 +38,15 @@ class BasicTaggedPtr
 
     explicit BasicTaggedPtr(T* ptr) noexcept : ptr(reinterpret_cast<std::uintptr_t>(ptr)) {}
 
-    BasicTaggedPtr(const BasicTaggedPtr& other) noexcept : ptr(static_cast<std::uintptr_t>(other.ptr)) {}
+    BasicTaggedPtr(std::uintptr_t other) noexcept : ptr(other) {}
 
-    BasicTaggedPtr& operator=(const BasicTaggedPtr& other) noexcept
+    BasicTaggedPtr& operator=(std::uintptr_t other) noexcept
     {
-        ptr = static_cast<std::uintptr_t>(other.ptr);
+        ptr = other;
         return *this;
     }
 
-    void clear() noexcept { ptr = std::uintptr_t{}; }
+    auto clear() noexcept { return detail::exchange(ptr, std::uintptr_t{}); }
 
     [[nodiscard]] T* get() const noexcept { return reinterpret_cast<T*>(ptr & PTR_MASK); }
 
