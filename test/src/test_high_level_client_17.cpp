@@ -781,23 +781,109 @@ TEST_CASE_TEMPLATE("RPC::request can be cancelled", RPC, test::UnaryRPC, test::G
 }
 #endif
 
-TEST_CASE_FIXTURE(HighLevelClientCancellationTest<test::ClientStreamingRPC>,
-                  "ClientStreamingRPC::write with set_last_message can be cancelled")
+struct ClientStreamingReadInitialMetadataCancellation
 {
+    using RPC = test::ClientStreamingRPC;
+
+    static auto step(HighLevelClientCancellationTest<RPC>&, RPC& rpc)
+    {
+        return rpc.read_initial_metadata(test::ASIO_DEFERRED);
+    }
+};
+TYPE_TO_STRING(ClientStreamingReadInitialMetadataCancellation);
+
+struct ClientStreamingWriteLastCancellation
+{
+    using RPC = test::ClientStreamingRPC;
+
+    static auto step(HighLevelClientCancellationTest<RPC>& test, RPC& rpc)
+    {
+        return rpc.write(test.request, grpc::WriteOptions{}.set_last_message(), test::ASIO_DEFERRED);
+    }
+};
+TYPE_TO_STRING(ClientStreamingWriteLastCancellation);
+
+struct ClientStreamingFinishCancellation
+{
+    using RPC = test::ClientStreamingRPC;
+
+    static auto step(HighLevelClientCancellationTest<RPC>&, RPC& rpc) { return rpc.finish(test::ASIO_DEFERRED); }
+};
+TYPE_TO_STRING(ClientStreamingFinishCancellation);
+
+struct ServerStreamingReadInitialMetadataCancellation
+{
+    using RPC = test::ServerStreamingRPC;
+
+    static auto step(HighLevelClientCancellationTest<RPC>&, RPC& rpc)
+    {
+        return rpc.read_initial_metadata(test::ASIO_DEFERRED);
+    }
+};
+TYPE_TO_STRING(ServerStreamingReadInitialMetadataCancellation);
+
+struct ServerStreamingReadCancellation
+{
+    using RPC = test::ServerStreamingRPC;
+
+    static auto step(HighLevelClientCancellationTest<RPC>& test, RPC& rpc)
+    {
+        return rpc.read(test.response, test::ASIO_DEFERRED);
+    }
+};
+TYPE_TO_STRING(ServerStreamingReadCancellation);
+
+template <class RPCType>
+struct BidiStreamingReadInitialMetadataCancellationT
+{
+    using RPC = RPCType;
+
+    static auto step(HighLevelClientCancellationTest<RPC>&, RPC& rpc)
+    {
+        return rpc.read_initial_metadata(test::ASIO_DEFERRED);
+    }
+};
+
+using BidiStreamingReadInitialMetadataCancellation =
+    BidiStreamingReadInitialMetadataCancellationT<test::BidirectionalStreamingRPC>;
+TYPE_TO_STRING(BidiStreamingReadInitialMetadataCancellation);
+
+using GenericBidiStreamingReadInitialMetadataCancellation =
+    BidiStreamingReadInitialMetadataCancellationT<test::GenericStreamingRPC>;
+TYPE_TO_STRING(GenericBidiStreamingReadInitialMetadataCancellation);
+
+template <class RPCType>
+struct BidiStreamingFinishCancellationT
+{
+    using RPC = RPCType;
+
+    static auto step(HighLevelClientCancellationTest<RPC>&, RPC& rpc) { return rpc.finish(test::ASIO_DEFERRED); }
+};
+
+using BidiStreamingFinishCancellation = BidiStreamingFinishCancellationT<test::BidirectionalStreamingRPC>;
+TYPE_TO_STRING(BidiStreamingFinishCancellation);
+
+using GenericBidiStreamingFinishCancellation = BidiStreamingFinishCancellationT<test::GenericStreamingRPC>;
+TYPE_TO_STRING(GenericBidiStreamingFinishCancellation);
+
+TEST_CASE_TEMPLATE("RPC step functions can be cancelled", T, ClientStreamingReadInitialMetadataCancellation,
+                   ClientStreamingWriteLastCancellation, ClientStreamingFinishCancellation,
+                   ServerStreamingReadInitialMetadataCancellation, ServerStreamingReadCancellation,
+                   BidiStreamingReadInitialMetadataCancellation, BidiStreamingFinishCancellation,
+                   GenericBidiStreamingReadInitialMetadataCancellation, GenericBidiStreamingFinishCancellation)
+{
+    HighLevelClientCancellationTest<typename T::RPC> test;
     const auto not_to_exceed = test::one_second_from_now();
-    grpc::WriteOptions options{};
-    spawn_and_run(
+    test.spawn_and_run(
         [&](const asio::yield_context& yield)
         {
-            test_server.request_rpc(yield);
+            test.test_server.request_rpc(yield);
         },
         [&](const asio::yield_context& yield)
         {
-            auto rpc = test::ClientStreamingRPC::request(grpc_context, *stub, client_context, response, yield);
-            timer.expires_at({});
-            asio::experimental::make_parallel_group(
-                timer.async_wait(test::ASIO_DEFERRED),
-                rpc.write(request, grpc::WriteOptions{}.set_last_message(), test::ASIO_DEFERRED))
+            auto rpc = test.request_rpc(yield);
+            test.timer.expires_at({});
+            asio::experimental::make_parallel_group(test.timer.async_wait(test::ASIO_DEFERRED), T::step(test, rpc))
                 .async_wait(asio::experimental::wait_for_one(), yield);
             CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.status_code());
         });
