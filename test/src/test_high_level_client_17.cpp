@@ -27,6 +27,7 @@
 #include <agrpc/high_level_client.hpp>
 #include <agrpc/notify_when_done.hpp>
 #include <agrpc/wait.hpp>
+#include <grpcpp/grpcpp.h>
 
 #include <future>
 
@@ -866,11 +867,8 @@ TYPE_TO_STRING(BidiStreamingFinishCancellation);
 using GenericBidiStreamingFinishCancellation = BidiStreamingFinishCancellationT<test::GenericStreamingRPC>;
 TYPE_TO_STRING(GenericBidiStreamingFinishCancellation);
 
-TEST_CASE_TEMPLATE("RPC step functions can be cancelled", T, ClientStreamingReadInitialMetadataCancellation,
-                   ClientStreamingWriteLastCancellation, ClientStreamingFinishCancellation,
-                   ServerStreamingReadInitialMetadataCancellation, ServerStreamingReadCancellation,
-                   BidiStreamingReadInitialMetadataCancellation, BidiStreamingFinishCancellation,
-                   GenericBidiStreamingReadInitialMetadataCancellation, GenericBidiStreamingFinishCancellation)
+template <class T>
+void test_rpc_step_functions_can_be_cancelled()
 {
     HighLevelClientCancellationTest<typename T::RPC> test;
     const auto not_to_exceed = test::one_second_from_now();
@@ -886,7 +884,25 @@ TEST_CASE_TEMPLATE("RPC step functions can be cancelled", T, ClientStreamingRead
             asio::experimental::make_parallel_group(test.timer.async_wait(test::ASIO_DEFERRED), T::step(test, rpc))
                 .async_wait(asio::experimental::wait_for_one(), yield);
             CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.status_code());
+            test.server_shutdown.initiate();
         });
     CHECK_LT(test::now(), not_to_exceed);
+}
+
+TEST_CASE_TEMPLATE("RPC::read_initial_metadata can be cancelled", T, ClientStreamingReadInitialMetadataCancellation,
+                   ServerStreamingReadInitialMetadataCancellation, BidiStreamingReadInitialMetadataCancellation,
+                   GenericBidiStreamingReadInitialMetadataCancellation)
+{
+    if (grpc::Version() > "1.20.0")
+    {
+        test_rpc_step_functions_can_be_cancelled<T>();
+    }
+}
+
+TEST_CASE_TEMPLATE("RPC step functions can be cancelled", T, ClientStreamingWriteLastCancellation,
+                   ClientStreamingFinishCancellation, ServerStreamingReadCancellation, BidiStreamingFinishCancellation,
+                   GenericBidiStreamingFinishCancellation)
+{
+    test_rpc_step_functions_can_be_cancelled<T>();
 }
 #endif
