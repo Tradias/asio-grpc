@@ -671,7 +671,7 @@ struct agrpc::asio::traits::query_member<agrpc::BasicGrpcExecutor<Allocator, Opt
 };
 #endif
 
-#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_SCHEDULE_MEMBER_TRAIT) && \
+#if defined(AGRPC_ASIO_HAS_SENDER_RECEIVER) && !defined(BOOST_ASIO_HAS_DEDUCED_SCHEDULE_MEMBER_TRAIT) && \
     !defined(ASIO_HAS_DEDUCED_SCHEDULE_MEMBER_TRAIT)
 template <class Allocator, std::uint32_t Options>
 struct agrpc::asio::traits::schedule_member<agrpc::BasicGrpcExecutor<Allocator, Options>>

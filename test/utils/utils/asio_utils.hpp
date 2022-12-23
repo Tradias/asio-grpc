@@ -274,8 +274,8 @@ void co_spawn_and_run(agrpc::GrpcContext& grpc_context, Functions&&... functions
 #endif
 }  // namespace test
 
-#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_SET_DONE_MEMBER_TRAIT) && \
-    !defined(ASIO_HAS_DEDUCED_SET_DONE_MEMBER_TRAIT)
+#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
+#if !defined(BOOST_ASIO_HAS_DEDUCED_SET_DONE_MEMBER_TRAIT) && !defined(ASIO_HAS_DEDUCED_SET_DONE_MEMBER_TRAIT)
 template <class Function, class Allocator>
 struct agrpc::asio::traits::set_done_member<test::FunctionAsReceiver<Function, Allocator>>
 {
@@ -292,8 +292,7 @@ struct agrpc::asio::traits::set_done_member<test::FunctionAsStatefulReceiver<Fun
 };
 #endif
 
-#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_SET_VALUE_MEMBER_TRAIT) && \
-    !defined(ASIO_HAS_DEDUCED_SET_VALUE_MEMBER_TRAIT)
+#if !defined(BOOST_ASIO_HAS_DEDUCED_SET_VALUE_MEMBER_TRAIT) && !defined(ASIO_HAS_DEDUCED_SET_VALUE_MEMBER_TRAIT)
 template <class Function, class Allocator, class Vs>
 struct agrpc::asio::traits::set_value_member<test::FunctionAsReceiver<Function, Allocator>, Vs>
 {
@@ -310,8 +309,7 @@ struct agrpc::asio::traits::set_value_member<test::FunctionAsStatefulReceiver<Fu
 };
 #endif
 
-#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_SET_ERROR_MEMBER_TRAIT) && \
-    !defined(ASIO_HAS_DEDUCED_SET_ERROR_MEMBER_TRAIT)
+#if !defined(BOOST_ASIO_HAS_DEDUCED_SET_ERROR_MEMBER_TRAIT) && !defined(ASIO_HAS_DEDUCED_SET_ERROR_MEMBER_TRAIT)
 template <class Function, class Allocator, class E>
 struct agrpc::asio::traits::set_error_member<test::FunctionAsReceiver<Function, Allocator>, E>
 {
@@ -326,6 +324,7 @@ struct agrpc::asio::traits::set_error_member<test::FunctionAsStatefulReceiver<Fu
     : agrpc::asio::traits::set_error_member<test::FunctionAsReceiver<Function, Allocator>, E>
 {
 };
+#endif
 #endif
 
 #endif  // AGRPC_UTILS_ASIO_UTILS_HPP

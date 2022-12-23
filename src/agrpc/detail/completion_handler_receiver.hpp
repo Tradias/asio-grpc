@@ -94,8 +94,8 @@ struct agrpc::asio::associator<Associator, agrpc::detail::CompletionHandlerRecei
 
 #endif
 
-#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_SET_DONE_MEMBER_TRAIT) && \
-    !defined(ASIO_HAS_DEDUCED_SET_DONE_MEMBER_TRAIT)
+#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
+#if !defined(BOOST_ASIO_HAS_DEDUCED_SET_DONE_MEMBER_TRAIT) && !defined(ASIO_HAS_DEDUCED_SET_DONE_MEMBER_TRAIT)
 template <class CompletionHandler>
 struct agrpc::asio::traits::set_done_member<agrpc::detail::CompletionHandlerReceiver<CompletionHandler>>
 {
@@ -106,8 +106,7 @@ struct agrpc::asio::traits::set_done_member<agrpc::detail::CompletionHandlerRece
 };
 #endif
 
-#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_SET_VALUE_MEMBER_TRAIT) && \
-    !defined(ASIO_HAS_DEDUCED_SET_VALUE_MEMBER_TRAIT)
+#if !defined(BOOST_ASIO_HAS_DEDUCED_SET_VALUE_MEMBER_TRAIT) && !defined(ASIO_HAS_DEDUCED_SET_VALUE_MEMBER_TRAIT)
 template <class CompletionHandler, class Vs>
 struct agrpc::asio::traits::set_value_member<agrpc::detail::CompletionHandlerReceiver<CompletionHandler>, Vs>
 {
@@ -118,8 +117,7 @@ struct agrpc::asio::traits::set_value_member<agrpc::detail::CompletionHandlerRec
 };
 #endif
 
-#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_SET_ERROR_MEMBER_TRAIT) && \
-    !defined(ASIO_HAS_DEDUCED_SET_ERROR_MEMBER_TRAIT)
+#if !defined(BOOST_ASIO_HAS_DEDUCED_SET_ERROR_MEMBER_TRAIT) && !defined(ASIO_HAS_DEDUCED_SET_ERROR_MEMBER_TRAIT)
 template <class CompletionHandler, class E>
 struct agrpc::asio::traits::set_error_member<agrpc::detail::CompletionHandlerReceiver<CompletionHandler>, E>
 {
@@ -128,6 +126,7 @@ struct agrpc::asio::traits::set_error_member<agrpc::detail::CompletionHandlerRec
 
     using result_type = void;
 };
+#endif
 #endif
 
 #endif  // AGRPC_DETAIL_COMPLETION_HANDLER_RECEIVER_HPP

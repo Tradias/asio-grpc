@@ -161,8 +161,8 @@ class ConditionalSenderOperationState
 
 AGRPC_NAMESPACE_END
 
-#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_CONNECT_MEMBER_TRAIT) && \
-    !defined(ASIO_HAS_DEDUCED_CONNECT_MEMBER_TRAIT)
+#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
+#if !defined(BOOST_ASIO_HAS_DEDUCED_CONNECT_MEMBER_TRAIT) && !defined(ASIO_HAS_DEDUCED_CONNECT_MEMBER_TRAIT)
 template <class Sender, class Receiver, class... CompletionArgs>
 struct agrpc::asio::traits::connect_member<agrpc::detail::ConditionalSender<Sender, CompletionArgs...>, Receiver>
 {
@@ -175,8 +175,7 @@ struct agrpc::asio::traits::connect_member<agrpc::detail::ConditionalSender<Send
 };
 #endif
 
-#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_START_MEMBER_TRAIT) && \
-    !defined(ASIO_HAS_DEDUCED_START_MEMBER_TRAIT)
+#if !defined(BOOST_ASIO_HAS_DEDUCED_START_MEMBER_TRAIT) && !defined(ASIO_HAS_DEDUCED_START_MEMBER_TRAIT)
 template <class Sender, class Receiver, class... CompletionArgs>
 struct agrpc::asio::traits::start_member<
     agrpc::detail::ConditionalSenderOperationState<Sender, Receiver, CompletionArgs...>>
@@ -186,6 +185,7 @@ struct agrpc::asio::traits::start_member<
 
     using result_type = void;
 };
+#endif
 #endif
 
 #endif  // AGRPC_DETAIL_CONDITIONAL_SENDER_HPP

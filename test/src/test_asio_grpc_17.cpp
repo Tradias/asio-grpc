@@ -556,18 +556,20 @@ TEST_CASE_TEMPLATE("yield_context bidirectional streaming", Stub, test::v1::Test
         });
 }
 
-TEST_CASE_FIXTURE(test::GrpcClientServerTest, "agrpc::request for unary RPCs can be called with a unique_ptr<Stub>")
+TEST_CASE("agrpc::request for unary RPCs can be called with a unique_ptr<Stub>")
 {
-    client_context.set_deadline(test::hundred_milliseconds_from_now());
-    const auto stub_ptr = test::v1::Test::NewStub(channel);
+    std::unique_ptr<test::v1::Test::Stub> stub;
+    test::GrpcClientServerTest test;
+    stub = test::v1::Test::NewStub(test.channel);
+    test.client_context.set_deadline(test::hundred_milliseconds_from_now());
     test::msg::Request request;
     const auto reader =
-        agrpc::request(&test::v1::Test::Stub::AsyncUnary, stub_ptr, client_context, request, grpc_context);
+        agrpc::request(&test::v1::Test::Stub::AsyncUnary, stub, test.client_context, request, test.grpc_context);
     CHECK(reader);
     test::msg::Response response;
     grpc::Status status;
-    agrpc::finish(reader, response, status, asio::bind_executor(grpc_context, test::NoOp{}));
-    grpc_context.run();
+    agrpc::finish(reader, response, status, asio::bind_executor(test.grpc_context, test::NoOp{}));
+    test.grpc_context.run();
 }
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "agrpc::wait correctly unbinds executor_binder and allocator_binder")

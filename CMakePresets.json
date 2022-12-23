@@ -37,7 +37,7 @@
             },
             "execution": {
                 "noTestsAction": "error",
-                "timeout": 120,
+                "timeout": 180,
                 "jobs": 8
             }
         }

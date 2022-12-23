@@ -214,32 +214,6 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request trac
 }
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-inline decltype(asio::execution::schedule(std::declval<agrpc::GrpcExecutor>())) request_handler_archetype(
-    grpc::ServerContext&, test::msg::Request&, grpc::ServerAsyncResponseWriter<test::msg::Response>&);
-
-TEST_CASE_FIXTURE(test::GrpcClientServerTest, "RepeatedlyRequestSender fulfills unified executor concepts")
-{
-    using RepeatedlyRequestSender = decltype(agrpc::repeatedly_request(
-        &test::v1::Test::AsyncService::RequestUnary, service, &request_handler_archetype, use_sender()));
-    CHECK(asio::execution::sender<RepeatedlyRequestSender>);
-    CHECK(asio::execution::is_sender_v<RepeatedlyRequestSender>);
-    CHECK(asio::execution::typed_sender<RepeatedlyRequestSender>);
-    CHECK(asio::execution::is_typed_sender_v<RepeatedlyRequestSender>);
-    CHECK(asio::execution::sender_to<RepeatedlyRequestSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
-    CHECK(asio::execution::is_sender_to_v<RepeatedlyRequestSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
-    CHECK(
-        asio::execution::is_nothrow_connect_v<RepeatedlyRequestSender, test::ConditionallyNoexceptNoOpReceiver<true>>);
-    CHECK_FALSE(
-        asio::execution::is_nothrow_connect_v<RepeatedlyRequestSender, test::ConditionallyNoexceptNoOpReceiver<false>>);
-    CHECK(asio::execution::is_nothrow_connect_v<RepeatedlyRequestSender,
-                                                const test::ConditionallyNoexceptNoOpReceiver<true>&>);
-    CHECK_FALSE(asio::execution::is_nothrow_connect_v<RepeatedlyRequestSender,
-                                                      const test::ConditionallyNoexceptNoOpReceiver<false>&>);
-    using OperationState = asio::execution::connect_result_t<RepeatedlyRequestSender, test::InvocableArchetype>;
-    CHECK(asio::execution::operation_state<OperationState>);
-    CHECK(asio::execution::is_operation_state_v<OperationState>);
-}
-
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request unary concurrent requests")
 {
     static constexpr auto REQUEST_COUNT = 300;
@@ -280,42 +254,6 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request unar
     grpc_context.run();
     CHECK_EQ(REQUEST_COUNT, request_received_count);
     REQUIRE_EQ(REQUEST_COUNT, completion_order.size());
-}
-
-TEST_CASE_FIXTURE(test::GrpcClientServerTest, "asio use_sender repeatedly_request unary")
-{
-    bool is_shutdown{false};
-    auto request_count{0};
-    test::msg::Response response;
-    const auto request_handler = [&](grpc::ServerContext&, test::msg::Request& request,
-                                     grpc::ServerAsyncResponseWriter<test::msg::Response>& writer)
-    {
-        CHECK_EQ(42, request.integer());
-        ++request_count;
-        if (request_count > 3)
-        {
-            is_shutdown = true;
-        }
-        response.set_integer(21);
-        return agrpc::finish(writer, response, grpc::Status::OK, use_sender());
-    };
-    asio::execution::submit(
-        agrpc::repeatedly_request(&test::v1::Test::AsyncService::RequestUnary, service, request_handler, use_sender()),
-        test::FunctionAsReceiver{[&]()
-                                 {
-                                     CHECK_EQ(4, request_count);
-                                 }});
-    test::spawn(grpc_context,
-                [&](const asio::yield_context& yield)
-                {
-                    while (!is_shutdown)
-                    {
-                        test::client_perform_unary_success(grpc_context, *stub, yield);
-                    }
-                    server->Shutdown();
-                });
-    grpc_context.run();
-    CHECK_EQ(4, request_count);
 }
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable repeatedly_request cancel keeps request handler alive")

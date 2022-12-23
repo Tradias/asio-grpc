@@ -271,7 +271,12 @@ class ScopeGuard
     }
 
     ScopeGuard(const ScopeGuard&) = delete;
-    ScopeGuard(ScopeGuard&&) = delete;
+
+    ScopeGuard(ScopeGuard&& other) noexcept
+        : on_exit(static_cast<OnExit&&>(other.on_exit)), is_armed(std::exchange(other.is_armed, false))
+    {
+    }
+
     ScopeGuard& operator=(const ScopeGuard&) = delete;
     ScopeGuard& operator=(ScopeGuard&&) = delete;
 

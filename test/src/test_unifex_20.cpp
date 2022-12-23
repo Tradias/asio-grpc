@@ -48,7 +48,7 @@ struct UnifexTest : virtual test::GrpcContextTest
     }
 };
 
-TEST_CASE("unifex asio-grpc fulfills unified executor concepts")
+TEST_CASE("unifex asio-grpc fulfills std::execution concepts")
 {
     CHECK(unifex::scheduler<agrpc::GrpcExecutor>);
     using UseSender = decltype(agrpc::use_sender(std::declval<agrpc::GrpcExecutor>()));
@@ -179,6 +179,50 @@ TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::schedule when already runnin
                                                     })));
     CHECK_EQ(expected_thread_id, actual_thread_id);
 }
+
+#if !UNIFEX_NO_COROUTINES
+TEST_CASE_TEMPLATE("ScheduleSender start/submit with shutdown GrpcContext", T, std::true_type, std::false_type)
+{
+    test::StatefulReceiverState state;
+    test::FunctionAsStatefulReceiver receiver{[](auto&&...) {}, state};
+    {
+        agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+        grpc::Alarm alarm;
+        const auto sender = [&]
+        {
+            if constexpr (T::value)
+            {
+                return unifex::schedule(grpc_context.get_scheduler());
+            }
+            else
+            {
+                return agrpc::wait(alarm, test::five_seconds_from_now(), agrpc::use_sender(grpc_context));
+            }
+        };
+        std::optional<decltype(unifex::connect(sender(), receiver))> operation_state;
+        auto guard = agrpc::detail::ScopeGuard{[&]
+                                               {
+                                                   SUBCASE("submit") { unifex::submit(sender(), receiver); }
+                                                   SUBCASE("start")
+                                                   {
+                                                       operation_state.emplace(unifex::connect(sender(), receiver));
+                                                       unifex::start(*operation_state);
+                                                   }
+                                               }};
+        unifex::submit(unifex::let_value(unifex::schedule(grpc_context.get_scheduler()),
+                                         [&]
+                                         {
+                                             grpc_context.stop();
+                                             return agrpc::wait(alarm, test::five_seconds_from_now(),
+                                                                agrpc::use_sender(grpc_context));
+                                         }),
+                       test::FunctionAsReceiver{[guard = std::move(guard)](bool) {}});
+        grpc_context.run();
+    }
+    CHECK(state.was_done);
+    CHECK_FALSE(state.exception);
+}
+#endif
 
 TEST_CASE_FIXTURE(UnifexTest, "unifex agrpc::wait from different thread")
 {
@@ -338,6 +382,28 @@ struct UnifexRepeatedlyRequestTest : UnifexTest, test::GrpcClientServerTest
                                         unifex::get_allocator, get_allocator());
     }
 };
+
+inline decltype(unifex::schedule(std::declval<agrpc::GrpcExecutor>())) request_handler_archetype(
+    grpc::ServerContext&, test::msg::Request&, grpc::ServerAsyncResponseWriter<test::msg::Response>&);
+
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "RepeatedlyRequestSender fulfills unified executor concepts")
+{
+    using RepeatedlyRequestSender = decltype(agrpc::repeatedly_request(
+        &test::v1::Test::AsyncService::RequestUnary, service, &request_handler_archetype, use_sender()));
+    CHECK(unifex::sender<RepeatedlyRequestSender>);
+    CHECK(unifex::typed_sender<RepeatedlyRequestSender>);
+    CHECK(unifex::sender_to<RepeatedlyRequestSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
+    CHECK(unifex::is_nothrow_connectable_v<RepeatedlyRequestSender, test::ConditionallyNoexceptNoOpReceiver<true>>);
+    CHECK_FALSE(
+        unifex::is_nothrow_connectable_v<RepeatedlyRequestSender, test::ConditionallyNoexceptNoOpReceiver<false>>);
+    CHECK(unifex::is_nothrow_connectable_v<RepeatedlyRequestSender,
+                                           const test::ConditionallyNoexceptNoOpReceiver<true>&>);
+    CHECK_FALSE(unifex::is_nothrow_connectable_v<RepeatedlyRequestSender,
+                                                 const test::ConditionallyNoexceptNoOpReceiver<false>&>);
+    using OperationState =
+        unifex::connect_result_t<RepeatedlyRequestSender, test::FunctionAsReceiver<test::InvocableArchetype>>;
+    CHECK(std::is_invocable_v<decltype(unifex::start), OperationState&>);
+}
 
 TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex repeatedly_request unary - shutdown server")
 {

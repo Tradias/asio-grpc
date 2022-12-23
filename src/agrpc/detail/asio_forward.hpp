@@ -28,15 +28,10 @@
 #include <asio/bind_executor.hpp>
 #include <asio/execution/allocator.hpp>
 #include <asio/execution/blocking.hpp>
-#include <asio/execution/connect.hpp>
 #include <asio/execution/context.hpp>
 #include <asio/execution/mapping.hpp>
 #include <asio/execution/outstanding_work.hpp>
 #include <asio/execution/relationship.hpp>
-#include <asio/execution/set_done.hpp>
-#include <asio/execution/set_error.hpp>
-#include <asio/execution/set_value.hpp>
-#include <asio/execution/start.hpp>
 #include <asio/execution_context.hpp>
 #include <asio/query.hpp>
 #include <asio/system_executor.hpp>
@@ -60,6 +55,16 @@
 
 #define AGRPC_ASIO_HAS_BIND_ALLOCATOR
 #endif
+
+#if (ASIO_VERSION < 102500) || !defined(ASIO_NO_DEPRECATED)
+#include <asio/execution/connect.hpp>
+#include <asio/execution/set_done.hpp>
+#include <asio/execution/set_error.hpp>
+#include <asio/execution/set_value.hpp>
+#include <asio/execution/start.hpp>
+
+#define AGRPC_ASIO_HAS_SENDER_RECEIVER
+#endif
 #elif defined(AGRPC_BOOST_ASIO)
 //
 #include <boost/version.hpp>
@@ -71,15 +76,10 @@
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/execution/allocator.hpp>
 #include <boost/asio/execution/blocking.hpp>
-#include <boost/asio/execution/connect.hpp>
 #include <boost/asio/execution/context.hpp>
 #include <boost/asio/execution/mapping.hpp>
 #include <boost/asio/execution/outstanding_work.hpp>
 #include <boost/asio/execution/relationship.hpp>
-#include <boost/asio/execution/set_done.hpp>
-#include <boost/asio/execution/set_error.hpp>
-#include <boost/asio/execution/set_value.hpp>
-#include <boost/asio/execution/start.hpp>
 #include <boost/asio/execution_context.hpp>
 #include <boost/asio/query.hpp>
 #include <boost/asio/system_executor.hpp>
@@ -102,6 +102,16 @@
 #include <boost/asio/bind_allocator.hpp>
 
 #define AGRPC_ASIO_HAS_BIND_ALLOCATOR
+#endif
+
+#if (BOOST_VERSION < 108100) || !defined(BOOST_ASIO_NO_DEPRECATED)
+#include <boost/asio/execution/connect.hpp>
+#include <boost/asio/execution/set_done.hpp>
+#include <boost/asio/execution/set_error.hpp>
+#include <boost/asio/execution/set_value.hpp>
+#include <boost/asio/execution/start.hpp>
+
+#define AGRPC_ASIO_HAS_SENDER_RECEIVER
 #endif
 #endif
 
@@ -154,6 +164,7 @@ decltype(auto) get_allocator(const Object& object)
     return asio::get_associated_allocator(object);
 }
 
+#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
 using asio::execution::connect;
 using asio::execution::connect_result_t;
 using asio::execution::is_sender_v;
@@ -161,6 +172,43 @@ using asio::execution::set_done;
 using asio::execution::set_error;
 using asio::execution::set_value;
 using asio::execution::start;
+#else
+template <class Sender>
+inline constexpr bool is_sender_v = true;
+
+template <class Sender, class Receiver>
+auto connect(Sender&& sender, Receiver&& receiver)
+{
+    return static_cast<Sender&&>(sender).connect(static_cast<Receiver&&>(receiver));
+}
+
+template <class Sender, class Receiver>
+using connect_result_t = decltype(exec::connect(std::declval<Sender>(), std::declval<Receiver>()));
+
+template <class Receiver>
+void set_done(Receiver&& receiver)
+{
+    static_cast<Receiver&&>(receiver).set_done();
+}
+
+template <class Receiver, class... T>
+void set_error(Receiver&& receiver, T&&... t)
+{
+    static_cast<Receiver&&>(receiver).set_error(static_cast<T&&>(t)...);
+}
+
+template <class Receiver, class... T>
+void set_value(Receiver&& receiver, T&&... t)
+{
+    static_cast<Receiver&&>(receiver).set_value(static_cast<T&&>(t)...);
+}
+
+template <class OperationState>
+void start(OperationState&& state)
+{
+    static_cast<OperationState&&>(state).start();
+}
+#endif
 
 struct unstoppable_token
 {
@@ -261,10 +309,24 @@ class CancellationSlotAsStopToken
 };
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
+template <class Executor, class Function>
+void do_execute(Executor&& executor, Function&& function)
+{
+    asio::execution::execute(static_cast<Executor&&>(executor), static_cast<Function&&>(function));
+}
+#else
+template <class Executor, class Function>
+void do_execute(Executor&& executor, Function&& function)
+{
+    static_cast<Executor&&>(executor).execute(static_cast<Function&&>(function));
+}
+#endif
+
 template <class Executor, class Function, class Allocator>
 void post_with_allocator(Executor&& executor, Function&& function, const Allocator& allocator)
 {
-    asio::execution::execute(
+    detail::do_execute(
         asio::prefer(asio::require(static_cast<Executor&&>(executor), asio::execution::blocking_t::never),
                      asio::execution::relationship_t::fork, asio::execution::allocator(allocator)),
         static_cast<Function&&>(function));

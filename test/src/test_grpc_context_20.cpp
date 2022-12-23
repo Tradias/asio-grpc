@@ -33,8 +33,8 @@ TEST_CASE("GrpcExecutor fulfills Executor TS concepts")
     CHECK(asio::execution::executor_of<agrpc::GrpcExecutor, test::InvocableArchetype>);
 }
 
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-TEST_CASE("GrpcSender and ScheduleSender fulfill unified executor concepts")
+#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
+TEST_CASE("GrpcSender and ScheduleSender fulfill std::execution concepts")
 {
     using UseSender = decltype(agrpc::use_sender(std::declval<agrpc::GrpcExecutor>()));
     using GrpcSender =
@@ -68,46 +68,6 @@ TEST_CASE_FIXTURE(
 }
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
-TEST_CASE_TEMPLATE("asio ScheduleSender start/submit with shutdown GrpcContext", T, std::true_type, std::false_type)
-{
-    test::StatefulReceiverState state;
-    test::FunctionAsStatefulReceiver receiver{[](auto&&...) {}, state};
-    {
-        agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
-        grpc::Alarm alarm;
-        test::co_spawn_and_run(grpc_context,
-                               [&]() -> asio::awaitable<void>
-                               {
-                                   agrpc::detail::ScopeGuard guard{
-                                       [&]
-                                       {
-                                           const auto sender = [&]
-                                           {
-                                               if constexpr (T{})
-                                               {
-                                                   return asio::execution::schedule(grpc_context.get_scheduler());
-                                               }
-                                               else
-                                               {
-                                                   return agrpc::wait(alarm, test::five_seconds_from_now(),
-                                                                      agrpc::use_sender(grpc_context));
-                                               }
-                                           };
-                                           SUBCASE("submit") { asio::execution::submit(sender(), receiver); }
-                                           SUBCASE("start")
-                                           {
-                                               auto operation_state = asio::execution::connect(sender(), receiver);
-                                               asio::execution::start(operation_state);
-                                           }
-                                       }};
-                                   grpc_context.stop();
-                                   co_await agrpc::wait(alarm, test::five_seconds_from_now());
-                               });
-    }
-    CHECK(state.was_done);
-    CHECK_FALSE(state.exception);
-}
-
 TEST_CASE_FIXTURE(test::GrpcContextTest, "co_spawn two Alarms and await their ok")
 {
     bool ok1{false};

@@ -33,6 +33,10 @@
 #include <chrono>
 #include <optional>
 
+#if (BOOST_VERSION >= 108100)
+#include <boost/asio/experimental/use_promise.hpp>
+#endif
+
 namespace asio = boost::asio;
 
 asio::awaitable<void> grpc_alarm()

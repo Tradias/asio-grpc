@@ -31,7 +31,6 @@
 TEST_CASE("GrpcExecutor fulfills Executor TS traits")
 {
     using Exec = agrpc::GrpcContext::executor_type;
-    CHECK(asio::execution::can_execute_v<std::add_const_t<Exec>, asio::execution::invocable_archetype>);
     CHECK(asio::execution::is_executor_v<Exec>);
     CHECK(asio::can_require_v<Exec, asio::execution::blocking_t::never_t>);
     CHECK(asio::can_prefer_v<Exec, asio::execution::blocking_t::possibly_t>);
@@ -66,9 +65,10 @@ TEST_CASE("GrpcExecutor fulfills Executor TS traits")
                          asio::execution::outstanding_work));
 }
 
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-TEST_CASE("GrpcSender and ScheduleSender fulfill unified executor traits")
+#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
+TEST_CASE("GrpcSender and ScheduleSender fulfill std::execution traits")
 {
+    CHECK(asio::execution::can_execute_v<std::add_const_t<agrpc::GrpcExecutor>, asio::execution::invocable_archetype>);
     CHECK(asio::execution::is_scheduler_v<agrpc::GrpcExecutor>);
     using UseSender = decltype(agrpc::use_sender(std::declval<agrpc::GrpcExecutor>()));
     using UseSenderFromGrpcContext = decltype(agrpc::use_sender(std::declval<agrpc::GrpcContext&>()));
@@ -494,13 +494,16 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post/execute with allocator")
     {
         asio::post(grpc_context, test::HandlerWithAssociatedAllocator{test::NoOp{}, get_allocator()});
     }
-    SUBCASE("asio::execute before grpc_context.run()") { get_tracking_allocator_executor().execute(test::NoOp{}); }
+    SUBCASE("asio::execute before grpc_context.run()")
+    {
+        agrpc::detail::do_execute(get_tracking_allocator_executor(), test::NoOp{});
+    }
     SUBCASE("asio::execute after grpc_context.run() from same thread")
     {
         test::post(grpc_context,
                    [&, exec = get_tracking_allocator_executor()]
                    {
-                       exec.execute(test::NoOp{});
+                       agrpc::detail::do_execute(exec, test::NoOp{});
                    });
     }
     grpc_context.run();
@@ -521,7 +524,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "dispatch with allocator")
 TEST_CASE_FIXTURE(test::GrpcContextTest, "execute with throwing allocator")
 {
     const auto executor = asio::require(get_executor(), asio::execution::allocator(test::ThrowingAllocator<>{}));
-    CHECK_THROWS(executor.execute(test::NoOp{}));
+    CHECK_THROWS(agrpc::detail::do_execute(executor, test::NoOp{}));
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post with throwing completion handler")
@@ -749,7 +752,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_while() runs until the
     CHECK(alarm2_finished);
 }
 
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::schedule")
 {
     bool invoked{false};

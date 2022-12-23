@@ -153,6 +153,7 @@ TEST_CASE_TEMPLATE("RPC::read_initial_metadata automatically finishes RPC on err
         });
 }
 
+#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
 TEST_CASE_FIXTURE(test::HighLevelClientTest<test::UnaryRPC>,
                   "RPC::request can have UseSender as default completion token")
 {
@@ -197,6 +198,7 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::UnaryRPC>,
     CHECK(ok);
     CHECK_EQ(21, response.integer());
 }
+#endif
 
 TEST_CASE_FIXTURE(test::HighLevelClientTest<test::UnaryRPC>, "RPC::request generic unary RPC successfully")
 {
@@ -476,6 +478,7 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>,
         });
 }
 
+#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
 TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>,
                   "ClientStreamingRPC::finish can be called multiple times using sender")
 {
@@ -526,6 +529,7 @@ TEST_CASE_FIXTURE(test::HighLevelClientTest<test::ClientStreamingRPC>,
                                          }});
         });
 }
+#endif
 
 TEST_CASE_FIXTURE(HighLevelClientIoContextTest<test::BidirectionalStreamingRPC>, "BidirectionalStreamingRPC success")
 {

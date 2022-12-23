@@ -429,8 +429,8 @@ class BasicSenderOperationState
 
 AGRPC_NAMESPACE_END
 
-#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_CONNECT_MEMBER_TRAIT) && \
-    !defined(ASIO_HAS_DEDUCED_CONNECT_MEMBER_TRAIT)
+#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
+#if !defined(BOOST_ASIO_HAS_DEDUCED_CONNECT_MEMBER_TRAIT) && !defined(ASIO_HAS_DEDUCED_CONNECT_MEMBER_TRAIT)
 template <class Implementation, class R>
 struct agrpc::asio::traits::connect_member<agrpc::detail::BasicSender<Implementation>, R>
 {
@@ -442,8 +442,7 @@ struct agrpc::asio::traits::connect_member<agrpc::detail::BasicSender<Implementa
 };
 #endif
 
-#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_SUBMIT_MEMBER_TRAIT) && \
-    !defined(ASIO_HAS_DEDUCED_SUBMIT_MEMBER_TRAIT)
+#if !defined(BOOST_ASIO_HAS_DEDUCED_SUBMIT_MEMBER_TRAIT) && !defined(ASIO_HAS_DEDUCED_SUBMIT_MEMBER_TRAIT)
 template <class Implementation, class R>
 struct agrpc::asio::traits::submit_member<agrpc::detail::BasicSender<Implementation>, R>
 {
@@ -454,8 +453,7 @@ struct agrpc::asio::traits::submit_member<agrpc::detail::BasicSender<Implementat
 };
 #endif
 
-#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_START_MEMBER_TRAIT) && \
-    !defined(ASIO_HAS_DEDUCED_START_MEMBER_TRAIT)
+#if !defined(BOOST_ASIO_HAS_DEDUCED_START_MEMBER_TRAIT) && !defined(ASIO_HAS_DEDUCED_START_MEMBER_TRAIT)
 template <class Implementation, class Receiver>
 struct agrpc::asio::traits::start_member<agrpc::detail::BasicSenderOperationState<Implementation, Receiver>>
 {
@@ -464,6 +462,7 @@ struct agrpc::asio::traits::start_member<agrpc::detail::BasicSenderOperationStat
 
     using result_type = void;
 };
+#endif
 #endif
 
 #endif  // AGRPC_DETAIL_BASIC_SENDER_HPP

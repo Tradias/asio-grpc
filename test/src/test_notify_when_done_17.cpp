@@ -137,7 +137,7 @@ TEST_CASE("notify_when_done: destructs and deallocates unstarted, local operatio
     CHECK_FALSE(invoked);
 }
 
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
 TEST_CASE("notify_when_done: deallocates sender operation states only when necessary")
 {
     bool use_submit{false};
@@ -186,7 +186,9 @@ TEST_CASE("notify_when_done: deallocates sender operation states only when neces
     CHECK_FALSE(invoked);
     CHECK_EQ(tracked.bytes_allocated, tracked.bytes_deallocated);
 }
+#endif
 
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 TEST_CASE("notify_when_done: is completed on RPC success")
 {
     bool ok{true};
