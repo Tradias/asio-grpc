@@ -25,7 +25,7 @@
 namespace example
 {
 // ---------------------------------------------------
-// A helper to properly shut down a gRPC without deadlocking.
+// A helper to properly shut down a gRPC server without deadlocking.
 // ---------------------------------------------------
 struct ServerShutdown
 {
@@ -52,10 +52,10 @@ struct ServerShutdown
         if (!is_shutdown.exchange(true))
         {
             // This will cause all coroutines to run to completion normally
-            // while returning `false` from RPC related steps. Also cancel the signals
+            // while returning `false` from RPC related steps. Also cancels the signals
             // so that the GrpcContext will eventually run out of work and return
             // from `run()`.
-            // We cannot call server.Shutdown() on the same thread that runs a GrpcContext because that could lead to
+            // We cannot call server.Shutdown() on the same thread that runs a GrpcContext because that can lead to a
             // deadlock, therefore create a new thread.
             shutdown_thread = std::thread(
                 [&]
@@ -65,8 +65,7 @@ struct ServerShutdown
                 });
             // Alternatively call `grpc_context.stop()` here instead which causes all coroutines
             // to end at their next suspension point.
-            // Then call `server->Shutdown()` after the call to `grpc_context.run()` returns
-            // or `.reset()` the grpc_context and go into another `grpc_context.run()`
+            // Then call `server->Shutdown()` after the call to `grpc_context.run()` returns.
         }
     }
 

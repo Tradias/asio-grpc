@@ -18,16 +18,16 @@
 #include <cstdio>
 #include <cstdlib>
 
-inline void abort_if_not_impl(bool condition, const char* condition_string)
+inline void abort_if_not_impl(bool condition, const char* condition_string, const char* file, const long line)
 {
     if (!condition)
     {
-        std::printf("Assertion failed: %s", condition_string);
+        std::printf("[%s:%li] Assertion failed: %s\n", file, line, condition_string);
         std::abort();
     }
 }
 
-#define abort_if_not(condition) abort_if_not_impl((condition), #condition)
+#define abort_if_not(condition) abort_if_not_impl((condition), #condition, __FILE__, __LINE__)
 
 template <class... Args>
 void silence_unused(Args&&... args)
