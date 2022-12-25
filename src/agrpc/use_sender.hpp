@@ -67,6 +67,14 @@ struct UseSender
     {
         return detail::UseSender{context};
     }
+
+    template <bool AlwaysFalse = false>
+    [[noreturn]] operator detail::UseSender()
+    {
+        static_assert(AlwaysFalse,
+                      "Certain functions require an explicitly provided token, for example created by "
+                      "`agrpc::use_sender(grpc_context)`, as the last argument.");
+    }
 };
 
 /**
