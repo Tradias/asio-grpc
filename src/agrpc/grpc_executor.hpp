@@ -59,6 +59,12 @@ class BasicGrpcExecutor
      */
     using allocator_type = Allocator;
 
+    /**
+     * @brief Default construct an executor
+     *
+     * The constructed object may not be used until it is assigned a valid executor, for example through
+     * `GrpcContext::get_executor`.
+     */
     BasicGrpcExecutor() = default;
 
     constexpr explicit BasicGrpcExecutor(agrpc::GrpcContext& grpc_context) noexcept(

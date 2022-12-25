@@ -22,18 +22,19 @@
 
 #include <vector>
 
+#ifndef AGRPC_USE_RECYCLING_ALLOCATOR
 TEST_CASE(
     "AllocatorBinder can be constructed using allocator_traits<polymorphic_allocator>::construct with expected "
     "arguments")
 {
-    using PmrAllocator = test::TrackingAllocator<>;
+    using PmrAllocator = agrpc::detail::pmr::polymorphic_allocator<std::byte>;
     using Binder = agrpc::AllocatorBinder<int, PmrAllocator>;
-    test::TrackedAllocation tracked;
-    PmrAllocator expected_allocator{tracked};
-    std::vector<Binder, test::TrackingAllocator<Binder>> vector;
+    PmrAllocator expected_allocator{agrpc::detail::pmr::new_delete_resource()};
+    std::vector<Binder, agrpc::detail::pmr::polymorphic_allocator<Binder>> vector;
     vector.emplace_back(expected_allocator);
     CHECK_EQ(expected_allocator, asio::get_associated_allocator(vector.front()));
 }
+#endif
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_allocator with awaitable")

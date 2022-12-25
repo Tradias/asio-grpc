@@ -56,16 +56,18 @@ TEST_CASE("GrpcSender and ScheduleSender fulfill std::execution concepts")
 #endif
 #endif
 
+#ifndef AGRPC_USE_RECYCLING_ALLOCATOR
 TEST_CASE_FIXTURE(
     test::GrpcContextTest,
     "asio BasicGrpcExecutor<PmrAllocator> can be constructed using allocator_traits<polymorphic_allocator>::construct")
 {
-    using PmrAllocator = test::TrackingAllocator<>;
+    using PmrAllocator = agrpc::detail::pmr::polymorphic_allocator<std::byte>;
     using Executor = agrpc::BasicGrpcExecutor<PmrAllocator>;
-    std::vector<Executor, test::TrackingAllocator<Executor>> vector;
-    vector.emplace_back(grpc_context, get_allocator());
-    CHECK_EQ(get_allocator(), vector.front().get_allocator());
+    std::vector<Executor, agrpc::detail::pmr::polymorphic_allocator<Executor>> vector;
+    vector.emplace_back(grpc_context, agrpc::detail::pmr::new_delete_resource());
+    CHECK_EQ(agrpc::detail::pmr::new_delete_resource(), vector.front().get_allocator().resource());
 }
+#endif
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "co_spawn two Alarms and await their ok")
