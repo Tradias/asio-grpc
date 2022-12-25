@@ -61,8 +61,7 @@ TEST_CASE_FIXTURE(
     test::GrpcContextTest,
     "asio BasicGrpcExecutor<PmrAllocator> can be constructed using allocator_traits<polymorphic_allocator>::construct")
 {
-    using PmrAllocator = agrpc::detail::pmr::polymorphic_allocator<std::byte>;
-    using Executor = agrpc::BasicGrpcExecutor<PmrAllocator>;
+    using Executor = agrpc::pmr::GrpcExecutor;
     std::vector<Executor, agrpc::detail::pmr::polymorphic_allocator<Executor>> vector;
     vector.emplace_back(grpc_context, agrpc::detail::pmr::new_delete_resource());
     CHECK_EQ(agrpc::detail::pmr::new_delete_resource(), vector.front().get_allocator().resource());

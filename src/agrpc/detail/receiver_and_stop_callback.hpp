@@ -15,7 +15,7 @@
 #ifndef AGRPC_DETAIL_RECEIVER_AND_STOP_CALLBACK_HPP
 #define AGRPC_DETAIL_RECEIVER_AND_STOP_CALLBACK_HPP
 
-#include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/asio_association.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/utility.hpp>
 

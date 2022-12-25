@@ -15,8 +15,8 @@
 #ifndef AGRPC_DETAIL_RECEIVER_HPP
 #define AGRPC_DETAIL_RECEIVER_HPP
 
-#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/execution.hpp>
 
 #include <utility>
 

@@ -20,6 +20,7 @@
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 
+#include <agrpc/detail/asio_association.hpp>
 #include <agrpc/detail/memory_resource.hpp>
 #include <agrpc/detail/tuple.hpp>
 #include <agrpc/detail/utility.hpp>

@@ -15,7 +15,7 @@
 #ifndef AGRPC_DETAIL_REPEATEDLY_REQUEST_SENDER_HPP
 #define AGRPC_DETAIL_REPEATEDLY_REQUEST_SENDER_HPP
 
-#include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/asio_association.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/no_op_stop_callback.hpp>
