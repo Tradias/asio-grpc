@@ -27,7 +27,7 @@ SOFTWARE.
 
  */
 
- html {
+html {
     /* side nav width. MUST be = `TREEVIEW_WIDTH`.
      * Make sure it is wide enough to contain the page title (logo + title + version)
      */
@@ -35,6 +35,8 @@ SOFTWARE.
     --menu-display: none;
 
     --top-height: 120px;
+    --toc-sticky-top: -25px;
+    --toc-max-height: calc(100vh - 2 * var(--spacing-medium) - 25px);
 }
 
 #projectname {
