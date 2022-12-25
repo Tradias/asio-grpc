@@ -58,18 +58,6 @@ Click on `snippet source` to jump to the code of an individual example.
 <sup><a href='/example/streaming-client.cpp#L72-L76' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-low-level-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
-<!-- snippet: client-side-grpc-stream -->
-<a id='snippet-client-side-grpc-stream'></a>
-```cpp
-// ---------------------------------------------------
-// -Experimental-
-// A bidirectional-streaming RPC where the client subscribes to a topic and the server sends the feed for the last
-// subscribed topic every 333ms. The feed is a simple string identified by an integer in the topic.
-// ---------------------------------------------------
-```
-<sup><a href='/example/streaming-client.cpp#L121-L127' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-grpc-stream' title='Start of snippet'>anchor</a></sup>
-<!-- endSnippet -->
-
 <!-- snippet: client-side-run-with-deadline -->
 <a id='snippet-client-side-run-with-deadline'></a>
 ```cpp
@@ -176,18 +164,6 @@ Click on `snippet source` to jump to the code of an individual example.
 // ---------------------------------------------------
 ```
 <sup><a href='/example/streaming-server.cpp#L80-L84' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-server-streaming' title='Start of snippet'>anchor</a></sup>
-<!-- endSnippet -->
-
-<!-- snippet: server-side-grpc-stream -->
-<a id='snippet-server-side-grpc-stream'></a>
-```cpp
-// ---------------------------------------------------
-// -Experimental-
-// A bidirectional-streaming RPC where the client subscribes to a topic and the server sends the feed for the last
-// subscribed topic every 333ms. The feed is a simple string identified by an integer in the topic.
-// ---------------------------------------------------
-```
-<sup><a href='/example/streaming-server.cpp#L191-L197' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-grpc-stream' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Multi-threaded
