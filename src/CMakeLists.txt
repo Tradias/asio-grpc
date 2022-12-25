@@ -119,6 +119,7 @@ if(ASIO_GRPC_BUILD_TESTS AND ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/memory_resource.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/memory_resource_allocator.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/name.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/namespace_cpp20.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/no_op_stop_callback.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/notify_on_state_change.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/notify_when_done.hpp"

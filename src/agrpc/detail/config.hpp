@@ -75,17 +75,17 @@
 #define AGRPC_NAMESPACE_BEGIN() \
     namespace agrpc             \
     {
-#elif defined(AGRPC_BOOST_ASIO)
-#define AGRPC_NAMESPACE_BEGIN() \
-    namespace agrpc             \
-    {                           \
-    inline namespace b          \
-    {
 #elif defined(AGRPC_STANDALONE_ASIO)
 #define AGRPC_NAMESPACE_BEGIN() \
     namespace agrpc             \
     {                           \
     inline namespace s          \
+    {
+#elif defined(AGRPC_BOOST_ASIO)
+#define AGRPC_NAMESPACE_BEGIN() \
+    namespace agrpc             \
+    {                           \
+    inline namespace b          \
     {
 #elif defined(AGRPC_UNIFEX)
 #define AGRPC_NAMESPACE_BEGIN() \

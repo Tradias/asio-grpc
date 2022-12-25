@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/namespace_cpp20.hpp>
 #include <agrpc/detail/repeatedly_request_sender.hpp>
 #include <agrpc/detail/rpc.hpp>
 #include <agrpc/detail/rpc_context.hpp>
@@ -32,6 +33,9 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+
+AGRPC_NAMESPACE_CPP20_BEGIN()
+
 /**
  * @brief Server-side function object to register request handlers
  *
@@ -142,7 +146,10 @@ class RepeatedlyRequestFn
                                          static_cast<CompletionToken&&>(token));
     }
 };
-}  // namespace detail
+
+AGRPC_NAMESPACE_CPP20_END
+
+}
 
 /**
  * @brief Register a request handler for a RPC

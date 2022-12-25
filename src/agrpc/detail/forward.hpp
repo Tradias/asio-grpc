@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_executor_options.hpp>
+#include <agrpc/detail/namespace_cpp20.hpp>
 
 #include <memory>
 
@@ -56,8 +57,6 @@ struct BasicSenderAccess;
 template <class Sender, class Receiver, class... CompletionArgs>
 class ConditionalSenderOperationState;
 
-class RepeatedlyRequestFn;
-
 struct RepeatedlyRequestContextAccess;
 
 class GenericRPCContext;
@@ -94,6 +93,12 @@ grpc::CompletionQueue* get_completion_queue(agrpc::GrpcContext&) noexcept;
 
 template <class Executor>
 grpc::CompletionQueue* get_completion_queue(const agrpc::BasicGrpcStream<Executor>&) noexcept;
+
+AGRPC_NAMESPACE_CPP20_BEGIN()
+
+class RepeatedlyRequestFn;
+
+AGRPC_NAMESPACE_CPP20_END
 }
 
 AGRPC_NAMESPACE_END

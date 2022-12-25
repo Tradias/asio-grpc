@@ -111,6 +111,7 @@ MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
 NamespaceMacros:
   - AGRPC_NAMESPACE_BEGIN
+  - AGRPC_NAMESPACE_CPP20_BEGIN
   - DOCTEST_TEST_SUITE
 PenaltyBreakAssignment: 2
 PenaltyBreakBeforeFirstCallParameter: 1
