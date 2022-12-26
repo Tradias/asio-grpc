@@ -26,7 +26,7 @@ An [Executor, Networking TS](https://www.boost.org/doc/libs/1_81_0/doc/html/boos
 <a id='snippet-client-side-helloworld'></a>
 ```cpp
 helloworld::Greeter::Stub stub{grpc::CreateChannel(host, grpc::InsecureChannelCredentials())};
-agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+agrpc::GrpcContext grpc_context;
 
 asio::co_spawn(
     grpc_context,
