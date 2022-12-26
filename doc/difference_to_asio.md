@@ -17,7 +17,7 @@ agrpc::wait(alarm, deadline, asio::bind_executor(grpc_context.get_executor(), []
 // grpc_context.get_executor() is both, the I/O executor and completion handler executor
 ```
 
-As a consequence, the asynchronous operations always complete in the thread that called `GrpcContext::run*()/poll*()`, whereas Asio would submit the completion handler for execution as if by performing `asio::dispatch(exec2, [=<moved>]() { completion_handler(args...); })`. See also [Asio's documentation](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/asynchronous_operations.html).
+As a consequence, the asynchronous operations always complete in the thread that called `GrpcContext::run*()/poll*()`, whereas Asio would submit the completion handler for execution as if by performing `asio::dispatch(exec2, [=<moved>]() { completion_handler(args...); })`. See also [Asio's documentation](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio/reference/asynchronous_operations.html).
 
 More recently added APIs like the `agrpc::Alarm` behave exactly like Asio:
 

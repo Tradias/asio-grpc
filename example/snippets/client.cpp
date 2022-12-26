@@ -382,8 +382,4 @@ void client_main()
         asio::detached);
     grpc_context.run();
     // end-snippet
-
-    // begin-snippet: make-work-guard
-    std::optional guard{asio::require(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked)};
-    // end-snippet
 }
