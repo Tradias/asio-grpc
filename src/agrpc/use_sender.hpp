@@ -69,7 +69,7 @@ struct UseSender
     }
 
     template <bool AlwaysFalse = false>
-    [[noreturn]] operator detail::UseSender()
+    [[noreturn]] operator detail::UseSender() const
     {
         static_assert(AlwaysFalse,
                       "Certain functions require an explicitly provided token, for example created by "

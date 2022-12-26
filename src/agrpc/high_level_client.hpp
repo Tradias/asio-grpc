@@ -640,7 +640,7 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
                         CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
-            detail::ClientUnaryRequestSenderImplementation<PrepareAsync, Executor>>(
+            detail::ClientUnaryRequestSenderImplementation<PrepareAsync>>(
             grpc_context, {context, response}, {grpc_context, stub, context, request}, token);
     }
 
@@ -747,8 +747,7 @@ class RPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor, agrpc::RPCType::CLIENT_UNAR
                         grpc::ClientContext& context, const grpc::ByteBuffer& request, grpc::ByteBuffer& response,
                         CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
-        return detail::async_initiate_sender_implementation<
-            detail::GenericClientUnaryRequestSenderImplementation<Executor>>(
+        return detail::async_initiate_sender_implementation<detail::ClientGenericUnaryRequestSenderImplementation>(
             grpc_context, {context, response}, {grpc_context, method, stub, context, request}, token);
     }
 
@@ -878,6 +877,7 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
     }
 
   private:
+    friend detail::ClientStreamingRequestSenderImplementationBase<PrepareAsync, Executor>;
     friend detail::ClientClientStreamingRequestSenderImplementation<PrepareAsync, Executor>;
 
     using detail::RPCClientClientStreamingBase<ResponderT<RequestT>, Executor>::RPCClientClientStreamingBase;
@@ -992,6 +992,7 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>
     }
 
   private:
+    friend detail::ClientStreamingRequestSenderImplementationBase<PrepareAsync, Executor>;
     friend detail::ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor>;
 
     using detail::RPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>::RPCClientServerStreamingBase;
@@ -1098,6 +1099,7 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING
     }
 
   private:
+    friend detail::ClientStreamingRequestSenderImplementationBase<PrepareAsync, Executor>;
     friend detail::ClientBidirectionalStreamingRequestSenderImplementation<PrepareAsync, Executor>;
 
     using detail::RPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>,
@@ -1173,8 +1175,7 @@ class RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor, agrpc::RPCType::CLIENT_
                         CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
-            detail::ClientBidirectionalStreamingRequestSenderImplementation<agrpc::CLIENT_GENERIC_STREAMING_RPC,
-                                                                            Executor>>(
+            detail::ClientGenericBidirectionalStreamingRequestSenderImplementation<Executor>>(
             grpc_context, {}, {grpc_context, method, stub, context}, token);
     }
 
@@ -1191,8 +1192,8 @@ class RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor, agrpc::RPCType::CLIENT_
     }
 
   private:
-    friend detail::ClientBidirectionalStreamingRequestSenderImplementation<agrpc::CLIENT_GENERIC_STREAMING_RPC,
-                                                                           Executor>;
+    friend detail::ClientStreamingRequestSenderImplementationBase<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>;
+    friend detail::ClientGenericBidirectionalStreamingRequestSenderImplementation<Executor>;
 
     using detail::RPCBidirectionalStreamingBase<grpc::GenericClientAsyncReaderWriter,
                                                 Executor>::RPCBidirectionalStreamingBase;

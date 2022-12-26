@@ -38,7 +38,7 @@ class BasicTaggedPtr
 
     explicit BasicTaggedPtr(T* ptr) noexcept : ptr(reinterpret_cast<std::uintptr_t>(ptr)) {}
 
-    BasicTaggedPtr(std::uintptr_t other) noexcept : ptr(other) {}
+    explicit BasicTaggedPtr(std::uintptr_t other) noexcept : ptr(other) {}
 
     BasicTaggedPtr& operator=(std::uintptr_t other) noexcept
     {

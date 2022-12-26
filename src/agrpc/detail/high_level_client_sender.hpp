@@ -58,8 +58,6 @@ struct RPCAccess
 
 struct ClientContextCancellationFunction
 {
-    grpc::ClientContext& client_context;
-
 #if !defined(AGRPC_UNIFEX)
     explicit
 #endif
@@ -79,12 +77,12 @@ struct ClientContextCancellationFunction
         }
     }
 #endif
+
+    grpc::ClientContext& client_context;
 };
 
 struct RPCCancellationFunction
 {
-    detail::RPCClientContextBase& rpc;
-
 #if !defined(AGRPC_UNIFEX)
     explicit
 #endif
@@ -104,16 +102,18 @@ struct RPCCancellationFunction
         }
     }
 #endif
+
+    detail::RPCClientContextBase& rpc;
 };
 
-template <auto PrepareAsync, class Executor>
-struct ClientUnaryRequestSenderImplementation;
+template <class Responder>
+struct ClientUnaryRequestSenderImplementationBase;
 
-template <class Stub, class Request, class Response, template <class> class Responder,
-          detail::ClientUnaryRequest<Stub, Request, Responder<Response>> PrepareAsync, class Executor>
-struct ClientUnaryRequestSenderImplementation<PrepareAsync, Executor> : detail::GrpcSenderImplementationBase
+template <class Response, template <class> class Responder>
+struct ClientUnaryRequestSenderImplementationBase<Responder<Response>>
 {
-    using RPC = agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>;
+    static constexpr auto TYPE = detail::SenderImplementationType::GRPC_TAG;
+
     using Signature = void(grpc::Status);
     using StopFunction = ClientContextCancellationFunction;
 
@@ -123,12 +123,6 @@ struct ClientUnaryRequestSenderImplementation<PrepareAsync, Executor> : detail::
         Response& response;
     };
 
-    ClientUnaryRequestSenderImplementation(agrpc::GrpcContext& grpc_context, Stub& stub,
-                                           grpc::ClientContext& client_context, const Request& req)
-        : responder((stub.*PrepareAsync)(&client_context, req, grpc_context.get_completion_queue()))
-    {
-    }
-
     auto& stop_function_arg(const Initiation& initiation) noexcept { return initiation.client_context; }
 
     void initiate(const agrpc::GrpcContext&, const Initiation& initiation, detail::OperationBase* operation) noexcept
@@ -143,46 +137,76 @@ struct ClientUnaryRequestSenderImplementation<PrepareAsync, Executor> : detail::
         on_done(static_cast<grpc::Status&&>(status));
     }
 
-    grpc::Status status;
     std::unique_ptr<Responder<Response>> responder;
+    grpc::Status status;
 };
 
-template <class Executor>
-struct GenericClientUnaryRequestSenderImplementation : detail::GrpcSenderImplementationBase
+template <auto PrepareAsync>
+struct ClientUnaryRequestSenderImplementation;
+
+template <class Stub, class Request, class Response, template <class> class Responder,
+          detail::ClientUnaryRequest<Stub, Request, Responder<Response>> PrepareAsync>
+struct ClientUnaryRequestSenderImplementation<PrepareAsync>
+    : ClientUnaryRequestSenderImplementationBase<Responder<Response>>
 {
-    using RPC = agrpc::RPC<detail::GenericRPCType::CLIENT_UNARY, Executor, agrpc::RPCType::CLIENT_UNARY>;
-    using Signature = void(grpc::Status);
-    using StopFunction = ClientContextCancellationFunction;
-
-    struct Initiation
+    ClientUnaryRequestSenderImplementation(agrpc::GrpcContext& grpc_context, Stub& stub,
+                                           grpc::ClientContext& client_context, const Request& req)
+        : ClientUnaryRequestSenderImplementationBase<Responder<Response>>{
+              (stub.*PrepareAsync)(&client_context, req, grpc_context.get_completion_queue())}
     {
-        grpc::ClientContext& client_context;
-        grpc::ByteBuffer& response;
-    };
+    }
+};
 
-    GenericClientUnaryRequestSenderImplementation(agrpc::GrpcContext& grpc_context, const std::string& method,
+struct ClientGenericUnaryRequestSenderImplementation
+    : ClientUnaryRequestSenderImplementationBase<grpc::GenericClientAsyncResponseReader>
+{
+    ClientGenericUnaryRequestSenderImplementation(agrpc::GrpcContext& grpc_context, const std::string& method,
                                                   grpc::GenericStub& stub, grpc::ClientContext& client_context,
                                                   const grpc::ByteBuffer& req)
-        : responder(stub.PrepareUnaryCall(&client_context, method, req, grpc_context.get_completion_queue()))
+        : ClientUnaryRequestSenderImplementationBase<grpc::GenericClientAsyncResponseReader>{
+              stub.PrepareUnaryCall(&client_context, method, req, grpc_context.get_completion_queue())}
     {
     }
+};
 
-    auto& stop_function_arg(const Initiation& initiation) noexcept { return initiation.client_context; }
+template <auto PrepareAsync, class Executor>
+struct ClientStreamingRequestSenderImplementationBase
+{
+    static constexpr auto TYPE = detail::SenderImplementationType::GRPC_TAG;
 
-    void initiate(const agrpc::GrpcContext&, const Initiation& initiation, detail::OperationBase* operation) noexcept
+    using RPC = agrpc::RPC<PrepareAsync, Executor>;
+    using Signature = void(RPC);
+    using Initiation = detail::Empty;
+    using StopFunction = detail::RPCCancellationFunction;
+
+    detail::RPCClientContextBase& stop_function_arg(const Initiation&) noexcept { return rpc; }
+
+    void initiate(const agrpc::GrpcContext&, const Initiation&, void* self) noexcept
     {
-        responder->StartCall();
-        responder->Finish(&initiation.response, &status, operation);
+        rpc.responder().StartCall(self);
     }
 
-    template <class OnDone>
-    void done(OnDone on_done, bool)
+    template <template <int> class OnDone>
+    void done(OnDone<0> on_done, bool ok)
     {
-        on_done(static_cast<grpc::Status&&>(status));
+        if (ok)
+        {
+            on_done(static_cast<RPC&&>(rpc));
+        }
+        else
+        {
+            detail::RPCAccess::client_initiate_finish(rpc, on_done.template self<1>());
+        }
     }
 
-    grpc::Status status;
-    std::unique_ptr<grpc::GenericClientAsyncResponseReader> responder;
+    template <template <int> class OnDone>
+    void done(OnDone<1> on_done, bool)
+    {
+        rpc.set_finished();
+        on_done(static_cast<RPC&&>(rpc));
+    }
+
+    RPC rpc;
 };
 
 template <auto PrepareAsync, class Executor>
@@ -191,48 +215,16 @@ struct ClientClientStreamingRequestSenderImplementation;
 template <class Stub, class Request, class Response, template <class> class Responder,
           detail::PrepareAsyncClientClientStreamingRequest<Stub, Responder<Request>, Response> PrepareAsync,
           class Executor>
-struct ClientClientStreamingRequestSenderImplementation<PrepareAsync, Executor> : detail::GrpcSenderImplementationBase
+struct ClientClientStreamingRequestSenderImplementation<PrepareAsync, Executor>
+    : ClientStreamingRequestSenderImplementationBase<PrepareAsync, Executor>
 {
-    using RPC = agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>;
-    using Signature = void(RPC);
-    using Initiation = detail::Empty;
-    using StopFunction = detail::RPCCancellationFunction;
-
     ClientClientStreamingRequestSenderImplementation(agrpc::GrpcContext& grpc_context, Stub& stub,
                                                      grpc::ClientContext& client_context, Response& response)
-        : rpc(grpc_context.get_executor(), client_context,
-              (stub.*PrepareAsync)(&client_context, &response, grpc_context.get_completion_queue()))
+        : ClientStreamingRequestSenderImplementationBase<PrepareAsync, Executor>{
+              {grpc_context.get_executor(), client_context,
+               (stub.*PrepareAsync)(&client_context, &response, grpc_context.get_completion_queue())}}
     {
     }
-
-    detail::RPCClientContextBase& stop_function_arg(const Initiation&) noexcept { return rpc; }
-
-    void initiate(const agrpc::GrpcContext&, const Initiation&, void* self) noexcept
-    {
-        rpc.responder().StartCall(self);
-    }
-
-    template <template <int> class OnDone>
-    void done(OnDone<0> on_done, bool ok)
-    {
-        if (ok)
-        {
-            on_done(static_cast<RPC&&>(rpc));
-        }
-        else
-        {
-            detail::RPCAccess::client_initiate_finish(rpc, on_done.template self<1>());
-        }
-    }
-
-    template <template <int> class OnDone>
-    void done(OnDone<1> on_done, bool)
-    {
-        rpc.set_finished();
-        on_done(static_cast<RPC&&>(rpc));
-    }
-
-    RPC rpc;
 };
 
 template <auto PrepareAsync, class Executor>
@@ -241,48 +233,16 @@ struct ClientServerStreamingRequestSenderImplementation;
 template <class Stub, class Request, class Response, template <class> class Responder,
           detail::PrepareAsyncClientServerStreamingRequest<Stub, Request, Responder<Response>> PrepareAsync,
           class Executor>
-struct ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor> : detail::GrpcSenderImplementationBase
+struct ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor>
+    : ClientStreamingRequestSenderImplementationBase<PrepareAsync, Executor>
 {
-    using RPC = agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>;
-    using Signature = void(RPC);
-    using Initiation = detail::Empty;
-    using StopFunction = detail::RPCCancellationFunction;
-
     ClientServerStreamingRequestSenderImplementation(agrpc::GrpcContext& grpc_context, Stub& stub,
                                                      grpc::ClientContext& client_context, const Request& req)
-        : rpc(grpc_context.get_executor(), client_context,
-              (stub.*PrepareAsync)(&client_context, req, grpc_context.get_completion_queue()))
+        : ClientStreamingRequestSenderImplementationBase<PrepareAsync, Executor>{
+              {grpc_context.get_executor(), client_context,
+               (stub.*PrepareAsync)(&client_context, req, grpc_context.get_completion_queue())}}
     {
     }
-
-    detail::RPCClientContextBase& stop_function_arg(const Initiation&) noexcept { return rpc; }
-
-    void initiate(const agrpc::GrpcContext&, const Initiation&, void* self) noexcept
-    {
-        rpc.responder().StartCall(self);
-    }
-
-    template <template <int> class OnDone>
-    void done(OnDone<0> on_done, bool ok)
-    {
-        if (ok)
-        {
-            on_done(static_cast<RPC&&>(rpc));
-        }
-        else
-        {
-            detail::RPCAccess::client_initiate_finish(rpc, on_done.template self<1>());
-        }
-    }
-
-    template <template <int> class OnDone>
-    void done(OnDone<1> on_done, bool)
-    {
-        rpc.set_finished();
-        on_done(static_cast<RPC&&>(rpc));
-    }
-
-    RPC rpc;
 };
 
 template <auto PrepareAsync, class Executor>
@@ -292,96 +252,29 @@ template <class Stub, class Request, class Response, template <class, class> cla
           detail::PrepareAsyncClientBidirectionalStreamingRequest<Stub, Responder<Request, Response>> PrepareAsync,
           class Executor>
 struct ClientBidirectionalStreamingRequestSenderImplementation<PrepareAsync, Executor>
-    : detail::GrpcSenderImplementationBase
+    : ClientStreamingRequestSenderImplementationBase<PrepareAsync, Executor>
 {
-    using RPC = agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>;
-    using Signature = void(RPC);
-    using Initiation = detail::Empty;
-    using StopFunction = detail::RPCCancellationFunction;
-
     ClientBidirectionalStreamingRequestSenderImplementation(agrpc::GrpcContext& grpc_context, Stub& stub,
                                                             grpc::ClientContext& client_context)
-        : rpc(grpc_context.get_executor(), client_context,
-              (stub.*PrepareAsync)(&client_context, grpc_context.get_completion_queue()))
+        : ClientStreamingRequestSenderImplementationBase<PrepareAsync, Executor>{
+              {grpc_context.get_executor(), client_context,
+               (stub.*PrepareAsync)(&client_context, grpc_context.get_completion_queue())}}
     {
     }
-
-    detail::RPCClientContextBase& stop_function_arg(const Initiation&) noexcept { return rpc; }
-
-    void initiate(const agrpc::GrpcContext&, const Initiation&, void* self) noexcept
-    {
-        rpc.responder().StartCall(self);
-    }
-
-    template <template <int> class OnDone>
-    void done(OnDone<0> on_done, bool ok)
-    {
-        if (ok)
-        {
-            on_done(static_cast<RPC&&>(rpc));
-        }
-        else
-        {
-            detail::RPCAccess::client_initiate_finish(rpc, on_done.template self<1>());
-        }
-    }
-
-    template <template <int> class OnDone>
-    void done(OnDone<1> on_done, bool)
-    {
-        rpc.set_finished();
-        on_done(static_cast<RPC&&>(rpc));
-    }
-
-    RPC rpc;
 };
 
 template <class Executor>
-struct ClientBidirectionalStreamingRequestSenderImplementation<detail::GenericRPCType::CLIENT_STREAMING, Executor>
-    : detail::GrpcSenderImplementationBase
+struct ClientGenericBidirectionalStreamingRequestSenderImplementation
+    : ClientStreamingRequestSenderImplementationBase<detail::GenericRPCType::CLIENT_STREAMING, Executor>
 {
-    using RPC =
-        agrpc::RPC<detail::GenericRPCType::CLIENT_STREAMING, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>;
-    using Signature = void(RPC);
-    using Initiation = detail::Empty;
-    using StopFunction = detail::RPCCancellationFunction;
-
-    ClientBidirectionalStreamingRequestSenderImplementation(agrpc::GrpcContext& grpc_context, const std::string& method,
-                                                            grpc::GenericStub& stub,
-                                                            grpc::ClientContext& client_context)
-        : rpc(grpc_context.get_executor(), client_context,
-              stub.PrepareCall(&client_context, method, grpc_context.get_completion_queue()))
+    ClientGenericBidirectionalStreamingRequestSenderImplementation(agrpc::GrpcContext& grpc_context,
+                                                                   const std::string& method, grpc::GenericStub& stub,
+                                                                   grpc::ClientContext& client_context)
+        : ClientStreamingRequestSenderImplementationBase<detail::GenericRPCType::CLIENT_STREAMING, Executor>{
+              {grpc_context.get_executor(), client_context,
+               stub.PrepareCall(&client_context, method, grpc_context.get_completion_queue())}}
     {
     }
-
-    detail::RPCClientContextBase& stop_function_arg(const Initiation&) noexcept { return rpc; }
-
-    void initiate(const agrpc::GrpcContext&, const Initiation&, void* self) noexcept
-    {
-        rpc.responder().StartCall(self);
-    }
-
-    template <template <int> class OnDone>
-    void done(OnDone<0> on_done, bool ok)
-    {
-        if (ok)
-        {
-            on_done(static_cast<RPC&&>(rpc));
-        }
-        else
-        {
-            detail::RPCAccess::client_initiate_finish(rpc, on_done.template self<1>());
-        }
-    }
-
-    template <template <int> class OnDone>
-    void done(OnDone<1> on_done, bool)
-    {
-        rpc.set_finished();
-        on_done(static_cast<RPC&&>(rpc));
-    }
-
-    RPC rpc;
 };
 
 template <class RPCBase>

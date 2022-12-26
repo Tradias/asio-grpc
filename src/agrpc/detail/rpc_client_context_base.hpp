@@ -51,7 +51,7 @@ class AutoCancelClientContextRef
 
     void clear() noexcept { context.clear(); }
 
-    void cancel()
+    void cancel() const
     {
         if (const auto context_ptr = context.get())
         {
@@ -88,7 +88,7 @@ class RPCClientContextBase
 
     void set_finished() noexcept { client_context.clear(); }
 
-    void cancel() { client_context.cancel(); }
+    void cancel() const { client_context.cancel(); }
 
     [[nodiscard]] bool is_writes_done() const noexcept { return client_context.has_bit<0>(); }
 
