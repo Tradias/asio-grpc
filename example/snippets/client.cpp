@@ -238,13 +238,6 @@ void client_generic_streaming_corked(agrpc::GrpcContext& grpc_context, grpc::Gen
     /* [request-client-generic-streaming-corked] */
 }
 
-void create_client_grpc_context()
-{
-    /* [create-grpc_context-client-side] */
-    agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
-    /* [create-grpc_context-client-side] */
-}
-
 asio::awaitable<void> bind_allocator(std::allocator<void> my_allocator)
 {
     std::unique_ptr<grpc::ClientAsyncWriter<example::v1::Request>> writer;
@@ -362,7 +355,7 @@ asio::awaitable<void> mock_stub(agrpc::GrpcContext& grpc_context)
 void client_main()
 {
     // begin-snippet: create-grpc_context-client-side
-    agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+    agrpc::GrpcContext grpc_context;
     // end-snippet
 
     // begin-snippet: run-grpc_context-client-side

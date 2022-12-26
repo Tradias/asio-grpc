@@ -138,7 +138,7 @@ struct ClientUnaryRequestSenderImplementationBase<Responder<Response>>
     }
 
     std::unique_ptr<Responder<Response>> responder;
-    grpc::Status status;
+    grpc::Status status{};
 };
 
 template <auto PrepareAsync>

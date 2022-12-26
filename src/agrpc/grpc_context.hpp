@@ -61,17 +61,24 @@ class GrpcContext
     using allocator_type = detail::GrpcContextLocalAllocator;
 
     /**
-     * @brief Construct a GrpcContext from a `grpc::CompletionQueue`
+     * @brief Construct a GrpcContext for gRPC clients
+     */
+    GrpcContext() = default;
+
+    template <class = void>
+    [[deprecated("For gRPC clients use the default constructor")]] explicit GrpcContext(
+        std::unique_ptr<grpc::CompletionQueue>&& completion_queue);
+
+    /**
+     * @brief Construct a GrpcContext for gRPC servers
      *
-     * For servers and clients:
+     * The resulting GrpcContext can also be used for clients.
+     *
+     * Example:
      *
      * @snippet server.cpp create-grpc_context-server-side
-     *
-     * For clients only:
-     *
-     * @snippet client.cpp create-grpc_context-client-side
      */
-    explicit GrpcContext(std::unique_ptr<grpc::CompletionQueue>&& completion_queue);
+    explicit GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue>&& completion_queue);
 
     /**
      * @brief Destruct the GrpcContext
@@ -291,7 +298,7 @@ class GrpcContext
     std::atomic_bool stopped{false};
     std::atomic_bool shutdown{false};
     bool check_remote_work{false};
-    std::unique_ptr<grpc::CompletionQueue> completion_queue;
+    std::unique_ptr<grpc::CompletionQueue> completion_queue{std::make_unique<grpc::CompletionQueue>()};
     detail::GrpcContextLocalMemoryResource local_resource{detail::new_delete_resource()};
     LocalWorkQueue local_work_queue;
     NotifyWhenDoneList notify_when_done_list;

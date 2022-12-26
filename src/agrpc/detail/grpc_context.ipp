@@ -54,8 +54,14 @@ inline grpc::CompletionQueue* get_completion_queue(agrpc::GrpcContext& grpc_cont
 }
 }  // namespace detail
 
+template <class>
 inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue>&& completion_queue)
     : completion_queue(static_cast<std::unique_ptr<grpc::CompletionQueue>&&>(completion_queue))
+{
+}
+
+inline GrpcContext::GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue>&& completion_queue)
+    : completion_queue(static_cast<std::unique_ptr<grpc::ServerCompletionQueue>&&>(completion_queue))
 {
 }
 

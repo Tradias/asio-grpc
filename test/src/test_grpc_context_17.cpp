@@ -130,7 +130,7 @@ TEST_CASE("GrpcExecutorOptions")
 
 struct GrpcExecutorTest : test::GrpcContextTest
 {
-    agrpc::GrpcContext other_grpc_context{std::make_unique<grpc::CompletionQueue>()};
+    agrpc::GrpcContext other_grpc_context;
 
     auto other_executor() noexcept { return other_grpc_context.get_executor(); }
 
