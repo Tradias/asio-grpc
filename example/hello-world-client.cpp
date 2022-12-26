@@ -32,7 +32,7 @@ int main(int argc, const char** argv)
 
     // begin-snippet: client-side-helloworld
     helloworld::Greeter::Stub stub{grpc::CreateChannel(host, grpc::InsecureChannelCredentials())};
-    agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+    agrpc::GrpcContext grpc_context;
 
     asio::co_spawn(
         grpc_context,

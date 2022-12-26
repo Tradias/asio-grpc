@@ -19,7 +19,7 @@
 
 int main()
 {
-    agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+    agrpc::GrpcContext grpc_context;
 
     auto rpc = &target::Test::AsyncService::RequestUnary;
 

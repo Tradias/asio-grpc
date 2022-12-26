@@ -216,7 +216,7 @@ int main(int argc, const char** argv)
     // We can mix generic and non-generic requests on the same channel.
     example::v1::ExampleExt::Stub stub{channel};
 
-    agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+    agrpc::GrpcContext grpc_context;
 
     example::spawn(grpc_context,
                    [&](asio::yield_context yield)

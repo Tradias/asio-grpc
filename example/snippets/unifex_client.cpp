@@ -41,7 +41,7 @@ int main()
 {
     auto stub =
         example::v1::Example::NewStub(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
-    agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+    agrpc::GrpcContext grpc_context;
 
     unifex::sync_wait(unifex::when_all(unified_executors(grpc_context, *stub),
                                        [&]() -> unifex::task<void>

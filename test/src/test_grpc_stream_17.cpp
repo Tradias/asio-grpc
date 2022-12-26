@@ -52,7 +52,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "CancelSafe: cancel wait for alarm and 
 
 TEST_CASE_TEMPLATE("CancelSafe: wait before initiate", T, bool, test::ErrorCode)
 {
-    agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+    agrpc::GrpcContext grpc_context;
     bool ok{};
     agrpc::CancelSafe<void(T)> safe;
     safe.wait(asio::bind_executor(grpc_context,
@@ -67,7 +67,7 @@ TEST_CASE_TEMPLATE("CancelSafe: wait before initiate", T, bool, test::ErrorCode)
 
 TEST_CASE_TEMPLATE("CancelSafe: wait for already completed operation", T, bool, test::ErrorCode)
 {
-    agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+    agrpc::GrpcContext grpc_context;
     bool ok{};
     agrpc::CancelSafe<void(T)> safe;
     safe.token()(T{});

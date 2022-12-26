@@ -130,7 +130,7 @@ int main(int argc, const char** argv)
     const auto channel = grpc::CreateChannel(host, grpc::InsecureChannelCredentials());
     example::v1::Example::Stub stub{channel};
     example::v1::ExampleExt::Stub stub_ext{channel};
-    agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+    agrpc::GrpcContext grpc_context;
 
     grpc_context.work_started();
     unifex::sync_wait(unifex::when_all(

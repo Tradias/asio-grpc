@@ -22,7 +22,7 @@
 
 void run_out_var()
 {
-    agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+    agrpc::GrpcContext grpc_context;
 
     out_var::v1::Test::AsyncService service;
 

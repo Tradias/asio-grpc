@@ -155,7 +155,7 @@ int main(int argc, const char** argv)
     const auto host = std::string("localhost:") + port;
 
     example::v1::ExampleExt::Stub stub_ext{grpc::CreateChannel(host, grpc::InsecureChannelCredentials())};
-    agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+    agrpc::GrpcContext grpc_context;
 
     asio::io_context io_context{1};
     std::optional guard{asio::require(io_context.get_executor(), asio::execution::outstanding_work_t::tracked)};

@@ -186,7 +186,7 @@ TEST_CASE_TEMPLATE("ScheduleSender start/submit with shutdown GrpcContext", T, s
     test::StatefulReceiverState state;
     test::FunctionAsStatefulReceiver receiver{[](auto&&...) {}, state};
     {
-        agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+        agrpc::GrpcContext grpc_context;
         grpc::Alarm alarm;
         const auto sender = [&]
         {

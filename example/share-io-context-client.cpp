@@ -70,7 +70,7 @@ int main(int argc, const char** argv)
     asio::io_context io_context{1};
 
     example::v1::Example::Stub stub{grpc::CreateChannel(host, grpc::InsecureChannelCredentials())};
-    agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
+    agrpc::GrpcContext grpc_context;
     std::optional grpc_context_work_guard{
         asio::prefer(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked)};
 
