@@ -62,6 +62,8 @@ class GrpcContext
 
     /**
      * @brief Construct a GrpcContext for gRPC clients
+     *
+     * @since 2.4.0
      */
     GrpcContext() = default;
 

@@ -20,6 +20,7 @@
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 
+#include <agrpc/default_completion_token.hpp>
 #include <agrpc/detail/cancel_safe.hpp>
 #include <agrpc/detail/tuple.hpp>
 #include <agrpc/detail/type_erased_completion_handler.hpp>
@@ -93,12 +94,21 @@ class CancelSafe<void(CompletionArgs...)>
      */
     [[nodiscard]] CompletionToken token() noexcept { return CompletionToken{*this}; }
 
+    [[deprecated(
+        "This function has always reported whether a wait is currently pending and not whether the asynchronous "
+        "operation initiated with the CompletionToken has completed. It has therefore been renamed to "
+        "`is_wait_pending()`.")]] [[nodiscard]] bool
+    is_running() const noexcept
+    {
+        return is_wait_pending();
+    }
+
     /**
-     * @brief Is an operation currently running?
+     * @brief Is a wait currently pending?
      *
      * Thread-safe
      */
-    [[nodiscard]] bool is_running() const noexcept { return bool{this->completion_handler}; }
+    [[nodiscard]] bool is_wait_pending() const noexcept { return bool{this->completion_handler}; }
 
     /**
      * @brief Wait for the asynchronous operation to complete
@@ -115,8 +125,8 @@ class CancelSafe<void(CompletionArgs...)>
      *
      * All. Upon cancellation, the asynchronous operation continues to run.
      */
-    template <class CompletionToken>
-    auto wait(CompletionToken token)
+    template <class CompletionToken = agrpc::DefaultCompletionToken>
+    auto wait(CompletionToken token = {})
     {
         assert(!completion_handler && "Can only wait again when the previous wait has been cancelled or completed");
         return asio::async_initiate<CompletionToken, CompletionSignature>(Initiator{*this}, token);
