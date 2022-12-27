@@ -99,6 +99,7 @@ if(ASIO_GRPC_BUILD_TESTS AND ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/execution_unifex.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/executor_with_default.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/forward.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/get_completion_queue.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpc_completion_queue_event.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpc_context.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/grpc_context.ipp"

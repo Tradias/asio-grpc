@@ -24,6 +24,7 @@
 #include <agrpc/cancel_safe.hpp>
 #include <agrpc/default_completion_token.hpp>
 #include <agrpc/detail/async_initiate.hpp>
+#include <agrpc/detail/get_completion_queue.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>

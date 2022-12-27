@@ -21,12 +21,6 @@
 
 #include <memory>
 
-namespace grpc
-{
-class CompletionQueue;
-class ClientContext;
-}
-
 AGRPC_NAMESPACE_BEGIN()
 
 template <class Allocator = std::allocator<void>, std::uint32_t Options = detail::GrpcExecutorOptions::DEFAULT>
@@ -85,14 +79,6 @@ template <class Responder, class Executor>
 class RPCBidirectionalStreamingBase;
 
 struct RPCCancellationFunction;
-
-template <class Allocator, std::uint32_t Options>
-grpc::CompletionQueue* get_completion_queue(const agrpc::BasicGrpcExecutor<Allocator, Options>&) noexcept;
-
-grpc::CompletionQueue* get_completion_queue(agrpc::GrpcContext&) noexcept;
-
-template <class Executor>
-grpc::CompletionQueue* get_completion_queue(const agrpc::BasicGrpcStream<Executor>&) noexcept;
 
 AGRPC_NAMESPACE_CPP20_BEGIN()
 

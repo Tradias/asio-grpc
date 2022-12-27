@@ -16,7 +16,7 @@
 #define AGRPC_AGRPC_GET_COMPLETION_QUEUE_HPP
 
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/forward.hpp>
+#include <agrpc/detail/get_completion_queue.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

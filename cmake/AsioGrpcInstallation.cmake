@@ -45,6 +45,7 @@ install(
     FILES_MATCHING
     PATTERN "*.hpp"
     PATTERN "*.ipp"
+    PATTERN "*memory_resource.hpp" EXCLUDE
     PATTERN "*memory_resource_boost_pmr.hpp" EXCLUDE
     PATTERN "*memory_resource_recycling_allocator.hpp" EXCLUDE
     PATTERN "*memory_resource_std_pmr.hpp" EXCLUDE)

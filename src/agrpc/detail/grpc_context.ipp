@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/get_completion_queue.hpp>
 #include <agrpc/detail/grpc_completion_queue_event.hpp>
 #include <agrpc/detail/grpc_context.hpp>
 #include <agrpc/detail/grpc_executor_options.hpp>

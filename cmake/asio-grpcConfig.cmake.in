@@ -42,7 +42,7 @@ elseif(TARGET "Boost::boost")
     list(APPEND ASIO_GRPC_BOOST_ASIO_LINK_LIBRARIES "Boost::boost")
 endif()
 
-find_dependency(gRPC)
+find_dependency(gRPC QUIET)
 if(TARGET "gRPC::grpc++_unsecure")
     list(APPEND ASIO_GRPC_BOOST_ASIO_LINK_LIBRARIES "gRPC::grpc++_unsecure")
     list(APPEND ASIO_GRPC_STANDALONE_ASIO_LINK_LIBRARIES "gRPC::grpc++_unsecure")

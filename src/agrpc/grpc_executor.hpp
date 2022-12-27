@@ -20,6 +20,7 @@
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
+#include <agrpc/detail/get_completion_queue.hpp>
 #include <agrpc/detail/grpc_executor_base.hpp>
 #include <agrpc/detail/grpc_executor_options.hpp>
 #include <agrpc/detail/memory_resource.hpp>
