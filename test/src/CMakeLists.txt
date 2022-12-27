@@ -57,8 +57,9 @@ set(ASIO_GRPC_CPP17_TEST_SOURCE_FILES
     "test_test_17.cpp"
     "test_health_check_service_17.cpp"
     "test_client_rpc_17.cpp")
-set(ASIO_GRPC_CPP20_TEST_SOURCE_FILES "test_asio_grpc_20.cpp" "test_repeatedly_request_20.cpp"
-                                      "test_bind_allocator_20.cpp" "test_grpc_context_20.cpp" "test_grpc_stream_20.cpp")
+set(ASIO_GRPC_CPP20_TEST_SOURCE_FILES
+    "test_asio_grpc_20.cpp" "test_repeatedly_request_20.cpp" "test_bind_allocator_20.cpp" "test_grpc_context_20.cpp"
+    "test_grpc_stream_20.cpp" "test_high_level_server_20.cpp")
 
 asio_grpc_add_test(asio-grpc-test-boost-cpp17 "BOOST_ASIO" "17" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES})
 asio_grpc_add_test(asio-grpc-test-cpp17 "STANDALONE_ASIO" "17" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES})
