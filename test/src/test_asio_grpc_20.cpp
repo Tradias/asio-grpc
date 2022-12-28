@@ -19,8 +19,9 @@
 #include "utils/rpc.hpp"
 #include "utils/time.hpp"
 
+#include <agrpc/alarm.hpp>
+#include <agrpc/high_level_client.hpp>
 #include <agrpc/rpc.hpp>
-#include <agrpc/wait.hpp>
 
 #include <cstddef>
 
@@ -204,20 +205,7 @@ TEST_CASE_TEMPLATE("awaitable bidirectional streaming", Stub, test::v1::Test::St
 }
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-template <class Function>
-asio::awaitable<void> run_with_deadline(grpc::Alarm& alarm, grpc::ClientContext& client_context,
-                                        std::chrono::system_clock::time_point deadline, Function function)
-{
-    const auto set_alarm = [&]() -> asio::awaitable<void>
-    {
-        if (co_await agrpc::wait(alarm, deadline))
-        {
-            client_context.TryCancel();
-        }
-    };
-    using namespace asio::experimental::awaitable_operators;
-    co_await (set_alarm() || function());
-}
+using RPC = agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncUnary>;
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline no cancel")
 {
@@ -237,16 +225,12 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline no ca
         [&]() -> asio::awaitable<void>
         {
             test::msg::Request request;
-            const auto reader =
-                agrpc::request(&test::v1::Test::Stub::AsyncUnary, *stub, client_context, request, grpc_context);
             test::msg::Response response;
-            grpc::Alarm alarm;
             const auto not_to_exceed = test::one_second_from_now();
-            co_await run_with_deadline(alarm, client_context, not_to_exceed,
-                                       [&]() -> asio::awaitable<void>
-                                       {
-                                           CHECK(co_await agrpc::finish(*reader, response, status));
-                                       });
+            using namespace asio::experimental::awaitable_operators;
+            auto result = co_await (RPC::request(grpc_context, *stub, client_context, request, response) ||
+                                    agrpc::Alarm(grpc_context).wait(not_to_exceed));
+            status = std::move(std::get<0>(result));
             CHECK_LT(test::now(), not_to_exceed);
         });
     CHECK_EQ(grpc::StatusCode::OK, status.error_code());
@@ -256,7 +240,7 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline no ca
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline and cancel")
 {
     bool server_finish_ok{};
-    grpc::Status status;
+    bool is_cancelled{};
     test::co_spawn_and_run(
         grpc_context,
         [&]() -> asio::awaitable<void>
@@ -265,27 +249,22 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline and c
             grpc::ServerAsyncResponseWriter<test::msg::Response> writer{&server_context};
             CHECK(co_await agrpc::request(&test::v1::Test::AsyncService::RequestUnary, service, server_context, request,
                                           writer));
-            grpc::Alarm alarm;
-            co_await agrpc::wait(alarm, test::one_second_from_now());
+            co_await agrpc::Alarm(grpc_context).wait(test::one_second_from_now());
             test::msg::Response response;
             server_finish_ok = co_await agrpc::finish(writer, response, grpc::Status::OK);
         },
         [&]() -> asio::awaitable<void>
         {
             test::msg::Request request;
-            const auto reader =
-                agrpc::request(&test::v1::Test::Stub::AsyncUnary, stub, client_context, request, grpc_context);
             test::msg::Response response;
-            grpc::Alarm alarm;
             const auto not_to_exceed = test::one_second_from_now();
-            co_await run_with_deadline(alarm, client_context, test::hundred_milliseconds_from_now(),
-                                       [&]() -> asio::awaitable<void>
-                                       {
-                                           CHECK(co_await agrpc::finish(*reader, response, status));
-                                       });
+            using namespace asio::experimental::awaitable_operators;
+            auto result = co_await (RPC::request(grpc_context, *stub, client_context, request, response) ||
+                                    agrpc::Alarm(grpc_context).wait(test::hundred_milliseconds_from_now()));
+            is_cancelled = 1 == result.index();
             CHECK_LT(test::now(), not_to_exceed);
         });
-    CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
+    CHECK(is_cancelled);
     CHECK_FALSE(server_finish_ok);
 }
 #endif

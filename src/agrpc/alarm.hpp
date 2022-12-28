@@ -104,7 +104,7 @@ class BasicAlarm
     auto wait(const Deadline& deadline, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{}) &&
     {
         return detail::async_initiate_sender_implementation<detail::MoveAlarmSenderImplementation<Deadline, Executor>>(
-            grpc_context(), {*this, deadline}, {}, token);
+            grpc_context(), deadline, {static_cast<BasicAlarm&&>(*this)}, token);
     }
 
     /**

@@ -16,11 +16,14 @@
 #include "example/v1/example_ext.grpc.pb.h"
 #include "helper.hpp"
 
+#include <agrpc/alarm.hpp>
 #include <agrpc/high_level_client.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/co_spawn.hpp>
+#include <boost/asio/deferred.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/experimental/awaitable_operators.hpp>
+#include <boost/asio/experimental/parallel_group.hpp>
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 
@@ -150,6 +153,46 @@ asio::awaitable<void> make_bidirectional_streaming_request(agrpc::GrpcContext& g
 // ---------------------------------------------------
 //
 
+// begin-snippet: client-side-run-with-deadline
+// ---------------------------------------------------
+// A unary request with a per-RPC step timeout. Using a unary RPC for demonstration purposes, the same mechanism can be
+// applied to streaming RPCs, where it is arguably more useful.
+// For unary RPCs, `grpc::ClientContext::set_deadline` should be preferred.
+// ---------------------------------------------------
+// end-snippet
+asio::awaitable<void> make_and_cancel_unary_request(agrpc::GrpcContext& grpc_context,
+                                                    example::v1::ExampleExt::Stub& stub)
+{
+    using RPC = agrpc::RPC<&example::v1::ExampleExt::Stub::PrepareAsyncSlowUnary>;
+
+    grpc::ClientContext client_context;
+    client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
+
+    RPC::Request request;
+    request.set_delay(2000);  // tell server to delay response by 2000ms
+    RPC::Response response;
+
+    const auto not_to_exceed = std::chrono::steady_clock::now() + std::chrono::milliseconds(1900);
+
+    const auto result =
+        co_await asio::experimental::make_parallel_group(
+            RPC::request(grpc_context, stub, client_context, request, response, asio::deferred),
+            agrpc::Alarm(grpc_context)
+                .wait(std::chrono::system_clock::now() + std::chrono::milliseconds(100), asio::deferred))
+            .async_wait(asio::experimental::wait_for_one(), asio::use_awaitable);
+
+    // Alternative, slighlty less performant syntax:
+    //
+    // using namespace asio::experimental::awaitable_operators;
+    // co_await (RPC::request(grpc_context, stub, client_context, request, response) ||
+    // agrpc::Alarm(grpc_context).wait(deadline))
+
+    abort_if_not(grpc::StatusCode::CANCELLED == std::get<1>(result).error_code());
+    abort_if_not(std::chrono::steady_clock::now() < not_to_exceed);
+}
+// ---------------------------------------------------
+//
+
 // ---------------------------------------------------
 // The Shutdown endpoint is used by unit tests.
 // ---------------------------------------------------
@@ -192,6 +235,7 @@ int main(int argc, const char** argv)
             co_await make_client_streaming_request(grpc_context, stub);
             co_await make_server_streaming_request(grpc_context, stub);
             co_await make_bidirectional_streaming_request(grpc_context, stub);
+            co_await make_and_cancel_unary_request(grpc_context, stub_ext);
             co_await make_shutdown_request(grpc_context, stub_ext);
         },
         asio::detached);

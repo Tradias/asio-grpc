@@ -695,4 +695,26 @@ TEST_CASE_FIXTURE(UnifexHighLevelTest, "unifex high-level client BidirectionalSt
             CHECK_EQ(grpc::StatusCode::OK, rpc.status_code());
         }());
 }
+
+TEST_CASE_FIXTURE(UnifexHighLevelTest, "unifex high-level client can be canelled")
+{
+    const auto with_deadline = [&](std::chrono::system_clock::time_point deadline)
+    {
+        return unifex::stop_when(unifex::then(agrpc::Alarm(grpc_context).wait(deadline), [](auto&&...) {}));
+    };
+    const auto not_to_exceed = test::one_second_from_now();
+    run(
+        [&]() -> unifex::task<void>
+        {
+            co_await test_server.request_rpc(use_sender());
+        }(),
+        [&]() -> unifex::task<void>
+        {
+            auto rpc = co_await request_rpc(use_sender());
+            CHECK_FALSE(co_await (rpc.finish() | with_deadline(test::now())));
+            CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.status_code());
+            server_shutdown.initiate();
+        }());
+    CHECK_LT(test::now(), not_to_exceed);
+}
 #endif

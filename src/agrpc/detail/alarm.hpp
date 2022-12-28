@@ -33,40 +33,23 @@ struct MoveAlarmSenderImplementation
 
     using Alarm = agrpc::BasicAlarm<Executor>;
     using Signature = void(bool, Alarm);
+    using Initiation = Deadline;
     using StopFunction = detail::AlarmCancellationFunction;
 
-    struct Initiation
-    {
-        Alarm& alarm;
-        Deadline deadline;
-    };
+    auto& stop_function_arg(const Initiation&) noexcept { return alarm.alarm; }
 
-    auto& stop_function_arg(const Initiation& initiation) noexcept
+    void initiate(agrpc::GrpcContext& grpc_context, const Initiation& deadline, detail::OperationBase* operation)
     {
-        return alarm.emplace(static_cast<Alarm&&>(initiation.alarm)).alarm;
-    }
-
-    void initiate(agrpc::GrpcContext& grpc_context, const Initiation& initiation, detail::OperationBase* operation)
-    {
-        Alarm* emplaced_alarm;
-        if (alarm)
-        {
-            emplaced_alarm = &*alarm;
-        }
-        else
-        {
-            emplaced_alarm = &alarm.emplace(static_cast<Alarm&&>(initiation.alarm));
-        }
-        detail::AlarmInitFunction{emplaced_alarm->alarm, initiation.deadline}(grpc_context, operation);
+        detail::AlarmInitFunction{alarm.alarm, deadline}(grpc_context, operation);
     }
 
     template <class OnDone>
     void done(OnDone on_done, bool ok)
     {
-        on_done(ok, static_cast<Alarm&&>(*alarm));
+        on_done(ok, static_cast<Alarm&&>(alarm));
     }
 
-    std::optional<Alarm> alarm;
+    Alarm alarm;
 };
 }
 

@@ -118,55 +118,6 @@ asio::awaitable<void> make_bidirectional_streaming_request(example::v1::Example:
 // ---------------------------------------------------
 //
 
-// begin-snippet: client-side-run-with-deadline
-// ---------------------------------------------------
-// A unary request with a per-RPC step timeout. Using a unary RPC for demonstration purposes, the same mechanism can be
-// applied to streaming RPCs, where it is arguably more useful.
-// For unary RPCs, `grpc::ClientContext::set_deadline` should be preferred.
-// ---------------------------------------------------
-// end-snippet
-template <class Function>
-asio::awaitable<void> run_with_deadline(grpc::Alarm& alarm, grpc::ClientContext& client_context,
-                                        std::chrono::system_clock::time_point deadline, Function function)
-{
-    const auto set_alarm = [&]() -> asio::awaitable<void>
-    {
-        if (co_await agrpc::wait(alarm, deadline))
-        {
-            client_context.TryCancel();
-        }
-    };
-    using namespace asio::experimental::awaitable_operators;
-    co_await (set_alarm() || function());
-}
-
-asio::awaitable<void> make_and_cancel_unary_request(agrpc::GrpcContext& grpc_context,
-                                                    example::v1::ExampleExt::Stub& stub)
-{
-    grpc::ClientContext client_context;
-    client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
-
-    example::v1::SlowRequest request;
-    request.set_delay(2000);  // tell server to delay response by 2000ms
-    const auto reader =
-        agrpc::request(&example::v1::ExampleExt::Stub::AsyncSlowUnary, stub, client_context, request, grpc_context);
-
-    google::protobuf::Empty response;
-    grpc::Status status;
-    grpc::Alarm alarm;
-    const auto not_to_exceed = std::chrono::steady_clock::now() + std::chrono::milliseconds(1900);
-    co_await run_with_deadline(alarm, client_context, std::chrono::system_clock::now() + std::chrono::milliseconds(100),
-                               [&]
-                               {
-                                   return agrpc::finish(reader, response, status);
-                               });
-
-    abort_if_not(std::chrono::steady_clock::now() < not_to_exceed);
-    abort_if_not(grpc::StatusCode::CANCELLED == status.error_code());
-}
-// ---------------------------------------------------
-//
-
 // ---------------------------------------------------
 // The Shutdown endpoint is used by unit tests.
 // ---------------------------------------------------
@@ -211,7 +162,6 @@ int main(int argc, const char** argv)
             // Let's perform the client-streaming and bidirectional-streaming requests simultaneously
             using namespace asio::experimental::awaitable_operators;
             co_await (make_client_streaming_request(stub) && make_bidirectional_streaming_request(stub));
-            co_await make_and_cancel_unary_request(grpc_context, stub_ext);
             co_await make_shutdown_request(grpc_context, stub_ext);
         },
         asio::detached);
