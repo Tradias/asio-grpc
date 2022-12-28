@@ -49,7 +49,7 @@ inline void process_grpc_tag(agrpc::GrpcContext& grpc_context, void* tag, bool o
                                      grpc_context);
         }
     };
-    if (tag)
+    if (tag != nullptr)
     {
         agrpc::Alarm(grpc_context)
             .wait(detail::GrpcContextImplementation::TIME_ZERO, ProcessTag{grpc_context, tag, ok});

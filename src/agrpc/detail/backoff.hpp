@@ -49,7 +49,7 @@ class Backoff
         if (ITERATIONS_PER_DELAY == iterations)
         {
             iterations = Iteration{};
-            this->increase_delay();
+            increase_delay();
         }
         return delay;
     }

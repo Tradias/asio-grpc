@@ -65,7 +65,7 @@ class BufferOperation : public detail::QueueableOperationBase
 
     detail::BufferAllocator<std::byte, Buffer> allocator() noexcept
     {
-        return detail::BufferAllocator<std::byte, Buffer>{this->buffer};
+        return detail::BufferAllocator<std::byte, Buffer>{buffer};
     }
 
   private:
@@ -148,7 +148,7 @@ class RepeatedlyRequestCoroutineOperation
 
     ~RepeatedlyRequestCoroutineOperation()
     {
-        detail::GrpcContextImplementation::add_local_operation(this->grpc_context(), this->buffer_operation);
+        detail::GrpcContextImplementation::add_local_operation(this->grpc_context(), buffer_operation);
     }
 
     bool initiate_repeatedly_request()

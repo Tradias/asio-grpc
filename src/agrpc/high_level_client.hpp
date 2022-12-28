@@ -179,7 +179,7 @@ class RPCClientClientStreamingBase<ResponderT<RequestT>, Executor>
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto write(const RequestT& request, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
-        return this->write(request, grpc::WriteOptions{}, static_cast<CompletionToken&&>(token));
+        return write(request, grpc::WriteOptions{}, static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -427,7 +427,7 @@ class RPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto write(const RequestT& request, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
-        return this->write(request, grpc::WriteOptions{}, static_cast<CompletionToken&&>(token));
+        return write(request, grpc::WriteOptions{}, static_cast<CompletionToken&&>(token));
     }
 
     /**

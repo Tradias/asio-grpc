@@ -47,24 +47,24 @@ class AssociatedCompletionHandler
     template <class... Args>
     decltype(auto) operator()(Args&&... args) &&
     {
-        return static_cast<CompletionHandler&&>(this->completion_handler_)(static_cast<Args&&>(args)...);
+        return static_cast<CompletionHandler&&>(completion_handler_)(static_cast<Args&&>(args)...);
     }
 
     template <class... Args>
     decltype(auto) operator()(Args&&... args) const&
     {
-        return this->completion_handler_(static_cast<Args&&>(args)...);
+        return completion_handler_(static_cast<Args&&>(args)...);
     }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     [[nodiscard]] decltype(auto) get_executor() const noexcept
     {
-        return asio::get_associated_executor(this->completion_handler_);
+        return asio::get_associated_executor(completion_handler_);
     }
 
     [[nodiscard]] allocator_type get_allocator() const noexcept
     {
-        return asio::get_associated_allocator(this->completion_handler_);
+        return asio::get_associated_allocator(completion_handler_);
     }
 #endif
 

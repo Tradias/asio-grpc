@@ -191,7 +191,7 @@ inline HealthCheckRepeatedlyRequest<Implementation>::HealthCheckRepeatedlyReques
 template <class Implementation>
 inline void HealthCheckRepeatedlyRequest<Implementation>::start()
 {
-    this->impl = Implementation::create_and_initiate(service, this);
+    impl = Implementation::create_and_initiate(service, this);
 }
 
 template <class Implementation>

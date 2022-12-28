@@ -61,33 +61,33 @@ class AllocatedPointer
     {
         if (this != &other)
         {
-            this->get() = std::exchange(other.get(), nullptr);
+            get() = std::exchange(other.get(), nullptr);
         }
         return *this;
     }
 
     ~AllocatedPointer() noexcept
     {
-        if (this->get())
+        if (get())
         {
-            detail::destroy_deallocate_using_traits<Traits>(this->get_allocator(), this->get());
+            detail::destroy_deallocate_using_traits<Traits>(get_allocator(), get());
         }
     }
 
-    Pointer& get() noexcept { return this->impl.first(); }
+    Pointer& get() noexcept { return impl.first(); }
 
-    Pointer get() const noexcept { return this->impl.first(); }
+    Pointer get() const noexcept { return impl.first(); }
 
-    Allocator& get_allocator() noexcept { return this->impl.second(); }
+    Allocator& get_allocator() noexcept { return impl.second(); }
 
-    Pointer operator->() const noexcept { return this->get(); }
+    Pointer operator->() const noexcept { return get(); }
 
-    Pointer release() noexcept { return std::exchange(this->get(), nullptr); }
+    Pointer release() noexcept { return std::exchange(get(), nullptr); }
 
     void reset() noexcept
     {
-        detail::destroy_deallocate_using_traits<Traits>(this->get_allocator(), this->get());
-        this->release();
+        detail::destroy_deallocate_using_traits<Traits>(get_allocator(), get());
+        release();
     }
 
   private:
@@ -133,7 +133,7 @@ class AllocationGuard
     void reset() noexcept
     {
         detail::destroy_deallocate_using_traits<Traits>(allocator, ptr);
-        this->release();
+        release();
     }
 
   private:
@@ -161,13 +161,13 @@ class UninitializedAllocationGuard
 
     ~UninitializedAllocationGuard() noexcept
     {
-        if (this->ptr)
+        if (ptr)
         {
-            Traits::deallocate(this->allocator, this->ptr, 1);
+            Traits::deallocate(allocator, ptr, 1);
         }
     }
 
-    detail::AllocationGuard<Traits> release() noexcept { return {std::exchange(this->ptr, nullptr), this->allocator}; }
+    detail::AllocationGuard<Traits> release() noexcept { return {std::exchange(ptr, nullptr), allocator}; }
 
     Allocator& get_allocator() noexcept { return allocator; }
 

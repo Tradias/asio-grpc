@@ -155,7 +155,7 @@ class AllocatorBinder
     /**
      * @brief Get the target's associated executor
      */
-    constexpr decltype(auto) get_executor() const noexcept { return detail::exec::get_executor(this->get()); }
+    constexpr decltype(auto) get_executor() const noexcept { return detail::exec::get_executor(get()); }
 
     /**
      * @brief Get the bound allocator
@@ -175,7 +175,7 @@ class AllocatorBinder
     template <class... Args>
     constexpr decltype(auto) operator()(Args&&... args) &&
     {
-        return static_cast<Target&&>(this->get())(static_cast<Args&&>(args)...);
+        return static_cast<Target&&>(get())(static_cast<Args&&>(args)...);
     }
 
     /**
@@ -184,7 +184,7 @@ class AllocatorBinder
     template <class... Args>
     constexpr decltype(auto) operator()(Args&&... args) &
     {
-        return this->get()(static_cast<Args&&>(args)...);
+        return get()(static_cast<Args&&>(args)...);
     }
 
     /**
@@ -193,7 +193,7 @@ class AllocatorBinder
     template <class... Args>
     constexpr decltype(auto) operator()(Args&&... args) const&
     {
-        return this->get()(static_cast<Args&&>(args)...);
+        return get()(static_cast<Args&&>(args)...);
     }
 
   private:

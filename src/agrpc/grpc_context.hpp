@@ -127,7 +127,7 @@ class GrpcContext
     bool run_until(const Deadline& deadline)
     {
         grpc::TimePoint<Deadline> deadline_time_point(deadline);
-        return this->run_until_impl(deadline_time_point.raw_time());
+        return run_until_impl(deadline_time_point.raw_time());
     }
 
     /**

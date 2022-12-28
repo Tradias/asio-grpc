@@ -86,7 +86,7 @@ class HealthCheckService final : public grpc::HealthCheckServiceInterface
     friend detail::HealthCheckRepeatedlyRequestCheck;
     friend detail::HealthCheckChecker;
 
-    detail::ServingStatus get_serving_status(const std::string& service_name) const;
+    [[nodiscard]] detail::ServingStatus get_serving_status(const std::string& service_name) const;
 
     agrpc::GrpcContext* grpc_context;
     grpc::health::v1::Health::AsyncService service;

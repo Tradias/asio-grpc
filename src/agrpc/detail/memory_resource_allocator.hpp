@@ -45,12 +45,9 @@ class MemoryResourceAllocator
 
     MemoryResourceAllocator& operator=(MemoryResourceAllocator&& other) = delete;
 
-    [[nodiscard]] T* allocate(std::size_t n)
-    {
-        return static_cast<T*>(this->resource->allocate(n * sizeof(T), alignof(T)));
-    }
+    [[nodiscard]] T* allocate(std::size_t n) { return static_cast<T*>(resource->allocate(n * sizeof(T), alignof(T))); }
 
-    void deallocate(T* p, std::size_t n) noexcept { this->resource->deallocate(p, n * sizeof(T), alignof(T)); }
+    void deallocate(T* p, std::size_t n) noexcept { resource->deallocate(p, n * sizeof(T), alignof(T)); }
 
     template <class U>
     friend bool operator==(const MemoryResourceAllocator& lhs,

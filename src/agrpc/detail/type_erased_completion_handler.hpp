@@ -82,7 +82,7 @@ class BasicTypeErasedCompletionHandler<void(Args...), VoidPointer>
 
     detail::TypeErasedCompletionHandler<void(Args...)> release() noexcept
     {
-        return {this->release_completion_handler(), complete_};
+        return {release_completion_handler(), complete_};
     }
 
     explicit operator bool() const noexcept { return static_cast<bool>(completion_handler); }
@@ -90,7 +90,7 @@ class BasicTypeErasedCompletionHandler<void(Args...), VoidPointer>
     template <class... CompletionArgs>
     void complete(CompletionArgs&&... args) &&
     {
-        complete_(this->release_completion_handler(), static_cast<CompletionArgs&&>(args)...);
+        complete_(release_completion_handler(), static_cast<CompletionArgs&&>(args)...);
     }
 
   private:

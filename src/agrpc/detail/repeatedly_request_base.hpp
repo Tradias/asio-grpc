@@ -85,14 +85,14 @@ class RepeatedlyRequestOperationBase
 
     auto& completion_handler() noexcept { return impl1.second(); }
 
-    decltype(auto) get_allocator() noexcept { return detail::exec::get_allocator(this->request_handler()); }
+    decltype(auto) get_allocator() noexcept { return detail::exec::get_allocator(request_handler_); }
 
   protected:
     [[nodiscard]] bool is_stopped() const noexcept { return impl2.second().is_stopped(); }
 
-    decltype(auto) get_executor() noexcept { return detail::exec::get_executor(this->request_handler()); }
+    decltype(auto) get_executor() noexcept { return detail::exec::get_executor(request_handler_); }
 
-    agrpc::GrpcContext& grpc_context() noexcept { return detail::query_grpc_context(this->get_executor()); }
+    agrpc::GrpcContext& grpc_context() noexcept { return detail::query_grpc_context(get_executor()); }
 
     RPC rpc() noexcept { return impl2.first(); }
 

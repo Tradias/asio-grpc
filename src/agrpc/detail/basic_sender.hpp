@@ -257,10 +257,7 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
             {
                 return &do_complete<detail::AllocationType::LOCAL>;
             }
-            else
-            {
-                return &do_complete<detail::AllocationType::CUSTOM>;
-            }
+            return &do_complete<detail::AllocationType::CUSTOM>;
         }
         else
         {
@@ -275,7 +272,7 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
     }
 
     template <detail::AllocationType AllocType, int Id = 0>
-    bool current_on_complete_is() const noexcept
+    [[nodiscard]] bool current_on_complete_is() const noexcept
     {
         return detail::OperationBaseAccess::get_on_complete(*this) == &do_complete<AllocType, Id>;
     }

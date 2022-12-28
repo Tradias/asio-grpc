@@ -61,7 +61,7 @@ class RepeatedlyRequestOperation : public detail::QueueableOperationBase,
             return false;
         }
         auto next_rpc_context = detail::allocate<RPCContext>(this->get_allocator());
-        this->rpc_context = next_rpc_context.get();
+        rpc_context = next_rpc_context.get();
         auto* cq = local_grpc_context.get_server_completion_queue();
         local_grpc_context.work_started();
         detail::initiate_request_from_rpc_context(this->rpc(), this->service(), *rpc_context, cq, this);

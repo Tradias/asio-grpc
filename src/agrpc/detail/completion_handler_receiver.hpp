@@ -42,7 +42,7 @@ class CompletionHandlerReceiver
         static_cast<CompletionHandler&&>(completion_handler_)(static_cast<Args&&>(args)...);
     }
 
-    static void set_error(std::exception_ptr ep) { std::rethrow_exception(ep); }
+    static void set_error(const std::exception_ptr& ep) { std::rethrow_exception(ep); }
 
     allocator_type get_allocator() const noexcept { return detail::exec::get_allocator(completion_handler_); }
 

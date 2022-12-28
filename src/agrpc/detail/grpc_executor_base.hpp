@@ -116,7 +116,7 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
     GrpcExecutorWorkTrackerBase(agrpc::GrpcContext* grpc_context, const Allocator& allocator) noexcept
         : Base(grpc_context, allocator)
     {
-        this->grpc_context()->work_started();
+        grpc_context->work_started();
     }
 };
 

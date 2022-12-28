@@ -183,7 +183,7 @@ class BasicGrpcExecutor
     void dispatch(Function&& function, const OtherAllocator& other_allocator) const
     {
         detail::create_and_submit_no_arg_operation<false>(
-            this->context(), agrpc::AllocatorBinder(other_allocator, static_cast<Function&&>(function)));
+            context(), agrpc::AllocatorBinder(other_allocator, static_cast<Function&&>(function)));
     }
 
     /**
@@ -201,7 +201,7 @@ class BasicGrpcExecutor
     void post(Function&& function, const OtherAllocator& other_allocator) const
     {
         detail::create_and_submit_no_arg_operation<true>(
-            this->context(), agrpc::AllocatorBinder(other_allocator, static_cast<Function&&>(function)));
+            context(), agrpc::AllocatorBinder(other_allocator, static_cast<Function&&>(function)));
     }
 
     /**
@@ -219,7 +219,7 @@ class BasicGrpcExecutor
     void defer(Function&& function, const OtherAllocator& other_allocator) const
     {
         detail::create_and_submit_no_arg_operation<true>(
-            this->context(), agrpc::AllocatorBinder(other_allocator, static_cast<Function&&>(function)));
+            context(), agrpc::AllocatorBinder(other_allocator, static_cast<Function&&>(function)));
     }
 #endif
 

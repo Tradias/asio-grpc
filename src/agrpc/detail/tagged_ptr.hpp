@@ -52,9 +52,9 @@ class BasicTaggedPtr
 
     [[nodiscard]] bool is_null() const noexcept { return (ptr & PTR_MASK) == std::uintptr_t{}; }
 
-    [[nodiscard]] T* operator->() const noexcept { return this->get(); }
+    [[nodiscard]] T* operator->() const noexcept { return get(); }
 
-    [[nodiscard]] T& operator*() const noexcept { return *this->get(); }
+    [[nodiscard]] T& operator*() const noexcept { return *get(); }
 
     template <std::uintptr_t Bit>
     [[nodiscard]] bool has_bit() const noexcept

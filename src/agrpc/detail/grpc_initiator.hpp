@@ -43,7 +43,7 @@ class GrpcInitiator
     void operator()(CompletionHandler&& completion_handler)
     {
         auto unbound = detail::unbind_and_get_associates(static_cast<CompletionHandler&&>(completion_handler));
-        this->submit(unbound, std::move(unbound.completion_handler()));
+        submit(unbound, std::move(unbound.completion_handler()));
     }
 
   protected:
@@ -64,8 +64,7 @@ class GrpcInitiator
             }
         }
 #endif
-        detail::grpc_submit(grpc_context, this->initiating_function,
-                            static_cast<CompletionHandler&&>(completion_handler));
+        detail::grpc_submit(grpc_context, initiating_function, static_cast<CompletionHandler&&>(completion_handler));
     }
 
   private:
@@ -86,7 +85,7 @@ class GrpcCompletionHandlerWithPayload : public detail::AssociatedCompletionHand
 
     decltype(auto) operator()(bool ok) &&
     {
-        return static_cast<Base&&>(*this)(std::pair{static_cast<Payload&&>(this->payload_), ok});
+        return static_cast<Base&&>(*this)(std::pair{static_cast<Payload&&>(payload_), ok});
     }
 
     [[nodiscard]] auto& payload() noexcept { return payload_; }

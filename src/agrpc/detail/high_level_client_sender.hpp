@@ -73,7 +73,7 @@ struct ClientContextCancellationFunction
     {
         if (static_cast<bool>(type & (asio::cancellation_type::terminal | asio::cancellation_type::partial)))
         {
-            this->operator()();
+            operator()();
         }
     }
 #endif
@@ -98,7 +98,7 @@ struct RPCCancellationFunction
     {
         if (static_cast<bool>(type & (asio::cancellation_type::terminal | asio::cancellation_type::partial)))
         {
-            this->operator()();
+            operator()();
         }
     }
 #endif

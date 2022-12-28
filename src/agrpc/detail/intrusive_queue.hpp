@@ -65,12 +65,12 @@ class IntrusiveQueue
         return result;
     }
 
-    [[nodiscard]] bool empty() const noexcept { return this->head == nullptr; }
+    [[nodiscard]] bool empty() const noexcept { return head == nullptr; }
 
     [[nodiscard]] Item* pop_front() noexcept
     {
-        Item* item = std::exchange(this->head, this->head->next);
-        if (this->head == nullptr)
+        Item* item = std::exchange(head, head->next);
+        if (head == nullptr)
         {
             tail = nullptr;
         }
@@ -82,7 +82,7 @@ class IntrusiveQueue
         item->next = nullptr;
         if (tail == nullptr)
         {
-            this->head = item;
+            head = item;
         }
         else
         {
@@ -98,9 +98,9 @@ class IntrusiveQueue
             return;
         }
         auto* other_head = std::exchange(other.head, nullptr);
-        if (this->empty())
+        if (empty())
         {
-            this->head = other_head;
+            head = other_head;
         }
         else
         {

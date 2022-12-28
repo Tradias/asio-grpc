@@ -73,11 +73,8 @@ auto allocate_operation(agrpc::GrpcContext& grpc_context, Handler&& handler, Arg
         return detail::allocate_local_operation<OperationTemplate>(grpc_context, static_cast<Handler&&>(handler),
                                                                    static_cast<Args&&>(args)...);
     }
-    else
-    {
-        return detail::allocate_custom_operation<OperationTemplate>(static_cast<Handler&&>(handler),
-                                                                    static_cast<Args&&>(args)...);
-    }
+    return detail::allocate_custom_operation<OperationTemplate>(static_cast<Handler&&>(handler),
+                                                                static_cast<Args&&>(args)...);
 }
 
 template <bool IsBlockingNever, class Handler>

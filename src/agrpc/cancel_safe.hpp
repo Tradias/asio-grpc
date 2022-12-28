@@ -75,7 +75,7 @@ class CancelSafe<void(CompletionArgs...)>
             }
             else
             {
-                this->self.result.emplace(Result{static_cast<CompletionArgs&&>(completion_args)...});
+                self.result.emplace(Result{static_cast<CompletionArgs&&>(completion_args)...});
             }
         }
 
@@ -108,7 +108,7 @@ class CancelSafe<void(CompletionArgs...)>
      *
      * Thread-safe
      */
-    [[nodiscard]] bool is_wait_pending() const noexcept { return bool{this->completion_handler}; }
+    [[nodiscard]] bool is_wait_pending() const noexcept { return bool{completion_handler}; }
 
     /**
      * @brief Wait for the asynchronous operation to complete

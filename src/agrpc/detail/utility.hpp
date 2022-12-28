@@ -162,9 +162,9 @@ class CompressedPair final : private Second
     {
     }
 
-    constexpr First& first() noexcept { return this->first_; }
+    constexpr First& first() noexcept { return first_; }
 
-    constexpr const First& first() const noexcept { return this->first_; }
+    constexpr const First& first() const noexcept { return first_; }
 
     constexpr Second& second() noexcept { return *this; }
 
@@ -196,13 +196,13 @@ class CompressedPair<First, Second, false> final
     {
     }
 
-    constexpr First& first() noexcept { return this->first_; }
+    constexpr First& first() noexcept { return first_; }
 
-    constexpr const First& first() const noexcept { return this->first_; }
+    constexpr const First& first() const noexcept { return first_; }
 
-    constexpr Second& second() noexcept { return this->second_; }
+    constexpr Second& second() noexcept { return second_; }
 
-    constexpr const Second& second() const noexcept { return this->second_; }
+    constexpr const Second& second() const noexcept { return second_; }
 
   private:
     First first_;
@@ -251,9 +251,9 @@ class EmptyBaseOptimization<T, false>
     {
     }
 
-    constexpr T& get() noexcept { return this->value; }
+    constexpr T& get() noexcept { return value; }
 
-    constexpr const T& get() const noexcept { return this->value; }
+    constexpr const T& get() const noexcept { return value; }
 
   private:
     T value;

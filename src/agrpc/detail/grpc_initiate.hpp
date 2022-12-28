@@ -33,36 +33,24 @@ namespace detail
 template <class StopFunction>
 using GrpcInitiateTemplateArgs = void (*)(StopFunction);
 
-struct GrpcInitiateImplFn
-{
-    GrpcInitiateImplFn() = default;
-    GrpcInitiateImplFn(const GrpcInitiateImplFn&) = delete;
-    GrpcInitiateImplFn(GrpcInitiateImplFn&&) = delete;
-    GrpcInitiateImplFn& operator=(const GrpcInitiateImplFn&) = delete;
-    GrpcInitiateImplFn& operator=(GrpcInitiateImplFn&&) = delete;
-
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    template <class StopFunction, class InitiatingFunction, class CompletionToken>
-    auto operator()(const detail::GrpcInitiateTemplateArgs<StopFunction>, InitiatingFunction&& initiating_function,
-                    CompletionToken token) const
-    {
-        return asio::async_initiate<CompletionToken, void(bool)>(
-            detail::GrpcInitiator<InitiatingFunction, StopFunction>{
-                static_cast<InitiatingFunction&&>(initiating_function)},
-            token);
-    }
+template <class StopFunction, class InitiatingFunction, class CompletionToken>
+auto grpc_initiate_impl(const detail::GrpcInitiateTemplateArgs<StopFunction>, InitiatingFunction&& initiating_function,
+                        CompletionToken token)
+{
+    return asio::async_initiate<CompletionToken, void(bool)>(
+        detail::GrpcInitiator<InitiatingFunction, StopFunction>{static_cast<InitiatingFunction&&>(initiating_function)},
+        token);
+}
 #endif
 
-    template <class StopFunction, class InitiatingFunction>
-    auto operator()(const detail::GrpcInitiateTemplateArgs<StopFunction>, InitiatingFunction&& initiating_function,
-                    detail::UseSender token) const noexcept
-    {
-        return detail::BasicSenderAccess::create<detail::GrpcSenderImplementation<InitiatingFunction, StopFunction>>(
-            token.grpc_context, {static_cast<InitiatingFunction&&>(initiating_function)}, {});
-    }
-};
-
-inline constexpr detail::GrpcInitiateImplFn grpc_initiate_impl{};
+template <class StopFunction, class InitiatingFunction>
+auto grpc_initiate_impl(const detail::GrpcInitiateTemplateArgs<StopFunction>, InitiatingFunction&& initiating_function,
+                        detail::UseSender token) noexcept
+{
+    return detail::BasicSenderAccess::create<detail::GrpcSenderImplementation<InitiatingFunction, StopFunction>>(
+        token.grpc_context, {static_cast<InitiatingFunction&&>(initiating_function)}, {});
+}
 
 template <class InitiatingFunction, class CompletionToken>
 auto grpc_initiate(InitiatingFunction&& initiating_function, CompletionToken&& token)

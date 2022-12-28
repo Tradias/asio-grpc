@@ -82,7 +82,7 @@ class WorkTrackingCompletionHandler : private detail::EmptyBaseOptimization<Comp
   public:
     template <class Ch>
     explicit WorkTrackingCompletionHandler(Ch&& ch)
-        : CompletionHandlerBase(static_cast<Ch&&>(ch)), WorkTrackerBase(this->completion_handler())
+        : CompletionHandlerBase(static_cast<Ch&&>(ch)), WorkTrackerBase(completion_handler())
     {
     }
 
@@ -93,7 +93,7 @@ class WorkTrackingCompletionHandler : private detail::EmptyBaseOptimization<Comp
     template <class... Args>
     void operator()(Args&&... args) &&
     {
-        auto& ch = this->completion_handler();
+        auto& ch = completion_handler();
         auto executor = asio::prefer(asio::get_associated_executor(ch), asio::execution::blocking_t::possibly,
                                      asio::execution::allocator(asio::get_associated_allocator(ch)));
         detail::do_execute(
@@ -106,12 +106,12 @@ class WorkTrackingCompletionHandler : private detail::EmptyBaseOptimization<Comp
 
     [[nodiscard]] decltype(auto) get_executor() const noexcept
     {
-        return asio::get_associated_executor(this->completion_handler());
+        return asio::get_associated_executor(completion_handler());
     }
 
     [[nodiscard]] allocator_type get_allocator() const noexcept
     {
-        return asio::get_associated_allocator(this->completion_handler());
+        return asio::get_associated_allocator(completion_handler());
     }
 };
 }

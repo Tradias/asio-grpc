@@ -43,11 +43,11 @@ class MultiArgRPCContext : public detail::RPCContextBase
 
     MultiArgRPCContext() = default;
 
-    auto args() noexcept { return std::forward_as_tuple(this->server_context(), this->request_, this->responder_); }
+    auto args() noexcept { return std::forward_as_tuple(this->server_context(), request_, responder_); }
 
-    Request& request() noexcept { return this->request_; }
+    Request& request() noexcept { return request_; }
 
-    Responder& responder() noexcept { return this->responder_; }
+    Responder& responder() noexcept { return responder_; }
 
   private:
     Request request_{};
@@ -62,9 +62,9 @@ class SingleArgRPCContext : public detail::RPCContextBase
 
     SingleArgRPCContext() = default;
 
-    auto args() noexcept { return std::forward_as_tuple(this->server_context(), this->responder_); }
+    auto args() noexcept { return std::forward_as_tuple(this->server_context(), responder_); }
 
-    Responder& responder() noexcept { return this->responder_; }
+    Responder& responder() noexcept { return responder_; }
 
   private:
     Responder responder_{&this->server_context()};
@@ -75,15 +75,15 @@ class GenericRPCContext
   public:
     using Signature = void(grpc::GenericServerContext&, grpc::GenericServerAsyncReaderWriter&);
 
-    grpc::GenericServerContext& server_context() noexcept { return this->context; }
+    grpc::GenericServerContext& server_context() noexcept { return context; }
 
-    auto args() noexcept { return std::forward_as_tuple(this->context, this->responder_); }
+    auto args() noexcept { return std::forward_as_tuple(context, responder_); }
 
-    grpc::GenericServerAsyncReaderWriter& responder() noexcept { return this->responder_; }
+    grpc::GenericServerAsyncReaderWriter& responder() noexcept { return responder_; }
 
   private:
     grpc::GenericServerContext context{};
-    grpc::GenericServerAsyncReaderWriter responder_{&this->context};
+    grpc::GenericServerAsyncReaderWriter responder_{&context};
 };
 
 template <class>

@@ -30,7 +30,7 @@ namespace detail
 struct RethrowFirstArg
 {
     template <class... Args>
-    void operator()(std::exception_ptr ep, Args&&...) const
+    void operator()(const std::exception_ptr& ep, Args&&...) const
     {
         if AGRPC_UNLIKELY (ep)
         {
