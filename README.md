@@ -51,9 +51,9 @@ More examples for things like streaming RPCs, double-buffered file transfer with
 
 # Requirements
 
-Asio-grpc requires [gRPC](https://grpc.io/) and either [Boost.Asio](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio.html) (min. 1.74.0), [standalone Asio](https://github.com/chriskohlhoff/asio) (min. 1.17.0) or [libunifex](https://github.com/facebookexperimental/libunifex).
+Asio-grpc is a C++17, header-only library. To install it, CMake (3.14+) is all that is needed.
 
-CMake version 3.14+ is required to install project, but the `src/` directory may also be copied and used directly.
+To use it, [gRPC](https://grpc.io/) and either [Boost.Asio](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio.html) (min. 1.74.0), [standalone Asio](https://github.com/chriskohlhoff/asio) (min. 1.17.0) or [libunifex](https://github.com/facebookexperimental/libunifex) must be present and linked into your application.
 
 Versions tested by Github Actions:
 
@@ -236,7 +236,7 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
 
 `ASIO_GRPC_USE_RECYCLING_ALLOCATOR` - Use [asio::recycling_allocator](https://think-async.com/Asio/asio-1.24.0/doc/asio/reference/recycling_allocator.html) instead of `<memory_resource>`. Mutually exclusive with `ASIO_GRPC_USE_BOOST_CONTAINER`.
 
-`ASIO_GRPC_DISABLE_AUTOLINK` - Set before using `find_package(asio-grpc)` to prevent `asio-grpcConfig.cmake` from finding and setting up interface link libraries.
+`ASIO_GRPC_DISABLE_AUTOLINK` - Set before using `find_package(asio-grpc)` to prevent `asio-grpcConfig.cmake` from finding and setting up interface link libraries like `gRPC::grpc++`.
 
 # Performance
 
