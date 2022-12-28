@@ -31,10 +31,10 @@ class BufferAllocator
 
     BufferAllocator() = default;
 
-    explicit BufferAllocator(Buffer& buffer) noexcept : buffer(&buffer) {}
+    explicit BufferAllocator(Buffer& buffer) noexcept : buffer_(&buffer) {}
 
     template <class U>
-    BufferAllocator(const detail::BufferAllocator<U, Buffer>& other) noexcept : buffer(other.buffer)
+    BufferAllocator(const detail::BufferAllocator<U, Buffer>& other) noexcept : buffer_(other.buffer_)
     {
     }
 
@@ -42,7 +42,7 @@ class BufferAllocator
     {
         static_assert(alignof(std::max_align_t) >= alignof(T), "Overaligned types are not supported");
         static_assert(Buffer::max_size() >= sizeof(T), "Insufficient buffer size");
-        return static_cast<T*>(buffer->allocate(n * sizeof(T)));
+        return static_cast<T*>(buffer_->allocate(n * sizeof(T)));
     }
 
     static void deallocate(T*, std::size_t) noexcept {}
@@ -50,20 +50,20 @@ class BufferAllocator
     template <class U>
     friend bool operator==(const BufferAllocator& lhs, const detail::BufferAllocator<U, Buffer>& rhs) noexcept
     {
-        return lhs.buffer == rhs.buffer;
+        return lhs.buffer_ == rhs.buffer;
     }
 
     template <class U>
     friend bool operator!=(const BufferAllocator& lhs, const detail::BufferAllocator<U, Buffer>& rhs) noexcept
     {
-        return lhs.buffer != rhs.buffer;
+        return lhs.buffer_ != rhs.buffer;
     }
 
   private:
     template <class, class>
     friend class detail::BufferAllocator;
 
-    Buffer* buffer;
+    Buffer* buffer_;
 };
 }
 

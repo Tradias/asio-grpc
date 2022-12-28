@@ -68,7 +68,7 @@ class AllocatorBinder
      */
     template <class... Args>
     constexpr explicit AllocatorBinder(const Allocator& allocator, Args&&... args)
-        : impl(detail::SecondThenVariadic{}, allocator, static_cast<Args&&>(args)...)
+        : impl_(detail::SecondThenVariadic{}, allocator, static_cast<Args&&>(args)...)
     {
     }
 
@@ -82,7 +82,7 @@ class AllocatorBinder
      */
     template <class OtherTarget, class OtherAllocator>
     constexpr explicit AllocatorBinder(const AllocatorBinder<OtherTarget, OtherAllocator>& other)
-        : impl(other.get(), other.impl.second())
+        : impl_(other.get(), other.impl_.second())
     {
     }
 
@@ -91,7 +91,7 @@ class AllocatorBinder
      */
     template <class OtherTarget, class OtherAllocator>
     constexpr AllocatorBinder(const Allocator& allocator, AllocatorBinder<OtherTarget, OtherAllocator>& other)
-        : impl(other.get(), allocator)
+        : impl_(other.get(), allocator)
     {
     }
 
@@ -100,7 +100,7 @@ class AllocatorBinder
      */
     template <class OtherTarget, class OtherAllocator>
     constexpr AllocatorBinder(const Allocator& allocator, const AllocatorBinder<OtherTarget, OtherAllocator>& other)
-        : impl(other.get(), allocator)
+        : impl_(other.get(), allocator)
     {
     }
 
@@ -114,7 +114,7 @@ class AllocatorBinder
      */
     template <class OtherTarget, class OtherAllocator>
     constexpr explicit AllocatorBinder(AllocatorBinder<OtherTarget, OtherAllocator>&& other)
-        : impl(static_cast<OtherTarget&&>(other.get()), static_cast<OtherAllocator&&>(other.impl.second()))
+        : impl_(static_cast<OtherTarget&&>(other.get()), static_cast<OtherAllocator&&>(other.impl_.second()))
     {
     }
 
@@ -123,7 +123,7 @@ class AllocatorBinder
      */
     template <class OtherTarget, class OtherAllocator>
     constexpr AllocatorBinder(const Allocator& allocator, AllocatorBinder<OtherTarget, OtherAllocator>&& other)
-        : impl(static_cast<OtherTarget&&>(other.get()), allocator)
+        : impl_(static_cast<OtherTarget&&>(other.get()), allocator)
     {
     }
 
@@ -145,12 +145,12 @@ class AllocatorBinder
     /**
      * @brief Get the target (mutable)
      */
-    constexpr target_type& get() noexcept { return impl.first(); }
+    constexpr target_type& get() noexcept { return impl_.first(); }
 
     /**
      * @brief Get the target (const)
      */
-    constexpr const target_type& get() const noexcept { return impl.first(); }
+    constexpr const target_type& get() const noexcept { return impl_.first(); }
 
     /**
      * @brief Get the target's associated executor
@@ -160,7 +160,7 @@ class AllocatorBinder
     /**
      * @brief Get the bound allocator
      */
-    constexpr Allocator get_allocator() const noexcept { return impl.second(); }
+    constexpr Allocator get_allocator() const noexcept { return impl_.second(); }
 
 #ifdef AGRPC_UNIFEX
     friend Allocator tag_invoke(unifex::tag_t<unifex::get_allocator>, const AllocatorBinder& binder) noexcept
@@ -200,7 +200,7 @@ class AllocatorBinder
     template <class, class>
     friend class agrpc::AllocatorBinder;
 
-    detail::CompressedPair<Target, Allocator> impl;
+    detail::CompressedPair<Target, Allocator> impl_;
 };
 
 template <class Allocator, class Target>
@@ -265,12 +265,12 @@ struct AllocatorBinderAsyncResultInitWrapper
     template <class Handler, class... Args>
     constexpr void operator()(Handler&& handler, Args&&... args) &&
     {
-        static_cast<Initiation&&>(initiation)(agrpc::AllocatorBinder(allocator, static_cast<Handler&&>(handler)),
-                                              static_cast<Args&&>(args)...);
+        static_cast<Initiation&&>(initiation_)(agrpc::AllocatorBinder(allocator_, static_cast<Handler&&>(handler)),
+                                               static_cast<Args&&>(args)...);
     }
 
-    Allocator allocator;
-    Initiation initiation;
+    Allocator allocator_;
+    Initiation initiation_;
 };
 }  // namespace detail
 
@@ -288,11 +288,11 @@ class agrpc::asio::async_result<agrpc::AllocatorBinder<CompletionToken, Allocato
       public agrpc::detail::AllocatorBinderAsyncResultReturnType<async_result<CompletionToken, Signature>>
 {
   public:
-    constexpr explicit async_result(agrpc::AllocatorBinder<CompletionToken, Allocator>& binder) : result(binder.get())
+    constexpr explicit async_result(agrpc::AllocatorBinder<CompletionToken, Allocator>& binder) : result_(binder.get())
     {
     }
 
-    constexpr decltype(auto) get() { return result.get(); }
+    constexpr decltype(auto) get() { return result_.get(); }
 
     template <class Initiation, class BoundCompletionToken, class... Args>
     static decltype(auto) initiate(Initiation&& initiation, BoundCompletionToken&& token, Args&&... args)
@@ -304,7 +304,7 @@ class agrpc::asio::async_result<agrpc::AllocatorBinder<CompletionToken, Allocato
     }
 
   private:
-    async_result<CompletionToken, Signature> result;
+    async_result<CompletionToken, Signature> result_;
 };
 
 template <class Target, class Allocator, class Allocator1>

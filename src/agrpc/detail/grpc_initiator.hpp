@@ -35,7 +35,7 @@ class GrpcInitiator
 {
   public:
     explicit GrpcInitiator(InitiatingFunction initiating_function)
-        : initiating_function(static_cast<InitiatingFunction&&>(initiating_function))
+        : initiating_function_(static_cast<InitiatingFunction&&>(initiating_function))
     {
     }
 
@@ -43,14 +43,14 @@ class GrpcInitiator
     void operator()(CompletionHandler&& completion_handler)
     {
         auto unbound = detail::unbind_and_get_associates(static_cast<CompletionHandler&&>(completion_handler));
-        submit(unbound, std::move(unbound.completion_handler()));
+        submit(unbound, std::move(unbound.completion_handler_));
     }
 
   protected:
     template <class Unbound, class CompletionHandler>
     void submit(Unbound& unbound, CompletionHandler&& completion_handler)
     {
-        auto& grpc_context = detail::query_grpc_context(unbound.executor());
+        auto& grpc_context = detail::query_grpc_context(unbound.executor_);
         if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context))
         {
             return;
@@ -58,17 +58,17 @@ class GrpcInitiator
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
         if constexpr (!std::is_same_v<detail::Empty, StopFunction>)
         {
-            if (unbound.cancellation_slot().is_connected())
+            if (unbound.cancellation_slot_.is_connected())
             {
-                unbound.cancellation_slot().template emplace<StopFunction>(initiating_function);
+                unbound.cancellation_slot_.template emplace<StopFunction>(initiating_function_);
             }
         }
 #endif
-        detail::grpc_submit(grpc_context, initiating_function, static_cast<CompletionHandler&&>(completion_handler));
+        detail::grpc_submit(grpc_context, initiating_function_, static_cast<CompletionHandler&&>(completion_handler));
     }
 
   private:
-    InitiatingFunction initiating_function;
+    InitiatingFunction initiating_function_;
 };
 
 template <class CompletionHandler, class Payload>
@@ -106,7 +106,7 @@ class GrpcWithPayloadInitiator : public detail::GrpcInitiator<InitiatingFunction
         auto unbound = detail::unbind_and_get_associates(static_cast<CompletionHandler&&>(completion_handler));
         using UnboundCompletionHandler = typename decltype(unbound)::CompletionHandlerT;
         detail::GrpcCompletionHandlerWithPayload<UnboundCompletionHandler, Payload>
-            unbound_completion_handler_with_payload{std::move(unbound.completion_handler())};
+            unbound_completion_handler_with_payload{std::move(unbound.completion_handler_)};
         this->submit(unbound, std::move(unbound_completion_handler_with_payload));
     }
 };

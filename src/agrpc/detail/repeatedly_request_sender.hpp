@@ -40,34 +40,34 @@ class RepeatedlyRequestStopContext
     class StopFunction
     {
       public:
-        explicit StopFunction(RepeatedlyRequestStopContext& context) noexcept : context(context) {}
+        explicit StopFunction(RepeatedlyRequestStopContext& context) noexcept : context_(context) {}
 
-        void operator()() const noexcept { context.stop(); }
+        void operator()() const noexcept { context_.stop(); }
 
       private:
-        RepeatedlyRequestStopContext& context;
+        RepeatedlyRequestStopContext& context_;
     };
 
   public:
     template <class StopToken>
     void emplace(StopToken&& stop_token) noexcept
     {
-        stop_callback.emplace(static_cast<StopToken&&>(stop_token), StopFunction{*this});
+        stop_callback_.emplace(static_cast<StopToken&&>(stop_token), StopFunction{*this});
     }
 
-    [[nodiscard]] bool is_stopped() const noexcept { return stopped.load(std::memory_order_relaxed); }
+    [[nodiscard]] bool is_stopped() const noexcept { return stopped_.load(std::memory_order_relaxed); }
 
-    void reset() noexcept { stop_callback.reset(); }
+    void reset() noexcept { stop_callback_.reset(); }
 
   private:
     void stop() noexcept
     {
-        stopped.store(true, std::memory_order_relaxed);
+        stopped_.store(true, std::memory_order_relaxed);
         reset();
     }
 
-    std::optional<detail::StopCallbackTypeT<Receiver&, StopFunction>> stop_callback;
-    std::atomic<bool> stopped;
+    std::optional<detail::StopCallbackTypeT<Receiver&, StopFunction>> stop_callback_;
+    std::atomic<bool> stopped_;
 };
 
 template <class Receiver>
@@ -98,16 +98,16 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
         {
             struct DeallocateRequestHandlerOperationReceiver
             {
-                RequestHandlerOperation& repeat_operation;
+                RequestHandlerOperation& repeat_operation_;
 
                 explicit DeallocateRequestHandlerOperationReceiver(RequestHandlerOperation& repeat_operation) noexcept
-                    : repeat_operation(repeat_operation)
+                    : repeat_operation_(repeat_operation)
                 {
                 }
 
                 void deallocate() noexcept
                 {
-                    detail::destroy_deallocate(&repeat_operation, repeat_operation.get_allocator());
+                    detail::destroy_deallocate(&repeat_operation_, repeat_operation_.get_allocator());
                 }
 
                 void set_done() noexcept { deallocate(); }
@@ -121,51 +121,51 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
                 void set_error(const std::exception_ptr&) noexcept { deallocate(); }
             };
 
-            agrpc::GrpcContext& grpc_context;
-            RequestHandler request_handler;
-            detail::CompressedPair<Operation::RPCContext, Allocator> impl;
+            agrpc::GrpcContext& grpc_context_;
+            RequestHandler request_handler_;
+            detail::CompressedPair<Operation::RPCContext, Allocator> impl_;
             std::optional<detail::InplaceWithFunctionWrapper<
                 detail::exec::connect_result_t<RequestHandlerSender, DeallocateRequestHandlerOperationReceiver>>>
-                operation_state;
+                operation_state_;
 
             explicit RequestHandlerOperation(agrpc::GrpcContext& grpc_context, const RequestHandler& request_handler,
                                              const Allocator& allocator)
-                : grpc_context(grpc_context),
-                  request_handler(request_handler),
-                  impl(detail::SecondThenVariadic{}, allocator)
+                : grpc_context_(grpc_context),
+                  request_handler_(request_handler),
+                  impl_(detail::SecondThenVariadic{}, allocator)
             {
             }
 
             void emplace_request_handler_operation()
             {
-                operation_state.emplace(detail::InplaceWithFunction{},
-                                        [&]
-                                        {
-                                            return detail::exec::connect(
-                                                detail::invoke_from_rpc_context(request_handler, rpc_context()),
-                                                DeallocateRequestHandlerOperationReceiver{*this});
-                                        });
+                operation_state_.emplace(detail::InplaceWithFunction{},
+                                         [&]
+                                         {
+                                             return detail::exec::connect(
+                                                 detail::invoke_from_rpc_context(request_handler_, rpc_context()),
+                                                 DeallocateRequestHandlerOperationReceiver{*this});
+                                         });
             }
 
-            void start_request_handler_operation() { detail::exec::start(operation_state->value); }
+            void start_request_handler_operation() { detail::exec::start(operation_state_->value_); }
 
-            auto& rpc_context() noexcept { return impl.first(); }
+            auto& rpc_context() noexcept { return impl_.first(); }
 
-            auto& get_allocator() noexcept { return impl.second(); }
+            auto& get_allocator() noexcept { return impl_.second(); }
         };
 
       public:
         void start() noexcept
         {
-            if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context))
+            if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context_))
             {
-                detail::exec::set_done(static_cast<Receiver&&>(receiver));
+                detail::exec::set_done(static_cast<Receiver&&>(receiver_));
                 return;
             }
-            auto stop_token = detail::exec::get_stop_token(receiver);
+            auto stop_token = detail::exec::get_stop_token(receiver_);
             if (stop_token.stop_requested())
             {
-                detail::exec::set_done(static_cast<Receiver&&>(receiver));
+                detail::exec::set_done(static_cast<Receiver&&>(receiver_));
                 return;
             }
             stop_context().emplace(std::move(stop_token));
@@ -178,22 +178,22 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
         template <class R>
         Operation(const RepeatedlyRequestSender& sender, R&& receiver)
             : Base(&Operation::do_request_complete),
-              grpc_context(sender.grpc_context),
-              receiver(static_cast<R&&>(receiver)),
-              impl1(sender.rpc),
-              service(sender.service),
-              request_handler(sender.request_handler)
+              grpc_context_(sender.grpc_context_),
+              receiver_(static_cast<R&&>(receiver)),
+              impl_(sender.rpc_),
+              service_(sender.service_),
+              request_handler_(sender.request_handler_)
         {
         }
 
         template <class R>
         Operation(RepeatedlyRequestSender&& sender, R&& receiver)
             : Base(&Operation::do_request_complete),
-              grpc_context(sender.grpc_context),
-              receiver(static_cast<R&&>(receiver)),
-              impl1(sender.rpc),
-              service(sender.service),
-              request_handler(std::move(sender.request_handler))
+              grpc_context_(sender.grpc_context_),
+              receiver_(static_cast<R&&>(receiver)),
+              impl_(sender.rpc_),
+              service_(sender.service_),
+              request_handler_(std::move(sender.request_handler_))
         {
         }
 
@@ -201,18 +201,18 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
 
         bool initiate_repeatedly_request()
         {
-            auto& local_grpc_context = grpc_context;
+            auto& local_grpc_context = grpc_context_;
             if AGRPC_UNLIKELY (is_stopped())
             {
                 return false;
             }
             const auto allocator = get_allocator();
             auto next_request_handler_operation =
-                detail::allocate<RequestHandlerOperation>(allocator, grpc_context, request_handler, allocator);
-            request_handler_operation = next_request_handler_operation.get();
+                detail::allocate<RequestHandlerOperation>(allocator, grpc_context_, request_handler_, allocator);
+            request_handler_operation_ = next_request_handler_operation.get();
             auto* cq = local_grpc_context.get_server_completion_queue();
             local_grpc_context.work_started();
-            detail::initiate_request_from_rpc_context(rpc(), service, request_handler_operation->rpc_context(), cq,
+            detail::initiate_request_from_rpc_context(rpc(), service_, request_handler_operation_->rpc_context(), cq,
                                                       this);
             next_request_handler_operation.release();
             return true;
@@ -221,14 +221,14 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
         static void do_request_complete(detail::OperationBase* op, detail::OperationResult result, agrpc::GrpcContext&)
         {
             auto* self = static_cast<Operation*>(op);
-            detail::AllocationGuard ptr{self->request_handler_operation, self->get_allocator()};
+            detail::AllocationGuard ptr{self->request_handler_operation_, self->get_allocator()};
             if AGRPC_LIKELY (detail::OperationResult::OK == result)
             {
                 if (auto exception_ptr = emplace_request_handler_operation(*ptr))
                 {
                     self->stop_context().reset();
                     ptr.reset();
-                    detail::exec::set_error(static_cast<Receiver&&>(self->receiver), std::move(exception_ptr));
+                    detail::exec::set_error(static_cast<Receiver&&>(self->receiver_), std::move(exception_ptr));
                     return;
                 }
                 const auto is_repeated = self->initiate_repeatedly_request();
@@ -266,27 +266,27 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
         void finish()
         {
             stop_context().reset();
-            detail::satisfy_receiver(static_cast<Receiver&&>(receiver));
+            detail::satisfy_receiver(static_cast<Receiver&&>(receiver_));
         }
 
         void done() noexcept
         {
             stop_context().reset();
-            detail::exec::set_done(static_cast<Receiver&&>(receiver));
+            detail::exec::set_done(static_cast<Receiver&&>(receiver_));
         }
 
-        RPC rpc() noexcept { return impl1.first(); }
+        RPC rpc() noexcept { return impl_.first(); }
 
-        auto& stop_context() noexcept { return impl1.second(); }
+        auto& stop_context() noexcept { return impl_.second(); }
 
-        decltype(auto) get_allocator() noexcept { return detail::exec::get_allocator(receiver); }
+        decltype(auto) get_allocator() noexcept { return detail::exec::get_allocator(receiver_); }
 
-        agrpc::GrpcContext& grpc_context;
-        Receiver receiver;
-        detail::CompressedPair<RPC, detail::RepeatedlyRequestStopContext<Receiver>> impl1;
-        Service& service;
-        RequestHandlerOperation* request_handler_operation;
-        RequestHandler request_handler;
+        agrpc::GrpcContext& grpc_context_;
+        Receiver receiver_;
+        detail::CompressedPair<RPC, detail::RepeatedlyRequestStopContext<Receiver>> impl_;
+        Service& service_;
+        RequestHandlerOperation* request_handler_operation_;
+        RequestHandler request_handler_;
     };
 
   public:
@@ -309,16 +309,19 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
   private:
     template <class Rh>
     RepeatedlyRequestSender(agrpc::GrpcContext& grpc_context, RPC rpc, Service& service, Rh&& request_handler)
-        : grpc_context(grpc_context), rpc(rpc), service(service), request_handler(static_cast<Rh&&>(request_handler))
+        : grpc_context_(grpc_context),
+          rpc_(rpc),
+          service_(service),
+          request_handler_(static_cast<Rh&&>(request_handler))
     {
     }
 
     friend detail::RepeatedlyRequestFn;
 
-    agrpc::GrpcContext& grpc_context;
-    RPC rpc;
-    Service& service;
-    RequestHandler request_handler;
+    agrpc::GrpcContext& grpc_context_;
+    RPC rpc_;
+    Service& service_;
+    RequestHandler request_handler_;
 };
 }
 

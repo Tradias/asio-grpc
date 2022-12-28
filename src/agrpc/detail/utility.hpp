@@ -186,7 +186,7 @@ class CompressedPair<First, Second, false> final
     }
 
     template <class T, class = std::enable_if_t<(!std::is_same_v<CompressedPair, detail::RemoveCrefT<T>>)>>
-    constexpr explicit CompressedPair(T&& first) : first_(static_cast<T&&>(first)), second_{}
+    constexpr explicit CompressedPair(T&& first) : first_(static_cast<T&&>(first))
     {
     }
 
@@ -206,7 +206,7 @@ class CompressedPair<First, Second, false> final
 
   private:
     First first_;
-    Second second_;
+    Second second_{};
 };
 
 template <class First, class Second>
@@ -241,39 +241,39 @@ class EmptyBaseOptimization<T, false>
 {
   public:
     template <class... Args>
-    constexpr explicit EmptyBaseOptimization(Args&&... args) : value(static_cast<Args&&>(args)...)
+    constexpr explicit EmptyBaseOptimization(Args&&... args) : value_(static_cast<Args&&>(args)...)
     {
     }
 
     template <class Function>
     constexpr EmptyBaseOptimization(detail::InplaceWithFunction, Function&& function)
-        : value(static_cast<Function&&>(function)())
+        : value_(static_cast<Function&&>(function)())
     {
     }
 
-    constexpr T& get() noexcept { return value; }
+    constexpr T& get() noexcept { return value_; }
 
-    constexpr const T& get() const noexcept { return value; }
+    constexpr const T& get() const noexcept { return value_; }
 
   private:
-    T value;
+    T value_;
 };
 
 template <class OnExit>
 class ScopeGuard
 {
   public:
-    constexpr explicit ScopeGuard(OnExit on_exit) : on_exit{static_cast<OnExit&&>(on_exit)} {}
+    constexpr explicit ScopeGuard(OnExit on_exit) : on_exit_{static_cast<OnExit&&>(on_exit)} {}
 
     template <class... Args>
-    constexpr explicit ScopeGuard(Args&&... args) : on_exit{static_cast<Args&&>(args)...}
+    constexpr explicit ScopeGuard(Args&&... args) : on_exit_{static_cast<Args&&>(args)...}
     {
     }
 
     ScopeGuard(const ScopeGuard&) = delete;
 
     ScopeGuard(ScopeGuard&& other) noexcept
-        : on_exit(static_cast<OnExit&&>(other.on_exit)), is_armed(std::exchange(other.is_armed, false))
+        : on_exit_(static_cast<OnExit&&>(other.on_exit_)), is_armed_(std::exchange(other.is_armed_, false))
     {
     }
 
@@ -282,34 +282,34 @@ class ScopeGuard
 
     ~ScopeGuard() noexcept
     {
-        if (is_armed)
+        if (is_armed_)
         {
-            on_exit();
+            on_exit_();
         }
     }
 
-    constexpr void release() noexcept { is_armed = false; }
+    constexpr void release() noexcept { is_armed_ = false; }
 
   private:
-    OnExit on_exit;
-    bool is_armed{true};
+    OnExit on_exit_;
+    bool is_armed_{true};
 };
 
 template <class T>
 struct InplaceWithFunctionWrapper
 {
     template <class... Args>
-    constexpr explicit InplaceWithFunctionWrapper(Args&&... args) : value(static_cast<Args&&>(args)...)
+    constexpr explicit InplaceWithFunctionWrapper(Args&&... args) : value_(static_cast<Args&&>(args)...)
     {
     }
 
     template <class Function>
     constexpr InplaceWithFunctionWrapper(detail::InplaceWithFunction, Function&& function)
-        : value(static_cast<Function&&>(function)())
+        : value_(static_cast<Function&&>(function)())
     {
     }
 
-    T value;
+    T value_;
 };
 
 template <class T>

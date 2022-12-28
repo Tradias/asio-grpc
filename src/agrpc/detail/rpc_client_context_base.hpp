@@ -29,11 +29,11 @@ class AutoCancelClientContextRef
   public:
     AutoCancelClientContextRef() = default;
 
-    explicit AutoCancelClientContextRef(grpc::ClientContext& context) noexcept : context(std::addressof(context)) {}
+    explicit AutoCancelClientContextRef(grpc::ClientContext& context) noexcept : context_(std::addressof(context)) {}
 
     AutoCancelClientContextRef(const AutoCancelClientContextRef&) = delete;
 
-    AutoCancelClientContextRef(AutoCancelClientContextRef&& other) noexcept : context(other.context.clear()) {}
+    AutoCancelClientContextRef(AutoCancelClientContextRef&& other) noexcept : context_(other.context_.clear()) {}
 
     ~AutoCancelClientContextRef() noexcept { cancel(); }
 
@@ -44,37 +44,37 @@ class AutoCancelClientContextRef
         if (this != &other)
         {
             cancel();
-            context = other.context.clear();
+            context_ = other.context_.clear();
         }
         return *this;
     }
 
-    void clear() noexcept { context.clear(); }
+    void clear() noexcept { context_.clear(); }
 
     void cancel() const
     {
-        if (const auto context_ptr = context.get())
+        if (auto* const context_ptr = context_.get())
         {
             context_ptr->TryCancel();
         }
     }
 
-    [[nodiscard]] bool is_null() const noexcept { return context.is_null(); }
+    [[nodiscard]] bool is_null() const noexcept { return context_.is_null(); }
 
     template <std::uintptr_t Bit>
     [[nodiscard]] bool has_bit() const noexcept
     {
-        return context.template has_bit<Bit>();
+        return context_.template has_bit<Bit>();
     }
 
     template <std::uintptr_t Bit>
     void set_bit() noexcept
     {
-        context.template set_bit<Bit>();
+        context_.template set_bit<Bit>();
     }
 
   private:
-    detail::AtomicTaggedPtr<grpc::ClientContext> context{};
+    detail::AtomicTaggedPtr<grpc::ClientContext> context_{};
 };
 
 class RPCClientContextBase
@@ -82,22 +82,22 @@ class RPCClientContextBase
   protected:
     RPCClientContextBase() = default;
 
-    explicit RPCClientContextBase(grpc::ClientContext& client_context) : client_context(client_context) {}
+    explicit RPCClientContextBase(grpc::ClientContext& client_context) : client_context_(client_context) {}
 
-    [[nodiscard]] bool is_finished() const noexcept { return client_context.is_null(); }
+    [[nodiscard]] bool is_finished() const noexcept { return client_context_.is_null(); }
 
-    void set_finished() noexcept { client_context.clear(); }
+    void set_finished() noexcept { client_context_.clear(); }
 
-    void cancel() const { client_context.cancel(); }
+    void cancel() const { client_context_.cancel(); }
 
-    [[nodiscard]] bool is_writes_done() const noexcept { return client_context.has_bit<0>(); }
+    [[nodiscard]] bool is_writes_done() const noexcept { return client_context_.has_bit<0>(); }
 
-    void set_writes_done() noexcept { client_context.set_bit<0>(); }
+    void set_writes_done() noexcept { client_context_.set_bit<0>(); }
 
   private:
     friend detail::RPCCancellationFunction;
 
-    detail::AutoCancelClientContextRef client_context;
+    detail::AutoCancelClientContextRef client_context_;
 };
 }
 

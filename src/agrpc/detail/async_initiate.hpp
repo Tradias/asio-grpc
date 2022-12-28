@@ -34,11 +34,11 @@ struct SelectInvokeWithArgs
     template <class CompletionHandler, class... Args>
     struct Type
     {
-        explicit Type(CompletionHandler&& ch) : ch(static_cast<CompletionHandler&&>(ch)) {}
+        explicit Type(CompletionHandler&& ch) : ch_(static_cast<CompletionHandler&&>(ch)) {}
 
-        void operator()() { static_cast<CompletionHandler&&>(ch)(Args{}...); }
+        void operator()() { static_cast<CompletionHandler&&>(ch_)(Args{}...); }
 
-        CompletionHandler ch;
+        CompletionHandler ch_;
     };
 };
 
@@ -52,14 +52,14 @@ struct SelectInvokeWithArgs<false>
 
         template <class... U>
         explicit Type(CompletionHandler&& ch, U&&... u)
-            : ch(static_cast<CompletionHandler&&>(ch)), args{static_cast<U&&>(u)...}
+            : ch_(static_cast<CompletionHandler&&>(ch)), args_{static_cast<U&&>(u)...}
         {
         }
 
-        void operator()() { detail::apply(static_cast<CompletionHandler&&>(ch), static_cast<ArgsTuple&&>(args)); }
+        void operator()() { detail::apply(static_cast<CompletionHandler&&>(ch_), static_cast<ArgsTuple&&>(args_)); }
 
-        CompletionHandler ch;
-        ArgsTuple args;
+        CompletionHandler ch_;
+        ArgsTuple args_;
     };
 };
 

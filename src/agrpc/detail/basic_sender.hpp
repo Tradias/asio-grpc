@@ -111,8 +111,8 @@ class BasicSender : public detail::SenderOf<typename Implementation::Signature>
                                           std::is_nothrow_copy_constructible_v<Initiation> &&
                                           std::is_nothrow_move_constructible_v<Implementation>))
     {
-        return {static_cast<Receiver&&>(receiver), grpc_context, initiation,
-                static_cast<Implementation&&>(implementation)};
+        return {static_cast<Receiver&&>(receiver), grpc_context_, initiation_,
+                static_cast<Implementation&&>(implementation_)};
     }
 
     template <class Receiver, class Impl = Implementation, class = std::enable_if_t<std::is_copy_constructible_v<Impl>>>
@@ -121,21 +121,21 @@ class BasicSender : public detail::SenderOf<typename Implementation::Signature>
                                               std::is_nothrow_copy_constructible_v<Initiation> &&
                                               std::is_nothrow_copy_constructible_v<Implementation>))
     {
-        return {static_cast<Receiver&&>(receiver), grpc_context, initiation, implementation};
+        return {static_cast<Receiver&&>(receiver), grpc_context_, initiation_, implementation_};
     }
 
     template <class Receiver>
     void submit(Receiver&& receiver) &&
     {
-        detail::submit_basic_sender_running_operation(grpc_context, static_cast<Receiver&&>(receiver), initiation,
-                                                      static_cast<Implementation&&>(implementation));
+        detail::submit_basic_sender_running_operation(grpc_context_, static_cast<Receiver&&>(receiver), initiation_,
+                                                      static_cast<Implementation&&>(implementation_));
     }
 
     template <class Receiver, class Impl = Implementation, class = std::enable_if_t<std::is_copy_constructible_v<Impl>>>
     void submit(Receiver&& receiver) const&
     {
-        detail::submit_basic_sender_running_operation(grpc_context, static_cast<Receiver&&>(receiver), initiation,
-                                                      implementation);
+        detail::submit_basic_sender_running_operation(grpc_context_, static_cast<Receiver&&>(receiver), initiation_,
+                                                      implementation_);
     }
 
   private:
@@ -145,15 +145,15 @@ class BasicSender : public detail::SenderOf<typename Implementation::Signature>
     friend class detail::BasicSenderOperationState;
 
     BasicSender(agrpc::GrpcContext& grpc_context, const Initiation& initiation, Implementation&& implementation)
-        : grpc_context(grpc_context),
-          initiation(initiation),
-          implementation{static_cast<Implementation&&>(implementation)}
+        : grpc_context_(grpc_context),
+          initiation_(initiation),
+          implementation_{static_cast<Implementation&&>(implementation)}
     {
     }
 
-    agrpc::GrpcContext& grpc_context;
-    Initiation initiation;
-    Implementation implementation;
+    agrpc::GrpcContext& grpc_context_;
+    Initiation initiation_;
+    Implementation implementation_;
 };
 
 template <class Implementation, class Receiver, detail::DeallocateOnComplete Deallocate>
@@ -325,30 +325,30 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
         implementation().initiate(grpc_context, initiation, static_cast<Base*>(this));
     }
 
-    Implementation& implementation() noexcept { return impl.second(); }
+    Implementation& implementation() noexcept { return impl_.second(); }
 
     void emplace_stop_callback(StopToken&& stop_token, const Initiation& initiation) noexcept
     {
         if (stop_token.stop_possible())
         {
-            impl.first().emplace_stop_callback(static_cast<StopToken&&>(stop_token), implementation(), initiation);
+            impl_.first().emplace_stop_callback(static_cast<StopToken&&>(stop_token), implementation(), initiation);
         }
     }
 
-    void reset_stop_callback() noexcept { impl.first().reset_stop_callback(); }
+    void reset_stop_callback() noexcept { impl_.first().reset_stop_callback(); }
 
   public:
     template <class R>
     BasicSenderRunningOperation(detail::AllocationType allocation_type, R&& receiver, Implementation&& implementation)
         : Base(get_on_complete(allocation_type)),
-          impl(static_cast<R&&>(receiver), static_cast<Implementation&&>(implementation))
+          impl_(static_cast<R&&>(receiver), static_cast<Implementation&&>(implementation))
     {
     }
 
     template <class R>
     BasicSenderRunningOperation(detail::AllocationType allocation_type, R&& receiver,
                                 const Implementation& implementation)
-        : Base(get_on_complete(allocation_type)), impl(static_cast<R&&>(receiver), implementation)
+        : Base(get_on_complete(allocation_type)), impl_(static_cast<R&&>(receiver), implementation)
     {
     }
 
@@ -359,7 +359,7 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
         initiate(grpc_context, initiation);
     }
 
-    Receiver& receiver() noexcept { return impl.first().receiver(); }
+    Receiver& receiver() noexcept { return impl_.first().receiver(); }
 
     void put_into_scratch_space(void* ptr) noexcept
     {
@@ -377,7 +377,7 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
     }
 
   private:
-    detail::CompressedPair<detail::ReceiverAndStopCallback<Receiver, StopFunction>, Implementation> impl;
+    detail::CompressedPair<detail::ReceiverAndStopCallback<Receiver, StopFunction>, Implementation> impl_;
 };
 
 template <class Implementation, class Receiver>
@@ -393,7 +393,7 @@ class BasicSenderOperationState
         auto stop_token = detail::check_start_conditions(grpc_context, receiver());
         if (stop_token)
         {
-            op.start(grpc_context, impl.second(), std::move(*stop_token));
+            op.start(grpc_context, impl_.second(), std::move(*stop_token));
         }
     }
 
@@ -408,19 +408,19 @@ class BasicSenderOperationState
     template <class R, class Impl>
     BasicSenderOperationState(R&& receiver, agrpc::GrpcContext& grpc_context, const Initiation& initiation,
                               Impl&& implementation)
-        : impl(detail::SecondThenVariadic{}, initiation, detail::AllocationType::NONE, static_cast<R&&>(receiver),
-               static_cast<Impl&&>(implementation))
+        : impl_(detail::SecondThenVariadic{}, initiation, detail::AllocationType::NONE, static_cast<R&&>(receiver),
+                static_cast<Impl&&>(implementation))
     {
         operation().put_into_scratch_space(&grpc_context);
     }
 
-    auto& operation() noexcept { return impl.first(); }
+    auto& operation() noexcept { return impl_.first(); }
 
     Receiver& receiver() noexcept { return operation().receiver(); }
 
     detail::CompressedPair<
         detail::BasicSenderRunningOperation<Implementation, Receiver, detail::DeallocateOnComplete::NO>, Initiation>
-        impl;
+        impl_;
 };
 }
 

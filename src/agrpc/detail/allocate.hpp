@@ -46,13 +46,13 @@ class AllocatedPointer
     using Value = typename Traits::value_type;
 
   public:
-    AllocatedPointer(Pointer ptr, const Allocator& allocator) noexcept : impl(ptr, allocator) {}
+    AllocatedPointer(Pointer ptr, const Allocator& allocator) noexcept : impl_(ptr, allocator) {}
 
     AllocatedPointer(const AllocatedPointer&) = delete;
     AllocatedPointer& operator=(const AllocatedPointer&) = delete;
 
     AllocatedPointer(AllocatedPointer&& other) noexcept
-        : impl(std::exchange(other.get(), nullptr), other.get_allocator())
+        : impl_(std::exchange(other.get(), nullptr), other.get_allocator())
     {
     }
 
@@ -74,11 +74,11 @@ class AllocatedPointer
         }
     }
 
-    Pointer& get() noexcept { return impl.first(); }
+    Pointer& get() noexcept { return impl_.first(); }
 
-    Pointer get() const noexcept { return impl.first(); }
+    Pointer get() const noexcept { return impl_.first(); }
 
-    Allocator& get_allocator() noexcept { return impl.second(); }
+    Allocator& get_allocator() noexcept { return impl_.second(); }
 
     Pointer operator->() const noexcept { return get(); }
 
@@ -91,7 +91,7 @@ class AllocatedPointer
     }
 
   private:
-    detail::CompressedPair<Pointer, Allocator> impl;
+    detail::CompressedPair<Pointer, Allocator> impl_;
 };
 
 template <class T, class Allocator>
@@ -105,7 +105,7 @@ class AllocationGuard
     using Pointer = typename Traits::pointer;
 
   public:
-    AllocationGuard(Pointer ptr, const Allocator& allocator) noexcept : ptr(ptr), allocator(allocator) {}
+    AllocationGuard(Pointer ptr, const Allocator& allocator) noexcept : ptr_(ptr), allocator_(allocator) {}
 
     AllocationGuard(const AllocationGuard&) = delete;
     AllocationGuard& operator=(const AllocationGuard&) = delete;
@@ -114,31 +114,31 @@ class AllocationGuard
 
     ~AllocationGuard() noexcept
     {
-        if (ptr)
+        if (ptr_)
         {
-            detail::destroy_deallocate_using_traits<Traits>(allocator, ptr);
+            detail::destroy_deallocate_using_traits<Traits>(allocator_, ptr_);
         }
     }
 
-    Pointer get() const noexcept { return ptr; }
+    Pointer get() const noexcept { return ptr_; }
 
-    Allocator get_allocator() const noexcept { return allocator; }
+    Allocator get_allocator() const noexcept { return allocator_; }
 
-    Pointer operator->() const noexcept { return ptr; }
+    Pointer operator->() const noexcept { return ptr_; }
 
-    auto& operator*() const noexcept { return *ptr; }
+    auto& operator*() const noexcept { return *ptr_; }
 
-    Pointer release() noexcept { return std::exchange(ptr, nullptr); }
+    Pointer release() noexcept { return std::exchange(ptr_, nullptr); }
 
     void reset() noexcept
     {
-        detail::destroy_deallocate_using_traits<Traits>(allocator, ptr);
+        detail::destroy_deallocate_using_traits<Traits>(allocator_, ptr_);
         release();
     }
 
   private:
-    Pointer ptr;
-    Allocator allocator;
+    Pointer ptr_;
+    Allocator allocator_;
 };
 
 template <class T, class Allocator>
@@ -152,7 +152,7 @@ class UninitializedAllocationGuard
     using Pointer = typename Traits::pointer;
 
   public:
-    UninitializedAllocationGuard(Pointer ptr, Allocator& allocator) noexcept : ptr(ptr), allocator(allocator) {}
+    UninitializedAllocationGuard(Pointer ptr, Allocator& allocator) noexcept : ptr_(ptr), allocator_(allocator) {}
 
     UninitializedAllocationGuard(const UninitializedAllocationGuard&) = delete;
     UninitializedAllocationGuard(UninitializedAllocationGuard&&) = delete;
@@ -161,19 +161,19 @@ class UninitializedAllocationGuard
 
     ~UninitializedAllocationGuard() noexcept
     {
-        if (ptr)
+        if (ptr_)
         {
-            Traits::deallocate(allocator, ptr, 1);
+            Traits::deallocate(allocator_, ptr_, 1);
         }
     }
 
-    detail::AllocationGuard<Traits> release() noexcept { return {std::exchange(ptr, nullptr), allocator}; }
+    detail::AllocationGuard<Traits> release() noexcept { return {std::exchange(ptr_, nullptr), allocator_}; }
 
-    Allocator& get_allocator() noexcept { return allocator; }
+    Allocator& get_allocator() noexcept { return allocator_; }
 
   private:
-    Pointer ptr;
-    Allocator& allocator;
+    Pointer ptr_;
+    Allocator& allocator_;
 };
 
 template <class T, class Allocator, class... Args>

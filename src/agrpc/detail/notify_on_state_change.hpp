@@ -27,13 +27,13 @@ namespace detail
 template <class Deadline>
 struct NotifyOnStateChangeInitFunction
 {
-    grpc::ChannelInterface& channel;
-    Deadline deadline;
-    ::grpc_connectivity_state last_observed;
+    grpc::ChannelInterface& channel_;
+    Deadline deadline_;
+    ::grpc_connectivity_state last_observed_;
 
     void operator()(agrpc::GrpcContext& grpc_context, void* tag) const
     {
-        channel.NotifyOnStateChange(last_observed, deadline, grpc_context.get_completion_queue(), tag);
+        channel_.NotifyOnStateChange(last_observed_, deadline_, grpc_context.get_completion_queue(), tag);
     }
 };
 }

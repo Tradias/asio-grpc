@@ -30,6 +30,7 @@ namespace detail::exec
 {
 using ::unifex::get_allocator;
 using ::unifex::get_scheduler;
+inline const auto& get_executor = get_scheduler;
 
 template <class T>
 inline constexpr bool is_sender_v = ::unifex::sender<T>;
@@ -43,21 +44,6 @@ using ::unifex::set_value;
 using ::unifex::start;
 using ::unifex::stop_token_type_t;
 using ::unifex::unstoppable_token;
-
-template <class T, class = void>
-inline constexpr bool HAS_GET_SCHEDULER = false;
-
-template <class T>
-inline constexpr bool HAS_GET_SCHEDULER<T, decltype((void)exec::get_scheduler(std::declval<T>()))> = true;
-
-template <class Object>
-decltype(auto) get_executor(const Object& object)
-{
-    if constexpr (exec::HAS_GET_SCHEDULER<Object>)
-    {
-        return exec::get_scheduler(object);
-    }
-}
 }  // namespace exec
 
 AGRPC_NAMESPACE_END

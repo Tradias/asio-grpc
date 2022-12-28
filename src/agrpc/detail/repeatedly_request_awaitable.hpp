@@ -65,7 +65,7 @@ class BufferOperation : public detail::QueueableOperationBase
 
     detail::BufferAllocator<std::byte, Buffer> allocator() noexcept
     {
-        return detail::BufferAllocator<std::byte, Buffer>{buffer};
+        return detail::BufferAllocator<std::byte, Buffer>{buffer_};
     }
 
   private:
@@ -74,7 +74,7 @@ class BufferOperation : public detail::QueueableOperationBase
         detail::destroy_deallocate(static_cast<BufferOperation*>(op), std::allocator<BufferOperation>{});
     }
 
-    Buffer buffer;
+    Buffer buffer_;
 };
 
 template <class Buffer>
@@ -140,7 +140,7 @@ class RepeatedlyRequestCoroutineOperation
         : NoArgBase(ON_STOP_COMPLETE),
           detail::RepeatedlyRequestOperationBase<RequestHandler, RPC, CompletionHandler>(
               static_cast<Rh&&>(request_handler), rpc, service, static_cast<Ch&&>(completion_handler), is_stoppable),
-          buffer_operation(detail::create_allocated_buffer_operation<CoroutineCompletionHandlerBuffer>())
+          buffer_operation_(detail::create_allocated_buffer_operation<CoroutineCompletionHandlerBuffer>())
     {
         // Count buffer_operation
         this->grpc_context().work_started();
@@ -148,7 +148,7 @@ class RepeatedlyRequestCoroutineOperation
 
     ~RepeatedlyRequestCoroutineOperation()
     {
-        detail::GrpcContextImplementation::add_local_operation(this->grpc_context(), buffer_operation);
+        detail::GrpcContextImplementation::add_local_operation(this->grpc_context(), buffer_operation_);
     }
 
     bool initiate_repeatedly_request()
@@ -173,7 +173,7 @@ class RepeatedlyRequestCoroutineOperation
                                  }};
         const auto ok = co_await detail::initiate_request_from_rpc_context(
             this->rpc(), this->service(), rpc_context,
-            agrpc::AllocatorBinder(buffer_operation->allocator(), UseCoroutine{}));
+            agrpc::AllocatorBinder(buffer_operation_->allocator(), UseCoroutine{}));
         guard.release();
         if AGRPC_LIKELY (ok)
         {
@@ -190,7 +190,7 @@ class RepeatedlyRequestCoroutineOperation
         }
     }
 
-    BufferOp* buffer_operation;
+    BufferOp* buffer_operation_;
 };
 }
 

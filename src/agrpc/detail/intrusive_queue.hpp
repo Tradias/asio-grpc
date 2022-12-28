@@ -35,7 +35,7 @@ class IntrusiveQueue
     IntrusiveQueue& operator=(const IntrusiveQueue&) = delete;
 
     IntrusiveQueue(IntrusiveQueue&& other) noexcept
-        : head(std::exchange(other.head, nullptr)), tail(std::exchange(other.tail, nullptr))
+        : head_(std::exchange(other.head_, nullptr)), tail_(std::exchange(other.tail_, nullptr))
     {
     }
 
@@ -43,8 +43,8 @@ class IntrusiveQueue
 
     IntrusiveQueue& operator=(IntrusiveQueue&& other) noexcept
     {
-        std::swap(head, other.head);
-        std::swap(tail, other.tail);
+        std::swap(head_, other.head_);
+        std::swap(tail_, other.tail_);
         return *this;
     }
 
@@ -54,41 +54,41 @@ class IntrusiveQueue
         Item* new_tail = list;
         while (list != nullptr)
         {
-            Item* next = list->next;
-            list->next = new_head;
+            Item* next = list->next_;
+            list->next_ = new_head;
             new_head = list;
             list = next;
         }
         IntrusiveQueue result;
-        result.head = new_head;
-        result.tail = new_tail;
+        result.head_ = new_head;
+        result.tail_ = new_tail;
         return result;
     }
 
-    [[nodiscard]] bool empty() const noexcept { return head == nullptr; }
+    [[nodiscard]] bool empty() const noexcept { return head_ == nullptr; }
 
     [[nodiscard]] Item* pop_front() noexcept
     {
-        Item* item = std::exchange(head, head->next);
-        if (head == nullptr)
+        Item* item = std::exchange(head_, head_->next_);
+        if (head_ == nullptr)
         {
-            tail = nullptr;
+            tail_ = nullptr;
         }
         return item;
     }
 
     void push_back(Item* item) noexcept
     {
-        item->next = nullptr;
-        if (tail == nullptr)
+        item->next_ = nullptr;
+        if (tail_ == nullptr)
         {
-            head = item;
+            head_ = item;
         }
         else
         {
-            tail->next = item;
+            tail_->next_ = item;
         }
-        tail = item;
+        tail_ = item;
     }
 
     void append(IntrusiveQueue other) noexcept
@@ -97,21 +97,21 @@ class IntrusiveQueue
         {
             return;
         }
-        auto* other_head = std::exchange(other.head, nullptr);
+        auto* other_head = std::exchange(other.head_, nullptr);
         if (empty())
         {
-            head = other_head;
+            head_ = other_head;
         }
         else
         {
-            tail->next = other_head;
+            tail_->next_ = other_head;
         }
-        tail = std::exchange(other.tail, nullptr);
+        tail_ = std::exchange(other.tail_, nullptr);
     }
 
   private:
-    Item* head{nullptr};
-    Item* tail{nullptr};
+    Item* head_{nullptr};
+    Item* tail_{nullptr};
 };
 }
 

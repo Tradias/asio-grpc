@@ -57,12 +57,12 @@ class RepeatedlyRequestContext
      * client-streaming: `std::tuple<grpc::ServerContext&, grpc::ServerAsyncReader<Response, Request>&>`<br>
      * bidirectional-streaming: `std::tuple<grpc::ServerContext&, grpc::ServerAsyncReaderWriter<Response, Request>&>`
      */
-    [[nodiscard]] decltype(auto) args() const noexcept { return impl->args(); }
+    [[nodiscard]] decltype(auto) args() const noexcept { return impl_->args(); }
 
     /**
      * @brief Reference to the `grpc::ServerContext` of this request
      */
-    [[nodiscard]] decltype(auto) server_context() const noexcept { return impl->server_context(); }
+    [[nodiscard]] decltype(auto) server_context() const noexcept { return impl_->server_context(); }
 
     /**
      * @brief Reference to the request
@@ -75,7 +75,7 @@ class RepeatedlyRequestContext
             detail::HAS_REQUEST_MEMBER_FUNCTION<detail::AllocatedPointer<Allocator>>,
             "Client-streaming, bidirectional-streaming and generic requests are made without an initial request by "
             "the client. The .request() member function is therefore not available.");
-        return impl->request();
+        return impl_->request();
     }
 
     /**
@@ -88,16 +88,16 @@ class RepeatedlyRequestContext
      * client-streaming: `grpc::ServerAsyncReader<Response, Request>&`<br>
      * bidirectional-streaming: `grpc::ServerAsyncReaderWriter<Response, Request>&`
      */
-    [[nodiscard]] decltype(auto) responder() const noexcept { return impl->responder(); }
+    [[nodiscard]] decltype(auto) responder() const noexcept { return impl_->responder(); }
 
   private:
     using Impl = detail::AllocatedPointer<Allocator>;
 
     friend detail::RepeatedlyRequestContextAccess;
 
-    Impl impl;
+    explicit RepeatedlyRequestContext(Impl&& impl) noexcept : impl_(static_cast<Impl&&>(impl)) {}
 
-    explicit RepeatedlyRequestContext(Impl&& impl) noexcept : impl(static_cast<Impl&&>(impl)) {}
+    Impl impl_;
 };
 
 /**

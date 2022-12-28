@@ -33,15 +33,15 @@ struct FixedSizeString
 
     constexpr explicit operator std::string_view() const noexcept { return {data_, N}; }
 
-    static constexpr auto size() noexcept { return N; }
+    [[nodiscard]] static constexpr auto size() noexcept { return N; }
 
-    constexpr auto begin() noexcept { return data_; }
+    [[nodiscard]] constexpr auto begin() noexcept { return data_; }
 
-    constexpr auto begin() const noexcept { return data_; }
+    [[nodiscard]] constexpr auto begin() const noexcept { return data_; }
 
-    constexpr auto end() noexcept { return data_ + N; }
+    [[nodiscard]] constexpr auto end() noexcept { return data_ + N; }
 
-    constexpr auto end() const noexcept { return data_ + N; }
+    [[nodiscard]] constexpr auto end() const noexcept { return data_ + N; }
 };
 
 template <class... U>
@@ -53,15 +53,15 @@ struct StaticString
     char data_[N];
     std::size_t size_{N};
 
-    constexpr auto begin() noexcept { return data_; }
+    [[nodiscard]] constexpr auto begin() noexcept { return data_; }
 
-    constexpr auto begin() const noexcept { return data_; }
+    [[nodiscard]] constexpr auto begin() const noexcept { return data_; }
 
-    constexpr auto end() noexcept { return data_ + size_; }
+    [[nodiscard]] constexpr auto end() noexcept { return data_ + size_; }
 
-    constexpr auto end() const noexcept { return data_ + size_; }
+    [[nodiscard]] constexpr auto end() const noexcept { return data_ + size_; }
 
-    constexpr auto size() const noexcept { return size_; }
+    [[nodiscard]] constexpr auto size() const noexcept { return size_; }
 
     constexpr void set_size(std::size_t new_size) noexcept { size_ = new_size; }
 };
@@ -71,13 +71,16 @@ struct StringView
     const char* data_;
     std::size_t size_;
 
-    constexpr auto size() const noexcept { return size_; }
+    [[nodiscard]] constexpr auto size() const noexcept { return size_; }
 
-    constexpr auto begin() const noexcept { return data_; }
+    [[nodiscard]] constexpr auto begin() const noexcept { return data_; }
 
-    constexpr auto end() const noexcept { return data_ + size_; }
+    [[nodiscard]] constexpr auto end() const noexcept { return data_ + size_; }
 
-    constexpr auto substr(std::size_t pos, std::size_t count) const noexcept { return StringView{data_ + pos, count}; }
+    [[nodiscard]] constexpr auto substr(std::size_t pos, std::size_t count) const noexcept
+    {
+        return StringView{data_ + pos, count};
+    }
 };
 
 template <class T>

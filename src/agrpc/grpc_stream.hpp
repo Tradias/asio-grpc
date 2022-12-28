@@ -68,28 +68,28 @@ class BasicGrpcStream
      * @brief Construct from an executor
      */
     template <class Exec>
-    explicit BasicGrpcStream(Exec&& executor) noexcept : executor(static_cast<Exec&&>(executor))
+    explicit BasicGrpcStream(Exec&& executor) noexcept : executor_(static_cast<Exec&&>(executor))
     {
     }
 
     /**
      * @brief Construct from a `agrpc::GrpcContext`
      */
-    explicit BasicGrpcStream(agrpc::GrpcContext& grpc_context) noexcept : executor(grpc_context.get_executor()) {}
+    explicit BasicGrpcStream(agrpc::GrpcContext& grpc_context) noexcept : executor_(grpc_context.get_executor()) {}
 
     /**
      * @brief Get the associated executor
      *
      * Thread-safe
      */
-    [[nodiscard]] const executor_type& get_executor() const noexcept { return executor; }
+    [[nodiscard]] const executor_type& get_executor() const noexcept { return executor_; }
 
     /**
      * @brief Is an operation currently running?
      *
      * Thread-safe
      */
-    [[nodiscard]] bool is_running() const noexcept { return running.load(std::memory_order_relaxed); }
+    [[nodiscard]] bool is_running() const noexcept { return running_.load(std::memory_order_relaxed); }
 
     /**
      * @brief Wait for the initiated operation to complete
@@ -103,7 +103,7 @@ class BasicGrpcStream
     template <class CompletionToken = asio::default_completion_token_t<Executor>>
     auto next(CompletionToken&& token = asio::default_completion_token_t<Executor>{})
     {
-        return safe.wait(static_cast<CompletionToken&&>(token));
+        return safe_.wait(static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -114,7 +114,7 @@ class BasicGrpcStream
     template <class Allocator, class Function, class... Args>
     BasicGrpcStream& initiate(std::allocator_arg_t, Allocator allocator, Function&& function, Args&&... args)
     {
-        running.store(true, std::memory_order_relaxed);
+        running_.store(true, std::memory_order_relaxed);
         std::invoke(static_cast<Function&&>(function), static_cast<Args&&>(args)...,
                     agrpc::bind_allocator(allocator, CompletionHandler{*this}));
         return *this;
@@ -128,7 +128,7 @@ class BasicGrpcStream
     template <class Function, class... Args>
     BasicGrpcStream& initiate(Function&& function, Args&&... args)
     {
-        running.store(true, std::memory_order_relaxed);
+        running_.store(true, std::memory_order_relaxed);
         std::invoke(static_cast<Function&&>(function), static_cast<Args&&>(args)..., CompletionHandler{*this});
         return *this;
     }
@@ -148,7 +148,7 @@ class BasicGrpcStream
     {
         if (is_running())
         {
-            return safe.wait(static_cast<CompletionToken&&>(token));
+            return safe_.wait(static_cast<CompletionToken&&>(token));
         }
         return detail::async_initiate_immediate_completion<void(detail::ErrorCode, bool)>(
             static_cast<CompletionToken&&>(token));
@@ -160,23 +160,23 @@ class BasicGrpcStream
       public:
         using executor_type = Executor;
 
-        explicit CompletionHandler(BasicGrpcStream& stream) : self(stream) {}
+        explicit CompletionHandler(BasicGrpcStream& stream) : self_(stream) {}
 
         void operator()(bool ok)
         {
-            self.running.store(false, std::memory_order_relaxed);
-            self.safe.token()(ok);
+            self_.running_.store(false, std::memory_order_relaxed);
+            self_.safe_.token()(ok);
         }
 
-        [[nodiscard]] const executor_type& get_executor() const noexcept { return self.executor; }
+        [[nodiscard]] const executor_type& get_executor() const noexcept { return self_.executor_; }
 
       private:
-        BasicGrpcStream& self;
+        BasicGrpcStream& self_;
     };
 
-    Executor executor;
-    agrpc::GrpcCancelSafe safe;
-    std::atomic_bool running{};
+    Executor executor_;
+    agrpc::GrpcCancelSafe safe_;
+    std::atomic_bool running_{};
 };
 
 /**

@@ -438,7 +438,7 @@ class BasicGrpcExecutor
     [[nodiscard]] static constexpr asio::execution::relationship_t::fork_t query(
         asio::execution::relationship_t) noexcept
     {
-        return detail::QueryStaticRelationship::result_type();
+        return {};
     }
 
     /**

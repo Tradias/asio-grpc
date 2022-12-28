@@ -85,17 +85,17 @@ class RPCExecutorBase
      *
      * Thread-safe
      */
-    [[nodiscard]] const executor_type& get_executor() const noexcept { return executor; }
+    [[nodiscard]] const executor_type& get_executor() const noexcept { return executor_; }
 
   protected:
-    RPCExecutorBase() : executor(agrpc::GrpcExecutor{}) {}
+    RPCExecutorBase() : executor_(agrpc::GrpcExecutor{}) {}
 
-    explicit RPCExecutorBase(const Executor& executor) : executor(executor) {}
+    explicit RPCExecutorBase(const Executor& executor) : executor_(executor) {}
 
-    auto& grpc_context() const noexcept { return detail::query_grpc_context(executor); }
+    auto& grpc_context() const noexcept { return detail::query_grpc_context(executor_); }
 
   private:
-    Executor executor;
+    Executor executor_;
 };
 
 /**

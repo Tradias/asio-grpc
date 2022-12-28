@@ -30,23 +30,23 @@ template <bool IsStoppable>
 class RepeatedlyRequestBaseStopContext
 {
   public:
-    explicit RepeatedlyRequestBaseStopContext(bool is_stoppable) noexcept : is_stoppable(is_stoppable) {}
+    explicit RepeatedlyRequestBaseStopContext(bool is_stoppable) noexcept : is_stoppable_(is_stoppable) {}
 
     [[nodiscard]] bool is_stopped() const noexcept
     {
-        return is_stoppable ? stopped.load(std::memory_order_relaxed) : false;
+        return is_stoppable_ ? stopped_.load(std::memory_order_relaxed) : false;
     }
 
     template <class StopFunction, class StopToken>
     void emplace(StopToken&& token)
     {
         using StopCallback = typename detail::RemoveCrefT<decltype(token)>::template callback_type<StopFunction>;
-        [[maybe_unused]] StopCallback s{static_cast<StopToken&&>(token), StopFunction{stopped}};
+        [[maybe_unused]] StopCallback s{static_cast<StopToken&&>(token), StopFunction{stopped_}};
     }
 
   private:
-    std::atomic_bool stopped{};
-    const bool is_stoppable;
+    std::atomic_bool stopped_{};
+    const bool is_stoppable_;
 };
 
 template <>
@@ -75,34 +75,34 @@ class RepeatedlyRequestOperationBase
     template <class Ch, class Rh>
     RepeatedlyRequestOperationBase(Rh&& request_handler, RPC rpc, Service& service, Ch&& completion_handler,
                                    bool is_stoppable)
-        : impl1(service, static_cast<Ch&&>(completion_handler)),
-          impl2(rpc, is_stoppable),
+        : impl1_(service, static_cast<Ch&&>(completion_handler)),
+          impl2_(rpc, is_stoppable),
           request_handler_(static_cast<Rh&&>(request_handler))
     {
     }
 
-    auto& cancellation_context() noexcept { return impl2.second(); }
+    auto& cancellation_context() noexcept { return impl2_.second(); }
 
-    auto& completion_handler() noexcept { return impl1.second(); }
+    auto& completion_handler() noexcept { return impl1_.second(); }
 
     decltype(auto) get_allocator() noexcept { return detail::exec::get_allocator(request_handler_); }
 
   protected:
-    [[nodiscard]] bool is_stopped() const noexcept { return impl2.second().is_stopped(); }
+    [[nodiscard]] bool is_stopped() const noexcept { return impl2_.second().is_stopped(); }
 
     decltype(auto) get_executor() noexcept { return detail::exec::get_executor(request_handler_); }
 
     agrpc::GrpcContext& grpc_context() noexcept { return detail::query_grpc_context(get_executor()); }
 
-    RPC rpc() noexcept { return impl2.first(); }
+    RPC rpc() noexcept { return impl2_.first(); }
 
-    Service& service() noexcept { return impl1.first(); }
+    Service& service() noexcept { return impl1_.first(); }
 
     RequestHandler& request_handler() noexcept { return request_handler_; }
 
   private:
-    detail::CompressedPair<Service&, CompletionHandler> impl1;
-    detail::CompressedPair<RPC, StopContext> impl2;
+    detail::CompressedPair<Service&, CompletionHandler> impl1_;
+    detail::CompressedPair<RPC, StopContext> impl2_;
     RequestHandler request_handler_;
 };
 }

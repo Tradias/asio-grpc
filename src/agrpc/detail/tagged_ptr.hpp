@@ -36,21 +36,21 @@ class BasicTaggedPtr
   public:
     BasicTaggedPtr() = default;
 
-    explicit BasicTaggedPtr(T* ptr) noexcept : ptr(reinterpret_cast<std::uintptr_t>(ptr)) {}
+    explicit BasicTaggedPtr(T* ptr) noexcept : ptr_(reinterpret_cast<std::uintptr_t>(ptr)) {}
 
-    explicit BasicTaggedPtr(std::uintptr_t other) noexcept : ptr(other) {}
+    explicit BasicTaggedPtr(std::uintptr_t other) noexcept : ptr_(other) {}
 
     BasicTaggedPtr& operator=(std::uintptr_t other) noexcept
     {
-        ptr = other;
+        ptr_ = other;
         return *this;
     }
 
-    auto clear() noexcept { return detail::exchange(ptr, std::uintptr_t{}); }
+    auto clear() noexcept { return detail::exchange(ptr_, std::uintptr_t{}); }
 
-    [[nodiscard]] T* get() const noexcept { return reinterpret_cast<T*>(ptr & PTR_MASK); }
+    [[nodiscard]] T* get() const noexcept { return reinterpret_cast<T*>(ptr_ & PTR_MASK); }
 
-    [[nodiscard]] bool is_null() const noexcept { return (ptr & PTR_MASK) == std::uintptr_t{}; }
+    [[nodiscard]] bool is_null() const noexcept { return (ptr_ & PTR_MASK) == std::uintptr_t{}; }
 
     [[nodiscard]] T* operator->() const noexcept { return get(); }
 
@@ -61,7 +61,7 @@ class BasicTaggedPtr
     {
         static_assert(Bit < AVAILABLE_BITS, "TaggedPtr has insufficient available bits");
         constexpr auto SHIFT = std::uintptr_t{1} << Bit;
-        return (ptr & SHIFT) != std::uintptr_t{};
+        return (ptr_ & SHIFT) != std::uintptr_t{};
     }
 
     template <std::uintptr_t Bit>
@@ -69,7 +69,7 @@ class BasicTaggedPtr
     {
         static_assert(Bit < AVAILABLE_BITS, "TaggedPtr has insufficient available bits");
         constexpr auto SHIFT = std::uintptr_t{1} << Bit;
-        ptr &= ~SHIFT;
+        ptr_ &= ~SHIFT;
     }
 
     template <std::uintptr_t Bit>
@@ -77,11 +77,11 @@ class BasicTaggedPtr
     {
         static_assert(Bit < AVAILABLE_BITS, "TaggedPtr has insufficient available bits");
         constexpr auto SHIFT = std::uintptr_t{1} << Bit;
-        ptr |= SHIFT;
+        ptr_ |= SHIFT;
     }
 
   private:
-    StorageType ptr{};
+    StorageType ptr_{};
 };
 
 template <class T>

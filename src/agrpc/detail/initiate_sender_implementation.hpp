@@ -37,14 +37,14 @@ struct SubmitSenderToWorkTrackingCompletionHandler
                     Implementation&& implementation)
     {
         detail::submit_basic_sender_running_operation(
-            grpc_context,
+            grpc_context_,
             detail::CompletionHandlerReceiver<
                 detail::WorkTrackingCompletionHandler<detail::RemoveCrefT<CompletionHandler>>>(
                 static_cast<CompletionHandler&&>(completion_handler)),
             initiation, static_cast<Implementation&&>(implementation));
     }
 
-    agrpc::GrpcContext& grpc_context;
+    agrpc::GrpcContext& grpc_context_;
 };
 
 struct ConditionalSubmitSenderToWorkTrackingCompletionHandler
@@ -57,7 +57,7 @@ struct ConditionalSubmitSenderToWorkTrackingCompletionHandler
         using Signature = typename detail::RemoveCrefT<Implementation>::Signature;
         if (condition)
         {
-            detail::SubmitSenderToWorkTrackingCompletionHandler{grpc_context}(
+            detail::SubmitSenderToWorkTrackingCompletionHandler{grpc_context_}(
                 static_cast<CompletionHandler&&>(completion_handler), initiation,
                 static_cast<Implementation&&>(implementation));
         }
@@ -68,7 +68,7 @@ struct ConditionalSubmitSenderToWorkTrackingCompletionHandler
         }
     }
 
-    agrpc::GrpcContext& grpc_context;
+    agrpc::GrpcContext& grpc_context_;
 };
 #endif
 

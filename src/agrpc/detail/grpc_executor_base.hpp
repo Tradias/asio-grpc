@@ -33,20 +33,20 @@ class GrpcExecutorBase
     GrpcExecutorBase() = default;
 
     GrpcExecutorBase(agrpc::GrpcContext* grpc_context, const Allocator& allocator) noexcept
-        : impl(grpc_context, allocator)
+        : impl_(grpc_context, allocator)
     {
     }
 
-    [[nodiscard]] agrpc::GrpcContext*& grpc_context() noexcept { return impl.first(); }
+    [[nodiscard]] agrpc::GrpcContext*& grpc_context() noexcept { return impl_.first(); }
 
-    [[nodiscard]] agrpc::GrpcContext* grpc_context() const noexcept { return impl.first(); }
+    [[nodiscard]] agrpc::GrpcContext* grpc_context() const noexcept { return impl_.first(); }
 
-    [[nodiscard]] Allocator& allocator() noexcept { return impl.second(); }
+    [[nodiscard]] Allocator& allocator() noexcept { return impl_.second(); }
 
-    [[nodiscard]] const Allocator& allocator() const noexcept { return impl.second(); }
+    [[nodiscard]] const Allocator& allocator() const noexcept { return impl_.second(); }
 
   private:
-    detail::CompressedPair<agrpc::GrpcContext*, Allocator> impl;
+    detail::CompressedPair<agrpc::GrpcContext*, Allocator> impl_;
 };
 
 template <class Allocator>

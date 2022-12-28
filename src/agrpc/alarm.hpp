@@ -54,12 +54,12 @@ class BasicAlarm
     /**
      * @brief Construct a BasicAlarm from an executor
      */
-    explicit BasicAlarm(const Executor& executor) : executor(executor) {}
+    explicit BasicAlarm(const Executor& executor) : executor_(executor) {}
 
     /**
      * @brief Construct a BasicAlarm from a GrpcContext
      */
-    explicit BasicAlarm(agrpc::GrpcContext& grpc_context) : executor(grpc_context.get_executor()) {}
+    explicit BasicAlarm(agrpc::GrpcContext& grpc_context) : executor_(grpc_context.get_executor()) {}
 
     /**
      * @brief Wait until a specified deadline has been reached (lvalue overload)
@@ -85,7 +85,7 @@ class BasicAlarm
     {
         return detail::async_initiate_sender_implementation<
             detail::GrpcSenderImplementation<detail::AlarmInitFunction<Deadline>, detail::AlarmCancellationFunction>>(
-            grpc_context(), {alarm, deadline}, {}, token);
+            grpc_context(), {alarm_, deadline}, {}, token);
     }
 
     /**
@@ -112,16 +112,16 @@ class BasicAlarm
      *
      * Thread-safe
      */
-    [[nodiscard]] const executor_type& get_executor() const noexcept { return executor; }
+    [[nodiscard]] const executor_type& get_executor() const noexcept { return executor_; }
 
   private:
     template <class, class>
     friend struct detail::MoveAlarmSenderImplementation;
 
-    auto& grpc_context() const noexcept { return detail::query_grpc_context(executor); }
+    auto& grpc_context() const noexcept { return detail::query_grpc_context(executor_); }
 
-    Executor executor;
-    grpc::Alarm alarm;
+    Executor executor_;
+    grpc::Alarm alarm_;
 
 };
 

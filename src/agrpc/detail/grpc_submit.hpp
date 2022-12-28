@@ -26,10 +26,10 @@ namespace detail
 {
 struct DeallocateOperationFunctor
 {
-    agrpc::GrpcContext& grpc_context;
-    detail::OperationBase* operation;
+    agrpc::GrpcContext& grpc_context_;
+    detail::OperationBase* operation_;
 
-    void operator()() { operation->complete(detail::OperationResult::SHUTDOWN_NOT_OK, grpc_context); }
+    void operator()() { operation_->complete(detail::OperationResult::SHUTDOWN_NOT_OK, grpc_context_); }
 };
 
 using OperationAllocationGuard = detail::ScopeGuard<detail::DeallocateOperationFunctor>;

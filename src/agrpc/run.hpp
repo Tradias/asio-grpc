@@ -148,10 +148,13 @@ struct ResolvedRunTraits
 template <class ExecutionContext>
 struct AreContextsStoppedCondition
 {
-    const agrpc::GrpcContext& grpc_context;
-    ExecutionContext& execution_context;
+    [[nodiscard]] bool operator()() const noexcept
+    {
+        return grpc_context_.is_stopped() && execution_context_.stopped();
+    }
 
-    [[nodiscard]] bool operator()() const noexcept { return grpc_context.is_stopped() && execution_context.stopped(); }
+    const agrpc::GrpcContext& grpc_context_;
+    ExecutionContext& execution_context_;
 };
 
 struct GrpcContextDoOne

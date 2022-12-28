@@ -29,10 +29,10 @@ namespace detail
 class RPCContextBase
 {
   public:
-    grpc::ServerContext& server_context() noexcept { return context; }
+    grpc::ServerContext& server_context() noexcept { return context_; }
 
   private:
-    grpc::ServerContext context{};
+    grpc::ServerContext context_{};
 };
 
 template <class Request, class Responder>
@@ -75,15 +75,15 @@ class GenericRPCContext
   public:
     using Signature = void(grpc::GenericServerContext&, grpc::GenericServerAsyncReaderWriter&);
 
-    grpc::GenericServerContext& server_context() noexcept { return context; }
+    grpc::GenericServerContext& server_context() noexcept { return context_; }
 
-    auto args() noexcept { return std::forward_as_tuple(context, responder_); }
+    auto args() noexcept { return std::forward_as_tuple(context_, responder_); }
 
     grpc::GenericServerAsyncReaderWriter& responder() noexcept { return responder_; }
 
   private:
-    grpc::GenericServerContext context{};
-    grpc::GenericServerAsyncReaderWriter responder_{&context};
+    grpc::GenericServerContext context_{};
+    grpc::GenericServerAsyncReaderWriter responder_{&context_};
 };
 
 template <class>

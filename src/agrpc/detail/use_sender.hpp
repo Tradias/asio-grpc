@@ -24,7 +24,7 @@ namespace detail
 {
 struct UseSender
 {
-    agrpc::GrpcContext& grpc_context;
+    agrpc::GrpcContext& grpc_context_;
 };
 }
 

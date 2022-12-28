@@ -32,9 +32,9 @@ namespace detail
 {
 struct WorkFinishedOnExitFunctor
 {
-    agrpc::GrpcContext& grpc_context;
+    agrpc::GrpcContext& grpc_context_;
 
-    explicit WorkFinishedOnExitFunctor(agrpc::GrpcContext& grpc_context) noexcept : grpc_context(grpc_context) {}
+    explicit WorkFinishedOnExitFunctor(agrpc::GrpcContext& grpc_context) noexcept : grpc_context_(grpc_context) {}
 
     void operator()() const noexcept;
 
@@ -64,8 +64,8 @@ struct GrpcContextThreadInfo : asio::detail::thread_info_base
 // Enables Boost.Asio's awaitable frame memory recycling
 struct GrpcContextThreadContext : asio::detail::thread_context
 {
-    detail::GrpcContextThreadInfo this_thread;
-    thread_call_stack::context ctx{this, this_thread};
+    detail::GrpcContextThreadInfo this_thread_;
+    thread_call_stack::context ctx_{this, this_thread_};
 };
 #else
 struct GrpcContextThreadContext
@@ -75,7 +75,7 @@ struct GrpcContextThreadContext
 
 struct ThreadLocalGrpcContextGuard
 {
-    const agrpc::GrpcContext* old_context;
+    const agrpc::GrpcContext* old_context_;
 
     explicit ThreadLocalGrpcContextGuard(const agrpc::GrpcContext& grpc_context) noexcept;
 

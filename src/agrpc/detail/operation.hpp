@@ -37,16 +37,16 @@ class NoArgOperation : public detail::QueueableOperationBase
         : Base(detail::AllocationType::LOCAL == allocation_type
                    ? detail::DO_COMPLETE_LOCAL_NO_ARG_HANDLER<NoArgOperation>
                    : detail::DO_COMPLETE_NO_ARG_HANDLER<NoArgOperation>),
-          handler(static_cast<Args&&>(args)...)
+          handler_(static_cast<Args&&>(args)...)
     {
     }
 
-    [[nodiscard]] Handler& completion_handler() noexcept { return handler; }
+    [[nodiscard]] Handler& completion_handler() noexcept { return handler_; }
 
-    [[nodiscard]] auto get_allocator() noexcept { return detail::exec::get_allocator(handler); }
+    [[nodiscard]] auto get_allocator() noexcept { return detail::exec::get_allocator(handler_); }
 
   private:
-    Handler handler;
+    Handler handler_;
 };
 
 template <class Handler>
@@ -61,16 +61,16 @@ class GrpcTagOperation : public detail::OperationBase
         : Base(detail::AllocationType::LOCAL == allocation_type
                    ? detail::DO_COMPLETE_LOCAL_GRPC_TAG_HANDLER<GrpcTagOperation>
                    : detail::DO_COMPLETE_GRPC_TAG_HANDLER<GrpcTagOperation>),
-          handler(static_cast<Args&&>(args)...)
+          handler_(static_cast<Args&&>(args)...)
     {
     }
 
-    [[nodiscard]] Handler& completion_handler() noexcept { return handler; }
+    [[nodiscard]] Handler& completion_handler() noexcept { return handler_; }
 
-    [[nodiscard]] auto get_allocator() noexcept { return detail::exec::get_allocator(handler); }
+    [[nodiscard]] auto get_allocator() noexcept { return detail::exec::get_allocator(handler_); }
 
   private:
-    Handler handler;
+    Handler handler_;
 };
 }
 

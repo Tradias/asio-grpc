@@ -88,12 +88,12 @@ class HealthCheckService final : public grpc::HealthCheckServiceInterface
 
     [[nodiscard]] detail::ServingStatus get_serving_status(const std::string& service_name) const;
 
-    agrpc::GrpcContext* grpc_context;
-    grpc::health::v1::Health::AsyncService service;
-    std::map<std::string, detail::HealthCheckServiceData> services_map;
-    detail::HealthCheckRepeatedlyRequestWatch repeatedly_request_watch;
-    detail::HealthCheckRepeatedlyRequestCheck repeatedly_request_check;
-    bool is_shutdown{false};
+    agrpc::GrpcContext* grpc_context_;
+    grpc::health::v1::Health::AsyncService service_;
+    std::map<std::string, detail::HealthCheckServiceData> services_map_;
+    detail::HealthCheckRepeatedlyRequestWatch repeatedly_request_watch_;
+    detail::HealthCheckRepeatedlyRequestCheck repeatedly_request_check_;
+    bool is_shutdown_{false};
 };
 
 /**

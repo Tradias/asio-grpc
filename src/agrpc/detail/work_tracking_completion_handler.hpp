@@ -50,13 +50,13 @@ class WorkTracker
 {
   public:
     explicit WorkTracker(const CompletionHandler& ch)
-        : work(asio::prefer(asio::get_associated_executor(ch), asio::execution::outstanding_work_t::tracked))
+        : work_(asio::prefer(asio::get_associated_executor(ch), asio::execution::outstanding_work_t::tracked))
     {
     }
 
   private:
     typename asio::prefer_result<asio::associated_executor_t<CompletionHandler>,
-                                 asio::execution::outstanding_work_t::tracked_t>::type work;
+                                 asio::execution::outstanding_work_t::tracked_t>::type work_;
 };
 
 template <class CompletionHandler>

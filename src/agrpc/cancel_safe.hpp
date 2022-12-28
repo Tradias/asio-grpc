@@ -69,22 +69,22 @@ class CancelSafe<void(CompletionArgs...)>
       public:
         void operator()(CompletionArgs... completion_args)
         {
-            if (auto ch = self.completion_handler.release())
+            if (auto ch = self_.completion_handler_.release())
             {
                 detail::complete_successfully(std::move(ch), static_cast<CompletionArgs&&>(completion_args)...);
             }
             else
             {
-                self.result.emplace(Result{static_cast<CompletionArgs&&>(completion_args)...});
+                self_.result_.emplace(Result{static_cast<CompletionArgs&&>(completion_args)...});
             }
         }
 
       private:
         friend agrpc::CancelSafe<void(CompletionArgs...)>;
 
-        explicit CompletionToken(CancelSafe& self) noexcept : self(self) {}
+        explicit CompletionToken(CancelSafe& self) noexcept : self_(self) {}
 
-        CancelSafe& self;
+        CancelSafe& self_;
     };
 
     /**
@@ -108,7 +108,7 @@ class CancelSafe<void(CompletionArgs...)>
      *
      * Thread-safe
      */
-    [[nodiscard]] bool is_wait_pending() const noexcept { return bool{completion_handler}; }
+    [[nodiscard]] bool is_wait_pending() const noexcept { return bool{completion_handler_}; }
 
     /**
      * @brief Wait for the asynchronous operation to complete
@@ -128,24 +128,22 @@ class CancelSafe<void(CompletionArgs...)>
     template <class CompletionToken = agrpc::DefaultCompletionToken>
     auto wait(CompletionToken token = {})
     {
-        assert(!completion_handler && "Can only wait again when the previous wait has been cancelled or completed");
+        assert(!completion_handler_ && "Can only wait again when the previous wait has been cancelled or completed");
         return asio::async_initiate<CompletionToken, CompletionSignature>(Initiator{*this}, token);
     }
 
   private:
     struct Initiator
     {
-        CancelSafe& self;
-
         template <class CompletionHandler>
         void operator()(CompletionHandler&& ch)
         {
-            if (self.result)
+            if (self_.result_)
             {
                 auto executor = asio::get_associated_executor(ch);
                 const auto allocator = asio::get_associated_allocator(ch);
-                auto local_result{static_cast<Result&&>(*self.result)};
-                self.result.reset();
+                auto local_result{static_cast<Result&&>(*self_.result_)};
+                self_.result_.reset();
                 detail::post_with_allocator(
                     std::move(executor),
                     [ch = static_cast<CompletionHandler&&>(ch),
@@ -157,31 +155,33 @@ class CancelSafe<void(CompletionArgs...)>
                 return;
             }
             auto cancellation_slot = asio::get_associated_cancellation_slot(ch);
-            self.emplace_completion_handler(static_cast<CompletionHandler&&>(ch));
-            self.install_cancellation_handler(cancellation_slot);
+            self_.emplace_completion_handler(static_cast<CompletionHandler&&>(ch));
+            self_.install_cancellation_handler(cancellation_slot);
         }
+
+        CancelSafe& self_;
     };
 
     struct CancellationHandler
     {
-        CancelSafe& self;
-
         void operator()(asio::cancellation_type type)
         {
             if (static_cast<bool>(type & asio::cancellation_type::all))
             {
-                if (auto ch = self.completion_handler.release())
+                if (auto ch = self_.completion_handler_.release())
                 {
                     detail::complete_operation_aborted(std::move(ch), CompletionArgs{}...);
                 }
             }
         }
+
+        CancelSafe& self_;
     };
 
     template <class CompletionHandler>
     void emplace_completion_handler(CompletionHandler&& ch)
     {
-        completion_handler
+        completion_handler_
             .template emplace<detail::WorkTrackingCompletionHandler<detail::RemoveCrefT<CompletionHandler>>>(
                 static_cast<CompletionHandler&&>(ch));
     }
@@ -195,8 +195,8 @@ class CancelSafe<void(CompletionArgs...)>
         }
     }
 
-    detail::AtomicTypeErasedCompletionHandler<CompletionSignature> completion_handler{};
-    std::optional<Result> result;
+    detail::AtomicTypeErasedCompletionHandler<CompletionSignature> completion_handler_{};
+    std::optional<Result> result_;
 };
 
 /**

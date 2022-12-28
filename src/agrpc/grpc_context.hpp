@@ -295,16 +295,16 @@ class GrpcContext
 
     bool run_until_impl(::gpr_timespec deadline);
 
-    grpc::Alarm work_alarm;
-    std::atomic_long outstanding_work{};
-    std::atomic_bool stopped{false};
-    std::atomic_bool shutdown{false};
-    bool check_remote_work{false};
-    std::unique_ptr<grpc::CompletionQueue> completion_queue{std::make_unique<grpc::CompletionQueue>()};
-    detail::GrpcContextLocalMemoryResource local_resource{detail::new_delete_resource()};
-    LocalWorkQueue local_work_queue;
-    NotifyWhenDoneList notify_when_done_list;
-    RemoteWorkQueue remote_work_queue{false};
+    grpc::Alarm work_alarm_;
+    std::atomic_long outstanding_work_{};
+    std::atomic_bool stopped_{false};
+    std::atomic_bool shutdown_{false};
+    bool check_remote_work_{false};
+    std::unique_ptr<grpc::CompletionQueue> completion_queue_{std::make_unique<grpc::CompletionQueue>()};
+    detail::GrpcContextLocalMemoryResource local_resource_{detail::new_delete_resource()};
+    LocalWorkQueue local_work_queue_;
+    NotifyWhenDoneList notify_when_done_list_;
+    RemoteWorkQueue remote_work_queue_{false};
 };
 
 AGRPC_NAMESPACE_END

@@ -39,14 +39,14 @@ inline void process_grpc_tag(agrpc::GrpcContext& grpc_context, void* tag, bool o
 {
     struct ProcessTag
     {
-        agrpc::GrpcContext& grpc_context;
-        void* tag;
-        bool ok;
+        agrpc::GrpcContext& grpc_context_;
+        void* tag_;
+        bool ok_;
 
         void operator()(bool, agrpc::Alarm&&)
         {
-            detail::process_grpc_tag(tag, ok ? detail::OperationResult::OK : detail::OperationResult::NOT_OK,
-                                     grpc_context);
+            detail::process_grpc_tag(tag_, ok_ ? detail::OperationResult::OK : detail::OperationResult::NOT_OK,
+                                     grpc_context_);
         }
     };
     if (tag != nullptr)

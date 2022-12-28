@@ -45,20 +45,20 @@ class Backoff
 
     Delay next() noexcept
     {
-        ++iterations;
-        if (ITERATIONS_PER_DELAY == iterations)
+        ++iterations_;
+        if (ITERATIONS_PER_DELAY == iterations_)
         {
-            iterations = Iteration{};
+            iterations_ = Iteration{};
             increase_delay();
         }
-        return delay;
+        return delay_;
     }
 
     auto reset() noexcept
     {
-        iterations = Iteration{};
-        delay = Delay::zero();
-        return delay;
+        iterations_ = Iteration{};
+        delay_ = Delay::zero();
+        return delay_;
     }
 
   private:
@@ -66,14 +66,14 @@ class Backoff
 
     void increase_delay() noexcept
     {
-        if (MAX_DELAY > delay)
+        if (MAX_DELAY > delay_)
         {
-            delay += INCREMENT;
+            delay_ += INCREMENT;
         }
     }
 
-    Delay delay{Delay::zero()};
-    Iteration iterations{};
+    Delay delay_{Delay::zero()};
+    Iteration iterations_{};
 };
 }
 

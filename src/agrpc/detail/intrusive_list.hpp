@@ -41,29 +41,29 @@ class IntrusiveList
 
         iterator() = default;
 
-        explicit iterator(T* item) : item(item) {}
+        explicit iterator(T* item) : item_(item) {}
 
-        reference operator*() noexcept { return *item; }
+        reference operator*() noexcept { return *item_; }
 
         iterator& operator++() noexcept
         {
-            item = item->list_next;
+            item_ = item_->list_next_;
             return *this;
         }
 
         iterator operator++(int) noexcept
         {
             auto self = *this;
-            item = item->list_next;
+            item_ = item_->list_next_;
             return self;
         }
 
-        friend bool operator==(const iterator& lhs, const iterator& rhs) { return lhs.item == rhs.item; }
+        friend bool operator==(const iterator& lhs, const iterator& rhs) { return lhs.item_ == rhs.item_; }
 
-        friend bool operator!=(const iterator& lhs, const iterator& rhs) { return lhs.item != rhs.item; }
+        friend bool operator!=(const iterator& lhs, const iterator& rhs) { return lhs.item_ != rhs.item_; }
 
       private:
-        T* item{};
+        T* item_{};
     };
 
     IntrusiveList() = default;
@@ -71,7 +71,7 @@ class IntrusiveList
     IntrusiveList(const IntrusiveList&) = delete;
 
     IntrusiveList(IntrusiveList&& other) noexcept
-        : head(std::exchange(other.head, nullptr)), tail(std::exchange(other.tail, nullptr))
+        : head_(std::exchange(other.head_, nullptr)), tail_(std::exchange(other.tail_, nullptr))
     {
     }
 
@@ -80,67 +80,67 @@ class IntrusiveList
     IntrusiveList& operator=(const IntrusiveList&) = delete;
     IntrusiveList& operator=(IntrusiveList&&) = delete;
 
-    [[nodiscard]] bool empty() const noexcept { return head == nullptr; }
+    [[nodiscard]] bool empty() const noexcept { return head_ == nullptr; }
 
-    [[nodiscard]] iterator begin() noexcept { return iterator(head); }
+    [[nodiscard]] iterator begin() noexcept { return iterator(head_); }
 
     [[nodiscard]] iterator end() noexcept { return iterator(); }
 
     void push_back(T* item) noexcept
     {
-        item->list_prev = tail;
-        item->list_next = nullptr;
-        if (tail == nullptr)
+        item->list_prev_ = tail_;
+        item->list_next_ = nullptr;
+        if (tail_ == nullptr)
         {
-            head = item;
+            head_ = item;
         }
         else
         {
-            tail->list_next = item;
+            tail_->list_next_ = item;
         }
-        tail = item;
+        tail_ = item;
     }
 
     [[nodiscard]] T* pop_front() noexcept
     {
-        auto* item = head;
-        head = item->list_next;
-        if (head != nullptr)
+        auto* item = head_;
+        head_ = item->list_next_;
+        if (head_ != nullptr)
         {
-            head->list_prev = nullptr;
+            head_->list_prev_ = nullptr;
         }
         else
         {
-            tail = nullptr;
+            tail_ = nullptr;
         }
         return item;
     }
 
     void remove(T* item) noexcept
     {
-        auto* const prev = item->list_prev;
-        auto* const next = item->list_next;
+        auto* const prev = item->list_prev_;
+        auto* const next = item->list_next_;
         if (prev != nullptr)
         {
-            prev->list_next = next;
+            prev->list_next_ = next;
         }
         else
         {
-            head = next;
+            head_ = next;
         }
         if (next != nullptr)
         {
-            next->list_prev = prev;
+            next->list_prev_ = prev;
         }
         else
         {
-            tail = prev;
+            tail_ = prev;
         }
     }
 
   private:
-    T* head{nullptr};
-    T* tail{nullptr};
+    T* head_{nullptr};
+    T* tail_{nullptr};
 };
 }
 

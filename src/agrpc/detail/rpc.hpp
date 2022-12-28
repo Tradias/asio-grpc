@@ -34,55 +34,55 @@ namespace detail
 template <class Message, class Responder>
 struct ReadInitFunction
 {
-    Responder& responder;
-    Message& message;
+    Responder& responder_;
+    Message& message_;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.Read(&message, tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder_.Read(&message_, tag); }
 };
 
 template <class Message, class Responder>
 struct WriteInitFunction
 {
-    Responder& responder;
-    const Message& message;
+    Responder& responder_;
+    const Message& message_;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.Write(message, tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder_.Write(message_, tag); }
 };
 
 template <class Message, class Responder>
 struct WriteWithOptionsInitFunction
 {
-    Responder& responder;
-    const Message& message;
-    grpc::WriteOptions options;
+    Responder& responder_;
+    const Message& message_;
+    grpc::WriteOptions options_;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.Write(message, options, tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder_.Write(message_, options_, tag); }
 };
 
 template <class Message, class Responder>
 struct WriteLastInitFunction
 {
-    Responder& responder;
-    const Message& message;
-    grpc::WriteOptions options;
+    Responder& responder_;
+    const Message& message_;
+    grpc::WriteOptions options_;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.WriteLast(message, options, tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder_.WriteLast(message_, options_, tag); }
 };
 
 template <class Responder>
 struct ClientWritesDoneInitFunction
 {
-    Responder& responder;
+    Responder& responder_;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.WritesDone(tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder_.WritesDone(tag); }
 };
 
 template <class Responder>
 struct ReadInitialMetadataInitFunction
 {
-    Responder& responder;
+    Responder& responder_;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.ReadInitialMetadata(tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder_.ReadInitialMetadata(tag); }
 };
 
 template <class Responder, class = decltype(&Responder::Finish)>
@@ -93,10 +93,10 @@ struct FinishInitFunction<Responder, void (BaseResponder::*)(const grpc::Status&
 {
     static constexpr bool IS_CONST = true;
 
-    Responder& responder;
-    const grpc::Status& status;
+    Responder& responder_;
+    const grpc::Status& status_;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.Finish(status, tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder_.Finish(status_, tag); }
 };
 
 template <class Responder, class BaseResponder>
@@ -104,10 +104,10 @@ struct FinishInitFunction<Responder, void (BaseResponder::*)(grpc::Status*, void
 {
     static constexpr bool IS_CONST = false;
 
-    Responder& responder;
-    grpc::Status& status;
+    Responder& responder_;
+    grpc::Status& status_;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.Finish(&status, tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder_.Finish(&status_, tag); }
 };
 
 template <class Responder, class = decltype(&Responder::Finish)>
@@ -120,11 +120,11 @@ struct FinishWithMessageInitFunction<Responder, void (BaseResponder::*)(const Re
 
     using Message = Response;
 
-    Responder& responder;
-    const Message& message;
-    const grpc::Status& status;
+    Responder& responder_;
+    const Message& message_;
+    const grpc::Status& status_;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.Finish(message, status, tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder_.Finish(message_, status_, tag); }
 };
 
 template <class Responder, class BaseResponder, class Response>
@@ -134,287 +134,287 @@ struct FinishWithMessageInitFunction<Responder, void (BaseResponder::*)(Response
 
     using Message = Response;
 
-    Responder& responder;
-    Message& message;
-    grpc::Status& status;
+    Responder& responder_;
+    Message& message_;
+    grpc::Status& status_;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.Finish(&message, &status, tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder_.Finish(&message_, &status_, tag); }
 };
 
 template <class Responder>
 struct ServerFinishWithErrorInitFunction
 {
-    Responder& responder;
-    const grpc::Status& status;
+    Responder& responder_;
+    const grpc::Status& status_;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.FinishWithError(status, tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder_.FinishWithError(status_, tag); }
 };
 
 template <class Message, class Responder>
 struct ServerWriteAndFinishInitFunction
 {
-    Responder& responder;
-    const Message& message;
-    grpc::WriteOptions options;
-    const grpc::Status& status;
+    Responder& responder_;
+    const Message& message_;
+    grpc::WriteOptions options_;
+    const grpc::Status& status_;
 
     void operator()(const agrpc::GrpcContext&, void* tag) const
     {
-        responder.WriteAndFinish(message, options, status, tag);
+        responder_.WriteAndFinish(message_, options_, status_, tag);
     }
 };
 
 template <class Responder>
 struct SendInitialMetadataInitFunction
 {
-    Responder& responder;
+    Responder& responder_;
 
-    void operator()(const agrpc::GrpcContext&, void* tag) const { responder.SendInitialMetadata(tag); }
+    void operator()(const agrpc::GrpcContext&, void* tag) const { responder_.SendInitialMetadata(tag); }
 };
 
 template <class Stub, class Request, class Responder>
 struct AsyncClientServerStreamingRequestInitFunction
 {
-    detail::AsyncClientServerStreamingRequest<Stub, Request, Responder> rpc;
-    Stub& stub;
-    grpc::ClientContext& client_context;
-    const Request& request;
-    std::unique_ptr<Responder>& reader;
+    detail::AsyncClientServerStreamingRequest<Stub, Request, Responder> rpc_;
+    Stub& stub_;
+    grpc::ClientContext& client_context_;
+    const Request& request_;
+    std::unique_ptr<Responder>& reader_;
 
     void operator()(agrpc::GrpcContext& grpc_context, void* tag) const
     {
-        reader = (stub.*rpc)(&client_context, request, grpc_context.get_completion_queue(), tag);
+        reader_ = (stub_.*rpc_)(&client_context_, request_, grpc_context.get_completion_queue(), tag);
     }
 };
 
 template <class Stub, class Request, class Responder>
 struct PrepareAsyncClientServerStreamingRequestInitFunction
 {
-    detail::PrepareAsyncClientServerStreamingRequest<Stub, Request, Responder> rpc;
-    Stub& stub;
-    grpc::ClientContext& client_context;
-    const Request& request;
-    std::unique_ptr<Responder>& reader;
+    detail::PrepareAsyncClientServerStreamingRequest<Stub, Request, Responder> rpc_;
+    Stub& stub_;
+    grpc::ClientContext& client_context_;
+    const Request& request_;
+    std::unique_ptr<Responder>& reader_;
 
     void operator()(agrpc::GrpcContext& grpc_context, void* tag) const
     {
-        reader = (stub.*rpc)(&client_context, request, grpc_context.get_completion_queue());
-        reader->StartCall(tag);
+        reader_ = (stub_.*rpc_)(&client_context_, request_, grpc_context.get_completion_queue());
+        reader_->StartCall(tag);
     }
 };
 
 template <class Stub, class Request, class Responder>
 struct AsyncClientServerStreamingRequestConvenienceInitFunction
 {
-    detail::AsyncClientServerStreamingRequest<Stub, Request, Responder> rpc;
-    Stub& stub;
-    grpc::ClientContext& client_context;
-    const Request& request;
+    detail::AsyncClientServerStreamingRequest<Stub, Request, Responder> rpc_;
+    Stub& stub_;
+    grpc::ClientContext& client_context_;
+    const Request& request_;
 
     template <class T>
     void operator()(agrpc::GrpcContext& grpc_context, T* tag) const
     {
         tag->completion_handler().payload() =
-            (stub.*rpc)(&client_context, request, grpc_context.get_completion_queue(), tag);
+            (stub_.*rpc_)(&client_context_, request_, grpc_context.get_completion_queue(), tag);
     }
 };
 
 template <class Stub, class Request, class Responder>
 struct PrepareAsyncClientServerStreamingRequestConvenienceInitFunction
 {
-    detail::PrepareAsyncClientServerStreamingRequest<Stub, Request, Responder> rpc;
-    Stub& stub;
-    grpc::ClientContext& client_context;
-    const Request& request;
+    detail::PrepareAsyncClientServerStreamingRequest<Stub, Request, Responder> rpc_;
+    Stub& stub_;
+    grpc::ClientContext& client_context_;
+    const Request& request_;
 
     template <class T>
     void operator()(agrpc::GrpcContext& grpc_context, T* tag) const
     {
-        auto& reader = tag->completion_handler().payload();
-        reader = (stub.*rpc)(&client_context, request, grpc_context.get_completion_queue());
-        reader->StartCall(tag);
+        auto& reader_ = tag->completion_handler().payload();
+        reader_ = (stub_.*rpc_)(&client_context_, request_, grpc_context.get_completion_queue());
+        reader_->StartCall(tag);
     }
 };
 
 template <class Stub, class Responder, class Response>
 struct AsyncClientClientStreamingRequestInitFunction
 {
-    detail::AsyncClientClientStreamingRequest<Stub, Responder, Response> rpc;
-    Stub& stub;
-    grpc::ClientContext& client_context;
-    std::unique_ptr<Responder>& writer;
-    Response& response;
+    detail::AsyncClientClientStreamingRequest<Stub, Responder, Response> rpc_;
+    Stub& stub_;
+    grpc::ClientContext& client_context_;
+    std::unique_ptr<Responder>& writer_;
+    Response& response_;
 
     void operator()(agrpc::GrpcContext& grpc_context, void* tag) const
     {
-        writer = (stub.*rpc)(&client_context, &response, grpc_context.get_completion_queue(), tag);
+        writer_ = (stub_.*rpc_)(&client_context_, &response_, grpc_context.get_completion_queue(), tag);
     }
 };
 
 template <class Stub, class Responder, class Response>
 struct PrepareAsyncClientClientStreamingRequestInitFunction
 {
-    detail::PrepareAsyncClientClientStreamingRequest<Stub, Responder, Response> rpc;
-    Stub& stub;
-    grpc::ClientContext& client_context;
-    std::unique_ptr<Responder>& writer;
-    Response& response;
+    detail::PrepareAsyncClientClientStreamingRequest<Stub, Responder, Response> rpc_;
+    Stub& stub_;
+    grpc::ClientContext& client_context_;
+    std::unique_ptr<Responder>& writer_;
+    Response& response_;
 
     void operator()(agrpc::GrpcContext& grpc_context, void* tag) const
     {
-        writer = (stub.*rpc)(&client_context, &response, grpc_context.get_completion_queue());
-        writer->StartCall(tag);
+        writer_ = (stub_.*rpc_)(&client_context_, &response_, grpc_context.get_completion_queue());
+        writer_->StartCall(tag);
     }
 };
 
 template <class Stub, class Responder, class Response>
 struct AsyncClientClientStreamingRequestConvenienceInitFunction
 {
-    detail::AsyncClientClientStreamingRequest<Stub, Responder, Response> rpc;
-    Stub& stub;
-    grpc::ClientContext& client_context;
-    Response& response;
+    detail::AsyncClientClientStreamingRequest<Stub, Responder, Response> rpc_;
+    Stub& stub_;
+    grpc::ClientContext& client_context_;
+    Response& response_;
 
     template <class T>
     void operator()(agrpc::GrpcContext& grpc_context, T* tag) const
     {
         tag->completion_handler().payload() =
-            (stub.*rpc)(&client_context, &response, grpc_context.get_completion_queue(), tag);
+            (stub_.*rpc_)(&client_context_, &response_, grpc_context.get_completion_queue(), tag);
     }
 };
 
 template <class Stub, class Responder, class Response>
 struct PrepareAsyncClientClientStreamingRequestConvenienceInitFunction
 {
-    detail::PrepareAsyncClientClientStreamingRequest<Stub, Responder, Response> rpc;
-    Stub& stub;
-    grpc::ClientContext& client_context;
-    Response& response;
+    detail::PrepareAsyncClientClientStreamingRequest<Stub, Responder, Response> rpc_;
+    Stub& stub_;
+    grpc::ClientContext& client_context_;
+    Response& response_;
 
     template <class T>
     void operator()(agrpc::GrpcContext& grpc_context, T* tag) const
     {
-        auto& writer = tag->completion_handler().payload();
-        writer = (stub.*rpc)(&client_context, &response, grpc_context.get_completion_queue());
-        writer->StartCall(tag);
+        auto& writer_ = tag->completion_handler().payload();
+        writer_ = (stub_.*rpc_)(&client_context_, &response_, grpc_context.get_completion_queue());
+        writer_->StartCall(tag);
     }
 };
 
 template <class Stub, class Responder>
 struct AsyncClientBidirectionalStreamingRequestInitFunction
 {
-    detail::AsyncClientBidirectionalStreamingRequest<Stub, Responder> rpc;
-    Stub& stub;
-    grpc::ClientContext& client_context;
-    std::unique_ptr<Responder>& reader_writer;
+    detail::AsyncClientBidirectionalStreamingRequest<Stub, Responder> rpc_;
+    Stub& stub_;
+    grpc::ClientContext& client_context_;
+    std::unique_ptr<Responder>& reader_writer_;
 
     void operator()(agrpc::GrpcContext& grpc_context, void* tag) const
     {
-        reader_writer = (stub.*rpc)(&client_context, grpc_context.get_completion_queue(), tag);
+        reader_writer_ = (stub_.*rpc_)(&client_context_, grpc_context.get_completion_queue(), tag);
     }
 };
 
 template <class Stub, class Responder>
 struct PrepareAsyncClientBidirectionalStreamingRequestInitFunction
 {
-    detail::PrepareAsyncClientBidirectionalStreamingRequest<Stub, Responder> rpc;
-    Stub& stub;
-    grpc::ClientContext& client_context;
-    std::unique_ptr<Responder>& reader_writer;
+    detail::PrepareAsyncClientBidirectionalStreamingRequest<Stub, Responder> rpc_;
+    Stub& stub_;
+    grpc::ClientContext& client_context_;
+    std::unique_ptr<Responder>& reader_writer_;
 
     void operator()(agrpc::GrpcContext& grpc_context, void* tag) const
     {
-        reader_writer = (stub.*rpc)(&client_context, grpc_context.get_completion_queue());
-        reader_writer->StartCall(tag);
+        reader_writer_ = (stub_.*rpc_)(&client_context_, grpc_context.get_completion_queue());
+        reader_writer_->StartCall(tag);
     }
 };
 
 template <class Stub, class Responder>
 struct AsyncClientBidirectionalStreamingRequestConvenienceInitFunction
 {
-    detail::AsyncClientBidirectionalStreamingRequest<Stub, Responder> rpc;
-    Stub& stub;
-    grpc::ClientContext& client_context;
+    detail::AsyncClientBidirectionalStreamingRequest<Stub, Responder> rpc_;
+    Stub& stub_;
+    grpc::ClientContext& client_context_;
 
     template <class T>
     void operator()(agrpc::GrpcContext& grpc_context, T* tag) const
     {
-        tag->completion_handler().payload() = (stub.*rpc)(&client_context, grpc_context.get_completion_queue(), tag);
+        tag->completion_handler().payload() = (stub_.*rpc_)(&client_context_, grpc_context.get_completion_queue(), tag);
     }
 };
 
 template <class Stub, class Responder>
 struct PrepareAsyncClientBidirectionalStreamingRequestConvenienceInitFunction
 {
-    detail::PrepareAsyncClientBidirectionalStreamingRequest<Stub, Responder> rpc;
-    Stub& stub;
-    grpc::ClientContext& client_context;
+    detail::PrepareAsyncClientBidirectionalStreamingRequest<Stub, Responder> rpc_;
+    Stub& stub_;
+    grpc::ClientContext& client_context_;
 
     template <class T>
     void operator()(agrpc::GrpcContext& grpc_context, T* tag) const
     {
-        auto& reader_writer = tag->completion_handler().payload();
-        reader_writer = (stub.*rpc)(&client_context, grpc_context.get_completion_queue());
-        reader_writer->StartCall(tag);
+        auto& reader_writer_ = tag->completion_handler().payload();
+        reader_writer_ = (stub_.*rpc_)(&client_context_, grpc_context.get_completion_queue());
+        reader_writer_->StartCall(tag);
     }
 };
 
 struct ClientGenericStreamingRequestInitFunction
 {
-    const std::string& method;
-    grpc::GenericStub& stub;
-    grpc::ClientContext& client_context;
-    std::unique_ptr<grpc::GenericClientAsyncReaderWriter>& reader_writer;
+    const std::string& method_;
+    grpc::GenericStub& stub_;
+    grpc::ClientContext& client_context_;
+    std::unique_ptr<grpc::GenericClientAsyncReaderWriter>& reader_writer_;
 
     void operator()(agrpc::GrpcContext& grpc_context, void* tag) const
     {
-        reader_writer = stub.PrepareCall(&client_context, method, grpc_context.get_completion_queue());
-        reader_writer->StartCall(tag);
+        reader_writer_ = stub_.PrepareCall(&client_context_, method_, grpc_context.get_completion_queue());
+        reader_writer_->StartCall(tag);
     }
 };
 
 template <class Service, class Request, class Responder>
 struct ServerMultiArgRequestInitFunction
 {
-    detail::ServerMultiArgRequest<Service, Request, Responder> rpc;
-    Service& service;
-    grpc::ServerContext& server_context;
-    Request& request;
-    Responder& responder;
+    detail::ServerMultiArgRequest<Service, Request, Responder> rpc_;
+    Service& service_;
+    grpc::ServerContext& server_context_;
+    Request& request_;
+    Responder& responder_;
 
     void operator()(agrpc::GrpcContext& grpc_context, void* tag) const
     {
         auto* const cq = grpc_context.get_server_completion_queue();
-        (service.*rpc)(&server_context, &request, &responder, cq, cq, tag);
+        (service_.*rpc_)(&server_context_, &request_, &responder_, cq, cq, tag);
     }
 };
 
 template <class Service, class Responder>
 struct ServerSingleArgRequestInitFunction
 {
-    detail::ServerSingleArgRequest<Service, Responder> rpc;
-    Service& service;
-    grpc::ServerContext& server_context;
-    Responder& responder;
+    detail::ServerSingleArgRequest<Service, Responder> rpc_;
+    Service& service_;
+    grpc::ServerContext& server_context_;
+    Responder& responder_;
 
     void operator()(agrpc::GrpcContext& grpc_context, void* tag) const
     {
         auto* const cq = grpc_context.get_server_completion_queue();
-        (service.*rpc)(&server_context, &responder, cq, cq, tag);
+        (service_.*rpc_)(&server_context_, &responder_, cq, cq, tag);
     }
 };
 
 template <class ReaderWriter>
 struct ServerGenericRequestInitFunction
 {
-    grpc::AsyncGenericService& service;
-    grpc::GenericServerContext& server_context;
-    ReaderWriter& reader_writer;
+    grpc::AsyncGenericService& service_;
+    grpc::GenericServerContext& server_context_;
+    ReaderWriter& reader_writer_;
 
     void operator()(agrpc::GrpcContext& grpc_context, void* tag) const
     {
         auto* const cq = grpc_context.get_server_completion_queue();
-        service.RequestCall(&server_context, &reader_writer, cq, cq, tag);
+        service_.RequestCall(&server_context_, &reader_writer_, cq, cq, tag);
     }
 };
 }

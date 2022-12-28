@@ -49,7 +49,7 @@ auto grpc_initiate_impl(const detail::GrpcInitiateTemplateArgs<StopFunction>, In
                         detail::UseSender token) noexcept
 {
     return detail::BasicSenderAccess::create<detail::GrpcSenderImplementation<InitiatingFunction, StopFunction>>(
-        token.grpc_context, {static_cast<InitiatingFunction&&>(initiating_function)}, {});
+        token.grpc_context_, {static_cast<InitiatingFunction&&>(initiating_function)}, {});
 }
 
 template <class InitiatingFunction, class CompletionToken>

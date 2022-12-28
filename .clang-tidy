@@ -20,14 +20,16 @@ CheckOptions:
   - key: readability-identifier-naming.ConstexprVariableCase
     value: UPPER_CASE
   - key: readability-identifier-naming.ConstexprVariableIgnoredRegexp
-    value: "(wait|use_sender|repeatedly_request|value|read|write|request|write_last|writes_done|finish|send_initial_metadata|finish_with_error|write_and_finish|read_initial_metadata|get_completion_queue|notify_when_done|notify_on_state_change|is_sender_v|sends_done|is_valid|is_noexcept)"
+    value: "(grpc_initiate|wait|use_sender|repeatedly_request|value|read|write|request|write_last|writes_done|finish|send_initial_metadata|finish_with_error|write_and_finish|read_initial_metadata|get_completion_queue|notify_when_done|notify_on_state_change|is_sender_v|sends_done|is_valid|is_noexcept)"
   - key: readability-identifier-naming.MemberConstantCase
     value: UPPER_CASE
   - key: readability-identifier-naming.MemberCase
     value: lower_case
+  - key: readability-identifier-naming.MemberSuffix
+    value: "_"
   - key: readability-identifier-naming.MethodCase
     value: lower_case
   - key: readability-identifier-naming.TypeAliasCase
     value: CamelCase
   - key: readability-identifier-naming.TypeAliasIgnoredRegexp
-    value: "(as_default_on_t|other|target_type|type|completion_handler_type|handler_type|return_type|executor_type|allocator_type|value_types|error_types)"
+    value: "(value_type|difference_type|reference|pointer|iterator_category|result_type|connect_result_t|stop_token_type_t|default_completion_token_type|as_default_on_t|other|target_type|type|completion_handler_type|handler_type|return_type|executor_type|allocator_type|value_types|error_types)"

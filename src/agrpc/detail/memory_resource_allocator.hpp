@@ -31,13 +31,13 @@ class MemoryResourceAllocator
 
     MemoryResourceAllocator() = default;
 
-    explicit MemoryResourceAllocator(Resource* resource) noexcept : resource(resource) {}
+    explicit MemoryResourceAllocator(Resource* resource) noexcept : resource_(resource) {}
 
     MemoryResourceAllocator(const MemoryResourceAllocator&) = default;
 
     template <class U>
     MemoryResourceAllocator(const detail::MemoryResourceAllocator<U, Resource>& other) noexcept
-        : resource(other.resource)
+        : resource_(other.resource_)
     {
     }
 
@@ -45,29 +45,29 @@ class MemoryResourceAllocator
 
     MemoryResourceAllocator& operator=(MemoryResourceAllocator&& other) = delete;
 
-    [[nodiscard]] T* allocate(std::size_t n) { return static_cast<T*>(resource->allocate(n * sizeof(T), alignof(T))); }
+    [[nodiscard]] T* allocate(std::size_t n) { return static_cast<T*>(resource_->allocate(n * sizeof(T), alignof(T))); }
 
-    void deallocate(T* p, std::size_t n) noexcept { resource->deallocate(p, n * sizeof(T), alignof(T)); }
+    void deallocate(T* p, std::size_t n) noexcept { resource_->deallocate(p, n * sizeof(T), alignof(T)); }
 
     template <class U>
     friend bool operator==(const MemoryResourceAllocator& lhs,
                            const detail::MemoryResourceAllocator<U, Resource>& rhs) noexcept
     {
-        return lhs.resource == rhs.resource;
+        return lhs.resource_ == rhs.resource;
     }
 
     template <class U>
     friend bool operator!=(const MemoryResourceAllocator& lhs,
                            const detail::MemoryResourceAllocator<U, Resource>& rhs) noexcept
     {
-        return lhs.resource != rhs.resource;
+        return lhs.resource_ != rhs.resource;
     }
 
   private:
     template <class, class>
     friend class detail::MemoryResourceAllocator;
 
-    Resource* resource;
+    Resource* resource_;
 };
 }
 

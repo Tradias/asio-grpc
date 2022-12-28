@@ -37,8 +37,8 @@ class HealthCheckRepeatedlyRequest : public detail::OperationBase
   private:
     static void do_request_complete(Base* op, detail::OperationResult result, agrpc::GrpcContext&);
 
-    agrpc::HealthCheckService& service;
-    Implementation* impl;
+    agrpc::HealthCheckService& service_;
+    Implementation* impl_;
 };
 
 using HealthCheckRepeatedlyRequestWatch = detail::HealthCheckRepeatedlyRequest<detail::HealthCheckWatcher>;

@@ -33,18 +33,18 @@ namespace detail
 class RepeatedlyRequestCancellationFunction
 {
   public:
-    explicit RepeatedlyRequestCancellationFunction(std::atomic_bool& stopped) noexcept : stopped(stopped) {}
+    explicit RepeatedlyRequestCancellationFunction(std::atomic_bool& stopped) noexcept : stopped_(stopped) {}
 
     void operator()(asio::cancellation_type type) noexcept
     {
         if (static_cast<bool>(type & asio::cancellation_type::all))
         {
-            stopped.store(true, std::memory_order_relaxed);
+            stopped_.store(true, std::memory_order_relaxed);
         }
     }
 
   private:
-    std::atomic_bool& stopped;
+    std::atomic_bool& stopped_;
 };
 #else
 class RepeatedlyRequestCancellationFunction

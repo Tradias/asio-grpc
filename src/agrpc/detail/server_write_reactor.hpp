@@ -48,11 +48,11 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
     ServerWriteReactor(agrpc::GrpcContext& grpc_context, RPC rpc, Service& service, Request& request, void* tag)
         : detail::ServerWriteReactorStepBase(nullptr),
           detail::ServerWriteReactorDoneBase(&ServerWriteReactor::do_done_notified),
-          grpc_context(&grpc_context)
+          grpc_context_(&grpc_context)
     {
-        server_context.AsyncNotifyWhenDone(static_cast<DoneBase*>(this));
+        server_context_.AsyncNotifyWhenDone(static_cast<DoneBase*>(this));
         auto* const cq = grpc_context.get_server_completion_queue();
-        (service.*rpc)(&server_context, &request, &writer, cq, cq, tag);
+        (service.*rpc)(&server_context_, &request, &writer_, cq, cq, tag);
     }
 
     template <class... Args>
@@ -66,7 +66,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
     void write(const Response& response)
     {
         get_on_complete() = &ServerWriteReactor::do_write_done;
-        writer.Write(response, static_cast<StepBase*>(this));
+        writer_.Write(response, static_cast<StepBase*>(this));
     }
 
     [[nodiscard]] bool is_finished() const noexcept { return &ServerWriteReactor::do_finish_done == get_on_complete(); }
@@ -74,13 +74,13 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
     void finish(const grpc::Status& status)
     {
         get_on_complete() = &ServerWriteReactor::do_finish_done;
-        writer.Finish(status, static_cast<StepBase*>(this));
+        writer_.Finish(status, static_cast<StepBase*>(this));
     }
 
     void deallocate() { detail::destroy_deallocate(static_cast<Derived*>(this), get_allocator()); }
 
   private:
-    auto get_allocator() const noexcept { return grpc_context->get_allocator(); }
+    auto get_allocator() const noexcept { return grpc_context_->get_allocator(); }
 
     auto& get_on_complete() noexcept
     {
@@ -96,12 +96,12 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
 
     bool is_finishing_or_writing() const noexcept { return nullptr != get_on_complete(); }
 
-    bool is_completed() const noexcept { return grpc_context.has_bit<0>(); }
+    bool is_completed() const noexcept { return grpc_context_.has_bit<0>(); }
 
     bool set_completed() noexcept
     {
         const auto old_value = is_completed();
-        grpc_context.set_bit<0>();
+        grpc_context_.set_bit<0>();
         return old_value;
     }
 
@@ -109,7 +109,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
     {
         auto* const self = static_cast<ServerWriteReactor*>(static_cast<StepBase*>(op));
         self->set_step_done();
-        self->grpc_context->work_started();
+        self->grpc_context_->work_started();
         detail::AllocationGuard guard{static_cast<Derived*>(self), self->get_allocator()};
         if (!self->is_completed())
         {
@@ -129,7 +129,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
     {
         auto* const self = static_cast<ServerWriteReactor*>(static_cast<StepBase*>(op));
         self->set_step_done();
-        self->grpc_context->work_started();
+        self->grpc_context_->work_started();
         detail::AllocationGuard guard{static_cast<Derived*>(self), self->get_allocator()};
         if (!self->is_completed())
         {
@@ -145,7 +145,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
     static void do_done_notified(detail::OperationBase* op, detail::OperationResult result, agrpc::GrpcContext&)
     {
         auto* const self = static_cast<ServerWriteReactor*>(static_cast<DoneBase*>(op));
-        self->grpc_context->work_started();
+        self->grpc_context_->work_started();
         const bool completed = self->set_completed();
         if (completed || !self->is_finishing_or_writing())
         {
@@ -157,9 +157,9 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
         }
     }
 
-    detail::TaggedPtr<agrpc::GrpcContext> grpc_context;
-    grpc::ServerContext server_context;
-    grpc::ServerAsyncWriter<Response> writer{&server_context};
+    detail::TaggedPtr<agrpc::GrpcContext> grpc_context_;
+    grpc::ServerContext server_context_;
+    grpc::ServerAsyncWriter<Response> writer_{&server_context_};
 };
 }
 

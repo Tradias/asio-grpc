@@ -34,7 +34,7 @@ class AtomicIntrusiveQueue
     AtomicIntrusiveQueue() = default;
 
     explicit AtomicIntrusiveQueue(bool initially_active) noexcept
-        : head(initially_active ? nullptr : producer_inactive_value())
+        : head_(initially_active ? nullptr : producer_inactive_value())
     {
     }
 
@@ -52,7 +52,7 @@ class AtomicIntrusiveQueue
     [[nodiscard]] bool try_mark_active() noexcept
     {
         void* old_value = producer_inactive_value();
-        return head.compare_exchange_strong(old_value, nullptr, std::memory_order_acquire, std::memory_order_relaxed);
+        return head_.compare_exchange_strong(old_value, nullptr, std::memory_order_acquire, std::memory_order_relaxed);
     }
 
     // Enqueue an item to the queue.
@@ -63,21 +63,21 @@ class AtomicIntrusiveQueue
     [[nodiscard]] bool enqueue(Item* item) noexcept
     {
         const void* const inactive = producer_inactive_value();
-        void* old_value = head.load(std::memory_order_relaxed);
+        void* old_value = head_.load(std::memory_order_relaxed);
         do
         {
-            item->next = (old_value == inactive) ? nullptr : static_cast<Item*>(old_value);
-        } while (!head.compare_exchange_weak(old_value, item, std::memory_order_acq_rel));
+            item->next_ = (old_value == inactive) ? nullptr : static_cast<Item*>(old_value);
+        } while (!head_.compare_exchange_weak(old_value, item, std::memory_order_acq_rel));
         return old_value == inactive;
     }
 
     bool try_mark_inactive() noexcept
     {
         void* const inactive = producer_inactive_value();
-        if (void* old_value = head.load(std::memory_order_relaxed); old_value == nullptr)
+        if (void* old_value = head_.load(std::memory_order_relaxed); old_value == nullptr)
         {
-            return head.compare_exchange_strong(old_value, inactive, std::memory_order_release,
-                                                std::memory_order_relaxed);
+            return head_.compare_exchange_strong(old_value, inactive, std::memory_order_release,
+                                                 std::memory_order_relaxed);
         }
         return false;
     }
@@ -92,7 +92,7 @@ class AtomicIntrusiveQueue
         {
             return {};
         }
-        void* const old_value = head.exchange(nullptr, std::memory_order_acquire);
+        void* const old_value = head_.exchange(nullptr, std::memory_order_acquire);
         return detail::IntrusiveQueue<Item>::make_reversed(static_cast<Item*>(old_value));
     }
 
@@ -101,11 +101,11 @@ class AtomicIntrusiveQueue
     {
         // Pick some pointer that is not nullptr and that is
         // guaranteed to not be the address of a valid item.
-        const void* head_address = std::addressof(head);
+        const void* head_address = std::addressof(head_);
         return const_cast<void*>(head_address);
     }
 
-    std::atomic<void*> head{nullptr};
+    std::atomic<void*> head_{nullptr};
 };
 }
 

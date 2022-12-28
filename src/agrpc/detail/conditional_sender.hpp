@@ -59,8 +59,8 @@ class ConditionalSender
         Receiver&& receiver) && noexcept((detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver> &&
                                           std::is_nothrow_move_constructible_v<Sender>))
     {
-        return {static_cast<Receiver&&>(receiver), static_cast<Sender&&>(sender), condition,
-                static_cast<ArgsTuple&&>(args)};
+        return {static_cast<Receiver&&>(receiver), static_cast<Sender&&>(sender_), condition_,
+                static_cast<ArgsTuple&&>(args_)};
     }
 
     template <class Receiver, class S = Sender, class = std::enable_if_t<std::is_copy_constructible_v<S>>>
@@ -68,20 +68,20 @@ class ConditionalSender
         Receiver&& receiver) const& noexcept((detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver> &&
                                               std::is_nothrow_copy_constructible_v<Sender>))
     {
-        return {static_cast<Receiver&&>(receiver), sender, condition, args};
+        return {static_cast<Receiver&&>(receiver), sender_, condition_, args_};
     }
 
   private:
     friend detail::ConditionalSenderAccess;
 
     ConditionalSender(Sender&& sender, bool condition, CompletionArgs&&... args)
-        : sender{static_cast<Sender&&>(sender)}, args{static_cast<CompletionArgs&&>(args)...}, condition(condition)
+        : sender_{static_cast<Sender&&>(sender)}, args_{static_cast<CompletionArgs&&>(args)...}, condition_(condition)
     {
     }
 
-    Sender sender;
-    ArgsTuple args;
-    bool condition;
+    Sender sender_;
+    ArgsTuple args_;
+    bool condition_;
 };
 
 template <class Sender, class... CompletionArgs>
@@ -124,15 +124,15 @@ class ConditionalSenderOperationState
   public:
     void start() noexcept
     {
-        if (condition)
+        if (condition_)
         {
-            detail::exec::start(operation_state);
+            detail::exec::start(operation_state_);
         }
         else
         {
             using CompletionValues = typename Sender::template value_types<detail::TypeList, detail::TypeList>;
             detail::ConditionalSenderSatisfyReceiver<CompletionValues>::satisfy(
-                static_cast<Receiver&&>(operation_state.receiver()), static_cast<ArgsTuple&&>(args));
+                static_cast<Receiver&&>(operation_state_.receiver()), static_cast<ArgsTuple&&>(args_));
         }
     }
 
@@ -141,21 +141,23 @@ class ConditionalSenderOperationState
 
     template <class R>
     ConditionalSenderOperationState(R&& receiver, Sender&& sender, bool condition, ArgsTuple&& args)
-        : operation_state(detail::exec::connect(static_cast<Sender&&>(sender), static_cast<R&&>(receiver))),
-          args(static_cast<ArgsTuple&&>(args)),
-          condition(condition)
+        : operation_state_(detail::exec::connect(static_cast<Sender&&>(sender), static_cast<R&&>(receiver))),
+          args_(static_cast<ArgsTuple&&>(args)),
+          condition_(condition)
     {
     }
 
     template <class R>
     ConditionalSenderOperationState(R&& receiver, const Sender& sender, bool condition, const ArgsTuple& args)
-        : operation_state(detail::exec::connect(sender, static_cast<R&&>(receiver))), args(args), condition(condition)
+        : operation_state_(detail::exec::connect(sender, static_cast<R&&>(receiver))),
+          args_(args),
+          condition_(condition)
     {
     }
 
-    detail::exec::connect_result_t<Sender, Receiver> operation_state;
-    ArgsTuple args;
-    bool condition;
+    detail::exec::connect_result_t<Sender, Receiver> operation_state_;
+    ArgsTuple args_;
+    bool condition_;
 };
 }
 

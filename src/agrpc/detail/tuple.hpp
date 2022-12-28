@@ -35,22 +35,22 @@ struct Tuple<>
 template <class T0>
 struct Tuple<T0>
 {
-    T0 v0;
+    T0 v0_;
 };
 
 template <class T0, class T1>
 struct Tuple<T0, T1>
 {
-    T0 v0;
-    T1 v1;
+    T0 v0_;
+    T1 v1_;
 };
 
 template <class T0, class T1, class T2>
 struct Tuple<T0, T1, T2>
 {
-    T0 v0;
-    T1 v1;
-    T2 v2;
+    T0 v0_;
+    T1 v1_;
+    T2 v2_;
 };
 
 template <class T0, class T1, class T2, class... T>
@@ -58,11 +58,11 @@ struct Tuple<T0, T1, T2, T...>
 {
     template <class Arg1, class Arg2, class... Args>
     Tuple(Arg1&& arg1, Arg2&& arg2, Args&&... args)
-        : impl(static_cast<Arg1&&>(arg1), static_cast<Arg2&&>(arg2), static_cast<Args&&>(args)...)
+        : impl_(static_cast<Arg1&&>(arg1), static_cast<Arg2&&>(arg2), static_cast<Args&&>(args)...)
     {
     }
 
-    std::tuple<T0, T1, T2, T...> impl;
+    std::tuple<T0, T1, T2, T...> impl_;
 };
 
 template <class... T>
@@ -80,20 +80,20 @@ decltype(auto) get(Tuple&& tuple) noexcept
     {
         if constexpr (I == 0)
         {
-            return (static_cast<Tuple&&>(tuple).v0);
+            return (static_cast<Tuple&&>(tuple).v0_);
         }
         else if constexpr (I == 1)
         {
-            return (static_cast<Tuple&&>(tuple).v1);
+            return (static_cast<Tuple&&>(tuple).v1_);
         }
         else if constexpr (I == 2)
         {
-            return (static_cast<Tuple&&>(tuple).v2);
+            return (static_cast<Tuple&&>(tuple).v2_);
         }
     }
     else
     {
-        return std::get<I>(static_cast<Tuple&&>(tuple).impl);
+        return std::get<I>(static_cast<Tuple&&>(tuple).impl_);
     }
 }
 
@@ -113,7 +113,7 @@ decltype(auto) apply(F&& f, Tuple&& t)
     }
     else
     {
-        return std::apply(static_cast<F&&>(f), static_cast<Tuple&&>(t).impl);
+        return std::apply(static_cast<F&&>(f), static_cast<Tuple&&>(t).impl_);
     }
 }
 

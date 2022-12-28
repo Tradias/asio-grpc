@@ -40,30 +40,16 @@ struct UnbindResult
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
     CancellationSlot cancellation_slot_;
 #endif
-
-    UnbindResult(CompletionHandler&& completion_handler, Executor&& executor
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-                 ,
-                 CancellationSlot&& cancellation_slot
-#endif
-                 )
-        : completion_handler_(static_cast<CompletionHandler&&>(completion_handler)),
-          executor_(static_cast<Executor&&>(executor))
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-          ,
-          cancellation_slot_(static_cast<CancellationSlot&&>(cancellation_slot))
-#endif
-    {
-    }
-
-    auto& completion_handler() noexcept { return completion_handler_; }
-
-    auto& executor() noexcept { return executor_; }
-
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-    auto& cancellation_slot() noexcept { return cancellation_slot_; }
-#endif
 };
+
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+template <class CompletionHandler, class Executor, class CancellationSlot>
+UnbindResult(CompletionHandler, Executor, CancellationSlot)
+    -> UnbindResult<CompletionHandler, Executor, CancellationSlot>;
+#else
+template <class CompletionHandler, class Executor>
+UnbindResult(CompletionHandler, Executor) -> UnbindResult<CompletionHandler, Executor>;
+#endif
 
 template <class CompletionHandler>
 decltype(auto) unbind_recursively(CompletionHandler&& completion_handler)

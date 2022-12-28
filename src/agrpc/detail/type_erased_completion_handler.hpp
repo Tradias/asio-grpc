@@ -76,7 +76,7 @@ class BasicTypeErasedCompletionHandler<void(Args...), VoidPointer>
     void emplace(CompletionHandler&& ch)
     {
         auto allocator = asio::get_associated_allocator(ch);
-        completion_handler = detail::allocate<Target>(allocator, static_cast<CompletionHandler&&>(ch)).release();
+        completion_handler_ = detail::allocate<Target>(allocator, static_cast<CompletionHandler&&>(ch)).release();
         complete_ = &detail::deallocate_and_invoke<Target, Args...>;
     }
 
@@ -85,7 +85,7 @@ class BasicTypeErasedCompletionHandler<void(Args...), VoidPointer>
         return {release_completion_handler(), complete_};
     }
 
-    explicit operator bool() const noexcept { return static_cast<bool>(completion_handler); }
+    explicit operator bool() const noexcept { return static_cast<bool>(completion_handler_); }
 
     template <class... CompletionArgs>
     void complete(CompletionArgs&&... args) &&
@@ -98,13 +98,13 @@ class BasicTypeErasedCompletionHandler<void(Args...), VoidPointer>
     friend class detail::BasicTypeErasedCompletionHandler;
 
     BasicTypeErasedCompletionHandler(void* completion_handler, Complete complete)
-        : completion_handler(completion_handler), complete_(complete)
+        : completion_handler_(completion_handler), complete_(complete)
     {
     }
 
-    void* release_completion_handler() noexcept { return detail::exchange(completion_handler, nullptr); }
+    void* release_completion_handler() noexcept { return detail::exchange(completion_handler_, nullptr); }
 
-    VoidPointer completion_handler{};
+    VoidPointer completion_handler_{};
     Complete complete_;
 };
 }

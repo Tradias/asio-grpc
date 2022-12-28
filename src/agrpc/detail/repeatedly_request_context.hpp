@@ -61,10 +61,10 @@ class RepeatedlyRequestOperation : public detail::QueueableOperationBase,
             return false;
         }
         auto next_rpc_context = detail::allocate<RPCContext>(this->get_allocator());
-        rpc_context = next_rpc_context.get();
+        rpc_context_ = next_rpc_context.get();
         auto* cq = local_grpc_context.get_server_completion_queue();
         local_grpc_context.work_started();
-        detail::initiate_request_from_rpc_context(this->rpc(), this->service(), *rpc_context, cq, this);
+        detail::initiate_request_from_rpc_context(this->rpc(), this->service(), *rpc_context_, cq, this);
         next_rpc_context.release();
         return true;
     }
@@ -75,7 +75,7 @@ class RepeatedlyRequestOperation : public detail::QueueableOperationBase,
     {
         auto* self = static_cast<RepeatedlyRequestOperation*>(op);
         const auto allocator = self->get_allocator();
-        detail::AllocatedPointer ptr{self->rpc_context, allocator};
+        detail::AllocatedPointer ptr{self->rpc_context_, allocator};
         auto& request_handler = self->request_handler();
         if AGRPC_LIKELY (!detail::is_shutdown(result))
         {
@@ -112,7 +112,7 @@ class RepeatedlyRequestOperation : public detail::QueueableOperationBase,
         detail::GrpcContextImplementation::add_local_operation(grpc_context, this);
     }
 
-    RPCContext* rpc_context;
+    RPCContext* rpc_context_;
 };
 }
 

@@ -32,7 +32,7 @@ template <class Slot>
 class CancellationSlotAsStopToken
 {
   public:
-    explicit CancellationSlotAsStopToken(Slot&& slot) : slot(static_cast<Slot&&>(slot)) {}
+    explicit CancellationSlotAsStopToken(Slot&& slot) : slot_(static_cast<Slot&&>(slot)) {}
 
     template <class StopFunction>
     struct callback_type
@@ -40,16 +40,16 @@ class CancellationSlotAsStopToken
         template <class T>
         explicit callback_type(CancellationSlotAsStopToken token, T&& arg)
         {
-            token.slot.template emplace<StopFunction>(static_cast<T&&>(arg));
+            token.slot_.template emplace<StopFunction>(static_cast<T&&>(arg));
         }
     };
 
     [[nodiscard]] static constexpr bool stop_requested() noexcept { return false; }
 
-    [[nodiscard]] bool stop_possible() const noexcept { return slot.is_connected(); }
+    [[nodiscard]] bool stop_possible() const noexcept { return slot_.is_connected(); }
 
   private:
-    Slot slot;
+    Slot slot_;
 };
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)

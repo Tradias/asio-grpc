@@ -35,7 +35,7 @@ class NotfiyWhenDoneSenderImplementation : public detail::IntrusiveListHook<Notf
     using StopFunction = detail::Empty;
     using Initiation = detail::Empty;
 
-    NotfiyWhenDoneSenderImplementation(grpc::ServerContext& server_context) : server_context(server_context) {}
+    NotfiyWhenDoneSenderImplementation(grpc::ServerContext& server_context) : server_context_(server_context) {}
 
     template <class Init>
     void initiate(Init init, const Initiation&)
@@ -44,20 +44,20 @@ class NotfiyWhenDoneSenderImplementation : public detail::IntrusiveListHook<Notf
         if constexpr (detail::AllocationType::NONE == Init::ALLOCATION_TYPE ||
                       detail::AllocationType::LOCAL == Init::ALLOCATION_TYPE)
         {
-            operation = init.template self<1>();
-            initiate_async_notify_when_done<Init::ALLOCATION_TYPE>(grpc_context, operation);
+            operation_ = init.template self<1>();
+            initiate_async_notify_when_done<Init::ALLOCATION_TYPE>(grpc_context, operation_);
         }
         else
         {
             if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
             {
-                operation = init.template self<1>();
-                initiate_async_notify_when_done<Init::ALLOCATION_TYPE>(grpc_context, operation);
+                operation_ = init.template self<1>();
+                initiate_async_notify_when_done<Init::ALLOCATION_TYPE>(grpc_context, operation_);
             }
             else
             {
                 auto* const self = init.template self<0>();
-                operation = self;
+                operation_ = self;
                 detail::GrpcContextImplementation::add_remote_operation(grpc_context, self);
             }
         }
@@ -82,7 +82,7 @@ class NotfiyWhenDoneSenderImplementation : public detail::IntrusiveListHook<Notf
 
     void complete(detail::OperationResult result, agrpc::GrpcContext& grpc_context)
     {
-        operation->complete(result, grpc_context);
+        operation_->complete(result, grpc_context);
     }
 
   private:
@@ -93,11 +93,11 @@ class NotfiyWhenDoneSenderImplementation : public detail::IntrusiveListHook<Notf
         {
             detail::GrpcContextImplementation::add_notify_when_done_operation(grpc_context, this);
         }
-        server_context.AsyncNotifyWhenDone(self);
+        server_context_.AsyncNotifyWhenDone(self);
     }
 
-    grpc::ServerContext& server_context;
-    detail::OperationBase* operation;
+    grpc::ServerContext& server_context_;
+    detail::OperationBase* operation_;
 };
 }
 

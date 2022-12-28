@@ -36,20 +36,20 @@ struct MoveAlarmSenderImplementation
     using Initiation = Deadline;
     using StopFunction = detail::AlarmCancellationFunction;
 
-    auto& stop_function_arg(const Initiation&) noexcept { return alarm.alarm; }
+    auto& stop_function_arg(const Initiation&) noexcept { return alarm_.alarm_; }
 
     void initiate(agrpc::GrpcContext& grpc_context, const Initiation& deadline, detail::OperationBase* operation)
     {
-        detail::AlarmInitFunction{alarm.alarm, deadline}(grpc_context, operation);
+        detail::AlarmInitFunction{alarm_.alarm_, deadline}(grpc_context, operation);
     }
 
     template <class OnDone>
     void done(OnDone on_done, bool ok)
     {
-        on_done(ok, static_cast<Alarm&&>(alarm));
+        on_done(ok, static_cast<Alarm&&>(alarm_));
     }
 
-    Alarm alarm;
+    Alarm alarm_;
 };
 }
 

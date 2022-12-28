@@ -50,16 +50,16 @@ class OperationBase
   public:
     void complete(detail::OperationResult result, agrpc::GrpcContext& grpc_context)
     {
-        on_complete(this, result, grpc_context);
+        on_complete_(this, result, grpc_context);
     }
 
   protected:
-    explicit OperationBase(OperationOnComplete on_complete) noexcept : on_complete(on_complete) {}
+    explicit OperationBase(OperationOnComplete on_complete) noexcept : on_complete_(on_complete) {}
 
   private:
     friend detail::OperationBaseAccess;
 
-    OperationOnComplete on_complete;
+    OperationOnComplete on_complete_;
 };
 
 class QueueableOperationBase : public detail::OperationBase
@@ -72,14 +72,14 @@ class QueueableOperationBase : public detail::OperationBase
     friend detail::IntrusiveQueue<QueueableOperationBase>;
     friend detail::AtomicIntrusiveQueue<QueueableOperationBase>;
 
-    QueueableOperationBase* next;
+    QueueableOperationBase* next_;
 };
 
 struct OperationBaseAccess
 {
-    static auto& get_on_complete(detail::OperationBase& operation) noexcept { return operation.on_complete; }
+    static auto& get_on_complete(detail::OperationBase& operation) noexcept { return operation.on_complete_; }
 
-    static auto get_on_complete(const detail::OperationBase& operation) noexcept { return operation.on_complete; }
+    static auto get_on_complete(const detail::OperationBase& operation) noexcept { return operation.on_complete_; }
 };
 
 [[nodiscard]] constexpr bool is_ok(OperationResult result) noexcept { return result == OperationResult::OK; }

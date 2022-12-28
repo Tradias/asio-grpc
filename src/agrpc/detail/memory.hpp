@@ -70,10 +70,10 @@ class StackBuffer
   public:
     [[nodiscard]] static constexpr std::size_t max_size() noexcept { return Size; }
 
-    [[nodiscard]] void* allocate(std::size_t) noexcept { return buffer; }
+    [[nodiscard]] void* allocate(std::size_t) noexcept { return buffer_; }
 
   private:
-    alignas(std::max_align_t) std::byte buffer[Size];
+    alignas(std::max_align_t) std::byte buffer_[Size];
 };
 
 class DelayedBuffer
@@ -83,7 +83,7 @@ class DelayedBuffer
 
     struct Data
     {
-        alignas(std::max_align_t) std::byte data[CHUNK_SIZE];
+        alignas(std::max_align_t) std::byte data_[CHUNK_SIZE];
     };
 
   public:
@@ -94,19 +94,19 @@ class DelayedBuffer
 
     [[nodiscard]] void* allocate(std::size_t size)
     {
-        if AGRPC_LIKELY (buffer)
+        if AGRPC_LIKELY (buffer_)
         {
-            return buffer.get();
+            return buffer_.get();
         }
         else
         {
-            buffer.reset(new Data[(size + 1) / CHUNK_SIZE]);
-            return buffer.get();
+            buffer_.reset(new Data[(size + 1) / CHUNK_SIZE]);
+            return buffer_.get();
         }
     }
 
   private:
-    std::unique_ptr<Data[]> buffer;
+    std::unique_ptr<Data[]> buffer_;
 };
 }
 

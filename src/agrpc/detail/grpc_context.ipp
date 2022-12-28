@@ -57,20 +57,20 @@ inline grpc::CompletionQueue* get_completion_queue(agrpc::GrpcContext& grpc_cont
 
 template <class>
 inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue>&& completion_queue)
-    : completion_queue(static_cast<std::unique_ptr<grpc::CompletionQueue>&&>(completion_queue))
+    : completion_queue_(static_cast<std::unique_ptr<grpc::CompletionQueue>&&>(completion_queue))
 {
 }
 
 inline GrpcContext::GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue>&& completion_queue)
-    : completion_queue(static_cast<std::unique_ptr<grpc::ServerCompletionQueue>&&>(completion_queue))
+    : completion_queue_(static_cast<std::unique_ptr<grpc::ServerCompletionQueue>&&>(completion_queue))
 {
 }
 
 inline GrpcContext::~GrpcContext()
 {
     stop();
-    shutdown.store(true, std::memory_order_relaxed);
-    completion_queue->Shutdown();
+    shutdown_.store(true, std::memory_order_relaxed);
+    completion_queue_->Shutdown();
     detail::drain_completion_queue(*this);
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     asio::execution_context::shutdown();
@@ -147,16 +147,16 @@ inline bool GrpcContext::poll_completion_queue()
 
 inline void GrpcContext::stop()
 {
-    if (!stopped.exchange(true, std::memory_order_relaxed) &&
-        !detail::GrpcContextImplementation::running_in_this_thread(*this) && remote_work_queue.try_mark_active())
+    if (!stopped_.exchange(true, std::memory_order_relaxed) &&
+        !detail::GrpcContextImplementation::running_in_this_thread(*this) && remote_work_queue_.try_mark_active())
     {
         detail::GrpcContextImplementation::trigger_work_alarm(*this);
     }
 }
 
-inline void GrpcContext::reset() noexcept { stopped.store(false, std::memory_order_relaxed); }
+inline void GrpcContext::reset() noexcept { stopped_.store(false, std::memory_order_relaxed); }
 
-inline bool GrpcContext::is_stopped() const noexcept { return stopped.load(std::memory_order_relaxed); }
+inline bool GrpcContext::is_stopped() const noexcept { return stopped_.load(std::memory_order_relaxed); }
 
 inline GrpcContext::executor_type GrpcContext::get_executor() noexcept { return GrpcContext::executor_type{*this}; }
 
@@ -164,24 +164,24 @@ inline GrpcContext::executor_type GrpcContext::get_scheduler() noexcept { return
 
 inline GrpcContext::allocator_type GrpcContext::get_allocator() noexcept
 {
-    return detail::create_local_allocator(local_resource);
+    return detail::create_local_allocator(local_resource_);
 }
 
-inline void GrpcContext::work_started() noexcept { outstanding_work.fetch_add(1, std::memory_order_relaxed); }
+inline void GrpcContext::work_started() noexcept { outstanding_work_.fetch_add(1, std::memory_order_relaxed); }
 
 inline void GrpcContext::work_finished() noexcept
 {
-    if AGRPC_UNLIKELY (1 == outstanding_work.fetch_sub(1, std::memory_order_relaxed))
+    if AGRPC_UNLIKELY (1 == outstanding_work_.fetch_sub(1, std::memory_order_relaxed))
     {
         stop();
     }
 }
 
-inline grpc::CompletionQueue* GrpcContext::get_completion_queue() noexcept { return completion_queue.get(); }
+inline grpc::CompletionQueue* GrpcContext::get_completion_queue() noexcept { return completion_queue_.get(); }
 
 inline grpc::ServerCompletionQueue* GrpcContext::get_server_completion_queue() noexcept
 {
-    return static_cast<grpc::ServerCompletionQueue*>(completion_queue.get());
+    return static_cast<grpc::ServerCompletionQueue*>(completion_queue_.get());
 }
 
 AGRPC_NAMESPACE_END

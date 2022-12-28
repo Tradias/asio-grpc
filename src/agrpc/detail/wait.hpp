@@ -27,12 +27,12 @@ namespace detail
 template <class Deadline>
 struct AlarmInitFunction
 {
-    grpc::Alarm& alarm;
-    Deadline deadline;
+    grpc::Alarm& alarm_;
+    Deadline deadline_;
 
     void operator()(agrpc::GrpcContext& grpc_context, void* tag) const
     {
-        alarm.Set(grpc_context.get_completion_queue(), deadline, tag);
+        alarm_.Set(grpc_context.get_completion_queue(), deadline_, tag);
     }
 };
 
@@ -41,13 +41,13 @@ AlarmInitFunction(grpc::Alarm&, const Deadline&) -> AlarmInitFunction<Deadline>;
 
 struct AlarmCancellationFunction
 {
-    grpc::Alarm& alarm;
+    grpc::Alarm& alarm_;
 
 #if !defined(AGRPC_UNIFEX)
     explicit
 #endif
         AlarmCancellationFunction(grpc::Alarm& alarm) noexcept
-        : alarm(alarm)
+        : alarm_(alarm)
     {
     }
 
@@ -56,11 +56,11 @@ struct AlarmCancellationFunction
     explicit
 #endif
         AlarmCancellationFunction(const detail::AlarmInitFunction<Deadline>& init_function) noexcept
-        : alarm(init_function.alarm)
+        : alarm_(init_function.alarm_)
     {
     }
 
-    void operator()() const { alarm.Cancel(); }
+    void operator()() const { alarm_.Cancel(); }
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
     void operator()(asio::cancellation_type type) const
