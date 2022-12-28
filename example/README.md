@@ -13,7 +13,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // A simple client-streaming request with coroutines.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/high-level-client.cpp#L33-L37' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-high-level-client-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/high-level-client.cpp#L36-L40' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-high-level-client-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: client-side-high-level-server-streaming -->
@@ -23,7 +23,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // A simple server-streaming request with coroutines.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/high-level-client.cpp#L70-L74' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-high-level-server-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/high-level-client.cpp#L73-L77' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-high-level-server-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: client-side-high-level-bidirectional-streaming -->
@@ -33,7 +33,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // A bidirectional-streaming request that simply sends the response from the server back to it.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/high-level-client.cpp#L106-L110' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-high-level-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/high-level-client.cpp#L109-L113' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-high-level-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Streaming RPCs (low-level API)
@@ -67,7 +67,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // For unary RPCs, `grpc::ClientContext::set_deadline` should be preferred.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/streaming-client.cpp#L121-L127' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-run-with-deadline' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/high-level-client.cpp#L156-L162' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-run-with-deadline' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Multi-threaded
@@ -239,17 +239,17 @@ Click on `snippet source` to jump to the code of an individual example.
 // A simple unary request with unifex coroutines.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/unifex-client.cpp#L32-L36' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-unifex-unary' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/unifex-client.cpp#L35-L39' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-unifex-unary' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: client-side-unifex-server-streaming -->
 <a id='snippet-client-side-unifex-server-streaming'></a>
 ```cpp
 // ---------------------------------------------------
-// A simple server-streaming request with unifex coroutines.
+// A server-streaming request with unifex sender/receiver.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/unifex-client.cpp#L54-L58' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-unifex-server-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/unifex-client.cpp#L57-L61' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-unifex-server-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: client-side-unifex-with-deadline -->
@@ -261,7 +261,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // `grpc::ClientContext::set_deadline` is the preferred way of specifying a timeout.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/unifex-client.cpp#L82-L88' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-unifex-with-deadline' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/unifex-client.cpp#L142-L148' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-unifex-with-deadline' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Server-side
