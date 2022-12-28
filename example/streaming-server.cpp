@@ -148,11 +148,13 @@ asio::awaitable<bool> writer(grpc::ServerAsyncReaderWriter<example::v1::Response
             // Channel got closed by the reader.
             break;
         }
-        // Switch to the thread_pool.
+        // In this example we switch to the thread_pool to compute the response.
         co_await asio::post(asio::bind_executor(thread_pool, asio::use_awaitable));
+
         // Compute the response.
         example::v1::Response response;
         response.set_integer(request.integer() * 2);
+
         // reader_writer is thread-safe so we can just interact with it from the thread_pool.
         ok = co_await agrpc::write(reader_writer, response);
         // Now we are back on the main thread.
