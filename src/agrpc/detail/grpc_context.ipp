@@ -61,7 +61,7 @@ inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue>&& complet
 {
 }
 
-inline GrpcContext::GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue>&& completion_queue)
+inline GrpcContext::GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue> completion_queue)
     : completion_queue_(static_cast<std::unique_ptr<grpc::ServerCompletionQueue>&&>(completion_queue))
 {
 }

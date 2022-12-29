@@ -80,7 +80,7 @@ class GrpcContext
      *
      * @snippet server.cpp create-grpc_context-server-side
      */
-    explicit GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue>&& completion_queue);
+    explicit GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue> completion_queue);
 
     /**
      * @brief Destruct the GrpcContext
