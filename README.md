@@ -213,7 +213,7 @@ See asio-grpc's documentation on the Hunter website: [https://hunter.readthedocs
 <details><summary><b>Using conan</b></summary>
 <p>
 
-Please refer to the conan documentation on how to [use packages](https://docs.conan.io/en/latest/using_packages.html). The recipe in conan-center is called [asio-grpc/2.3.0](https://conan.io/center/asio-grpc).   
+Please refer to the conan documentation on how to [use packages](https://docs.conan.io/en/latest/using_packages.html). The recipe in conan-center is called [asio-grpc/2.4.0](https://conan.io/center/asio-grpc).   
 If you are using conan's CMake generator then link with `asio-grpc::asio-grpc` independent of the backend that you choose:
 
 ```cmake
