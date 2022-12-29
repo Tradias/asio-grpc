@@ -68,7 +68,7 @@ struct PerformUnarySuccessOptions
 };
 
 template <class Stub>
-void client_perform_unary_success(agrpc::GrpcContext& grpc_context, Stub& stub, asio::yield_context yield,
+void client_perform_unary_success(agrpc::GrpcContext& grpc_context, Stub& stub, const asio::yield_context& yield,
                                   test::PerformUnarySuccessOptions options = {})
 {
     const auto client_context = test::create_client_context();
@@ -90,7 +90,7 @@ void client_perform_unary_success(agrpc::GrpcContext& grpc_context, Stub& stub, 
 }
 
 bool client_perform_unary_unchecked(agrpc::GrpcContext& grpc_context, test::v1::Test::Stub& stub,
-                                    asio::yield_context yield,
+                                    const asio::yield_context& yield,
                                     std::chrono::system_clock::time_point deadline = test::five_seconds_from_now());
 
 struct PerformClientStreamingSuccessOptions
@@ -100,17 +100,17 @@ struct PerformClientStreamingSuccessOptions
     int32_t request_payload{42};
 };
 
-void client_perform_client_streaming_success(test::v1::Test::Stub& stub, asio::yield_context yield,
+void client_perform_client_streaming_success(test::v1::Test::Stub& stub, const asio::yield_context& yield,
                                              test::PerformClientStreamingSuccessOptions options = {});
 
 void client_perform_client_streaming_success(test::msg::Response& response,
                                              grpc::ClientAsyncWriter<test::msg::Request>& writer,
-                                             asio::yield_context yield,
+                                             const asio::yield_context& yield,
                                              test::PerformClientStreamingSuccessOptions options = {});
 
 void client_perform_client_streaming_success(test::msg::Response& response,
                                              grpc::ClientAsyncWriterInterface<test::msg::Request>& writer,
-                                             asio::yield_context yield,
+                                             const asio::yield_context& yield,
                                              test::PerformClientStreamingSuccessOptions options = {});
 }
 

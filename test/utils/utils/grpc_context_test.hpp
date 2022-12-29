@@ -68,7 +68,7 @@ struct GrpcContextTest
 
     auto use_sender() noexcept { return agrpc::use_sender(get_executor()); }
 
-    bool allocator_has_been_used() noexcept;
+    bool allocator_has_been_used() const noexcept;
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     GrpcContextTrackingAllocatorExecutor get_tracking_allocator_executor() noexcept;

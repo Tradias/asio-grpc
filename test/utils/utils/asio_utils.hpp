@@ -44,7 +44,7 @@ struct NoOp
 
 struct RethrowFirstArg
 {
-    void operator()(std::exception_ptr ep)
+    void operator()(const std::exception_ptr& ep)
     {
         if (ep)
         {
@@ -105,27 +105,22 @@ struct FunctionAsStatefulReceiver : public test::FunctionAsReceiver<Function, Al
 
     void set_done() noexcept { state.was_done = true; }
 
-    void set_error(std::exception_ptr ptr) noexcept { state.exception = ptr; }
+    void set_error(const std::exception_ptr& ptr) noexcept { state.exception = ptr; }
 };
 
 template <bool IsNothrow>
 struct ConditionallyNoexceptNoOpReceiver
 {
-    ConditionallyNoexceptNoOpReceiver() noexcept(IsNothrow) {}
+    ConditionallyNoexceptNoOpReceiver() noexcept(IsNothrow) = default;
 
-    ConditionallyNoexceptNoOpReceiver(const ConditionallyNoexceptNoOpReceiver&) noexcept(IsNothrow) {}
+    ConditionallyNoexceptNoOpReceiver(const ConditionallyNoexceptNoOpReceiver&) noexcept(IsNothrow) = default;
 
-    ConditionallyNoexceptNoOpReceiver(ConditionallyNoexceptNoOpReceiver&&) noexcept(IsNothrow) {}
+    ConditionallyNoexceptNoOpReceiver(ConditionallyNoexceptNoOpReceiver&&) noexcept(IsNothrow) = default;
 
-    ConditionallyNoexceptNoOpReceiver& operator=(const ConditionallyNoexceptNoOpReceiver&) noexcept(IsNothrow)
-    {
-        return *this;
-    }
+    ConditionallyNoexceptNoOpReceiver& operator=(const ConditionallyNoexceptNoOpReceiver&) noexcept(IsNothrow) =
+        default;
 
-    ConditionallyNoexceptNoOpReceiver& operator=(ConditionallyNoexceptNoOpReceiver&&) noexcept(IsNothrow)
-    {
-        return *this;
-    }
+    ConditionallyNoexceptNoOpReceiver& operator=(ConditionallyNoexceptNoOpReceiver&&) noexcept(IsNothrow) = default;
 
     void set_done() noexcept {}
 
@@ -234,7 +229,7 @@ auto parallel_group_bind_executor(const Executor& executor, CancellationConditio
                {
                    return [&](auto&& t)
                    {
-                       return f(asio::bind_executor(executor, std::move(t)));
+                       return f(asio::bind_executor(executor, std::forward<decltype(t)>(t)));
                    };
                }(function)...)
         .async_wait(cancellation_condition, std::forward<CompletionToken>(token));

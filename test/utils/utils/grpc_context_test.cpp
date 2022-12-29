@@ -38,7 +38,7 @@ agrpc::GrpcExecutor GrpcContextTest::get_executor() noexcept { return grpc_conte
 
 test::TrackingAllocator<> GrpcContextTest::get_allocator() noexcept { return test::TrackingAllocator<>(resource); }
 
-bool GrpcContextTest::allocator_has_been_used() noexcept { return resource.bytes_allocated > 0; }
+bool GrpcContextTest::allocator_has_been_used() const noexcept { return resource.bytes_allocated > 0; }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 GrpcContextTrackingAllocatorExecutor GrpcContextTest::get_tracking_allocator_executor() noexcept

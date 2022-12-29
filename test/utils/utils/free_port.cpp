@@ -54,7 +54,7 @@ void recreate_if_old(const fs::path& port_file)
 
 auto get_port_lock_file()
 {
-    const auto port_file = fs::temp_directory_path() / (std::string(PORT_FILE_NAME) + ".lock");
+    auto port_file = fs::temp_directory_path() / (std::string(PORT_FILE_NAME) + ".lock");
     std::ofstream file_stream{port_file.native()};
     return port_file;
 }

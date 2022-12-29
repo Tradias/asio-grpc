@@ -168,10 +168,7 @@ struct HighLevelClientTest : test::GrpcClientServerTest
             return IntrospectRPC<RPC>::request(this->get_executor(), *stub, generic_stub, client_context, request,
                                                response, token);
         }
-        else
-        {
-            return request_rpc(token);
-        }
+        return request_rpc(token);
     }
 
     template <class CompletionToken>

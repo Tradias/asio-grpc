@@ -26,7 +26,7 @@
 namespace test
 {
 bool client_perform_unary_unchecked(agrpc::GrpcContext& grpc_context, test::v1::Test::Stub& stub,
-                                    asio::yield_context yield, std::chrono::system_clock::time_point deadline)
+                                    const asio::yield_context& yield, std::chrono::system_clock::time_point deadline)
 {
     const auto client_context = test::create_client_context(deadline);
     const auto reader = agrpc::request(&test::v1::Test::Stub::AsyncUnary, stub, *client_context, {}, grpc_context);
@@ -35,7 +35,7 @@ bool client_perform_unary_unchecked(agrpc::GrpcContext& grpc_context, test::v1::
     return agrpc::finish(*reader, response, status, yield);
 }
 
-void client_perform_client_streaming_success(test::v1::Test::Stub& stub, asio::yield_context yield,
+void client_perform_client_streaming_success(test::v1::Test::Stub& stub, const asio::yield_context& yield,
                                              test::PerformClientStreamingSuccessOptions options)
 {
     test::msg::Response response;
@@ -50,7 +50,7 @@ namespace
 {
 template <class Writer>
 void client_perform_client_streaming_success_impl(test::msg::Response& response, Writer& writer,
-                                                  asio::yield_context yield,
+                                                  const asio::yield_context& yield,
                                                   test::PerformClientStreamingSuccessOptions options)
 {
     CHECK(agrpc::read_initial_metadata(writer, yield));
@@ -82,7 +82,7 @@ void client_perform_client_streaming_success_impl(test::msg::Response& response,
 
 void client_perform_client_streaming_success(test::msg::Response& response,
                                              grpc::ClientAsyncWriter<test::msg::Request>& writer,
-                                             asio::yield_context yield,
+                                             const asio::yield_context& yield,
                                              test::PerformClientStreamingSuccessOptions options)
 {
     test::client_perform_client_streaming_success_impl(response, writer, yield, options);
@@ -90,7 +90,7 @@ void client_perform_client_streaming_success(test::msg::Response& response,
 
 void client_perform_client_streaming_success(test::msg::Response& response,
                                              grpc::ClientAsyncWriterInterface<test::msg::Request>& writer,
-                                             asio::yield_context yield,
+                                             const asio::yield_context& yield,
                                              test::PerformClientStreamingSuccessOptions options)
 {
     test::client_perform_client_streaming_success_impl(response, writer, yield, options);

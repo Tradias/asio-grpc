@@ -1,5 +1,6 @@
 ---
 Checks: "clang-diagnostic-*,clang-analyzer-*,readability-*,modernize-*,performance-*,bugprone-*,cert-*,-readability-magic-numbers,-readability-identifier-length,-readability-named-parameter,-modernize-use-trailing-return-type,-modernize-avoid-c-arrays,-cert-dcl58-cpp,-bugprone-forwarding-reference-overload,-readability-uppercase-literal-suffix,-cert-dcl21-cpp"
+HeaderFilterRegex: "agrpc/.*"
 CheckOptions:
   - key: readability-identifier-naming.NamespaceCase
     value: lower_case

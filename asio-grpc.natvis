@@ -39,75 +39,75 @@
     </Type>
     <!-- RepeatedlyRequestContext -->
     <Type Name="agrpc::b::RepeatedlyRequestContext&lt;*&gt;">
-        <DisplayString>{impl.impl.first_}</DisplayString>
+        <DisplayString>{impl_.impl_.first_}</DisplayString>
         <Expand>
-            <Item Name="[server_context]">impl.impl.first_->context</Item>
-            <Item Name="[request]" Optional="true">impl.impl.first_->request_</Item>
-            <Item Name="[responder]">impl.impl.first_->responder_</Item>
+            <Item Name="[server_context]">impl_.impl_.first_->context_</Item>
+            <Item Name="[request]" Optional="true">impl_.impl_.first_->request_</Item>
+            <Item Name="[responder]">impl_.impl_.first_->responder_</Item>
         </Expand>
     </Type>
     <Type Name="agrpc::s::RepeatedlyRequestContext&lt;*&gt;">
-        <DisplayString>{impl.impl.first_}</DisplayString>
+        <DisplayString>{impl_.impl_.first_}</DisplayString>
         <Expand>
-            <Item Name="[server_context]">impl.impl.first_->context</Item>
-            <Item Name="[request]" Optional="true">impl.impl.first_->request_</Item>
-            <Item Name="[responder]">impl.impl.first_->responder_</Item>
+            <Item Name="[server_context_]">impl_.impl_.first_->context_</Item>
+            <Item Name="[request]" Optional="true">impl_.impl_.first_->request_</Item>
+            <Item Name="[responder]">impl_.impl_.first_->responder_</Item>
         </Expand>
     </Type>
     <!-- BasicGrpcExecutor -->
     <Type Name="agrpc::b::BasicGrpcExecutor&lt;*,*&gt;">
-        <DisplayString>{this->impl}</DisplayString>
+        <DisplayString>{this->impl_}</DisplayString>
         <Expand>
-            <Item Name="[grpc_context]">this->impl.first_</Item>
-            <Item Name="[allocator]" Optional="true">this->impl.second_</Item>
+            <Item Name="[grpc_context]">this->impl_.first_</Item>
+            <Item Name="[allocator]" Optional="true">this->impl_.second_</Item>
         </Expand>
     </Type>
     <Type Name="agrpc::s::BasicGrpcExecutor&lt;*,*&gt;">
-        <DisplayString>{this->impl}</DisplayString>
+        <DisplayString>{this->impl_}</DisplayString>
         <Expand>
-            <Item Name="[grpc_context]">this->impl.first_</Item>
-            <Item Name="[allocator]" Optional="true">this->impl.second_</Item>
+            <Item Name="[grpc_context]">this->impl_.first_</Item>
+            <Item Name="[allocator]" Optional="true">this->impl_.second_</Item>
         </Expand>
     </Type>
     <Type Name="agrpc::u::BasicGrpcExecutor&lt;*,*&gt;">
-        <DisplayString>{this->impl}</DisplayString>
+        <DisplayString>{this->impl_}</DisplayString>
         <Expand>
-            <Item Name="[grpc_context]">this->impl.first_</Item>
-            <Item Name="[allocator]" Optional="true">this->impl.second_</Item>
+            <Item Name="[grpc_context]">this->impl_.first_</Item>
+            <Item Name="[allocator]" Optional="true">this->impl_.second_</Item>
         </Expand>
     </Type>
     <!-- AllocatorBinder -->
     <Type Name="agrpc::b::AllocatorBinder&lt;*,*&gt;">
-        <DisplayString>{impl.first_}</DisplayString>
+        <DisplayString>{impl_.first_}</DisplayString>
         <Expand>
-            <Item Name="[target]">impl.first_</Item>
-            <Item Name="[allocator]" Optional="true">impl.second_</Item>
+            <Item Name="[target]">impl_.first_</Item>
+            <Item Name="[allocator]" Optional="true">impl_.second_</Item>
         </Expand>
     </Type>
     <Type Name="agrpc::s::AllocatorBinder&lt;*,*&gt;">
-        <DisplayString>{impl.first_}</DisplayString>
+        <DisplayString>{impl_.first_}</DisplayString>
         <Expand>
-            <Item Name="[target]">impl.first_</Item>
-            <Item Name="[allocator]" Optional="true">impl.second_</Item>
+            <Item Name="[target]">impl_.first_</Item>
+            <Item Name="[allocator]" Optional="true">impl_.second_</Item>
         </Expand>
     </Type>
     <!-- TaggedPtr -->
     <Type Name="agrpc::b::detail::TaggedPtr&lt;*&gt;">
-        <DisplayString>{*($T1 *)(ptr &amp; PTR_MASK)}</DisplayString>
+        <DisplayString>{*($T1 *)(ptr_ &amp; PTR_MASK)}</DisplayString>
         <Expand>
-            <ExpandedItem>*($T1 *)(ptr &amp; PTR_MASK)</ExpandedItem>
+            <ExpandedItem>*($T1 *)(ptr_ &amp; PTR_MASK)</ExpandedItem>
         </Expand>
     </Type>
     <Type Name="agrpc::s::detail::TaggedPtr&lt;*&gt;">
-        <DisplayString>{*($T1 *)(ptr &amp; PTR_MASK)}</DisplayString>
+        <DisplayString>{*($T1 *)(ptr_ &amp; PTR_MASK)}</DisplayString>
         <Expand>
-            <ExpandedItem>*($T1 *)(ptr &amp; PTR_MASK)</ExpandedItem>
+            <ExpandedItem>*($T1 *)(ptr_ &amp; PTR_MASK)</ExpandedItem>
         </Expand>
     </Type>
     <Type Name="agrpc::u::detail::TaggedPtr&lt;*&gt;">
-        <DisplayString>{*($T1 *)(ptr &amp; PTR_MASK)}</DisplayString>
+        <DisplayString>{*($T1 *)(ptr_ &amp; PTR_MASK)}</DisplayString>
         <Expand>
-            <ExpandedItem>*($T1 *)(ptr &amp; PTR_MASK)</ExpandedItem>
+            <ExpandedItem>*($T1 *)(ptr_ &amp; PTR_MASK)</ExpandedItem>
         </Expand>
     </Type>
     <!-- RPC -->
@@ -115,27 +115,27 @@
         <DisplayString>{this->status_}</DisplayString>
         <Expand>
             <Item Name="[status]">this->status_</Item>
-            <Item Name="[executor]">this->executor</Item>
-            <Item Name="[client_context]" Optional="true">this->client_context.context</Item>
-            <Item Name="[responder]" Optional="true">this->responder_</Item>
+            <Item Name="[executor]">this->executor_</Item>
+            <Item Name="[client_context]">this->client_context_.context_</Item>
+            <Item Name="[responder]">this->responder_</Item>
         </Expand>
     </Type>
     <Type Name="agrpc::s::RPC&lt;*,*,*&gt;">
         <DisplayString>{this->status_}</DisplayString>
         <Expand>
             <Item Name="[status]">this->status_</Item>
-            <Item Name="[executor]">this->executor</Item>
-            <Item Name="[client_context]" Optional="true">this->client_context.context</Item>
-            <Item Name="[responder]" Optional="true">this->responder_</Item>
+            <Item Name="[executor]">this->executor_</Item>
+            <Item Name="[client_context]">this->client_context_.context_</Item>
+            <Item Name="[responder]">this->responder_</Item>
         </Expand>
     </Type>
     <Type Name="agrpc::u::RPC&lt;*,*,*&gt;">
         <DisplayString>{this->status_}</DisplayString>
         <Expand>
             <Item Name="[status]">this->status_</Item>
-            <Item Name="[executor]">this->executor</Item>
-            <Item Name="[client_context]" Optional="true">this->client_context.context</Item>
-            <Item Name="[responder]" Optional="true">this->responder_</Item>
+            <Item Name="[executor]">this->executor_</Item>
+            <Item Name="[client_context]">this->client_context_.context_</Item>
+            <Item Name="[responder]">this->responder_</Item>
         </Expand>
     </Type>
 </AutoVisualizer>
