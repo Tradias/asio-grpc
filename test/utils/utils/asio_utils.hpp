@@ -111,16 +111,21 @@ struct FunctionAsStatefulReceiver : public test::FunctionAsReceiver<Function, Al
 template <bool IsNothrow>
 struct ConditionallyNoexceptNoOpReceiver
 {
-    ConditionallyNoexceptNoOpReceiver() noexcept(IsNothrow) = default;
+    ConditionallyNoexceptNoOpReceiver() noexcept(IsNothrow) {}
 
-    ConditionallyNoexceptNoOpReceiver(const ConditionallyNoexceptNoOpReceiver&) noexcept(IsNothrow) = default;
+    ConditionallyNoexceptNoOpReceiver(const ConditionallyNoexceptNoOpReceiver&) noexcept(IsNothrow) {}
 
-    ConditionallyNoexceptNoOpReceiver(ConditionallyNoexceptNoOpReceiver&&) noexcept(IsNothrow) = default;
+    ConditionallyNoexceptNoOpReceiver(ConditionallyNoexceptNoOpReceiver&&) noexcept(IsNothrow) {}
 
-    ConditionallyNoexceptNoOpReceiver& operator=(const ConditionallyNoexceptNoOpReceiver&) noexcept(IsNothrow) =
-        default;
+    ConditionallyNoexceptNoOpReceiver& operator=(const ConditionallyNoexceptNoOpReceiver&) noexcept(IsNothrow)
+    {
+        return *this;
+    }
 
-    ConditionallyNoexceptNoOpReceiver& operator=(ConditionallyNoexceptNoOpReceiver&&) noexcept(IsNothrow) = default;
+    ConditionallyNoexceptNoOpReceiver& operator=(ConditionallyNoexceptNoOpReceiver&&) noexcept(IsNothrow)
+    {
+        return *this;
+    }
 
     void set_done() noexcept {}
 
