@@ -30,9 +30,14 @@
 namespace test
 {
 using UnaryRPC = agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncUnary>;
+using UnaryInterfaceRPC = agrpc::RPC<&test::v1::Test::StubInterface::PrepareAsyncUnary>;
 using ClientStreamingRPC = agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncClientStreaming>;
+using ClientStreamingInterfaceRPC = agrpc::RPC<&test::v1::Test::StubInterface::PrepareAsyncClientStreaming>;
 using ServerStreamingRPC = agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncServerStreaming>;
+using ServerStreamingInterfaceRPC = agrpc::RPC<&test::v1::Test::StubInterface::PrepareAsyncServerStreaming>;
 using BidirectionalStreamingRPC = agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncBidirectionalStreaming>;
+using BidirectionalStreamingInterfaceRPC =
+    agrpc::RPC<&test::v1::Test::StubInterface::PrepareAsyncBidirectionalStreaming>;
 using GenericUnaryRPC = agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC>;
 using GenericStreamingRPC = agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC>;
 
