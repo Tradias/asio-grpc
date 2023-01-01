@@ -138,4 +138,107 @@
             <Item Name="[responder]">this->responder_</Item>
         </Expand>
     </Type>
+	<!-- OperationBase -->
+	<Type Name="agrpc::b::detail::OperationBase">
+		<DisplayString>{this->on_complete_}</DisplayString>
+	</Type>
+	<Type Name="agrpc::s::detail::OperationBase">
+		<DisplayString>{this->on_complete_}</DisplayString>
+	</Type>
+	<Type Name="agrpc::u::detail::OperationBase">
+		<DisplayString>{this->on_complete_}</DisplayString>
+	</Type>
+	<!-- IntrusiveQueue -->
+	<Type Name="agrpc::b::detail::IntrusiveQueue&lt;*&gt;">
+		<DisplayString>{this->head_}</DisplayString>
+		<Expand>
+			<LinkedListItems>
+				<HeadPointer>head_</HeadPointer>
+				<NextPointer>next_</NextPointer>
+				<ValueNode>this</ValueNode>
+			</LinkedListItems>
+		</Expand>
+	</Type>
+	<Type Name="agrpc::s::detail::IntrusiveQueue&lt;*&gt;">
+		<DisplayString>{this->head_}</DisplayString>
+		<Expand>
+			<LinkedListItems>
+				<HeadPointer>head_</HeadPointer>
+				<NextPointer>next_</NextPointer>
+				<ValueNode>this</ValueNode>
+			</LinkedListItems>
+		</Expand>
+	</Type>
+	<Type Name="agrpc::u::detail::IntrusiveQueue&lt;*&gt;">
+		<DisplayString>{this->head_}</DisplayString>
+		<Expand>
+			<LinkedListItems>
+				<HeadPointer>head_</HeadPointer>
+				<NextPointer>next_</NextPointer>
+				<ValueNode>this</ValueNode>
+			</LinkedListItems>
+		</Expand>
+	</Type>
+	<!-- AtomicIntrusiveQueue -->
+	<Type Name="agrpc::b::detail::AtomicIntrusiveQueue&lt;*&gt;">
+		<DisplayString>{this->head_}</DisplayString>
+		<Expand>
+			<LinkedListItems>
+				<HeadPointer>($T1 *)head_._Storage._Value</HeadPointer>
+				<NextPointer>next_</NextPointer>
+				<ValueNode>this</ValueNode>
+			</LinkedListItems>
+		</Expand>
+	</Type>
+	<Type Name="agrpc::s::detail::AtomicIntrusiveQueue&lt;*&gt;">
+		<DisplayString>{this->head_}</DisplayString>
+		<Expand>
+			<LinkedListItems>
+				<HeadPointer>($T1 *)head_._Storage._Value</HeadPointer>
+				<NextPointer>next_</NextPointer>
+				<ValueNode>this</ValueNode>
+			</LinkedListItems>
+		</Expand>
+	</Type>
+	<Type Name="agrpc::u::detail::AtomicIntrusiveQueue&lt;*&gt;">
+		<DisplayString>{this->head_}</DisplayString>
+		<Expand>
+			<LinkedListItems>
+				<HeadPointer>($T1 *)head_._Storage._Value</HeadPointer>
+				<NextPointer>next_</NextPointer>
+				<ValueNode>this</ValueNode>
+			</LinkedListItems>
+		</Expand>
+	</Type>
+	<!-- IntrusiveList -->
+	<Type Name="agrpc::b::detail::IntrusiveList&lt;*&gt;">
+		<DisplayString>{this->head_}</DisplayString>
+		<Expand>
+			<LinkedListItems>
+				<HeadPointer>head_</HeadPointer>
+				<NextPointer>list_next_</NextPointer>
+				<ValueNode>this</ValueNode>
+			</LinkedListItems>
+		</Expand>
+	</Type>
+	<Type Name="agrpc::s::detail::IntrusiveList&lt;*&gt;">
+		<DisplayString>{this->head_}</DisplayString>
+		<Expand>
+			<LinkedListItems>
+				<HeadPointer>head_</HeadPointer>
+				<NextPointer>list_next_</NextPointer>
+				<ValueNode>this</ValueNode>
+			</LinkedListItems>
+		</Expand>
+	</Type>
+	<Type Name="agrpc::u::detail::IntrusiveList&lt;*&gt;">
+		<DisplayString>{this->head_}</DisplayString>
+		<Expand>
+			<LinkedListItems>
+				<HeadPointer>head_</HeadPointer>
+				<NextPointer>list_next_</NextPointer>
+				<ValueNode>this</ValueNode>
+			</LinkedListItems>
+		</Expand>
+	</Type>
 </AutoVisualizer>
