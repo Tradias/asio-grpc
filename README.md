@@ -225,7 +225,7 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
 
 `backend` - One of "boost" for Boost.Asio, "asio" for standalone Asio or "unifex" for libunifex.
 
-`use_boost_container` - "True" to use Boost.Container instead of `<memory_resource>`.
+`local_allocator` - One of "memory_resource" for `<memory_resource>`, "boost_container" for Boost.Container, "recycling_allocator" for [asio::recycling_allocator](https://think-async.com/Asio/asio-1.24.0/doc/asio/reference/recycling_allocator.html).
 
 </p>
 </details>
