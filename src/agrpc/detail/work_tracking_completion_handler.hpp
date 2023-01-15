@@ -76,8 +76,8 @@ class WorkTrackingCompletionHandler : private detail::EmptyBaseOptimization<Comp
     using allocator_type = asio::associated_allocator_t<CompletionHandler>;
 
   private:
-    using WorkTrackerBase = detail::WorkTracker<CompletionHandler>;
     using CompletionHandlerBase = detail::EmptyBaseOptimization<CompletionHandler>;
+    using WorkTrackerBase = detail::WorkTracker<CompletionHandler>;
 
   public:
     template <class Ch>
@@ -126,8 +126,8 @@ struct agrpc::asio::associator<Associator, agrpc::detail::WorkTrackingCompletion
 {
     using type = typename Associator<CompletionHandler, DefaultCandidate>::type;
 
-    static type get(const agrpc::detail::WorkTrackingCompletionHandler<CompletionHandler>& b,
-                    const DefaultCandidate& c = DefaultCandidate()) noexcept
+    static decltype(auto) get(const agrpc::detail::WorkTrackingCompletionHandler<CompletionHandler>& b,
+                              const DefaultCandidate& c = DefaultCandidate()) noexcept
     {
         return Associator<CompletionHandler, DefaultCandidate>::get(b.completion_handler(), c);
     }

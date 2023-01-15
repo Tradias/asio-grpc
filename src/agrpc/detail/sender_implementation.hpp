@@ -31,10 +31,7 @@ enum class SenderImplementationType
 };
 
 template <detail::SenderImplementationType>
-struct BaseForSenderImplementationType;
-
-template <>
-struct BaseForSenderImplementationType<detail::SenderImplementationType::NO_ARG>
+struct BaseForSenderImplementationType
 {
     using Type = detail::QueueableOperationBase;
 };
@@ -43,12 +40,6 @@ template <>
 struct BaseForSenderImplementationType<detail::SenderImplementationType::GRPC_TAG>
 {
     using Type = detail::OperationBase;
-};
-
-template <>
-struct BaseForSenderImplementationType<detail::SenderImplementationType::BOTH>
-{
-    using Type = detail::QueueableOperationBase;
 };
 
 template <detail::SenderImplementationType ImplementationType>

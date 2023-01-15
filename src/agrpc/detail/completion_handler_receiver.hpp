@@ -68,8 +68,8 @@ struct agrpc::asio::associated_allocator<agrpc::detail::CompletionHandlerReceive
 {
     using type = asio::associated_allocator_t<CompletionHandler, Allocator1>;
 
-    static constexpr type get(const agrpc::detail::CompletionHandlerReceiver<CompletionHandler>& b,
-                              const Allocator1& allocator = Allocator1()) noexcept
+    static constexpr decltype(auto) get(const agrpc::detail::CompletionHandlerReceiver<CompletionHandler>& b,
+                                        const Allocator1& allocator = Allocator1()) noexcept
     {
         return asio::get_associated_allocator(b.completion_handler(), allocator);
     }
@@ -83,8 +83,8 @@ struct agrpc::asio::associator<Associator, agrpc::detail::CompletionHandlerRecei
 {
     using type = typename Associator<CompletionHandler, DefaultCandidate>::type;
 
-    static constexpr type get(const agrpc::detail::CompletionHandlerReceiver<CompletionHandler>& b,
-                              const DefaultCandidate& c = DefaultCandidate()) noexcept
+    static constexpr decltype(auto) get(const agrpc::detail::CompletionHandlerReceiver<CompletionHandler>& b,
+                                        const DefaultCandidate& c = DefaultCandidate()) noexcept
     {
         return Associator<CompletionHandler, DefaultCandidate>::get(b.completion_handler(), c);
     }

@@ -83,8 +83,8 @@ struct agrpc::asio::associator<Associator, agrpc::detail::AssociatedCompletionHa
 {
     using type = typename Associator<CompletionHandler, DefaultCandidate>::type;
 
-    static type get(const agrpc::detail::AssociatedCompletionHandler<CompletionHandler>& b,
-                    const DefaultCandidate& c = DefaultCandidate()) noexcept
+    static decltype(auto) get(const agrpc::detail::AssociatedCompletionHandler<CompletionHandler>& b,
+                              const DefaultCandidate& c = DefaultCandidate()) noexcept
     {
         return Associator<CompletionHandler, DefaultCandidate>::get(b.completion_handler(), c);
     }

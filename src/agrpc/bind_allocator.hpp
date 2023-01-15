@@ -312,8 +312,8 @@ struct agrpc::asio::associated_allocator<agrpc::AllocatorBinder<Target, Allocato
 {
     using type = Allocator;
 
-    static constexpr type get(const agrpc::AllocatorBinder<Target, Allocator>& b,
-                              const Allocator1& = Allocator1()) noexcept
+    static constexpr decltype(auto) get(const agrpc::AllocatorBinder<Target, Allocator>& b,
+                                        const Allocator1& = Allocator1()) noexcept
     {
         return b.get_allocator();
     }
@@ -326,8 +326,8 @@ struct agrpc::asio::associator<Associator, agrpc::AllocatorBinder<Target, Alloca
 {
     using type = typename Associator<Target, DefaultCandidate>::type;
 
-    static constexpr type get(const agrpc::AllocatorBinder<Target, Allocator>& b,
-                              const DefaultCandidate& c = DefaultCandidate()) noexcept
+    static constexpr decltype(auto) get(const agrpc::AllocatorBinder<Target, Allocator>& b,
+                                        const DefaultCandidate& c = DefaultCandidate()) noexcept
     {
         return Associator<Target, DefaultCandidate>::get(b.get(), c);
     }

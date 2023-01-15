@@ -46,9 +46,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
   public:
     template <class RPC, class Service, class Request>
     ServerWriteReactor(agrpc::GrpcContext& grpc_context, RPC rpc, Service& service, Request& request, void* tag)
-        : detail::ServerWriteReactorStepBase(nullptr),
-          detail::ServerWriteReactorDoneBase(&ServerWriteReactor::do_done_notified),
-          grpc_context_(&grpc_context)
+        : StepBase(nullptr), DoneBase(&ServerWriteReactor::do_done_notified), grpc_context_(&grpc_context)
     {
         server_context_.AsyncNotifyWhenDone(static_cast<DoneBase*>(this));
         auto* const cq = grpc_context.get_server_completion_queue();
