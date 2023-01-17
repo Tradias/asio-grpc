@@ -16,15 +16,17 @@
 #include "example/v1/example_ext.grpc.pb.h"
 #include "grpc/health/v1/health.grpc.pb.h"
 #include "helper.hpp"
+#include "server_shutdown_unifex.hpp"
 
 #include <agrpc/asio_grpc.hpp>
 #include <agrpc/health_check_service.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 #include <unifex/finally.hpp>
-#include <unifex/just.hpp>
+#include <unifex/just_from.hpp>
+#include <unifex/just_void_or_done.hpp>
 #include <unifex/let_done.hpp>
-#include <unifex/let_value_with_stop_source.hpp>
+#include <unifex/let_value_with.hpp>
 #include <unifex/sync_wait.hpp>
 #include <unifex/task.hpp>
 #include <unifex/then.hpp>
@@ -39,41 +41,20 @@
 // the example testable.
 // ---------------------------------------------------
 // end-snippet
-unifex::task<void> handle_unary_request(agrpc::GrpcContext& grpc_context, grpc::ServerContext&,
-                                        example::v1::Request& request,
-                                        grpc::ServerAsyncResponseWriter<example::v1::Response>& writer)
-{
-    example::v1::Response response;
-    response.set_integer(request.integer());
-    co_await agrpc::finish(writer, response, grpc::Status::OK, agrpc::use_sender(grpc_context));
-}
 auto register_unary_request_handler(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
 {
-    return unifex::let_value_with_stop_source(
-        [&](unifex::inplace_stop_source& stop)
-        {
-            return unifex::let_done(unifex::with_query_value(
-                                        // Register a handler for all incoming RPCs of this method
-                                        // (Example::RequestUnary) until the server is being
-                                        // shut down or stop is requested. The handler must return a sender.
-                                        agrpc::repeatedly_request(
-                                            &example::v1::Example::AsyncService::RequestUnary, service,
-                                            [&](auto& server_context, auto& request, auto& writer)
-                                            {
-                                                // Stop handling any more requests after this one. This is done to make
-                                                // the example testable.
-                                                stop.request_stop();
-                                                return handle_unary_request(grpc_context, server_context, request,
-                                                                            writer);
-                                            },
-                                            agrpc::use_sender(grpc_context)),
-                                        unifex::get_stop_token, stop.get_token()),
-                                    []()
-                                    {
-                                        // Prevent stop signal from propagating up
-                                        return unifex::just();
-                                    });
-        });
+    auto request_handler = [&](grpc::ServerContext&, example::v1::Request& request,
+                               grpc::ServerAsyncResponseWriter<example::v1::Response>& writer) -> unifex::task<void>
+    {
+        example::v1::Response response;
+        response.set_integer(request.integer());
+        co_await agrpc::finish(writer, response, grpc::Status::OK, agrpc::use_sender(grpc_context));
+    };
+
+    // Register a handler for all incoming RPCs of this method (Example::Unary) until the server is being
+    // shut down.
+    return agrpc::repeatedly_request(&example::v1::Example::AsyncService::RequestUnary, service, request_handler,
+                                     agrpc::use_sender(grpc_context));
 }
 // ---------------------------------------------------
 //
@@ -134,6 +115,75 @@ unifex::task<void> handle_slow_unary_request(agrpc::GrpcContext& grpc_context,
 // ---------------------------------------------------
 //
 
+auto handle_shutdown_request(agrpc::GrpcContext& grpc_context, example::v1::ExampleExt::AsyncService& service,
+                             example::ServerShutdown& server_shutdown)
+{
+    struct Context
+    {
+        grpc::ServerContext server_context{};
+        grpc::ServerAsyncResponseWriter<google::protobuf::Empty> writer{&server_context};
+
+        Context() = default;
+    };
+    return unifex::let_value_with(
+               []
+               {
+                   return Context{};
+               },
+               [&](Context& context)
+               {
+                   return unifex::let_value_with(
+                              []
+                              {
+                                  return google::protobuf::Empty{};
+                              },
+                              [&](auto& request)
+                              {
+                                  return agrpc::request(&example::v1::ExampleExt::AsyncService::RequestShutdown,
+                                                        service, context.server_context, request, context.writer,
+                                                        agrpc::use_sender(grpc_context));
+                              }) |
+                          unifex::let_value(
+                              [](bool ok)
+                              {
+                                  return unifex::just_void_or_done(ok);
+                              }) |
+                          unifex::then(
+                              []
+                              {
+                                  return google::protobuf::Empty{};
+                              }) |
+                          unifex::let_value(
+                              [&](const auto& response)
+                              {
+                                  return agrpc::finish(context.writer, response, grpc::Status::OK,
+                                                       agrpc::use_sender(grpc_context));
+                              });
+               }) |
+           unifex::then(
+               [&](bool)
+               {
+                   server_shutdown.shutdown();
+               });
+}
+
+template <class Sender>
+void run_grpc_context_for_sender(agrpc::GrpcContext& grpc_context, Sender&& sender)
+{
+    grpc_context.work_started();
+    unifex::sync_wait(
+        unifex::when_all(unifex::finally(std::forward<Sender>(sender), unifex::just_from(
+                                                                           [&]
+                                                                           {
+                                                                               grpc_context.work_finished();
+                                                                           })),
+                         unifex::just_from(
+                             [&]
+                             {
+                                 grpc_context.run();
+                             })));
+}
+
 int main(int argc, const char** argv)
 {
     const auto port = argc >= 2 ? argv[1] : "50051";
@@ -153,21 +203,13 @@ int main(int argc, const char** argv)
     abort_if_not(bool{server});
     agrpc::start_health_check_service(*server, grpc_context);
 
-    grpc_context.work_started();
-    unifex::sync_wait(
-        unifex::when_all(unifex::finally(unifex::when_all(register_unary_request_handler(grpc_context, service),
-                                                          handle_server_streaming_request(grpc_context, service),
-                                                          handle_slow_unary_request(grpc_context, service_ext)),
-                                         unifex::then(unifex::just(),
-                                                      [&]
-                                                      {
-                                                          grpc_context.work_finished();
-                                                      })),
-                         unifex::then(unifex::just(),
-                                      [&]
-                                      {
-                                          grpc_context.run();
-                                      })));
+    example::ServerShutdown server_shutdown{*server};
+
+    run_grpc_context_for_sender(grpc_context,
+                                unifex::when_all(register_unary_request_handler(grpc_context, service),
+                                                 handle_server_streaming_request(grpc_context, service),
+                                                 handle_slow_unary_request(grpc_context, service_ext),
+                                                 handle_shutdown_request(grpc_context, service_ext, server_shutdown)));
 
     server->Shutdown();
 }

@@ -87,15 +87,14 @@ void reader(grpc::GenericServerAsyncReaderWriter& reader_writer, Channel& channe
     while (true)
     {
         grpc::ByteBuffer buffer;
-
         if (!agrpc::read(reader_writer, buffer, yield))
         {
             std::cout << "Generic: Client is done writing." << std::endl;
             break;
         }
-        // Send request to writer. Using detached as completion token since we do
-        // not want to wait until the writer has picked up the request.
-        channel.async_send(boost::system::error_code{}, std::move(buffer), asio::detached);
+        // Send request to writer. The `max_buffer_size` of the channel acts as backpressure.
+        boost::system::error_code ec;
+        channel.async_send(boost::system::error_code{}, std::move(buffer), yield[ec]);
     }
     // Signal the writer to complete.
     channel.close();
@@ -151,7 +150,10 @@ void handle_generic_bidistream_request(agrpc::GrpcContext& grpc_context,
                                        grpc::GenericServerAsyncReaderWriter& reader_writer,
                                        asio::thread_pool& thread_pool, const asio::yield_context& yield)
 {
-    Channel channel{grpc_context};
+    // Maximum number of requests that are buffered by the channel to enable backpressure.
+    static constexpr auto MAX_BUFFER_SIZE = 2;
+
+    Channel channel{grpc_context, MAX_BUFFER_SIZE};
 
     bool ok{};
 

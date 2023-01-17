@@ -14,7 +14,7 @@
 
 #include "grpc/health/v1/health.grpc.pb.h"
 #include "helloworld/helloworld.grpc.pb.h"
-#include "server_shutdown.hpp"
+#include "server_shutdown_asio.hpp"
 
 #include <agrpc/asio_grpc.hpp>
 #include <agrpc/health_check_service.hpp>

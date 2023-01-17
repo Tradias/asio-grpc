@@ -129,19 +129,19 @@ asio::awaitable<void> make_bidirectional_streaming_request(agrpc::GrpcContext& g
     // Perform a request/response ping-pong.
     example::v1::Request request;
     request.set_integer(1);
-    bool write_ok{true};
-    bool read_ok{true};
+    example::v1::Response response;
+
+    // Reads and writes can be performed simultaneously.
+    using namespace asio::experimental::awaitable_operators;
+    auto [read_ok, write_ok] = co_await (rpc.read(response) && rpc.write(request));
+
     int count{};
     while (read_ok && write_ok && count < 10)
     {
-        example::v1::Response response;
-        // Reads and writes can be performed simultaneously.
-        using namespace asio::experimental::awaitable_operators;
-        std::tie(read_ok, write_ok) = co_await (rpc.read(response) && rpc.write(request));
-
         std::cout << "High-level: Bidirectional streaming: " << response.integer() << '\n';
         request.set_integer(response.integer());
         ++count;
+        std::tie(read_ok, write_ok) = co_await (rpc.read(response) && rpc.write(request));
     }
 
     // Finish will automatically signal that the client is done writing. Optionally call rpc.writes_done() to explicitly

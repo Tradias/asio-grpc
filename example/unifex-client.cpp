@@ -20,7 +20,7 @@
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 #include <unifex/finally.hpp>
-#include <unifex/just.hpp>
+#include <unifex/just_from.hpp>
 #include <unifex/just_void_or_done.hpp>
 #include <unifex/let_value_with.hpp>
 #include <unifex/repeat_effect_until.hpp>
@@ -173,6 +173,44 @@ unifex::task<void> make_and_cancel_unary_request(agrpc::GrpcContext& grpc_contex
 // ---------------------------------------------------
 //
 
+auto make_shutdown_request(agrpc::GrpcContext& grpc_context, example::v1::ExampleExt::Stub& stub)
+{
+    return unifex::let_value_with(
+               []
+               {
+                   return std::pair<grpc::ClientContext, google::protobuf::Empty>{};
+               },
+               [&](auto& context)
+               {
+                   auto& [client_context, response] = context;
+                   client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
+                   return agrpc::RPC<&example::v1::ExampleExt::Stub::PrepareAsyncShutdown>::request(
+                       grpc_context, stub, client_context, {}, response);
+               }) |
+           unifex::then(
+               [](grpc::Status status)
+               {
+                   abort_if_not(status.ok());
+               });
+}
+
+template <class Sender>
+void run_grpc_context_for_sender(agrpc::GrpcContext& grpc_context, Sender&& sender)
+{
+    grpc_context.work_started();
+    unifex::sync_wait(
+        unifex::when_all(unifex::finally(std::forward<Sender>(sender), unifex::just_from(
+                                                                           [&]
+                                                                           {
+                                                                               grpc_context.work_finished();
+                                                                           })),
+                         unifex::just_from(
+                             [&]
+                             {
+                                 grpc_context.run();
+                             })));
+}
+
 int main(int argc, const char** argv)
 {
     const auto port = argc >= 2 ? argv[1] : "50051";
@@ -183,19 +221,14 @@ int main(int argc, const char** argv)
     example::v1::ExampleExt::Stub stub_ext{channel};
     agrpc::GrpcContext grpc_context;
 
-    grpc_context.work_started();
-    unifex::sync_wait(unifex::when_all(
-        unifex::finally(
-            unifex::when_all(make_unary_request(grpc_context, stub), make_server_streaming_request(grpc_context, stub),
-                             make_and_cancel_unary_request(grpc_context, stub_ext)),
-            unifex::then(unifex::just(),
-                         [&]
-                         {
-                             grpc_context.work_finished();
-                         })),
-        unifex::then(unifex::just(),
-                     [&]
-                     {
-                         grpc_context.run();
-                     })));
+    auto sender =
+        unifex::when_all(make_unary_request(grpc_context, stub), make_server_streaming_request(grpc_context, stub),
+                         make_and_cancel_unary_request(grpc_context, stub_ext)) |
+        unifex::then([](auto&&...) {}) |
+        unifex::let_value(
+            [&]
+            {
+                return make_shutdown_request(grpc_context, stub_ext);
+            });
+    run_grpc_context_for_sender(grpc_context, std::move(sender));
 }

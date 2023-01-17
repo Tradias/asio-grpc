@@ -148,6 +148,14 @@ agrpc::GrpcAwaitable<bool> handle_send_file_request(agrpc::GrpcContext& grpc_con
                                      buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
 }
 
+void rethrow_first_arg(const std::exception_ptr& ep)
+{
+    if (ep)
+    {
+        std::rethrow_exception(ep);
+    }
+}
+
 void run_io_context(asio::io_context& io_context)
 {
     try
@@ -192,13 +200,7 @@ int main(int argc, const char** argv)
             {
                 abort_if_not(co_await handle_send_file_request(grpc_context, io_context, service_ext, file_path));
             },
-            [](auto&& ep)
-            {
-                if (ep)
-                {
-                    std::rethrow_exception(ep);
-                }
-            });
+            &rethrow_first_arg);
 
         std::thread io_context_thread{&run_io_context, std::ref(io_context)};
         example::ScopeGuard on_exit{[&]
@@ -208,7 +210,7 @@ int main(int argc, const char** argv)
                                     }};
         grpc_context.run();
 
-        // Check that output file has expected content
+        // Check that output file has the expected content
         std::string content;
         {
             std::ifstream stream{file_path};

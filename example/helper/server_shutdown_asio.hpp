@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_HELPER_SERVER_SHUTDOWN_HPP
-#define AGRPC_HELPER_SERVER_SHUTDOWN_HPP
+#ifndef AGRPC_HELPER_SERVER_SHUTDOWN_ASIO_HPP
+#define AGRPC_HELPER_SERVER_SHUTDOWN_ASIO_HPP
 
 #include <agrpc/grpc_executor.hpp>
 #include <boost/asio/signal_set.hpp>
@@ -83,4 +83,4 @@ struct ServerShutdown
 };
 }
 
-#endif  // AGRPC_HELPER_SERVER_SHUTDOWN_HPP
+#endif  // AGRPC_HELPER_SERVER_SHUTDOWN_ASIO_HPP

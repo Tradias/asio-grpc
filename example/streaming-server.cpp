@@ -15,14 +15,14 @@
 #include "example/v1/example.grpc.pb.h"
 #include "example/v1/example_ext.grpc.pb.h"
 #include "helper.hpp"
-#include "server_shutdown.hpp"
+#include "server_shutdown_asio.hpp"
 
 #include <agrpc/asio_grpc.hpp>
+#include <boost/asio/as_tuple.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/experimental/awaitable_operators.hpp>
 #include <boost/asio/experimental/channel.hpp>
-#include <boost/asio/redirect_error.hpp>
 #include <boost/asio/thread_pool.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
@@ -125,9 +125,9 @@ asio::awaitable<void> reader(grpc::ServerAsyncReaderWriter<example::v1::Response
             // Client is done writing.
             break;
         }
-        // Send request to writer. Using detached as completion token since we do not want to wait until the writer
-        // has picked up the request.
-        channel.async_send(boost::system::error_code{}, std::move(request), asio::detached);
+        // Send request to writer. The `max_buffer_size` of the channel acts as backpressure.
+        (void)co_await channel.async_send(boost::system::error_code{}, std::move(request),
+                                          asio::as_tuple(asio::use_awaitable));
     }
     // Signal the writer to complete.
     channel.close();
@@ -141,8 +141,7 @@ asio::awaitable<bool> writer(grpc::ServerAsyncReaderWriter<example::v1::Response
     bool ok{true};
     while (ok)
     {
-        boost::system::error_code ec;
-        const auto request = co_await channel.async_receive(asio::redirect_error(asio::use_awaitable, ec));
+        const auto [ec, request] = co_await channel.async_receive(asio::as_tuple(asio::use_awaitable));
         if (ec)
         {
             // Channel got closed by the reader.
@@ -174,7 +173,11 @@ asio::awaitable<void> handle_bidirectional_streaming_request(example::v1::Exampl
         // Server is shutting down.
         co_return;
     }
-    Channel channel{co_await asio::this_coro::executor};
+
+    // Maximum number of requests that are buffered by the channel to enable backpressure.
+    static constexpr auto MAX_BUFFER_SIZE = 2;
+
+    Channel channel{co_await asio::this_coro::executor, MAX_BUFFER_SIZE};
 
     using namespace asio::experimental::awaitable_operators;
     const auto ok = co_await (reader(reader_writer, channel) && writer(reader_writer, channel, thread_pool));
@@ -260,27 +263,9 @@ int main(int argc, const char** argv)
 
     register_client_streaming_handler(grpc_context, service);
     register_server_streaming_handler(grpc_context, service);
-    asio::co_spawn(
-        grpc_context,
-        [&]() -> asio::awaitable<void>
-        {
-            co_await handle_bidirectional_streaming_request(service, thread_pool);
-        },
-        asio::detached);
-    asio::co_spawn(
-        grpc_context,
-        [&]() -> asio::awaitable<void>
-        {
-            co_await handle_slow_unary_request(service_ext);
-        },
-        asio::detached);
-    asio::co_spawn(
-        grpc_context,
-        [&]() -> asio::awaitable<void>
-        {
-            co_await handle_shutdown_request(service_ext, server_shutdown);
-        },
-        asio::detached);
+    asio::co_spawn(grpc_context, handle_bidirectional_streaming_request(service, thread_pool), asio::detached);
+    asio::co_spawn(grpc_context, handle_slow_unary_request(service_ext), asio::detached);
+    asio::co_spawn(grpc_context, handle_shutdown_request(service_ext, server_shutdown), asio::detached);
 
     grpc_context.run();
     std::cout << "Shutdown completed\n";
