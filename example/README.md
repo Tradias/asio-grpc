@@ -274,7 +274,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // the example testable.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/unifex-server.cpp#L36-L41' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-unifex-unary' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/unifex-server.cpp#L38-L43' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-unifex-unary' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: server-side-unifex-server-streaming -->
@@ -284,5 +284,5 @@ Click on `snippet source` to jump to the code of an individual example.
 // A simple server-streaming request handler using coroutines.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/unifex-server.cpp#L81-L85' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-unifex-server-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/unifex-server.cpp#L62-L66' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-unifex-server-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
