@@ -61,8 +61,7 @@ struct NotfiyWhenDoneFn
      */
     template <class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(agrpc::GrpcContext& grpc_context, grpc::ServerContext& server_context,
-                    CompletionToken token = {}) const
-        noexcept(std::is_same_v<agrpc::UseSender, detail::RemoveCrefT<CompletionToken>>)
+                    CompletionToken token = {}) const noexcept(detail::IS_USE_SENDER<CompletionToken>)
     {
         return detail::async_initiate_sender_implementation<detail::NotfiyWhenDoneSenderImplementation>(
             grpc_context, {}, {server_context}, token);

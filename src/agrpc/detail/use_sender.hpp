@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
+#include <agrpc/detail/utility.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -26,6 +27,9 @@ struct UseSender
 {
     agrpc::GrpcContext& grpc_context_;
 };
+
+template <class T>
+inline constexpr bool IS_USE_SENDER = std::is_same_v<agrpc::UseSender, detail::RemoveCrefT<T>>;
 }
 
 AGRPC_NAMESPACE_END

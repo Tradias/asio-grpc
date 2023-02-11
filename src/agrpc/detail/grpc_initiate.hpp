@@ -35,8 +35,7 @@ using GrpcInitiateTemplateArgs = void (*)(StopFunction);
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class StopFunction, class InitiatingFunction, class CompletionToken>
-auto grpc_initiate_impl(const detail::GrpcInitiateTemplateArgs<StopFunction>, InitiatingFunction&& initiating_function,
-                        CompletionToken token)
+auto grpc_initiate_impl(InitiatingFunction&& initiating_function, CompletionToken token)
 {
     return asio::async_initiate<CompletionToken, void(bool)>(
         detail::GrpcInitiator<InitiatingFunction, StopFunction>{static_cast<InitiatingFunction&&>(initiating_function)},
@@ -45,8 +44,7 @@ auto grpc_initiate_impl(const detail::GrpcInitiateTemplateArgs<StopFunction>, In
 #endif
 
 template <class StopFunction, class InitiatingFunction>
-auto grpc_initiate_impl(const detail::GrpcInitiateTemplateArgs<StopFunction>, InitiatingFunction&& initiating_function,
-                        detail::UseSender token) noexcept
+auto grpc_initiate_impl(InitiatingFunction&& initiating_function, detail::UseSender token) noexcept
 {
     return detail::BasicSenderAccess::create<detail::GrpcSenderImplementation<InitiatingFunction, StopFunction>>(
         token.grpc_context_, {static_cast<InitiatingFunction&&>(initiating_function)}, {});
@@ -55,9 +53,8 @@ auto grpc_initiate_impl(const detail::GrpcInitiateTemplateArgs<StopFunction>, In
 template <class InitiatingFunction, class CompletionToken>
 auto grpc_initiate(InitiatingFunction&& initiating_function, CompletionToken&& token)
 {
-    return detail::grpc_initiate_impl(detail::GrpcInitiateTemplateArgs<detail::Empty>{},
-                                      static_cast<InitiatingFunction&&>(initiating_function),
-                                      static_cast<CompletionToken&&>(token));
+    return detail::grpc_initiate_impl<detail::Empty>(static_cast<InitiatingFunction&&>(initiating_function),
+                                                     static_cast<CompletionToken&&>(token));
 }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)

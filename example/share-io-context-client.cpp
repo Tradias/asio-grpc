@@ -19,6 +19,7 @@
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/detached.hpp>
+#include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/experimental/awaitable_operators.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -71,8 +72,7 @@ int main(int argc, const char** argv)
 
     example::v1::Example::Stub stub{grpc::CreateChannel(host, grpc::InsecureChannelCredentials())};
     agrpc::GrpcContext grpc_context;
-    std::optional grpc_context_work_guard{
-        asio::prefer(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked)};
+    auto grpc_context_work_guard = asio::make_work_guard(grpc_context);
 
     asio::co_spawn(
         io_context,
@@ -85,7 +85,8 @@ int main(int argc, const char** argv)
         },
         asio::detached);
 
-    // First, initiate the io_context's thread_local variables by posting on it.
+    // First, initiate the io_context's thread_local variables by posting on it. The io_context uses them to optimize
+    // dynamic memory allocations.
     // Then undo the work counting of asio::post.
     // Run GrpcContext and io_context until both stop.
     // Finally, redo the work counting.
