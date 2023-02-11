@@ -114,7 +114,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // Example showing how to run an io_context and a GrpcContext on the same thread for gRPC clients.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/share-io-context-client.cpp#L33-L37' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-share-io-context' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/share-io-context-client.cpp#L34-L38' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-share-io-context' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### io_uring file transfer
