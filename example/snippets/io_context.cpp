@@ -26,6 +26,8 @@
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 
+#include <thread>
+
 namespace asio = boost::asio;
 
 void implicit_io_context()
