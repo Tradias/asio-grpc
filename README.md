@@ -55,18 +55,7 @@ Asio-grpc is a C++17, header-only library. To install it, CMake (3.14+) is all t
 
 To use it, [gRPC](https://grpc.io/) and either [Boost.Asio](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio.html) (min. 1.74.0), [standalone Asio](https://github.com/chriskohlhoff/asio) (min. 1.17.0) or [libunifex](https://github.com/facebookexperimental/libunifex) must be present and linked into your application.
 
-Versions tested by Github Actions:
-
- * CMake 3.16.3
- * gRPC 1.50.1, 1.16.1 (older versions might work as well)
- * Boost 1.81.0
- * Standalone Asio 1.17.0
- * libunifex 2022-10-10
- * MSVC 19.34 (Visual Studio 17 2022)
- * GCC 8.4.0, 10.3.0, 11.1.0
- * Clang 10.0.0, 12.0.0
- * AppleClang 14
- * C++17 and C++20
+Supported compilers are GCC 8+, Clang 10+, AppleClang 14+ and latest MSVC.
 
 # Usage
 
@@ -242,8 +231,9 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
 
 asio-grpc is part of [grpc_bench](https://github.com/Tradias/grpc_bench). Head over there to compare its performance against other libraries and languages.
 
-Results from the helloworld unary RPC   
-Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz, Linux, GCC 12.2.0, Boost 1.80.0, gRPC 1.50.0, asio-grpc v2.4.0, jemalloc 5.2.1   
+Below are the results from the helloworld unary RPC for:   
+Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz   
+Linux, GCC 12.2.0, Boost 1.80.0, gRPC 1.50.0, asio-grpc v2.4.0, jemalloc 5.2.1   
 Request scenario: string_100B
 
 <details><summary><b>Results</b></summary>
