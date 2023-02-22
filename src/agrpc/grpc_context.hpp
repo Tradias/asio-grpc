@@ -301,7 +301,7 @@ class GrpcContext
     std::atomic_bool shutdown_{false};
     bool check_remote_work_{false};
     std::unique_ptr<grpc::CompletionQueue> completion_queue_{std::make_unique<grpc::CompletionQueue>()};
-    detail::GrpcContextLocalMemoryResource local_resource_{detail::new_delete_resource()};
+    detail::GrpcContextLocalMemoryResource local_resource_;
     LocalWorkQueue local_work_queue_;
     NotifyWhenDoneList notify_when_done_list_;
     RemoteWorkQueue remote_work_queue_{false};

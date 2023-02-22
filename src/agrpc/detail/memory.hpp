@@ -25,6 +25,16 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+inline constexpr auto MAX_ALIGN = alignof(std::max_align_t);
+inline constexpr std::size_t MAX_ALIGN_MINUS_ONE = MAX_ALIGN - 1u;
+
+struct MaxAlignedData
+{
+    static constexpr auto count(std::size_t size) noexcept { return (size + 1) / MAX_ALIGN; }
+
+    alignas(std::max_align_t) std::byte data_[MAX_ALIGN];
+};
+
 template <class T>
 struct UnwrapUniquePtr
 {
@@ -78,18 +88,10 @@ class StackBuffer
 
 class DelayedBuffer
 {
-  private:
-    static constexpr auto CHUNK_SIZE = alignof(std::max_align_t);
-
-    struct Data
-    {
-        alignas(std::max_align_t) std::byte data_[CHUNK_SIZE];
-    };
-
   public:
     [[nodiscard]] static constexpr std::size_t max_size() noexcept
     {
-        return std::numeric_limits<std::size_t>::max() - (CHUNK_SIZE - 1);
+        return std::numeric_limits<std::size_t>::max() - (MAX_ALIGN - 1);
     }
 
     [[nodiscard]] void* allocate(std::size_t size)
@@ -100,13 +102,13 @@ class DelayedBuffer
         }
         else
         {
-            buffer_.reset(new Data[(size + 1) / CHUNK_SIZE]);
+            buffer_.reset(new MaxAlignedData[MaxAlignedData::count(size)]);
             return buffer_.get();
         }
     }
 
   private:
-    std::unique_ptr<Data[]> buffer_;
+    std::unique_ptr<MaxAlignedData[]> buffer_;
 };
 }
 

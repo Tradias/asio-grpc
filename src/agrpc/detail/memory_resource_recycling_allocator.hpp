@@ -12,30 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_MEMORY_RESOURCE_HPP
-#define AGRPC_DETAIL_MEMORY_RESOURCE_HPP
+#ifndef AGRPC_DETAIL_MEMORY_RESOURCE_RECYCLING_ALLOCATOR_HPP
+#define AGRPC_DETAIL_MEMORY_RESOURCE_RECYCLING_ALLOCATOR_HPP
 
 #include <agrpc/detail/config.hpp>
-
-#ifdef AGRPC_STANDALONE_ASIO
-
-#if (ASIO_VERSION >= 102201)
-#include <asio/recycling_allocator.hpp>
-#else
-#include <asio/detail/recycling_allocator.hpp>
-#endif
-
-#elif defined(AGRPC_BOOST_ASIO)
-
-#if (BOOST_VERSION >= 107900)
-#include <boost/asio/recycling_allocator.hpp>
-#else
-#include <boost/asio/recycling_allocator.hpp>
-#endif
-
-#endif
-
-#include <cstddef>
+#include <agrpc/detail/memory_resource_allocator.hpp>
+#include <agrpc/detail/pool_resource.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -53,35 +35,15 @@ template <class, class>
 struct uses_allocator;
 }
 
-struct GrpcContextLocalMemoryResource
-{
-    constexpr explicit GrpcContextLocalMemoryResource(int) noexcept {}
-};
+using GrpcContextLocalMemoryResource = detail::PoolResource;
+using GrpcContextLocalAllocator = detail::MemoryResourceAllocator<std::byte, detail::GrpcContextLocalMemoryResource>;
 
-using GrpcContextLocalAllocator =
-#ifdef AGRPC_STANDALONE_ASIO
-#if (ASIO_VERSION >= 102201)
-    ::asio::
-#else
-    ::asio::detail::
-#endif
-#elif defined(AGRPC_BOOST_ASIO)
-#if (BOOST_VERSION >= 107900)
-    ::boost::asio::
-#else
-    ::boost::asio::detail::
-#endif
-#endif
-        recycling_allocator<std::byte>;
-
-inline auto create_local_allocator(const detail::GrpcContextLocalMemoryResource&) noexcept
+inline auto create_local_allocator(detail::GrpcContextLocalMemoryResource& resource) noexcept
 {
-    return detail::GrpcContextLocalAllocator{};
+    return detail::GrpcContextLocalAllocator{&resource};
 }
-
-constexpr auto new_delete_resource() noexcept { return 0; }
 }
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_MEMORY_RESOURCE_HPP
+#endif  // AGRPC_DETAIL_MEMORY_RESOURCE_RECYCLING_ALLOCATOR_HPP

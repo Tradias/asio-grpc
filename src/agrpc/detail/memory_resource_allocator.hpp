@@ -53,14 +53,14 @@ class MemoryResourceAllocator
     friend bool operator==(const MemoryResourceAllocator& lhs,
                            const detail::MemoryResourceAllocator<U, Resource>& rhs) noexcept
     {
-        return lhs.resource_ == rhs.resource;
+        return lhs.resource_ == rhs.resource_;
     }
 
     template <class U>
     friend bool operator!=(const MemoryResourceAllocator& lhs,
                            const detail::MemoryResourceAllocator<U, Resource>& rhs) noexcept
     {
-        return lhs.resource_ != rhs.resource;
+        return lhs.resource_ != rhs.resource_;
     }
 
   private:
