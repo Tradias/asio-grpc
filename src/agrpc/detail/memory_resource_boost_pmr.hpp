@@ -27,14 +27,6 @@ namespace detail
 {
 namespace pmr = boost::container::pmr;
 namespace container = boost::container;
-
-using GrpcContextLocalMemoryResource = detail::PoolResource;
-using GrpcContextLocalAllocator = detail::MemoryResourceAllocator<std::byte, detail::GrpcContextLocalMemoryResource>;
-
-inline auto create_local_allocator(detail::GrpcContextLocalMemoryResource& resource) noexcept
-{
-    return detail::GrpcContextLocalAllocator{&resource};
-}
 }
 
 AGRPC_NAMESPACE_END

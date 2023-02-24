@@ -34,14 +34,6 @@ namespace container
 template <class, class>
 struct uses_allocator;
 }
-
-using GrpcContextLocalMemoryResource = detail::PoolResource;
-using GrpcContextLocalAllocator = detail::MemoryResourceAllocator<std::byte, detail::GrpcContextLocalMemoryResource>;
-
-inline auto create_local_allocator(detail::GrpcContextLocalMemoryResource& resource) noexcept
-{
-    return detail::GrpcContextLocalAllocator{&resource};
-}
 }
 
 AGRPC_NAMESPACE_END

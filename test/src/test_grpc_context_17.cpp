@@ -500,7 +500,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post/execute with allocator")
     }
     SUBCASE("asio::execute after grpc_context.run() from same thread")
     {
-        test::post(grpc_context,
+        asio::post(grpc_context,
                    [&, exec = get_tracking_allocator_executor()]
                    {
                        agrpc::detail::do_execute(exec, test::NoOp{});
@@ -510,13 +510,30 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post/execute with allocator")
     CHECK(allocator_has_been_used());
 }
 
+TEST_CASE_FIXTURE(test::GrpcContextTest, "post large local allocation")
+{
+    bool ok{};
+    post(
+        [&]
+        {
+            asio::post(grpc_context,
+                       [&, a = std::array<char, 5000>{}]
+                       {
+                           (void)a;
+                           ok = true;
+                       });
+        });
+    grpc_context.run();
+    CHECK(ok);
+}
+
 TEST_CASE_FIXTURE(test::GrpcContextTest, "dispatch with allocator")
 {
-    test::post(grpc_context,
-               [&]
-               {
-                   asio::dispatch(get_tracking_allocator_executor(), test::NoOp{});
-               });
+    post(
+        [&]
+        {
+            asio::dispatch(get_tracking_allocator_executor(), test::NoOp{});
+        });
     grpc_context.run();
     CHECK_FALSE(allocator_has_been_used());
 }
