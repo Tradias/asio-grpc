@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_BACKOFF_HPP
 
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/math.hpp>
 
 #include <chrono>
 #include <cstdint>
@@ -24,12 +25,6 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class T>
-constexpr auto maximum(T a, T b) noexcept
-{
-    return (a < b) ? b : a;
-}
-
 using BackoffDelay = std::chrono::nanoseconds;
 
 template <detail::BackoffDelay::rep MaxDelay>

@@ -45,17 +45,21 @@ namespace pmr
  * @brief `asio::awaitable` specialized on `agrpc::pmr::GrpcExecutor`
  */
 template <class T>
-using GrpcAwaitable = asio::awaitable<T, agrpc::pmr::GrpcExecutor>;
+using GrpcAwaitable [[deprecated]] =
+    asio::awaitable<T, agrpc::BasicGrpcExecutor<agrpc::detail::pmr::polymorphic_allocator<std::byte>>>;
 
 /**
  * @brief `asio::use_awaitable_t` specialized on `agrpc::pmr::GrpcExecutor`
  */
-using GrpcUseAwaitable = asio::use_awaitable_t<agrpc::pmr::GrpcExecutor>;
+using GrpcUseAwaitable [[deprecated]] =
+    asio::use_awaitable_t<agrpc::BasicGrpcExecutor<agrpc::detail::pmr::polymorphic_allocator<std::byte>>>;
 
 /**
  * @brief `asio::use_awaitable` specialized on `agrpc::pmr::GrpcExecutor`
  */
-inline constexpr agrpc::pmr::GrpcUseAwaitable GRPC_USE_AWAITABLE{};
+[[deprecated]] inline constexpr asio::use_awaitable_t<
+    agrpc::BasicGrpcExecutor<agrpc::detail::pmr::polymorphic_allocator<std::byte>>>
+    GRPC_USE_AWAITABLE{};
 }  // namespace pmr
 
 AGRPC_NAMESPACE_END

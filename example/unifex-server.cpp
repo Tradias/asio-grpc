@@ -210,6 +210,4 @@ int main(int argc, const char** argv)
                                                  handle_server_streaming_request(grpc_context, service),
                                                  handle_slow_unary_request(grpc_context, service_ext),
                                                  handle_shutdown_request(grpc_context, service_ext, server_shutdown)));
-
-    server->Shutdown();
 }

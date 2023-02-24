@@ -184,7 +184,7 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
 
 ### Available features
 
-`boost-container` - Use Boost.Container instead of `<memory_resource>`.
+`boost-container` (deprecated) - Use Boost.Container instead of `<memory_resource>`.
 
 See [selecting-library-features](https://vcpkg.io/en/docs/users/selecting-library-features.html) to learn how to select features with vcpkg.
 
@@ -214,16 +214,16 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
 
 `backend` - One of "boost" for Boost.Asio, "asio" for standalone Asio or "unifex" for libunifex.
 
-`local_allocator` - One of "memory_resource" for `<memory_resource>`, "boost_container" for Boost.Container, "recycling_allocator" for [asio::recycling_allocator](https://think-async.com/Asio/asio-1.24.0/doc/asio/reference/recycling_allocator.html).
+`local_allocator` (deprecated) - One of "memory_resource" for `<memory_resource>`, "boost_container" for Boost.Container, "recycling_allocator" for [asio::recycling_allocator](https://think-async.com/Asio/asio-1.24.0/doc/asio/reference/recycling_allocator.html).
 
 </p>
 </details>
 
 ## CMake Options
 
-`ASIO_GRPC_USE_BOOST_CONTAINER` - Use Boost.Container instead of `<memory_resource>`. Mutually exclusive with `ASIO_GRPC_USE_RECYCLING_ALLOCATOR`.
+`ASIO_GRPC_USE_BOOST_CONTAINER` (deprecated) - Use Boost.Container instead of `<memory_resource>`. Mutually exclusive with `ASIO_GRPC_USE_RECYCLING_ALLOCATOR`.
 
-`ASIO_GRPC_USE_RECYCLING_ALLOCATOR` - Use [asio::recycling_allocator](https://think-async.com/Asio/asio-1.24.0/doc/asio/reference/recycling_allocator.html) instead of `<memory_resource>`. Mutually exclusive with `ASIO_GRPC_USE_BOOST_CONTAINER`.
+`ASIO_GRPC_USE_RECYCLING_ALLOCATOR` (deprecated) - Use [asio::recycling_allocator](https://think-async.com/Asio/asio-1.24.0/doc/asio/reference/recycling_allocator.html) instead of `<memory_resource>`. Mutually exclusive with `ASIO_GRPC_USE_BOOST_CONTAINER`.
 
 `ASIO_GRPC_DISABLE_AUTOLINK` - Set before using `find_package(asio-grpc)` to prevent `asio-grpcConfig.cmake` from finding and setting up interface link libraries like `gRPC::grpc++`.
 

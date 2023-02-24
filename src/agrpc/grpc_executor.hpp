@@ -489,7 +489,7 @@ namespace pmr
  * This BasicGrpcExecutor does not track outstanding work, has the relationship.fork and blocking.never properties and
  * uses the `pmr::polymorphic_allocator` allocator.
  */
-using GrpcExecutor = agrpc::BasicGrpcExecutor<agrpc::detail::pmr::polymorphic_allocator<std::byte>>;
+using GrpcExecutor [[deprecated]] = agrpc::BasicGrpcExecutor<agrpc::detail::pmr::polymorphic_allocator<std::byte>>;
 }  // namespace pmr
 
 // Implementation details

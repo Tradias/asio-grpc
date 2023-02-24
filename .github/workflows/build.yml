@@ -16,7 +16,7 @@ on:
 
 env:
   VCPKG_VERSION: '6adca01a3fadca0cc0b80f03ec57c7c3a0be5c02' # Nov 02, 2022
-  CMAKE_ARGS: '-DCMAKE_BUILD_TYPE=Release -DVCPKG_MANIFEST_INSTALL=off -DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=off'
+  CMAKE_ARGS: '-DCMAKE_BUILD_TYPE=Release -DVCPKG_MANIFEST_INSTALL=off -DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=off -DCMAKE_COMPILE_WARNING_AS_ERROR=on'
   CTEST_ARGS: '-T test --output-on-failure --timeout 180 --no-tests=error --parallel 25'
 
 jobs:
@@ -32,7 +32,7 @@ jobs:
             os: windows-2022,
             triplet: 'x64-windows-release',
             build-type: 'Release',
-            cmake-extra-args: '-DVCPKG_TARGET_TRIPLET=x64-windows-release',
+            cmake-extra-args: '-DVCPKG_TARGET_TRIPLET=x64-windows-release -DCMAKE_COMPILE_WARNING_AS_ERROR=off',
             parallel: 1,
           }
           - {

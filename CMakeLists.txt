@@ -17,9 +17,9 @@ cmake_minimum_required(VERSION 3.14...3.24)
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcOptionDefaults.cmake")
 
 # user options
-option(ASIO_GRPC_USE_BOOST_CONTAINER "Use Boost.Container instead of <memory_resource>"
+option(ASIO_GRPC_USE_BOOST_CONTAINER "(deprecated) Use Boost.Container instead of <memory_resource>"
        ${ASIO_GRPC_DEFAULT_USE_BOOST_CONTAINER})
-option(ASIO_GRPC_USE_RECYCLING_ALLOCATOR "Use asio::recycling_allocator instead of <memory_resource>" off)
+option(ASIO_GRPC_USE_RECYCLING_ALLOCATOR "(deprecated) Use asio::recycling_allocator instead of <memory_resource>" off)
 
 if(ASIO_GRPC_USE_BOOST_CONTAINER AND ASIO_GRPC_USE_RECYCLING_ALLOCATOR)
     message(

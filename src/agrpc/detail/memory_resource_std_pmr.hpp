@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/memory_resource_allocator.hpp>
+#include <agrpc/detail/pool_resource.hpp>
 
 #include <memory_resource>
 
@@ -26,16 +27,6 @@ namespace detail
 {
 namespace pmr = std::pmr;
 namespace container = std;
-
-using GrpcContextLocalMemoryResource = detail::pmr::unsynchronized_pool_resource;
-using GrpcContextLocalAllocator = detail::MemoryResourceAllocator<std::byte, detail::GrpcContextLocalMemoryResource>;
-
-inline auto create_local_allocator(detail::GrpcContextLocalMemoryResource& resource) noexcept
-{
-    return detail::GrpcContextLocalAllocator{&resource};
-}
-
-inline auto new_delete_resource() noexcept { return detail::pmr::new_delete_resource(); }
 }
 
 AGRPC_NAMESPACE_END

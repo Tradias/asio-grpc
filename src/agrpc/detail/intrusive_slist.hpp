@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_INTRUSIVE_LIST_HPP
-#define AGRPC_DETAIL_INTRUSIVE_LIST_HPP
+#ifndef AGRPC_DETAIL_INTRUSIVE_SLIST_HPP
+#define AGRPC_DETAIL_INTRUSIVE_SLIST_HPP
 
 #include <agrpc/detail/config.hpp>
 
@@ -24,10 +24,8 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-// Adapted from
-// https://github.com/facebookexperimental/libunifex/blob/main/include/unifex/detail/intrusive_list.hpp
 template <class T>
-class IntrusiveList
+class IntrusiveSlist
 {
   public:
     class iterator
@@ -47,14 +45,14 @@ class IntrusiveList
 
         iterator& operator++() noexcept
         {
-            item_ = item_->list_next_;
+            item_ = item_->next_;
             return *this;
         }
 
         iterator operator++(int) noexcept
         {
             auto self = *this;
-            item_ = item_->list_next_;
+            item_ = item_->next_;
             return self;
         }
 
@@ -66,19 +64,16 @@ class IntrusiveList
         T* item_{};
     };
 
-    IntrusiveList() = default;
+    IntrusiveSlist() = default;
 
-    IntrusiveList(const IntrusiveList&) = delete;
+    IntrusiveSlist(const IntrusiveSlist&) = delete;
 
-    IntrusiveList(IntrusiveList&& other) noexcept
-        : head_(std::exchange(other.head_, nullptr)), tail_(std::exchange(other.tail_, nullptr))
-    {
-    }
+    IntrusiveSlist(IntrusiveSlist&& other) noexcept : head_(std::exchange(other.head_, nullptr)) {}
 
-    ~IntrusiveList() = default;
+    ~IntrusiveSlist() = default;
 
-    IntrusiveList& operator=(const IntrusiveList&) = delete;
-    IntrusiveList& operator=(IntrusiveList&&) = delete;
+    IntrusiveSlist& operator=(const IntrusiveSlist&) = delete;
+    IntrusiveSlist& operator=(IntrusiveSlist&&) = delete;
 
     [[nodiscard]] bool empty() const noexcept { return head_ == nullptr; }
 
@@ -86,64 +81,26 @@ class IntrusiveList
 
     [[nodiscard]] iterator end() noexcept { return iterator{}; }
 
-    void push_back(T* item) noexcept
+    void clear() noexcept { head_ = nullptr; }
+
+    void push_front(T* item) noexcept
     {
-        item->list_prev_ = tail_;
-        item->list_next_ = nullptr;
-        if (tail_ == nullptr)
-        {
-            head_ = item;
-        }
-        else
-        {
-            tail_->list_next_ = item;
-        }
-        tail_ = item;
+        item->next_ = head_;
+        head_ = item;
     }
 
     [[nodiscard]] T* pop_front() noexcept
     {
-        auto* item = head_;
-        head_ = item->list_next_;
-        if (head_ != nullptr)
-        {
-            head_->list_prev_ = nullptr;
-        }
-        else
-        {
-            tail_ = nullptr;
-        }
-        return item;
-    }
-
-    void remove(T* item) noexcept
-    {
-        auto* const prev = item->list_prev_;
-        auto* const next = item->list_next_;
-        if (prev != nullptr)
-        {
-            prev->list_next_ = next;
-        }
-        else
-        {
-            head_ = next;
-        }
-        if (next != nullptr)
-        {
-            next->list_prev_ = prev;
-        }
-        else
-        {
-            tail_ = prev;
-        }
+        auto* const current_head = head_;
+        head_ = current_head->next_;
+        return current_head;
     }
 
   private:
     T* head_{nullptr};
-    T* tail_{nullptr};
 };
 }
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_INTRUSIVE_LIST_HPP
+#endif  // AGRPC_DETAIL_INTRUSIVE_SLIST_HPP
