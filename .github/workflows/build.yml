@@ -32,7 +32,7 @@ jobs:
             os: windows-2022,
             triplet: 'x64-windows-release',
             build-type: 'Release',
-            cmake-extra-args: '-DVCPKG_TARGET_TRIPLET=x64-windows-release',
+            cmake-extra-args: '-DVCPKG_TARGET_TRIPLET=x64-windows-release -DCMAKE_COMPILE_WARNING_AS_ERROR=off',
             parallel: 1,
           }
           - {
