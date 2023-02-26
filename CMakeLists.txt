@@ -50,9 +50,15 @@ option(ASIO_GRPC_INSTALL "Create the install target" ${ASIO_GRPC_PROJECT_IS_TOP_
 set(ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR
     "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
     CACHE STRING "Install directory for CMake config files")
+option(ASIO_GRPC_BUILD_EXAMPLES "Build examples" off)
 
 # maintainer options
-option(ASIO_GRPC_BUILD_TESTS "Build tests and examples" off)
+option(ASIO_GRPC_BUILD_TESTS "Build tests" off)
+if(ASIO_GRPC_BUILD_TESTS)
+    set(ASIO_GRPC_BUILD_EXAMPLES
+        on
+        CACHE BOOL "Build examples" FORCE)
+endif()
 option(ASIO_GRPC_DISCOVER_TESTS "Discover tests for ctest" off)
 option(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES
        "When tests and/or example builds are enabled then also create CMake targets for C++20" on)
@@ -80,30 +86,30 @@ set(ASIO_GRPC_CMAKE_INSTALL_TEST_CTEST_COMMAND
 
 set(ASIO_GRPC_PROJECT_ROOT "${CMAKE_CURRENT_LIST_DIR}")
 
-if(ASIO_GRPC_BUILD_TESTS)
-    message(STATUS "CMake version: ${CMAKE_VERSION}")
-
+if(ASIO_GRPC_BUILD_EXAMPLES)
     # store value of Boost_USE_STATIC_RUNTIME because it gets cleared by find_package(Boost)
     set(ASIO_GRPC_BOOST_USE_STATIC_RUNTIME ${Boost_USE_STATIC_RUNTIME})
-
-    # find dependencies
     include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcFindPackages.cmake")
-
-    # include CMake modules
     include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcCompileOptions.cmake")
     include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcCheckBoostVersion.cmake")
+endif()
+
+if(ASIO_GRPC_BUILD_TESTS)
     include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcInstallGitHooks.cmake")
     include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcCoverage.cmake")
 endif()
 
-if(NOT ASIO_GRPC_PROJECT_IS_TOP_LEVEL OR ASIO_GRPC_BUILD_TESTS)
+if(NOT ASIO_GRPC_PROJECT_IS_TOP_LEVEL OR ASIO_GRPC_BUILD_EXAMPLES)
     include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcProtobufGenerator.cmake")
 endif()
 
 add_subdirectory(src)
 
-if(ASIO_GRPC_BUILD_TESTS)
+if(ASIO_GRPC_BUILD_EXAMPLES)
     add_subdirectory(example)
+endif()
+
+if(ASIO_GRPC_BUILD_TESTS)
     add_subdirectory(doc)
 
     find_package(doctest REQUIRED)

@@ -28,8 +28,6 @@ if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPL
                                 rpc_cheat_sheet.cpp)
     target_link_libraries(asio-grpc-documentation-boost-asio PRIVATE asio-grpc::asio-grpc)
 
-    if(NOT ASIO_GRPC_USE_RECYCLING_ALLOCATOR)
-        asio_grpc_add_documentation(asio-grpc-documentation-unifex unifex_client.cpp unifex_server.cpp)
-        target_link_libraries(asio-grpc-documentation-unifex PRIVATE asio-grpc::asio-grpc-unifex)
-    endif()
+    asio_grpc_add_documentation(asio-grpc-documentation-unifex unifex_client.cpp unifex_server.cpp)
+    target_link_libraries(asio-grpc-documentation-unifex PRIVATE asio-grpc::asio-grpc-unifex)
 endif()

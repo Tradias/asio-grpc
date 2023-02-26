@@ -22,7 +22,7 @@ function(asio_grpc_create_interface_target _asio_grpc_name)
     target_include_directories(${_asio_grpc_name} INTERFACE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
                                                             $<INSTALL_INTERFACE:include>)
 
-    if(NOT ASIO_GRPC_PROJECT_IS_TOP_LEVEL OR ASIO_GRPC_BUILD_TESTS)
+    if(NOT ASIO_GRPC_PROJECT_IS_TOP_LEVEL OR ASIO_GRPC_BUILD_EXAMPLES)
         if(ASIO_GRPC_USE_BOOST_CONTAINER)
             target_compile_definitions(${_asio_grpc_name} INTERFACE AGRPC_USE_BOOST_CONTAINER)
         elseif(ASIO_GRPC_USE_RECYCLING_ALLOCATOR)
@@ -53,11 +53,11 @@ target_compile_definitions(asio-grpc-standalone-asio INTERFACE AGRPC_STANDALONE_
 asio_grpc_create_interface_target(asio-grpc-unifex)
 target_compile_definitions(asio-grpc-unifex INTERFACE AGRPC_UNIFEX)
 
-if(ASIO_GRPC_BUILD_TESTS)
+if(ASIO_GRPC_BUILD_EXAMPLES)
     target_link_libraries(asio-grpc INTERFACE Boost::headers)
     target_link_libraries(asio-grpc-standalone-asio INTERFACE asio::asio)
 
-    if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
+    if(TARGET unifex::unifex)
         target_link_libraries(asio-grpc-unifex INTERFACE unifex::unifex)
     endif()
 endif()

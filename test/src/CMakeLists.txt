@@ -75,9 +75,7 @@ if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
                        ${ASIO_GRPC_CPP20_TEST_SOURCE_FILES})
     target_link_libraries(asio-grpc-test-cpp20 PRIVATE Boost::coroutine Boost::thread)
 
-    if(NOT ASIO_GRPC_USE_RECYCLING_ALLOCATOR)
-        asio_grpc_add_test(asio-grpc-test-unifex-cpp20 "UNIFEX" "20" "test_unifex_20.cpp")
-    endif()
+    asio_grpc_add_test(asio-grpc-test-unifex-cpp20 "UNIFEX" "20" "test_unifex_20.cpp")
 endif()
 
 set_source_files_properties("test_test_17.cpp" PROPERTIES SKIP_UNITY_BUILD_INCLUSION on)
