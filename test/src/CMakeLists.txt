@@ -61,20 +61,13 @@ set(ASIO_GRPC_CPP20_TEST_SOURCE_FILES "test_asio_grpc_20.cpp" "test_repeatedly_r
                                       "test_bind_allocator_20.cpp" "test_grpc_context_20.cpp" "test_grpc_stream_20.cpp")
 
 asio_grpc_add_test(asio-grpc-test-boost-cpp17 "BOOST_ASIO" "17" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES})
-target_link_libraries(asio-grpc-test-boost-cpp17 PRIVATE Boost::coroutine Boost::thread)
-
 asio_grpc_add_test(asio-grpc-test-cpp17 "STANDALONE_ASIO" "17" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES})
-target_link_libraries(asio-grpc-test-cpp17 PRIVATE Boost::coroutine Boost::thread)
 
 if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
     asio_grpc_add_test(asio-grpc-test-boost-cpp20 "BOOST_ASIO" "20" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES}
                        ${ASIO_GRPC_CPP20_TEST_SOURCE_FILES})
-    target_link_libraries(asio-grpc-test-boost-cpp20 PRIVATE Boost::coroutine Boost::thread)
-
     asio_grpc_add_test(asio-grpc-test-cpp20 "STANDALONE_ASIO" "20" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES}
                        ${ASIO_GRPC_CPP20_TEST_SOURCE_FILES})
-    target_link_libraries(asio-grpc-test-cpp20 PRIVATE Boost::coroutine Boost::thread)
-
     asio_grpc_add_test(asio-grpc-test-unifex-cpp20 "UNIFEX" "20" "test_unifex_20.cpp")
 endif()
 

@@ -77,7 +77,7 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
     target_precompile_headers(${_asio_grpc_name} PRIVATE "utils/precompiled_header.hpp")
 
     if(${_asio_grpc_type} STREQUAL "BOOST_ASIO")
-        target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc)
+        target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc Boost::coroutine Boost::thread)
 
         target_compile_definitions(
             ${_asio_grpc_name} PUBLIC "ASIO_GRPC_TEST_CPP_VERSION=\"Boost.Asio C++${_asio_grpc_cxx_standard}\""
@@ -85,7 +85,7 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
 
         target_sources(${_asio_grpc_name} PRIVATE "utils/io_context_test.cpp" "utils/io_context_test.hpp")
     elseif(${_asio_grpc_type} STREQUAL "STANDALONE_ASIO")
-        target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc-standalone-asio)
+        target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc-standalone-asio Boost::coroutine Boost::thread)
 
         target_compile_definitions(
             ${_asio_grpc_name} PUBLIC "ASIO_GRPC_TEST_CPP_VERSION=\"Standalone Asio C++${_asio_grpc_cxx_standard}\""
