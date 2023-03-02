@@ -23,9 +23,9 @@ For running the contexts there are two choices. Either on separate threads:
 
 @snippet{code} io_context.cpp run_io_context_separate_thread
 
-Or on the same thread. Here the work counting of the io_context is aligned with that of the GrpcContext:
+Or on the same thread:
 
 @snippet{code} io_context.cpp agrpc_run_io_context_shared_work
 
-Note that both approaches come with their own different kind of overheads. Running on two different threads might require additional synchronization in the user code while running on the same thread reduces peak performance. In the [Performance](https://github.com/Tradias/asio-grpc#performance) section of the README you can find results for using an idle io_context with a busy GrpcContext running on the same thread (look for `cpp_asio_grpc_io_context_coro`). Your mileage might vary, please always measure!
+Note that both approaches come with their own different kind of overheads. Running on two different threads might require additional synchronization in the user code while running on the same thread reduces peak performance. In the [Performance](https://github.com/Tradias/asio-grpc#performance) section of the README you can find results for using an idle io_context with a busy GrpcContext running on the same thread (look for `cpp_asio_grpc_io_context_coro`).
 

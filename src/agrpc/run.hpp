@@ -200,8 +200,7 @@ void run_impl(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_cont
 template <class Traits, class ExecutionContext>
 void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context)
 {
-    agrpc::run<Traits>(grpc_context, execution_context,
-                       detail::GrpcContextStoppedCondition{grpc_context, execution_context});
+    agrpc::run<Traits>(grpc_context, execution_context, detail::GrpcContextStoppedCondition{grpc_context});
 }
 
 template <class Traits, class ExecutionContext, class StopCondition>
@@ -215,7 +214,7 @@ template <class Traits, class ExecutionContext>
 void run_completion_queue(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context)
 {
     agrpc::run_completion_queue<Traits>(grpc_context, execution_context,
-                                        detail::GrpcContextStoppedCondition{grpc_context, execution_context});
+                                        detail::GrpcContextStoppedCondition{grpc_context});
 }
 
 template <class Traits, class ExecutionContext, class StopCondition>
