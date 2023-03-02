@@ -59,7 +59,7 @@ struct DefaultRunTraits
  * @brief (experimental) Run an execution context in the same thread as a GrpcContext
  *
  * The GrpcContext should be in the ready state when this function is invoked, other than that semantically identical to
- * GrpcContext::run(). This function ends when both contexts are stopped.
+ * GrpcContext::run(). This function ends when the GrpcContext is stopped, e.g. because it ran out of work.
  *
  * @tparam Traits See DefaultRunTraits
  *
@@ -85,7 +85,8 @@ void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context, 
  * @brief (experimental) Run an execution context in the same thread as a GrpcContext's completion queue
  *
  * The GrpcContext should be in the ready state when this function is invoked, other than that semantically identical to
- * GrpcContext::run_completion_queue(). This function ends when both contexts are stopped.
+ * GrpcContext::run_completion_queue(). This function ends when the GrpcContext is stopped, e.g. because it ran out of
+ * work.
  *
  * @tparam Traits See DefaultRunTraits
  *
@@ -145,16 +146,11 @@ struct ResolvedRunTraits
     }
 };
 
-template <class ExecutionContext>
-struct AreContextsStoppedCondition
+struct GrpcContextStoppedCondition
 {
-    [[nodiscard]] bool operator()() const noexcept
-    {
-        return grpc_context_.is_stopped() && execution_context_.stopped();
-    }
+    [[nodiscard]] bool operator()() const noexcept { return grpc_context_.is_stopped(); }
 
     const agrpc::GrpcContext& grpc_context_;
-    ExecutionContext& execution_context_;
 };
 
 struct GrpcContextDoOne
@@ -205,7 +201,7 @@ template <class Traits, class ExecutionContext>
 void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context)
 {
     agrpc::run<Traits>(grpc_context, execution_context,
-                       detail::AreContextsStoppedCondition<ExecutionContext>{grpc_context, execution_context});
+                       detail::GrpcContextStoppedCondition{grpc_context, execution_context});
 }
 
 template <class Traits, class ExecutionContext, class StopCondition>
@@ -218,9 +214,8 @@ void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context, 
 template <class Traits, class ExecutionContext>
 void run_completion_queue(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context)
 {
-    agrpc::run_completion_queue<Traits>(
-        grpc_context, execution_context,
-        detail::AreContextsStoppedCondition<ExecutionContext>{grpc_context, execution_context});
+    agrpc::run_completion_queue<Traits>(grpc_context, execution_context,
+                                        detail::GrpcContextStoppedCondition{grpc_context, execution_context});
 }
 
 template <class Traits, class ExecutionContext, class StopCondition>

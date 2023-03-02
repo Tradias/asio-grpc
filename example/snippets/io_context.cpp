@@ -89,18 +89,13 @@ void explicit_io_context()
     /* [run_io_context_separate_thread] */
 
     /* [agrpc_run_io_context_shared_work] */
-    // Assuming that the io_context is the "main" context and that some work has been submitted to it prior.
     // First, initiate the io_context's thread_local variables by posting on it. The io_context uses them to optimize
     // dynamic memory allocations.
-    // Then undo the work counting of asio::post.
-    // Run GrpcContext and io_context until both stop.
-    // Finally, redo the work counting.
+    // Then run GrpcContext and io_context until the GrpcContext stops, e.g. because it ran out of work.
     asio::post(io_context,
                [&]
                {
-                   io_context.get_executor().on_work_finished();
                    agrpc::run(grpc_context, io_context);
-                   io_context.get_executor().on_work_started();
                });
     io_context.run();
     /* [agrpc_run_io_context_shared_work] */

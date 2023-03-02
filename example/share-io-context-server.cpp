@@ -99,15 +99,11 @@ int main(int argc, const char** argv)
 
     // First, initiate the io_context's thread_local variables by posting on it. The io_context uses them to optimize
     // dynamic memory allocations.
-    // Then undo the work counting of asio::post.
-    // Run GrpcContext and io_context until both stop.
-    // Finally, redo the work counting.
+    // Then run GrpcContext and io_context until the GrpcContext stops (runs out of work).
     asio::post(io_context,
                [&]
                {
-                   io_context.get_executor().on_work_finished();
                    agrpc::run(grpc_context, io_context);
-                   io_context.get_executor().on_work_started();
                });
     io_context.run();
 
