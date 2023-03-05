@@ -56,18 +56,19 @@ constexpr std::size_t floor_log2_get_shift(std::size_t n) noexcept
     }
 }
 
+inline constexpr auto FLOOR_LOG2_INITIAL_SHIFT = detail::floor_log2_get_shift(SIZE_T_BIT_COUNT);
+
 constexpr std::size_t floor_log2(std::size_t x) noexcept
 {
     std::size_t n = x;
     std::size_t log2 = 0;
-    std::size_t remaining_bits = SIZE_T_BIT_COUNT;
-    std::size_t shift = detail::floor_log2_get_shift(remaining_bits);
+    std::size_t shift = FLOOR_LOG2_INITIAL_SHIFT;
     while (shift != 0u)
     {
-        std::size_t tmp = n >> shift;
-        if (tmp != 0u)
+        if (std::size_t tmp = n >> shift; tmp != 0u)
         {
-            log2 += shift, n = tmp;
+            log2 += shift;
+            n = tmp;
         }
         shift = detail::floor_log2_get_shift(shift);
     }

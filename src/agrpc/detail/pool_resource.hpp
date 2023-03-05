@@ -47,7 +47,7 @@ class MemoryBlockList
     {
         const auto allocation_size = size + HEADER_SIZE;
         void* p = MaxAlignAllocator::allocate(allocation_size);
-        auto* const header = ::new (static_cast<void*>(p)) Header;
+        auto* const header = ::new (p) Header;
         header->size_ = allocation_size;
         list_.push_front(header);
         return static_cast<char*>(p) + HEADER_SIZE;
@@ -97,7 +97,7 @@ class MemoryBlockSlist
     {
         const auto allocation_size = size + HEADER_SIZE;
         void* p = MaxAlignAllocator::allocate_already_max_aligned(allocation_size);
-        auto* const header = ::new (static_cast<void*>(p)) Header;
+        auto* const header = ::new (p) Header;
         header->size_ = allocation_size;
         slist_.push_front(header);
         return static_cast<char*>(p) + HEADER_SIZE;
@@ -147,7 +147,7 @@ class Pool
 
     void deallocate_block(void* p) noexcept
     {
-        auto* pv = ::new (static_cast<void*>(p)) FreeListEntry;
+        auto* pv = ::new (p) FreeListEntry;
         free_slist_.push_front(pv);
     }
 
