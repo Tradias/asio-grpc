@@ -81,13 +81,13 @@ inline GrpcContext::~GrpcContext()
 
 inline bool GrpcContext::run()
 {
-    return detail::GrpcContextImplementation::process_work(*this,
-                                                           [](agrpc::GrpcContext& grpc_context)
-                                                           {
-                                                               return detail::GrpcContextImplementation::do_one(
-                                                                   grpc_context,
-                                                                   detail::GrpcContextImplementation::INFINITE_FUTURE);
-                                                           });
+    return detail::GrpcContextImplementation::process_work(
+        *this,
+        [](agrpc::GrpcContext& grpc_context)
+        {
+            return detail::GrpcContextImplementation::do_one_if_not_stopped(
+                grpc_context, detail::GrpcContextImplementation::INFINITE_FUTURE);
+        });
 }
 
 inline bool GrpcContext::run_completion_queue()
@@ -96,30 +96,30 @@ inline bool GrpcContext::run_completion_queue()
         *this,
         [](agrpc::GrpcContext& grpc_context)
         {
-            return detail::GrpcContextImplementation::do_one_completion_queue(
+            return detail::GrpcContextImplementation::do_one_completion_queue_if_not_stopped(
                 grpc_context, detail::GrpcContextImplementation::INFINITE_FUTURE);
         });
 }
 
 inline bool GrpcContext::poll()
 {
-    return detail::GrpcContextImplementation::process_work(*this,
-                                                           [](agrpc::GrpcContext& grpc_context)
-                                                           {
-                                                               return detail::GrpcContextImplementation::do_one(
-                                                                   grpc_context,
-                                                                   detail::GrpcContextImplementation::TIME_ZERO);
-                                                           });
+    return detail::GrpcContextImplementation::process_work(
+        *this,
+        [](agrpc::GrpcContext& grpc_context)
+        {
+            return detail::GrpcContextImplementation::do_one_if_not_stopped(
+                grpc_context, detail::GrpcContextImplementation::TIME_ZERO);
+        });
 }
 
 inline bool GrpcContext::run_until_impl(::gpr_timespec deadline)
 {
-    return detail::GrpcContextImplementation::process_work(*this,
-                                                           [deadline](agrpc::GrpcContext& grpc_context)
-                                                           {
-                                                               return detail::GrpcContextImplementation::do_one(
-                                                                   grpc_context, deadline);
-                                                           });
+    return detail::GrpcContextImplementation::process_work(
+        *this,
+        [deadline](agrpc::GrpcContext& grpc_context)
+        {
+            return detail::GrpcContextImplementation::do_one_if_not_stopped(grpc_context, deadline);
+        });
 }
 
 template <class Condition>
@@ -129,7 +129,7 @@ inline bool GrpcContext::run_while(Condition&& condition)
         *this,
         [&](agrpc::GrpcContext& grpc_context)
         {
-            return condition() && detail::GrpcContextImplementation::do_one(
+            return condition() && detail::GrpcContextImplementation::do_one_if_not_stopped(
                                       grpc_context, detail::GrpcContextImplementation::INFINITE_FUTURE);
         });
 }
@@ -140,7 +140,7 @@ inline bool GrpcContext::poll_completion_queue()
         *this,
         [](agrpc::GrpcContext& grpc_context)
         {
-            return detail::GrpcContextImplementation::do_one_completion_queue(
+            return detail::GrpcContextImplementation::do_one_completion_queue_if_not_stopped(
                 grpc_context, detail::GrpcContextImplementation::TIME_ZERO);
         });
 }

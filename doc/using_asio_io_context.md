@@ -11,7 +11,7 @@ Since a GrpcContext is also an [asio::execution_context](https://www.boost.org/d
 While this is the most convenient approach is also has some downsides:
 
 * The io_context cannot be run on more than one thread.
-* There is runtime overhead due to uncontrollable thread switching.
+* There is runtime overhead due to non-customizable thread switching.
 
 ## Explicit io_context
 
@@ -19,13 +19,23 @@ GrpcContext and io_context can also be created directly and used as usual: submi
 
 @snippet{code} io_context.cpp co_spawn_io_context_and_grpc_context
 
+### Run on separate threads
+
 For running the contexts there are two choices. Either on separate threads:
 
 @snippet{code} io_context.cpp run_io_context_separate_thread
 
-Or on the same thread:
+### Run on one thread
 
-@snippet{code} io_context.cpp agrpc_run_io_context_shared_work
+Until the GrpcContext stops:
 
-Note that both approaches come with their own different kind of overheads. Running on two different threads might require additional synchronization in the user code while running on the same thread reduces peak performance. In the [Performance](https://github.com/Tradias/asio-grpc#performance) section of the README you can find results for using an idle io_context with a busy GrpcContext running on the same thread (look for `cpp_asio_grpc_io_context_coro`).
+@snippet{code} io_context.cpp agrpc_run_io_context_and_grpc_context
+
+Or until both contexts stop:
+
+@snippet{code} io_context.cpp agrpc_run_io_context_shared_work_tracking
+
+### Conclusion
+
+Both approaches come with their own different kind of overheads. Running on two threads might require additional synchronization in the user code while running on the same thread reduces peak performance. In the [Performance](https://github.com/Tradias/asio-grpc#performance) section of the README you can find results for using an idle io_context with a busy GrpcContext running on the same thread (look for `cpp_asio_grpc_io_context_coro`).
 

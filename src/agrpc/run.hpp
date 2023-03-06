@@ -53,6 +53,18 @@ struct DefaultRunTraits
     {
         return 0 != execution_context.poll();
     }
+
+    template <class ExecutionContext, class Rep, class Period>
+    static bool run_for(ExecutionContext& execution_context, std::chrono::duration<Rep, Period> duration)
+    {
+        return 0 != execution_context.run_for(duration);
+    }
+
+    template <class ExecutionContext>
+    static bool is_stopped(ExecutionContext& execution_context)
+    {
+        return execution_context.stopped();
+    }
 };
 
 /**
@@ -127,6 +139,21 @@ inline constexpr auto RESOLVED_RUN_TRAITS_HAS_POLL<Traits, ExecutionContext,
                                                    decltype((void)Traits::poll(std::declval<ExecutionContext&>()))> =
     true;
 
+template <class Traits, class ExecutionContext, class = void>
+inline constexpr auto RESOLVED_RUN_TRAITS_HAS_RUN_FOR = false;
+
+template <class Traits, class ExecutionContext>
+inline constexpr auto RESOLVED_RUN_TRAITS_HAS_RUN_FOR<
+    Traits, ExecutionContext,
+    decltype((void)Traits::run_for(std::declval<ExecutionContext&>(), std::declval<detail::BackoffDelay>()))> = true;
+
+template <class Traits, class ExecutionContext, class = void>
+inline constexpr auto RESOLVED_RUN_TRAITS_HAS_IS_STOPPED = false;
+
+template <class Traits, class ExecutionContext>
+inline constexpr auto RESOLVED_RUN_TRAITS_HAS_IS_STOPPED<
+    Traits, ExecutionContext, decltype((void)Traits::is_stopped(std::declval<ExecutionContext&>()))> = true;
+
 template <class Traits>
 struct ResolvedRunTraits
 {
@@ -144,13 +171,37 @@ struct ResolvedRunTraits
             return agrpc::DefaultRunTraits::poll(execution_context);
         }
     }
+
+    template <class ExecutionContext, class Rep, class Period>
+    static bool run_for(ExecutionContext& execution_context, std::chrono::duration<Rep, Period> duration)
+    {
+        if constexpr (detail::RESOLVED_RUN_TRAITS_HAS_RUN_FOR<Traits, ExecutionContext>)
+        {
+            return Traits::run_for(execution_context, duration);
+        }
+        else
+        {
+            return agrpc::DefaultRunTraits::run_for(execution_context, duration);
+        }
+    }
+
+    template <class ExecutionContext>
+    static bool is_stopped(ExecutionContext& execution_context)
+    {
+        if constexpr (detail::RESOLVED_RUN_TRAITS_HAS_IS_STOPPED<Traits, ExecutionContext>)
+        {
+            return Traits::is_stopped(execution_context);
+        }
+        else
+        {
+            return agrpc::DefaultRunTraits::is_stopped(execution_context);
+        }
+    }
 };
 
-struct GrpcContextStoppedCondition
+struct AlwaysFalseCondition
 {
-    [[nodiscard]] bool operator()() const noexcept { return grpc_context_.is_stopped(); }
-
-    const agrpc::GrpcContext& grpc_context_;
+    [[nodiscard]] constexpr bool operator()() const noexcept { return false; }
 };
 
 struct GrpcContextDoOne
@@ -169,6 +220,19 @@ struct GrpcContextDoOneCompletionQueue
     }
 };
 
+struct IsGrpcContextStopped
+{
+    bool is_stopped_{};
+
+    bool operator()(agrpc::GrpcContext& grpc_context)
+    {
+        is_stopped_ = grpc_context.is_stopped();
+        return is_stopped_;
+    }
+
+    constexpr explicit operator bool() const noexcept { return is_stopped_; }
+};
+
 template <class GrpcContextPoller, class Traits, class ExecutionContext, class StopCondition>
 void run_impl(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context, StopCondition stop_condition)
 {
@@ -179,12 +243,25 @@ void run_impl(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_cont
     detail::ThreadLocalGrpcContextGuard guard{grpc_context};
     Backoff backoff;
     auto delay = backoff.next();
-    while (!stop_condition())
+    IsGrpcContextStopped is_grpc_context_stopped{};
+    while (!stop_condition() &&
+           (!is_grpc_context_stopped(grpc_context) || !ResolvedTraits::is_stopped(execution_context)))
     {
-        const auto has_polled = ResolvedTraits::poll(execution_context);
-        const auto delay_timespec = detail::BackoffDelay::zero() == delay ? detail::GrpcContextImplementation::TIME_ZERO
-                                                                          : detail::gpr_timespec_from_now(delay);
-        GrpcContextPoller::poll(grpc_context, delay_timespec);
+        const bool has_polled = [&]
+        {
+            if (is_grpc_context_stopped)
+            {
+                return ResolvedTraits::run_for(execution_context, delay);
+            }
+            return ResolvedTraits::poll(execution_context);
+        }();
+        if (!is_grpc_context_stopped)
+        {
+            const auto delay_timespec = detail::BackoffDelay::zero() == delay
+                                            ? detail::GrpcContextImplementation::TIME_ZERO
+                                            : detail::gpr_timespec_from_now(delay);
+            GrpcContextPoller::poll(grpc_context, delay_timespec);
+        }
         if (has_polled)
         {
             delay = backoff.reset();
@@ -200,7 +277,7 @@ void run_impl(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_cont
 template <class Traits, class ExecutionContext>
 void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context)
 {
-    agrpc::run<Traits>(grpc_context, execution_context, detail::GrpcContextStoppedCondition{grpc_context});
+    agrpc::run<Traits>(grpc_context, execution_context, detail::AlwaysFalseCondition{});
 }
 
 template <class Traits, class ExecutionContext, class StopCondition>
@@ -213,8 +290,7 @@ void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context, 
 template <class Traits, class ExecutionContext>
 void run_completion_queue(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context)
 {
-    agrpc::run_completion_queue<Traits>(grpc_context, execution_context,
-                                        detail::GrpcContextStoppedCondition{grpc_context});
+    agrpc::run_completion_queue<Traits>(grpc_context, execution_context, detail::AlwaysFalseCondition{});
 }
 
 template <class Traits, class ExecutionContext, class StopCondition>

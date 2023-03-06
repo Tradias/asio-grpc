@@ -88,15 +88,35 @@ void explicit_io_context()
     io_context_thread.join();
     /* [run_io_context_separate_thread] */
 
-    /* [agrpc_run_io_context_shared_work] */
+    /* [agrpc_run_io_context_and_grpc_context] */
     // First, initiate the io_context's thread_local variables by posting on it. The io_context uses them to optimize
     // dynamic memory allocations.
-    // Then run GrpcContext and io_context until the GrpcContext stops, e.g. because it ran out of work.
+    // Then run GrpcContext and io_context until the GrpcContext stops.
     asio::post(io_context,
                [&]
                {
-                   agrpc::run(grpc_context, io_context);
+                   agrpc::run(grpc_context, io_context,
+                              [&]
+                              {
+                                  return grpc_context.is_stopped();
+                              });
                });
     io_context.run();
-    /* [agrpc_run_io_context_shared_work] */
+    /* [agrpc_run_io_context_and_grpc_context] */
+
+    /* [agrpc_run_io_context_shared_work_tracking] */
+    // First, initiate the io_context's thread_local variables by posting on it. The io_context uses them to optimize
+    // dynamic memory allocations.
+    // Then undo the work counting of asio::post.
+    // Run GrpcContext and io_context until both stop.
+    // Finally, redo the work counting.
+    asio::post(io_context,
+               [&]
+               {
+                   io_context.get_executor().on_work_finished();
+                   agrpc::run(grpc_context, io_context);
+                   io_context.get_executor().on_work_started();
+               });
+    io_context.run();
+    /* [agrpc_run_io_context_shared_work_tracking] */
 }

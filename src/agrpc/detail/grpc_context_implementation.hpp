@@ -133,8 +133,11 @@ struct GrpcContextImplementation
     static bool do_one(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline,
                        detail::InvokeHandler invoke = detail::InvokeHandler::YES, StopPredicate stop_predicate = {});
 
-    static bool do_one_completion_queue(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline,
-                                        detail::InvokeHandler invoke = detail::InvokeHandler::YES);
+    static bool do_one_if_not_stopped(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline);
+
+    static bool do_one_completion_queue(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline);
+
+    static bool do_one_completion_queue_if_not_stopped(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline);
 
     template <class LoopFunction>
     static bool process_work(agrpc::GrpcContext& grpc_context, LoopFunction loop_function);

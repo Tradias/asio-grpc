@@ -142,11 +142,20 @@ TEST_CASE_FIXTURE(RunTest, "agrpc::run Traits can use traits that do not inherit
 struct Counter
 {
     int value{};
+
+    static bool stopped() { return false; }
 };
 
 struct MyCustomPoll
 {
     static bool poll(Counter& counter)
+    {
+        ++counter.value;
+        return false;
+    }
+
+    template <class Rep, class Period>
+    static bool run_for(Counter& counter, std::chrono::duration<Rep, Period>)
     {
         ++counter.value;
         return false;
@@ -182,6 +191,12 @@ struct MyWaitTraits
     static constexpr std::chrono::seconds MAX_LATENCY{1};
 
     static bool poll(Counter&) { return false; }
+
+    template <class Rep, class Period>
+    static bool run_for(Counter&, std::chrono::duration<Rep, Period>)
+    {
+        return false;
+    }
 };
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "agrpc::run Traits::MAX_LATENCY is adhered to")
