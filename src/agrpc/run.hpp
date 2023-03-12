@@ -54,12 +54,21 @@ struct DefaultRunTraits
         return 0 != execution_context.poll();
     }
 
+    /**
+     * @brief How to run the execution context for the specified duration
+     *
+     * This function should let the execution context process some work and sleep for at least `duration`. If any work
+     * has been processed then it should return true.
+     */
     template <class ExecutionContext, class Rep, class Period>
     static bool run_for(ExecutionContext& execution_context, std::chrono::duration<Rep, Period> duration)
     {
         return 0 != execution_context.run_for(duration);
     }
 
+    /**
+     * @brief Has the execution context been stopped?
+     */
     template <class ExecutionContext>
     static bool is_stopped(ExecutionContext& execution_context)
     {
@@ -247,7 +256,7 @@ void run_impl(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_cont
     while (!stop_condition() &&
            (!is_grpc_context_stopped(grpc_context) || !ResolvedTraits::is_stopped(execution_context)))
     {
-        const bool has_polled = [&]
+        const bool has_polled = [&]() -> bool
         {
             if (is_grpc_context_stopped)
             {
