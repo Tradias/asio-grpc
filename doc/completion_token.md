@@ -6,10 +6,6 @@ The last argument to all async functions in this library is a [CompletionToken](
 
 @snippet server.cpp alarm-with-callback
 
-## Stackless coroutine
-
-@snippet server.cpp alarm-stackless-coroutine
-
 ## use_sender
 
 `agrpc::use_sender` causes free functions in this library to return a [sender](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#typedsender-concept). They can e.g. be combined with `unifex::task` to asynchronously process RPCs using `co_await`:

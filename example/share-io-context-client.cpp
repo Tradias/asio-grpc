@@ -68,25 +68,30 @@ int main(int argc, const char** argv)
     const auto host = std::string("localhost:") + grpc_port;
     const auto tcp_port = static_cast<asio::ip::port_type>(argc >= 3 ? std::stoul(argv[2]) : 8000);
 
+    example::v1::Example::Stub stub{grpc::CreateChannel(host, grpc::InsecureChannelCredentials())};
+
+    /* [co_spawn_io_context_and_grpc_context] */
     asio::io_context io_context{1};
 
-    example::v1::Example::Stub stub{grpc::CreateChannel(host, grpc::InsecureChannelCredentials())};
-    agrpc::GrpcContext grpc_context;
-    auto grpc_context_work_guard = asio::make_work_guard(grpc_context);
+    agrpc::GrpcContext
+        grpc_context;  // for gRPC servers this would be constructed using `grpc::ServerBuilder::AddCompletionQueue`
 
     asio::co_spawn(
-        io_context,
-        [&]() -> asio::awaitable<void>
+        io_context,  // Spawning onto the io_context means that completed operations will switch back to the it before
+                     // resuming the coroutine. This can be customized on a per-operation basis using
+                     // `asio::bind_executor`.
+        [&, grpc_context_work_guard = asio::make_work_guard(grpc_context)]() mutable -> asio::awaitable<void>
         {
-            // The two operations below will run concurrently on the same thread.
             using namespace asio::experimental::awaitable_operators;
             co_await (make_grpc_request(grpc_context, stub) && make_tcp_request(tcp_port));
             grpc_context_work_guard.reset();
         },
         asio::detached);
+    /* [co_spawn_io_context_and_grpc_context] */
 
+    /* [agrpc_run_io_context_shared_work_tracking] */
     // First, initiate the io_context's thread_local variables by posting on it. The io_context uses them to optimize
-    // dynamic memory allocations.
+    // dynamic memory allocations. This is an optional step but it can improve performance.
     // Then undo the work counting of asio::post.
     // Run GrpcContext and io_context until both stop.
     // Finally, redo the work counting.
@@ -98,4 +103,5 @@ int main(int argc, const char** argv)
                    io_context.get_executor().on_work_started();
                });
     io_context.run();
+    /* [agrpc_run_io_context_shared_work_tracking] */
 }

@@ -82,44 +82,6 @@ asio::awaitable<void> timer_with_different_completion_tokens(agrpc::GrpcContext&
     /* [alarm-with-allocator-aware-awaitable] */
     co_await agrpc::wait(alarm, deadline, agrpc::bind_allocator(my_allocator, asio::use_awaitable));
     /* [alarm-with-allocator-aware-awaitable] */
-
-    /* [alarm-stackless-coroutine] */
-    struct Coro : asio::coroutine
-    {
-        using executor_type = agrpc::GrpcContext::executor_type;
-
-        struct Context
-        {
-            std::chrono::system_clock::time_point deadline;
-            agrpc::GrpcContext& grpc_context;
-            grpc::Alarm alarm;
-
-            Context(std::chrono::system_clock::time_point deadline, agrpc::GrpcContext& grpc_context)
-                : deadline(deadline), grpc_context(grpc_context)
-            {
-            }
-        };
-
-        std::shared_ptr<Context> context;
-
-        Coro(std::chrono::system_clock::time_point deadline, agrpc::GrpcContext& grpc_context)
-            : context(std::make_shared<Context>(deadline, grpc_context))
-        {
-        }
-
-        void operator()(bool wait_ok)
-        {
-            BOOST_ASIO_CORO_REENTER(*this)
-            {
-                BOOST_ASIO_CORO_YIELD agrpc::wait(context->alarm, context->deadline, std::move(*this));
-                (void)wait_ok;
-            }
-        }
-
-        executor_type get_executor() const noexcept { return context->grpc_context.get_executor(); }
-    };
-    Coro{deadline, grpc_context}(false);
-    /* [alarm-stackless-coroutine] */
 }
 
 asio::awaitable<void> unary(example::v1::Example::AsyncService& service)

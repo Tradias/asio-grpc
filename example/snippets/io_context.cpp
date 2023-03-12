@@ -44,54 +44,29 @@ void implicit_io_context()
     /* [implicit_io_context] */
 }
 
-void explicit_io_context()
+void explicit_io_context_separate_threads()
 {
-    example::v1::Example::Stub stub{grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials())};
-    asio::ip::tcp::endpoint endpoint(asio::ip::make_address_v4("127.0.0.1"), 8000);
-
-    /* [co_spawn_io_context_and_grpc_context] */
     asio::io_context io_context{1};
-
     agrpc::GrpcContext grpc_context;
-    auto grpc_context_work_guard = asio::make_work_guard(grpc_context);
-
-    asio::co_spawn(
-        io_context,  // Spawning onto the io_context means that completed operations will switch back to the it before
-                     // resuming the coroutine ...
-        [&]() -> asio::awaitable<void>
-        {
-            asio::ip::tcp::socket socket(io_context);
-            co_await socket.async_connect(endpoint, asio::use_awaitable);
-            co_await asio::async_write(socket, asio::buffer("example"), asio::use_awaitable);
-
-            using RPC = agrpc::RPC<&example::v1::Example::Stub::PrepareAsyncUnary>;
-            grpc::ClientContext client_context;
-            client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
-            RPC::Request request;
-            request.set_integer(42);
-            RPC::Response response;
-            // ... using bind_executor however, we can remain on the thread of the GrpcContext.
-            co_await RPC::request(grpc_context, stub, client_context, request, response,
-                                  asio::bind_executor(asio::system_executor{}, asio::use_awaitable));
-
-            grpc_context_work_guard.reset();
-        },
-        asio::detached);
-    /* [co_spawn_io_context_and_grpc_context] */
 
     /* [run_io_context_separate_thread] */
-    std::thread io_context_thread{[&]
-                                  {
-                                      io_context.run();
-                                  }};
-    grpc_context.run();
-    io_context_thread.join();
+    std::thread grpc_context_thread{[&]
+                                    {
+                                        grpc_context.run();
+                                    }};
+    io_context.run();
+    grpc_context_thread.join();
     /* [run_io_context_separate_thread] */
+}
+
+void explicit_io_context_samr_thread()
+{
+    asio::io_context io_context{1};
+    agrpc::GrpcContext grpc_context;
 
     /* [agrpc_run_io_context_and_grpc_context] */
     // First, initiate the io_context's thread_local variables by posting on it. The io_context uses them to optimize
-    // dynamic memory allocations.
-    // Then run GrpcContext and io_context until the GrpcContext stops.
+    // dynamic memory allocations. This is an optional step but it can improve performance.
     asio::post(io_context,
                [&]
                {
@@ -103,20 +78,4 @@ void explicit_io_context()
                });
     io_context.run();
     /* [agrpc_run_io_context_and_grpc_context] */
-
-    /* [agrpc_run_io_context_shared_work_tracking] */
-    // First, initiate the io_context's thread_local variables by posting on it. The io_context uses them to optimize
-    // dynamic memory allocations.
-    // Then undo the work counting of asio::post.
-    // Run GrpcContext and io_context until both stop.
-    // Finally, redo the work counting.
-    asio::post(io_context,
-               [&]
-               {
-                   io_context.get_executor().on_work_finished();
-                   agrpc::run(grpc_context, io_context);
-                   io_context.get_executor().on_work_started();
-               });
-    io_context.run();
-    /* [agrpc_run_io_context_shared_work_tracking] */
 }

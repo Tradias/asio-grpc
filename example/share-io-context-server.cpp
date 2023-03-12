@@ -19,6 +19,7 @@
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/detached.hpp>
+#include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/experimental/awaitable_operators.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <grpcpp/server.h>
@@ -83,12 +84,9 @@ int main(int argc, const char** argv)
     server = builder.BuildAndStart();
     abort_if_not(bool{server});
 
-    std::optional grpc_context_work_guard{
-        asio::prefer(grpc_context.get_executor(), asio::execution::outstanding_work_t::tracked)};
-
     asio::co_spawn(
         io_context,
-        [&]() -> asio::awaitable<void>
+        [&, grpc_context_work_guard = asio::make_work_guard(grpc_context)]() mutable -> asio::awaitable<void>
         {
             // The two operations below will run concurrently on the same thread.
             using namespace boost::asio::experimental::awaitable_operators;
@@ -98,7 +96,7 @@ int main(int argc, const char** argv)
         asio::detached);
 
     // First, initiate the io_context's thread_local variables by posting on it. The io_context uses them to optimize
-    // dynamic memory allocations.
+    // dynamic memory allocations. This is an optional step but it can improve performance.
     // Then undo the work counting of asio::post.
     // Run GrpcContext and io_context until both stop.
     // Finally, redo the work counting.
