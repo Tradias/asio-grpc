@@ -16,8 +16,6 @@
 #define AGRPC_DETAIL_MEMORY_RESOURCE_BOOST_PMR_HPP
 
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/memory_resource_allocator.hpp>
-#include <agrpc/detail/pool_resource.hpp>
 #include <boost/container/pmr/polymorphic_allocator.hpp>
 #include <boost/container/uses_allocator.hpp>
 

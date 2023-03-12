@@ -16,8 +16,6 @@
 #define AGRPC_DETAIL_MEMORY_RESOURCE_HPP
 
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/memory_resource_allocator.hpp>
-#include <agrpc/detail/pool_resource.hpp>
 
 #include <memory_resource>
 
