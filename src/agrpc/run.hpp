@@ -233,7 +233,7 @@ struct IsGrpcContextStopped
 {
     bool is_stopped_{};
 
-    bool operator()(agrpc::GrpcContext& grpc_context)
+    bool operator()(const agrpc::GrpcContext& grpc_context)
     {
         is_stopped_ = grpc_context.is_stopped();
         return is_stopped_;

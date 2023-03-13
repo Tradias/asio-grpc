@@ -489,7 +489,10 @@ namespace pmr
  * This BasicGrpcExecutor does not track outstanding work, has the relationship.fork and blocking.never properties and
  * uses the `pmr::polymorphic_allocator` allocator.
  */
-using GrpcExecutor [[deprecated]] = agrpc::BasicGrpcExecutor<agrpc::detail::pmr::polymorphic_allocator<std::byte>>;
+using GrpcExecutor
+    [[deprecated("Asio-grpc no longer depends on <memory_resource> or Boost.Container. All pmr type alias will "
+                 "therefore be removed in v3.")]] =
+        agrpc::BasicGrpcExecutor<agrpc::detail::pmr::polymorphic_allocator<std::byte>>;
 }  // namespace pmr
 
 // Implementation details

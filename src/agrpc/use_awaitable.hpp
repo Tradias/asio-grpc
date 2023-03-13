@@ -45,21 +45,27 @@ namespace pmr
  * @brief `asio::awaitable` specialized on `agrpc::pmr::GrpcExecutor`
  */
 template <class T>
-using GrpcAwaitable [[deprecated]] =
-    asio::awaitable<T, agrpc::BasicGrpcExecutor<agrpc::detail::pmr::polymorphic_allocator<std::byte>>>;
+using GrpcAwaitable
+    [[deprecated("Asio-grpc no longer depends on <memory_resource> or Boost.Container. All pmr type alias will "
+                 "therefore be removed in v3.")]] =
+        asio::awaitable<T, agrpc::BasicGrpcExecutor<agrpc::detail::pmr::polymorphic_allocator<std::byte>>>;
 
 /**
  * @brief `asio::use_awaitable_t` specialized on `agrpc::pmr::GrpcExecutor`
  */
-using GrpcUseAwaitable [[deprecated]] =
-    asio::use_awaitable_t<agrpc::BasicGrpcExecutor<agrpc::detail::pmr::polymorphic_allocator<std::byte>>>;
+using GrpcUseAwaitable
+    [[deprecated("Asio-grpc no longer depends on <memory_resource> or Boost.Container. All pmr type alias will "
+                 "therefore be removed in v3.")]] =
+        asio::use_awaitable_t<agrpc::BasicGrpcExecutor<agrpc::detail::pmr::polymorphic_allocator<std::byte>>>;
 
 /**
  * @brief `asio::use_awaitable` specialized on `agrpc::pmr::GrpcExecutor`
  */
-[[deprecated]] inline constexpr asio::use_awaitable_t<
-    agrpc::BasicGrpcExecutor<agrpc::detail::pmr::polymorphic_allocator<std::byte>>>
-    GRPC_USE_AWAITABLE{};
+[[deprecated(
+    "Asio-grpc no longer depends on <memory_resource> or Boost.Container. All pmr type alias will therefore be removed "
+    "in v3.")]] inline constexpr asio::
+    use_awaitable_t<agrpc::BasicGrpcExecutor<agrpc::detail::pmr::polymorphic_allocator<std::byte>>>
+        GRPC_USE_AWAITABLE{};
 }  // namespace pmr
 
 AGRPC_NAMESPACE_END
