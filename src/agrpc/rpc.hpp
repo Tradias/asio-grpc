@@ -136,6 +136,9 @@ struct RequestFn
      * @snippet client.cpp request-unary-client-side
      *
      * @param rpc A pointer to the async version of the RPC method. The async version starts with `Async`.
+     * @param stub The generated Stub or StubInterface, or a `std::unique_ptr` of it. In the example this is:
+     * `example::v1::Example::Stub`.
+     * @param request The generated request message type for the RPC. In the example this is: `example::v1::Request`.
      */
     template <class Stub, class DerivedStub, class Request, class Responder>
     auto operator()(detail::ClientUnaryRequest<Stub, Request, Responder> rpc, DerivedStub& stub,
@@ -177,8 +180,9 @@ struct RequestFn
      * @snippet client.cpp request-server-streaming-client-side-alt
      *
      * @param rpc A pointer to the async version of the RPC method. The async version starts with `PrepareAsync`.
-     * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
+     * @param stub The generated Stub or StubInterface, or a `std::unique_ptr` of it. In the example this is:
      * `example::v1::Example::Stub`.
+     * @param request The generated request message type for the RPC. In the example this is: `example::v1::Request`.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(std::pair<std::unique_ptr<grpc::ClientAsyncReader<Response>>, bool>)`. `true`
      * indicates that the RPC is going to go to the wire. If it is `false`, it is not going to the wire. This would
@@ -227,8 +231,9 @@ struct RequestFn
      * @snippet client.cpp request-server-streaming-client-side
      *
      * @param rpc A pointer to the async version of the RPC method. The async version always starts with `PrepareAsync`.
-     * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
+     * @param stub The generated Stub or StubInterface, or a `std::unique_ptr` of it. In the example this is:
      * `example::v1::Example::Stub`.
+     * @param request The generated request message type for the RPC. In the example this is: `example::v1::Request`.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. `true` indicates that the RPC is going to go to the wire. If it is `false`,
      * it is not going to the wire. This would happen if the channel is either permanently broken or transiently broken
@@ -280,8 +285,9 @@ struct RequestFn
      * @snippet client.cpp request-client-streaming-client-side-alt
      *
      * @param rpc A pointer to the async version of the RPC method. The async version starts with `PrepareAsync`.
-     * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
+     * @param stub The generated Stub or StubInterface, or a `std::unique_ptr` of it. In the example this is:
      * `example::v1::Example::Stub`.
+     * @param response The generated response message type for the RPC. In the example this is: `example::v1::Response`.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(std::pair<std::unique_ptr<grpc::ClientAsyncWriter<Request>>, bool>)`. `true`
      * indicates that the RPC is going to go to the wire. If it is `false`, it is not going to the wire. This would
@@ -335,8 +341,9 @@ struct RequestFn
      * @snippet client.cpp request-client-streaming-client-side-corked
      *
      * @param rpc A pointer to the async version of the RPC method. The async version starts with `PrepareAsync`.
-     * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
+     * @param stub The generated Stub or StubInterface, or a `std::unique_ptr` of it. In the example this is:
      * `example::v1::Example::Stub`.
+     * @param response The generated response message type for the RPC. In the example this is: `example::v1::Response`.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. `true` indicates that the RPC is going to go to the wire. If it is `false`,
      * it is not going to the wire. This would happen if the channel is either permanently broken or transiently broken
@@ -388,7 +395,7 @@ struct RequestFn
      * @snippet client.cpp request-bidirectional-client-side-alt
      *
      * @param rpc A pointer to the async version of the RPC method. The async version starts with `PrepareAsync`.
-     * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
+     * @param stub The generated Stub or StubInterface, or a `std::unique_ptr` of it. In the example this is:
      * `example::v1::Example::Stub`.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(std::pair<std::unique_ptr<grpc::ClientAsyncReaderWriter<Request>>, bool>)`. `true`
@@ -440,7 +447,7 @@ struct RequestFn
      * @snippet client.cpp request-client-bidirectional-client-side-corked
      *
      * @param rpc A pointer to the async version of the RPC method. The async version starts with `PrepareAsync`.
-     * @param stub The Stub that corresponds to the RPC method. In the example above the stub is:
+     * @param stub The generated Stub or StubInterface, or a `std::unique_ptr` of it. In the example this is:
      * `example::v1::Example::Stub`.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. `true` indicates that the RPC is going to go to the wire. If it is `false`,
@@ -561,6 +568,7 @@ struct ReadFn
      *
      * @snippet client.cpp read-bidirectional-client-side
      *
+     * @param reader A `grpc::Client/ServerAsyncReader(Writer)(Interface)` or a `std::unique_ptr` of it.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. `true` indicates that a valid message was read. `false` when
      * there will be no more incoming messages, either because the other side has called WritesDone() or the stream has
@@ -623,6 +631,7 @@ struct WriteFn
      *
      * @snippet client.cpp write-bidirectional-client-side
      *
+     * @param writer A `grpc::Client/ServerAsync(Reader)Writer(Interface)` or a `std::unique_ptr` of it.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
      * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
@@ -693,6 +702,7 @@ struct WritesDoneFn
      *
      * @snippet client.cpp write_done-bidirectional-client-side
      *
+     * @param writer A `grpc::ClientAsync(Reader)Writer(Interface)` or a `std::unique_ptr` of it.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
      * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
@@ -773,6 +783,7 @@ struct FinishFn
      *
      * @snippet client.cpp finish-bidirectional-client-side
      *
+     * @param responder A `grpc::ClientAsyncReader(Writer)(Interface)` or a `std::unique_ptr` of it.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. The bool should always be `true`.
      */
@@ -814,6 +825,7 @@ struct FinishFn
      *
      * @snippet server.cpp finish-bidirectional-streaming-server-side
      *
+     * @param responder A `grpc::ServerAsyncReader(Writer)(Interface)` or a `std::unique_ptr` of it.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
      * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
@@ -850,6 +862,7 @@ struct FinishFn
      *
      * @snippet client.cpp finish-unary-client-side
      *
+     * @param responder A `grpc::ClientAsyncResponseReader(Interface)` or a `std::unique_ptr` of it.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. The bool should always be `true`.
      */
@@ -892,6 +905,7 @@ struct FinishFn
      *
      * @snippet server.cpp finish-unary-server-side
      *
+     * @param responder A `grpc::ServerAsyncReader/ServerAsyncResponseWriter(Interface)` or a `std::unique_ptr` of it.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
      * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
@@ -973,6 +987,7 @@ struct WriteLastFn
      *
      * @snippet client.cpp write_last-bidirectional-client-side
      *
+     * @param writer A `grpc::Client/ServerAsync(Reader)Writer(Interface)` or a `std::unique_ptr` of it.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
      * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
@@ -1040,6 +1055,7 @@ struct WriteAndFinishFn
      *
      * @snippet server.cpp write_and_finish-bidirectional-streaming-server-side
      *
+     * @param writer A `grpc::ServerAsync(Reader)Writer(Interface)` or a `std::unique_ptr` of it.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
      * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
@@ -1106,6 +1122,7 @@ struct FinishWithErrorFn
      *
      * @snippet server.cpp finish_with_error-unary-server-side
      *
+     * @param responder A `grpc::ServerAsyncReader/ServerAsyncResponseWriter(Interface)` or a `std::unique_ptr` of it.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. The bool should always be `true`.
      */
@@ -1155,8 +1172,8 @@ struct SendInitialMetadataFn
      *
      * @snippet server.cpp send_initial_metadata-unary-server-side
      *
-     * @param responder `grpc::ServerAsyncResponseWriter`, `grpc::ServerAsyncReader`, `grpc::ServerAsyncWriter` or
-     * `grpc::ServerAsyncReaderWriter`
+     * @param responder `grpc::ServerAsyncResponseWriter(Interface)`, `grpc::ServerAsyncReader(Interface)`,
+     * `grpc::ServerAsyncWriter(Interface)` or `grpc::ServerAsyncReaderWriter(Interface)` or a `std::unique_ptr` of it.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
      * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
@@ -1217,8 +1234,8 @@ struct ReadInitialMetadataFn
      * metadata (e.g. by calling `agrpc::send_initial_metadata`) but waits for a message from the client instead then
      * this function won't complete until `agrpc::write` is called.
      *
-     * @param responder `grpc::ClientAsyncResponseReader`, `grpc::ClientAsyncReader`, `grpc::ClientAsyncWriter` or
-     * `grpc::ClientAsyncReaderWriter` (or a unique_ptr of them or their -Interface variants).
+     * @param responder `grpc::ClientAsyncResponseReader(Interface)`, `grpc::ClientAsyncReader(Interface)`,
+     * `grpc::ClientAsyncWriter(Interface)` or `grpc::ClientAsyncReaderWriter(Interface)` or a `std::unique_ptr` of it.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. `true` indicates that the metadata was read, `false` when the call is
      * dead.
