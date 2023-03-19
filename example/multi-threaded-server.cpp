@@ -21,7 +21,6 @@
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
-#include <forward_list>
 #include <memory>
 #include <thread>
 #include <vector>
@@ -65,22 +64,22 @@ int main(int argc, const char** argv)
 
     std::unique_ptr<grpc::Server> server;
     helloworld::Greeter::AsyncService service;
-    std::forward_list<agrpc::GrpcContext> grpc_contexts;
+    std::vector<std::unique_ptr<agrpc::GrpcContext>> grpc_contexts;
 
     {
         grpc::ServerBuilder builder;
         for (size_t i = 0; i < thread_count; ++i)
         {
-            grpc_contexts.emplace_front(builder.AddCompletionQueue());
+            grpc_contexts.emplace_back(std::make_unique<agrpc::GrpcContext>(builder.AddCompletionQueue()));
         }
         builder.AddListeningPort(host, grpc::InsecureServerCredentials());
         builder.RegisterService(&service);
         agrpc::add_health_check_service(builder);
         server = builder.BuildAndStart();
-        agrpc::start_health_check_service(*server, grpc_contexts.front());
+        agrpc::start_health_check_service(*server, *grpc_contexts.front());
     }
 
-    example::ServerShutdown shutdown{*server, grpc_contexts.front()};
+    example::ServerShutdown shutdown{*server, *grpc_contexts.front()};
 
     // Create one thread per GrpcContext.
     std::vector<std::thread> threads;
@@ -89,7 +88,7 @@ int main(int argc, const char** argv)
         threads.emplace_back(
             [&, i]
             {
-                auto& grpc_context = *std::next(grpc_contexts.begin(), i);
+                auto& grpc_context = *grpc_contexts[i];
                 register_request_handler(grpc_context, service, shutdown);
                 grpc_context.run();
             });

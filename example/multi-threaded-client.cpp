@@ -22,7 +22,7 @@
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 
-#include <forward_list>
+#include <memory>
 #include <thread>
 #include <vector>
 
@@ -67,6 +67,12 @@ asio::awaitable<void> make_request(agrpc::GrpcContext& grpc_context, helloworld:
     abort_if_not(status.ok());
 }
 
+struct GuardedGrpcContext
+{
+    agrpc::GrpcContext context;
+    asio::executor_work_guard<agrpc::GrpcContext::executor_type> guard{context.get_executor()};
+};
+
 int main(int argc, const char** argv)
 {
     const auto port = argc >= 2 ? argv[1] : "50051";
@@ -74,14 +80,12 @@ int main(int argc, const char** argv)
     const auto thread_count = std::thread::hardware_concurrency();
 
     helloworld::Greeter::Stub stub{grpc::CreateChannel(host, grpc::InsecureChannelCredentials())};
-    std::forward_list<agrpc::GrpcContext> grpc_contexts;
-    std::vector<asio::executor_work_guard<agrpc::GrpcContext::executor_type>> guards;
+    std::vector<std::unique_ptr<GuardedGrpcContext>> grpc_contexts;
 
     // Create GrpcContexts and their work guards.
     for (size_t i = 0; i < thread_count; ++i)
     {
-        auto& grpc_context = grpc_contexts.emplace_front(std::make_unique<grpc::CompletionQueue>());
-        guards.emplace_back(grpc_context.get_executor());
+        grpc_contexts.emplace_back(std::make_unique<GuardedGrpcContext>());
     }
 
     // Create one thread per GrpcContext.
@@ -92,20 +96,22 @@ int main(int argc, const char** argv)
         threads.emplace_back(
             [&, i]
             {
-                auto& grpc_context = *std::next(grpc_contexts.begin(), i);
-                grpc_context.run();
+                grpc_contexts[i]->context.run();
             });
     }
 
-    // Make requests.
+    // Make some example requests.
     RoundRobin round_robin_grpc_contexts{grpc_contexts.begin(), thread_count};
     for (size_t i{}; i < 20; ++i)
     {
-        auto& grpc_context = round_robin_grpc_contexts.next();
+        auto& grpc_context = round_robin_grpc_contexts.next()->context;
         boost::asio::co_spawn(grpc_context, make_request(grpc_context, stub), boost::asio::detached);
     }
 
-    guards.clear();
+    for (auto& grpc_context : grpc_contexts)
+    {
+        grpc_context->guard.reset();
+    }
 
     for (auto& thread : threads)
     {
