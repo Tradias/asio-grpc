@@ -175,7 +175,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // Multi-threaded server performing 20 unary requests
 // ---------------------------------------------------
 ```
-<sup><a href='/example/multi-threaded-server.cpp#L31-L35' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-multi-threaded' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/multi-threaded-server.cpp#L30-L34' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-multi-threaded' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Generic
