@@ -166,6 +166,17 @@ Click on `snippet source` to jump to the code of an individual example.
 <sup><a href='/example/streaming-server.cpp#L80-L84' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-server-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
+<!-- snippet: server-side-bidirectional-streaming -->
+<a id='snippet-server-side-bidirectional-streaming'></a>
+```cpp
+// ---------------------------------------------------
+// The following bidirectional-streaming example shows how to dispatch requests to a thread_pool and write responses
+// back to the client.
+// ---------------------------------------------------
+```
+<sup><a href='/example/streaming-server.cpp#L107-L112' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
 ### Multi-threaded
 
 <!-- snippet: server-side-multi-threaded -->
