@@ -64,11 +64,10 @@ class BasicAlarm
     /**
      * @brief Wait until a specified deadline has been reached (lvalue overload)
      *
-     * The operation finishes once the alarm expires (at deadline) or is cancelled (see
-     * [Cancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_alarm.html#a57837c6b6d75f622c056b3050cf000fb)). If the
-     * alarm expired, the result will be true, false otherwise (ie, upon cancellation).
+     * The operation finishes once the alarm expires (at deadline) or is cancelled. If the alarm expired, the result
+     * will be true, false otherwise (i.e. upon cancellation).
      *
-     * Only one wait may be outstanding at a time.
+     * @attention Only one wait may be outstanding at a time.
      *
      * Example:
      *
@@ -106,6 +105,16 @@ class BasicAlarm
         return detail::async_initiate_sender_implementation<detail::MoveAlarmSenderImplementation<Deadline, Executor>>(
             grpc_context(), deadline, {static_cast<BasicAlarm&&>(*this)}, token);
     }
+
+    /**
+     * @brief Cancel an outstanding wait
+     *
+     * The outstanding wait will complete with `false` if the Alarm did not fire yet, otherwise this function has no
+     * effect.
+     *
+     * Thread-safe
+     */
+    void cancel() { alarm_.Cancel(); }
 
     /**
      * @brief Get the executor

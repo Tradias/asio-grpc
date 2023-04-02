@@ -92,6 +92,23 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "agrpc::Alarm move-overload with callba
     CHECK(ok);
 }
 
+TEST_CASE_FIXTURE(test::GrpcContextTest, "agrpc::Alarm::cancel")
+{
+    bool ok{true};
+    agrpc::Alarm alarm{grpc_context};
+    const auto not_to_exceed = std::chrono::steady_clock::now() + std::chrono::seconds(4);
+    alarm.wait(test::five_seconds_from_now(), WaitOkAssigner{ok});
+    post(
+        [&]
+        {
+            alarm.cancel();
+            alarm.cancel();
+        });
+    grpc_context.run();
+    CHECK_GT(not_to_exceed, std::chrono::steady_clock::now());
+    CHECK_FALSE(ok);
+}
+
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 TEST_CASE_TEMPLATE("cancel agrpc::Alarm with cancellation_type::total", T, std::true_type, std::false_type)
 {
