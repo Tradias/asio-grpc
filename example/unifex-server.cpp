@@ -22,6 +22,7 @@
 #include <agrpc/health_check_service.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
+#include <unifex/async_scope.hpp>
 #include <unifex/finally.hpp>
 #include <unifex/just_from.hpp>
 #include <unifex/just_void_or_done.hpp>
@@ -171,17 +172,18 @@ template <class Sender>
 void run_grpc_context_for_sender(agrpc::GrpcContext& grpc_context, Sender&& sender)
 {
     grpc_context.work_started();
-    unifex::sync_wait(
-        unifex::when_all(unifex::finally(std::forward<Sender>(sender), unifex::just_from(
-                                                                           [&]
-                                                                           {
-                                                                               grpc_context.work_finished();
-                                                                           })),
-                         unifex::just_from(
-                             [&]
-                             {
-                                 grpc_context.run();
-                             })));
+    const auto finally_finish_work = [&grpc_context](auto&& sender)
+    {
+        return unifex::finally(std::forward<decltype(sender)>(sender), unifex::then(unifex::just(),
+                                                                                    [&]
+                                                                                    {
+                                                                                        grpc_context.work_finished();
+                                                                                    }));
+    };
+    unifex::async_scope scope;
+    scope.detached_spawn(finally_finish_work(unifex::then(std::forward<Sender>(sender), [](auto&&...) {})));
+    grpc_context.run();
+    unifex::sync_wait(scope.complete());
 }
 
 int main(int argc, const char** argv)
@@ -205,9 +207,11 @@ int main(int argc, const char** argv)
 
     example::ServerShutdown server_shutdown{*server};
 
-    run_grpc_context_for_sender(grpc_context,
-                                unifex::when_all(register_unary_request_handler(grpc_context, service),
-                                                 handle_server_streaming_request(grpc_context, service),
-                                                 handle_slow_unary_request(grpc_context, service_ext),
-                                                 handle_shutdown_request(grpc_context, service_ext, server_shutdown)));
+    run_grpc_context_for_sender(
+        grpc_context,
+        unifex::with_query_value(unifex::when_all(register_unary_request_handler(grpc_context, service),
+                                                  handle_server_streaming_request(grpc_context, service),
+                                                  handle_slow_unary_request(grpc_context, service_ext),
+                                                  handle_shutdown_request(grpc_context, service_ext, server_shutdown)),
+                                 unifex::get_scheduler, unifex::inline_scheduler{}));
 }

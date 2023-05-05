@@ -76,7 +76,11 @@ constexpr std::size_t floor_log2(std::size_t x) noexcept
 }
 #endif
 
+#if __cpp_lib_int_pow2 >= 202002L
+constexpr bool is_pow2(std::size_t x) noexcept { return std::has_single_bit(x); }
+#else
 constexpr bool is_pow2(std::size_t x) noexcept { return (x & (x - 1)) == 0; }
+#endif
 
 constexpr std::size_t ceil_log2(std::size_t x) noexcept
 {

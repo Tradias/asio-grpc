@@ -103,6 +103,7 @@
 #endif
 
 #ifdef AGRPC_UNIFEX
+#include <unifex/async_scope.hpp>
 #include <unifex/config.hpp>
 #include <unifex/execute.hpp>
 #include <unifex/finally.hpp>
@@ -116,6 +117,7 @@
 #include <unifex/scheduler_concepts.hpp>
 #include <unifex/sender_concepts.hpp>
 #include <unifex/sequence.hpp>
+#include <unifex/spawn_detached.hpp>
 #include <unifex/stop_when.hpp>
 #include <unifex/submit.hpp>
 #include <unifex/sync_wait.hpp>

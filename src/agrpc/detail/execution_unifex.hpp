@@ -19,10 +19,12 @@
 #include <unifex/config.hpp>
 #include <unifex/get_allocator.hpp>
 #include <unifex/get_stop_token.hpp>
+#include <unifex/inline_scheduler.hpp>
 #include <unifex/receiver_concepts.hpp>
 #include <unifex/scheduler_concepts.hpp>
 #include <unifex/sender_concepts.hpp>
 #include <unifex/stop_token_concepts.hpp>
+#include <unifex/tag_invoke.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -38,11 +40,13 @@ inline constexpr bool is_sender_v = ::unifex::sender<T>;
 using ::unifex::connect;
 using ::unifex::connect_result_t;
 using ::unifex::get_stop_token;
+using ::unifex::inline_scheduler;
 using ::unifex::set_done;
 using ::unifex::set_error;
 using ::unifex::set_value;
 using ::unifex::start;
 using ::unifex::stop_token_type_t;
+using ::unifex::tag_t;
 using ::unifex::unstoppable_token;
 }  // namespace exec
 

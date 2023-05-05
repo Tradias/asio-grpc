@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/asio_association.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/no_op_stop_callback.hpp>
 #include <agrpc/detail/operation_base.hpp>
@@ -119,6 +120,12 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
                 }
 
                 void set_error(const std::exception_ptr&) noexcept { deallocate(); }
+
+                friend exec::inline_scheduler tag_invoke(exec::tag_t<exec::get_scheduler>,
+                                                         const DeallocateRequestHandlerOperationReceiver&) noexcept
+                {
+                    return {};
+                }
             };
 
             agrpc::GrpcContext& grpc_context_;

@@ -6,11 +6,11 @@ vcpkg_from_github(
     REPO
     facebookexperimental/libunifex
     REF
-    591ec09e7d51858ad05be979d4034574215f5971
+    v0.2.0
     SHA512
-    b07ebad2e6fa9a40c73fe2712e65cfe49591857bf784bd901acb7f35549746a36679c969df89321866530fd774bde176aa2d800f3da1462e818eecb8d0822842
+    94597f4267eaf04d9350e3d07916615bdc7a04029258c1c024099b7554503e6c245cd28e271dcd819700035a19e5e600aa54c9d418333ddb8ef8c10a6025c30e
     HEAD_REF
-    master
+    main
     PATCHES
     fix-compile-error.patch
     do-not-link-std-coroutines.patch)

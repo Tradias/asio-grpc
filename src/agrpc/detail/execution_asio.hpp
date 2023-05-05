@@ -45,11 +45,14 @@ class CancellationSlotAsStopToken;
 
 namespace exec
 {
-template <class Object>
-decltype(auto) get_scheduler(const Object& object)
+inline constexpr struct GetSchedulerFn
 {
-    return asio::get_associated_executor(object);
-}
+    template <class Object>
+    decltype(auto) operator()(const Object& object) const
+    {
+        return asio::get_associated_executor(object);
+    }
+} get_scheduler{};
 
 template <class Object>
 decltype(auto) get_executor(const Object& object)
@@ -143,6 +146,19 @@ decltype(auto) get_stop_token([[maybe_unused]] const Receiver& receiver) noexcep
 
 template <class Receiver>
 using stop_token_type_t = decltype(exec::get_stop_token(std::declval<Receiver>()));
+
+namespace detail
+{
+template <class T>
+constexpr T tag_t_helper(const T&);
+}
+
+template <auto& CPO>
+using tag_t = decltype(detail::tag_t_helper(CPO));
+
+struct inline_scheduler
+{
+};
 }  // namespace exec
 }  // namespace detail
 
