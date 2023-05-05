@@ -13,7 +13,8 @@ vcpkg_from_github(
     main
     PATCHES
     fix-compile-error.patch
-    do-not-link-std-coroutines.patch)
+    do-not-link-std-coroutines.patch
+    fix-spawn-future.patch)
 
 vcpkg_check_features(
     OUT_FEATURE_OPTIONS
