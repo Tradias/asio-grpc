@@ -10,6 +10,7 @@ on:
       - '**.cmake.in'
       - '**/CMakeLists.txt'
       - '.github/workflows/build.yml'
+      - 'deps/**'
       - 'sonar-project.properties'
       - 'vcpkg.json'
       - 'CMakePresets.json'
