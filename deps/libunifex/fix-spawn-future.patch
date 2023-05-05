@@ -1,3 +1,20 @@
+diff --git a/include/unifex/let_value_with_stop_source.hpp b/include/unifex/let_value_with_stop_source.hpp
+index 53e90e5..7c8350d 100644
+--- a/include/unifex/let_value_with_stop_source.hpp
++++ b/include/unifex/let_value_with_stop_source.hpp
+@@ -165,8 +165,10 @@ public:
+   template <typename SuccessorFactory2, typename Receiver2>
+   type(SuccessorFactory2&& func, Receiver2&& r) noexcept(
+       std::is_nothrow_constructible_v<SuccessorFactory, SuccessorFactory2>&&
+-          std::is_nothrow_constructible_v<Receiver, Receiver2>&& noexcept(
+-              connect_inner_op(func, (Receiver2 &&) r)))
++          std::is_nothrow_constructible_v<Receiver, Receiver2>&& 
++          successor_is_nothrow&& 
++          inner_receiver_nothrow_constructible&&
++          nothrow_connectable)
+     : func_{(SuccessorFactory2 &&) func}
+     , receiverToken_(get_stop_token(r))
+     , innerOp_(connect_inner_op(func_, (Receiver2 &&) r)) {}
 diff --git a/include/unifex/spawn_future.hpp b/include/unifex/spawn_future.hpp
 index 23c7e33..b02fc52 100644
 --- a/include/unifex/spawn_future.hpp
