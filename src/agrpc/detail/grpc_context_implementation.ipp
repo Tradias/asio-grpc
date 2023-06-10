@@ -162,7 +162,7 @@ inline bool GrpcContextImplementation::process_local_queue(agrpc::GrpcContext& g
 inline bool get_next_event(grpc::CompletionQueue* cq, detail::GrpcCompletionQueueEvent& event,
                            ::gpr_timespec deadline) noexcept
 {
-    return grpc::CompletionQueue::GOT_EVENT == cq->AsyncNext(&event.tag, &event.ok, deadline);
+    return grpc::CompletionQueue::GOT_EVENT == cq->AsyncNext(&event.tag_, &event.ok_, deadline);
 }
 
 inline bool GrpcContextImplementation::handle_next_completion_queue_event(agrpc::GrpcContext& grpc_context,
@@ -172,7 +172,7 @@ inline bool GrpcContextImplementation::handle_next_completion_queue_event(agrpc:
     if (detail::GrpcCompletionQueueEvent event;
         detail::get_next_event(grpc_context.get_completion_queue(), event, deadline))
     {
-        if (GrpcContextImplementation::HAS_REMOTE_WORK_TAG == event.tag)
+        if (GrpcContextImplementation::HAS_REMOTE_WORK_TAG == event.tag_)
         {
             grpc_context.check_remote_work_ = true;
         }
@@ -180,9 +180,9 @@ inline bool GrpcContextImplementation::handle_next_completion_queue_event(agrpc:
         {
             const auto result =
                 detail::InvokeHandler::NO == invoke
-                    ? (event.ok ? detail::OperationResult::SHUTDOWN_OK : detail::OperationResult::SHUTDOWN_NOT_OK)
-                    : (event.ok ? detail::OperationResult::OK : detail::OperationResult::NOT_OK);
-            detail::process_grpc_tag(event.tag, result, grpc_context);
+                    ? (event.ok_ ? detail::OperationResult::SHUTDOWN_OK : detail::OperationResult::SHUTDOWN_NOT_OK)
+                    : (event.ok_ ? detail::OperationResult::OK : detail::OperationResult::NOT_OK);
+            detail::process_grpc_tag(event.tag_, result, grpc_context);
         }
         return true;
     }

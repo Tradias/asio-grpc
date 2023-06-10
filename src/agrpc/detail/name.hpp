@@ -105,8 +105,8 @@ constexpr auto get_class_name()
 template <auto T>
 inline constexpr auto MEMBER_FUNCTION_CLASS_NAME_V = true;
 
-template <class R, class S, class... T, R (S::*f)(T...)>
-inline constexpr auto MEMBER_FUNCTION_CLASS_NAME_V<f> = detail::get_class_name<S>();
+template <class R, class S, class... T, R (S::*F)(T...)>
+inline constexpr auto MEMBER_FUNCTION_CLASS_NAME_V<F> = detail::get_class_name<S>();
 
 template <auto T>
 constexpr auto get_function_name()

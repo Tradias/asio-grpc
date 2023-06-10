@@ -230,9 +230,9 @@ struct PrepareAsyncClientServerStreamingRequestConvenienceInitFunction
     template <class T>
     void operator()(agrpc::GrpcContext& grpc_context, T* tag) const
     {
-        auto& reader_ = tag->completion_handler().payload();
-        reader_ = (stub_.*rpc_)(&client_context_, request_, grpc_context.get_completion_queue());
-        reader_->StartCall(tag);
+        auto& reader = tag->completion_handler().payload();
+        reader = (stub_.*rpc_)(&client_context_, request_, grpc_context.get_completion_queue());
+        reader->StartCall(tag);
     }
 };
 
@@ -294,9 +294,9 @@ struct PrepareAsyncClientClientStreamingRequestConvenienceInitFunction
     template <class T>
     void operator()(agrpc::GrpcContext& grpc_context, T* tag) const
     {
-        auto& writer_ = tag->completion_handler().payload();
-        writer_ = (stub_.*rpc_)(&client_context_, &response_, grpc_context.get_completion_queue());
-        writer_->StartCall(tag);
+        auto& writer = tag->completion_handler().payload();
+        writer = (stub_.*rpc_)(&client_context_, &response_, grpc_context.get_completion_queue());
+        writer->StartCall(tag);
     }
 };
 
@@ -353,9 +353,9 @@ struct PrepareAsyncClientBidirectionalStreamingRequestConvenienceInitFunction
     template <class T>
     void operator()(agrpc::GrpcContext& grpc_context, T* tag) const
     {
-        auto& reader_writer_ = tag->completion_handler().payload();
-        reader_writer_ = (stub_.*rpc_)(&client_context_, grpc_context.get_completion_queue());
-        reader_writer_->StartCall(tag);
+        auto& reader_writer = tag->completion_handler().payload();
+        reader_writer = (stub_.*rpc_)(&client_context_, grpc_context.get_completion_queue());
+        reader_writer->StartCall(tag);
     }
 };
 

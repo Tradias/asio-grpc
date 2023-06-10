@@ -23,8 +23,8 @@ namespace detail
 {
 struct GrpcCompletionQueueEvent
 {
-    void* tag;
-    bool ok;
+    void* tag_;
+    bool ok_;
 };
 }
 

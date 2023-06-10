@@ -34,22 +34,19 @@ struct UnifexTest : virtual test::GrpcContextTest
     void run(Sender&&... sender)
     {
         grpc_context.work_started();
-        auto finally_finish_work = [&](auto&& sender)
-        {
-            return unifex::finally(std::forward<decltype(sender)>(sender),
-                                   unifex::then(unifex::just(),
-                                                [&]
-                                                {
-                                                    grpc_context.work_finished();
-                                                }));
-        };
-        unifex::async_scope scope;
-        scope.detached_spawn(finally_finish_work(
-            unifex::then(unifex::with_query_value(unifex::when_all(std::forward<Sender>(sender)...),
-                                                  unifex::get_scheduler, unifex::inline_scheduler{}),
-                         [](auto&&...) {})));
-        grpc_context.run();
-        unifex::sync_wait(scope.complete());
+        unifex::sync_wait(unifex::when_all(
+            unifex::finally(unifex::with_query_value(unifex::when_all(std::forward<Sender>(sender)...),
+                                                     unifex::get_scheduler, unifex::inline_scheduler{}),
+                            unifex::then(unifex::just(),
+                                         [&]
+                                         {
+                                             grpc_context.work_finished();
+                                         })),
+            unifex::then(unifex::just(),
+                         [&]
+                         {
+                             grpc_context.run();
+                         })));
     }
 };
 

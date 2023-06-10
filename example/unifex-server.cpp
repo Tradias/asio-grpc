@@ -22,11 +22,9 @@
 #include <agrpc/health_check_service.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
-#include <unifex/async_scope.hpp>
 #include <unifex/finally.hpp>
 #include <unifex/just_from.hpp>
 #include <unifex/just_void_or_done.hpp>
-#include <unifex/let_done.hpp>
 #include <unifex/let_value_with.hpp>
 #include <unifex/sync_wait.hpp>
 #include <unifex/task.hpp>
@@ -172,18 +170,17 @@ template <class Sender>
 void run_grpc_context_for_sender(agrpc::GrpcContext& grpc_context, Sender&& sender)
 {
     grpc_context.work_started();
-    const auto finally_finish_work = [&grpc_context](auto&& sender)
-    {
-        return unifex::finally(std::forward<decltype(sender)>(sender), unifex::then(unifex::just(),
-                                                                                    [&]
-                                                                                    {
-                                                                                        grpc_context.work_finished();
-                                                                                    }));
-    };
-    unifex::async_scope scope;
-    scope.detached_spawn(finally_finish_work(unifex::then(std::forward<Sender>(sender), [](auto&&...) {})));
-    grpc_context.run();
-    unifex::sync_wait(scope.complete());
+    unifex::sync_wait(
+        unifex::when_all(unifex::finally(std::forward<Sender>(sender), unifex::just_from(
+                                                                           [&]
+                                                                           {
+                                                                               grpc_context.work_finished();
+                                                                           })),
+                         unifex::just_from(
+                             [&]
+                             {
+                                 grpc_context.run();
+                             })));
 }
 
 int main(int argc, const char** argv)

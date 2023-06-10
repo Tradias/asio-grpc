@@ -139,7 +139,7 @@ class HealthCheckChecker : public detail::OperationBase
         : Base(&HealthCheckChecker::do_complete), service_(service)
     {
         auto* const cq = grpc_context().get_server_completion_queue();
-        service_.service_.RequestCheck(&server_context_, &request_, &writer, cq, cq, tag);
+        service_.service_.RequestCheck(&server_context_, &request_, &writer_, cq, cq, tag);
     }
 
     void run() { finish(service_.get_serving_status(request_.service())); }
@@ -168,18 +168,18 @@ class HealthCheckChecker : public detail::OperationBase
     {
         if (detail::ServingStatus::NOT_FOUND == status)
         {
-            writer.FinishWithError(grpc::Status(grpc::StatusCode::NOT_FOUND, "service name unknown"), this);
+            writer_.FinishWithError(grpc::Status(grpc::StatusCode::NOT_FOUND, "service name unknown"), this);
             return;
         }
         grpc::health::v1::HealthCheckResponse response;
         response.set_status(detail::to_grpc_serving_status(status));
-        writer.Finish(response, grpc::Status::OK, this);
+        writer_.Finish(response, grpc::Status::OK, this);
     }
 
     agrpc::HealthCheckService& service_;
     grpc::ServerContext server_context_;
     grpc::health::v1::HealthCheckRequest request_;
-    grpc::ServerAsyncResponseWriter<grpc::health::v1::HealthCheckResponse> writer{&server_context_};
+    grpc::ServerAsyncResponseWriter<grpc::health::v1::HealthCheckResponse> writer_{&server_context_};
 };
 
 template <class Implementation>
