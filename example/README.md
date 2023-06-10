@@ -250,7 +250,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // A simple unary request with unifex coroutines.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/unifex-client.cpp#L37-L41' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-unifex-unary' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/unifex-client.cpp#L36-L40' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-unifex-unary' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: client-side-unifex-server-streaming -->
@@ -260,7 +260,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // A server-streaming request with unifex sender/receiver.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/unifex-client.cpp#L59-L63' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-unifex-server-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/unifex-client.cpp#L58-L62' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-unifex-server-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: client-side-unifex-with-deadline -->
@@ -272,7 +272,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // `grpc::ClientContext::set_deadline` is the preferred way of specifying a timeout.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/unifex-client.cpp#L144-L150' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-unifex-with-deadline' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/unifex-client.cpp#L143-L149' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-unifex-with-deadline' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Server-side
@@ -285,7 +285,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // the example testable.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/unifex-server.cpp#L39-L44' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-unifex-unary' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/unifex-server.cpp#L37-L42' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-unifex-unary' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: server-side-unifex-server-streaming -->
@@ -295,5 +295,5 @@ Click on `snippet source` to jump to the code of an individual example.
 // A simple server-streaming request handler using coroutines.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/unifex-server.cpp#L63-L67' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-unifex-server-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/unifex-server.cpp#L61-L65' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-unifex-server-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
