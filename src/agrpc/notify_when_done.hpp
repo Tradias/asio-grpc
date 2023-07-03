@@ -38,7 +38,7 @@ namespace detail
  *
  * @since 2.3.0
  */
-struct NotfiyWhenDoneFn
+struct NotifyWhenDoneFn
 {
     /**
      * @brief Set notification for rpc completion
@@ -63,7 +63,7 @@ struct NotfiyWhenDoneFn
     auto operator()(agrpc::GrpcContext& grpc_context, grpc::ServerContext& server_context,
                     CompletionToken token = {}) const noexcept(detail::IS_USE_SENDER<CompletionToken>)
     {
-        return detail::async_initiate_sender_implementation<detail::NotfiyWhenDoneSenderImplementation>(
+        return detail::async_initiate_sender_implementation<detail::NotifyWhenDoneSenderImplementation>(
             grpc_context, {}, {server_context}, token);
     }
 };
@@ -72,13 +72,13 @@ struct NotfiyWhenDoneFn
 /**
  * @brief Set notification for server-side rpc completion
  *
- * @link detail::NotfiyWhenDoneFn
+ * @link detail::NotifyWhenDoneFn
  * Server-side function to set notification for rpc completion.
  * @endlink
  *
  * @since 2.3.0
  */
-inline constexpr detail::NotfiyWhenDoneFn notify_when_done{};
+inline constexpr detail::NotifyWhenDoneFn notify_when_done{};
 
 AGRPC_NAMESPACE_END
 

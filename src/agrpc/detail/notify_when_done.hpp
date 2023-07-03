@@ -26,7 +26,7 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-class NotfiyWhenDoneSenderImplementation : public detail::IntrusiveListHook<NotfiyWhenDoneSenderImplementation>
+class NotifyWhenDoneSenderImplementation : public detail::IntrusiveListHook<NotifyWhenDoneSenderImplementation>
 {
   public:
     static constexpr auto TYPE = detail::SenderImplementationType::BOTH;
@@ -35,7 +35,7 @@ class NotfiyWhenDoneSenderImplementation : public detail::IntrusiveListHook<Notf
     using StopFunction = detail::Empty;
     using Initiation = detail::Empty;
 
-    NotfiyWhenDoneSenderImplementation(grpc::ServerContext& server_context) : server_context_(server_context) {}
+    NotifyWhenDoneSenderImplementation(grpc::ServerContext& server_context) : server_context_(server_context) {}
 
     template <class Init>
     void initiate(Init init, const Initiation&)

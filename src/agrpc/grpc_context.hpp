@@ -289,7 +289,7 @@ class GrpcContext
   private:
     using RemoteWorkQueue = detail::AtomicIntrusiveQueue<detail::QueueableOperationBase>;
     using LocalWorkQueue = detail::IntrusiveQueue<detail::QueueableOperationBase>;
-    using NotifyWhenDoneList = detail::IntrusiveList<detail::NotfiyWhenDoneSenderImplementation>;
+    using NotifyWhenDoneList = detail::IntrusiveList<detail::NotifyWhenDoneSenderImplementation>;
 
     friend detail::GrpcContextImplementation;
 

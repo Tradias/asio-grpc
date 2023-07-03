@@ -111,10 +111,10 @@ struct GrpcContextImplementation
     static void add_operation(agrpc::GrpcContext& grpc_context, detail::QueueableOperationBase* op) noexcept;
 
     static void add_notify_when_done_operation(agrpc::GrpcContext& grpc_context,
-                                               detail::NotfiyWhenDoneSenderImplementation* implementation) noexcept;
+                                               detail::NotifyWhenDoneSenderImplementation* implementation) noexcept;
 
     static void remove_notify_when_done_operation(agrpc::GrpcContext& grpc_context,
-                                                  detail::NotfiyWhenDoneSenderImplementation* implementation) noexcept;
+                                                  detail::NotifyWhenDoneSenderImplementation* implementation) noexcept;
 
     static void deallocate_notify_when_done_list(agrpc::GrpcContext& grpc_context);
 

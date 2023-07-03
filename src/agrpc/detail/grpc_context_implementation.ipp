@@ -99,13 +99,13 @@ inline void GrpcContextImplementation::add_operation(agrpc::GrpcContext& grpc_co
 }
 
 inline void GrpcContextImplementation::add_notify_when_done_operation(
-    agrpc::GrpcContext& grpc_context, detail::NotfiyWhenDoneSenderImplementation* implementation) noexcept
+    agrpc::GrpcContext& grpc_context, detail::NotifyWhenDoneSenderImplementation* implementation) noexcept
 {
     grpc_context.notify_when_done_list_.push_back(implementation);
 }
 
 inline void GrpcContextImplementation::remove_notify_when_done_operation(
-    agrpc::GrpcContext& grpc_context, detail::NotfiyWhenDoneSenderImplementation* implementation) noexcept
+    agrpc::GrpcContext& grpc_context, detail::NotifyWhenDoneSenderImplementation* implementation) noexcept
 {
     grpc_context.notify_when_done_list_.remove(implementation);
 }
