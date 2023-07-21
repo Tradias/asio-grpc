@@ -29,15 +29,15 @@ struct Buffer
 {
     using allocator_type = example::OneShotAllocator<std::byte, Capacity>;
 
-    [[nodiscard]] allocator_type allocator() noexcept { return allocator_type{buffer}; }
+    [[nodiscard]] allocator_type allocator() noexcept { return allocator_type{data_}; }
 
     template <class Target>
     [[nodiscard]] auto bind_allocator(Target&& target) noexcept
     {
-        return agrpc::bind_allocator(this->allocator(), std::forward<Target>(target));
+        return agrpc::bind_allocator(allocator(), std::forward<Target>(target));
     }
 
-    alignas(std::max_align_t) std::byte buffer[Capacity];
+    alignas(std::max_align_t) std::byte data_[Capacity];
 };
 }
 

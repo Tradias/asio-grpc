@@ -17,11 +17,12 @@
 #include "example/v1/example_ext.grpc.pb.h"
 #include "helper.hpp"
 #include "scope_guard.hpp"
-#include "when_both.hpp"
+#include "server_shutdown_asio.hpp"
 
 #include <agrpc/asio_grpc.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/co_spawn.hpp>
+#include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/stream_file.hpp>
 #include <boost/asio/write.hpp>
@@ -37,8 +38,7 @@ namespace asio = boost::asio;
 
 // begin-snippet: server-side-file-transfer
 // ---------------------------------------------------
-// Example showing how to transfer files over a streaming RPC. Only a fixed number of dynamic memory allocations are
-// performed.
+// Example showing how to transfer files over a streaming RPC. Stack buffers are used to customize memory allocation.
 // ---------------------------------------------------
 // end-snippet
 
@@ -49,8 +49,8 @@ agrpc::GrpcAwaitable<bool> handle_send_file_request(agrpc::GrpcContext& grpc_con
                                                     const std::string& file_path)
 {
     // These buffers are used to customize allocation of completion handlers.
-    example::Buffer<320> buffer1;
-    example::Buffer<64> buffer2;
+    example::Buffer<300> buffer1;
+    example::Buffer<40> buffer2;
 
     grpc::ServerContext server_context;
     grpc::ServerAsyncReader<google::protobuf::Empty, example::v1::SendFileRequest> responder{&server_context};
@@ -61,20 +61,19 @@ agrpc::GrpcAwaitable<bool> handle_send_file_request(agrpc::GrpcContext& grpc_con
         co_return false;
     }
 
-    example::v1::SendFileRequest first_write_buffer;
+    example::v1::SendFileRequest first_buffer;
 
     // Read the first chunk from the client
-    bool ok = co_await agrpc::read(responder, first_write_buffer, buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
+    bool ok = co_await agrpc::read(responder, first_buffer, buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
 
-    bool finish_write = first_write_buffer.finish_write();
-    if (!ok && !finish_write)
+    if (!ok)
     {
-        // Client hang up or forgot to set finish_write.
+        // Client hung up
         co_await agrpc::finish(responder, {}, grpc::Status::OK, buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
         co_return false;
     }
 
-    example::v1::SendFileRequest second_write_buffer;
+    example::v1::SendFileRequest second_buffer;
 
     // Switch to the io_context and open the file there to avoid blocking the GrpcContext.
     co_await asio::post(buffer1.bind_allocator(asio::bind_executor(io_context, agrpc::GRPC_USE_AWAITABLE)));
@@ -88,60 +87,39 @@ agrpc::GrpcAwaitable<bool> handle_send_file_request(agrpc::GrpcContext& grpc_con
                                  asio::stream_file::write_only | asio::stream_file::create};
 
     // Lambda that writes the first argument to the file and simultaneously waits for the next message from the client.
-    const auto write_and_read = [&](const example::v1::SendFileRequest& message_to_write,
-                                    example::v1::SendFileRequest& message_to_read)
-        -> agrpc::GrpcAwaitable<std::pair<std::pair<boost::system::error_code, std::size_t>, bool>>
+    const auto write_and_read =
+        [&](const example::v1::SendFileRequest& message_to_write, example::v1::SendFileRequest& message_to_read)
     {
-        co_return co_await example::when_both<std::pair<boost::system::error_code, std::size_t>, bool>(
-            [&](auto&& completion_handler)
-            {
-                if (message_to_write.content().empty())
-                {
-                    std::move(completion_handler)(std::pair<boost::system::error_code, std::size_t>{});
-                }
-                else
-                {
-                    // Using bind_executor to avoid switching contexts in case this function completes after
-                    // agrpc::read.
-                    asio::async_write(
-                        file, asio::buffer(message_to_write.content()), asio::transfer_all(),
-                        buffer1.bind_allocator(asio::bind_executor(io_context, std::move(completion_handler))));
-                }
-            },
-            [&](auto&& completion_handler)
-            {
-                if (finish_write)
-                {
-                    std::move(completion_handler)(true);
-                }
-                else
-                {
-                    // Need to bind_executor here because completion_handler is a simple invocable without an associated
-                    // executor.
-                    agrpc::read(
-                        responder, message_to_read,
-                        buffer2.bind_allocator(asio::bind_executor(grpc_context, std::move(completion_handler))));
-                }
-            });
+        return asio::experimental::make_parallel_group(
+                   [&](auto&& token)
+                   {
+                       // Using bind_executor to avoid switching contexts in case this function completes after
+                       // agrpc::read.
+                       return asio::async_write(
+                           file, asio::buffer(message_to_write.content()),
+                           buffer1.bind_allocator(asio::bind_executor(asio::system_executor{}, std::move(token))));
+                   },
+                   [&](auto&& token)
+                   {
+                       // Need to bind_executor here because `token` is a simple invocable without an
+                       // associated executor.
+                       return agrpc::read(responder, message_to_read,
+                                          buffer2.bind_allocator(asio::bind_executor(grpc_context, std::move(token))));
+                   })
+            .async_wait(asio::experimental::wait_for_all(), buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
     };
 
-    ok = (co_await write_and_read(first_write_buffer, second_write_buffer)).second;
-
-    auto current = &second_write_buffer;  // second buffer is set to current
-    auto next = &first_write_buffer;
-    while (ok && !finish_write)
+    auto* current = &first_buffer;
+    auto* next = &second_buffer;
+    while (ok)
     {
-        finish_write = current->finish_write();
-        ok = (co_await write_and_read(*current, *next)).second;
+        auto [completion_order, ec, bytes_written, next_ok] = co_await write_and_read(*current, *next);
+        if (ec)
+        {
+            throw boost::system::system_error(ec);
+        }
+        ok = next_ok;
         std::swap(current, next);
-    }
-
-    file.close();
-
-    if (!ok && !finish_write)
-    {
-        // Client hang up or forgot to set finish_write.
-        std::filesystem::remove(file_path);
     }
 
     co_return co_await agrpc::finish(responder, {}, grpc::Status::OK,
@@ -183,6 +161,7 @@ int main(int argc, const char** argv)
     builder.RegisterService(&service_ext);
     server = builder.BuildAndStart();
     abort_if_not(bool{server});
+    example::ServerShutdown shutdown{*server, grpc_context};
 
     asio::io_context io_context{1};
     std::optional guard{asio::require(io_context.get_executor(), asio::execution::outstanding_work_t::tracked)};
@@ -199,6 +178,7 @@ int main(int argc, const char** argv)
             [&]() -> agrpc::GrpcAwaitable<void>
             {
                 abort_if_not(co_await handle_send_file_request(grpc_context, io_context, service_ext, file_path));
+                shutdown.shutdown();
             },
             &rethrow_first_arg);
 
@@ -222,9 +202,7 @@ int main(int argc, const char** argv)
     catch (const std::exception& e)
     {
         std::cerr << "Exception: " << e.what() << std::endl;
-        server->Shutdown();
         return 1;
     }
-    server->Shutdown();
     return 0;
 }

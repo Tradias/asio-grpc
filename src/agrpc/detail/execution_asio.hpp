@@ -45,14 +45,16 @@ class CancellationSlotAsStopToken;
 
 namespace exec
 {
-inline constexpr struct GetSchedulerFn
+struct GetSchedulerFn
 {
     template <class Object>
     decltype(auto) operator()(const Object& object) const
     {
         return asio::get_associated_executor(object);
     }
-} get_scheduler{};
+};
+
+inline constexpr GetSchedulerFn get_scheduler{};
 
 template <class Object>
 decltype(auto) get_executor(const Object& object)

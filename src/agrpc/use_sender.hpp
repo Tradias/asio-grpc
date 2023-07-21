@@ -72,8 +72,8 @@ struct UseSender
     [[noreturn]] operator detail::UseSender() const
     {
         static_assert(AlwaysFalse,
-                      "Certain functions require an explicitly provided token, for example created by "
-                      "`agrpc::use_sender(grpc_context)`, as the last argument.");
+                      "You probably tried to use a free functions like `agrpc::read` without providing a completion "
+                      "token. Create one using `agrpc::use_sender(grpc_context)` and pass it as the last argument.");
     }
 };
 

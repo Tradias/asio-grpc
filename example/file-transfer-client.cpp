@@ -16,11 +16,11 @@
 #include "example/v1/example_ext.grpc.pb.h"
 #include "helper.hpp"
 #include "scope_guard.hpp"
-#include "when_both.hpp"
 
 #include <agrpc/asio_grpc.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/co_spawn.hpp>
+#include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/stream_file.hpp>
 #include <grpcpp/client_context.h>
@@ -35,8 +35,7 @@ namespace asio = boost::asio;
 
 // begin-snippet: client-side-file-transfer
 // ---------------------------------------------------
-// Example showing how to transfer files over a streaming RPC. Only a fixed number of dynamic memory allocations are
-// performed.
+// Example showing how to transfer files over a streaming RPC. Stack buffers are used to customize memory allocation.
 // ---------------------------------------------------
 // end-snippet
 
@@ -84,7 +83,7 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
     // async_read_some completes. We do not need to switch because rpc::write is thread-safe.
     auto bytes_read = co_await file.async_read_some(
         asio::buffer(*first_read_buffer.mutable_content()),
-        buffer1.bind_allocator(asio::bind_executor(io_context, agrpc::GRPC_USE_AWAITABLE)));
+        buffer1.bind_allocator(asio::bind_executor(asio::system_executor{}, agrpc::GRPC_USE_AWAITABLE)));
 
     bool is_eof{false};
 
@@ -100,27 +99,28 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
         // Prepare for the next read from the file.
         next->mutable_content()->resize(CHUNK_SIZE);
 
-        auto [ec_and_bytes_read, ok] =
-            co_await example::when_both<std::pair<boost::system::error_code, std::size_t>, bool>(
-                [&](auto&& completion_handler)
+        auto [completion_order, ec, next_bytes_read, ok] =
+            co_await asio::experimental::make_parallel_group(
+                [&](auto&& token)
                 {
                     // Again using bind_executor to avoid switching contexts in case this function completes after
                     // rpc::write.
-                    file.async_read_some(
+                    return file.async_read_some(
                         asio::buffer(*next->mutable_content()),
-                        buffer1.bind_allocator(asio::bind_executor(io_context, std::move(completion_handler))));
+                        buffer1.bind_allocator(asio::bind_executor(asio::system_executor{}, std::move(token))));
                 },
-                [&](auto&& completion_handler)
+                [&](auto&& token)
                 {
-                    rpc.write(*current, buffer2.bind_allocator(std::move(completion_handler)));
-                });
+                    return rpc.write(*current, buffer2.bind_allocator(std::move(token)));
+                })
+                .async_wait(asio::experimental::wait_for_all(), buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
         if (!ok)
         {
             // Lost connection to server, no reason to finish this RPC.
             co_return false;
         }
-        is_eof = asio::error::eof == ec_and_bytes_read.first;
-        bytes_read = ec_and_bytes_read.second;
+        is_eof = asio::error::eof == ec;
+        bytes_read = next_bytes_read;
 
         std::swap(current, next);
     }
@@ -129,7 +129,6 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
 
     // Signal that we are done sending chunks
     current->mutable_content()->resize(bytes_read);
-    current->set_finish_write(true);
     co_await rpc.write(*current, grpc::WriteOptions{}.set_last_message(),
                        buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
 

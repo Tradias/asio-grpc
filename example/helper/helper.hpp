@@ -27,7 +27,7 @@ inline void abort_if_not_impl(bool condition, const char* condition_string, cons
     }
 }
 
-#define abort_if_not(condition) abort_if_not_impl((condition), #condition, __FILE__, __LINE__)
+#define abort_if_not(condition) ::abort_if_not_impl((condition), #condition, __FILE__, __LINE__)
 
 template <class... Args>
 void silence_unused(Args&&... args)

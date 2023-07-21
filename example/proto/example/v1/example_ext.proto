@@ -31,6 +31,5 @@ message SlowRequest {
 }
 
 message SendFileRequest {
-  bytes content = 2;
-  bool finish_write = 3;
+  bytes content = 1;
 }

@@ -46,7 +46,7 @@ AGRPC_NAMESPACE_CPP20_BEGIN()
  * This function helps to ensure that there are enough outstanding calls to `request` to match incoming RPCs. It takes a
  * RPC, a Service, a RequestHandler and a CompletionToken. The RequestHandler determines what to do with a client
  * request, it could e.g. spawn a new coroutine to process it. It must also have an associated executor that refers to a
- * `agrpc::GrpcContext`. When the client makes a request the RequestHandler is invoked with a
+ * `agrpc::GrpcContext`. When the client makes a request, the RequestHandler is invoked with a
  * `agrpc::RepeatedlyRequestContext` - a move-only type that provides a stable address to the `grpc::ServerContext`, the
  * request (if any) and the responder that were used when requesting the RPC. It must be kept alive until the RPC is
  * finished. The RequestHandler's associated allocator (or the queried allocator from its associated executor [until
