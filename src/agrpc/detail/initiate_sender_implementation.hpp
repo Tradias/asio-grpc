@@ -16,9 +16,7 @@
 #define AGRPC_DETAIL_INITIATE_SENDER_IMPLEMENTATION_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
-#include <agrpc/detail/async_initiate.hpp>
 #include <agrpc/detail/completion_handler_receiver.hpp>
-#include <agrpc/detail/conditional_sender.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/work_tracking_completion_handler.hpp>
 #include <agrpc/grpc_context.hpp>

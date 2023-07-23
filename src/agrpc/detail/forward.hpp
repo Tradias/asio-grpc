@@ -48,9 +48,6 @@ class AtomicIntrusiveQueue;
 
 struct BasicSenderAccess;
 
-template <class Sender, class Receiver, class... CompletionArgs>
-class ConditionalSenderOperationState;
-
 struct RepeatedlyRequestContextAccess;
 
 class GenericRPCContext;
@@ -70,15 +67,7 @@ template <class Deadline, class Executor>
 struct MoveAlarmSenderImplementation;
 
 template <class Responder, class Executor>
-class RPCClientClientStreamingBase;
-
-template <class Responder, class Executor>
-class RPCClientServerStreamingBase;
-
-template <class Responder, class Executor>
-class RPCBidirectionalStreamingBase;
-
-struct RPCCancellationFunction;
+class ClientRPCBidiStreamingBase;
 
 AGRPC_NAMESPACE_CPP20_BEGIN()
 

@@ -90,7 +90,6 @@ if(ASIO_GRPC_BUILD_TESTS AND ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/buffer_allocator.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/cancel_safe.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/completion_handler_receiver.hpp"
-                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/conditional_sender.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/config.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/coroutine_traits.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/default_completion_token.hpp"

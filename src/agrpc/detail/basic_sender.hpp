@@ -402,9 +402,6 @@ class BasicSenderOperationState
 
     friend detail::BasicSender<Implementation>;
 
-    template <class, class, class...>
-    friend class detail::ConditionalSenderOperationState;
-
     template <class R, class Impl>
     BasicSenderOperationState(R&& receiver, agrpc::GrpcContext& grpc_context, const Initiation& initiation,
                               Impl&& implementation)

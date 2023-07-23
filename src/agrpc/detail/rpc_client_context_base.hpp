@@ -24,9 +24,27 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+/**
+ * @brief (experimental) RPC ClientContext base
+ *
+ * @since 2.6.0
+ */
 template <class Responder>
 class AutoCancelClientContextAndResponder
 {
+  public:
+    /**
+     * @brief Get the underlying `grpc::ClientContext`
+     */
+    [[nodiscard]] grpc::ClientContext& context() { return client_context_; }
+
+    /**
+     * @brief Cancel this RPC
+     *
+     * Effectively calls `context().TryCancel()`.
+     */
+    void cancel() noexcept { client_context_.TryCancel(); }
+
   protected:
     AutoCancelClientContextAndResponder() = default;
 
@@ -56,13 +74,9 @@ class AutoCancelClientContextAndResponder
 
     AutoCancelClientContextAndResponder& operator=(AutoCancelClientContextAndResponder&& other) = delete;
 
-    void cancel() noexcept { client_context_.TryCancel(); }
-
     [[nodiscard]] Responder& responder() noexcept { return *responder_; }
 
     void set_responder(std::unique_ptr<Responder> responder) noexcept { responder_.set(responder.release()); }
-
-    [[nodiscard]] grpc::ClientContext& context() { return client_context_; }
 
     [[nodiscard]] bool is_finished() const noexcept { return responder_.template has_bit<0>(); }
 
@@ -73,8 +87,6 @@ class AutoCancelClientContextAndResponder
     void set_writes_done() noexcept { responder_.template set_bit<1>(); }
 
   private:
-    friend detail::RPCCancellationFunction;
-
     grpc::ClientContext client_context_{};
     detail::AtomicTaggedPtr<Responder> responder_{};
 };
