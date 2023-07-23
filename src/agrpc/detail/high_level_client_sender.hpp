@@ -32,20 +32,23 @@ AGRPC_NAMESPACE_BEGIN()
  * This is the main entrypoint into the high-level client API.
  *
  * @see
- * @c agrpc::RPC<PrepareAsync,Executor,agrpc::RPCType::CLIENT_UNARY> <br>
- * @c agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC,Executor,agrpc::RPCType::CLIENT_UNARY> <br>
- * @c agrpc::RPC<PrepareAsync,Executor,agrpc::RPCType::CLIENT_CLIENT_STREAMING> <br>
- * @c agrpc::RPC<PrepareAsync,Executor,agrpc::RPCType::CLIENT_SERVER_STREAMING> <br>
- * @c agrpc::RPC<PrepareAsync,Executor,agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING> <br>
- * @c agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC,Executor,agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING> <br>
+ * @c agrpc::RPC<PrepareAsync,Executor> <br>
+ * @c agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC,Executor> <br>
+ * @c agrpc::RPC<PrepareAsync,Executor> <br>
+ * @c agrpc::RPC<PrepareAsync,Executor> <br>
+ * @c agrpc::RPC<PrepareAsync,Executor> <br>
+ * @c agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC,Executor> <br>
  *
  * @since 2.1.0
  */
-template <auto PrepareAsync, class Executor = agrpc::GrpcExecutor, agrpc::RPCType = detail::RPC_TYPE<PrepareAsync>>
+template <auto PrepareAsync, class Executor = agrpc::GrpcExecutor>
 class RPC;
 
 namespace detail
 {
+template <auto PrepareAsync, class Executor>
+class RPCClientServerStreaming;
+
 struct ClientContextCancellationFunction
 {
 #if !defined(AGRPC_UNIFEX)
@@ -157,7 +160,7 @@ template <class Stub, class Request, class Response, template <class> class Resp
           class Executor>
 struct ClientStreamingRequestSenderInitiation<PrepareAsync, Executor>
 {
-    using RPC = agrpc::RPC<PrepareAsync, Executor>;
+    using RPC = detail::RPCClientServerStreaming<PrepareAsync, Executor>;
 
     RPC& rpc_;
 

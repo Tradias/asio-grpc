@@ -32,6 +32,11 @@ enum class RPCType
     CLIENT_UNARY,
 
     /**
+     * @brief Client-side generic unary RPC
+     */
+    CLIENT_GENERIC_UNARY,
+
+    /**
      * @brief Client-side server-streaming RPC
      */
     CLIENT_SERVER_STREAMING,
@@ -44,7 +49,12 @@ enum class RPCType
     /**
      * @brief Client-side bidirectional-streaming RPC
      */
-    CLIENT_BIDIRECTIONAL_STREAMING
+    CLIENT_BIDIRECTIONAL_STREAMING,
+
+    /**
+     * @brief Client-side generic streaming RPC
+     */
+    CLIENT_GENERIC_STREAMING
 };
 
 AGRPC_NAMESPACE_END

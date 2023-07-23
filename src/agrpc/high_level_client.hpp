@@ -560,9 +560,11 @@ inline constexpr auto CLIENT_GENERIC_STREAMING_RPC = detail::GenericRPCType::CLI
  */
 template <class StubT, class RequestT, class ResponseT, template <class> class ResponderT,
           detail::ClientUnaryRequest<StubT, RequestT, ResponderT<ResponseT>> PrepareAsync, class Executor>
-class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
+class RPC<PrepareAsync, Executor>
 {
   public:
+    static constexpr agrpc::RPCType TYPE = agrpc::RPCType::CLIENT_UNARY;
+
     /**
      * @brief The stub type
      */
@@ -592,7 +594,7 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
         /**
          * @brief The RPC type when rebound to the specified executor
          */
-        using other = RPC<PrepareAsync, OtherExecutor, agrpc::RPCType::CLIENT_UNARY>;
+        using other = RPC<PrepareAsync, OtherExecutor>;
     };
 
     /**
@@ -676,9 +678,11 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
  * @since 2.1.0
  */
 template <class Executor>
-class RPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor, agrpc::RPCType::CLIENT_UNARY>
+class RPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor>
 {
   public:
+    static constexpr agrpc::RPCType TYPE = agrpc::RPCType::CLIENT_GENERIC_UNARY;
+
     /**
      * @brief The stub type
      */
@@ -708,7 +712,7 @@ class RPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor, agrpc::RPCType::CLIENT_UNAR
         /**
          * @brief The RPC type when rebound to the specified executor
          */
-        using other = RPC<agrpc::CLIENT_GENERIC_UNARY_RPC, OtherExecutor, agrpc::RPCType::CLIENT_UNARY>;
+        using other = RPC<agrpc::CLIENT_GENERIC_UNARY_RPC, OtherExecutor>;
     };
 
     /**
@@ -782,10 +786,11 @@ class RPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor, agrpc::RPCType::CLIENT_UNAR
 template <class StubT, class RequestT, class ResponseT, template <class> class ResponderT,
           detail::PrepareAsyncClientClientStreamingRequest<StubT, ResponderT<RequestT>, ResponseT> PrepareAsync,
           class Executor>
-class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
-    : public detail::RPCClientClientStreamingBase<ResponderT<RequestT>, Executor>
+class RPC<PrepareAsync, Executor> : public detail::RPCClientClientStreamingBase<ResponderT<RequestT>, Executor>
 {
   public:
+    static constexpr agrpc::RPCType TYPE = agrpc::RPCType::CLIENT_CLIENT_STREAMING;
+
     /**
      * @brief The stub type
      */
@@ -805,7 +810,7 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
         /**
          * @brief The RPC type when rebound to the specified executor
          */
-        using other = RPC<PrepareAsync, OtherExecutor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>;
+        using other = RPC<PrepareAsync, OtherExecutor>;
     };
 
     /**
@@ -871,6 +876,8 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
     friend detail::ClientStreamingRequestSenderImplementation<PrepareAsync, Executor>;
 };
 
+namespace detail
+{
 /**
  * @brief (experimental) I/O object for client-side server-streaming RPCs
  *
@@ -890,10 +897,12 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
 template <class StubT, class RequestT, class ResponseT, template <class> class ResponderT,
           detail::PrepareAsyncClientServerStreamingRequest<StubT, RequestT, ResponderT<ResponseT>> PrepareAsync,
           class Executor>
-class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>
+class RPCClientServerStreaming<PrepareAsync, Executor>
     : public detail::RPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
 {
   public:
+    static constexpr agrpc::RPCType TYPE = agrpc::RPCType::CLIENT_SERVER_STREAMING;
+
     /**
      * @brief The stub type
      */
@@ -913,7 +922,7 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>
         /**
          * @brief The RPC type when rebound to the specified executor
          */
-        using other = RPC<PrepareAsync, OtherExecutor, agrpc::RPCType::CLIENT_SERVER_STREAMING>;
+        using other = RPC<PrepareAsync, OtherExecutor>;
     };
 
     /**
@@ -975,6 +984,25 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>
     friend detail::ClientStreamingRequestSenderInitiation<PrepareAsync, Executor>;
     friend detail::ClientStreamingRequestSenderImplementation<PrepareAsync, Executor>;
 };
+}
+
+template <class StubT, class RequestT, class ResponseT,
+          std::unique_ptr<grpc::ClientAsyncReader<ResponseT>> (StubT::*PrepareAsync)(
+              grpc::ClientContext*, const RequestT&, grpc::CompletionQueue*),
+          class Executor>
+class RPC<PrepareAsync, Executor> : public detail::RPCClientServerStreaming<PrepareAsync, Executor>
+{
+    using detail::RPCClientServerStreaming<PrepareAsync, Executor>::RPCClientServerStreaming;
+};
+
+template <class StubT, class RequestT, class ResponseT,
+          std::unique_ptr<grpc::ClientAsyncReaderInterface<ResponseT>> (StubT::*PrepareAsync)(
+              grpc::ClientContext*, const RequestT&, grpc::CompletionQueue*),
+          class Executor>
+class RPC<PrepareAsync, Executor> : public detail::RPCClientServerStreaming<PrepareAsync, Executor>
+{
+    using detail::RPCClientServerStreaming<PrepareAsync, Executor>::RPCClientServerStreaming;
+};
 
 /**
  * @brief (experimental) I/O object for client-side bidirectional-streaming RPCs
@@ -995,10 +1023,12 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>
 template <class StubT, class RequestT, class ResponseT, template <class, class> class ResponderT,
           detail::PrepareAsyncClientBidirectionalStreamingRequest<StubT, ResponderT<RequestT, ResponseT>> PrepareAsync,
           class Executor>
-class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>
+class RPC<PrepareAsync, Executor>
     : public detail::RPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
 {
   public:
+    static constexpr agrpc::RPCType TYPE = agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING;
+
     /**
      * @brief The stub type
      */
@@ -1013,7 +1043,7 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING
         /**
          * @brief The RPC type when rebound to the specified executor
          */
-        using other = RPC<PrepareAsync, OtherExecutor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>;
+        using other = RPC<PrepareAsync, OtherExecutor>;
     };
 
     /**
@@ -1090,10 +1120,12 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING
  * @since 2.1.0
  */
 template <class Executor>
-class RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>
+class RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>
     : public detail::RPCBidirectionalStreamingBase<grpc::GenericClientAsyncReaderWriter, Executor>
 {
   public:
+    static constexpr agrpc::RPCType TYPE = agrpc::RPCType::CLIENT_GENERIC_STREAMING;
+
     /**
      * @brief The stub type
      */
@@ -1108,8 +1140,7 @@ class RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor, agrpc::RPCType::CLIENT_
         /**
          * @brief The RPC type when rebound to the specified executor
          */
-        using other =
-            RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, OtherExecutor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>;
+        using other = RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, OtherExecutor>;
     };
 
     /**

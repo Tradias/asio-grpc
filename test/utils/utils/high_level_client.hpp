@@ -43,16 +43,16 @@ using BidirectionalStreamingInterfaceRPC =
 using GenericUnaryRPC = agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC>;
 using GenericStreamingRPC = agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC>;
 
-template <class RPC>
+template <class RPC, auto Type = RPC::TYPE>
 struct IntrospectRPC;
 
 template <auto PrepareAsync, class Executor>
-struct IntrospectRPC<agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>>
+struct IntrospectRPC<agrpc::RPC<PrepareAsync, Executor>, agrpc::RPCType::CLIENT_UNARY>
 {
     static constexpr auto CLIENT_REQUEST = PrepareAsync;
     static constexpr auto SERVER_REQUEST = &test::v1::Test::AsyncService::RequestUnary;
 
-    using RPC = agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>;
+    using RPC = agrpc::RPC<PrepareAsync, Executor>;
 
     template <class ExecOrContext, class CompletionToken>
     static auto request(ExecOrContext&& executor, typename RPC::Stub& stub, grpc::GenericStub&,
@@ -64,7 +64,7 @@ struct IntrospectRPC<agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_U
 };
 
 template <class Executor>
-struct IntrospectRPC<agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor>>
+struct IntrospectRPC<agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor>, agrpc::RPCType::CLIENT_GENERIC_UNARY>
 {
     static constexpr auto CLIENT_REQUEST = agrpc::CLIENT_GENERIC_UNARY_RPC;
     static constexpr auto SERVER_REQUEST = &test::v1::Test::AsyncService::RequestUnary;
@@ -81,12 +81,12 @@ struct IntrospectRPC<agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor>>
 };
 
 template <auto PrepareAsync, class Executor>
-struct IntrospectRPC<agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>>
+struct IntrospectRPC<agrpc::RPC<PrepareAsync, Executor>, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
 {
     static constexpr auto CLIENT_REQUEST = PrepareAsync;
     static constexpr auto SERVER_REQUEST = &test::v1::Test::AsyncService::RequestClientStreaming;
 
-    using RPC = agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>;
+    using RPC = agrpc::RPC<PrepareAsync, Executor>;
 
     template <class CompletionToken>
     static auto start(RPC& rpc, typename RPC::Stub& stub, grpc::GenericStub&, const typename RPC::Request&,
@@ -97,12 +97,12 @@ struct IntrospectRPC<agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_C
 };
 
 template <auto PrepareAsync, class Executor>
-struct IntrospectRPC<agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>>
+struct IntrospectRPC<agrpc::RPC<PrepareAsync, Executor>, agrpc::RPCType::CLIENT_SERVER_STREAMING>
 {
     static constexpr auto CLIENT_REQUEST = PrepareAsync;
     static constexpr auto SERVER_REQUEST = &test::v1::Test::AsyncService::RequestServerStreaming;
 
-    using RPC = agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>;
+    using RPC = agrpc::RPC<PrepareAsync, Executor>;
 
     template <class CompletionToken>
     static auto start(RPC& rpc, typename RPC::Stub& stub, grpc::GenericStub&, const typename RPC::Request& request,
@@ -113,12 +113,12 @@ struct IntrospectRPC<agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_S
 };
 
 template <auto PrepareAsync, class Executor>
-struct IntrospectRPC<agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>>
+struct IntrospectRPC<agrpc::RPC<PrepareAsync, Executor>, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>
 {
     static constexpr auto CLIENT_REQUEST = PrepareAsync;
     static constexpr auto SERVER_REQUEST = &test::v1::Test::AsyncService::RequestBidirectionalStreaming;
 
-    using RPC = agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>;
+    using RPC = agrpc::RPC<PrepareAsync, Executor>;
 
     template <class CompletionToken>
     static auto start(RPC& rpc, typename RPC::Stub& stub, grpc::GenericStub&, const typename RPC::Request&,
@@ -129,7 +129,8 @@ struct IntrospectRPC<agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_B
 };
 
 template <class Executor>
-struct IntrospectRPC<agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>>
+struct IntrospectRPC<agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>,
+                     agrpc::RPCType::CLIENT_GENERIC_STREAMING>
 {
     static constexpr auto CLIENT_REQUEST = agrpc::CLIENT_GENERIC_STREAMING_RPC;
     static constexpr auto SERVER_REQUEST = &test::v1::Test::AsyncService::RequestBidirectionalStreaming;

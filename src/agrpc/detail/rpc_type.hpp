@@ -67,31 +67,6 @@ enum class GenericRPCType
     CLIENT_STREAMING
 };
 
-template <auto PrepareAsync>
-inline constexpr auto RPC_TYPE = agrpc::RPCType::CLIENT_UNARY;
-
-template <class Stub, class Request, class Response,
-          std::unique_ptr<grpc::ClientAsyncReader<Response>> (Stub::*PrepareAsync)(grpc::ClientContext*, const Request&,
-                                                                                   grpc::CompletionQueue*)>
-inline constexpr auto RPC_TYPE<PrepareAsync> = agrpc::RPCType::CLIENT_SERVER_STREAMING;
-
-template <class Stub, class Request, class Response,
-          std::unique_ptr<grpc::ClientAsyncReaderInterface<Response>> (Stub::*PrepareAsync)(
-              grpc::ClientContext*, const Request&, grpc::CompletionQueue*)>
-inline constexpr auto RPC_TYPE<PrepareAsync> = agrpc::RPCType::CLIENT_SERVER_STREAMING;
-
-template <class Stub, class Request, class Response, template <class> class Writer,
-          detail::PrepareAsyncClientClientStreamingRequest<Stub, Writer<Request>, Response> PrepareAsync>
-inline constexpr auto RPC_TYPE<PrepareAsync> = agrpc::RPCType::CLIENT_CLIENT_STREAMING;
-
-template <class Stub, class Request, class Response, template <class, class> class ReaderWriter,
-          detail::PrepareAsyncClientBidirectionalStreamingRequest<Stub, ReaderWriter<Request, Response>> PrepareAsync>
-inline constexpr auto RPC_TYPE<PrepareAsync> = agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING;
-
-template <>
-inline constexpr auto RPC_TYPE<detail::GenericRPCType::CLIENT_STREAMING> =
-    agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING;
-
 struct GenericRPCMarker
 {
 };
