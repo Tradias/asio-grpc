@@ -123,11 +123,10 @@ Click on `snippet source` to jump to the code of an individual example.
 <a id='snippet-client-side-file-transfer'></a>
 ```cpp
 // ---------------------------------------------------
-// Example showing how to transfer files over a streaming RPC. Only a fixed number of dynamic memory allocations are
-// performed.
+// Example showing how to transfer files over a streaming RPC. Stack buffers are used to customize memory allocation.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/file-transfer-client.cpp#L36-L41' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-file-transfer' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/file-transfer-client.cpp#L36-L40' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-file-transfer' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Asio server-side
@@ -232,11 +231,10 @@ Click on `snippet source` to jump to the code of an individual example.
 <a id='snippet-server-side-file-transfer'></a>
 ```cpp
 // ---------------------------------------------------
-// Example showing how to transfer files over a streaming RPC. Only a fixed number of dynamic memory allocations are
-// performed.
+// Example showing how to transfer files over a streaming RPC. Stack buffers are used to customize memory allocation.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/file-transfer-server.cpp#L38-L43' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-file-transfer' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/file-transfer-server.cpp#L39-L43' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-file-transfer' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Libunifex
