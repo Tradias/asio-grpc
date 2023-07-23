@@ -56,6 +56,7 @@ asio::awaitable<void> handle_client_streaming_request(
     } while (read_ok);
 
     example::v1::Response response;
+    response.set_integer(42);
     co_await agrpc::finish(reader, response, grpc::Status::OK);
 
     // Or finish with an error

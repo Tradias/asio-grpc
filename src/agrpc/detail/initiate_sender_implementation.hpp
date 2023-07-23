@@ -46,30 +46,6 @@ struct SubmitSenderToWorkTrackingCompletionHandler
 
     agrpc::GrpcContext& grpc_context_;
 };
-
-struct ConditionalSubmitSenderToWorkTrackingCompletionHandler
-{
-    template <class CompletionHandler, class Implementation, class... Args>
-    void operator()(CompletionHandler&& completion_handler,
-                    const typename detail::RemoveCrefT<Implementation>::Initiation& initiation,
-                    Implementation&& implementation, bool condition, Args&&... args)
-    {
-        using Signature = typename detail::RemoveCrefT<Implementation>::Signature;
-        if (condition)
-        {
-            detail::SubmitSenderToWorkTrackingCompletionHandler{grpc_context_}(
-                static_cast<CompletionHandler&&>(completion_handler), initiation,
-                static_cast<Implementation&&>(implementation));
-        }
-        else
-        {
-            detail::InitiateImmediateCompletion<Signature>{}(static_cast<CompletionHandler&&>(completion_handler),
-                                                             static_cast<Args&&>(args)...);
-        }
-    }
-
-    agrpc::GrpcContext& grpc_context_;
-};
 #endif
 
 template <class Implementation, class CompletionToken>
@@ -89,30 +65,6 @@ auto async_initiate_sender_implementation(agrpc::GrpcContext& grpc_context,
     {
         return detail::BasicSenderAccess::create<Implementation>(grpc_context, initiation,
                                                                  static_cast<Implementation&&>(implementation));
-    }
-}
-
-template <class Implementation, class CompletionToken, class... Args>
-auto async_initiate_conditional_sender_implementation(agrpc::GrpcContext& grpc_context,
-                                                      const typename Implementation::Initiation& initiation,
-                                                      Implementation&& implementation, bool condition,
-                                                      [[maybe_unused]] CompletionToken& token, Args&&... args)
-{
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    if constexpr (!std::is_same_v<agrpc::UseSender, CompletionToken>)
-    {
-        using Signature = typename Implementation::Signature;
-        return asio::async_initiate<CompletionToken, Signature>(
-            detail::ConditionalSubmitSenderToWorkTrackingCompletionHandler{grpc_context}, token, initiation,
-            static_cast<Implementation&&>(implementation), condition, static_cast<Args&&>(args)...);
-    }
-    else
-#endif
-    {
-        return detail::ConditionalSenderAccess::create(
-            detail::BasicSenderAccess::create<Implementation>(grpc_context, initiation,
-                                                              static_cast<Implementation&&>(implementation)),
-            condition, static_cast<Args&&>(args)...);
     }
 }
 }

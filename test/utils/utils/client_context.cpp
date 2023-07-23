@@ -23,6 +23,11 @@
 
 namespace test
 {
+void set_default_deadline(grpc::ClientContext& client_context)
+{
+    client_context.set_deadline(test::five_seconds_from_now());
+}
+
 std::unique_ptr<grpc::ClientContext> create_client_context(std::chrono::system_clock::time_point deadline)
 {
     auto client_context = std::make_unique<grpc::ClientContext>();

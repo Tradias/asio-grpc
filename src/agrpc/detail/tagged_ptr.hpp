@@ -48,6 +48,8 @@ class BasicTaggedPtr
 
     auto clear() noexcept { return detail::exchange(ptr_, std::uintptr_t{}); }
 
+    void set(T* new_ptr) noexcept { ptr_ = reinterpret_cast<std::uintptr_t>(new_ptr) | (ptr_ & ~PTR_MASK); }
+
     [[nodiscard]] T* get() const noexcept { return reinterpret_cast<T*>(ptr_ & PTR_MASK); }
 
     [[nodiscard]] bool is_null() const noexcept { return (ptr_ & PTR_MASK) == std::uintptr_t{}; }

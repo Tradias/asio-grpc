@@ -682,19 +682,16 @@ TEST_CASE_FIXTURE(UnifexHighLevelTest, "unifex high-level client BidirectionalSt
         }(),
         [&]() -> unifex::task<void>
         {
-            auto rpc = co_await test::BidirectionalStreamingRPC::request(grpc_context, *stub, client_context);
+            auto rpc = create_rpc();
+            co_await rpc.start(*stub);
             request.set_integer(42);
             CHECK(co_await rpc.write(request));
             CHECK(co_await rpc.writes_done());
             CHECK(co_await rpc.read(response));
             CHECK_EQ(1, response.integer());
-            CHECK(co_await rpc.writes_done());
             CHECK_FALSE(co_await rpc.read(response));
             CHECK_EQ(1, response.integer());
-            CHECK(co_await rpc.finish());
-            CHECK_EQ(grpc::StatusCode::OK, rpc.status_code());
-            CHECK(co_await rpc.finish());
-            CHECK_EQ(grpc::StatusCode::OK, rpc.status_code());
+            CHECK_EQ(grpc::StatusCode::OK, (co_await rpc.finish()).error_code());
         }());
 }
 
@@ -712,9 +709,10 @@ TEST_CASE_FIXTURE(UnifexHighLevelTest, "unifex high-level client can be canelled
         }(),
         [&]() -> unifex::task<void>
         {
-            auto rpc = co_await request_rpc(use_sender());
-            CHECK_FALSE(co_await (rpc.finish() | with_deadline(test::now())));
-            CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.status_code());
+            auto rpc = create_rpc();
+            co_await start_rpc(rpc, use_sender());
+            const auto status = co_await (rpc.finish() | with_deadline(test::now()));
+            CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
             server_shutdown.initiate();
         }());
     CHECK_LT(test::now(), not_to_exceed);

@@ -38,7 +38,6 @@ struct HealthCheckServiceTest : test::GrpcContextTest
 
     std::shared_ptr<grpc::Channel> channel;
     std::unique_ptr<grpc_health::Health::Stub> stub;
-    grpc::ClientContext client_context;
     grpc_health::HealthCheckRequest request;
     grpc_health::HealthCheckResponse response;
     std::optional<test::GrpcContextWorkTrackingExecutor> guard;
@@ -63,7 +62,6 @@ struct HealthCheckServiceTest : test::GrpcContextTest
         }
         channel = grpc::CreateChannel("127.0.0.1:" + port, grpc::InsecureChannelCredentials());
         stub = grpc_health::Health::NewStub(channel);
-        client_context.set_deadline(test::five_seconds_from_now());
     }
 
     ~HealthCheckServiceTest() { server->Shutdown(); }
@@ -83,11 +81,12 @@ struct HealthCheckServiceTest : test::GrpcContextTest
         run(
             [&](const asio::yield_context& yield)
             {
-                CHECK(CheckRPC::request(grpc_context, *stub, client_context, request, response, yield).ok());
+                auto client_context = test::create_client_context();
+                CHECK(CheckRPC::request(grpc_context, *stub, *client_context, request, response, yield).ok());
                 CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_SERVING, response.status());
                 server->GetHealthCheckService()->SetServingStatus(false);
-                grpc::ClientContext client_context2;
-                CHECK(CheckRPC::request(grpc_context, *stub, client_context2, request, response, yield).ok());
+                auto client_context2 = test::create_client_context();
+                CHECK(CheckRPC::request(grpc_context, *stub, *client_context2, request, response, yield).ok());
                 CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_NOT_SERVING, response.status());
             });
     }
@@ -97,8 +96,9 @@ struct HealthCheckServiceTest : test::GrpcContextTest
         run(
             [&](const asio::yield_context& yield)
             {
+                auto client_context = test::create_client_context();
                 request.set_service("non-existent");
-                const auto status = CheckRPC::request(grpc_context, *stub, client_context, request, response, yield);
+                const auto status = CheckRPC::request(grpc_context, *stub, *client_context, request, response, yield);
                 CHECK_EQ(grpc::StatusCode::NOT_FOUND, status.error_code());
                 CHECK_EQ("service name unknown", status.error_message());
             });
@@ -106,12 +106,12 @@ struct HealthCheckServiceTest : test::GrpcContextTest
 
     void test_watch_default_service_and_change_serving_status()
     {
-        client_context.set_deadline(test::one_second_from_now());
         run(
             [&](const asio::yield_context& yield)
             {
-                auto rpc = WatchRPC::request(grpc_context, *stub, client_context, request, yield);
-                CHECK(rpc.ok());
+                WatchRPC rpc{grpc_context};
+                rpc.context().set_deadline(test::one_second_from_now());
+                CHECK(rpc.start(*stub, request, yield));
                 CHECK(rpc.read(response, yield));
                 CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_SERVING, response.status());
                 server->GetHealthCheckService()->SetServingStatus(false);
@@ -133,9 +133,9 @@ struct HealthCheckServiceTest : test::GrpcContextTest
         run(
             [&](const asio::yield_context& yield)
             {
+                WatchRPC rpc{grpc_context, test::set_default_deadline};
                 request.set_service("non-existent");
-                auto rpc = WatchRPC::request(grpc_context, *stub, client_context, request, yield);
-                CHECK(rpc.ok());
+                CHECK(rpc.start(*stub, request, yield));
                 CHECK(rpc.read(response, yield));
                 CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_SERVICE_UNKNOWN, response.status());
                 if (add_service)
@@ -144,7 +144,7 @@ struct HealthCheckServiceTest : test::GrpcContextTest
                     CHECK(rpc.read(response, yield));
                     CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_SERVING, response.status());
                 }
-                client_context.TryCancel();
+                rpc.cancel();
                 rpc.read(response, yield);
                 // wait for the server to receive the cancellation
                 wait(alarm, test::hundred_milliseconds_from_now(), test::NoOp{});
@@ -158,7 +158,8 @@ struct HealthCheckServiceTest : test::GrpcContextTest
         run(
             [&](const asio::yield_context& yield)
             {
-                auto rpc = WatchRPC::request(grpc_context, *stub, client_context, request, yield);
+                WatchRPC rpc{grpc_context, test::set_default_deadline};
+                CHECK(rpc.start(*stub, request, yield));
                 CHECK(rpc.read(response, yield));
                 health_check_service->Shutdown();
                 CHECK(rpc.read(response, yield));
@@ -181,11 +182,12 @@ struct HealthCheckServiceTest : test::GrpcContextTest
         run(
             [&](const asio::yield_context& yield)
             {
-                auto rpc = WatchRPC::request(grpc_context, *stub, client_context, request, yield);
+                WatchRPC rpc{grpc_context, test::set_default_deadline};
+                CHECK(rpc.start(*stub, request, yield));
                 CHECK(rpc.read(response, yield));
-                client_context.TryCancel();
+                rpc.cancel();
                 CHECK_FALSE(rpc.read(response, yield));
-                CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.status_code());
+                CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.finish(yield).error_code());
                 server->GetHealthCheckService()->SetServingStatus(false);
             });
     }
@@ -201,17 +203,15 @@ struct HealthCheckServiceTest : test::GrpcContextTest
     void test_watch_and_cause_serving_status_update_to_fail()
     {
         bool read_initiated{};
-        agrpc::GrpcContext client_grpc_context{std::make_unique<grpc::CompletionQueue>()};
-        client_context.set_deadline(test::hundred_milliseconds_from_now());
-        std::unique_ptr<grpc::ClientAsyncReader<grpc_health::HealthCheckResponse>> reader;
-        agrpc::request(&grpc_health::Health::Stub::PrepareAsyncWatch, stub, client_context, request, reader,
-                       asio::bind_executor(client_grpc_context,
-                                           [&](bool)
-                                           {
-                                               agrpc::read(reader, response,
-                                                           asio::bind_executor(client_grpc_context, [&](bool) {}));
-                                               read_initiated = true;
-                                           }));
+        agrpc::GrpcContext client_grpc_context;
+        WatchRPC rpc{grpc_context};
+        rpc.context().set_deadline(test::hundred_milliseconds_from_now());
+        rpc.start(*stub, request,
+                  [&](bool)
+                  {
+                      rpc.read(response, [&](bool) {});
+                      read_initiated = true;
+                  });
         client_grpc_context.run_while(not_true(read_initiated));
         std::this_thread::sleep_for(std::chrono::milliseconds(110));       // wait for deadline to expire
         wait(alarm, test::hundred_milliseconds_from_now(), test::NoOp{});  // wait for the server to finish the Watch
@@ -222,21 +222,19 @@ struct HealthCheckServiceTest : test::GrpcContextTest
     void test_watch_and_accept_rpc_then_destruct()
     {
         bool read_initiated{};
-        agrpc::GrpcContext client_grpc_context{std::make_unique<grpc::CompletionQueue>()};
-        client_context.set_deadline(test::hundred_milliseconds_from_now());
-        std::unique_ptr<grpc::ClientAsyncReader<grpc_health::HealthCheckResponse>> reader;
-        agrpc::request(&grpc_health::Health::Stub::PrepareAsyncWatch, stub, client_context, request, reader,
-                       asio::bind_executor(client_grpc_context,
-                                           [&](bool)
-                                           {
-                                               agrpc::read(reader, response,
-                                                           asio::bind_executor(client_grpc_context,
-                                                                               [&](bool)
-                                                                               {
-                                                                                   guard.reset();
-                                                                               }));
-                                               read_initiated = true;
-                                           }));
+        agrpc::GrpcContext client_grpc_context;
+        WatchRPC rpc{grpc_context};
+        rpc.context().set_deadline(test::hundred_milliseconds_from_now());
+        rpc.start(*stub, request,
+                  [&](bool)
+                  {
+                      rpc.read(response,
+                               [&](bool)
+                               {
+                                   guard.reset();
+                               });
+                      read_initiated = true;
+                  });
         client_grpc_context.run_while(not_true(read_initiated));
         std::this_thread::sleep_for(std::chrono::milliseconds(110));  // wait for deadline to expire
         guard.emplace(get_work_tracking_executor());

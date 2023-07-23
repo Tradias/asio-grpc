@@ -20,6 +20,7 @@
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 #include <unifex/finally.hpp>
+#include <unifex/just.hpp>
 #include <unifex/just_from.hpp>
 #include <unifex/just_void_or_done.hpp>
 #include <unifex/let_value_with.hpp>
@@ -79,10 +80,9 @@ auto response_processor(example::v1::Response& response)
     };
 }
 
-auto handle_server_streaming_request(ServerStreamingRPC& rpc)
+auto handle_server_streaming_request(bool ok, ServerStreamingRPC& rpc)
 {
-    abort_if_not(rpc.ok());
-    return unifex::just_void_or_done(rpc.ok()) |
+    return unifex::just_void_or_done(ok) |
            unifex::then(
                []
                {
@@ -105,35 +105,39 @@ auto handle_server_streaming_request(ServerStreamingRPC& rpc)
                                                           return !context.ok;
                                                       });
                }) |
-           unifex::then(
+           unifex::let_value(
                [&]
                {
-                   abort_if_not(rpc.ok());
+                   return rpc.finish();
+               }) |
+           unifex::then(
+               [&](const grpc::Status& status)
+               {
+                   abort_if_not(status.ok());
                });
 }
 
 auto make_server_streaming_request(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
-    struct RequestContext
-    {
-        grpc::ClientContext client_context;
-        example::v1::Request request;
-    };
     return unifex::let_value_with(
-        []
+        [&]
         {
-            return RequestContext{};
+            return ServerStreamingRPC{grpc_context};
         },
-        [&](RequestContext& context)
+        [&](ServerStreamingRPC& rpc)
         {
-            auto& [client_context, request] = context;
-            client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
-            request.set_integer(10);
-            return ServerStreamingRPC::request(grpc_context, stub, client_context, request) |
+            rpc.context().set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
+            return unifex::just(example::v1::Request{}) |
                    unifex::let_value(
-                       [&](ServerStreamingRPC& rpc)
+                       [&](example::v1::Request& request)
                        {
-                           return handle_server_streaming_request(rpc);
+                           request.set_integer(10);
+                           return rpc.start(stub, request);
+                       }) |
+                   unifex::let_value(
+                       [&](bool ok)
+                       {
+                           return handle_server_streaming_request(ok, rpc);
                        });
         });
 }

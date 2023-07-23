@@ -24,80 +24,59 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-class AutoCancelClientContextRef
-{
-  public:
-    AutoCancelClientContextRef() = default;
-
-    explicit AutoCancelClientContextRef(grpc::ClientContext& context) noexcept : context_(std::addressof(context)) {}
-
-    AutoCancelClientContextRef(const AutoCancelClientContextRef&) = delete;
-
-    AutoCancelClientContextRef(AutoCancelClientContextRef&& other) noexcept : context_(other.context_.clear()) {}
-
-    ~AutoCancelClientContextRef() noexcept { cancel(); }
-
-    AutoCancelClientContextRef& operator=(const AutoCancelClientContextRef&) = delete;
-
-    AutoCancelClientContextRef& operator=(AutoCancelClientContextRef&& other) noexcept
-    {
-        if (this != &other)
-        {
-            cancel();
-            context_ = other.context_.clear();
-        }
-        return *this;
-    }
-
-    void clear() noexcept { context_.clear(); }
-
-    void cancel() const
-    {
-        if (auto* const context_ptr = context_.get())
-        {
-            context_ptr->TryCancel();
-        }
-    }
-
-    [[nodiscard]] bool is_null() const noexcept { return context_.is_null(); }
-
-    template <std::uintptr_t Bit>
-    [[nodiscard]] bool has_bit() const noexcept
-    {
-        return context_.template has_bit<Bit>();
-    }
-
-    template <std::uintptr_t Bit>
-    void set_bit() noexcept
-    {
-        context_.template set_bit<Bit>();
-    }
-
-  private:
-    detail::AtomicTaggedPtr<grpc::ClientContext> context_{};
-};
-
-class RPCClientContextBase
+template <class Responder>
+class AutoCancelClientContextAndResponder
 {
   protected:
-    RPCClientContextBase() = default;
+    AutoCancelClientContextAndResponder() = default;
 
-    explicit RPCClientContextBase(grpc::ClientContext& client_context) : client_context_(client_context) {}
+    template <class ClientContextInitFunction>
+    explicit AutoCancelClientContextAndResponder(ClientContextInitFunction&& init_function) noexcept
+    {
+        static_cast<ClientContextInitFunction&&>(init_function)(client_context_);
+    }
 
-    [[nodiscard]] bool is_finished() const noexcept { return client_context_.is_null(); }
+    AutoCancelClientContextAndResponder(const AutoCancelClientContextAndResponder&) = delete;
 
-    void set_finished() noexcept { client_context_.clear(); }
+    AutoCancelClientContextAndResponder(AutoCancelClientContextAndResponder&& other) = delete;
 
-    void cancel() const { client_context_.cancel(); }
+    ~AutoCancelClientContextAndResponder() noexcept
+    {
+        if (!is_finished())
+        {
+            client_context_.TryCancel();
+        }
+        if (auto* const responder_ptr = responder_.get())
+        {
+            std::default_delete<Responder>{}(responder_ptr);
+        }
+    }
 
-    [[nodiscard]] bool is_writes_done() const noexcept { return client_context_.has_bit<0>(); }
+    AutoCancelClientContextAndResponder& operator=(const AutoCancelClientContextAndResponder&) = delete;
 
-    void set_writes_done() noexcept { client_context_.set_bit<0>(); }
+    AutoCancelClientContextAndResponder& operator=(AutoCancelClientContextAndResponder&& other) = delete;
+
+    void cancel() noexcept { client_context_.TryCancel(); }
+
+    [[nodiscard]] Responder& responder() noexcept { return *responder_; }
+
+    void set_responder(std::unique_ptr<Responder> responder) noexcept { responder_.set(responder.release()); }
+
+    [[nodiscard]] grpc::ClientContext& context() { return client_context_; }
+
+    [[nodiscard]] bool is_finished() const noexcept { return responder_.template has_bit<0>(); }
+
+    void set_finished() noexcept { responder_.template set_bit<0>(); }
+
+    [[nodiscard]] bool is_writes_done() const noexcept { return responder_.template has_bit<1>(); }
+
+    void set_writes_done() noexcept { responder_.template set_bit<1>(); }
 
   private:
     friend detail::RPCCancellationFunction;
 
-    detail::AutoCancelClientContextRef client_context_;
+    grpc::ClientContext client_context_{};
+    detail::AtomicTaggedPtr<Responder> responder_{};
 };
 }
 

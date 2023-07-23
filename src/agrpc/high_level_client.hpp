@@ -31,42 +31,6 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 /**
- * @brief (experimental) RPC's grpc::Status base
- *
- * @since 2.1.0
- */
-class RPCStatusBase
-{
-  public:
-    /**
-     * @brief The RPC's status code
-     *
-     * Equivalent to `status().error_code()`.
-     */
-    [[nodiscard]] grpc::StatusCode status_code() const noexcept { return status_.error_code(); }
-
-    /**
-     * @brief Is the RPC's status code OK?
-     *
-     * Equivalent to `status().ok()`.
-     */
-    [[nodiscard]] bool ok() const noexcept { return status_.ok(); }
-
-    /**
-     * @brief The RPC's status
-     */
-    [[nodiscard]] grpc::Status& status() noexcept { return status_; };
-
-    /**
-     * @brief The RPC's status (const overload)
-     */
-    [[nodiscard]] const grpc::Status& status() const noexcept { return status_; };
-
-  private:
-    grpc::Status status_;
-};
-
-/**
  * @brief (experimental) RPC's executor base
  *
  * @since 2.1.0
@@ -105,18 +69,43 @@ class RPCExecutorBase
  */
 template <class RequestT, template <class> class ResponderT, class Executor>
 class RPCClientClientStreamingBase<ResponderT<RequestT>, Executor>
-    : public detail::RPCStatusBase, public detail::RPCExecutorBase<Executor>, public detail::RPCClientContextBase
+    : public detail::RPCExecutorBase<Executor>, public detail::AutoCancelClientContextAndResponder<ResponderT<RequestT>>
 {
+  private:
+    using Responder = ResponderT<RequestT>;
+
   public:
     /**
      * @brief The request message type
      */
     using Request = RequestT;
 
-    /**
-     * @brief The underlying `grpc::ClientAsyncWriter/Interface` type
-     */
-    using Responder = ResponderT<RequestT>;
+    explicit RPCClientClientStreamingBase(agrpc::GrpcContext& grpc_context)
+        : detail::RPCExecutorBase<Executor>(grpc_context.get_executor())
+    {
+    }
+
+    template <class ClientContextInitFunction>
+    RPCClientClientStreamingBase(agrpc::GrpcContext& grpc_context, ClientContextInitFunction&& init_function)
+        : detail::RPCExecutorBase<Executor>(grpc_context.get_executor()),
+          detail::AutoCancelClientContextAndResponder<Responder>(
+              static_cast<ClientContextInitFunction&&>(init_function))
+    {
+    }
+
+    explicit RPCClientClientStreamingBase(const Executor& executor) : detail::RPCExecutorBase<Executor>(executor) {}
+
+    template <class ClientContextInitFunction>
+    RPCClientClientStreamingBase(const Executor& executor, ClientContextInitFunction&& init_function)
+        : detail::RPCExecutorBase<Executor>(executor),
+          detail::AutoCancelClientContextAndResponder<Responder>(
+              static_cast<ClientContextInitFunction&&>(init_function))
+    {
+    }
+
+    using detail::AutoCancelClientContextAndResponder<Responder>::context;
+
+    using detail::AutoCancelClientContextAndResponder<Responder>::cancel;
 
     /**
      * @brief Read initial metadata
@@ -135,8 +124,7 @@ class RPCClientClientStreamingBase<ResponderT<RequestT>, Executor>
      * complete until `write()` is called.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
-     * `void(bool)`. `true` indicates that the metadata was read. If it is `false`, then the call is dead, the RPC is
-     * automatically finished and error details can be obtained by calling `status()`.
+     * `void(bool)`. `true` indicates that the metadata was read. If it is `false`, then the call is dead.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto read_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
@@ -150,8 +138,7 @@ class RPCClientClientStreamingBase<ResponderT<RequestT>, Executor>
      * @brief Send a message to the server
      *
      * WriteOptions options is used to set the write options of this message, otherwise identical to:
-     * `write(request, token)`. If WriteOptions contain `set_last_message` then the RPC is automatically finished as
-     * part of this operation.
+     * `write(request, token)`.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto write(const RequestT& request, grpc::WriteOptions options,
@@ -173,8 +160,7 @@ class RPCClientClientStreamingBase<ResponderT<RequestT>, Executor>
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` means that the data is going to go to the wire. If it is `false`, it is
      * not going to the wire because the call is already dead (i.e., canceled, deadline expired, other side dropped the
-     * channel, etc). The RPC is automatically finished in that case and error details can be obtained by calling
-     * `status()`.
+     * channel, etc).
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto write(const RequestT& request, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
@@ -187,9 +173,7 @@ class RPCClientClientStreamingBase<ResponderT<RequestT>, Executor>
      *
      * Indicate that the stream is to be finished and request notification for when the call has been ended.
      *
-     * May not be used concurrently with other operations.
-     *
-     * This function may be called multiple times, but subsequent calls have no effect.
+     * May not be used concurrently with other operations and may only be called once.
      *
      * The operation will finish when either:
      *
@@ -206,39 +190,20 @@ class RPCClientClientStreamingBase<ResponderT<RequestT>, Executor>
      * @arg Attempts to fill in the response parameter that was passed to `RPC::request`.
      *
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
-     * completion signature is `void(bool)`. The bool is equal to `ok()` after finishing.
+     * completion signature is `void(grpc::Status)`.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto finish(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
-        return detail::async_initiate_conditional_sender_implementation<
-            detail::ClientFinishSenderImplementation<RPCClientClientStreamingBase>>(
-            this->grpc_context(), {}, {*this}, !this->is_finished(), token, this->ok());
-    }
-
-    /**
-     * @brief The underlying `grpc::ClientAsyncWriter/Interface`
-     */
-    [[nodiscard]] Responder& responder() noexcept { return *responder_; }
-
-  protected:
-    friend detail::ReadInitialMetadataSenderImplementation<RPCClientClientStreamingBase>;
-    friend detail::WriteClientStreamingSenderImplementation<Responder, Executor>;
-    friend detail::ClientFinishSenderImplementation<RPCClientClientStreamingBase>;
-    friend detail::RPCAccess;
-
-    RPCClientClientStreamingBase() = default;
-
-    RPCClientClientStreamingBase(const Executor& executor, grpc::ClientContext& client_context,
-                                 std::unique_ptr<Responder>&& responder)
-        : detail::RPCExecutorBase<Executor>(executor),
-          detail::RPCClientContextBase(client_context),
-          responder_(static_cast<std::unique_ptr<Responder>&&>(responder))
-    {
+        return detail::async_initiate_sender_implementation<
+            detail::ClientFinishSenderImplementation<RPCClientClientStreamingBase>>(this->grpc_context(), {}, {*this},
+                                                                                    token);
     }
 
   private:
-    std::unique_ptr<Responder> responder_;
+    friend detail::ReadInitialMetadataSenderImplementation<RPCClientClientStreamingBase>;
+    friend detail::WriteClientStreamingSenderImplementation<Responder, Executor>;
+    friend detail::ClientFinishSenderImplementation<RPCClientClientStreamingBase>;
 };
 
 /**
@@ -248,18 +213,44 @@ class RPCClientClientStreamingBase<ResponderT<RequestT>, Executor>
  */
 template <class ResponseT, template <class> class ResponderT, class Executor>
 class RPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
-    : public detail::RPCStatusBase, public detail::RPCExecutorBase<Executor>, public detail::RPCClientContextBase
+    : public detail::RPCExecutorBase<Executor>,
+      public detail::AutoCancelClientContextAndResponder<ResponderT<ResponseT>>
 {
+  private:
+    using Responder = ResponderT<ResponseT>;
+
   public:
     /**
      * @brief The response message type
      */
     using Response = ResponseT;
 
-    /**
-     * @brief The underlying `grpc::ClientAsyncReader/Interface` type
-     */
-    using Responder = ResponderT<ResponseT>;
+    explicit RPCClientServerStreamingBase(agrpc::GrpcContext& grpc_context)
+        : detail::RPCExecutorBase<Executor>(grpc_context.get_executor())
+    {
+    }
+
+    template <class ClientContextInitFunction>
+    RPCClientServerStreamingBase(agrpc::GrpcContext& grpc_context, ClientContextInitFunction&& init_function)
+        : detail::RPCExecutorBase<Executor>(grpc_context.get_executor()),
+          detail::AutoCancelClientContextAndResponder<Responder>(
+              static_cast<ClientContextInitFunction&&>(init_function))
+    {
+    }
+
+    explicit RPCClientServerStreamingBase(const Executor& executor) : detail::RPCExecutorBase<Executor>(executor) {}
+
+    template <class ClientContextInitFunction>
+    RPCClientServerStreamingBase(const Executor& executor, ClientContextInitFunction&& init_function)
+        : detail::RPCExecutorBase<Executor>(executor),
+          detail::AutoCancelClientContextAndResponder<Responder>(
+              static_cast<ClientContextInitFunction&&>(init_function))
+    {
+    }
+
+    using detail::AutoCancelClientContextAndResponder<Responder>::context;
+
+    using detail::AutoCancelClientContextAndResponder<Responder>::cancel;
 
     /**
      * @brief Read initial metadata
@@ -274,8 +265,7 @@ class RPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
      * the calling code can access the received metadata through the ClientContext.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
-     * `void(bool)`. `true` indicates that the metadata was read. If it is `false`, then the call is dead, the RPC is
-     * automatically finished and error details can be obtained by calling `status()`.
+     * `void(bool)`. `true` indicates that the metadata was read. If it is `false`, then the call is dead.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto read_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
@@ -294,8 +284,7 @@ class RPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` indicates that a valid message was read. `false` when
      * there will be no more incoming messages, either because the other server is finished sending messages or the
-     * stream has failed (or been cancelled). The RPC is automatically finished in either case and potential error
-     * details can be obtained by calling `status()`.
+     * stream has failed (or been cancelled).
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto read(ResponseT& response, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
@@ -306,27 +295,45 @@ class RPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
     }
 
     /**
-     * @brief The underlying `grpc::ClientAsyncReader/Interface`
+     * @brief Finish the RPC
+     *
+     * Indicate that the stream is to be finished and request notification for when the call has been ended.
+     *
+     * May not be used concurrently with other operations and may only be called once.
+     *
+     * It is appropriate to call this method when:
+     *
+     * @arg All messages from the server have been received (either known implictly, or explicitly because a previous
+     * read operation returned `false`).
+     *
+     * The operation will finish when either:
+     *
+     * @arg The server has returned a status.
+     * @arg The call failed for some reason and the library generated a status.
+     *
+     * Note that implementations of this method attempt to receive initial metadata from the server if initial metadata
+     * has not been received yet.
+     *
+     * Side effect:
+     *
+     * @arg The ClientContext associated with the call is updated with possible initial and trailing metadata received
+     * from the server.
+     *
+     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * completion signature is `void(grpc::Status)`.
      */
-    [[nodiscard]] Responder& responder() noexcept { return *responder_; }
-
-  protected:
-    friend detail::ReadInitialMetadataSenderImplementation<RPCClientServerStreamingBase>;
-    friend detail::ReadServerStreamingSenderImplementation<Responder, Executor>;
-    friend detail::RPCAccess;
-
-    RPCClientServerStreamingBase() = default;
-
-    RPCClientServerStreamingBase(const Executor& executor, grpc::ClientContext& client_context,
-                                 std::unique_ptr<Responder>&& responder)
-        : detail::RPCExecutorBase<Executor>(executor),
-          detail::RPCClientContextBase(client_context),
-          responder_(static_cast<std::unique_ptr<Responder>&&>(responder))
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    auto finish(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
+        return detail::async_initiate_sender_implementation<
+            detail::ClientFinishServerStreamingSenderImplementation<RPCClientServerStreamingBase>>(this->grpc_context(),
+                                                                                                   {}, {*this}, token);
     }
 
   private:
-    std::unique_ptr<Responder> responder_;
+    friend detail::ReadInitialMetadataSenderImplementation<RPCClientServerStreamingBase>;
+    friend detail::ReadServerStreamingSenderImplementation<Responder, Executor>;
+    friend detail::ClientFinishServerStreamingSenderImplementation<RPCClientServerStreamingBase>;
 };
 
 /**
@@ -336,8 +343,12 @@ class RPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>
  */
 template <class RequestT, class ResponseT, template <class, class> class ResponderT, class Executor>
 class RPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
-    : public detail::RPCStatusBase, public detail::RPCExecutorBase<Executor>, public detail::RPCClientContextBase
+    : public detail::RPCExecutorBase<Executor>,
+      public detail::AutoCancelClientContextAndResponder<ResponderT<RequestT, ResponseT>>
 {
+  private:
+    using Responder = ResponderT<RequestT, ResponseT>;
+
   public:
     /**
      * @brief The request message type
@@ -349,10 +360,32 @@ class RPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
      */
     using Response = ResponseT;
 
-    /**
-     * @brief The underlying `grpc::ClientAsyncReaderWriter/Interface` type
-     */
-    using Responder = ResponderT<RequestT, ResponseT>;
+    explicit RPCBidirectionalStreamingBase(agrpc::GrpcContext& grpc_context)
+        : detail::RPCExecutorBase<Executor>(grpc_context.get_executor())
+    {
+    }
+
+    template <class ClientContextInitFunction>
+    RPCBidirectionalStreamingBase(agrpc::GrpcContext& grpc_context, ClientContextInitFunction&& init_function)
+        : detail::RPCExecutorBase<Executor>(grpc_context.get_executor()),
+          detail::AutoCancelClientContextAndResponder<Responder>(
+              static_cast<ClientContextInitFunction&&>(init_function))
+    {
+    }
+
+    explicit RPCBidirectionalStreamingBase(const Executor& executor) : detail::RPCExecutorBase<Executor>(executor) {}
+
+    template <class ClientContextInitFunction>
+    RPCBidirectionalStreamingBase(const Executor& executor, ClientContextInitFunction&& init_function)
+        : detail::RPCExecutorBase<Executor>(executor),
+          detail::AutoCancelClientContextAndResponder<Responder>(
+              static_cast<ClientContextInitFunction&&>(init_function))
+    {
+    }
+
+    using detail::AutoCancelClientContextAndResponder<Responder>::context;
+
+    using detail::AutoCancelClientContextAndResponder<Responder>::cancel;
 
     /**
      * @brief Read initial metadata
@@ -368,8 +401,7 @@ class RPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
      * the calling code can access the received metadata through the ClientContext.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
-     * `void(bool)`. `true` indicates that the metadata was read. If it is `false`, then the call is dead, the RPC is
-     * automatically finished and error details can be obtained by calling `status()`.
+     * `void(bool)`. `true` indicates that the metadata was read. If it is `false`, then the call is dead.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto read_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
@@ -447,9 +479,9 @@ class RPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto writes_done(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
-        return detail::async_initiate_conditional_sender_implementation<
-            detail::ClientWritesDoneSenderImplementation<Responder, Executor>>(
-            this->grpc_context(), {}, {*this}, !this->is_writes_done() && !this->is_finished(), token, this->ok());
+        return detail::async_initiate_sender_implementation<
+            detail::ClientWritesDoneSenderImplementation<Responder, Executor>>(this->grpc_context(), {}, {*this},
+                                                                               token);
     }
 
     /**
@@ -457,9 +489,7 @@ class RPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
      *
      * Indicate that the stream is to be finished and request notification for when the call has been ended.
      *
-     * May not be used concurrently with other operations.
-     *
-     * This function may be called multiple times, but subsequent calls have no effect.
+     * May not be used concurrently with other operations and may only be called once.
      *
      * It is appropriate to call this method when:
      *
@@ -480,41 +510,22 @@ class RPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
      * from the server.
      *
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
-     * completion signature is `void(bool)`. The bool is equal to `ok()` after finishing.
+     * completion signature is `void(grpc::Status)`.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto finish(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
-        return detail::async_initiate_conditional_sender_implementation<
-            detail::ClientFinishSenderImplementation<RPCBidirectionalStreamingBase>>(
-            this->grpc_context(), {}, {*this}, !this->is_finished(), token, this->ok());
+        return detail::async_initiate_sender_implementation<
+            detail::ClientFinishSenderImplementation<RPCBidirectionalStreamingBase>>(this->grpc_context(), {}, {*this},
+                                                                                     token);
     }
 
-    /**
-     * @brief The underlying `grpc::ClientAsyncReaderWriter/Interface`
-     */
-    [[nodiscard]] Responder& responder() noexcept { return *responder_; }
-
-  protected:
+  private:
     friend detail::ReadInitialMetadataSenderImplementation<RPCBidirectionalStreamingBase>;
     friend detail::ClientReadBidiStreamingSenderImplementation<Responder, Executor>;
     friend detail::ClientWriteBidiStreamingSenderImplementation<Responder, Executor>;
     friend detail::ClientWritesDoneSenderImplementation<Responder, Executor>;
     friend detail::ClientFinishSenderImplementation<RPCBidirectionalStreamingBase>;
-    friend detail::RPCAccess;
-
-    RPCBidirectionalStreamingBase() = default;
-
-    RPCBidirectionalStreamingBase(const Executor& executor, grpc::ClientContext& client_context,
-                                  std::unique_ptr<Responder>&& responder)
-        : detail::RPCExecutorBase<Executor>(executor),
-          detail::RPCClientContextBase(client_context),
-          responder_(static_cast<std::unique_ptr<Responder>&&>(responder))
-    {
-    }
-
-  private:
-    std::unique_ptr<Responder> responder_;
 };
 }
 
@@ -542,8 +553,7 @@ inline constexpr auto CLIENT_GENERIC_STREAMING_RPC = detail::GenericRPCType::CLI
  *
  * Terminal and partial. Cancellation is performed by invoking
  * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984).
- * After successful cancellation no further operations may be started on the RPC. Operations are also cancelled when the
- * deadline of the RPC has been reached (see
+ * Operations are also cancelled when the deadline of the RPC has been reached (see
  * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6)).
  *
  * @since 2.1.0
@@ -567,11 +577,6 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
      * @brief The request message type
      */
     using Response = ResponseT;
-
-    /**
-     * @brief The underlying `grpc::ClientAsyncResponseReader/Interface` type
-     */
-    using Responder = ResponderT<ResponseT>;
 
     /**
      * @brief The executor type
@@ -665,8 +670,7 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_UNARY>
  *
  * Terminal and partial. Cancellation is performed by invoking
  * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984).
- * After successful cancellation no further operations may be started on the RPC. Operations are also cancelled when the
- * deadline of the RPC has been reached (see
+ * Operations are also cancelled when the deadline of the RPC has been reached (see
  * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6)).
  *
  * @since 2.1.0
@@ -689,11 +693,6 @@ class RPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor, agrpc::RPCType::CLIENT_UNAR
      * @brief The request message type
      */
     using Response = grpc::ByteBuffer;
-
-    /**
-     * @brief The underlying `grpc::GenericClientAsyncResponseReader` type
-     */
-    using Responder = grpc::GenericClientAsyncResponseReader;
 
     /**
      * @brief The executor type
@@ -774,8 +773,8 @@ class RPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor, agrpc::RPCType::CLIENT_UNAR
  *
  * Terminal and partial. Cancellation is performed by invoking
  * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984).
- * After successful cancellation no further operations may be started on the RPC. Operations are also cancelled when the
- * deadline of the RPC has been reached (see
+ * After successful cancellation no further operations may be started on the RPC (except `finish`). Operations are also
+ * cancelled when the deadline of the RPC has been reached (see
  * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6)).
  *
  * @since 2.1.0
@@ -843,6 +842,8 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
         return std::string_view(detail::CLIENT_METHOD_NAME_V<PrepareAsync>);
     }
 
+    using detail::RPCClientClientStreamingBase<ResponderT<RequestT>, Executor>::RPCClientClientStreamingBase;
+
     /**
      * @brief Start a client-streaming request
      *
@@ -854,33 +855,20 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
      * @param response The response message, will be filled by the server upon finishing this RPC. Must remain alive
      * until this RPC is finished.
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
-     * `void(RPC)`. Use `ok()` to check whether the request was successful.
+     * `void(bool)`. `true` means that the rpc was started successfully. If it is `false`, then call `finish` to obtain
+     * the error details.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    static auto request(agrpc::GrpcContext& grpc_context, StubT& stub, grpc::ClientContext& context,
-                        ResponseT& response, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+    auto start(StubT& stub, ResponseT& response, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
-            detail::ClientClientStreamingRequestSenderImplementation<PrepareAsync, Executor>>(
-            grpc_context, {}, {grpc_context, stub, context, response}, token);
-    }
-
-    /**
-     * @brief Start a client-streaming request (executor overload)
-     */
-    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    static auto request(const Executor& executor, StubT& stub, grpc::ClientContext& context, ResponseT& response,
-                        CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
-    {
-        return RPC::request(detail::query_grpc_context(executor), stub, context, response,
-                            static_cast<CompletionToken&&>(token));
+            detail::ClientStreamingRequestSenderImplementation<PrepareAsync, Executor>>(
+            this->grpc_context(), {*this, stub, response}, {}, token);
     }
 
   private:
-    friend detail::ClientStreamingRequestSenderImplementationBase<PrepareAsync, Executor>;
-    friend detail::ClientClientStreamingRequestSenderImplementation<PrepareAsync, Executor>;
-
-    using detail::RPCClientClientStreamingBase<ResponderT<RequestT>, Executor>::RPCClientClientStreamingBase;
+    friend detail::ClientStreamingRequestSenderInitiation<PrepareAsync, Executor>;
+    friend detail::ClientStreamingRequestSenderImplementation<PrepareAsync, Executor>;
 };
 
 /**
@@ -893,8 +881,8 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
  *
  * Terminal and partial. Cancellation is performed by invoking
  * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984).
- * After successful cancellation no further operations may be started on the RPC. Operations are also cancelled when the
- * deadline of the RPC has been reached (see
+ * After successful cancellation no further operations may be started on the RPC (except `finish`). Operations are also
+ * cancelled when the deadline of the RPC has been reached (see
  * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6)).
  *
  * @since 2.1.0
@@ -962,6 +950,8 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>
         return std::string_view(detail::CLIENT_METHOD_NAME_V<PrepareAsync>);
     }
 
+    using detail::RPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>::RPCClientServerStreamingBase;
+
     /**
      * @brief Start a server-streaming request
      *
@@ -969,33 +959,21 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>
      * @param request The request message, save to delete when this function returns, unless a deferred completion token
      * is used like `agrpc::use_sender` or `asio::deferred`.
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
-     * `void(RPC)`. Use `ok()` to check whether the request was successful.
+     * `void(bool)`. `true` means that the rpc was started successfully. If it is `false`, then call `finish` to obtain
+     * the error details.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    static auto request(agrpc::GrpcContext& grpc_context, StubT& stub, grpc::ClientContext& context,
-                        const RequestT& request, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+    auto start(StubT& stub, const RequestT& request,
+               CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
-            detail::ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor>>(
-            grpc_context, {}, {grpc_context, stub, context, request}, token);
-    }
-
-    /**
-     * @brief Start a server-streaming request (executor overload)
-     */
-    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    static auto request(const Executor& executor, StubT& stub, grpc::ClientContext& context, const RequestT& request,
-                        CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
-    {
-        return RPC::request(detail::query_grpc_context(executor), stub, context, request,
-                            static_cast<CompletionToken&&>(token));
+            detail::ClientStreamingRequestSenderImplementation<PrepareAsync, Executor>>(
+            this->grpc_context(), {*this, stub, request}, {}, token);
     }
 
   private:
-    friend detail::ClientStreamingRequestSenderImplementationBase<PrepareAsync, Executor>;
-    friend detail::ClientServerStreamingRequestSenderImplementation<PrepareAsync, Executor>;
-
-    using detail::RPCClientServerStreamingBase<ResponderT<ResponseT>, Executor>::RPCClientServerStreamingBase;
+    friend detail::ClientStreamingRequestSenderInitiation<PrepareAsync, Executor>;
+    friend detail::ClientStreamingRequestSenderImplementation<PrepareAsync, Executor>;
 };
 
 /**
@@ -1008,8 +986,8 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>
  *
  * Terminal and partial. Cancellation is performed by invoking
  * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984).
- * After successful cancellation no further operations may be started on the RPC. Operations are also cancelled when the
- * deadline of the RPC has been reached (see
+ * After successful cancellation no further operations may be started on the RPC (except `finish`). Operations are also
+ * cancelled when the deadline of the RPC has been reached (see
  * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6)).
  *
  * @since 2.1.0
@@ -1072,38 +1050,28 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING
         return std::string_view(detail::CLIENT_METHOD_NAME_V<PrepareAsync>);
     }
 
+    using detail::RPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>,
+                                                Executor>::RPCBidirectionalStreamingBase;
+
     /**
      * @brief Start a bidirectional-streaming request
      *
      * @param stub The Stub that corresponds to the RPC method, e.g. `example::v1::Example::Stub`.
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
-     * `void(RPC)`. Use `ok()` to check whether the request was successful.
+     * `void(bool)`. `true` means that the rpc was started successfully. If it is `false`, then call `finish` to obtain
+     * the error details.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    static auto request(agrpc::GrpcContext& grpc_context, StubT& stub, grpc::ClientContext& context,
-                        CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+    auto start(StubT& stub, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
-            detail::ClientBidirectionalStreamingRequestSenderImplementation<PrepareAsync, Executor>>(
-            grpc_context, {}, {grpc_context, stub, context}, token);
-    }
-
-    /**
-     * @brief Start a bidirectional-streaming request (executor overload)
-     */
-    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    static auto request(const Executor& executor, StubT& stub, grpc::ClientContext& context,
-                        CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
-    {
-        return RPC::request(detail::query_grpc_context(executor), stub, context, static_cast<CompletionToken&&>(token));
+            detail::ClientStreamingRequestSenderImplementation<PrepareAsync, Executor>>(this->grpc_context(),
+                                                                                        {*this, stub}, {}, token);
     }
 
   private:
-    friend detail::ClientStreamingRequestSenderImplementationBase<PrepareAsync, Executor>;
-    friend detail::ClientBidirectionalStreamingRequestSenderImplementation<PrepareAsync, Executor>;
-
-    using detail::RPCBidirectionalStreamingBase<ResponderT<RequestT, ResponseT>,
-                                                Executor>::RPCBidirectionalStreamingBase;
+    friend detail::ClientStreamingRequestSenderInitiation<PrepareAsync, Executor>;
+    friend detail::ClientStreamingRequestSenderImplementation<PrepareAsync, Executor>;
 };
 
 /**
@@ -1115,8 +1083,8 @@ class RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING
  *
  * Terminal and partial. Cancellation is performed by invoking
  * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984).
- * After successful cancellation no further operations may be started on the RPC. Operations are also cancelled when the
- * deadline of the RPC has been reached (see
+ * After successful cancellation no further operations may be started on the RPC (except `finish`). Operations are also
+ * cancelled when the deadline of the RPC has been reached (see
  * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6)).
  *
  * @since 2.1.0
@@ -1163,40 +1131,28 @@ class RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor, agrpc::RPCType::CLIENT_
      */
     static constexpr std::string_view method_name() noexcept { return detail::CLIENT_GENERIC_METHOD_NAME; }
 
+    using detail::RPCBidirectionalStreamingBase<grpc::GenericClientAsyncReaderWriter,
+                                                Executor>::RPCBidirectionalStreamingBase;
+
     /**
      * @brief Start a generic streaming request
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
-     * `void(RPC)`. Use `ok()` to check whether the request was successful.
+     * `void(bool)`. `true` means that the rpc was started successfully. If it is `false`, then call `finish` to obtain
+     * the error details.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    static auto request(agrpc::GrpcContext& grpc_context, const std::string& method, grpc::GenericStub& stub,
-                        grpc::ClientContext& context,
-                        CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+    auto start(const std::string& method, grpc::GenericStub& stub,
+               CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
-            detail::ClientGenericBidirectionalStreamingRequestSenderImplementation<Executor>>(
-            grpc_context, {}, {grpc_context, method, stub, context}, token);
-    }
-
-    /**
-     * @brief Start a generic streaming request (executor overload)
-     */
-    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    static auto request(const Executor& executor, const std::string& method, grpc::GenericStub& stub,
-                        grpc::ClientContext& context,
-                        CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
-    {
-        return RPC::request(detail::query_grpc_context(executor), method, stub, context,
-                            static_cast<CompletionToken&&>(token));
+            detail::ClientStreamingRequestSenderImplementation<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>>(
+            this->grpc_context(), {*this, method, stub}, {}, token);
     }
 
   private:
-    friend detail::ClientStreamingRequestSenderImplementationBase<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>;
-    friend detail::ClientGenericBidirectionalStreamingRequestSenderImplementation<Executor>;
-
-    using detail::RPCBidirectionalStreamingBase<grpc::GenericClientAsyncReaderWriter,
-                                                Executor>::RPCBidirectionalStreamingBase;
+    friend detail::ClientStreamingRequestSenderInitiation<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>;
+    friend detail::ClientStreamingRequestSenderImplementation<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>;
 };
 
 AGRPC_NAMESPACE_END

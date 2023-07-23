@@ -42,30 +42,27 @@ asio::awaitable<void> make_client_streaming_request(agrpc::GrpcContext& grpc_con
 {
     using RPC = agrpc::RPC<&example::v1::Example::Stub::PrepareAsyncClientStreaming>;
 
-    grpc::ClientContext client_context;
-    client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
+    RPC rpc{grpc_context};
+    rpc.context().set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
 
     example::v1::Response response;
-    RPC rpc = co_await RPC::request(grpc_context, stub, client_context, response);
-    abort_if_not(rpc.ok());
+    const bool start_ok = co_await rpc.start(stub, response);
+    abort_if_not(start_ok);
 
     // Optionally read initial metadata first. Otherwise it will be read along with the first write.
-    bool read_ok = co_await rpc.read_initial_metadata();
+    const bool read_ok = co_await rpc.read_initial_metadata();
 
-    // Send a message. On error, rpc.status() will be populated with error information.
+    // Send a message.
     example::v1::Request request;
-    bool write_ok = co_await rpc.write(request);
+    const bool write_ok = co_await rpc.write(request);
 
     // Wait for the server to recieve all our messages and obtain the server's response + status.
-    bool status_ok = co_await rpc.finish();
+    const grpc::Status status = co_await rpc.finish();
+    abort_if_not(status.ok());
 
-    // In case of an error inspect the status for details.
-    grpc::Status& status = rpc.status();
+    std::cout << "High-level: Client streaming completed. Response: " << response.integer() << '\n';
 
-    abort_if_not(status_ok);
-    silence_unused(read_ok, write_ok, status);
-
-    std::cout << "High-level: Client streaming completed\n";
+    silence_unused(read_ok, write_ok);
 }
 // ---------------------------------------------------
 //
@@ -79,13 +76,12 @@ asio::awaitable<void> make_server_streaming_request(agrpc::GrpcContext& grpc_con
 {
     using RPC = agrpc::RPC<&example::v1::Example::Stub::PrepareAsyncServerStreaming>;
 
-    grpc::ClientContext client_context;
-    client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
+    RPC rpc{grpc_context};
+    rpc.context().set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
 
     example::v1::Request request;
     request.set_integer(5);
-    RPC rpc = co_await RPC::request(grpc_context, stub, client_context, request);
-    abort_if_not(rpc.ok());
+    abort_if_not(co_await rpc.start(stub, request));
 
     example::v1::Response response;
 
@@ -94,12 +90,8 @@ asio::awaitable<void> make_server_streaming_request(agrpc::GrpcContext& grpc_con
         std::cout << "High-level: Server streaming: " << response.integer() << "\n";
     }
 
-    if (!rpc.ok())
-    {
-        // In case of an error inspect the status for details.
-        grpc::Status& status = rpc.status();
-        abort_if_not(status.ok());
-    }
+    const grpc::Status status = co_await rpc.finish();
+    abort_if_not(status.ok());
 
     std::cout << "High-level: Server streaming completed\n";
 }
@@ -116,11 +108,10 @@ asio::awaitable<void> make_bidirectional_streaming_request(agrpc::GrpcContext& g
 {
     using RPC = agrpc::RPC<&example::v1::Example::Stub::PrepareAsyncBidirectionalStreaming>;
 
-    grpc::ClientContext client_context;
-    client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
+    RPC rpc{grpc_context};
+    rpc.context().set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
 
-    RPC rpc = co_await RPC::request(grpc_context, stub, client_context);
-    if (!rpc.ok())
+    if (!co_await rpc.start(stub))
     {
         // Channel is either permanently broken or transiently broken but with the fail-fast option.
         co_return;
@@ -146,9 +137,8 @@ asio::awaitable<void> make_bidirectional_streaming_request(agrpc::GrpcContext& g
 
     // Finish will automatically signal that the client is done writing. Optionally call rpc.writes_done() to explicitly
     // signal it earlier.
-    bool status_ok = co_await rpc.finish();
-
-    abort_if_not(status_ok);
+    const grpc::Status status = co_await rpc.finish();
+    abort_if_not(status.ok());
 }
 // ---------------------------------------------------
 //

@@ -56,12 +56,10 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
     example::Buffer<250> buffer1;
     example::Buffer<64> buffer2;
 
-    grpc::ClientContext client_context;
-    client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
+    RPC rpc{grpc_context};
+    rpc.context().set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
     google::protobuf::Empty response;
-    auto rpc = co_await RPC::request(grpc_context, stub, client_context, response,
-                                     buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
-    if (!rpc.ok())
+    if (!co_await rpc.start(stub, response, buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE)))
     {
         co_return false;
     }
@@ -132,7 +130,7 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
     co_await rpc.write(*current, grpc::WriteOptions{}.set_last_message(),
                        buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
 
-    co_return rpc.ok();
+    co_return (co_await rpc.finish(buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE))).ok();
 }
 
 void run_io_context(asio::io_context& io_context)

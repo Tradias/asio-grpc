@@ -18,9 +18,11 @@
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asio_forward.hpp"
 #include "utils/asio_utils.hpp"
+#include "utils/client_context.hpp"
 #include "utils/grpc_client_server_test.hpp"
 #include "utils/server_shutdown_initiator.hpp"
 #include "utils/test_server.hpp"
+#include "utils/time.hpp"
 
 #include <agrpc/high_level_client.hpp>
 #include <doctest/doctest.h>
@@ -86,12 +88,11 @@ struct IntrospectRPC<agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_C
 
     using RPC = agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_CLIENT_STREAMING>;
 
-    template <class ExecOrContext, class CompletionToken>
-    static auto request(ExecOrContext&& executor, typename RPC::Stub& stub, grpc::GenericStub&,
-                        grpc::ClientContext& context, const typename RPC::Request&, typename RPC::Response& response,
-                        CompletionToken&& token)
+    template <class CompletionToken>
+    static auto start(RPC& rpc, typename RPC::Stub& stub, grpc::GenericStub&, const typename RPC::Request&,
+                      typename RPC::Response& response, CompletionToken&& token)
     {
-        return RPC::request(executor, stub, context, response, token);
+        return rpc.start(stub, response, token);
     }
 };
 
@@ -103,12 +104,11 @@ struct IntrospectRPC<agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_S
 
     using RPC = agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_SERVER_STREAMING>;
 
-    template <class ExecOrContext, class CompletionToken>
-    static auto request(ExecOrContext&& executor, typename RPC::Stub& stub, grpc::GenericStub&,
-                        grpc::ClientContext& context, const typename RPC::Request& request,
-                        const typename RPC::Response&, CompletionToken&& token)
+    template <class CompletionToken>
+    static auto start(RPC& rpc, typename RPC::Stub& stub, grpc::GenericStub&, const typename RPC::Request& request,
+                      const typename RPC::Response&, CompletionToken&& token)
     {
-        return RPC::request(executor, stub, context, request, token);
+        return rpc.start(stub, request, token);
     }
 };
 
@@ -120,12 +120,11 @@ struct IntrospectRPC<agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_B
 
     using RPC = agrpc::RPC<PrepareAsync, Executor, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>;
 
-    template <class ExecOrContext, class CompletionToken>
-    static auto request(ExecOrContext&& executor, typename RPC::Stub& stub, grpc::GenericStub&,
-                        grpc::ClientContext& context, const typename RPC::Request&, const typename RPC::Response&,
-                        CompletionToken&& token)
+    template <class CompletionToken>
+    static auto start(RPC& rpc, typename RPC::Stub& stub, grpc::GenericStub&, const typename RPC::Request&,
+                      const typename RPC::Response&, CompletionToken&& token)
     {
-        return RPC::request(executor, stub, context, token);
+        return rpc.start(stub, token);
     }
 };
 
@@ -137,12 +136,11 @@ struct IntrospectRPC<agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>>
 
     using RPC = agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>;
 
-    template <class ExecOrContext, class CompletionToken>
-    static auto request(ExecOrContext&& executor, test::v1::Test::Stub&, typename RPC::Stub& stub,
-                        grpc::ClientContext& context, const typename RPC::Request&, const typename RPC::Response&,
-                        CompletionToken&& token)
+    template <class CompletionToken>
+    static auto start(RPC& rpc, test::v1::Test::Stub&, typename RPC::Stub& stub, const typename RPC::Request&,
+                      const typename RPC::Response&, CompletionToken&& token)
     {
-        return RPC::request(executor, "/test.v1.Test/BidirectionalStreaming", stub, context, token);
+        return rpc.start("/test.v1.Test/BidirectionalStreaming", stub, token);
     }
 };
 
@@ -159,6 +157,8 @@ struct HighLevelClientTest : test::GrpcClientServerTest
     }
 #endif
 
+    auto create_rpc() { return RPC{grpc_context, test::set_default_deadline}; }
+
     template <class CompletionToken>
     auto request_rpc(CompletionToken&& token)
     {
@@ -174,6 +174,12 @@ struct HighLevelClientTest : test::GrpcClientServerTest
                                                response, token);
         }
         return request_rpc(token);
+    }
+
+    template <class CompletionToken>
+    auto start_rpc(RPC& rpc, CompletionToken&& token)
+    {
+        return IntrospectRPC<RPC>::start(rpc, *stub, generic_stub, request, response, token);
     }
 
     template <class CompletionToken>
@@ -194,9 +200,13 @@ struct HighLevelClientTest : test::GrpcClientServerTest
 }
 
 TYPE_TO_STRING(test::UnaryRPC);
+TYPE_TO_STRING(test::UnaryInterfaceRPC);
 TYPE_TO_STRING(test::ClientStreamingRPC);
+TYPE_TO_STRING(test::ClientStreamingInterfaceRPC);
 TYPE_TO_STRING(test::ServerStreamingRPC);
+TYPE_TO_STRING(test::ServerStreamingInterfaceRPC);
 TYPE_TO_STRING(test::BidirectionalStreamingRPC);
+TYPE_TO_STRING(test::BidirectionalStreamingInterfaceRPC);
 TYPE_TO_STRING(test::GenericUnaryRPC);
 TYPE_TO_STRING(test::GenericStreamingRPC);
 
