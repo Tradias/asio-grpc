@@ -47,6 +47,9 @@ class RPC;
 namespace detail
 {
 template <auto PrepareAsync, class Executor>
+class ClientRPCUnaryBase;
+
+template <auto PrepareAsync, class Executor>
 class ClientRPCServerStreamingBase;
 
 struct ClientContextCancellationFunction

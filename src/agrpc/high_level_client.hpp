@@ -77,25 +77,16 @@ inline constexpr auto CLIENT_GENERIC_UNARY_RPC = detail::GenericRPCType::CLIENT_
  */
 inline constexpr auto CLIENT_GENERIC_STREAMING_RPC = detail::GenericRPCType::CLIENT_STREAMING;
 
+namespace detail
+{
 /**
- * @brief (experimental) I/O object for client-side unary RPCs
- *
- * @tparam UnaryPrepareAsync A pointer to the generated, async version of the RPC method. The async version starts with
- * `PrepareAsync`.
- * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
- *
- * **Per-Operation Cancellation**
- *
- * Terminal and partial. Cancellation is performed by invoking
- * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984).
- * Operations are also cancelled when the deadline of the RPC has been reached (see
- * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6)).
+ * @brief (experimental) Client-side, unary RPC base
  *
  * @since 2.6.0
  */
 template <class StubT, class RequestT, class ResponseT, template <class> class ResponderT,
           detail::ClientUnaryRequest<StubT, RequestT, ResponderT<ResponseT>> UnaryPrepareAsync, class Executor>
-class RPC<UnaryPrepareAsync, Executor>
+class ClientRPCUnaryBase<UnaryPrepareAsync, Executor>
 {
   public:
     static constexpr agrpc::RPCType TYPE = agrpc::RPCType::CLIENT_UNARY;
@@ -193,9 +184,50 @@ class RPC<UnaryPrepareAsync, Executor>
     static auto request(const Executor& executor, StubT& stub, grpc::ClientContext& context, const RequestT& request,
                         ResponseT& response, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
-        return RPC::request(detail::query_grpc_context(executor), stub, context, request, response,
-                            static_cast<CompletionToken&&>(token));
+        return ClientRPCUnaryBase::request(detail::query_grpc_context(executor), stub, context, request, response,
+                                           static_cast<CompletionToken&&>(token));
     }
+
+  private:
+    ClientRPCUnaryBase(const ClientRPCUnaryBase& other) = delete;
+    ClientRPCUnaryBase(ClientRPCUnaryBase&& other) = delete;
+    ~ClientRPCUnaryBase() = delete;
+    ClientRPCUnaryBase& operator=(const ClientRPCUnaryBase& other) = delete;
+    ClientRPCUnaryBase& operator=(ClientRPCUnaryBase&& other) = delete;
+};
+}
+
+/**
+ * @brief (experimental) I/O object for client-side unary RPCs
+ *
+ * @tparam UnaryPrepareAsync A pointer to the generated, async version of the RPC method. The async version starts with
+ * `PrepareAsync`.
+ * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
+ *
+ * **Per-Operation Cancellation**
+ *
+ * Terminal and partial. Cancellation is performed by invoking
+ * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984).
+ * Operations are also cancelled when the deadline of the RPC has been reached (see
+ * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6)).
+ *
+ * @since 2.6.0
+ */
+template <class StubT, class RequestT, class ResponseT,
+          std::unique_ptr<grpc::ClientAsyncResponseReader<ResponseT>> (StubT::*UnaryPrepareAsync)(
+              grpc::ClientContext*, const RequestT&, grpc::CompletionQueue*),
+          class Executor>
+class RPC<UnaryPrepareAsync, Executor> : public detail::ClientRPCUnaryBase<UnaryPrepareAsync, Executor>
+{
+    using detail::ClientRPCUnaryBase<UnaryPrepareAsync, Executor>::ClientRPCUnaryBase;
+};
+template <class StubT, class RequestT, class ResponseT,
+          std::unique_ptr<grpc::ClientAsyncResponseReaderInterface<ResponseT>> (StubT::*UnaryPrepareAsync)(
+              grpc::ClientContext*, const RequestT&, grpc::CompletionQueue*),
+          class Executor>
+class RPC<UnaryPrepareAsync, Executor> : public detail::ClientRPCUnaryBase<UnaryPrepareAsync, Executor>
+{
+    using detail::ClientRPCUnaryBase<UnaryPrepareAsync, Executor>::ClientRPCUnaryBase;
 };
 
 /**
@@ -300,6 +332,13 @@ class RPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor>
         return RPC::request(detail::query_grpc_context(executor), method, stub, context, request, response,
                             static_cast<CompletionToken&&>(token));
     }
+
+  private:
+    RPC(const RPC& other) = delete;
+    RPC(RPC&& other) = delete;
+    ~RPC() = delete;
+    RPC& operator=(const RPC& other) = delete;
+    RPC& operator=(RPC&& other) = delete;
 };
 
 /**
@@ -558,7 +597,7 @@ class RPC<ClientStreamingPrepareAsync, Executor>
 namespace detail
 {
 /**
- * @brief (experimental) Client-side RPC server-streaming base
+ * @brief (experimental) Client-side, server-streaming RPC base
  *
  * @since 2.6.0
  */
@@ -827,7 +866,7 @@ class RPC<ServerStreamingPrepareAsync, Executor>
 namespace detail
 {
 /**
- * @brief (experimental) Client-side RPC bidirectional-streaming base
+ * @brief (experimental) Client-side, bidirectional-streaming RPC base
  *
  * @since 2.6.0
  */
