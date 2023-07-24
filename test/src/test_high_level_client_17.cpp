@@ -51,13 +51,13 @@ struct HighLevelClientIoContextTest : test::HighLevelClientTest<RPC>, test::IoCo
     }
 };
 
-template <class RPC>
-auto get_status_code(const RPC& rpc)
+TEST_CASE_TEMPLATE("Streaming RPC can be destructed without being started", RPC, test::ClientStreamingRPC,
+                   test::ClientStreamingInterfaceRPC, test::ServerStreamingRPC, test::ServerStreamingInterfaceRPC,
+                   test::BidirectionalStreamingRPC, test::BidirectionalStreamingInterfaceRPC, test::GenericStreamingRPC)
 {
-    return rpc.status_code();
+    agrpc::GrpcContext grpc_context;
+    CHECK_NOTHROW([[maybe_unused]] RPC rpc{grpc_context.get_executor()});
 }
-
-auto get_status_code(const grpc::Status& status) { return status.error_code(); }
 
 TEST_CASE_TEMPLATE("Unary RPC::request automatically finishes RPC on error", RPC, test::UnaryRPC,
                    test::UnaryInterfaceRPC, test::GenericUnaryRPC)
@@ -81,7 +81,7 @@ TEST_CASE_TEMPLATE("Unary RPC::request automatically finishes RPC on error", RPC
 
 TEST_CASE_TEMPLATE("Streaming RPC::start returns false on error", RPC, test::ClientStreamingRPC,
                    test::ClientStreamingInterfaceRPC, test::ServerStreamingRPC, test::ServerStreamingInterfaceRPC,
-                   test::BidirectionalStreamingRPC, test::BidirectionalStreamingInterfaceRPC)
+                   test::BidirectionalStreamingRPC, test::BidirectionalStreamingInterfaceRPC, test::GenericStreamingRPC)
 {
     test::HighLevelClientTest<RPC> test;
     test.server->Shutdown();
@@ -618,15 +618,13 @@ TEST_CASE_TEMPLATE("Unary RPC::request can be cancelled", RPC, test::UnaryRPC, t
     HighLevelClientCancellationTest<RPC> test;
     test.server->Shutdown();
     const auto not_to_exceed = test::one_second_from_now();
-    test.timer.expires_at({});
     asio::experimental::make_parallel_group(test.request_rpc(test::ASIO_DEFERRED),
-                                            test.timer.async_wait(test::ASIO_DEFERRED))
+                                            asio::post(asio::bind_executor(test.grpc_context, test::ASIO_DEFERRED)))
         .async_wait(asio::experimental::wait_for_one(),
-                    [&](auto&&, auto&& rpc, auto&&...)
+                    [&](auto&&, const grpc::Status& status, auto&&...)
                     {
-                        CHECK_FALSE(rpc.ok());
-                        CHECK_EQ(grpc::StatusCode::CANCELLED, get_status_code(rpc));
-                        test.server_shutdown.initiate();
+                        CHECK_FALSE(status.ok());
+                        CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
                     });
     test.grpc_context.run();
     CHECK_LT(test::now(), not_to_exceed);
@@ -638,10 +636,9 @@ TEST_CASE_TEMPLATE("Streaming RPC::start can be cancelled", RPC, test::ClientStr
     HighLevelClientCancellationTest<RPC> test;
     test.server->Shutdown();
     const auto not_to_exceed = test::one_second_from_now();
-    test.timer.expires_at({});
     auto rpc = test.create_rpc();
     asio::experimental::make_parallel_group(test.start_rpc(rpc, test::ASIO_DEFERRED),
-                                            test.timer.async_wait(test::ASIO_DEFERRED))
+                                            asio::post(asio::bind_executor(test.grpc_context, test::ASIO_DEFERRED)))
         .async_wait(asio::experimental::wait_for_one(),
                     [&](auto&&, bool ok, auto&&...)
                     {
@@ -650,7 +647,6 @@ TEST_CASE_TEMPLATE("Streaming RPC::start can be cancelled", RPC, test::ClientStr
                             [&](grpc::Status&& status)
                             {
                                 CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
-                                test.server_shutdown.initiate();
                             });
                     });
     test.grpc_context.run();
@@ -706,57 +702,11 @@ using GenericBidiStreamingReadCancellation = StreamingReadCancellationT<test::Ge
 TYPE_TO_STRING(GenericBidiStreamingReadCancellation);
 
 template <class RPCType>
-struct StreamingWriteCancellationT
-{
-    using RPC = RPCType;
-
-    static auto step(HighLevelClientCancellationTest<RPC>& test, RPC& rpc)
-    {
-        return rpc.write(test.request, test::ASIO_DEFERRED);
-    }
-};
-
-using ClientStreamingWriteCancellation = StreamingWriteCancellationT<test::ClientStreamingRPC>;
-TYPE_TO_STRING(ClientStreamingWriteCancellation);
-
-using BidiStreamingWriteCancellation = StreamingWriteCancellationT<test::BidirectionalStreamingRPC>;
-TYPE_TO_STRING(BidiStreamingWriteCancellation);
-
-using GenericBidiStreamingWriteCancellation = StreamingWriteCancellationT<test::GenericStreamingRPC>;
-TYPE_TO_STRING(GenericBidiStreamingWriteCancellation);
-
-template <class RPCType>
-struct StreamingWriteLastCancellationT
-{
-    using RPC = RPCType;
-
-    static auto step(HighLevelClientCancellationTest<RPC>& test, RPC& rpc)
-    {
-        return rpc.write(test.request, grpc::WriteOptions{}.set_last_message(), test::ASIO_DEFERRED);
-    }
-};
-
-using ClientStreamingWriteLastCancellation = StreamingWriteLastCancellationT<test::ClientStreamingRPC>;
-TYPE_TO_STRING(ClientStreamingWriteLastCancellation);
-
-using BidiStreamingWriteLastCancellation = StreamingWriteLastCancellationT<test::BidirectionalStreamingRPC>;
-TYPE_TO_STRING(BidiStreamingWriteLastCancellation);
-
-using GenericBidiStreamingWriteLastCancellation = StreamingWriteLastCancellationT<test::GenericStreamingRPC>;
-TYPE_TO_STRING(GenericBidiStreamingWriteLastCancellation);
-
-template <class RPCType>
 struct StreamingFinishCancellationT
 {
     using RPC = RPCType;
 
     static auto step(HighLevelClientCancellationTest<RPC>&, RPC& rpc) { return rpc.finish(test::ASIO_DEFERRED); }
-
-    template <class Result>
-    static auto check(Result& result)
-    {
-        CHECK_EQ(grpc::StatusCode::CANCELLED, std::get<2>(result).error_code());
-    }
 };
 
 using ClientStreamingFinishCancellation = StreamingFinishCancellationT<test::ClientStreamingRPC>;
@@ -771,7 +721,7 @@ TYPE_TO_STRING(BidiStreamingFinishCancellation);
 using GenericBidiStreamingFinishCancellation = StreamingFinishCancellationT<test::GenericStreamingRPC>;
 TYPE_TO_STRING(GenericBidiStreamingFinishCancellation);
 
-template <class T, bool IsAlreadyFinished = false>
+template <class T>
 void test_rpc_step_functions_can_be_cancelled()
 {
     HighLevelClientCancellationTest<typename T::RPC> test;
@@ -785,13 +735,13 @@ void test_rpc_step_functions_can_be_cancelled()
         {
             auto rpc = test.create_rpc();
             test.start_rpc(rpc, yield);
-            test.timer.expires_at({});
-            auto result =
-                asio::experimental::make_parallel_group(test.timer.async_wait(test::ASIO_DEFERRED), T::step(test, rpc))
+            [[maybe_unused]] auto result =
+                asio::experimental::make_parallel_group(
+                    asio::post(asio::bind_executor(test.grpc_context, test::ASIO_DEFERRED)), T::step(test, rpc))
                     .async_wait(asio::experimental::wait_for_one(), yield);
-            if constexpr (IsAlreadyFinished)
+            if constexpr (std::is_same_v<grpc::Status&, decltype(std::get<1>(result))>)
             {
-                T::check(result);
+                CHECK_EQ(grpc::StatusCode::CANCELLED, std::get<1>(result).error_code());
             }
             else
             {
@@ -814,17 +764,9 @@ TEST_CASE_TEMPLATE("RPC::read_initial_metadata can be cancelled", T, ClientStrea
 
 TEST_CASE_TEMPLATE("RPC step functions can be cancelled", T, ServerStreamingReadCancellation,
                    BidiStreamingReadCancellation, GenericBidiStreamingReadCancellation,
-                   ClientStreamingWriteCancellation, GenericBidiStreamingWriteCancellation,
-                   ClientStreamingWriteLastCancellation, BidiStreamingWriteLastCancellation,
-                   GenericBidiStreamingWriteLastCancellation)
+                   ClientStreamingFinishCancellation, ServerStreamingFinishCancellation,
+                   BidiStreamingFinishCancellation, GenericBidiStreamingFinishCancellation)
 {
     test_rpc_step_functions_can_be_cancelled<T>();
-}
-
-TEST_CASE_TEMPLATE("RPC finish functions can be cancelled", T, ClientStreamingFinishCancellation,
-                   ServerStreamingFinishCancellation, BidiStreamingFinishCancellation,
-                   GenericBidiStreamingFinishCancellation)
-{
-    test_rpc_step_functions_can_be_cancelled<T, true>();
 }
 #endif

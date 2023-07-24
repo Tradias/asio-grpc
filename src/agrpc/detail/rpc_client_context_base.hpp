@@ -42,6 +42,8 @@ class AutoCancelClientContextAndResponder
      * @brief Cancel this RPC
      *
      * Effectively calls `context().TryCancel()`.
+     *
+     * Thread-safe
      */
     void cancel() noexcept { client_context_.TryCancel(); }
 
@@ -60,12 +62,12 @@ class AutoCancelClientContextAndResponder
 
     ~AutoCancelClientContextAndResponder() noexcept
     {
-        if (!is_finished())
-        {
-            client_context_.TryCancel();
-        }
         if (auto* const responder_ptr = responder_.get())
         {
+            if (!is_finished())
+            {
+                client_context_.TryCancel();
+            }
             std::default_delete<Responder>{}(responder_ptr);
         }
     }
