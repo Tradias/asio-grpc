@@ -114,56 +114,29 @@ unifex::task<void> handle_slow_unary_request(agrpc::GrpcContext& grpc_context,
 // ---------------------------------------------------
 //
 
-auto handle_shutdown_request(agrpc::GrpcContext& grpc_context, example::v1::ExampleExt::AsyncService& service,
-                             example::ServerShutdown& server_shutdown)
+auto register_shutdown_request_handler(agrpc::GrpcContext& grpc_context, example::v1::ExampleExt::AsyncService& service,
+                                       example::ServerShutdown& server_shutdown)
 {
-    struct Context
+    auto request_handler = [&](grpc::ServerContext&, google::protobuf::Empty&,
+                               grpc::ServerAsyncResponseWriter<google::protobuf::Empty>& writer)
     {
-        grpc::ServerContext server_context{};
-        grpc::ServerAsyncResponseWriter<google::protobuf::Empty> writer{&server_context};
-
-        Context() = default;
+        return unifex::let_value_with(
+                   []
+                   {
+                       return google::protobuf::Empty{};
+                   },
+                   [&](auto& response)
+                   {
+                       return agrpc::finish(writer, response, grpc::Status::OK, agrpc::use_sender(grpc_context));
+                   }) |
+               unifex::then(
+                   [&](bool)
+                   {
+                       server_shutdown.shutdown();
+                   });
     };
-    return unifex::let_value_with(
-               []
-               {
-                   return Context{};
-               },
-               [&](Context& context)
-               {
-                   return unifex::let_value_with(
-                              []
-                              {
-                                  return google::protobuf::Empty{};
-                              },
-                              [&](auto& request)
-                              {
-                                  return agrpc::request(&example::v1::ExampleExt::AsyncService::RequestShutdown,
-                                                        service, context.server_context, request, context.writer,
-                                                        agrpc::use_sender(grpc_context));
-                              }) |
-                          unifex::let_value(
-                              [](bool ok)
-                              {
-                                  return unifex::just_void_or_done(ok);
-                              }) |
-                          unifex::then(
-                              []
-                              {
-                                  return google::protobuf::Empty{};
-                              }) |
-                          unifex::let_value(
-                              [&](const auto& response)
-                              {
-                                  return agrpc::finish(context.writer, response, grpc::Status::OK,
-                                                       agrpc::use_sender(grpc_context));
-                              });
-               }) |
-           unifex::then(
-               [&](bool)
-               {
-                   server_shutdown.shutdown();
-               });
+    return agrpc::repeatedly_request(&example::v1::ExampleExt::AsyncService::RequestShutdown, service, request_handler,
+                                     agrpc::use_sender(grpc_context));
 }
 
 template <class Sender>
@@ -205,10 +178,10 @@ int main(int argc, const char** argv)
     example::ServerShutdown server_shutdown{*server};
 
     run_grpc_context_for_sender(
-        grpc_context,
-        unifex::with_query_value(unifex::when_all(register_unary_request_handler(grpc_context, service),
-                                                  handle_server_streaming_request(grpc_context, service),
-                                                  handle_slow_unary_request(grpc_context, service_ext),
-                                                  handle_shutdown_request(grpc_context, service_ext, server_shutdown)),
-                                 unifex::get_scheduler, unifex::inline_scheduler{}));
+        grpc_context, unifex::with_query_value(unifex::when_all(register_unary_request_handler(grpc_context, service),
+                                                                handle_server_streaming_request(grpc_context, service),
+                                                                handle_slow_unary_request(grpc_context, service_ext),
+                                                                register_shutdown_request_handler(
+                                                                    grpc_context, service_ext, server_shutdown)),
+                                               unifex::get_scheduler, unifex::inline_scheduler{}));
 }

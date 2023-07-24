@@ -187,13 +187,6 @@ class ClientRPCUnaryBase<UnaryPrepareAsync, Executor>
         return ClientRPCUnaryBase::request(detail::query_grpc_context(executor), stub, context, request, response,
                                            static_cast<CompletionToken&&>(token));
     }
-
-  private:
-    ClientRPCUnaryBase(const ClientRPCUnaryBase& other) = delete;
-    ClientRPCUnaryBase(ClientRPCUnaryBase&& other) = delete;
-    ~ClientRPCUnaryBase() = delete;
-    ClientRPCUnaryBase& operator=(const ClientRPCUnaryBase& other) = delete;
-    ClientRPCUnaryBase& operator=(ClientRPCUnaryBase&& other) = delete;
 };
 }
 
@@ -220,6 +213,13 @@ template <class StubT, class RequestT, class ResponseT,
 class RPC<UnaryPrepareAsync, Executor> : public detail::ClientRPCUnaryBase<UnaryPrepareAsync, Executor>
 {
     using detail::ClientRPCUnaryBase<UnaryPrepareAsync, Executor>::ClientRPCUnaryBase;
+
+  private:
+    RPC(const RPC& other) = delete;
+    RPC(RPC&& other) = delete;
+    ~RPC() = delete;
+    RPC& operator=(const RPC& other) = delete;
+    RPC& operator=(RPC&& other) = delete;
 };
 template <class StubT, class RequestT, class ResponseT,
           std::unique_ptr<grpc::ClientAsyncResponseReaderInterface<ResponseT>> (StubT::*UnaryPrepareAsync)(
@@ -228,6 +228,13 @@ template <class StubT, class RequestT, class ResponseT,
 class RPC<UnaryPrepareAsync, Executor> : public detail::ClientRPCUnaryBase<UnaryPrepareAsync, Executor>
 {
     using detail::ClientRPCUnaryBase<UnaryPrepareAsync, Executor>::ClientRPCUnaryBase;
+
+  private:
+    RPC(const RPC& other) = delete;
+    RPC(RPC&& other) = delete;
+    ~RPC() = delete;
+    RPC& operator=(const RPC& other) = delete;
+    RPC& operator=(RPC&& other) = delete;
 };
 
 /**
