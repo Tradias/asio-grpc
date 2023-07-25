@@ -46,7 +46,7 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
                                                                   example::v1::ExampleExt::Stub& stub,
                                                                   const std::string& file_path)
 {
-    using RPC = agrpc::RPC<&example::v1::ExampleExt::Stub::PrepareAsyncSendFile>;
+    using RPC = agrpc::ClientRPC<&example::v1::ExampleExt::Stub::PrepareAsyncSendFile>;
 
     // Use a larger chunk size in production code, like 64'0000.
     // Here we use a smaller value so that our payload needs more than one chunk.

@@ -41,7 +41,7 @@
 // end-snippet
 unifex::task<void> make_unary_request(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
-    using RPC = agrpc::RPC<&example::v1::Example::Stub::PrepareAsyncUnary>;
+    using RPC = agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncUnary>;
 
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
@@ -61,7 +61,7 @@ unifex::task<void> make_unary_request(agrpc::GrpcContext& grpc_context, example:
 // A server-streaming request with unifex sender/receiver.
 // ---------------------------------------------------
 // end-snippet
-using ServerStreamingRPC = agrpc::RPC<&example::v1::Example::Stub::PrepareAsyncServerStreaming>;
+using ServerStreamingClientRPC = agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncServerStreaming>;
 
 struct ReadContext
 {
@@ -80,7 +80,7 @@ auto response_processor(example::v1::Response& response)
     };
 }
 
-auto handle_server_streaming_request(bool ok, ServerStreamingRPC& rpc)
+auto handle_server_streaming_request(bool ok, ServerStreamingClientRPC& rpc)
 {
     return unifex::just_void_or_done(ok) |
            unifex::then(
@@ -122,9 +122,9 @@ auto make_server_streaming_request(agrpc::GrpcContext& grpc_context, example::v1
     return unifex::let_value_with(
         [&]
         {
-            return ServerStreamingRPC{grpc_context};
+            return ServerStreamingClientRPC{grpc_context};
         },
-        [&](ServerStreamingRPC& rpc)
+        [&](ServerStreamingClientRPC& rpc)
         {
             rpc.context().set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
             return unifex::just(example::v1::Request{}) |
@@ -158,7 +158,7 @@ auto with_deadline(agrpc::GrpcContext& grpc_context, std::chrono::system_clock::
 
 unifex::task<void> make_and_cancel_unary_request(agrpc::GrpcContext& grpc_context, example::v1::ExampleExt::Stub& stub)
 {
-    using RPC = agrpc::RPC<&example::v1::ExampleExt::Stub::PrepareAsyncSlowUnary>;
+    using RPC = agrpc::ClientRPC<&example::v1::ExampleExt::Stub::PrepareAsyncSlowUnary>;
 
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
@@ -189,7 +189,7 @@ auto make_shutdown_request(agrpc::GrpcContext& grpc_context, example::v1::Exampl
                {
                    auto& [client_context, response] = context;
                    client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
-                   return agrpc::RPC<&example::v1::ExampleExt::Stub::PrepareAsyncShutdown>::request(
+                   return agrpc::ClientRPC<&example::v1::ExampleExt::Stub::PrepareAsyncShutdown>::request(
                        grpc_context, stub, client_context, {}, response);
                }) |
            unifex::then(

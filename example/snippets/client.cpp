@@ -368,7 +368,7 @@ void client_main()
             example::v1::Request request;
             request.set_integer(42);
             example::v1::Response response;
-            using RPC = agrpc::RPC<&example::v1::Example::Stub::PrepareAsyncUnary>;
+            using RPC = agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncUnary>;
             grpc::Status status = co_await RPC::request(grpc_context, stub, client_context, request, response);
             assert(status.ok());
         },

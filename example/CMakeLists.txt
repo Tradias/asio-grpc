@@ -50,8 +50,8 @@ if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPL
     asio_grpc_add_example(streaming-client "20")
     target_link_libraries(asio-grpc-example-streaming-client PRIVATE asio-grpc::asio-grpc)
 
-    asio_grpc_add_example(high-level-client "20")
-    target_link_libraries(asio-grpc-example-high-level-client PRIVATE asio-grpc::asio-grpc)
+    asio_grpc_add_example(client-rpc "20")
+    target_link_libraries(asio-grpc-example-client-rpc PRIVATE asio-grpc::asio-grpc)
 
     asio_grpc_add_example(streaming-server "20")
     target_link_libraries(asio-grpc-example-streaming-server PRIVATE asio-grpc::asio-grpc)

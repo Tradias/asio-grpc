@@ -20,8 +20,8 @@
 #include "utils/grpc_context_test.hpp"
 #include "utils/time.hpp"
 
+#include <agrpc/client_rpc.hpp>
 #include <agrpc/health_check_service.hpp>
-#include <agrpc/high_level_client.hpp>
 #include <agrpc/rpc.hpp>
 #include <grpcpp/create_channel.h>
 #include <grpcpp/grpcpp.h>
@@ -33,8 +33,8 @@ namespace grpc_health = grpc::health::v1;
 template <bool UseAgrpc>
 struct HealthCheckServiceTest : test::GrpcContextTest
 {
-    using CheckRPC = agrpc::RPC<&grpc_health::Health::Stub::PrepareAsyncCheck>;
-    using WatchRPC = agrpc::RPC<&grpc_health::Health::Stub::PrepareAsyncWatch>;
+    using CheckRPC = agrpc::ClientRPC<&grpc_health::Health::Stub::PrepareAsyncCheck>;
+    using WatchRPC = agrpc::ClientRPC<&grpc_health::Health::Stub::PrepareAsyncWatch>;
 
     std::shared_ptr<grpc::Channel> channel;
     std::unique_ptr<grpc_health::Health::Stub> stub;

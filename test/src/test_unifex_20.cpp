@@ -16,11 +16,11 @@
 #include "utils/asio_forward.hpp"
 #include "utils/asio_utils.hpp"
 #include "utils/client_context.hpp"
+#include "utils/client_rpc.hpp"
 #include "utils/delete_guard.hpp"
 #include "utils/doctest.hpp"
 #include "utils/grpc_client_server_test.hpp"
 #include "utils/grpc_context_test.hpp"
-#include "utils/high_level_client.hpp"
 
 #include <agrpc/asio_grpc.hpp>
 
@@ -663,11 +663,11 @@ TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex repeatedly_request client stre
     CHECK_EQ(4, request_count);
 }
 
-struct UnifexHighLevelTest : test::HighLevelClientTest<test::BidirectionalStreamingRPC>, UnifexTest
+struct UnifexClientRPCTest : test::ClientRPCTest<test::BidirectionalStreamingClientRPC>, UnifexTest
 {
 };
 
-TEST_CASE_FIXTURE(UnifexHighLevelTest, "unifex high-level client BidirectionalStreamingRPC success")
+TEST_CASE_FIXTURE(UnifexClientRPCTest, "unifex BidirectionalStreamingClientRPC success")
 {
     run(
         [&]() -> unifex::task<void>
@@ -695,7 +695,7 @@ TEST_CASE_FIXTURE(UnifexHighLevelTest, "unifex high-level client BidirectionalSt
         }());
 }
 
-TEST_CASE_FIXTURE(UnifexHighLevelTest, "unifex high-level client can be canelled")
+TEST_CASE_FIXTURE(UnifexClientRPCTest, "unifex BidirectionalStreamingClientRPC can be canelled")
 {
     const auto with_deadline = [&](std::chrono::system_clock::time_point deadline)
     {

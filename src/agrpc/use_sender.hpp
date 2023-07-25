@@ -36,7 +36,7 @@ AGRPC_NAMESPACE_BEGIN()
  *
  * For member functions in this library the `agrpc::UseSender` object must be used directly:
  * @code{cpp}
- * agrpc::RPC<...>::request(..., agrpc::use_sender);
+ * agrpc::ClientRPC<...>::request(..., agrpc::use_sender);
  * @endcode
  */
 struct UseSender

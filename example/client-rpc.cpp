@@ -17,7 +17,7 @@
 #include "helper.hpp"
 
 #include <agrpc/alarm.hpp>
-#include <agrpc/high_level_client.hpp>
+#include <agrpc/client_rpc.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/deferred.hpp>
@@ -31,16 +31,16 @@
 
 namespace asio = boost::asio;
 
-// Example showing some of the features of the high-level client API of asio-grpc with Boost.Asio.
+// Example showing some of the features of the ClientRPC API of asio-grpc with Boost.Asio.
 
-// begin-snippet: client-side-high-level-client-streaming
+// begin-snippet: client-side-client-rpc-streaming
 // ---------------------------------------------------
 // A simple client-streaming request with coroutines.
 // ---------------------------------------------------
 // end-snippet
 asio::awaitable<void> make_client_streaming_request(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
-    using RPC = agrpc::RPC<&example::v1::Example::Stub::PrepareAsyncClientStreaming>;
+    using RPC = agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncClientStreaming>;
 
     RPC rpc{grpc_context};
     rpc.context().set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
@@ -60,21 +60,21 @@ asio::awaitable<void> make_client_streaming_request(agrpc::GrpcContext& grpc_con
     const grpc::Status status = co_await rpc.finish();
     abort_if_not(status.ok());
 
-    std::cout << "High-level: Client streaming completed. Response: " << response.integer() << '\n';
+    std::cout << "ClientRPC: Client streaming completed. Response: " << response.integer() << '\n';
 
     silence_unused(read_ok, write_ok);
 }
 // ---------------------------------------------------
 //
 
-// begin-snippet: client-side-high-level-server-streaming
+// begin-snippet: client-rpc-server-streaming
 // ---------------------------------------------------
 // A simple server-streaming request with coroutines.
 // ---------------------------------------------------
 // end-snippet
 asio::awaitable<void> make_server_streaming_request(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
-    using RPC = agrpc::RPC<&example::v1::Example::Stub::PrepareAsyncServerStreaming>;
+    using RPC = agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncServerStreaming>;
 
     RPC rpc{grpc_context};
     rpc.context().set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
@@ -87,18 +87,18 @@ asio::awaitable<void> make_server_streaming_request(agrpc::GrpcContext& grpc_con
 
     while (co_await rpc.read(response))
     {
-        std::cout << "High-level: Server streaming: " << response.integer() << "\n";
+        std::cout << "ClientRPC: Server streaming: " << response.integer() << "\n";
     }
 
     const grpc::Status status = co_await rpc.finish();
     abort_if_not(status.ok());
 
-    std::cout << "High-level: Server streaming completed\n";
+    std::cout << "ClientRPC: Server streaming completed\n";
 }
 // ---------------------------------------------------
 //
 
-// begin-snippet: client-side-high-level-bidirectional-streaming
+// begin-snippet: client-rpc-bidirectional-streaming
 // ---------------------------------------------------
 // A bidirectional-streaming request that simply sends the response from the server back to it.
 // ---------------------------------------------------
@@ -106,7 +106,7 @@ asio::awaitable<void> make_server_streaming_request(agrpc::GrpcContext& grpc_con
 asio::awaitable<void> make_bidirectional_streaming_request(agrpc::GrpcContext& grpc_context,
                                                            example::v1::Example::Stub& stub)
 {
-    using RPC = agrpc::RPC<&example::v1::Example::Stub::PrepareAsyncBidirectionalStreaming>;
+    using RPC = agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncBidirectionalStreaming>;
 
     RPC rpc{grpc_context};
     rpc.context().set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
@@ -129,7 +129,7 @@ asio::awaitable<void> make_bidirectional_streaming_request(agrpc::GrpcContext& g
     int count{};
     while (read_ok && write_ok && count < 10)
     {
-        std::cout << "High-level: Bidirectional streaming: " << response.integer() << '\n';
+        std::cout << "ClientRPC: Bidirectional streaming: " << response.integer() << '\n';
         request.set_integer(response.integer());
         ++count;
         std::tie(read_ok, write_ok) = co_await (rpc.read(response) && rpc.write(request));
@@ -153,7 +153,7 @@ asio::awaitable<void> make_bidirectional_streaming_request(agrpc::GrpcContext& g
 asio::awaitable<void> make_and_cancel_unary_request(agrpc::GrpcContext& grpc_context,
                                                     example::v1::ExampleExt::Stub& stub)
 {
-    using RPC = agrpc::RPC<&example::v1::ExampleExt::Stub::PrepareAsyncSlowUnary>;
+    using RPC = agrpc::ClientRPC<&example::v1::ExampleExt::Stub::PrepareAsyncSlowUnary>;
 
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
@@ -192,16 +192,17 @@ asio::awaitable<void> make_shutdown_request(agrpc::GrpcContext& grpc_context, ex
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
 
     google::protobuf::Empty response;
-    const grpc::Status status = co_await agrpc::RPC<&example::v1::ExampleExt::Stub::PrepareAsyncShutdown>::request(
-        grpc_context, stub, client_context, {}, response);
+    const grpc::Status status =
+        co_await agrpc::ClientRPC<&example::v1::ExampleExt::Stub::PrepareAsyncShutdown>::request(
+            grpc_context, stub, client_context, {}, response);
 
     if (status.ok())
     {
-        std::cout << "High-level: Successfully send shutdown request to server\n";
+        std::cout << "ClientRPC: Successfully send shutdown request to server\n";
     }
     else
     {
-        std::cout << "High-level: Failed to send shutdown request to server: " << status.error_message() << '\n';
+        std::cout << "ClientRPC: Failed to send shutdown request to server: " << status.error_message() << '\n';
     }
     abort_if_not(status.ok());
 }

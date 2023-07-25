@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_UTILS_HIGH_LEVEL_CLIENT_HPP
-#define AGRPC_UTILS_HIGH_LEVEL_CLIENT_HPP
+#ifndef AGRPC_UTILS_CLIENT_RPC_HPP
+#define AGRPC_UTILS_CLIENT_RPC_HPP
 
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asio_forward.hpp"
@@ -24,35 +24,35 @@
 #include "utils/test_server.hpp"
 #include "utils/time.hpp"
 
-#include <agrpc/high_level_client.hpp>
+#include <agrpc/client_rpc.hpp>
 #include <doctest/doctest.h>
 
 #include <functional>
 
 namespace test
 {
-using UnaryRPC = agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncUnary>;
-using UnaryInterfaceRPC = agrpc::RPC<&test::v1::Test::StubInterface::PrepareAsyncUnary>;
-using ClientStreamingRPC = agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncClientStreaming>;
-using ClientStreamingInterfaceRPC = agrpc::RPC<&test::v1::Test::StubInterface::PrepareAsyncClientStreaming>;
-using ServerStreamingRPC = agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncServerStreaming>;
-using ServerStreamingInterfaceRPC = agrpc::RPC<&test::v1::Test::StubInterface::PrepareAsyncServerStreaming>;
-using BidirectionalStreamingRPC = agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncBidirectionalStreaming>;
-using BidirectionalStreamingInterfaceRPC =
-    agrpc::RPC<&test::v1::Test::StubInterface::PrepareAsyncBidirectionalStreaming>;
-using GenericUnaryRPC = agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC>;
-using GenericStreamingRPC = agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC>;
+using UnaryClientRPC = agrpc::ClientRPC<&test::v1::Test::Stub::PrepareAsyncUnary>;
+using UnaryInterfaceClientRPC = agrpc::ClientRPC<&test::v1::Test::StubInterface::PrepareAsyncUnary>;
+using ClientStreamingClientRPC = agrpc::ClientRPC<&test::v1::Test::Stub::PrepareAsyncClientStreaming>;
+using ClientStreamingInterfaceClientRPC = agrpc::ClientRPC<&test::v1::Test::StubInterface::PrepareAsyncClientStreaming>;
+using ServerStreamingClientRPC = agrpc::ClientRPC<&test::v1::Test::Stub::PrepareAsyncServerStreaming>;
+using ServerStreamingInterfaceClientRPC = agrpc::ClientRPC<&test::v1::Test::StubInterface::PrepareAsyncServerStreaming>;
+using BidirectionalStreamingClientRPC = agrpc::ClientRPC<&test::v1::Test::Stub::PrepareAsyncBidirectionalStreaming>;
+using BidirectionalStreamingInterfaceClientRPC =
+    agrpc::ClientRPC<&test::v1::Test::StubInterface::PrepareAsyncBidirectionalStreaming>;
+using GenericUnaryClientRPC = agrpc::ClientRPC<agrpc::CLIENT_GENERIC_UNARY_RPC>;
+using GenericStreamingClientRPC = agrpc::ClientRPC<agrpc::CLIENT_GENERIC_STREAMING_RPC>;
 
 template <class RPC, auto Type = RPC::TYPE>
 struct IntrospectRPC;
 
 template <auto PrepareAsync, class Executor>
-struct IntrospectRPC<agrpc::RPC<PrepareAsync, Executor>, agrpc::RPCType::CLIENT_UNARY>
+struct IntrospectRPC<agrpc::ClientRPC<PrepareAsync, Executor>, agrpc::ClientRPCType::UNARY>
 {
     static constexpr auto CLIENT_REQUEST = PrepareAsync;
     static constexpr auto SERVER_REQUEST = &test::v1::Test::AsyncService::RequestUnary;
 
-    using RPC = agrpc::RPC<PrepareAsync, Executor>;
+    using RPC = agrpc::ClientRPC<PrepareAsync, Executor>;
 
     template <class ExecOrContext, class CompletionToken>
     static auto request(ExecOrContext&& executor, typename RPC::Stub& stub, grpc::GenericStub&,
@@ -64,12 +64,12 @@ struct IntrospectRPC<agrpc::RPC<PrepareAsync, Executor>, agrpc::RPCType::CLIENT_
 };
 
 template <class Executor>
-struct IntrospectRPC<agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor>, agrpc::RPCType::CLIENT_GENERIC_UNARY>
+struct IntrospectRPC<agrpc::ClientRPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor>, agrpc::ClientRPCType::GENERIC_UNARY>
 {
     static constexpr auto CLIENT_REQUEST = agrpc::CLIENT_GENERIC_UNARY_RPC;
     static constexpr auto SERVER_REQUEST = &test::v1::Test::AsyncService::RequestUnary;
 
-    using RPC = agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor>;
+    using RPC = agrpc::ClientRPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor>;
 
     template <class ExecOrContext, class CompletionToken>
     static auto request(ExecOrContext&& executor, test::v1::Test::Stub&, typename RPC::Stub& stub,
@@ -81,12 +81,12 @@ struct IntrospectRPC<agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor>, agrp
 };
 
 template <auto PrepareAsync, class Executor>
-struct IntrospectRPC<agrpc::RPC<PrepareAsync, Executor>, agrpc::RPCType::CLIENT_CLIENT_STREAMING>
+struct IntrospectRPC<agrpc::ClientRPC<PrepareAsync, Executor>, agrpc::ClientRPCType::CLIENT_STREAMING>
 {
     static constexpr auto CLIENT_REQUEST = PrepareAsync;
     static constexpr auto SERVER_REQUEST = &test::v1::Test::AsyncService::RequestClientStreaming;
 
-    using RPC = agrpc::RPC<PrepareAsync, Executor>;
+    using RPC = agrpc::ClientRPC<PrepareAsync, Executor>;
 
     template <class CompletionToken>
     static auto start(RPC& rpc, typename RPC::Stub& stub, grpc::GenericStub&, const typename RPC::Request&,
@@ -97,12 +97,12 @@ struct IntrospectRPC<agrpc::RPC<PrepareAsync, Executor>, agrpc::RPCType::CLIENT_
 };
 
 template <auto PrepareAsync, class Executor>
-struct IntrospectRPC<agrpc::RPC<PrepareAsync, Executor>, agrpc::RPCType::CLIENT_SERVER_STREAMING>
+struct IntrospectRPC<agrpc::ClientRPC<PrepareAsync, Executor>, agrpc::ClientRPCType::SERVER_STREAMING>
 {
     static constexpr auto CLIENT_REQUEST = PrepareAsync;
     static constexpr auto SERVER_REQUEST = &test::v1::Test::AsyncService::RequestServerStreaming;
 
-    using RPC = agrpc::RPC<PrepareAsync, Executor>;
+    using RPC = agrpc::ClientRPC<PrepareAsync, Executor>;
 
     template <class CompletionToken>
     static auto start(RPC& rpc, typename RPC::Stub& stub, grpc::GenericStub&, const typename RPC::Request& request,
@@ -113,12 +113,12 @@ struct IntrospectRPC<agrpc::RPC<PrepareAsync, Executor>, agrpc::RPCType::CLIENT_
 };
 
 template <auto PrepareAsync, class Executor>
-struct IntrospectRPC<agrpc::RPC<PrepareAsync, Executor>, agrpc::RPCType::CLIENT_BIDIRECTIONAL_STREAMING>
+struct IntrospectRPC<agrpc::ClientRPC<PrepareAsync, Executor>, agrpc::ClientRPCType::BIDIRECTIONAL_STREAMING>
 {
     static constexpr auto CLIENT_REQUEST = PrepareAsync;
     static constexpr auto SERVER_REQUEST = &test::v1::Test::AsyncService::RequestBidirectionalStreaming;
 
-    using RPC = agrpc::RPC<PrepareAsync, Executor>;
+    using RPC = agrpc::ClientRPC<PrepareAsync, Executor>;
 
     template <class CompletionToken>
     static auto start(RPC& rpc, typename RPC::Stub& stub, grpc::GenericStub&, const typename RPC::Request&,
@@ -129,13 +129,13 @@ struct IntrospectRPC<agrpc::RPC<PrepareAsync, Executor>, agrpc::RPCType::CLIENT_
 };
 
 template <class Executor>
-struct IntrospectRPC<agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>,
-                     agrpc::RPCType::CLIENT_GENERIC_STREAMING>
+struct IntrospectRPC<agrpc::ClientRPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>,
+                     agrpc::ClientRPCType::GENERIC_STREAMING>
 {
     static constexpr auto CLIENT_REQUEST = agrpc::CLIENT_GENERIC_STREAMING_RPC;
     static constexpr auto SERVER_REQUEST = &test::v1::Test::AsyncService::RequestBidirectionalStreaming;
 
-    using RPC = agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>;
+    using RPC = agrpc::ClientRPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>;
 
     template <class CompletionToken>
     static auto start(RPC& rpc, test::v1::Test::Stub&, typename RPC::Stub& stub, const typename RPC::Request&,
@@ -146,7 +146,7 @@ struct IntrospectRPC<agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>,
 };
 
 template <class RPC>
-struct HighLevelClientTest : test::GrpcClientServerTest
+struct ClientRPCTest : test::GrpcClientServerTest
 {
     static constexpr auto SERVER_REQUEST = IntrospectRPC<RPC>::SERVER_REQUEST;
 
@@ -200,15 +200,15 @@ struct HighLevelClientTest : test::GrpcClientServerTest
 };
 }
 
-TYPE_TO_STRING(test::UnaryRPC);
-TYPE_TO_STRING(test::UnaryInterfaceRPC);
-TYPE_TO_STRING(test::ClientStreamingRPC);
-TYPE_TO_STRING(test::ClientStreamingInterfaceRPC);
-TYPE_TO_STRING(test::ServerStreamingRPC);
-TYPE_TO_STRING(test::ServerStreamingInterfaceRPC);
-TYPE_TO_STRING(test::BidirectionalStreamingRPC);
-TYPE_TO_STRING(test::BidirectionalStreamingInterfaceRPC);
-TYPE_TO_STRING(test::GenericUnaryRPC);
-TYPE_TO_STRING(test::GenericStreamingRPC);
+TYPE_TO_STRING(test::UnaryClientRPC);
+TYPE_TO_STRING(test::UnaryInterfaceClientRPC);
+TYPE_TO_STRING(test::ClientStreamingClientRPC);
+TYPE_TO_STRING(test::ClientStreamingInterfaceClientRPC);
+TYPE_TO_STRING(test::ServerStreamingClientRPC);
+TYPE_TO_STRING(test::ServerStreamingInterfaceClientRPC);
+TYPE_TO_STRING(test::BidirectionalStreamingClientRPC);
+TYPE_TO_STRING(test::BidirectionalStreamingInterfaceClientRPC);
+TYPE_TO_STRING(test::GenericUnaryClientRPC);
+TYPE_TO_STRING(test::GenericStreamingClientRPC);
 
-#endif  // AGRPC_UTILS_HIGH_LEVEL_CLIENT_HPP
+#endif  // AGRPC_UTILS_CLIENT_RPC_HPP

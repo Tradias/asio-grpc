@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_HIGH_LEVEL_CLIENT_SENDER_HPP
-#define AGRPC_DETAIL_HIGH_LEVEL_CLIENT_SENDER_HPP
+#ifndef AGRPC_DETAIL_CLIENT_RPC_SENDER_HPP
+#define AGRPC_DETAIL_CLIENT_RPC_SENDER_HPP
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_sender.hpp>
@@ -27,22 +27,22 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief (experimental) Primary RPC template
+ * @brief (experimental) Primary ClientRPC template
  *
- * This is the main entrypoint into the high-level client API.
+ * This is the main entrypoint into the recommended API for writing asynchronous gRPC clients.
  *
  * @see
- * @c agrpc::RPC<UnaryPrepareAsync,Executor> <br>
- * @c agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC,Executor> <br>
- * @c agrpc::RPC<ClientStreamingPrepareAsync,Executor> <br>
- * @c agrpc::RPC<ServerStreamingPrepareAsync,Executor> <br>
- * @c agrpc::RPC<BidiStreamingPrepareAsync,Executor> <br>
- * @c agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC,Executor> <br>
+ * @c agrpc::ClientRPC<PrepareAsyncUnary,Executor> <br>
+ * @c agrpc::ClientRPC<agrpc::CLIENT_GENERIC_UNARY_RPC,Executor> <br>
+ * @c agrpc::ClientRPC<PrepareAsyncClientStreaming,Executor> <br>
+ * @c agrpc::ClientRPC<PrepareAsyncServerStreaming,Executor> <br>
+ * @c agrpc::ClientRPC<PrepareAsyncBidiStreaming,Executor> <br>
+ * @c agrpc::ClientRPC<agrpc::CLIENT_GENERIC_STREAMING_RPC,Executor> <br>
  *
  * @since 2.6.0
  */
 template <auto PrepareAsync, class Executor = agrpc::GrpcExecutor>
-class RPC;
+class ClientRPC;
 
 namespace detail
 {
@@ -148,7 +148,7 @@ template <class Stub, class Request, class Response, template <class> class Resp
           class Executor>
 struct ClientStreamingRequestSenderInitiation<PrepareAsync, Executor>
 {
-    using RPC = agrpc::RPC<PrepareAsync, Executor>;
+    using RPC = agrpc::ClientRPC<PrepareAsync, Executor>;
 
     RPC& rpc_;
 
@@ -178,7 +178,7 @@ template <class Stub, class Request, class Response, template <class, class> cla
           class Executor>
 struct ClientStreamingRequestSenderInitiation<PrepareAsync, Executor>
 {
-    using RPC = agrpc::RPC<PrepareAsync, Executor>;
+    using RPC = agrpc::ClientRPC<PrepareAsync, Executor>;
 
     RPC& rpc_;
 
@@ -191,7 +191,7 @@ struct ClientStreamingRequestSenderInitiation<PrepareAsync, Executor>
 template <class Executor>
 struct ClientStreamingRequestSenderInitiation<detail::GenericRPCType::CLIENT_STREAMING, Executor>
 {
-    using RPC = agrpc::RPC<detail::GenericRPCType::CLIENT_STREAMING, Executor>;
+    using RPC = agrpc::ClientRPC<detail::GenericRPCType::CLIENT_STREAMING, Executor>;
 
     RPC& rpc_;
 
@@ -209,7 +209,7 @@ struct ClientStreamingRequestSenderImplementation : detail::GrpcSenderImplementa
 
     auto& stop_function_arg(const Initiation& initiation) noexcept { return initiation.rpc_.context(); }
 
-    void initiate(const agrpc::GrpcContext&, const Initiation& initiation, void* self) noexcept
+    static void initiate(const agrpc::GrpcContext&, const Initiation& initiation, void* self) noexcept
     {
         initiation.rpc_.responder().StartCall(self);
     }
@@ -487,4 +487,4 @@ struct ClientFinishServerStreamingSenderImplementation
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_HIGH_LEVEL_CLIENT_SENDER_HPP
+#endif  // AGRPC_DETAIL_CLIENT_RPC_SENDER_HPP

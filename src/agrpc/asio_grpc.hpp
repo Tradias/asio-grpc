@@ -33,13 +33,13 @@
 #include <agrpc/alarm.hpp>
 #include <agrpc/bind_allocator.hpp>
 #include <agrpc/cancel_safe.hpp>
+#include <agrpc/client_rpc.hpp>
 #include <agrpc/default_completion_token.hpp>
 #include <agrpc/get_completion_queue.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
 #include <agrpc/grpc_initiate.hpp>
 #include <agrpc/grpc_stream.hpp>
-#include <agrpc/high_level_client.hpp>
 #include <agrpc/notify_on_state_change.hpp>
 #include <agrpc/notify_when_done.hpp>
 #include <agrpc/repeatedly_request.hpp>

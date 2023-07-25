@@ -4,36 +4,36 @@ Click on `snippet source` to jump to the code of an individual example.
 
 ## Asio client-side
 
-### Streaming RPCs (high-level API)
+### Streaming RPCs (ClientRPC API)
 
-<!-- snippet: client-side-high-level-client-streaming -->
-<a id='snippet-client-side-high-level-client-streaming'></a>
+<!-- snippet: client-side-client-rpc-streaming -->
+<a id='snippet-client-side-client-rpc-streaming'></a>
 ```cpp
 // ---------------------------------------------------
 // A simple client-streaming request with coroutines.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/high-level-client.cpp#L36-L40' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-high-level-client-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/client-rpc.cpp#L36-L40' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-client-rpc-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
-<!-- snippet: client-side-high-level-server-streaming -->
-<a id='snippet-client-side-high-level-server-streaming'></a>
+<!-- snippet: client-rpc-server-streaming -->
+<a id='snippet-client-rpc-server-streaming'></a>
 ```cpp
 // ---------------------------------------------------
 // A simple server-streaming request with coroutines.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/high-level-client.cpp#L70-L74' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-high-level-server-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/client-rpc.cpp#L70-L74' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-rpc-server-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
-<!-- snippet: client-side-high-level-bidirectional-streaming -->
-<a id='snippet-client-side-high-level-bidirectional-streaming'></a>
+<!-- snippet: client-rpc-bidirectional-streaming -->
+<a id='snippet-client-rpc-bidirectional-streaming'></a>
 ```cpp
 // ---------------------------------------------------
 // A bidirectional-streaming request that simply sends the response from the server back to it.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/high-level-client.cpp#L101-L105' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-high-level-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/client-rpc.cpp#L101-L105' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-rpc-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Streaming RPCs (low-level API)
@@ -67,7 +67,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // For unary RPCs, `grpc::ClientContext::set_deadline` should be preferred.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/high-level-client.cpp#L146-L152' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-run-with-deadline' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/client-rpc.cpp#L146-L152' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-run-with-deadline' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Multi-threaded

@@ -38,7 +38,7 @@ int main(int argc, const char** argv)
         grpc_context,
         [&]() -> asio::awaitable<void>
         {
-            using RPC = agrpc::RPC<&helloworld::Greeter::Stub::PrepareAsyncSayHello>;
+            using RPC = agrpc::ClientRPC<&helloworld::Greeter::Stub::PrepareAsyncSayHello>;
             grpc::ClientContext client_context;
             helloworld::HelloRequest request;
             request.set_name("world");

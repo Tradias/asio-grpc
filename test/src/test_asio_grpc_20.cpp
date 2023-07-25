@@ -20,7 +20,7 @@
 #include "utils/time.hpp"
 
 #include <agrpc/alarm.hpp>
-#include <agrpc/high_level_client.hpp>
+#include <agrpc/client_rpc.hpp>
 #include <agrpc/rpc.hpp>
 
 #include <cstddef>
@@ -205,7 +205,7 @@ TEST_CASE_TEMPLATE("awaitable bidirectional streaming", Stub, test::v1::Test::St
 }
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-using RPC = agrpc::RPC<&test::v1::Test::Stub::PrepareAsyncUnary>;
+using RPC = agrpc::ClientRPC<&test::v1::Test::Stub::PrepareAsyncUnary>;
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline no cancel")
 {

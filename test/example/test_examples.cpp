@@ -65,7 +65,7 @@ TEST_CASE("examples")
         client_program = ASIO_GRPC_EXAMPLE_MULTI_THREADED_CLIENT;
         server_program = ASIO_GRPC_EXAMPLE_MULTI_THREADED_SERVER;
     }
-    SUBCASE("High-level streaming")
+    SUBCASE("ClientRPC streaming")
     {
         client_program = ASIO_GRPC_EXAMPLE_HIGH_LEVEL_CLIENT;
         server_program = ASIO_GRPC_EXAMPLE_STREAMING_SERVER;

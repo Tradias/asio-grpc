@@ -54,7 +54,7 @@ bool deserialize(grpc::ByteBuffer& buffer, Message& message)
 void make_generic_unary_request(agrpc::GrpcContext& grpc_context, grpc::GenericStub& stub,
                                 const asio::yield_context& yield)
 {
-    using RPC = agrpc::RPC<agrpc::CLIENT_GENERIC_UNARY_RPC>;
+    using RPC = agrpc::ClientRPC<agrpc::CLIENT_GENERIC_UNARY_RPC>;
 
     example::v1::Request request;
     request.set_integer(1);
@@ -72,8 +72,8 @@ void make_generic_unary_request(agrpc::GrpcContext& grpc_context, grpc::GenericS
     abort_if_not(status.ok());
 
     // -- For streaming RPCs use:
-    // agrpc::RPC<agrpc::CLIENT_GENERIC_STREAMING_RPC>::request(grpc_context, "/example.v1.Example/ServerStreaming",
-    // stub, client_context, yield);
+    // agrpc::ClientRPC<agrpc::CLIENT_GENERIC_STREAMING_RPC>::request(grpc_context,
+    // "/example.v1.Example/ServerStreaming", stub, client_context, yield);
 
     // -- Deserialize the response message
     example::v1::Response response;

@@ -56,7 +56,7 @@ class RoundRobin
 
 asio::awaitable<void> make_request(agrpc::GrpcContext& grpc_context, helloworld::Greeter::Stub& stub)
 {
-    using RPC = agrpc::RPC<&helloworld::Greeter::Stub::PrepareAsyncSayHello>;
+    using RPC = agrpc::ClientRPC<&helloworld::Greeter::Stub::PrepareAsyncSayHello>;
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
     RPC::Request request;

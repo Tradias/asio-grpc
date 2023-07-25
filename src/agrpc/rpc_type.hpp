@@ -20,41 +20,41 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief (experimental) The type of an RPC
+ * @brief (experimental) The type of a ClientRPC
  *
  * @since 2.1.0
  */
-enum class RPCType
+enum class ClientRPCType
 {
     /**
-     * @brief Client-side unary RPC
+     * @brief Client-side unary rpc
      */
-    CLIENT_UNARY,
+    UNARY,
 
     /**
-     * @brief Client-side generic unary RPC
+     * @brief Client-side generic unary rpc
      */
-    CLIENT_GENERIC_UNARY,
+    GENERIC_UNARY,
 
     /**
-     * @brief Client-side server-streaming RPC
+     * @brief Client-side server-streaming rpc
      */
-    CLIENT_SERVER_STREAMING,
+    SERVER_STREAMING,
 
     /**
-     * @brief Client-side client-streaming RPC
+     * @brief Client-side client-streaming rpc
      */
-    CLIENT_CLIENT_STREAMING,
+    CLIENT_STREAMING,
 
     /**
-     * @brief Client-side bidirectional-streaming RPC
+     * @brief Client-side bidirectional-streaming rpc
      */
-    CLIENT_BIDIRECTIONAL_STREAMING,
+    BIDIRECTIONAL_STREAMING,
 
     /**
-     * @brief Client-side generic streaming RPC
+     * @brief Client-side generic streaming rpc
      */
-    CLIENT_GENERIC_STREAMING
+    GENERIC_STREAMING
 };
 
 AGRPC_NAMESPACE_END
