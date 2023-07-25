@@ -36,14 +36,13 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief (experimental) CompletionQueue-based implementation of grpc::HealthCheckServiceInterface
+ * @brief CompletionQueue-based implementation of grpc::HealthCheckServiceInterface
  *
  * This class is a drop-in replacement for the `grpc::DefaultHealthCheckService`. It should be added to a
  * `grpc::ServerBuilder` using `agrpc::add_health_check_service`.
  *
  * **Motivation**: `grpc::DefaultHealthCheckService` is implemented in terms of gRPC's generic callback API. Mixing
- * callback services and CompletionQueue-based services in one `grpc::Server` leads to significant performance
- * degradation.
+ * callback services and CompletionQueue-based services in one `grpc::Server` significantly degrades performance.
  *
  * @note In order to use this class you must compile and link with
  * [health.proto](https://github.com/grpc/grpc/blob/v1.50.1/src/proto/grpc/health/v1/health.proto). If your compiler
@@ -97,10 +96,10 @@ class HealthCheckService final : public grpc::HealthCheckServiceInterface
 };
 
 /**
- * @brief (experimental) Add a HealthCheckService to a `grpc::Server`
+ * @brief Add a HealthCheckService to a `grpc::Server`
  *
  * The service must be started using `agrpc::start_health_check_service` after `builder.BuildAndStart()` has been
- * called.
+ * called. May only be called once for a given ServerBuilder.
  *
  * Example:
  *
@@ -113,7 +112,10 @@ class HealthCheckService final : public grpc::HealthCheckServiceInterface
 grpc::ServerBuilder& add_health_check_service(grpc::ServerBuilder& builder);
 
 /**
- * @brief (experimental) Start a previously added HealthCheckService
+ * @brief Start a previously added HealthCheckService
+ *
+ * The service must have been added using `agrpc::add_health_check_service()`. May only be called once for a given
+ * HealthCheckService.
  *
  * Does not contribute to the work tracking of the GrpcContext. May not be called concurrently with
  * `GrpcContext::run/poll`.
@@ -128,9 +130,10 @@ grpc::ServerBuilder& add_health_check_service(grpc::ServerBuilder& builder);
 void start_health_check_service(agrpc::HealthCheckService& service, agrpc::GrpcContext& grpc_context);
 
 /**
- * @brief (experimental) Start a previously added HealthCheckService (`grpc::Server` overload)
+ * @brief Start a previously added HealthCheckService (`grpc::Server` overload)
  *
- * The service must have been added using `agrpc::add_health_check_service()`.
+ * The service must have been added using `agrpc::add_health_check_service()`. May only be called once for a given
+ * HealthCheckService.
  *
  * Effectively performs:
  *
