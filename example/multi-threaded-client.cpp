@@ -62,7 +62,8 @@ asio::awaitable<void> make_request(agrpc::GrpcContext& grpc_context, helloworld:
     RPC::Request request;
     request.set_name("world");
     RPC::Response response;
-    const auto status = co_await RPC::request(grpc_context, stub, client_context, request, response);
+    const auto status =
+        co_await RPC::request(grpc_context, stub, client_context, request, response, asio::use_awaitable);
 
     abort_if_not(status.ok());
 }

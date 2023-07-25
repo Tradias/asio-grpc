@@ -31,12 +31,20 @@ using DefaultCompletionToken = agrpc::UseSender;
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class Executor>
-using DefaultCompletionTokenT =
+using DefaultCompletionTokenT = asio::default_completion_token_t<Executor>;
+#else
+template <class>
+using DefaultCompletionTokenT = detail::DefaultCompletionToken;
+#endif
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+template <class Executor>
+using LegacyDefaultCompletionTokenT =
     detail::ConditionalT<std::is_same_v<void, asio::default_completion_token_t<Executor>>,
                          detail::DefaultCompletionToken, asio::default_completion_token_t<Executor>>;
 #else
 template <class>
-using DefaultCompletionTokenT = detail::DefaultCompletionToken;
+using LegacyDefaultCompletionTokenT = detail::DefaultCompletionToken;
 #endif
 }
 

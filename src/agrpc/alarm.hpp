@@ -79,8 +79,8 @@ class BasicAlarm
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. `true` if it expired, `false` if it was canceled.
      */
-    template <class Deadline, class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto wait(const Deadline& deadline, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{}) &
+    template <class Deadline, class CompletionToken = detail::LegacyDefaultCompletionTokenT<Executor>>
+    auto wait(const Deadline& deadline, CompletionToken token = detail::LegacyDefaultCompletionTokenT<Executor>{}) &
     {
         return detail::async_initiate_sender_implementation<
             detail::GrpcSenderImplementation<detail::AlarmInitFunction<Deadline>, detail::AlarmCancellationFunction>>(
@@ -99,8 +99,8 @@ class BasicAlarm
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(BasicAlarm, bool)`. `true` if it expired, `false` if it was canceled.
      */
-    template <class Deadline, class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto wait(const Deadline& deadline, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{}) &&
+    template <class Deadline, class CompletionToken = detail::LegacyDefaultCompletionTokenT<Executor>>
+    auto wait(const Deadline& deadline, CompletionToken token = detail::LegacyDefaultCompletionTokenT<Executor>{}) &&
     {
         return detail::async_initiate_sender_implementation<detail::MoveAlarmSenderImplementation<Deadline, Executor>>(
             grpc_context(), deadline, {static_cast<BasicAlarm&&>(*this)}, token);

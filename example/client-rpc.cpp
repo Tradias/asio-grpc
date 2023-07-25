@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "client_rpc.hpp"
 #include "example/v1/example.grpc.pb.h"
 #include "example/v1/example_ext.grpc.pb.h"
 #include "helper.hpp"
@@ -40,7 +41,7 @@ namespace asio = boost::asio;
 // end-snippet
 asio::awaitable<void> make_client_streaming_request(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
-    using RPC = agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncClientStreaming>;
+    using RPC = example::AwaitableClientRPC<&example::v1::Example::Stub::PrepareAsyncClientStreaming>;
 
     RPC rpc{grpc_context};
     rpc.context().set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
@@ -74,7 +75,7 @@ asio::awaitable<void> make_client_streaming_request(agrpc::GrpcContext& grpc_con
 // end-snippet
 asio::awaitable<void> make_server_streaming_request(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
-    using RPC = agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncServerStreaming>;
+    using RPC = example::AwaitableClientRPC<&example::v1::Example::Stub::PrepareAsyncServerStreaming>;
 
     RPC rpc{grpc_context};
     rpc.context().set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
@@ -106,7 +107,7 @@ asio::awaitable<void> make_server_streaming_request(agrpc::GrpcContext& grpc_con
 asio::awaitable<void> make_bidirectional_streaming_request(agrpc::GrpcContext& grpc_context,
                                                            example::v1::Example::Stub& stub)
 {
-    using RPC = agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncBidirectionalStreaming>;
+    using RPC = example::AwaitableClientRPC<&example::v1::Example::Stub::PrepareAsyncBidirectionalStreaming>;
 
     RPC rpc{grpc_context};
     rpc.context().set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
@@ -153,7 +154,7 @@ asio::awaitable<void> make_bidirectional_streaming_request(agrpc::GrpcContext& g
 asio::awaitable<void> make_and_cancel_unary_request(agrpc::GrpcContext& grpc_context,
                                                     example::v1::ExampleExt::Stub& stub)
 {
-    using RPC = agrpc::ClientRPC<&example::v1::ExampleExt::Stub::PrepareAsyncSlowUnary>;
+    using RPC = example::AwaitableClientRPC<&example::v1::ExampleExt::Stub::PrepareAsyncSlowUnary>;
 
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
@@ -193,7 +194,7 @@ asio::awaitable<void> make_shutdown_request(agrpc::GrpcContext& grpc_context, ex
 
     google::protobuf::Empty response;
     const grpc::Status status =
-        co_await agrpc::ClientRPC<&example::v1::ExampleExt::Stub::PrepareAsyncShutdown>::request(
+        co_await example::AwaitableClientRPC<&example::v1::ExampleExt::Stub::PrepareAsyncShutdown>::request(
             grpc_context, stub, client_context, {}, response);
 
     if (status.ok())

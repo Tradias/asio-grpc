@@ -205,7 +205,7 @@ TEST_CASE_TEMPLATE("awaitable bidirectional streaming", Stub, test::v1::Test::St
 }
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-using RPC = agrpc::ClientRPC<&test::v1::Test::Stub::PrepareAsyncUnary>;
+using RPC = asio::use_awaitable_t<>::as_default_on_t<agrpc::ClientRPC<&test::v1::Test::Stub::PrepareAsyncUnary>>;
 
 TEST_CASE_FIXTURE(test::GrpcClientServerTest, "awaitable run_with_deadline no cancel")
 {

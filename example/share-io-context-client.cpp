@@ -56,7 +56,8 @@ asio::awaitable<void> make_grpc_request(agrpc::GrpcContext& grpc_context, exampl
     RPC::Request request;
     request.set_integer(42);
     RPC::Response response;
-    const auto status = co_await RPC::request(grpc_context, stub, client_context, request, response);
+    const auto status =
+        co_await RPC::request(grpc_context, stub, client_context, request, response, asio::use_awaitable);
 
     abort_if_not(status.ok());
     abort_if_not(42 == response.integer());
