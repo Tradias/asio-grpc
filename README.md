@@ -65,7 +65,7 @@ The library can be added to a CMake project using either `add_subdirectory` or `
 #include <agrpc/asio_grpc.hpp>
 ```
 
-<details><summary><b>As a subdirectory</b></summary>
+<details><summary><b>As a CMake subdirectory</b></summary>
 <p>
 
 Clone the repository into a subdirectory of your CMake project. Then add it and link it to your target.
@@ -215,6 +215,18 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
 `backend` - One of "boost" for Boost.Asio, "asio" for standalone Asio or "unifex" for libunifex.
 
 `local_allocator` (deprecated) - One of "memory_resource" for `<memory_resource>`, "boost_container" for Boost.Container, "recycling_allocator" for [asio::recycling_allocator](https://think-async.com/Asio/asio-1.24.0/doc/asio/reference/recycling_allocator.html).
+
+</p>
+</details>
+
+<details><summary><b>Raw source code</b></summary>
+<p>
+
+This type of usage is unsupported. Future versions of asio-grpc might break it without notice.
+
+Copy the contents of the `src/` directory into your project and add it to your project's include directories. Depending on your desired backend: Boost.Asio, 
+standalone Asio or libunifex, set the preprocessor definitions `AGRPC_BOOST_ASIO`, `AGRPC_STANDALONE_ASIO` or `AGRPC_UNIFEX` respectively. Also make sure that 
+the backend's header files and libraries can be found correctly.
 
 </p>
 </details>
