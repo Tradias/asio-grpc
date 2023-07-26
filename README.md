@@ -32,7 +32,7 @@ asio::co_spawn(
     grpc_context,
     [&]() -> asio::awaitable<void>
     {
-        using RPC = agrpc::RPC<&helloworld::Greeter::Stub::PrepareAsyncSayHello>;
+        using RPC = agrpc::ClientRPC<&helloworld::Greeter::Stub::PrepareAsyncSayHello>;
         grpc::ClientContext client_context;
         helloworld::HelloRequest request;
         request.set_name("world");
@@ -342,14 +342,15 @@ asio::co_spawn(
         example::v1::Request request;
         request.set_integer(42);
         example::v1::Response response;
-        using RPC = agrpc::RPC<&example::v1::Example::Stub::PrepareAsyncUnary>;
-        grpc::Status status = co_await RPC::request(grpc_context, stub, client_context, request, response);
+        using RPC = agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncUnary>;
+        grpc::Status status =
+            co_await RPC::request(grpc_context, stub, client_context, request, response, asio::use_awaitable);
         assert(status.ok());
     },
     asio::detached);
 grpc_context.run();
 ```
-<sup><a href='/example/snippets/client.cpp#L361-L377' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-client-side' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/snippets/client.cpp#L361-L378' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-client-side' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Where to go from here?

@@ -13,7 +13,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // A simple client-streaming request with coroutines.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/client-rpc.cpp#L36-L40' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-client-rpc-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/client-rpc.cpp#L37-L41' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-client-rpc-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: client-rpc-server-streaming -->
@@ -23,7 +23,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // A simple server-streaming request with coroutines.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/client-rpc.cpp#L70-L74' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-rpc-server-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/client-rpc.cpp#L71-L75' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-rpc-server-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: client-rpc-bidirectional-streaming -->
@@ -33,7 +33,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // A bidirectional-streaming request that simply sends the response from the server back to it.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/client-rpc.cpp#L101-L105' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-rpc-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/client-rpc.cpp#L102-L106' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-rpc-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Streaming RPCs (low-level API)
@@ -67,7 +67,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // For unary RPCs, `grpc::ClientContext::set_deadline` should be preferred.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/client-rpc.cpp#L146-L152' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-run-with-deadline' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/client-rpc.cpp#L147-L153' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-run-with-deadline' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Multi-threaded
