@@ -131,7 +131,7 @@ jobs:
     - name: Download sonar-scanner
       uses: warchant/setup-sonar-scanner@v3
       with:
-        version: 4.8.0.2856
+        version: 5.0.0.2966
 
     - name: Run sonar-scanner
       env:
@@ -139,7 +139,7 @@ jobs:
       run: |
         sonar-scanner \
           -Dsonar.cfamily.compile-commands=${{ github.workspace }}/build-10/compile_commands.json \
-          -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
+          -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
           -Dsonar.coverageReportPaths=${{ github.workspace }}/build-10/sonarqube-coverage.xml
 
     - name: GCC 11 Configure CMake

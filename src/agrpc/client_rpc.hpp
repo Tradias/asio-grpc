@@ -191,6 +191,8 @@ class ClientRPCUnaryBase<PrepareAsyncUnary, Executor>
         return ClientRPCUnaryBase::request(detail::query_grpc_context(executor), stub, context, request, response,
                                            static_cast<CompletionToken&&>(token));
     }
+
+    ClientRPCUnaryBase() = delete;
 };
 }
 
@@ -216,14 +218,6 @@ template <class StubT, class RequestT, class ResponseT,
           class Executor>
 class ClientRPC<PrepareAsyncUnary, Executor> : public detail::ClientRPCUnaryBase<PrepareAsyncUnary, Executor>
 {
-    using detail::ClientRPCUnaryBase<PrepareAsyncUnary, Executor>::ClientRPCUnaryBase;
-
-  private:
-    ClientRPC(const ClientRPC& other) = delete;
-    ClientRPC(ClientRPC&& other) = delete;
-    ~ClientRPC() = delete;
-    ClientRPC& operator=(const ClientRPC& other) = delete;
-    ClientRPC& operator=(ClientRPC&& other) = delete;
 };
 template <class StubT, class RequestT, class ResponseT,
           std::unique_ptr<grpc::ClientAsyncResponseReaderInterface<ResponseT>> (StubT::*PrepareAsyncUnary)(
@@ -231,14 +225,6 @@ template <class StubT, class RequestT, class ResponseT,
           class Executor>
 class ClientRPC<PrepareAsyncUnary, Executor> : public detail::ClientRPCUnaryBase<PrepareAsyncUnary, Executor>
 {
-    using detail::ClientRPCUnaryBase<PrepareAsyncUnary, Executor>::ClientRPCUnaryBase;
-
-  private:
-    ClientRPC(const ClientRPC& other) = delete;
-    ClientRPC(ClientRPC&& other) = delete;
-    ~ClientRPC() = delete;
-    ClientRPC& operator=(const ClientRPC& other) = delete;
-    ClientRPC& operator=(ClientRPC&& other) = delete;
 };
 
 /**
@@ -328,12 +314,7 @@ class ClientRPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor>
                                   static_cast<CompletionToken&&>(token));
     }
 
-  private:
-    ClientRPC(const ClientRPC& other) = delete;
-    ClientRPC(ClientRPC&& other) = delete;
-    ~ClientRPC() = delete;
-    ClientRPC& operator=(const ClientRPC& other) = delete;
-    ClientRPC& operator=(ClientRPC&& other) = delete;
+    ClientRPC() = delete;
 };
 
 /**
