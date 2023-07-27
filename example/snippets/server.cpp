@@ -282,26 +282,38 @@ void repeatedly_request_example(agrpc::GrpcContext& grpc_context, example::v1::E
 /* [repeatedly-request-callback] */
 
 /* [repeatedly-request-awaitable] */
-void register_client_streaming_handler(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
+void register_handlers(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
 {
-    agrpc::repeatedly_request(
-        &example::v1::Example::AsyncService::RequestClientStreaming, service,
-        asio::bind_executor(
-            grpc_context,
-            [&](grpc::ServerContext& server_context,
-                grpc::ServerAsyncReader<example::v1::Response, example::v1::Request>&) -> asio::awaitable<void>
-            {
-                try
-                {
-                    // ...
-                }
-                catch (...)
-                {
-                    server_context.TryCancel();
-                    throw;
-                }
-                co_return;
-            }));
+    auto register_handler = [&](auto request_function, auto handler)
+    {
+        agrpc::repeatedly_request(request_function, service, asio::bind_executor(grpc_context, handler));
+    };
+
+    register_handler(&example::v1::Example::AsyncService::RequestUnary,
+                     [&](grpc::ServerContext&, example::v1::Request&,
+                         grpc::ServerAsyncResponseWriter<example::v1::Response>&) -> asio::awaitable<void>
+                     {
+                         co_return;
+                     });
+    register_handler(&example::v1::Example::AsyncService::RequestServerStreaming,
+                     [&](grpc::ServerContext&, example::v1::Request&,
+                         grpc::ServerAsyncWriter<example::v1::Response>&) -> asio::awaitable<void>
+                     {
+                         co_return;
+                     });
+    register_handler(&example::v1::Example::AsyncService::RequestClientStreaming,
+                     [&](grpc::ServerContext&,
+                         grpc::ServerAsyncReader<example::v1::Response, example::v1::Request>&) -> asio::awaitable<void>
+                     {
+                         co_return;
+                     });
+    register_handler(
+        &example::v1::Example::AsyncService::RequestBidirectionalStreaming,
+        [&](grpc::ServerContext&,
+            grpc::ServerAsyncReaderWriter<example::v1::Response, example::v1::Request>&) -> asio::awaitable<void>
+        {
+            co_return;
+        });
 }
 /* [repeatedly-request-awaitable] */
 

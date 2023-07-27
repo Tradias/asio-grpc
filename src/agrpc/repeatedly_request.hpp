@@ -56,15 +56,7 @@ AGRPC_NAMESPACE_CPP20_BEGIN()
  * `grpc::Server` been shutdown. It will **not** wait until all outstanding RPCs that are being processed by the
  * RequestHandler have completed.
  *
- * When using the special CompletionToken created by `agrpc::use_sender` the RequestHandler's signature must be:<br>
- * `sender auto operator()(grpc::ServerContext&, Request&, Responder&)` for unary and server-streaming requests and<br>
- * `sender auto operator()(grpc::ServerContext&, Responder&)` otherwise.<br>
- * A copy of the RequestHandler will be made for each request to avoid lifetime surprises.
- * For libunifex this is the only available overload of this function.
- *
- * @snippet unifex_server.cpp repeatedly-request-sender
- *
- * Another special overload of `agrpc::repeatedly_request` can be used by passing a RequestHandler with the following
+ * A special overload of `agrpc::repeatedly_request` can be used by passing a RequestHandler with the following
  * signature:<br>
  * `awaitable auto operator()(grpc::ServerContext&, Request&, Responder&)` for unary and server-streaming requests
  * and<br>
@@ -72,6 +64,14 @@ AGRPC_NAMESPACE_CPP20_BEGIN()
  * A copy of the RequestHandler will be made for each request to avoid lifetime surprises.
  *
  * @snippet server.cpp repeatedly-request-awaitable
+ *
+ * When using the special CompletionToken created by `agrpc::use_sender` the RequestHandler's signature must be:<br>
+ * `sender auto operator()(grpc::ServerContext&, Request&, Responder&)` for unary and server-streaming requests and<br>
+ * `sender auto operator()(grpc::ServerContext&, Responder&)` otherwise.<br>
+ * A copy of the RequestHandler will be made for each request to avoid lifetime surprises.
+ * For libunifex this is the only available overload of this function.
+ *
+ * @snippet unifex_server.cpp repeatedly-request-sender
  *
  * The following example shows how to implement a RequestHandler with a custom allocator for simple, high-performance
  * RPC processing:
