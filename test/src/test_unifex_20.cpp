@@ -71,6 +71,11 @@ TEST_CASE("unifex asio-grpc fulfills std::execution concepts")
     CHECK(unifex::is_nothrow_connectable_v<ScheduleSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
 }
 
+TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::schedule blocking_kind")
+{
+    CHECK_EQ(unifex::blocking_kind::maybe, unifex::blocking(unifex::schedule(grpc_context.get_scheduler())));
+}
+
 TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::schedule")
 {
     bool invoked{false};

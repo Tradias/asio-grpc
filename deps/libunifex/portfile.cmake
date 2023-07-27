@@ -6,9 +6,9 @@ vcpkg_from_github(
     REPO
     facebookexperimental/libunifex
     REF
-    v0.2.0
+    v0.3.0
     SHA512
-    94597f4267eaf04d9350e3d07916615bdc7a04029258c1c024099b7554503e6c245cd28e271dcd819700035a19e5e600aa54c9d418333ddb8ef8c10a6025c30e
+    91a02d50e45c0458e25bd51c50fb6e98a668298733a3e66e8eb5353b0a5ea78a3656fe83b873e0ea50b26c6a7de572a663160b458c0fb1272ffa8bfd7715d1cc
     HEAD_REF
     main
     PATCHES
