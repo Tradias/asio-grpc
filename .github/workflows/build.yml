@@ -138,9 +138,9 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         sonar-scanner \
-          -Dsonar.cfamily.compile-commands=${{ github.workspace }}/build-10/compile_commands.json \
-          -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
-          -Dsonar.coverageReportPaths=${{ github.workspace }}/build-10/sonarqube-coverage.xml
+          "-Dsonar.cfamily.compile-commands=${{ github.workspace }}/build-10/compile_commands.json" \
+          "-Dsonar.token=${{ secrets.SONAR_TOKEN }}" \
+          "-Dsonar.coverageReportPaths=${{ github.workspace }}/build-10/sonarqube-coverage.xml"
 
     - name: GCC 11 Configure CMake
       run: cmake --preset default -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which g++-11) -DASIO_GRPC_USE_RECYCLING_ALLOCATOR=on -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
