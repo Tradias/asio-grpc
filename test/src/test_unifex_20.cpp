@@ -79,7 +79,6 @@ TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::schedule blocking_kind")
 TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::schedule")
 {
     bool invoked{false};
-    test::DeleteGuard guard{};
     const auto sender = unifex::schedule(get_executor());
     test::StatefulReceiverState state;
     test::FunctionAsStatefulReceiver receiver{[&]
@@ -87,16 +86,8 @@ TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::schedule")
                                                   invoked = true;
                                               },
                                               state};
-    SUBCASE("connect")
-    {
-        auto& operation_state = guard.emplace_with(
-            [&]
-            {
-                return unifex::connect(sender, receiver);
-            });
-        unifex::start(operation_state);
-    }
-    SUBCASE("submit") { unifex::submit(sender, receiver); }
+    auto operation_state = unifex::connect(sender, receiver);
+    unifex::start(operation_state);
     CHECK_FALSE(invoked);
     grpc_context.run();
     CHECK(invoked);
@@ -104,45 +95,33 @@ TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::schedule")
     CHECK_FALSE(state.exception);
 }
 
-TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::submit from Grpc::Context::run")
+TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::schedule from Grpc::Context::run")
 {
     bool invoked{false};
+    test::DeleteGuard guard{};
     test::StatefulReceiverState state;
     test::FunctionAsStatefulReceiver receiver{[&]
                                               {
-                                                  unifex::submit(unifex::schedule(get_executor()),
-                                                                 test::FunctionAsReceiver{[&]
-                                                                                          {
-                                                                                              invoked = true;
-                                                                                          }});
+                                                  auto& operation_state = guard.emplace_with(
+                                                      [&]
+                                                      {
+                                                          return unifex::connect(unifex::schedule(get_executor()),
+                                                                                 test::FunctionAsReceiver{[&]
+                                                                                                          {
+                                                                                                              invoked =
+                                                                                                                  true;
+                                                                                                          }});
+                                                      });
+                                                  unifex::start(operation_state);
                                               },
                                               state};
-    unifex::submit(unifex::schedule(get_executor()), receiver);
+    auto operation_state = unifex::connect(unifex::schedule(get_executor()), receiver);
+    unifex::start(operation_state);
     CHECK_FALSE(invoked);
     grpc_context.run();
     CHECK(invoked);
     CHECK_FALSE(state.was_done);
     CHECK_FALSE(state.exception);
-}
-
-TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::submit with allocator")
-{
-    unifex::submit(unifex::schedule(get_executor()), test::FunctionAsReceiver{test::NoOp{}, get_allocator()});
-    grpc_context.run();
-    CHECK(allocator_has_been_used());
-}
-
-TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::execute")
-{
-    bool invoked{false};
-    unifex::execute(get_executor(),
-                    [&]
-                    {
-                        invoked = true;
-                    });
-    CHECK_FALSE(invoked);
-    grpc_context.run();
-    CHECK(invoked);
 }
 
 TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::schedule from different thread")
@@ -190,6 +169,7 @@ TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::schedule when already runnin
 #if !UNIFEX_NO_COROUTINES
 TEST_CASE_TEMPLATE("ScheduleSender start/submit with shutdown GrpcContext", T, std::true_type, std::false_type)
 {
+    test::DeleteGuard del;
     test::StatefulReceiverState state;
     test::FunctionAsStatefulReceiver receiver{[](auto&&...) {}, state};
     {
@@ -207,23 +187,27 @@ TEST_CASE_TEMPLATE("ScheduleSender start/submit with shutdown GrpcContext", T, s
             }
         };
         std::optional<decltype(unifex::connect(sender(), receiver))> operation_state;
-        auto guard = agrpc::detail::ScopeGuard{[&]
-                                               {
-                                                   SUBCASE("submit") { unifex::submit(sender(), receiver); }
-                                                   SUBCASE("start")
-                                                   {
-                                                       operation_state.emplace(unifex::connect(sender(), receiver));
-                                                       unifex::start(*operation_state);
-                                                   }
-                                               }};
-        unifex::submit(unifex::let_value(unifex::schedule(grpc_context.get_scheduler()),
-                                         [&]
-                                         {
-                                             grpc_context.stop();
-                                             return agrpc::wait(alarm, test::five_seconds_from_now(),
-                                                                agrpc::use_sender(grpc_context));
-                                         }),
-                       test::FunctionAsReceiver{[guard = std::move(guard)](bool) {}});
+        auto guard =
+            agrpc::detail::ScopeGuard{[&]
+                                      {
+                                          unifex::start(operation_state.emplace(unifex::connect(sender(), receiver)));
+                                      }};
+        // Ensure that the above operation is started during destruction of the GrpcContext:
+        auto& op = del.emplace_with(
+            [&]
+            {
+                return unifex::connect(unifex::let_value(unifex::schedule(grpc_context.get_scheduler()),
+                                                         [&]
+                                                         {
+                                                             grpc_context.stop();
+                                                             return unifex::with_query_value(
+                                                                 agrpc::wait(alarm, test::five_seconds_from_now(),
+                                                                             agrpc::use_sender(grpc_context)),
+                                                                 unifex::get_allocator, std::move(guard));
+                                                         }),
+                                       test::FunctionAsReceiver{[](bool) {}});
+            });
+        unifex::start(op);
         grpc_context.run();
     }
     CHECK(state.was_done);
@@ -307,6 +291,8 @@ TEST_CASE("unifex GrpcContext.stop() with pending GrpcSender operation")
 
 struct UnifexRepeatedlyRequestTest : UnifexTest, test::GrpcClientServerTest
 {
+    test::ServerShutdownInitiator shutdown{*server};
+
     template <class OnRequestDone = test::NoOp>
     auto make_client_unary_request_sender(std::chrono::system_clock::time_point deadline,
                                           OnRequestDone on_request_done = {})
@@ -355,11 +341,7 @@ struct UnifexRepeatedlyRequestTest : UnifexTest, test::GrpcClientServerTest
                                                     ++request_count;
                                                     if (request_count == max_request_count)
                                                     {
-                                                        unifex::execute(get_executor(),
-                                                                        [&]
-                                                                        {
-                                                                            server->Shutdown();
-                                                                        });
+                                                        shutdown.initiate();
                                                     }
                                                 });
     }
@@ -555,7 +537,8 @@ TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex repeatedly_request unary 
                 },
                 use_sender());
         });
-    unifex::submit(std::move(repeatedly_request), test::ConditionallyNoexceptNoOpReceiver<true>{});
+    auto op = unifex::connect(std::move(repeatedly_request), test::ConditionallyNoexceptNoOpReceiver<true>{});
+    op.start();
     run(unifex::when_all(make_client_unary_request_sender(test::five_seconds_from_now(), &check_response_ok),
                          make_client_unary_request_sender(test::five_seconds_from_now(), &check_response_ok),
                          make_client_unary_request_sender(test::five_seconds_from_now(), &check_response_ok)));
@@ -579,9 +562,6 @@ TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex::task unary")
 {
     bool server_finish_ok{false};
     bool client_finish_ok{false};
-    bool use_submit{false};
-    SUBCASE("use submit") { use_submit = true; }
-    SUBCASE("use co_await") {}
     run(
         [&]() -> unifex::task<void>
         {
@@ -589,21 +569,8 @@ TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex::task unary")
             CHECK(co_await agrpc::request(&test::v1::Test::AsyncService::RequestUnary, service, server_context,
                                           context->request, context->writer, use_sender()));
             context->response.set_integer(42);
-            if (use_submit)
-            {
-                test::FunctionAsReceiver receiver{[&, context](bool ok)
-                                                  {
-                                                      server_finish_ok = ok;
-                                                  },
-                                                  get_allocator()};
-                unifex::submit(agrpc::finish(context->writer, context->response, grpc::Status::OK, use_sender()),
-                               std::move(receiver));
-            }
-            else
-            {
-                server_finish_ok =
-                    co_await agrpc::finish(context->writer, context->response, grpc::Status::OK, use_sender());
-            }
+            server_finish_ok =
+                co_await agrpc::finish(context->writer, context->response, grpc::Status::OK, use_sender());
         }(),
         [&]() -> unifex::task<void>
         {
@@ -617,10 +584,6 @@ TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex::task unary")
         }());
     CHECK(server_finish_ok);
     CHECK(client_finish_ok);
-    if (use_submit)
-    {
-        CHECK(allocator_has_been_used());
-    }
 }
 
 TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex repeatedly_request client streaming")

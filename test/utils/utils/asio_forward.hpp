@@ -104,7 +104,6 @@
 
 #ifdef AGRPC_UNIFEX
 #include <unifex/config.hpp>
-#include <unifex/execute.hpp>
 #include <unifex/finally.hpp>
 #include <unifex/just.hpp>
 #include <unifex/let_done.hpp>
@@ -117,7 +116,6 @@
 #include <unifex/sender_concepts.hpp>
 #include <unifex/sequence.hpp>
 #include <unifex/stop_when.hpp>
-#include <unifex/submit.hpp>
 #include <unifex/sync_wait.hpp>
 #include <unifex/then.hpp>
 #include <unifex/when_all.hpp>
