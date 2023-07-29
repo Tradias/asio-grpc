@@ -39,6 +39,11 @@ class AutoCancelClientContextAndResponder
     [[nodiscard]] grpc::ClientContext& context() { return client_context_; }
 
     /**
+     * @brief Get the underlying `grpc::ClientContext` (const overload)
+     */
+    [[nodiscard]] const grpc::ClientContext& context() const { return client_context_; }
+
+    /**
      * @brief Cancel this RPC
      *
      * Effectively calls `context().TryCancel()`.
