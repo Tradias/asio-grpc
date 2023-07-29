@@ -40,8 +40,8 @@ using ServerStreamingInterfaceClientRPC = agrpc::ClientRPC<&test::v1::Test::Stub
 using BidirectionalStreamingClientRPC = agrpc::ClientRPC<&test::v1::Test::Stub::PrepareAsyncBidirectionalStreaming>;
 using BidirectionalStreamingInterfaceClientRPC =
     agrpc::ClientRPC<&test::v1::Test::StubInterface::PrepareAsyncBidirectionalStreaming>;
-using GenericUnaryClientRPC = agrpc::ClientRPC<agrpc::CLIENT_GENERIC_UNARY_RPC>;
-using GenericStreamingClientRPC = agrpc::ClientRPC<agrpc::CLIENT_GENERIC_STREAMING_RPC>;
+using GenericUnaryClientRPC = agrpc::ClientRPCGenericUnary<>;
+using GenericStreamingClientRPC = agrpc::ClientRPCGenericStreaming<>;
 
 template <class RPC, auto Type = RPC::TYPE>
 struct IntrospectRPC;
@@ -49,7 +49,6 @@ struct IntrospectRPC;
 template <auto PrepareAsync, class Executor>
 struct IntrospectRPC<agrpc::ClientRPC<PrepareAsync, Executor>, agrpc::ClientRPCType::UNARY>
 {
-    static constexpr auto CLIENT_REQUEST = PrepareAsync;
     static constexpr auto SERVER_REQUEST = &test::v1::Test::AsyncService::RequestUnary;
 
     using RPC = agrpc::ClientRPC<PrepareAsync, Executor>;
@@ -64,12 +63,11 @@ struct IntrospectRPC<agrpc::ClientRPC<PrepareAsync, Executor>, agrpc::ClientRPCT
 };
 
 template <class Executor>
-struct IntrospectRPC<agrpc::ClientRPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor>, agrpc::ClientRPCType::GENERIC_UNARY>
+struct IntrospectRPC<agrpc::ClientRPCGenericUnary<Executor>, agrpc::ClientRPCType::GENERIC_UNARY>
 {
-    static constexpr auto CLIENT_REQUEST = agrpc::CLIENT_GENERIC_UNARY_RPC;
     static constexpr auto SERVER_REQUEST = &test::v1::Test::AsyncService::RequestUnary;
 
-    using RPC = agrpc::ClientRPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor>;
+    using RPC = agrpc::ClientRPCGenericUnary<Executor>;
 
     template <class ExecOrContext, class CompletionToken>
     static auto request(ExecOrContext&& executor, test::v1::Test::Stub&, typename RPC::Stub& stub,
@@ -83,7 +81,6 @@ struct IntrospectRPC<agrpc::ClientRPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor>
 template <auto PrepareAsync, class Executor>
 struct IntrospectRPC<agrpc::ClientRPC<PrepareAsync, Executor>, agrpc::ClientRPCType::CLIENT_STREAMING>
 {
-    static constexpr auto CLIENT_REQUEST = PrepareAsync;
     static constexpr auto SERVER_REQUEST = &test::v1::Test::AsyncService::RequestClientStreaming;
 
     using RPC = agrpc::ClientRPC<PrepareAsync, Executor>;
@@ -99,7 +96,6 @@ struct IntrospectRPC<agrpc::ClientRPC<PrepareAsync, Executor>, agrpc::ClientRPCT
 template <auto PrepareAsync, class Executor>
 struct IntrospectRPC<agrpc::ClientRPC<PrepareAsync, Executor>, agrpc::ClientRPCType::SERVER_STREAMING>
 {
-    static constexpr auto CLIENT_REQUEST = PrepareAsync;
     static constexpr auto SERVER_REQUEST = &test::v1::Test::AsyncService::RequestServerStreaming;
 
     using RPC = agrpc::ClientRPC<PrepareAsync, Executor>;
@@ -115,7 +111,6 @@ struct IntrospectRPC<agrpc::ClientRPC<PrepareAsync, Executor>, agrpc::ClientRPCT
 template <auto PrepareAsync, class Executor>
 struct IntrospectRPC<agrpc::ClientRPC<PrepareAsync, Executor>, agrpc::ClientRPCType::BIDIRECTIONAL_STREAMING>
 {
-    static constexpr auto CLIENT_REQUEST = PrepareAsync;
     static constexpr auto SERVER_REQUEST = &test::v1::Test::AsyncService::RequestBidirectionalStreaming;
 
     using RPC = agrpc::ClientRPC<PrepareAsync, Executor>;
@@ -129,13 +124,11 @@ struct IntrospectRPC<agrpc::ClientRPC<PrepareAsync, Executor>, agrpc::ClientRPCT
 };
 
 template <class Executor>
-struct IntrospectRPC<agrpc::ClientRPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>,
-                     agrpc::ClientRPCType::GENERIC_STREAMING>
+struct IntrospectRPC<agrpc::ClientRPCGenericStreaming<Executor>, agrpc::ClientRPCType::GENERIC_STREAMING>
 {
-    static constexpr auto CLIENT_REQUEST = agrpc::CLIENT_GENERIC_STREAMING_RPC;
     static constexpr auto SERVER_REQUEST = &test::v1::Test::AsyncService::RequestBidirectionalStreaming;
 
-    using RPC = agrpc::ClientRPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>;
+    using RPC = agrpc::ClientRPCGenericStreaming<Executor>;
 
     template <class CompletionToken>
     static auto start(RPC& rpc, test::v1::Test::Stub&, typename RPC::Stub& stub, const typename RPC::Request&,

@@ -33,11 +33,11 @@ AGRPC_NAMESPACE_BEGIN()
  *
  * @see
  * @c agrpc::ClientRPC<PrepareAsyncUnary,Executor> <br>
- * @c agrpc::ClientRPC<agrpc::CLIENT_GENERIC_UNARY_RPC,Executor> <br>
+ * @c agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_UNARY,Executor> <br>
  * @c agrpc::ClientRPC<PrepareAsyncClientStreaming,Executor> <br>
  * @c agrpc::ClientRPC<PrepareAsyncServerStreaming,Executor> <br>
  * @c agrpc::ClientRPC<PrepareAsyncBidiStreaming,Executor> <br>
- * @c agrpc::ClientRPC<agrpc::CLIENT_GENERIC_STREAMING_RPC,Executor> <br>
+ * @c agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_STREAMING,Executor> <br>
  *
  * @since 2.6.0
  */
@@ -189,9 +189,9 @@ struct ClientStreamingRequestSenderInitiation<PrepareAsync, Executor>
 };
 
 template <class Executor>
-struct ClientStreamingRequestSenderInitiation<detail::GenericRPCType::CLIENT_STREAMING, Executor>
+struct ClientStreamingRequestSenderInitiation<agrpc::ClientRPCType::GENERIC_STREAMING, Executor>
 {
-    using RPC = agrpc::ClientRPC<detail::GenericRPCType::CLIENT_STREAMING, Executor>;
+    using RPC = agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_STREAMING, Executor>;
 
     RPC& rpc_;
 

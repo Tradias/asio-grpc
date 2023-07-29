@@ -61,12 +61,6 @@ template <class Service, class Responder>
 using ServerSingleArgRequest = void (Service::*)(grpc::ServerContext*, Responder*, grpc::CompletionQueue*,
                                                  grpc::ServerCompletionQueue*, void*);
 
-enum class GenericRPCType
-{
-    CLIENT_UNARY,
-    CLIENT_STREAMING
-};
-
 struct GenericRPCMarker
 {
 };

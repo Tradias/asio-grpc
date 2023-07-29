@@ -54,7 +54,7 @@ bool deserialize(grpc::ByteBuffer& buffer, Message& message)
 void make_generic_unary_request(agrpc::GrpcContext& grpc_context, grpc::GenericStub& stub,
                                 const asio::yield_context& yield)
 {
-    using RPC = agrpc::ClientRPC<agrpc::CLIENT_GENERIC_UNARY_RPC>;
+    using RPC = agrpc::ClientRPCGenericUnary<>;
 
     example::v1::Request request;
     request.set_integer(1);

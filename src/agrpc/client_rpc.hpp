@@ -63,20 +63,6 @@ class RPCExecutorBase
 };
 }
 
-/**
- * @brief (experimental) A marker value to ClientRPC for generic unary rpcs
- *
- * @since 2.1.0
- */
-inline constexpr auto CLIENT_GENERIC_UNARY_RPC = detail::GenericRPCType::CLIENT_UNARY;
-
-/**
- * @brief (experimental) A marker value to ClientRPC for generic streaming rpcs
- *
- * @since 2.1.0
- */
-inline constexpr auto CLIENT_GENERIC_STREAMING_RPC = detail::GenericRPCType::CLIENT_STREAMING;
-
 namespace detail
 {
 /**
@@ -258,7 +244,7 @@ class ClientRPC<PrepareAsyncUnary, Executor> : public detail::ClientRPCUnaryBase
  * @since 2.6.0
  */
 template <class Executor>
-class ClientRPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor>
+class ClientRPC<agrpc::ClientRPCType::GENERIC_UNARY, Executor>
 {
   public:
     /**
@@ -295,7 +281,7 @@ class ClientRPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor>
         /**
          * @brief The ClientRPC type when rebound to the specified executor
          */
-        using other = ClientRPC<agrpc::CLIENT_GENERIC_UNARY_RPC, OtherExecutor>;
+        using other = ClientRPC<agrpc::ClientRPCType::GENERIC_UNARY, OtherExecutor>;
     };
 
     /**
@@ -332,6 +318,16 @@ class ClientRPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor>
 
     ClientRPC() = delete;
 };
+
+/**
+ * @brief (experimental) I/O object for client-side, generic, unary rpcs (type alias)
+ *
+ * @see agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_UNARY,Executor>
+ *
+ * @since 2.6.0
+ */
+template <class Executor = agrpc::GrpcExecutor>
+using ClientRPCGenericUnary = agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_UNARY, Executor>;
 
 /**
  * @brief (experimental) I/O object for client-side, client-streaming rpcs
@@ -1225,7 +1221,7 @@ class ClientRPC<PrepareAsyncBidiStreaming, Executor>
  * @since 2.6.0
  */
 template <class Executor>
-class ClientRPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>
+class ClientRPC<agrpc::ClientRPCType::GENERIC_STREAMING, Executor>
     : public detail::ClientRPCBidiStreamingBase<grpc::GenericClientAsyncReaderWriter, Executor>
 {
   public:
@@ -1248,7 +1244,7 @@ class ClientRPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>
         /**
          * @brief The ClientRPC type when rebound to the specified executor
          */
-        using other = ClientRPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, OtherExecutor>;
+        using other = ClientRPC<agrpc::ClientRPCType::GENERIC_STREAMING, OtherExecutor>;
     };
 
     using detail::ClientRPCBidiStreamingBase<grpc::GenericClientAsyncReaderWriter,
@@ -1266,14 +1262,24 @@ class ClientRPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>
                CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
-            detail::ClientStreamingRequestSenderImplementation<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>>(
+            detail::ClientStreamingRequestSenderImplementation<agrpc::ClientRPCType::GENERIC_STREAMING, Executor>>(
             this->grpc_context(), {*this, method, stub}, {}, token);
     }
 
   private:
-    friend detail::ClientStreamingRequestSenderInitiation<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>;
-    friend detail::ClientStreamingRequestSenderImplementation<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>;
+    friend detail::ClientStreamingRequestSenderInitiation<agrpc::ClientRPCType::GENERIC_STREAMING, Executor>;
+    friend detail::ClientStreamingRequestSenderImplementation<agrpc::ClientRPCType::GENERIC_STREAMING, Executor>;
 };
+
+/**
+ * @brief (experimental) I/O object for client-side, generic, streaming rpcs (type alias)
+ *
+ * @see agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_STREAMING,Executor>
+ *
+ * @since 2.6.0
+ */
+template <class Executor = agrpc::GrpcExecutor>
+using ClientRPCGenericStreaming = agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_STREAMING, Executor>;
 
 AGRPC_NAMESPACE_END
 
