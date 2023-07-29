@@ -98,8 +98,8 @@ class HealthCheckService final : public grpc::HealthCheckServiceInterface
 /**
  * @brief Add a HealthCheckService to a `grpc::Server`
  *
- * The service must be started using `agrpc::start_health_check_service` after `builder.BuildAndStart()` has been
- * called. May only be called once for a given ServerBuilder.
+ * Must be called before `grpc::ServerBuilder.BuildAndStart()` and the service must be started using
+ * `agrpc::start_health_check_service` after BuildAndStart. May only be called once for a given ServerBuilder.
  *
  * Example:
  *
@@ -114,8 +114,8 @@ grpc::ServerBuilder& add_health_check_service(grpc::ServerBuilder& builder);
 /**
  * @brief Start a previously added HealthCheckService
  *
- * The service must have been added using `agrpc::add_health_check_service()`. May only be called once for a given
- * HealthCheckService.
+ * Must be called before `grpc::ServerBuilder.BuildAndStart()` and the service must be started using
+ * `agrpc::start_health_check_service` after BuildAndStart. May only be called once for a given ServerBuilder.
  *
  * Does not contribute to the work tracking of the GrpcContext. May not be called concurrently with
  * `GrpcContext::run/poll`.
