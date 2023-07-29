@@ -38,6 +38,24 @@ class BasicAlarm;
 
 struct UseSender;
 
+/**
+ * @brief (experimental) Primary ClientRPC template
+ *
+ * This is the main entrypoint into the recommended API for writing asynchronous gRPC clients.
+ *
+ * @see
+ * @c agrpc::ClientRPC<PrepareAsyncUnary,Executor> <br>
+ * @c agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_UNARY,Executor> <br>
+ * @c agrpc::ClientRPC<PrepareAsyncClientStreaming,Executor> <br>
+ * @c agrpc::ClientRPC<PrepareAsyncServerStreaming,Executor> <br>
+ * @c agrpc::ClientRPC<PrepareAsyncBidiStreaming,Executor> <br>
+ * @c agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_STREAMING,Executor> <br>
+ *
+ * @since 2.6.0
+ */
+template <auto PrepareAsync, class Executor = agrpc::BasicGrpcExecutor<>>
+class ClientRPC;
+
 namespace detail
 {
 template <class Item>
@@ -66,8 +84,15 @@ class ServerWriteReactor;
 template <class Deadline, class Executor>
 struct MoveAlarmSenderImplementation;
 
+template <auto PrepareAsync, class Executor>
+class ClientRPCServerStreamingBase;
+
 template <class Responder, class Executor>
 class ClientRPCBidiStreamingBase;
+
+struct AutoCancelClientContextAndResponderAccess;
+
+struct RPCExecutorBaseAccess;
 
 AGRPC_NAMESPACE_CPP20_BEGIN()
 

@@ -129,7 +129,7 @@ TEST_CASE_FIXTURE(test::ClientRPCTest<test::ServerStreamingClientRPC>,
                     test::Exception);
 }
 
-TEST_CASE_TEMPLATE("RPC::read_initial_metadata successfully", RPC, test::ClientStreamingClientRPC,
+TEST_CASE_TEMPLATE("ClientRPC::read_initial_metadata successfully", RPC, test::ClientStreamingClientRPC,
                    test::ServerStreamingClientRPC, test::BidirectionalStreamingClientRPC)
 {
     test::ClientRPCTest<RPC> test;
@@ -147,7 +147,7 @@ TEST_CASE_TEMPLATE("RPC::read_initial_metadata successfully", RPC, test::ClientS
         });
 }
 
-TEST_CASE_TEMPLATE("RPC::read_initial_metadata on cancelled RPC", RPC, test::ClientStreamingClientRPC,
+TEST_CASE_TEMPLATE("ClientRPC::read_initial_metadata on cancelled RPC", RPC, test::ClientStreamingClientRPC,
                    test::ServerStreamingClientRPC)
 {
     test::ClientRPCTest<RPC> test;
@@ -169,7 +169,7 @@ TEST_CASE_TEMPLATE("RPC::read_initial_metadata on cancelled RPC", RPC, test::Cli
 
 #ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
 TEST_CASE_FIXTURE(test::ClientRPCTest<test::UnaryClientRPC>,
-                  "RPC::request can have UseSender as default completion token")
+                  "ClientRPC::request can have UseSender as default completion token")
 {
     using RPC = agrpc::UseSender::as_default_on_t<agrpc::ClientRPC<&test::v1::Test::Stub::PrepareAsyncUnary>>;
     bool ok{};
@@ -214,7 +214,7 @@ TEST_CASE_FIXTURE(test::ClientRPCTest<test::UnaryClientRPC>,
 }
 #endif
 
-TEST_CASE_FIXTURE(test::ClientRPCTest<test::GenericUnaryClientRPC>, "RPC::request generic unary RPC successfully")
+TEST_CASE_FIXTURE(test::ClientRPCTest<test::GenericUnaryClientRPC>, "ClientRPC::request generic unary RPC successfully")
 {
     bool use_executor_overload{};
     SUBCASE("executor overload") {}
@@ -585,7 +585,7 @@ TEST_CASE_FIXTURE(ClientRPCIoContextTest<test::GenericStreamingClientRPC>, "Gene
         });
 }
 
-TEST_CASE("RPC::service_name/method_name")
+TEST_CASE("ClientRPC::service_name/method_name")
 {
     const auto check_eq_and_null_terminated = [](std::string_view expected, std::string_view actual)
     {
@@ -600,6 +600,20 @@ TEST_CASE("RPC::service_name/method_name")
     check_eq_and_null_terminated("ServerStreaming", test::ServerStreamingClientRPC::method_name());
     check_eq_and_null_terminated("test.v1.Test", test::BidirectionalStreamingClientRPC::service_name());
     check_eq_and_null_terminated("BidirectionalStreaming", test::BidirectionalStreamingClientRPC::method_name());
+}
+
+struct Derived : test::ServerStreamingClientRPC
+{
+    template <class T = test::ServerStreamingClientRPC>
+    auto is_finished(int) -> decltype((void)T::is_finished(), std::true_type{});
+
+    template <class T = test::ServerStreamingClientRPC>
+    auto is_finished(long) -> std::false_type;
+};
+
+TEST_CASE("ClientRPC derived class cannot access private base member")
+{
+    CHECK_FALSE(decltype(std::declval<Derived>().is_finished(0))::value);
 }
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
@@ -753,9 +767,9 @@ void test_rpc_step_functions_can_be_cancelled()
     CHECK_LT(test::now(), not_to_exceed);
 }
 
-TEST_CASE_TEMPLATE("RPC::read_initial_metadata can be cancelled", T, ClientStreamingReadInitialMetadataCancellation,
-                   ServerStreamingReadInitialMetadataCancellation, BidiStreamingReadInitialMetadataCancellation,
-                   GenericBidiStreamingReadInitialMetadataCancellation)
+TEST_CASE_TEMPLATE("ClientRPC::read_initial_metadata can be cancelled", T,
+                   ClientStreamingReadInitialMetadataCancellation, ServerStreamingReadInitialMetadataCancellation,
+                   BidiStreamingReadInitialMetadataCancellation, GenericBidiStreamingReadInitialMetadataCancellation)
 {
     if (grpc::Version() > "1.20.0")
     {

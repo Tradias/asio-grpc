@@ -38,10 +38,9 @@ struct GrpcSenderImplementation : detail::GrpcSenderImplementationBase
 
     static auto& stop_function_arg(const Initiation& initiation) noexcept { return initiation; }
 
-    static void initiate(agrpc::GrpcContext& grpc_context, const Initiation& initiation,
-                         detail::OperationBase* operation)
+    static void initiate(agrpc::GrpcContext& grpc_context, const Initiation& initiation, detail::OperationBase* self)
     {
-        initiation(grpc_context, operation);
+        initiation(grpc_context, self);
     }
 
     template <class OnDone>

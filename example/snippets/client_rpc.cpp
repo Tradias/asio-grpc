@@ -20,7 +20,7 @@
 namespace asio = boost::asio;
 
 /* [client_rpc-unary] */
-asio::awaitable<void> unary(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
+asio::awaitable<void> client_rpc_unary(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
     using RPC = agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncUnary>;
     grpc::ClientContext client_context;
@@ -38,7 +38,7 @@ asio::awaitable<void> unary(agrpc::GrpcContext& grpc_context, example::v1::Examp
 /* [client_rpc-unary] */
 
 /* [client_rpc-client-streaming] */
-asio::awaitable<void> client_streaming(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
+asio::awaitable<void> client_rpc_client_streaming(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
     using RPC = asio::use_awaitable_t<>::as_default_on_t<
         agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncClientStreaming>>;
@@ -74,7 +74,7 @@ asio::awaitable<void> client_streaming(agrpc::GrpcContext& grpc_context, example
 /* [client_rpc-client-streaming] */
 
 /* [client_rpc-server-streaming] */
-asio::awaitable<void> server_streaming(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
+asio::awaitable<void> client_rpc_server_streaming(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
     using RPC = asio::use_awaitable_t<>::as_default_on_t<
         agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncServerStreaming>>;
@@ -107,7 +107,8 @@ asio::awaitable<void> server_streaming(agrpc::GrpcContext& grpc_context, example
 /* [client_rpc-server-streaming] */
 
 /* [client_rpc-bidi-streaming] */
-asio::awaitable<void> bidirectional_streaming(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
+asio::awaitable<void> client_rpc_bidirectional_streaming(agrpc::GrpcContext& grpc_context,
+                                                         example::v1::Example::Stub& stub)
 {
     using RPC = asio::use_awaitable_t<>::as_default_on_t<
         agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncBidirectionalStreaming>>;
@@ -143,7 +144,7 @@ asio::awaitable<void> bidirectional_streaming(agrpc::GrpcContext& grpc_context, 
 /* [client_rpc-bidi-streaming] */
 
 /* [client_rpc-generic-unary] */
-asio::awaitable<void> generic_unary(agrpc::GrpcContext& grpc_context, grpc::GenericStub& stub)
+asio::awaitable<void> client_rpc_generic_unary(agrpc::GrpcContext& grpc_context, grpc::GenericStub& stub)
 {
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
@@ -179,5 +180,5 @@ asio::awaitable<void> generic_unary(agrpc::GrpcContext& grpc_context, grpc::Gene
 /* [client_rpc-generic-unary] */
 
 /* [client_rpc-generic-streaming] */
-asio::awaitable<void> client_generic_streaming_request(grpc::GenericStub&) { co_return; }
+asio::awaitable<void> client_rpc_generic_streaming(agrpc::GrpcContext&, grpc::GenericStub&) { co_return; }
 /* [client_rpc-generic-streaming] */

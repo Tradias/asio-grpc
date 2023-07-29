@@ -23,45 +23,11 @@
 #include <agrpc/detail/initiate_sender_implementation.hpp>
 #include <agrpc/detail/name.hpp>
 #include <agrpc/detail/rpc_client_context_base.hpp>
+#include <agrpc/detail/rpc_executor_base.hpp>
 #include <agrpc/detail/rpc_type.hpp>
 #include <agrpc/grpc_executor.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
-
-namespace detail
-{
-/**
- * @brief (experimental) RPC's executor base
- *
- * @since 2.1.0
- */
-template <class Executor>
-class RPCExecutorBase
-{
-  public:
-    /**
-     * @brief The executor type
-     */
-    using executor_type = Executor;
-
-    /**
-     * @brief Get the executor
-     *
-     * Thread-safe
-     */
-    [[nodiscard]] const executor_type& get_executor() const noexcept { return executor_; }
-
-  protected:
-    RPCExecutorBase() : executor_(agrpc::GrpcExecutor{}) {}
-
-    explicit RPCExecutorBase(const Executor& executor) : executor_(executor) {}
-
-    auto& grpc_context() const noexcept { return detail::query_grpc_context(executor_); }
-
-  private:
-    Executor executor_;
-};
-}
 
 namespace detail
 {
@@ -521,7 +487,7 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor>
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto read_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
-        return detail::async_initiate_sender_implementation<detail::ReadInitialMetadataSenderImplementation<ClientRPC>>(
+        return detail::async_initiate_sender_implementation<detail::ReadInitialMetadataSenderImplementation<Responder>>(
             this->grpc_context(), {}, {*this}, token);
     }
 
@@ -536,7 +502,7 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor>
                CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
-            detail::WriteClientStreamingSenderImplementation<ClientRPC>>(this->grpc_context(), {request, options},
+            detail::WriteClientStreamingSenderImplementation<Responder>>(this->grpc_context(), {request, options},
                                                                          {*this}, token);
     }
 
@@ -591,8 +557,8 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor>
     }
 
   private:
-    friend detail::ReadInitialMetadataSenderImplementation<ClientRPC>;
-    friend detail::WriteClientStreamingSenderImplementation<ClientRPC>;
+    friend detail::ReadInitialMetadataSenderImplementation<Responder>;
+    friend detail::WriteClientStreamingSenderImplementation<Responder>;
     friend detail::ClientFinishSenderImplementation<ClientRPC>;
     friend detail::ClientStreamingRequestSenderInitiation<PrepareAsyncClientStreaming, Executor>;
     friend detail::ClientStreamingRequestSenderImplementation<PrepareAsyncClientStreaming, Executor>;
@@ -766,9 +732,8 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto read_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
-        return detail::async_initiate_sender_implementation<
-            detail::ReadInitialMetadataSenderImplementation<ClientRPCServerStreamingBase>>(this->grpc_context(), {},
-                                                                                           {*this}, token);
+        return detail::async_initiate_sender_implementation<detail::ReadInitialMetadataSenderImplementation<Responder>>(
+            this->grpc_context(), {}, {*this}, token);
     }
 
     /**
@@ -785,9 +750,8 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto read(ResponseT& response, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
-        return detail::async_initiate_sender_implementation<
-            detail::ReadServerStreamingSenderImplementation<ClientRPCServerStreamingBase>>(this->grpc_context(),
-                                                                                           {response}, {*this}, token);
+        return detail::async_initiate_sender_implementation<detail::ReadServerStreamingSenderImplementation<Responder>>(
+            this->grpc_context(), {response}, {*this}, token);
     }
 
     /**
@@ -822,14 +786,14 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
     auto finish(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
-            detail::ClientFinishServerStreamingSenderImplementation<ClientRPCServerStreamingBase>>(this->grpc_context(),
-                                                                                                   {}, {*this}, token);
+            detail::ClientFinishServerStreamingSenderImplementation<Responder>>(this->grpc_context(), {}, {*this},
+                                                                                token);
     }
 
   private:
-    friend detail::ReadInitialMetadataSenderImplementation<ClientRPCServerStreamingBase>;
-    friend detail::ReadServerStreamingSenderImplementation<ClientRPCServerStreamingBase>;
-    friend detail::ClientFinishServerStreamingSenderImplementation<ClientRPCServerStreamingBase>;
+    friend detail::ReadInitialMetadataSenderImplementation<Responder>;
+    friend detail::ReadServerStreamingSenderImplementation<Responder>;
+    friend detail::ClientFinishServerStreamingSenderImplementation<Responder>;
     friend detail::ClientStreamingRequestSenderInitiation<PrepareAsyncServerStreaming, Executor>;
     friend detail::ClientStreamingRequestSenderImplementation<PrepareAsyncServerStreaming, Executor>;
 };
@@ -969,9 +933,8 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto read_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
-        return detail::async_initiate_sender_implementation<
-            detail::ReadInitialMetadataSenderImplementation<ClientRPCBidiStreamingBase>>(this->grpc_context(), {},
-                                                                                         {*this}, token);
+        return detail::async_initiate_sender_implementation<detail::ReadInitialMetadataSenderImplementation<Responder>>(
+            this->grpc_context(), {}, {*this}, token);
     }
 
     /**
@@ -990,8 +953,8 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
     auto read(ResponseT& response, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
-            detail::ClientReadBidiStreamingSenderImplementation<Responder, Executor>>(this->grpc_context(), {response},
-                                                                                      {*this}, token);
+            detail::ClientReadBidiStreamingSenderImplementation<Responder>>(this->grpc_context(), {response}, {*this},
+                                                                            token);
     }
 
     /**
@@ -1012,8 +975,8 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
                CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation<
-            detail::ClientWriteBidiStreamingSenderImplementation<Responder, Executor>>(
-            this->grpc_context(), {request, options}, {*this}, token);
+            detail::ClientWriteBidiStreamingSenderImplementation<Responder>>(this->grpc_context(), {request, options},
+                                                                             {*this}, token);
     }
 
     /**
@@ -1042,9 +1005,8 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto writes_done(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
-        return detail::async_initiate_sender_implementation<
-            detail::ClientWritesDoneSenderImplementation<Responder, Executor>>(this->grpc_context(), {}, {*this},
-                                                                               token);
+        return detail::async_initiate_sender_implementation<detail::ClientWritesDoneSenderImplementation<Responder>>(
+            this->grpc_context(), {}, {*this}, token);
     }
 
     /**
@@ -1084,10 +1046,10 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
     }
 
   private:
-    friend detail::ReadInitialMetadataSenderImplementation<ClientRPCBidiStreamingBase>;
-    friend detail::ClientReadBidiStreamingSenderImplementation<Responder, Executor>;
-    friend detail::ClientWriteBidiStreamingSenderImplementation<Responder, Executor>;
-    friend detail::ClientWritesDoneSenderImplementation<Responder, Executor>;
+    friend detail::ReadInitialMetadataSenderImplementation<Responder>;
+    friend detail::ClientReadBidiStreamingSenderImplementation<Responder>;
+    friend detail::ClientWriteBidiStreamingSenderImplementation<Responder>;
+    friend detail::ClientWritesDoneSenderImplementation<Responder>;
     friend detail::ClientFinishSenderImplementation<ClientRPCBidiStreamingBase>;
 };
 }

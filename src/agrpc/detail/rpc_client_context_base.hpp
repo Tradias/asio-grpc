@@ -81,9 +81,8 @@ class AutoCancelClientContextAndResponder
 
     AutoCancelClientContextAndResponder& operator=(AutoCancelClientContextAndResponder&& other) = delete;
 
-    [[nodiscard]] Responder& responder() noexcept { return *responder_; }
-
-    void set_responder(std::unique_ptr<Responder> responder) noexcept { responder_.set(responder.release()); }
+  private:
+    friend struct detail::AutoCancelClientContextAndResponderAccess;
 
     [[nodiscard]] bool is_finished() const noexcept { return responder_.template has_bit<0>(); }
 
@@ -93,9 +92,48 @@ class AutoCancelClientContextAndResponder
 
     void set_writes_done() noexcept { responder_.template set_bit<1>(); }
 
-  private:
     grpc::ClientContext client_context_{};
     detail::AtomicTaggedPtr<Responder> responder_{};
+};
+
+struct AutoCancelClientContextAndResponderAccess
+{
+    template <class Responder>
+    static Responder& responder(AutoCancelClientContextAndResponder<Responder>& rpc) noexcept
+    {
+        return *rpc.responder_;
+    }
+
+    template <class Responder>
+    static void set_responder(AutoCancelClientContextAndResponder<Responder>& rpc,
+                              std::unique_ptr<Responder> responder) noexcept
+    {
+        rpc.responder_.set(responder.release());
+    }
+
+    template <class Responder>
+    [[nodiscard]] static bool is_finished(AutoCancelClientContextAndResponder<Responder>& rpc) noexcept
+    {
+        return rpc.is_finished();
+    }
+
+    template <class Responder>
+    static void set_finished(AutoCancelClientContextAndResponder<Responder>& rpc) noexcept
+    {
+        rpc.set_finished();
+    }
+
+    template <class Responder>
+    [[nodiscard]] static bool is_writes_done(AutoCancelClientContextAndResponder<Responder>& rpc) noexcept
+    {
+        return rpc.is_writes_done();
+    }
+
+    template <class Responder>
+    static void set_writes_done(AutoCancelClientContextAndResponder<Responder>& rpc) noexcept
+    {
+        rpc.set_writes_done();
+    }
 };
 }
 

@@ -38,9 +38,9 @@ struct MoveAlarmSenderImplementation
 
     auto& stop_function_arg(const Initiation&) noexcept { return alarm_.alarm_; }
 
-    void initiate(agrpc::GrpcContext& grpc_context, const Initiation& deadline, detail::OperationBase* operation)
+    void initiate(agrpc::GrpcContext& grpc_context, const Initiation& deadline, void* tag)
     {
-        detail::AlarmInitFunction{alarm_.alarm_, deadline}(grpc_context, operation);
+        detail::AlarmInitFunction{alarm_.alarm_, deadline}(grpc_context, tag);
     }
 
     template <class OnDone>
