@@ -129,7 +129,7 @@ class ClientRPCUnaryBase<PrepareAsyncUnary, Executor>
     /**
      * @brief Name of the gRPC service
      *
-     * Equivalent to the generated `Service::service_full_name()`.
+     * Equal to the generated `Service::service_full_name()`.
      *
      * E.g. for the `.proto` schema
      *
@@ -199,6 +199,14 @@ class ClientRPCUnaryBase<PrepareAsyncUnary, Executor>
 /**
  * @brief (experimental) I/O object for client-side, unary rpcs
  *
+ * Example:
+ *
+ * @snippet client_rpc.cpp client_rpc-unary
+ *
+ * Based on `.proto` file:
+ *
+ * @snippet example.proto example-proto
+ *
  * @tparam PrepareAsyncUnary A pointer to the generated, async version of the gRPC method. The async version starts with
  * `PrepareAsync`.
  * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
@@ -229,6 +237,14 @@ class ClientRPC<PrepareAsyncUnary, Executor> : public detail::ClientRPCUnaryBase
 
 /**
  * @brief (experimental) I/O object for client-side, generic, unary rpcs
+ *
+ * Example:
+ *
+ * @snippet client_rpc.cpp client_rpc-generic-unary
+ *
+ * Based on `.proto` file:
+ *
+ * @snippet example.proto example-proto
  *
  * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
  *
@@ -320,6 +336,14 @@ class ClientRPC<agrpc::CLIENT_GENERIC_UNARY_RPC, Executor>
 /**
  * @brief (experimental) I/O object for client-side, client-streaming rpcs
  *
+ * Example:
+ *
+ * @snippet client_rpc.cpp client_rpc-client-streaming
+ *
+ * Based on `.proto` file:
+ *
+ * @snippet example.proto example-proto
+ *
  * @tparam PrepareAsyncClientStreaming A pointer to the generated, async version of the gRPC method. The async version
  * starts with `PrepareAsync`.
  * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
@@ -380,7 +404,7 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor>
     /**
      * @brief Name of the gRPC service
      *
-     * Equivalent to the generated `Service::service_full_name()`.
+     * Equal to the generated `Service::service_full_name()`.
      *
      * E.g. for the `.proto` schema
      *
@@ -462,12 +486,12 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor>
      * [initial_metadata_corked](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#af79c64534c7b208594ba8e76021e2696)
      * option set.
      *
-     * @param stub The Stub that corresponds to the gRPC method, e.g. `example::v1::Example::Stub`.
+     * @param stub The Stub that corresponds to the gRPC method.
      * @param response The response message, will be filled by the server upon finishing this rpc. Must remain alive
      * until this rpc is finished.
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` means that the rpc was started successfully. If it is `false`, then call `finish` to obtain
-     * the error details.
+     * error details.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto start(StubT& stub, ResponseT& response, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
@@ -525,8 +549,8 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor>
      *
      * Only one write may be outstanding at any given time. May not be called concurrently with
      * `read_initial_metadata()`. GRPC does not take ownership or a reference to `request`, so it is safe to to
-     * deallocate once write returns (unless a deferred completion token is used like `agrpc::use_sender` or
-     * `asio::deferred`).
+     * deallocate once write returns (unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is
+     * used).
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` means that the data is going to go to the wire. If it is `false`, it is
@@ -632,7 +656,7 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
     /**
      * @brief Name of the gRPC service
      *
-     * Equivalent to the generated `Service::service_full_name()`.
+     * Equal to the generated `Service::service_full_name()`.
      *
      * E.g. for the `.proto` schema
      *
@@ -710,12 +734,12 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
     /**
      * @brief Start a server-streaming request
      *
-     * @param stub The Stub that corresponds to the gRPC method, e.g. `example::v1::Example::Stub`.
+     * @param stub The Stub that corresponds to the gRPC method.
      * @param request The request message, save to delete when this function returns, unless a deferred completion token
      * is used like `agrpc::use_sender` or `asio::deferred`.
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` means that the rpc was started successfully. If it is `false`, then call `finish` to obtain
-     * the error details.
+     * error details.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto start(StubT& stub, const RequestT& request,
@@ -817,6 +841,14 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
 
 /**
  * @brief (experimental) I/O object for client-side, server-streaming rpcs
+ *
+ * Example:
+ *
+ * @snippet client_rpc.cpp client_rpc-server-streaming
+ *
+ * Based on `.proto` file:
+ *
+ * @snippet example.proto example-proto
  *
  * @tparam PrepareAsyncServerStreaming A pointer to the generated, async version of the gRPC method. The async version
  * starts with `PrepareAsync`.
@@ -971,8 +1003,8 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
      *
      * Only one write may be outstanding at any given time. This is thread-safe with respect to `read()`. It should not
      * be called concurrently with other operations. gRPC does not take ownership or a reference to `request`, so it is
-     * safe to to deallocate once write returns (unless a deferred completion token is used like `agrpc::use_sender` or
-     * `asio::deferred`).
+     * safe to to deallocate once write returns (unless a deferred completion token like `agrpc::use_sender` or
+     * `asio::deferred` is used).
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` means that the data is going to go to the wire. If it is `false`, it is
@@ -1067,6 +1099,14 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
 /**
  * @brief (experimental) I/O object for client-side, bidirectional-streaming rpcs
  *
+ * Example:
+ *
+ * @snippet client_rpc.cpp client_rpc-bidi-streaming
+ *
+ * Based on `.proto` file:
+ *
+ * @snippet example.proto example-proto
+ *
  * @tparam PrepareAsyncBidiStreaming A pointer to the generated, async version of the gRPC method. The async version
  * starts with `PrepareAsync`.
  * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
@@ -1114,7 +1154,7 @@ class ClientRPC<PrepareAsyncBidiStreaming, Executor>
     /**
      * @brief Name of the gRPC service
      *
-     * Equivalent to the generated `Service::service_full_name()`.
+     * Equal to the generated `Service::service_full_name()`.
      *
      * E.g. for the `.proto` schema
      *
@@ -1151,10 +1191,10 @@ class ClientRPC<PrepareAsyncBidiStreaming, Executor>
     /**
      * @brief Start a bidirectional-streaming request
      *
-     * @param stub The Stub that corresponds to the gRPC method, e.g. `example::v1::Example::Stub`.
+     * @param stub The Stub that corresponds to the gRPC method.
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` means that the rpc was started successfully. If it is `false`, then call `finish` to obtain
-     * the error details.
+     * error details.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto start(StubT& stub, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
@@ -1219,7 +1259,7 @@ class ClientRPC<agrpc::CLIENT_GENERIC_STREAMING_RPC, Executor>
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` means that the rpc was started successfully. If it is `false`, then call `finish` to obtain
-     * the error details.
+     * error details.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto start(const std::string& method, grpc::GenericStub& stub,

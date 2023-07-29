@@ -24,7 +24,7 @@ endfunction()
 if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
     asio_grpc_add_documentation(asio-grpc-documentation-blog blog.cpp)
 
-    asio_grpc_add_documentation(asio-grpc-documentation-boost-asio client.cpp server.cpp io_context.cpp
+    asio_grpc_add_documentation(asio-grpc-documentation-boost-asio client.cpp client_rpc.cpp server.cpp io_context.cpp
                                 rpc_cheat_sheet.cpp)
     target_link_libraries(asio-grpc-documentation-boost-asio PRIVATE asio-grpc::asio-grpc)
 

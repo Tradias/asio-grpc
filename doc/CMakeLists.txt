@@ -22,6 +22,8 @@ if(TARGET Doxygen::doxygen)
     set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "doc/index.md")
     set(DOXYGEN_VERBATIM_HEADERS "NO")
     set(DOXYGEN_HTML_OUTPUT "docs")
+    set(DOXYGEN_INLINE_INHERITED_MEMB "YES")
+    set(DOXYGEN_SORT_MEMBER_DOCS "NO")
 
     # `doxygen -w html header.html delete_me.html delete_me.css`
     set(DOXYGEN_HTML_HEADER "${CMAKE_CURRENT_LIST_DIR}/header.html")
