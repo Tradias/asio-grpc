@@ -1,4 +1,4 @@
-// Copyright 2022 Dennis Hezel
+// Copyright 2023 Dennis Hezel
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -107,7 +107,7 @@ TEST_CASE_FIXTURE(test::IoContextTest, "CancelSafe: can handle move-only complet
 {
     agrpc::CancelSafe<void(std::unique_ptr<int>)> safe;
     auto token = safe.token();
-    asio::async_initiate<decltype(token), void(std::unique_ptr<int> &&)>(
+    asio::async_initiate<decltype(token), void(std::unique_ptr<int>&&)>(
         [&](auto ch)
         {
             asio::post(io_context,

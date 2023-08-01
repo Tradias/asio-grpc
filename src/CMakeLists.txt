@@ -1,4 +1,4 @@
-# Copyright 2022 Dennis Hezel
+# Copyright 2023 Dennis Hezel
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -137,6 +137,7 @@ if(ASIO_GRPC_BUILD_TESTS AND ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/rpc.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/rpc_client_context_base.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/rpc_context.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/rpc_executor_base.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/schedule_sender.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/sender_implementation.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/sender_of.hpp"

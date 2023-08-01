@@ -1,4 +1,4 @@
-// Copyright 2022 Dennis Hezel
+// Copyright 2023 Dennis Hezel
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,10 +27,7 @@ namespace detail
 {
 #ifdef AGRPC_HAS_CONCEPTS
 template <class Context>
-concept IS_CASTABLE_TO_GRPC_CONTEXT = requires(Context& context)
-{
-    static_cast<agrpc::GrpcContext&>(context);
-};
+concept IS_CASTABLE_TO_GRPC_CONTEXT = requires(Context& context) { static_cast<agrpc::GrpcContext&>(context); };
 #else
 template <class Context, class = void>
 inline constexpr bool IS_CASTABLE_TO_GRPC_CONTEXT = false;
