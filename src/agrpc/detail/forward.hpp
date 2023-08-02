@@ -70,7 +70,7 @@ struct RepeatedlyRequestContextAccess;
 
 class GenericRPCContext;
 
-class NotifyWhenDoneSenderImplementation;
+struct NotifyWhenDoneSenderImplementation;
 
 struct HealthCheckServiceData;
 
@@ -81,7 +81,7 @@ class HealthCheckChecker;
 template <class Derived, class Response>
 class ServerWriteReactor;
 
-template <class Deadline, class Executor>
+template <class Executor>
 struct MoveAlarmSenderImplementation;
 
 template <auto PrepareAsync, class Executor>

@@ -49,14 +49,28 @@ class ReceiverAndStopCallback
 
     void reset_stop_callback() noexcept { stop_callback_.reset(); }
 
-    template <class Implementation>
-    void emplace_stop_callback(StopToken&& stop_token, Implementation& implementation,
-                               const typename Implementation::Initiation& initiation) noexcept
+    template <class Initiation, class Implementation>
+    void emplace_stop_callback(StopToken&& stop_token, const Initiation& initiation,
+                               Implementation& implementation) noexcept
     {
-        stop_callback_.emplace(static_cast<StopToken&&>(stop_token), implementation.stop_function_arg(initiation));
+        stop_callback_.emplace(static_cast<StopToken&&>(stop_token), stop_function_arg(initiation, implementation));
     }
 
   private:
+    template <class Initiation, class Implementation>
+    auto stop_function_arg(const Initiation& initiation, Implementation& implementation)
+        -> decltype(initiation.stop_function_arg(implementation))
+    {
+        return initiation.stop_function_arg(implementation);
+    }
+
+    template <class Initiation, class Implementation>
+    auto stop_function_arg(const Initiation& initiation, const Implementation&)
+        -> decltype(initiation.stop_function_arg())
+    {
+        return initiation.stop_function_arg();
+    }
+
     Receiver receiver_;
     StopCallback stop_callback_;
 };
@@ -74,9 +88,8 @@ class ReceiverAndStopCallback<Receiver, StopFunction, false>
 
     static constexpr void reset_stop_callback() noexcept {}
 
-    template <class StopToken, class Implementation>
-    static constexpr void emplace_stop_callback(const StopToken&, const Implementation&,
-                                                const typename Implementation::Initiation&) noexcept
+    template <class StopToken, class Initiation, class Implementation>
+    static constexpr void emplace_stop_callback(const StopToken&, const Initiation&, const Implementation&) noexcept
     {
     }
 

@@ -29,9 +29,8 @@ namespace detail
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 struct SubmitSenderToWorkTrackingCompletionHandler
 {
-    template <class CompletionHandler, class Implementation>
-    void operator()(CompletionHandler&& completion_handler,
-                    const typename detail::RemoveCrefT<Implementation>::Initiation& initiation,
+    template <class CompletionHandler, class Initiation, class Implementation>
+    void operator()(CompletionHandler&& completion_handler, const Initiation& initiation,
                     Implementation&& implementation)
     {
         detail::submit_basic_sender_running_operation(
@@ -46,9 +45,8 @@ struct SubmitSenderToWorkTrackingCompletionHandler
 };
 #endif
 
-template <class Implementation, class CompletionToken>
-auto async_initiate_sender_implementation(agrpc::GrpcContext& grpc_context,
-                                          const typename Implementation::Initiation& initiation,
+template <class Initiation, class Implementation, class CompletionToken>
+auto async_initiate_sender_implementation(agrpc::GrpcContext& grpc_context, const Initiation& initiation,
                                           Implementation&& implementation, [[maybe_unused]] CompletionToken& token)
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
@@ -61,8 +59,8 @@ auto async_initiate_sender_implementation(agrpc::GrpcContext& grpc_context,
     else
 #endif
     {
-        return detail::BasicSenderAccess::create<Implementation>(grpc_context, initiation,
-                                                                 static_cast<Implementation&&>(implementation));
+        return detail::BasicSenderAccess::create<Initiation, Implementation>(
+            grpc_context, initiation, static_cast<Implementation&&>(implementation));
     }
 }
 }

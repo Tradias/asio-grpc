@@ -82,9 +82,9 @@ class BasicAlarm
     template <class Deadline, class CompletionToken = detail::LegacyDefaultCompletionTokenT<Executor>>
     auto wait(const Deadline& deadline, CompletionToken token = detail::LegacyDefaultCompletionTokenT<Executor>{}) &
     {
-        return detail::async_initiate_sender_implementation<
-            detail::GrpcSenderImplementation<detail::AlarmInitFunction<Deadline>, detail::AlarmCancellationFunction>>(
-            grpc_context(), {alarm_, deadline}, {}, token);
+        return detail::async_initiate_sender_implementation(
+            grpc_context(), detail::GrpcSenderInitiation<detail::AlarmInitFunction<Deadline>>{alarm_, deadline},
+            detail::GrpcSenderImplementation<detail::AlarmCancellationFunction>{}, token);
     }
 
     /**
@@ -102,8 +102,9 @@ class BasicAlarm
     template <class Deadline, class CompletionToken = detail::LegacyDefaultCompletionTokenT<Executor>>
     auto wait(const Deadline& deadline, CompletionToken token = detail::LegacyDefaultCompletionTokenT<Executor>{}) &&
     {
-        return detail::async_initiate_sender_implementation<detail::MoveAlarmSenderImplementation<Deadline, Executor>>(
-            grpc_context(), deadline, {static_cast<BasicAlarm&&>(*this)}, token);
+        return detail::async_initiate_sender_implementation(
+            grpc_context(), detail::MoveAlarmSenderInitiation<Deadline>{deadline},
+            detail::MoveAlarmSenderImplementation<Executor>{static_cast<BasicAlarm&&>(*this)}, token);
     }
 
     /**
@@ -124,7 +125,7 @@ class BasicAlarm
     [[nodiscard]] const executor_type& get_executor() const noexcept { return executor_; }
 
   private:
-    template <class, class>
+    template <class>
     friend struct detail::MoveAlarmSenderImplementation;
 
     auto& grpc_context() const noexcept { return detail::query_grpc_context(executor_); }

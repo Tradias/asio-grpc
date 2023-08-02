@@ -51,17 +51,16 @@ template <class Receiver>
     return stop_token;
 }
 
-template <class Implementation>
+template <class Initiation, class Implementation>
 class BasicSender;
 
 struct BasicSenderAccess
 {
-    template <class Implementation>
-    static auto create(agrpc::GrpcContext& grpc_context, const typename Implementation::Initiation& initiation,
-                       Implementation&& implementation)
+    template <class Initiation, class Implementation>
+    static auto create(agrpc::GrpcContext& grpc_context, const Initiation& initiation, Implementation&& implementation)
     {
-        return detail::BasicSender<detail::RemoveCrefT<Implementation>>(grpc_context, initiation,
-                                                                        static_cast<Implementation&&>(implementation));
+        return detail::BasicSender<Initiation, detail::RemoveCrefT<Implementation>>(
+            grpc_context, initiation, static_cast<Implementation&&>(implementation));
     }
 };
 
@@ -81,10 +80,9 @@ struct BasicSenderRunningOperationTemplate
     using Type = detail::BasicSenderRunningOperation<Implementation, Receiver, detail::DeallocateOnComplete::YES>;
 };
 
-template <class Receiver, class Implementation>
+template <class Receiver, class Initiation, class Implementation>
 void submit_basic_sender_running_operation(agrpc::GrpcContext& grpc_context, Receiver receiver,
-                                           const typename detail::RemoveCrefT<Implementation>::Initiation& initiation,
-                                           Implementation&& implementation)
+                                           const Initiation& initiation, Implementation&& implementation)
 {
     if (auto stop_token = detail::check_start_conditions(grpc_context, receiver))
     {
@@ -95,18 +93,15 @@ void submit_basic_sender_running_operation(agrpc::GrpcContext& grpc_context, Rec
     }
 }
 
-template <class Implementation, class Receiver>
+template <class Initiation, class Implementation, class Receiver>
 class BasicSenderOperationState;
 
-template <class Implementation>
+template <class Initiation, class Implementation>
 class BasicSender : public detail::SenderOf<typename Implementation::Signature>
 {
-  private:
-    using Initiation = typename Implementation::Initiation;
-
   public:
     template <class Receiver>
-    [[nodiscard]] detail::BasicSenderOperationState<Implementation, detail::RemoveCrefT<Receiver>> connect(
+    [[nodiscard]] detail::BasicSenderOperationState<Initiation, Implementation, detail::RemoveCrefT<Receiver>> connect(
         Receiver&& receiver) && noexcept((detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver> &&
                                           std::is_nothrow_copy_constructible_v<Initiation> &&
                                           std::is_nothrow_move_constructible_v<Implementation>))
@@ -116,7 +111,7 @@ class BasicSender : public detail::SenderOf<typename Implementation::Signature>
     }
 
     template <class Receiver, class Impl = Implementation, class = std::enable_if_t<std::is_copy_constructible_v<Impl>>>
-    [[nodiscard]] detail::BasicSenderOperationState<Implementation, detail::RemoveCrefT<Receiver>> connect(
+    [[nodiscard]] detail::BasicSenderOperationState<Initiation, Implementation, detail::RemoveCrefT<Receiver>> connect(
         Receiver&& receiver) const& noexcept((detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver> &&
                                               std::is_nothrow_copy_constructible_v<Initiation> &&
                                               std::is_nothrow_copy_constructible_v<Implementation>))
@@ -141,7 +136,7 @@ class BasicSender : public detail::SenderOf<typename Implementation::Signature>
   private:
     friend detail::BasicSenderAccess;
 
-    template <class, class>
+    template <class, class, class>
     friend class detail::BasicSenderOperationState;
 
     BasicSender(agrpc::GrpcContext& grpc_context, const Initiation& initiation, Implementation&& implementation)
@@ -161,7 +156,6 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
 {
   private:
     using Base = detail::BaseForSenderImplementationTypeT<Implementation::TYPE>;
-    using Initiation = typename Implementation::Initiation;
     using StopFunction = typename Implementation::StopFunction;
     using StopToken = detail::exec::stop_token_type_t<Receiver>;
 
@@ -298,40 +292,48 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
         agrpc::GrpcContext& grpc_context_;
     };
 
-    template <class... T>
+    template <class Initiation, class... T>
     void initiate(agrpc::GrpcContext& grpc_context, const Initiation& initiation, T...)
     {
         if constexpr (Deallocate == detail::DeallocateOnComplete::YES)
         {
             if (current_on_complete_is<detail::AllocationType::LOCAL>())
             {
-                implementation().initiate(Init<detail::AllocationType::LOCAL>{*this, grpc_context}, initiation);
+                initiation.initiate(Init<detail::AllocationType::LOCAL>{*this, grpc_context}, implementation());
             }
             else
             {
-                implementation().initiate(Init<detail::AllocationType::CUSTOM>{*this, grpc_context}, initiation);
+                initiation.initiate(Init<detail::AllocationType::CUSTOM>{*this, grpc_context}, implementation());
             }
         }
         else
         {
-            implementation().initiate(Init<detail::AllocationType::NONE>{*this, grpc_context}, initiation);
+            initiation.initiate(Init<detail::AllocationType::NONE>{*this, grpc_context}, implementation());
         }
     }
 
-    template <class Impl = Implementation>
+    template <class Initiation, class Impl = Implementation>
     auto initiate(agrpc::GrpcContext& grpc_context, const Initiation& initiation)
-        -> decltype((void)std::declval<Impl&>().initiate(grpc_context, initiation, static_cast<Base*>(nullptr)))
+        -> decltype((void)initiation.initiate(grpc_context, std::declval<Impl&>(), static_cast<Base*>(nullptr)))
     {
-        implementation().initiate(grpc_context, initiation, static_cast<Base*>(this));
+        initiation.initiate(grpc_context, implementation(), static_cast<Base*>(this));
+    }
+
+    template <class Initiation>
+    auto initiate(agrpc::GrpcContext& grpc_context, const Initiation& initiation)
+        -> decltype((void)initiation.initiate(grpc_context, static_cast<Base*>(nullptr)))
+    {
+        initiation.initiate(grpc_context, static_cast<Base*>(this));
     }
 
     Implementation& implementation() noexcept { return impl_.second(); }
 
+    template <class Initiation>
     void emplace_stop_callback(StopToken&& stop_token, const Initiation& initiation) noexcept
     {
         if (stop_token.stop_possible())
         {
-            impl_.first().emplace_stop_callback(static_cast<StopToken&&>(stop_token), implementation(), initiation);
+            impl_.first().emplace_stop_callback(static_cast<StopToken&&>(stop_token), initiation, implementation());
         }
     }
 
@@ -352,6 +354,7 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
     {
     }
 
+    template <class Initiation>
     void start(agrpc::GrpcContext& grpc_context, const Initiation& initiation, StopToken&& stop_token) noexcept
     {
         grpc_context.work_started();
@@ -380,7 +383,7 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
     detail::CompressedPair<detail::ReceiverAndStopCallback<Receiver, StopFunction>, Implementation> impl_;
 };
 
-template <class Implementation, class Receiver>
+template <class Initiation, class Implementation, class Receiver>
 class BasicSenderOperationState
 {
   public:
@@ -398,9 +401,7 @@ class BasicSenderOperationState
     }
 
   private:
-    using Initiation = typename Implementation::Initiation;
-
-    friend detail::BasicSender<Implementation>;
+    friend detail::BasicSender<Initiation, Implementation>;
 
     template <class R, class Impl>
     BasicSenderOperationState(R&& receiver, agrpc::GrpcContext& grpc_context, const Initiation& initiation,
@@ -425,20 +426,21 @@ AGRPC_NAMESPACE_END
 
 #ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
 #if !defined(BOOST_ASIO_HAS_DEDUCED_CONNECT_MEMBER_TRAIT) && !defined(ASIO_HAS_DEDUCED_CONNECT_MEMBER_TRAIT)
-template <class Implementation, class R>
-struct agrpc::asio::traits::connect_member<agrpc::detail::BasicSender<Implementation>, R>
+template <class Initiation, class Implementation, class R>
+struct agrpc::asio::traits::connect_member<agrpc::detail::BasicSender<Initiation, Implementation>, R>
 {
     static constexpr bool is_valid = true;
     static constexpr bool is_noexcept =
-        noexcept(std::declval<agrpc::detail::BasicSender<Implementation>>().connect(std::declval<R>()));
+        noexcept(std::declval<agrpc::detail::BasicSender<Initiation, Implementation>>().connect(std::declval<R>()));
 
-    using result_type = decltype(std::declval<agrpc::detail::BasicSender<Implementation>>().connect(std::declval<R>()));
+    using result_type =
+        decltype(std::declval<agrpc::detail::BasicSender<Initiation, Implementation>>().connect(std::declval<R>()));
 };
 #endif
 
 #if !defined(BOOST_ASIO_HAS_DEDUCED_SUBMIT_MEMBER_TRAIT) && !defined(ASIO_HAS_DEDUCED_SUBMIT_MEMBER_TRAIT)
-template <class Implementation, class R>
-struct agrpc::asio::traits::submit_member<agrpc::detail::BasicSender<Implementation>, R>
+template <class Initiation, class Implementation, class R>
+struct agrpc::asio::traits::submit_member<agrpc::detail::BasicSender<Initiation, Implementation>, R>
 {
     static constexpr bool is_valid = true;
     static constexpr bool is_noexcept = false;
@@ -448,8 +450,8 @@ struct agrpc::asio::traits::submit_member<agrpc::detail::BasicSender<Implementat
 #endif
 
 #if !defined(BOOST_ASIO_HAS_DEDUCED_START_MEMBER_TRAIT) && !defined(ASIO_HAS_DEDUCED_START_MEMBER_TRAIT)
-template <class Implementation, class Receiver>
-struct agrpc::asio::traits::start_member<agrpc::detail::BasicSenderOperationState<Implementation, Receiver>>
+template <class Initiation, class Implementation, class Receiver>
+struct agrpc::asio::traits::start_member<agrpc::detail::BasicSenderOperationState<Initiation, Implementation, Receiver>>
 {
     static constexpr bool is_valid = true;
     static constexpr bool is_noexcept = true;

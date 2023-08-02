@@ -46,8 +46,10 @@ auto grpc_initiate_impl(InitiatingFunction&& initiating_function, CompletionToke
 template <class StopFunction, class InitiatingFunction>
 auto grpc_initiate_impl(InitiatingFunction&& initiating_function, detail::UseSender token) noexcept
 {
-    return detail::BasicSenderAccess::create<detail::GrpcSenderImplementation<InitiatingFunction, StopFunction>>(
-        token.grpc_context_, {static_cast<InitiatingFunction&&>(initiating_function)}, {});
+    return detail::BasicSenderAccess::create(
+        token.grpc_context_,
+        detail::GrpcSenderInitiation<InitiatingFunction>{static_cast<InitiatingFunction&&>(initiating_function)},
+        detail::GrpcSenderImplementation<StopFunction>{});
 }
 
 template <class InitiatingFunction, class CompletionToken>

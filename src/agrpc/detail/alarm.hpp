@@ -26,22 +26,14 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class Deadline, class Executor>
+template <class Executor>
 struct MoveAlarmSenderImplementation
 {
     static constexpr auto TYPE = detail::SenderImplementationType::GRPC_TAG;
 
     using Alarm = agrpc::BasicAlarm<Executor>;
     using Signature = void(bool, Alarm);
-    using Initiation = Deadline;
     using StopFunction = detail::AlarmCancellationFunction;
-
-    auto& stop_function_arg(const Initiation&) noexcept { return alarm_.alarm_; }
-
-    void initiate(agrpc::GrpcContext& grpc_context, const Initiation& deadline, void* tag)
-    {
-        detail::AlarmInitFunction{alarm_.alarm_, deadline}(grpc_context, tag);
-    }
 
     template <class OnDone>
     void done(OnDone on_done, bool ok)
@@ -49,7 +41,27 @@ struct MoveAlarmSenderImplementation
         on_done(ok, static_cast<Alarm&&>(alarm_));
     }
 
+    auto& grpc_alarm() { return alarm_.alarm_; }
+
     Alarm alarm_;
+};
+
+template <class Deadline>
+struct MoveAlarmSenderInitiation
+{
+    template <class Executor>
+    static auto& stop_function_arg(MoveAlarmSenderImplementation<Executor>& impl) noexcept
+    {
+        return impl.grpc_alarm();
+    }
+
+    template <class Executor>
+    void initiate(agrpc::GrpcContext& grpc_context, MoveAlarmSenderImplementation<Executor>& impl, void* tag) const
+    {
+        detail::AlarmInitFunction{impl.grpc_alarm(), deadline_}(grpc_context, tag);
+    }
+
+    Deadline deadline_;
 };
 }
 

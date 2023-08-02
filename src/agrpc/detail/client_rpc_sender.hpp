@@ -70,20 +70,6 @@ struct ClientUnaryRequestSenderImplementationBase<Responder<Response>>
     using Signature = void(grpc::Status);
     using StopFunction = detail::ClientContextCancellationFunction;
 
-    struct Initiation
-    {
-        grpc::ClientContext& client_context_;
-        Response& response_;
-    };
-
-    grpc::ClientContext& stop_function_arg(const Initiation& initiation) noexcept { return initiation.client_context_; }
-
-    void initiate(const agrpc::GrpcContext&, const Initiation& initiation, void* tag) noexcept
-    {
-        responder_->StartCall();
-        responder_->Finish(&initiation.response_, &status_, tag);
-    }
-
     template <class OnDone>
     void done(OnDone on_done, bool)
     {
@@ -92,6 +78,23 @@ struct ClientUnaryRequestSenderImplementationBase<Responder<Response>>
 
     std::unique_ptr<Responder<Response>> responder_;
     grpc::Status status_{};
+};
+
+template <class Response>
+struct ClientUnaryRequestSenderInitiation
+{
+    auto& stop_function_arg() const noexcept { return client_context_; }
+
+    template <template <class> class Responder>
+    void initiate(const agrpc::GrpcContext&, ClientUnaryRequestSenderImplementationBase<Responder<Response>>& impl,
+                  void* tag) const
+    {
+        impl.responder_->StartCall();
+        impl.responder_->Finish(&response_, &impl.status_, tag);
+    }
+
+    grpc::ClientContext& client_context_;
+    Response& response_;
 };
 
 template <auto PrepareAsync>
@@ -122,6 +125,24 @@ struct ClientGenericUnaryRequestSenderImplementation
     }
 };
 
+struct ClientRPCGrpcSenderImplementation : detail::GrpcSenderImplementationBase
+{
+    using StopFunction = detail::ClientContextCancellationFunction;
+};
+
+using ClientStreamingRequestSenderImplementation = ClientRPCGrpcSenderImplementation;
+
+template <class Derived>
+struct ClientStreamingRequestSenderInitiationBase
+{
+    auto& stop_function_arg() const noexcept { return static_cast<const Derived&>(*this).rpc_.context(); }
+
+    void initiate(const agrpc::GrpcContext&, void* tag) const
+    {
+        ClientRPCAccess::responder(static_cast<const Derived&>(*this).rpc_).StartCall(tag);
+    }
+};
+
 template <auto PrepareAsync, class Executor>
 struct ClientStreamingRequestSenderInitiation;
 
@@ -129,6 +150,7 @@ template <class Stub, class Request, class Response, template <class> class Resp
           detail::PrepareAsyncClientClientStreamingRequest<Stub, Responder<Request>, Response> PrepareAsync,
           class Executor>
 struct ClientStreamingRequestSenderInitiation<PrepareAsync, Executor>
+    : ClientStreamingRequestSenderInitiationBase<ClientStreamingRequestSenderInitiation<PrepareAsync, Executor>>
 {
     using RPC = agrpc::ClientRPC<PrepareAsync, Executor>;
 
@@ -146,6 +168,7 @@ template <class Stub, class Request, class Response, template <class> class Resp
           detail::PrepareAsyncClientServerStreamingRequest<Stub, Request, Responder<Response>> PrepareAsync,
           class Executor>
 struct ClientStreamingRequestSenderInitiation<PrepareAsync, Executor>
+    : ClientStreamingRequestSenderInitiationBase<ClientStreamingRequestSenderInitiation<PrepareAsync, Executor>>
 {
     using RPC = detail::ClientRPCServerStreamingBase<PrepareAsync, Executor>;
 
@@ -163,6 +186,7 @@ template <class Stub, class Request, class Response, template <class, class> cla
           detail::PrepareAsyncClientBidirectionalStreamingRequest<Stub, Responder<Request, Response>> PrepareAsync,
           class Executor>
 struct ClientStreamingRequestSenderInitiation<PrepareAsync, Executor>
+    : ClientStreamingRequestSenderInitiationBase<ClientStreamingRequestSenderInitiation<PrepareAsync, Executor>>
 {
     using RPC = agrpc::ClientRPC<PrepareAsync, Executor>;
 
@@ -177,6 +201,8 @@ struct ClientStreamingRequestSenderInitiation<PrepareAsync, Executor>
 
 template <class Executor>
 struct ClientStreamingRequestSenderInitiation<agrpc::ClientRPCType::GENERIC_STREAMING, Executor>
+    : ClientStreamingRequestSenderInitiationBase<
+          ClientStreamingRequestSenderInitiation<agrpc::ClientRPCType::GENERIC_STREAMING, Executor>>
 {
     using RPC = agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_STREAMING, Executor>;
 
@@ -190,209 +216,117 @@ struct ClientStreamingRequestSenderInitiation<agrpc::ClientRPCType::GENERIC_STRE
     RPC& rpc_;
 };
 
-template <auto PrepareAsync, class Executor>
-struct ClientStreamingRequestSenderImplementation : detail::GrpcSenderImplementationBase
-{
-    using StopFunction = detail::ClientContextCancellationFunction;
-    using Initiation = detail::ClientStreamingRequestSenderInitiation<PrepareAsync, Executor>;
-
-    auto& stop_function_arg(const Initiation& initiation) noexcept { return initiation.rpc_.context(); }
-
-    static void initiate(const agrpc::GrpcContext&, const Initiation& initiation, void* tag) noexcept
-    {
-        ClientRPCAccess::responder(initiation.rpc_).StartCall(tag);
-    }
-
-    template <class OnDone>
-    static void done(OnDone on_done, bool ok)
-    {
-        on_done(ok);
-    }
-};
+using ReadInitialMetadataSenderImplementation = ClientRPCGrpcSenderImplementation;
 
 template <class Responder>
-struct ReadInitialMetadataSenderImplementation : detail::GrpcSenderImplementationBase
+struct ReadInitialMetadataSenderInitiation
 {
-    using RPC = detail::AutoCancelClientContextAndResponder<Responder>;
-    using Initiation = detail::Empty;
-    using StopFunction = detail::ClientContextCancellationFunction;
+    auto& stop_function_arg() const noexcept { return rpc_.context(); }
 
-    ReadInitialMetadataSenderImplementation(RPC& rpc) : rpc_(rpc) {}
-
-    grpc::ClientContext& stop_function_arg(const Initiation&) noexcept { return rpc_.context(); }
-
-    void initiate(const agrpc::GrpcContext&, const Initiation&, void* tag) noexcept
+    void initiate(const agrpc::GrpcContext&, void* tag) const
     {
         ClientRPCAccess::responder(rpc_).ReadInitialMetadata(tag);
     }
 
-    template <class OnDone>
-    static void done(OnDone on_done, bool ok)
-    {
-        on_done(ok);
-    }
-
-    RPC& rpc_;
+    detail::AutoCancelClientContextAndResponder<Responder>& rpc_;
 };
 
+using ReadServerStreamingSenderImplementation = ClientRPCGrpcSenderImplementation;
+
 template <class Responder>
-struct ReadServerStreamingSenderImplementation;
+struct ReadServerStreamingSenderInitiation;
 
 template <template <class> class Responder, class Response>
-struct ReadServerStreamingSenderImplementation<Responder<Response>> : detail::GrpcSenderImplementationBase
+struct ReadServerStreamingSenderInitiation<Responder<Response>>
 {
-    using RPC = detail::AutoCancelClientContextAndResponder<Responder<Response>>;
-    using StopFunction = detail::ClientContextCancellationFunction;
+    auto& stop_function_arg() const noexcept { return rpc_.context(); }
 
-    struct Initiation
+    void initiate(const agrpc::GrpcContext&, void* tag) const
     {
-        Response& response_;
-    };
-
-    ReadServerStreamingSenderImplementation(RPC& rpc) : rpc_(rpc) {}
-
-    grpc::ClientContext& stop_function_arg(const Initiation&) noexcept { return rpc_.context(); }
-
-    void initiate(const agrpc::GrpcContext&, const Initiation& initiation, void* tag) noexcept
-    {
-        ClientRPCAccess::responder(rpc_).Read(&initiation.response_, tag);
+        ClientRPCAccess::responder(rpc_).Read(&response_, tag);
     }
 
-    template <class OnDone>
-    static void done(OnDone on_done, bool ok)
-    {
-        on_done(ok);
-    }
-
-    RPC& rpc_;
+    detail::AutoCancelClientContextAndResponder<Responder<Response>>& rpc_;
+    Response& response_;
 };
 
+using WriteClientStreamingSenderImplementation = ClientRPCGrpcSenderImplementation;
+
 template <class Responder>
-struct WriteClientStreamingSenderImplementation;
+struct WriteClientStreamingSenderInitiation;
 
 template <template <class> class Responder, class Request>
-struct WriteClientStreamingSenderImplementation<Responder<Request>> : detail::GrpcSenderImplementationBase
+struct WriteClientStreamingSenderInitiation<Responder<Request>>
 {
-    using RPC = detail::AutoCancelClientContextAndResponder<Responder<Request>>;
-    using StopFunction = detail::ClientContextCancellationFunction;
+    auto& stop_function_arg() const noexcept { return rpc_.context(); }
 
-    struct Initiation
+    void initiate(const agrpc::GrpcContext&, void* tag) const
     {
-        const Request& request_;
-        grpc::WriteOptions options_;
-    };
-
-    WriteClientStreamingSenderImplementation(RPC& rpc) : rpc_(rpc) {}
-
-    grpc::ClientContext& stop_function_arg(const Initiation&) noexcept { return rpc_.context(); }
-
-    void initiate(const agrpc::GrpcContext&, const Initiation& initiation, void* tag) noexcept
-    {
-        auto& [req, options] = initiation;
-        if (options.is_last_message())
+        if (options_.is_last_message())
         {
             ClientRPCAccess::set_writes_done(rpc_);
-            ClientRPCAccess::responder(rpc_).Write(req, options, tag);
+            ClientRPCAccess::responder(rpc_).Write(request_, options_, tag);
         }
         else
         {
-            ClientRPCAccess::responder(rpc_).Write(req, options, tag);
+            ClientRPCAccess::responder(rpc_).Write(request_, options_, tag);
         }
     }
 
-    template <class OnDone>
-    static void done(OnDone on_done, bool ok)
-    {
-        on_done(ok);
-    }
-
-    RPC& rpc_;
+    detail::AutoCancelClientContextAndResponder<Responder<Request>>& rpc_;
+    const Request& request_;
+    grpc::WriteOptions options_;
 };
 
+using ClientReadBidiStreamingSenderImplementation = ClientRPCGrpcSenderImplementation;
+
 template <class Responder>
-struct ClientReadBidiStreamingSenderImplementation;
+struct ClientReadBidiStreamingSenderInitiation;
 
 template <template <class, class> class Responder, class Request, class Response>
-struct ClientReadBidiStreamingSenderImplementation<Responder<Request, Response>> : detail::GrpcSenderImplementationBase
+struct ClientReadBidiStreamingSenderInitiation<Responder<Request, Response>>
 {
-    using RPCBase = detail::AutoCancelClientContextAndResponder<Responder<Request, Response>>;
-    using StopFunction = detail::ClientContextCancellationFunction;
+    auto& stop_function_arg() const noexcept { return rpc_.context(); }
 
-    struct Initiation
+    void initiate(const agrpc::GrpcContext&, void* tag) const
     {
-        Response& response_;
-    };
-
-    ClientReadBidiStreamingSenderImplementation(RPCBase& rpc) : rpc_(rpc) {}
-
-    grpc::ClientContext& stop_function_arg(const Initiation&) noexcept { return rpc_.context(); }
-
-    void initiate(const agrpc::GrpcContext&, const Initiation& initiation, void* tag) noexcept
-    {
-        ClientRPCAccess::responder(rpc_).Read(&initiation.response_, tag);
+        ClientRPCAccess::responder(rpc_).Read(&response_, tag);
     }
 
-    template <class OnDone>
-    static void done(OnDone on_done, bool ok)
-    {
-        on_done(ok);
-    }
-
-    RPCBase& rpc_;
+    detail::AutoCancelClientContextAndResponder<Responder<Request, Response>>& rpc_;
+    Response& response_;
 };
 
+using ClientWriteBidiStreamingSenderImplementation = ClientRPCGrpcSenderImplementation;
+
 template <class Responder>
-struct ClientWriteBidiStreamingSenderImplementation;
+struct ClientWriteBidiStreamingSenderInitiation;
 
 template <template <class, class> class Responder, class Request, class Response>
-struct ClientWriteBidiStreamingSenderImplementation<Responder<Request, Response>> : detail::GrpcSenderImplementationBase
+struct ClientWriteBidiStreamingSenderInitiation<Responder<Request, Response>>
 {
-    using RPCBase = detail::AutoCancelClientContextAndResponder<Responder<Request, Response>>;
-    using StopFunction = detail::ClientContextCancellationFunction;
+    auto& stop_function_arg() const noexcept { return rpc_.context(); }
 
-    struct Initiation
+    void initiate(const agrpc::GrpcContext&, void* tag) const
     {
-        const Request& request_;
-        grpc::WriteOptions options_;
-    };
-
-    ClientWriteBidiStreamingSenderImplementation(RPCBase& rpc) : rpc_(rpc) {}
-
-    grpc::ClientContext& stop_function_arg(const Initiation&) noexcept { return rpc_.context(); }
-
-    void initiate(const agrpc::GrpcContext&, const Initiation& initiation, void* tag) noexcept
-    {
-        auto& [req, options] = initiation;
-        if (options.is_last_message())
+        if (options_.is_last_message())
         {
             ClientRPCAccess::set_writes_done(rpc_);
         }
-        ClientRPCAccess::responder(rpc_).Write(req, options, tag);
+        ClientRPCAccess::responder(rpc_).Write(request_, options_, tag);
     }
 
-    template <class OnDone>
-    static void done(OnDone on_done, bool ok)
-    {
-        on_done(ok);
-    }
-
-    RPCBase& rpc_;
+    detail::AutoCancelClientContextAndResponder<Responder<Request, Response>>& rpc_;
+    const Request& request_;
+    grpc::WriteOptions options_;
 };
 
 template <class Responder>
-struct ClientWritesDoneSenderImplementation : detail::GrpcSenderImplementationBase
+struct ClientWritesDoneSenderImplementation : ClientRPCGrpcSenderImplementation
 {
-    using RPCBase = detail::AutoCancelClientContextAndResponder<Responder>;
-    using Initiation = detail::Empty;
-    using StopFunction = detail::ClientContextCancellationFunction;
-
-    ClientWritesDoneSenderImplementation(RPCBase& rpc) : rpc_(rpc) {}
-
-    grpc::ClientContext& stop_function_arg(const Initiation&) noexcept { return rpc_.context(); }
-
-    void initiate(const agrpc::GrpcContext&, const Initiation&, void* tag) noexcept
+    explicit ClientWritesDoneSenderImplementation(detail::AutoCancelClientContextAndResponder<Responder>& rpc) noexcept
+        : rpc_(rpc)
     {
-        ClientRPCAccess::responder(rpc_).WritesDone(tag);
     }
 
     template <class OnDone>
@@ -402,39 +336,37 @@ struct ClientWritesDoneSenderImplementation : detail::GrpcSenderImplementationBa
         on_done(ok);
     }
 
-    RPCBase& rpc_;
+    detail::AutoCancelClientContextAndResponder<Responder>& rpc_;
 };
 
-template <class RPC>
+struct ClientWritesDoneSenderInitiation
+{
+    template <class Responder>
+    static auto& stop_function_arg(const ClientWritesDoneSenderImplementation<Responder>& impl) noexcept
+    {
+        return impl.rpc_.context();
+    }
+
+    template <class Responder>
+    static void initiate(const agrpc::GrpcContext&, const ClientWritesDoneSenderImplementation<Responder>& impl,
+                         void* tag)
+    {
+        ClientRPCAccess::responder(impl.rpc_).WritesDone(tag);
+    }
+};
+
+template <class Responder>
 struct ClientFinishSenderImplementation
 {
     static constexpr auto TYPE = detail::SenderImplementationType::GRPC_TAG;
 
     using Signature = void(grpc::Status);
-    using Initiation = detail::Empty;
     using StopFunction = detail::ClientContextCancellationFunction;
-
-    ClientFinishSenderImplementation(RPC& rpc) : rpc_(rpc) {}
-
-    grpc::ClientContext& stop_function_arg(const Initiation&) noexcept { return rpc_.context(); }
-
-    template <class Init>
-    void initiate(Init init, const Initiation&) noexcept
-    {
-        if (ClientRPCAccess::is_writes_done(rpc_))
-        {
-            ClientRPCAccess::responder(rpc_).Finish(&status_, init.template self<1>());
-        }
-        else
-        {
-            ClientRPCAccess::responder(rpc_).WritesDone(init.template self<0>());
-        }
-    }
 
     template <template <int> class OnDone>
     void done(OnDone<0> on_done, bool)
     {
-        RPCExecutorBaseAccess::grpc_context(rpc_).work_started();
+        on_done.grpc_context().work_started();
         ClientRPCAccess::responder(rpc_).Finish(&status_, on_done.template self<1>());
     }
 
@@ -445,8 +377,30 @@ struct ClientFinishSenderImplementation
         on_done(static_cast<grpc::Status&&>(status_));
     }
 
-    RPC& rpc_;
+    detail::AutoCancelClientContextAndResponder<Responder>& rpc_;
     grpc::Status status_{};
+};
+
+struct ClientFinishSenderInitiation
+{
+    template <class RPC>
+    static auto& stop_function_arg(const ClientFinishSenderImplementation<RPC>& impl) noexcept
+    {
+        return impl.rpc_.context();
+    }
+
+    template <class Init, class RPC>
+    static void initiate(Init init, ClientFinishSenderImplementation<RPC>& impl)
+    {
+        if (ClientRPCAccess::is_writes_done(impl.rpc_))
+        {
+            ClientRPCAccess::responder(impl.rpc_).Finish(&impl.status_, init.template self<1>());
+        }
+        else
+        {
+            ClientRPCAccess::responder(impl.rpc_).WritesDone(init.template self<0>());
+        }
+    }
 };
 
 template <class Responder>
@@ -458,13 +412,6 @@ struct ClientFinishServerStreamingSenderImplementation
     using Initiation = detail::Empty;
     using StopFunction = detail::ClientContextCancellationFunction;
 
-    grpc::ClientContext& stop_function_arg(const Initiation&) noexcept { return rpc_.context(); }
-
-    void initiate(const agrpc::GrpcContext&, const Initiation&, void* tag) noexcept
-    {
-        ClientRPCAccess::responder(rpc_).Finish(&status_, tag);
-    }
-
     template <class OnDone>
     void done(OnDone on_done, bool)
     {
@@ -474,6 +421,22 @@ struct ClientFinishServerStreamingSenderImplementation
 
     detail::AutoCancelClientContextAndResponder<Responder>& rpc_;
     grpc::Status status_{};
+};
+
+struct ClientFinishServerStreamingSenderInitation
+{
+    template <class Responder>
+    static auto& stop_function_arg(const ClientFinishServerStreamingSenderImplementation<Responder>& impl) noexcept
+    {
+        return impl.rpc_.context();
+    }
+
+    template <class Responder>
+    static void initiate(const agrpc::GrpcContext&, ClientFinishServerStreamingSenderImplementation<Responder>& impl,
+                         void* tag)
+    {
+        ClientRPCAccess::responder(impl.rpc_).Finish(&impl.status_, tag);
+    }
 };
 }
 

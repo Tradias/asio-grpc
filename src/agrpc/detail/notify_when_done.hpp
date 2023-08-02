@@ -26,41 +26,16 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-class NotifyWhenDoneSenderImplementation : public detail::IntrusiveListHook<NotifyWhenDoneSenderImplementation>
+struct NotifyWhenDoneSenderImplementation : public detail::IntrusiveListHook<NotifyWhenDoneSenderImplementation>
 {
-  public:
     static constexpr auto TYPE = detail::SenderImplementationType::BOTH;
 
     using Signature = void();
     using StopFunction = detail::Empty;
-    using Initiation = detail::Empty;
 
-    NotifyWhenDoneSenderImplementation(grpc::ServerContext& server_context) : server_context_(server_context) {}
-
-    template <class Init>
-    void initiate(Init init, const Initiation&)
+    explicit NotifyWhenDoneSenderImplementation(grpc::ServerContext& server_context) noexcept
+        : server_context_(server_context)
     {
-        auto& grpc_context = init.grpc_context();
-        if constexpr (detail::AllocationType::NONE == Init::ALLOCATION_TYPE ||
-                      detail::AllocationType::LOCAL == Init::ALLOCATION_TYPE)
-        {
-            operation_ = init.template self<1>();
-            initiate_async_notify_when_done<Init::ALLOCATION_TYPE>(grpc_context, operation_);
-        }
-        else
-        {
-            if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
-            {
-                operation_ = init.template self<1>();
-                initiate_async_notify_when_done<Init::ALLOCATION_TYPE>(grpc_context, operation_);
-            }
-            else
-            {
-                auto* const self = init.template self<0>();
-                operation_ = self;
-                detail::GrpcContextImplementation::add_remote_operation(grpc_context, self);
-            }
-        }
     }
 
     template <template <int> class OnDone>
@@ -85,7 +60,6 @@ class NotifyWhenDoneSenderImplementation : public detail::IntrusiveListHook<Noti
         operation_->complete(result, grpc_context);
     }
 
-  private:
     template <detail::AllocationType AllocType>
     void initiate_async_notify_when_done(agrpc::GrpcContext& grpc_context, detail::OperationBase* self)
     {
@@ -98,6 +72,35 @@ class NotifyWhenDoneSenderImplementation : public detail::IntrusiveListHook<Noti
 
     grpc::ServerContext& server_context_;
     detail::OperationBase* operation_;
+};
+
+struct NotifyWhenDoneSenderInitiation
+{
+    template <class Init>
+    static void initiate(Init init, NotifyWhenDoneSenderImplementation& impl)
+    {
+        auto& grpc_context = init.grpc_context();
+        if constexpr (detail::AllocationType::NONE == Init::ALLOCATION_TYPE ||
+                      detail::AllocationType::LOCAL == Init::ALLOCATION_TYPE)
+        {
+            impl.operation_ = init.template self<1>();
+            impl.initiate_async_notify_when_done<Init::ALLOCATION_TYPE>(grpc_context, impl.operation_);
+        }
+        else
+        {
+            if (detail::GrpcContextImplementation::running_in_this_thread(grpc_context))
+            {
+                impl.operation_ = init.template self<1>();
+                impl.initiate_async_notify_when_done<Init::ALLOCATION_TYPE>(grpc_context, impl.operation_);
+            }
+            else
+            {
+                auto* const self = init.template self<0>();
+                impl.operation_ = self;
+                detail::GrpcContextImplementation::add_remote_operation(grpc_context, self);
+            }
+        }
+    }
 };
 }
 

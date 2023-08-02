@@ -28,26 +28,28 @@ struct GrpcSenderImplementationBase
 
     using Signature = void(bool);
     using StopFunction = detail::Empty;
-};
-
-template <class InitiatingFunction, class StopFunctionT = detail::Empty>
-struct GrpcSenderImplementation : detail::GrpcSenderImplementationBase
-{
-    using StopFunction = StopFunctionT;
-    using Initiation = InitiatingFunction;
-
-    static auto& stop_function_arg(const Initiation& initiation) noexcept { return initiation; }
-
-    static void initiate(agrpc::GrpcContext& grpc_context, const Initiation& initiation, detail::OperationBase* self)
-    {
-        initiation(grpc_context, self);
-    }
 
     template <class OnDone>
     static void done(OnDone on_done, bool ok)
     {
         on_done(ok);
     }
+};
+
+template <class StopFunctionT = detail::Empty>
+struct GrpcSenderImplementation : detail::GrpcSenderImplementationBase
+{
+    using StopFunction = StopFunctionT;
+};
+
+template <class InitiatingFunction>
+struct GrpcSenderInitiation
+{
+    auto& stop_function_arg() const noexcept { return initiating_function_; }
+
+    void initiate(agrpc::GrpcContext& grpc_context, void* tag) const { initiating_function_(grpc_context, tag); }
+
+    InitiatingFunction initiating_function_;
 };
 }
 

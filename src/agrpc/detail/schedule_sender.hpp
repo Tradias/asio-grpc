@@ -30,12 +30,6 @@ struct ScheduleSenderImplementation
 
     using Signature = void();
     using StopFunction = detail::Empty;
-    using Initiation = detail::Empty;
-
-    static void initiate(agrpc::GrpcContext& grpc_context, const Initiation&, detail::QueueableOperationBase* operation)
-    {
-        detail::GrpcContextImplementation::add_operation(grpc_context, operation);
-    }
 
     template <class OnDone>
     static void done(OnDone on_done)
@@ -44,7 +38,15 @@ struct ScheduleSenderImplementation
     }
 };
 
-using ScheduleSender = detail::BasicSender<detail::ScheduleSenderImplementation>;
+struct ScheduleSenderInitiation
+{
+    static void initiate(agrpc::GrpcContext& grpc_context, detail::QueueableOperationBase* operation) noexcept
+    {
+        detail::GrpcContextImplementation::add_operation(grpc_context, operation);
+    }
+};
+
+using ScheduleSender = detail::BasicSender<detail::ScheduleSenderInitiation, detail::ScheduleSenderImplementation>;
 }
 
 AGRPC_NAMESPACE_END

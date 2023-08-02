@@ -63,8 +63,9 @@ struct NotifyWhenDoneFn
     auto operator()(agrpc::GrpcContext& grpc_context, grpc::ServerContext& server_context,
                     CompletionToken token = {}) const noexcept(detail::IS_USE_SENDER<CompletionToken>)
     {
-        return detail::async_initiate_sender_implementation<detail::NotifyWhenDoneSenderImplementation>(
-            grpc_context, {}, {server_context}, token);
+        return detail::async_initiate_sender_implementation(grpc_context, detail::NotifyWhenDoneSenderInitiation{},
+                                                            detail::NotifyWhenDoneSenderImplementation{server_context},
+                                                            token);
     }
 };
 }  // namespace detail

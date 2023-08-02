@@ -260,7 +260,8 @@ class BasicGrpcExecutor
      */
     [[nodiscard]] detail::ScheduleSender schedule() const noexcept
     {
-        return detail::BasicSenderAccess::create<detail::ScheduleSenderImplementation>(*this->grpc_context(), {}, {});
+        return detail::BasicSenderAccess::create(*this->grpc_context(), detail::ScheduleSenderInitiation{},
+                                                 detail::ScheduleSenderImplementation{});
     }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
