@@ -50,6 +50,9 @@ class RPCExecutorBase
     template <auto, class>
     friend class agrpc::ClientRPC;
 
+    template <auto, class, class>
+    friend class agrpc::ServerRPC;
+
     template <auto, class>
     friend class detail::ClientRPCServerStreamingBase;
 

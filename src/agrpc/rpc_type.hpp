@@ -57,6 +57,39 @@ enum class ClientRPCType
     GENERIC_STREAMING
 };
 
+/**
+ * @brief (experimental) The type of a ServerRPC
+ *
+ * @since 2.1.0
+ */
+enum class ServerRPCType
+{
+    /**
+     * @brief Server-side unary rpc
+     */
+    UNARY,
+
+    /**
+     * @brief Server-side server-streaming rpc
+     */
+    SERVER_STREAMING,
+
+    /**
+     * @brief Server-side client-streaming rpc
+     */
+    CLIENT_STREAMING,
+
+    /**
+     * @brief Server-side bidirectional-streaming rpc
+     */
+    BIDIRECTIONAL_STREAMING,
+
+    /**
+     * @brief Server-side generic streaming rpc
+     */
+    GENERIC_STREAMING
+};
+
 AGRPC_NAMESPACE_END
 
 #endif  // AGRPC_AGRPC_RPC_TYPE_HPP

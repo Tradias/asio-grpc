@@ -56,6 +56,25 @@ struct UseSender;
 template <auto PrepareAsync, class Executor = agrpc::BasicGrpcExecutor<>>
 class ClientRPC;
 
+struct DefaultServerRPCTraits;
+
+/**
+ * @brief (experimental) Primary ServerRPC template
+ *
+ * This is the main entrypoint into the recommended API for writing asynchronous gRPC clients.
+ *
+ * @see
+ * @c agrpc::ServerRPC<RequestAsyncUnary,Executor> <br>
+ * @c agrpc::ServerRPC<RequestAsyncClientStreaming,Executor> <br>
+ * @c agrpc::ServerRPC<RequestAsyncServerStreaming,Executor> <br>
+ * @c agrpc::ServerRPC<RequestAsyncBidiStreaming,Executor> <br>
+ * @c agrpc::ServerRPC<agrpc::ServerRPCType::GENERIC_STREAMING,Executor> <br>
+ *
+ * @since 2.7.0
+ */
+template <auto RequestRPC, class Traits = agrpc::DefaultServerRPCTraits, class Executor = agrpc::BasicGrpcExecutor<>>
+class ServerRPC;
+
 namespace detail
 {
 template <class Item>
@@ -91,6 +110,8 @@ template <class Responder, class Executor>
 class ClientRPCBidiStreamingBase;
 
 struct ClientRPCContextBaseAccess;
+
+struct ServerRPCContextBaseAccess;
 
 struct RPCExecutorBaseAccess;
 
