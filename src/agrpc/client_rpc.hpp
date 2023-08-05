@@ -513,10 +513,10 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor> : public detail::RPCExecu
      * @brief Send a message to the server
      *
      * Only one write may be outstanding at any given time. May not be called concurrently with
-     * `read_initial_metadata()`. GRPC does not take ownership or a reference to `request`, so it is safe to to
-     * deallocate once write returns (unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is
-     * used).
+     * `read_initial_metadata()`.
      *
+     * @param request The request message, save to delete when this function returns, unless a deferred completion token
+     * is used like `agrpc::use_sender` or `asio::deferred`.
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` means that the data is going to go to the wire. If it is `false`, it is
      * not going to the wire because the call is already dead (i.e., canceled, deadline expired, other side dropped the
@@ -949,10 +949,10 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
      * @brief Send a message to the server
      *
      * Only one write may be outstanding at any given time. This is thread-safe with respect to `read()`. It should not
-     * be called concurrently with other operations. gRPC does not take ownership or a reference to `request`, so it is
-     * safe to to deallocate once write returns (unless a deferred completion token like `agrpc::use_sender` or
-     * `asio::deferred` is used).
+     * be called concurrently with other operations.
      *
+     * @param request The request message, save to delete when this function returns, unless a deferred completion token
+     * is used like `agrpc::use_sender` or `asio::deferred`.
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` means that the data is going to go to the wire. If it is `false`, it is
      * not going to the wire because the call is already dead (i.e., canceled, deadline expired, other side dropped the

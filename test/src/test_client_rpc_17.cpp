@@ -51,13 +51,22 @@ struct ClientRPCIoContextTest : test::ClientRPCTest<RPC>, test::IoContextTest
     }
 };
 
-TEST_CASE_TEMPLATE("Streaming RPC can be destructed without being started", RPC, test::ClientStreamingClientRPC,
-                   test::ClientStreamingInterfaceClientRPC, test::ServerStreamingClientRPC,
-                   test::ServerStreamingInterfaceClientRPC, test::BidirectionalStreamingClientRPC,
-                   test::BidirectionalStreamingInterfaceClientRPC, test::GenericStreamingClientRPC)
+TEST_CASE_TEMPLATE("ClientRPC::request successfully", RPC, test::UnaryClientRPC, test::UnaryInterfaceClientRPC)
 {
-    agrpc::GrpcContext grpc_context;
-    CHECK_NOTHROW([[maybe_unused]] RPC rpc{grpc_context.get_executor()});
+    test::ClientRPCTest<RPC> test;
+    test.spawn_and_run(
+        [&](const asio::yield_context& yield)
+        {
+            test.test_server.request_rpc(yield);
+            CHECK_EQ(42, test.test_server.request.integer());
+            agrpc::finish(test.test_server.responder, test.test_server.response, grpc::Status::OK, yield);
+        },
+        [&](const asio::yield_context& yield)
+        {
+            test.request.set_integer(42);
+            const auto status = test.request_rpc(false, yield);
+            CHECK_EQ(grpc::StatusCode::OK, status.error_code());
+        });
 }
 
 TEST_CASE_TEMPLATE("Unary RPC::request automatically finishes RPC on error", RPC, test::UnaryClientRPC,
@@ -78,6 +87,15 @@ TEST_CASE_TEMPLATE("Unary RPC::request automatically finishes RPC on error", RPC
                                        status_code);
                      });
     test.grpc_context.run();
+}
+
+TEST_CASE_TEMPLATE("Streaming RPC can be destructed without being started", RPC, test::ClientStreamingClientRPC,
+                   test::ClientStreamingInterfaceClientRPC, test::ServerStreamingClientRPC,
+                   test::ServerStreamingInterfaceClientRPC, test::BidirectionalStreamingClientRPC,
+                   test::BidirectionalStreamingInterfaceClientRPC, test::GenericStreamingClientRPC)
+{
+    agrpc::GrpcContext grpc_context;
+    CHECK_NOTHROW([[maybe_unused]] RPC rpc{grpc_context.get_executor()});
 }
 
 TEST_CASE_TEMPLATE("Streaming RPC::start returns false on error", RPC, test::ClientStreamingClientRPC,

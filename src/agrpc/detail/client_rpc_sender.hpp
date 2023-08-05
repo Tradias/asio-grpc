@@ -125,13 +125,6 @@ struct ClientGenericUnaryRequestSenderImplementation
     }
 };
 
-struct ClientRPCGrpcSenderImplementation : detail::GrpcSenderImplementationBase
-{
-    using StopFunction = detail::ClientContextCancellationFunction;
-};
-
-using ClientStreamingRequestSenderImplementation = ClientRPCGrpcSenderImplementation;
-
 template <class Derived>
 struct ClientStreamingRequestSenderInitiationBase
 {
@@ -215,6 +208,13 @@ struct ClientStreamingRequestSenderInitiation<agrpc::ClientRPCType::GENERIC_STRE
 
     RPC& rpc_;
 };
+
+struct ClientRPCGrpcSenderImplementation : detail::GrpcSenderImplementationBase
+{
+    using StopFunction = detail::ClientContextCancellationFunction;
+};
+
+using ClientStreamingRequestSenderImplementation = ClientRPCGrpcSenderImplementation;
 
 using ReadInitialMetadataSenderImplementation = ClientRPCGrpcSenderImplementation;
 
@@ -406,7 +406,6 @@ struct ClientFinishServerStreamingSenderImplementation
     static constexpr auto TYPE = detail::SenderImplementationType::GRPC_TAG;
 
     using Signature = void(grpc::Status);
-    using Initiation = detail::Empty;
     using StopFunction = detail::ClientContextCancellationFunction;
 
     template <class OnDone>

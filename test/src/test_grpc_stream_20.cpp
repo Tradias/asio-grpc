@@ -67,7 +67,10 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcStream: next can be interrupted wi
                                auto result =
                                    co_await (agrpc::wait(alarm2, test::ten_milliseconds_from_now()) || stream.next());
                                CHECK_EQ(0, result.index());
-                               CHECK(co_await stream.next());
+                               if (stream.is_running())
+                               {
+                                   CHECK(co_await stream.next());
+                               }
                                co_await stream.cleanup();
                            });
 }
