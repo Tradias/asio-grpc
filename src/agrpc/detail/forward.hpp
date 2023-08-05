@@ -90,7 +90,7 @@ class ClientRPCServerStreamingBase;
 template <class Responder, class Executor>
 class ClientRPCBidiStreamingBase;
 
-struct AutoCancelClientContextAndResponderAccess;
+struct ClientRPCContextBaseAccess;
 
 struct RPCExecutorBaseAccess;
 

@@ -15,9 +15,9 @@
 #ifndef AGRPC_DETAIL_CLIENT_RPC_SENDER_HPP
 #define AGRPC_DETAIL_CLIENT_RPC_SENDER_HPP
 
+#include <agrpc/detail/client_rpc_context_base.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_sender.hpp>
-#include <agrpc/detail/rpc_client_context_base.hpp>
 #include <agrpc/detail/rpc_executor_base.hpp>
 #include <agrpc/detail/rpc_type.hpp>
 #include <agrpc/detail/utility.hpp>
@@ -32,7 +32,7 @@ namespace detail
 template <auto PrepareAsync, class Executor>
 class ClientRPCUnaryBase;
 
-using ClientRPCAccess = AutoCancelClientContextAndResponderAccess;
+using ClientRPCAccess = ClientRPCContextBaseAccess;
 
 struct ClientContextCancellationFunction
 {
@@ -228,7 +228,7 @@ struct ReadInitialMetadataSenderInitiation
         ClientRPCAccess::responder(rpc_).ReadInitialMetadata(tag);
     }
 
-    detail::AutoCancelClientContextAndResponder<Responder>& rpc_;
+    detail::ClientRPCContextBase<Responder>& rpc_;
 };
 
 using ReadServerStreamingSenderImplementation = ClientRPCGrpcSenderImplementation;
@@ -246,7 +246,7 @@ struct ReadServerStreamingSenderInitiation<Responder<Response>>
         ClientRPCAccess::responder(rpc_).Read(&response_, tag);
     }
 
-    detail::AutoCancelClientContextAndResponder<Responder<Response>>& rpc_;
+    detail::ClientRPCContextBase<Responder<Response>>& rpc_;
     Response& response_;
 };
 
@@ -273,7 +273,7 @@ struct WriteClientStreamingSenderInitiation<Responder<Request>>
         }
     }
 
-    detail::AutoCancelClientContextAndResponder<Responder<Request>>& rpc_;
+    detail::ClientRPCContextBase<Responder<Request>>& rpc_;
     const Request& request_;
     grpc::WriteOptions options_;
 };
@@ -293,7 +293,7 @@ struct ClientReadBidiStreamingSenderInitiation<Responder<Request, Response>>
         ClientRPCAccess::responder(rpc_).Read(&response_, tag);
     }
 
-    detail::AutoCancelClientContextAndResponder<Responder<Request, Response>>& rpc_;
+    detail::ClientRPCContextBase<Responder<Request, Response>>& rpc_;
     Response& response_;
 };
 
@@ -316,7 +316,7 @@ struct ClientWriteBidiStreamingSenderInitiation<Responder<Request, Response>>
         ClientRPCAccess::responder(rpc_).Write(request_, options_, tag);
     }
 
-    detail::AutoCancelClientContextAndResponder<Responder<Request, Response>>& rpc_;
+    detail::ClientRPCContextBase<Responder<Request, Response>>& rpc_;
     const Request& request_;
     grpc::WriteOptions options_;
 };
@@ -324,10 +324,7 @@ struct ClientWriteBidiStreamingSenderInitiation<Responder<Request, Response>>
 template <class Responder>
 struct ClientWritesDoneSenderImplementation : ClientRPCGrpcSenderImplementation
 {
-    explicit ClientWritesDoneSenderImplementation(detail::AutoCancelClientContextAndResponder<Responder>& rpc) noexcept
-        : rpc_(rpc)
-    {
-    }
+    explicit ClientWritesDoneSenderImplementation(detail::ClientRPCContextBase<Responder>& rpc) noexcept : rpc_(rpc) {}
 
     template <class OnDone>
     void done(OnDone on_done, bool ok)
@@ -336,7 +333,7 @@ struct ClientWritesDoneSenderImplementation : ClientRPCGrpcSenderImplementation
         on_done(ok);
     }
 
-    detail::AutoCancelClientContextAndResponder<Responder>& rpc_;
+    detail::ClientRPCContextBase<Responder>& rpc_;
 };
 
 struct ClientWritesDoneSenderInitiation
@@ -377,7 +374,7 @@ struct ClientFinishSenderImplementation
         on_done(static_cast<grpc::Status&&>(status_));
     }
 
-    detail::AutoCancelClientContextAndResponder<Responder>& rpc_;
+    detail::ClientRPCContextBase<Responder>& rpc_;
     grpc::Status status_{};
 };
 
@@ -419,7 +416,7 @@ struct ClientFinishServerStreamingSenderImplementation
         on_done(static_cast<grpc::Status&&>(status_));
     }
 
-    detail::AutoCancelClientContextAndResponder<Responder>& rpc_;
+    detail::ClientRPCContextBase<Responder>& rpc_;
     grpc::Status status_{};
 };
 

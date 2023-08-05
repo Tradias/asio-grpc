@@ -17,12 +17,12 @@
 
 #include <agrpc/default_completion_token.hpp>
 #include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/client_rpc_context_base.hpp>
 #include <agrpc/detail/client_rpc_sender.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/initiate_sender_implementation.hpp>
 #include <agrpc/detail/name.hpp>
-#include <agrpc/detail/rpc_client_context_base.hpp>
 #include <agrpc/detail/rpc_executor_base.hpp>
 #include <agrpc/detail/rpc_type.hpp>
 #include <agrpc/grpc_executor.hpp>
@@ -326,8 +326,8 @@ template <class StubT, class RequestT, class ResponseT, template <class> class R
           detail::PrepareAsyncClientClientStreamingRequest<StubT, ResponderT<RequestT>, ResponseT>
               PrepareAsyncClientStreaming,
           class Executor>
-class ClientRPC<PrepareAsyncClientStreaming, Executor>
-    : public detail::RPCExecutorBase<Executor>, public detail::AutoCancelClientContextAndResponder<ResponderT<RequestT>>
+class ClientRPC<PrepareAsyncClientStreaming, Executor> : public detail::RPCExecutorBase<Executor>,
+                                                         public detail::ClientRPCContextBase<ResponderT<RequestT>>
 {
   private:
     using Responder = ResponderT<RequestT>;
@@ -417,8 +417,7 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor>
     template <class ClientContextInitFunction>
     ClientRPC(agrpc::GrpcContext& grpc_context, ClientContextInitFunction&& init_function)
         : detail::RPCExecutorBase<Executor>(grpc_context.get_executor()),
-          detail::AutoCancelClientContextAndResponder<Responder>(
-              static_cast<ClientContextInitFunction&&>(init_function))
+          detail::ClientRPCContextBase<Responder>(static_cast<ClientContextInitFunction&&>(init_function))
     {
     }
 
@@ -436,12 +435,11 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor>
     template <class ClientContextInitFunction>
     ClientRPC(const Executor& executor, ClientContextInitFunction&& init_function)
         : detail::RPCExecutorBase<Executor>(executor),
-          detail::AutoCancelClientContextAndResponder<Responder>(
-              static_cast<ClientContextInitFunction&&>(init_function))
+          detail::ClientRPCContextBase<Responder>(static_cast<ClientContextInitFunction&&>(init_function))
     {
     }
 
-    using detail::AutoCancelClientContextAndResponder<Responder>::context;
+    using detail::ClientRPCContextBase<Responder>::context;
 
     /**
      * @brief Start a client-streaming request
@@ -467,7 +465,7 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor>
             detail::ClientStreamingRequestSenderImplementation{}, token);
     }
 
-    using detail::AutoCancelClientContextAndResponder<Responder>::cancel;
+    using detail::ClientRPCContextBase<Responder>::cancel;
 
     /**
      * @brief Read initial metadata
@@ -575,8 +573,7 @@ template <class StubT, class RequestT, class ResponseT, template <class> class R
               PrepareAsyncServerStreaming,
           class Executor>
 class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
-    : public detail::RPCExecutorBase<Executor>,
-      public detail::AutoCancelClientContextAndResponder<ResponderT<ResponseT>>
+    : public detail::RPCExecutorBase<Executor>, public detail::ClientRPCContextBase<ResponderT<ResponseT>>
 {
   private:
     using Responder = ResponderT<ResponseT>;
@@ -666,8 +663,7 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
     template <class ClientContextInitFunction>
     ClientRPCServerStreamingBase(agrpc::GrpcContext& grpc_context, ClientContextInitFunction&& init_function)
         : detail::RPCExecutorBase<Executor>(grpc_context.get_executor()),
-          detail::AutoCancelClientContextAndResponder<Responder>(
-              static_cast<ClientContextInitFunction&&>(init_function))
+          detail::ClientRPCContextBase<Responder>(static_cast<ClientContextInitFunction&&>(init_function))
     {
     }
 
@@ -685,12 +681,11 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
     template <class ClientContextInitFunction>
     ClientRPCServerStreamingBase(const Executor& executor, ClientContextInitFunction&& init_function)
         : detail::RPCExecutorBase<Executor>(executor),
-          detail::AutoCancelClientContextAndResponder<Responder>(
-              static_cast<ClientContextInitFunction&&>(init_function))
+          detail::ClientRPCContextBase<Responder>(static_cast<ClientContextInitFunction&&>(init_function))
     {
     }
 
-    using detail::AutoCancelClientContextAndResponder<Responder>::context;
+    using detail::ClientRPCContextBase<Responder>::context;
 
     /**
      * @brief Start a server-streaming request
@@ -712,7 +707,7 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
             detail::ClientStreamingRequestSenderImplementation{}, token);
     }
 
-    using detail::AutoCancelClientContextAndResponder<Responder>::cancel;
+    using detail::ClientRPCContextBase<Responder>::cancel;
 
     /**
      * @brief Read initial metadata
@@ -847,8 +842,7 @@ namespace detail
  */
 template <class RequestT, class ResponseT, template <class, class> class ResponderT, class Executor>
 class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
-    : public detail::RPCExecutorBase<Executor>,
-      public detail::AutoCancelClientContextAndResponder<ResponderT<RequestT, ResponseT>>
+    : public detail::RPCExecutorBase<Executor>, public detail::ClientRPCContextBase<ResponderT<RequestT, ResponseT>>
 {
   private:
     using Responder = ResponderT<RequestT, ResponseT>;
@@ -881,8 +875,7 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
     template <class ClientContextInitFunction>
     ClientRPCBidiStreamingBase(agrpc::GrpcContext& grpc_context, ClientContextInitFunction&& init_function)
         : detail::RPCExecutorBase<Executor>(grpc_context.get_executor()),
-          detail::AutoCancelClientContextAndResponder<Responder>(
-              static_cast<ClientContextInitFunction&&>(init_function))
+          detail::ClientRPCContextBase<Responder>(static_cast<ClientContextInitFunction&&>(init_function))
     {
     }
 
@@ -900,14 +893,13 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
     template <class ClientContextInitFunction>
     ClientRPCBidiStreamingBase(const Executor& executor, ClientContextInitFunction&& init_function)
         : detail::RPCExecutorBase<Executor>(executor),
-          detail::AutoCancelClientContextAndResponder<Responder>(
-              static_cast<ClientContextInitFunction&&>(init_function))
+          detail::ClientRPCContextBase<Responder>(static_cast<ClientContextInitFunction&&>(init_function))
     {
     }
 
-    using detail::AutoCancelClientContextAndResponder<Responder>::context;
+    using detail::ClientRPCContextBase<Responder>::context;
 
-    using detail::AutoCancelClientContextAndResponder<Responder>::cancel;
+    using detail::ClientRPCContextBase<Responder>::cancel;
 
     /**
      * @brief Read initial metadata
