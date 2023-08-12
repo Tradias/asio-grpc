@@ -109,11 +109,19 @@ class ClientRPCServerStreamingBase;
 template <class Responder, class Executor>
 class ClientRPCBidiStreamingBase;
 
+template <class Responder, class Traits, class Executor>
+class ServerRPCBidiStreamingBase;
+
 struct ClientRPCContextBaseAccess;
 
 struct ServerRPCContextBaseAccess;
 
 struct RPCExecutorBaseAccess;
+
+class NotifyWhenDone;
+
+template <auto RequestRPC, class Traits = agrpc::DefaultServerRPCTraits, class Executor = agrpc::BasicGrpcExecutor<>>
+class UnstartedServerRPC;
 
 AGRPC_NAMESPACE_CPP20_BEGIN()
 

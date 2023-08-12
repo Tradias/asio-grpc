@@ -14,7 +14,7 @@
 
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asio_utils.hpp"
-#include "utils/client_rpc.hpp"
+#include "utils/client_rpc_test.hpp"
 #include "utils/delete_guard.hpp"
 #include "utils/doctest.hpp"
 #include "utils/exception.hpp"
@@ -465,10 +465,10 @@ TEST_CASE_FIXTURE(ClientRPCIoContextTest<test::BidirectionalStreamingClientRPC>,
         [&](const asio::yield_context& yield)
         {
             CHECK(test_server.request_rpc(yield));
-            test_server.response.set_integer(1);
             CHECK(agrpc::read(test_server.responder, test_server.request, yield));
             CHECK_FALSE(agrpc::read(test_server.responder, test_server.request, yield));
             CHECK_EQ(42, test_server.request.integer());
+            test_server.response.set_integer(1);
             CHECK(agrpc::write(test_server.responder, test_server.response, yield));
             CHECK(agrpc::finish(test_server.responder, grpc::Status::OK, yield));
         },

@@ -51,19 +51,6 @@ class ServerRPCNotifyWhenDoneBase
 template <>
 class ServerRPCNotifyWhenDoneBase<false>
 {
-  public:
-    static constexpr bool is_running() { return false; }
-
-    template <class CompletionToken>
-    static auto done(CompletionToken&& token)
-    {
-        return detail::async_initiate_immediate_completion<void()>(static_cast<CompletionToken&&>(token));
-    }
-
-  private:
-    friend detail::ServerRPCContextBaseAccess;
-
-    static constexpr void initiate(const agrpc::GrpcContext&, const grpc::ServerContext&) {}
 };
 }
 

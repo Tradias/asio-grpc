@@ -18,30 +18,43 @@
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/server_rpc_notify_when_done_base.hpp>
+#include <grpcpp/generic/async_generic_service.h>
 #include <grpcpp/server_context.h>
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+template <class Responder>
+struct ServerContextBase
+{
+    grpc::ServerContext server_context_;
+};
+
+template <>
+struct ServerContextBase<grpc::GenericServerAsyncReaderWriter>
+{
+    grpc::GenericServerContext server_context_;
+};
+
 /**
- * @brief (experimental) ServerRPC grpc::ServerContext base
+ * @brief (experimental) ServerRPC ServerContext base
  *
  * @since 2.6.0
  */
 template <class Responder>
-class ServerRPCContextBase
+class ServerRPCContextBase : private ServerContextBase<Responder>
 {
   public:
     /**
-     * @brief Get the underlying `grpc::ServerContext`
+     * @brief Get the underlying `ServerContext`
      */
-    [[nodiscard]] grpc::ServerContext& context() { return server_context_; }
+    [[nodiscard]] auto& context() { return this->server_context_; }
 
     /**
-     * @brief Get the underlying `grpc::ServerContext` (const overload)
+     * @brief Get the underlying `ServerContext` (const overload)
      */
-    [[nodiscard]] const grpc::ServerContext& context() const { return server_context_; }
+    [[nodiscard]] const auto& context() const { return this->server_context_; }
 
     /**
      * @brief Cancel this RPC
@@ -50,7 +63,7 @@ class ServerRPCContextBase
      *
      * Thread-safe
      */
-    void cancel() noexcept { server_context_.TryCancel(); }
+    void cancel() noexcept { this->server_context_.TryCancel(); }
 
     [[nodiscard]] bool is_finished() const noexcept { return is_finished_; }
 
@@ -60,7 +73,7 @@ class ServerRPCContextBase
     template <class ServerContextInitFunction>
     explicit ServerRPCContextBase(ServerContextInitFunction&& init_function) noexcept
     {
-        static_cast<ServerContextInitFunction&&>(init_function)(server_context_);
+        static_cast<ServerContextInitFunction&&>(init_function)(this->server_context_);
     }
 
     ServerRPCContextBase(const ServerRPCContextBase&) = delete;
@@ -71,7 +84,7 @@ class ServerRPCContextBase
     {
         if (is_started_ && !is_finished_)
         {
-            server_context_.TryCancel();
+            this->server_context_.TryCancel();
         }
     }
 
@@ -82,8 +95,7 @@ class ServerRPCContextBase
   private:
     friend detail::ServerRPCContextBaseAccess;
 
-    grpc::ServerContext server_context_{};
-    Responder responder_{&server_context_};
+    Responder responder_{&this->server_context_};
     bool is_started_{};
     bool is_finished_{};
 };
@@ -125,20 +137,11 @@ struct ServerRPCContextBaseAccess
     static void initiate_notify_when_done(ServerRPCBase<Responder, IsNotifyWhenDone>& rpc,
                                           agrpc::GrpcContext& grpc_context)
     {
-        rpc.initiate(grpc_context, rpc.server_context_);
+        if constexpr (IsNotifyWhenDone)
+        {
+            rpc.initiate(grpc_context, rpc.server_context_);
+        }
     }
-
-    // template <class Responder>
-    // [[nodiscard]] static bool is_writes_done(ServerRPCContextBase<Responder>& rpc) noexcept
-    // {
-    //     return rpc.responder_.template has_bit<1>();
-    // }
-
-    // template <class Responder>
-    // static void set_writes_done(ServerRPCContextBase<Responder>& rpc) noexcept
-    // {
-    //     rpc.responder_.template set_bit<1>();
-    // }
 };
 }
 

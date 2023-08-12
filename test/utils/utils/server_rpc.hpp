@@ -22,19 +22,17 @@
 
 namespace test
 {
-// using UnaryServerRPC = agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestUnary>;
-// using ClientStreamingServerRPC = agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestClientStreaming>;
+using UnaryServerRPC = agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestUnary>;
+using ClientStreamingServerRPC = agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestClientStreaming>;
 using ServerStreamingServerRPC = agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestServerStreaming>;
-// using BidirectionalStreamingServerRPC =
-// agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestBidirectionalStreaming>; using GenericUnaryServerRPC =
-// agrpc::ServerRPCGenericUnary<>;
+using BidirectionalStreamingServerRPC = agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestBidirectionalStreaming>;
+using GenericServerRPC = agrpc::GenericServerRPC<>;
 }
 
-// TYPE_TO_STRING(test::UnaryServerRPC);
-// TYPE_TO_STRING(test::ClientStreamingServerRPC);
+TYPE_TO_STRING(test::UnaryServerRPC);
+TYPE_TO_STRING(test::ClientStreamingServerRPC);
 TYPE_TO_STRING(test::ServerStreamingServerRPC);
-// TYPE_TO_STRING(test::BidirectionalStreamingServerRPC);
-// TYPE_TO_STRING(test::GenericUnaryServerRPC);
-// TYPE_TO_STRING(test::GenericStreamingServerRPC);
+TYPE_TO_STRING(test::BidirectionalStreamingServerRPC);
+TYPE_TO_STRING(test::GenericServerRPC);
 
 #endif  // AGRPC_UTILS_SERVER_RPC_HPP

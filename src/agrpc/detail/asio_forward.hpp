@@ -93,6 +93,10 @@
 
 #define AGRPC_ASIO_HAS_BIND_ALLOCATOR
 #endif
+
+#if (BOOST_VERSION >= 108000)
+#define AGRPC_ASIO_HAS_NEW_SPAWN
+#endif
 #endif
 
 AGRPC_NAMESPACE_BEGIN()

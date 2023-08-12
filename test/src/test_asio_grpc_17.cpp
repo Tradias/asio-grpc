@@ -401,7 +401,7 @@ TEST_CASE_TEMPLATE("yield_context client streaming", Stub, test::v1::Test::Stub,
             response.set_integer(21);
             if (use_finish_with_error)
             {
-                CHECK(agrpc::finish_with_error(reader_ref, grpc::Status::CANCELLED, yield));
+                CHECK(agrpc::finish_with_error(reader_ref, test::create_already_exists_status(), yield));
             }
             else
             {
@@ -448,7 +448,7 @@ TEST_CASE_TEMPLATE("yield_context unary", Stub, test::v1::Test::Stub, test::v1::
             response.set_integer(21);
             if (use_finish_with_error)
             {
-                CHECK(agrpc::finish_with_error(writer, grpc::Status::CANCELLED, yield));
+                CHECK(agrpc::finish_with_error(writer, test::create_already_exists_status(), yield));
             }
             else
             {

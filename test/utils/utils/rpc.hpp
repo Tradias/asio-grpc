@@ -80,7 +80,7 @@ void client_perform_unary_success(agrpc::GrpcContext& grpc_context, Stub& stub, 
     CHECK(agrpc::finish(*reader, response, status, yield));
     if (options.finish_with_error)
     {
-        CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
+        CHECK_EQ(grpc::StatusCode::ALREADY_EXISTS, status.error_code());
     }
     else
     {
@@ -112,6 +112,8 @@ void client_perform_client_streaming_success(test::msg::Response& response,
                                              grpc::ClientAsyncWriterInterface<test::msg::Request>& writer,
                                              const asio::yield_context& yield,
                                              test::PerformClientStreamingSuccessOptions options = {});
+
+grpc::Status create_already_exists_status();
 }
 
 #endif  // AGRPC_UTILS_RPC_HPP

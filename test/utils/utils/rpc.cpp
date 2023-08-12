@@ -70,7 +70,7 @@ void client_perform_client_streaming_success_impl(test::msg::Response& response,
     CHECK(agrpc::finish(writer, status, yield));
     if (options.finish_with_error)
     {
-        CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
+        CHECK_EQ(grpc::StatusCode::ALREADY_EXISTS, status.error_code());
     }
     else
     {
@@ -95,4 +95,6 @@ void client_perform_client_streaming_success(test::msg::Response& response,
 {
     test::client_perform_client_streaming_success_impl(response, writer, yield, options);
 }
+
+grpc::Status create_already_exists_status() { return grpc::Status{grpc::StatusCode::ALREADY_EXISTS, {}}; }
 }

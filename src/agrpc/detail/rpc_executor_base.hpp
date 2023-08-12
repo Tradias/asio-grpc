@@ -53,11 +53,17 @@ class RPCExecutorBase
     template <auto, class, class>
     friend class agrpc::ServerRPC;
 
+    template <auto, class, class>
+    friend class detail::UnstartedServerRPC;
+
     template <auto, class>
     friend class detail::ClientRPCServerStreamingBase;
 
     template <class, class>
     friend class detail::ClientRPCBidiStreamingBase;
+
+    template <class, class, class>
+    friend class detail::ServerRPCBidiStreamingBase;
 
     friend struct detail::RPCExecutorBaseAccess;
 

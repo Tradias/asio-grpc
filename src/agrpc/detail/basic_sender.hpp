@@ -331,10 +331,7 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
     template <class Initiation>
     void emplace_stop_callback(StopToken&& stop_token, const Initiation& initiation) noexcept
     {
-        if (stop_token.stop_possible())
-        {
-            impl_.first().emplace_stop_callback(static_cast<StopToken&&>(stop_token), initiation, implementation());
-        }
+        impl_.first().emplace_stop_callback(static_cast<StopToken&&>(stop_token), initiation, implementation());
     }
 
     void reset_stop_callback() noexcept { impl_.first().reset_stop_callback(); }

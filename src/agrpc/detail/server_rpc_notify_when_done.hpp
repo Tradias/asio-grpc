@@ -15,14 +15,19 @@
 #ifndef AGRPC_DETAIL_SERVER_RPC_NOTIFY_WHEN_DONE_HPP
 #define AGRPC_DETAIL_SERVER_RPC_NOTIFY_WHEN_DONE_HPP
 
-#include <agrpc/cancel_safe.hpp>
+#include "agrpc/detail/completion_handler_receiver.hpp"
+#include "agrpc/detail/work_tracking_completion_handler.hpp"
+
 #include <agrpc/detail/allocation_type.hpp>
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
 #include <agrpc/detail/grpc_submit.hpp>
 #include <agrpc/detail/intrusive_list_hook.hpp>
+#include <agrpc/detail/manual_reset_event.hpp>
 #include <agrpc/detail/operation.hpp>
 #include <agrpc/detail/sender_implementation.hpp>
+#include <agrpc/use_sender.hpp>
 #include <grpcpp/server_context.h>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -53,7 +58,7 @@ class NotifyWhenDone
         void operator()(bool) const
         {
             self_.running_ = false;
-            self_.safe_.token()();
+            self_.event_.set();
         }
 
         allocator_type get_allocator() const noexcept;
@@ -82,13 +87,12 @@ class NotifyWhenDone
     [[nodiscard]] bool is_running() const noexcept { return running_; }
 
     template <class CompletionToken>
-    auto done(CompletionToken&& token)
-    {
-        return safe_.wait(static_cast<CompletionToken&&>(token));
-    }
+    auto done(CompletionToken token);
+
+    auto done(agrpc::UseSender) { return event_.wait(); }
 
   private:
-    agrpc::CancelSafe<void()> safe_;
+    ManualResetEvent event_;
     bool running_{true};
     union
     {
@@ -136,6 +140,27 @@ inline NotifyWhenDone::CompletionHandler::allocator_type NotifyWhenDone::Complet
     const noexcept
 {
     return Allocator<Operation>{&self_.operation_};
+}
+
+template <class CompletionToken>
+inline auto NotifyWhenDone::done(CompletionToken token)
+{
+    return asio::async_initiate<CompletionToken, void()>(
+        [&](auto&& completion_handler)
+        {
+            using CompletionHandler = decltype(completion_handler);
+            using Receiver = detail::CompletionHandlerReceiver<
+                detail::WorkTrackingCompletionHandler<detail::RemoveCrefT<CompletionHandler>>>;
+            using ManualResetEventOperation =
+                decltype(std::declval<ManualResetEvent>().wait().connect(std::declval<Receiver>()));
+            const auto allocator = detail::exec::get_allocator(completion_handler);
+            Receiver handler{static_cast<CompletionHandler&&>(completion_handler)};
+            auto operation =
+                detail::allocate<ManualResetEventOperation>(allocator, static_cast<Receiver&&>(handler), event_);
+            operation->start();
+            operation.release();
+        },
+        token);
 }
 }
 

@@ -103,6 +103,13 @@ struct TestServer<&test::v1::Test::AsyncService::RequestBidirectionalStreaming> 
     test::msg::Response response{};
     grpc::ServerAsyncReaderWriter<test::msg::Response, test::msg::Request> responder{&server_context};
 };
+
+template <>
+struct TestServer<agrpc::ServerRPCType::GENERIC>
+{
+    grpc::AsyncGenericService& service;
+    grpc::GenericServerContext& server_context;
+};
 }
 
 #endif  // AGRPC_UTILS_TEST_SERVER_HPP

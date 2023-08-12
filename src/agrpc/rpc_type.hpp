@@ -87,7 +87,7 @@ enum class ServerRPCType
     /**
      * @brief Server-side generic streaming rpc
      */
-    GENERIC_STREAMING
+    GENERIC
 };
 
 AGRPC_NAMESPACE_END
