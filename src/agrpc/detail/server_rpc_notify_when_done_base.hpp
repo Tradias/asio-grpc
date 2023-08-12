@@ -32,18 +32,15 @@ class ServerRPCNotifyWhenDoneBase
     bool is_running() const { return notify_when_done_.is_running(); }
 
     template <class CompletionToken>
-    auto done(CompletionToken&& token)
+    auto done(agrpc::GrpcContext& grpc_context, CompletionToken&& token)
     {
-        return notify_when_done_.done(static_cast<CompletionToken&&>(token));
+        return notify_when_done_.done(grpc_context, static_cast<CompletionToken&&>(token));
     }
 
   private:
     friend detail::ServerRPCContextBaseAccess;
 
-    void initiate(agrpc::GrpcContext& grpc_context, grpc::ServerContext& server_context)
-    {
-        notify_when_done_.initiate(grpc_context, server_context);
-    }
+    void initiate(grpc::ServerContext& server_context) { notify_when_done_.initiate(server_context); }
 
     detail::NotifyWhenDone notify_when_done_{};
 };

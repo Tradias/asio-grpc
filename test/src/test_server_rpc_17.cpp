@@ -203,6 +203,12 @@ TEST_CASE_FIXTURE(ServerRPCTest<test::BidirectionalStreamingServerRPC>, "ServerR
     register_and_perform_three_requests(
         [&](test::BidirectionalStreamingServerRPC& rpc, const asio::yield_context& yield)
         {
+            bool done{};
+            rpc.done(
+                [&]
+                {
+                    done = true;
+                });
             CHECK(rpc.send_initial_metadata(yield));
             CHECK(rpc.read(test_server.request, yield));
             CHECK_FALSE(rpc.read(test_server.request, yield));
@@ -218,7 +224,7 @@ TEST_CASE_FIXTURE(ServerRPCTest<test::BidirectionalStreamingServerRPC>, "ServerR
                 CHECK(rpc.write(test_server.response, yield));
                 CHECK(rpc.finish(grpc::Status::OK, yield));
             }
-            rpc.done(yield);
+            CHECK(done);
             CHECK_FALSE(rpc.context().IsCancelled());
         },
         [&](auto& request, auto& response, const asio::yield_context& yield)

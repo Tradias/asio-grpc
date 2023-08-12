@@ -33,8 +33,7 @@ struct DefaultServerRPCTraits
 template <class ServiceT, class RequestT, class ResponseT,
           detail::ServerUnaryRequest<ServiceT, RequestT, ResponseT> RequestRPC, class TraitsT, class Executor>
 class ServerRPC<RequestRPC, TraitsT, Executor>
-    : public detail::RPCExecutorBase<Executor>,
-      public detail::ServerRPCBase<grpc::ServerAsyncResponseWriter<ResponseT>, TraitsT::NOTIFY_WHEN_DONE>
+    : public detail::ServerRPCBase<Executor, grpc::ServerAsyncResponseWriter<ResponseT>, TraitsT::NOTIFY_WHEN_DONE>
 {
   private:
     static constexpr bool IS_NOTIFY_WHEN_DONE = TraitsT::NOTIFY_WHEN_DONE;
@@ -63,7 +62,11 @@ class ServerRPC<RequestRPC, TraitsT, Executor>
         using other = ServerRPC<RequestRPC, TraitsT, OtherExecutor>;
     };
 
-    explicit ServerRPC(const Executor& executor) : detail::RPCExecutorBase<Executor>{executor} {}
+    explicit ServerRPC(const Executor& executor)
+        : detail::ServerRPCBase<Executor, grpc::ServerAsyncResponseWriter<ResponseT>, TraitsT::NOTIFY_WHEN_DONE>{
+              executor}
+    {
+    }
 
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto start(ServiceT& service, RequestT& request,
@@ -105,8 +108,7 @@ class ServerRPC<RequestRPC, TraitsT, Executor>
 template <class ServiceT, class RequestT, class ResponseT,
           detail::ServerClientStreamingRequest<ServiceT, RequestT, ResponseT> RequestRPC, class TraitsT, class Executor>
 class ServerRPC<RequestRPC, TraitsT, Executor>
-    : public detail::RPCExecutorBase<Executor>,
-      public detail::ServerRPCBase<grpc::ServerAsyncReader<ResponseT, RequestT>, TraitsT::NOTIFY_WHEN_DONE>
+    : public detail::ServerRPCBase<Executor, grpc::ServerAsyncReader<ResponseT, RequestT>, TraitsT::NOTIFY_WHEN_DONE>
 {
   private:
     static constexpr bool IS_NOTIFY_WHEN_DONE = TraitsT::NOTIFY_WHEN_DONE;
@@ -135,7 +137,11 @@ class ServerRPC<RequestRPC, TraitsT, Executor>
         using other = ServerRPC<RequestRPC, TraitsT, OtherExecutor>;
     };
 
-    explicit ServerRPC(const Executor& executor) : detail::RPCExecutorBase<Executor>{executor} {}
+    explicit ServerRPC(const Executor& executor)
+        : detail::ServerRPCBase<Executor, grpc::ServerAsyncReader<ResponseT, RequestT>, TraitsT::NOTIFY_WHEN_DONE>{
+              executor}
+    {
+    }
 
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto start(ServiceT& service, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
@@ -183,8 +189,7 @@ class ServerRPC<RequestRPC, TraitsT, Executor>
 template <class ServiceT, class RequestT, class ResponseT,
           detail::ServerServerStreamingRequest<ServiceT, RequestT, ResponseT> RequestRPC, class TraitsT, class Executor>
 class ServerRPC<RequestRPC, TraitsT, Executor>
-    : public detail::RPCExecutorBase<Executor>,
-      public detail::ServerRPCBase<grpc::ServerAsyncWriter<ResponseT>, TraitsT::NOTIFY_WHEN_DONE>
+    : public detail::ServerRPCBase<Executor, grpc::ServerAsyncWriter<ResponseT>, TraitsT::NOTIFY_WHEN_DONE>
 {
   private:
     static constexpr bool IS_NOTIFY_WHEN_DONE = TraitsT::NOTIFY_WHEN_DONE;
@@ -213,7 +218,10 @@ class ServerRPC<RequestRPC, TraitsT, Executor>
         using other = ServerRPC<RequestRPC, TraitsT, OtherExecutor>;
     };
 
-    explicit ServerRPC(const Executor& executor) : detail::RPCExecutorBase<Executor>{executor} {}
+    explicit ServerRPC(const Executor& executor)
+        : detail::ServerRPCBase<Executor, grpc::ServerAsyncWriter<ResponseT>, TraitsT::NOTIFY_WHEN_DONE>{executor}
+    {
+    }
 
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto start(ServiceT& service, RequestT& request,
@@ -277,8 +285,7 @@ namespace detail
 {
 template <class RequestT, class ResponseT, template <class, class> class ResponderT, class TraitsT, class Executor>
 class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Executor>
-    : public detail::RPCExecutorBase<Executor>,
-      public detail::ServerRPCBase<ResponderT<ResponseT, RequestT>, TraitsT::NOTIFY_WHEN_DONE>
+    : public detail::ServerRPCBase<Executor, ResponderT<ResponseT, RequestT>, TraitsT::NOTIFY_WHEN_DONE>
 {
   private:
     using Responder = ResponderT<ResponseT, RequestT>;
@@ -288,7 +295,10 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
     using Response = ResponseT;
     using Traits = TraitsT;
 
-    explicit ServerRPCBidiStreamingBase(const Executor& executor) : detail::RPCExecutorBase<Executor>{executor} {}
+    explicit ServerRPCBidiStreamingBase(const Executor& executor)
+        : detail::ServerRPCBase<Executor, ResponderT<ResponseT, RequestT>, TraitsT::NOTIFY_WHEN_DONE>{executor}
+    {
+    }
 
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto send_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})

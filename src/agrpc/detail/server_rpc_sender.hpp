@@ -59,7 +59,7 @@ struct ServerContextCancellationFunction
 template <class Responder, bool IsNotifyWhenDone>
 struct ServerRequestSenderImplementation : detail::GrpcSenderImplementationBase
 {
-    using RPC = detail::ServerRPCBase<Responder, IsNotifyWhenDone>;
+    using RPC = detail::ServerRPCResponderAndNotifyWhenDone<Responder, IsNotifyWhenDone>;
 
     explicit ServerRequestSenderImplementation(RPC& rpc) noexcept : rpc_(rpc) {}
 
@@ -80,18 +80,6 @@ struct ServerRequestSenderImplementation : detail::GrpcSenderImplementationBase
     RPC& rpc_;
 };
 
-template <class Responder, bool IsNotifyWhenDone>
-void initiate_server_request_sender_implementation(agrpc::GrpcContext& grpc_context,
-                                                   ServerRequestSenderImplementation<Responder, IsNotifyWhenDone>& impl)
-{
-    auto& rpc = impl.rpc_;
-    if constexpr (IsNotifyWhenDone)
-    {
-        ServerRPCAccess::initiate_notify_when_done(rpc, grpc_context);
-        grpc_context.work_finished();
-    }
-}
-
 template <auto RequestRPC, bool IsNotifyWhenDone>
 struct ServerRequestSenderInitiation;
 
@@ -102,8 +90,8 @@ struct ServerRequestSenderInitiation<RequestRPC, IsNotifyWhenDone>
     void initiate(agrpc::GrpcContext& grpc_context,
                   ServerRequestSenderImplementation<Responder, IsNotifyWhenDone>& impl, void* tag) const
     {
-        detail::initiate_server_request_sender_implementation(grpc_context, impl);
         auto& rpc = impl.rpc_;
+        ServerRPCAccess::initiate_notify_when_done(rpc);
         (service_.*RequestRPC)(&rpc.context(), &ServerRPCAccess::responder(rpc), grpc_context.get_completion_queue(),
                                grpc_context.get_server_completion_queue(), tag);
     }
@@ -118,8 +106,8 @@ struct ServerRequestSenderInitiation<RequestRPC, IsNotifyWhenDone>
     void initiate(agrpc::GrpcContext& grpc_context,
                   ServerRequestSenderImplementation<Responder, IsNotifyWhenDone>& impl, void* tag) const
     {
-        detail::initiate_server_request_sender_implementation(grpc_context, impl);
         auto& rpc = impl.rpc_;
+        ServerRPCAccess::initiate_notify_when_done(rpc);
         (service_.*RequestRPC)(&rpc.context(), &req_, &ServerRPCAccess::responder(rpc),
                                grpc_context.get_completion_queue(), grpc_context.get_server_completion_queue(), tag);
     }
@@ -135,8 +123,8 @@ struct ServerRequestSenderInitiation<agrpc::ServerRPCType::GENERIC, IsNotifyWhen
                   ServerRequestSenderImplementation<grpc::GenericServerAsyncReaderWriter, IsNotifyWhenDone>& impl,
                   void* tag) const
     {
-        detail::initiate_server_request_sender_implementation(grpc_context, impl);
         auto& rpc = impl.rpc_;
+        ServerRPCAccess::initiate_notify_when_done(rpc);
         service_.RequestCall(&rpc.context(), &ServerRPCAccess::responder(rpc), grpc_context.get_completion_queue(),
                              grpc_context.get_server_completion_queue(), tag);
     }

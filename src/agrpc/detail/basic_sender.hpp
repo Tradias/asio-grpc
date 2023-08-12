@@ -18,6 +18,7 @@
 #include <agrpc/detail/allocate_operation.hpp>
 #include <agrpc/detail/allocation_type.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/deallocate_on_complete.hpp>
 #include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/receiver.hpp>
@@ -62,12 +63,6 @@ struct BasicSenderAccess
         return detail::BasicSender<Initiation, detail::RemoveCrefT<Implementation>>(
             grpc_context, initiation, static_cast<Implementation&&>(implementation));
     }
-};
-
-enum class DeallocateOnComplete
-{
-    NO,
-    YES
 };
 
 template <class Implementation, class Receiver, detail::DeallocateOnComplete Deallocate>

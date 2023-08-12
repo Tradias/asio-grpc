@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
+#include <agrpc/detail/rpc_executor_base.hpp>
 #include <agrpc/detail/server_rpc_notify_when_done_base.hpp>
 #include <grpcpp/generic/async_generic_service.h>
 #include <grpcpp/server_context.h>
@@ -101,10 +102,33 @@ class ServerRPCContextBase : private ServerContextBase<Responder>
 };
 
 template <class Responder, bool IsNotifyWhenDone>
-class ServerRPCBase : public ServerRPCContextBase<Responder>, public ServerRPCNotifyWhenDoneBase<IsNotifyWhenDone>
+class ServerRPCResponderAndNotifyWhenDone : public ServerRPCContextBase<Responder>,
+                                            public ServerRPCNotifyWhenDoneBase<IsNotifyWhenDone>
 {
   private:
     friend detail::ServerRPCContextBaseAccess;
+};
+
+template <class Executor, class Responder, bool IsNotifyWhenDone>
+class ServerRPCBase : public detail::RPCExecutorBase<Executor>,
+                      public ServerRPCResponderAndNotifyWhenDone<Responder, IsNotifyWhenDone>
+{
+  public:
+    using detail::RPCExecutorBase<Executor>::RPCExecutorBase;
+
+    template <class CompletionToken>
+    auto done(CompletionToken&& token)
+    {
+        return ServerRPCNotifyWhenDoneBase<IsNotifyWhenDone>::done(RPCExecutorBaseAccess::grpc_context(*this),
+                                                                   static_cast<CompletionToken&&>(token));
+    }
+};
+
+template <class Executor, class Responder>
+class ServerRPCBase<Executor, Responder, false> : public detail::RPCExecutorBase<Executor>,
+                                                  public ServerRPCResponderAndNotifyWhenDone<Responder, false>
+{
+    using detail::RPCExecutorBase<Executor>::RPCExecutorBase;
 };
 
 struct ServerRPCContextBaseAccess
@@ -134,12 +158,11 @@ struct ServerRPCContextBaseAccess
     }
 
     template <class Responder, bool IsNotifyWhenDone>
-    static void initiate_notify_when_done(ServerRPCBase<Responder, IsNotifyWhenDone>& rpc,
-                                          agrpc::GrpcContext& grpc_context)
+    static void initiate_notify_when_done(ServerRPCResponderAndNotifyWhenDone<Responder, IsNotifyWhenDone>& rpc)
     {
         if constexpr (IsNotifyWhenDone)
         {
-            rpc.initiate(grpc_context, rpc.server_context_);
+            rpc.initiate(rpc.server_context_);
         }
     }
 };
