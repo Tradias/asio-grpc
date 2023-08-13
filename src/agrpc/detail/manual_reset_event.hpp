@@ -23,6 +23,7 @@
 #include <agrpc/detail/receiver.hpp>
 #include <agrpc/detail/sender_of.hpp>
 #include <agrpc/detail/stop_callback_lifetime.hpp>
+#include <agrpc/detail/utility.hpp>
 
 #include <atomic>
 
@@ -191,7 +192,7 @@ class ManualResetEventSender : public detail::SenderOf<void()>
 {
   public:
     template <class R>
-    auto connect(R&& receiver)
+    [[nodiscard]] auto connect(R&& receiver) && noexcept(detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<R>)
     {
         return ManualResetEventOperationState<detail::RemoveCrefT<R>>{static_cast<R&&>(receiver), event_};
     }

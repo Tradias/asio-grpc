@@ -143,7 +143,7 @@ TEST_CASE_TEMPLATE("awaitable unary", Stub, test::v1::Test::Stub, test::v1::Test
             CHECK(co_await agrpc::finish(*reader, response, status));
             if (use_finish_with_error)
             {
-                CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
+                CHECK_EQ(grpc::StatusCode::ALREADY_EXISTS, status.error_code());
             }
             else
             {

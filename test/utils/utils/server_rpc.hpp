@@ -22,17 +22,36 @@
 
 namespace test
 {
+struct NotifyWhenDoneTraits
+{
+    static constexpr bool NOTIFY_WHEN_DONE = true;
+};
+
 using UnaryServerRPC = agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestUnary>;
+using NotifyWhenDoneUnaryServerRPC =
+    agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestUnary, NotifyWhenDoneTraits>;
 using ClientStreamingServerRPC = agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestClientStreaming>;
+using NotifyWhenDoneClientStreamingServerRPC =
+    agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestClientStreaming, NotifyWhenDoneTraits>;
 using ServerStreamingServerRPC = agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestServerStreaming>;
+using NotifyWhenDoneServerStreamingServerRPC =
+    agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestServerStreaming, NotifyWhenDoneTraits>;
 using BidirectionalStreamingServerRPC = agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestBidirectionalStreaming>;
+using NotifyWhenDoneBidirectionalStreamingServerRPC =
+    agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestBidirectionalStreaming, NotifyWhenDoneTraits>;
 using GenericServerRPC = agrpc::GenericServerRPC<>;
+using NotifyWhenDoneGenericServerRPC = agrpc::GenericServerRPC<NotifyWhenDoneTraits>;
 }
 
 TYPE_TO_STRING(test::UnaryServerRPC);
+TYPE_TO_STRING(test::NotifyWhenDoneUnaryServerRPC);
 TYPE_TO_STRING(test::ClientStreamingServerRPC);
+TYPE_TO_STRING(test::NotifyWhenDoneClientStreamingServerRPC);
 TYPE_TO_STRING(test::ServerStreamingServerRPC);
+TYPE_TO_STRING(test::NotifyWhenDoneServerStreamingServerRPC);
 TYPE_TO_STRING(test::BidirectionalStreamingServerRPC);
+TYPE_TO_STRING(test::NotifyWhenDoneBidirectionalStreamingServerRPC);
 TYPE_TO_STRING(test::GenericServerRPC);
+TYPE_TO_STRING(test::NotifyWhenDoneGenericServerRPC);
 
 #endif  // AGRPC_UTILS_SERVER_RPC_HPP

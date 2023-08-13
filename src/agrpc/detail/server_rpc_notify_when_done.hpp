@@ -15,18 +15,16 @@
 #ifndef AGRPC_DETAIL_SERVER_RPC_NOTIFY_WHEN_DONE_HPP
 #define AGRPC_DETAIL_SERVER_RPC_NOTIFY_WHEN_DONE_HPP
 
-#include <agrpc/detail/allocation_type.hpp>
+#include <agrpc/detail/allocate.hpp>
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/completion_handler_receiver.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/grpc_context_implementation.hpp>
-#include <agrpc/detail/intrusive_list_hook.hpp>
 #include <agrpc/detail/manual_reset_event.hpp>
-#include <agrpc/detail/operation.hpp>
-#include <agrpc/detail/sender_implementation.hpp>
 #include <agrpc/detail/work_tracking_completion_handler.hpp>
 #include <agrpc/use_sender.hpp>
 #include <grpcpp/server_context.h>
+
+#include <atomic>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -42,25 +40,26 @@ class NotifyWhenDone : public detail::OperationBase
         server_context.AsyncNotifyWhenDone(static_cast<detail::OperationBase*>(this));
     }
 
-    [[nodiscard]] bool is_running() const noexcept { return running_; }
+    [[nodiscard]] bool is_running() const noexcept { return running_.load(std::memory_order_relaxed); }
 
     template <class CompletionToken>
     auto done(agrpc::GrpcContext& grpc_context, CompletionToken token);
 
-    auto done(agrpc::GrpcContext&, agrpc::UseSender) { return event_.wait(); }
+    auto done(const agrpc::GrpcContext&, agrpc::UseSender) { return event_.wait(); }
 
   private:
     static void do_complete(detail::OperationBase* op, detail::OperationResult, agrpc::GrpcContext&)
     {
         auto* self = static_cast<NotifyWhenDone*>(op);
-        self->running_ = false;
+        self->running_.store(true, std::memory_order_relaxed);
         self->event_.set();
     }
 
     ManualResetEvent event_;
-    bool running_{true};
+    std::atomic<bool> running_{true};
 };
 
+#ifndef AGRPC_UNIFEX
 template <class CompletionToken>
 inline auto NotifyWhenDone::done(agrpc::GrpcContext& grpc_context, CompletionToken token)
 {
@@ -90,6 +89,7 @@ inline auto NotifyWhenDone::done(agrpc::GrpcContext& grpc_context, CompletionTok
         },
         token);
 }
+#endif
 }
 
 AGRPC_NAMESPACE_END

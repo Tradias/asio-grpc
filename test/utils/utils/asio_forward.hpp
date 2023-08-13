@@ -27,6 +27,7 @@
 #include <asio/spawn.hpp>
 #include <asio/steady_timer.hpp>
 #include <asio/thread_pool.hpp>
+#include <asio/use_future.hpp>
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 #include <asio/co_spawn.hpp>
@@ -70,6 +71,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/thread_pool.hpp>
+#include <boost/asio/use_future.hpp>
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 #include <boost/asio/co_spawn.hpp>

@@ -25,7 +25,7 @@
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post a apgrc::Alarm and use variadic-arg callback for its wait")
 {
     bool ok{false};
-    agrpc::Alarm alarm{grpc_context};
+    agrpc::BasicAlarm alarm{grpc_context};
     post(
         [&]
         {
@@ -41,7 +41,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post a apgrc::Alarm and use vari
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "agrpc::Alarm with const-ref callback")
 {
-    agrpc::Alarm alarm{grpc_context};
+    agrpc::BasicAlarm alarm{grpc_context.get_executor()};
     bool ok{false};
     const auto cb = [&](bool wait_ok)
     {

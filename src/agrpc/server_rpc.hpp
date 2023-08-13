@@ -27,7 +27,7 @@ AGRPC_NAMESPACE_BEGIN()
 
 struct DefaultServerRPCTraits
 {
-    static constexpr bool NOTIFY_WHEN_DONE = true;
+    static constexpr bool NOTIFY_WHEN_DONE = false;
 };
 
 template <class ServiceT, class RequestT, class ResponseT,

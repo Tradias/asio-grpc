@@ -18,6 +18,7 @@
 #include "utils/delete_guard.hpp"
 #include "utils/doctest.hpp"
 #include "utils/exception.hpp"
+#include "utils/future.hpp"
 #include "utils/inline_executor.hpp"
 #include "utils/io_context_test.hpp"
 #include "utils/protobuf.hpp"
@@ -335,17 +336,9 @@ TEST_CASE_FIXTURE(ClientRPCIoContextTest<test::ClientStreamingClientRPC>,
             CHECK(agrpc::finish(responder, test_server.response, grpc::Status::OK, yield));
 
             // wait for cancellation signal from first request
-            grpc::Alarm alarm;
-            for (int i{}; i < 50; ++i)
-            {
-                agrpc::wait(alarm, test::ten_milliseconds_from_now(), yield);
-                if (is_cancelled_future.wait_for(std::chrono::milliseconds(1)) == std::future_status::ready)
-                {
-                    CHECK(is_cancelled_future.get());
-                    return;
-                }
-            }
-            FAIL("timeout reached while waiting for cancellation signal");
+            const auto is_cancelled = test::wait_for_future(grpc_context, is_cancelled_future, yield);
+            CHECK_MESSAGE(is_cancelled, "timeout reached while waiting for cancellation signal");
+            CHECK(*is_cancelled);
         },
         [&](const asio::yield_context& yield)
         {

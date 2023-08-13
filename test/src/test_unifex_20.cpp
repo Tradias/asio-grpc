@@ -17,6 +17,7 @@
 #include "utils/asio_utils.hpp"
 #include "utils/client_context.hpp"
 #include "utils/client_rpc.hpp"
+#include "utils/client_rpc_test.hpp"
 #include "utils/delete_guard.hpp"
 #include "utils/doctest.hpp"
 #include "utils/grpc_client_server_test.hpp"
