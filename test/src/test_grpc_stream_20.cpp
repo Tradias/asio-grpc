@@ -74,4 +74,27 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcStream: next can be interrupted wi
                                co_await stream.cleanup();
                            });
 }
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcStream.next() is sticky")
+{
+    test::co_spawn_and_run(
+        grpc_context,
+        [&]() -> asio::awaitable<void>
+        {
+            agrpc::GrpcStream stream{grpc_context};
+            grpc::Alarm alarm;
+            stream.initiate(agrpc::wait, alarm, test::now());
+            CHECK(co_await stream.next());
+            CHECK(co_await stream.next());
+            CHECK(co_await stream.next());
+            stream.initiate(agrpc::wait, alarm, test::five_seconds_from_now());
+            grpc::Alarm alarm2;
+            using namespace asio::experimental::awaitable_operators;
+            auto result = co_await (agrpc::wait(alarm2, test::hundred_milliseconds_from_now()) || stream.next());
+            CHECK_EQ(0, result.index());
+            CHECK(stream.is_running());
+            alarm.Cancel();
+            co_await stream.cleanup();
+        });
+}
 #endif

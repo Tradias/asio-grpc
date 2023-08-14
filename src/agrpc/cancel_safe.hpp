@@ -69,13 +69,10 @@ class CancelSafe<void(CompletionArgs...)>
       public:
         void operator()(CompletionArgs... completion_args)
         {
+            self_.result_.emplace(Result{completion_args...});
             if (auto ch = self_.completion_handler_.release())
             {
                 detail::complete_successfully(std::move(ch), static_cast<CompletionArgs&&>(completion_args)...);
-            }
-            else
-            {
-                self_.result_.emplace(Result{static_cast<CompletionArgs&&>(completion_args)...});
             }
         }
 
@@ -116,7 +113,10 @@ class CancelSafe<void(CompletionArgs...)>
      * Only one call to `wait()` may be outstanding at a time. Waiting for an already completed operation will
      * immediately invoke the completion handler in a manner equivalent to using `asio::post`.
      *
-     * Thread-unsafe with regards to successful completion of the asynchronous operation.
+     * Completions are sticky and should be reset before initation the next operation.
+     *
+     * May not be called concurrently with initiating the next operation (by passing `token()` to the initiating
+     * function of an asynchronous operation).
      *
      * @param token Completion token that matches the completion args. Either `void(error_code, CompletionArgs...)` if
      * the first argument in CompletionArgs is not `error_code` or `void(CompletionArgs...)` otherwise.
@@ -132,6 +132,11 @@ class CancelSafe<void(CompletionArgs...)>
         return asio::async_initiate<CompletionToken, CompletionSignature>(Initiator{*this}, token);
     }
 
+    /**
+     * @brief Reset the result of a previously completed operation
+     */
+    void reset() noexcept { result_.reset(); }
+
   private:
     struct Initiator
     {
@@ -142,12 +147,9 @@ class CancelSafe<void(CompletionArgs...)>
             {
                 auto executor = asio::get_associated_executor(ch);
                 const auto allocator = asio::get_associated_allocator(ch);
-                auto local_result{static_cast<Result&&>(*self_.result_)};
-                self_.result_.reset();
                 detail::post_with_allocator(
                     std::move(executor),
-                    [ch = static_cast<CompletionHandler&&>(ch),
-                     local_result = static_cast<Result&&>(local_result)]() mutable
+                    [ch = static_cast<CompletionHandler&&>(ch), local_result = *self_.result_]() mutable
                     {
                         detail::invoke_successfully_from_tuple(std::move(ch), static_cast<Result&&>(local_result));
                     },

@@ -115,6 +115,7 @@ class BasicGrpcStream
     BasicGrpcStream& initiate(std::allocator_arg_t, Allocator allocator, Function&& function, Args&&... args)
     {
         running_.store(true, std::memory_order_relaxed);
+        safe_.reset();
         std::invoke(static_cast<Function&&>(function), static_cast<Args&&>(args)...,
                     agrpc::bind_allocator(allocator, CompletionHandler{*this}));
         return *this;
@@ -129,6 +130,7 @@ class BasicGrpcStream
     BasicGrpcStream& initiate(Function&& function, Args&&... args)
     {
         running_.store(true, std::memory_order_relaxed);
+        safe_.reset();
         std::invoke(static_cast<Function&&>(function), static_cast<Args&&>(args)..., CompletionHandler{*this});
         return *this;
     }
