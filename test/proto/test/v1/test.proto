@@ -27,4 +27,14 @@ service Test {
   }
 
   rpc Unary(msg.Request) returns (msg.Response) {}
+
+  rpc Subscribe(stream Topic) returns (stream Feed) {}
+}
+
+message Topic {
+  int32 id = 1;
+}
+
+message Feed {
+  string content = 1;
 }

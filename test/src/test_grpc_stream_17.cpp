@@ -103,6 +103,29 @@ TEST_CASE_FIXTURE(test::IoContextTest, "CancelSafe: wait for asio::steady_timer"
     io_context.run();
 }
 
+TEST_CASE_FIXTURE(test::IoContextTest, "CancelSafe: can handle move-only completion arguments")
+{
+    agrpc::CancelSafe<void(std::unique_ptr<int>)> safe;
+    auto token = safe.token();
+    asio::async_initiate<decltype(token), void(std::unique_ptr<int>&&)>(
+        [&](auto ch)
+        {
+            asio::post(io_context,
+                       [&, ch = std::move(ch)]() mutable
+                       {
+                           std::move(ch)(std::make_unique<int>(42));
+                       });
+        },
+        token);
+    safe.wait(
+        [&](test::ErrorCode ec, std::unique_ptr<int>&& actual)
+        {
+            CHECK_FALSE(ec);
+            CHECK_EQ(42, *actual);
+        });
+    io_context.run();
+}
+
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcStream: get_completion_queue")
 {
     agrpc::GrpcStream stream{grpc_context};
