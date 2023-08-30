@@ -19,7 +19,7 @@
 #include <agrpc/detail/coroutine_traits.hpp>
 #include <agrpc/detail/rethrow_first_arg.hpp>
 #include <agrpc/detail/rpc_request.hpp>
-#include <agrpc/detail/unstarted_server_rpc.hpp>
+#include <agrpc/detail/start_server_rpc.hpp>
 #include <agrpc/grpc_context.hpp>
 
 #ifdef AGRPC_STANDALONE_ASIO
@@ -49,30 +49,37 @@ void register_yield_handler(const typename ServerRPC::executor_type& executor, S
 {
     static constexpr bool HAS_INITIAL_REQUEST =
         ServerRPC::TYPE == agrpc::ServerRPCType::SERVER_STREAMING || ServerRPC::TYPE == agrpc::ServerRPCType::UNARY;
-    detail::UnstartedServerRPCType<ServerRPC> rpc{executor};
+    auto rpc = detail::ServerRPCContextBaseAccess::construct<ServerRPC>(executor);
     detail::RPCRequest<typename ServerRPC::Request, HAS_INITIAL_REQUEST> req;
     if (!req.start(rpc, service, yield))
     {
         return;
     }
     detail::spawn(yield,
-                  [executor, &service, request_handler](const auto& yield) mutable
+                  [executor, &service, request_handler](const asio::basic_yield_context<Executor>& yield) mutable
                   {
                       agrpc::register_yield_handler<ServerRPC>(executor, service,
                                                                static_cast<RequestHandler&&>(request_handler), yield);
                   });
     std::exception_ptr eptr;
-    AGRPC_TRY { req.invoke(static_cast<RequestHandler&&>(request_handler), static_cast<ServerRPC&>(rpc), yield); }
+    AGRPC_TRY { req.invoke(static_cast<RequestHandler&&>(request_handler), rpc, yield); }
     AGRPC_CATCH(...) { eptr = std::current_exception(); }
-    if (!rpc.is_finished())
+    if (!detail::ServerRPCContextBaseAccess::is_finished(rpc))
     {
         rpc.cancel();
     }
     if constexpr (ServerRPC::Traits::NOTIFY_WHEN_DONE)
     {
-        if (rpc.is_running())
+        if (!rpc.is_done())
         {
-            rpc.done(yield);
+            rpc.wait_for_done(yield);
+        }
+    }
+    if constexpr (ServerRPC::Traits::RESUMABLE_READ)
+    {
+        if (rpc.is_reading())
+        {
+            rpc.wait_for_read(yield);
         }
     }
     if (eptr)

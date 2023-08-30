@@ -18,31 +18,25 @@
 #include <agrpc/detail/async_initiate.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
-#include <agrpc/detail/server_rpc_notify_when_done.hpp>
+#include <agrpc/detail/running_manual_reset_event.hpp>
 #include <grpcpp/server_context.h>
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <bool IsNotifyWhenDone>
+template <bool>
 class ServerRPCNotifyWhenDoneBase
 {
-  public:
-    bool is_running() const { return notify_when_done_.is_running(); }
-
-    template <class CompletionToken>
-    auto done(agrpc::GrpcContext& grpc_context, CompletionToken&& token)
-    {
-        return notify_when_done_.done(grpc_context, static_cast<CompletionToken&&>(token));
-    }
-
   private:
     friend detail::ServerRPCContextBaseAccess;
 
-    void initiate(grpc::ServerContext& server_context) { notify_when_done_.initiate(server_context); }
+    template <bool, class, class>
+    friend class detail::ServerRPCNotifyWhenDoneMixin;
 
-    detail::NotifyWhenDone notify_when_done_{};
+    void initiate(grpc::ServerContext& server_context) { server_context.AsyncNotifyWhenDone(event_.tag()); }
+
+    RunningManualResetEvent<void()> event_;
 };
 
 template <>

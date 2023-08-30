@@ -17,12 +17,13 @@
 
 #include "test/v1/test.grpc.pb.h"
 
+#include <agrpc/default_server_rpc_traits.hpp>
 #include <agrpc/server_rpc.hpp>
 #include <doctest/doctest.h>
 
 namespace test
 {
-struct NotifyWhenDoneTraits
+struct NotifyWhenDoneTraits : agrpc::DefaultServerRPCTraits
 {
     static constexpr bool NOTIFY_WHEN_DONE = true;
 };

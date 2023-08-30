@@ -118,10 +118,11 @@ struct ServerRPCContextBaseAccess;
 
 struct RPCExecutorBaseAccess;
 
-class NotifyWhenDone;
+template <bool IsNotifyWhenDone, class Responder, class Executor>
+class ServerRPCNotifyWhenDoneMixin;
 
-template <auto RequestRPC, class Traits = agrpc::DefaultServerRPCTraits, class Executor = agrpc::BasicGrpcExecutor<>>
-class UnstartedServerRPC;
+template <class Signature>
+class RunningManualResetEvent;
 
 AGRPC_NAMESPACE_CPP20_BEGIN()
 

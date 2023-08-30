@@ -23,7 +23,46 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class CompletionHandler>
+template <class>
+struct InvokeSuccessfully
+{
+    template <class Ch, class... Args>
+    static void invoke(Ch&& ch, Args&&... args)
+    {
+        static_cast<Ch&&>(ch)(static_cast<Args&&>(args)...);
+    }
+};
+
+template <class... Args>
+struct InvokeSuccessfully<void(detail::ErrorCode, Args...)>
+{
+    template <class Ch, class... T>
+    static void invoke(Ch&& ch, T&&... args)
+    {
+        static_cast<Ch&&>(ch)(detail::ErrorCode{}, static_cast<T&&>(args)...);
+    }
+};
+
+template <class Signature>
+struct InvokeCancelled
+{
+    template <class Ch>
+    static constexpr void invoke(Ch&&) noexcept
+    {
+    }
+};
+
+template <class... Args>
+struct InvokeCancelled<void(detail::ErrorCode, Args...)>
+{
+    template <class Ch>
+    static void invoke(Ch&& ch)
+    {
+        static_cast<Ch&&>(ch)(detail::operation_aborted_error_code(), Args{}...);
+    }
+};
+
+template <class CompletionHandler, class Signature = void>
 class CompletionHandlerReceiver
 {
   public:
@@ -34,12 +73,13 @@ class CompletionHandlerReceiver
     {
     }
 
-    static void set_done() noexcept {}
+    void set_done() { InvokeCancelled<Signature>::invoke(static_cast<CompletionHandler&&>(completion_handler_)); }
 
     template <class... Args>
     void set_value(Args&&... args) &&
     {
-        static_cast<CompletionHandler&&>(completion_handler_)(static_cast<Args&&>(args)...);
+        InvokeSuccessfully<Signature>::invoke(static_cast<CompletionHandler&&>(completion_handler_),
+                                              static_cast<Args&&>(args)...);
     }
 
     static void set_error(const std::exception_ptr& ep) { std::rethrow_exception(ep); }
@@ -55,20 +95,21 @@ class CompletionHandlerReceiver
 
 AGRPC_NAMESPACE_END
 
-template <class CompletionHandler, class Alloc>
-struct agrpc::detail::container::uses_allocator<agrpc::detail::CompletionHandlerReceiver<CompletionHandler>, Alloc>
-    : std::false_type
+template <class CompletionHandler, class Signature, class Alloc>
+struct agrpc::detail::container::uses_allocator<agrpc::detail::CompletionHandlerReceiver<CompletionHandler, Signature>,
+                                                Alloc> : std::false_type
 {
 };
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 
-template <class CompletionHandler, class Allocator1>
-struct agrpc::asio::associated_allocator<agrpc::detail::CompletionHandlerReceiver<CompletionHandler>, Allocator1>
+template <class CompletionHandler, class Signature, class Allocator1>
+struct agrpc::asio::associated_allocator<agrpc::detail::CompletionHandlerReceiver<CompletionHandler, Signature>,
+                                         Allocator1>
 {
     using type = asio::associated_allocator_t<CompletionHandler, Allocator1>;
 
-    static constexpr decltype(auto) get(const agrpc::detail::CompletionHandlerReceiver<CompletionHandler>& b,
+    static constexpr decltype(auto) get(const agrpc::detail::CompletionHandlerReceiver<CompletionHandler, Signature>& b,
                                         const Allocator1& allocator = Allocator1()) noexcept
     {
         return asio::get_associated_allocator(b.completion_handler(), allocator);
@@ -77,13 +118,13 @@ struct agrpc::asio::associated_allocator<agrpc::detail::CompletionHandlerReceive
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 
-template <template <class, class> class Associator, class CompletionHandler, class DefaultCandidate>
-struct agrpc::asio::associator<Associator, agrpc::detail::CompletionHandlerReceiver<CompletionHandler>,
+template <template <class, class> class Associator, class CompletionHandler, class Signature, class DefaultCandidate>
+struct agrpc::asio::associator<Associator, agrpc::detail::CompletionHandlerReceiver<CompletionHandler, Signature>,
                                DefaultCandidate>
 {
     using type = typename Associator<CompletionHandler, DefaultCandidate>::type;
 
-    static constexpr decltype(auto) get(const agrpc::detail::CompletionHandlerReceiver<CompletionHandler>& b,
+    static constexpr decltype(auto) get(const agrpc::detail::CompletionHandlerReceiver<CompletionHandler, Signature>& b,
                                         const DefaultCandidate& c = DefaultCandidate()) noexcept
     {
         return Associator<CompletionHandler, DefaultCandidate>::get(b.completion_handler(), c);
@@ -96,8 +137,8 @@ struct agrpc::asio::associator<Associator, agrpc::detail::CompletionHandlerRecei
 
 #ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
 #if !defined(BOOST_ASIO_HAS_DEDUCED_SET_DONE_MEMBER_TRAIT) && !defined(ASIO_HAS_DEDUCED_SET_DONE_MEMBER_TRAIT)
-template <class CompletionHandler>
-struct agrpc::asio::traits::set_done_member<agrpc::detail::CompletionHandlerReceiver<CompletionHandler>>
+template <class CompletionHandler, class Signature>
+struct agrpc::asio::traits::set_done_member<agrpc::detail::CompletionHandlerReceiver<CompletionHandler, Signature>>
 {
     static constexpr bool is_valid = true;
     static constexpr bool is_noexcept = true;
@@ -107,8 +148,8 @@ struct agrpc::asio::traits::set_done_member<agrpc::detail::CompletionHandlerRece
 #endif
 
 #if !defined(BOOST_ASIO_HAS_DEDUCED_SET_VALUE_MEMBER_TRAIT) && !defined(ASIO_HAS_DEDUCED_SET_VALUE_MEMBER_TRAIT)
-template <class CompletionHandler, class Vs>
-struct agrpc::asio::traits::set_value_member<agrpc::detail::CompletionHandlerReceiver<CompletionHandler>, Vs>
+template <class CompletionHandler, class Signature, class Vs>
+struct agrpc::asio::traits::set_value_member<agrpc::detail::CompletionHandlerReceiver<CompletionHandler, Signature>, Vs>
 {
     static constexpr bool is_valid = true;
     static constexpr bool is_noexcept = false;
@@ -118,8 +159,8 @@ struct agrpc::asio::traits::set_value_member<agrpc::detail::CompletionHandlerRec
 #endif
 
 #if !defined(BOOST_ASIO_HAS_DEDUCED_SET_ERROR_MEMBER_TRAIT) && !defined(ASIO_HAS_DEDUCED_SET_ERROR_MEMBER_TRAIT)
-template <class CompletionHandler, class E>
-struct agrpc::asio::traits::set_error_member<agrpc::detail::CompletionHandlerReceiver<CompletionHandler>, E>
+template <class CompletionHandler, class Signature, class E>
+struct agrpc::asio::traits::set_error_member<agrpc::detail::CompletionHandlerReceiver<CompletionHandler, Signature>, E>
 {
     static constexpr bool is_valid = true;
     static constexpr bool is_noexcept = false;

@@ -83,7 +83,7 @@ struct ServerRPCTest : std::conditional_t<(agrpc::ServerRPCType::GENERIC == RPC:
         {
             if (use_notify_when_done)
             {
-                return rpc.done(asio::use_future);
+                return rpc.wait_for_done(asio::use_future);
             }
         }
         return std::future<void>{};
@@ -105,13 +105,6 @@ struct ServerRPCTest : std::conditional_t<(agrpc::ServerRPCType::GENERIC == RPC:
     test::ServerShutdownInitiator server_shutdown{*this->server};
     bool use_notify_when_done{};
 };
-
-TEST_CASE_TEMPLATE("ServerRPC can be destructed without being started", RPC, test::UnaryServerRPC,
-                   test::ServerStreamingServerRPC, test::BidirectionalStreamingServerRPC, test::GenericServerRPC)
-{
-    test::GrpcClientServerTest test;
-    CHECK_NOTHROW([[maybe_unused]] RPC rpc{test.get_executor()});
-}
 
 TEST_CASE_TEMPLATE("ServerRPC unary success", RPC, test::UnaryServerRPC, test::NotifyWhenDoneUnaryServerRPC)
 {

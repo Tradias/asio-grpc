@@ -66,35 +66,11 @@ class ServerRPCContextBase : private ServerContextBase<Responder>
      */
     void cancel() noexcept { this->server_context_.TryCancel(); }
 
-    [[nodiscard]] bool is_finished() const noexcept { return is_finished_; }
-
-  protected:
-    ServerRPCContextBase() = default;
-
-    template <class ServerContextInitFunction>
-    explicit ServerRPCContextBase(ServerContextInitFunction&& init_function) noexcept
-    {
-        static_cast<ServerContextInitFunction&&>(init_function)(this->server_context_);
-    }
-
-    ServerRPCContextBase(const ServerRPCContextBase&) = delete;
-
-    ServerRPCContextBase(ServerRPCContextBase&& other) = delete;
-
-    ~ServerRPCContextBase() noexcept
-    {
-        if (is_started_ && !is_finished_)
-        {
-            this->server_context_.TryCancel();
-        }
-    }
-
-    ServerRPCContextBase& operator=(const ServerRPCContextBase&) = delete;
-
-    ServerRPCContextBase& operator=(ServerRPCContextBase&& other) = delete;
-
   private:
     friend detail::ServerRPCContextBaseAccess;
+
+    template <bool, class, class>
+    friend class detail::ServerRPCNotifyWhenDoneMixin;
 
     Responder responder_{&this->server_context_};
     bool is_started_{};
@@ -107,32 +83,21 @@ class ServerRPCResponderAndNotifyWhenDone : public ServerRPCContextBase<Responde
 {
   private:
     friend detail::ServerRPCContextBaseAccess;
-};
 
-template <class Executor, class Responder, bool IsNotifyWhenDone>
-class ServerRPCBase : public detail::RPCExecutorBase<Executor>,
-                      public ServerRPCResponderAndNotifyWhenDone<Responder, IsNotifyWhenDone>
-{
-  public:
-    using detail::RPCExecutorBase<Executor>::RPCExecutorBase;
-
-    template <class CompletionToken>
-    auto done(CompletionToken&& token)
-    {
-        return ServerRPCNotifyWhenDoneBase<IsNotifyWhenDone>::done(RPCExecutorBaseAccess::grpc_context(*this),
-                                                                   static_cast<CompletionToken&&>(token));
-    }
-};
-
-template <class Executor, class Responder>
-class ServerRPCBase<Executor, Responder, false> : public detail::RPCExecutorBase<Executor>,
-                                                  public ServerRPCResponderAndNotifyWhenDone<Responder, false>
-{
-    using detail::RPCExecutorBase<Executor>::RPCExecutorBase;
+    using ServerRPCContextBase<Responder>::ServerRPCContextBase;
 };
 
 struct ServerRPCContextBaseAccess
 {
+    template <class ServerRPC>
+    using Responder = typename ServerRPC::Responder;
+
+    template <class ServerRPC>
+    static auto construct(const typename ServerRPC::executor_type& executor)
+    {
+        return ServerRPC(executor);
+    }
+
     template <class Responder>
     static Responder& responder(ServerRPCContextBase<Responder>& rpc) noexcept
     {

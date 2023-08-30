@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_RPC_REQUEST_HPP
 
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/start_server_rpc.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -28,16 +29,16 @@ struct RPCRequest
     template <class RPC, class Service, class CompletionToken>
     auto start(RPC& rpc, Service& service, CompletionToken&& token)
     {
-        return rpc.start(service, request, static_cast<CompletionToken&&>(token));
+        return detail::start(rpc, service, request_, static_cast<CompletionToken&&>(token));
     }
 
     template <class Handler, class RPC, class CompletionToken>
     auto invoke(Handler&& handler, RPC& rpc, CompletionToken&& token)
     {
-        static_cast<Handler&&>(handler)(rpc, request, static_cast<CompletionToken&&>(token));
+        static_cast<Handler&&>(handler)(rpc, request_, static_cast<CompletionToken&&>(token));
     }
 
-    Request request;
+    Request request_;
 };
 
 template <class Request>
@@ -46,7 +47,7 @@ struct RPCRequest<Request, false>
     template <class RPC, class Service, class CompletionToken>
     auto start(RPC& rpc, Service& service, CompletionToken&& token)
     {
-        return rpc.start(service, static_cast<CompletionToken&&>(token));
+        return detail::start(rpc, service, static_cast<CompletionToken&&>(token));
     }
 
     template <class Handler, class RPC, class CompletionToken>

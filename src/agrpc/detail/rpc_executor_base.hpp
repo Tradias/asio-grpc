@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_RPC_EXECUTOR_BASE_HPP
 
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/default_completion_token.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/query_grpc_context.hpp>
 #include <agrpc/detail/tagged_ptr.hpp>
@@ -53,9 +54,6 @@ class RPCExecutorBase
     template <auto, class, class>
     friend class agrpc::ServerRPC;
 
-    template <auto, class, class>
-    friend class detail::UnstartedServerRPC;
-
     template <auto, class>
     friend class detail::ClientRPCServerStreamingBase;
 
@@ -65,7 +63,10 @@ class RPCExecutorBase
     template <class, class, class>
     friend class detail::ServerRPCBidiStreamingBase;
 
-    friend struct detail::RPCExecutorBaseAccess;
+    template <bool, class, class>
+    friend class detail::ServerRPCNotifyWhenDoneMixin;
+
+    friend detail::RPCExecutorBaseAccess;
 
     RPCExecutorBase() : executor_(agrpc::GrpcExecutor{}) {}
 
@@ -78,6 +79,9 @@ class RPCExecutorBase
 
 struct RPCExecutorBaseAccess
 {
+    template <class T>
+    using DefaultCompletionTokenT = detail::DefaultCompletionTokenT<typename T::executor_type>;
+
     template <class Executor>
     static agrpc::GrpcContext& grpc_context(detail::RPCExecutorBase<Executor>& rpc) noexcept
     {
