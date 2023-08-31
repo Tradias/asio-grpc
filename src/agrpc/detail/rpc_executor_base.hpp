@@ -74,7 +74,7 @@ class RPCExecutorBase
 
     explicit RPCExecutorBase(const Executor& executor) : executor_(executor) {}
 
-    auto& grpc_context() const noexcept { return detail::query_grpc_context(executor_); }
+    [[nodiscard]] agrpc::GrpcContext& grpc_context() const noexcept { return detail::query_grpc_context(executor_); }
 
     Executor executor_;
 };

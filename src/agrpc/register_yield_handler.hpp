@@ -77,7 +77,7 @@ void register_yield_handler(const typename ServerRPC::executor_type& executor, S
     }
     if constexpr (ServerRPC::Traits::RESUMABLE_READ)
     {
-        if (rpc.is_reading())
+        if (detail::ServerRPCReadMixinAccess::is_reading(rpc))
         {
             rpc.wait_for_read(yield);
         }

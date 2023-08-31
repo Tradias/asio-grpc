@@ -24,12 +24,12 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+struct ServerRPCReadMixinAccess;
+
 template <bool IsSet, class Base>
 class ServerRPCReadMixin : public Base
 {
   public:
-    [[nodiscard]] bool is_reading() const { return event_.is_running(); }
-
     template <class Request>
     void initiate_read(Request& request)
     {
@@ -47,6 +47,8 @@ class ServerRPCReadMixin : public Base
     using Base::Base;
 
   private:
+    friend detail::ServerRPCReadMixinAccess;
+
     RunningManualResetEvent<void(bool)> event_;
 };
 
@@ -55,6 +57,15 @@ class ServerRPCReadMixin<false, Base> : public Base
 {
   protected:
     using Base::Base;
+};
+
+struct ServerRPCReadMixinAccess
+{
+    template <bool IsSet, class Base>
+    [[nodiscard]] static bool is_reading(ServerRPCReadMixin<IsSet, Base>& mixin) noexcept
+    {
+        return mixin.event_.is_running();
+    }
 };
 }
 
