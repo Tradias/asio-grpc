@@ -35,7 +35,7 @@ class ServerRPCNotifyWhenDoneMixin : public RPCExecutorBase<Executor>,
         return this->event_.wait(RPCExecutorBaseAccess::grpc_context(*this), static_cast<CompletionToken&&>(token));
     }
 
-  private:
+  protected:
     using RPCExecutorBase<Executor>::RPCExecutorBase;
 };
 
@@ -43,7 +43,7 @@ template <class Responder, class Executor>
 class ServerRPCNotifyWhenDoneMixin<false, Responder, Executor>
     : public RPCExecutorBase<Executor>, public ServerRPCResponderAndNotifyWhenDone<Responder, false>
 {
-  private:
+  protected:
     using RPCExecutorBase<Executor>::RPCExecutorBase;
 };
 }

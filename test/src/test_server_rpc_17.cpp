@@ -48,7 +48,7 @@ struct ServerRPCTest : std::conditional_t<(agrpc::ServerRPCType::GENERIC == RPC:
         if constexpr (RPC::Traits::NOTIFY_WHEN_DONE)
         {
             SUBCASE("implicit notify when done") {}
-            SUBCASE("explicit notify when done") { use_notify_when_done = true; }
+            SUBCASE("explicit notify when done") { use_notify_when_done_ = true; }
         }
     }
 
@@ -57,7 +57,7 @@ struct ServerRPCTest : std::conditional_t<(agrpc::ServerRPCType::GENERIC == RPC:
     {
         int counter{};
         auto run_client_function =
-            [&counter, &client_function, &server_shutdown = this->server_shutdown](const asio::yield_context& yield)
+            [&counter, &client_function, &server_shutdown = this->server_shutdown_](const asio::yield_context& yield)
         {
             typename ClientRPC::Request request;
             typename ClientRPC::Response response;
@@ -81,7 +81,7 @@ struct ServerRPCTest : std::conditional_t<(agrpc::ServerRPCType::GENERIC == RPC:
     {
         if constexpr (RPC::Traits::NOTIFY_WHEN_DONE)
         {
-            if (use_notify_when_done)
+            if (use_notify_when_done_)
             {
                 return rpc.wait_for_done(asio::use_future);
             }
@@ -94,7 +94,7 @@ struct ServerRPCTest : std::conditional_t<(agrpc::ServerRPCType::GENERIC == RPC:
     {
         if constexpr (RPC::Traits::NOTIFY_WHEN_DONE)
         {
-            if (use_notify_when_done)
+            if (use_notify_when_done_)
             {
                 CHECK(test::wait_for_future(this->grpc_context, future, yield));
                 CHECK_FALSE(rpc.context().IsCancelled());
@@ -102,8 +102,8 @@ struct ServerRPCTest : std::conditional_t<(agrpc::ServerRPCType::GENERIC == RPC:
         }
     }
 
-    test::ServerShutdownInitiator server_shutdown{*this->server};
-    bool use_notify_when_done{};
+    test::ServerShutdownInitiator server_shutdown_{*this->server};
+    bool use_notify_when_done_{};
 };
 
 TEST_CASE_TEMPLATE("ServerRPC unary success", RPC, test::UnaryServerRPC, test::NotifyWhenDoneUnaryServerRPC)

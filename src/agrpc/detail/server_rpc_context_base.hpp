@@ -81,17 +81,15 @@ template <class Responder, bool IsNotifyWhenDone>
 class ServerRPCResponderAndNotifyWhenDone : public ServerRPCContextBase<Responder>,
                                             public ServerRPCNotifyWhenDoneBase<IsNotifyWhenDone>
 {
+  protected:
+    using ServerRPCContextBase<Responder>::ServerRPCContextBase;
+
   private:
     friend detail::ServerRPCContextBaseAccess;
-
-    using ServerRPCContextBase<Responder>::ServerRPCContextBase;
 };
 
 struct ServerRPCContextBaseAccess
 {
-    template <class ServerRPC>
-    using Responder = typename ServerRPC::Responder;
-
     template <class ServerRPC>
     static auto construct(const typename ServerRPC::executor_type& executor)
     {

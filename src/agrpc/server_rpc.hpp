@@ -54,6 +54,12 @@ class ServerRPC<RequestRPC, TraitsT, Executor>
         using other = ServerRPC<RequestRPC, TraitsT, OtherExecutor>;
     };
 
+    ServerRPC() = delete;
+    ServerRPC(const ServerRPC& other) = delete;
+    ServerRPC(ServerRPC&& other) = delete;
+    ServerRPC& operator=(const ServerRPC& other) = delete;
+    ServerRPC& operator=(ServerRPC&& other) = delete;
+
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto send_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
@@ -84,12 +90,6 @@ class ServerRPC<RequestRPC, TraitsT, Executor>
     friend detail::ServerRPCContextBaseAccess;
 
     using detail::ServerRPCBase<Responder, TraitsT, Executor>::ServerRPCBase;
-
-    ServerRPC() = delete;
-    ServerRPC(const ServerRPC& other) = delete;
-    ServerRPC(ServerRPC&& other) = delete;
-    ServerRPC& operator=(const ServerRPC& other) = delete;
-    ServerRPC& operator=(ServerRPC&& other) = delete;
 };
 
 template <class ServiceT, class RequestT, class ResponseT,
@@ -122,6 +122,12 @@ class ServerRPC<RequestRPC, TraitsT, Executor>
         using other = ServerRPC<RequestRPC, TraitsT, OtherExecutor>;
     };
 
+    ServerRPC() = delete;
+    ServerRPC(const ServerRPC& other) = delete;
+    ServerRPC(ServerRPC&& other) = delete;
+    ServerRPC& operator=(const ServerRPC& other) = delete;
+    ServerRPC& operator=(ServerRPC&& other) = delete;
+
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto send_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
@@ -160,12 +166,6 @@ class ServerRPC<RequestRPC, TraitsT, Executor>
     friend detail::ServerRPCContextBaseAccess;
 
     using detail::ServerRPCBase<Responder, TraitsT, Executor>::ServerRPCBase;
-
-    ServerRPC() = delete;
-    ServerRPC(const ServerRPC& other) = delete;
-    ServerRPC(ServerRPC&& other) = delete;
-    ServerRPC& operator=(const ServerRPC& other) = delete;
-    ServerRPC& operator=(ServerRPC&& other) = delete;
 };
 
 template <class ServiceT, class RequestT, class ResponseT,
@@ -197,6 +197,12 @@ class ServerRPC<RequestRPC, TraitsT, Executor>
          */
         using other = ServerRPC<RequestRPC, TraitsT, OtherExecutor>;
     };
+
+    ServerRPC() = delete;
+    ServerRPC(const ServerRPC& other) = delete;
+    ServerRPC(ServerRPC&& other) = delete;
+    ServerRPC& operator=(const ServerRPC& other) = delete;
+    ServerRPC& operator=(ServerRPC&& other) = delete;
 
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto send_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
@@ -249,12 +255,6 @@ class ServerRPC<RequestRPC, TraitsT, Executor>
     friend detail::ServerRPCContextBaseAccess;
 
     using detail::ServerRPCBase<Responder, TraitsT, Executor>::ServerRPCBase;
-
-    ServerRPC() = delete;
-    ServerRPC(const ServerRPC& other) = delete;
-    ServerRPC(ServerRPC&& other) = delete;
-    ServerRPC& operator=(const ServerRPC& other) = delete;
-    ServerRPC& operator=(ServerRPC&& other) = delete;
 };
 
 namespace detail
@@ -265,10 +265,6 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
 {
   private:
     using Responder = ResponderT<ResponseT, RequestT>;
-
-    friend detail::ServerRPCContextBaseAccess;
-
-    using detail::ServerRPCBase<Responder, TraitsT, Executor>::ServerRPCBase;
 
   public:
     using Request = RequestT;
@@ -329,6 +325,11 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
             this->grpc_context(), detail::ServerFinishSenderInitation{status},
             detail::ServerFinishSenderImplementation<Responder>{*this}, token);
     }
+
+  private:
+    friend detail::ServerRPCContextBaseAccess;
+
+    using detail::ServerRPCBase<Responder, TraitsT, Executor>::ServerRPCBase;
 };
 }
 
@@ -355,15 +356,15 @@ class ServerRPC<RequestRPC, TraitsT, Executor>
         using other = ServerRPC<RequestRPC, TraitsT, OtherExecutor>;
     };
 
-  private:
-    using detail::ServerRPCBidiStreamingBase<grpc::ServerAsyncReaderWriter<ResponseT, RequestT>, TraitsT,
-                                             Executor>::ServerRPCBidiStreamingBase;
-
     ServerRPC() = delete;
     ServerRPC(const ServerRPC& other) = delete;
     ServerRPC(ServerRPC&& other) = delete;
     ServerRPC& operator=(const ServerRPC& other) = delete;
     ServerRPC& operator=(ServerRPC&& other) = delete;
+
+  private:
+    using detail::ServerRPCBidiStreamingBase<grpc::ServerAsyncReaderWriter<ResponseT, RequestT>, TraitsT,
+                                             Executor>::ServerRPCBidiStreamingBase;
 };
 
 template <class TraitsT, class Executor>
@@ -388,15 +389,15 @@ class ServerRPC<agrpc::ServerRPCType::GENERIC, TraitsT, Executor>
         using other = ServerRPC<agrpc::ServerRPCType::GENERIC, TraitsT, OtherExecutor>;
     };
 
-  private:
-    using detail::ServerRPCBidiStreamingBase<grpc::GenericServerAsyncReaderWriter, TraitsT,
-                                             Executor>::ServerRPCBidiStreamingBase;
-
     ServerRPC() = delete;
     ServerRPC(const ServerRPC& other) = delete;
     ServerRPC(ServerRPC&& other) = delete;
     ServerRPC& operator=(const ServerRPC& other) = delete;
     ServerRPC& operator=(ServerRPC&& other) = delete;
+
+  private:
+    using detail::ServerRPCBidiStreamingBase<grpc::GenericServerAsyncReaderWriter, TraitsT,
+                                             Executor>::ServerRPCBidiStreamingBase;
 };
 
 template <class Traits = agrpc::DefaultServerRPCTraits, class Executor = agrpc::GrpcExecutor>

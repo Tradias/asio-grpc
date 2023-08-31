@@ -43,16 +43,17 @@ class ServerRPCReadMixin : public Base
         return event_.wait(RPCExecutorBaseAccess::grpc_context(*this), static_cast<CompletionToken&&>(token));
     }
 
-  private:
+  protected:
     using Base::Base;
 
+  private:
     RunningManualResetEvent<void(bool)> event_;
 };
 
 template <class Base>
 class ServerRPCReadMixin<false, Base> : public Base
 {
-  private:
+  protected:
     using Base::Base;
 };
 }

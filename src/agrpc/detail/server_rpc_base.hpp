@@ -28,7 +28,7 @@ class ServerRPCBase
     : public ServerRPCReadMixin<Traits::RESUMABLE_READ,
                                 ServerRPCNotifyWhenDoneMixin<Traits::NOTIFY_WHEN_DONE, Responder, Executor>>
 {
-  private:
+  protected:
     using ServerRPCReadMixin<Traits::RESUMABLE_READ, ServerRPCNotifyWhenDoneMixin<Traits::NOTIFY_WHEN_DONE, Responder,
                                                                                   Executor>>::ServerRPCReadMixin;
 };

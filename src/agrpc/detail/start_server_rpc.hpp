@@ -30,8 +30,7 @@ auto start(agrpc::ServerRPC<RequestRPC, TraitsT, Executor>& rpc, Service& servic
            typename agrpc::ServerRPC<RequestRPC, TraitsT, Executor>::Request& request,
            CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
 {
-    using Responder = typename detail::ServerRPCContextBaseAccess::template Responder<
-        agrpc::ServerRPC<RequestRPC, TraitsT, Executor>>;
+    using Responder = std::remove_reference_t<decltype(ServerRPCContextBaseAccess::responder(rpc))>;
     return detail::async_initiate_sender_implementation(
         RPCExecutorBaseAccess::grpc_context(rpc),
         detail::ServerRequestSenderInitiation<RequestRPC, TraitsT::NOTIFY_WHEN_DONE>{service, request},
@@ -43,8 +42,7 @@ template <auto RequestRPC, class TraitsT, class Executor, class Service,
 auto start(agrpc::ServerRPC<RequestRPC, TraitsT, Executor>& rpc, Service& service,
            CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
 {
-    using Responder = typename detail::ServerRPCContextBaseAccess::template Responder<
-        agrpc::ServerRPC<RequestRPC, TraitsT, Executor>>;
+    using Responder = std::remove_reference_t<decltype(ServerRPCContextBaseAccess::responder(rpc))>;
     return detail::async_initiate_sender_implementation(
         RPCExecutorBaseAccess::grpc_context(rpc),
         detail::ServerRequestSenderInitiation<RequestRPC, TraitsT::NOTIFY_WHEN_DONE>{service},

@@ -68,6 +68,8 @@ class RPCExecutorBase
 
     friend detail::RPCExecutorBaseAccess;
 
+    friend detail::ServerRPCContextBaseAccess;
+
     RPCExecutorBase() : executor_(agrpc::GrpcExecutor{}) {}
 
     explicit RPCExecutorBase(const Executor& executor) : executor_(executor) {}
