@@ -130,24 +130,6 @@ TEST_CASE_FIXTURE(test::ClientRPCTest<test::ServerStreamingClientRPC>,
                     test::Exception);
 }
 
-TEST_CASE_TEMPLATE("ClientRPC::read_initial_metadata successfully", RPC, test::ClientStreamingClientRPC,
-                   test::ServerStreamingClientRPC, test::BidirectionalStreamingClientRPC)
-{
-    test::ClientRPCTest<RPC> test;
-    test.spawn_and_run(
-        [&](const asio::yield_context& yield)
-        {
-            test.test_server.request_rpc(yield);
-            agrpc::send_initial_metadata(test.test_server.responder, yield);
-        },
-        [&](const asio::yield_context& yield)
-        {
-            auto rpc = test.create_rpc();
-            CHECK(test.start_rpc(rpc, yield));
-            CHECK(rpc.read_initial_metadata(yield));
-        });
-}
-
 TEST_CASE_TEMPLATE("ClientRPC::read_initial_metadata on cancelled RPC", RPC, test::ClientStreamingClientRPC,
                    test::ServerStreamingClientRPC)
 {
@@ -214,53 +196,6 @@ TEST_CASE_FIXTURE(test::ClientRPCTest<test::UnaryClientRPC>,
     CHECK_EQ(21, response.integer());
 }
 #endif
-
-TEST_CASE_FIXTURE(test::ClientRPCTest<test::GenericUnaryClientRPC>, "ClientRPC::request generic unary RPC successfully")
-{
-    bool use_executor_overload{};
-    SUBCASE("executor overload") {}
-    SUBCASE("GrpcContext overload") { use_executor_overload = true; }
-    spawn_and_run(
-        [&](const asio::yield_context& yield)
-        {
-            CHECK(test_server.request_rpc(yield));
-            CHECK_EQ(42, test_server.request.integer());
-            test_server.response.set_integer(24);
-            CHECK(agrpc::finish(test_server.responder, test_server.response, grpc::Status::OK, yield));
-        },
-        [&](const asio::yield_context& yield)
-        {
-            test::msg::Request typed_request;
-            typed_request.set_integer(42);
-            request = test::message_to_grpc_buffer(typed_request);
-            auto status = request_rpc(use_executor_overload, yield);
-            CHECK(status.ok());
-            CHECK_EQ(24, test::grpc_buffer_to_message<test::msg::Response>(response).integer());
-        });
-}
-
-TEST_CASE_FIXTURE(test::ClientRPCTest<test::ServerStreamingClientRPC>, "ServerStreamingClientRPC::read successfully")
-{
-    spawn_and_run(
-        [&](const asio::yield_context& yield)
-        {
-            CHECK(test_server.request_rpc(yield));
-            CHECK_EQ(42, test_server.request.integer());
-            test_server.response.set_integer(1);
-            CHECK(agrpc::write(test_server.responder, test_server.response, yield));
-            CHECK(agrpc::finish(test_server.responder, grpc::Status::OK, yield));
-        },
-        [&](const asio::yield_context& yield)
-        {
-            auto rpc = create_rpc();
-            request.set_integer(42);
-            start_rpc(rpc, yield);
-            CHECK(rpc.read(response, yield));
-            CHECK_EQ(1, response.integer());
-            CHECK_FALSE(rpc.read(response, yield));
-            CHECK_EQ(grpc::StatusCode::OK, rpc.finish(yield).error_code());
-        });
-}
 
 TEST_CASE_FIXTURE(test::ClientRPCTest<test::ServerStreamingClientRPC>, "ServerStreamingClientRPC::read failure")
 {
@@ -356,38 +291,6 @@ TEST_CASE_FIXTURE(ClientRPCIoContextTest<test::ClientStreamingClientRPC>,
         });
 }
 
-TEST_CASE_FIXTURE(test::ClientRPCTest<test::ClientStreamingClientRPC>, "ClientStreamingClientRPC::write successfully")
-{
-    bool set_last_message{};
-    SUBCASE("write and finish separately") {}
-    SUBCASE("set_last_message") { set_last_message = true; }
-    spawn_and_run(
-        [&](const asio::yield_context& yield)
-        {
-            CHECK(test_server.request_rpc(yield));
-            CHECK(agrpc::read(test_server.responder, test_server.request, yield));
-            CHECK_EQ(42, test_server.request.integer());
-            test_server.response.set_integer(1);
-            CHECK_FALSE(agrpc::read(test_server.responder, test_server.request, yield));
-            CHECK(agrpc::finish(test_server.responder, test_server.response, grpc::Status::OK, yield));
-        },
-        [&](const asio::yield_context& yield)
-        {
-            auto rpc = create_rpc();
-            start_rpc(rpc, yield);
-            request.set_integer(42);
-            if (set_last_message)
-            {
-                CHECK(rpc.write(request, grpc::WriteOptions{}.set_last_message(), yield));
-            }
-            else
-            {
-                CHECK(rpc.write(request, yield));
-            }
-            CHECK_EQ(grpc::StatusCode::OK, rpc.finish(yield).error_code());
-        });
-}
-
 TEST_CASE_FIXTURE(test::ClientRPCTest<test::ClientStreamingClientRPC>, "ClientStreamingClientRPC::write failure")
 {
     grpc::WriteOptions options{};
@@ -452,35 +355,6 @@ TEST_CASE_FIXTURE(test::ClientRPCTest<test::ClientStreamingClientRPC>, "ClientSt
 #endif
 
 TEST_CASE_FIXTURE(ClientRPCIoContextTest<test::BidirectionalStreamingClientRPC>,
-                  "BidirectionalStreamingClientRPC success")
-{
-    run_server_client_on_separate_threads(
-        [&](const asio::yield_context& yield)
-        {
-            CHECK(test_server.request_rpc(yield));
-            CHECK(agrpc::read(test_server.responder, test_server.request, yield));
-            CHECK_FALSE(agrpc::read(test_server.responder, test_server.request, yield));
-            CHECK_EQ(42, test_server.request.integer());
-            test_server.response.set_integer(1);
-            CHECK(agrpc::write(test_server.responder, test_server.response, yield));
-            CHECK(agrpc::finish(test_server.responder, grpc::Status::OK, yield));
-        },
-        [&](const asio::yield_context& yield)
-        {
-            auto rpc = create_rpc();
-            start_rpc(rpc, yield);
-            request.set_integer(42);
-            CHECK(rpc.write(request, yield));
-            CHECK(rpc.writes_done(yield));
-            CHECK(rpc.read(response, yield));
-            CHECK_EQ(1, response.integer());
-            CHECK_FALSE(rpc.read(response, yield));
-            CHECK_EQ(1, response.integer());
-            CHECK_EQ(grpc::StatusCode::OK, rpc.finish(yield).error_code());
-        });
-}
-
-TEST_CASE_FIXTURE(ClientRPCIoContextTest<test::BidirectionalStreamingClientRPC>,
                   "BidirectionalStreamingClientRPC concurrent read+write")
 {
     bool set_last_message{};
@@ -542,39 +416,6 @@ TEST_CASE_FIXTURE(ClientRPCIoContextTest<test::BidirectionalStreamingClientRPC>,
             CHECK_FALSE(rpc.write(request, yield));
             CHECK_FALSE(promise.get_future().get());
             CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.finish(yield).error_code());
-        });
-}
-
-TEST_CASE_FIXTURE(ClientRPCIoContextTest<test::GenericStreamingClientRPC>, "GenericStreamingClientRPC success")
-{
-    run_server_client_on_separate_threads(
-        [&](const asio::yield_context& yield)
-        {
-            CHECK(test_server.request_rpc(yield));
-            test_server.response.set_integer(1);
-            CHECK(agrpc::read(test_server.responder, test_server.request, yield));
-            CHECK_FALSE(agrpc::read(test_server.responder, test_server.request, yield));
-            CHECK_EQ(42, test_server.request.integer());
-            CHECK(agrpc::write(test_server.responder, test_server.response, yield));
-            CHECK(agrpc::finish(test_server.responder, grpc::Status::OK, yield));
-        },
-        [&](const asio::yield_context& yield)
-        {
-            auto rpc = create_rpc();
-            CHECK(start_rpc(rpc, yield));
-
-            test::msg::Request typed_request;
-            typed_request.set_integer(42);
-            CHECK(rpc.write(test::message_to_grpc_buffer(typed_request), yield));
-            CHECK(rpc.writes_done(yield));
-
-            CHECK(rpc.read(response, yield));
-            CHECK_EQ(1, test::grpc_buffer_to_message<test::msg::Response>(response).integer());
-
-            response.Clear();
-            CHECK_FALSE(rpc.read(response, yield));
-
-            CHECK_EQ(grpc::StatusCode::OK, rpc.finish(yield).error_code());
         });
 }
 

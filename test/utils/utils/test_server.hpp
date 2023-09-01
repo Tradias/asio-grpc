@@ -47,8 +47,8 @@ struct TestServer<&test::v1::Test::AsyncService::RequestUnary> : test::TestServe
                               this->request, this->responder, std::forward<CompletionToken>(token));
     }
 
-    test::msg::Request request{};
-    test::msg::Response response{};
+    test::msg::Request request;
+    test::msg::Response response;
     grpc::ServerAsyncResponseWriter<test::msg::Response> responder{&server_context};
 };
 
@@ -64,8 +64,8 @@ struct TestServer<&test::v1::Test::AsyncService::RequestClientStreaming> : test:
                               this->server_context, this->responder, std::forward<CompletionToken>(token));
     }
 
-    test::msg::Request request{};
-    test::msg::Response response{};
+    test::msg::Request request;
+    test::msg::Response response;
     grpc::ServerAsyncReader<test::msg::Response, test::msg::Request> responder{&server_context};
 };
 
@@ -82,8 +82,8 @@ struct TestServer<&test::v1::Test::AsyncService::RequestServerStreaming> : test:
                               std::forward<CompletionToken>(token));
     }
 
-    test::msg::Request request{};
-    test::msg::Response response{};
+    test::msg::Request request;
+    test::msg::Response response;
     grpc::ServerAsyncWriter<test::msg::Response> responder{&server_context};
 };
 
@@ -99,16 +99,30 @@ struct TestServer<&test::v1::Test::AsyncService::RequestBidirectionalStreaming> 
                               this->server_context, this->responder, std::forward<CompletionToken>(token));
     }
 
-    test::msg::Request request{};
-    test::msg::Response response{};
+    test::msg::Request request;
+    test::msg::Response response;
     grpc::ServerAsyncReaderWriter<test::msg::Response, test::msg::Request> responder{&server_context};
 };
 
 template <>
 struct TestServer<agrpc::ServerRPCType::GENERIC>
 {
+    TestServer(grpc::AsyncGenericService& service, grpc::GenericServerContext& server_context)
+        : service(service), server_context(server_context)
+    {
+    }
+
+    template <class CompletionToken>
+    auto request_rpc(CompletionToken&& token)
+    {
+        return agrpc::request(service, server_context, responder, std::forward<CompletionToken>(token));
+    }
+
+    grpc::ByteBuffer request;
+    grpc::ByteBuffer response;
     grpc::AsyncGenericService& service;
     grpc::GenericServerContext& server_context;
+    grpc::GenericServerAsyncReaderWriter responder{&server_context};
 };
 }
 
