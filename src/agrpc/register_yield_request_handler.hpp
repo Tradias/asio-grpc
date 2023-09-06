@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_AGRPC_REGISTER_SPAWN_HANDLER_HPP
-#define AGRPC_AGRPC_REGISTER_SPAWN_HANDLER_HPP
+#ifndef AGRPC_AGRPC_REGISTER_YIELD_REQUEST_HANDLER_HPP
+#define AGRPC_AGRPC_REGISTER_YIELD_REQUEST_HANDLER_HPP
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/coroutine_traits.hpp>
@@ -44,13 +44,11 @@ void spawn(Executor&& executor, Function&& function)
 }
 
 template <class ServerRPC, class Service, class RequestHandler, class Executor>
-void register_yield_handler(const typename ServerRPC::executor_type& executor, Service& service,
-                            RequestHandler request_handler, const asio::basic_yield_context<Executor>& yield)
+void register_yield_request_handler(const typename ServerRPC::executor_type& executor, Service& service,
+                                    RequestHandler request_handler, const asio::basic_yield_context<Executor>& yield)
 {
-    static constexpr bool HAS_INITIAL_REQUEST =
-        ServerRPC::TYPE == agrpc::ServerRPCType::SERVER_STREAMING || ServerRPC::TYPE == agrpc::ServerRPCType::UNARY;
     auto rpc = detail::ServerRPCContextBaseAccess::construct<ServerRPC>(executor);
-    detail::RPCRequest<typename ServerRPC::Request, HAS_INITIAL_REQUEST> req;
+    detail::RPCRequest<typename ServerRPC::Request, detail::has_initial_request(ServerRPC::TYPE)> req;
     if (!req.start(rpc, service, yield))
     {
         return;
@@ -58,8 +56,8 @@ void register_yield_handler(const typename ServerRPC::executor_type& executor, S
     detail::spawn(yield,
                   [executor, &service, request_handler](const asio::basic_yield_context<Executor>& yield) mutable
                   {
-                      agrpc::register_yield_handler<ServerRPC>(executor, service,
-                                                               static_cast<RequestHandler&&>(request_handler), yield);
+                      agrpc::register_yield_request_handler<ServerRPC>(
+                          executor, service, static_cast<RequestHandler&&>(request_handler), yield);
                   });
     std::exception_ptr eptr;
     AGRPC_TRY { req.invoke(static_cast<RequestHandler&&>(request_handler), rpc, yield); }
@@ -90,4 +88,4 @@ void register_yield_handler(const typename ServerRPC::executor_type& executor, S
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_AGRPC_REGISTER_SPAWN_HANDLER_HPP
+#endif  // AGRPC_AGRPC_REGISTER_YIELD_REQUEST_HANDLER_HPP

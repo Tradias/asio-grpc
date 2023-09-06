@@ -42,5 +42,7 @@ std::chrono::system_clock::time_point five_hundred_milliseconds_from_now()
 
 std::chrono::system_clock::time_point one_second_from_now() { return test::now() + std::chrono::seconds(1); }
 
+std::chrono::system_clock::time_point two_seconds_from_now() { return test::now() + std::chrono::seconds(2); }
+
 std::chrono::system_clock::time_point five_seconds_from_now() { return test::now() + std::chrono::seconds(5); }
 }  // namespace test

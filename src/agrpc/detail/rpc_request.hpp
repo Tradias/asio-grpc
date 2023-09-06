@@ -17,11 +17,16 @@
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/start_server_rpc.hpp>
+#include <agrpc/rpc_type.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+constexpr bool has_initial_request(agrpc::ServerRPCType type) noexcept
+{
+    return type == agrpc::ServerRPCType::SERVER_STREAMING || type == agrpc::ServerRPCType::UNARY;
+}
 
 template <class Request, bool HasInitialRequest>
 struct RPCRequest
@@ -32,10 +37,10 @@ struct RPCRequest
         return detail::start(rpc, service, request_, static_cast<CompletionToken&&>(token));
     }
 
-    template <class Handler, class RPC, class CompletionToken>
-    auto invoke(Handler&& handler, RPC& rpc, CompletionToken&& token)
+    template <class Handler, class RPC, class... Args>
+    auto invoke(Handler&& handler, RPC& rpc, Args&&... args)
     {
-        static_cast<Handler&&>(handler)(rpc, request_, static_cast<CompletionToken&&>(token));
+        return static_cast<Handler&&>(handler)(rpc, request_, static_cast<Args&&>(args)...);
     }
 
     Request request_;
@@ -50,10 +55,10 @@ struct RPCRequest<Request, false>
         return detail::start(rpc, service, static_cast<CompletionToken&&>(token));
     }
 
-    template <class Handler, class RPC, class CompletionToken>
-    auto invoke(Handler&& handler, RPC& rpc, CompletionToken&& token)
+    template <class Handler, class RPC, class... Args>
+    auto invoke(Handler&& handler, RPC& rpc, Args&&... args)
     {
-        static_cast<Handler&&>(handler)(rpc, static_cast<CompletionToken&&>(token));
+        return static_cast<Handler&&>(handler)(rpc, static_cast<Args&&>(args)...);
     }
 };
 }

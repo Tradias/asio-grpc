@@ -28,19 +28,14 @@
 #include "utils/time.hpp"
 
 #include <agrpc/client_rpc.hpp>
-#include <agrpc/register_yield_handler.hpp>
+#include <agrpc/register_yield_request_handler.hpp>
 #include <agrpc/server_rpc.hpp>
 
 #include <cstddef>
 
 template <class RPC>
-struct ServerRPCTest : test::ClientRPCTest<typename test::IntrospectRPC<RPC>::ClientRPC>
+struct ServerRPCTest : test::ClientServerRPCTest<typename test::IntrospectRPC<RPC>::ClientRPC, RPC>
 {
-    static constexpr auto SERVER_REQUEST = test::IntrospectRPC<RPC>::SERVER_REQUEST;
-
-    using ServerRPC = RPC;
-    using ClientRPC = typename test::IntrospectRPC<RPC>::ClientRPC;
-
     ServerRPCTest() = default;
 
     explicit ServerRPCTest(bool)
@@ -50,31 +45,6 @@ struct ServerRPCTest : test::ClientRPCTest<typename test::IntrospectRPC<RPC>::Cl
             SUBCASE("implicit notify when done") {}
             SUBCASE("explicit notify when done") { use_notify_when_done_ = true; }
         }
-    }
-
-    template <class RequestHandler, class ClientFunction>
-    void register_and_perform_three_requests(RequestHandler handler, ClientFunction client_function)
-    {
-        int counter{};
-        auto run_client_function =
-            [&counter, &client_function, &server_shutdown = this->server_shutdown](const asio::yield_context& yield)
-        {
-            typename ClientRPC::Request request;
-            typename ClientRPC::Response response;
-            client_function(request, response, yield);
-            ++counter;
-            if (counter == 3)
-            {
-                server_shutdown.initiate();
-            }
-        };
-        test::spawn_and_run(
-            this->grpc_context,
-            [&](const asio::yield_context& yield)
-            {
-                agrpc::register_yield_handler<RPC>(this->get_executor(), this->service, handler, yield);
-            },
-            run_client_function, run_client_function, run_client_function);
     }
 
     auto set_up_notify_when_done([[maybe_unused]] RPC& rpc)
@@ -171,10 +141,10 @@ TEST_CASE_TEMPLATE("Streaming ClientRPC/ServerRPC read/send_initial_metadata suc
             rpc.context().AddInitialMetadata("test", "a");
             CHECK(rpc.send_initial_metadata(GetYield{}(args...)));
         },
-        [&](auto&, auto&, const asio::yield_context& yield)
+        [&](auto& request, auto& response, const asio::yield_context& yield)
         {
             auto rpc = test.create_rpc();
-            CHECK(test.start_rpc(rpc, yield));
+            CHECK(test.start_rpc(rpc, request, response, yield));
             CHECK(rpc.read_initial_metadata(yield));
             CHECK_EQ(0, rpc.context().GetServerInitialMetadata().find("test")->second.compare("a"));
         });
@@ -332,7 +302,7 @@ TEST_CASE_TEMPLATE("ServerRPC/ClientRPC bidi streaming success", RPC, test::Bidi
         [&](auto& request, auto& response, const asio::yield_context& yield)
         {
             auto rpc = test.create_rpc();
-            test.start_rpc(rpc, yield);
+            test.start_rpc(rpc, request, response, yield);
             request.set_integer(1);
             CHECK(rpc.write(request, yield));
             CHECK(rpc.writes_done(yield));
@@ -361,7 +331,7 @@ TEST_CASE_FIXTURE(ServerRPCTest<test::GenericServerRPC>, "ServerRPC/ClientRPC ge
             response.set_integer(11);
             CHECK(rpc.write_and_finish(test::message_to_grpc_buffer(response), grpc::Status::OK, yield));
         },
-        [&](auto& request, auto& response, const asio::yield_context& yield)
+        [&](grpc::ByteBuffer& request, grpc::ByteBuffer& response, const asio::yield_context& yield)
         {
             grpc::ClientContext client_context;
             test::set_default_deadline(client_context);
@@ -412,10 +382,10 @@ TEST_CASE_TEMPLATE("ServerRPC/ClientRPC generic streaming success", RPC, test::G
             }
             test.check_notify_when_done(future, rpc, yield);
         },
-        [&](auto&, auto& response, const asio::yield_context& yield)
+        [&](auto& request, auto& response, const asio::yield_context& yield)
         {
             auto rpc = test.create_rpc();
-            CHECK(test.start_rpc(rpc, yield));
+            CHECK(test.start_rpc(rpc, request, response, yield));
 
             test::msg::Request typed_request;
             typed_request.set_integer(42);

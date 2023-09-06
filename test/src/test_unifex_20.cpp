@@ -24,6 +24,7 @@
 #include "utils/grpc_context_test.hpp"
 
 #include <agrpc/asio_grpc.hpp>
+#include <agrpc/register_sender_request_handler.hpp>
 
 #include <cstddef>
 #include <optional>
@@ -632,35 +633,39 @@ TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex repeatedly_request client stre
     CHECK_EQ(4, request_count);
 }
 
-struct UnifexClientRPCTest : test::ClientRPCTest<test::BidirectionalStreamingClientRPC>, UnifexTest
+struct UnifexClientRPCTest : test::ClientServerRPCTest<test::BidirectionalStreamingClientRPC>, UnifexTest
 {
 };
 
 TEST_CASE_FIXTURE(UnifexClientRPCTest, "unifex BidirectionalStreamingClientRPC success")
 {
-    run(
-        [&]() -> unifex::task<void>
-        {
-            CHECK(co_await test_server.request_rpc(use_sender()));
-            test_server.response.set_integer(1);
-            CHECK(co_await agrpc::read(test_server.responder, test_server.request, use_sender()));
-            CHECK_FALSE(co_await agrpc::read(test_server.responder, test_server.request, use_sender()));
-            CHECK_EQ(42, test_server.request.integer());
-            CHECK(co_await agrpc::write(test_server.responder, test_server.response, use_sender()));
-            CHECK(co_await agrpc::finish(test_server.responder, grpc::Status::OK, use_sender()));
-        }(),
+    run(agrpc::register_sender_request_handler<ServerRPC>(grpc_context, service,
+                                                          [&](ServerRPC& rpc) -> unifex::task<void>
+                                                          {
+                                                              Response response;
+                                                              response.set_integer(1);
+                                                              Request request;
+                                                              CHECK(co_await rpc.read(request));
+                                                              CHECK_FALSE(co_await rpc.read(request));
+                                                              CHECK_EQ(42, request.integer());
+                                                              CHECK(co_await rpc.write(response));
+                                                              CHECK(co_await rpc.finish(grpc::Status::OK));
+                                                          }),
         [&]() -> unifex::task<void>
         {
             auto rpc = create_rpc();
             co_await rpc.start(*stub);
+            Request request;
             request.set_integer(42);
             CHECK(co_await rpc.write(request));
             CHECK(co_await rpc.writes_done());
+            Response response;
             CHECK(co_await rpc.read(response));
             CHECK_EQ(1, response.integer());
             CHECK_FALSE(co_await rpc.read(response));
             CHECK_EQ(1, response.integer());
             CHECK_EQ(grpc::StatusCode::OK, (co_await rpc.finish()).error_code());
+            server_shutdown.initiate();
         }());
 }
 
@@ -671,15 +676,15 @@ TEST_CASE_FIXTURE(UnifexClientRPCTest, "unifex BidirectionalStreamingClientRPC c
         return unifex::stop_when(unifex::then(agrpc::Alarm(grpc_context).wait(deadline), [](auto&&...) {}));
     };
     const auto not_to_exceed = test::one_second_from_now();
-    run(
-        [&]() -> unifex::task<void>
-        {
-            co_await test_server.request_rpc(use_sender());
-        }(),
+    run(agrpc::register_sender_request_handler<ServerRPC>(grpc_context, service,
+                                                          [&](ServerRPC&)
+                                                          {
+                                                              return unifex::just();
+                                                          }),
         [&]() -> unifex::task<void>
         {
             auto rpc = create_rpc();
-            co_await start_rpc(rpc, use_sender());
+            co_await rpc.start(*stub);
             const auto status = co_await (rpc.finish() | with_deadline(test::now()));
             CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
             server_shutdown.initiate();

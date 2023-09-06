@@ -15,6 +15,7 @@
 #ifndef AGRPC_AGRPC_SERVER_RPC_HPP
 #define AGRPC_AGRPC_SERVER_RPC_HPP
 
+#include <agrpc/default_server_rpc_traits.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/default_completion_token.hpp>
 #include <agrpc/detail/initiate_sender_implementation.hpp>
