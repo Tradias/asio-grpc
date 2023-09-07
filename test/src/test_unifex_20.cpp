@@ -27,7 +27,6 @@
 #include <agrpc/register_sender_request_handler.hpp>
 
 #include <cstddef>
-#include <functional>
 #include <optional>
 #include <thread>
 
@@ -296,12 +295,12 @@ struct UnifexRepeatedlyRequestTest : UnifexTest, test::GrpcClientServerTest
 {
     test::ServerShutdownInitiator shutdown{*server};
 
-    auto make_client_unary_request_sender(
-        std::chrono::system_clock::time_point deadline,
-        std::function<void(bool, const test::msg::Response&, const grpc::Status&)> on_request_done = test::NoOp{})
+    template <class OnRequestDone>
+    auto make_client_unary_request_sender(std::chrono::system_clock::time_point deadline,
+                                          OnRequestDone on_request_done = test::NoOp{})
     {
         return unifex::let_value_with(
-            [&, deadline]
+            [this, deadline]
             {
                 auto context = test::create_client_context(deadline);
                 test::msg::Request request;
@@ -311,14 +310,14 @@ struct UnifexRepeatedlyRequestTest : UnifexTest, test::GrpcClientServerTest
                     agrpc::request(&test::v1::Test::Stub::AsyncUnary, *stub, *context_ptr, request, grpc_context),
                     test::msg::Response{}, grpc::Status{}, std::move(context)};
             },
-            [&, on_request_done](auto& tuple)
+            [this, on_request_done](auto& tuple)
             {
                 auto& [reader, response, status, _] = tuple;
                 return unifex::then(agrpc::finish(*reader, response, status, use_sender()),
-                                    [&, on_request_done](bool ok) mutable
+                                    [&tuple, on_request_done](bool ok)
                                     {
                                         auto& [reader, response, status, _] = tuple;
-                                        std::move(on_request_done)(ok, response, status);
+                                        on_request_done(ok, response, status);
                                     });
             });
     }
