@@ -96,6 +96,9 @@ struct ServerRPCContextBaseAccess
         return ServerRPC(executor);
     }
 
+    template <class ServerRPC>
+    static constexpr auto service(ServerRPC&) -> typename ServerRPC::Service;
+
     template <class Responder>
     static Responder& responder(ServerRPCContextBase<Responder>& rpc) noexcept
     {
@@ -129,6 +132,9 @@ struct ServerRPCContextBaseAccess
         }
     }
 };
+
+template <class ServerRPC>
+using GetServerRPCServiceT = decltype(detail::ServerRPCContextBaseAccess::service(std::declval<ServerRPC&>()));
 }
 
 AGRPC_NAMESPACE_END

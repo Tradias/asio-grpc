@@ -32,6 +32,7 @@ class ServerRPC<RequestRPC, TraitsT, Executor>
 {
   private:
     using Responder = grpc::ServerAsyncResponseWriter<ResponseT>;
+    using Service = ServiceT;
 
   public:
     /**
@@ -100,6 +101,7 @@ class ServerRPC<RequestRPC, TraitsT, Executor>
 {
   private:
     using Responder = grpc::ServerAsyncReader<ResponseT, RequestT>;
+    using Service = ServiceT;
 
   public:
     /**
@@ -176,6 +178,7 @@ class ServerRPC<RequestRPC, TraitsT, Executor>
 {
   private:
     using Responder = grpc::ServerAsyncWriter<ResponseT>;
+    using Service = ServiceT;
 
   public:
     /**
@@ -364,6 +367,10 @@ class ServerRPC<RequestRPC, TraitsT, Executor>
     ServerRPC& operator=(ServerRPC&& other) = delete;
 
   private:
+    friend detail::ServerRPCContextBaseAccess;
+
+    using Service = ServiceT;
+
     using detail::ServerRPCBidiStreamingBase<grpc::ServerAsyncReaderWriter<ResponseT, RequestT>, TraitsT,
                                              Executor>::ServerRPCBidiStreamingBase;
 };
@@ -397,6 +404,10 @@ class ServerRPC<agrpc::ServerRPCType::GENERIC, TraitsT, Executor>
     ServerRPC& operator=(ServerRPC&& other) = delete;
 
   private:
+    friend detail::ServerRPCContextBaseAccess;
+
+    using Service = grpc::AsyncGenericService;
+
     using detail::ServerRPCBidiStreamingBase<grpc::GenericServerAsyncReaderWriter, TraitsT,
                                              Executor>::ServerRPCBidiStreamingBase;
 };
