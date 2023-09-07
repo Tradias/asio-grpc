@@ -70,6 +70,7 @@ class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
         {
             return;
         }
+        store_value(args...);
         op->set_value(args...);
     }
 
@@ -84,6 +85,8 @@ class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
   private:
     template <class, class>
     friend struct ManualResetEventRunningOperationState;
+
+    void store_value(Args... args) { static_cast<detail::Tuple<Args...>&>(*this) = detail::Tuple<Args...>{args...}; }
 
     auto* signalled_state() const { return const_cast<Op*>(reinterpret_cast<const Op*>(this)); }
 

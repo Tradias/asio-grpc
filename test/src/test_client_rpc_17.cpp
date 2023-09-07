@@ -38,6 +38,31 @@ struct ClientRPCTest : test::ClientServerRPCTest<RPC>
 template <class RPC>
 struct ClientRPCRequestResponseTest : ClientRPCTest<RPC>
 {
+    using ClientRPCTest<RPC>::start_rpc;
+
+    template <class CompletionToken>
+    auto start_rpc(RPC& rpc, CompletionToken&& token)
+    {
+        return test::ClientServerRPCTest<RPC>::start_rpc(rpc, this->request, this->response,
+                                                         static_cast<CompletionToken&&>(token));
+    }
+
+    using ClientRPCTest<RPC>::request_rpc;
+
+    template <class CompletionToken>
+    auto request_rpc(CompletionToken&& token)
+    {
+        return test::ClientServerRPCTest<RPC>::request_rpc(this->client_context, this->request, this->response,
+                                                           static_cast<CompletionToken&&>(token));
+    }
+
+    template <class CompletionToken>
+    auto request_rpc(bool use_executor, CompletionToken&& token)
+    {
+        return test::ClientServerRPCTest<RPC>::request_rpc(use_executor, this->client_context, this->request,
+                                                           this->response, static_cast<CompletionToken&&>(token));
+    }
+
     typename RPC::Request request;
     typename RPC::Response response;
 };
@@ -63,27 +88,6 @@ struct ClientRPCIoContextTest : ClientRPCRequestResponseTest<RPC>, test::IoConte
                                 agrpc::register_yield_request_handler<SRPC>(this->get_executor(), this->service,
                                                                             server_func, yield);
                             });
-    }
-
-    template <class CompletionToken>
-    auto start_rpc(RPC& rpc, CompletionToken&& token)
-    {
-        return test::ClientServerRPCTest<RPC>::start_rpc(rpc, this->request, this->response,
-                                                         static_cast<CompletionToken&&>(token));
-    }
-
-    template <class CompletionToken>
-    auto request_rpc(CompletionToken&& token)
-    {
-        return test::ClientServerRPCTest<RPC>::request_rpc(this->client_context, this->request, this->response,
-                                                           static_cast<CompletionToken&&>(token));
-    }
-
-    template <class CompletionToken>
-    auto request_rpc(bool use_executor, CompletionToken&& token)
-    {
-        return test::ClientServerRPCTest<RPC>::request_rpc(use_executor, this->client_context, this->request,
-                                                           this->response, static_cast<CompletionToken&&>(token));
     }
 };
 
@@ -448,19 +452,11 @@ TEST_CASE("ClientRPC derived class cannot access private base member")
 }
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-template <class RPC>
-struct ClientRPCCancellationTest : ClientRPCIoContextTest<RPC>
-{
-    asio::steady_timer timer{this->io_context};
-
-    ClientRPCCancellationTest() { this->run_io_context_detached(); }
-};
-
 // gRPC requests seem to be uncancellable on platforms other than Windows
 #ifdef _WIN32
 TEST_CASE_TEMPLATE("Unary RPC::request can be cancelled", RPC, test::UnaryClientRPC, test::GenericUnaryClientRPC)
 {
-    ClientRPCCancellationTest<RPC> test;
+    ClientRPCRequestResponseTest<RPC> test;
     test.server->Shutdown();
     const auto not_to_exceed = test::one_second_from_now();
     asio::experimental::make_parallel_group(test.request_rpc(test::ASIO_DEFERRED),
@@ -479,7 +475,7 @@ TEST_CASE_TEMPLATE("Streaming RPC::start can be cancelled", RPC, test::ClientStr
                    test::ServerStreamingClientRPC, test::BidirectionalStreamingClientRPC,
                    test::GenericStreamingClientRPC)
 {
-    ClientRPCCancellationTest<RPC> test;
+    ClientRPCRequestResponseTest<RPC> test;
     test.server->Shutdown();
     const auto not_to_exceed = test::one_second_from_now();
     auto rpc = test.create_rpc();
@@ -505,7 +501,7 @@ struct StreamingReadInitialMetadataCancellationT
 {
     using RPC = RPCType;
 
-    static auto step(ClientRPCCancellationTest<RPC>&, RPC& rpc)
+    static auto step(ClientRPCRequestResponseTest<RPC>&, RPC& rpc)
     {
         return rpc.read_initial_metadata(test::ASIO_DEFERRED);
     }
@@ -532,7 +528,7 @@ struct StreamingReadCancellationT
 {
     using RPC = RPCType;
 
-    static auto step(ClientRPCCancellationTest<RPC>& test, RPC& rpc)
+    static auto step(ClientRPCRequestResponseTest<RPC>& test, RPC& rpc)
     {
         return rpc.read(test.response, test::ASIO_DEFERRED);
     }
@@ -552,7 +548,7 @@ struct StreamingFinishCancellationT
 {
     using RPC = RPCType;
 
-    static auto step(ClientRPCCancellationTest<RPC>&, RPC& rpc) { return rpc.finish(test::ASIO_DEFERRED); }
+    static auto step(ClientRPCRequestResponseTest<RPC>&, RPC& rpc) { return rpc.finish(test::ASIO_DEFERRED); }
 };
 
 using ClientStreamingFinishCancellation = StreamingFinishCancellationT<test::ClientStreamingClientRPC>;
@@ -570,7 +566,7 @@ TYPE_TO_STRING(GenericBidiStreamingFinishCancellation);
 template <class T>
 void test_rpc_step_functions_can_be_cancelled()
 {
-    ClientRPCCancellationTest<typename T::RPC> test;
+    ClientRPCRequestResponseTest<typename T::RPC> test;
     const auto not_to_exceed = test::two_seconds_from_now();
     test.register_and_perform_three_requests(
         [&](auto&&...) {},

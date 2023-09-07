@@ -59,6 +59,7 @@ class RunningManualResetEvent<void(Args...)> : public detail::OperationBase
     [[nodiscard]] void* tag() noexcept
     {
         running_.store(true, std::memory_order_relaxed);
+        event_.reset();
         return static_cast<detail::OperationBase*>(this);
     }
 
