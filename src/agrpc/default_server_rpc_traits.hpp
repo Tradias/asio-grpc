@@ -22,7 +22,7 @@ AGRPC_NAMESPACE_BEGIN()
 struct DefaultServerRPCTraits
 {
     static constexpr bool NOTIFY_WHEN_DONE = false;
-    static constexpr bool RESUMABLE_READ = true;
+    static constexpr bool RESUMABLE_READ = false;
 };
 
 AGRPC_NAMESPACE_END

@@ -675,18 +675,20 @@ TEST_CASE_FIXTURE(UnifexClientRPCTest, "unifex BidirectionalStreamingClientRPC c
     {
         return unifex::stop_when(unifex::then(agrpc::Alarm(grpc_context).wait(deadline), [](auto&&...) {}));
     };
-    const auto not_to_exceed = test::one_second_from_now();
+    const auto not_to_exceed = test::two_seconds_from_now();
+    Request request;
     run(agrpc::register_sender_request_handler<ServerRPC>(grpc_context, service,
-                                                          [&](ServerRPC&)
+                                                          [&](ServerRPC& rpc)
                                                           {
-                                                              return unifex::just();
+                                                              return rpc.read(request);
                                                           }),
         [&]() -> unifex::task<void>
         {
             auto rpc = create_rpc();
             co_await rpc.start(*stub);
-            const auto status = co_await (rpc.finish() | with_deadline(test::now()));
-            CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
+            Response response;
+            co_await (rpc.read(response) | with_deadline(test::now()));
+            CHECK_EQ(grpc::StatusCode::CANCELLED, (co_await rpc.finish()).error_code());
             server_shutdown.initiate();
         }());
     CHECK_LT(test::now(), not_to_exceed);

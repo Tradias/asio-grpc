@@ -261,7 +261,7 @@ TEST_CASE_FIXTURE(ClientRPCTest<test::ServerStreamingClientRPC>, "ServerStreamin
 TEST_CASE_FIXTURE(ClientRPCIoContextTest<test::ClientStreamingClientRPC>,
                   "ClientStreamingClientRPC automatically cancels on destruction")
 {
-    bool is_first{};
+    bool is_first{true};
     run_server_client_on_separate_threads<test::NotifyWhenDoneClientStreamingServerRPC>(
         [&](auto& rpc, const asio::yield_context& yield)
         {

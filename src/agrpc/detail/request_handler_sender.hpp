@@ -75,32 +75,6 @@ class RequestHandlerSenderStopContext<StopToken, false> : public detail::NoOpSto
 {
 };
 
-template <class Operation>
-struct DeallocateOperationReceiver
-{
-    Operation& op_;
-
-    explicit DeallocateOperationReceiver(Operation& op) noexcept : op_(op) {}
-
-    void deallocate() noexcept { detail::destroy_deallocate(&op_, op_.get_allocator()); }
-
-    void set_done() noexcept { deallocate(); }
-
-    template <class... T>
-    void set_value(T&&...) noexcept
-    {
-        deallocate();
-    }
-
-    void set_error(const std::exception_ptr&) noexcept { deallocate(); }
-
-    friend exec::inline_scheduler tag_invoke(exec::tag_t<exec::get_scheduler>,
-                                             const DeallocateOperationReceiver&) noexcept
-    {
-        return {};
-    }
-};
-
 template <class ServerRPC, class RequestHandler, class StopToken, class Allocator>
 struct RequestHandlerSenderOperationBase;
 
@@ -177,6 +151,22 @@ struct RequestHandlerSenderOperationBase : RequestHandlerSenderOperationSetError
     detail::RequestHandlerSenderStopContext<StopToken> stop_context_;
 };
 
+template <class Receiver, class Signature, bool IsSet>
+struct WaitForOperationState
+{
+    using Type =
+        detail::InplaceWithFunctionWrapper<exec::connect_result_t<ManualResetEventSender<Signature>, Receiver>>;
+};
+
+template <class Receiver, class Signature>
+struct WaitForOperationState<Receiver, Signature, false>
+{
+    using Type = detail::Empty;
+};
+
+template <class Receiver, class Signature, bool IsSet>
+using WaitForOperationStateT = typename WaitForOperationState<Receiver, Signature, IsSet>::Type;
+
 template <class ServerRPC, class RequestHandler, class StopToken, class Allocator>
 struct RequestHandlerOperation
 {
@@ -185,9 +175,6 @@ struct RequestHandlerOperation
         detail::RPCRequest<typename ServerRPC::Request, detail::has_initial_request(ServerRPC::TYPE)>;
     using RequestHandlerInvokeResult =
         decltype(std::declval<InitialRequest>().invoke(std::declval<RequestHandler>(), std::declval<ServerRPC&>()));
-    using DeallocateRequestHandlerOperationReceiver = detail::DeallocateOperationReceiver<RequestHandlerOperation>;
-    using RequestHandlerOperationState = detail::InplaceWithFunctionWrapper<
-        exec::connect_result_t<RequestHandlerInvokeResult, DeallocateRequestHandlerOperationReceiver>>;
     using RequestHandlerSenderOperationBase =
         detail::RequestHandlerSenderOperationBase<ServerRPC, RequestHandler, StopToken, Allocator>;
 
@@ -245,7 +232,96 @@ struct RequestHandlerOperation
                                    std::declval<ServerRPC&>(), std::declval<Service&>(), agrpc::use_sender)),
                                StartReceiver>>;
 
-    using OperationState = std::variant<StartOperationState, RequestHandlerOperationState>;
+    template <class Action>
+    struct Receiver
+    {
+        RequestHandlerOperation& op_;
+
+        explicit Receiver(RequestHandlerOperation& op) noexcept : op_(op) {}
+
+        void perform() noexcept { Action::perform(op_); }
+
+        void set_done() noexcept { perform(); }
+
+        template <class... T>
+        void set_value(T&&...) noexcept
+        {
+            perform();
+        }
+
+        void set_error(const std::exception_ptr&) noexcept { perform(); }
+
+        friend exec::inline_scheduler tag_invoke(exec::tag_t<exec::get_scheduler>, const Receiver&) noexcept
+        {
+            return {};
+        }
+    };
+
+    struct Finish
+    {
+        static void perform(RequestHandlerOperation& op)
+        {
+            auto& rpc = op.rpc_;
+            if (!detail::ServerRPCContextBaseAccess::is_finished(rpc))
+            {
+                rpc.cancel();
+            }
+            if constexpr (ServerRPC::Traits::NOTIFY_WHEN_DONE)
+            {
+                if (!rpc.is_done())
+                {
+                    op.start_wait_for_done();
+                    return;
+                }
+            }
+            if constexpr (ServerRPC::Traits::RESUMABLE_READ)
+            {
+                if (detail::ServerRPCReadMixinAccess::is_reading(rpc))
+                {
+                    op.start_wait_for_read();
+                    return;
+                }
+            }
+            detail::destroy_deallocate(&op, op.get_allocator());
+        }
+    };
+
+    using FinishReceiver = Receiver<Finish>;
+    using RequestHandlerOperationState =
+        detail::InplaceWithFunctionWrapper<exec::connect_result_t<RequestHandlerInvokeResult, FinishReceiver>>;
+
+    struct WaitForDone
+    {
+        static void perform(RequestHandlerOperation& op)
+        {
+            auto& rpc = op.rpc_;
+            if constexpr (ServerRPC::Traits::RESUMABLE_READ)
+            {
+                if (detail::ServerRPCReadMixinAccess::is_reading(rpc))
+                {
+                    op.start_wait_for_read();
+                    return;
+                }
+            }
+            detail::destroy_deallocate(&op, op.get_allocator());
+        }
+    };
+
+    using WaitForDoneReceiver = Receiver<WaitForDone>;
+    using WaitForDoneOperationState =
+        detail::WaitForOperationStateT<WaitForDoneReceiver, void(), ServerRPC::Traits::NOTIFY_WHEN_DONE>;
+
+    struct WaitForRead
+    {
+        static void perform(RequestHandlerOperation& op) { detail::destroy_deallocate(&op, op.get_allocator()); }
+    };
+
+    using WaitForReadReceiver = Receiver<WaitForRead>;
+    using WaitForReadOperationState =
+        detail::WaitForOperationStateT<WaitForReadReceiver, void(bool), ServerRPC::Traits::RESUMABLE_READ>;
+
+    using OperationState = std::variant<StartOperationState, RequestHandlerOperationState, WaitForDoneOperationState,
+                                        WaitForReadOperationState>;
 
     explicit RequestHandlerOperation(RequestHandlerSenderOperationBase& operation, const Allocator& allocator)
         : impl1_(operation.request_handler()),
@@ -254,8 +330,9 @@ struct RequestHandlerOperation
                  detail::InplaceWithFunction{},
                  [&]
                  {
-                     return exec::connect(initial_request().start(rpc_, operation.service(), agrpc::use_sender),
-                                          StartReceiver{operation, *this});
+                     return initial_request()
+                         .start(rpc_, operation.service(), agrpc::use_sender)
+                         .connect(StartReceiver{operation, *this});
                  })
     {
     }
@@ -272,7 +349,7 @@ struct RequestHandlerOperation
                 {
                     return exec::connect(
                         initial_request().invoke(static_cast<RequestHandler&&>(request_handler()), rpc_),
-                        DeallocateRequestHandlerOperationReceiver{*this});
+                        FinishReceiver{*this});
                 });
             return {};
         }
@@ -282,6 +359,28 @@ struct RequestHandlerOperation
     void start_request_handler_operation_state()
     {
         exec::start(std::get<RequestHandlerOperationState>(operation_state()).value_);
+    }
+
+    void start_wait_for_done()
+    {
+        auto& state = operation_state().template emplace<WaitForDoneOperationState>(
+            detail::InplaceWithFunction{},
+            [&]
+            {
+                return rpc_.wait_for_done(agrpc::use_sender).connect(WaitForDoneReceiver{*this});
+            });
+        exec::start(state.value_);
+    }
+
+    void start_wait_for_read()
+    {
+        auto& state = operation_state().template emplace<WaitForReadOperationState>(
+            detail::InplaceWithFunction{},
+            [&]
+            {
+                return rpc_.wait_for_read(agrpc::use_sender).connect(WaitForReadReceiver{*this});
+            });
+        exec::start(state.value_);
     }
 
     auto& request_handler() noexcept { return impl1_.first(); }
