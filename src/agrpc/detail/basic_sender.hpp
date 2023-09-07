@@ -215,6 +215,25 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
         }
     }
 
+    template <detail::AllocationType AllocType, int Id, class... Args>
+    auto done(agrpc::GrpcContext& grpc_context, Args&&... args) -> decltype((void)std::declval<Implementation&>().done(
+        typename OnDone<AllocType>::template Type<Id>{std::declval<BasicSenderRunningOperation&>(), grpc_context},
+        static_cast<Args&&>(args)...))
+    {
+        implementation().done(typename OnDone<AllocType>::template Type<Id>{*this, grpc_context},
+                              static_cast<Args&&>(args)...);
+    }
+
+    template <detail::AllocationType AllocType, int Id, class... Args>
+    auto done(agrpc::GrpcContext& grpc_context, Args&&... args)
+        -> decltype((void)std::declval<Implementation&>().done(grpc_context, static_cast<Args&&>(args)...))
+    {
+        implementation().done(grpc_context, args...);
+        reset_stop_callback();
+        auto receiver = extract_receiver_and_optionally_deallocate<AllocType>(grpc_context);
+        detail::satisfy_receiver(static_cast<Receiver&&>(receiver), static_cast<Args&&>(args)...);
+    }
+
     template <detail::AllocationType AllocType, int Id = 0>
     static void do_complete(detail::OperationBase* op, detail::OperationResult result, agrpc::GrpcContext& grpc_context)
     {
@@ -224,12 +243,11 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
             if constexpr (Implementation::TYPE == detail::SenderImplementationType::BOTH ||
                           Implementation::TYPE == detail::SenderImplementationType::GRPC_TAG)
             {
-                self.implementation().done(typename OnDone<AllocType>::template Type<Id>{self, grpc_context},
-                                           detail::is_ok(result));
+                self.template done<AllocType, Id>(grpc_context, detail::is_ok(result));
             }
             else
             {
-                self.implementation().done(typename OnDone<AllocType>::template Type<Id>{self, grpc_context});
+                self.template done<AllocType, Id>(grpc_context);
             }
         }
         else

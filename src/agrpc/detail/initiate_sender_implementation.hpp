@@ -18,6 +18,7 @@
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/completion_handler_receiver.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/sender_implementation_operation.hpp>
 #include <agrpc/detail/work_tracking_completion_handler.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/use_sender.hpp>
@@ -54,6 +55,44 @@ auto async_initiate_sender_implementation(agrpc::GrpcContext& grpc_context, cons
     {
         return asio::async_initiate<CompletionToken, typename Implementation::Signature>(
             detail::SubmitSenderToWorkTrackingCompletionHandler{grpc_context}, token, initiation,
+            static_cast<Implementation&&>(implementation));
+    }
+    else
+#endif
+    {
+        return detail::BasicSenderAccess::create<Initiation, Implementation>(
+            grpc_context, initiation, static_cast<Implementation&&>(implementation));
+    }
+}
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+struct SubmitToCompletionHandler
+{
+    template <class CompletionHandler, class Initiation, class Implementation>
+    void operator()(CompletionHandler&& completion_handler, const Initiation& initiation,
+                    Implementation&& implementation)
+    {
+        detail::submit_sender_implementation_operation(
+            grpc_context_,
+            detail::WorkTrackingCompletionHandler<detail::RemoveCrefT<CompletionHandler>>(
+                static_cast<CompletionHandler&&>(completion_handler)),
+            initiation, static_cast<Implementation&&>(implementation));
+    }
+
+    agrpc::GrpcContext& grpc_context_;
+};
+#endif
+
+template <class Initiation, class Implementation, class CompletionToken>
+auto async_initiate_sender_implementation_operation(agrpc::GrpcContext& grpc_context, const Initiation& initiation,
+                                                    Implementation&& implementation,
+                                                    [[maybe_unused]] CompletionToken& token)
+{
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+    if constexpr (!std::is_same_v<agrpc::UseSender, CompletionToken>)
+    {
+        return asio::async_initiate<CompletionToken, typename Implementation::Signature>(
+            detail::SubmitToCompletionHandler{grpc_context}, token, initiation,
             static_cast<Implementation&&>(implementation));
     }
     else

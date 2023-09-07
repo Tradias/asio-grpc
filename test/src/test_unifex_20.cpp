@@ -27,6 +27,7 @@
 #include <agrpc/register_sender_request_handler.hpp>
 
 #include <cstddef>
+#include <functional>
 #include <optional>
 #include <thread>
 
@@ -295,9 +296,9 @@ struct UnifexRepeatedlyRequestTest : UnifexTest, test::GrpcClientServerTest
 {
     test::ServerShutdownInitiator shutdown{*server};
 
-    template <class OnRequestDone = test::NoOp>
-    auto make_client_unary_request_sender(std::chrono::system_clock::time_point deadline,
-                                          OnRequestDone on_request_done = {})
+    auto make_client_unary_request_sender(
+        std::chrono::system_clock::time_point deadline,
+        std::function<void(bool, const test::msg::Response&, const grpc::Status&)> on_request_done = test::NoOp{})
     {
         return unifex::let_value_with(
             [&, deadline]
@@ -640,19 +641,20 @@ struct UnifexClientRPCTest : test::ClientServerRPCTest<test::BidirectionalStream
 TEST_CASE_FIXTURE(UnifexClientRPCTest, "unifex BidirectionalStreamingClientRPC success")
 {
     // ODR-use function to work around undefined reference bug in GCC 10
-    (void)&test::v1::Test::AsyncService::RequestBidirectionalStreaming;
-    run(agrpc::register_sender_request_handler<ServerRPC>(grpc_context, service,
-                                                          [&](ServerRPC& rpc) -> unifex::task<void>
-                                                          {
-                                                              Response response;
-                                                              response.set_integer(1);
-                                                              Request request;
-                                                              CHECK(co_await rpc.read(request));
-                                                              CHECK_FALSE(co_await rpc.read(request));
-                                                              CHECK_EQ(42, request.integer());
-                                                              CHECK(co_await rpc.write(response));
-                                                              CHECK(co_await rpc.finish(grpc::Status::OK));
-                                                          }),
+    using RPC = agrpc::ServerRPC<&test::v1::Test::WithAsyncMethod_BidirectionalStreaming<
+        test::v1::Test::WithAsyncMethod_Unary<test::v1::Test::Service>>::RequestBidirectionalStreaming>;
+    run(agrpc::register_sender_request_handler<RPC>(grpc_context, service,
+                                                    [&](RPC& rpc) -> unifex::task<void>
+                                                    {
+                                                        Response response;
+                                                        response.set_integer(1);
+                                                        Request request;
+                                                        CHECK(co_await rpc.read(request));
+                                                        CHECK_FALSE(co_await rpc.read(request));
+                                                        CHECK_EQ(42, request.integer());
+                                                        CHECK(co_await rpc.write(response));
+                                                        CHECK(co_await rpc.finish(grpc::Status::OK));
+                                                    }),
         [&]() -> unifex::task<void>
         {
             auto rpc = create_rpc();

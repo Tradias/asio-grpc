@@ -30,6 +30,8 @@ class ReceiverAndStopCallback : private StopCallbackLifetime<Receiver, StopFunct
     using typename Base::StopToken;
 
   public:
+    using Base::IS_STOPPABLE;
+
     template <class R>
     explicit ReceiverAndStopCallback(R&& receiver) : receiver_(static_cast<R&&>(receiver))
     {
