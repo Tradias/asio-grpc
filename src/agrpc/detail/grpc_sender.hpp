@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/basic_sender.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/forward.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -29,11 +30,7 @@ struct GrpcSenderImplementationBase
     using Signature = void(bool);
     using StopFunction = detail::Empty;
 
-    template <class OnDone>
-    static void done(OnDone on_done, bool ok)
-    {
-        on_done(ok);
-    }
+    static void done(const agrpc::GrpcContext&, bool) noexcept {}
 };
 
 template <class StopFunctionT = detail::Empty>

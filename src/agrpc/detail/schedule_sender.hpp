@@ -31,11 +31,7 @@ struct ScheduleSenderImplementation
     using Signature = void();
     using StopFunction = detail::Empty;
 
-    template <class OnDone>
-    static void done(OnDone on_done)
-    {
-        on_done();
-    }
+    static void done(const agrpc::GrpcContext&) noexcept {}
 };
 
 struct ScheduleSenderInitiation

@@ -107,11 +107,6 @@ template <class Receiver>
 template <class Signature, class Receiver, detail::DeallocateOnComplete>
 inline constexpr bool set_value_impl{};
 
-template <detail::DeallocateOnComplete>
-struct DeallocateOnCompleteArg
-{
-};
-
 template <class Signature, class Receiver>
 struct ManualResetEventRunningOperationState : ManualResetEventOperationStateBase<Signature>
 {
