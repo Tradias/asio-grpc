@@ -17,12 +17,14 @@
 #include "utils/asio_utils.hpp"
 #include "utils/client_context.hpp"
 #include "utils/client_rpc.hpp"
+#include "utils/client_rpc_test.hpp"
 #include "utils/delete_guard.hpp"
 #include "utils/doctest.hpp"
 #include "utils/grpc_client_server_test.hpp"
 #include "utils/grpc_context_test.hpp"
 
 #include <agrpc/asio_grpc.hpp>
+#include <agrpc/register_sender_request_handler.hpp>
 
 #include <cstddef>
 #include <optional>
@@ -293,12 +295,12 @@ struct UnifexRepeatedlyRequestTest : UnifexTest, test::GrpcClientServerTest
 {
     test::ServerShutdownInitiator shutdown{*server};
 
-    template <class OnRequestDone = test::NoOp>
+    template <class OnRequestDone>
     auto make_client_unary_request_sender(std::chrono::system_clock::time_point deadline,
-                                          OnRequestDone on_request_done = {})
+                                          OnRequestDone on_request_done = test::NoOp{})
     {
         return unifex::let_value_with(
-            [&, deadline]
+            [this, deadline]
             {
                 auto context = test::create_client_context(deadline);
                 test::msg::Request request;
@@ -308,14 +310,14 @@ struct UnifexRepeatedlyRequestTest : UnifexTest, test::GrpcClientServerTest
                     agrpc::request(&test::v1::Test::Stub::AsyncUnary, *stub, *context_ptr, request, grpc_context),
                     test::msg::Response{}, grpc::Status{}, std::move(context)};
             },
-            [&, on_request_done](auto& tuple)
+            [this, on_request_done](auto& tuple)
             {
                 auto& [reader, response, status, _] = tuple;
                 return unifex::then(agrpc::finish(*reader, response, status, use_sender()),
-                                    [&, on_request_done](bool ok) mutable
+                                    [&tuple, on_request_done](bool ok)
                                     {
                                         auto& [reader, response, status, _] = tuple;
-                                        std::move(on_request_done)(ok, response, status);
+                                        on_request_done(ok, response, status);
                                     });
             });
     }
@@ -631,35 +633,42 @@ TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex repeatedly_request client stre
     CHECK_EQ(4, request_count);
 }
 
-struct UnifexClientRPCTest : test::ClientRPCTest<test::BidirectionalStreamingClientRPC>, UnifexTest
+struct UnifexClientRPCTest : test::ClientServerRPCTest<test::BidirectionalStreamingClientRPC>, UnifexTest
 {
 };
 
 TEST_CASE_FIXTURE(UnifexClientRPCTest, "unifex BidirectionalStreamingClientRPC success")
 {
-    run(
-        [&]() -> unifex::task<void>
-        {
-            CHECK(co_await test_server.request_rpc(use_sender()));
-            test_server.response.set_integer(1);
-            CHECK(co_await agrpc::read(test_server.responder, test_server.request, use_sender()));
-            CHECK_FALSE(co_await agrpc::read(test_server.responder, test_server.request, use_sender()));
-            CHECK_EQ(42, test_server.request.integer());
-            CHECK(co_await agrpc::write(test_server.responder, test_server.response, use_sender()));
-            CHECK(co_await agrpc::finish(test_server.responder, grpc::Status::OK, use_sender()));
-        }(),
+    // ODR-use function to work around undefined reference bug in GCC 10
+    using RPC = agrpc::ServerRPC<&test::v1::Test::WithAsyncMethod_BidirectionalStreaming<
+        test::v1::Test::WithAsyncMethod_Unary<test::v1::Test::Service>>::RequestBidirectionalStreaming>;
+    run(agrpc::register_sender_request_handler<RPC>(grpc_context, service,
+                                                    [&](RPC& rpc) -> unifex::task<void>
+                                                    {
+                                                        Response response;
+                                                        response.set_integer(1);
+                                                        Request request;
+                                                        CHECK(co_await rpc.read(request));
+                                                        CHECK_FALSE(co_await rpc.read(request));
+                                                        CHECK_EQ(42, request.integer());
+                                                        CHECK(co_await rpc.write(response));
+                                                        CHECK(co_await rpc.finish(grpc::Status::OK));
+                                                    }),
         [&]() -> unifex::task<void>
         {
             auto rpc = create_rpc();
             co_await rpc.start(*stub);
+            Request request;
             request.set_integer(42);
             CHECK(co_await rpc.write(request));
             CHECK(co_await rpc.writes_done());
+            Response response;
             CHECK(co_await rpc.read(response));
             CHECK_EQ(1, response.integer());
             CHECK_FALSE(co_await rpc.read(response));
             CHECK_EQ(1, response.integer());
             CHECK_EQ(grpc::StatusCode::OK, (co_await rpc.finish()).error_code());
+            server_shutdown.initiate();
         }());
 }
 
@@ -669,18 +678,20 @@ TEST_CASE_FIXTURE(UnifexClientRPCTest, "unifex BidirectionalStreamingClientRPC c
     {
         return unifex::stop_when(unifex::then(agrpc::Alarm(grpc_context).wait(deadline), [](auto&&...) {}));
     };
-    const auto not_to_exceed = test::one_second_from_now();
-    run(
-        [&]() -> unifex::task<void>
-        {
-            co_await test_server.request_rpc(use_sender());
-        }(),
+    const auto not_to_exceed = test::two_seconds_from_now();
+    Request request;
+    run(agrpc::register_sender_request_handler<ServerRPC>(grpc_context, service,
+                                                          [&](ServerRPC& rpc)
+                                                          {
+                                                              return rpc.read(request);
+                                                          }),
         [&]() -> unifex::task<void>
         {
             auto rpc = create_rpc();
-            co_await start_rpc(rpc, use_sender());
-            const auto status = co_await (rpc.finish() | with_deadline(test::now()));
-            CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
+            co_await rpc.start(*stub);
+            Response response;
+            co_await (rpc.read(response) | with_deadline(test::now()));
+            CHECK_EQ(grpc::StatusCode::CANCELLED, (co_await rpc.finish()).error_code());
             server_shutdown.initiate();
         }());
     CHECK_LT(test::now(), not_to_exceed);

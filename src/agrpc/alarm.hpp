@@ -132,8 +132,10 @@ class BasicAlarm
 
     Executor executor_;
     grpc::Alarm alarm_;
-
 };
+
+template <class = void>
+BasicAlarm(agrpc::GrpcContext&) -> BasicAlarm<agrpc::GrpcExecutor>;
 
 /**
  * @brief A BasicAlarm that uses `agrpc::GrpcExecutor`

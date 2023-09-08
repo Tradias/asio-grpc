@@ -92,6 +92,12 @@ struct IsGrpcContextStoppedPredicate
     [[nodiscard]] bool operator()(const agrpc::GrpcContext& grpc_context) const noexcept;
 };
 
+enum class InvokeHandler
+{
+    NO,
+    YES
+};
+
 struct GrpcContextImplementation
 {
     static constexpr void* HAS_REMOTE_WORK_TAG = nullptr;

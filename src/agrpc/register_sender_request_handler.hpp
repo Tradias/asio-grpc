@@ -12,35 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_UTILS_UTILITY_HPP
-#define AGRPC_UTILS_UTILITY_HPP
+#ifndef AGRPC_AGRPC_REGISTER_SENDER_REQUEST_HANDLER_HPP
+#define AGRPC_AGRPC_REGISTER_SENDER_REQUEST_HANDLER_HPP
 
-#include <utility>
+#include <agrpc/detail/request_handler_sender.hpp>
 
-namespace test
+AGRPC_NAMESPACE_BEGIN()
+
+template <class ServerRPC, class Service, class RequestHandler>
+detail::RequestHandlerSender<ServerRPC, RequestHandler> register_sender_request_handler(
+    agrpc::GrpcContext& grpc_context, Service& service, RequestHandler request_handler)
 {
-
-template <class T>
-struct TypeIdentity
-{
-    using type = T;
-};
-
-template <class T>
-using TypeIdentityT = typename TypeIdentity<T>::type;
-
-template <class UseMove, class T>
-auto&& move_if(T&& t)
-{
-    if constexpr (UseMove::value)
-    {
-        return std::move(t);
-    }
-    else
-    {
-        return t;
-    }
+    return {grpc_context, service, static_cast<RequestHandler&&>(request_handler)};
 }
-}  // namespace test
 
-#endif  // AGRPC_UTILS_UTILITY_HPP
+AGRPC_NAMESPACE_END
+
+#endif  // AGRPC_AGRPC_REGISTER_SENDER_REQUEST_HANDLER_HPP

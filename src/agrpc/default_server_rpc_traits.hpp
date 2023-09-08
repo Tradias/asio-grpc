@@ -12,35 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_UTILS_UTILITY_HPP
-#define AGRPC_UTILS_UTILITY_HPP
+#ifndef AGRPC_AGRPC_DEFAULT_SERVER_RPC_TRAITS_HPP
+#define AGRPC_AGRPC_DEFAULT_SERVER_RPC_TRAITS_HPP
 
-#include <utility>
+#include <agrpc/detail/config.hpp>
 
-namespace test
+AGRPC_NAMESPACE_BEGIN()
+
+struct DefaultServerRPCTraits
 {
-
-template <class T>
-struct TypeIdentity
-{
-    using type = T;
+    static constexpr bool NOTIFY_WHEN_DONE = false;
+    static constexpr bool RESUMABLE_READ = false;
 };
 
-template <class T>
-using TypeIdentityT = typename TypeIdentity<T>::type;
+AGRPC_NAMESPACE_END
 
-template <class UseMove, class T>
-auto&& move_if(T&& t)
-{
-    if constexpr (UseMove::value)
-    {
-        return std::move(t);
-    }
-    else
-    {
-        return t;
-    }
-}
-}  // namespace test
-
-#endif  // AGRPC_UTILS_UTILITY_HPP
+#endif  // AGRPC_AGRPC_DEFAULT_SERVER_RPC_TRAITS_HPP

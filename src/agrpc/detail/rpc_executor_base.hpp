@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_RPC_EXECUTOR_BASE_HPP
 
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/default_completion_token.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/query_grpc_context.hpp>
 #include <agrpc/detail/tagged_ptr.hpp>
@@ -50,25 +51,39 @@ class RPCExecutorBase
     template <auto, class>
     friend class agrpc::ClientRPC;
 
+    template <auto, class, class>
+    friend class agrpc::ServerRPC;
+
     template <auto, class>
     friend class detail::ClientRPCServerStreamingBase;
 
     template <class, class>
     friend class detail::ClientRPCBidiStreamingBase;
 
-    friend struct detail::RPCExecutorBaseAccess;
+    template <class, class, class>
+    friend class detail::ServerRPCBidiStreamingBase;
+
+    template <bool, class, class>
+    friend class detail::ServerRPCNotifyWhenDoneMixin;
+
+    friend detail::RPCExecutorBaseAccess;
+
+    friend detail::ServerRPCContextBaseAccess;
 
     RPCExecutorBase() : executor_(agrpc::GrpcExecutor{}) {}
 
     explicit RPCExecutorBase(const Executor& executor) : executor_(executor) {}
 
-    auto& grpc_context() const noexcept { return detail::query_grpc_context(executor_); }
+    [[nodiscard]] agrpc::GrpcContext& grpc_context() const noexcept { return detail::query_grpc_context(executor_); }
 
     Executor executor_;
 };
 
 struct RPCExecutorBaseAccess
 {
+    template <class T>
+    using DefaultCompletionTokenT = detail::DefaultCompletionTokenT<typename T::executor_type>;
+
     template <class Executor>
     static agrpc::GrpcContext& grpc_context(detail::RPCExecutorBase<Executor>& rpc) noexcept
     {

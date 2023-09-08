@@ -12,35 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_UTILS_UTILITY_HPP
-#define AGRPC_UTILS_UTILITY_HPP
+#ifndef AGRPC_DETAIL_DEALLOCATE_ON_COMPLETE_HPP
+#define AGRPC_DETAIL_DEALLOCATE_ON_COMPLETE_HPP
 
-#include <utility>
+#include <agrpc/detail/config.hpp>
 
-namespace test
+AGRPC_NAMESPACE_BEGIN()
+
+namespace detail
 {
-
-template <class T>
-struct TypeIdentity
+enum class DeallocateOnComplete
 {
-    using type = T;
+    NO,
+    YES
 };
-
-template <class T>
-using TypeIdentityT = typename TypeIdentity<T>::type;
-
-template <class UseMove, class T>
-auto&& move_if(T&& t)
-{
-    if constexpr (UseMove::value)
-    {
-        return std::move(t);
-    }
-    else
-    {
-        return t;
-    }
 }
-}  // namespace test
 
-#endif  // AGRPC_UTILS_UTILITY_HPP
+AGRPC_NAMESPACE_END
+
+#endif  // AGRPC_DETAIL_DEALLOCATE_ON_COMPLETE_HPP

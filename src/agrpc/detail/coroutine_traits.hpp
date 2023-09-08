@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/rethrow_first_arg.hpp>
 #include <agrpc/detail/utility.hpp>
 
 #include <exception>
@@ -27,18 +28,6 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-struct RethrowFirstArg
-{
-    template <class... Args>
-    void operator()(const std::exception_ptr& ep, Args&&...) const
-    {
-        if AGRPC_UNLIKELY (ep)
-        {
-            std::rethrow_exception(ep);
-        }
-    }
-};
-
 struct CompletionHandlerUnknown
 {
 };

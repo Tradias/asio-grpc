@@ -25,12 +25,6 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-enum class InvokeHandler
-{
-    NO,
-    YES
-};
-
 enum class OperationResult
 {
     SHUTDOWN_NOT_OK,

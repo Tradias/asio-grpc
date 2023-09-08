@@ -47,8 +47,8 @@ struct TestServer<&test::v1::Test::AsyncService::RequestUnary> : test::TestServe
                               this->request, this->responder, std::forward<CompletionToken>(token));
     }
 
-    test::msg::Request request{};
-    test::msg::Response response{};
+    test::msg::Request request;
+    test::msg::Response response;
     grpc::ServerAsyncResponseWriter<test::msg::Response> responder{&server_context};
 };
 
@@ -64,8 +64,8 @@ struct TestServer<&test::v1::Test::AsyncService::RequestClientStreaming> : test:
                               this->server_context, this->responder, std::forward<CompletionToken>(token));
     }
 
-    test::msg::Request request{};
-    test::msg::Response response{};
+    test::msg::Request request;
+    test::msg::Response response;
     grpc::ServerAsyncReader<test::msg::Response, test::msg::Request> responder{&server_context};
 };
 
@@ -82,8 +82,8 @@ struct TestServer<&test::v1::Test::AsyncService::RequestServerStreaming> : test:
                               std::forward<CompletionToken>(token));
     }
 
-    test::msg::Request request{};
-    test::msg::Response response{};
+    test::msg::Request request;
+    test::msg::Response response;
     grpc::ServerAsyncWriter<test::msg::Response> responder{&server_context};
 };
 
@@ -99,8 +99,8 @@ struct TestServer<&test::v1::Test::AsyncService::RequestBidirectionalStreaming> 
                               this->server_context, this->responder, std::forward<CompletionToken>(token));
     }
 
-    test::msg::Request request{};
-    test::msg::Response response{};
+    test::msg::Request request;
+    test::msg::Response response;
     grpc::ServerAsyncReaderWriter<test::msg::Response, test::msg::Request> responder{&server_context};
 };
 }

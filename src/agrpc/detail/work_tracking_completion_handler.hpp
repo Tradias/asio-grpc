@@ -45,30 +45,29 @@ inline constexpr bool
     IS_INLINE_EXECUTOR<asio::basic_system_executor<asio::execution::blocking_t::always_t, Relationship, Allocator>> =
         true;
 
-template <class CompletionHandler, bool = detail::IS_INLINE_EXECUTOR<asio::associated_executor_t<CompletionHandler>>>
+template <class Executor, bool = detail::IS_INLINE_EXECUTOR<Executor>>
 class WorkTracker
 {
   public:
-    explicit WorkTracker(const CompletionHandler& ch)
-        : work_(asio::prefer(asio::get_associated_executor(ch), asio::execution::outstanding_work_t::tracked))
+    explicit WorkTracker(Executor&& executor)
+        : work_(asio::prefer(std::move(executor), asio::execution::outstanding_work_t::tracked))
     {
     }
 
   private:
-    typename asio::prefer_result<asio::associated_executor_t<CompletionHandler>,
-                                 asio::execution::outstanding_work_t::tracked_t>::type work_;
+    typename asio::prefer_result<Executor, asio::execution::outstanding_work_t::tracked_t>::type work_;
 };
 
-template <class CompletionHandler>
-class WorkTracker<CompletionHandler, true>
+template <class Executor>
+class WorkTracker<Executor, true>
 {
   public:
-    constexpr explicit WorkTracker(const CompletionHandler&) noexcept {}
+    constexpr explicit WorkTracker(const Executor&) noexcept {}
 };
 
 template <class CompletionHandler>
 class WorkTrackingCompletionHandler : private detail::EmptyBaseOptimization<CompletionHandler>,
-                                      private detail::WorkTracker<CompletionHandler>
+                                      private detail::WorkTracker<asio::associated_executor_t<CompletionHandler>>
 
 {
   public:
@@ -77,12 +76,12 @@ class WorkTrackingCompletionHandler : private detail::EmptyBaseOptimization<Comp
 
   private:
     using CompletionHandlerBase = detail::EmptyBaseOptimization<CompletionHandler>;
-    using WorkTrackerBase = detail::WorkTracker<CompletionHandler>;
+    using WorkTrackerBase = detail::WorkTracker<executor_type>;
 
   public:
     template <class Ch>
     explicit WorkTrackingCompletionHandler(Ch&& ch)
-        : CompletionHandlerBase(static_cast<Ch&&>(ch)), WorkTrackerBase(completion_handler())
+        : CompletionHandlerBase(static_cast<Ch&&>(ch)), WorkTrackerBase(get_executor())
     {
     }
 

@@ -53,6 +53,25 @@ template <class Stub, class Responder>
 using PrepareAsyncClientBidirectionalStreamingRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*,
                                                                                              grpc::CompletionQueue*);
 
+template <class Service, class Request, class Response>
+using ServerUnaryRequest = void (Service::*)(grpc::ServerContext*, Request*, grpc::ServerAsyncResponseWriter<Response>*,
+                                             grpc::CompletionQueue*, grpc::ServerCompletionQueue*, void*);
+
+template <class Service, class Request, class Response>
+using ServerClientStreamingRequest = void (Service::*)(grpc::ServerContext*,
+                                                       grpc::ServerAsyncReader<Response, Request>*,
+                                                       grpc::CompletionQueue*, grpc::ServerCompletionQueue*, void*);
+
+template <class Service, class Request, class Response>
+using ServerServerStreamingRequest = void (Service::*)(grpc::ServerContext*, Request*,
+                                                       grpc::ServerAsyncWriter<Response>*, grpc::CompletionQueue*,
+                                                       grpc::ServerCompletionQueue*, void*);
+
+template <class Service, class Request, class Response>
+using ServerBidiStreamingRequest = void (Service::*)(grpc::ServerContext*,
+                                                     grpc::ServerAsyncReaderWriter<Response, Request>*,
+                                                     grpc::CompletionQueue*, grpc::ServerCompletionQueue*, void*);
+
 template <class Service, class Request, class Responder>
 using ServerMultiArgRequest = void (Service::*)(grpc::ServerContext*, Request*, Responder*, grpc::CompletionQueue*,
                                                 grpc::ServerCompletionQueue*, void*);

@@ -18,6 +18,7 @@
 #include <agrpc/detail/allocate_operation.hpp>
 #include <agrpc/detail/allocation_type.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/deallocate_on_complete.hpp>
 #include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/receiver.hpp>
@@ -34,7 +35,7 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class Receiver>
-[[nodiscard]] std::optional<detail::exec::stop_token_type_t<Receiver>> check_start_conditions(
+[[nodiscard]] std::optional<detail::exec::stop_token_type_t<Receiver&>> check_start_conditions(
     const agrpc::GrpcContext& grpc_context, Receiver& receiver)
 {
     if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context))
@@ -62,12 +63,6 @@ struct BasicSenderAccess
         return detail::BasicSender<Initiation, detail::RemoveCrefT<Implementation>>(
             grpc_context, initiation, static_cast<Implementation&&>(implementation));
     }
-};
-
-enum class DeallocateOnComplete
-{
-    NO,
-    YES
 };
 
 template <class Implementation, class Receiver, detail::DeallocateOnComplete Deallocate>
@@ -157,7 +152,7 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
   private:
     using Base = detail::BaseForSenderImplementationTypeT<Implementation::TYPE>;
     using StopFunction = typename Implementation::StopFunction;
-    using StopToken = detail::exec::stop_token_type_t<Receiver>;
+    using StopToken = detail::exec::stop_token_type_t<Receiver&>;
 
     template <detail::AllocationType AllocType>
     struct OnDone
@@ -220,6 +215,24 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
         }
     }
 
+    template <detail::AllocationType AllocType, int Id, class... Args>
+    auto done(agrpc::GrpcContext& grpc_context, Args&&... args) -> decltype((void)std::declval<Implementation&>().done(
+        std::declval<typename OnDone<AllocType>::template Type<Id>>(), static_cast<Args&&>(args)...))
+    {
+        implementation().done(typename OnDone<AllocType>::template Type<Id>{*this, grpc_context},
+                              static_cast<Args&&>(args)...);
+    }
+
+    template <detail::AllocationType AllocType, int Id, class... Args>
+    auto done(agrpc::GrpcContext& grpc_context, Args&&... args)
+        -> decltype((void)std::declval<Implementation&>().done(grpc_context, static_cast<Args&&>(args)...))
+    {
+        implementation().done(grpc_context, args...);
+        reset_stop_callback();
+        auto receiver = extract_receiver_and_optionally_deallocate<AllocType>(grpc_context);
+        detail::satisfy_receiver(static_cast<Receiver&&>(receiver), static_cast<Args&&>(args)...);
+    }
+
     template <detail::AllocationType AllocType, int Id = 0>
     static void do_complete(detail::OperationBase* op, detail::OperationResult result, agrpc::GrpcContext& grpc_context)
     {
@@ -229,12 +242,11 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
             if constexpr (Implementation::TYPE == detail::SenderImplementationType::BOTH ||
                           Implementation::TYPE == detail::SenderImplementationType::GRPC_TAG)
             {
-                self.implementation().done(typename OnDone<AllocType>::template Type<Id>{self, grpc_context},
-                                           detail::is_ok(result));
+                self.template done<AllocType, Id>(grpc_context, detail::is_ok(result));
             }
             else
             {
-                self.implementation().done(typename OnDone<AllocType>::template Type<Id>{self, grpc_context});
+                self.template done<AllocType, Id>(grpc_context);
             }
         }
         else
@@ -331,10 +343,7 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
     template <class Initiation>
     void emplace_stop_callback(StopToken&& stop_token, const Initiation& initiation) noexcept
     {
-        if (stop_token.stop_possible())
-        {
-            impl_.first().emplace_stop_callback(static_cast<StopToken&&>(stop_token), initiation, implementation());
-        }
+        impl_.first().emplace_stop_callback(static_cast<StopToken&&>(stop_token), initiation, implementation());
     }
 
     void reset_stop_callback() noexcept { impl_.first().reset_stop_callback(); }

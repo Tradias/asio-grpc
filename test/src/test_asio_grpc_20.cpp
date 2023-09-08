@@ -124,7 +124,7 @@ TEST_CASE_TEMPLATE("awaitable unary", Stub, test::v1::Test::Stub, test::v1::Test
             response.set_integer(21);
             if (use_finish_with_error)
             {
-                CHECK(co_await agrpc::finish_with_error(writer, grpc::Status::CANCELLED));
+                CHECK(co_await agrpc::finish_with_error(writer, test::create_already_exists_status()));
             }
             else
             {
@@ -143,7 +143,7 @@ TEST_CASE_TEMPLATE("awaitable unary", Stub, test::v1::Test::Stub, test::v1::Test
             CHECK(co_await agrpc::finish(*reader, response, status));
             if (use_finish_with_error)
             {
-                CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
+                CHECK_EQ(grpc::StatusCode::ALREADY_EXISTS, status.error_code());
             }
             else
             {

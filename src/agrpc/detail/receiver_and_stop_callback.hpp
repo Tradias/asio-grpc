@@ -15,31 +15,23 @@
 #ifndef AGRPC_DETAIL_RECEIVER_AND_STOP_CALLBACK_HPP
 #define AGRPC_DETAIL_RECEIVER_AND_STOP_CALLBACK_HPP
 
-#include <agrpc/detail/asio_association.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/utility.hpp>
-
-#include <optional>
+#include <agrpc/detail/stop_callback_lifetime.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
 template <class Receiver, class StopFunction>
-inline constexpr bool RECEIVER_NEEDS_STOP_CALLBACK =
-    detail::IS_STOP_EVER_POSSIBLE_V<detail::exec::stop_token_type_t<std::remove_reference_t<Receiver>&>>;
-
-template <class Receiver>
-inline constexpr bool RECEIVER_NEEDS_STOP_CALLBACK<Receiver, detail::Empty> = false;
-
-template <class Receiver, class StopFunction, bool = detail::RECEIVER_NEEDS_STOP_CALLBACK<Receiver, StopFunction>>
-class ReceiverAndStopCallback
+class ReceiverAndStopCallback : private StopCallbackLifetime<exec::stop_token_type_t<Receiver&>, StopFunction>
 {
   private:
-    using StopToken = detail::exec::stop_token_type_t<Receiver>;
-    using StopCallback = std::optional<detail::StopCallbackTypeT<Receiver&, StopFunction>>;
+    using StopToken = exec::stop_token_type_t<Receiver&>;
+    using Base = StopCallbackLifetime<StopToken, StopFunction>;
 
   public:
+    using Base::IS_STOPPABLE;
+
     template <class R>
     explicit ReceiverAndStopCallback(R&& receiver) : receiver_(static_cast<R&&>(receiver))
     {
@@ -47,13 +39,16 @@ class ReceiverAndStopCallback
 
     Receiver& receiver() noexcept { return receiver_; }
 
-    void reset_stop_callback() noexcept { stop_callback_.reset(); }
+    void reset_stop_callback() noexcept { this->reset(); }
 
     template <class Initiation, class Implementation>
     void emplace_stop_callback(StopToken&& stop_token, const Initiation& initiation,
                                Implementation& implementation) noexcept
     {
-        stop_callback_.emplace(static_cast<StopToken&&>(stop_token), stop_function_arg(initiation, implementation));
+        if constexpr (Base::IS_STOPPABLE)
+        {
+            this->emplace(static_cast<StopToken&&>(stop_token), stop_function_arg(initiation, implementation));
+        }
     }
 
   private:
@@ -71,29 +66,6 @@ class ReceiverAndStopCallback
         return initiation.stop_function_arg();
     }
 
-    Receiver receiver_;
-    StopCallback stop_callback_;
-};
-
-template <class Receiver, class StopFunction>
-class ReceiverAndStopCallback<Receiver, StopFunction, false>
-{
-  public:
-    template <class R>
-    explicit ReceiverAndStopCallback(R&& receiver) : receiver_(static_cast<R&&>(receiver))
-    {
-    }
-
-    Receiver& receiver() noexcept { return receiver_; }
-
-    static constexpr void reset_stop_callback() noexcept {}
-
-    template <class StopToken, class Initiation, class Implementation>
-    static constexpr void emplace_stop_callback(const StopToken&, const Initiation&, const Implementation&) noexcept
-    {
-    }
-
-  private:
     Receiver receiver_;
 };
 }
