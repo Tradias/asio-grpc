@@ -19,7 +19,6 @@
 
 namespace test
 {
-
 template <class T>
 struct TypeIdentity
 {

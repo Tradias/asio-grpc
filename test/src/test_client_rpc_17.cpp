@@ -93,18 +93,20 @@ struct ClientRPCIoContextTest : ClientRPCRequestResponseTest<RPC>, test::IoConte
 
 TEST_CASE_TEMPLATE("ClientRPC::request successfully", RPC, test::UnaryClientRPC, test::UnaryInterfaceClientRPC)
 {
-    test::ClientRPCTest<RPC> test;
-    test.spawn_and_run(
-        [&](const asio::yield_context& yield)
+    ClientRPCTest<RPC> test;
+    test.register_and_perform_three_requests(
+        [&](auto& rpc, const typename RPC::Request& request, const asio::yield_context& yield)
         {
-            test.test_server.request_rpc(yield);
-            CHECK_EQ(42, test.test_server.request.integer());
-            agrpc::finish(test.test_server.responder, test.test_server.response, grpc::Status::OK, yield);
+            CHECK_EQ(42, request.integer());
+            typename RPC::Response response;
+            rpc.finish(response, grpc::Status::OK, yield);
         },
-        [&](const asio::yield_context& yield)
+        [&](auto& request, auto& response, const asio::yield_context& yield)
         {
-            test.request.set_integer(42);
-            const auto status = test.request_rpc(false, yield);
+            request.set_integer(42);
+            grpc::ClientContext client_context;
+            test::set_default_deadline(client_context);
+            const auto status = test.request_rpc(false, client_context, request, response, yield);
             CHECK_EQ(grpc::StatusCode::OK, status.error_code());
         });
 }

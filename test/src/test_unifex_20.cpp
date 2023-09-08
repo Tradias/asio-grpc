@@ -640,8 +640,9 @@ struct UnifexClientRPCTest : test::ClientServerRPCTest<test::BidirectionalStream
 TEST_CASE_FIXTURE(UnifexClientRPCTest, "unifex BidirectionalStreamingClientRPC success")
 {
     // ODR-use function to work around undefined reference bug in GCC 10
-    using RPC = agrpc::ServerRPC<&test::v1::Test::WithAsyncMethod_BidirectionalStreaming<
-        test::v1::Test::WithAsyncMethod_Unary<test::v1::Test::Service>>::RequestBidirectionalStreaming>;
+    using RPC =
+        agrpc::ServerRPC<&test::v1::Test::WithAsyncMethod_BidirectionalStreaming<test::v1::Test::WithAsyncMethod_Unary<
+            test::v1::Test::WithAsyncMethod_Subscribe<test::v1::Test::Service>>>::RequestBidirectionalStreaming>;
     run(agrpc::register_sender_request_handler<RPC>(grpc_context, service,
                                                     [&](RPC& rpc) -> unifex::task<void>
                                                     {

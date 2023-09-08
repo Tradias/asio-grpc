@@ -402,8 +402,7 @@ class BasicSenderOperationState
         auto* const scratch_space = op.get_scratch_space();
         auto& grpc_context = *static_cast<agrpc::GrpcContext*>(scratch_space);
         op.restore_scratch_space(detail::AllocationType::NONE);
-        auto stop_token = detail::check_start_conditions(grpc_context, receiver());
-        if (stop_token)
+        if (auto stop_token = detail::check_start_conditions(grpc_context, receiver()))
         {
             op.start(grpc_context, impl_.second(), std::move(*stop_token));
         }

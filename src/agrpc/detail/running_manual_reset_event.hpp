@@ -93,13 +93,10 @@ class RunningManualResetEvent<void(Args...)> : public detail::OperationBase
                     detail::WorkTrackingCompletionHandler<detail::RemoveCrefT<CompletionHandler>>, Sig>;
                 using Operation = ManualResetEventRunningOperationState<Signature, Receiver>;
                 Receiver receiver{static_cast<CompletionHandler&&>(completion_handler)};
-                if (detail::check_start_conditions(receiver))
-                {
-                    auto operation = detail::allocate<Operation>(allocator, static_cast<Receiver&&>(receiver), event_,
-                                                                 DeallocateOnCompleteArg<DeallocateOnComplete::YES>{});
-                    operation->start();
-                    operation.release();
-                }
+                auto operation = detail::allocate<Operation>(allocator, static_cast<Receiver&&>(receiver), event_,
+                                                             DeallocateOnCompleteArg<DeallocateOnComplete::YES>{});
+                operation->start();
+                operation.release();
             },
             token);
     }

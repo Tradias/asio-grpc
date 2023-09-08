@@ -93,17 +93,6 @@ class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
     std::atomic<Op*> op_{};
 };
 
-template <class Receiver>
-[[nodiscard]] bool check_start_conditions(Receiver& receiver)
-{
-    if (detail::exec::get_stop_token(receiver).stop_requested())
-    {
-        detail::exec::set_done(static_cast<Receiver&&>(receiver));
-        return false;
-    }
-    return true;
-}
-
 template <class Signature, class Receiver, detail::DeallocateOnComplete>
 inline constexpr bool set_value_impl{};
 
@@ -126,6 +115,8 @@ struct ManualResetEventRunningOperationState : ManualResetEventOperationStateBas
         ManualResetEvent<Signature>& event_;
     };
 
+    using StopCallback = detail::StopCallbackLifetime<exec::stop_token_type_t<Receiver&>, StopFunction>;
+
     template <class R, detail::DeallocateOnComplete Deallocate>
     ManualResetEventRunningOperationState(R&& receiver, ManualResetEvent<Signature>& event,
                                           DeallocateOnCompleteArg<Deallocate>)
@@ -144,8 +135,7 @@ struct ManualResetEventRunningOperationState : ManualResetEventOperationStateBas
 
     auto& stop_callback() noexcept { return impl_.second(); }
 
-    detail::CompressedPair<Receiver, detail::StopCallbackLifetime<exec::stop_token_type_t<Receiver&>, StopFunction>>
-        impl_;
+    detail::CompressedPair<Receiver, StopCallback> impl_;
 };
 
 template <class... Args, class Receiver, detail::DeallocateOnComplete Deallocate>
@@ -176,10 +166,12 @@ class ManualResetEventOperationState
             detail::satisfy_receiver(static_cast<Receiver&&>(state.receiver()));
             return;
         }
-        if (detail::check_start_conditions(state.receiver()))
+        if (detail::exec::get_stop_token(state.receiver()).stop_requested())
         {
-            state.start();
+            detail::exec::set_done(static_cast<Receiver&&>(state.receiver()));
+            return;
         }
+        state.start();
     }
 
   private:
