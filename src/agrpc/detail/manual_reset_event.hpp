@@ -149,7 +149,8 @@ struct ManualResetEventRunningOperationState : ManualResetEventOperationStateBas
 
     auto& stop_callback() noexcept { return impl_.second(); }
 
-    detail::CompressedPair<Receiver, detail::StopCallbackLifetime<Receiver, StopFunction>> impl_;
+    detail::CompressedPair<Receiver, detail::StopCallbackLifetime<exec::stop_token_type_t<Receiver&>, StopFunction>>
+        impl_;
 };
 
 template <class... Args, class Receiver, detail::DeallocateOnComplete Deallocate>

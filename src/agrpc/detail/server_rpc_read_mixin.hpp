@@ -26,7 +26,7 @@ namespace detail
 {
 struct ServerRPCReadMixinAccess;
 
-template <bool IsSet, class Base>
+template <bool IsResumableRead, class Base>
 class ServerRPCReadMixin : public Base
 {
   public:
@@ -61,8 +61,8 @@ class ServerRPCReadMixin<false, Base> : public Base
 
 struct ServerRPCReadMixinAccess
 {
-    template <bool IsSet, class Base>
-    [[nodiscard]] static bool is_reading(ServerRPCReadMixin<IsSet, Base>& mixin) noexcept
+    template <bool IsResumableRead, class Base>
+    [[nodiscard]] static bool is_reading(ServerRPCReadMixin<IsResumableRead, Base>& mixin) noexcept
     {
         return mixin.event_.is_running();
     }

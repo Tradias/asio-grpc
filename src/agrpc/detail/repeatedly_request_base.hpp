@@ -69,7 +69,7 @@ class RepeatedlyRequestOperationBase
   private:
     using Service = detail::GetServiceT<RPC>;
     using StopContext = detail::RepeatedlyRequestBaseStopContext<
-        detail::IS_STOP_EVER_POSSIBLE_V<detail::exec::stop_token_type_t<CompletionHandler>>>;
+        detail::IS_STOP_EVER_POSSIBLE_V<detail::exec::stop_token_type_t<CompletionHandler&>>>;
 
   public:
     template <class Ch, class Rh>

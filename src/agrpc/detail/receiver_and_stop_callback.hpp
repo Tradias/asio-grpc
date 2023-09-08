@@ -23,11 +23,11 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class Receiver, class StopFunction>
-class ReceiverAndStopCallback : private StopCallbackLifetime<Receiver, StopFunction>
+class ReceiverAndStopCallback : private StopCallbackLifetime<exec::stop_token_type_t<Receiver&>, StopFunction>
 {
   private:
-    using Base = StopCallbackLifetime<Receiver, StopFunction>;
-    using typename Base::StopToken;
+    using StopToken = exec::stop_token_type_t<Receiver&>;
+    using Base = StopCallbackLifetime<StopToken, StopFunction>;
 
   public:
     using Base::IS_STOPPABLE;

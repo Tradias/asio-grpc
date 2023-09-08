@@ -32,7 +32,7 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
 {
     using Base = detail::BaseForSenderImplementationTypeT<Implementation::TYPE>;
     using StopFunction = typename Implementation::StopFunction;
-    using StopToken = exec::stop_token_type_t<CompletionHandler>;
+    using StopToken = exec::stop_token_type_t<CompletionHandler&>;
 
     template <detail::AllocationType AllocType>
     static void do_complete(detail::OperationBase* op, detail::OperationResult result, agrpc::GrpcContext& grpc_context)

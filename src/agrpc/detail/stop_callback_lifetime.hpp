@@ -25,25 +25,20 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class Receiver, class StopFunction>
-inline constexpr bool RECEIVER_NEEDS_STOP_CALLBACK =
-    detail::IS_STOP_EVER_POSSIBLE_V<detail::exec::stop_token_type_t<std::remove_reference_t<Receiver>&>>;
+template <class StopToken, class StopFunction>
+inline constexpr bool NEEDS_STOP_CALLBACK = detail::IS_STOP_EVER_POSSIBLE_V<StopToken>;
 
-template <class Receiver>
-inline constexpr bool RECEIVER_NEEDS_STOP_CALLBACK<Receiver, detail::Empty> = false;
+template <class StopToken>
+inline constexpr bool NEEDS_STOP_CALLBACK<StopToken, detail::Empty> = false;
 
-template <class Receiver, class StopFunction, bool = detail::RECEIVER_NEEDS_STOP_CALLBACK<Receiver, StopFunction>>
+template <class StopToken, class StopFunction, bool = detail::NEEDS_STOP_CALLBACK<StopToken, StopFunction>>
 class StopCallbackLifetime
 {
   private:
-    using StopCallback = std::optional<detail::StopCallbackTypeT<Receiver&, StopFunction>>;
+    using StopCallback = std::optional<typename StopToken::template callback_type<StopFunction>>;
 
   public:
     static constexpr bool IS_STOPPABLE = true;
-
-    using StopToken = detail::exec::stop_token_type_t<Receiver>;
-
-    StopCallbackLifetime() = default;
 
     void reset() noexcept { stop_callback_.reset(); }
 
@@ -60,17 +55,15 @@ class StopCallbackLifetime
     StopCallback stop_callback_;
 };
 
-template <class Receiver, class StopFunction>
-class StopCallbackLifetime<Receiver, StopFunction, false>
+template <class StopToken, class StopFunction>
+class StopCallbackLifetime<StopToken, StopFunction, false>
 {
   public:
     static constexpr bool IS_STOPPABLE = false;
 
-    using StopToken = detail::exec::stop_token_type_t<Receiver>;
-
     static constexpr void reset() noexcept {}
 
-    template <class StopToken, class... Args>
+    template <class... Args>
     static constexpr void emplace(const StopToken&, Args&&...) noexcept
     {
     }

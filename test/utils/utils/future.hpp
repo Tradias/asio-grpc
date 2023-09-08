@@ -32,7 +32,7 @@ std::optional<std::conditional_t<std::is_same_v<void, T>, bool, T>> wait_for_fut
     agrpc::Alarm alarm{grpc_context};
     for (int i{}; i < 50; ++i)
     {
-        alarm.wait(std::chrono::system_clock::now() + std::chrono::milliseconds(10), yield);
+        alarm.wait(std::chrono::system_clock::now() + std::chrono::milliseconds(50), yield);
         if (future.wait_for(std::chrono::milliseconds(1)) == std::future_status::ready)
         {
             if constexpr (std::is_same_v<void, T>)

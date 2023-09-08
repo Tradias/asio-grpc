@@ -190,7 +190,7 @@ struct RequestHandlerOperation
         {
         }
 
-        [[noreturn]] void set_done() noexcept { std::terminate(); }
+        [[noreturn]] static void set_done() noexcept { std::terminate(); }
 
         void set_value(bool ok)
         {
@@ -219,7 +219,7 @@ struct RequestHandlerOperation
             }
         }
 
-        [[noreturn]] void set_error(const std::exception_ptr&) noexcept { std::terminate(); }
+        [[noreturn]] static void set_error(const std::exception_ptr&) noexcept { std::terminate(); }
 
         friend exec::inline_scheduler tag_invoke(exec::tag_t<exec::get_scheduler>, const StartReceiver&) noexcept
         {

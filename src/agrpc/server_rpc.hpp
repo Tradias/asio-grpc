@@ -26,8 +26,8 @@
 AGRPC_NAMESPACE_BEGIN()
 
 template <class ServiceT, class RequestT, class ResponseT,
-          detail::ServerUnaryRequest<ServiceT, RequestT, ResponseT> RequestRPC, class TraitsT, class Executor>
-class ServerRPC<RequestRPC, TraitsT, Executor>
+          detail::ServerUnaryRequest<ServiceT, RequestT, ResponseT> RequestUnary, class TraitsT, class Executor>
+class ServerRPC<RequestUnary, TraitsT, Executor>
     : public detail::ServerRPCBase<grpc::ServerAsyncResponseWriter<ResponseT>, TraitsT, Executor>
 {
   private:
@@ -53,7 +53,7 @@ class ServerRPC<RequestRPC, TraitsT, Executor>
         /**
          * @brief The ServerRPC type when rebound to the specified executor
          */
-        using other = ServerRPC<RequestRPC, TraitsT, OtherExecutor>;
+        using other = ServerRPC<RequestUnary, TraitsT, OtherExecutor>;
     };
 
     ServerRPC() = delete;
@@ -95,8 +95,9 @@ class ServerRPC<RequestRPC, TraitsT, Executor>
 };
 
 template <class ServiceT, class RequestT, class ResponseT,
-          detail::ServerClientStreamingRequest<ServiceT, RequestT, ResponseT> RequestRPC, class TraitsT, class Executor>
-class ServerRPC<RequestRPC, TraitsT, Executor>
+          detail::ServerClientStreamingRequest<ServiceT, RequestT, ResponseT> RequestClientStreaming, class TraitsT,
+          class Executor>
+class ServerRPC<RequestClientStreaming, TraitsT, Executor>
     : public detail::ServerRPCBase<grpc::ServerAsyncReader<ResponseT, RequestT>, TraitsT, Executor>
 {
   private:
@@ -122,7 +123,7 @@ class ServerRPC<RequestRPC, TraitsT, Executor>
         /**
          * @brief The ServerRPC type when rebound to the specified executor
          */
-        using other = ServerRPC<RequestRPC, TraitsT, OtherExecutor>;
+        using other = ServerRPC<RequestClientStreaming, TraitsT, OtherExecutor>;
     };
 
     ServerRPC() = delete;
@@ -172,8 +173,9 @@ class ServerRPC<RequestRPC, TraitsT, Executor>
 };
 
 template <class ServiceT, class RequestT, class ResponseT,
-          detail::ServerServerStreamingRequest<ServiceT, RequestT, ResponseT> RequestRPC, class TraitsT, class Executor>
-class ServerRPC<RequestRPC, TraitsT, Executor>
+          detail::ServerServerStreamingRequest<ServiceT, RequestT, ResponseT> RequestServerStreaming, class TraitsT,
+          class Executor>
+class ServerRPC<RequestServerStreaming, TraitsT, Executor>
     : public detail::ServerRPCBase<grpc::ServerAsyncWriter<ResponseT>, TraitsT, Executor>
 {
   private:
@@ -199,7 +201,7 @@ class ServerRPC<RequestRPC, TraitsT, Executor>
         /**
          * @brief The ServerRPC type when rebound to the specified executor
          */
-        using other = ServerRPC<RequestRPC, TraitsT, OtherExecutor>;
+        using other = ServerRPC<RequestServerStreaming, TraitsT, OtherExecutor>;
     };
 
     ServerRPC() = delete;
@@ -338,8 +340,9 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
 }
 
 template <class ServiceT, class RequestT, class ResponseT,
-          detail::ServerBidiStreamingRequest<ServiceT, RequestT, ResponseT> RequestRPC, class TraitsT, class Executor>
-class ServerRPC<RequestRPC, TraitsT, Executor>
+          detail::ServerBidiStreamingRequest<ServiceT, RequestT, ResponseT> RequestBidiStreaming, class TraitsT,
+          class Executor>
+class ServerRPC<RequestBidiStreaming, TraitsT, Executor>
     : public detail::ServerRPCBidiStreamingBase<grpc::ServerAsyncReaderWriter<ResponseT, RequestT>, TraitsT, Executor>
 {
   public:
@@ -357,7 +360,7 @@ class ServerRPC<RequestRPC, TraitsT, Executor>
         /**
          * @brief The ServerRPC type when rebound to the specified executor
          */
-        using other = ServerRPC<RequestRPC, TraitsT, OtherExecutor>;
+        using other = ServerRPC<RequestBidiStreaming, TraitsT, OtherExecutor>;
     };
 
     ServerRPC() = delete;

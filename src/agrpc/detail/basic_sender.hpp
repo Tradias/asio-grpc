@@ -35,7 +35,7 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class Receiver>
-[[nodiscard]] std::optional<detail::exec::stop_token_type_t<Receiver>> check_start_conditions(
+[[nodiscard]] std::optional<detail::exec::stop_token_type_t<Receiver&>> check_start_conditions(
     const agrpc::GrpcContext& grpc_context, Receiver& receiver)
 {
     if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context))
@@ -152,7 +152,7 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
   private:
     using Base = detail::BaseForSenderImplementationTypeT<Implementation::TYPE>;
     using StopFunction = typename Implementation::StopFunction;
-    using StopToken = detail::exec::stop_token_type_t<Receiver>;
+    using StopToken = detail::exec::stop_token_type_t<Receiver&>;
 
     template <detail::AllocationType AllocType>
     struct OnDone
@@ -217,8 +217,7 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
 
     template <detail::AllocationType AllocType, int Id, class... Args>
     auto done(agrpc::GrpcContext& grpc_context, Args&&... args) -> decltype((void)std::declval<Implementation&>().done(
-        typename OnDone<AllocType>::template Type<Id>{std::declval<BasicSenderRunningOperation&>(), grpc_context},
-        static_cast<Args&&>(args)...))
+        std::declval<typename OnDone<AllocType>::template Type<Id>>(), static_cast<Args&&>(args)...))
     {
         implementation().done(typename OnDone<AllocType>::template Type<Id>{*this, grpc_context},
                               static_cast<Args&&>(args)...);

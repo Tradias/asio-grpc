@@ -54,10 +54,10 @@ void register_yield_request_handler(const typename ServerRPC::executor_type& exe
         return;
     }
     detail::spawn(yield,
-                  [executor, &service, request_handler](const asio::basic_yield_context<Executor>& yield) mutable
+                  [executor, &service, request_handler](const asio::basic_yield_context<Executor>& next_yield) mutable
                   {
                       agrpc::register_yield_request_handler<ServerRPC>(
-                          executor, service, static_cast<RequestHandler&&>(request_handler), yield);
+                          executor, service, static_cast<RequestHandler&&>(request_handler), next_yield);
                   });
     std::exception_ptr eptr;
     AGRPC_TRY { req.invoke(static_cast<RequestHandler&&>(request_handler), rpc, yield); }
