@@ -96,6 +96,7 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
     using Base = detail::BaseForSenderImplementationTypeT<Implementation::TYPE>;
     using StopFunction = typename Implementation::StopFunction;
     using StopToken = detail::exec::stop_token_type_t<Receiver&>;
+    using StopCallback = detail::StopCallbackLifetime<StopToken, StopFunction>;
 
     template <int Id = 0>
     static void do_complete(detail::OperationBase* op, detail::OperationResult result, agrpc::GrpcContext& grpc_context)
@@ -114,10 +115,14 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
     template <class Initiation>
     void emplace_stop_callback(StopToken&& stop_token, const Initiation& initiation) noexcept
     {
-        impl_.first().emplace_stop_callback(static_cast<StopToken&&>(stop_token), initiation, implementation());
+        if constexpr (StopCallback::IS_STOPPABLE)
+        {
+            stop_callback().emplace(static_cast<StopToken&&>(stop_token),
+                                    detail::get_stop_function_arg(initiation, implementation()));
+        }
     }
 
-    void reset_stop_callback() noexcept { impl_.first().reset_stop_callback(); }
+    void reset_stop_callback() noexcept { stop_callback().reset(); }
 
   public:
     template <class R>
@@ -140,7 +145,9 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
         detail::initiate<detail::DeallocateOnComplete::NO>(*this, grpc_context, initiation, AllocationType::NONE);
     }
 
-    Receiver& receiver() noexcept { return impl_.first().receiver(); }
+    Receiver& receiver() noexcept { return impl_.first().first(); }
+
+    StopCallback& stop_callback() noexcept { return impl_.first().second(); }
 
     Implementation& implementation() noexcept { return impl_.second(); }
 
@@ -172,7 +179,7 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
     void restore_scratch_space() noexcept { detail::OperationBaseAccess::get_on_complete(*this) = &do_complete; }
 
   private:
-    detail::CompressedPair<detail::ReceiverAndStopCallback<Receiver, StopFunction>, Implementation> impl_;
+    detail::CompressedPair<detail::CompressedPair<Receiver, StopCallback>, Implementation> impl_;
 };
 
 template <class Initiation, class Implementation, class Receiver>

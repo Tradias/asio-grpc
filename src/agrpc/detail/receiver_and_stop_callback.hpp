@@ -35,40 +35,6 @@ auto get_stop_function_arg(const Initiation& initiation, const Implementation&)
 {
     return initiation.stop_function_arg();
 }
-
-template <class Receiver, class StopFunction>
-class ReceiverAndStopCallback : private StopCallbackLifetime<exec::stop_token_type_t<Receiver&>, StopFunction>
-{
-  private:
-    using StopToken = exec::stop_token_type_t<Receiver&>;
-    using Base = StopCallbackLifetime<StopToken, StopFunction>;
-
-  public:
-    using Base::IS_STOPPABLE;
-
-    template <class R>
-    explicit ReceiverAndStopCallback(R&& receiver) : receiver_(static_cast<R&&>(receiver))
-    {
-    }
-
-    Receiver& receiver() noexcept { return receiver_; }
-
-    void reset_stop_callback() noexcept { this->reset(); }
-
-    template <class Initiation, class Implementation>
-    void emplace_stop_callback(StopToken&& stop_token, const Initiation& initiation,
-                               Implementation& implementation) noexcept
-    {
-        if constexpr (Base::IS_STOPPABLE)
-        {
-            this->emplace(static_cast<StopToken&&>(stop_token),
-                          detail::get_stop_function_arg(initiation, implementation));
-        }
-    }
-
-  private:
-    Receiver receiver_;
-};
 }
 
 AGRPC_NAMESPACE_END
