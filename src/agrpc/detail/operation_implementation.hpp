@@ -26,37 +26,31 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <AllocationType AllocType, int Id, template <class, class> class Operation, class Implementation, class T,
-          class... Args>
-auto complete_impl(Operation<Implementation, T>& operation, agrpc::GrpcContext& grpc_context, Args&&... args)
-    -> decltype((void)std::declval<Implementation&>().done(
-        std::declval<OperationHandle<Operation<Implementation, T>, AllocType, Id>>(), static_cast<Args&&>(args)...))
+template <AllocationType AllocType, int Id, class Operation>
+void complete(Operation& operation, detail::OperationResult result, agrpc::GrpcContext& grpc_context)
 {
-    operation.implementation().done(
-        OperationHandle<Operation<Implementation, T>, AllocType, Id>{operation, grpc_context},
-        static_cast<Args&&>(args)...);
-}
-
-template <AllocationType AllocType, int Id, template <class, class> class Operation, class Implementation, class T,
-          class... Args>
-auto complete_impl(Operation<Implementation, T>& operation, agrpc::GrpcContext& grpc_context, Args&&... args)
-    -> decltype((void)std::declval<Implementation&>().done(grpc_context, static_cast<Args&&>(args)...))
-{
-    operation.implementation().done(grpc_context, args...);
-    operation.template complete<AllocType>(grpc_context, static_cast<Args&&>(args)...);
-}
-
-template <AllocationType AllocType, int Id, template <class, class> class Operation, class Implementation, class T>
-void complete(Operation<Implementation, T>& operation, detail::OperationResult result, agrpc::GrpcContext& grpc_context)
-{
+    using Implementation = typename Operation::Implementation;
+    const auto impl = [&](auto&&... args)
+    {
+        if constexpr (Implementation::NEEDS_ON_COMPLETE)
+        {
+            operation.implementation().complete(OperationHandle<Operation, AllocType, Id>{operation, grpc_context},
+                                                static_cast<decltype(args)&&>(args)...);
+        }
+        else
+        {
+            operation.implementation().complete(grpc_context, args...);
+            operation.template complete<AllocType>(grpc_context, static_cast<decltype(args)&&>(args)...);
+        }
+    };
     if constexpr (Implementation::TYPE == detail::SenderImplementationType::BOTH ||
                   Implementation::TYPE == detail::SenderImplementationType::GRPC_TAG)
     {
-        detail::complete_impl<AllocType, Id>(operation, grpc_context, detail::is_ok(result));
+        impl(detail::is_ok(result));
     }
     else
     {
-        detail::complete_impl<AllocType, Id>(operation, grpc_context);
+        impl();
     }
 }
 }

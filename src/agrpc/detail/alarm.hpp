@@ -30,15 +30,16 @@ template <class Executor>
 struct MoveAlarmSenderImplementation
 {
     static constexpr auto TYPE = detail::SenderImplementationType::GRPC_TAG;
+    static constexpr bool NEEDS_ON_COMPLETE = true;
 
     using Alarm = agrpc::BasicAlarm<Executor>;
     using Signature = void(bool, Alarm);
     using StopFunction = detail::AlarmCancellationFunction;
 
-    template <class OnDone>
-    void done(OnDone on_done, bool ok)
+    template <class OnComplete>
+    void complete(OnComplete on_complete, bool ok)
     {
-        on_done(ok, static_cast<Alarm&&>(alarm_));
+        on_complete(ok, static_cast<Alarm&&>(alarm_));
     }
 
     auto& grpc_alarm() { return alarm_.alarm_; }

@@ -27,11 +27,12 @@ namespace detail
 struct ScheduleSenderImplementation
 {
     static constexpr auto TYPE = detail::SenderImplementationType::NO_ARG;
+    static constexpr bool NEEDS_ON_COMPLETE = false;
 
     using Signature = void();
     using StopFunction = detail::Empty;
 
-    static void done(const agrpc::GrpcContext&) noexcept {}
+    static void complete(const agrpc::GrpcContext&) noexcept {}
 };
 
 struct ScheduleSenderInitiation

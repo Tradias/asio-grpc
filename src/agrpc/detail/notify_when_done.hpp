@@ -29,6 +29,7 @@ namespace detail
 struct NotifyWhenDoneSenderImplementation : public detail::IntrusiveListHook<NotifyWhenDoneSenderImplementation>
 {
     static constexpr auto TYPE = detail::SenderImplementationType::BOTH;
+    static constexpr bool NEEDS_ON_COMPLETE = true;
 
     using Signature = void();
     using StopFunction = detail::Empty;
@@ -38,21 +39,22 @@ struct NotifyWhenDoneSenderImplementation : public detail::IntrusiveListHook<Not
     {
     }
 
-    template <template <int> class OnDone>
-    void done(OnDone<0> on_done, bool)
+    template <template <int> class OnComplete>
+    void complete(OnComplete<0> on_complete, bool)
     {
-        detail::GrpcContextImplementation::work_started(on_done.grpc_context());
-        initiate_async_notify_when_done<OnDone<0>::ALLOCATION_TYPE>(on_done.grpc_context(), on_done.template self<1>());
+        detail::GrpcContextImplementation::work_started(on_complete.grpc_context());
+        initiate_async_notify_when_done<OnComplete<0>::ALLOCATION_TYPE>(on_complete.grpc_context(),
+                                                                        on_complete.template self<1>());
     }
 
-    template <template <int> class OnDone>
-    void done(OnDone<1> on_done, bool)
+    template <template <int> class OnComplete>
+    void complete(OnComplete<1> on_complete, bool)
     {
-        if constexpr (detail::AllocationType::NONE != OnDone<1>::ALLOCATION_TYPE)
+        if constexpr (detail::AllocationType::NONE != OnComplete<1>::ALLOCATION_TYPE)
         {
-            detail::GrpcContextImplementation::remove_notify_when_done_operation(on_done.grpc_context(), this);
+            detail::GrpcContextImplementation::remove_notify_when_done_operation(on_complete.grpc_context(), this);
         }
-        on_done();
+        on_complete();
     }
 
     void complete(detail::OperationResult result, agrpc::GrpcContext& grpc_context)

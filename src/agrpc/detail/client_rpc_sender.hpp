@@ -62,22 +62,32 @@ struct ClientContextCancellationFunction
 template <class Responder>
 struct ClientUnaryRequestSenderImplementationBase;
 
-template <class Response, template <class> class Responder>
-struct ClientUnaryRequestSenderImplementationBase<Responder<Response>>
+struct StatusSenderImplementationBase
 {
     static constexpr auto TYPE = detail::SenderImplementationType::GRPC_TAG;
+    static constexpr bool NEEDS_ON_COMPLETE = true;
 
     using Signature = void(grpc::Status);
     using StopFunction = detail::ClientContextCancellationFunction;
 
-    template <class OnDone>
-    void done(OnDone on_done, bool)
+    grpc::Status status_{};
+};
+
+template <class Response, template <class> class Responder>
+struct ClientUnaryRequestSenderImplementationBase<Responder<Response>> : StatusSenderImplementationBase
+{
+    explicit ClientUnaryRequestSenderImplementationBase(std::unique_ptr<Responder<Response>> responder)
+        : responder_(std::move(responder))
     {
-        on_done(static_cast<grpc::Status&&>(status_));
+    }
+
+    template <class OnComplete>
+    void complete(OnComplete on_complete, bool)
+    {
+        on_complete(static_cast<grpc::Status&&>(status_));
     }
 
     std::unique_ptr<Responder<Response>> responder_;
-    grpc::Status status_{};
 };
 
 template <class Response>
@@ -324,13 +334,15 @@ struct ClientWriteBidiStreamingSenderInitiation<Responder<Request, Response>>
 template <class Responder>
 struct ClientWritesDoneSenderImplementation : ClientRPCGrpcSenderImplementation
 {
+    static constexpr bool NEEDS_ON_COMPLETE = true;
+
     explicit ClientWritesDoneSenderImplementation(detail::ClientRPCContextBase<Responder>& rpc) noexcept : rpc_(rpc) {}
 
-    template <class OnDone>
-    void done(OnDone on_done, bool ok)
+    template <class OnComplete>
+    void complete(OnComplete on_complete, bool ok)
     {
         ClientRPCAccess::set_writes_done(rpc_);
-        on_done(ok);
+        on_complete(ok);
     }
 
     detail::ClientRPCContextBase<Responder>& rpc_;
@@ -353,29 +365,25 @@ struct ClientWritesDoneSenderInitiation
 };
 
 template <class Responder>
-struct ClientFinishSenderImplementation
+struct ClientFinishSenderImplementation : StatusSenderImplementationBase
 {
-    static constexpr auto TYPE = detail::SenderImplementationType::GRPC_TAG;
+    explicit ClientFinishSenderImplementation(detail::ClientRPCContextBase<Responder>& rpc) : rpc_(rpc) {}
 
-    using Signature = void(grpc::Status);
-    using StopFunction = detail::ClientContextCancellationFunction;
-
-    template <template <int> class OnDone>
-    void done(OnDone<0> on_done, bool)
+    template <template <int> class OnComplete>
+    void complete(OnComplete<0> on_complete, bool)
     {
-        on_done.grpc_context().work_started();
-        ClientRPCAccess::responder(rpc_).Finish(&status_, on_done.template self<1>());
+        on_complete.grpc_context().work_started();
+        ClientRPCAccess::responder(rpc_).Finish(&status_, on_complete.template self<1>());
     }
 
-    template <template <int> class OnDone>
-    void done(OnDone<1> on_done, bool)
+    template <template <int> class OnComplete>
+    void complete(OnComplete<1> on_complete, bool)
     {
         ClientRPCAccess::set_finished(rpc_);
-        on_done(static_cast<grpc::Status&&>(status_));
+        on_complete(static_cast<grpc::Status&&>(status_));
     }
 
     detail::ClientRPCContextBase<Responder>& rpc_;
-    grpc::Status status_{};
 };
 
 struct ClientFinishSenderInitiation
@@ -401,22 +409,20 @@ struct ClientFinishSenderInitiation
 };
 
 template <class Responder>
-struct ClientFinishServerStreamingSenderImplementation
+struct ClientFinishServerStreamingSenderImplementation : StatusSenderImplementationBase
 {
-    static constexpr auto TYPE = detail::SenderImplementationType::GRPC_TAG;
+    explicit ClientFinishServerStreamingSenderImplementation(detail::ClientRPCContextBase<Responder>& rpc) : rpc_(rpc)
+    {
+    }
 
-    using Signature = void(grpc::Status);
-    using StopFunction = detail::ClientContextCancellationFunction;
-
-    template <class OnDone>
-    void done(OnDone on_done, bool)
+    template <class OnComplete>
+    void complete(OnComplete on_complete, bool)
     {
         ClientRPCAccess::set_finished(rpc_);
-        on_done(static_cast<grpc::Status&&>(status_));
+        on_complete(static_cast<grpc::Status&&>(status_));
     }
 
     detail::ClientRPCContextBase<Responder>& rpc_;
-    grpc::Status status_{};
 };
 
 struct ClientFinishServerStreamingSenderInitation

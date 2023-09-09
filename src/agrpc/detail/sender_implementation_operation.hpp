@@ -29,9 +29,10 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class Implementation, class CompletionHandler>
-struct SenderImplementationOperation : public detail::BaseForSenderImplementationTypeT<Implementation::TYPE>
+template <class ImplementationT, class CompletionHandler>
+struct SenderImplementationOperation : public detail::BaseForSenderImplementationTypeT<ImplementationT::TYPE>
 {
+    using Implementation = ImplementationT;
     using Base = detail::BaseForSenderImplementationTypeT<Implementation::TYPE>;
     using StopFunction = typename Implementation::StopFunction;
     using StopToken = exec::stop_token_type_t<CompletionHandler&>;

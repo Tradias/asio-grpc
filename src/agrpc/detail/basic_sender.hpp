@@ -89,9 +89,12 @@ struct BasicSenderAccess
     }
 };
 
-template <class Implementation, class Receiver>
-class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTypeT<Implementation::TYPE>
+template <class ImplementationT, class Receiver>
+class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTypeT<ImplementationT::TYPE>
 {
+  public:
+    using Implementation = ImplementationT;
+
   private:
     using Base = detail::BaseForSenderImplementationTypeT<Implementation::TYPE>;
     using StopFunction = typename Implementation::StopFunction;

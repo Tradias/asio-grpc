@@ -63,7 +63,7 @@ struct ServerRequestSenderImplementation : detail::GrpcSenderImplementationBase
 
     explicit ServerRequestSenderImplementation(RPC& rpc) noexcept : rpc_(rpc) {}
 
-    void done(agrpc::GrpcContext& grpc_context, bool ok) const noexcept
+    void complete(agrpc::GrpcContext& grpc_context, bool ok) const noexcept
     {
         if (ok)
         {
@@ -130,14 +130,9 @@ struct ServerRequestSenderInitiation<agrpc::ServerRPCType::GENERIC, IsNotifyWhen
     grpc::AsyncGenericService& service_;
 };
 
-struct ServerRPCGrpcSenderImplementation
+struct ServerRPCGrpcSenderImplementation : detail::GrpcSenderImplementationBase
 {
-    static constexpr auto TYPE = detail::SenderImplementationType::GRPC_TAG;
-
     using StopFunction = detail::ServerContextCancellationFunction;
-    using Signature = void(bool);
-
-    static void done(const agrpc::GrpcContext&, bool) noexcept {}
 };
 
 struct ServerRPCSenderInitiationBase
@@ -205,7 +200,7 @@ struct ServerFinishSenderImplementation : ServerRPCGrpcSenderImplementation
 {
     explicit ServerFinishSenderImplementation(detail::ServerRPCContextBase<Responder>& rpc) noexcept : rpc_(rpc) {}
 
-    void done(const agrpc::GrpcContext&, bool) noexcept { ServerRPCAccess::set_finished(rpc_); }
+    void complete(const agrpc::GrpcContext&, bool) noexcept { ServerRPCAccess::set_finished(rpc_); }
 
     detail::ServerRPCContextBase<Responder>& rpc_;
 };
