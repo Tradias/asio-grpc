@@ -15,7 +15,7 @@
 #ifndef AGRPC_AGRPC_BIND_ALLOCATOR_HPP
 #define AGRPC_AGRPC_BIND_ALLOCATOR_HPP
 
-#include <agrpc/detail/asio_association.hpp>
+#include <agrpc/detail/association.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/memory_resource.hpp>
 #include <agrpc/detail/utility.hpp>

@@ -15,7 +15,7 @@
 #ifndef AGRPC_DETAIL_STOP_CALLBACK_LIFETIME_HPP
 #define AGRPC_DETAIL_STOP_CALLBACK_LIFETIME_HPP
 
-#include <agrpc/detail/asio_association.hpp>
+#include <agrpc/detail/association.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/utility.hpp>
 
@@ -34,6 +34,7 @@ inline constexpr bool NEEDS_STOP_CALLBACK<StopToken, detail::Empty> = false;
 template <class StopToken, class StopFunction, bool = detail::NEEDS_STOP_CALLBACK<StopToken, StopFunction>>
 class StopCallbackLifetime
 {
+#ifdef AGRPC_UNIFEX
   private:
     using StopCallback = std::optional<typename StopToken::template callback_type<StopFunction>>;
 
@@ -45,7 +46,7 @@ class StopCallbackLifetime
     template <class... Args>
     void emplace(StopToken&& stop_token, Args&&... args) noexcept
     {
-        if (stop_token.stop_possible())
+        if (detail::stop_possible(stop_token))
         {
             stop_callback_.emplace(static_cast<StopToken&&>(stop_token), static_cast<Args&&>(args)...);
         }
@@ -53,6 +54,21 @@ class StopCallbackLifetime
 
   private:
     StopCallback stop_callback_;
+#else
+  public:
+    static constexpr bool IS_STOPPABLE = true;
+
+    static constexpr void reset() noexcept {}
+
+    template <class... Args>
+    void emplace(StopToken&& stop_token, Args&&... args) noexcept
+    {
+        if (detail::stop_possible(stop_token))
+        {
+            stop_token.template emplace<StopFunction>(static_cast<Args&&>(args)...);
+        }
+    }
+#endif
 };
 
 template <class StopToken, class StopFunction>

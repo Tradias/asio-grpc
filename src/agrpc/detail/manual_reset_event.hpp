@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_MANUAL_RESET_EVENT_HPP
 
 #include <agrpc/detail/allocate.hpp>
+#include <agrpc/detail/association.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/deallocate_on_complete.hpp>
 #include <agrpc/detail/execution.hpp>
@@ -104,15 +105,14 @@ struct ManualResetEventRunningOperationState : ManualResetEventOperationStateBas
         template <class... T>
         void operator()(T&&...) const
         {
-            ManualResetEventOperationStateBase<Signature>* op = op_;
-            if (event_.op_.compare_exchange_strong(op, nullptr, std::memory_order_acq_rel))
+            ManualResetEventOperationStateBase<Signature>* op = &op_;
+            if (op->event_.op_.compare_exchange_strong(op, nullptr, std::memory_order_acq_rel))
             {
-                detail::exec::set_done(static_cast<Receiver&&>(op_->receiver()));
+                detail::exec::set_done(static_cast<Receiver&&>(op_.receiver()));
             }
         }
 
-        ManualResetEventRunningOperationState* op_;
-        ManualResetEvent<Signature>& event_;
+        ManualResetEventRunningOperationState& op_;
     };
 
     using StopCallback = detail::StopCallbackLifetime<exec::stop_token_type_t<Receiver&>, StopFunction>;
@@ -127,7 +127,7 @@ struct ManualResetEventRunningOperationState : ManualResetEventOperationStateBas
 
     void start() noexcept
     {
-        stop_callback().emplace(detail::exec::get_stop_token(receiver()), StopFunction{this, this->event_});
+        stop_callback().emplace(detail::exec::get_stop_token(receiver()), StopFunction{*this});
         this->event_.op_.store(this, std::memory_order_release);
     }
 
@@ -166,7 +166,7 @@ class ManualResetEventOperationState
             detail::satisfy_receiver(static_cast<Receiver&&>(state.receiver()));
             return;
         }
-        if (detail::exec::get_stop_token(state.receiver()).stop_requested())
+        if (detail::stop_requested(detail::exec::get_stop_token(state.receiver())))
         {
             detail::exec::set_done(static_cast<Receiver&&>(state.receiver()));
             return;

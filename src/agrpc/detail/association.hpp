@@ -12,29 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_NO_OP_STOP_CALLBACK_HPP
-#define AGRPC_DETAIL_NO_OP_STOP_CALLBACK_HPP
+#ifndef AGRPC_DETAIL_ASSOCIATION_HPP
+#define AGRPC_DETAIL_ASSOCIATION_HPP
 
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/execution.hpp>
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+#include <agrpc/detail/association_asio.hpp>
+#else
+#include <agrpc/detail/association_unifex.hpp>
+#endif
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-class NoOpStopCallback
-{
-  public:
-    template <class StopToken>
-    static constexpr void emplace(StopToken&&) noexcept
-    {
-    }
+template <class T>
+using AssociatedAllocatorT = decltype(detail::exec::get_allocator(std::declval<T>()));
 
-    [[nodiscard]] static constexpr bool is_stopped() noexcept { return false; }
-
-    static constexpr void reset() noexcept {}
-};
-}
+template <class T>
+using AssociatedExecutorT = decltype(detail::exec::get_executor(std::declval<T>()));
+}  // namespace detail
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_NO_OP_STOP_CALLBACK_HPP
+#endif  // AGRPC_DETAIL_ASSOCIATION_HPP

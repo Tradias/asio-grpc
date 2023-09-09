@@ -29,29 +29,6 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-class RepeatedlyRequestCancellationFunction
-{
-  public:
-    explicit RepeatedlyRequestCancellationFunction(std::atomic_bool& stopped) noexcept : stopped_(stopped) {}
-
-    void operator()(asio::cancellation_type type) noexcept
-    {
-        if (static_cast<bool>(type & asio::cancellation_type::all))
-        {
-            stopped_.store(true, std::memory_order_relaxed);
-        }
-    }
-
-  private:
-    std::atomic_bool& stopped_;
-};
-#else
-class RepeatedlyRequestCancellationFunction
-{
-};
-#endif
-
 template <class Operation>
 void initiate_repeatedly_request(agrpc::GrpcContext& grpc_context, Operation& operation)
 {
@@ -75,17 +52,13 @@ struct BasicRepeatedlyRequestInitiator
         auto& grpc_context = detail::query_grpc_context(executor);
         const auto allocator = detail::exec::get_allocator(request_handler);
         auto stop_token = detail::exec::get_stop_token(completion_handler);
-        const bool is_stop_possible = stop_token.stop_possible();
+        const bool is_stop_possible = detail::stop_possible(stop_token);
 
         auto operation = detail::allocate<Operation<DecayedRequestHandler, RPC, TrackingCompletionHandler>>(
             allocator, static_cast<RequestHandler&&>(request_handler), rpc, service,
             static_cast<CompletionHandler&&>(completion_handler), is_stop_possible);
 
-        if (is_stop_possible)
-        {
-            auto& context = operation->cancellation_context();
-            context.template emplace<detail::RepeatedlyRequestCancellationFunction>(stop_token);
-        }
+        operation->cancellation_context().emplace(std::move(stop_token));
         detail::StartWorkAndGuard guard{grpc_context};
         detail::initiate_repeatedly_request(grpc_context, *operation);
         guard.release();

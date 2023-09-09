@@ -15,11 +15,11 @@
 #ifndef AGRPC_DETAIL_REQUEST_HANDLER_SENDER_HPP
 #define AGRPC_DETAIL_REQUEST_HANDLER_SENDER_HPP
 
-#include <agrpc/detail/asio_association.hpp>
+#include <agrpc/detail/association.hpp>
+#include <agrpc/detail/atomic_bool_stop_context.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/forward.hpp>
-#include <agrpc/detail/no_op_stop_callback.hpp>
 #include <agrpc/detail/rpc_request.hpp>
 #include <agrpc/detail/sender_of.hpp>
 #include <agrpc/detail/server_rpc_context_base.hpp>
@@ -34,47 +34,6 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class StopToken, bool = detail::IS_STOP_EVER_POSSIBLE_V<StopToken>>
-class RequestHandlerSenderStopContext
-{
-  private:
-    class StopFunction
-    {
-      public:
-        explicit StopFunction(RequestHandlerSenderStopContext& context) noexcept : context_(context) {}
-
-        void operator()() const noexcept { context_.stop(); }
-
-      private:
-        RequestHandlerSenderStopContext& context_;
-    };
-
-  public:
-    void emplace(StopToken&& stop_token) noexcept
-    {
-        stop_callback_.emplace(static_cast<StopToken&&>(stop_token), StopFunction{*this});
-    }
-
-    [[nodiscard]] bool is_stopped() const noexcept { return stopped_.load(std::memory_order_relaxed); }
-
-    void reset() noexcept { stop_callback_.reset(); }
-
-  private:
-    void stop() noexcept
-    {
-        stopped_.store(true, std::memory_order_relaxed);
-        reset();
-    }
-
-    std::optional<typename StopToken::template callback_type<StopFunction>> stop_callback_;
-    std::atomic<bool> stopped_;
-};
-
-template <class StopToken>
-class RequestHandlerSenderStopContext<StopToken, false> : public detail::NoOpStopCallback
-{
-};
-
 template <class ServerRPC, class RequestHandler, class StopToken, class Allocator>
 struct RequestHandlerSenderOperationBase;
 
@@ -148,7 +107,7 @@ struct RequestHandlerSenderOperationBase : RequestHandlerSenderOperationSetError
     const RequestHandler& request_handler() const noexcept { return sender_.request_handler_; }
 
     Sender sender_;
-    detail::RequestHandlerSenderStopContext<StopToken> stop_context_;
+    detail::AtomicBoolStopContext<StopToken> stop_context_;
 };
 
 template <class Receiver, class Signature, bool IsSet>
@@ -435,7 +394,7 @@ class RequestHandlerSenderOperation : public detail::RequestHandlerSenderOperati
             return;
         }
         auto stop_token = exec::get_stop_token(receiver_);
-        if (stop_token.stop_requested())
+        if (detail::stop_requested(stop_token))
         {
             exec::set_done(static_cast<Receiver&&>(receiver_));
             return;

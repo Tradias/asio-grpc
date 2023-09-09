@@ -121,7 +121,7 @@ class RunningManualResetEvent<void(Args...)> : public detail::OperationBase
     }
 
     ManualResetEvent<Signature> event_;
-    std::atomic<bool> running_{};
+    std::atomic_bool running_{};
 };
 }
 

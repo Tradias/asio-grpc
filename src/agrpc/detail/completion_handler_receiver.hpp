@@ -15,7 +15,7 @@
 #ifndef AGRPC_DETAIL_COMPLETION_HANDLER_RECEIVER_HPP
 #define AGRPC_DETAIL_COMPLETION_HANDLER_RECEIVER_HPP
 
-#include <agrpc/detail/asio_association.hpp>
+#include <agrpc/detail/association.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/memory_resource.hpp>
 

@@ -19,7 +19,7 @@
 #include <agrpc/detail/allocation_type.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
-#include <agrpc/detail/receiver_and_stop_callback.hpp>
+#include <agrpc/detail/stop_callback_lifetime.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/grpc_context.hpp>
 
@@ -27,6 +27,20 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+template <class Initiation, class Implementation>
+auto get_stop_function_arg(const Initiation& initiation, Implementation& implementation)
+    -> decltype(initiation.stop_function_arg(implementation))
+{
+    return initiation.stop_function_arg(implementation);
+}
+
+template <class Initiation, class Implementation>
+auto get_stop_function_arg(const Initiation& initiation, const Implementation&)
+    -> decltype(initiation.stop_function_arg())
+{
+    return initiation.stop_function_arg();
+}
+
 template <class Implementation, class CompletionHandler>
 struct SenderImplementationOperation : public detail::BaseForSenderImplementationTypeT<Implementation::TYPE>
 {
@@ -60,8 +74,7 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
             {
                 self->implementation().done(grpc_context);
             }
-            self->reset_stop_callback();
-            auto handler{std::move(self->completion_handler())};
+            auto handler{static_cast<CompletionHandler&&>(self->completion_handler())};
             ptr.reset();
             if constexpr (Implementation::TYPE == detail::SenderImplementationType::BOTH ||
                           Implementation::TYPE == detail::SenderImplementationType::GRPC_TAG)
@@ -89,14 +102,15 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
     template <class Initiation>
     void emplace_stop_callback(const Initiation& initiation) noexcept
     {
-        if constexpr (detail::ReceiverAndStopCallback<CompletionHandler, StopFunction>::IS_STOPPABLE)
+        if constexpr (detail::NEEDS_STOP_CALLBACK<exec::stop_token_type_t<CompletionHandler&>, StopFunction>)
         {
-            impl_.first().emplace_stop_callback(exec::get_stop_token(this->completion_handler()), initiation,
-                                                implementation());
+            auto stop_token = exec::get_stop_token(this->completion_handler());
+            if (detail::stop_possible(stop_token))
+            {
+                stop_token.template emplace<StopFunction>(detail::get_stop_function_arg(initiation, implementation()));
+            }
         }
     }
-
-    void reset_stop_callback() noexcept { impl_.first().reset_stop_callback(); }
 
     SenderImplementationOperation(detail::AllocationType allocation_type, CompletionHandler&& completion_handler,
                                   Implementation&& implementation)
@@ -105,11 +119,11 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
     {
     }
 
-    CompletionHandler& completion_handler() noexcept { return impl_.first().receiver(); }
+    CompletionHandler& completion_handler() noexcept { return impl_.first(); }
 
     void* tag() noexcept { return static_cast<Base*>(this); }
 
-    detail::CompressedPair<detail::ReceiverAndStopCallback<CompletionHandler, StopFunction>, Implementation> impl_;
+    detail::CompressedPair<CompletionHandler, Implementation> impl_;
 };
 
 template <class Initiation, class Implementation, class CompletionHandler>

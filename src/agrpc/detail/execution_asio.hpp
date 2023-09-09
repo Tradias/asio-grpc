@@ -40,8 +40,10 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class Slot>
-class CancellationSlotAsStopToken;
+struct UnstoppableCancellationSlot
+{
+    static constexpr bool is_connected() noexcept { return false; }
+};
 
 namespace exec
 {
@@ -114,35 +116,13 @@ void start(OperationState&& state)
 }
 #endif
 
-struct unstoppable_token
-{
-    template <class F>
-    struct callback_type
-    {
-        constexpr explicit callback_type(unstoppable_token, F&&) noexcept {}
-    };
-
-    [[nodiscard]] static constexpr bool stop_requested() noexcept { return false; }
-
-    [[nodiscard]] static constexpr bool stop_possible() noexcept { return false; }
-};
-
 template <class Receiver>
-decltype(auto) get_stop_token([[maybe_unused]] const Receiver& receiver) noexcept
+auto get_stop_token([[maybe_unused]] const Receiver& receiver) noexcept
 {
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-    using Slot = std::remove_const_t<
-        std::remove_reference_t<decltype(asio::get_associated_cancellation_slot(receiver, unstoppable_token{}))>>;
-    if constexpr (std::is_same_v<unstoppable_token, Slot>)
-    {
-        return unstoppable_token{};
-    }
-    else
-    {
-        return detail::CancellationSlotAsStopToken<Slot>{asio::get_associated_cancellation_slot(receiver)};
-    }
+    return asio::get_associated_cancellation_slot(receiver, detail::UnstoppableCancellationSlot{});
 #else
-    return unstoppable_token{};
+    return detail::UnstoppableCancellationSlot{};
 #endif
 }
 

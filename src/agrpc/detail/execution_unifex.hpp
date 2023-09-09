@@ -47,7 +47,6 @@ using ::unifex::set_value;
 using ::unifex::start;
 using ::unifex::stop_token_type_t;
 using ::unifex::tag_t;
-using ::unifex::unstoppable_token;
 }  // namespace exec
 
 AGRPC_NAMESPACE_END

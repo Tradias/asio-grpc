@@ -22,37 +22,6 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class T>
-using AssociatedAllocatorT = decltype(detail::exec::get_allocator(std::declval<T>()));
-
-template <class T>
-using AssociatedExecutorT = decltype(detail::exec::get_executor(std::declval<T>()));
-
-template <class Slot>
-class CancellationSlotAsStopToken
-{
-  public:
-    explicit CancellationSlotAsStopToken(Slot&& slot) : slot_(static_cast<Slot&&>(slot)) {}
-
-    template <class StopFunction>
-    struct callback_type
-    {
-        template <class T>
-        explicit callback_type(CancellationSlotAsStopToken token, T&& arg)
-        {
-            token.slot_.template emplace<StopFunction>(static_cast<T&&>(arg));
-        }
-    };
-
-    [[nodiscard]] static constexpr bool stop_requested() noexcept { return false; }
-
-    [[nodiscard]] bool stop_possible() const noexcept { return slot_.is_connected(); }
-
-  private:
-    Slot slot_;
-};
-
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 #ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
 template <class Executor, class Function>
 void do_execute(Executor&& executor, Function&& function)
@@ -75,22 +44,24 @@ void post_with_allocator(Executor&& executor, Function&& function, const Allocat
                      asio::execution::relationship_t::fork, asio::execution::allocator(allocator)),
         static_cast<Function&&>(function));
 }
-#endif
+
+template <class CancellationSlot>
+bool stop_possible(CancellationSlot& cancellation_slot)
+{
+    return cancellation_slot.is_connected();
+}
 
 template <class T>
-using GetExecutorT = decltype(detail::exec::get_executor(std::declval<T>()));
+constexpr bool stop_requested(const T&) noexcept
+{
+    return false;
+}
 
-template <class Receiver, class Callback>
-using StopCallbackTypeT = typename detail::exec::stop_token_type_t<Receiver>::template callback_type<Callback>;
-
-template <class T, class = std::false_type>
+template <class CancellationSlot>
 inline constexpr bool IS_STOP_EVER_POSSIBLE_V = true;
 
-template <class T>
-using IsStopEverPossibleHelper = std::bool_constant<(T{}.stop_possible())>;
-
-template <class T>
-inline constexpr bool IS_STOP_EVER_POSSIBLE_V<T, detail::IsStopEverPossibleHelper<T>> = false;
+template <>
+inline constexpr bool IS_STOP_EVER_POSSIBLE_V<detail::UnstoppableCancellationSlot> = false;
 }  // namespace detail
 
 AGRPC_NAMESPACE_END

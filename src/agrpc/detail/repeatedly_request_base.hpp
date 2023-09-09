@@ -15,7 +15,8 @@
 #ifndef AGRPC_DETAIL_REPEATEDLY_REQUEST_BASE_HPP
 #define AGRPC_DETAIL_REPEATEDLY_REQUEST_BASE_HPP
 
-#include <agrpc/detail/asio_association.hpp>
+#include <agrpc/detail/association.hpp>
+#include <agrpc/detail/atomic_bool_stop_context.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/query_grpc_context.hpp>
 #include <agrpc/detail/rpc_type.hpp>
@@ -26,41 +27,26 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <bool IsStoppable>
-class RepeatedlyRequestBaseStopContext
+template <class StopToken, bool = detail::IS_STOP_EVER_POSSIBLE_V<StopToken>>
+class RepeatedlyRequestBaseStopContext : public detail::AtomicBoolStopContext<StopToken>
 {
+  private:
+    using Base = detail::AtomicBoolStopContext<StopToken>;
+
   public:
     explicit RepeatedlyRequestBaseStopContext(bool is_stoppable) noexcept : is_stoppable_(is_stoppable) {}
 
-    [[nodiscard]] bool is_stopped() const noexcept
-    {
-        return is_stoppable_ ? stopped_.load(std::memory_order_relaxed) : false;
-    }
-
-    template <class StopFunction, class StopToken>
-    void emplace(StopToken&& token)
-    {
-        using StopCallback = typename detail::RemoveCrefT<decltype(token)>::template callback_type<StopFunction>;
-        [[maybe_unused]] StopCallback s{static_cast<StopToken&&>(token), StopFunction{stopped_}};
-    }
+    [[nodiscard]] bool is_stopped() const noexcept { return is_stoppable_ ? Base::is_stopped() : false; }
 
   private:
-    std::atomic_bool stopped_{};
     const bool is_stoppable_;
 };
 
-template <>
-class RepeatedlyRequestBaseStopContext<false>
+template <class StopToken>
+class RepeatedlyRequestBaseStopContext<StopToken, false> : public detail::AtomicBoolStopContext<StopToken>
 {
   public:
-    constexpr explicit RepeatedlyRequestBaseStopContext(bool) noexcept {}
-
-    [[nodiscard]] static constexpr bool is_stopped() noexcept { return false; }
-
-    template <class StopFunction, class StopToken>
-    static constexpr void emplace(StopToken&&) noexcept
-    {
-    }
+    explicit RepeatedlyRequestBaseStopContext(bool) noexcept {}
 };
 
 template <class RequestHandler, class RPC, class CompletionHandler>
@@ -68,8 +54,7 @@ class RepeatedlyRequestOperationBase
 {
   private:
     using Service = detail::GetServiceT<RPC>;
-    using StopContext = detail::RepeatedlyRequestBaseStopContext<
-        detail::IS_STOP_EVER_POSSIBLE_V<detail::exec::stop_token_type_t<CompletionHandler&>>>;
+    using StopContext = detail::RepeatedlyRequestBaseStopContext<detail::exec::stop_token_type_t<CompletionHandler&>>;
 
   public:
     template <class Ch, class Rh>

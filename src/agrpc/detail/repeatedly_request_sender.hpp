@@ -15,15 +15,16 @@
 #ifndef AGRPC_DETAIL_REPEATEDLY_REQUEST_SENDER_HPP
 #define AGRPC_DETAIL_REPEATEDLY_REQUEST_SENDER_HPP
 
-#include <agrpc/detail/asio_association.hpp>
+#include <agrpc/detail/association.hpp>
+#include <agrpc/detail/atomic_bool_stop_context.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/forward.hpp>
-#include <agrpc/detail/no_op_stop_callback.hpp>
 #include <agrpc/detail/operation_base.hpp>
 #include <agrpc/detail/receiver.hpp>
 #include <agrpc/detail/rpc_context.hpp>
 #include <agrpc/detail/sender_of.hpp>
+#include <agrpc/detail/stop_callback_lifetime.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/grpc_context.hpp>
 
@@ -34,48 +35,6 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class Receiver, bool = detail::IS_STOP_EVER_POSSIBLE_V<detail::exec::stop_token_type_t<Receiver&>>>
-class RepeatedlyRequestStopContext
-{
-  private:
-    class StopFunction
-    {
-      public:
-        explicit StopFunction(RepeatedlyRequestStopContext& context) noexcept : context_(context) {}
-
-        void operator()() const noexcept { context_.stop(); }
-
-      private:
-        RepeatedlyRequestStopContext& context_;
-    };
-
-  public:
-    template <class StopToken>
-    void emplace(StopToken&& stop_token) noexcept
-    {
-        stop_callback_.emplace(static_cast<StopToken&&>(stop_token), StopFunction{*this});
-    }
-
-    [[nodiscard]] bool is_stopped() const noexcept { return stopped_.load(std::memory_order_relaxed); }
-
-    void reset() noexcept { stop_callback_.reset(); }
-
-  private:
-    void stop() noexcept
-    {
-        stopped_.store(true, std::memory_order_relaxed);
-        reset();
-    }
-
-    std::optional<detail::StopCallbackTypeT<Receiver&, StopFunction>> stop_callback_;
-    std::atomic<bool> stopped_;
-};
-
-template <class Receiver>
-class RepeatedlyRequestStopContext<Receiver, false> : public detail::NoOpStopCallback
-{
-};
-
 template <class RPC, class RequestHandler>
 class RepeatedlyRequestSender : public detail::SenderOf<void()>
 {
@@ -170,7 +129,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
                 return;
             }
             auto stop_token = detail::exec::get_stop_token(receiver_);
-            if (stop_token.stop_requested())
+            if (detail::stop_requested(stop_token))
             {
                 detail::exec::set_done(static_cast<Receiver&&>(receiver_));
                 return;
@@ -290,7 +249,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
 
         agrpc::GrpcContext& grpc_context_;
         Receiver receiver_;
-        detail::CompressedPair<RPC, detail::RepeatedlyRequestStopContext<Receiver>> impl_;
+        detail::CompressedPair<RPC, detail::AtomicBoolStopContext<exec::stop_token_type_t<Receiver&>>> impl_;
         Service& service_;
         RequestHandlerOperation* request_handler_operation_;
         RequestHandler request_handler_;

@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/allocate_operation.hpp>
 #include <agrpc/detail/allocation_type.hpp>
+#include <agrpc/detail/association.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/deallocate_on_complete.hpp>
 #include <agrpc/detail/execution.hpp>
@@ -44,7 +45,7 @@ template <class Receiver>
         return std::nullopt;
     }
     auto stop_token = detail::exec::get_stop_token(receiver);
-    if (stop_token.stop_requested())
+    if (detail::stop_requested(stop_token))
     {
         detail::exec::set_done(static_cast<Receiver&&>(receiver));
         return std::nullopt;
@@ -79,13 +80,15 @@ template <class Receiver, class Initiation, class Implementation>
 void submit_basic_sender_running_operation(agrpc::GrpcContext& grpc_context, Receiver receiver,
                                            const Initiation& initiation, Implementation&& implementation)
 {
-    if (auto stop_token = detail::check_start_conditions(grpc_context, receiver))
+    if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context))
     {
-        auto operation = detail::allocate_operation<
-            detail::BasicSenderRunningOperationTemplate<detail::RemoveCrefT<Implementation>>::template Type>(
-            grpc_context, static_cast<Receiver&&>(receiver), static_cast<Implementation&&>(implementation));
-        operation->start(grpc_context, initiation, std::move(*stop_token));
+        return;
     }
+    auto stop_token = exec::get_stop_token(receiver);
+    auto operation = detail::allocate_operation<
+        detail::BasicSenderRunningOperationTemplate<detail::RemoveCrefT<Implementation>>::template Type>(
+        grpc_context, static_cast<Receiver&&>(receiver), static_cast<Implementation&&>(implementation));
+    operation->start(grpc_context, initiation, std::move(stop_token));
 }
 
 template <class Initiation, class Implementation, class Receiver>
