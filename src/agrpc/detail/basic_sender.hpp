@@ -98,7 +98,7 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
   private:
     using Base = detail::BaseForSenderImplementationTypeT<Implementation::TYPE>;
     using StopFunction = typename Implementation::StopFunction;
-    using StopToken = detail::exec::stop_token_type_t<Receiver&>;
+    using StopToken = exec::stop_token_type_t<Receiver&>;
     using StopCallback = detail::StopCallbackLifetime<StopToken, StopFunction>;
 
     template <int Id = 0>
@@ -111,7 +111,7 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
         }
         else
         {
-            detail::exec::set_done(static_cast<Receiver&&>(self.receiver()));
+            exec::set_done(static_cast<Receiver&&>(self.receiver()));
         }
     }
 
@@ -196,13 +196,13 @@ class BasicSenderOperationState
         auto& grpc_context = *static_cast<agrpc::GrpcContext*>(scratch_space);
         if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context))
         {
-            detail::exec::set_done(static_cast<Receiver&&>(receiver()));
+            exec::set_done(static_cast<Receiver&&>(receiver()));
             return;
         }
-        auto stop_token = detail::exec::get_stop_token(receiver());
+        auto stop_token = exec::get_stop_token(receiver());
         if (detail::stop_requested(stop_token))
         {
-            detail::exec::set_done(static_cast<Receiver&&>(receiver()));
+            exec::set_done(static_cast<Receiver&&>(receiver()));
             return;
         }
         op.restore_scratch_space();

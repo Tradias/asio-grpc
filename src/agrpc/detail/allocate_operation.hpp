@@ -38,7 +38,7 @@ template <template <class> class OperationTemplate, class Handler, class... Args
 auto allocate_custom_operation(Handler&& handler, Args&&... args)
 
 {
-    const auto allocator = detail::exec::get_allocator(handler);
+    const auto allocator = exec::get_allocator(handler);
     auto operation = detail::allocate<OperationTemplate<detail::RemoveCrefT<Handler>>>(
         allocator, detail::AllocationType::CUSTOM, static_cast<Handler&&>(handler), static_cast<Args&&>(args)...);
     return operation.release();
@@ -49,7 +49,7 @@ auto allocate_local_operation(agrpc::GrpcContext& grpc_context, Handler&& handle
 
 {
     using DecayedHandler = detail::RemoveCrefT<Handler>;
-    auto allocator = detail::exec::get_allocator(handler);
+    auto allocator = exec::get_allocator(handler);
     if constexpr (detail::IS_STD_ALLOCATOR<decltype(allocator)>)
     {
         auto operation = detail::allocate<OperationTemplate<DecayedHandler>>(

@@ -84,7 +84,7 @@ class CompletionHandlerReceiver
 
     static void set_error(const std::exception_ptr& ep) { std::rethrow_exception(ep); }
 
-    allocator_type get_allocator() const noexcept { return detail::exec::get_allocator(completion_handler_); }
+    allocator_type get_allocator() const noexcept { return exec::get_allocator(completion_handler_); }
 
     const CompletionHandler& completion_handler() const noexcept { return completion_handler_; }
 

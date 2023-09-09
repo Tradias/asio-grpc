@@ -43,7 +43,7 @@ class NoArgOperation : public detail::QueueableOperationBase
 
     [[nodiscard]] Handler& completion_handler() noexcept { return handler_; }
 
-    [[nodiscard]] auto get_allocator() noexcept { return detail::exec::get_allocator(handler_); }
+    [[nodiscard]] auto get_allocator() noexcept { return exec::get_allocator(handler_); }
 
   private:
     Handler handler_;
@@ -67,7 +67,7 @@ class GrpcTagOperation : public detail::OperationBase
 
     [[nodiscard]] Handler& completion_handler() noexcept { return handler_; }
 
-    [[nodiscard]] auto get_allocator() noexcept { return detail::exec::get_allocator(handler_); }
+    [[nodiscard]] auto get_allocator() noexcept { return exec::get_allocator(handler_); }
 
   private:
     Handler handler_;

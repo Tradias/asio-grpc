@@ -29,10 +29,10 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class T>
-using AssociatedAllocatorT = decltype(detail::exec::get_allocator(std::declval<T>()));
+using AssociatedAllocatorT = decltype(exec::get_allocator(std::declval<T>()));
 
 template <class T>
-using AssociatedExecutorT = decltype(detail::exec::get_executor(std::declval<T>()));
+using AssociatedExecutorT = decltype(exec::get_executor(std::declval<T>()));
 }  // namespace detail
 
 AGRPC_NAMESPACE_END

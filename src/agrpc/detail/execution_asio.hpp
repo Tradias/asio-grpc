@@ -120,9 +120,9 @@ template <class Receiver>
 auto get_stop_token([[maybe_unused]] const Receiver& receiver) noexcept
 {
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-    return asio::get_associated_cancellation_slot(receiver, detail::UnstoppableCancellationSlot{});
+    return asio::get_associated_cancellation_slot(receiver, UnstoppableCancellationSlot{});
 #else
-    return detail::UnstoppableCancellationSlot{};
+    return UnstoppableCancellationSlot{};
 #endif
 }
 

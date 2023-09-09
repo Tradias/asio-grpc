@@ -46,12 +46,12 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
     {
       private:
         using Base = detail::OperationBase;
-        using Allocator = detail::RemoveCrefT<decltype(detail::exec::get_allocator(std::declval<Receiver&>()))>;
+        using Allocator = detail::RemoveCrefT<decltype(exec::get_allocator(std::declval<Receiver&>()))>;
         using RPCContext = detail::RPCContextForRPCT<RPC>;
         using RequestHandlerSender =
             detail::InvokeResultFromSignatureT<RequestHandler&, typename RPCContext::Signature>;
 
-        static_assert(detail::exec::is_sender_v<RequestHandlerSender>,
+        static_assert(exec::is_sender_v<RequestHandlerSender>,
                       "`repeatedly_request` request handler must return a sender.");
 
         struct RequestHandlerOperation
@@ -91,7 +91,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
             RequestHandler request_handler_;
             detail::CompressedPair<Operation::RPCContext, Allocator> impl_;
             std::optional<detail::InplaceWithFunctionWrapper<
-                detail::exec::connect_result_t<RequestHandlerSender, DeallocateRequestHandlerOperationReceiver>>>
+                exec::connect_result_t<RequestHandlerSender, DeallocateRequestHandlerOperationReceiver>>>
                 operation_state_;
 
             explicit RequestHandlerOperation(agrpc::GrpcContext& grpc_context, const RequestHandler& request_handler,
@@ -107,13 +107,13 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
                 operation_state_.emplace(detail::InplaceWithFunction{},
                                          [&]
                                          {
-                                             return detail::exec::connect(
+                                             return exec::connect(
                                                  detail::invoke_from_rpc_context(request_handler_, rpc_context()),
                                                  DeallocateRequestHandlerOperationReceiver{*this});
                                          });
             }
 
-            void start_request_handler_operation() { detail::exec::start(operation_state_->value_); }
+            void start_request_handler_operation() { exec::start(operation_state_->value_); }
 
             auto& rpc_context() noexcept { return impl_.first(); }
 
@@ -125,13 +125,13 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
         {
             if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context_))
             {
-                detail::exec::set_done(static_cast<Receiver&&>(receiver_));
+                exec::set_done(static_cast<Receiver&&>(receiver_));
                 return;
             }
-            auto stop_token = detail::exec::get_stop_token(receiver_);
+            auto stop_token = exec::get_stop_token(receiver_);
             if (detail::stop_requested(stop_token))
             {
-                detail::exec::set_done(static_cast<Receiver&&>(receiver_));
+                exec::set_done(static_cast<Receiver&&>(receiver_));
                 return;
             }
             stop_context().emplace(std::move(stop_token));
@@ -194,7 +194,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
                 {
                     self->stop_context().reset();
                     ptr.reset();
-                    detail::exec::set_error(static_cast<Receiver&&>(self->receiver_), std::move(exception_ptr));
+                    exec::set_error(static_cast<Receiver&&>(self->receiver_), std::move(exception_ptr));
                     return;
                 }
                 const auto is_repeated = self->initiate_repeatedly_request();
@@ -238,14 +238,14 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
         void done() noexcept
         {
             stop_context().reset();
-            detail::exec::set_done(static_cast<Receiver&&>(receiver_));
+            exec::set_done(static_cast<Receiver&&>(receiver_));
         }
 
         RPC rpc() noexcept { return impl_.first(); }
 
         auto& stop_context() noexcept { return impl_.second(); }
 
-        decltype(auto) get_allocator() noexcept { return detail::exec::get_allocator(receiver_); }
+        decltype(auto) get_allocator() noexcept { return exec::get_allocator(receiver_); }
 
         agrpc::GrpcContext& grpc_context_;
         Receiver receiver_;

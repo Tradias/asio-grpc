@@ -27,7 +27,7 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <AllocationType AllocType, int Id, class Operation>
-void complete(Operation& operation, detail::OperationResult result, agrpc::GrpcContext& grpc_context)
+void complete(Operation& operation, [[maybe_unused]] detail::OperationResult result, agrpc::GrpcContext& grpc_context)
 {
     using Implementation = typename Operation::Implementation;
     const auto impl = [&](auto&&... args)

@@ -108,7 +108,7 @@ struct ManualResetEventRunningOperationState : ManualResetEventOperationStateBas
             ManualResetEventOperationStateBase<Signature>* op = &op_;
             if (op->event_.op_.compare_exchange_strong(op, nullptr, std::memory_order_acq_rel))
             {
-                detail::exec::set_done(static_cast<Receiver&&>(op_.receiver()));
+                exec::set_done(static_cast<Receiver&&>(op_.receiver()));
             }
         }
 
@@ -127,7 +127,7 @@ struct ManualResetEventRunningOperationState : ManualResetEventOperationStateBas
 
     void start() noexcept
     {
-        stop_callback().emplace(detail::exec::get_stop_token(receiver()), StopFunction{*this});
+        stop_callback().emplace(exec::get_stop_token(receiver()), StopFunction{*this});
         this->event_.op_.store(this, std::memory_order_release);
     }
 
@@ -146,7 +146,7 @@ inline constexpr auto set_value_impl<void(Args...), Receiver, Deallocate> =
     if constexpr (Deallocate == detail::DeallocateOnComplete::YES)
     {
         Receiver local_receiver{static_cast<Receiver&&>(self->receiver())};
-        detail::destroy_deallocate(self, detail::exec::get_allocator(local_receiver));
+        detail::destroy_deallocate(self, exec::get_allocator(local_receiver));
         detail::satisfy_receiver(static_cast<Receiver&&>(local_receiver), args...);
     }
     else
@@ -166,9 +166,9 @@ class ManualResetEventOperationState
             detail::satisfy_receiver(static_cast<Receiver&&>(state.receiver()));
             return;
         }
-        if (detail::stop_requested(detail::exec::get_stop_token(state.receiver())))
+        if (detail::stop_requested(exec::get_stop_token(state.receiver())))
         {
-            detail::exec::set_done(static_cast<Receiver&&>(state.receiver()));
+            exec::set_done(static_cast<Receiver&&>(state.receiver()));
             return;
         }
         state.start();
