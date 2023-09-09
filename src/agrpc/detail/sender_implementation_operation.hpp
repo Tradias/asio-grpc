@@ -19,7 +19,9 @@
 #include <agrpc/detail/allocation_type.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
-#include <agrpc/detail/stop_callback_lifetime.hpp>
+#include <agrpc/detail/operation_implementation.hpp>
+#include <agrpc/detail/operation_initiation.hpp>
+#include <agrpc/detail/receiver_and_stop_callback.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/grpc_context.hpp>
 
@@ -27,20 +29,6 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class Initiation, class Implementation>
-auto get_stop_function_arg(const Initiation& initiation, Implementation& implementation)
-    -> decltype(initiation.stop_function_arg(implementation))
-{
-    return initiation.stop_function_arg(implementation);
-}
-
-template <class Initiation, class Implementation>
-auto get_stop_function_arg(const Initiation& initiation, const Implementation&)
-    -> decltype(initiation.stop_function_arg())
-{
-    return initiation.stop_function_arg();
-}
-
 template <class Implementation, class CompletionHandler>
 struct SenderImplementationOperation : public detail::BaseForSenderImplementationTypeT<Implementation::TYPE>
 {
@@ -48,43 +36,17 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
     using StopFunction = typename Implementation::StopFunction;
     using StopToken = exec::stop_token_type_t<CompletionHandler&>;
 
-    template <detail::AllocationType AllocType>
+    template <detail::AllocationType AllocType, int Id = 0>
     static void do_complete(detail::OperationBase* op, detail::OperationResult result, agrpc::GrpcContext& grpc_context)
     {
         auto* self = static_cast<SenderImplementationOperation*>(op);
-        detail::AllocationGuard ptr{self, [&]
-                                    {
-                                        if constexpr (AllocType == detail::AllocationType::LOCAL)
-                                        {
-                                            return grpc_context.get_allocator();
-                                        }
-                                        else
-                                        {
-                                            return exec::get_allocator(self->completion_handler());
-                                        }
-                                    }()};
         if AGRPC_LIKELY (!detail::is_shutdown(result))
         {
-            if constexpr (Implementation::TYPE == detail::SenderImplementationType::BOTH ||
-                          Implementation::TYPE == detail::SenderImplementationType::GRPC_TAG)
-            {
-                self->implementation().done(grpc_context, detail::is_ok(result));
-            }
-            else
-            {
-                self->implementation().done(grpc_context);
-            }
-            auto handler{static_cast<CompletionHandler&&>(self->completion_handler())};
-            ptr.reset();
-            if constexpr (Implementation::TYPE == detail::SenderImplementationType::BOTH ||
-                          Implementation::TYPE == detail::SenderImplementationType::GRPC_TAG)
-            {
-                static_cast<CompletionHandler&&>(handler)(detail::is_ok(result));
-            }
-            else
-            {
-                static_cast<CompletionHandler&&>(handler)();
-            }
+            detail::complete<AllocType, Id>(*self, result, grpc_context);
+        }
+        else
+        {
+            [[maybe_unused]] detail::AllocationGuard ptr{self, self->template get_allocator<AllocType>(grpc_context)};
         }
     }
 
@@ -97,7 +59,30 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
         return &do_complete<detail::AllocationType::CUSTOM>;
     }
 
-    Implementation& implementation() noexcept { return impl_.second(); }
+    template <class Initation>
+    SenderImplementationOperation(detail::AllocationType allocation_type, CompletionHandler&& completion_handler,
+                                  agrpc::GrpcContext& grpc_context, const Initation& initiation,
+                                  Implementation&& implementation)
+        : Base(get_on_complete(allocation_type)),
+          impl_(static_cast<CompletionHandler&&>(completion_handler), static_cast<Implementation&&>(implementation))
+    {
+        grpc_context.work_started();
+        emplace_stop_callback(initiation);
+        detail::initiate<detail::DeallocateOnComplete::YES>(*this, grpc_context, initiation, allocation_type);
+    }
+
+    template <AllocationType AllocType>
+    decltype(auto) get_allocator(agrpc::GrpcContext& grpc_context) noexcept
+    {
+        if constexpr (AllocType == detail::AllocationType::LOCAL)
+        {
+            return grpc_context.get_allocator();
+        }
+        else
+        {
+            return exec::get_allocator(completion_handler());
+        }
+    }
 
     template <class Initiation>
     void emplace_stop_callback(const Initiation& initiation) noexcept
@@ -112,35 +97,29 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
         }
     }
 
-    SenderImplementationOperation(detail::AllocationType allocation_type, CompletionHandler&& completion_handler,
-                                  Implementation&& implementation)
-        : Base(get_on_complete(allocation_type)),
-          impl_(static_cast<CompletionHandler&&>(completion_handler), static_cast<Implementation&&>(implementation))
-    {
-    }
-
     CompletionHandler& completion_handler() noexcept { return impl_.first(); }
 
-    void* tag() noexcept { return static_cast<Base*>(this); }
+    Implementation& implementation() noexcept { return impl_.second(); }
+
+    Base* tag() noexcept { return this; }
+
+    template <AllocationType AllocType, int Id>
+    void set_on_complete() noexcept
+    {
+        detail::OperationBaseAccess::get_on_complete(*this) = &do_complete<AllocType, Id>;
+    }
+
+    template <AllocationType AllocType, class... Args>
+    void complete(agrpc::GrpcContext& grpc_context, Args... args)
+    {
+        detail::AllocationGuard ptr{this, get_allocator<AllocType>(grpc_context)};
+        auto handler{static_cast<CompletionHandler&&>(completion_handler())};
+        ptr.reset();
+        static_cast<CompletionHandler&&>(handler)(static_cast<Args&&>(args)...);
+    }
 
     detail::CompressedPair<CompletionHandler, Implementation> impl_;
 };
-
-template <class Initiation, class Implementation, class CompletionHandler>
-auto initiate(agrpc::GrpcContext& grpc_context, const Initiation& initiation,
-              SenderImplementationOperation<Implementation, CompletionHandler>& operation)
-    -> decltype((void)initiation.initiate(grpc_context, std::declval<Implementation&>(), nullptr))
-{
-    initiation.initiate(grpc_context, operation.implementation(), operation.tag());
-}
-
-template <class Initiation, class Implementation, class CompletionHandler>
-auto initiate(agrpc::GrpcContext& grpc_context, const Initiation& initiation,
-              SenderImplementationOperation<Implementation, CompletionHandler>& operation)
-    -> decltype((void)initiation.initiate(grpc_context, nullptr))
-{
-    initiation.initiate(grpc_context, operation.tag());
-}
 
 template <class Implementation>
 struct SenderImplementationOperationTemplate
@@ -157,13 +136,10 @@ void submit_sender_implementation_operation(agrpc::GrpcContext& grpc_context, Co
     {
         return;
     }
-    auto operation = detail::allocate_operation<
+    detail::allocate_operation<
         detail::SenderImplementationOperationTemplate<detail::RemoveCrefT<Implementation>>::template Type>(
-        grpc_context, static_cast<CompletionHandler&&>(completion_handler),
+        grpc_context, static_cast<CompletionHandler&&>(completion_handler), grpc_context, initiation,
         static_cast<Implementation&&>(implementation));
-    grpc_context.work_started();
-    operation->emplace_stop_callback(initiation);
-    detail::initiate(grpc_context, initiation, *operation);
 }
 }
 

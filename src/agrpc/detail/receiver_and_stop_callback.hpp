@@ -22,6 +22,20 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+template <class Initiation, class Implementation>
+auto get_stop_function_arg(const Initiation& initiation, Implementation& implementation)
+    -> decltype(initiation.stop_function_arg(implementation))
+{
+    return initiation.stop_function_arg(implementation);
+}
+
+template <class Initiation, class Implementation>
+auto get_stop_function_arg(const Initiation& initiation, const Implementation&)
+    -> decltype(initiation.stop_function_arg())
+{
+    return initiation.stop_function_arg();
+}
+
 template <class Receiver, class StopFunction>
 class ReceiverAndStopCallback : private StopCallbackLifetime<exec::stop_token_type_t<Receiver&>, StopFunction>
 {
@@ -47,25 +61,12 @@ class ReceiverAndStopCallback : private StopCallbackLifetime<exec::stop_token_ty
     {
         if constexpr (Base::IS_STOPPABLE)
         {
-            this->emplace(static_cast<StopToken&&>(stop_token), stop_function_arg(initiation, implementation));
+            this->emplace(static_cast<StopToken&&>(stop_token),
+                          detail::get_stop_function_arg(initiation, implementation));
         }
     }
 
   private:
-    template <class Initiation, class Implementation>
-    auto stop_function_arg(const Initiation& initiation, Implementation& implementation)
-        -> decltype(initiation.stop_function_arg(implementation))
-    {
-        return initiation.stop_function_arg(implementation);
-    }
-
-    template <class Initiation, class Implementation>
-    auto stop_function_arg(const Initiation& initiation, const Implementation&)
-        -> decltype(initiation.stop_function_arg())
-    {
-        return initiation.stop_function_arg();
-    }
-
     Receiver receiver_;
 };
 }

@@ -31,7 +31,7 @@ auto start(agrpc::ServerRPC<RequestRPC, TraitsT, Executor>& rpc, Service& servic
            CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
 {
     using Responder = std::remove_reference_t<decltype(ServerRPCContextBaseAccess::responder(rpc))>;
-    return detail::async_initiate_sender_implementation_operation(
+    return detail::async_initiate_sender_implementation(
         RPCExecutorBaseAccess::grpc_context(rpc),
         detail::ServerRequestSenderInitiation<RequestRPC, TraitsT::NOTIFY_WHEN_DONE>{service, request},
         detail::ServerRequestSenderImplementation<Responder, TraitsT::NOTIFY_WHEN_DONE>{rpc}, token);
@@ -43,7 +43,7 @@ auto start(agrpc::ServerRPC<RequestRPC, TraitsT, Executor>& rpc, Service& servic
            CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
 {
     using Responder = std::remove_reference_t<decltype(ServerRPCContextBaseAccess::responder(rpc))>;
-    return detail::async_initiate_sender_implementation_operation(
+    return detail::async_initiate_sender_implementation(
         RPCExecutorBaseAccess::grpc_context(rpc),
         detail::ServerRequestSenderInitiation<RequestRPC, TraitsT::NOTIFY_WHEN_DONE>{service},
         detail::ServerRequestSenderImplementation<Responder, TraitsT::NOTIFY_WHEN_DONE>{rpc}, token);
@@ -53,7 +53,7 @@ template <class TraitsT, class Executor, class CompletionToken = detail::Default
 auto start(agrpc::ServerRPC<agrpc::ServerRPCType::GENERIC, TraitsT, Executor>& rpc, grpc::AsyncGenericService& service,
            CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
 {
-    return detail::async_initiate_sender_implementation_operation(
+    return detail::async_initiate_sender_implementation(
         RPCExecutorBaseAccess::grpc_context(rpc),
         detail::ServerRequestSenderInitiation<agrpc::ServerRPCType::GENERIC, TraitsT::NOTIFY_WHEN_DONE>{service},
         detail::ServerRequestSenderImplementation<grpc::GenericServerAsyncReaderWriter, TraitsT::NOTIFY_WHEN_DONE>{rpc},

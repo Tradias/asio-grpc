@@ -82,7 +82,7 @@ class BasicAlarm
     template <class Deadline, class CompletionToken = detail::LegacyDefaultCompletionTokenT<Executor>>
     auto wait(const Deadline& deadline, CompletionToken token = detail::LegacyDefaultCompletionTokenT<Executor>{}) &
     {
-        return detail::async_initiate_sender_implementation_operation(
+        return detail::async_initiate_sender_implementation(
             grpc_context(), detail::GrpcSenderInitiation<detail::AlarmInitFunction<Deadline>>{alarm_, deadline},
             detail::GrpcSenderImplementation<detail::AlarmCancellationFunction>{}, token);
     }

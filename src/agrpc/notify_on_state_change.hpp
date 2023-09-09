@@ -58,7 +58,7 @@ struct NotifyOnStateChangeFn
                     ::grpc_connectivity_state last_observed, Deadline deadline, CompletionToken token = {}) const
         noexcept(detail::IS_USE_SENDER<CompletionToken>&& std::is_nothrow_copy_constructible_v<Deadline>)
     {
-        return detail::async_initiate_sender_implementation_operation(
+        return detail::async_initiate_sender_implementation(
             grpc_context,
             detail::GrpcSenderInitiation<detail::NotifyOnStateChangeInitFunction<Deadline>>{channel, deadline,
                                                                                             last_observed},

@@ -153,28 +153,30 @@ struct RequestHandlerOperation
 
         void set_value(bool ok)
         {
-            detail::AllocationGuard ptr{&request_handler_op_, request_handler_op_.get_allocator()};
+            auto& op = op_;
+            auto& request_handler_op = request_handler_op_;
+            detail::AllocationGuard ptr{&request_handler_op, request_handler_op.get_allocator()};
             if (ok)
             {
-                if (auto exception_ptr = request_handler_op_.emplace_request_handler_operation_state())
+                if (auto exception_ptr = request_handler_op.emplace_request_handler_operation_state())
                 {
                     ptr.reset();
-                    op_.set_error(std::move(*exception_ptr));
+                    op.set_error(std::move(*exception_ptr));
                     return;
                 }
                 const bool is_repeated =
-                    op_.create_and_start_request_handler_operation(request_handler_op_.get_allocator());
-                request_handler_op_.start_request_handler_operation_state();
+                    op.create_and_start_request_handler_operation(request_handler_op.get_allocator());
+                request_handler_op.start_request_handler_operation_state();
                 ptr.release();
                 if (!is_repeated)
                 {
-                    op_.set_done();
+                    op.set_done();
                 }
             }
             else
             {
                 ptr.reset();
-                op_.set_done();
+                op.set_done();
             }
         }
 
@@ -296,7 +298,7 @@ struct RequestHandlerOperation
     {
     }
 
-    void start() { exec::start(std::get<StartOperationState>(operation_state()).value_); }
+    void start() { std::get<StartOperationState>(operation_state()).value_.start(); }
 
     std::optional<std::exception_ptr> emplace_request_handler_operation_state()
     {
@@ -328,7 +330,7 @@ struct RequestHandlerOperation
             {
                 return rpc_.wait_for_done(agrpc::use_sender).connect(WaitForDoneReceiver{*this});
             });
-        exec::start(state.value_);
+        state.value_.start();
     }
 
     void start_wait_for_read()
@@ -339,7 +341,7 @@ struct RequestHandlerOperation
             {
                 return rpc_.wait_for_read(agrpc::use_sender).connect(WaitForReadReceiver{*this});
             });
-        exec::start(state.value_);
+        state.value_.start();
     }
 
     auto& request_handler() noexcept { return impl1_.first(); }

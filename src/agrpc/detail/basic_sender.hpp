@@ -22,6 +22,8 @@
 #include <agrpc/detail/deallocate_on_complete.hpp>
 #include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/forward.hpp>
+#include <agrpc/detail/operation_implementation.hpp>
+#include <agrpc/detail/operation_initiation.hpp>
 #include <agrpc/detail/receiver.hpp>
 #include <agrpc/detail/receiver_and_stop_callback.hpp>
 #include <agrpc/detail/sender_implementation.hpp>
@@ -29,68 +31,10 @@
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/grpc_context.hpp>
 
-#include <optional>
-
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class Receiver>
-[[nodiscard]] std::optional<detail::exec::stop_token_type_t<Receiver&>> check_start_conditions(
-    const agrpc::GrpcContext& grpc_context, Receiver& receiver)
-{
-    if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context))
-    {
-        detail::exec::set_done(static_cast<Receiver&&>(receiver));
-        return std::nullopt;
-    }
-    auto stop_token = detail::exec::get_stop_token(receiver);
-    if (detail::stop_requested(stop_token))
-    {
-        detail::exec::set_done(static_cast<Receiver&&>(receiver));
-        return std::nullopt;
-    }
-    return stop_token;
-}
-
-template <class Initiation, class Implementation>
-class BasicSender;
-
-struct BasicSenderAccess
-{
-    template <class Initiation, class Implementation>
-    static auto create(agrpc::GrpcContext& grpc_context, const Initiation& initiation, Implementation&& implementation)
-    {
-        return detail::BasicSender<Initiation, detail::RemoveCrefT<Implementation>>(
-            grpc_context, initiation, static_cast<Implementation&&>(implementation));
-    }
-};
-
-template <class Implementation, class Receiver, detail::DeallocateOnComplete Deallocate>
-class BasicSenderRunningOperation;
-
-template <class Implementation>
-struct BasicSenderRunningOperationTemplate
-{
-    template <class Receiver>
-    using Type = detail::BasicSenderRunningOperation<Implementation, Receiver, detail::DeallocateOnComplete::YES>;
-};
-
-template <class Receiver, class Initiation, class Implementation>
-void submit_basic_sender_running_operation(agrpc::GrpcContext& grpc_context, Receiver receiver,
-                                           const Initiation& initiation, Implementation&& implementation)
-{
-    if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context))
-    {
-        return;
-    }
-    auto stop_token = exec::get_stop_token(receiver);
-    auto operation = detail::allocate_operation<
-        detail::BasicSenderRunningOperationTemplate<detail::RemoveCrefT<Implementation>>::template Type>(
-        grpc_context, static_cast<Receiver&&>(receiver), static_cast<Implementation&&>(implementation));
-    operation->start(grpc_context, initiation, std::move(stop_token));
-}
-
 template <class Initiation, class Implementation, class Receiver>
 class BasicSenderOperationState;
 
@@ -117,20 +61,6 @@ class BasicSender : public detail::SenderOf<typename Implementation::Signature>
         return {static_cast<Receiver&&>(receiver), grpc_context_, initiation_, implementation_};
     }
 
-    template <class Receiver>
-    void submit(Receiver&& receiver) &&
-    {
-        detail::submit_basic_sender_running_operation(grpc_context_, static_cast<Receiver&&>(receiver), initiation_,
-                                                      static_cast<Implementation&&>(implementation_));
-    }
-
-    template <class Receiver, class Impl = Implementation, class = std::enable_if_t<std::is_copy_constructible_v<Impl>>>
-    void submit(Receiver&& receiver) const&
-    {
-        detail::submit_basic_sender_running_operation(grpc_context_, static_cast<Receiver&&>(receiver), initiation_,
-                                                      implementation_);
-    }
-
   private:
     friend detail::BasicSenderAccess;
 
@@ -149,7 +79,17 @@ class BasicSender : public detail::SenderOf<typename Implementation::Signature>
     Implementation implementation_;
 };
 
-template <class Implementation, class Receiver, detail::DeallocateOnComplete Deallocate>
+struct BasicSenderAccess
+{
+    template <class Initiation, class Implementation>
+    static auto create(agrpc::GrpcContext& grpc_context, const Initiation& initiation, Implementation&& implementation)
+    {
+        return detail::BasicSender<Initiation, detail::RemoveCrefT<Implementation>>(
+            grpc_context, initiation, static_cast<Implementation&&>(implementation));
+    }
+};
+
+template <class Implementation, class Receiver>
 class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTypeT<Implementation::TYPE>
 {
   private:
@@ -157,191 +97,19 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
     using StopFunction = typename Implementation::StopFunction;
     using StopToken = detail::exec::stop_token_type_t<Receiver&>;
 
-    template <detail::AllocationType AllocType>
-    struct OnDone
-    {
-        template <int Id>
-        struct Type
-        {
-            static constexpr auto ALLOCATION_TYPE = AllocType;
-
-            template <class... Args>
-            void operator()(Args... args)
-            {
-                self_.reset_stop_callback();
-                auto receiver = self_.extract_receiver_and_optionally_deallocate<AllocType>(grpc_context_);
-                detail::satisfy_receiver(static_cast<Receiver&&>(receiver), static_cast<Args&&>(args)...);
-            }
-
-            template <int NextId = Id>
-            [[nodiscard]] Base* self() const noexcept
-            {
-                if constexpr (NextId != Id)
-                {
-                    self_.set_on_complete<AllocType, NextId>();
-                }
-                return &self_;
-            }
-
-            [[nodiscard]] agrpc::GrpcContext& grpc_context() const noexcept { return grpc_context_; }
-
-            BasicSenderRunningOperation& self_;
-            agrpc::GrpcContext& grpc_context_;
-        };
-    };
-
-    template <detail::AllocationType AllocType>
-    Receiver extract_receiver_and_deallocate([[maybe_unused]] agrpc::GrpcContext& grpc_context)
-    {
-        Receiver local_receiver{static_cast<Receiver&&>(receiver())};
-        if constexpr (AllocType == detail::AllocationType::LOCAL)
-        {
-            detail::destroy_deallocate(this, grpc_context.get_allocator());
-        }
-        else
-        {
-            detail::destroy_deallocate(this, detail::exec::get_allocator(local_receiver));
-        }
-        return local_receiver;
-    }
-
-    template <detail::AllocationType AllocType>
-    Receiver extract_receiver_and_optionally_deallocate([[maybe_unused]] agrpc::GrpcContext& grpc_context)
-    {
-        if constexpr (AllocType == detail::AllocationType::NONE)
-        {
-            return static_cast<Receiver&&>(receiver());
-        }
-        else
-        {
-            return extract_receiver_and_deallocate<AllocType>(grpc_context);
-        }
-    }
-
-    template <detail::AllocationType AllocType, int Id, class... Args>
-    auto done(agrpc::GrpcContext& grpc_context, Args&&... args) -> decltype((void)std::declval<Implementation&>().done(
-        std::declval<typename OnDone<AllocType>::template Type<Id>>(), static_cast<Args&&>(args)...))
-    {
-        implementation().done(typename OnDone<AllocType>::template Type<Id>{*this, grpc_context},
-                              static_cast<Args&&>(args)...);
-    }
-
-    template <detail::AllocationType AllocType, int Id, class... Args>
-    auto done(agrpc::GrpcContext& grpc_context, Args&&... args)
-        -> decltype((void)std::declval<Implementation&>().done(grpc_context, static_cast<Args&&>(args)...))
-    {
-        implementation().done(grpc_context, args...);
-        reset_stop_callback();
-        auto receiver = extract_receiver_and_optionally_deallocate<AllocType>(grpc_context);
-        detail::satisfy_receiver(static_cast<Receiver&&>(receiver), static_cast<Args&&>(args)...);
-    }
-
-    template <detail::AllocationType AllocType, int Id = 0>
+    template <int Id = 0>
     static void do_complete(detail::OperationBase* op, detail::OperationResult result, agrpc::GrpcContext& grpc_context)
     {
         auto& self = *static_cast<BasicSenderRunningOperation*>(op);
         if AGRPC_LIKELY (!detail::is_shutdown(result))
         {
-            if constexpr (Implementation::TYPE == detail::SenderImplementationType::BOTH ||
-                          Implementation::TYPE == detail::SenderImplementationType::GRPC_TAG)
-            {
-                self.template done<AllocType, Id>(grpc_context, detail::is_ok(result));
-            }
-            else
-            {
-                self.template done<AllocType, Id>(grpc_context);
-            }
+            detail::complete<AllocationType::NONE, Id>(self, result, grpc_context);
         }
         else
         {
-            detail::exec::set_done(self.template extract_receiver_and_optionally_deallocate<AllocType>(grpc_context));
+            detail::exec::set_done(static_cast<Receiver&&>(self.receiver()));
         }
     }
-
-    static detail::OperationOnComplete get_on_complete([[maybe_unused]] detail::AllocationType allocation_type)
-    {
-        if constexpr (Deallocate == detail::DeallocateOnComplete::YES)
-        {
-            if (allocation_type == detail::AllocationType::LOCAL)
-            {
-                return &do_complete<detail::AllocationType::LOCAL>;
-            }
-            return &do_complete<detail::AllocationType::CUSTOM>;
-        }
-        else
-        {
-            return &do_complete<detail::AllocationType::NONE>;
-        }
-    }
-
-    template <detail::AllocationType AllocType, int Id>
-    void set_on_complete() noexcept
-    {
-        detail::OperationBaseAccess::get_on_complete(*this) = &do_complete<AllocType, Id>;
-    }
-
-    template <detail::AllocationType AllocType, int Id = 0>
-    [[nodiscard]] bool current_on_complete_is() const noexcept
-    {
-        return detail::OperationBaseAccess::get_on_complete(*this) == &do_complete<AllocType, Id>;
-    }
-
-    template <detail::AllocationType AllocType>
-    struct Init
-    {
-        static constexpr auto ALLOCATION_TYPE = AllocType;
-
-        template <int NextId = 0>
-        [[nodiscard]] Base* self() const noexcept
-        {
-            if constexpr (NextId != 0)
-            {
-                self_.set_on_complete<AllocType, NextId>();
-            }
-            return &self_;
-        }
-
-        [[nodiscard]] agrpc::GrpcContext& grpc_context() const noexcept { return grpc_context_; }
-
-        BasicSenderRunningOperation& self_;
-        agrpc::GrpcContext& grpc_context_;
-    };
-
-    template <class Initiation, class... T>
-    void initiate(agrpc::GrpcContext& grpc_context, const Initiation& initiation, T...)
-    {
-        if constexpr (Deallocate == detail::DeallocateOnComplete::YES)
-        {
-            if (current_on_complete_is<detail::AllocationType::LOCAL>())
-            {
-                initiation.initiate(Init<detail::AllocationType::LOCAL>{*this, grpc_context}, implementation());
-            }
-            else
-            {
-                initiation.initiate(Init<detail::AllocationType::CUSTOM>{*this, grpc_context}, implementation());
-            }
-        }
-        else
-        {
-            initiation.initiate(Init<detail::AllocationType::NONE>{*this, grpc_context}, implementation());
-        }
-    }
-
-    template <class Initiation, class Impl = Implementation>
-    auto initiate(agrpc::GrpcContext& grpc_context, const Initiation& initiation)
-        -> decltype((void)initiation.initiate(grpc_context, std::declval<Impl&>(), static_cast<Base*>(nullptr)))
-    {
-        initiation.initiate(grpc_context, implementation(), static_cast<Base*>(this));
-    }
-
-    template <class Initiation>
-    auto initiate(agrpc::GrpcContext& grpc_context, const Initiation& initiation)
-        -> decltype((void)initiation.initiate(grpc_context, static_cast<Base*>(nullptr)))
-    {
-        initiation.initiate(grpc_context, static_cast<Base*>(this));
-    }
-
-    Implementation& implementation() noexcept { return impl_.second(); }
 
     template <class Initiation>
     void emplace_stop_callback(StopToken&& stop_token, const Initiation& initiation) noexcept
@@ -353,16 +121,14 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
 
   public:
     template <class R>
-    BasicSenderRunningOperation(detail::AllocationType allocation_type, R&& receiver, Implementation&& implementation)
-        : Base(get_on_complete(allocation_type)),
-          impl_(static_cast<R&&>(receiver), static_cast<Implementation&&>(implementation))
+    BasicSenderRunningOperation(R&& receiver, Implementation&& implementation)
+        : Base(&do_complete), impl_(static_cast<R&&>(receiver), static_cast<Implementation&&>(implementation))
     {
     }
 
     template <class R>
-    BasicSenderRunningOperation(detail::AllocationType allocation_type, R&& receiver,
-                                const Implementation& implementation)
-        : Base(get_on_complete(allocation_type)), impl_(static_cast<R&&>(receiver), implementation)
+    BasicSenderRunningOperation(R&& receiver, const Implementation& implementation)
+        : Base(&do_complete), impl_(static_cast<R&&>(receiver), implementation)
     {
     }
 
@@ -371,10 +137,27 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
     {
         grpc_context.work_started();
         emplace_stop_callback(static_cast<StopToken&&>(stop_token), initiation);
-        initiate(grpc_context, initiation);
+        detail::initiate<detail::DeallocateOnComplete::NO>(*this, grpc_context, initiation, AllocationType::NONE);
     }
 
     Receiver& receiver() noexcept { return impl_.first().receiver(); }
+
+    Implementation& implementation() noexcept { return impl_.second(); }
+
+    Base* tag() noexcept { return this; }
+
+    template <AllocationType, int Id>
+    void set_on_complete() noexcept
+    {
+        detail::OperationBaseAccess::get_on_complete(*this) = &do_complete<Id>;
+    }
+
+    template <AllocationType, class... Args>
+    void complete(agrpc::GrpcContext&, Args... args)
+    {
+        reset_stop_callback();
+        detail::satisfy_receiver(static_cast<Receiver&&>(receiver()), static_cast<Args&&>(args)...);
+    }
 
     void put_into_scratch_space(void* ptr) noexcept
     {
@@ -386,10 +169,7 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
         return reinterpret_cast<void*>(detail::OperationBaseAccess::get_on_complete(*this));
     }
 
-    void restore_scratch_space(detail::AllocationType allocation_type) noexcept
-    {
-        detail::OperationBaseAccess::get_on_complete(*this) = get_on_complete(allocation_type);
-    }
+    void restore_scratch_space() noexcept { detail::OperationBaseAccess::get_on_complete(*this) = &do_complete; }
 
   private:
     detail::CompressedPair<detail::ReceiverAndStopCallback<Receiver, StopFunction>, Implementation> impl_;
@@ -404,11 +184,19 @@ class BasicSenderOperationState
         auto& op = operation();
         auto* const scratch_space = op.get_scratch_space();
         auto& grpc_context = *static_cast<agrpc::GrpcContext*>(scratch_space);
-        op.restore_scratch_space(detail::AllocationType::NONE);
-        if (auto stop_token = detail::check_start_conditions(grpc_context, receiver()))
+        if AGRPC_UNLIKELY (detail::GrpcContextImplementation::is_shutdown(grpc_context))
         {
-            op.start(grpc_context, impl_.second(), std::move(*stop_token));
+            detail::exec::set_done(static_cast<Receiver&&>(receiver()));
+            return;
         }
+        auto stop_token = detail::exec::get_stop_token(receiver());
+        if (detail::stop_requested(stop_token))
+        {
+            detail::exec::set_done(static_cast<Receiver&&>(receiver()));
+            return;
+        }
+        op.restore_scratch_space();
+        op.start(grpc_context, impl_.second(), std::move(stop_token));
     }
 
   private:
@@ -417,7 +205,7 @@ class BasicSenderOperationState
     template <class R, class Impl>
     BasicSenderOperationState(R&& receiver, agrpc::GrpcContext& grpc_context, const Initiation& initiation,
                               Impl&& implementation)
-        : impl_(detail::SecondThenVariadic{}, initiation, detail::AllocationType::NONE, static_cast<R&&>(receiver),
+        : impl_(detail::SecondThenVariadic{}, initiation, static_cast<R&&>(receiver),
                 static_cast<Impl&&>(implementation))
     {
         operation().put_into_scratch_space(&grpc_context);
@@ -427,9 +215,7 @@ class BasicSenderOperationState
 
     Receiver& receiver() noexcept { return operation().receiver(); }
 
-    detail::CompressedPair<
-        detail::BasicSenderRunningOperation<Implementation, Receiver, detail::DeallocateOnComplete::NO>, Initiation>
-        impl_;
+    detail::CompressedPair<detail::BasicSenderRunningOperation<Implementation, Receiver>, Initiation> impl_;
 };
 }
 
@@ -446,17 +232,6 @@ struct agrpc::asio::traits::connect_member<agrpc::detail::BasicSender<Initiation
 
     using result_type =
         decltype(std::declval<agrpc::detail::BasicSender<Initiation, Implementation>>().connect(std::declval<R>()));
-};
-#endif
-
-#if !defined(BOOST_ASIO_HAS_DEDUCED_SUBMIT_MEMBER_TRAIT) && !defined(ASIO_HAS_DEDUCED_SUBMIT_MEMBER_TRAIT)
-template <class Initiation, class Implementation, class R>
-struct agrpc::asio::traits::submit_member<agrpc::detail::BasicSender<Initiation, Implementation>, R>
-{
-    static constexpr bool is_valid = true;
-    static constexpr bool is_noexcept = false;
-
-    using result_type = void;
 };
 #endif
 

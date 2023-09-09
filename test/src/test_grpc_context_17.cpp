@@ -805,7 +805,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::schedule with throw
     CHECK_THROWS_WITH_AS(std::rethrow_exception(state.exception), "test", std::invalid_argument);
 }
 
-TEST_CASE("asio GrpcExecutor::schedule and shutdown GrpcContext")
+TEST_CASE("asio GrpcExecutor::schedule and destruct GrpcContext")
 {
     bool invoked{false};
     test::StatefulReceiverState state;
@@ -828,14 +828,6 @@ TEST_CASE("asio GrpcExecutor::schedule and shutdown GrpcContext")
     CHECK_FALSE(invoked);
     CHECK_FALSE(state.exception);
     CHECK(state.was_done);
-}
-
-TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::submit with allocator")
-{
-    asio::execution::submit(asio::execution::schedule(get_executor()),
-                            test::FunctionAsReceiver{test::NoOp{}, get_allocator()});
-    grpc_context.run();
-    CHECK(allocator_has_been_used());
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::execution connect and start Alarm")

@@ -169,7 +169,7 @@ TEST_CASE_FIXTURE(UnifexTest, "unifex GrpcExecutor::schedule when already runnin
 }
 
 #if !UNIFEX_NO_COROUTINES
-TEST_CASE_TEMPLATE("ScheduleSender start/submit with shutdown GrpcContext", T, std::true_type, std::false_type)
+TEST_CASE_TEMPLATE("ScheduleSender start with shutdown GrpcContext", T, std::true_type, std::false_type)
 {
     test::DeleteGuard del;
     test::StatefulReceiverState state;
