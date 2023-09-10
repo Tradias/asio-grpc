@@ -64,41 +64,35 @@ class RequestHandlerSender : public detail::SenderOf<void()>
     RequestHandler request_handler_;
 };
 
-class RequestHandlerSenderOperationSetErrorAndDone
+class RequestHandlerSenderOperationComplete
 {
   public:
-    using SetError = void (*)(RequestHandlerSenderOperationSetErrorAndDone&, const std::exception_ptr&) noexcept;
-    using SetDone = void (*)(RequestHandlerSenderOperationSetErrorAndDone&) noexcept;
+    using Complete = void (*)(RequestHandlerSenderOperationComplete&) noexcept;
 
-    RequestHandlerSenderOperationSetErrorAndDone(SetError set_error, SetDone set_done) noexcept
-        : set_error_(set_error), set_done_(set_done)
-    {
-    }
+    RequestHandlerSenderOperationComplete(Complete complete) noexcept : complete_(complete) {}
 
-    void set_error(const std::exception_ptr& eptr) { set_error_(*this, eptr); }
-
-    void set_done() { set_done_(*this); }
+    void complete() noexcept { complete_(*this); }
 
   private:
-    SetError set_error_;
-    SetDone set_done_;
+    Complete complete_;
 };
 
 template <class ServerRPC, class RequestHandler, class StopToken, class Allocator>
-struct RequestHandlerSenderOperationBase : RequestHandlerSenderOperationSetErrorAndDone
+struct RequestHandlerSenderOperationBase : RequestHandlerSenderOperationComplete
 {
     using Service = detail::GetServerRPCServiceT<ServerRPC>;
     using Sender = RequestHandlerSender<ServerRPC, RequestHandler>;
 
-    RequestHandlerSenderOperationBase(Sender&& sender, RequestHandlerSenderOperationSetErrorAndDone::SetError set_error,
-                                      RequestHandlerSenderOperationSetErrorAndDone::SetDone set_done)
-        : RequestHandlerSenderOperationSetErrorAndDone{set_error, set_done}, sender_(static_cast<Sender&&>(sender))
+    RequestHandlerSenderOperationBase(Sender&& sender, RequestHandlerSenderOperationComplete::Complete complete)
+        : RequestHandlerSenderOperationComplete{complete}, sender_(static_cast<Sender&&>(sender))
     {
     }
 
     bool is_stopped() const noexcept { return stop_context_.is_stopped(); }
 
-    bool create_and_start_request_handler_operation(const Allocator& allocator);
+    void stop() noexcept { stop_context_.stop(); }
+
+    void create_and_start_request_handler_operation(const Allocator& allocator);
 
     agrpc::GrpcContext& grpc_context() const noexcept { return sender_.grpc_context_; }
 
@@ -106,7 +100,18 @@ struct RequestHandlerSenderOperationBase : RequestHandlerSenderOperationSetError
 
     const RequestHandler& request_handler() const noexcept { return sender_.request_handler_; }
 
+    void set_error(std::exception_ptr&& eptr) noexcept { eptr_ = static_cast<std::exception_ptr&&>(eptr); }
+
+    void increment_ref_count() noexcept { reference_count_.fetch_add(1, std::memory_order_relaxed); }
+
+    [[nodiscard]] bool decrement_ref_count() noexcept
+    {
+        return 1 == reference_count_.fetch_sub(1, std::memory_order_relaxed);
+    }
+
     Sender sender_;
+    std::atomic_size_t reference_count_{};
+    std::exception_ptr eptr_;
     detail::AtomicBoolStopContext<StopToken> stop_context_;
 };
 
@@ -129,9 +134,14 @@ using WaitForOperationStateT = typename WaitForOperationState<Receiver, Signatur
 struct RequestHandlerOperationFinish
 {
     template <class Operation>
-    static void perform(Operation& op)
+    static void perform(Operation& op, std::exception_ptr* eptr)
     {
         auto& rpc = op.rpc_;
+        if (eptr)
+        {
+            op.base_.stop();
+            op.base_.set_error(static_cast<std::exception_ptr&&>(*eptr));
+        }
         if (!detail::ServerRPCContextBaseAccess::is_finished(rpc))
         {
             rpc.cancel();
@@ -159,7 +169,7 @@ struct RequestHandlerOperationFinish
 struct RequestHandlerOperationWaitForDone
 {
     template <class Operation>
-    static void perform(Operation& op)
+    static void perform(Operation& op, std::exception_ptr*)
     {
         auto& rpc = op.rpc_;
         if constexpr (Operation::Traits::RESUMABLE_READ)
@@ -177,7 +187,7 @@ struct RequestHandlerOperationWaitForDone
 struct RequestHandlerOperationWaitForRead
 {
     template <class Operation>
-    static void perform(Operation& op)
+    static void perform(Operation& op, std::exception_ptr*)
     {
         detail::destroy_deallocate(&op, op.get_allocator());
     }
@@ -199,46 +209,29 @@ struct RequestHandlerOperation
 
     struct StartReceiver
     {
-        RequestHandlerSenderOperationBase& op_;
         RequestHandlerOperation& request_handler_op_;
 
-        StartReceiver(RequestHandlerSenderOperationBase& op, RequestHandlerOperation& request_handler_op) noexcept
-            : op_(op), request_handler_op_(request_handler_op)
-        {
-        }
-
-        [[noreturn]] static void set_done() noexcept { std::terminate(); }
+        static constexpr void set_done() noexcept {}
 
         void set_value(bool ok)
         {
-            auto& op = op_;
-            auto& request_handler_op = request_handler_op_;
-            detail::AllocationGuard ptr{&request_handler_op, request_handler_op.get_allocator()};
+            auto& base = request_handler_op_.base_;
+            detail::AllocationGuard ptr{&request_handler_op_, request_handler_op_.get_allocator()};
             if (ok)
             {
-                if (auto exception_ptr = request_handler_op.emplace_request_handler_operation_state())
+                if (auto exception_ptr = request_handler_op_.emplace_request_handler_operation_state())
                 {
-                    ptr.reset();
-                    op.set_error(std::move(*exception_ptr));
+                    request_handler_op_.rpc_.cancel();
+                    base.set_error(static_cast<std::exception_ptr&&>(*exception_ptr));
                     return;
                 }
-                const bool is_repeated =
-                    op.create_and_start_request_handler_operation(request_handler_op.get_allocator());
-                request_handler_op.start_request_handler_operation_state();
+                base.create_and_start_request_handler_operation(request_handler_op_.get_allocator());
+                request_handler_op_.start_request_handler_operation_state();
                 ptr.release();
-                if (!is_repeated)
-                {
-                    op.set_done();
-                }
-            }
-            else
-            {
-                ptr.reset();
-                op.set_done();
             }
         }
 
-        [[noreturn]] static void set_error(const std::exception_ptr&) noexcept { std::terminate(); }
+        static constexpr void set_error(const std::exception_ptr&) noexcept {}
 
         friend exec::inline_scheduler tag_invoke(exec::tag_t<exec::get_scheduler>, const StartReceiver&) noexcept
         {
@@ -256,19 +249,17 @@ struct RequestHandlerOperation
     {
         RequestHandlerOperation& op_;
 
-        explicit Receiver(RequestHandlerOperation& op) noexcept : op_(op) {}
+        void perform(std::exception_ptr* eptr) noexcept { Action::perform(op_, eptr); }
 
-        void perform() noexcept { Action::perform(op_); }
-
-        void set_done() noexcept { perform(); }
+        void set_done() noexcept { perform(nullptr); }
 
         template <class... T>
         void set_value(T&&...) noexcept
         {
-            perform();
+            perform(nullptr);
         }
 
-        void set_error(const std::exception_ptr&) noexcept { perform(); }
+        void set_error(std::exception_ptr eptr) noexcept { perform(&eptr); }
 
         friend exec::inline_scheduler tag_invoke(exec::tag_t<exec::get_scheduler>, const Receiver&) noexcept
         {
@@ -292,7 +283,8 @@ struct RequestHandlerOperation
         std::variant<StartOperationState, FinishOperationState, WaitForDoneOperationState, WaitForReadOperationState>;
 
     explicit RequestHandlerOperation(RequestHandlerSenderOperationBase& operation, const Allocator& allocator)
-        : impl1_(operation.request_handler()),
+        : base_(operation),
+          impl1_(operation.request_handler()),
           rpc_(detail::ServerRPCContextBaseAccess::construct<ServerRPC>(operation.grpc_context().get_executor())),
           impl2_(detail::SecondThenVariadic{}, allocator, std::in_place_type<StartOperationState>,
                  detail::InplaceWithFunction{},
@@ -300,10 +292,25 @@ struct RequestHandlerOperation
                  {
                      return initial_request()
                          .start(rpc_, operation.service(), agrpc::use_sender)
-                         .connect(StartReceiver{operation, *this});
+                         .connect(StartReceiver{*this});
                  })
     {
+        base_.increment_ref_count();
     }
+
+    RequestHandlerOperation(const RequestHandlerOperation& other) = delete;
+    RequestHandlerOperation(RequestHandlerOperation&& other) = delete;
+
+    ~RequestHandlerOperation() noexcept
+    {
+        if (base_.decrement_ref_count())
+        {
+            base_.complete();
+        }
+    }
+
+    RequestHandlerOperation& operator=(const RequestHandlerOperation& other) = delete;
+    RequestHandlerOperation& operator=(RequestHandlerOperation&& other) = delete;
 
     void start() { std::get<StartOperationState>(operation_state()).value_.start(); }
 
@@ -359,25 +366,26 @@ struct RequestHandlerOperation
 
     auto& get_allocator() noexcept { return impl2_.second(); }
 
+    RequestHandlerSenderOperationBase& base_;
     detail::CompressedPair<RequestHandler, InitialRequest> impl1_;
     ServerRPC rpc_;
     detail::CompressedPair<OperationState, Allocator> impl2_;
 };
 
 template <class ServerRPC, class RequestHandler, class StopToken, class Allocator>
-inline bool
+inline void
 RequestHandlerSenderOperationBase<ServerRPC, RequestHandler, StopToken,
                                   Allocator>::create_and_start_request_handler_operation(const Allocator& allocator)
 {
     if AGRPC_UNLIKELY (is_stopped())
     {
-        return false;
+        return;
     }
     using RequestHandlerOperation = detail::RequestHandlerOperation<ServerRPC, RequestHandler, StopToken, Allocator>;
     auto request_handler_operation = detail::allocate<RequestHandlerOperation>(allocator, *this, allocator);
     request_handler_operation->start();
     request_handler_operation.release();
-    return true;
+    return;
 }
 
 template <class ServerRPC, class RequestHandler, class Receiver>
@@ -417,24 +425,22 @@ class RequestHandlerSenderOperation : public detail::RequestHandlerSenderOperati
 
     template <class R>
     RequestHandlerSenderOperation(RequestHandlerSender&& sender, R&& receiver)
-        : Base(static_cast<RequestHandlerSender&&>(sender), &set_error, &set_done),
-          receiver_(static_cast<R&&>(receiver))
+        : Base(static_cast<RequestHandlerSender&&>(sender), &complete_impl), receiver_(static_cast<R&&>(receiver))
     {
     }
 
-    static void set_error(RequestHandlerSenderOperationSetErrorAndDone& operation,
-                          const std::exception_ptr& eptr) noexcept
+    static void complete_impl(RequestHandlerSenderOperationComplete& operation) noexcept
     {
         auto& self = static_cast<RequestHandlerSenderOperation&>(operation);
         self.stop_context_.reset();
-        exec::set_error(static_cast<Receiver&&>(self.receiver_), eptr);
-    }
-
-    static void set_done(RequestHandlerSenderOperationSetErrorAndDone& operation) noexcept
-    {
-        auto& self = static_cast<RequestHandlerSenderOperation&>(operation);
-        self.stop_context_.reset();
-        exec::set_done(static_cast<Receiver&&>(self.receiver_));
+        if (self.eptr_)
+        {
+            exec::set_error(static_cast<Receiver&&>(self.receiver_), static_cast<std::exception_ptr&&>(self.eptr_));
+        }
+        else
+        {
+            exec::set_done(static_cast<Receiver&&>(self.receiver_));
+        }
     }
 
     decltype(auto) get_allocator() noexcept { return exec::get_allocator(receiver_); }

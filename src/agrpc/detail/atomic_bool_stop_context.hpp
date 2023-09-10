@@ -69,15 +69,13 @@ class AtomicBoolStopContext : private detail::StopCallbackLifetime<StopToken, At
 
     using Base::reset;
 
-  private:
-    friend StopFunction;
-
     void stop() noexcept
     {
         stopped_.store(true, std::memory_order_relaxed);
         reset();
     }
 
+  private:
     std::atomic_bool stopped_{};
 };
 

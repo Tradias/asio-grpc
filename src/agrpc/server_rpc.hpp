@@ -63,14 +63,6 @@ class ServerRPC<RequestUnary, TraitsT, Executor>
     ServerRPC& operator=(ServerRPC&& other) = delete;
 
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto send_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
-    {
-        return detail::async_initiate_sender_implementation(
-            this->grpc_context(), detail::SendInitialMetadataSenderInitiation<Responder>{*this},
-            detail::SendInitialMetadataSenderImplementation{}, token);
-    }
-
-    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto finish(const ResponseT& response, const grpc::Status& status,
                 CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
@@ -131,14 +123,6 @@ class ServerRPC<RequestClientStreaming, TraitsT, Executor>
     ServerRPC(ServerRPC&& other) = delete;
     ServerRPC& operator=(const ServerRPC& other) = delete;
     ServerRPC& operator=(ServerRPC&& other) = delete;
-
-    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto send_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
-    {
-        return detail::async_initiate_sender_implementation(
-            this->grpc_context(), detail::SendInitialMetadataSenderInitiation<Responder>{*this},
-            detail::SendInitialMetadataSenderImplementation{}, token);
-    }
 
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto read(RequestT& request, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
@@ -211,14 +195,6 @@ class ServerRPC<RequestServerStreaming, TraitsT, Executor>
     ServerRPC& operator=(ServerRPC&& other) = delete;
 
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto send_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
-    {
-        return detail::async_initiate_sender_implementation(
-            this->grpc_context(), detail::SendInitialMetadataSenderInitiation<Responder>{*this},
-            detail::SendInitialMetadataSenderImplementation{}, token);
-    }
-
-    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto write(const ResponseT& response, grpc::WriteOptions options,
                CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
@@ -276,14 +252,6 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
     using Request = RequestT;
     using Response = ResponseT;
     using Traits = TraitsT;
-
-    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto send_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
-    {
-        return detail::async_initiate_sender_implementation(
-            this->grpc_context(), detail::SendInitialMetadataSenderInitiation<Responder>{*this},
-            detail::SendInitialMetadataSenderImplementation{}, token);
-    }
 
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto read(RequestT& request, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})

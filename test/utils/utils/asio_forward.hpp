@@ -120,6 +120,7 @@
 #include <unifex/stop_when.hpp>
 #include <unifex/sync_wait.hpp>
 #include <unifex/then.hpp>
+#include <unifex/unstoppable.hpp>
 #include <unifex/when_all.hpp>
 #include <unifex/with_query_value.hpp>
 
