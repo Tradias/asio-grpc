@@ -86,16 +86,14 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
     }
 
     template <class Initiation>
-    void emplace_stop_callback(const Initiation& initiation) noexcept
+    void emplace_stop_callback(const Initiation& initiation)
     {
-        if constexpr (detail::NEEDS_STOP_CALLBACK<exec::stop_token_type_t<CompletionHandler&>, StopFunction>)
-        {
-            auto stop_token = exec::get_stop_token(this->completion_handler());
-            if (detail::stop_possible(stop_token))
-            {
-                stop_token.template emplace<StopFunction>(detail::get_stop_function_arg(initiation, implementation()));
-            }
-        }
+        detail::emplace_stop_callback<StopFunction>(*this,
+                                                    [&](auto...) -> decltype(auto)
+                                                    {
+                                                        return detail::get_stop_function_arg(initiation,
+                                                                                             implementation());
+                                                    });
     }
 
     CompletionHandler& completion_handler() noexcept { return impl_.first(); }

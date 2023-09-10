@@ -35,6 +35,20 @@ auto get_stop_function_arg(const Initiation& initiation, const Implementation&)
 {
     return initiation.stop_function_arg();
 }
+
+template <class StopFunction, class Operation, class GetStopFunctionArg>
+void emplace_stop_callback(Operation& operation, GetStopFunctionArg get_stop_function_arg)
+{
+    using CompletionHandler = detail::RemoveCrefT<decltype(operation.completion_handler())>;
+    if constexpr (detail::NEEDS_STOP_CALLBACK<exec::stop_token_type_t<CompletionHandler&>, StopFunction>)
+    {
+        auto stop_token = exec::get_stop_token(operation.completion_handler());
+        if (detail::stop_possible(stop_token))
+        {
+            stop_token.template emplace<StopFunction>(get_stop_function_arg());
+        }
+    }
+}
 }
 
 AGRPC_NAMESPACE_END

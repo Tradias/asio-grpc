@@ -26,11 +26,6 @@ enum class DeallocateOnComplete
     NO,
     YES
 };
-
-template <detail::DeallocateOnComplete>
-struct DeallocateOnCompleteArg
-{
-};
 }
 
 AGRPC_NAMESPACE_END

@@ -126,10 +126,68 @@ struct WaitForOperationState<Receiver, Signature, false>
 template <class Receiver, class Signature, bool IsSet>
 using WaitForOperationStateT = typename WaitForOperationState<Receiver, Signature, IsSet>::Type;
 
+struct RequestHandlerOperationFinish
+{
+    template <class Operation>
+    static void perform(Operation& op)
+    {
+        auto& rpc = op.rpc_;
+        if (!detail::ServerRPCContextBaseAccess::is_finished(rpc))
+        {
+            rpc.cancel();
+        }
+        if constexpr (Operation::Traits::NOTIFY_WHEN_DONE)
+        {
+            if (!rpc.is_done())
+            {
+                op.start_wait_for_done();
+                return;
+            }
+        }
+        if constexpr (Operation::Traits::RESUMABLE_READ)
+        {
+            if (detail::ServerRPCReadMixinAccess::is_reading(rpc))
+            {
+                op.start_wait_for_read();
+                return;
+            }
+        }
+        detail::destroy_deallocate(&op, op.get_allocator());
+    }
+};
+
+struct RequestHandlerOperationWaitForDone
+{
+    template <class Operation>
+    static void perform(Operation& op)
+    {
+        auto& rpc = op.rpc_;
+        if constexpr (Operation::Traits::RESUMABLE_READ)
+        {
+            if (detail::ServerRPCReadMixinAccess::is_reading(rpc))
+            {
+                op.start_wait_for_read();
+                return;
+            }
+        }
+        detail::destroy_deallocate(&op, op.get_allocator());
+    }
+};
+
+struct RequestHandlerOperationWaitForRead
+{
+    template <class Operation>
+    static void perform(Operation& op)
+    {
+        detail::destroy_deallocate(&op, op.get_allocator());
+    }
+};
+
 template <class ServerRPC, class RequestHandler, class StopToken, class Allocator>
 struct RequestHandlerOperation
 {
     using Service = detail::GetServerRPCServiceT<ServerRPC>;
+    using Traits = ServerRPC::Traits;
     using InitialRequest =
         detail::RPCRequest<typename ServerRPC::Request, detail::has_initial_request(ServerRPC::TYPE)>;
     using RequestHandlerInvokeResult =
@@ -218,71 +276,20 @@ struct RequestHandlerOperation
         }
     };
 
-    struct Finish
-    {
-        static void perform(RequestHandlerOperation& op)
-        {
-            auto& rpc = op.rpc_;
-            if (!detail::ServerRPCContextBaseAccess::is_finished(rpc))
-            {
-                rpc.cancel();
-            }
-            if constexpr (ServerRPC::Traits::NOTIFY_WHEN_DONE)
-            {
-                if (!rpc.is_done())
-                {
-                    op.start_wait_for_done();
-                    return;
-                }
-            }
-            if constexpr (ServerRPC::Traits::RESUMABLE_READ)
-            {
-                if (detail::ServerRPCReadMixinAccess::is_reading(rpc))
-                {
-                    op.start_wait_for_read();
-                    return;
-                }
-            }
-            detail::destroy_deallocate(&op, op.get_allocator());
-        }
-    };
-
-    using FinishReceiver = Receiver<Finish>;
-    using RequestHandlerOperationState =
+    using FinishReceiver = Receiver<RequestHandlerOperationFinish>;
+    using FinishOperationState =
         detail::InplaceWithFunctionWrapper<exec::connect_result_t<RequestHandlerInvokeResult, FinishReceiver>>;
 
-    struct WaitForDone
-    {
-        static void perform(RequestHandlerOperation& op)
-        {
-            auto& rpc = op.rpc_;
-            if constexpr (ServerRPC::Traits::RESUMABLE_READ)
-            {
-                if (detail::ServerRPCReadMixinAccess::is_reading(rpc))
-                {
-                    op.start_wait_for_read();
-                    return;
-                }
-            }
-            detail::destroy_deallocate(&op, op.get_allocator());
-        }
-    };
-
-    using WaitForDoneReceiver = Receiver<WaitForDone>;
+    using WaitForDoneReceiver = Receiver<RequestHandlerOperationWaitForDone>;
     using WaitForDoneOperationState =
         detail::WaitForOperationStateT<WaitForDoneReceiver, void(), ServerRPC::Traits::NOTIFY_WHEN_DONE>;
 
-    struct WaitForRead
-    {
-        static void perform(RequestHandlerOperation& op) { detail::destroy_deallocate(&op, op.get_allocator()); }
-    };
-
-    using WaitForReadReceiver = Receiver<WaitForRead>;
+    using WaitForReadReceiver = Receiver<RequestHandlerOperationWaitForRead>;
     using WaitForReadOperationState =
         detail::WaitForOperationStateT<WaitForReadReceiver, void(bool), ServerRPC::Traits::RESUMABLE_READ>;
 
-    using OperationState = std::variant<StartOperationState, RequestHandlerOperationState, WaitForDoneOperationState,
-                                        WaitForReadOperationState>;
+    using OperationState =
+        std::variant<StartOperationState, FinishOperationState, WaitForDoneOperationState, WaitForReadOperationState>;
 
     explicit RequestHandlerOperation(RequestHandlerSenderOperationBase& operation, const Allocator& allocator)
         : impl1_(operation.request_handler()),
@@ -304,7 +311,7 @@ struct RequestHandlerOperation
     {
         AGRPC_TRY
         {
-            operation_state().template emplace<RequestHandlerOperationState>(
+            operation_state().template emplace<FinishOperationState>(
                 detail::InplaceWithFunction{},
                 [&]
                 {
@@ -319,7 +326,7 @@ struct RequestHandlerOperation
 
     void start_request_handler_operation_state()
     {
-        exec::start(std::get<RequestHandlerOperationState>(operation_state()).value_);
+        exec::start(std::get<FinishOperationState>(operation_state()).value_);
     }
 
     void start_wait_for_done()
