@@ -134,7 +134,6 @@ if(ASIO_GRPC_BUILD_TESTS AND ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/pool_resource_allocator.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/query_grpc_context.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/receiver.hpp"
-                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/receiver_and_stop_callback.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/repeatedly_request.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/repeatedly_request_awaitable.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/repeatedly_request_base.hpp"

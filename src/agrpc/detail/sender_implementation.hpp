@@ -44,6 +44,20 @@ struct BaseForSenderImplementationType<detail::SenderImplementationType::GRPC_TA
 
 template <detail::SenderImplementationType ImplementationType>
 using BaseForSenderImplementationTypeT = typename detail::BaseForSenderImplementationType<ImplementationType>::Type;
+
+template <class Initiation, class Implementation>
+auto get_stop_function_arg(const Initiation& initiation, Implementation& implementation)
+    -> decltype(initiation.stop_function_arg(implementation))
+{
+    return initiation.stop_function_arg(implementation);
+}
+
+template <class Initiation, class Implementation>
+auto get_stop_function_arg(const Initiation& initiation, const Implementation&)
+    -> decltype(initiation.stop_function_arg())
+{
+    return initiation.stop_function_arg();
+}
 }
 
 AGRPC_NAMESPACE_END

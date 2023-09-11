@@ -25,9 +25,9 @@
 #include <agrpc/detail/operation_implementation.hpp>
 #include <agrpc/detail/operation_initiation.hpp>
 #include <agrpc/detail/receiver.hpp>
-#include <agrpc/detail/receiver_and_stop_callback.hpp>
 #include <agrpc/detail/sender_implementation.hpp>
 #include <agrpc/detail/sender_of.hpp>
+#include <agrpc/detail/stop_callback_lifetime.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/grpc_context.hpp>
 

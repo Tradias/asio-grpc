@@ -100,19 +100,23 @@ struct RequestHandlerSenderOperationBase : RequestHandlerSenderOperationComplete
 
     const RequestHandler& request_handler() const noexcept { return sender_.request_handler_; }
 
-    void set_error(std::exception_ptr&& eptr) noexcept { eptr_ = static_cast<std::exception_ptr&&>(eptr); }
-
-    void increment_ref_count() noexcept { reference_count_.fetch_add(1, std::memory_order_relaxed); }
-
-    [[nodiscard]] bool decrement_ref_count() noexcept
+    void set_error(std::exception_ptr&& eptr) noexcept
     {
-        return 1 == reference_count_.fetch_sub(1, std::memory_order_relaxed);
+        if (!has_error_.exchange(true))
+        {
+            eptr_ = static_cast<std::exception_ptr&&>(eptr);
+        }
     }
+
+    void increment_ref_count() noexcept { ++reference_count_; }
+
+    [[nodiscard]] bool decrement_ref_count() noexcept { return 0 == --reference_count_; }
 
     Sender sender_;
     std::atomic_size_t reference_count_{};
     std::exception_ptr eptr_;
     detail::AtomicBoolStopContext<StopToken> stop_context_;
+    std::atomic_bool has_error_{};
 };
 
 template <class Receiver, class Signature, bool IsSet>

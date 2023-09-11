@@ -22,7 +22,6 @@
 #include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/receiver.hpp>
-#include <agrpc/detail/receiver_and_stop_callback.hpp>
 #include <agrpc/detail/sender_of.hpp>
 #include <agrpc/detail/stop_callback_lifetime.hpp>
 #include <agrpc/detail/tuple.hpp>
@@ -250,12 +249,19 @@ struct ManualResetEventOperation<void(Args...), CompletionHandler> : ManualReset
     ManualResetEventOperation(Ch&& ch, ManualResetEvent<Signature>& event)
         : Base{event, &set_value_impl}, completion_handler_(static_cast<Ch&&>(ch))
     {
-        detail::emplace_stop_callback<StopFunction>(*this,
-                                                    [&]() -> ManualResetEventOperation&
-                                                    {
-                                                        return *this;
-                                                    });
+        emplace_stop_callback();
         this->event_.op_.store(this, std::memory_order_release);
+    }
+
+    void emplace_stop_callback()
+    {
+        if constexpr (detail::IS_STOP_EVER_POSSIBLE_V<exec::stop_token_type_t<CompletionHandler&>>)
+        {
+            if (auto stop_token = exec::get_stop_token(completion_handler()); detail::stop_possible(stop_token))
+            {
+                stop_token.template emplace<StopFunction>(*this);
+            }
+        }
     }
 
     void cancel()

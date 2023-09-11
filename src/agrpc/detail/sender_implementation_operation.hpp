@@ -21,7 +21,7 @@
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/operation_implementation.hpp>
 #include <agrpc/detail/operation_initiation.hpp>
-#include <agrpc/detail/receiver_and_stop_callback.hpp>
+#include <agrpc/detail/stop_callback_lifetime.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/grpc_context.hpp>
 
@@ -35,7 +35,6 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
     using Implementation = ImplementationT;
     using Base = detail::BaseForSenderImplementationTypeT<Implementation::TYPE>;
     using StopFunction = typename Implementation::StopFunction;
-    using StopToken = exec::stop_token_type_t<CompletionHandler&>;
 
     template <detail::AllocationType AllocType, int Id = 0>
     static void do_complete(detail::OperationBase* op, detail::OperationResult result, agrpc::GrpcContext& grpc_context)
@@ -88,12 +87,13 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
     template <class Initiation>
     void emplace_stop_callback(const Initiation& initiation)
     {
-        detail::emplace_stop_callback<StopFunction>(*this,
-                                                    [&](auto...) -> decltype(auto)
-                                                    {
-                                                        return detail::get_stop_function_arg(initiation,
-                                                                                             implementation());
-                                                    });
+        if constexpr (detail::NEEDS_STOP_CALLBACK<exec::stop_token_type_t<CompletionHandler&>, StopFunction>)
+        {
+            if (auto stop_token = exec::get_stop_token(completion_handler()); detail::stop_possible(stop_token))
+            {
+                stop_token.template emplace<StopFunction>(detail::get_stop_function_arg(initiation, implementation()));
+            }
+        }
     }
 
     CompletionHandler& completion_handler() noexcept { return impl_.first(); }
