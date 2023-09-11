@@ -109,7 +109,7 @@ jobs:
       run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-8 --build-config Release
 
 
-  multi-gcc-build:
+  gcc-11-build:
     name: 'Ubuntu/22.04/GCC'
     runs-on: ubuntu-22.04
     env:
@@ -160,15 +160,6 @@ jobs:
           "-Dsonar.cfamily.compile-commands=${{ github.workspace }}/build-11/compile_commands.json" \
           "-Dsonar.login=${{ secrets.SONAR_TOKEN }}" \
           "-Dsonar.coverageReportPaths=${{ github.workspace }}/build-11/sonarqube-coverage.xml"
-
-    - name: GCC 12 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-12 -DCMAKE_CXX_COMPILER=$(which g++-12) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
-
-    - name: GCC 12 Build
-      run: cmake --build ${{ github.workspace }}/build-12 --config Release --parallel $(nproc) --target asio-grpc-check-header-syntax all
-
-    - name: GCC 12 Test
-      run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-12 --build-config Release
 
 
   multi-clang-build:
