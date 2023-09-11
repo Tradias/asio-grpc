@@ -19,6 +19,7 @@
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/default_completion_token.hpp>
 #include <agrpc/detail/initiate_sender_implementation.hpp>
+#include <agrpc/detail/name.hpp>
 #include <agrpc/detail/rpc_type.hpp>
 #include <agrpc/detail/server_rpc_base.hpp>
 #include <agrpc/detail/server_rpc_sender.hpp>
@@ -55,6 +56,37 @@ class ServerRPC<RequestUnary, TraitsT, Executor>
          */
         using other = ServerRPC<RequestUnary, TraitsT, OtherExecutor>;
     };
+
+    /**
+     * @brief Name of the gRPC service
+     *
+     * Equal to the generated `Service::service_full_name()`.
+     *
+     * E.g. for the `.proto` schema
+     *
+     * @code{proto}
+     * package example.v1;
+     *
+     * service Example { ... }
+     * @endcode
+     *
+     * the return value would be `"example.v1.Example"`.
+     */
+    static constexpr std::string_view service_name() noexcept
+    {
+        return detail::SERVER_SERVICE_NAME_V<RequestUnary>.view();
+    }
+
+    /**
+     * @brief Name of the gRPC method
+     *
+     * E.g. for `agrpc::ServerRPC<&example::Example::AsyncService::RequestMyMethod>` the return value would be
+     * `"MyMethod"`.
+     */
+    static constexpr std::string_view method_name() noexcept
+    {
+        return detail::SERVER_METHOD_NAME_V<RequestUnary>.view();
+    }
 
     ServerRPC() = delete;
     ServerRPC(const ServerRPC& other) = delete;
@@ -117,6 +149,37 @@ class ServerRPC<RequestClientStreaming, TraitsT, Executor>
          */
         using other = ServerRPC<RequestClientStreaming, TraitsT, OtherExecutor>;
     };
+
+    /**
+     * @brief Name of the gRPC service
+     *
+     * Equal to the generated `Service::service_full_name()`.
+     *
+     * E.g. for the `.proto` schema
+     *
+     * @code{proto}
+     * package example.v1;
+     *
+     * service Example { ... }
+     * @endcode
+     *
+     * the return value would be `"example.v1.Example"`.
+     */
+    static constexpr std::string_view service_name() noexcept
+    {
+        return detail::SERVER_SERVICE_NAME_V<RequestClientStreaming>.view();
+    }
+
+    /**
+     * @brief Name of the gRPC method
+     *
+     * E.g. for `agrpc::ServerRPC<&example::Example::AsyncService::RequestMyMethod>` the return value would be
+     * `"MyMethod"`.
+     */
+    static constexpr std::string_view method_name() noexcept
+    {
+        return detail::SERVER_METHOD_NAME_V<RequestClientStreaming>.view();
+    }
 
     ServerRPC() = delete;
     ServerRPC(const ServerRPC& other) = delete;
@@ -187,6 +250,37 @@ class ServerRPC<RequestServerStreaming, TraitsT, Executor>
          */
         using other = ServerRPC<RequestServerStreaming, TraitsT, OtherExecutor>;
     };
+
+    /**
+     * @brief Name of the gRPC service
+     *
+     * Equal to the generated `Service::service_full_name()`.
+     *
+     * E.g. for the `.proto` schema
+     *
+     * @code{proto}
+     * package example.v1;
+     *
+     * service Example { ... }
+     * @endcode
+     *
+     * the return value would be `"example.v1.Example"`.
+     */
+    static constexpr std::string_view service_name() noexcept
+    {
+        return detail::SERVER_SERVICE_NAME_V<RequestServerStreaming>.view();
+    }
+
+    /**
+     * @brief Name of the gRPC method
+     *
+     * E.g. for `agrpc::ServerRPC<&example::Example::AsyncService::RequestMyMethod>` the return value would be
+     * `"MyMethod"`.
+     */
+    static constexpr std::string_view method_name() noexcept
+    {
+        return detail::SERVER_METHOD_NAME_V<RequestServerStreaming>.view();
+    }
 
     ServerRPC() = delete;
     ServerRPC(const ServerRPC& other) = delete;
@@ -330,6 +424,37 @@ class ServerRPC<RequestBidiStreaming, TraitsT, Executor>
          */
         using other = ServerRPC<RequestBidiStreaming, TraitsT, OtherExecutor>;
     };
+
+    /**
+     * @brief Name of the gRPC service
+     *
+     * Equal to the generated `Service::service_full_name()`.
+     *
+     * E.g. for the `.proto` schema
+     *
+     * @code{proto}
+     * package example.v1;
+     *
+     * service Example { ... }
+     * @endcode
+     *
+     * the return value would be `"example.v1.Example"`.
+     */
+    static constexpr std::string_view service_name() noexcept
+    {
+        return detail::SERVER_SERVICE_NAME_V<RequestBidiStreaming>.view();
+    }
+
+    /**
+     * @brief Name of the gRPC method
+     *
+     * E.g. for `agrpc::ServerRPC<&example::Example::AsyncService::RequestMyMethod>` the return value would be
+     * `"MyMethod"`.
+     */
+    static constexpr std::string_view method_name() noexcept
+    {
+        return detail::SERVER_METHOD_NAME_V<RequestBidiStreaming>.view();
+    }
 
     ServerRPC() = delete;
     ServerRPC(const ServerRPC& other) = delete;

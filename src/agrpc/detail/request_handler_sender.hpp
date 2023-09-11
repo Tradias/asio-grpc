@@ -201,7 +201,7 @@ template <class ServerRPC, class RequestHandler, class StopToken, class Allocato
 struct RequestHandlerOperation
 {
     using Service = detail::GetServerRPCServiceT<ServerRPC>;
-    using Traits = ServerRPC::Traits;
+    using Traits = typename ServerRPC::Traits;
     using InitialRequest =
         detail::RPCRequest<typename ServerRPC::Request, detail::has_initial_request(ServerRPC::TYPE)>;
     using RequestHandlerInvokeResult =

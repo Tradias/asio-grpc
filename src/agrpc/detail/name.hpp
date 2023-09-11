@@ -31,7 +31,7 @@ struct FixedSizeString
     // Always null-terminated
     char data_[N + 1];
 
-    constexpr explicit operator std::string_view() const noexcept { return {data_, N}; }
+    [[nodiscard]] constexpr std::string_view view() const noexcept { return {data_, N}; }
 
     [[nodiscard]] static constexpr auto size() noexcept { return N; }
 
@@ -128,39 +128,76 @@ constexpr auto get_function_name()
 #endif
 }
 
-template <auto PrepareAsync>
+template <class T>
 constexpr auto prepare_service_name()
 {
-    constexpr auto member_func_class_name = detail::MEMBER_FUNCTION_CLASS_NAME_V<PrepareAsync>;
-    constexpr auto stub_suffix_size = sizeof("::Stub") - 1;
-    constexpr auto service_name = member_func_class_name.substr(0, member_func_class_name.size() - stub_suffix_size);
-    StaticString<service_name.size()> result{};
+    auto result = T::prepare_service_name();
     const auto begin = result.begin();
     const auto end = result.end();
-    detail::copy(service_name.begin(), service_name.end(), begin);
     const auto new_end = detail::replace_sequence_with_value(begin, end, FixedSizeString{':', ':'}, '.');
     result.set_size(new_end - begin);
     return result;
 }
 
-template <auto PrepareAsync>
-constexpr auto get_client_service_name()
+template <class T>
+constexpr auto get_service_name()
 {
-    constexpr auto prepared = detail::prepare_service_name<PrepareAsync>();
-    FixedSizeString<prepared.size()> chars{};
-    detail::copy(prepared.begin(), prepared.end(), chars.begin());
-    return chars;
+    constexpr auto prepared = detail::prepare_service_name<T>();
+    FixedSizeString<prepared.size()> result{};
+    detail::copy(prepared.begin(), prepared.end(), result.begin());
+    return result;
 }
 
 template <auto PrepareAsync>
-inline constexpr auto CLIENT_SERVICE_NAME_V = detail::get_client_service_name<PrepareAsync>();
+struct ClientName
+{
+    static constexpr auto FUNCTION = PrepareAsync;
+    static constexpr decltype(auto) METHOD_PREFIX = "::PrepareAsync";
+
+    static constexpr auto prepare_service_name()
+    {
+        constexpr auto member_func_class_name = detail::MEMBER_FUNCTION_CLASS_NAME_V<PrepareAsync>;
+        constexpr auto suffix_size = sizeof("::Stub") - 1;
+        constexpr auto service_name = member_func_class_name.substr(0, member_func_class_name.size() - suffix_size);
+        StaticString<service_name.size()> result{};
+        detail::copy(service_name.begin(), service_name.end(), result.begin());
+        return result;
+    }
+};
 
 template <auto PrepareAsync>
-constexpr auto get_client_method_name()
+inline constexpr auto CLIENT_SERVICE_NAME_V = detail::get_service_name<ClientName<PrepareAsync>>();
+
+template <auto RequestRPC>
+struct ServerName
 {
-    constexpr auto function_name = detail::get_function_name<PrepareAsync>();
-    constexpr auto member_func_class_name = detail::MEMBER_FUNCTION_CLASS_NAME_V<PrepareAsync>;
-    constexpr auto prepare_async_size = sizeof("::PrepareAsync") - 1;
+    static constexpr auto FUNCTION = RequestRPC;
+    static constexpr decltype(auto) METHOD_PREFIX = "::Request";
+
+    static constexpr auto prepare_service_name()
+    {
+        constexpr auto member_func_class_name = detail::MEMBER_FUNCTION_CLASS_NAME_V<RequestRPC>;
+        constexpr auto first_angle_bracket =
+            detail::find(member_func_class_name.begin(), member_func_class_name.end(), '<');
+        constexpr auto end_of_service_name =
+            detail::rfind(member_func_class_name.begin(), first_angle_bracket, ':') - 1;
+        constexpr auto service_name =
+            member_func_class_name.substr(0, end_of_service_name - member_func_class_name.begin());
+        StaticString<service_name.size()> result{};
+        detail::copy(service_name.begin(), service_name.end(), result.begin());
+        return result;
+    }
+};
+
+template <auto RequestRPC>
+inline constexpr auto SERVER_SERVICE_NAME_V = detail::get_service_name<ServerName<RequestRPC>>();
+
+template <class T>
+constexpr auto get_method_name()
+{
+    constexpr auto function_name = detail::get_function_name<T::FUNCTION>();
+    constexpr auto member_func_class_name = detail::MEMBER_FUNCTION_CLASS_NAME_V<T::FUNCTION>;
+    constexpr auto prepare_async_size = sizeof(T::METHOD_PREFIX) - 1;
     constexpr auto begin = detail::search(function_name.begin(), function_name.end(), member_func_class_name.begin(),
                                           member_func_class_name.end()) +
                            member_func_class_name.size() + prepare_async_size;
@@ -173,7 +210,10 @@ constexpr auto get_client_method_name()
 }
 
 template <auto PrepareAsync>
-inline constexpr auto CLIENT_METHOD_NAME_V = detail::get_client_method_name<PrepareAsync>();
+inline constexpr auto CLIENT_METHOD_NAME_V = detail::get_method_name<ClientName<PrepareAsync>>();
+
+template <auto PrepareAsync>
+inline constexpr auto SERVER_METHOD_NAME_V = detail::get_method_name<ServerName<PrepareAsync>>();
 }
 
 AGRPC_NAMESPACE_END

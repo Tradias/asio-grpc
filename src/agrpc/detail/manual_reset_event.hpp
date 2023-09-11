@@ -239,10 +239,7 @@ struct ManualResetEventOperation<void(Args...), CompletionHandler> : ManualReset
     static void set_value_impl(Base* base, Args... args)
     {
         auto* self = static_cast<ManualResetEventOperation*>(base);
-        detail::AllocationGuard ptr{self, exec::get_allocator(self->completion_handler_)};
-        auto handler{static_cast<CompletionHandler&&>(self->completion_handler_)};
-        ptr.reset();
-        static_cast<CompletionHandler&&>(handler)(detail::ErrorCode{}, static_cast<Args&&>(args)...);
+        self->complete(detail::ErrorCode{}, static_cast<Args&&>(args)...);
     }
 
     template <class Ch>
@@ -264,13 +261,15 @@ struct ManualResetEventOperation<void(Args...), CompletionHandler> : ManualReset
         }
     }
 
-    void cancel()
+    void complete(detail::ErrorCode&& ec, Args&&... args)
     {
         detail::AllocationGuard ptr{this, exec::get_allocator(completion_handler_)};
         auto handler{static_cast<CompletionHandler&&>(completion_handler_)};
         ptr.reset();
-        static_cast<CompletionHandler&&>(handler)(detail::operation_aborted_error_code(), Args{}...);
+        static_cast<CompletionHandler&&>(handler)(static_cast<detail::ErrorCode&&>(ec), static_cast<Args&&>(args)...);
     }
+
+    void cancel() { complete(detail::operation_aborted_error_code(), Args{}...); }
 
     CompletionHandler& completion_handler() noexcept { return completion_handler_; }
 

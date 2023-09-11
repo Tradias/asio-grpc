@@ -62,6 +62,19 @@ constexpr InputIt find(InputIt first, InputIt last, const T& value)
     return last;
 }
 
+template <class InputIt, class T>
+constexpr InputIt rfind(InputIt first, InputIt last, const T& value)
+{
+    for (; last != first; --last)
+    {
+        if (*last == value)
+        {
+            return last;
+        }
+    }
+    return first;
+}
+
 template <class InputIt, class OutputIt>
 constexpr OutputIt copy(InputIt first, InputIt last, OutputIt d_first)
 {

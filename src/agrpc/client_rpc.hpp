@@ -97,7 +97,7 @@ class ClientRPCUnaryBase<PrepareAsyncUnary, Executor>
      */
     static constexpr std::string_view service_name() noexcept
     {
-        return std::string_view(detail::CLIENT_SERVICE_NAME_V<PrepareAsyncUnary>);
+        return detail::CLIENT_SERVICE_NAME_V<PrepareAsyncUnary>.view();
     }
 
     /**
@@ -110,7 +110,7 @@ class ClientRPCUnaryBase<PrepareAsyncUnary, Executor>
      */
     static constexpr std::string_view method_name() noexcept
     {
-        return std::string_view(detail::CLIENT_METHOD_NAME_V<PrepareAsyncUnary>);
+        return detail::CLIENT_METHOD_NAME_V<PrepareAsyncUnary>.view();
     }
 
     /**
@@ -384,7 +384,7 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor> : public detail::RPCExecu
      */
     static constexpr std::string_view service_name() noexcept
     {
-        return std::string_view(detail::CLIENT_SERVICE_NAME_V<PrepareAsyncClientStreaming>);
+        return detail::CLIENT_SERVICE_NAME_V<PrepareAsyncClientStreaming>.view();
     }
 
     /**
@@ -397,7 +397,7 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor> : public detail::RPCExecu
      */
     static constexpr std::string_view method_name() noexcept
     {
-        return std::string_view(detail::CLIENT_METHOD_NAME_V<PrepareAsyncClientStreaming>);
+        return detail::CLIENT_METHOD_NAME_V<PrepareAsyncClientStreaming>.view();
     }
 
     /**
@@ -630,7 +630,7 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
      */
     static constexpr std::string_view service_name() noexcept
     {
-        return std::string_view(detail::CLIENT_SERVICE_NAME_V<PrepareAsyncServerStreaming>);
+        return detail::CLIENT_SERVICE_NAME_V<PrepareAsyncServerStreaming>.view();
     }
 
     /**
@@ -643,7 +643,7 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
      */
     static constexpr std::string_view method_name() noexcept
     {
-        return std::string_view(detail::CLIENT_METHOD_NAME_V<PrepareAsyncServerStreaming>);
+        return detail::CLIENT_METHOD_NAME_V<PrepareAsyncServerStreaming>.view();
     }
 
     /**
@@ -1110,7 +1110,7 @@ class ClientRPC<PrepareAsyncBidiStreaming, Executor>
      */
     static constexpr std::string_view service_name() noexcept
     {
-        return std::string_view(detail::CLIENT_SERVICE_NAME_V<PrepareAsyncBidiStreaming>);
+        return detail::CLIENT_SERVICE_NAME_V<PrepareAsyncBidiStreaming>.view();
     }
 
     /**
@@ -1123,7 +1123,7 @@ class ClientRPC<PrepareAsyncBidiStreaming, Executor>
      */
     static constexpr std::string_view method_name() noexcept
     {
-        return std::string_view(detail::CLIENT_METHOD_NAME_V<PrepareAsyncBidiStreaming>);
+        return detail::CLIENT_METHOD_NAME_V<PrepareAsyncBidiStreaming>.view();
     }
 
     using detail::ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>::ClientRPCBidiStreamingBase;

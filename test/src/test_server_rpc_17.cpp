@@ -402,6 +402,26 @@ TEST_CASE_TEMPLATE("ServerRPC/ClientRPC generic streaming success", RPC, test::G
         });
 }
 
+TEST_CASE("ServerRPC::service_name/method_name")
+{
+    const auto check_eq_and_null_terminated = [](std::string_view expected, std::string_view actual)
+    {
+        CHECK_EQ(expected, actual);
+        CHECK_EQ('\0', *(actual.data() + actual.size()));
+    };
+    check_eq_and_null_terminated("test.v1.Test", test::UnaryServerRPC::service_name());
+    check_eq_and_null_terminated("Unary", test::UnaryServerRPC::method_name());
+    using UnaryRPC = agrpc::ServerRPC<&test::v1::Test::WithAsyncMethod_Unary<test::v1::Test::Service>::RequestUnary>;
+    check_eq_and_null_terminated("test.v1.Test", UnaryRPC::service_name());
+    check_eq_and_null_terminated("Unary", UnaryRPC::method_name());
+    check_eq_and_null_terminated("test.v1.Test", test::ClientStreamingServerRPC::service_name());
+    check_eq_and_null_terminated("ClientStreaming", test::ClientStreamingServerRPC::method_name());
+    check_eq_and_null_terminated("test.v1.Test", test::ServerStreamingServerRPC::service_name());
+    check_eq_and_null_terminated("ServerStreaming", test::ServerStreamingServerRPC::method_name());
+    check_eq_and_null_terminated("test.v1.Test", test::BidirectionalStreamingServerRPC::service_name());
+    check_eq_and_null_terminated("BidirectionalStreaming", test::BidirectionalStreamingServerRPC::method_name());
+}
+
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 TEST_CASE_TEMPLATE("ServerRPC resumable read can be cancelled", RPC, test::ResumableReadClientStreamingServerRPC,
                    test::NotifyAndResumableReadClientStreamingServerRPC,
