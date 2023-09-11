@@ -173,7 +173,7 @@ struct RequestHandlerOperationFinish
 struct RequestHandlerOperationWaitForDone
 {
     template <class Operation>
-    static void perform(Operation& op, std::exception_ptr*)
+    static void perform(Operation& op, const std::exception_ptr*)
     {
         auto& rpc = op.rpc_;
         if constexpr (Operation::Traits::RESUMABLE_READ)
@@ -191,7 +191,7 @@ struct RequestHandlerOperationWaitForDone
 struct RequestHandlerOperationWaitForRead
 {
     template <class Operation>
-    static void perform(Operation& op, std::exception_ptr*)
+    static void perform(Operation& op, const std::exception_ptr*)
     {
         detail::destroy_deallocate(&op, op.get_allocator());
     }

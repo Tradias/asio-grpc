@@ -17,7 +17,6 @@
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
-#include <agrpc/detail/tagged_ptr.hpp>
 #include <grpcpp/client_context.h>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -75,7 +74,9 @@ class ClientRPCContextBase
     friend detail::ClientRPCContextBaseAccess;
 
     grpc::ClientContext client_context_{};
-    detail::AtomicTaggedPtr<Responder> responder_{};
+    Responder* responder_{};
+    bool is_finished_{};
+    bool is_writes_done_{};
 };
 
 struct ClientRPCContextBaseAccess
@@ -89,44 +90,44 @@ struct ClientRPCContextBaseAccess
     template <class Responder>
     static void set_responder(ClientRPCContextBase<Responder>& rpc, std::unique_ptr<Responder> responder) noexcept
     {
-        rpc.responder_.set(responder.release());
+        rpc.responder_ = responder.release();
     }
 
     template <class Responder>
     [[nodiscard]] static bool is_finished(ClientRPCContextBase<Responder>& rpc) noexcept
     {
-        return rpc.responder_.template has_bit<0>();
+        return rpc.is_finished_;
     }
 
     template <class Responder>
     static void set_finished(ClientRPCContextBase<Responder>& rpc) noexcept
     {
-        rpc.responder_.template set_bit<0>();
+        rpc.is_finished_ = true;
     }
 
     template <class Responder>
     [[nodiscard]] static bool is_writes_done(ClientRPCContextBase<Responder>& rpc) noexcept
     {
-        return rpc.responder_.template has_bit<1>();
+        return rpc.is_writes_done_;
     }
 
     template <class Responder>
     static void set_writes_done(ClientRPCContextBase<Responder>& rpc) noexcept
     {
-        rpc.responder_.template set_bit<1>();
+        rpc.is_writes_done_ = true;
     }
 };
 
 template <class Responder>
 inline ClientRPCContextBase<Responder>::~ClientRPCContextBase() noexcept
 {
-    if (auto* const responder_ptr = responder_.get())
+    if (responder_)
     {
         if (!ClientRPCContextBaseAccess::is_finished(*this))
         {
             client_context_.TryCancel();
         }
-        std::default_delete<Responder>{}(responder_ptr);
+        std::default_delete<Responder>{}(responder_);
     }
 }
 }

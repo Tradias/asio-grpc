@@ -334,16 +334,9 @@ struct ClientWriteBidiStreamingSenderInitiation<Responder<Request, Response>>
 template <class Responder>
 struct ClientWritesDoneSenderImplementation : ClientRPCGrpcSenderImplementation
 {
-    static constexpr bool NEEDS_ON_COMPLETE = true;
-
     explicit ClientWritesDoneSenderImplementation(detail::ClientRPCContextBase<Responder>& rpc) noexcept : rpc_(rpc) {}
 
-    template <class OnComplete>
-    void complete(OnComplete on_complete, bool ok)
-    {
-        ClientRPCAccess::set_writes_done(rpc_);
-        on_complete(ok);
-    }
+    void complete(const agrpc::GrpcContext&, bool) { ClientRPCAccess::set_writes_done(rpc_); }
 
     detail::ClientRPCContextBase<Responder>& rpc_;
 };

@@ -460,15 +460,15 @@ TEST_CASE("ClientRPC::service_name/method_name")
 struct Derived : test::ServerStreamingClientRPC
 {
     template <class T = test::ServerStreamingClientRPC>
-    auto is_finished(int) -> decltype((void)T::is_finished(), std::true_type{});
+    auto grpc_context(int) -> decltype((void)&T::grpc_context, std::true_type{});
 
     template <class T = test::ServerStreamingClientRPC>
-    auto is_finished(long) -> std::false_type;
+    auto grpc_context(long) -> std::false_type;
 };
 
 TEST_CASE("ClientRPC derived class cannot access private base member")
 {
-    CHECK_FALSE(decltype(std::declval<Derived>().is_finished(0))::value);
+    CHECK_FALSE(decltype(std::declval<Derived>().grpc_context(0))::value);
 }
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT

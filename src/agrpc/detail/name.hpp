@@ -197,10 +197,10 @@ constexpr auto get_method_name()
 {
     constexpr auto function_name = detail::get_function_name<T::FUNCTION>();
     constexpr auto member_func_class_name = detail::MEMBER_FUNCTION_CLASS_NAME_V<T::FUNCTION>;
-    constexpr auto prepare_async_size = sizeof(T::METHOD_PREFIX) - 1;
+    constexpr auto method_prefix_size = sizeof(T::METHOD_PREFIX) - 1;
     constexpr auto begin = detail::search(function_name.begin(), function_name.end(), member_func_class_name.begin(),
                                           member_func_class_name.end()) +
-                           member_func_class_name.size() + prepare_async_size;
+                           member_func_class_name.size() + method_prefix_size;
     constexpr auto end = detail::find(begin, function_name.end(), '(');
     constexpr auto size = end - begin;
     constexpr auto method_name = function_name.substr(std::distance(function_name.begin(), begin), size);

@@ -61,7 +61,7 @@ class StopCallbackLifetime
     static constexpr void reset() noexcept {}
 
     template <class... Args>
-    void emplace(StopToken&& stop_token, Args&&... args) noexcept
+    static void emplace(StopToken&& stop_token, Args&&... args) noexcept
     {
         if (detail::stop_possible(stop_token))
         {
