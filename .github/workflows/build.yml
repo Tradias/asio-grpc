@@ -16,7 +16,7 @@ on:
       - 'CMakePresets.json'
 
 env:
-  VCPKG_VERSION: '64adda19c86e89526b5e27703a193c14477cce07' # Jul 02, 2023
+  VCPKG_VERSION: '962e5e39f8a25f42522f51fffc574e05a3efd26b' # Jul 02, 2023
   CMAKE_ARGS: '-DCMAKE_BUILD_TYPE=Release -DVCPKG_MANIFEST_INSTALL=off -DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=off -DCMAKE_COMPILE_WARNING_AS_ERROR=on'
   CTEST_ARGS: '-T test --output-on-failure --timeout 180 --no-tests=error --parallel 25'
 
@@ -49,12 +49,11 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Install vcpkg
-      uses: lukka/run-vcpkg@v10
+      uses: lukka/run-vcpkg@v11
       with:
         vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
         vcpkgJsonGlob: 'vcpkg.json'
-        appendedCacheKey: '${{ matrix.config.triplet }}'
 
     - name: Run vcpkg
       run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ matrix.config.triplet }} --host-triplet ${{ matrix.config.triplet }} --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
@@ -69,18 +68,15 @@ jobs:
       run: ctest --preset default --parallel 25 --build-config ${{ matrix.config.build-type }}
 
 
-  multi-gcc-build:
+  gcc-8-build:
     name: 'Ubuntu/20.04/GCC'
     runs-on: ubuntu-20.04
     env:
       TRIPLET: 'x64-linux-release'
-      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-release -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_CMAKE_INSTALL_TEST_CTEST_COMMAND=/usr/bin/ctest -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold'
 
     steps:
-    - name: Install GCC 8, 11 and gcovr
-      run: |
-        sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test &&\
-        sudo apt-get install g++-8 g++-11 gcovr cmake
+    - name: Install GCC 8
+      run: sudo apt-get install g++-8
 
     - name: Make gcc-8 default compiler
       run: |
@@ -92,23 +88,19 @@ jobs:
         sudo update-alternatives --set cpp $(which g++-8)
 
     - uses: actions/checkout@v2
-      with:
-        # Disabling shallow clone is recommended for improving relevancy of sonarsource reporting
-        fetch-depth: 0
 
     - name: Install vcpkg
-      uses: lukka/run-vcpkg@v10
+      uses: lukka/run-vcpkg@v11
       with:
         vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
         vcpkgJsonGlob: 'vcpkg.json'
-        appendedCacheKey: '${{ env.TRIPLET }}-gcc8'
 
     - name: Run vcpkg
       run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
 
     - name: GCC 8 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-8 -DCMAKE_CXX_COMPILER=$(which g++-8) -DCMAKE_UNITY_BUILD=on -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
+      run: cmake --preset default -B ${{ github.workspace }}/build-8 -DCMAKE_CXX_COMPILER=$(which g++-8) -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed -DVCPKG_TARGET_TRIPLET=${{ env.TRIPLET }} -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold ${{ env.CMAKE_ARGS }}
 
     - name: GCC 8 Build
       run: cmake --build ${{ github.workspace }}/build-8 --config Release --parallel $(nproc)
@@ -116,40 +108,67 @@ jobs:
     - name: GCC 8 Test
       run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-8 --build-config Release
 
-    - name: GCC 10 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which g++-10) -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DASIO_GRPC_TEST_COVERAGE=on -DASIO_GRPC_GCOV_PROGRAM=$(which gcov-10) -DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build-10/sonarqube-coverage.xml -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }} -DCMAKE_BUILD_TYPE=Debug
 
-    - name: GCC 10 Build
-      run: cmake --build ${{ github.workspace }}/build-10 --config Debug --parallel $(nproc)
+  multi-gcc-build:
+    name: 'Ubuntu/22.04/GCC'
+    runs-on: ubuntu-22.04
+    env:
+      TRIPLET: 'x64-linux-release'
+      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-release -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_CMAKE_INSTALL_TEST_CTEST_COMMAND=/usr/bin/ctest -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold'
 
-    - name: GCC 10 Test
-      run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-10 --build-config Debug
+    steps:
+    - name: Install GCC 12, gcovr and (old) cmake
+      run: sudo apt-get install g++-12 gcovr cmake
 
-    - name: GCC 10 Coverage
-      run: cmake --build ${{ github.workspace }}/build-10 --config Debug --target asio-grpc-test-coverage
+    - uses: actions/checkout@v2
+      with:
+        # Disabling shallow clone is recommended for improving relevancy of sonarsource reporting
+        fetch-depth: 0
+
+    - name: Install vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
+        vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
+        vcpkgJsonGlob: 'vcpkg.json'
+
+    - name: Run vcpkg
+      run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
+
+    - name: GCC 11 Configure CMake
+      run: cmake --preset default -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which g++-11) -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DASIO_GRPC_TEST_COVERAGE=on -DASIO_GRPC_GCOV_PROGRAM=$(which gcov-11) -DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build-11/sonarqube-coverage.xml -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }} -DCMAKE_BUILD_TYPE=Debug
+
+    - name: GCC 11 Build
+      run: cmake --build ${{ github.workspace }}/build-11 --config Debug --parallel $(nproc)
+
+    - name: GCC 11 Test
+      run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-11 --build-config Debug
+
+    - name: GCC 11 Coverage
+      run: cmake --build ${{ github.workspace }}/build-11 --config Debug --target asio-grpc-test-coverage
 
     - name: Download sonar-scanner
-      uses: warchant/setup-sonar-scanner@v5
+      uses: warchant/setup-sonar-scanner@v7
       with:
-        version: 4.8.0.2856
+        version: 4.8.1.3023
 
     - name: Run sonar-scanner
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         sonar-scanner \
-          "-Dsonar.cfamily.compile-commands=${{ github.workspace }}/build-10/compile_commands.json" \
-          "-Dsonar.token=${{ secrets.SONAR_TOKEN }}" \
-          "-Dsonar.coverageReportPaths=${{ github.workspace }}/build-10/sonarqube-coverage.xml"
+          "-Dsonar.cfamily.compile-commands=${{ github.workspace }}/build-11/compile_commands.json" \
+          "-Dsonar.login=${{ secrets.SONAR_TOKEN }}" \
+          "-Dsonar.coverageReportPaths=${{ github.workspace }}/build-11/sonarqube-coverage.xml"
 
-    - name: GCC 11 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which g++-11) -DASIO_GRPC_USE_RECYCLING_ALLOCATOR=on -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
+    - name: GCC 12 Configure CMake
+      run: cmake --preset default -B ${{ github.workspace }}/build-12 -DCMAKE_CXX_COMPILER=$(which g++-12) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
 
-    - name: GCC 11 Build
-      run: cmake --build ${{ github.workspace }}/build-11 --config Release --parallel $(nproc) --target asio-grpc-check-header-syntax all
+    - name: GCC 12 Build
+      run: cmake --build ${{ github.workspace }}/build-12 --config Release --parallel $(nproc) --target asio-grpc-check-header-syntax all
 
-    - name: GCC 11 Test
-      run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-11 --build-config Release
+    - name: GCC 12 Test
+      run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-12 --build-config Release
 
 
   multi-clang-build:
@@ -157,7 +176,7 @@ jobs:
     runs-on: ubuntu-20.04
     env:
       TRIPLET: 'x64-linux-clang-release'
-      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-clang-release -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-10/include/c++/v1/ -Wno-unused-command-line-argument" -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld'
+      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-clang-release -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-10/include/c++/v1/ -Wno-unused-command-line-argument" -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld'
 
     steps:
     - name: Install dot for doxygen
@@ -175,18 +194,17 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Install vcpkg
-      uses: lukka/run-vcpkg@v10
+      uses: lukka/run-vcpkg@v11
       with:
         vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
         vcpkgJsonGlob: 'vcpkg.json'
-        appendedCacheKey: '${{ env.TRIPLET }}'
 
     - name: Run vcpkg
       run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
 
     - name: Clang 10 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which clang++-10) -DCMAKE_UNITY_BUILD=on -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
+      run: cmake --preset default -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which clang++-10) -DCMAKE_UNITY_BUILD=on -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
 
     - name: Clang 10 Build
       run: cmake --build ${{ github.workspace }}/build-10 --config Release --parallel $(nproc)
@@ -209,7 +227,7 @@ jobs:
       run: cmake --build ${{ github.workspace }}/build-12 --config Release --parallel $(nproc)
 
     - name: Clang 12 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-12 -DCMAKE_CXX_COMPILER=$(which clang++-12) -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DDOXYGEN_EXECUTABLE=${{ runner.workspace }}/doxygen/bin/doxygen -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
+      run: cmake --preset default -B ${{ github.workspace }}/build-12 -DCMAKE_CXX_COMPILER=$(which clang++-12) -DDOXYGEN_EXECUTABLE=${{ runner.workspace }}/doxygen/bin/doxygen -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
 
     - name: Clang 12 Build
       run: cmake --build ${{ github.workspace }}/build-12 --config Release --parallel $(nproc) --target asio-grpc-check-header-syntax all
@@ -250,12 +268,11 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Install vcpkg
-      uses: lukka/run-vcpkg@v10
+      uses: lukka/run-vcpkg@v11
       with:
         vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
         vcpkgJsonGlob: 'vcpkg.json'
-        appendedCacheKey: '${{ env.TRIPLET }}-gcc-default'
 
     - name: Run vcpkg
       run: |

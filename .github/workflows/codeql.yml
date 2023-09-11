@@ -7,7 +7,7 @@ on:
     - cron: '39 0 * * 1'
 
 env:
-  VCPKG_VERSION: '64adda19c86e89526b5e27703a193c14477cce07'
+  VCPKG_VERSION: '962e5e39f8a25f42522f51fffc574e05a3efd26b'
 
 jobs:
   analyze:
