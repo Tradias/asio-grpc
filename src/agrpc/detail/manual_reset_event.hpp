@@ -17,8 +17,8 @@
 
 #include <agrpc/detail/allocate.hpp>
 #include <agrpc/detail/association.hpp>
+#include <agrpc/detail/cancel_safe.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/deallocate_on_complete.hpp>
 #include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/receiver.hpp>
@@ -51,13 +51,29 @@ struct ManualResetEventOperationBase;
 template <class... Args>
 struct ManualResetEventOperationBase<void(Args...)>
 {
-    using SetValue = void (*)(ManualResetEventOperationBase*, Args...);
+    using Complete = void (*)(ManualResetEventOperationBase*);
 
-    void set_value(Args... args) noexcept { set_value_(this, args...); }
+    void complete() noexcept { complete_(this); }
 
     ManualResetEvent<void(Args...)>& event_;
-    SetValue set_value_;
+    Complete complete_;
 };
+
+template <class CompletionHandler, class... Args, std::size_t... I>
+void prepend_error_code_and_apply(CompletionHandler&& ch, detail::Tuple<Args...>&& args,
+                                  const std::index_sequence<I...>&)
+{
+    static_cast<CompletionHandler&&>(ch)(detail::ErrorCode{},
+                                         detail::get<I>(static_cast<detail::Tuple<Args...>&&>(args))...);
+}
+
+template <class CompletionHandler, class... Args>
+void prepend_error_code_and_apply(CompletionHandler&& ch, detail::Tuple<Args...>&& args)
+{
+    detail::prepend_error_code_and_apply(static_cast<CompletionHandler&&>(ch),
+                                         static_cast<detail::Tuple<Args...>&&>(args),
+                                         std::make_index_sequence<sizeof...(Args)>{});
+}
 
 template <class... Args>
 class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
@@ -65,6 +81,36 @@ class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
   private:
     using Signature = void(Args...);
     using Op = ManualResetEventOperationBase<Signature>;
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+    struct InitiateWait
+    {
+        template <class CompletionHandler, class IOExecutor>
+        void operator()(CompletionHandler&& completion_handler, const IOExecutor& io_executor) const
+        {
+            const auto allocator = asio::get_associated_allocator(completion_handler);
+            if (event_.ready())
+            {
+                auto executor = asio::get_associated_executor(completion_handler, io_executor);
+                detail::post_with_allocator(
+                    std::move(executor),
+                    [&, ch = static_cast<CompletionHandler&&>(completion_handler)]() mutable
+                    {
+                        detail::prepend_error_code_and_apply(static_cast<CompletionHandler&&>(ch),
+                                                             static_cast<ManualResetEvent&&>(event_).args());
+                    },
+                    allocator);
+                return;
+            }
+            using Ch = detail::WorkTrackingCompletionHandler<detail::RemoveCrefT<CompletionHandler>>;
+            using Operation = ManualResetEventOperation<Signature, Ch>;
+            detail::allocate<Operation>(allocator, static_cast<CompletionHandler&&>(completion_handler), event_)
+                .release();
+        }
+
+        ManualResetEvent& event_;
+    };
+#endif
 
   public:
     void set(Args... args)
@@ -74,8 +120,8 @@ class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
         {
             return;
         }
-        store_value(args...);
-        op->set_value(args...);
+        store_value(static_cast<Args&&>(args)...);
+        op->complete();
     }
 
     [[nodiscard]] bool ready() const noexcept { return op_.load(std::memory_order_acquire) == signalled_state(); }
@@ -84,7 +130,16 @@ class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
 
     [[nodiscard]] ManualResetEventSender<Signature> wait() noexcept;
 
-    const detail::Tuple<Args...>& args() const noexcept { return *this; }
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+    template <class CompletionToken, class IOExecutor = asio::system_executor>
+    auto wait(CompletionToken token, IOExecutor io_executor = {})
+    {
+        using Sig = detail::PrependErrorCodeToSignatureT<Signature>;
+        return asio::async_initiate<CompletionToken, Sig>(InitiateWait{*this}, token, io_executor);
+    }
+#endif
+
+    auto&& args() && noexcept { return static_cast<detail::Tuple<Args...>&&>(*this); }
 
   private:
     template <class, class>
@@ -93,7 +148,10 @@ class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
     template <class, class>
     friend struct ManualResetEventOperation;
 
-    void store_value(Args... args) { static_cast<detail::Tuple<Args...>&>(*this) = detail::Tuple<Args...>{args...}; }
+    void store_value(Args&&... args)
+    {
+        static_cast<detail::Tuple<Args...>&>(*this) = detail::Tuple<Args...>{static_cast<Args&&>(args)...};
+    }
 
     [[nodiscard]] bool compare_exchange(Op* op) noexcept
     {
@@ -110,6 +168,7 @@ struct ManualResetEventRunningOperationState<void(Args...), Receiver> : ManualRe
 {
     using Signature = void(Args...);
     using Base = ManualResetEventOperationBase<Signature>;
+    using Event = ManualResetEvent<Signature>;
 
     struct StopFunction
     {
@@ -128,16 +187,16 @@ struct ManualResetEventRunningOperationState<void(Args...), Receiver> : ManualRe
 
     using StopCallback = detail::StopCallbackLifetime<exec::stop_token_type_t<Receiver&>, StopFunction>;
 
-    static void set_value_impl(Base* base, Args... args)
+    static void complete_impl(Base* base)
     {
         auto& self = *static_cast<ManualResetEventRunningOperationState*>(base);
         self.stop_callback().reset();
-        detail::satisfy_receiver(static_cast<Receiver&&>(self.receiver()), args...);
+        self.complete();
     }
 
     template <class R>
     ManualResetEventRunningOperationState(R&& receiver, ManualResetEvent<Signature>& event)
-        : Base{event, &set_value_impl}, impl_(static_cast<R&&>(receiver))
+        : Base{event, &complete_impl}, impl_(static_cast<R&&>(receiver))
     {
     }
 
@@ -145,6 +204,16 @@ struct ManualResetEventRunningOperationState<void(Args...), Receiver> : ManualRe
     {
         stop_callback().emplace(exec::get_stop_token(receiver()), StopFunction{*this});
         this->event_.op_.store(this, std::memory_order_release);
+    }
+
+    void complete()
+    {
+        detail::apply(
+            [&](Args&&... args)
+            {
+                detail::satisfy_receiver(static_cast<Receiver&&>(receiver()), static_cast<Args&&>(args)...);
+            },
+            static_cast<Event&&>(this->event_).args());
     }
 
     auto& receiver() noexcept { return impl_.first(); }
@@ -162,7 +231,7 @@ class ManualResetEventOperationState
     {
         if (state.event_.ready())
         {
-            detail::satisfy_receiver(static_cast<Receiver&&>(state.receiver()));
+            state.complete();
             return;
         }
         if (detail::stop_requested(exec::get_stop_token(state.receiver())))
@@ -191,14 +260,15 @@ class ManualResetEventSender : public detail::SenderOf<void()>
   public:
     template <class R>
     [[nodiscard]] auto connect(R&& receiver) && noexcept(detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<R>)
+        -> ManualResetEventOperationState<Signature, detail::RemoveCrefT<R>>
     {
-        return ManualResetEventOperationState<Signature, detail::RemoveCrefT<R>>{static_cast<R&&>(receiver), event_};
+        return {static_cast<R&&>(receiver), event_};
     }
 
   private:
     friend ManualResetEvent<Signature>;
 
-    explicit ManualResetEventSender(ManualResetEvent<Signature>& event) : event_(event) {}
+    explicit ManualResetEventSender(ManualResetEvent<Signature>& event) noexcept : event_(event) {}
 
     ManualResetEvent<Signature>& event_;
 };
@@ -214,6 +284,7 @@ struct ManualResetEventOperation<void(Args...), CompletionHandler> : ManualReset
 {
     using Signature = void(Args...);
     using Base = ManualResetEventOperationBase<Signature>;
+    using Event = ManualResetEvent<Signature>;
 
     struct StopFunction
     {
@@ -236,15 +307,20 @@ struct ManualResetEventOperation<void(Args...), CompletionHandler> : ManualReset
         ManualResetEventOperation& op_;
     };
 
-    static void set_value_impl(Base* base, Args... args)
+    static void complete_impl(Base* base)
     {
-        auto* self = static_cast<ManualResetEventOperation*>(base);
-        self->complete(detail::ErrorCode{}, static_cast<Args&&>(args)...);
+        auto& self = *static_cast<ManualResetEventOperation*>(base);
+        detail::apply(
+            [&](Args&&... args)
+            {
+                self.complete(detail::ErrorCode{}, static_cast<Args&&>(args)...);
+            },
+            static_cast<Event&&>(self.event_).args());
     }
 
     template <class Ch>
     ManualResetEventOperation(Ch&& ch, ManualResetEvent<Signature>& event)
-        : Base{event, &set_value_impl}, completion_handler_(static_cast<Ch&&>(ch))
+        : Base{event, &complete_impl}, completion_handler_(static_cast<Ch&&>(ch))
     {
         emplace_stop_callback();
         this->event_.op_.store(this, std::memory_order_release);
@@ -254,7 +330,7 @@ struct ManualResetEventOperation<void(Args...), CompletionHandler> : ManualReset
     {
         if constexpr (detail::IS_STOP_EVER_POSSIBLE_V<exec::stop_token_type_t<CompletionHandler&>>)
         {
-            if (auto stop_token = exec::get_stop_token(completion_handler()); detail::stop_possible(stop_token))
+            if (auto stop_token = exec::get_stop_token(completion_handler_); detail::stop_possible(stop_token))
             {
                 stop_token.template emplace<StopFunction>(*this);
             }
@@ -270,8 +346,6 @@ struct ManualResetEventOperation<void(Args...), CompletionHandler> : ManualReset
     }
 
     void cancel() { complete(detail::operation_aborted_error_code(), Args{}...); }
-
-    CompletionHandler& completion_handler() noexcept { return completion_handler_; }
 
     CompletionHandler completion_handler_;
 };
