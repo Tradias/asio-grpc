@@ -73,13 +73,6 @@ void register_yield_request_handler(const typename ServerRPC::executor_type& exe
             rpc.wait_for_done(yield);
         }
     }
-    if constexpr (ServerRPC::Traits::RESUMABLE_READ)
-    {
-        if (detail::ServerRPCReadMixinAccess::is_reading(rpc))
-        {
-            rpc.wait_for_read(yield);
-        }
-    }
     if (eptr)
     {
         std::rethrow_exception(eptr);

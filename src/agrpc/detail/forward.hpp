@@ -121,8 +121,7 @@ struct RPCExecutorBaseAccess;
 template <bool IsNotifyWhenDone, class Responder, class Executor>
 class ServerRPCNotifyWhenDoneMixin;
 
-template <class Signature>
-class RunningManualResetEvent;
+class NotifyWhenDoneEvent;
 
 AGRPC_NAMESPACE_CPP20_BEGIN()
 

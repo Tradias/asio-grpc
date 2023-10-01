@@ -18,7 +18,6 @@
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/initiate_sender_implementation.hpp>
 #include <agrpc/detail/server_rpc_notify_when_done_mixin.hpp>
-#include <agrpc/detail/server_rpc_read_mixin.hpp>
 #include <agrpc/detail/server_rpc_sender.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -26,9 +25,7 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class Responder, class Traits, class Executor>
-class ServerRPCBase
-    : public ServerRPCReadMixin<Traits::RESUMABLE_READ,
-                                ServerRPCNotifyWhenDoneMixin<Traits::NOTIFY_WHEN_DONE, Responder, Executor>>
+class ServerRPCBase : public ServerRPCNotifyWhenDoneMixin<Traits::NOTIFY_WHEN_DONE, Responder, Executor>
 {
   public:
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
@@ -41,8 +38,7 @@ class ServerRPCBase
     }
 
   protected:
-    using ServerRPCReadMixin<Traits::RESUMABLE_READ, ServerRPCNotifyWhenDoneMixin<Traits::NOTIFY_WHEN_DONE, Responder,
-                                                                                  Executor>>::ServerRPCReadMixin;
+    using ServerRPCNotifyWhenDoneMixin<Traits::NOTIFY_WHEN_DONE, Responder, Executor>::ServerRPCNotifyWhenDoneMixin;
 };
 }
 

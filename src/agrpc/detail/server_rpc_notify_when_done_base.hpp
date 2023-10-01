@@ -18,7 +18,7 @@
 #include <agrpc/detail/async_initiate.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
-#include <agrpc/detail/running_manual_reset_event.hpp>
+#include <agrpc/detail/notify_when_done_event.hpp>
 #include <grpcpp/server_context.h>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -36,7 +36,7 @@ class ServerRPCNotifyWhenDoneBase
 
     void initiate(grpc::ServerContext& server_context) { server_context.AsyncNotifyWhenDone(event_.tag()); }
 
-    RunningManualResetEvent<void()> event_;
+    NotifyWhenDoneEvent event_;
 };
 
 template <>

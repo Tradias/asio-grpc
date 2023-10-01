@@ -28,17 +28,6 @@ struct NotifyWhenDoneTraits : agrpc::DefaultServerRPCTraits
     static constexpr bool NOTIFY_WHEN_DONE = true;
 };
 
-struct ResumableReadTraits : agrpc::DefaultServerRPCTraits
-{
-    static constexpr bool RESUMABLE_READ = true;
-};
-
-struct NotifyAndResumableReadTraits : agrpc::DefaultServerRPCTraits
-{
-    static constexpr bool NOTIFY_WHEN_DONE = true;
-    static constexpr bool RESUMABLE_READ = true;
-};
-
 using UnaryServerRPC = agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestUnary>;
 using NotifyWhenDoneUnaryServerRPC =
     agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestUnary, NotifyWhenDoneTraits>;
@@ -46,10 +35,6 @@ using NotifyWhenDoneUnaryServerRPC =
 using ClientStreamingServerRPC = agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestClientStreaming>;
 using NotifyWhenDoneClientStreamingServerRPC =
     agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestClientStreaming, NotifyWhenDoneTraits>;
-using ResumableReadClientStreamingServerRPC =
-    agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestClientStreaming, ResumableReadTraits>;
-using NotifyAndResumableReadClientStreamingServerRPC =
-    agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestClientStreaming, NotifyAndResumableReadTraits>;
 
 using ServerStreamingServerRPC = agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestServerStreaming>;
 using NotifyWhenDoneServerStreamingServerRPC =
@@ -58,10 +43,6 @@ using NotifyWhenDoneServerStreamingServerRPC =
 using BidirectionalStreamingServerRPC = agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestBidirectionalStreaming>;
 using NotifyWhenDoneBidirectionalStreamingServerRPC =
     agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestBidirectionalStreaming, NotifyWhenDoneTraits>;
-using ResumableReadBidirectionalStreamingServerRPC =
-    agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestBidirectionalStreaming, ResumableReadTraits>;
-using NotifyAndResumableReadBidirectionalStreamingServerRPC =
-    agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestBidirectionalStreaming, NotifyAndResumableReadTraits>;
 
 using GenericServerRPC = agrpc::GenericServerRPC<>;
 using NotifyWhenDoneGenericServerRPC = agrpc::GenericServerRPC<NotifyWhenDoneTraits>;
@@ -72,16 +53,12 @@ TYPE_TO_STRING(test::NotifyWhenDoneUnaryServerRPC);
 
 TYPE_TO_STRING(test::ClientStreamingServerRPC);
 TYPE_TO_STRING(test::NotifyWhenDoneClientStreamingServerRPC);
-TYPE_TO_STRING(test::ResumableReadClientStreamingServerRPC);
-TYPE_TO_STRING(test::NotifyAndResumableReadClientStreamingServerRPC);
 
 TYPE_TO_STRING(test::ServerStreamingServerRPC);
 TYPE_TO_STRING(test::NotifyWhenDoneServerStreamingServerRPC);
 
 TYPE_TO_STRING(test::BidirectionalStreamingServerRPC);
 TYPE_TO_STRING(test::NotifyWhenDoneBidirectionalStreamingServerRPC);
-TYPE_TO_STRING(test::ResumableReadBidirectionalStreamingServerRPC);
-TYPE_TO_STRING(test::NotifyAndResumableReadBidirectionalStreamingServerRPC);
 
 TYPE_TO_STRING(test::GenericServerRPC);
 TYPE_TO_STRING(test::NotifyWhenDoneGenericServerRPC);

@@ -158,37 +158,11 @@ struct RequestHandlerOperationFinish
                 return;
             }
         }
-        if constexpr (Operation::Traits::RESUMABLE_READ)
-        {
-            if (detail::ServerRPCReadMixinAccess::is_reading(rpc))
-            {
-                op.start_wait_for_read();
-                return;
-            }
-        }
         detail::destroy_deallocate(&op, op.get_allocator());
     }
 };
 
 struct RequestHandlerOperationWaitForDone
-{
-    template <class Operation>
-    static void perform(Operation& op, const std::exception_ptr*)
-    {
-        auto& rpc = op.rpc_;
-        if constexpr (Operation::Traits::RESUMABLE_READ)
-        {
-            if (detail::ServerRPCReadMixinAccess::is_reading(rpc))
-            {
-                op.start_wait_for_read();
-                return;
-            }
-        }
-        detail::destroy_deallocate(&op, op.get_allocator());
-    }
-};
-
-struct RequestHandlerOperationWaitForRead
 {
     template <class Operation>
     static void perform(Operation& op, const std::exception_ptr*)
@@ -279,12 +253,7 @@ struct RequestHandlerOperation
     using WaitForDoneOperationState =
         detail::WaitForOperationStateT<WaitForDoneReceiver, void(), ServerRPC::Traits::NOTIFY_WHEN_DONE>;
 
-    using WaitForReadReceiver = Receiver<RequestHandlerOperationWaitForRead>;
-    using WaitForReadOperationState =
-        detail::WaitForOperationStateT<WaitForReadReceiver, void(bool), ServerRPC::Traits::RESUMABLE_READ>;
-
-    using OperationState =
-        std::variant<StartOperationState, FinishOperationState, WaitForDoneOperationState, WaitForReadOperationState>;
+    using OperationState = std::variant<StartOperationState, FinishOperationState, WaitForDoneOperationState>;
 
     explicit RequestHandlerOperation(RequestHandlerSenderOperationBase& operation, const Allocator& allocator)
         : base_(operation),
@@ -347,17 +316,6 @@ struct RequestHandlerOperation
             [&]
             {
                 return rpc_.wait_for_done(agrpc::use_sender).connect(WaitForDoneReceiver{*this});
-            });
-        state.value_.start();
-    }
-
-    void start_wait_for_read()
-    {
-        auto& state = operation_state().template emplace<WaitForReadOperationState>(
-            detail::InplaceWithFunction{},
-            [&]
-            {
-                return rpc_.wait_for_read(agrpc::use_sender).connect(WaitForReadReceiver{*this});
             });
         state.value_.start();
     }

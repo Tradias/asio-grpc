@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_RUNNING_MANUAL_RESET_EVENT_HPP
-#define AGRPC_DETAIL_RUNNING_MANUAL_RESET_EVENT_HPP
+#ifndef AGRPC_DETAIL_NOTIFY_WHEN_DONE_EVENT_HPP
+#define AGRPC_DETAIL_NOTIFY_WHEN_DONE_EVENT_HPP
 
 #include <agrpc/detail/allocate.hpp>
 #include <agrpc/detail/asio_forward.hpp>
@@ -34,19 +34,14 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class... Args>
-class RunningManualResetEvent<void(Args...)> : public detail::OperationBase
+class NotifyWhenDoneEvent : public detail::OperationBase
 {
-  private:
-    using Signature = void(Args...);
-
   public:
-    RunningManualResetEvent() noexcept : detail::OperationBase{&do_complete} {}
+    NotifyWhenDoneEvent() noexcept : detail::OperationBase{&do_complete} {}
 
     [[nodiscard]] void* tag() noexcept
     {
         running_.store(true, std::memory_order_relaxed);
-        event_.reset();
         return static_cast<detail::OperationBase*>(this);
     }
 
@@ -65,26 +60,19 @@ class RunningManualResetEvent<void(Args...)> : public detail::OperationBase
   private:
     static void do_complete(detail::OperationBase* op, detail::OperationResult result, agrpc::GrpcContext&)
     {
-        auto* self = static_cast<RunningManualResetEvent*>(op);
+        auto* self = static_cast<NotifyWhenDoneEvent*>(op);
         self->running_.store(false, std::memory_order_relaxed);
         if AGRPC_LIKELY (!detail::is_shutdown(result))
         {
-            if constexpr ((false || ... || std::is_same_v<Args, bool>))
-            {
-                self->event_.set(detail::is_ok(result));
-            }
-            else
-            {
-                self->event_.set();
-            }
+            self->event_.set();
         }
     }
 
-    ManualResetEvent<Signature> event_;
+    ManualResetEvent<void()> event_;
     std::atomic_bool running_{};
 };
 }
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_RUNNING_MANUAL_RESET_EVENT_HPP
+#endif  // AGRPC_DETAIL_NOTIFY_WHEN_DONE_EVENT_HPP
