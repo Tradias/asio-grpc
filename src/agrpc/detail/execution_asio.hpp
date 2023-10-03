@@ -70,6 +70,15 @@ decltype(auto) get_allocator(const Object& object)
     return asio::get_associated_allocator(object);
 }
 
+template <class T>
+inline constexpr bool scheduler = asio::is_executor<T>::value || asio::execution::is_executor_v<T>;
+
+template <class, class = void>
+inline constexpr bool scheduler_provider = false;
+
+template <class T>
+inline constexpr bool scheduler_provider<T, decltype((void)std::declval<T>().get_executor())> = true;
+
 #ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
 using asio::execution::connect;
 using asio::execution::connect_result_t;

@@ -33,23 +33,23 @@
 
 #include <cstddef>
 
-template <class RPC>
-struct ServerRPCTest : test::ClientServerRPCTest<typename test::IntrospectRPC<RPC>::ClientRPC, RPC>
+template <class ServerRPC>
+struct ServerRPCTest : test::ClientServerRPCTest<typename test::IntrospectRPC<ServerRPC>::ClientRPC, ServerRPC>
 {
     ServerRPCTest() = default;
 
     explicit ServerRPCTest(bool)
     {
-        if constexpr (RPC::Traits::NOTIFY_WHEN_DONE)
+        if constexpr (ServerRPC::Traits::NOTIFY_WHEN_DONE)
         {
             SUBCASE("implicit notify when done") {}
             SUBCASE("explicit notify when done") { use_notify_when_done_ = true; }
         }
     }
 
-    auto set_up_notify_when_done([[maybe_unused]] RPC& rpc)
+    auto set_up_notify_when_done([[maybe_unused]] ServerRPC& rpc)
     {
-        if constexpr (RPC::Traits::NOTIFY_WHEN_DONE)
+        if constexpr (ServerRPC::Traits::NOTIFY_WHEN_DONE)
         {
             if (use_notify_when_done_)
             {
@@ -59,10 +59,10 @@ struct ServerRPCTest : test::ClientServerRPCTest<typename test::IntrospectRPC<RP
         return std::future<void>{};
     }
 
-    void check_notify_when_done([[maybe_unused]] std::future<void>& future, [[maybe_unused]] RPC& rpc,
+    void check_notify_when_done([[maybe_unused]] std::future<void>& future, [[maybe_unused]] ServerRPC& rpc,
                                 [[maybe_unused]] const asio::yield_context& yield)
     {
-        if constexpr (RPC::Traits::NOTIFY_WHEN_DONE)
+        if constexpr (ServerRPC::Traits::NOTIFY_WHEN_DONE)
         {
             if (use_notify_when_done_)
             {

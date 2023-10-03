@@ -166,6 +166,7 @@ if(ASIO_GRPC_BUILD_TESTS AND ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/use_sender.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/utility.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/wait.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/waiter.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/work_tracking_completion_handler.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/get_completion_queue.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpc_context.hpp"
@@ -184,5 +185,6 @@ if(ASIO_GRPC_BUILD_TESTS AND ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/test.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/use_awaitable.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/use_sender.hpp"
-                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/wait.hpp")
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/wait.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/waiter.hpp")
 endif()

@@ -32,12 +32,24 @@ template <class... Args>
 struct PrependErrorCodeToSignature<void(detail::ErrorCode, Args...)>
 {
     using Type = void(detail::ErrorCode, Args...);
+
+    template <class Function>
+    static void invoke_with_default_args(Function&& function, detail::ErrorCode&& ec)
+    {
+        static_cast<Function&&>(function)(static_cast<detail::ErrorCode&&>(ec), Args{}...);
+    }
 };
 
 template <class... Args>
 struct PrependErrorCodeToSignature<void(Args...)>
 {
     using Type = void(detail::ErrorCode, Args...);
+
+    template <class Function>
+    static void invoke_with_default_args(Function&& function, detail::ErrorCode&& ec)
+    {
+        static_cast<Function&&>(function)(static_cast<detail::ErrorCode&&>(ec), Args{}...);
+    }
 };
 
 template <class Signature>

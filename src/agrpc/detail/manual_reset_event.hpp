@@ -60,19 +60,27 @@ struct ManualResetEventOperationBase<void(Args...)>
 };
 
 template <class CompletionHandler, class... Args, std::size_t... I>
-void prepend_error_code_and_apply(CompletionHandler&& ch, detail::Tuple<Args...>&& args,
-                                  const std::index_sequence<I...>&)
+void prepend_error_code_and_apply_impl(CompletionHandler&& ch, detail::Tuple<Args...>&& args,
+                                       const std::index_sequence<I...>&)
 {
     static_cast<CompletionHandler&&>(ch)(detail::ErrorCode{},
                                          detail::get<I>(static_cast<detail::Tuple<Args...>&&>(args))...);
 }
 
+template <class CompletionHandler, class... Args, std::size_t... I>
+void prepend_error_code_and_apply_impl(CompletionHandler&& ch, detail::Tuple<detail::ErrorCode, Args...>&& args,
+                                       const std::index_sequence<I...>&)
+{
+    static_cast<CompletionHandler&&>(ch)(
+        detail::get<I>(static_cast<detail::Tuple<detail::ErrorCode, Args...>&&>(args))...);
+}
+
 template <class CompletionHandler, class... Args>
 void prepend_error_code_and_apply(CompletionHandler&& ch, detail::Tuple<Args...>&& args)
 {
-    detail::prepend_error_code_and_apply(static_cast<CompletionHandler&&>(ch),
-                                         static_cast<detail::Tuple<Args...>&&>(args),
-                                         std::make_index_sequence<sizeof...(Args)>{});
+    detail::prepend_error_code_and_apply_impl(static_cast<CompletionHandler&&>(ch),
+                                              static_cast<detail::Tuple<Args...>&&>(args),
+                                              std::make_index_sequence<sizeof...(Args)>{});
 }
 
 template <class... Args>
@@ -89,15 +97,16 @@ class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
         void operator()(CompletionHandler&& completion_handler, const IOExecutor& io_executor) const
         {
             const auto allocator = asio::get_associated_allocator(completion_handler);
-            if (event_.ready())
+            auto& event = event_;
+            if (event.ready())
             {
                 auto executor = asio::get_associated_executor(completion_handler, io_executor);
                 detail::post_with_allocator(
                     std::move(executor),
-                    [&, ch = static_cast<CompletionHandler&&>(completion_handler)]() mutable
+                    [&event, ch = static_cast<CompletionHandler&&>(completion_handler)]() mutable
                     {
                         detail::prepend_error_code_and_apply(static_cast<CompletionHandler&&>(ch),
-                                                             static_cast<ManualResetEvent&&>(event_).args());
+                                                             static_cast<ManualResetEvent&&>(event).args());
                     },
                     allocator);
                 return;
@@ -113,7 +122,7 @@ class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
 #endif
 
   public:
-    void set(Args... args)
+    void set(Args&&... args)
     {
         auto* const op = op_.exchange(signalled_state(), std::memory_order_acq_rel);
         if (op == signalled_state() || op == nullptr)
@@ -126,13 +135,17 @@ class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
 
     [[nodiscard]] bool ready() const noexcept { return op_.load(std::memory_order_acquire) == signalled_state(); }
 
-    void reset() noexcept { op_.store(nullptr, std::memory_order_release); }
+    void reset() noexcept
+    {
+        auto* expected = signalled_state();
+        op_.compare_exchange_strong(expected, nullptr, std::memory_order_release);
+    }
 
     [[nodiscard]] ManualResetEventSender<Signature> wait() noexcept;
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    template <class CompletionToken, class IOExecutor = asio::system_executor>
-    auto wait(CompletionToken token, IOExecutor io_executor = {})
+    template <class CompletionToken, class IOExecutor>
+    auto wait(CompletionToken token, const IOExecutor& io_executor)
     {
         using Sig = detail::PrependErrorCodeToSignatureT<Signature>;
         return asio::async_initiate<CompletionToken, Sig>(InitiateWait{*this}, token, io_executor);
@@ -310,10 +323,10 @@ struct ManualResetEventOperation<void(Args...), CompletionHandler> : ManualReset
     static void complete_impl(Base* base)
     {
         auto& self = *static_cast<ManualResetEventOperation*>(base);
-        detail::apply(
-            [&](Args&&... args)
+        detail::prepend_error_code_and_apply(
+            [&](auto&&... args)
             {
-                self.complete(detail::ErrorCode{}, static_cast<Args&&>(args)...);
+                self.complete(static_cast<decltype(args)&&>(args)...);
             },
             static_cast<Event&&>(self.event_).args());
     }
@@ -337,15 +350,24 @@ struct ManualResetEventOperation<void(Args...), CompletionHandler> : ManualReset
         }
     }
 
-    void complete(detail::ErrorCode&& ec, Args&&... args)
+    template <class... TArgs>
+    void complete(TArgs&&... args)
     {
         detail::AllocationGuard ptr{this, exec::get_allocator(completion_handler_)};
         auto handler{static_cast<CompletionHandler&&>(completion_handler_)};
         ptr.reset();
-        static_cast<CompletionHandler&&>(handler)(static_cast<detail::ErrorCode&&>(ec), static_cast<Args&&>(args)...);
+        static_cast<CompletionHandler&&>(handler)(static_cast<TArgs&&>(args)...);
     }
 
-    void cancel() { complete(detail::operation_aborted_error_code(), Args{}...); }
+    void cancel()
+    {
+        detail::PrependErrorCodeToSignature<Signature>::invoke_with_default_args(
+            [&](auto&& ec, auto&&... args)
+            {
+                complete(ec, args...);
+            },
+            detail::operation_aborted_error_code());
+    }
 
     CompletionHandler completion_handler_;
 };

@@ -18,6 +18,7 @@
 #include <agrpc/default_completion_token.hpp>
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/grpc_initiate.hpp>
 #include <agrpc/detail/wait.hpp>
 
@@ -64,6 +65,14 @@ struct WaitFn
     {
         return detail::grpc_initiate_impl<detail::AlarmCancellationFunction>(detail::AlarmInitFunction{alarm, deadline},
                                                                              static_cast<CompletionToken&&>(token));
+    }
+
+    template <class Executor, class Deadline, class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    decltype(auto) operator()(agrpc::BasicAlarm<Executor>& alarm, const Deadline& deadline,
+                              CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{}) const
+        noexcept(noexcept(alarm.wait(deadline, static_cast<CompletionToken&&>(token))))
+    {
+        return alarm.wait(deadline, static_cast<CompletionToken&&>(token));
     }
 };
 }

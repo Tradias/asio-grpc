@@ -75,6 +75,9 @@ struct DefaultServerRPCTraits;
 template <auto RequestRPC, class Traits = agrpc::DefaultServerRPCTraits, class Executor = agrpc::BasicGrpcExecutor<>>
 class ServerRPC;
 
+template <class Signature, class Executor = agrpc::BasicGrpcExecutor<>>
+class Waiter;
+
 namespace detail
 {
 template <class Item>

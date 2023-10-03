@@ -47,7 +47,7 @@ class NotifyWhenDoneEvent : public detail::OperationBase
 
     [[nodiscard]] bool is_running() const noexcept { return running_.load(std::memory_order_relaxed); }
 
-    auto wait(const agrpc::GrpcContext&, agrpc::UseSender) { return event_.wait(); }
+    auto wait(const agrpc::GrpcContext&, agrpc::UseSender) noexcept { return event_.wait(); }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     template <class CompletionToken>

@@ -33,6 +33,8 @@ namespace detail::exec
 using ::unifex::get_allocator;
 using ::unifex::get_scheduler;
 inline const auto& get_executor = get_scheduler;
+using ::unifex::scheduler;
+using ::unifex::scheduler_provider;
 
 template <class T>
 inline constexpr bool is_sender_v = ::unifex::sender<T>;

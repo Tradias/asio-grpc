@@ -56,6 +56,8 @@ struct Tuple<T0, T1, T2>
 template <class T0, class T1, class T2, class... T>
 struct Tuple<T0, T1, T2, T...>
 {
+    Tuple() = default;
+
     template <class Arg1, class Arg2, class... Args>
     Tuple(Arg1&& arg1, Arg2&& arg2, Args&&... args)
         : impl_(static_cast<Arg1&&>(arg1), static_cast<Arg2&&>(arg2), static_cast<Args&&>(args)...)
