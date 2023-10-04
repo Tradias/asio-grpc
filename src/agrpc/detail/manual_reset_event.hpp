@@ -97,8 +97,7 @@ class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
         void operator()(CompletionHandler&& completion_handler, const IOExecutor& io_executor) const
         {
             const auto allocator = asio::get_associated_allocator(completion_handler);
-            auto& event = event_;
-            if (event.ready())
+            if (auto& event = event_; event.ready())
             {
                 auto executor = asio::get_associated_executor(completion_handler, io_executor);
                 detail::post_with_allocator(
@@ -362,9 +361,9 @@ struct ManualResetEventOperation<void(Args...), CompletionHandler> : ManualReset
     void cancel()
     {
         detail::PrependErrorCodeToSignature<Signature>::invoke_with_default_args(
-            [&](auto&& ec, auto&&... args)
+            [&](detail::ErrorCode&& ec, auto&&... args)
             {
-                complete(ec, args...);
+                complete(static_cast<detail::ErrorCode&&>(ec), args...);
             },
             detail::operation_aborted_error_code());
     }

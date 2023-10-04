@@ -583,6 +583,16 @@ struct ReadFn
                                                                                  response},
             static_cast<CompletionToken&&>(token));
     }
+
+    template <auto RequestRPC, class Traits, class Executor,
+              class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    decltype(auto) operator()(agrpc::ServerRPC<RequestRPC, Traits, Executor>& rpc,
+                              typename agrpc::ServerRPC<RequestRPC, Traits, Executor>::Request& request,
+                              CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{}) const
+        noexcept(noexcept(rpc.read(request, static_cast<CompletionToken&&>(token))))
+    {
+        return rpc.read(request, static_cast<CompletionToken&&>(token));
+    }
 };
 
 /**

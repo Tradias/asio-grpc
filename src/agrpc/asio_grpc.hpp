@@ -47,9 +47,11 @@
 #include <agrpc/rpc.hpp>
 #include <agrpc/rpc_type.hpp>
 #include <agrpc/run.hpp>
+#include <agrpc/server_rpc.hpp>
 #include <agrpc/test.hpp>
 #include <agrpc/use_awaitable.hpp>
 #include <agrpc/use_sender.hpp>
 #include <agrpc/wait.hpp>
+#include <agrpc/waiter.hpp>
 
 #endif  // AGRPC_AGRPC_ASIO_GRPC_HPP

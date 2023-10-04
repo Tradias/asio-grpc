@@ -30,6 +30,7 @@
 #include <agrpc/client_rpc.hpp>
 #include <agrpc/register_yield_request_handler.hpp>
 #include <agrpc/server_rpc.hpp>
+#include <agrpc/waiter.hpp>
 
 #include <cstddef>
 
@@ -421,3 +422,56 @@ TEST_CASE("ServerRPC::service_name/method_name")
     check_eq_and_null_terminated("test.v1.Test", test::BidirectionalStreamingServerRPC::service_name());
     check_eq_and_null_terminated("BidirectionalStreaming", test::BidirectionalStreamingServerRPC::method_name());
 }
+
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+TEST_CASE_TEMPLATE("ServerRPC resumable read can be cancelled", RPC, test::ClientStreamingServerRPC,
+                   test::BidirectionalStreamingServerRPC)
+{
+    ServerRPCTest<RPC> test{true};
+    test.register_and_perform_three_requests(
+        [&](RPC& rpc, const asio::yield_context& yield)
+        {
+            typename RPC::Request request;
+            agrpc::Waiter<void(bool)> waiter;
+
+            waiter.initiate(agrpc::read, rpc, request);
+            CHECK(waiter.wait(yield));
+            CHECK_EQ(1, request.integer());
+            CHECK(waiter.wait(yield));
+            CHECK_EQ(1, request.integer());
+
+            const auto not_to_exceed = test::two_hundred_milliseconds_from_now();
+            waiter.initiate(agrpc::read, rpc, request);
+            for (int i{}; i != 2; ++i)
+            {
+                auto [completion_order, ec, read_ok] =
+                    asio::experimental::make_parallel_group(
+                        waiter.wait(test::ASIO_DEFERRED),
+                        asio::post(asio::bind_executor(test.grpc_context, test::ASIO_DEFERRED)))
+                        .async_wait(asio::experimental::wait_for_one(), yield);
+                CHECK_LT(test::now(), not_to_exceed);
+                CHECK_EQ(asio::error::operation_aborted, ec);
+                CHECK_EQ(1, request.integer());
+            }
+            CHECK_FALSE(waiter.wait(yield));
+
+            if constexpr (agrpc::ServerRPCType::BIDIRECTIONAL_STREAMING == RPC::TYPE)
+            {
+                CHECK(rpc.finish(grpc::Status::OK, yield));
+            }
+            else
+            {
+                CHECK(rpc.finish({}, grpc::Status::OK, yield));
+            }
+        },
+        [&](auto& request, auto& response, const asio::yield_context& yield)
+        {
+            auto rpc = test.create_rpc();
+            test.start_rpc(rpc, request, response, yield);
+            request.set_integer(1);
+            CHECK(rpc.write(request, yield));
+            agrpc::Alarm(test.grpc_context).wait(test::five_hundred_milliseconds_from_now(), yield);
+            CHECK_EQ(grpc::StatusCode::OK, rpc.finish(yield).error_code());
+        });
+}
+#endif

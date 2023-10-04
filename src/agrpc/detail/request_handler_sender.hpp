@@ -69,7 +69,7 @@ class RequestHandlerSenderOperationComplete
   public:
     using Complete = void (*)(RequestHandlerSenderOperationComplete&) noexcept;
 
-    RequestHandlerSenderOperationComplete(Complete complete) noexcept : complete_(complete) {}
+    explicit RequestHandlerSenderOperationComplete(Complete complete) noexcept : complete_(complete) {}
 
     void complete() noexcept { complete_(*this); }
 

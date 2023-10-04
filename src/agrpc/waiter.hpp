@@ -25,11 +25,17 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief (experimental) Cancellation safety for streaming RPCs
+ * @brief (experimental) Utility class for uncancelable operations
  *
- * Lightweight, IoObject-like class with cancellation safety for RPC functions.
+ * Provides cancellation support for otherwise uncancelable operations by canceling only the act of waiting for
+ * completion as opposed to the operation itself.
  *
- * @since 1.7.0 (and Boost.Asio 1.77.0)
+ * @tparam Signature Completion signature of the operation. For example, for `agrpc::Alarm::wait` this would be
+ * `void(bool)`.
+ * @tparam Executor Type of the I/O executor. For `agrpc::Alarm` this would be `agrpc::GrpcExecutor` or
+ * `asio::any_io_executor`. Default: `agrpc::GrpcExecutor`
+ *
+ * @since 2.7.0 (and Boost.Asio 1.77.0)
  */
 template <class Signature, class Executor>
 class Waiter
@@ -41,17 +47,20 @@ class Waiter
     using executor_type = Executor;
 
     /**
-     * @brief Rebind the stream to another executor
+     * @brief Rebind the Waiter to another executor
      */
     template <class OtherExecutor>
     struct rebind_executor
     {
         /**
-         * @brief The stream type when rebound to the specified executor
+         * @brief The Waiter type when rebound to the specified executor
          */
         using other = Waiter<Signature, OtherExecutor>;
     };
 
+    /**
+     * @brief Default construct a Waiter
+     */
     Waiter() noexcept {}
 
     Waiter(const Waiter& other) = delete;
@@ -66,6 +75,15 @@ class Waiter
      * @brief Initiate an operation
      *
      * Only one operation may be running at a time.
+     *
+     * Example:
+     *
+     * @snippet server_rpc.cpp waiter-example
+     *
+     * @param function Callable that will be invoked with all subsequent arguments followed by the completion handler of
+     * this Waiter.
+     * @param executor_or_io_object Either an executor itself or an object that implements `get_executor()`. This will
+     * become the I/O executor of subsequent calls to `wait()`.
      */
     template <class Function, class ExecutorOrIoObject, class... Args>
     void initiate(Function&& function, ExecutorOrIoObject&& executor_or_io_object, Args&&... args)
@@ -78,7 +96,7 @@ class Waiter
     }
 
     /**
-     * @brief Is an operation currently running?
+     * @brief Has the initiated operation finished?
      *
      * Thread-safe
      */
@@ -87,7 +105,9 @@ class Waiter
     /**
      * @brief Wait for the initiated operation to complete
      *
-     * Only one call to `next()` may be outstanding at a time.
+     * Only one call to `wait()` may be outstanding at a time. May be called before an operation has been initiated.
+     * Care must be taken when invoking this function multiple times for an already completed operation as completion
+     * arguments are moved into the completion handler.
      *
      * **Per-Operation Cancellation**
      *
@@ -110,8 +130,6 @@ class Waiter
     }
 
     auto wait_impl(agrpc::UseSender) noexcept { return event_.wait(); }
-
-    void* initial_state() noexcept { return &executor_; }
 
     void destroy_executor() noexcept
     {
