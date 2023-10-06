@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_AGRPC_REGISTER_YIELD_REQUEST_HANDLER_HPP
-#define AGRPC_AGRPC_REGISTER_YIELD_REQUEST_HANDLER_HPP
+#ifndef AGRPC_AGRPC_REGISTER_AWAITABLE_REQUEST_HANDLER_HPP
+#define AGRPC_AGRPC_REGISTER_AWAITABLE_REQUEST_HANDLER_HPP
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/rethrow_first_arg.hpp>
@@ -22,44 +22,28 @@
 #include <agrpc/grpc_context.hpp>
 
 #ifdef AGRPC_STANDALONE_ASIO
-#include <asio/spawn.hpp>
+#include <asio/co_spawn.hpp>
 #elif defined(AGRPC_BOOST_ASIO)
-#include <boost/asio/spawn.hpp>
+#include <boost/asio/co_spawn.hpp>
 #endif
 
 AGRPC_NAMESPACE_BEGIN()
 
-namespace detail
-{
-template <class Executor, class Function>
-void spawn(Executor&& executor, Function&& function)
-{
-#ifdef AGRPC_ASIO_HAS_NEW_SPAWN
-    asio::spawn(static_cast<Executor&&>(executor), static_cast<Function&&>(function), detail::RethrowFirstArg{});
-#else
-    asio::spawn(static_cast<Executor&&>(executor), static_cast<Function&&>(function));
-#endif
-}
-}
-
-template <class ServerRPC, class Service, class RequestHandler, class Executor>
-void register_yield_request_handler(const typename ServerRPC::executor_type& executor, Service& service,
-                                    RequestHandler request_handler, const asio::basic_yield_context<Executor>& yield)
+template <class ServerRPC, class Service, class RequestHandler, class Executor = asio::any_io_executor>
+asio::awaitable<void, Executor> register_awaitable_request_handler(typename ServerRPC::executor_type executor,
+                                                                   Service& service, RequestHandler request_handler)
 {
     auto rpc = detail::ServerRPCContextBaseAccess::construct<ServerRPC>(executor);
     detail::RPCRequest<typename ServerRPC::Request, detail::has_initial_request(ServerRPC::TYPE)> req;
-    if (!req.start(rpc, service, yield))
+    if (!co_await req.start(rpc, service, asio::use_awaitable_t<Executor>{}))
     {
-        return;
+        co_return;
     }
-    detail::spawn(yield,
-                  [executor, &service, request_handler](const asio::basic_yield_context<Executor>& next_yield) mutable
-                  {
-                      agrpc::register_yield_request_handler<ServerRPC>(
-                          executor, service, static_cast<RequestHandler&&>(request_handler), next_yield);
-                  });
+    asio::co_spawn(co_await asio::this_coro::executor,
+                   agrpc::register_awaitable_request_handler<ServerRPC>(executor, service, request_handler),
+                   detail::RethrowFirstArg{});
     std::exception_ptr eptr;
-    AGRPC_TRY { req.invoke(static_cast<RequestHandler&&>(request_handler), rpc, yield); }
+    AGRPC_TRY { co_await req.invoke(static_cast<RequestHandler&&>(request_handler), rpc); }
     AGRPC_CATCH(...) { eptr = std::current_exception(); }
     if (!detail::ServerRPCContextBaseAccess::is_finished(rpc))
     {
@@ -69,7 +53,7 @@ void register_yield_request_handler(const typename ServerRPC::executor_type& exe
     {
         if (!rpc.is_done())
         {
-            rpc.wait_for_done(yield);
+            co_await rpc.wait_for_done(asio::use_awaitable_t<Executor>{});
         }
     }
     if (eptr)
@@ -80,4 +64,4 @@ void register_yield_request_handler(const typename ServerRPC::executor_type& exe
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_AGRPC_REGISTER_YIELD_REQUEST_HANDLER_HPP
+#endif  // AGRPC_AGRPC_REGISTER_AWAITABLE_REQUEST_HANDLER_HPP

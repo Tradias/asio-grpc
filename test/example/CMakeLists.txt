@@ -31,6 +31,7 @@ add_dependencies(
     asio-grpc-example-multi-threaded-client
     asio-grpc-example-multi-threaded-server
     asio-grpc-example-client-rpc
+    asio-grpc-example-server-rpc
     asio-grpc-example-unifex-client
     asio-grpc-example-unifex-server)
 
@@ -50,7 +51,8 @@ target_compile_definitions(
             "ASIO_GRPC_EXAMPLE_GENERIC_SERVER=\"$<TARGET_FILE:asio-grpc-example-generic-server>\""
             "ASIO_GRPC_EXAMPLE_MULTI_THREADED_CLIENT=\"$<TARGET_FILE:asio-grpc-example-multi-threaded-client>\""
             "ASIO_GRPC_EXAMPLE_MULTI_THREADED_SERVER=\"$<TARGET_FILE:asio-grpc-example-multi-threaded-server>\""
-            "ASIO_GRPC_EXAMPLE_HIGH_LEVEL_CLIENT=\"$<TARGET_FILE:asio-grpc-example-client-rpc>\""
+            "ASIO_GRPC_EXAMPLE_CLIENT_RPC=\"$<TARGET_FILE:asio-grpc-example-client-rpc>\""
+            "ASIO_GRPC_EXAMPLE_SERVER_RPC=\"$<TARGET_FILE:asio-grpc-example-server-rpc>\""
             "ASIO_GRPC_EXAMPLE_UNIFEX_CLIENT=\"$<TARGET_FILE:asio-grpc-example-unifex-client>\""
             "ASIO_GRPC_EXAMPLE_UNIFEX_SERVER=\"$<TARGET_FILE:asio-grpc-example-unifex-server>\"")
 

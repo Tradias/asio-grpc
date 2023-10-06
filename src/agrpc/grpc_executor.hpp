@@ -79,8 +79,8 @@ class BasicGrpcExecutor
     {
     }
 
-#if defined(AGRPC_UNIFEX) || \
-    ((defined(AGRPC_BOOST_ASIO) || defined(AGRPC_STANDALONE_ASIO)) && !defined(BOOST_ASIO_NO_TS_EXECUTORS))
+#if defined(AGRPC_UNIFEX) || (defined(AGRPC_BOOST_ASIO) && !defined(BOOST_ASIO_NO_TS_EXECUTORS)) || \
+    (defined(AGRPC_STANDALONE_ASIO) && !defined(ASIO_NO_TS_EXECUTORS))
     /**
      * @brief Get the underlying GrpcContext
      *

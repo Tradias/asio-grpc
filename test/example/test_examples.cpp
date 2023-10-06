@@ -65,10 +65,10 @@ TEST_CASE("examples")
         client_program = ASIO_GRPC_EXAMPLE_MULTI_THREADED_CLIENT;
         server_program = ASIO_GRPC_EXAMPLE_MULTI_THREADED_SERVER;
     }
-    SUBCASE("ClientRPC streaming")
+    SUBCASE("Client/ServerRPC streaming")
     {
-        client_program = ASIO_GRPC_EXAMPLE_HIGH_LEVEL_CLIENT;
-        server_program = ASIO_GRPC_EXAMPLE_STREAMING_SERVER;
+        client_program = ASIO_GRPC_EXAMPLE_CLIENT_RPC;
+        server_program = ASIO_GRPC_EXAMPLE_SERVER_RPC;
     }
     boost::process::child server(server_program, args);
     REQUIRE(server.valid());
