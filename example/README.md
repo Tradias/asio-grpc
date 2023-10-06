@@ -152,7 +152,14 @@ Click on `snippet source` to jump to the code of an individual example.
 // A simple client-streaming request handler using coroutines.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/streaming-server.cpp#L37-L41' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-client-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/server-rpc.cpp#L38-L42' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-client-streaming' title='Start of snippet'>anchor</a></sup>
+<a id='snippet-server-side-client-streaming-1'></a>
+```cpp
+// ---------------------------------------------------
+// A simple client-streaming request handler using coroutines.
+// ---------------------------------------------------
+```
+<sup><a href='/example/streaming-server.cpp#L37-L41' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-client-streaming-1' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: server-side-server-streaming -->
@@ -162,7 +169,14 @@ Click on `snippet source` to jump to the code of an individual example.
 // A simple server-streaming request handler using coroutines.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/streaming-server.cpp#L81-L85' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-server-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/server-rpc.cpp#L75-L79' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-server-streaming' title='Start of snippet'>anchor</a></sup>
+<a id='snippet-server-side-server-streaming-1'></a>
+```cpp
+// ---------------------------------------------------
+// A simple server-streaming request handler using coroutines.
+// ---------------------------------------------------
+```
+<sup><a href='/example/streaming-server.cpp#L81-L85' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-server-streaming-1' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: server-side-bidirectional-streaming -->
@@ -173,7 +187,15 @@ Click on `snippet source` to jump to the code of an individual example.
 // back to the client.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/streaming-server.cpp#L108-L113' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/server-rpc.cpp#L96-L101' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
+<a id='snippet-server-side-bidirectional-streaming-1'></a>
+```cpp
+// ---------------------------------------------------
+// The following bidirectional-streaming example shows how to dispatch requests to a thread_pool and write responses
+// back to the client.
+// ---------------------------------------------------
+```
+<sup><a href='/example/streaming-server.cpp#L108-L113' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-bidirectional-streaming-1' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Multi-threaded
