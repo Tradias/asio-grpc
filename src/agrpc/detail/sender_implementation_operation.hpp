@@ -59,12 +59,12 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
         return &do_complete<detail::AllocationType::CUSTOM>;
     }
 
-    template <class Initation>
-    SenderImplementationOperation(detail::AllocationType allocation_type, CompletionHandler&& completion_handler,
+    template <class Ch, class Initation>
+    SenderImplementationOperation(detail::AllocationType allocation_type, Ch&& completion_handler,
                                   agrpc::GrpcContext& grpc_context, const Initation& initiation,
                                   Implementation&& implementation)
         : Base(get_on_complete(allocation_type)),
-          impl_(static_cast<CompletionHandler&&>(completion_handler), static_cast<Implementation&&>(implementation))
+          impl_(static_cast<Ch&&>(completion_handler), static_cast<Implementation&&>(implementation))
     {
         grpc_context.work_started();
         emplace_stop_callback(initiation);

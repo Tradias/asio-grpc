@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_HEALTH_CHECK_SERVICE_IPP
 
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/create_and_submit_no_arg_operation.hpp>
 #include <agrpc/detail/intrusive_list.hpp>
 #include <agrpc/detail/intrusive_list_hook.hpp>
 #include <agrpc/detail/sender_implementation.hpp>
