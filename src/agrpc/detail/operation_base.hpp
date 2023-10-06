@@ -53,7 +53,11 @@ class OperationBase
   private:
     friend detail::OperationBaseAccess;
 
-    OperationOnComplete on_complete_;
+    union
+    {
+        OperationOnComplete on_complete_;
+        void* scratch_space_;
+    };
 };
 
 class QueueableOperationBase : public detail::OperationBase
@@ -71,9 +75,19 @@ class QueueableOperationBase : public detail::OperationBase
 
 struct OperationBaseAccess
 {
-    static auto& get_on_complete(detail::OperationBase& operation) noexcept { return operation.on_complete_; }
+    static void set_on_complete(detail::OperationBase& operation, OperationOnComplete on_complete) noexcept
+    {
+        operation.on_complete_ = on_complete;
+    }
 
     static auto get_on_complete(const detail::OperationBase& operation) noexcept { return operation.on_complete_; }
+
+    static void set_scratch_space(detail::OperationBase& operation, void* ptr) noexcept
+    {
+        operation.scratch_space_ = ptr;
+    }
+
+    static void* get_scratch_space(const detail::OperationBase& operation) noexcept { return operation.scratch_space_; }
 };
 
 [[nodiscard]] constexpr bool is_ok(OperationResult result) noexcept { return result == OperationResult::OK; }

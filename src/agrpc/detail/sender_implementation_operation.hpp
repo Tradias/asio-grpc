@@ -105,7 +105,7 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
     template <AllocationType AllocType, int Id>
     void set_on_complete() noexcept
     {
-        detail::OperationBaseAccess::get_on_complete(*this) = &do_complete<AllocType, Id>;
+        detail::OperationBaseAccess::set_on_complete(*this, &do_complete<AllocType, Id>);
     }
 
     template <AllocationType AllocType, class... Args>

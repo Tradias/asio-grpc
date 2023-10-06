@@ -63,7 +63,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
 
     void write(const Response& response)
     {
-        get_on_complete() = &ServerWriteReactor::do_write_done;
+        set_on_complete(&ServerWriteReactor::do_write_done);
         writer_.Write(response, static_cast<StepBase*>(this));
     }
 
@@ -71,7 +71,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
 
     void finish(const grpc::Status& status)
     {
-        get_on_complete() = &ServerWriteReactor::do_finish_done;
+        set_on_complete(&ServerWriteReactor::do_finish_done);
         writer_.Finish(status, static_cast<StepBase*>(this));
     }
 
@@ -80,9 +80,9 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
   private:
     auto get_allocator() const noexcept { return grpc_context_->get_allocator(); }
 
-    auto& get_on_complete() noexcept
+    void set_on_complete(detail::OperationOnComplete on_complete) noexcept
     {
-        return detail::OperationBaseAccess::get_on_complete(*static_cast<StepBase*>(this));
+        detail::OperationBaseAccess::set_on_complete(*static_cast<StepBase*>(this), on_complete);
     }
 
     auto get_on_complete() const noexcept
@@ -90,7 +90,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
         return detail::OperationBaseAccess::get_on_complete(*static_cast<const StepBase*>(this));
     }
 
-    void set_step_done() noexcept { get_on_complete() = nullptr; }
+    void set_step_done() noexcept { set_on_complete(nullptr); }
 
     bool is_finishing_or_writing() const noexcept { return nullptr != get_on_complete(); }
 

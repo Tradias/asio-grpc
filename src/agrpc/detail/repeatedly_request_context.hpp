@@ -107,8 +107,8 @@ class RepeatedlyRequestOperation : public detail::QueueableOperationBase,
 
     void add_completing_operation(agrpc::GrpcContext& grpc_context)
     {
-        detail::OperationBaseAccess::get_on_complete(*this) =
-            detail::DO_COMPLETE_NO_ARG_HANDLER<RepeatedlyRequestOperation>;
+        detail::OperationBaseAccess::set_on_complete(*this,
+                                                     detail::DO_COMPLETE_NO_ARG_HANDLER<RepeatedlyRequestOperation>);
         detail::GrpcContextImplementation::add_local_operation(grpc_context, this);
     }
 

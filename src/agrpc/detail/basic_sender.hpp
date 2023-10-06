@@ -159,7 +159,7 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
     template <AllocationType, int Id>
     void set_on_complete() noexcept
     {
-        detail::OperationBaseAccess::get_on_complete(*this) = &do_complete<Id>;
+        detail::OperationBaseAccess::set_on_complete(*this, &do_complete<Id>);
     }
 
     template <AllocationType, class... Args>
@@ -169,17 +169,14 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
         detail::satisfy_receiver(static_cast<Receiver&&>(receiver()), static_cast<Args&&>(args)...);
     }
 
-    void put_into_scratch_space(void* ptr) noexcept
-    {
-        detail::OperationBaseAccess::get_on_complete(*this) = reinterpret_cast<detail::OperationOnComplete>(ptr);
-    }
+    void put_into_scratch_space(void* ptr) noexcept { detail::OperationBaseAccess::set_scratch_space(*this, ptr); }
 
     [[nodiscard]] void* get_scratch_space() const noexcept
     {
-        return reinterpret_cast<void*>(detail::OperationBaseAccess::get_on_complete(*this));
+        return detail::OperationBaseAccess::get_scratch_space(*this);
     }
 
-    void restore_scratch_space() noexcept { detail::OperationBaseAccess::get_on_complete(*this) = &do_complete; }
+    void restore_scratch_space() noexcept { detail::OperationBaseAccess::set_on_complete(*this, &do_complete); }
 
   private:
     detail::CompressedPair<detail::CompressedPair<Receiver, StopCallback>, Implementation> impl_;
