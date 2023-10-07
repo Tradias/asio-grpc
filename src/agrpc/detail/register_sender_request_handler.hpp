@@ -20,13 +20,13 @@
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/forward.hpp>
+#include <agrpc/detail/register_request_handler_base.hpp>
 #include <agrpc/detail/rpc_request.hpp>
 #include <agrpc/detail/sender_of.hpp>
 #include <agrpc/detail/server_rpc_context_base.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/grpc_context.hpp>
 
-#include <atomic>
 #include <optional>
 #include <variant>
 
@@ -34,9 +34,6 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class ServerRPC, class RequestHandler, class StopToken, class Allocator>
-struct RequestHandlerSenderOperationBase;
-
 template <class ServerRPC, class RequestHandler>
 class RequestHandlerSender : public detail::SenderOf<void()>
 {
@@ -52,71 +49,16 @@ class RequestHandlerSender : public detail::SenderOf<void()>
     }
 
     template <class Receiver>
-    auto connect(Receiver&& receiver) && noexcept(
-        detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver>&& std::is_nothrow_move_constructible_v<RequestHandler>);
+    auto connect(Receiver&& receiver) && noexcept(detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver> &&
+                                                  std::is_nothrow_move_constructible_v<RequestHandler>);
 
   private:
-    template <class, class, class, class>
-    friend struct detail::RequestHandlerSenderOperationBase;
+    template <class, class, class>
+    friend struct detail::RegisterRequestHandlerOperationBase;
 
     agrpc::GrpcContext& grpc_context_;
     Service& service_;
     RequestHandler request_handler_;
-};
-
-class RequestHandlerSenderOperationComplete
-{
-  public:
-    using Complete = void (*)(RequestHandlerSenderOperationComplete&) noexcept;
-
-    explicit RequestHandlerSenderOperationComplete(Complete complete) noexcept : complete_(complete) {}
-
-    void complete() noexcept { complete_(*this); }
-
-  private:
-    Complete complete_;
-};
-
-template <class ServerRPC, class RequestHandler, class StopToken, class Allocator>
-struct RequestHandlerSenderOperationBase : RequestHandlerSenderOperationComplete
-{
-    using Service = detail::GetServerRPCServiceT<ServerRPC>;
-    using Sender = RequestHandlerSender<ServerRPC, RequestHandler>;
-
-    RequestHandlerSenderOperationBase(Sender&& sender, RequestHandlerSenderOperationComplete::Complete complete)
-        : RequestHandlerSenderOperationComplete{complete}, sender_(static_cast<Sender&&>(sender))
-    {
-    }
-
-    bool is_stopped() const noexcept { return stop_context_.is_stopped(); }
-
-    void stop() noexcept { stop_context_.stop(); }
-
-    void create_and_start_request_handler_operation(const Allocator& allocator);
-
-    agrpc::GrpcContext& grpc_context() const noexcept { return sender_.grpc_context_; }
-
-    Service& service() const noexcept { return sender_.service_; }
-
-    const RequestHandler& request_handler() const noexcept { return sender_.request_handler_; }
-
-    void set_error(std::exception_ptr&& eptr) noexcept
-    {
-        if (!has_error_.exchange(true))
-        {
-            eptr_ = static_cast<std::exception_ptr&&>(eptr);
-        }
-    }
-
-    void increment_ref_count() noexcept { ++reference_count_; }
-
-    [[nodiscard]] bool decrement_ref_count() noexcept { return 0 == --reference_count_; }
-
-    Sender sender_;
-    std::atomic_size_t reference_count_{};
-    std::exception_ptr eptr_;
-    detail::AtomicBoolStopContext<StopToken> stop_context_;
-    std::atomic_bool has_error_{};
 };
 
 template <class Receiver, class Signature, bool IsSet>
@@ -172,6 +114,10 @@ struct RequestHandlerOperationWaitForDone
 };
 
 template <class ServerRPC, class RequestHandler, class StopToken, class Allocator>
+void create_and_start_request_handler_operation(
+    RegisterRequestHandlerOperationBase<ServerRPC, RequestHandler, StopToken>& operation, const Allocator& allocator);
+
+template <class ServerRPC, class RequestHandler, class StopToken, class Allocator>
 struct RequestHandlerOperation
 {
     using Service = detail::GetServerRPCServiceT<ServerRPC>;
@@ -180,8 +126,8 @@ struct RequestHandlerOperation
         detail::RPCRequest<typename ServerRPC::Request, detail::has_initial_request(ServerRPC::TYPE)>;
     using RequestHandlerInvokeResult =
         decltype(std::declval<InitialRequest>().invoke(std::declval<RequestHandler>(), std::declval<ServerRPC&>()));
-    using RequestHandlerSenderOperationBase =
-        detail::RequestHandlerSenderOperationBase<ServerRPC, RequestHandler, StopToken, Allocator>;
+    using RegisterRequestHandlerOperationBase =
+        detail::RegisterRequestHandlerOperationBase<ServerRPC, RequestHandler, StopToken>;
 
     static_assert(exec::is_sender_v<RequestHandlerInvokeResult>, "Request handler must return a sender.");
 
@@ -203,7 +149,7 @@ struct RequestHandlerOperation
                     base.set_error(static_cast<std::exception_ptr&&>(*exception_ptr));
                     return;
                 }
-                base.create_and_start_request_handler_operation(request_handler_op_.get_allocator());
+                detail::create_and_start_request_handler_operation(base, request_handler_op_.get_allocator());
                 request_handler_op_.start_request_handler_operation_state();
                 ptr.release();
             }
@@ -255,7 +201,7 @@ struct RequestHandlerOperation
 
     using OperationState = std::variant<StartOperationState, FinishOperationState, WaitForDoneOperationState>;
 
-    explicit RequestHandlerOperation(RequestHandlerSenderOperationBase& operation, const Allocator& allocator)
+    explicit RequestHandlerOperation(RegisterRequestHandlerOperationBase& operation, const Allocator& allocator)
         : base_(operation),
           impl1_(operation.request_handler()),
           rpc_(detail::ServerRPCContextBaseAccess::construct<ServerRPC>(operation.grpc_context().get_executor())),
@@ -328,37 +274,34 @@ struct RequestHandlerOperation
 
     auto& get_allocator() noexcept { return impl2_.second(); }
 
-    RequestHandlerSenderOperationBase& base_;
+    RegisterRequestHandlerOperationBase& base_;
     detail::CompressedPair<RequestHandler, InitialRequest> impl1_;
     ServerRPC rpc_;
     detail::CompressedPair<OperationState, Allocator> impl2_;
 };
 
 template <class ServerRPC, class RequestHandler, class StopToken, class Allocator>
-inline void
-RequestHandlerSenderOperationBase<ServerRPC, RequestHandler, StopToken,
-                                  Allocator>::create_and_start_request_handler_operation(const Allocator& allocator)
+void create_and_start_request_handler_operation(
+    RegisterRequestHandlerOperationBase<ServerRPC, RequestHandler, StopToken>& operation, const Allocator& allocator)
 {
-    if AGRPC_UNLIKELY (is_stopped())
+    if AGRPC_UNLIKELY (operation.is_stopped())
     {
         return;
     }
     using RequestHandlerOperation = detail::RequestHandlerOperation<ServerRPC, RequestHandler, StopToken, Allocator>;
-    auto request_handler_operation = detail::allocate<RequestHandlerOperation>(allocator, *this, allocator);
+    auto request_handler_operation = detail::allocate<RequestHandlerOperation>(allocator, operation, allocator);
     request_handler_operation->start();
     request_handler_operation.release();
-    return;
 }
 
 template <class ServerRPC, class RequestHandler, class Receiver>
-class RequestHandlerSenderOperation : public detail::RequestHandlerSenderOperationBase<
-                                          ServerRPC, RequestHandler, exec::stop_token_type_t<Receiver&>,
-                                          detail::RemoveCrefT<decltype(exec::get_allocator(std::declval<Receiver&>()))>>
+class RequestHandlerSenderOperation
+    : public detail::RegisterRequestHandlerOperationBase<ServerRPC, RequestHandler, exec::stop_token_type_t<Receiver&>>
 {
   private:
     using StopToken = exec::stop_token_type_t<Receiver&>;
+    using Base = detail::RegisterRequestHandlerOperationBase<ServerRPC, RequestHandler, StopToken>;
     using Allocator = detail::RemoveCrefT<decltype(exec::get_allocator(std::declval<Receiver&>()))>;
-    using Base = detail::RequestHandlerSenderOperationBase<ServerRPC, RequestHandler, StopToken, Allocator>;
     using RequestHandlerOperation = detail::RequestHandlerOperation<ServerRPC, RequestHandler, StopToken, Allocator>;
     using RequestHandlerSender = detail::RequestHandlerSender<ServerRPC, RequestHandler>;
 
@@ -379,7 +322,7 @@ class RequestHandlerSenderOperation : public detail::RequestHandlerSenderOperati
             return;
         }
         this->stop_context_.emplace(std::move(stop_token));
-        this->create_and_start_request_handler_operation(get_allocator());
+        detail::create_and_start_request_handler_operation(*this, get_allocator());
     }
 
   private:
@@ -391,7 +334,7 @@ class RequestHandlerSenderOperation : public detail::RequestHandlerSenderOperati
     {
     }
 
-    static void complete_impl(RequestHandlerSenderOperationComplete& operation) noexcept
+    static void complete_impl(RegisterRequestHandlerOperationComplete& operation) noexcept
     {
         auto& self = static_cast<RequestHandlerSenderOperation&>(operation);
         self.stop_context_.reset();
@@ -413,7 +356,7 @@ class RequestHandlerSenderOperation : public detail::RequestHandlerSenderOperati
 template <class ServerRPC, class RequestHandler>
 template <class Receiver>
 inline auto RequestHandlerSender<ServerRPC, RequestHandler>::connect(Receiver&& receiver) && noexcept(
-    detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver>&& std::is_nothrow_move_constructible_v<RequestHandler>)
+    detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver> && std::is_nothrow_move_constructible_v<RequestHandler>)
 {
     return RequestHandlerSenderOperation<ServerRPC, RequestHandler, detail::RemoveCrefT<Receiver>>{
         static_cast<RequestHandlerSender&&>(*this), static_cast<Receiver&&>(receiver)};

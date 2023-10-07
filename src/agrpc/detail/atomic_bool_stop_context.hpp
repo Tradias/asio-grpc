@@ -88,6 +88,8 @@ class AtomicBoolStopContext<StopToken, false>
     [[nodiscard]] static constexpr bool is_stopped() noexcept { return false; }
 
     static constexpr void reset() noexcept {}
+
+    static constexpr void stop() noexcept {}
 };
 }
 

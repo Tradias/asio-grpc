@@ -52,30 +52,25 @@ struct ClientServerRPCTest : std::conditional_t<(agrpc::ClientRPCType::GENERIC_U
     template <class RequestHandler, class... ClientFunctions>
     void register_perform_requests_no_shutdown(RequestHandler&& handler, ClientFunctions&&... client_functions)
     {
-        test::spawn_and_run(
-            this->grpc_context,
-            [&](const asio::yield_context& yield)
-            {
-                agrpc::register_yield_request_handler<ServerRPC>(this->get_executor(), this->service, handler, yield);
-            },
-            [&client_functions](const asio::yield_context& yield)
-            {
-                typename ClientRPC::Request request;
-                typename ClientRPC::Response response;
-                client_functions(request, response, yield);
-            }...);
+        agrpc::register_yield_request_handler<ServerRPC>(this->get_executor(), this->service, handler,
+                                                         test::RethrowFirstArg{});
+        test::spawn_and_run(this->grpc_context,
+                            [&client_functions](const asio::yield_context& yield)
+                            {
+                                typename ClientRPC::Request request;
+                                typename ClientRPC::Response response;
+                                client_functions(request, response, yield);
+                            }...);
     }
 
     template <class RequestHandler, class... ClientFunctions>
     void register_and_perform_requests(RequestHandler&& handler, ClientFunctions&&... client_functions)
     {
         int counter{};
+        agrpc::register_yield_request_handler<ServerRPC>(this->get_executor(), this->service, handler,
+                                                         test::RethrowFirstArg{});
         test::spawn_and_run(
             this->grpc_context,
-            [&](const asio::yield_context& yield)
-            {
-                agrpc::register_yield_request_handler<ServerRPC>(this->get_executor(), this->service, handler, yield);
-            },
             [&counter, &client_functions, &server_shutdown = this->server_shutdown](const asio::yield_context& yield)
             {
                 typename ClientRPC::Request request;

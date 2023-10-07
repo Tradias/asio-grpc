@@ -15,17 +15,15 @@
 #ifndef AGRPC_AGRPC_REGISTER_AWAITABLE_REQUEST_HANDLER_HPP
 #define AGRPC_AGRPC_REGISTER_AWAITABLE_REQUEST_HANDLER_HPP
 
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
+
+#ifdef AGRPC_ASIO_HAS_CO_AWAIT
+
 #include <agrpc/detail/rethrow_first_arg.hpp>
 #include <agrpc/detail/rpc_request.hpp>
 #include <agrpc/detail/start_server_rpc.hpp>
 #include <agrpc/grpc_context.hpp>
-
-#ifdef AGRPC_STANDALONE_ASIO
-#include <asio/co_spawn.hpp>
-#elif defined(AGRPC_BOOST_ASIO)
-#include <boost/asio/co_spawn.hpp>
-#endif
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -63,5 +61,7 @@ asio::awaitable<void, Executor> register_awaitable_request_handler(typename Serv
 }
 
 AGRPC_NAMESPACE_END
+
+#endif
 
 #endif  // AGRPC_AGRPC_REGISTER_AWAITABLE_REQUEST_HANDLER_HPP

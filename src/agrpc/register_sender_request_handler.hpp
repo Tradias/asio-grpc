@@ -15,7 +15,7 @@
 #ifndef AGRPC_AGRPC_REGISTER_SENDER_REQUEST_HANDLER_HPP
 #define AGRPC_AGRPC_REGISTER_SENDER_REQUEST_HANDLER_HPP
 
-#include <agrpc/detail/request_handler_sender.hpp>
+#include <agrpc/detail/register_sender_request_handler.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

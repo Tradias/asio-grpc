@@ -16,66 +16,17 @@
 #define AGRPC_AGRPC_REGISTER_YIELD_REQUEST_HANDLER_HPP
 
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/rethrow_first_arg.hpp>
-#include <agrpc/detail/rpc_request.hpp>
-#include <agrpc/detail/start_server_rpc.hpp>
-#include <agrpc/grpc_context.hpp>
-
-#ifdef AGRPC_STANDALONE_ASIO
-#include <asio/spawn.hpp>
-#elif defined(AGRPC_BOOST_ASIO)
-#include <boost/asio/spawn.hpp>
-#endif
+#include <agrpc/detail/register_yield_request_handler.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
-namespace detail
+template <class ServerRPC, class Service, class RequestHandler, class CompletionToken>
+auto register_yield_request_handler(const typename ServerRPC::executor_type& executor, Service& service,
+                                    RequestHandler request_handler, CompletionToken token)
 {
-template <class Executor, class Function>
-void spawn(Executor&& executor, Function&& function)
-{
-#ifdef AGRPC_ASIO_HAS_NEW_SPAWN
-    asio::spawn(static_cast<Executor&&>(executor), static_cast<Function&&>(function), detail::RethrowFirstArg{});
-#else
-    asio::spawn(static_cast<Executor&&>(executor), static_cast<Function&&>(function));
-#endif
-}
-}
-
-template <class ServerRPC, class Service, class RequestHandler, class Executor>
-void register_yield_request_handler(const typename ServerRPC::executor_type& executor, Service& service,
-                                    RequestHandler request_handler, const asio::basic_yield_context<Executor>& yield)
-{
-    auto rpc = detail::ServerRPCContextBaseAccess::construct<ServerRPC>(executor);
-    detail::RPCRequest<typename ServerRPC::Request, detail::has_initial_request(ServerRPC::TYPE)> req;
-    if (!req.start(rpc, service, yield))
-    {
-        return;
-    }
-    detail::spawn(yield,
-                  [executor, &service, request_handler](const asio::basic_yield_context<Executor>& next_yield) mutable
-                  {
-                      agrpc::register_yield_request_handler<ServerRPC>(
-                          executor, service, static_cast<RequestHandler&&>(request_handler), next_yield);
-                  });
-    std::exception_ptr eptr;
-    AGRPC_TRY { req.invoke(static_cast<RequestHandler&&>(request_handler), rpc, yield); }
-    AGRPC_CATCH(...) { eptr = std::current_exception(); }
-    if (!detail::ServerRPCContextBaseAccess::is_finished(rpc))
-    {
-        rpc.cancel();
-    }
-    if constexpr (ServerRPC::Traits::NOTIFY_WHEN_DONE)
-    {
-        if (!rpc.is_done())
-        {
-            rpc.wait_for_done(yield);
-        }
-    }
-    if (eptr)
-    {
-        std::rethrow_exception(eptr);
-    }
+    return asio::async_initiate<CompletionToken, void(std::exception_ptr)>(
+        detail::YieldRequestHandlerInitiator<ServerRPC>{}, token, executor, service,
+        static_cast<RequestHandler&&>(request_handler));
 }
 
 AGRPC_NAMESPACE_END

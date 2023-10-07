@@ -17,8 +17,6 @@
 
 #include <agrpc/detail/operation_base.hpp>
 
-#include <type_traits>
-
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
