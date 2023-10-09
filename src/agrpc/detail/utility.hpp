@@ -17,7 +17,6 @@
 
 #include <agrpc/detail/config.hpp>
 
-#include <cstddef>
 #include <type_traits>
 #include <utility>
 
@@ -318,6 +317,12 @@ struct InplaceWithFunctionWrapper
 
 template <class T>
 inline constexpr bool IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V = std::is_nothrow_constructible_v<detail::RemoveCrefT<T>, T>;
+
+template <class Enum>
+constexpr std::underlying_type_t<Enum> to_underlying(Enum e) noexcept
+{
+    return static_cast<std::underlying_type_t<Enum>>(e);
+}
 }
 
 AGRPC_NAMESPACE_END

@@ -20,10 +20,6 @@
 #include <agrpc/detail/rethrow_first_arg.hpp>
 #include <agrpc/detail/utility.hpp>
 
-#include <exception>
-
-#ifdef AGRPC_ASIO_HAS_CO_AWAIT
-
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
@@ -62,6 +58,7 @@ struct CompletionHandlerType<
 template <class CompletionToken, class Signature>
 using CompletionHandlerTypeT = typename CompletionHandlerType<CompletionToken, Signature>::Type;
 
+#ifdef AGRPC_ASIO_HAS_CO_AWAIT
 template <class Coroutine>
 struct CoroutineTraits;
 
@@ -83,10 +80,9 @@ using CoroutineCompletionTokenT = typename detail::CoroutineTraits<Coroutine>::C
 
 template <class Coroutine>
 using CoroutineExecutorT = typename detail::CoroutineTraits<Coroutine>::ExecutorType;
+#endif
 }
 
 AGRPC_NAMESPACE_END
-
-#endif
 
 #endif  // AGRPC_DETAIL_COROUTINE_TRAITS_HPP

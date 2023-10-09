@@ -65,6 +65,9 @@ class BufferAllocator
 
     Buffer* buffer_;
 };
+
+template <class Buffer>
+BufferAllocator(Buffer&) -> BufferAllocator<std::byte, Buffer>;
 }
 
 AGRPC_NAMESPACE_END

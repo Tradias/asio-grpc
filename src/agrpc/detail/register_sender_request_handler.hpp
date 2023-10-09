@@ -34,6 +34,9 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+template <class ServerRPC, class RequestHandler, class StopToken>
+struct RegisterRequestHandlerSenderOperationBase;
+
 template <class ServerRPC, class RequestHandler>
 class RequestHandlerSender : public detail::SenderOf<void()>
 {
@@ -54,11 +57,27 @@ class RequestHandlerSender : public detail::SenderOf<void()>
 
   private:
     template <class, class, class>
-    friend struct detail::RegisterRequestHandlerOperationBase;
+    friend struct detail::RegisterRequestHandlerSenderOperationBase;
 
     agrpc::GrpcContext& grpc_context_;
     Service& service_;
     RequestHandler request_handler_;
+};
+
+template <class ServerRPC, class RequestHandler, class StopToken>
+struct RegisterRequestHandlerSenderOperationBase
+    : RegisterRequestHandlerOperationBase<ServerRPC, RequestHandler, StopToken>,
+      RegisterRequestHandlerOperationComplete
+{
+    RegisterRequestHandlerSenderOperationBase(RequestHandlerSender<ServerRPC, RequestHandler>&& sender,
+                                              RegisterRequestHandlerOperationComplete::Complete complete)
+        : RegisterRequestHandlerOperationBase<ServerRPC, RequestHandler, StopToken>{sender.grpc_context_,
+                                                                                    sender.service_,
+                                                                                    static_cast<RequestHandler&&>(
+                                                                                        sender.request_handler_)},
+          RegisterRequestHandlerOperationComplete{complete}
+    {
+    }
 };
 
 template <class Receiver, class Signature, bool IsSet>
@@ -115,7 +134,8 @@ struct RequestHandlerOperationWaitForDone
 
 template <class ServerRPC, class RequestHandler, class StopToken, class Allocator>
 void create_and_start_request_handler_operation(
-    RegisterRequestHandlerOperationBase<ServerRPC, RequestHandler, StopToken>& operation, const Allocator& allocator);
+    RegisterRequestHandlerSenderOperationBase<ServerRPC, RequestHandler, StopToken>& operation,
+    const Allocator& allocator);
 
 template <class ServerRPC, class RequestHandler, class StopToken, class Allocator>
 struct RequestHandlerOperation
@@ -126,8 +146,8 @@ struct RequestHandlerOperation
         detail::RPCRequest<typename ServerRPC::Request, detail::has_initial_request(ServerRPC::TYPE)>;
     using RequestHandlerInvokeResult =
         decltype(std::declval<InitialRequest>().invoke(std::declval<RequestHandler>(), std::declval<ServerRPC&>()));
-    using RegisterRequestHandlerOperationBase =
-        detail::RegisterRequestHandlerOperationBase<ServerRPC, RequestHandler, StopToken>;
+    using RegisterRequestHandlerSenderOperationBase =
+        detail::RegisterRequestHandlerSenderOperationBase<ServerRPC, RequestHandler, StopToken>;
 
     static_assert(exec::is_sender_v<RequestHandlerInvokeResult>, "Request handler must return a sender.");
 
@@ -201,7 +221,7 @@ struct RequestHandlerOperation
 
     using OperationState = std::variant<StartOperationState, FinishOperationState, WaitForDoneOperationState>;
 
-    explicit RequestHandlerOperation(RegisterRequestHandlerOperationBase& operation, const Allocator& allocator)
+    explicit RequestHandlerOperation(RegisterRequestHandlerSenderOperationBase& operation, const Allocator& allocator)
         : base_(operation),
           impl1_(operation.request_handler()),
           rpc_(detail::ServerRPCContextBaseAccess::construct<ServerRPC>(operation.grpc_context().get_executor())),
@@ -274,7 +294,7 @@ struct RequestHandlerOperation
 
     auto& get_allocator() noexcept { return impl2_.second(); }
 
-    RegisterRequestHandlerOperationBase& base_;
+    RegisterRequestHandlerSenderOperationBase& base_;
     detail::CompressedPair<RequestHandler, InitialRequest> impl1_;
     ServerRPC rpc_;
     detail::CompressedPair<OperationState, Allocator> impl2_;
@@ -282,7 +302,8 @@ struct RequestHandlerOperation
 
 template <class ServerRPC, class RequestHandler, class StopToken, class Allocator>
 void create_and_start_request_handler_operation(
-    RegisterRequestHandlerOperationBase<ServerRPC, RequestHandler, StopToken>& operation, const Allocator& allocator)
+    RegisterRequestHandlerSenderOperationBase<ServerRPC, RequestHandler, StopToken>& operation,
+    const Allocator& allocator)
 {
     if AGRPC_UNLIKELY (operation.is_stopped())
     {
@@ -296,11 +317,12 @@ void create_and_start_request_handler_operation(
 
 template <class ServerRPC, class RequestHandler, class Receiver>
 class RequestHandlerSenderOperation
-    : public detail::RegisterRequestHandlerOperationBase<ServerRPC, RequestHandler, exec::stop_token_type_t<Receiver&>>
+    : public detail::RegisterRequestHandlerSenderOperationBase<ServerRPC, RequestHandler,
+                                                               exec::stop_token_type_t<Receiver&>>
 {
   private:
     using StopToken = exec::stop_token_type_t<Receiver&>;
-    using Base = detail::RegisterRequestHandlerOperationBase<ServerRPC, RequestHandler, StopToken>;
+    using Base = detail::RegisterRequestHandlerSenderOperationBase<ServerRPC, RequestHandler, StopToken>;
     using Allocator = detail::RemoveCrefT<decltype(exec::get_allocator(std::declval<Receiver&>()))>;
     using RequestHandlerOperation = detail::RequestHandlerOperation<ServerRPC, RequestHandler, StopToken, Allocator>;
     using RequestHandlerSender = detail::RequestHandlerSender<ServerRPC, RequestHandler>;

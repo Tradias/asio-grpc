@@ -15,7 +15,9 @@
 #ifndef AGRPC_DETAIL_REGISTER_YIELD_REQUEST_HANDLER_HPP
 #define AGRPC_DETAIL_REGISTER_YIELD_REQUEST_HANDLER_HPP
 
+#include <agrpc/detail/buffer_allocator.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/coroutine_traits.hpp>
 #include <agrpc/detail/register_request_handler_base.hpp>
 #include <agrpc/detail/rethrow_first_arg.hpp>
 #include <agrpc/detail/rpc_request.hpp>
@@ -48,10 +50,27 @@ struct YieldRequestHandlerOperation
                                                   exec::stop_token_type_t<CompletionHandler&>>,
       detail::QueueableOperationBase
 {
+    static constexpr auto COMPLETE =
+        static_cast<detail::OperationResult>(detail::to_underlying(detail::OperationResult::OK) + 1);
+
     using StopToken = exec::stop_token_type_t<CompletionHandler&>;
     using Base = detail::RegisterRequestHandlerOperationBase<ServerRPC, RequestHandler, StopToken>;
     using typename Base::Service;
+    using Executor = asio::associated_executor_t<CompletionHandler, agrpc::GrpcExecutor>;
     using Allocator = asio::associated_allocator_t<CompletionHandler>;
+    using RPCRequest = detail::RPCRequest<typename ServerRPC::Request, detail::has_initial_request(ServerRPC::TYPE)>;
+
+#ifdef AGRPC_ASIO_HAS_NEW_SPAWN
+    using YieldCompletionHandler = detail::CompletionHandlerTypeT<asio::basic_yield_context<Executor>, void(bool)>;
+#else
+    using YieldCompletionHandler = detail::CompletionHandlerUnknown;
+#endif
+
+    static constexpr auto BUFFER_SIZE = sizeof(YieldCompletionHandler) + 3 * sizeof(void*);
+
+    using YieldCompletionHandlerBuffer =
+        detail::ConditionalT<std::is_same_v<detail::CompletionHandlerUnknown, YieldCompletionHandler>,
+                             detail::DelayedBuffer, detail::StackBuffer<BUFFER_SIZE>>;
 
     struct Decrementer
     {
@@ -59,32 +78,30 @@ struct YieldRequestHandlerOperation
         {
             if (self_.decrement_ref_count())
             {
-                self_.Base::complete();
+                self_.complete(COMPLETE, self_.grpc_context());
             }
         }
 
         YieldRequestHandlerOperation& self_;
     };
 
-    static void complete_impl(RegisterRequestHandlerOperationComplete& operation) noexcept
-    {
-        auto& self = static_cast<YieldRequestHandlerOperation&>(operation);
-        detail::AllocationGuard guard{&self, self.get_allocator()};
-        if AGRPC_LIKELY (!detail::GrpcContextImplementation::is_shutdown(self.grpc_context()))
-        {
-            detail::GrpcContextImplementation::add_operation(self.grpc_context(), &self);
-            guard.release();
-        }
-    }
-
     static void do_complete(detail::OperationBase* operation, detail::OperationResult result, agrpc::GrpcContext&)
     {
         auto& self = *static_cast<YieldRequestHandlerOperation*>(operation);
         detail::AllocationGuard guard{&self, self.get_allocator()};
+        if (COMPLETE == result)
+        {
+            if AGRPC_LIKELY (!detail::GrpcContextImplementation::is_shutdown(self.grpc_context()))
+            {
+                detail::GrpcContextImplementation::add_operation(self.grpc_context(), &self);
+                guard.release();
+            }
+            return;
+        }
         if AGRPC_LIKELY (!detail::is_shutdown(result))
         {
             auto handler{static_cast<CompletionHandler&&>(self.completion_handler_)};
-            auto eptr = static_cast<std::exception_ptr&&>(self.error());
+            auto eptr{static_cast<std::exception_ptr&&>(self.error())};
             guard.reset();
             static_cast<CompletionHandler&&>(handler)(static_cast<std::exception_ptr&&>(eptr));
         }
@@ -93,7 +110,7 @@ struct YieldRequestHandlerOperation
     template <class Ch>
     YieldRequestHandlerOperation(agrpc::GrpcContext& grpc_context, Service& service, RequestHandler&& request_handler,
                                  Ch&& completion_handler)
-        : Base(grpc_context, service, static_cast<RequestHandler&&>(request_handler), &complete_impl),
+        : Base(grpc_context, service, static_cast<RequestHandler&&>(request_handler)),
           detail::QueueableOperationBase(&do_complete),
           completion_handler_(static_cast<Ch&&>(completion_handler))
     {
@@ -105,7 +122,7 @@ struct YieldRequestHandlerOperation
     void initiate()
     {
         this->increment_ref_count();
-        detail::spawn(asio::get_associated_executor(this->completion_handler_, this->grpc_context()),
+        detail::spawn(asio::get_associated_executor(completion_handler_, this->grpc_context()),
                       [g = detail::ScopeGuard<Decrementer>{*this}](const auto& yield)
                       {
                           g.get().self_.perform_request_and_repeat(yield);
@@ -120,12 +137,12 @@ struct YieldRequestHandlerOperation
         }
     }
 
-    template <class Executor>
-    void perform_request_and_repeat(const asio::basic_yield_context<Executor>& yield)
+    template <class Yield>
+    void perform_request_and_repeat(const Yield& yield)
     {
         auto rpc = detail::ServerRPCContextBaseAccess::construct<ServerRPC>(this->grpc_context().get_executor());
-        detail::RPCRequest<typename ServerRPC::Request, detail::has_initial_request(ServerRPC::TYPE)> req;
-        if (!req.start(rpc, this->service(), agrpc::AllocatorBinder(this->get_allocator(), yield)))
+        RPCRequest req;
+        if (!req.start(rpc, this->service(), agrpc::AllocatorBinder(detail::BufferAllocator{buffer_}, yield)))
         {
             return;
         }
@@ -151,6 +168,7 @@ struct YieldRequestHandlerOperation
 
     decltype(auto) get_allocator() noexcept { return exec::get_allocator(completion_handler_); }
 
+    YieldCompletionHandlerBuffer buffer_;
     CompletionHandler completion_handler_;
 };
 

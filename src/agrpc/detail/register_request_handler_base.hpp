@@ -42,24 +42,13 @@ class RegisterRequestHandlerOperationComplete
 };
 
 template <class ServerRPC, class RequestHandler, class StopToken>
-struct RegisterRequestHandlerOperationBase : RegisterRequestHandlerOperationComplete
+struct RegisterRequestHandlerOperationBase
 {
     using Service = detail::GetServerRPCServiceT<ServerRPC>;
 
-    template <class Sender>
-    RegisterRequestHandlerOperationBase(Sender&& sender, RegisterRequestHandlerOperationComplete::Complete complete)
-        : RegisterRequestHandlerOperationComplete{complete},
-          grpc_context_(sender.grpc_context_),
-          service_(sender.service_),
-          request_handler_(std::move(sender.request_handler_))
-    {
-    }
-
     RegisterRequestHandlerOperationBase(agrpc::GrpcContext& grpc_context, Service& service,
-                                        RequestHandler&& request_handler,
-                                        RegisterRequestHandlerOperationComplete::Complete complete)
-        : RegisterRequestHandlerOperationComplete{complete},
-          grpc_context_(grpc_context),
+                                        RequestHandler&& request_handler)
+        : grpc_context_(grpc_context),
           service_(service),
           request_handler_(static_cast<RequestHandler&&>(request_handler))
     {
@@ -93,9 +82,9 @@ struct RegisterRequestHandlerOperationBase : RegisterRequestHandlerOperationComp
     Service& service_;
     std::atomic_size_t reference_count_{};
     std::exception_ptr eptr_{};
-    RequestHandler request_handler_;
-    detail::AtomicBoolStopContext<StopToken> stop_context_;
     std::atomic_bool has_error_{};
+    detail::AtomicBoolStopContext<StopToken> stop_context_;
+    RequestHandler request_handler_;
 };
 }
 
