@@ -20,44 +20,18 @@
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 
-#include <agrpc/detail/rethrow_first_arg.hpp>
-#include <agrpc/detail/rpc_request.hpp>
-#include <agrpc/detail/start_server_rpc.hpp>
-#include <agrpc/grpc_context.hpp>
+#include <agrpc/detail/register_awaitable_request_handler.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
-template <class ServerRPC, class Service, class RequestHandler, class Executor = asio::any_io_executor>
-asio::awaitable<void, Executor> register_awaitable_request_handler(typename ServerRPC::executor_type executor,
-                                                                   Service& service, RequestHandler request_handler)
+template <class ServerRPC, class RequestHandler, class CompletionToken>
+auto register_awaitable_request_handler(const typename ServerRPC::executor_type& executor,
+                                        detail::GetServerRPCServiceT<ServerRPC>& service,
+                                        RequestHandler request_handler, CompletionToken token)
 {
-    auto rpc = detail::ServerRPCContextBaseAccess::construct<ServerRPC>(executor);
-    detail::RPCRequest<typename ServerRPC::Request, detail::has_initial_request(ServerRPC::TYPE)> req;
-    if (!co_await req.start(rpc, service, asio::use_awaitable_t<Executor>{}))
-    {
-        co_return;
-    }
-    asio::co_spawn(co_await asio::this_coro::executor,
-                   agrpc::register_awaitable_request_handler<ServerRPC>(executor, service, request_handler),
-                   detail::RethrowFirstArg{});
-    std::exception_ptr eptr;
-    AGRPC_TRY { co_await req.invoke(static_cast<RequestHandler&&>(request_handler), rpc); }
-    AGRPC_CATCH(...) { eptr = std::current_exception(); }
-    if (!detail::ServerRPCContextBaseAccess::is_finished(rpc))
-    {
-        rpc.cancel();
-    }
-    if constexpr (ServerRPC::Traits::NOTIFY_WHEN_DONE)
-    {
-        if (!rpc.is_done())
-        {
-            co_await rpc.wait_for_done(asio::use_awaitable_t<Executor>{});
-        }
-    }
-    if (eptr)
-    {
-        std::rethrow_exception(eptr);
-    }
+    return asio::async_initiate<CompletionToken, void(std::exception_ptr)>(
+        detail::AwaitableRequestHandlerInitiator<ServerRPC>{}, token, executor, service,
+        static_cast<RequestHandler&&>(request_handler));
 }
 
 AGRPC_NAMESPACE_END

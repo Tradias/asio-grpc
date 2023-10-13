@@ -250,14 +250,10 @@ int main(int argc, const char** argv)
 
     asio::thread_pool thread_pool{1};
 
-    asio::co_spawn(grpc_context,
-                   agrpc::register_awaitable_request_handler<ClientStreamingRPC>(grpc_context.get_executor(), service,
-                                                                                 &handle_client_streaming_request),
-                   asio::detached);
-    asio::co_spawn(grpc_context,
-                   agrpc::register_awaitable_request_handler<ServerStreamingRPC>(grpc_context.get_executor(), service,
-                                                                                 &handle_server_streaming_request),
-                   asio::detached);
+    agrpc::register_awaitable_request_handler<ClientStreamingRPC>(grpc_context.get_executor(), service,
+                                                                  &handle_client_streaming_request, asio::detached);
+    agrpc::register_awaitable_request_handler<ServerStreamingRPC>(grpc_context.get_executor(), service,
+                                                                  &handle_server_streaming_request, asio::detached);
     asio::co_spawn(grpc_context, handle_bidirectional_streaming_request(service, thread_pool), asio::detached);
     asio::co_spawn(grpc_context, handle_slow_unary_request(service_ext), asio::detached);
     asio::co_spawn(grpc_context, handle_shutdown_request(service_ext, server_shutdown), asio::detached);

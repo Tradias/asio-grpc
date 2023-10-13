@@ -32,26 +32,31 @@
 #include <optional>
 #include <thread>
 
-struct UnifexTest : virtual test::GrpcContextTest
+template <class Base>
+struct UnifexTestMixin : Base
 {
     template <class... Sender>
     void run(Sender&&... sender)
     {
-        grpc_context.work_started();
+        this->grpc_context.work_started();
         unifex::sync_wait(unifex::when_all(
             unifex::finally(unifex::with_query_value(unifex::when_all(std::forward<Sender>(sender)...),
                                                      unifex::get_scheduler, unifex::inline_scheduler{}),
                             unifex::then(unifex::just(),
                                          [&]
                                          {
-                                             grpc_context.work_finished();
+                                             this->grpc_context.work_finished();
                                          })),
             unifex::then(unifex::just(),
                          [&]
                          {
-                             grpc_context.run();
+                             this->grpc_context.run();
                          })));
     }
+};
+
+struct UnifexTest : UnifexTestMixin<test::GrpcContextTest>
+{
 };
 
 TEST_CASE("unifex asio-grpc fulfills std::execution concepts")
@@ -293,7 +298,7 @@ TEST_CASE("unifex GrpcContext.stop() with pending GrpcSender operation")
     CHECK_FALSE(invoked);
 }
 
-struct UnifexRepeatedlyRequestTest : UnifexTest, test::GrpcClientServerTest
+struct UnifexRepeatedlyRequestTest : UnifexTestMixin<test::GrpcClientServerTest>
 {
     struct Context
     {
@@ -580,7 +585,7 @@ TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex repeatedly_request unary 
     CHECK_EQ(42, count);
 }
 
-struct UnifexClientServerTest : UnifexTest, test::GrpcClientServerTest
+struct UnifexClientServerTest : UnifexTestMixin<test::GrpcClientServerTest>
 {
 };
 
@@ -666,7 +671,7 @@ TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex repeatedly_request client stre
     CHECK_EQ(4, request_count);
 }
 
-struct UnifexClientRPCTest : test::ClientServerRPCTest<test::BidirectionalStreamingClientRPC>, UnifexTest
+struct UnifexClientRPCTest : UnifexTestMixin<test::ClientServerRPCTest<test::BidirectionalStreamingClientRPC>>
 {
     template <class RPC, class RequestHandler, class... ClientFunctions>
     void register_and_perform_requests(RequestHandler&& handler, ClientFunctions&&... client_functions)

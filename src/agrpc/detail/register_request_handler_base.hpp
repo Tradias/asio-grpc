@@ -54,7 +54,10 @@ struct RegisterRequestHandlerOperationBase
     {
     }
 
-    bool is_stopped() const noexcept { return stop_context_.is_stopped(); }
+    bool is_stopped() const noexcept
+    {
+        return stop_context_.is_stopped() || has_error_.load(std::memory_order_relaxed);
+    }
 
     void stop() noexcept { stop_context_.stop(); }
 

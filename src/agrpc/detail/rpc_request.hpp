@@ -38,7 +38,7 @@ struct RPCRequest
     }
 
     template <class Handler, class RPC, class... Args>
-    auto invoke(Handler&& handler, RPC& rpc, Args&&... args)
+    decltype(auto) invoke(Handler&& handler, RPC& rpc, Args&&... args)
     {
         return static_cast<Handler&&>(handler)(rpc, request_, static_cast<Args&&>(args)...);
     }
@@ -56,7 +56,7 @@ struct RPCRequest<Request, false>
     }
 
     template <class Handler, class RPC, class... Args>
-    auto invoke(Handler&& handler, RPC& rpc, Args&&... args)
+    decltype(auto) invoke(Handler&& handler, RPC& rpc, Args&&... args)
     {
         return static_cast<Handler&&>(handler)(rpc, static_cast<Args&&>(args)...);
     }
