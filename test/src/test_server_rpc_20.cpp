@@ -39,20 +39,19 @@ struct ServerRPCAwaitableTest : test::ClientServerRPCTest<typename test::Introsp
     template <class... ClientFunctions>
     void perform_requests_in_order(ClientFunctions&&... client_functions)
     {
-        test::spawn_and_run(
-            this->grpc_context,
-            [&server_shutdown = this->server_shutdown, &client_functions...](const asio::yield_context& yield)
-            {
-                (
-                    [&]
-                    {
-                        typename ClientRPC::Request request;
-                        typename ClientRPC::Response response;
-                        client_functions(request, response, yield);
-                    }(),
-                    ...);
-                server_shutdown.initiate();
-            });
+        test::spawn_and_run(this->grpc_context,
+                            [&](const asio::yield_context& yield)
+                            {
+                                (
+                                    [&]
+                                    {
+                                        typename ClientRPC::Request request;
+                                        typename ClientRPC::Response response;
+                                        client_functions(request, response, yield);
+                                    }(),
+                                    ...);
+                                this->server_shutdown.initiate();
+                            });
     }
 
     template <class... ClientFunctions>
@@ -90,7 +89,7 @@ struct ServerRPCAwaitableTest : test::ClientServerRPCTest<typename test::Introsp
     }
 };
 
-TEST_CASE_TEMPLATE("ServerRPC unary success", RPC, test::UnaryServerRPC, test::NotifyWhenDoneUnaryServerRPC)
+TEST_CASE_TEMPLATE("Awaitable ServerRPC unary success", RPC, test::UnaryServerRPC, test::NotifyWhenDoneUnaryServerRPC)
 {
     ServerRPCAwaitableTest<RPC> test{};
     bool use_finish_with_error{};
@@ -117,8 +116,8 @@ TEST_CASE_TEMPLATE("ServerRPC unary success", RPC, test::UnaryServerRPC, test::N
         });
 }
 
-TEST_CASE_TEMPLATE("Unary ClientRPC/ServerRPC read/send_initial_metadata successfully", RPC, test::UnaryServerRPC,
-                   test::NotifyWhenDoneUnaryServerRPC)
+TEST_CASE_TEMPLATE("Awaitable unary ClientRPC/ServerRPC read/send_initial_metadata successfully", RPC,
+                   test::UnaryServerRPC, test::NotifyWhenDoneUnaryServerRPC)
 {
     ServerRPCAwaitableTest<RPC> test{};
     test.register_and_perform_three_requests(
@@ -137,7 +136,7 @@ TEST_CASE_TEMPLATE("Unary ClientRPC/ServerRPC read/send_initial_metadata success
         });
 }
 
-TEST_CASE_TEMPLATE("Streaming ClientRPC/ServerRPC read/send_initial_metadata successfully", RPC,
+TEST_CASE_TEMPLATE("Awaitable streaming ClientRPC/ServerRPC read/send_initial_metadata successfully", RPC,
                    test::ClientStreamingServerRPC, test::NotifyWhenDoneClientStreamingServerRPC,
                    test::ServerStreamingServerRPC, test::NotifyWhenDoneServerStreamingServerRPC,
                    test::BidirectionalStreamingServerRPC, test::NotifyWhenDoneBidirectionalStreamingServerRPC)
@@ -158,7 +157,7 @@ TEST_CASE_TEMPLATE("Streaming ClientRPC/ServerRPC read/send_initial_metadata suc
         });
 }
 
-TEST_CASE_TEMPLATE("ServerRPC/ClientRPC client streaming success", RPC, test::ClientStreamingServerRPC,
+TEST_CASE_TEMPLATE("Awaitable ServerRPC/ClientRPC client streaming success", RPC, test::ClientStreamingServerRPC,
                    test::NotifyWhenDoneClientStreamingServerRPC)
 {
     ServerRPCAwaitableTest<RPC> test{};
@@ -215,7 +214,7 @@ TEST_CASE_TEMPLATE("ServerRPC/ClientRPC client streaming success", RPC, test::Cl
         });
 }
 
-TEST_CASE_TEMPLATE("ServerRPC/ClientRPC server streaming success", RPC, test::ServerStreamingServerRPC,
+TEST_CASE_TEMPLATE("Awaitable ServerRPC/ClientRPC server streaming success", RPC, test::ServerStreamingServerRPC,
                    test::NotifyWhenDoneServerStreamingServerRPC)
 {
     ServerRPCAwaitableTest<RPC> test{};
@@ -268,7 +267,7 @@ auto just_finish(ServerRPCAwaitableTest<RPC>& test, grpc::StatusCode expected_co
 }
 
 TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ServerStreamingServerRPC>,
-                  "ServerRPC/ClientRPC server streaming customize allocator")
+                  "Awaitable ServerRPC/ClientRPC server streaming customize allocator")
 {
     agrpc::register_awaitable_request_handler<ServerRPC>(
         get_executor(), service,
@@ -283,7 +282,7 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ServerStreamingServerRPC>,
 }
 
 TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ServerStreamingServerRPC>,
-                  "ServerRPC/ClientRPC server streaming throw exception from request handler")
+                  "Awaitable ServerRPC/ClientRPC server streaming throw exception from request handler")
 {
     std::exception_ptr eptr;
     agrpc::register_awaitable_request_handler<ServerRPC>(
@@ -307,7 +306,8 @@ struct ServerRPCAwaitableIoContextTest : ServerRPCAwaitableTest<test::ServerStre
 {
 };
 
-TEST_CASE_FIXTURE(ServerRPCAwaitableIoContextTest, "ServerRPC/ClientRPC server streaming using io_context executor")
+TEST_CASE_FIXTURE(ServerRPCAwaitableIoContextTest,
+                  "Awaitable ServerRPC/ClientRPC server streaming using io_context executor")
 {
     agrpc::register_awaitable_request_handler<ServerRPC>(
         get_executor(), service,
@@ -321,7 +321,7 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableIoContextTest, "ServerRPC/ClientRPC server s
     perform_requests(just_finish(*this), just_finish(*this));
 }
 
-TEST_CASE_TEMPLATE("ServerRPC/ClientRPC server streaming no finish causes cancellation", RPC,
+TEST_CASE_TEMPLATE("Awaitable ServerRPC/ClientRPC server streaming no finish causes cancellation", RPC,
                    test::ServerStreamingServerRPC, test::NotifyWhenDoneServerStreamingServerRPC)
 {
     ServerRPCAwaitableTest<RPC> test{};
@@ -340,7 +340,7 @@ TEST_CASE_TEMPLATE("ServerRPC/ClientRPC server streaming no finish causes cancel
         });
 }
 
-TEST_CASE_TEMPLATE("ServerRPC/ClientRPC bidi streaming success", RPC, test::BidirectionalStreamingServerRPC,
+TEST_CASE_TEMPLATE("Awaitable ServerRPC/ClientRPC bidi streaming success", RPC, test::BidirectionalStreamingServerRPC,
                    test::NotifyWhenDoneBidirectionalStreamingServerRPC)
 {
     ServerRPCAwaitableTest<RPC> test{};
@@ -385,7 +385,8 @@ TEST_CASE_TEMPLATE("ServerRPC/ClientRPC bidi streaming success", RPC, test::Bidi
         });
 }
 
-TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::GenericServerRPC>, "ServerRPC/ClientRPC generic unary RPC success")
+TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::GenericServerRPC>,
+                  "Awaitable ServerRPC/ClientRPC generic unary RPC success")
 {
     bool use_executor_overload{};
     SUBCASE("executor overload") {}
@@ -423,7 +424,7 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::GenericServerRPC>, "ServerRPC/Cli
         });
 }
 
-TEST_CASE_TEMPLATE("ServerRPC/ClientRPC generic streaming success", RPC, test::GenericServerRPC,
+TEST_CASE_TEMPLATE("Awaitable ServerRPC/ClientRPC generic streaming success", RPC, test::GenericServerRPC,
                    test::NotifyWhenDoneGenericServerRPC)
 {
     ServerRPCAwaitableTest<RPC> test{};
@@ -471,7 +472,7 @@ TEST_CASE_TEMPLATE("ServerRPC/ClientRPC generic streaming success", RPC, test::G
 }
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-TEST_CASE_TEMPLATE("ServerRPC resumable read can be cancelled", RPC, test::ClientStreamingServerRPC,
+TEST_CASE_TEMPLATE("Awaitable ServerRPC resumable read can be cancelled", RPC, test::ClientStreamingServerRPC,
                    test::BidirectionalStreamingServerRPC)
 {
     ServerRPCAwaitableTest<RPC> test{};
@@ -523,7 +524,7 @@ TEST_CASE_TEMPLATE("ServerRPC resumable read can be cancelled", RPC, test::Clien
 }
 
 TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ServerStreamingServerRPC>,
-                  "ServerRPC/ClientRPC server streaming cancel register_awaitable_request_handler")
+                  "Awaitable ServerRPC/ClientRPC server streaming cancel register_awaitable_request_handler")
 {
     asio::cancellation_signal signal;
     std::exception_ptr eptr;
