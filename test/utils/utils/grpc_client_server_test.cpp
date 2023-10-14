@@ -21,11 +21,12 @@
 namespace test
 {
 GrpcClientServerTest::GrpcClientServerTest()
-    : server_context_lifetime(std::in_place), server_context(*server_context_lifetime)
+    : stub(test::v1::Test::NewStub(channel)),
+      server_context_lifetime(std::in_place),
+      server_context(*server_context_lifetime)
 {
     builder.RegisterService(&service);
-    this->server = builder.BuildAndStart();
-    stub = test::v1::Test::NewStub(this->channel);
+    server = builder.BuildAndStart();
 }
 
 GrpcClientServerTest::~GrpcClientServerTest()

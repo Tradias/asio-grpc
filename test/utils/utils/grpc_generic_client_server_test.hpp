@@ -22,7 +22,7 @@
 
 namespace test
 {
-struct GrpcGenericClientServerTest : virtual test::GrpcClientServerTestBase
+struct GrpcGenericClientServerTest : test::GrpcClientServerTestBase
 {
     grpc::AsyncGenericService service;
     std::unique_ptr<grpc::GenericStub> stub;

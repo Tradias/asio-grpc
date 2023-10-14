@@ -20,12 +20,12 @@
 namespace test
 {
 GrpcGenericClientServerTest::GrpcGenericClientServerTest()
-    : stub{std::make_unique<grpc::GenericStub>(this->channel)},
+    : stub{std::make_unique<grpc::GenericStub>(channel)},
       server_context_lifetime(std::in_place),
       server_context(*server_context_lifetime)
 {
     builder.RegisterAsyncGenericService(&service);
-    this->server = builder.BuildAndStart();
+    server = builder.BuildAndStart();
 }
 
 GrpcGenericClientServerTest::~GrpcGenericClientServerTest()

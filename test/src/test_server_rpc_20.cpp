@@ -287,7 +287,7 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ServerStreamingServerRPC>,
     std::exception_ptr eptr;
     agrpc::register_awaitable_request_handler<ServerRPC>(
         get_executor(), service,
-        [&](test::ServerStreamingServerRPC& rpc, test::msg::Request&) -> asio::awaitable<void>
+        [&](test::ServerStreamingServerRPC&, test::msg::Request&) -> asio::awaitable<void>
         {
             throw test::Exception{};
             co_return;
@@ -542,7 +542,7 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ServerStreamingServerRPC>,
     signal.emit(asio::cancellation_type::total);
     perform_requests_in_order(just_finish(*this), just_finish(*this, grpc::StatusCode::DEADLINE_EXCEEDED,
                                                               test::two_hundred_milliseconds_from_now()));
-    CHECK_THROWS(std::rethrow_exception(eptr));
+    CHECK_FALSE(eptr);
 }
 #endif
 #endif

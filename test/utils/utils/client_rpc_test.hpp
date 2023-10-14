@@ -30,6 +30,7 @@
 #include <doctest/doctest.h>
 
 #include <functional>
+#include <type_traits>
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 #include <agrpc/register_yield_request_handler.hpp>

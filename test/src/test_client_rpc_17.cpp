@@ -162,26 +162,20 @@ TEST_CASE_TEMPLATE("Streaming RPC::start returns false on error", RPC, test::Cli
     test.grpc_context.run();
 }
 
-TEST_CASE_FIXTURE(ClientRPCTest<test::ServerStreamingClientRPC>,
-                  "UnaryClientRPC::request exception thrown from completion handler rethrows from GrpcContext.run()")
+TEST_CASE_FIXTURE(
+    ClientRPCRequestResponseTest<test::ServerStreamingClientRPC>,
+    "ServerStreamingClientRPC::start exception thrown from completion handler rethrows from GrpcContext.run()")
 {
-    CHECK_THROWS_AS(register_and_perform_three_requests(
-                        [&](auto& rpc, auto&, const asio::yield_context& yield)
-                        {
-                            rpc.finish(grpc::Status::OK, yield);
-                        },
-                        [&](Request& request, Response& response, const asio::yield_context& yield)
-                        {
-                            auto rpc = std::make_unique<ClientRPC>(grpc_context, test::set_default_deadline);
-                            start_rpc(*rpc, request, response, yield);
-                            auto& r = *rpc;
-                            r.read(response, asio::bind_executor(test::InlineExecutor{},
-                                                                 [r = std::move(rpc)](bool)
-                                                                 {
-                                                                     throw test::Exception{};
-                                                                 }));
-                        }),
-                    test::Exception);
+    server->Shutdown();
+    test::ServerStreamingClientRPC rpc{get_executor()};
+    rpc.context().set_deadline(test::ten_milliseconds_from_now());
+    start_rpc(rpc, request, response,
+              asio::bind_executor(grpc_context,
+                                  [&](bool)
+                                  {
+                                      throw test::Exception{};
+                                  }));
+    CHECK_THROWS_AS(grpc_context.run(), test::Exception);
 }
 
 TEST_CASE_TEMPLATE("ClientRPC::read_initial_metadata on cancelled RPC", RPC, test::ClientStreamingClientRPC,
