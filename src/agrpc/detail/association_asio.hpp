@@ -62,6 +62,12 @@ inline constexpr bool IS_STOP_EVER_POSSIBLE_V = true;
 
 template <>
 inline constexpr bool IS_STOP_EVER_POSSIBLE_V<detail::UnstoppableCancellationSlot> = false;
+
+template <class T, class A = std::allocator<void>>
+using AssociatedAllocatorT = asio::associated_allocator_t<T, A>;
+
+template <class T, class E = asio::system_executor>
+using AssociatedExecutorT = asio::associated_executor_t<T, E>;
 }  // namespace detail
 
 AGRPC_NAMESPACE_END

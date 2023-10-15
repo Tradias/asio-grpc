@@ -16,11 +16,8 @@
 #define AGRPC_DETAIL_WORK_TRACKING_COMPLETION_HANDLER_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
-#include <agrpc/detail/config.hpp>
-
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-
 #include <agrpc/detail/association.hpp>
+#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/memory_resource.hpp>
 #include <agrpc/detail/tuple.hpp>
 #include <agrpc/detail/utility.hpp>
@@ -65,14 +62,26 @@ class WorkTracker<Executor, true>
     constexpr explicit WorkTracker(const Executor&) noexcept {}
 };
 
+template <class Handler, class... Args>
+void dispatch_with_args(Handler&& handler, Args&&... args)
+{
+    auto executor = asio::prefer(asio::get_associated_executor(handler), asio::execution::blocking_t::possibly,
+                                 asio::execution::allocator(asio::get_associated_allocator(handler)));
+    detail::do_execute(
+        std::move(executor),
+        [handler = static_cast<Handler&&>(handler), args = detail::Tuple{static_cast<Args&&>(args)...}]() mutable
+        {
+            detail::apply(static_cast<Handler&&>(handler), std::move(args));
+        });
+}
+
 template <class CompletionHandler>
 class WorkTrackingCompletionHandler : private detail::EmptyBaseOptimization<CompletionHandler>,
-                                      private detail::WorkTracker<asio::associated_executor_t<CompletionHandler>>
-
+                                      private detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandler>>
 {
   public:
-    using executor_type = asio::associated_executor_t<CompletionHandler>;
-    using allocator_type = asio::associated_allocator_t<CompletionHandler>;
+    using executor_type = detail::AssociatedExecutorT<CompletionHandler>;
+    using allocator_type = detail::AssociatedAllocatorT<CompletionHandler>;
 
   private:
     using CompletionHandlerBase = detail::EmptyBaseOptimization<CompletionHandler>;
@@ -92,15 +101,8 @@ class WorkTrackingCompletionHandler : private detail::EmptyBaseOptimization<Comp
     template <class... Args>
     void operator()(Args&&... args) &&
     {
-        auto& ch = completion_handler();
-        auto executor = asio::prefer(asio::get_associated_executor(ch), asio::execution::blocking_t::possibly,
-                                     asio::execution::allocator(asio::get_associated_allocator(ch)));
-        detail::do_execute(
-            std::move(executor),
-            [ch = static_cast<CompletionHandler&&>(ch), args = detail::Tuple{static_cast<Args&&>(args)...}]() mutable
-            {
-                detail::apply(static_cast<CompletionHandler&&>(ch), std::move(args));
-            });
+        detail::dispatch_with_args(static_cast<CompletionHandler&&>(completion_handler()),
+                                   static_cast<Args&&>(args)...);
     }
 
     [[nodiscard]] decltype(auto) get_executor() const noexcept
@@ -113,6 +115,15 @@ class WorkTrackingCompletionHandler : private detail::EmptyBaseOptimization<Comp
         return asio::get_associated_allocator(completion_handler());
     }
 };
+
+template <class AllocationGuard, class... Args>
+void dispatch_complete(AllocationGuard& guard, Args&&... args)
+{
+    auto handler{std::move(guard->completion_handler())};
+    auto tracker{std::move(guard->work_tracker())};
+    guard.reset();
+    detail::dispatch_with_args(std::move(handler), static_cast<Args&&>(args)...);
+}
 }
 
 AGRPC_NAMESPACE_END
@@ -139,7 +150,5 @@ struct agrpc::detail::container::uses_allocator<agrpc::detail::WorkTrackingCompl
     : std::false_type
 {
 };
-
-#endif
 
 #endif  // AGRPC_DETAIL_WORK_TRACKING_COMPLETION_HANDLER_HPP

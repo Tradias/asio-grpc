@@ -19,7 +19,6 @@
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/tuple.hpp>
 #include <agrpc/detail/utility.hpp>
-#include <agrpc/detail/work_tracking_completion_handler.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

@@ -42,6 +42,12 @@ using IsStopEverPossibleHelper = std::bool_constant<(T{}.stop_possible())>;
 
 template <class T>
 inline constexpr bool IS_STOP_EVER_POSSIBLE_V<T, detail::IsStopEverPossibleHelper<T>> = false;
+
+template <class T, class...>
+using AssociatedAllocatorT = decltype(exec::get_allocator(std::declval<T>()));
+
+template <class T, class...>
+using AssociatedExecutorT = decltype(exec::get_executor(std::declval<T>()));
 }  // namespace detail
 
 AGRPC_NAMESPACE_END

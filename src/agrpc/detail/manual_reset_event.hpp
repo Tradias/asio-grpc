@@ -110,7 +110,7 @@ class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
                     allocator);
                 return;
             }
-            using Ch = detail::WorkTrackingCompletionHandler<detail::RemoveCrefT<CompletionHandler>>;
+            using Ch = detail::RemoveCrefT<CompletionHandler>;
             using Operation = ManualResetEventOperation<Signature, Ch>;
             detail::allocate<Operation>(allocator, static_cast<CompletionHandler&&>(completion_handler), event_)
                 .release();
@@ -290,88 +290,12 @@ inline ManualResetEventSender<void(Args...)> ManualResetEvent<void(Args...)>::wa
 {
     return ManualResetEventSender<void(Args...)>{*this};
 }
-
-template <class... Args, class CompletionHandler>
-struct ManualResetEventOperation<void(Args...), CompletionHandler> : ManualResetEventOperationBase<void(Args...)>
-{
-    using Signature = void(Args...);
-    using Base = ManualResetEventOperationBase<Signature>;
-    using Event = ManualResetEvent<Signature>;
-
-    struct StopFunction
-    {
-        explicit StopFunction(ManualResetEventOperation& op) noexcept : op_(op) {}
-
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-        void operator()(asio::cancellation_type type) const
-        {
-            if (static_cast<bool>(type & asio::cancellation_type::all))
-            {
-                auto* op = static_cast<Base*>(&op_);
-                if (op->event_.compare_exchange(op))
-                {
-                    op_.cancel();
-                }
-            }
-        }
-#endif
-
-        ManualResetEventOperation& op_;
-    };
-
-    static void complete_impl(Base* base)
-    {
-        auto& self = *static_cast<ManualResetEventOperation*>(base);
-        detail::prepend_error_code_and_apply(
-            [&](auto&&... args)
-            {
-                self.complete(static_cast<decltype(args)&&>(args)...);
-            },
-            static_cast<Event&&>(self.event_).args());
-    }
-
-    template <class Ch>
-    ManualResetEventOperation(Ch&& ch, ManualResetEvent<Signature>& event)
-        : Base{event, &complete_impl}, completion_handler_(static_cast<Ch&&>(ch))
-    {
-        emplace_stop_callback();
-        this->event_.op_.store(this, std::memory_order_release);
-    }
-
-    void emplace_stop_callback()
-    {
-        if constexpr (detail::IS_STOP_EVER_POSSIBLE_V<exec::stop_token_type_t<CompletionHandler&>>)
-        {
-            if (auto stop_token = exec::get_stop_token(completion_handler_); detail::stop_possible(stop_token))
-            {
-                stop_token.template emplace<StopFunction>(*this);
-            }
-        }
-    }
-
-    template <class... TArgs>
-    void complete(TArgs&&... args)
-    {
-        detail::AllocationGuard ptr{this, exec::get_allocator(completion_handler_)};
-        auto handler{static_cast<CompletionHandler&&>(completion_handler_)};
-        ptr.reset();
-        static_cast<CompletionHandler&&>(handler)(static_cast<TArgs&&>(args)...);
-    }
-
-    void cancel()
-    {
-        detail::PrependErrorCodeToSignature<Signature>::invoke_with_default_args(
-            [&](detail::ErrorCode&& ec, auto&&... args)
-            {
-                complete(static_cast<detail::ErrorCode&&>(ec), args...);
-            },
-            detail::operation_aborted_error_code());
-    }
-
-    CompletionHandler completion_handler_;
-};
 }
 
 AGRPC_NAMESPACE_END
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+#include <agrpc/detail/manual_reset_event_operation.ipp>
+#endif
 
 #endif  // AGRPC_DETAIL_MANUAL_RESET_EVENT_HPP

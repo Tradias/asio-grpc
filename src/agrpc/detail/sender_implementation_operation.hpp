@@ -23,6 +23,7 @@
 #include <agrpc/detail/operation_initiation.hpp>
 #include <agrpc/detail/stop_callback_lifetime.hpp>
 #include <agrpc/detail/utility.hpp>
+#include <agrpc/detail/work_tracking_completion_handler.hpp>
 #include <agrpc/grpc_context.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -30,10 +31,12 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class ImplementationT, class CompletionHandler>
-struct SenderImplementationOperation : public detail::BaseForSenderImplementationTypeT<ImplementationT::TYPE>
+struct SenderImplementationOperation : public detail::BaseForSenderImplementationTypeT<ImplementationT::TYPE>,
+                                       private detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandler>>
 {
     using Implementation = ImplementationT;
     using Base = detail::BaseForSenderImplementationTypeT<Implementation::TYPE>;
+    using WorkTracker = detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandler>>;
     using StopFunction = typename Implementation::StopFunction;
 
     template <detail::AllocationType AllocType, int Id = 0>
@@ -64,6 +67,7 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
                                   agrpc::GrpcContext& grpc_context, const Initation& initiation,
                                   Implementation&& implementation)
         : Base(get_on_complete(allocation_type)),
+          WorkTracker(exec::get_executor(completion_handler)),
           impl_(static_cast<Ch&&>(completion_handler), static_cast<Implementation&&>(implementation))
     {
         grpc_context.work_started();
@@ -98,6 +102,8 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
 
     CompletionHandler& completion_handler() noexcept { return impl_.first(); }
 
+    WorkTracker& work_tracker() noexcept { return *this; }
+
     Implementation& implementation() noexcept { return impl_.second(); }
 
     Base* tag() noexcept { return this; }
@@ -112,9 +118,7 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
     void complete(agrpc::GrpcContext& grpc_context, Args... args)
     {
         detail::AllocationGuard ptr{this, get_allocator<AllocType>(grpc_context)};
-        auto handler{static_cast<CompletionHandler&&>(completion_handler())};
-        ptr.reset();
-        static_cast<CompletionHandler&&>(handler)(static_cast<Args&&>(args)...);
+        detail::dispatch_complete(ptr, static_cast<Args&&>(args)...);
     }
 
     detail::CompressedPair<CompletionHandler, Implementation> impl_;

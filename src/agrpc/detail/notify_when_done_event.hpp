@@ -20,7 +20,6 @@
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/manual_reset_event.hpp>
 #include <agrpc/detail/tuple.hpp>
-#include <agrpc/detail/work_tracking_completion_handler.hpp>
 #include <agrpc/use_sender.hpp>
 #include <grpcpp/server_context.h>
 

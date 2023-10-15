@@ -52,11 +52,10 @@ template <class Function, class Signature, class = void>
 inline constexpr bool INVOKE_RESULT_IS_CO_SPAWNABLE = false;
 
 template <class Function, class... Args>
-inline constexpr bool
-    INVOKE_RESULT_IS_CO_SPAWNABLE<Function, void(Args...),
-                                  std::enable_if_t<detail::IS_CO_SPAWNABLE<detail::AssociatedExecutorT<Function>,
-                                                                           std::invoke_result_t<Function, Args...>>>> =
-        true;
+inline constexpr bool INVOKE_RESULT_IS_CO_SPAWNABLE<
+    Function, void(Args...),
+    std::enable_if_t<detail::IS_CO_SPAWNABLE<decltype(exec::get_executor(std::declval<Function&>())),
+                                             std::invoke_result_t<Function, Args...>>>> = true;
 
 template <class Buffer>
 class BufferOperation : public detail::QueueableOperationBase

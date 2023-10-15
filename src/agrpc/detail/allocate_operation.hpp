@@ -36,7 +36,6 @@ inline constexpr bool IS_STD_ALLOCATOR<std::allocator<T>> = true;
 
 template <template <class> class OperationTemplate, class Handler, class... Args>
 auto allocate_custom_operation(Handler&& handler, Args&&... args)
-
 {
     const auto allocator = exec::get_allocator(handler);
     auto operation = detail::allocate<OperationTemplate<detail::RemoveCrefT<Handler>>>(
@@ -46,7 +45,6 @@ auto allocate_custom_operation(Handler&& handler, Args&&... args)
 
 template <template <class> class OperationTemplate, class Handler, class... Args>
 auto allocate_local_operation(agrpc::GrpcContext& grpc_context, Handler&& handler, Args&&... args)
-
 {
     using DecayedHandler = detail::RemoveCrefT<Handler>;
     auto allocator = exec::get_allocator(handler);

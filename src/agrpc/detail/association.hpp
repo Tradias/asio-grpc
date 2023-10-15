@@ -24,17 +24,4 @@
 #include <agrpc/detail/association_unifex.hpp>
 #endif
 
-AGRPC_NAMESPACE_BEGIN()
-
-namespace detail
-{
-template <class T>
-using AssociatedAllocatorT = decltype(exec::get_allocator(std::declval<T>()));
-
-template <class T>
-using AssociatedExecutorT = decltype(exec::get_executor(std::declval<T>()));
-}  // namespace detail
-
-AGRPC_NAMESPACE_END
-
 #endif  // AGRPC_DETAIL_ASSOCIATION_HPP

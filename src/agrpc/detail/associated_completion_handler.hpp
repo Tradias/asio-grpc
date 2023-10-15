@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_ASSOCIATED_COMPLETION_HANDLER_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/association.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/memory_resource.hpp>
 
@@ -30,10 +31,8 @@ template <class CompletionHandler>
 class AssociatedCompletionHandler
 {
   public:
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    using executor_type = asio::associated_executor_t<CompletionHandler>;
-    using allocator_type = asio::associated_allocator_t<CompletionHandler>;
-#endif
+    using executor_type = detail::AssociatedExecutorT<CompletionHandler>;
+    using allocator_type = detail::AssociatedAllocatorT<CompletionHandler>;
 
     template <class... Args>
     explicit AssociatedCompletionHandler(Args&&... args) : completion_handler_(static_cast<Args&&>(args)...)

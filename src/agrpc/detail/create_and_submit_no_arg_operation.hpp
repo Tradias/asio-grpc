@@ -17,8 +17,8 @@
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
+#include <agrpc/detail/operation.hpp>
 #include <agrpc/detail/schedule_sender.hpp>
-#include <agrpc/detail/sender_implementation_operation.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/grpc_context.hpp>
 
@@ -48,21 +48,19 @@ void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Handle
             return;
         }
     }
-    using Template = detail::SenderImplementationOperationTemplate<detail::ScheduleSenderImplementation>;
+    detail::StartWorkAndGuard guard{grpc_context};
     if (is_running_in_this_thread)
     {
-        auto operation = detail::allocate_local_operation<Template::Type>(
-            grpc_context, static_cast<Handler&&>(handler), grpc_context, detail::NoArgOperationInitiation{},
-            detail::ScheduleSenderImplementation{});
+        auto operation =
+            detail::allocate_local_operation<detail::NoArgOperation>(grpc_context, static_cast<Handler&&>(handler));
         detail::GrpcContextImplementation::add_local_operation(grpc_context, operation);
     }
     else
     {
-        auto operation = detail::allocate_custom_operation<Template::Type>(
-            static_cast<Handler&&>(handler), grpc_context, detail::NoArgOperationInitiation{},
-            detail::ScheduleSenderImplementation{});
+        auto operation = detail::allocate_custom_operation<detail::NoArgOperation>(static_cast<Handler&&>(handler));
         detail::GrpcContextImplementation::add_remote_operation(grpc_context, operation);
     }
+    guard.release();
 }
 }
 

@@ -17,10 +17,12 @@
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/sender_implementation_operation.hpp>
-#include <agrpc/detail/work_tracking_completion_handler.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/use_sender.hpp>
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+#include <agrpc/detail/sender_implementation_operation.hpp>
+#endif
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -33,11 +35,9 @@ struct SubmitToCompletionHandler
     void operator()(CompletionHandler&& completion_handler, const Initiation& initiation,
                     Implementation&& implementation)
     {
-        detail::submit_sender_implementation_operation(
-            grpc_context_,
-            detail::WorkTrackingCompletionHandler<detail::RemoveCrefT<CompletionHandler>>(
-                static_cast<CompletionHandler&&>(completion_handler)),
-            initiation, static_cast<Implementation&&>(implementation));
+        detail::submit_sender_implementation_operation(grpc_context_,
+                                                       static_cast<CompletionHandler&&>(completion_handler), initiation,
+                                                       static_cast<Implementation&&>(implementation));
     }
 
     agrpc::GrpcContext& grpc_context_;
