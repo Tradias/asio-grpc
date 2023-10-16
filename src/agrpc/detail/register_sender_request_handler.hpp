@@ -71,7 +71,7 @@ struct RegisterRequestHandlerSenderOperationBase
 {
     RegisterRequestHandlerSenderOperationBase(RequestHandlerSender<ServerRPC, RequestHandler>&& sender,
                                               RegisterRequestHandlerOperationComplete::Complete complete)
-        : RegisterRequestHandlerOperationBase<ServerRPC, RequestHandler, StopToken>{sender.grpc_context_,
+        : RegisterRequestHandlerOperationBase<ServerRPC, RequestHandler, StopToken>{sender.grpc_context_.get_executor(),
                                                                                     sender.service_,
                                                                                     static_cast<RequestHandler&&>(
                                                                                         sender.request_handler_)},
@@ -224,7 +224,7 @@ struct RequestHandlerOperation
     explicit RequestHandlerOperation(RegisterRequestHandlerSenderOperationBase& operation, const Allocator& allocator)
         : base_(operation),
           impl1_(operation.request_handler()),
-          rpc_(detail::ServerRPCContextBaseAccess::construct<ServerRPC>(operation.grpc_context().get_executor())),
+          rpc_(detail::ServerRPCContextBaseAccess::construct<ServerRPC>(operation.get_executor())),
           impl2_(detail::SecondThenVariadic{}, allocator, std::in_place_type<StartOperationState>,
                  detail::InplaceWithFunction{},
                  [&]

@@ -30,7 +30,7 @@ auto register_awaitable_request_handler(const typename ServerRPC::executor_type&
                                         RequestHandler request_handler, CompletionToken token)
 {
     return asio::async_initiate<CompletionToken, void(std::exception_ptr)>(
-        detail::AwaitableRequestHandlerInitiator<ServerRPC>{}, token, executor, service,
+        detail::AwaitableRequestHandlerInitiator<ServerRPC>{service}, token, executor,
         static_cast<RequestHandler&&>(request_handler));
 }
 

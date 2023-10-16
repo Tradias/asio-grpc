@@ -19,9 +19,9 @@
 
 AGRPC_NAMESPACE_BEGIN()
 
-template <class ServerRPC, class Service, class RequestHandler>
+template <class ServerRPC, class RequestHandler>
 [[nodiscard]] detail::RequestHandlerSender<ServerRPC, RequestHandler> register_sender_request_handler(
-    agrpc::GrpcContext& grpc_context, Service& service, RequestHandler request_handler)
+    agrpc::GrpcContext& grpc_context, detail::GetServerRPCServiceT<ServerRPC>& service, RequestHandler request_handler)
 {
     return {grpc_context, service, static_cast<RequestHandler&&>(request_handler)};
 }

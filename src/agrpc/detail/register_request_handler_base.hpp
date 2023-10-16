@@ -45,12 +45,11 @@ template <class ServerRPC, class RequestHandler, class StopToken>
 struct RegisterRequestHandlerOperationBase
 {
     using Service = detail::GetServerRPCServiceT<ServerRPC>;
+    using ServerRPCExecutor = typename ServerRPC::executor_type;
 
-    RegisterRequestHandlerOperationBase(agrpc::GrpcContext& grpc_context, Service& service,
+    RegisterRequestHandlerOperationBase(const ServerRPCExecutor& executor, Service& service,
                                         RequestHandler&& request_handler)
-        : grpc_context_(grpc_context),
-          service_(service),
-          request_handler_(static_cast<RequestHandler&&>(request_handler))
+        : executor_(executor), service_(service), request_handler_(static_cast<RequestHandler&&>(request_handler))
     {
     }
 
@@ -61,11 +60,13 @@ struct RegisterRequestHandlerOperationBase
 
     void stop() noexcept { stop_context_.stop(); }
 
-    agrpc::GrpcContext& grpc_context() const noexcept { return grpc_context_; }
+    agrpc::GrpcContext& grpc_context() const noexcept { return detail::query_grpc_context(executor_); }
+
+    const ServerRPCExecutor& get_executor() const noexcept { return executor_; }
 
     Service& service() const noexcept { return service_; }
 
-    const RequestHandler& request_handler() const noexcept { return request_handler_; }
+    RequestHandler& request_handler() noexcept { return request_handler_; }
 
     void set_error(std::exception_ptr&& eptr) noexcept
     {
@@ -81,7 +82,7 @@ struct RegisterRequestHandlerOperationBase
 
     [[nodiscard]] bool decrement_ref_count() noexcept { return 0 == --reference_count_; }
 
-    agrpc::GrpcContext& grpc_context_;
+    ServerRPCExecutor executor_;
     Service& service_;
     std::atomic_size_t reference_count_{};
     std::exception_ptr eptr_{};

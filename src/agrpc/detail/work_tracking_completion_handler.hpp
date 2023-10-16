@@ -71,7 +71,7 @@ void dispatch_with_args(Handler&& handler, Args&&... args)
         std::move(executor),
         [handler = static_cast<Handler&&>(handler), args = detail::Tuple{static_cast<Args&&>(args)...}]() mutable
         {
-            detail::apply(static_cast<Handler&&>(handler), std::move(args));
+            detail::apply(std::move(handler), std::move(args));
         });
 }
 
@@ -120,7 +120,7 @@ template <class AllocationGuard, class... Args>
 void dispatch_complete(AllocationGuard& guard, Args&&... args)
 {
     auto handler{std::move(guard->completion_handler())};
-    auto tracker{std::move(guard->work_tracker())};
+    [[maybe_unused]] auto tracker{std::move(guard->work_tracker())};
     guard.reset();
     detail::dispatch_with_args(std::move(handler), static_cast<Args&&>(args)...);
 }

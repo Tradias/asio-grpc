@@ -26,7 +26,7 @@ auto register_yield_request_handler(const typename ServerRPC::executor_type& exe
                                     CompletionToken token)
 {
     return asio::async_initiate<CompletionToken, void(std::exception_ptr)>(
-        detail::YieldRequestHandlerInitiator<ServerRPC>{}, token, executor, service,
+        detail::YieldRequestHandlerInitiator<ServerRPC>{service}, token, executor,
         static_cast<RequestHandler&&>(request_handler));
 }
 

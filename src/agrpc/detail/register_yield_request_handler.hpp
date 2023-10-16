@@ -49,13 +49,13 @@ struct YieldRequestHandlerOperation
     using typename Base::Allocator;
     using typename Base::RefCountGuard;
     using typename Base::RPCRequest;
+    using typename Base::ServerRPCExecutor;
     using typename Base::Service;
 
     template <class Ch>
-    YieldRequestHandlerOperation(agrpc::GrpcContext& grpc_context, Service& service, RequestHandler&& request_handler,
+    YieldRequestHandlerOperation(const ServerRPCExecutor& executor, Service& service, RequestHandler&& request_handler,
                                  Ch&& completion_handler)
-        : Base(grpc_context, service, static_cast<RequestHandler&&>(request_handler),
-               static_cast<Ch&&>(completion_handler),
+        : Base(executor, service, static_cast<RequestHandler&&>(request_handler), static_cast<Ch&&>(completion_handler),
                &detail::register_request_handler_asio_do_complete<YieldRequestHandlerOperation>)
     {
         initiate();
@@ -64,7 +64,7 @@ struct YieldRequestHandlerOperation
     void initiate()
     {
         this->increment_ref_count();
-        detail::spawn(asio::get_associated_executor(this->completion_handler(), this->grpc_context()),
+        detail::spawn(asio::get_associated_executor(this->completion_handler(), this->get_executor()),
                       [g = RefCountGuard{*this}](const auto& yield)
                       {
                           static_cast<YieldRequestHandlerOperation&>(g.get().self_).perform_request_and_repeat(yield);
@@ -82,7 +82,7 @@ struct YieldRequestHandlerOperation
     template <class Yield>
     void perform_request_and_repeat(const Yield& yield)
     {
-        auto rpc = detail::ServerRPCContextBaseAccess::construct<ServerRPC>(this->grpc_context().get_executor());
+        auto rpc = detail::ServerRPCContextBaseAccess::construct<ServerRPC>(this->get_executor());
         RPCRequest req;
         if (!req.start(rpc, this->service(), use_yield(yield)))
         {

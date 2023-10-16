@@ -34,6 +34,7 @@ struct AwaitableRequestHandlerOperation
     using typename Base::Allocator;
     using typename Base::RefCountGuard;
     using typename Base::RPCRequest;
+    using typename Base::ServerRPCExecutor;
     using typename Base::Service;
 
     using Awaitable = detail::RebindCoroutineT<decltype(std::declval<RPCRequest&>().invoke(
@@ -42,10 +43,9 @@ struct AwaitableRequestHandlerOperation
     using UseAwaitable = detail::CoroutineCompletionTokenT<Awaitable>;
 
     template <class Ch>
-    AwaitableRequestHandlerOperation(agrpc::GrpcContext& grpc_context, Service& service,
+    AwaitableRequestHandlerOperation(const ServerRPCExecutor& executor, Service& service,
                                      RequestHandler&& request_handler, Ch&& completion_handler)
-        : Base(grpc_context, service, static_cast<RequestHandler&&>(request_handler),
-               static_cast<Ch&&>(completion_handler),
+        : Base(executor, service, static_cast<RequestHandler&&>(request_handler), static_cast<Ch&&>(completion_handler),
                &detail::register_request_handler_asio_do_complete<AwaitableRequestHandlerOperation>)
     {
         initiate();
@@ -54,7 +54,7 @@ struct AwaitableRequestHandlerOperation
     void initiate()
     {
         this->increment_ref_count();
-        asio::co_spawn(asio::get_associated_executor(this->completion_handler(), this->grpc_context()),
+        asio::co_spawn(asio::get_associated_executor(this->completion_handler(), this->get_executor()),
                        perform_request_and_repeat(),
                        [g = RefCountGuard{*this}](std::exception_ptr eptr)
                        {
@@ -76,7 +76,7 @@ struct AwaitableRequestHandlerOperation
 
     Awaitable perform_request_and_repeat()
     {
-        auto rpc = detail::ServerRPCContextBaseAccess::construct<ServerRPC>(this->grpc_context().get_executor());
+        auto rpc = detail::ServerRPCContextBaseAccess::construct<ServerRPC>(this->get_executor());
         RPCRequest req;
         if (!co_await req.start(rpc, this->service(), use_awaitable()))
         {

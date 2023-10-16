@@ -67,22 +67,23 @@ class RegisterRequestHandlerOperationAsioBase
     };
 
   public:
+    using typename Base::ServerRPCExecutor;
     using typename Base::Service;
-    using Executor = detail::AssociatedExecutorT<CompletionHandlerT, agrpc::GrpcExecutor>;
+    using Executor = detail::AssociatedExecutorT<CompletionHandlerT, ServerRPCExecutor>;
     using Allocator = detail::AssociatedAllocatorT<CompletionHandlerT>;
     using RPCRequest = detail::RPCRequest<typename ServerRPC::Request, detail::has_initial_request(ServerRPC::TYPE)>;
     using RefCountGuard = detail::ScopeGuard<Decrementer>;
 
     template <class Ch>
-    RegisterRequestHandlerOperationAsioBase(agrpc::GrpcContext& grpc_context, Service& service,
+    RegisterRequestHandlerOperationAsioBase(const ServerRPCExecutor& executor, Service& service,
                                             RequestHandler&& request_handler, Ch&& completion_handler,
                                             detail::OperationOnComplete on_complete)
-        : Base(grpc_context, service, static_cast<RequestHandler&&>(request_handler)),
-          WorkTracker(exec::get_executor(completion_handler)),
+        : Base(executor, service, static_cast<RequestHandler&&>(request_handler)),
           detail::QueueableOperationBase(on_complete),
+          WorkTracker(exec::get_executor(completion_handler)),
           completion_handler_(static_cast<Ch&&>(completion_handler))
     {
-        grpc_context.work_started();
+        this->grpc_context().work_started();
         this->stop_context_.emplace(exec::get_stop_token(completion_handler_));
     }
 
@@ -100,17 +101,18 @@ struct RegisterRequestHandlerInitiator
 {
     template <class CompletionHandler, class RequestHandler>
     void operator()(CompletionHandler&& completion_handler, const typename ServerRPC::executor_type& executor,
-                    detail::GetServerRPCServiceT<ServerRPC>& service, RequestHandler&& request_handler) const
+                    RequestHandler&& request_handler) const
     {
         using Ch = detail::RemoveCrefT<CompletionHandler>;
         using DecayedRequestHandler = detail::RemoveCrefT<RequestHandler>;
-        auto& grpc_context = detail::query_grpc_context(executor);
         const auto allocator = exec::get_allocator(completion_handler);
         detail::allocate<Operation<ServerRPC, DecayedRequestHandler, Ch>>(
-            allocator, grpc_context, service, static_cast<RequestHandler&&>(request_handler),
+            allocator, executor, service_, static_cast<RequestHandler&&>(request_handler),
             static_cast<CompletionHandler&&>(completion_handler))
             .release();
     }
+
+    detail::GetServerRPCServiceT<ServerRPC>& service_;
 };
 
 template <class Operation>
