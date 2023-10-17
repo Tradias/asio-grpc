@@ -30,8 +30,18 @@ auto register_awaitable_request_handler(const typename ServerRPC::executor_type&
                                         RequestHandler request_handler, CompletionToken token)
 {
     return asio::async_initiate<CompletionToken, void(std::exception_ptr)>(
-        detail::AwaitableRequestHandlerInitiator<ServerRPC>{service}, token, executor,
+        detail::RegisterAwaitableRequestHandlerInitiator<ServerRPC>{service}, token, executor,
         static_cast<RequestHandler&&>(request_handler));
+}
+
+template <class ServerRPC, class RequestHandler, class CompletionToken>
+auto register_awaitable_request_handler(agrpc::GrpcContext& grpc_context,
+                                        detail::GetServerRPCServiceT<ServerRPC>& service,
+                                        RequestHandler&& request_handler, CompletionToken&& token)
+{
+    return agrpc::register_awaitable_request_handler<ServerRPC>(grpc_context.get_executor(), service,
+                                                                static_cast<RequestHandler&&>(request_handler),
+                                                                static_cast<CompletionToken&&>(token));
 }
 
 AGRPC_NAMESPACE_END

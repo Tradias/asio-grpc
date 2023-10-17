@@ -188,11 +188,11 @@ class ServerRPC<RequestClientStreaming, TraitsT, Executor>
     ServerRPC& operator=(ServerRPC&& other) = delete;
 
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto read(RequestT& request, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+    auto read(RequestT& req, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
-        return detail::async_initiate_sender_implementation(
-            this->grpc_context(), detail::ServerReadSenderInitiation<Responder>{*this, request},
-            detail::ServerReadSenderImplementation{}, token);
+        return detail::async_initiate_sender_implementation(this->grpc_context(),
+                                                            detail::ServerReadSenderInitiation<Responder>{*this, req},
+                                                            detail::ServerReadSenderImplementation{}, token);
     }
 
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
@@ -348,11 +348,11 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
     using Traits = TraitsT;
 
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto read(RequestT& request, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+    auto read(RequestT& req, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
     {
-        return detail::async_initiate_sender_implementation(
-            this->grpc_context(), detail::ServerReadSenderInitiation<Responder>{*this, request},
-            detail::ServerReadSenderImplementation{}, token);
+        return detail::async_initiate_sender_implementation(this->grpc_context(),
+                                                            detail::ServerReadSenderInitiation<Responder>{*this, req},
+                                                            detail::ServerReadSenderImplementation{}, token);
     }
 
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>

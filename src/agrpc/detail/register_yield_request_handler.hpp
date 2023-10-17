@@ -119,7 +119,8 @@ struct YieldRequestHandlerOperation
 };
 
 template <class ServerRPC>
-using YieldRequestHandlerInitiator = detail::RegisterRequestHandlerInitiator<ServerRPC, YieldRequestHandlerOperation>;
+using RegisterYieldRequestHandlerInitiator =
+    detail::RegisterRequestHandlerInitiator<ServerRPC, YieldRequestHandlerOperation>;
 }
 
 AGRPC_NAMESPACE_END

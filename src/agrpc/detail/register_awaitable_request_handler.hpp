@@ -112,7 +112,7 @@ struct AwaitableRequestHandlerOperation
 };
 
 template <class ServerRPC>
-using AwaitableRequestHandlerInitiator =
+using RegisterAwaitableRequestHandlerInitiator =
     detail::RegisterRequestHandlerInitiator<ServerRPC, AwaitableRequestHandlerOperation>;
 }
 
