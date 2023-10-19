@@ -296,7 +296,7 @@ class ClientRPC<agrpc::ClientRPCType::GENERIC_UNARY, Executor>
  * @since 2.6.0
  */
 template <class Executor = agrpc::GrpcExecutor>
-using ClientRPCGenericUnary = agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_UNARY, Executor>;
+using GenericUnaryClientRPC = agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_UNARY, Executor>;
 
 /**
  * @brief (experimental) I/O object for client-side, client-streaming rpcs
@@ -550,7 +550,7 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor> : public detail::RPCExecu
      * from the server.
      * @arg Attempts to fill in the response parameter that was passed to `start`.
      *
-     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The
      * completion signature is `void(grpc::Status)`.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
@@ -736,7 +736,7 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
     /**
      * @brief Receive a message from the server
      *
-     * Should not be called concurrently with `read_initial_metadata()`. It is not meaningful to call it concurrently
+     * May not be called concurrently with `read_initial_metadata()`. It is not meaningful to call it concurrently
      * with another read on the same stream since reads on the same stream are delivered in order.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
@@ -777,7 +777,7 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
      * @arg The ClientContext associated with the call is updated with possible initial and trailing metadata received
      * from the server.
      *
-     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The
      * completion signature is `void(grpc::Status)`.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
@@ -1025,7 +1025,7 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
      * @arg The ClientContext associated with the call is updated with possible initial and trailing metadata received
      * from the server.
      *
-     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
+     * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The
      * completion signature is `void(grpc::Status)`.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
@@ -1220,7 +1220,7 @@ class ClientRPC<agrpc::ClientRPCType::GENERIC_STREAMING, Executor>
  * @since 2.6.0
  */
 template <class Executor = agrpc::GrpcExecutor>
-using ClientRPCGenericStreaming = agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_STREAMING, Executor>;
+using GenericStreamingClientRPC = agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_STREAMING, Executor>;
 
 AGRPC_NAMESPACE_END
 

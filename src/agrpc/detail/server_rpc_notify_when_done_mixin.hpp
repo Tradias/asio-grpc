@@ -22,13 +22,44 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+/**
+ * @brief (experimental) ServerRPC NotifyWhenDone base
+ *
+ * @since 2.7.0
+ */
 template <bool IsNotifyWhenDone, class Responder, class Executor>
 class ServerRPCNotifyWhenDoneMixin : public RPCExecutorBase<Executor>,
                                      public ServerRPCResponderAndNotifyWhenDone<Responder, IsNotifyWhenDone>
 {
   public:
+    /**
+     * @brief Is this rpc done?
+     *
+     * Only available if `Traits` contain `NOTIFY_WHEN_DONE = true`.
+     *
+     * Returns true if NotifyWhenDone has fired which indicates the `finish` has been called or that the rpc is dead
+     * (i.e., canceled, deadline expired, other side dropped the channel, etc).
+     *
+     * Thread-safe
+     */
     [[nodiscard]] bool is_done() const noexcept { return !this->event_.is_running(); }
 
+    /**
+     * @brief Wait for done
+     *
+     * Only available if `Traits` contain `NOTIFY_WHEN_DONE = true`.
+     *
+     * Request notification of the completion of this rpc, either due to calling `finish` or because the rpc is dead
+     * (i.e., canceled, deadline expired, other side dropped the channel, etc).
+     * [rpc.context().IsCancelled()](https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_context.html#af2d0f087805b4b475d01b12d73508f09)
+     * may be called after this operation completes.
+     *
+     * Cancelling this operation does not invoke
+     * [grpc::ServerContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_context.html#a88d3a0c3d53e39f38654ce8fba968301).
+     *
+     * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
+     * `void()`.
+     */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto wait_for_done(CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {

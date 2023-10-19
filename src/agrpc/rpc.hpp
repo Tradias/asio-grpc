@@ -587,8 +587,8 @@ struct ReadFn
     template <auto RequestRPC, class Traits, class Executor,
               class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     decltype(auto) operator()(agrpc::ServerRPC<RequestRPC, Traits, Executor>& rpc,
-                              typename agrpc::ServerRPC<RequestRPC, Traits, Executor>::Request& request,
-                              CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{}) const
+                              typename agrpc::ServerRPC<RequestRPC, Traits, Executor>::Request & request,
+                              CompletionToken && token = detail::DefaultCompletionTokenT<Executor>{}) const
         noexcept(noexcept(rpc.read(request, static_cast<CompletionToken&&>(token))))
     {
         return rpc.read(request, static_cast<CompletionToken&&>(token));
@@ -622,7 +622,7 @@ struct WriteFn
     /**
      * @brief Write to a streaming RPC
      *
-     * Only one write may be outstanding at any given time. This is thread-safe with respect to `agrpc::read`. gRPC does
+     * Only one write may be outstanding at any given time. This is thread-safe with respect to `agrpc::read`. GRPC does
      * not take ownership or a reference to `response`, so it is safe to to deallocate once write returns.
      *
      * Example server-side server-streaming:
@@ -904,7 +904,7 @@ struct FinishFn
      * @note If status has a non-OK code, then message will not be sent, and the client will receive only the status
      * with possible trailing metadata.
      *
-     * gRPC does not take ownership or a reference to message and status, so it is safe to deallocate once finish
+     * GRPC does not take ownership or a reference to message and status, so it is safe to deallocate once finish
      * returns.
      *
      * Example client-streaming:
@@ -1047,7 +1047,7 @@ struct WriteAndFinishFn
      *
      * write_and_finish is equivalent of performing write_last and finish in a single step.
      *
-     * gRPC does not take ownership or a reference to response and status, so it is safe to deallocate once
+     * GRPC does not take ownership or a reference to response and status, so it is safe to deallocate once
      * write_and_finish returns.
      *
      * Implicit input parameter:
@@ -1134,7 +1134,9 @@ struct FinishWithErrorFn
      *
      * @param responder A `grpc::ServerAsyncReader/ServerAsyncResponseWriter(Interface)` or a `std::unique_ptr` of it.
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
-     * completion signature is `void(bool)`. The bool should always be `true`.
+     * completion signature is `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire.
+     * If it is `false`, it is not going to the wire because the call is already dead (i.e., canceled, deadline expired,
+     * other side dropped the channel, etc).
      */
     template <class Responder, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(Responder& responder, const grpc::Status& status, CompletionToken&& token = {}) const

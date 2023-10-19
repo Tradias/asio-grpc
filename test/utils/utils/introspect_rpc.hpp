@@ -43,9 +43,9 @@ struct IntrospectRPC<agrpc::ClientRPC<PrepareAsync, Executor>, agrpc::ClientRPCT
 };
 
 template <class Executor>
-struct IntrospectRPC<agrpc::ClientRPCGenericUnary<Executor>, agrpc::ClientRPCType::GENERIC_UNARY>
+struct IntrospectRPC<agrpc::GenericUnaryClientRPC<Executor>, agrpc::ClientRPCType::GENERIC_UNARY>
 {
-    using ClientRPC = agrpc::ClientRPCGenericUnary<Executor>;
+    using ClientRPC = agrpc::GenericUnaryClientRPC<Executor>;
     using ServerRPC = agrpc::GenericServerRPC<agrpc::DefaultServerRPCTraits, Executor>;
 
     template <class ExecOrContext, class CompletionToken>
@@ -103,9 +103,9 @@ struct IntrospectRPC<agrpc::ClientRPC<PrepareAsync, Executor>, agrpc::ClientRPCT
 };
 
 template <class Executor>
-struct IntrospectRPC<agrpc::ClientRPCGenericStreaming<Executor>, agrpc::ClientRPCType::GENERIC_STREAMING>
+struct IntrospectRPC<agrpc::GenericStreamingClientRPC<Executor>, agrpc::ClientRPCType::GENERIC_STREAMING>
 {
-    using ClientRPC = agrpc::ClientRPCGenericStreaming<Executor>;
+    using ClientRPC = agrpc::GenericStreamingClientRPC<Executor>;
     using ServerRPC = agrpc::GenericServerRPC<agrpc::DefaultServerRPCTraits, Executor>;
 
     template <class CompletionToken>

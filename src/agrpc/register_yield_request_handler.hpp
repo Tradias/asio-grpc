@@ -22,7 +22,7 @@ AGRPC_NAMESPACE_BEGIN()
 
 template <class ServerRPC, class RequestHandler, class CompletionToken>
 auto register_yield_request_handler(const typename ServerRPC::executor_type& executor,
-                                    detail::GetServerRPCServiceT<ServerRPC>& service, RequestHandler request_handler,
+                                    detail::GetServerRPCServiceT<ServerRPC>& service, RequestHandler&& request_handler,
                                     CompletionToken&& token)
 {
     return asio::async_initiate<CompletionToken, void(std::exception_ptr)>(

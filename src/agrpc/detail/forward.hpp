@@ -41,7 +41,7 @@ struct UseSender;
 /**
  * @brief (experimental) Primary ClientRPC template
  *
- * This is the main entrypoint into the recommended API for writing asynchronous gRPC clients.
+ * This is the main entrypoint into the recommended API for implementing asynchronous gRPC clients.
  *
  * @see
  * @c agrpc::ClientRPC<PrepareAsyncUnary,Executor> <br>
@@ -61,14 +61,14 @@ struct DefaultServerRPCTraits;
 /**
  * @brief (experimental) Primary ServerRPC template
  *
- * This is the main entrypoint into the recommended API for writing asynchronous gRPC clients.
+ * This is the main entrypoint into the recommended API for implementing asynchronous gRPC servers.
  *
  * @see
- * @c agrpc::ServerRPC<RequestAsyncUnary,Executor> <br>
- * @c agrpc::ServerRPC<RequestAsyncClientStreaming,Executor> <br>
- * @c agrpc::ServerRPC<RequestAsyncServerStreaming,Executor> <br>
- * @c agrpc::ServerRPC<RequestAsyncBidiStreaming,Executor> <br>
- * @c agrpc::ServerRPC<agrpc::ServerRPCType::GENERIC_STREAMING,Executor> <br>
+ * @c agrpc::ServerRPC<RequestUnary,TraitsT,Executor> <br>
+ * @c agrpc::ServerRPC<RequestClientStreaming,TraitsT,Executor> <br>
+ * @c agrpc::ServerRPC<RequestServerStreaming,TraitsT,Executor> <br>
+ * @c agrpc::ServerRPC<RequestBidiStreaming,TraitsT,Executor> <br>
+ * @c agrpc::ServerRPC<agrpc::ServerRPCType::GENERIC,TraitsT,Executor> <br>
  *
  * @since 2.7.0
  */
