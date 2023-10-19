@@ -126,12 +126,12 @@ class ClientRPCUnaryBase<PrepareAsyncUnary, Executor>
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     static auto request(agrpc::GrpcContext& grpc_context, StubT& stub, grpc::ClientContext& context,
                         const RequestT& request, ResponseT& response,
-                        CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+                        CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
             grpc_context, detail::ClientUnaryRequestSenderInitiation<Response>{context, response},
             detail::ClientUnaryRequestSenderImplementation<PrepareAsyncUnary>{grpc_context, stub, context, request},
-            token);
+            static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -265,11 +265,12 @@ class ClientRPC<agrpc::ClientRPCType::GENERIC_UNARY, Executor>
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     static auto request(agrpc::GrpcContext& grpc_context, const std::string& method, grpc::GenericStub& stub,
                         grpc::ClientContext& context, const grpc::ByteBuffer& request, grpc::ByteBuffer& response,
-                        CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+                        CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
             grpc_context, detail::ClientUnaryRequestSenderInitiation<Response>{context, response},
-            detail::ClientGenericUnaryRequestSenderImplementation{grpc_context, method, stub, context, request}, token);
+            detail::ClientGenericUnaryRequestSenderImplementation{grpc_context, method, stub, context, request},
+            static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -456,13 +457,13 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor> : public detail::RPCExecu
      * error details.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto start(StubT& stub, ResponseT& response, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+    auto start(StubT& stub, ResponseT& response, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(),
             detail::ClientStreamingRequestSenderInitiation<PrepareAsyncClientStreaming, Executor>{*this, stub,
                                                                                                   response},
-            detail::ClientStreamingRequestSenderImplementation{}, token);
+            detail::ClientStreamingRequestSenderImplementation{}, static_cast<CompletionToken&&>(token));
     }
 
     using detail::ClientRPCContextBase<Responder>::cancel;
@@ -487,11 +488,11 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor> : public detail::RPCExecu
      * `void(bool)`. `true` indicates that the metadata was read. If it is `false`, then the call is dead.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto read_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+    auto read_initial_metadata(CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::ReadInitialMetadataSenderInitiation<Responder>{*this},
-            detail::ReadInitialMetadataSenderImplementation{}, token);
+            detail::ReadInitialMetadataSenderImplementation{}, static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -502,11 +503,11 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor> : public detail::RPCExecu
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto write(const RequestT& request, grpc::WriteOptions options,
-               CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+               CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::WriteClientStreamingSenderInitiation<Responder>{*this, request, options},
-            detail::WriteClientStreamingSenderImplementation{}, token);
+            detail::WriteClientStreamingSenderImplementation{}, static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -553,11 +554,11 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor> : public detail::RPCExecu
      * completion signature is `void(grpc::Status)`.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto finish(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+    auto finish(CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::ClientFinishSenderInitiation{},
-            detail::ClientFinishSenderImplementation<Responder>{*this}, token);
+            detail::ClientFinishSenderImplementation<Responder>{*this}, static_cast<CompletionToken&&>(token));
     }
 };
 
@@ -699,12 +700,12 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto start(StubT& stub, const RequestT& request,
-               CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+               CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(),
             detail::ClientStreamingRequestSenderInitiation<PrepareAsyncServerStreaming, Executor>{*this, stub, request},
-            detail::ClientStreamingRequestSenderImplementation{}, token);
+            detail::ClientStreamingRequestSenderImplementation{}, static_cast<CompletionToken&&>(token));
     }
 
     using detail::ClientRPCContextBase<Responder>::cancel;
@@ -725,11 +726,11 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
      * `void(bool)`. `true` indicates that the metadata was read. If it is `false`, then the call is dead.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto read_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+    auto read_initial_metadata(CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::ReadInitialMetadataSenderInitiation<Responder>{*this},
-            detail::ReadInitialMetadataSenderImplementation{}, token);
+            detail::ReadInitialMetadataSenderImplementation{}, static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -744,11 +745,11 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
      * stream has failed (or been cancelled).
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto read(ResponseT& response, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+    auto read(ResponseT& response, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::ReadServerStreamingSenderInitiation<Responder>{*this, response},
-            detail::ReadServerStreamingSenderImplementation{}, token);
+            detail::ReadServerStreamingSenderImplementation{}, static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -780,11 +781,12 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
      * completion signature is `void(grpc::Status)`.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto finish(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+    auto finish(CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::ClientFinishServerStreamingSenderInitation{},
-            detail::ClientFinishServerStreamingSenderImplementation<Responder>{*this}, token);
+            detail::ClientFinishServerStreamingSenderImplementation<Responder>{*this},
+            static_cast<CompletionToken&&>(token));
     }
 };
 }
@@ -918,11 +920,11 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
      * `void(bool)`. `true` indicates that the metadata was read. If it is `false`, then the call is dead.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto read_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+    auto read_initial_metadata(CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::ReadInitialMetadataSenderInitiation<Responder>{*this},
-            detail::ReadInitialMetadataSenderImplementation{}, token);
+            detail::ReadInitialMetadataSenderImplementation{}, static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -938,11 +940,11 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
      * stream has failed (or been cancelled).
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto read(ResponseT& response, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+    auto read(ResponseT& response, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::ClientReadBidiStreamingSenderInitiation<Responder>{*this, response},
-            detail::ClientReadBidiStreamingSenderImplementation{}, token);
+            detail::ClientReadBidiStreamingSenderImplementation{}, static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -960,11 +962,11 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto write(const RequestT& request, grpc::WriteOptions options,
-               CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+               CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::ClientWriteBidiStreamingSenderInitiation<Responder>{*this, request, options},
-            detail::ClientWriteBidiStreamingSenderImplementation{}, token);
+            detail::ClientWriteBidiStreamingSenderImplementation{}, static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -991,11 +993,11 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
      * wire because the call is already dead (i.e., canceled, deadline expired, other side dropped the channel, etc).
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto writes_done(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+    auto writes_done(CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::ClientWritesDoneSenderInitiation{},
-            detail::ClientWritesDoneSenderImplementation<Responder>{*this}, token);
+            detail::ClientWritesDoneSenderImplementation<Responder>{*this}, static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -1027,11 +1029,11 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
      * completion signature is `void(grpc::Status)`.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto finish(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+    auto finish(CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::ClientFinishSenderInitiation{},
-            detail::ClientFinishSenderImplementation<Responder>{*this}, token);
+            detail::ClientFinishSenderImplementation<Responder>{*this}, static_cast<CompletionToken&&>(token));
     }
 };
 }
@@ -1137,12 +1139,12 @@ class ClientRPC<PrepareAsyncBidiStreaming, Executor>
      * error details.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto start(StubT& stub, CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+    auto start(StubT& stub, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(),
             detail::ClientStreamingRequestSenderInitiation<PrepareAsyncBidiStreaming, Executor>{*this, stub},
-            detail::ClientStreamingRequestSenderImplementation{}, token);
+            detail::ClientStreamingRequestSenderImplementation{}, static_cast<CompletionToken&&>(token));
     }
 };
 
@@ -1200,13 +1202,13 @@ class ClientRPC<agrpc::ClientRPCType::GENERIC_STREAMING, Executor>
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto start(const std::string& method, grpc::GenericStub& stub,
-               CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+               CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(),
             detail::ClientStreamingRequestSenderInitiation<agrpc::ClientRPCType::GENERIC_STREAMING, Executor>{
                 *this, method, stub},
-            detail::ClientStreamingRequestSenderImplementation{}, token);
+            detail::ClientStreamingRequestSenderImplementation{}, static_cast<CompletionToken&&>(token));
     }
 };
 

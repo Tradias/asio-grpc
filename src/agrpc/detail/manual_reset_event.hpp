@@ -144,7 +144,7 @@ class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     template <class CompletionToken, class IOExecutor>
-    auto wait(CompletionToken token, const IOExecutor& io_executor)
+    auto wait(CompletionToken&& token, const IOExecutor& io_executor)
     {
         using Sig = detail::PrependErrorCodeToSignatureT<Signature>;
         return asio::async_initiate<CompletionToken, Sig>(InitiateWait{*this}, token, io_executor);

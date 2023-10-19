@@ -118,16 +118,17 @@ TEST_CASE_TEMPLATE("Unary ClientRPC/ServerRPC read/send_initial_metadata success
         });
 }
 
+struct GetYield
+{
+    auto& operator()(typename test::msg::Request&, const asio::yield_context& yield) { return yield; }
+    auto& operator()(const asio::yield_context& yield) { return yield; }
+};
+
 TEST_CASE_TEMPLATE("Streaming ClientRPC/ServerRPC read/send_initial_metadata successfully", RPC,
                    test::ClientStreamingServerRPC, test::NotifyWhenDoneClientStreamingServerRPC,
                    test::ServerStreamingServerRPC, test::NotifyWhenDoneServerStreamingServerRPC,
                    test::BidirectionalStreamingServerRPC, test::NotifyWhenDoneBidirectionalStreamingServerRPC)
 {
-    struct GetYield
-    {
-        auto& operator()(typename RPC::Request&, const asio::yield_context& yield) { return yield; }
-        auto& operator()(const asio::yield_context& yield) { return yield; }
-    };
     ServerRPCTest<RPC> test{true};
     test.register_and_perform_three_requests(
         [&](RPC& rpc, auto&&... args)

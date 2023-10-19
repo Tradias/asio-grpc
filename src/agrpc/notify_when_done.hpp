@@ -61,11 +61,11 @@ struct NotifyWhenDoneFn
      */
     template <class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(agrpc::GrpcContext& grpc_context, grpc::ServerContext& server_context,
-                    CompletionToken token = {}) const noexcept(detail::IS_USE_SENDER<CompletionToken>)
+                    CompletionToken&& token = {}) const noexcept(detail::IS_USE_SENDER<CompletionToken>)
     {
         return detail::async_initiate_sender_implementation(grpc_context, detail::NotifyWhenDoneSenderInitiation{},
                                                             detail::NotifyWhenDoneSenderImplementation{server_context},
-                                                            token);
+                                                            static_cast<CompletionToken&&>(token));
     }
 };
 }  // namespace detail

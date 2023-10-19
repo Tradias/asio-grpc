@@ -125,7 +125,8 @@ struct GrpcContext::executor_type
 };
 
 template <class CompletionToken>
-auto read(grpc::ClientAsyncReader<helloworld::HelloReply>& reader, helloworld::HelloReply& reply, CompletionToken token)
+auto read(grpc::ClientAsyncReader<helloworld::HelloReply>& reader, helloworld::HelloReply& reply,
+          CompletionToken&& token)
 {
     return boost::asio::async_initiate<CompletionToken, void(bool)>(
         [&](auto completion_handler)

@@ -28,36 +28,38 @@ template <auto RequestRPC, class TraitsT, class Executor, class Service,
           class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
 auto start(agrpc::ServerRPC<RequestRPC, TraitsT, Executor>& rpc, Service& service,
            typename agrpc::ServerRPC<RequestRPC, TraitsT, Executor>::Request& request,
-           CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+           CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
 {
     using Responder = std::remove_reference_t<decltype(ServerRPCContextBaseAccess::responder(rpc))>;
     return detail::async_initiate_sender_implementation(
         RPCExecutorBaseAccess::grpc_context(rpc),
         detail::ServerRequestSenderInitiation<RequestRPC, TraitsT::NOTIFY_WHEN_DONE>{service, request},
-        detail::ServerRequestSenderImplementation<Responder, TraitsT::NOTIFY_WHEN_DONE>{rpc}, token);
+        detail::ServerRequestSenderImplementation<Responder, TraitsT::NOTIFY_WHEN_DONE>{rpc},
+        static_cast<CompletionToken&&>(token));
 }
 
 template <auto RequestRPC, class TraitsT, class Executor, class Service,
           class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
 auto start(agrpc::ServerRPC<RequestRPC, TraitsT, Executor>& rpc, Service& service,
-           CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+           CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
 {
     using Responder = std::remove_reference_t<decltype(ServerRPCContextBaseAccess::responder(rpc))>;
     return detail::async_initiate_sender_implementation(
         RPCExecutorBaseAccess::grpc_context(rpc),
         detail::ServerRequestSenderInitiation<RequestRPC, TraitsT::NOTIFY_WHEN_DONE>{service},
-        detail::ServerRequestSenderImplementation<Responder, TraitsT::NOTIFY_WHEN_DONE>{rpc}, token);
+        detail::ServerRequestSenderImplementation<Responder, TraitsT::NOTIFY_WHEN_DONE>{rpc},
+        static_cast<CompletionToken&&>(token));
 }
 
 template <class TraitsT, class Executor, class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
 auto start(agrpc::ServerRPC<agrpc::ServerRPCType::GENERIC, TraitsT, Executor>& rpc, grpc::AsyncGenericService& service,
-           CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+           CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
 {
     return detail::async_initiate_sender_implementation(
         RPCExecutorBaseAccess::grpc_context(rpc),
         detail::ServerRequestSenderInitiation<agrpc::ServerRPCType::GENERIC, TraitsT::NOTIFY_WHEN_DONE>{service},
         detail::ServerRequestSenderImplementation<grpc::GenericServerAsyncReaderWriter, TraitsT::NOTIFY_WHEN_DONE>{rpc},
-        token);
+        static_cast<CompletionToken&&>(token));
 }
 }
 

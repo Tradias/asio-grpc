@@ -129,7 +129,7 @@ class CancelSafe<void(CompletionArgs...)>
      * All. Upon cancellation, the asynchronous operation continues to run.
      */
     template <class CompletionToken = agrpc::DefaultCompletionToken>
-    auto wait(CompletionToken token = {})
+    auto wait(CompletionToken&& token = {})
     {
         assert(!completion_handler_ && "Can only wait again when the previous wait has been cancelled or completed");
         return asio::async_initiate<CompletionToken, CompletionSignature>(Initiator{*this}, token);

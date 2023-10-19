@@ -29,12 +29,12 @@ class ServerRPCBase : public ServerRPCNotifyWhenDoneMixin<Traits::NOTIFY_WHEN_DO
 {
   public:
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto send_initial_metadata(CompletionToken token = detail::DefaultCompletionTokenT<Executor>{})
+    auto send_initial_metadata(CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
             detail::RPCExecutorBaseAccess::grpc_context(*this),
             detail::SendInitialMetadataSenderInitiation<Responder>{*this},
-            detail::SendInitialMetadataSenderImplementation{}, token);
+            detail::SendInitialMetadataSenderImplementation{}, static_cast<CompletionToken&&>(token));
     }
 
   protected:

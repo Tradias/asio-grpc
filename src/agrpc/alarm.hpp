@@ -80,11 +80,12 @@ class BasicAlarm
      * completion signature is `void(bool)`. `true` if it expired, `false` if it was canceled.
      */
     template <class Deadline, class CompletionToken = detail::LegacyDefaultCompletionTokenT<Executor>>
-    auto wait(const Deadline& deadline, CompletionToken token = detail::LegacyDefaultCompletionTokenT<Executor>{}) &
+    auto wait(const Deadline& deadline, CompletionToken&& token = detail::LegacyDefaultCompletionTokenT<Executor>{}) &
     {
         return detail::async_initiate_sender_implementation(
             grpc_context(), detail::GrpcSenderInitiation<detail::AlarmInitFunction<Deadline>>{alarm_, deadline},
-            detail::GrpcSenderImplementation<detail::AlarmCancellationFunction>{}, token);
+            detail::GrpcSenderImplementation<detail::AlarmCancellationFunction>{},
+            static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -100,11 +101,12 @@ class BasicAlarm
      * completion signature is `void(BasicAlarm, bool)`. `true` if it expired, `false` if it was canceled.
      */
     template <class Deadline, class CompletionToken = detail::LegacyDefaultCompletionTokenT<Executor>>
-    auto wait(const Deadline& deadline, CompletionToken token = detail::LegacyDefaultCompletionTokenT<Executor>{}) &&
+    auto wait(const Deadline& deadline, CompletionToken&& token = detail::LegacyDefaultCompletionTokenT<Executor>{}) &&
     {
         return detail::async_initiate_sender_implementation(
             grpc_context(), detail::MoveAlarmSenderInitiation<Deadline>{deadline},
-            detail::MoveAlarmSenderImplementation<Executor>{static_cast<BasicAlarm&&>(*this)}, token);
+            detail::MoveAlarmSenderImplementation<Executor>{static_cast<BasicAlarm&&>(*this)},
+            static_cast<CompletionToken&&>(token));
     }
 
     /**

@@ -94,7 +94,7 @@ class RepeatedlyRequestFn
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     template <class RPC, class RequestHandler, class CompletionToken>
     static auto impl(RPC rpc, detail::GetServiceT<RPC>& service, RequestHandler&& request_handler,
-                     CompletionToken token)
+                     CompletionToken&& token)
     {
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
         using RPCContext = detail::RPCContextForRPCT<RPC>;

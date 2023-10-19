@@ -218,7 +218,7 @@ decltype(auto) initiate_using_async_completion(Initiation&& initiation, RawCompl
 }
 
 void wait(grpc::Alarm& alarm, std::chrono::system_clock::time_point deadline,
-          const asio::executor_binder<std::function<void(bool)>, agrpc::GrpcExecutor>& function);
+          asio::executor_binder<std::function<void(bool)>, agrpc::GrpcExecutor> function);
 
 void post(agrpc::GrpcContext& grpc_context, const std::function<void()>& function);
 

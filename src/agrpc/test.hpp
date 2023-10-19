@@ -27,9 +27,9 @@ AGRPC_NAMESPACE_BEGIN()
  * @brief Test utility to manually process gRPC tags
  *
  * This function can be used to process gRPC tags in places where the tag does not go through the
- * `grpc::CompletionQueue`, e.g. in mocked stubs. It processes the tag in a manner equivalent to `asio::post`.
+ * `grpc::CompletionQueue`, for example in mocked stubs. It processes the tag in a manner equivalent to `asio::post`.
  *
- * Example using GMock:
+ * Example using Google Mock:
  *
  * @snippet client.cpp mock-stub
  *

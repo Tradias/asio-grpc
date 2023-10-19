@@ -25,7 +25,7 @@ void spawn(agrpc::GrpcContext& grpc_context, const std::function<void(const asio
 }
 
 void wait(grpc::Alarm& alarm, std::chrono::system_clock::time_point deadline,
-          const asio::executor_binder<std::function<void(bool)>, agrpc::GrpcExecutor>& function)
+          asio::executor_binder<std::function<void(bool)>, agrpc::GrpcExecutor> function)
 {
     agrpc::wait(alarm, deadline, function);
 }

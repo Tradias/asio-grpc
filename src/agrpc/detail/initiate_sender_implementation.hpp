@@ -46,10 +46,10 @@ struct SubmitToCompletionHandler
 
 template <class Initiation, class Implementation, class CompletionToken>
 auto async_initiate_sender_implementation(agrpc::GrpcContext& grpc_context, const Initiation& initiation,
-                                          Implementation&& implementation, [[maybe_unused]] CompletionToken& token)
+                                          Implementation&& implementation, [[maybe_unused]] CompletionToken&& token)
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    if constexpr (!std::is_same_v<agrpc::UseSender, CompletionToken>)
+    if constexpr (!std::is_same_v<agrpc::UseSender, detail::RemoveCrefT<CompletionToken>>)
     {
         return asio::async_initiate<CompletionToken, typename Implementation::Signature>(
             detail::SubmitToCompletionHandler{grpc_context}, token, initiation,

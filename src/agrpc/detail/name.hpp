@@ -212,8 +212,8 @@ constexpr auto get_method_name()
 template <auto PrepareAsync>
 inline constexpr auto CLIENT_METHOD_NAME_V = detail::get_method_name<ClientName<PrepareAsync>>();
 
-template <auto PrepareAsync>
-inline constexpr auto SERVER_METHOD_NAME_V = detail::get_method_name<ServerName<PrepareAsync>>();
+template <auto RequestRPC>
+inline constexpr auto SERVER_METHOD_NAME_V = detail::get_method_name<ServerName<RequestRPC>>();
 }
 
 AGRPC_NAMESPACE_END

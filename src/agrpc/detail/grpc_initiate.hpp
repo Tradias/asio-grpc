@@ -35,7 +35,7 @@ using GrpcInitiateTemplateArgs = void (*)(StopFunction);
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class StopFunction, class InitiatingFunction, class CompletionToken>
-auto grpc_initiate_impl(InitiatingFunction&& initiating_function, CompletionToken token)
+auto grpc_initiate_impl(InitiatingFunction&& initiating_function, CompletionToken&& token)
 {
     return asio::async_initiate<CompletionToken, void(bool)>(
         detail::GrpcInitiator<InitiatingFunction, StopFunction>{static_cast<InitiatingFunction&&>(initiating_function)},
@@ -61,7 +61,7 @@ auto grpc_initiate(InitiatingFunction&& initiating_function, CompletionToken&& t
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class Payload, class InitiatingFunction, class CompletionToken>
-auto grpc_initiate_with_payload(InitiatingFunction&& initiating_function, CompletionToken token)
+auto grpc_initiate_with_payload(InitiatingFunction&& initiating_function, CompletionToken&& token)
 {
     return asio::async_initiate<CompletionToken, void(std::pair<Payload, bool>)>(
         detail::GrpcWithPayloadInitiator<Payload, InitiatingFunction>{

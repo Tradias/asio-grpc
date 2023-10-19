@@ -68,7 +68,7 @@ struct InitiateImmediateCompletion<void(Args...)>
 };
 
 template <class Signature, class CompletionToken, class... Args>
-auto async_initiate_immediate_completion(CompletionToken token, Args&&... args)
+auto async_initiate_immediate_completion(CompletionToken&& token, Args&&... args)
 {
     return asio::async_initiate<CompletionToken, Signature>(detail::InitiateImmediateCompletion<Signature>{}, token,
                                                             static_cast<Args&&>(args)...);

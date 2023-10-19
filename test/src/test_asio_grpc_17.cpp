@@ -662,15 +662,15 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post an Alarm and use variadic-a
     CHECK(ok);
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "agrpc::wait with const-ref callback")
+TEST_CASE_FIXTURE(test::GrpcContextTest, "agrpc::wait with lvalue-ref callback")
 {
     grpc::Alarm alarm;
     bool ok{false};
-    const auto cb = asio::bind_executor(grpc_context,
-                                        [&](bool wait_ok)
-                                        {
-                                            ok = wait_ok;
-                                        });
+    auto cb = asio::bind_executor(grpc_context,
+                                  [&](bool wait_ok)
+                                  {
+                                      ok = wait_ok;
+                                  });
     agrpc::wait(alarm, test::ten_milliseconds_from_now(), cb);
     grpc_context.run();
     CHECK(ok);
