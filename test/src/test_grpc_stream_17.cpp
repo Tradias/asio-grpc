@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "utils/doctest.hpp"
 #include "utils/grpc_context_test.hpp"
 #include "utils/io_context_test.hpp"
 #include "utils/time.hpp"
@@ -20,7 +21,6 @@
 #include <agrpc/get_completion_queue.hpp>
 #include <agrpc/grpc_stream.hpp>
 #include <agrpc/wait.hpp>
-#include <doctest/doctest.h>
 
 #include <cstddef>
 

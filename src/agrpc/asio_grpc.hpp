@@ -35,6 +35,7 @@
 #include <agrpc/cancel_safe.hpp>
 #include <agrpc/client_rpc.hpp>
 #include <agrpc/default_completion_token.hpp>
+#include <agrpc/default_server_rpc_traits.hpp>
 #include <agrpc/get_completion_queue.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>

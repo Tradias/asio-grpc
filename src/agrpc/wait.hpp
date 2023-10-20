@@ -60,19 +60,11 @@ struct WaitFn
      */
     template <class Deadline, class CompletionToken = agrpc::DefaultCompletionToken>
     auto operator()(grpc::Alarm& alarm, const Deadline& deadline, CompletionToken&& token = {}) const
-        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>&&
-                     std::is_nothrow_copy_constructible_v<Deadline>)
+        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken> &&
+                 std::is_nothrow_copy_constructible_v<Deadline>)
     {
         return detail::grpc_initiate_impl<detail::AlarmCancellationFunction>(detail::AlarmInitFunction{alarm, deadline},
                                                                              static_cast<CompletionToken&&>(token));
-    }
-
-    template <class Executor, class Deadline, class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    decltype(auto) operator()(agrpc::BasicAlarm<Executor>& alarm, const Deadline& deadline,
-                              CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{}) const
-        noexcept(noexcept(alarm.wait(deadline, static_cast<CompletionToken&&>(token))))
-    {
-        return alarm.wait(deadline, static_cast<CompletionToken&&>(token));
     }
 };
 }

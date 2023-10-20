@@ -117,8 +117,8 @@ jobs:
       CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-release -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_CMAKE_INSTALL_TEST_CTEST_COMMAND=/usr/bin/ctest -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold'
 
     steps:
-    - name: Install GCC 12, gcovr and (old) cmake
-      run: sudo apt-get install g++-12 gcovr cmake
+    - name: Install gcovr and (old) cmake
+      run: sudo apt-get install gcovr cmake
 
     - uses: actions/checkout@v2
       with:

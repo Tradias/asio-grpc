@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "utils/doctest.hpp"
 #include "utils/grpc_context_test.hpp"
 #include "utils/io_context_test.hpp"
 #include "utils/time.hpp"
 
 #include <agrpc/alarm.hpp>
 #include <agrpc/waiter.hpp>
-#include <doctest/doctest.h>
 
 #include <cstddef>
 
@@ -84,11 +84,16 @@ TEST_CASE_FIXTURE(test::IoContextTest, "Waiter: can handle move-only completion 
     io_context.run();
 }
 
+inline constexpr auto alarm_wait = [](agrpc::Alarm& alarm, auto deadline, auto token)
+{
+    return alarm.wait(deadline, token);
+};
+
 TEST_CASE_FIXTURE(test::GrpcContextTest, "Waiter: initiate alarm -> cancel alarm -> wait returns false")
 {
     agrpc::Waiter<void(bool)> waiter;
     agrpc::Alarm alarm{grpc_context};
-    waiter.initiate(agrpc::wait, alarm, test::five_seconds_from_now());
+    waiter.initiate(alarm_wait, alarm, test::five_seconds_from_now());
     CHECK_FALSE(waiter.is_ready());
     alarm.cancel();
     waiter.wait(
@@ -105,7 +110,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "Waiter: can change default completion 
 {
     agrpc::UseSender::as_default_on_t<agrpc::Waiter<void(bool)>> waiter;
     agrpc::Alarm alarm{grpc_context};
-    waiter.initiate(agrpc::wait, alarm, test::ten_milliseconds_from_now());
+    waiter.initiate(alarm_wait, alarm, test::ten_milliseconds_from_now());
     auto sender = waiter.wait();
     CHECK(agrpc::detail::exec::is_sender_v<decltype(sender)>);
     grpc_context.run();
@@ -141,7 +146,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "Waiter: cancel wait for alarm and wait
     bool done{};
     agrpc::Waiter<void(bool)> waiter;
     agrpc::Alarm alarm{grpc_context};
-    waiter.initiate(agrpc::wait, alarm, test::five_hundred_milliseconds_from_now());
+    waiter.initiate(alarm_wait, alarm, test::five_hundred_milliseconds_from_now());
     asio::cancellation_signal signal;
     waiter.wait(agrpc::bind_allocator(get_allocator(), asio::bind_cancellation_slot(signal.slot(),
                                                                                     [&](auto&& ec, bool)
