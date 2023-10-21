@@ -34,6 +34,10 @@
 
 // Example showing some of the features of using asio-grpc with libunifex.
 
+using ExampleService = example::v1::Example::AsyncService;
+
+using UnaryRPC = agrpc::ServerRPC<&ExampleService::RequestUnary>;
+
 // begin-snippet: server-side-unifex-unary
 // ---------------------------------------------------
 // Register a request handler to unary requests. A bit of boilerplate code regarding stop_source has been added to make
@@ -42,18 +46,21 @@
 // end-snippet
 auto register_unary_request_handler(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
 {
-    auto request_handler = [&](grpc::ServerContext&, example::v1::Request& request,
-                               grpc::ServerAsyncResponseWriter<example::v1::Response>& writer) -> unifex::task<void>
-    {
-        example::v1::Response response;
-        response.set_integer(request.integer());
-        co_await agrpc::finish(writer, response, grpc::Status::OK, agrpc::use_sender(grpc_context));
-    };
-
-    // Register a handler for all incoming RPCs of this method (Example::Unary) until the server is being
-    // shut down.
-    return agrpc::repeatedly_request(&example::v1::Example::AsyncService::RequestUnary, service, request_handler,
-                                     agrpc::use_sender(grpc_context));
+    // Register a handler for all incoming RPCs of this unary method until the server is being shut down.
+    return agrpc::register_sender_rpc_handler<UnaryRPC>(grpc_context, service,
+                                                        [&](UnaryRPC& rpc, UnaryRPC::Request& request)
+                                                        {
+                                                            return unifex::let_value_with(
+                                                                []
+                                                                {
+                                                                    return UnaryRPC::Response{};
+                                                                },
+                                                                [&](auto& response)
+                                                                {
+                                                                    response.set_integer(request.integer());
+                                                                    return rpc.finish(response, grpc::Status::OK);
+                                                                });
+                                                        });
 }
 // ---------------------------------------------------
 //
@@ -117,17 +124,17 @@ unifex::task<void> handle_slow_unary_request(agrpc::GrpcContext& grpc_context,
 auto register_shutdown_request_handler(agrpc::GrpcContext& grpc_context, example::v1::ExampleExt::AsyncService& service,
                                        example::ServerShutdown& server_shutdown)
 {
-    auto request_handler = [&](grpc::ServerContext&, google::protobuf::Empty&,
-                               grpc::ServerAsyncResponseWriter<google::protobuf::Empty>& writer)
+    using RPC = agrpc::ServerRPC<&example::v1::ExampleExt::AsyncService::RequestShutdown>;
+    auto rpc_handler = [&](RPC& rpc, const RPC::Request&)
     {
         return unifex::let_value_with(
                    []
                    {
-                       return google::protobuf::Empty{};
+                       return RPC::Response{};
                    },
                    [&](auto& response)
                    {
-                       return agrpc::finish(writer, response, grpc::Status::OK, agrpc::use_sender(grpc_context));
+                       return rpc.finish(response, grpc::Status::OK);
                    }) |
                unifex::then(
                    [&](bool)
@@ -135,8 +142,7 @@ auto register_shutdown_request_handler(agrpc::GrpcContext& grpc_context, example
                        server_shutdown.shutdown();
                    });
     };
-    return agrpc::repeatedly_request(&example::v1::ExampleExt::AsyncService::RequestShutdown, service, request_handler,
-                                     agrpc::use_sender(grpc_context));
+    return agrpc::register_sender_rpc_handler<RPC>(grpc_context, service, rpc_handler);
 }
 
 template <class Sender>
@@ -158,6 +164,7 @@ void run_grpc_context_for_sender(agrpc::GrpcContext& grpc_context, Sender&& send
 
 int main(int argc, const char** argv)
 {
+    std::this_thread::sleep_for(std::chrono::seconds(4));
     const auto port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("0.0.0.0:") + port;
 

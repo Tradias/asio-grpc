@@ -84,7 +84,7 @@ struct RegisterAwaitableRPCHandlerOperation
             co_return;
         }
         initiate_next();
-        AGRPC_TRY { (void)co_await req.invoke(this->rpc_handler(), rpc); }
+        AGRPC_TRY { co_await req.invoke(this->rpc_handler(), rpc); }
         AGRPC_CATCH(...) { this->set_error(std::current_exception()); }
         if (!detail::ServerRPCContextBaseAccess::is_finished(rpc))
         {

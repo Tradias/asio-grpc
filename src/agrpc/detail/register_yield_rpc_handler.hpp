@@ -90,7 +90,7 @@ struct RegisterYieldRPCHandlerOperation
             return;
         }
         initiate_next();
-        AGRPC_TRY { (void)req.invoke(this->rpc_handler(), rpc, yield); }
+        AGRPC_TRY { req.invoke(this->rpc_handler(), rpc, yield); }
         AGRPC_CATCH(...) { this->set_error(std::current_exception()); }
         if (!detail::ServerRPCContextBaseAccess::is_finished(rpc))
         {

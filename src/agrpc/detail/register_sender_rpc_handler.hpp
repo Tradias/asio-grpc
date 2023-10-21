@@ -77,21 +77,22 @@ struct RegisterRPCHandlerSenderOperationBase : RegisterRPCHandlerOperationBase<S
     }
 };
 
-template <class Receiver, class Signature, bool IsSet>
-struct WaitForOperationState
+template <class Receiver, class Signature, bool IsNotifyWhenDone>
+struct GetWaitForDoneOperationState
 {
     using Type =
         detail::InplaceWithFunctionWrapper<exec::connect_result_t<ManualResetEventSender<Signature>, Receiver>>;
 };
 
 template <class Receiver, class Signature>
-struct WaitForOperationState<Receiver, Signature, false>
+struct GetWaitForDoneOperationState<Receiver, Signature, false>
 {
     using Type = detail::Empty;
 };
 
-template <class Receiver, class Signature, bool IsSet>
-using WaitForOperationStateT = typename WaitForOperationState<Receiver, Signature, IsSet>::Type;
+template <class Receiver, class Signature, bool IsNotifyWhenDone>
+using GetWaitForDoneOperationStateT =
+    typename GetWaitForDoneOperationState<Receiver, Signature, IsNotifyWhenDone>::Type;
 
 struct RPCHandlerOperationFinish
 {
@@ -155,18 +156,18 @@ struct RPCHandlerOperation
 
         void set_value(bool ok)
         {
-            auto& base = rpc_handler_op_.base_;
-            detail::AllocationGuard ptr{&rpc_handler_op_, rpc_handler_op_.get_allocator()};
+            auto& op = rpc_handler_op_;
+            detail::AllocationGuard ptr{&op, op.get_allocator()};
             if (ok)
             {
-                if (auto exception_ptr = rpc_handler_op_.emplace_rpc_handler_operation_state())
+                if (auto exception_ptr = op.emplace_rpc_handler_operation_state())
                 {
-                    rpc_handler_op_.rpc_.cancel();
-                    base.set_error(static_cast<std::exception_ptr&&>(*exception_ptr));
+                    op.rpc_.cancel();
+                    op.base_.set_error(static_cast<std::exception_ptr&&>(*exception_ptr));
                     return;
                 }
-                detail::create_and_start_rpc_handler_operation(base, rpc_handler_op_.get_allocator());
-                rpc_handler_op_.start_rpc_handler_operation_state();
+                detail::create_and_start_rpc_handler_operation(op.base_, op.get_allocator());
+                op.start_rpc_handler_operation_state();
                 ptr.release();
             }
         }
@@ -213,7 +214,7 @@ struct RPCHandlerOperation
 
     using WaitForDoneReceiver = Receiver<RPCHandlerOperationWaitForDone>;
     using WaitForDoneOperationState =
-        detail::WaitForOperationStateT<WaitForDoneReceiver, void(), ServerRPC::Traits::NOTIFY_WHEN_DONE>;
+        detail::GetWaitForDoneOperationStateT<WaitForDoneReceiver, void(), ServerRPC::Traits::NOTIFY_WHEN_DONE>;
 
     using OperationState = std::variant<StartOperationState, FinishOperationState, WaitForDoneOperationState>;
 

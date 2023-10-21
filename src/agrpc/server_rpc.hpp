@@ -149,7 +149,7 @@ class ServerRPC<RequestUnary, TraitsT, Executor>
      * with possible trailing metadata.
      *
      * GRPC does not take ownership or a reference to message and status, so it is safe to deallocate once finish
-     * returns.
+     * returns, unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is used.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire. If it is `false`, it is
@@ -177,8 +177,8 @@ class ServerRPC<RequestUnary, TraitsT, Executor>
      *
      * @arg Sends initial metadata if not already sent (using the ServerContext associated with this call).
      *
-     * gRPC does not take ownership or a reference to status, so it is safe to deallocate once finish_with_error
-     * returns.
+     * GRPC does not take ownership or a reference to status, so it is safe to deallocate once finish_with_error
+     * returns, unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is used.
      *
      * @note Status must have a non-OK code.
      *
@@ -345,7 +345,7 @@ class ServerRPC<RequestClientStreaming, TraitsT, Executor>
      * with possible trailing metadata.
      *
      * GRPC does not take ownership or a reference to message and status, so it is safe to deallocate once finish
-     * returns.
+     * returns, unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is used.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire. If it is `false`, it is
@@ -374,7 +374,7 @@ class ServerRPC<RequestClientStreaming, TraitsT, Executor>
      * @arg Sends initial metadata if not already sent (using the ServerContext associated with this call).
      *
      * gRPC does not take ownership or a reference to status, so it is safe to deallocate once finish_with_error
-     * returns.
+     * returns, unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is used.
      *
      * @note Status must have a non-OK code.
      *
@@ -547,7 +547,8 @@ class ServerRPC<RequestServerStreaming, TraitsT, Executor>
      * step.
      *
      * GRPC does not take ownership or a reference to response and status, so it is safe to deallocate once
-     * write_and_finish returns.
+     * write_and_finish returns, unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is
+     * used.
      *
      * Implicit input parameter:
      *
@@ -707,7 +708,8 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
      * step.
      *
      * GRPC does not take ownership or a reference to response and status, so it is safe to deallocate once
-     * write_and_finish returns.
+     * write_and_finish returns, unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is
+     * used.
      *
      * Implicit input parameter:
      *
