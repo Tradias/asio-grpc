@@ -149,7 +149,7 @@ Click on `snippet source` to jump to the code of an individual example.
 <a id='snippet-server-side-client-streaming'></a>
 ```cpp
 // ---------------------------------------------------
-// A simple client-streaming request handler using coroutines.
+// A simple client-streaming rpc handler using coroutines.
 // ---------------------------------------------------
 ```
 <sup><a href='/example/server-rpc.cpp#L40-L44' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-client-streaming' title='Start of snippet'>anchor</a></sup>
@@ -166,7 +166,7 @@ Click on `snippet source` to jump to the code of an individual example.
 <a id='snippet-server-side-server-streaming'></a>
 ```cpp
 // ---------------------------------------------------
-// A simple server-streaming request handler using coroutines.
+// A simple server-streaming rpc handler using coroutines.
 // ---------------------------------------------------
 ```
 <sup><a href='/example/server-rpc.cpp#L77-L81' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-server-streaming' title='Start of snippet'>anchor</a></sup>
@@ -305,7 +305,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // the example testable.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/unifex-server.cpp#L37-L42' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-unifex-unary' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/unifex-server.cpp#L41-L46' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-unifex-unary' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: server-side-unifex-server-streaming -->
@@ -315,5 +315,5 @@ Click on `snippet source` to jump to the code of an individual example.
 // A simple server-streaming request handler using coroutines.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/unifex-server.cpp#L61-L65' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-unifex-server-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/unifex-server.cpp#L68-L72' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-unifex-server-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
