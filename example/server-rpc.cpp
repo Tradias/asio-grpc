@@ -18,7 +18,7 @@
 #include "server_shutdown_asio.hpp"
 
 #include <agrpc/asio_grpc.hpp>
-#include <agrpc/register_awaitable_request_handler.hpp>
+#include <agrpc/register_awaitable_rpc_handler.hpp>
 #include <boost/asio/as_tuple.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/detached.hpp>
@@ -39,7 +39,7 @@ using ExampleExtService = example::v1::ExampleExt::AsyncService;
 
 // begin-snippet: server-side-client-streaming
 // ---------------------------------------------------
-// A simple client-streaming request handler using coroutines.
+// A simple client-streaming rpc handler using coroutines.
 // ---------------------------------------------------
 // end-snippet
 using ClientStreamingRPC =
@@ -76,7 +76,7 @@ asio::awaitable<void> handle_client_streaming_request(ClientStreamingRPC& rpc)
 
 // begin-snippet: server-side-server-streaming
 // ---------------------------------------------------
-// A simple server-streaming request handler using coroutines.
+// A simple server-streaming rpc handler using coroutines.
 // ---------------------------------------------------
 // end-snippet
 using ServerStreamingRPC =
@@ -153,7 +153,7 @@ asio::awaitable<bool> writer(BidiStreamingRPC& rpc, Channel& channel, asio::thre
     co_return ok;
 }
 
-auto bidirectional_streaming_request_handler(asio::thread_pool& thread_pool)
+auto bidirectional_streaming_rpc_handler(asio::thread_pool& thread_pool)
 {
     return [&](BidiStreamingRPC& rpc) -> asio::awaitable<void>
     {
@@ -217,19 +217,19 @@ int main(int argc, const char** argv)
 
     asio::thread_pool thread_pool{1};
 
-    agrpc::register_awaitable_request_handler<ClientStreamingRPC>(grpc_context, service,
-                                                                  &handle_client_streaming_request, asio::detached);
+    agrpc::register_awaitable_rpc_handler<ClientStreamingRPC>(grpc_context, service, &handle_client_streaming_request,
+                                                              asio::detached);
 
-    agrpc::register_awaitable_request_handler<ServerStreamingRPC>(grpc_context, service,
-                                                                  &handle_server_streaming_request, asio::detached);
+    agrpc::register_awaitable_rpc_handler<ServerStreamingRPC>(grpc_context, service, &handle_server_streaming_request,
+                                                              asio::detached);
 
-    agrpc::register_awaitable_request_handler<BidiStreamingRPC>(
-        grpc_context, service, bidirectional_streaming_request_handler(thread_pool), asio::detached);
+    agrpc::register_awaitable_rpc_handler<BidiStreamingRPC>(
+        grpc_context, service, bidirectional_streaming_rpc_handler(thread_pool), asio::detached);
 
-    agrpc::register_awaitable_request_handler<SlowUnaryRPC>(grpc_context, service_ext, &handle_slow_unary_request,
-                                                            asio::detached);
+    agrpc::register_awaitable_rpc_handler<SlowUnaryRPC>(grpc_context, service_ext, &handle_slow_unary_request,
+                                                        asio::detached);
 
-    agrpc::register_awaitable_request_handler<ShutdownRPC>(
+    agrpc::register_awaitable_rpc_handler<ShutdownRPC>(
         grpc_context, service_ext,
         [&](ShutdownRPC& rpc, const ShutdownRPC::Request&) -> asio::awaitable<void>
         {

@@ -60,7 +60,7 @@ enum class ClientRPCType
 /**
  * @brief (experimental) The type of a ServerRPC
  *
- * @since 2.1.0
+ * @since 2.7.0
  */
 enum class ServerRPCType
 {

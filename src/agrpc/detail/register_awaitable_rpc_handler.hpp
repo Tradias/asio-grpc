@@ -12,41 +12,42 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_REGISTER_AWAITABLE_REQUEST_HANDLER_HPP
-#define AGRPC_DETAIL_REGISTER_AWAITABLE_REQUEST_HANDLER_HPP
+#ifndef AGRPC_DETAIL_REGISTER_AWAITABLE_RPC_HANDLER_HPP
+#define AGRPC_DETAIL_REGISTER_AWAITABLE_RPC_HANDLER_HPP
 
 #include <agrpc/bind_allocator.hpp>
 #include <agrpc/detail/allocate_operation.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/coroutine_traits.hpp>
-#include <agrpc/detail/register_request_handler_asio_base.hpp>
+#include <agrpc/detail/register_rpc_handler_asio_base.hpp>
 #include <agrpc/grpc_context.hpp>
+
+#ifdef AGRPC_ASIO_HAS_CO_AWAIT
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class ServerRPC, class RequestHandler, class CompletionHandler>
-struct AwaitableRequestHandlerOperation
-    : detail::RegisterRequestHandlerOperationAsioBase<ServerRPC, RequestHandler, CompletionHandler>
+template <class ServerRPC, class RPCHandler, class CompletionHandler>
+struct RegisterAwaitableRPCHandlerOperation
+    : detail::RegisterRPCHandlerOperationAsioBase<ServerRPC, RPCHandler, CompletionHandler>
 {
-    using Base = detail::RegisterRequestHandlerOperationAsioBase<ServerRPC, RequestHandler, CompletionHandler>;
+    using Base = detail::RegisterRPCHandlerOperationAsioBase<ServerRPC, RPCHandler, CompletionHandler>;
     using typename Base::Allocator;
     using typename Base::RefCountGuard;
     using typename Base::RPCRequest;
     using typename Base::ServerRPCExecutor;
     using typename Base::Service;
 
-    using Awaitable = detail::RebindCoroutineT<decltype(std::declval<RPCRequest&>().invoke(
-                                                   std::declval<RequestHandler&>(), std::declval<ServerRPC&>())),
-                                               void>;
+    using Awaitable = detail::RebindCoroutineT<
+        decltype(std::declval<RPCRequest&>().invoke(std::declval<RPCHandler&>(), std::declval<ServerRPC&>())), void>;
     using UseAwaitable = detail::CoroutineCompletionTokenT<Awaitable>;
 
     template <class Ch>
-    AwaitableRequestHandlerOperation(const ServerRPCExecutor& executor, Service& service,
-                                     RequestHandler&& request_handler, Ch&& completion_handler)
-        : Base(executor, service, static_cast<RequestHandler&&>(request_handler), static_cast<Ch&&>(completion_handler),
-               &detail::register_request_handler_asio_do_complete<AwaitableRequestHandlerOperation>)
+    RegisterAwaitableRPCHandlerOperation(const ServerRPCExecutor& executor, Service& service, RPCHandler&& rpc_handler,
+                                         Ch&& completion_handler)
+        : Base(executor, service, static_cast<RPCHandler&&>(rpc_handler), static_cast<Ch&&>(completion_handler),
+               &detail::register_rpc_handler_asio_do_complete<RegisterAwaitableRPCHandlerOperation>)
     {
         initiate();
     }
@@ -60,7 +61,7 @@ struct AwaitableRequestHandlerOperation
                        {
                            if (eptr)
                            {
-                               auto& self = static_cast<AwaitableRequestHandlerOperation&>(g.get().self_);
+                               auto& self = static_cast<RegisterAwaitableRPCHandlerOperation&>(g.get().self_);
                                self.set_error(static_cast<std::exception_ptr&&>(eptr));
                            }
                        });
@@ -83,7 +84,7 @@ struct AwaitableRequestHandlerOperation
             co_return;
         }
         initiate_next();
-        AGRPC_TRY { co_await req.invoke(this->request_handler(), rpc); }
+        AGRPC_TRY { (void)co_await req.invoke(this->rpc_handler(), rpc); }
         AGRPC_CATCH(...) { this->set_error(std::current_exception()); }
         if (!detail::ServerRPCContextBaseAccess::is_finished(rpc))
         {
@@ -112,10 +113,12 @@ struct AwaitableRequestHandlerOperation
 };
 
 template <class ServerRPC>
-using RegisterAwaitableRequestHandlerInitiator =
-    detail::RegisterRequestHandlerInitiator<ServerRPC, AwaitableRequestHandlerOperation>;
+using RegisterAwaitableRPCHandlerInitiator =
+    detail::RegisterRPCHandlerInitiator<ServerRPC, RegisterAwaitableRPCHandlerOperation>;
 }
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_REGISTER_AWAITABLE_REQUEST_HANDLER_HPP
+#endif
+
+#endif  // AGRPC_DETAIL_REGISTER_AWAITABLE_RPC_HANDLER_HPP

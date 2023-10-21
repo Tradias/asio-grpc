@@ -25,7 +25,7 @@
 #include <agrpc/alarm.hpp>
 #include <agrpc/bind_allocator.hpp>
 #include <agrpc/client_rpc.hpp>
-#include <agrpc/register_awaitable_request_handler.hpp>
+#include <agrpc/register_awaitable_rpc_handler.hpp>
 #include <agrpc/server_rpc.hpp>
 #include <agrpc/waiter.hpp>
 
@@ -73,18 +73,18 @@ struct ServerRPCAwaitableTest : test::ClientServerRPCTest<typename test::Introsp
             }...);
     }
 
-    template <class RequestHandler, class... ClientFunctions>
-    void register_and_perform_requests(RequestHandler&& handler, ClientFunctions&&... client_functions)
+    template <class RPCHandler, class... ClientFunctions>
+    void register_and_perform_requests(RPCHandler&& handler, ClientFunctions&&... client_functions)
     {
-        agrpc::register_awaitable_request_handler<ServerRPC>(this->get_executor(), this->service, handler,
-                                                             test::RethrowFirstArg{});
+        agrpc::register_awaitable_rpc_handler<ServerRPC>(this->get_executor(), this->service, handler,
+                                                         test::RethrowFirstArg{});
         perform_requests(static_cast<ClientFunctions&&>(client_functions)...);
     }
 
-    template <class RequestHandler, class ClientFunction>
-    void register_and_perform_three_requests(RequestHandler&& handler, ClientFunction&& client_function)
+    template <class RPCHandler, class ClientFunction>
+    void register_and_perform_three_requests(RPCHandler&& handler, ClientFunction&& client_function)
     {
-        register_and_perform_requests(std::forward<RequestHandler>(handler), client_function, client_function,
+        register_and_perform_requests(std::forward<RPCHandler>(handler), client_function, client_function,
                                       client_function);
     }
 };
@@ -269,7 +269,7 @@ auto just_finish(ServerRPCAwaitableTest<RPC>& test, grpc::StatusCode expected_co
 TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ServerStreamingServerRPC>,
                   "Awaitable ServerRPC/ClientRPC server streaming customize allocator")
 {
-    agrpc::register_awaitable_request_handler<ServerRPC>(
+    agrpc::register_awaitable_rpc_handler<ServerRPC>(
         get_executor(), service,
         [&](test::ServerStreamingServerRPC& rpc, test::msg::Request&) -> asio::awaitable<void>
         {
@@ -282,10 +282,10 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ServerStreamingServerRPC>,
 }
 
 TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ServerStreamingServerRPC>,
-                  "Awaitable ServerRPC/ClientRPC server streaming throw exception from request handler")
+                  "Awaitable ServerRPC/ClientRPC server streaming throw exception from rpc handler")
 {
     std::exception_ptr eptr;
-    agrpc::register_awaitable_request_handler<ServerRPC>(
+    agrpc::register_awaitable_rpc_handler<ServerRPC>(
         get_executor(), service,
         [&](test::ServerStreamingServerRPC&, test::msg::Request&) -> asio::awaitable<void>
         {
@@ -309,7 +309,7 @@ struct ServerRPCAwaitableIoContextTest : ServerRPCAwaitableTest<test::ServerStre
 TEST_CASE_FIXTURE(ServerRPCAwaitableIoContextTest,
                   "Awaitable ServerRPC/ClientRPC server streaming using io_context executor")
 {
-    agrpc::register_awaitable_request_handler<ServerRPC>(
+    agrpc::register_awaitable_rpc_handler<ServerRPC>(
         get_executor(), service,
         [&](test::ServerStreamingServerRPC& rpc,
             test::msg::Request&) -> asio::awaitable<void, asio::io_context::executor_type>
@@ -524,11 +524,11 @@ TEST_CASE_TEMPLATE("Awaitable ServerRPC resumable read can be cancelled", RPC, t
 }
 
 TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ServerStreamingServerRPC>,
-                  "Awaitable ServerRPC/ClientRPC server streaming cancel register_awaitable_request_handler")
+                  "Awaitable ServerRPC/ClientRPC server streaming cancel register_awaitable_rpc_handler")
 {
     asio::cancellation_signal signal;
     std::exception_ptr eptr;
-    agrpc::register_awaitable_request_handler<ServerRPC>(
+    agrpc::register_awaitable_rpc_handler<ServerRPC>(
         get_executor(), service,
         [&](test::ServerStreamingServerRPC& rpc, test::msg::Request&) -> asio::awaitable<void>
         {

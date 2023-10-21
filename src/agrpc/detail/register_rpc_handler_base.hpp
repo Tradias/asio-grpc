@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_REGISTER_REQUEST_HANDLER_BASE_HPP
-#define AGRPC_DETAIL_REGISTER_REQUEST_HANDLER_BASE_HPP
+#ifndef AGRPC_DETAIL_REGISTER_RPC_HANDLER_BASE_HPP
+#define AGRPC_DETAIL_REGISTER_RPC_HANDLER_BASE_HPP
 
 #include <agrpc/detail/atomic_bool_stop_context.hpp>
 #include <agrpc/detail/config.hpp>
@@ -28,12 +28,12 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-class RegisterRequestHandlerOperationComplete
+class RegisterRPCHandlerOperationComplete
 {
   public:
-    using Complete = void (*)(RegisterRequestHandlerOperationComplete&) noexcept;
+    using Complete = void (*)(RegisterRPCHandlerOperationComplete&) noexcept;
 
-    explicit RegisterRequestHandlerOperationComplete(Complete complete) noexcept : complete_(complete) {}
+    explicit RegisterRPCHandlerOperationComplete(Complete complete) noexcept : complete_(complete) {}
 
     void complete() noexcept { complete_(*this); }
 
@@ -41,15 +41,14 @@ class RegisterRequestHandlerOperationComplete
     Complete complete_;
 };
 
-template <class ServerRPC, class RequestHandler, class StopToken>
-struct RegisterRequestHandlerOperationBase
+template <class ServerRPC, class RPCHandler, class StopToken>
+struct RegisterRPCHandlerOperationBase
 {
     using Service = detail::GetServerRPCServiceT<ServerRPC>;
     using ServerRPCExecutor = typename ServerRPC::executor_type;
 
-    RegisterRequestHandlerOperationBase(const ServerRPCExecutor& executor, Service& service,
-                                        RequestHandler&& request_handler)
-        : executor_(executor), service_(service), request_handler_(static_cast<RequestHandler&&>(request_handler))
+    RegisterRPCHandlerOperationBase(const ServerRPCExecutor& executor, Service& service, RPCHandler&& rpc_handler)
+        : executor_(executor), service_(service), rpc_handler_(static_cast<RPCHandler&&>(rpc_handler))
     {
     }
 
@@ -66,7 +65,7 @@ struct RegisterRequestHandlerOperationBase
 
     Service& service() const noexcept { return service_; }
 
-    RequestHandler& request_handler() noexcept { return request_handler_; }
+    RPCHandler& rpc_handler() noexcept { return rpc_handler_; }
 
     void set_error(std::exception_ptr&& eptr) noexcept
     {
@@ -88,10 +87,10 @@ struct RegisterRequestHandlerOperationBase
     std::exception_ptr eptr_{};
     std::atomic_bool has_error_{};
     detail::AtomicBoolStopContext<StopToken> stop_context_;
-    RequestHandler request_handler_;
+    RPCHandler rpc_handler_;
 };
 }
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_REGISTER_REQUEST_HANDLER_BASE_HPP
+#endif  // AGRPC_DETAIL_REGISTER_RPC_HANDLER_BASE_HPP

@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_REGISTER_REQUEST_HANDLER_ASIO_BASE_HPP
-#define AGRPC_DETAIL_REGISTER_REQUEST_HANDLER_ASIO_BASE_HPP
+#ifndef AGRPC_DETAIL_REGISTER_RPC_HANDLER_ASIO_BASE_HPP
+#define AGRPC_DETAIL_REGISTER_RPC_HANDLER_ASIO_BASE_HPP
 
 #include <agrpc/detail/association.hpp>
 #include <agrpc/detail/buffer_allocator.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/coroutine_traits.hpp>
-#include <agrpc/detail/register_request_handler_base.hpp>
+#include <agrpc/detail/register_rpc_handler_base.hpp>
 #include <agrpc/detail/rethrow_first_arg.hpp>
 #include <agrpc/detail/rpc_request.hpp>
 #include <agrpc/detail/work_tracking_completion_handler.hpp>
@@ -35,13 +35,13 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-inline constexpr auto REGISTER_REQUEST_HANDLER_COMPLETE =
+inline constexpr auto REGISTER_RPC_HANDLER_COMPLETE =
     static_cast<detail::OperationResult>(detail::to_underlying(detail::OperationResult::OK) + 1);
 
-template <class ServerRPC, class RequestHandler, class CompletionHandlerT>
-class RegisterRequestHandlerOperationAsioBase
-    : public detail::RegisterRequestHandlerOperationBase<ServerRPC, RequestHandler,
-                                                         exec::stop_token_type_t<CompletionHandlerT&>>,
+template <class ServerRPC, class RPCHandler, class CompletionHandlerT>
+class RegisterRPCHandlerOperationAsioBase
+    : public detail::RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler,
+                                                     exec::stop_token_type_t<CompletionHandlerT&>>,
       public detail::QueueableOperationBase,
       private detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandlerT>>
 {
@@ -50,7 +50,7 @@ class RegisterRequestHandlerOperationAsioBase
     using StopToken = exec::stop_token_type_t<CompletionHandlerT&>;
 
   private:
-    using Base = detail::RegisterRequestHandlerOperationBase<ServerRPC, RequestHandler, StopToken>;
+    using Base = detail::RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler, StopToken>;
     using WorkTracker = detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandlerT>>;
 
     struct Decrementer
@@ -59,11 +59,11 @@ class RegisterRequestHandlerOperationAsioBase
         {
             if (self_.decrement_ref_count())
             {
-                self_.complete(REGISTER_REQUEST_HANDLER_COMPLETE, self_.grpc_context());
+                self_.complete(REGISTER_RPC_HANDLER_COMPLETE, self_.grpc_context());
             }
         }
 
-        RegisterRequestHandlerOperationAsioBase& self_;
+        RegisterRPCHandlerOperationAsioBase& self_;
     };
 
   public:
@@ -75,10 +75,9 @@ class RegisterRequestHandlerOperationAsioBase
     using RefCountGuard = detail::ScopeGuard<Decrementer>;
 
     template <class Ch>
-    RegisterRequestHandlerOperationAsioBase(const ServerRPCExecutor& executor, Service& service,
-                                            RequestHandler&& request_handler, Ch&& completion_handler,
-                                            detail::OperationOnComplete on_complete)
-        : Base(executor, service, static_cast<RequestHandler&&>(request_handler)),
+    RegisterRPCHandlerOperationAsioBase(const ServerRPCExecutor& executor, Service& service, RPCHandler&& rpc_handler,
+                                        Ch&& completion_handler, detail::OperationOnComplete on_complete)
+        : Base(executor, service, static_cast<RPCHandler&&>(rpc_handler)),
           detail::QueueableOperationBase(on_complete),
           WorkTracker(exec::get_executor(completion_handler)),
           completion_handler_(static_cast<Ch&&>(completion_handler))
@@ -97,17 +96,17 @@ class RegisterRequestHandlerOperationAsioBase
 };
 
 template <class ServerRPC, template <class, class, class> class Operation>
-struct RegisterRequestHandlerInitiator
+struct RegisterRPCHandlerInitiator
 {
-    template <class CompletionHandler, class RequestHandler>
+    template <class CompletionHandler, class RPCHandler>
     void operator()(CompletionHandler&& completion_handler, const typename ServerRPC::executor_type& executor,
-                    RequestHandler&& request_handler) const
+                    RPCHandler&& rpc_handler) const
     {
         using Ch = detail::RemoveCrefT<CompletionHandler>;
-        using DecayedRequestHandler = detail::RemoveCrefT<RequestHandler>;
+        using DecayedRPCHandler = detail::RemoveCrefT<RPCHandler>;
         const auto allocator = exec::get_allocator(completion_handler);
-        detail::allocate<Operation<ServerRPC, DecayedRequestHandler, Ch>>(
-            allocator, executor, service_, static_cast<RequestHandler&&>(request_handler),
+        detail::allocate<Operation<ServerRPC, DecayedRPCHandler, Ch>>(
+            allocator, executor, service_, static_cast<RPCHandler&&>(rpc_handler),
             static_cast<CompletionHandler&&>(completion_handler))
             .release();
     }
@@ -116,12 +115,12 @@ struct RegisterRequestHandlerInitiator
 };
 
 template <class Operation>
-static void register_request_handler_asio_do_complete(detail::OperationBase* operation, detail::OperationResult result,
-                                                      agrpc::GrpcContext&)
+static void register_rpc_handler_asio_do_complete(detail::OperationBase* operation, detail::OperationResult result,
+                                                  agrpc::GrpcContext&)
 {
     auto& self = *static_cast<Operation*>(operation);
     detail::AllocationGuard guard{&self, self.get_allocator()};
-    if (REGISTER_REQUEST_HANDLER_COMPLETE == result)
+    if (REGISTER_RPC_HANDLER_COMPLETE == result)
     {
         if AGRPC_LIKELY (!detail::GrpcContextImplementation::is_shutdown(self.grpc_context()))
         {
@@ -140,4 +139,4 @@ static void register_request_handler_asio_do_complete(detail::OperationBase* ope
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_REGISTER_REQUEST_HANDLER_ASIO_BASE_HPP
+#endif  // AGRPC_DETAIL_REGISTER_RPC_HANDLER_ASIO_BASE_HPP

@@ -81,8 +81,8 @@ struct ClientRPCIoContextTest : ClientRPCRequestResponseTest<RPC>, test::IoConte
                               client_func(yield);
                               this->server_shutdown.initiate();
                           });
-        agrpc::register_yield_request_handler<SRPC>(this->grpc_context, this->service, server_func,
-                                                    test::RethrowFirstArg{});
+        agrpc::register_yield_rpc_handler<SRPC>(this->grpc_context, this->service, server_func,
+                                                test::RethrowFirstArg{});
         this->run_io_context_detached(false);
         this->grpc_context.run();
     }

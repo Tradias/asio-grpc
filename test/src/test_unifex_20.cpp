@@ -26,7 +26,7 @@
 #include "utils/server_rpc.hpp"
 
 #include <agrpc/asio_grpc.hpp>
-#include <agrpc/register_sender_request_handler.hpp>
+#include <agrpc/register_sender_rpc_handler.hpp>
 
 #include <cstddef>
 #include <optional>
@@ -397,15 +397,15 @@ struct UnifexRepeatedlyRequestTest : UnifexTestMixin<test::GrpcClientServerTest>
                                  });
     }
 
-    auto make_unary_request_handler_sender()
+    auto make_unary_rpc_handler_sender()
     {
         using ServerRPC = test::UnaryServerRPC;
         return unifex::with_query_value(
-            agrpc::register_sender_request_handler<ServerRPC>(grpc_context, service,
-                                                              [&](ServerRPC& rpc, test::msg::Request& request)
-                                                              {
-                                                                  return handle_unary_request_sender(rpc, request);
-                                                              }),
+            agrpc::register_sender_rpc_handler<ServerRPC>(grpc_context, service,
+                                                          [&](ServerRPC& rpc, test::msg::Request& request)
+                                                          {
+                                                              return handle_unary_request_sender(rpc, request);
+                                                          }),
             unifex::get_allocator, get_allocator());
     }
 
@@ -673,11 +673,11 @@ TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex repeatedly_request client stre
 
 struct UnifexClientRPCTest : UnifexTestMixin<test::ClientServerRPCTest<test::BidirectionalStreamingClientRPC>>
 {
-    template <class RPC, class RequestHandler, class... ClientFunctions>
-    void register_and_perform_requests(RequestHandler&& handler, ClientFunctions&&... client_functions)
+    template <class RPC, class RPCHandler, class... ClientFunctions>
+    void register_and_perform_requests(RPCHandler&& handler, ClientFunctions&&... client_functions)
     {
         int counter{};
-        run(agrpc::register_sender_request_handler<RPC>(this->grpc_context, this->service, handler),
+        run(agrpc::register_sender_rpc_handler<RPC>(this->grpc_context, this->service, handler),
             [&counter, &client_functions, &server_shutdown = this->server_shutdown]() -> unifex::task<void>
             {
                 typename ClientRPC::Request request;
@@ -734,11 +734,11 @@ TEST_CASE_FIXTURE(UnifexClientRPCTest, "unifex BidirectionalStreamingClientRPC c
     };
     const auto not_to_exceed = test::two_seconds_from_now();
     Request request;
-    run(agrpc::register_sender_request_handler<ServerRPC>(grpc_context, service,
-                                                          [&](ServerRPC& rpc)
-                                                          {
-                                                              return rpc.read(request);
-                                                          }),
+    run(agrpc::register_sender_rpc_handler<ServerRPC>(grpc_context, service,
+                                                      [&](ServerRPC& rpc)
+                                                      {
+                                                          return rpc.read(request);
+                                                      }),
         [&]() -> unifex::task<void>
         {
             auto rpc = create_rpc();
@@ -752,22 +752,21 @@ TEST_CASE_FIXTURE(UnifexClientRPCTest, "unifex BidirectionalStreamingClientRPC c
 }
 #endif
 
-TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex request_handler unary - shutdown server")
+TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex rpc_handler unary - shutdown server")
 {
     auto request_count{0};
     auto request_sender = make_client_unary_request_sender(request_count, 4);
     run(unifex::sequence(request_sender, request_sender, request_sender, request_sender),
-        make_unary_request_handler_sender());
+        make_unary_rpc_handler_sender());
     CHECK_EQ(4, request_count);
     CHECK(allocator_has_been_used());
 }
 
-TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex request_handler unary - client requests stop")
+TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex rpc_handler unary - client requests stop")
 {
     auto request_count{0};
     unifex::inplace_stop_source stop;
-    auto repeater =
-        unifex::with_query_value(make_unary_request_handler_sender(), unifex::get_stop_token, stop.get_token());
+    auto repeater = unifex::with_query_value(make_unary_rpc_handler_sender(), unifex::get_stop_token, stop.get_token());
     auto request_sender = make_client_unary_request_sender(request_count, std::numeric_limits<int>::max());
     auto make_three_requests_then_stop = unifex::then(unifex::sequence(request_sender, request_sender, request_sender),
                                                       [&]()
@@ -779,13 +778,13 @@ TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex request_handler unary - c
     CHECK(allocator_has_been_used());
 }
 
-TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex request_handler unary - server requests stop")
+TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex rpc_handler unary - server requests stop")
 {
     auto request_count{0};
     auto repeater = unifex::let_value_with_stop_source(
         [&](unifex::inplace_stop_source& stop)
         {
-            return unifex::let_done(agrpc::register_sender_request_handler<test::UnaryServerRPC>(
+            return unifex::let_done(agrpc::register_sender_rpc_handler<test::UnaryServerRPC>(
                                         grpc_context, service,
                                         [&](test::UnaryServerRPC& rpc, auto& request)
                                         {
@@ -803,31 +802,31 @@ TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex request_handler unary - s
     CHECK_EQ(1, request_count);
 }
 
-TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex request_handler unary - stop with token before start")
+TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex rpc_handler unary - stop with token before start")
 {
     auto repeater = unifex::let_value_with_stop_source(
         [&](unifex::inplace_stop_source& stop)
         {
             stop.request_stop();
-            return make_unary_request_handler_sender();
+            return make_unary_rpc_handler_sender();
         });
     run(std::move(repeater));
     CHECK_FALSE(allocator_has_been_used());
 }
 
 TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest,
-                  "unifex request_handler unary - throw exception from request handler invocation calls set_error")
+                  "unifex rpc_handler unary - throw exception from rpc handler invocation calls set_error")
 {
-    auto request_handler = agrpc::register_sender_request_handler<test::UnaryServerRPC>(grpc_context, service,
-                                                                                        [&](auto&&...)
-                                                                                        {
-                                                                                            throw test::Exception{};
-                                                                                            return unifex::just();
-                                                                                        });
+    auto rpc_handler = agrpc::register_sender_rpc_handler<test::UnaryServerRPC>(grpc_context, service,
+                                                                                [&](auto&&...)
+                                                                                {
+                                                                                    throw test::Exception{};
+                                                                                    return unifex::just();
+                                                                                });
     std::exception_ptr error_propagation{};
     run(unifex::sequence(make_client_unary_request_sender(test::hundred_milliseconds_from_now(), &check_status_not_ok),
                          make_client_unary_request_sender(test::hundred_milliseconds_from_now(), &check_status_not_ok)),
-        unifex::let_error(std::move(request_handler),
+        unifex::let_error(std::move(rpc_handler),
                           [&](std::exception_ptr ep)
                           {
                               error_propagation = std::move(ep);
@@ -838,11 +837,10 @@ TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest,
 }
 
 #if !UNIFEX_NO_COROUTINES
-TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest,
-                  "unifex request_handler unary - throw exception from request handler sender")
+TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex rpc_handler unary - throw exception from rpc handler sender")
 {
     bool is_first{true};
-    auto request_handler = agrpc::register_sender_request_handler<test::UnaryServerRPC>(
+    auto rpc_handler = agrpc::register_sender_rpc_handler<test::UnaryServerRPC>(
         grpc_context, service,
         [&](test::UnaryServerRPC& rpc, auto& request) -> unifex::task<void>
         {
@@ -856,18 +854,18 @@ TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest,
     CHECK_THROWS_AS(
         run(unifex::sequence(make_client_unary_request_sender(test::five_seconds_from_now(), &check_status_not_ok),
                              make_client_unary_request_sender(test::five_seconds_from_now(), &check_response_ok)),
-            std::move(request_handler)),
+            std::move(rpc_handler)),
         test::Exception);
     CHECK_LT(test::now(), not_to_exceed);
 }
 
-TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex request_handler unary - keeps request handler alive")
+TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex rpc_handler unary - keeps rpc handler alive")
 {
     int count{};
-    auto request_handler = unifex::let_value_with_stop_source(
+    auto rpc_handler = unifex::let_value_with_stop_source(
         [&](unifex::inplace_stop_source& stop)
         {
-            return agrpc::register_sender_request_handler<test::UnaryServerRPC>(
+            return agrpc::register_sender_rpc_handler<test::UnaryServerRPC>(
                 grpc_context, service,
                 [&](test::UnaryServerRPC& rpc, auto& request) -> unifex::task<void>
                 {
@@ -884,7 +882,7 @@ TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex request_handler unary - k
                     co_await handle_unary_request_sender(rpc, request);
                 });
         });
-    auto op = unifex::connect(std::move(request_handler), test::ConditionallyNoexceptNoOpReceiver<true>{});
+    auto op = unifex::connect(std::move(rpc_handler), test::ConditionallyNoexceptNoOpReceiver<true>{});
     op.start();
     run(unifex::when_all(make_client_unary_request_sender(test::five_seconds_from_now(), &check_response_ok),
                          make_client_unary_request_sender(test::five_seconds_from_now(), &check_response_ok),
