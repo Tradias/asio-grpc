@@ -40,6 +40,13 @@ struct IntrospectRPC<agrpc::ClientRPC<PrepareAsync, Executor>, agrpc::ClientRPCT
     {
         return ClientRPC::request(executor, stub, context, request, response, token);
     }
+
+    template <class CompletionToken>
+    static auto start(ClientRPC& rpc, typename ClientRPC::Stub& stub, const typename ClientRPC::Request& request,
+                      typename ClientRPC::Response&, CompletionToken&&)
+    {
+        return rpc.start(stub, request);
+    }
 };
 
 template <class Executor>
@@ -54,6 +61,13 @@ struct IntrospectRPC<agrpc::GenericUnaryClientRPC<Executor>, agrpc::ClientRPCTyp
                         CompletionToken&& token)
     {
         return ClientRPC::request(executor, "/test.v1.Test/Unary", stub, context, request, response, token);
+    }
+
+    template <class CompletionToken>
+    static auto start(ClientRPC& rpc, typename ClientRPC::Stub& stub, const typename ClientRPC::Request& request,
+                      typename ClientRPC::Response&, CompletionToken&&)
+    {
+        return rpc.start("/test.v1.Test/Unary", stub, request);
     }
 };
 

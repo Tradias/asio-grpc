@@ -17,13 +17,12 @@
 
 #include <agrpc/default_completion_token.hpp>
 #include <agrpc/detail/asio_forward.hpp>
-#include <agrpc/detail/client_rpc_context_base.hpp>
+#include <agrpc/detail/client_rpc_base.hpp>
 #include <agrpc/detail/client_rpc_sender.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/initiate_sender_implementation.hpp>
 #include <agrpc/detail/name.hpp>
-#include <agrpc/detail/rpc_executor_base.hpp>
 #include <agrpc/detail/rpc_type.hpp>
 #include <agrpc/grpc_executor.hpp>
 
@@ -38,8 +37,11 @@ namespace detail
  */
 template <class StubT, class RequestT, class ResponseT, template <class> class ResponderT,
           detail::ClientUnaryRequest<StubT, RequestT, ResponderT<ResponseT>> PrepareAsyncUnary, class Executor>
-class ClientRPCUnaryBase<PrepareAsyncUnary, Executor>
+class ClientRPCUnaryBase<PrepareAsyncUnary, Executor> : public detail::ClientRPCBase<ResponderT<ResponseT>, Executor>
 {
+  private:
+    using Responder = ResponderT<ResponseT>;
+
   public:
     /**
      * @brief The rpc type
@@ -144,8 +146,48 @@ class ClientRPCUnaryBase<PrepareAsyncUnary, Executor>
         return ClientRPCUnaryBase::request(detail::query_grpc_context(executor), stub, context, request, response,
                                            static_cast<CompletionToken&&>(token));
     }
+    using detail::ClientRPCBase<ResponderT<ResponseT>, Executor>::ClientRPCBase;
 
-    ClientRPCUnaryBase() = delete;
+    /**
+     * @brief Start the rpc
+     *
+     * @param req The request message, save to delete when this function returns, unless a deferred completion token
+     * like `agrpc::use_sender` or `asio::deferred` is used.
+     */
+    void start(StubT& stub, const RequestT& req)
+    {
+        detail::ClientRPCContextBaseAccess::set_responder(
+            *this, (stub.*PrepareAsyncUnary)(&this->context(), req, this->grpc_context().get_completion_queue()));
+        detail::ClientRPCContextBaseAccess::responder(*this).StartCall();
+    }
+
+    /**
+     * @brief Finish the rpc
+     *
+     * Receive the server's response message and final status for the call.
+     *
+     * This operation will finish when either:
+     *
+     * @arg The server's response message and status have been received.
+     * @arg The server has returned a non-OK status (no message expected in this case).
+     * @arg The call failed for some reason and the library generated a non-OK status.
+     *
+     * Side effect:
+     *
+     * @arg The ClientContext associated with the call is updated with possible initial and trailing metadata sent from
+     * the server.
+     *
+     * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The
+     * completion signature is `void(grpc::Status)`.
+     */
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    auto finish(ResponseT& response, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
+    {
+        return detail::async_initiate_sender_implementation(
+            this->grpc_context(), detail::ClientFinishUnarySenderInitation{},
+            detail::ClientFinishUnarySenderImplementation<Responder>{*this, response},
+            static_cast<CompletionToken&&>(token));
+    }
 };
 }
 
@@ -179,6 +221,7 @@ template <class StubT, class RequestT, class ResponseT,
           class Executor>
 class ClientRPC<PrepareAsyncUnary, Executor> : public detail::ClientRPCUnaryBase<PrepareAsyncUnary, Executor>
 {
+    using detail::ClientRPCUnaryBase<PrepareAsyncUnary, Executor>::ClientRPCUnaryBase;
 };
 template <class StubT, class RequestT, class ResponseT,
           std::unique_ptr<grpc::ClientAsyncResponseReaderInterface<ResponseT>> (StubT::*PrepareAsyncUnary)(
@@ -186,6 +229,7 @@ template <class StubT, class RequestT, class ResponseT,
           class Executor>
 class ClientRPC<PrepareAsyncUnary, Executor> : public detail::ClientRPCUnaryBase<PrepareAsyncUnary, Executor>
 {
+    using detail::ClientRPCUnaryBase<PrepareAsyncUnary, Executor>::ClientRPCUnaryBase;
 };
 
 /**
@@ -212,7 +256,11 @@ class ClientRPC<PrepareAsyncUnary, Executor> : public detail::ClientRPCUnaryBase
  */
 template <class Executor>
 class ClientRPC<agrpc::ClientRPCType::GENERIC_UNARY, Executor>
+    : public detail::ClientRPCBase<grpc::GenericClientAsyncResponseReader, Executor>
 {
+  private:
+    using Responder = grpc::GenericClientAsyncResponseReader;
+
   public:
     /**
      * @brief The rpc type
@@ -285,7 +333,49 @@ class ClientRPC<agrpc::ClientRPCType::GENERIC_UNARY, Executor>
                                   static_cast<CompletionToken&&>(token));
     }
 
-    ClientRPC() = delete;
+    using detail::ClientRPCBase<grpc::GenericClientAsyncResponseReader, Executor>::ClientRPCBase;
+
+    /**
+     * @brief Start the rpc
+     *
+     * @param req The request message, save to delete when this function returns, unless a deferred completion token
+     * like `agrpc::use_sender` or `asio::deferred` is used.
+     * @param method The RPC method to call, e.g. "/test.v1.Test/Unary"
+     */
+    void start(const std::string& method, grpc::GenericStub& stub, const grpc::ByteBuffer& req)
+    {
+        detail::ClientRPCContextBaseAccess::set_responder(
+            *this, stub.PrepareUnaryCall(&this->context(), method, req, this->grpc_context().get_completion_queue()));
+        detail::ClientRPCContextBaseAccess::responder(*this).StartCall();
+    }
+
+    /**
+     * @brief Finish the rpc
+     *
+     * Receive the server's response message and final status for the call.
+     *
+     * This operation will finish when either:
+     *
+     * @arg The server's response message and status have been received.
+     * @arg The server has returned a non-OK status (no message expected in this case).
+     * @arg The call failed for some reason and the library generated a non-OK status.
+     *
+     * Side effect:
+     *
+     * @arg The ClientContext associated with the call is updated with possible initial and trailing metadata sent from
+     * the server.
+     *
+     * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The
+     * completion signature is `void(grpc::Status)`.
+     */
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    auto finish(grpc::ByteBuffer& response, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
+    {
+        return detail::async_initiate_sender_implementation(
+            this->grpc_context(), detail::ClientFinishUnarySenderInitation{},
+            detail::ClientFinishUnarySenderImplementation<Responder>{*this, response},
+            static_cast<CompletionToken&&>(token));
+    }
 };
 
 /**
@@ -327,8 +417,7 @@ template <class StubT, class RequestT, class ResponseT, template <class> class R
           detail::PrepareAsyncClientClientStreamingRequest<StubT, ResponderT<RequestT>, ResponseT>
               PrepareAsyncClientStreaming,
           class Executor>
-class ClientRPC<PrepareAsyncClientStreaming, Executor> : public detail::RPCExecutorBase<Executor>,
-                                                         public detail::ClientRPCContextBase<ResponderT<RequestT>>
+class ClientRPC<PrepareAsyncClientStreaming, Executor> : public detail::ClientRPCBase<ResponderT<RequestT>, Executor>
 {
   private:
     using Responder = ResponderT<RequestT>;
@@ -401,46 +490,7 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor> : public detail::RPCExecu
         return detail::CLIENT_METHOD_NAME_V<PrepareAsyncClientStreaming>.view();
     }
 
-    /**
-     * @brief Construct from a GrpcContext
-     */
-    explicit ClientRPC(agrpc::GrpcContext& grpc_context)
-        : detail::RPCExecutorBase<Executor>(grpc_context.get_executor())
-    {
-    }
-
-    /**
-     * @brief Construct from a GrpcContext and an init function
-     *
-     * @tparam ClientContextInitFunction A function with signature `void(grpc::ClientContext&)` which will be invoked
-     * during construction. It can, for example, be used to set this rpc's deadline.
-     */
-    template <class ClientContextInitFunction>
-    ClientRPC(agrpc::GrpcContext& grpc_context, ClientContextInitFunction&& init_function)
-        : detail::RPCExecutorBase<Executor>(grpc_context.get_executor()),
-          detail::ClientRPCContextBase<Responder>(static_cast<ClientContextInitFunction&&>(init_function))
-    {
-    }
-
-    /**
-     * @brief Construct from an executor
-     */
-    explicit ClientRPC(const Executor& executor) : detail::RPCExecutorBase<Executor>(executor) {}
-
-    /**
-     * @brief Construct from an executor and init function
-     *
-     * @tparam ClientContextInitFunction A function with signature `void(grpc::ClientContext&)` which will be invoked
-     * during construction. It can, for example, be used to set this rpc's deadline.
-     */
-    template <class ClientContextInitFunction>
-    ClientRPC(const Executor& executor, ClientContextInitFunction&& init_function)
-        : detail::RPCExecutorBase<Executor>(executor),
-          detail::ClientRPCContextBase<Responder>(static_cast<ClientContextInitFunction&&>(init_function))
-    {
-    }
-
-    using detail::ClientRPCContextBase<Responder>::context;
+    using detail::ClientRPCBase<ResponderT<RequestT>, Executor>::ClientRPCBase;
 
     /**
      * @brief Start a client-streaming request
@@ -465,8 +515,6 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor> : public detail::RPCExecu
                                                                                                   response},
             detail::ClientStreamingRequestSenderImplementation{}, static_cast<CompletionToken&&>(token));
     }
-
-    using detail::ClientRPCContextBase<Responder>::cancel;
 
     /**
      * @brief Read initial metadata
@@ -574,7 +622,7 @@ template <class StubT, class RequestT, class ResponseT, template <class> class R
               PrepareAsyncServerStreaming,
           class Executor>
 class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
-    : public detail::RPCExecutorBase<Executor>, public detail::ClientRPCContextBase<ResponderT<ResponseT>>
+    : public detail::ClientRPCBase<ResponderT<ResponseT>, Executor>
 {
   private:
     using Responder = ResponderT<ResponseT>;
@@ -647,46 +695,7 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
         return detail::CLIENT_METHOD_NAME_V<PrepareAsyncServerStreaming>.view();
     }
 
-    /**
-     * @brief Construct from a GrpcContext
-     */
-    explicit ClientRPCServerStreamingBase(agrpc::GrpcContext& grpc_context)
-        : detail::RPCExecutorBase<Executor>(grpc_context.get_executor())
-    {
-    }
-
-    /**
-     * @brief Construct from a GrpcContext and an init function
-     *
-     * @tparam ClientContextInitFunction A function with signature `void(grpc::ClientContext&)` which will be invoked
-     * during construction. It can, for example, be used to set this rpc's deadline.
-     */
-    template <class ClientContextInitFunction>
-    ClientRPCServerStreamingBase(agrpc::GrpcContext& grpc_context, ClientContextInitFunction&& init_function)
-        : detail::RPCExecutorBase<Executor>(grpc_context.get_executor()),
-          detail::ClientRPCContextBase<Responder>(static_cast<ClientContextInitFunction&&>(init_function))
-    {
-    }
-
-    /**
-     * @brief Construct from an executor
-     */
-    explicit ClientRPCServerStreamingBase(const Executor& executor) : detail::RPCExecutorBase<Executor>(executor) {}
-
-    /**
-     * @brief Construct from an executor and init function
-     *
-     * @tparam ClientContextInitFunction A function with signature `void(grpc::ClientContext&)` which will be invoked
-     * during construction. It can, for example, be used to set this rpc's deadline.
-     */
-    template <class ClientContextInitFunction>
-    ClientRPCServerStreamingBase(const Executor& executor, ClientContextInitFunction&& init_function)
-        : detail::RPCExecutorBase<Executor>(executor),
-          detail::ClientRPCContextBase<Responder>(static_cast<ClientContextInitFunction&&>(init_function))
-    {
-    }
-
-    using detail::ClientRPCContextBase<Responder>::context;
+    using detail::ClientRPCBase<ResponderT<ResponseT>, Executor>::ClientRPCBase;
 
     /**
      * @brief Start a server-streaming request
@@ -706,31 +715,6 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
             this->grpc_context(),
             detail::ClientStreamingRequestSenderInitiation<PrepareAsyncServerStreaming, Executor>{*this, stub, request},
             detail::ClientStreamingRequestSenderImplementation{}, static_cast<CompletionToken&&>(token));
-    }
-
-    using detail::ClientRPCContextBase<Responder>::cancel;
-
-    /**
-     * @brief Read initial metadata
-     *
-     * Request notification of the reading of the initial metadata.
-     *
-     * This call is optional, but if it is used, it cannot be used concurrently with or after the `read()` method.
-     *
-     * Side effect:
-     *
-     * @arg Upon receiving initial metadata from the server, the ClientContext associated with this call is updated, and
-     * the calling code can access the received metadata through the ClientContext.
-     *
-     * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
-     * `void(bool)`. `true` indicates that the metadata was read. If it is `false`, then the call is dead.
-     */
-    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto read_initial_metadata(CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
-    {
-        return detail::async_initiate_sender_implementation(
-            this->grpc_context(), detail::ReadInitialMetadataSenderInitiation<Responder>{*this},
-            detail::ReadInitialMetadataSenderImplementation{}, static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -844,7 +828,7 @@ namespace detail
  */
 template <class RequestT, class ResponseT, template <class, class> class ResponderT, class Executor>
 class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
-    : public detail::RPCExecutorBase<Executor>, public detail::ClientRPCContextBase<ResponderT<RequestT, ResponseT>>
+    : public detail::ClientRPCBase<ResponderT<RequestT, ResponseT>, Executor>
 {
   private:
     using Responder = ResponderT<RequestT, ResponseT>;
@@ -860,72 +844,7 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
      */
     using Response = ResponseT;
 
-    /**
-     * @brief Construct from a GrpcContext
-     */
-    explicit ClientRPCBidiStreamingBase(agrpc::GrpcContext& grpc_context)
-        : detail::RPCExecutorBase<Executor>(grpc_context.get_executor())
-    {
-    }
-
-    /**
-     * @brief Construct from a GrpcContext and an init function
-     *
-     * @tparam ClientContextInitFunction A function with signature `void(grpc::ClientContext&)` which will be invoked
-     * during construction. It can, for example, be used to set this rpc's deadline.
-     */
-    template <class ClientContextInitFunction>
-    ClientRPCBidiStreamingBase(agrpc::GrpcContext& grpc_context, ClientContextInitFunction&& init_function)
-        : detail::RPCExecutorBase<Executor>(grpc_context.get_executor()),
-          detail::ClientRPCContextBase<Responder>(static_cast<ClientContextInitFunction&&>(init_function))
-    {
-    }
-
-    /**
-     * @brief Construct from an executor
-     */
-    explicit ClientRPCBidiStreamingBase(const Executor& executor) : detail::RPCExecutorBase<Executor>(executor) {}
-
-    /**
-     * @brief Construct from an executor and init function
-     *
-     * @tparam ClientContextInitFunction A function with signature `void(grpc::ClientContext&)` which will be invoked
-     * during construction. It can, for example, be used to set this rpc's deadline.
-     */
-    template <class ClientContextInitFunction>
-    ClientRPCBidiStreamingBase(const Executor& executor, ClientContextInitFunction&& init_function)
-        : detail::RPCExecutorBase<Executor>(executor),
-          detail::ClientRPCContextBase<Responder>(static_cast<ClientContextInitFunction&&>(init_function))
-    {
-    }
-
-    using detail::ClientRPCContextBase<Responder>::context;
-
-    using detail::ClientRPCContextBase<Responder>::cancel;
-
-    /**
-     * @brief Read initial metadata
-     *
-     * Request notification of the reading of the initial metadata.
-     *
-     * This call is optional, but if it is used, it cannot be used concurrently with or after the `read()` or `write()`
-     * method.
-     *
-     * Side effect:
-     *
-     * @arg Upon receiving initial metadata from the server, the ClientContext associated with this call is updated, and
-     * the calling code can access the received metadata through the ClientContext.
-     *
-     * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
-     * `void(bool)`. `true` indicates that the metadata was read. If it is `false`, then the call is dead.
-     */
-    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto read_initial_metadata(CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
-    {
-        return detail::async_initiate_sender_implementation(
-            this->grpc_context(), detail::ReadInitialMetadataSenderInitiation<Responder>{*this},
-            detail::ReadInitialMetadataSenderImplementation{}, static_cast<CompletionToken&&>(token));
-    }
+    using detail::ClientRPCBase<ResponderT<RequestT, ResponseT>, Executor>::ClientRPCBase;
 
     /**
      * @brief Receive a message from the server

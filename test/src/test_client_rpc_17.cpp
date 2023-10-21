@@ -108,7 +108,7 @@ TEST_CASE_TEMPLATE("ClientRPC::request successfully", RPC, test::UnaryClientRPC,
         });
 }
 
-TEST_CASE_TEMPLATE("Unary RPC::request automatically finishes RPC on error", RPC, test::UnaryClientRPC,
+TEST_CASE_TEMPLATE("Unary ClientRPC::request automatically finishes rpc on error", RPC, test::UnaryClientRPC,
                    test::UnaryInterfaceClientRPC, test::GenericUnaryClientRPC)
 {
     ClientRPCRequestResponseTest<RPC> test;
@@ -128,16 +128,25 @@ TEST_CASE_TEMPLATE("Unary RPC::request automatically finishes RPC on error", RPC
     test.grpc_context.run();
 }
 
-TEST_CASE_TEMPLATE("Streaming RPC can be destructed without being started", RPC, test::ClientStreamingClientRPC,
-                   test::ClientStreamingInterfaceClientRPC, test::ServerStreamingClientRPC,
-                   test::ServerStreamingInterfaceClientRPC, test::BidirectionalStreamingClientRPC,
-                   test::BidirectionalStreamingInterfaceClientRPC, test::GenericStreamingClientRPC)
+TEST_CASE_TEMPLATE("Unary ClientRPC can be destructed after start", RPC, test::UnaryClientRPC,
+                   test::GenericUnaryClientRPC)
+{
+    ClientRPCRequestResponseTest<RPC> test;
+    RPC rpc{test.get_executor()};
+    test.start_rpc(rpc, int{});
+}
+
+TEST_CASE_TEMPLATE("Streaming ClientRPC can be destructed without being started", RPC, test::UnaryClientRPC,
+                   test::GenericUnaryClientRPC, test::ClientStreamingClientRPC, test::ClientStreamingInterfaceClientRPC,
+                   test::ServerStreamingClientRPC, test::ServerStreamingInterfaceClientRPC,
+                   test::BidirectionalStreamingClientRPC, test::BidirectionalStreamingInterfaceClientRPC,
+                   test::GenericStreamingClientRPC)
 {
     agrpc::GrpcContext grpc_context;
     CHECK_NOTHROW([[maybe_unused]] RPC rpc{grpc_context.get_executor()});
 }
 
-TEST_CASE_TEMPLATE("Streaming RPC::start returns false on error", RPC, test::ClientStreamingClientRPC,
+TEST_CASE_TEMPLATE("Streaming ClientRPC::start returns false on error", RPC, test::ClientStreamingClientRPC,
                    test::ClientStreamingInterfaceClientRPC, test::ServerStreamingClientRPC,
                    test::ServerStreamingInterfaceClientRPC, test::BidirectionalStreamingClientRPC,
                    test::BidirectionalStreamingInterfaceClientRPC, test::GenericStreamingClientRPC)

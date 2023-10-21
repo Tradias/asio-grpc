@@ -402,6 +402,44 @@ struct ClientFinishSenderInitiation
 };
 
 template <class Responder>
+struct ClientFinishUnarySenderImplementation;
+
+template <template <class> class Responder, class Response>
+struct ClientFinishUnarySenderImplementation<Responder<Response>> : StatusSenderImplementationBase
+{
+    explicit ClientFinishUnarySenderImplementation(detail::ClientRPCContextBase<Responder<Response>>& rpc,
+                                                   Response& response)
+        : rpc_(rpc), response_(response)
+    {
+    }
+
+    template <class OnComplete>
+    void complete(OnComplete on_complete, bool)
+    {
+        ClientRPCAccess::set_finished(rpc_);
+        on_complete(static_cast<grpc::Status&&>(status_));
+    }
+
+    detail::ClientRPCContextBase<Responder<Response>>& rpc_;
+    Response& response_;
+};
+
+struct ClientFinishUnarySenderInitation
+{
+    template <class Responder>
+    static auto& stop_function_arg(const ClientFinishUnarySenderImplementation<Responder>& impl) noexcept
+    {
+        return impl.rpc_.context();
+    }
+
+    template <class Responder>
+    static void initiate(const agrpc::GrpcContext&, ClientFinishUnarySenderImplementation<Responder>& impl, void* tag)
+    {
+        ClientRPCAccess::responder(impl.rpc_).Finish(&impl.response_, &impl.status_, tag);
+    }
+};
+
+template <class Responder>
 struct ClientFinishServerStreamingSenderImplementation : StatusSenderImplementationBase
 {
     explicit ClientFinishServerStreamingSenderImplementation(detail::ClientRPCContextBase<Responder>& rpc) : rpc_(rpc)

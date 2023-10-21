@@ -97,10 +97,54 @@ TEST_CASE_TEMPLATE("ServerRPC unary success", RPC, test::UnaryServerRPC, test::N
         });
 }
 
+TEST_CASE_TEMPLATE("ServerRPC unary start+finish success", RPC, test::UnaryServerRPC,
+                   test::NotifyWhenDoneUnaryServerRPC)
+{
+    ServerRPCTest<RPC> test{true};
+    bool use_finish_with_error{};
+    SUBCASE("finish") {}
+    SUBCASE("finish_with_error") { use_finish_with_error = true; }
+    test.register_and_perform_three_requests(
+        [&](RPC& rpc, test::msg::Request& request, const asio::yield_context& yield)
+        {
+            CHECK_EQ(42, request.integer());
+            if (use_finish_with_error)
+            {
+                CHECK(rpc.finish_with_error(test::create_already_exists_status(), yield));
+            }
+            else
+            {
+                typename RPC::Response response;
+                response.set_integer(21);
+                CHECK(rpc.finish(response, grpc::Status::OK, yield));
+            }
+        },
+        [&](auto& request, auto& response, const asio::yield_context& yield)
+        {
+            request.set_integer(42);
+            typename ServerRPCTest<RPC>::ClientRPC rpc{test.grpc_context, test::set_default_deadline};
+            rpc.start(*test.stub, request);
+            request = {};
+            const auto status = rpc.finish(response, yield);
+            if (use_finish_with_error)
+            {
+                CHECK_EQ(grpc::StatusCode::ALREADY_EXISTS, status.error_code());
+            }
+            else
+            {
+                CHECK(status.ok());
+                CHECK_EQ(21, response.integer());
+            }
+        });
+}
+
 TEST_CASE_TEMPLATE("Unary ClientRPC/ServerRPC read/send_initial_metadata successfully", RPC, test::UnaryServerRPC,
                    test::NotifyWhenDoneUnaryServerRPC)
 {
     ServerRPCTest<RPC> test{true};
+    bool use_start{};
+    SUBCASE("use request") {}
+    SUBCASE("use start") { use_start = true; }
     test.register_and_perform_three_requests(
         [&](RPC& rpc, auto&, const asio::yield_context& yield)
         {
@@ -110,11 +154,20 @@ TEST_CASE_TEMPLATE("Unary ClientRPC/ServerRPC read/send_initial_metadata success
         },
         [&](auto& request, auto& response, const asio::yield_context& yield)
         {
-            grpc::ClientContext client_context;
-            test::set_default_deadline(client_context);
-            CHECK_EQ(grpc::StatusCode::CANCELLED,
-                     test.request_rpc(client_context, request, response, yield).error_code());
-            CHECK_EQ(0, client_context.GetServerInitialMetadata().find("test")->second.compare("a"));
+            if (use_start)
+            {
+                typename ServerRPCTest<RPC>::ClientRPC rpc{test.grpc_context, test::set_default_deadline};
+                rpc.start(*test.stub, request);
+                rpc.read_initial_metadata(yield);
+                CHECK_EQ(0, rpc.context().GetServerInitialMetadata().find("test")->second.compare("a"));
+            }
+            else
+            {
+                const auto client_context = test::create_client_context();
+                CHECK_EQ(grpc::StatusCode::CANCELLED,
+                         test.request_rpc(*client_context, request, response, yield).error_code());
+                CHECK_EQ(0, client_context->GetServerInitialMetadata().find("test")->second.compare("a"));
+            }
         });
 }
 
@@ -314,9 +367,10 @@ TEST_CASE_TEMPLATE("ServerRPC/ClientRPC bidi streaming success", RPC, test::Bidi
 
 TEST_CASE_FIXTURE(ServerRPCTest<test::GenericServerRPC>, "ServerRPC/ClientRPC generic unary RPC success")
 {
-    bool use_executor_overload{};
+    int option{};
     SUBCASE("executor overload") {}
-    SUBCASE("GrpcContext overload") { use_executor_overload = true; }
+    SUBCASE("GrpcContext overload") { option = 1; }
+    SUBCASE("start+finish") { option = 2; }
     register_and_perform_three_requests(
         [&](test::GenericServerRPC& rpc, const asio::yield_context& yield)
         {
@@ -336,13 +390,19 @@ TEST_CASE_FIXTURE(ServerRPCTest<test::GenericServerRPC>, "ServerRPC/ClientRPC ge
             request = test::message_to_grpc_buffer(typed_request);
             auto status = [&]
             {
-                if (use_executor_overload)
+                if (0 == option)
                 {
                     return test::GenericUnaryClientRPC::request(get_executor(), "/test.v1.Test/Unary", *stub,
                                                                 client_context, request, response, yield);
                 }
-                return test::GenericUnaryClientRPC::request(grpc_context, "/test.v1.Test/Unary", *stub, client_context,
-                                                            request, response, yield);
+                else if (1 == option)
+                {
+                    return test::GenericUnaryClientRPC::request(grpc_context, "/test.v1.Test/Unary", *stub,
+                                                                client_context, request, response, yield);
+                }
+                test::GenericUnaryClientRPC rpc{grpc_context, test::set_default_deadline};
+                rpc.start("/test.v1.Test/Unary", *stub, request);
+                return rpc.finish(response, yield);
             }();
             CHECK_EQ(grpc::StatusCode::OK, status.error_code());
             CHECK_EQ(11, test::grpc_buffer_to_message<test::msg::Response>(response).integer());

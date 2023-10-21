@@ -121,6 +121,12 @@ struct ServerRPCContextBaseAccess;
 
 struct RPCExecutorBaseAccess;
 
+template <class Responder, class Executor>
+class ClientRPCBase;
+
+template <auto, class>
+class ClientRPCUnaryBase;
+
 template <bool IsNotifyWhenDone, class Responder, class Executor>
 class ServerRPCNotifyWhenDoneMixin;
 

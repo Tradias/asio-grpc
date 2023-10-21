@@ -54,6 +54,12 @@ class RPCExecutorBase
     template <auto, class, class>
     friend class agrpc::ServerRPC;
 
+    template <class, class>
+    friend class detail::ClientRPCBase;
+
+    template <auto, class>
+    friend class detail::ClientRPCUnaryBase;
+
     template <auto, class>
     friend class detail::ClientRPCServerStreamingBase;
 
