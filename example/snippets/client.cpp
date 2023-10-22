@@ -377,3 +377,20 @@ void client_main()
     grpc_context.run();
     // end-snippet
 }
+
+void client_main_cheat_sheet()
+{
+    /* [client-main-cheat-sheet] */
+    agrpc::GrpcContext grpc_context;
+    example::v1::Example::Stub stub(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
+    asio::co_spawn(
+        grpc_context,
+        [&]() -> asio::awaitable<void>
+        {
+            // ...
+            co_return;
+        },
+        asio::detached);
+    grpc_context.run();
+    /* [client-main-cheat-sheet] */
+}

@@ -19,7 +19,7 @@
 
 namespace asio = boost::asio;
 
-/* [client_rpc-unary] */
+/* [client-rpc-unary] */
 asio::awaitable<void> client_rpc_unary(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
     using RPC = agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncUnary>;
@@ -35,9 +35,31 @@ asio::awaitable<void> client_rpc_unary(agrpc::GrpcContext& grpc_context, example
         co_return;
     }
 }
-/* [client_rpc-unary] */
+/* [client-rpc-unary] */
 
-/* [client_rpc-client-streaming] */
+/* [client-rpc-unary-initial-metadata] */
+asio::awaitable<void> client_rpc_unary_initial_metadata(agrpc::GrpcContext& grpc_context,
+                                                        example::v1::Example::Stub& stub)
+{
+    using RPC = agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncUnary>;
+    RPC rpc{grpc_context};
+    rpc.context().set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
+    RPC::Request request;
+    rpc.start(stub, request);
+    co_await rpc.read_initial_metadata(asio::use_awaitable);
+    // Do something with:
+    // rpc.context.GetServerInitialMetadata();
+    RPC::Response response;
+    grpc::Status status = co_await rpc.finish(response, asio::use_awaitable);
+    if (!status.ok())
+    {
+        std::cerr << "Rpc failed: " << status.error_message();
+        co_return;
+    }
+}
+/* [client-rpc-unary-initial-metadata] */
+
+/* [client-rpc-client-streaming] */
 asio::awaitable<void> client_rpc_client_streaming(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
     using RPC = asio::use_awaitable_t<>::as_default_on_t<
@@ -71,9 +93,9 @@ asio::awaitable<void> client_rpc_client_streaming(agrpc::GrpcContext& grpc_conte
 
     std::cout << "Response: " << response.integer();
 }
-/* [client_rpc-client-streaming] */
+/* [client-rpc-client-streaming] */
 
-/* [client_rpc-server-streaming] */
+/* [client-rpc-server-streaming] */
 asio::awaitable<void> client_rpc_server_streaming(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
     using RPC = asio::use_awaitable_t<>::as_default_on_t<
@@ -104,9 +126,9 @@ asio::awaitable<void> client_rpc_server_streaming(agrpc::GrpcContext& grpc_conte
         co_return;
     }
 }
-/* [client_rpc-server-streaming] */
+/* [client-rpc-server-streaming] */
 
-/* [client_rpc-bidi-streaming] */
+/* [client-rpc-bidirectional-streaming] */
 asio::awaitable<void> client_rpc_bidirectional_streaming(agrpc::GrpcContext& grpc_context,
                                                          example::v1::Example::Stub& stub)
 {
@@ -141,9 +163,9 @@ asio::awaitable<void> client_rpc_bidirectional_streaming(agrpc::GrpcContext& grp
         co_return;
     }
 }
-/* [client_rpc-bidi-streaming] */
+/* [client-rpc-bidirectional-streaming] */
 
-/* [client_rpc-generic-unary] */
+/* [client-rpc-generic-unary] */
 asio::awaitable<void> client_rpc_generic_unary(agrpc::GrpcContext& grpc_context, grpc::GenericStub& stub)
 {
     grpc::ClientContext client_context;
@@ -177,8 +199,4 @@ asio::awaitable<void> client_rpc_generic_unary(agrpc::GrpcContext& grpc_context,
 
     std::cout << "Response: " << response.integer();
 }
-/* [client_rpc-generic-unary] */
-
-/* [client_rpc-generic-streaming] */
-asio::awaitable<void> client_rpc_generic_streaming(agrpc::GrpcContext&, grpc::GenericStub&) { co_return; }
-/* [client_rpc-generic-streaming] */
+/* [client-rpc-generic-unary] */

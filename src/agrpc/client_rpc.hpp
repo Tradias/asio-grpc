@@ -196,7 +196,11 @@ class ClientRPCUnaryBase<PrepareAsyncUnary, Executor> : public detail::ClientRPC
  *
  * Example:
  *
- * @snippet client_rpc.cpp client_rpc-unary
+ * @snippet client_rpc.cpp client-rpc-unary
+ *
+ * Alternative version that waits the server's initial metadata first:
+ *
+ * @snippet client_rpc.cpp client-rpc-unary-initial-metadata
  *
  * Based on `.proto` file:
  *
@@ -237,7 +241,7 @@ class ClientRPC<PrepareAsyncUnary, Executor> : public detail::ClientRPCUnaryBase
  *
  * Example:
  *
- * @snippet client_rpc.cpp client_rpc-generic-unary
+ * @snippet client_rpc.cpp client-rpc-generic-unary
  *
  * Based on `.proto` file:
  *
@@ -393,7 +397,7 @@ using GenericUnaryClientRPC = agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_UNA
  *
  * Example:
  *
- * @snippet client_rpc.cpp client_rpc-client-streaming
+ * @snippet client_rpc.cpp client-rpc-client-streaming
  *
  * Based on `.proto` file:
  *
@@ -780,7 +784,7 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
  *
  * Example:
  *
- * @snippet client_rpc.cpp client_rpc-server-streaming
+ * @snippet client_rpc.cpp client-rpc-server-streaming
  *
  * Based on `.proto` file:
  *
@@ -962,7 +966,7 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
  *
  * Example:
  *
- * @snippet client_rpc.cpp client_rpc-bidi-streaming
+ * @snippet client_rpc.cpp client-rpc-bidirectional-streaming
  *
  * Based on `.proto` file:
  *

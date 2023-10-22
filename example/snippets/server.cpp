@@ -15,6 +15,7 @@
 #include "example/v1/example.grpc.pb.h"
 #include "grpc/health/v1/health.grpc.pb.h"
 #include "helper.hpp"
+#include "server_shutdown_asio.hpp"
 
 #include <agrpc/asio_grpc.hpp>
 #include <agrpc/health_check_service.hpp>
@@ -361,8 +362,8 @@ void health_check_service()
 
 void server_main()
 {
-    std::unique_ptr<grpc::Server> server;
     example::v1::Example::AsyncService service;
+    std::unique_ptr<grpc::Server> server;
 
     // begin-snippet: create-grpc_context-server-side
     grpc::ServerBuilder builder;
@@ -384,4 +385,20 @@ void server_main()
 
     grpc_context.run();
     server->Shutdown();
+}
+
+void server_main_cheat_sheet()
+{
+    /* [server-main-cheat-sheet] */
+    example::v1::Example::AsyncService service;
+    std::unique_ptr<grpc::Server> server;
+    grpc::ServerBuilder builder;
+    agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
+    builder.AddListeningPort("0.0.0.0:50051", grpc::InsecureServerCredentials());
+    builder.RegisterService(&service);
+    server = builder.BuildAndStart();
+    example::ServerShutdown shutdown{*server, grpc_context};
+    register_handlers(grpc_context, service);
+    grpc_context.run();
+    /* [server-main-cheat-sheet] */
 }

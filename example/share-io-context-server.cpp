@@ -74,12 +74,12 @@ int main(int argc, const char** argv)
 
     asio::io_context io_context{1};
 
+    example::v1::Example::AsyncService service;
     std::unique_ptr<grpc::Server> server;
 
     grpc::ServerBuilder builder;
     agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
     builder.AddListeningPort(host, grpc::InsecureServerCredentials());
-    example::v1::Example::AsyncService service;
     builder.RegisterService(&service);
     server = builder.BuildAndStart();
     abort_if_not(bool{server});

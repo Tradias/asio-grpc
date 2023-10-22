@@ -168,14 +168,14 @@ int main(int argc, const char** argv)
     const auto port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("0.0.0.0:") + port;
 
+    example::v1::Example::AsyncService service;
+    example::v1::ExampleExt::AsyncService service_ext;
     std::unique_ptr<grpc::Server> server;
 
     grpc::ServerBuilder builder;
     agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
     builder.AddListeningPort(host, grpc::InsecureServerCredentials());
-    example::v1::Example::AsyncService service;
     builder.RegisterService(&service);
-    example::v1::ExampleExt::AsyncService service_ext;
     builder.RegisterService(&service_ext);
     agrpc::add_health_check_service(builder);
     server = builder.BuildAndStart();

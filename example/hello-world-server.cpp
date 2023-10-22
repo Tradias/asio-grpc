@@ -36,12 +36,12 @@ int main(int argc, const char** argv)
     const auto port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("0.0.0.0:") + port;
 
+    helloworld::Greeter::AsyncService service;
     std::unique_ptr<grpc::Server> server;
 
     grpc::ServerBuilder builder;
     agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
     builder.AddListeningPort(host, grpc::InsecureServerCredentials());
-    helloworld::Greeter::AsyncService service;
     builder.RegisterService(&service);
     server = builder.BuildAndStart();
 

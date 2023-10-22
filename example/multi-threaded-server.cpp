@@ -62,8 +62,8 @@ int main(int argc, const char** argv)
     const auto host = std::string("0.0.0.0:") + port;
     const auto thread_count = std::thread::hardware_concurrency();
 
-    std::unique_ptr<grpc::Server> server;
     helloworld::Greeter::AsyncService service;
+    std::unique_ptr<grpc::Server> server;
     std::vector<std::unique_ptr<agrpc::GrpcContext>> grpc_contexts;
 
     {

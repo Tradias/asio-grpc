@@ -17,6 +17,7 @@
 #include <agrpc/asio_grpc.hpp>
 #include <unifex/just.hpp>
 #include <unifex/let_value.hpp>
+#include <unifex/let_value_with.hpp>
 
 /* [repeatedly-request-sender] */
 auto register_client_streaming_handler(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
@@ -37,3 +38,24 @@ auto register_client_streaming_handler(agrpc::GrpcContext& grpc_context, example
         agrpc::use_sender(grpc_context));
 }
 /* [repeatedly-request-sender] */
+
+/* [server-rpc-unary-sender] */
+auto server_rpc_unary_sender(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
+{
+    using RPC = agrpc::ServerRPC<&example::v1::Example::AsyncService::RequestUnary>;
+    return agrpc::register_sender_rpc_handler<RPC>(grpc_context, service,
+                                                   [](RPC& rpc, RPC::Request& request)
+                                                   {
+                                                       return unifex::let_value_with(
+                                                           []
+                                                           {
+                                                               return RPC::Response{};
+                                                           },
+                                                           [&](auto& response)
+                                                           {
+                                                               response.set_integer(request.integer());
+                                                               return rpc.finish(response, grpc::Status::OK);
+                                                           });
+                                                   });
+}
+/* [server-rpc-unary-sender] */

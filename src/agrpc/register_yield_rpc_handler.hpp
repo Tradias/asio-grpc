@@ -20,6 +20,34 @@
 
 AGRPC_NAMESPACE_BEGIN()
 
+/**
+ * @brief (experimental) Register a Boost.Coroutine rpc handler for the given method
+ *
+ * The rpc handler will be invoked for every incoming request of this gRPC method. It must take `ServerRPC&` as
+ * first, `ServerRPC::Request&` as second (only for unary and server-streaming rpcs) and
+ * `asio::basic_yield_context<CompletionExecutor>` as third argument. The ServerRPC is automatically cancelled at the
+ * end of the rpc handler if `finish()` was not called earlier.
+ *
+ * This asynchronous operation runs forever unless it is cancelled, the rpc handler throws an exception or the server is
+ * shutdown
+ * ([grpc::Server::Shutdown](https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_interface.html#a6a1d337270116c95f387e0abf01f6c6c)
+ * is called). At which point it invokes the completion handler (passing forward the exception thrown by the request
+ * handler, if any) after all invocations of the rpc handler return.
+ *
+ * Example:
+ *
+ * @snippet server_rpc.cpp server-rpc-unary-yield
+ *
+ * @tparam ServerRPC An instantiation of `agrpc::ServerRPC`
+ * @param executor The executor used to handle each rpc
+ * @param service The service associated with the gRPC method of the ServerRPC
+ * @param rpc_handler A callable that takes an `asio::basic_yield_context<CompletionExecutor>` as last argument. The
+ * return value is ignored. The CompletionExecutor is the executor associated with the completion handler (defaulted to
+ * `executor`).
+ * @param token A completion token for signature `void(std::exception_ptr)`.
+ *
+ * @since 2.7.0
+ */
 template <class ServerRPC, class RPCHandler, class CompletionToken>
 auto register_yield_rpc_handler(const typename ServerRPC::executor_type& executor,
                                 detail::GetServerRPCServiceT<ServerRPC>& service, RPCHandler rpc_handler,
@@ -30,6 +58,11 @@ auto register_yield_rpc_handler(const typename ServerRPC::executor_type& executo
         static_cast<RPCHandler&&>(rpc_handler));
 }
 
+/**
+ * @brief (experimental) Register a rpc handler for the given method (GrpcContext overload)
+ *
+ * @since 2.7.0
+ */
 template <class ServerRPC, class RPCHandler, class CompletionToken>
 auto register_yield_rpc_handler(agrpc::GrpcContext& grpc_context, detail::GetServerRPCServiceT<ServerRPC>& service,
                                 RPCHandler&& rpc_handler, CompletionToken&& token)

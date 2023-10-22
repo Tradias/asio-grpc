@@ -39,9 +39,7 @@ struct ServerShutdown
         if (!is_shutdown.exchange(true))
         {
             // This will cause all coroutines to run to completion normally
-            // while returning `false` from RPC related steps. Also cancels the signals
-            // so that the GrpcContext will eventually run out of work and return
-            // from `run()`.
+            // while returning `false` from rpc related steps.
             // We cannot call server.Shutdown() on the same thread that runs a GrpcContext because that can lead to a
             // deadlock, therefore create a new thread.
             shutdown_thread = std::thread(

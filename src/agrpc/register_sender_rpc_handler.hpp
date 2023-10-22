@@ -19,6 +19,30 @@
 
 AGRPC_NAMESPACE_BEGIN()
 
+/**
+ * @brief (experimental) Register an awaitable rpc handler for the given method
+ *
+ * The rpc handler will be invoked for every incoming request of this gRPC method. It must take `ServerRPC&` as
+ * first argument and `ServerRPC::Request&` as second argument (only for unary and server-streaming rpcs). The ServerRPC
+ * is automatically cancelled at the end of the rpc handler's sender if `finish()` was not called earlier.
+ *
+ * This asynchronous operation runs forever unless it is cancelled, the rpc handler throws an exception or the server is
+ * shutdown
+ * ([grpc::Server::Shutdown](https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_interface.html#a6a1d337270116c95f387e0abf01f6c6c)
+ * is called). At which point it invokes the receiver (passing forward the exception thrown by the request handler, if
+ * any) after all sender produced by invoking the rpc handler complete.
+ *
+ * Example:
+ *
+ * @snippet unifex_server.cpp server-rpc-unary-sender
+ *
+ * @tparam ServerRPC An instantiation of `agrpc::ServerRPC`
+ * @param grpc_context The GrpcContext used to handle each rpc
+ * @param service The service associated with the gRPC method of the ServerRPC
+ * @param rpc_handler A callable that produces a sender
+ *
+ * @since 2.7.0
+ */
 template <class ServerRPC, class RPCHandler>
 [[nodiscard]] detail::RPCHandlerSender<ServerRPC, RPCHandler> register_sender_rpc_handler(
     agrpc::GrpcContext& grpc_context, detail::GetServerRPCServiceT<ServerRPC>& service, RPCHandler rpc_handler)

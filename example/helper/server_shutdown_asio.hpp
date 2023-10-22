@@ -30,7 +30,7 @@ namespace example
 struct ServerShutdown
 {
     grpc::Server& server;
-    boost::asio::basic_signal_set<agrpc::GrpcContext::executor_type> signals;
+    boost::asio::basic_signal_set<agrpc::GrpcExecutor> signals;
     std::atomic_bool is_shutdown{};
     std::thread shutdown_thread;
 
@@ -63,9 +63,6 @@ struct ServerShutdown
                     signals.cancel();
                     server.Shutdown();
                 });
-            // Alternatively call `grpc_context.stop()` here instead which causes all coroutines
-            // to end at their next suspension point.
-            // Then call `server->Shutdown()` after the call to `grpc_context.run()` returns.
         }
     }
 

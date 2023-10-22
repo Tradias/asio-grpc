@@ -25,7 +25,7 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief Register a rpc handler for the given method
+ * @brief (experimental) Register an awaitable rpc handler for the given method
  *
  * The rpc handler will be invoked for every incoming request of this gRPC method. It must take `ServerRPC&` as
  * first argument and `ServerRPC::Request&` as second argument (only for unary and server-streaming rpcs). The ServerRPC
@@ -44,8 +44,12 @@ AGRPC_NAMESPACE_BEGIN()
  * @tparam ServerRPC An instantiation of `agrpc::ServerRPC`
  * @param executor The executor used to handle each rpc
  * @param service The service associated with the gRPC method of the ServerRPC
- * @param rpc_handler A callable that produces an `asio::awaitable`. The awaitable's return value is ignored.
- * @param token A completion token. The completion signature is `void(std::exception_ptr)`.
+ * @param rpc_handler A callable that produces an `asio::awaitable<void, CompletionExecutor>`. The awaitable's return
+ * value is ignored. The CompletionExecutor is the executor associated with the completion handler (defaulted to
+ * `executor`).
+ * @param token A completion token for signature `void(std::exception_ptr)`.
+ *
+ * @since 2.7.0
  */
 template <class ServerRPC, class RPCHandler, class CompletionToken>
 auto register_awaitable_rpc_handler(const typename ServerRPC::executor_type& executor,
@@ -57,6 +61,11 @@ auto register_awaitable_rpc_handler(const typename ServerRPC::executor_type& exe
         static_cast<RPCHandler&&>(rpc_handler));
 }
 
+/**
+ * @brief (experimental) Register a rpc handler for the given method (GrpcContext overload)
+ *
+ * @since 2.7.0
+ */
 template <class ServerRPC, class RPCHandler, class CompletionToken>
 auto register_awaitable_rpc_handler(agrpc::GrpcContext& grpc_context, detail::GetServerRPCServiceT<ServerRPC>& service,
                                     RPCHandler&& rpc_handler, CompletionToken&& token)

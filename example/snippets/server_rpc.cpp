@@ -16,6 +16,7 @@
 
 #include <agrpc/asio_grpc.hpp>
 #include <agrpc/register_awaitable_rpc_handler.hpp>
+#include <agrpc/register_yield_rpc_handler.hpp>
 #include <boost/asio/deferred.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
@@ -74,6 +75,9 @@ void server_rpc_unary(agrpc::GrpcContext& grpc_context, example::v1::Example::As
             RPC::Response response;
             response.set_integer(request.integer());
             co_await rpc.finish(response, grpc::Status::OK);
+
+            // Alternatively finish with an error:
+            co_await rpc.finish_with_error(grpc::Status::CANCELLED);
         },
         asio::detached);
 }
@@ -96,6 +100,9 @@ void server_rpc_client_streaming(agrpc::GrpcContext& grpc_context, example::v1::
             RPC::Response response;
             response.set_integer(42);
             co_await rpc.finish(response, grpc::Status::OK);
+
+            // Alternatively finish with an error:
+            co_await rpc.finish_with_error(grpc::Status::CANCELLED);
         },
         asio::detached);
 }
@@ -191,3 +198,19 @@ void server_rpc_generic(agrpc::GrpcContext& grpc_context, grpc::AsyncGenericServ
         asio::detached);
 }
 /* [server-rpc-generic] */
+
+/* [server-rpc-unary-yield] */
+void server_rpc_unary_yield(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
+{
+    using RPC = agrpc::ServerRPC<&example::v1::Example::AsyncService::RequestUnary>;
+    agrpc::register_yield_rpc_handler<RPC>(
+        grpc_context, service,
+        [](RPC& rpc, RPC::Request& request, const asio::yield_context& yield)
+        {
+            RPC::Response response;
+            response.set_integer(request.integer());
+            rpc.finish(response, grpc::Status::OK, yield);
+        },
+        asio::detached);
+}
+/* [server-rpc-unary-yield] */

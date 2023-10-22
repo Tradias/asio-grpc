@@ -232,6 +232,7 @@ int main(int argc, const char** argv)
     const auto port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("0.0.0.0:") + port;
 
+    grpc::AsyncGenericService service;
     std::unique_ptr<grpc::Server> server;
     std::optional<std::thread> shutdown_thread;
 
@@ -239,7 +240,6 @@ int main(int argc, const char** argv)
     agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
     builder.AddListeningPort(host, grpc::InsecureServerCredentials());
 
-    grpc::AsyncGenericService service;
     builder.RegisterAsyncGenericService(&service);
 
     // All requests will be handled in a generic fashion except the shutdown request:

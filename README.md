@@ -292,68 +292,8 @@ The [agrpc::GrpcContext](https://tradias.github.io/asio-grpc/classagrpc_1_1_grpc
 
 Likewise, the [agrpc::GrpcExecutor](https://tradias.github.io/asio-grpc/classagrpc_1_1_basic_grpc_executor.html) satisfies the [Executor and Networking TS](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio/reference/Executor1.html#boost_asio.reference.Executor1.standard_executors) and [Scheduler](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#scheduler) requirements and can therefore be used in places where Asio/libunifex expects an `Executor` or `Scheduler`.
 
-The API for RPCs is modeled after the asynchronous, tag-based API of gRPC. As an example, the equivalent for `grpc::ClientAsyncReader<helloworld::HelloReply>.Read(helloworld::HelloReply*, void*)` would be `agrpc::ClientRPC<>.read(helloworld::HelloReply&, CompletionToken)`.
+The API for RPCs is modeled after the asynchronous, tag-based API of gRPC. As an example, the equivalent for `grpc::ClientAsyncReader<helloworld::HelloReply>.Read(helloworld::HelloReply*, void*)` would be `agrpc::ClientRPC.read(helloworld::HelloReply&, CompletionToken)`.
 
 Instead of the `void*` tag in the gRPC API the functions in this library expect a [CompletionToken](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers). Asio comes with several CompletionTokens already: [C++20 coroutine](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio/reference/use_awaitable.html), [stackless coroutine](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio/reference/coroutine.html), [callback](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio/reference/executor_binder.html) and [Boost.Coroutine](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio/reference/basic_yield_context.html). There is also a special token called `agrpc::use_sender` that causes RPC functions to return a [Sender](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#sender-concept).
 
 If you are interested in learning more about the implementation details of this library then check out [this blog article](https://medium.com/3yourmind/c-20-coroutines-for-asynchronous-grpc-services-5b3dab1d1d61).
-
-<details><summary><b>Getting started</b></summary>
-<p>
-
-## Getting started
-
-Start by creating a [agrpc::GrpcContext](https://tradias.github.io/asio-grpc/classagrpc_1_1_grpc_context.html).
-
-For servers and clients:
-
-<!-- snippet: create-grpc_context-server-side -->
-<a id='snippet-create-grpc_context-server-side'></a>
-```cpp
-grpc::ServerBuilder builder;
-agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
-```
-<sup><a href='/example/snippets/server.cpp#L367-L370' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-server-side' title='Start of snippet'>anchor</a></sup>
-<!-- endSnippet -->
-
-For clients only:
-
-<!-- snippet: create-grpc_context-client-side -->
-<a id='snippet-create-grpc_context-client-side'></a>
-```cpp
-agrpc::GrpcContext grpc_context;
-```
-<sup><a href='/example/snippets/client.cpp#L357-L359' title='Snippet source file'>snippet source</a> | <a href='#snippet-create-grpc_context-client-side' title='Start of snippet'>anchor</a></sup>
-<!-- endSnippet -->
-
-Add some work to the `grpc_context` and run it. As an example, a simple unary request using [asio::use_awaitable](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio/reference/use_awaitable.html) (the default completion token):
-
-<!-- snippet: run-grpc_context-client-side -->
-<a id='snippet-run-grpc_context-client-side'></a>
-```cpp
-example::v1::Example::Stub stub(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
-asio::co_spawn(
-    grpc_context,
-    [&]() -> asio::awaitable<void>
-    {
-        grpc::ClientContext client_context;
-        example::v1::Request request;
-        request.set_integer(42);
-        example::v1::Response response;
-        using RPC = agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncUnary>;
-        grpc::Status status =
-            co_await RPC::request(grpc_context, stub, client_context, request, response, asio::use_awaitable);
-        assert(status.ok());
-    },
-    asio::detached);
-grpc_context.run();
-```
-<sup><a href='/example/snippets/client.cpp#L361-L378' title='Snippet source file'>snippet source</a> | <a href='#snippet-run-grpc_context-client-side' title='Start of snippet'>anchor</a></sup>
-<!-- endSnippet -->
-
-## Where to go from here?
-
-Check out the [examples](/example) and the [documentation](https://tradias.github.io/asio-grpc/).
-
-</p>
-</details>
