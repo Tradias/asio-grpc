@@ -35,7 +35,7 @@ void run_out_var()
     request.set_integer(42);
 
     grpc::ServerAsyncResponseWriter<out_var::msg::Response> writer{&server_context};
-    const auto cb = boost::asio::bind_executor(grpc_context, [](bool) {});
+    auto cb = boost::asio::bind_executor(grpc_context, [](bool) {});
     const auto is_void =
         std::is_same_v<void, decltype(agrpc::request(out_var_v1_rpc, service, server_context, request, writer, cb))>;
 

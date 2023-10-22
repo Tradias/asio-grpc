@@ -72,7 +72,7 @@ void server_rpc_unary(agrpc::GrpcContext& grpc_context, example::v1::Example::As
         [](RPC& rpc, RPC::Request& request) -> asio::awaitable<void>
         {
             RPC::Response response;
-            response.set_integer(42);
+            response.set_integer(request.integer());
             co_await rpc.finish(response, grpc::Status::OK);
         },
         asio::detached);

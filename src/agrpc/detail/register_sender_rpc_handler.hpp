@@ -102,8 +102,7 @@ struct RPCHandlerOperationFinish
         auto& rpc = op.rpc_;
         if (eptr)
         {
-            op.base_.stop();
-            op.base_.set_error(static_cast<std::exception_ptr&&>(*eptr));
+            op.base().set_error(static_cast<std::exception_ptr&&>(*eptr));
         }
         if (!detail::ServerRPCContextBaseAccess::is_finished(rpc))
         {
@@ -157,18 +156,18 @@ struct RPCHandlerOperation
         void set_value(bool ok)
         {
             auto& op = rpc_handler_op_;
-            detail::AllocationGuard ptr{&op, op.get_allocator()};
+            detail::AllocationGuard guard{&op, op.get_allocator()};
             if (ok)
             {
                 if (auto exception_ptr = op.emplace_rpc_handler_operation_state())
                 {
                     op.rpc_.cancel();
-                    op.base_.set_error(static_cast<std::exception_ptr&&>(*exception_ptr));
+                    op.base().set_error(static_cast<std::exception_ptr&&>(*exception_ptr));
                     return;
                 }
-                detail::create_and_start_rpc_handler_operation(op.base_, op.get_allocator());
+                detail::create_and_start_rpc_handler_operation(op.base(), op.get_allocator());
                 op.start_rpc_handler_operation_state();
-                ptr.release();
+                guard.release();
             }
         }
 
@@ -219,8 +218,7 @@ struct RPCHandlerOperation
     using OperationState = std::variant<StartOperationState, FinishOperationState, WaitForDoneOperationState>;
 
     explicit RPCHandlerOperation(RegisterRPCHandlerSenderOperationBase& operation, const Allocator& allocator)
-        : base_(operation),
-          impl1_(operation.rpc_handler()),
+        : impl1_(operation),
           rpc_(detail::ServerRPCContextBaseAccess::construct<ServerRPC>(operation.get_executor())),
           impl2_(detail::SecondThenVariadic{}, allocator, std::in_place_type<StartOperationState>,
                  detail::InplaceWithFunction{},
@@ -231,7 +229,7 @@ struct RPCHandlerOperation
                          .connect(StartReceiver{*this});
                  })
     {
-        base_.increment_ref_count();
+        base().increment_ref_count();
     }
 
     RPCHandlerOperation(const RPCHandlerOperation& other) = delete;
@@ -239,9 +237,9 @@ struct RPCHandlerOperation
 
     ~RPCHandlerOperation() noexcept
     {
-        if (base_.decrement_ref_count())
+        if (base().decrement_ref_count())
         {
-            base_.complete();
+            base().complete();
         }
     }
 
@@ -258,8 +256,7 @@ struct RPCHandlerOperation
                 detail::InplaceWithFunction{},
                 [&]
                 {
-                    return exec::connect(initial_request().invoke(static_cast<RPCHandler&&>(rpc_handler()), rpc_),
-                                         FinishReceiver{*this});
+                    return exec::connect(initial_request().invoke(rpc_handler(), rpc_), FinishReceiver{*this});
                 });
             return {};
         }
@@ -279,7 +276,9 @@ struct RPCHandlerOperation
         state.value_.start();
     }
 
-    auto& rpc_handler() noexcept { return impl1_.first(); }
+    auto& base() noexcept { return impl1_.first(); }
+
+    auto& rpc_handler() noexcept { return base().rpc_handler(); }
 
     auto& initial_request() noexcept { return impl1_.second(); }
 
@@ -287,8 +286,7 @@ struct RPCHandlerOperation
 
     auto& get_allocator() noexcept { return impl2_.second(); }
 
-    RegisterRPCHandlerSenderOperationBase& base_;
-    detail::CompressedPair<RPCHandler, InitialRequest> impl1_;
+    detail::CompressedPair<RegisterRPCHandlerSenderOperationBase&, InitialRequest> impl1_;
     ServerRPC rpc_;
     detail::CompressedPair<OperationState, Allocator> impl2_;
 };

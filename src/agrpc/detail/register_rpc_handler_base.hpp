@@ -57,8 +57,6 @@ struct RegisterRPCHandlerOperationBase
         return stop_context_.is_stopped() || has_error_.load(std::memory_order_relaxed);
     }
 
-    void stop() noexcept { stop_context_.stop(); }
-
     agrpc::GrpcContext& grpc_context() const noexcept { return detail::query_grpc_context(executor_); }
 
     const ServerRPCExecutor& get_executor() const noexcept { return executor_; }

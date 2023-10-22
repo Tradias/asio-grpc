@@ -671,17 +671,21 @@ TEST_CASE_FIXTURE(UnifexClientServerTest, "unifex repeatedly_request client stre
     CHECK_EQ(4, request_count);
 }
 
-struct UnifexClientRPCTest : UnifexTestMixin<test::ClientServerRPCTest<test::BidirectionalStreamingClientRPC>>
+template <class RPC>
+struct UnifexClientRPCTest : UnifexTestMixin<test::ClientServerRPCTest<RPC>>
 {
-    template <class RPC, class RPCHandler, class... ClientFunctions>
+    using Base = test::ClientServerRPCTest<RPC>;
+
+    template <class RPCHandler, class... ClientFunctions>
     void register_and_perform_requests(RPCHandler&& handler, ClientFunctions&&... client_functions)
     {
         int counter{};
-        run(agrpc::register_sender_rpc_handler<RPC>(this->grpc_context, this->service, handler),
+        this->run(
+            agrpc::register_sender_rpc_handler<typename Base::ServerRPC>(this->grpc_context, this->service, handler),
             [&counter, &client_functions, &server_shutdown = this->server_shutdown]() -> unifex::task<void>
             {
-                typename ClientRPC::Request request;
-                typename ClientRPC::Response response;
+                typename Base::ClientRPC::Request request;
+                typename Base::ClientRPC::Response response;
                 co_await client_functions(request, response);
                 ++counter;
                 if (counter == sizeof...(client_functions))
@@ -692,12 +696,37 @@ struct UnifexClientRPCTest : UnifexTestMixin<test::ClientServerRPCTest<test::Bid
     }
 };
 
-TEST_CASE_FIXTURE(UnifexClientRPCTest, "unifex BidirectionalStreamingClientRPC success")
+TEST_CASE_FIXTURE(UnifexClientRPCTest<test::UnaryClientRPC>, "unifex UnaryClientRPC success")
 {
-    // ODR-use function to work around undefined reference bug in GCC 10
-    using RPC =
-        agrpc::ServerRPC<&test::v1::Test::WithAsyncMethod_BidirectionalStreaming<test::v1::Test::WithAsyncMethod_Unary<
-            test::v1::Test::WithAsyncMethod_Subscribe<test::v1::Test::Service>>>::RequestBidirectionalStreaming>;
+    auto client_func = [&](Request& request, Response& response) -> unifex::task<void>
+    {
+        grpc::ClientContext c;
+        test::set_default_deadline(c);
+        request.set_integer(42);
+        const auto status = co_await request_rpc(c, request, response, agrpc::use_sender);
+        CHECK_EQ(42, response.integer());
+        CHECK_EQ(grpc::StatusCode::OK, status.error_code());
+    };
+    register_and_perform_requests(
+        [&](ServerRPC& rpc, ServerRPC::Request& request)
+        {
+            return unifex::let_value_with(
+                []
+                {
+                    return ServerRPC::Response{};
+                },
+                [&](auto& response)
+                {
+                    response.set_integer(request.integer());
+                    return rpc.finish(response, grpc::Status::OK);
+                });
+        },
+        client_func, client_func, client_func);
+}
+
+TEST_CASE_FIXTURE(UnifexClientRPCTest<test::BidirectionalStreamingClientRPC>,
+                  "unifex BidirectionalStreamingClientRPC success")
+{
     auto client_func = [&](Request& request, Response& response) -> unifex::task<void>
     {
         auto rpc = create_rpc();
@@ -711,8 +740,8 @@ TEST_CASE_FIXTURE(UnifexClientRPCTest, "unifex BidirectionalStreamingClientRPC s
         CHECK_EQ(1, response.integer());
         CHECK_EQ(grpc::StatusCode::OK, (co_await rpc.finish()).error_code());
     };
-    register_and_perform_requests<RPC>(
-        [&](RPC& rpc) -> unifex::task<void>
+    register_and_perform_requests(
+        [&](ServerRPC& rpc) -> unifex::task<void>
         {
             Response response;
             response.set_integer(1);
@@ -726,7 +755,8 @@ TEST_CASE_FIXTURE(UnifexClientRPCTest, "unifex BidirectionalStreamingClientRPC s
         client_func, client_func, client_func);
 }
 
-TEST_CASE_FIXTURE(UnifexClientRPCTest, "unifex BidirectionalStreamingClientRPC can be canelled")
+TEST_CASE_FIXTURE(UnifexClientRPCTest<test::BidirectionalStreamingClientRPC>,
+                  "unifex BidirectionalStreamingClientRPC can be cancelled")
 {
     const auto with_deadline = [&](std::chrono::system_clock::time_point deadline)
     {
