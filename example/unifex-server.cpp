@@ -154,7 +154,6 @@ void run_grpc_context_for_sender(agrpc::GrpcContext& grpc_context, Sender&& send
 
 int main(int argc, const char** argv)
 {
-    std::this_thread::sleep_for(std::chrono::seconds(4));
     const auto port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("0.0.0.0:") + port;
 
