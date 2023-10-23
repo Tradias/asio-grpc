@@ -15,7 +15,6 @@
 #include "example/v1/example.grpc.pb.h"
 
 #include <agrpc/asio_grpc.hpp>
-#include <agrpc/register_awaitable_rpc_handler.hpp>
 #include <agrpc/register_yield_rpc_handler.hpp>
 #include <boost/asio/deferred.hpp>
 #include <boost/asio/detached.hpp>
@@ -160,7 +159,7 @@ void server_rpc_bidirectional_streaming(agrpc::GrpcContext& grpc_context, exampl
 /* [server-rpc-generic] */
 void server_rpc_generic(agrpc::GrpcContext& grpc_context, grpc::AsyncGenericService& service)
 {
-    using RPC = asio::use_awaitable_t<>::as_default_on_t<agrpc::GenericServerRPC<>>;
+    using RPC = asio::use_awaitable_t<>::as_default_on_t<agrpc::GenericServerRPC>;
     agrpc::register_awaitable_rpc_handler<RPC>(
         grpc_context, service,
         [](RPC& rpc) -> asio::awaitable<void>

@@ -50,10 +50,11 @@ struct IntrospectRPC<agrpc::ClientRPC<PrepareAsync, Executor>, agrpc::ClientRPCT
 };
 
 template <class Executor>
-struct IntrospectRPC<agrpc::GenericUnaryClientRPC<Executor>, agrpc::ClientRPCType::GENERIC_UNARY>
+struct IntrospectRPC<agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_UNARY, Executor>,
+                     agrpc::ClientRPCType::GENERIC_UNARY>
 {
-    using ClientRPC = agrpc::GenericUnaryClientRPC<Executor>;
-    using ServerRPC = agrpc::GenericServerRPC<agrpc::DefaultServerRPCTraits, Executor>;
+    using ClientRPC = agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_UNARY, Executor>;
+    using ServerRPC = agrpc::ServerRPC<agrpc::ServerRPCType::GENERIC, agrpc::DefaultServerRPCTraits, Executor>;
 
     template <class ExecOrContext, class CompletionToken>
     static auto request(ExecOrContext&& executor, typename ClientRPC::Stub& stub, grpc::ClientContext& context,
@@ -117,10 +118,11 @@ struct IntrospectRPC<agrpc::ClientRPC<PrepareAsync, Executor>, agrpc::ClientRPCT
 };
 
 template <class Executor>
-struct IntrospectRPC<agrpc::GenericStreamingClientRPC<Executor>, agrpc::ClientRPCType::GENERIC_STREAMING>
+struct IntrospectRPC<agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_STREAMING, Executor>,
+                     agrpc::ClientRPCType::GENERIC_STREAMING>
 {
-    using ClientRPC = agrpc::GenericStreamingClientRPC<Executor>;
-    using ServerRPC = agrpc::GenericServerRPC<agrpc::DefaultServerRPCTraits, Executor>;
+    using ClientRPC = agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_STREAMING, Executor>;
+    using ServerRPC = agrpc::ServerRPC<agrpc::ServerRPCType::GENERIC, agrpc::DefaultServerRPCTraits, Executor>;
 
     template <class CompletionToken>
     static auto start(ClientRPC& rpc, typename ClientRPC::Stub& stub, const typename ClientRPC::Request&,
@@ -159,10 +161,10 @@ struct IntrospectRPC<agrpc::ServerRPC<RequestRPC, Traits, Executor>, agrpc::Serv
 };
 
 template <class Traits, class Executor>
-struct IntrospectRPC<agrpc::GenericServerRPC<Traits, Executor>, agrpc::ServerRPCType::GENERIC>
+struct IntrospectRPC<agrpc::ServerRPC<agrpc::ServerRPCType::GENERIC, Traits, Executor>, agrpc::ServerRPCType::GENERIC>
 {
     using ClientRPC = agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_STREAMING, Executor>;
-    using ServerRPC = agrpc::GenericServerRPC<Traits, Executor>;
+    using ServerRPC = agrpc::ServerRPC<agrpc::ServerRPCType::GENERIC, Traits, Executor>;
 };
 }
 

@@ -30,7 +30,6 @@ int main(int argc, const char** argv)
 
     grpc::Status status;
 
-    // begin-snippet: client-side-helloworld
     helloworld::Greeter::Stub stub{grpc::CreateChannel(host, grpc::InsecureChannelCredentials())};
     agrpc::GrpcContext grpc_context;
 
@@ -49,7 +48,6 @@ int main(int argc, const char** argv)
         asio::detached);
 
     grpc_context.run();
-    // end-snippet
 
     abort_if_not(status.ok());
 }

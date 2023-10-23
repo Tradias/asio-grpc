@@ -179,7 +179,7 @@ asio::awaitable<void> client_rpc_generic_unary(agrpc::GrpcContext& grpc_context,
 
     grpc::ByteBuffer response_buffer;
 
-    using RPC = agrpc::GenericUnaryClientRPC<>;
+    using RPC = agrpc::GenericUnaryClientRPC;
     if (grpc::Status status = co_await RPC::request(grpc_context, "/example.v1.Example/Unary", stub, client_context,
                                                     request_buffer, response_buffer, asio::use_awaitable);
         !status.ok())

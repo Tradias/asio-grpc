@@ -44,8 +44,8 @@ using BidirectionalStreamingServerRPC = agrpc::ServerRPC<&test::v1::Test::AsyncS
 using NotifyWhenDoneBidirectionalStreamingServerRPC =
     agrpc::ServerRPC<&test::v1::Test::AsyncService::RequestBidirectionalStreaming, NotifyWhenDoneTraits>;
 
-using GenericServerRPC = agrpc::GenericServerRPC<>;
-using NotifyWhenDoneGenericServerRPC = agrpc::GenericServerRPC<NotifyWhenDoneTraits>;
+using GenericServerRPC = agrpc::GenericServerRPC;
+using NotifyWhenDoneGenericServerRPC = agrpc::ServerRPC<agrpc::ServerRPCType::GENERIC, NotifyWhenDoneTraits>;
 }
 
 TYPE_TO_STRING(test::UnaryServerRPC);

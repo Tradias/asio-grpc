@@ -37,6 +37,7 @@
 using ExampleService = example::v1::Example::AsyncService;
 
 using UnaryRPC = agrpc::ServerRPC<&ExampleService::RequestUnary>;
+using ServerStreamingRPC = agrpc::ServerRPC<&ExampleService::RequestServerStreaming>;
 
 // begin-snippet: server-side-unifex-unary
 // ---------------------------------------------------
@@ -48,7 +49,7 @@ auto register_unary_request_handler(agrpc::GrpcContext& grpc_context, example::v
 {
     // Register a handler for all incoming RPCs of this unary method until the server is being shut down.
     return agrpc::register_sender_rpc_handler<UnaryRPC>(grpc_context, service,
-                                                        [&](UnaryRPC& rpc, UnaryRPC::Request& request)
+                                                        [&](UnaryRPC& rpc, const UnaryRPC::Request& request)
                                                         {
                                                             return unifex::let_value_with(
                                                                 []
@@ -70,29 +71,24 @@ auto register_unary_request_handler(agrpc::GrpcContext& grpc_context, example::v
 // A simple server-streaming request handler using coroutines.
 // ---------------------------------------------------
 // end-snippet
-unifex::task<void> handle_server_streaming_request(agrpc::GrpcContext& grpc_context,
-                                                   example::v1::Example::AsyncService& service)
+auto handle_server_streaming_request(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
 {
-    grpc::ServerContext server_context;
-    grpc::ServerAsyncWriter<example::v1::Response> writer{&server_context};
-    example::v1::Request request;
-    if (!co_await agrpc::request(&example::v1::Example::AsyncService::RequestServerStreaming, service, server_context,
-                                 request, writer, agrpc::use_sender(grpc_context)))
-    {
-        // The gRPC server is shutting down.
-        co_return;
-    }
-    for (google::protobuf::int32 i = 0; i < request.integer(); ++i)
-    {
-        example::v1::Response response;
-        response.set_integer(i);
-        if (!co_await agrpc::write(writer, response, agrpc::use_sender(grpc_context)))
+    return agrpc::register_sender_rpc_handler<ServerStreamingRPC>(
+        grpc_context, service,
+        [&](ServerStreamingRPC& rpc, const ServerStreamingRPC::Request& request) -> unifex::task<void>
         {
-            // The client hung up.
-            co_return;
-        }
-    }
-    co_await agrpc::finish(writer, grpc::Status::OK, agrpc::use_sender(grpc_context));
+            for (google::protobuf::int32 i = 0; i < request.integer(); ++i)
+            {
+                example::v1::Response response;
+                response.set_integer(i);
+                if (!co_await rpc.write(response))
+                {
+                    // The client hung up.
+                    co_return;
+                }
+            }
+            co_await rpc.finish(grpc::Status::OK);
+        });
 }
 // ---------------------------------------------------
 //
@@ -100,23 +96,17 @@ unifex::task<void> handle_server_streaming_request(agrpc::GrpcContext& grpc_cont
 // ---------------------------------------------------
 // The SlowUnary endpoint is used by the client to demonstrate per-RPC step cancellation. See unifex-client.cpp.
 // ---------------------------------------------------
-unifex::task<void> handle_slow_unary_request(agrpc::GrpcContext& grpc_context,
-                                             example::v1::ExampleExt::AsyncService& service)
+auto handle_slow_unary_request(agrpc::GrpcContext& grpc_context, example::v1::ExampleExt::AsyncService& service)
 {
-    grpc::ServerContext server_context;
-    example::v1::SlowRequest request;
-    grpc::ServerAsyncResponseWriter<google::protobuf::Empty> writer{&server_context};
-    if (!co_await agrpc::request(&example::v1::ExampleExt::AsyncService::RequestSlowUnary, service, server_context,
-                                 request, writer, agrpc::use_sender(grpc_context)))
-    {
-        co_return;
-    }
-
-    grpc::Alarm alarm;
-    co_await agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::milliseconds(request.delay()),
-                         agrpc::use_sender(grpc_context));
-
-    co_await agrpc::finish(writer, {}, grpc::Status::OK, agrpc::use_sender(grpc_context));
+    using RPC = agrpc::ServerRPC<&example::v1::ExampleExt::AsyncService::RequestSlowUnary>;
+    return agrpc::register_sender_rpc_handler<RPC>(
+        grpc_context, service,
+        [&](RPC& rpc, const RPC::Request& request) -> unifex::task<void>
+        {
+            agrpc::Alarm alarm{grpc_context};
+            co_await alarm.wait(std::chrono::system_clock::now() + std::chrono::milliseconds(request.delay()));
+            co_await rpc.finish({}, grpc::Status::OK);
+        });
 }
 // ---------------------------------------------------
 //
@@ -142,7 +132,7 @@ auto register_shutdown_request_handler(agrpc::GrpcContext& grpc_context, example
                        server_shutdown.shutdown();
                    });
     };
-    return agrpc::register_sender_rpc_handler<RPC>(grpc_context, service, rpc_handler);
+    return agrpc::register_sender_rpc_handler<RPC>(grpc_context, service, std::move(rpc_handler));
 }
 
 template <class Sender>

@@ -18,6 +18,7 @@
 
 #include <agrpc/asio_grpc.hpp>
 #include <agrpc/health_check_service.hpp>
+#include <boost/asio/detached.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
@@ -36,24 +37,22 @@ namespace asio = boost::asio;
 void register_request_handler(agrpc::GrpcContext& grpc_context, helloworld::Greeter::AsyncService& service,
                               example::ServerShutdown& shutdown)
 {
-    agrpc::repeatedly_request(
-        &helloworld::Greeter::AsyncService::RequestSayHello, service,
-        asio::bind_executor(
-            grpc_context,
-            [&](grpc::ServerContext&, helloworld::HelloRequest& request,
-                grpc::ServerAsyncResponseWriter<helloworld::HelloReply>& writer) -> asio::awaitable<void>
-            {
-                helloworld::HelloReply response;
-                response.set_message("Hello " + request.name());
-                co_await agrpc::finish(writer, response, grpc::Status::OK);
+    agrpc::register_awaitable_rpc_handler<agrpc::ServerRPC<&helloworld::Greeter::AsyncService::RequestSayHello>>(
+        grpc_context, service,
+        [&](auto& rpc, helloworld::HelloRequest& request) -> asio::awaitable<void>
+        {
+            helloworld::HelloReply response;
+            response.set_message("Hello " + request.name());
+            co_await rpc.finish(response, grpc::Status::OK, asio::use_awaitable);
 
-                // In this example we shut down the server after 20 requests
-                static std::atomic_int counter{};
-                if (19 == counter.fetch_add(1))
-                {
-                    shutdown.shutdown();
-                }
-            }));
+            // In this example we shut down the server after 20 requests
+            static std::atomic_int counter{};
+            if (19 == counter.fetch_add(1))
+            {
+                shutdown.shutdown();
+            }
+        },
+        asio::detached);
 }
 
 int main(int argc, const char** argv)

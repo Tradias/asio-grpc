@@ -14,6 +14,7 @@
 
 #include "example/v1/example.grpc.pb.h"
 #include "helper.hpp"
+#include "server_shutdown_asio.hpp"
 
 #include <agrpc/asio_grpc.hpp>
 #include <boost/asio/bind_executor.hpp>
@@ -25,7 +26,6 @@
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
-#include <optional>
 #include <string_view>
 
 namespace asio = boost::asio;
@@ -38,7 +38,7 @@ namespace asio = boost::asio;
 // ---------------------------------------------------
 // end-snippet
 
-//  A simple tcp request that will be handled by the io_context
+//  A simple tcp request that will be handled by the io_context.
 asio::awaitable<void> handle_tcp_request(asio::ip::port_type port)
 {
     const auto& executor = co_await asio::this_coro::executor;
@@ -50,21 +50,8 @@ asio::awaitable<void> handle_tcp_request(asio::ip::port_type port)
     abort_if_not("example" == std::string_view(data, bytes_read - 1));
 }
 
-// A unary RPC request that will be handled by the GrpcContext
-asio::awaitable<void> handle_grpc_request(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
-{
-    grpc::ServerContext server_context;
-    example::v1::Request request;
-    grpc::ServerAsyncResponseWriter<example::v1::Response> writer{&server_context};
-    if (!co_await agrpc::request(&example::v1::Example::AsyncService::RequestUnary, service, server_context, request,
-                                 writer, asio::bind_executor(grpc_context, asio::use_awaitable)))
-    {
-        co_return;
-    }
-    example::v1::Response response;
-    response.set_integer(request.integer());
-    co_await agrpc::finish(writer, response, grpc::Status::OK, asio::bind_executor(grpc_context, asio::use_awaitable));
-}
+// A unary RPC request that will be handled by the GrpcContext.
+using RPC = agrpc::ServerRPC<&example::v1::Example::AsyncService::RequestUnary>;
 
 int main(int argc, const char** argv)
 {
@@ -84,16 +71,20 @@ int main(int argc, const char** argv)
     server = builder.BuildAndStart();
     abort_if_not(bool{server});
 
-    asio::co_spawn(
-        io_context,
-        [&, grpc_context_work_guard = asio::make_work_guard(grpc_context)]() mutable -> asio::awaitable<void>
+    example::ServerShutdown server_shutdown{*server, grpc_context};
+
+    agrpc::register_awaitable_rpc_handler<RPC>(
+        grpc_context, service,
+        [&](RPC& rpc, RPC::Request& request) -> asio::awaitable<void>
         {
-            // The two operations below will run concurrently on the same thread.
-            using namespace boost::asio::experimental::awaitable_operators;
-            co_await (handle_grpc_request(grpc_context, service) && handle_tcp_request(tcp_port));
-            grpc_context_work_guard.reset();
+            example::v1::Response response;
+            response.set_integer(request.integer());
+            co_await rpc.finish(response, grpc::Status::OK, asio::use_awaitable);
+            server_shutdown.shutdown();
         },
         asio::detached);
+
+    asio::co_spawn(io_context, handle_tcp_request(tcp_port), asio::detached);
 
     // First, initiate the io_context's thread_local variables by posting on it. The io_context uses them to optimize
     // dynamic memory allocations. This is an optional step but it can improve performance.
@@ -108,6 +99,4 @@ int main(int argc, const char** argv)
                    io_context.get_executor().on_work_started();
                });
     io_context.run();
-
-    server->Shutdown();
 }

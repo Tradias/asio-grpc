@@ -15,9 +15,11 @@
 #include "example/v1/example.grpc.pb.h"
 #include "example/v1/example_ext.grpc.pb.h"
 #include "helper.hpp"
+#include "server_shutdown_asio.hpp"
 #include "yield_helper.hpp"
 
 #include <agrpc/asio_grpc.hpp>
+#include <agrpc/register_yield_rpc_handler.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/experimental/channel.hpp>
@@ -29,7 +31,6 @@
 
 #include <iostream>
 #include <memory>
-#include <optional>
 #include <thread>
 
 namespace asio = boost::asio;
@@ -57,17 +58,17 @@ void process_request(grpc::ByteBuffer& buffer)
     grpc::GenericSerialize<grpc::ProtoBufferWriter, example::v1::Response>(response, &buffer, &own_buffer);
 }
 
-void handle_generic_unary_request(grpc::GenericServerAsyncReaderWriter& reader_writer, const asio::yield_context& yield)
+void handle_generic_unary_request(agrpc::GenericServerRPC& rpc, const asio::yield_context& yield)
 {
     grpc::ByteBuffer buffer;
 
     // -- Wait for the request message
-    agrpc::read(reader_writer, buffer, yield);
+    rpc.read(buffer, yield);
 
     process_request(buffer);
 
     // -- Write the response message and finish this RPC with OK
-    agrpc::write_and_finish(reader_writer, buffer, {}, grpc::Status::OK, yield);
+    rpc.write_and_finish(buffer, {}, grpc::Status::OK, yield);
 }
 // ---------------------------------------------------
 //
@@ -81,13 +82,12 @@ void handle_generic_unary_request(grpc::GenericServerAsyncReaderWriter& reader_w
 using Channel = asio::experimental::channel<agrpc::GrpcExecutor, void(boost::system::error_code, grpc::ByteBuffer)>;
 
 template <class Handler>
-void reader(grpc::GenericServerAsyncReaderWriter& reader_writer, Channel& channel,
-            const asio::basic_yield_context<Handler>& yield)
+void reader(agrpc::GenericServerRPC& rpc, Channel& channel, const asio::basic_yield_context<Handler>& yield)
 {
     while (true)
     {
         grpc::ByteBuffer buffer;
-        if (!agrpc::read(reader_writer, buffer, yield))
+        if (!rpc.read(buffer, yield))
         {
             std::cout << "Generic: Client is done writing." << std::endl;
             break;
@@ -116,7 +116,7 @@ auto
 // The writer will pick up reads from the reader through the channel and switch
 // to the thread_pool to compute their response.
 template <class Handler>
-bool writer(grpc::GenericServerAsyncReaderWriter& reader_writer, Channel& channel, asio::thread_pool& thread_pool,
+bool writer(agrpc::GenericServerRPC& rpc, Channel& channel, asio::thread_pool& thread_pool,
             const asio::basic_yield_context<Handler>& yield)
 {
     bool ok{true};
@@ -139,15 +139,14 @@ bool writer(grpc::GenericServerAsyncReaderWriter& reader_writer, Channel& channe
         process_request(buffer);
 
         // reader_writer is thread-safe so we can just interact with it from the thread_pool.
-        ok = agrpc::write(reader_writer, buffer, yield);
+        ok = rpc.write(buffer, yield);
         // Now we are back on the main thread.
     }
     std::cout << "Generic: Server writes completed with: " << std::boolalpha << ok << std::endl;
     return ok;
 }
 
-void handle_generic_bidistream_request(agrpc::GrpcContext& grpc_context,
-                                       grpc::GenericServerAsyncReaderWriter& reader_writer,
+void handle_generic_bidistream_request(agrpc::GrpcContext& grpc_context, agrpc::GenericServerRPC& rpc,
                                        asio::thread_pool& thread_pool, const asio::yield_context& yield)
 {
     // Maximum number of requests that are buffered by the channel to enable backpressure.
@@ -161,11 +160,11 @@ void handle_generic_bidistream_request(agrpc::GrpcContext& grpc_context,
         grpc_context, yield,
         [&](const auto& yield)
         {
-            reader(reader_writer, channel, yield);
+            reader(rpc, channel, yield);
         },
         [&](const auto& yield)
         {
-            ok = writer(reader_writer, channel, thread_pool, yield);
+            ok = writer(rpc, channel, thread_pool, yield);
         });
 
     if (!ok)
@@ -174,7 +173,7 @@ void handle_generic_bidistream_request(agrpc::GrpcContext& grpc_context,
         return;
     }
 
-    agrpc::finish(reader_writer, grpc::Status::OK, yield);
+    rpc.finish(grpc::Status::OK, yield);
 }
 // ---------------------------------------------------
 //
@@ -186,46 +185,28 @@ struct GenericRequestHandler
     agrpc::GrpcContext& grpc_context;
     asio::thread_pool& thread_pool;
 
-    void operator()(agrpc::GenericRepeatedlyRequestContext<>&& context) const
+    void operator()(agrpc::GenericServerRPC& rpc, const asio::yield_context& yield) const
     {
-        example::spawn(grpc_context,
-                       [&, context = std::move(context)](asio::yield_context yield)
-                       {
-                           const auto& method = context.server_context().method();
-                           if ("/example.v1.Example/Unary" == method)
-                           {
-                               handle_generic_unary_request(context.responder(), yield);
-                           }
-                           else if ("/example.v1.Example/BidirectionalStreaming" == method)
-                           {
-                               handle_generic_bidistream_request(grpc_context, context.responder(), thread_pool, yield);
-                           }
-                           else
-                           {
-                               throw std::runtime_error("Unsupport method!");
-                           }
-                       });
+        const auto& method = rpc.context().method();
+        if ("/example.v1.Example/Unary" == method)
+        {
+            handle_generic_unary_request(rpc, yield);
+        }
+        else if ("/example.v1.Example/BidirectionalStreaming" == method)
+        {
+            handle_generic_bidistream_request(grpc_context, rpc, thread_pool, yield);
+        }
+        else
+        {
+            throw std::runtime_error("Unsupport method!");
+        }
     }
 
     auto get_executor() const noexcept { return grpc_context.get_executor(); }
 };
 
 using ShutdownService = example::v1::ExampleExt::WithAsyncMethod_Shutdown<example::v1::ExampleExt::Service>;
-
-void handle_shutdown_request(ShutdownService& shutdown_service, grpc::Server& server,
-                             std::optional<std::thread>& shutdown_thread, const asio::yield_context& yield)
-{
-    grpc::ServerContext server_context;
-    grpc::ServerAsyncResponseWriter<google::protobuf::Empty> writer{&server_context};
-    google::protobuf::Empty request;
-    agrpc::request(&ShutdownService::RequestShutdown, shutdown_service, server_context, request, writer, yield);
-    agrpc::finish(writer, {}, grpc::Status::OK, yield);
-    shutdown_thread.emplace(
-        [&]
-        {
-            server.Shutdown();
-        });
-}
+using ShutdownRPC = agrpc::ServerRPC<&ShutdownService::RequestShutdown>;
 
 int main(int argc, const char** argv)
 {
@@ -234,7 +215,6 @@ int main(int argc, const char** argv)
 
     grpc::AsyncGenericService service;
     std::unique_ptr<grpc::Server> server;
-    std::optional<std::thread> shutdown_thread;
 
     grpc::ServerBuilder builder;
     agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
@@ -249,18 +229,23 @@ int main(int argc, const char** argv)
     server = builder.BuildAndStart();
     abort_if_not(bool{server});
 
-    example::spawn(grpc_context,
-                   [&](asio::yield_context yield)
-                   {
-                       handle_shutdown_request(shutdown_service, *server, shutdown_thread, yield);
-                   });
+    example::ServerShutdown server_shutdown{*server, grpc_context};
+
+    agrpc::register_yield_rpc_handler<ShutdownRPC>(
+        grpc_context, shutdown_service,
+        [&](ShutdownRPC& rpc, const ShutdownRPC::Request&, const asio::yield_context& yield)
+        {
+            if (rpc.finish({}, grpc::Status::OK, yield))
+            {
+                std::cout << "Received shutdown request from client\n";
+                server_shutdown.shutdown();
+            }
+        },
+        asio::detached);
 
     asio::thread_pool thread_pool{1};
-    agrpc::repeatedly_request(service, GenericRequestHandler{grpc_context, thread_pool});
+    agrpc::register_yield_rpc_handler<agrpc::GenericServerRPC>(
+        grpc_context, service, GenericRequestHandler{grpc_context, thread_pool}, asio::detached);
 
     grpc_context.run();
-    if (shutdown_thread && shutdown_thread->joinable())
-    {
-        shutdown_thread->join();
-    }
 }

@@ -54,7 +54,7 @@ bool deserialize(grpc::ByteBuffer& buffer, Message& message)
 void make_generic_unary_request(agrpc::GrpcContext& grpc_context, grpc::GenericStub& stub,
                                 const asio::yield_context& yield)
 {
-    using RPC = agrpc::GenericUnaryClientRPC<>;
+    using RPC = agrpc::GenericUnaryClientRPC;
 
     example::v1::Request request;
     request.set_integer(1);
@@ -94,22 +94,23 @@ struct BidirectionalStreamingRequest
     struct Context
     {
         grpc::GenericStub& stub;
-        grpc::ClientContext client_context;
-        std::unique_ptr<grpc::GenericClientAsyncReaderWriter> reader_writer;
-        grpc::Status status;
+        agrpc::GenericStreamingClientRPC rpc;
         example::v1::Request request;
         grpc::ByteBuffer response_buffer;
         int count{};
         bool write_ok{true};
         bool read_ok{true};
 
-        explicit Context(grpc::GenericStub& stub) : stub(stub) {}
+        Context(agrpc::GrpcContext& grpc_context, grpc::GenericStub& stub) : stub(stub), rpc(grpc_context) {}
     };
 
     std::unique_ptr<Context> context;
     asio::coroutine coro;
 
-    explicit BidirectionalStreamingRequest(grpc::GenericStub& stub) : context(std::make_unique<Context>(stub)) {}
+    BidirectionalStreamingRequest(agrpc::GrpcContext& grpc_context, grpc::GenericStub& stub)
+        : context(std::make_unique<Context>(grpc_context, stub))
+    {
+    }
 
     template <class Self>
     void operator()(Self& self, const std::array<std::size_t, 2>&, bool read_ok, bool write_ok)
@@ -118,15 +119,20 @@ struct BidirectionalStreamingRequest
     }
 
     template <class Self>
-    void operator()(Self& self, bool ok = {}, bool write_ok = {})
+    void operator()(Self& self, const grpc::Status& status)
+    {
+        (*this)(self, {}, {}, status);
+    }
+
+    template <class Self>
+    void operator()(Self& self, bool ok = {}, bool write_ok = {}, const grpc::Status& status = grpc::Status::OK)
     {
         auto& c = *context;
         BOOST_ASIO_CORO_REENTER(coro)
         {
-            c.client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
+            c.rpc.context().set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
 
-            BOOST_ASIO_CORO_YIELD agrpc::request("/example.v1.Example/BidirectionalStreaming", c.stub, c.client_context,
-                                                 c.reader_writer, std::move(self));
+            BOOST_ASIO_CORO_YIELD c.rpc.start("/example.v1.Example/BidirectionalStreaming", c.stub, std::move(self));
 
             if (!ok)
             {
@@ -148,11 +154,11 @@ struct BidirectionalStreamingRequest
                         executor, std::move(self),
                         [&](auto&& token)
                         {
-                            return agrpc::read(c.reader_writer, c.response_buffer, std::move(token));
+                            return c.rpc.read(c.response_buffer, std::move(token));
                         },
                         [&](auto&& token)
                         {
-                            return agrpc::write(c.reader_writer, request_buffer, std::move(token));
+                            return c.rpc.write(request_buffer, std::move(token));
                         });
                 }
                 c.read_ok = ok;
@@ -167,11 +173,11 @@ struct BidirectionalStreamingRequest
             }
 
             // Do not forget to signal that we are done writing before finishing.
-            BOOST_ASIO_CORO_YIELD agrpc::writes_done(c.reader_writer, std::move(self));
+            BOOST_ASIO_CORO_YIELD c.rpc.writes_done(std::move(self));
 
-            BOOST_ASIO_CORO_YIELD agrpc::finish(c.reader_writer, c.status, std::move(self));
+            BOOST_ASIO_CORO_YIELD c.rpc.finish(std::move(self));
 
-            abort_if_not(c.status.ok());
+            abort_if_not(status.ok());
 
             context.reset();
             self.complete();
@@ -183,7 +189,8 @@ template <class CompletionToken>
 auto make_bidirectional_streaming_request(agrpc::GrpcContext& grpc_context, grpc::GenericStub& stub,
                                           CompletionToken&& token)
 {
-    return asio::async_compose<CompletionToken, void()>(BidirectionalStreamingRequest{stub}, token, grpc_context);
+    return asio::async_compose<CompletionToken, void()>(BidirectionalStreamingRequest{grpc_context, stub}, token,
+                                                        grpc_context);
 }
 // ---------------------------------------------------
 //
@@ -194,14 +201,15 @@ void make_shutdown_request(agrpc::GrpcContext& grpc_context, example::v1::Exampl
     {
         grpc::ClientContext client_context;
         google::protobuf::Empty response;
-        grpc::Status status;
     };
     auto context = std::make_unique<Context>();
-    auto& [client_context, response, status] = *context;
-    auto reader = agrpc::request(&example::v1::ExampleExt::Stub::AsyncShutdown, stub, client_context, {}, grpc_context);
-    auto& r = *reader;
-    agrpc::finish(r, response, status,
-                  asio::bind_executor(grpc_context, [c = std::move(context), r = std::move(reader)](bool) {}));
+    auto& [client_context, response] = *context;
+    agrpc::ClientRPC<&example::v1::ExampleExt::Stub::PrepareAsyncShutdown>::request(
+        grpc_context, stub, client_context, {}, response,
+        [c = std::move(context)](const grpc::Status& status)
+        {
+            abort_if_not(status.ok());
+        });
 }
 
 int main(int argc, const char** argv)

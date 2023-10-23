@@ -31,8 +31,8 @@ using ServerStreamingInterfaceClientRPC = agrpc::ClientRPC<&test::v1::Test::Stub
 using BidirectionalStreamingClientRPC = agrpc::ClientRPC<&test::v1::Test::Stub::PrepareAsyncBidirectionalStreaming>;
 using BidirectionalStreamingInterfaceClientRPC =
     agrpc::ClientRPC<&test::v1::Test::StubInterface::PrepareAsyncBidirectionalStreaming>;
-using GenericUnaryClientRPC = agrpc::GenericUnaryClientRPC<>;
-using GenericStreamingClientRPC = agrpc::GenericStreamingClientRPC<>;
+using GenericUnaryClientRPC = agrpc::GenericUnaryClientRPC;
+using GenericStreamingClientRPC = agrpc::GenericStreamingClientRPC;
 }
 
 TYPE_TO_STRING(test::UnaryClientRPC);

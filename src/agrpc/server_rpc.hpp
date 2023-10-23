@@ -953,8 +953,7 @@ class ServerRPC<agrpc::ServerRPCType::GENERIC, TraitsT, Executor>
  *
  * @since 2.7.0
  */
-template <class Traits = agrpc::DefaultServerRPCTraits, class Executor = agrpc::GrpcExecutor>
-using GenericServerRPC = agrpc::ServerRPC<agrpc::ServerRPCType::GENERIC, Traits, Executor>;
+using GenericServerRPC = agrpc::ServerRPC<agrpc::ServerRPCType::GENERIC>;
 
 AGRPC_NAMESPACE_END
 

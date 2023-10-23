@@ -389,8 +389,7 @@ class ClientRPC<agrpc::ClientRPCType::GENERIC_UNARY, Executor>
  *
  * @since 2.6.0
  */
-template <class Executor = agrpc::GrpcExecutor>
-using GenericUnaryClientRPC = agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_UNARY, Executor>;
+using GenericUnaryClientRPC = agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_UNARY>;
 
 /**
  * @brief (experimental) I/O object for client-side, client-streaming rpcs
@@ -1142,8 +1141,7 @@ class ClientRPC<agrpc::ClientRPCType::GENERIC_STREAMING, Executor>
  *
  * @since 2.6.0
  */
-template <class Executor = agrpc::GrpcExecutor>
-using GenericStreamingClientRPC = agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_STREAMING, Executor>;
+using GenericStreamingClientRPC = agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_STREAMING>;
 
 AGRPC_NAMESPACE_END
 

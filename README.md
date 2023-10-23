@@ -16,37 +16,6 @@ An [Executor, Networking TS](https://www.boost.org/doc/libs/1_81_0/doc/html/boos
 * No-Asio version with [libunifex](https://github.com/facebookexperimental/libunifex)
 * CMake function to generate gRPC source files: [asio_grpc_protobuf_generate](/cmake/AsioGrpcProtobufGenerator.cmake)
 
-# Example
-
-* Client-side 'hello world':
-
-<!-- snippet: client-side-helloworld -->
-<a id='snippet-client-side-helloworld'></a>
-```cpp
-helloworld::Greeter::Stub stub{grpc::CreateChannel(host, grpc::InsecureChannelCredentials())};
-agrpc::GrpcContext grpc_context;
-
-asio::co_spawn(
-    grpc_context,
-    [&]() -> asio::awaitable<void>
-    {
-        using RPC = agrpc::ClientRPC<&helloworld::Greeter::Stub::PrepareAsyncSayHello>;
-        grpc::ClientContext client_context;
-        helloworld::HelloRequest request;
-        request.set_name("world");
-        helloworld::HelloReply response;
-        status = co_await RPC::request(grpc_context, stub, client_context, request, response, asio::use_awaitable);
-        std::cout << status.ok() << " response: " << response.message() << std::endl;
-    },
-    asio::detached);
-
-grpc_context.run();
-```
-<sup><a href='/example/hello-world-client.cpp#L33-L52' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-helloworld' title='Start of snippet'>anchor</a></sup>
-<!-- endSnippet -->
-
-More examples for things like streaming RPCs, libunifex-based sender/receiver, sharing a thread with an io_context, generic clients/servers and double-buffered file transfer with io_uring can be found in the [example](/example) directory. Even more examples can be found in another [repository](https://github.com/Tradias/example-vcpkg-grpc#branches).
-
 # Requirements
 
 Asio-grpc is a C++17, header-only library. To install it, CMake (3.14+) is all that is needed.
@@ -285,6 +254,7 @@ Request scenario: string_100B
 # Documentation
 
 [**Documentation**](https://tradias.github.io/asio-grpc/)
+[**Examples**](/example)
 
 The main workhorses of this library are the [agrpc::GrpcContext](https://tradias.github.io/asio-grpc/classagrpc_1_1_grpc_context.html) and its `executor_type` - [agrpc::GrpcExecutor](https://tradias.github.io/asio-grpc/classagrpc_1_1_basic_grpc_executor.html). 
 
@@ -297,3 +267,5 @@ The API for RPCs is modeled after the asynchronous, tag-based API of gRPC. As an
 Instead of the `void*` tag in the gRPC API the functions in this library expect a [CompletionToken](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers). Asio comes with several CompletionTokens already: [C++20 coroutine](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio/reference/use_awaitable.html), [stackless coroutine](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio/reference/coroutine.html), [callback](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio/reference/executor_binder.html) and [Boost.Coroutine](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio/reference/basic_yield_context.html). There is also a special token called `agrpc::use_sender` that causes RPC functions to return a [Sender](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#sender-concept).
 
 If you are interested in learning more about the implementation details of this library then check out [this blog article](https://medium.com/3yourmind/c-20-coroutines-for-asynchronous-grpc-services-5b3dab1d1d61).
+
+Even more examples can be found in another [repository](https://github.com/Tradias/example-vcpkg-grpc#branches).

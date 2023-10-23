@@ -43,6 +43,7 @@
 #include <agrpc/grpc_stream.hpp>
 #include <agrpc/notify_on_state_change.hpp>
 #include <agrpc/notify_when_done.hpp>
+#include <agrpc/register_awaitable_rpc_handler.hpp>
 #include <agrpc/register_sender_rpc_handler.hpp>
 #include <agrpc/repeatedly_request.hpp>
 #include <agrpc/repeatedly_request_context.hpp>

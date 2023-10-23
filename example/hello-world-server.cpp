@@ -21,9 +21,6 @@
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
-#include <optional>
-#include <thread>
-
 namespace asio = boost::asio;
 
 // begin-snippet: server-side-helloworld
@@ -45,22 +42,17 @@ int main(int argc, const char** argv)
     builder.RegisterService(&service);
     server = builder.BuildAndStart();
 
-    asio::co_spawn(
-        grpc_context,
-        [&]() -> asio::awaitable<void>
+    using RPC = agrpc::ServerRPC<&helloworld::Greeter::AsyncService::RequestSayHello>;
+    agrpc::register_awaitable_rpc_handler<RPC>(
+        grpc_context, service,
+        [&](RPC& rpc, RPC::Request& request) -> asio::awaitable<void>
         {
-            grpc::ServerContext server_context;
-            helloworld::HelloRequest request;
-            grpc::ServerAsyncResponseWriter<helloworld::HelloReply> writer{&server_context};
-            co_await agrpc::request(&helloworld::Greeter::AsyncService::RequestSayHello, service, server_context,
-                                    request, writer, asio::use_awaitable);
             helloworld::HelloReply response;
             response.set_message("Hello " + request.name());
-            co_await agrpc::finish(writer, response, grpc::Status::OK, asio::use_awaitable);
+            co_await rpc.finish(response, grpc::Status::OK, asio::use_awaitable);
+            server->Shutdown();
         },
         asio::detached);
 
     grpc_context.run();
-
-    server->Shutdown();
 }

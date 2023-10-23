@@ -28,79 +28,68 @@
 #include <grpcpp/server_builder.h>
 
 #include <iostream>
-#include <thread>
 
 namespace asio = boost::asio;
+
+using ExampleService = example::v1::Example::AsyncService;
+using ExampleExtService = example::v1::ExampleExt::AsyncService;
 
 // Example showing some of the features of using asio-grpc with Boost.Asio.
 
 // begin-snippet: server-side-client-streaming
 // ---------------------------------------------------
-// A simple client-streaming request handler using coroutines.
+// A simple client-streaming rpc handler using coroutines.
 // ---------------------------------------------------
 // end-snippet
-asio::awaitable<void> handle_client_streaming_request(
-    grpc::ServerContext&, grpc::ServerAsyncReader<example::v1::Response, example::v1::Request>& reader)
+using ClientStreamingRPC =
+    asio::use_awaitable_t<>::as_default_on_t<agrpc::ServerRPC<&ExampleService::RequestClientStreaming>>;
+
+asio::awaitable<void> handle_client_streaming_request(ClientStreamingRPC& rpc)
 {
     // Optionally send initial metadata first.
     // Since the default completion token in asio-grpc is asio::use_awaitable, this line is equivalent to:
     // co_await agrpc::send_initial_metadata(reader, asio::use_awaitable);
-    bool send_ok = co_await agrpc::send_initial_metadata(reader);
+    if (!co_await rpc.send_initial_metadata())
+    {
+        // Connection lost
+        co_return;
+    }
 
     bool read_ok;
     do
     {
         example::v1::Request request;
         // Read from the client stream until the client has signaled `writes_done`.
-        read_ok = co_await agrpc::read(reader, request);
+        read_ok = co_await rpc.read(request);
     } while (read_ok);
 
     example::v1::Response response;
     response.set_integer(42);
-    co_await agrpc::finish(reader, response, grpc::Status::OK);
+    co_await rpc.finish(response, grpc::Status::OK);
 
     // Or finish with an error
     // co_await agrpc::finish_with_error(reader, grpc::Status::CANCELLED);
-
-    // See documentation for the meaning of the bool values
-
-    silence_unused(send_ok);
-}
-
-void register_client_streaming_handler(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
-{
-    // Register a handler for all incoming RPCs of this method (Example::ClientStreaming) until the server is being
-    // shut down. An API for requesting to handle a single RPC is also available:
-    // `agrpc::request(&example::v1::Example::AsyncService::RequestClientStreaming, service, server_context, reader)`
-    agrpc::repeatedly_request(&example::v1::Example::AsyncService::RequestClientStreaming, service,
-                              asio::bind_executor(grpc_context, &handle_client_streaming_request));
 }
 // ---------------------------------------------------
 //
 
 // begin-snippet: server-side-server-streaming
 // ---------------------------------------------------
-// A simple server-streaming request handler using coroutines.
+// A simple server-streaming rpc handler using coroutines.
 // ---------------------------------------------------
 // end-snippet
-void register_server_streaming_handler(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
-{
-    auto request_handler = [](grpc::ServerContext&, example::v1::Request& request,
-                              grpc::ServerAsyncWriter<example::v1::Response>& writer) -> asio::awaitable<void>
-    {
-        example::v1::Response response;
-        response.set_integer(request.integer());
-        while (co_await agrpc::write(writer, response) && response.integer() > 0)
-        {
-            response.set_integer(response.integer() - 1);
-        }
-        co_await agrpc::finish(writer, grpc::Status::OK);
-    };
+using ServerStreamingRPC =
+    asio::use_awaitable_t<>::as_default_on_t<agrpc::ServerRPC<&ExampleService::RequestServerStreaming>>;
 
-    // Register a handler for all incoming RPCs of this method (Example::ServerStreaming) until the server is being
-    // shut down.
-    agrpc::repeatedly_request(&example::v1::Example::AsyncService::RequestServerStreaming, service,
-                              asio::bind_executor(grpc_context, request_handler));
+asio::awaitable<void> handle_server_streaming_request(ServerStreamingRPC& rpc, example::v1::Request& request)
+{
+    example::v1::Response response;
+    response.set_integer(request.integer());
+    while (co_await rpc.write(response) && response.integer() > 0)
+    {
+        response.set_integer(response.integer() - 1);
+    }
+    co_await rpc.finish(grpc::Status::OK);
 }
 // ---------------------------------------------------
 //
@@ -111,17 +100,19 @@ void register_server_streaming_handler(agrpc::GrpcContext& grpc_context, example
 // back to the client.
 // ---------------------------------------------------
 // end-snippet
+using BidiStreamingRPC =
+    asio::use_awaitable_t<>::as_default_on_t<agrpc::ServerRPC<&ExampleService::RequestBidirectionalStreaming>>;
+
 using Channel = asio::experimental::channel<void(boost::system::error_code, example::v1::Request)>;
 
 // This function will read one requests from the client at a time. Note that gRPC only allows calling agrpc::read after
 // a previous read has completed.
-asio::awaitable<void> reader(grpc::ServerAsyncReaderWriter<example::v1::Response, example::v1::Request>& reader_writer,
-                             Channel& channel)
+asio::awaitable<void> reader(BidiStreamingRPC& rpc, Channel& channel)
 {
     while (true)
     {
         example::v1::Request request;
-        if (!co_await agrpc::read(reader_writer, request))
+        if (!co_await rpc.read(request))
         {
             // Client is done writing.
             break;
@@ -136,8 +127,7 @@ asio::awaitable<void> reader(grpc::ServerAsyncReaderWriter<example::v1::Response
 
 // The writer will pick up reads from the reader through the channel and switch to the thread_pool to compute their
 // response.
-asio::awaitable<bool> writer(grpc::ServerAsyncReaderWriter<example::v1::Response, example::v1::Request>& reader_writer,
-                             Channel& channel, asio::thread_pool& thread_pool)
+asio::awaitable<bool> writer(BidiStreamingRPC& rpc, Channel& channel, asio::thread_pool& thread_pool)
 {
     bool ok{true};
     while (ok)
@@ -156,40 +146,32 @@ asio::awaitable<bool> writer(grpc::ServerAsyncReaderWriter<example::v1::Response
         response.set_integer(request.integer() * 2);
 
         // reader_writer is thread-safe so we can just interact with it from the thread_pool.
-        ok = co_await agrpc::write(reader_writer, response);
+        ok = co_await rpc.write(response);
         // Now we are back on the main thread.
     }
     co_return ok;
 }
 
-asio::awaitable<void> handle_bidirectional_streaming_request(example::v1::Example::AsyncService& service,
-                                                             asio::thread_pool& thread_pool)
+auto bidirectional_streaming_rpc_handler(asio::thread_pool& thread_pool)
 {
-    grpc::ServerContext server_context;
-    grpc::ServerAsyncReaderWriter<example::v1::Response, example::v1::Request> reader_writer{&server_context};
-    bool request_ok = co_await agrpc::request(&example::v1::Example::AsyncService::RequestBidirectionalStreaming,
-                                              service, server_context, reader_writer);
-    if (!request_ok)
+    return [&](BidiStreamingRPC& rpc) -> asio::awaitable<void>
     {
-        // Server is shutting down.
-        co_return;
-    }
+        // Maximum number of requests that are buffered by the channel to enable backpressure.
+        static constexpr auto MAX_BUFFER_SIZE = 2;
 
-    // Maximum number of requests that are buffered by the channel to enable backpressure.
-    static constexpr auto MAX_BUFFER_SIZE = 2;
+        Channel channel{co_await asio::this_coro::executor, MAX_BUFFER_SIZE};
 
-    Channel channel{co_await asio::this_coro::executor, MAX_BUFFER_SIZE};
+        using namespace asio::experimental::awaitable_operators;
+        const auto ok = co_await (reader(rpc, channel) && writer(rpc, channel, thread_pool));
 
-    using namespace asio::experimental::awaitable_operators;
-    const auto ok = co_await (reader(reader_writer, channel) && writer(reader_writer, channel, thread_pool));
+        if (!ok)
+        {
+            // Client has disconnected or server is shutting down.
+            co_return;
+        }
 
-    if (!ok)
-    {
-        // Client has disconnected or server is shutting down.
-        co_return;
-    }
-
-    co_await agrpc::finish(reader_writer, grpc::Status::OK);
+        co_await rpc.finish(grpc::Status::OK);
+    };
 }
 // ---------------------------------------------------
 //
@@ -197,63 +179,35 @@ asio::awaitable<void> handle_bidirectional_streaming_request(example::v1::Exampl
 // ---------------------------------------------------
 // The SlowUnary endpoint is used by the client to demonstrate per-RPC step cancellation. See streaming-client.cpp.
 // ---------------------------------------------------
-asio::awaitable<void> handle_slow_unary_request(example::v1::ExampleExt::AsyncService& service)
+using SlowUnaryRPC =
+    asio::use_awaitable_t<agrpc::GrpcExecutor>::as_default_on_t<agrpc::ServerRPC<&ExampleExtService::RequestSlowUnary>>;
+
+asio::awaitable<void, agrpc::GrpcExecutor> handle_slow_unary_request(SlowUnaryRPC& rpc, SlowUnaryRPC::Request& request)
 {
-    grpc::ServerContext server_context;
-    example::v1::SlowRequest request;
-    grpc::ServerAsyncResponseWriter<google::protobuf::Empty> writer{&server_context};
-    if (!co_await agrpc::request(&example::v1::ExampleExt::AsyncService::RequestSlowUnary, service, server_context,
-                                 request, writer))
-    {
-        co_return;
-    }
+    agrpc::Alarm alarm{co_await asio::this_coro::executor};
+    co_await alarm.wait(std::chrono::system_clock::now() + std::chrono::milliseconds(request.delay()),
+                        asio::use_awaitable_t<agrpc::GrpcExecutor>{});
 
-    grpc::Alarm alarm;
-    co_await agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::milliseconds(request.delay()));
-
-    co_await agrpc::finish(writer, {}, grpc::Status::OK);
+    co_await rpc.finish({}, grpc::Status::OK);
 }
 // ---------------------------------------------------
 //
 
-// ---------------------------------------------------
-// The Shutdown endpoint is used by unit tests.
-// ---------------------------------------------------
-asio::awaitable<void> handle_shutdown_request(example::v1::ExampleExt::AsyncService& service,
-                                              example::ServerShutdown& server_shutdown)
-{
-    grpc::ServerContext server_context;
-    grpc::ServerAsyncResponseWriter<google::protobuf::Empty> writer{&server_context};
-    google::protobuf::Empty request;
-    if (!co_await agrpc::request(&example::v1::ExampleExt::AsyncService::RequestShutdown, service, server_context,
-                                 request, writer))
-    {
-        co_return;
-    }
-
-    google::protobuf::Empty response;
-    if (co_await agrpc::finish(writer, response, grpc::Status::OK))
-    {
-        std::cout << "Received shutdown request from client\n";
-        server_shutdown.shutdown();
-    }
-}
-// ---------------------------------------------------
-//
+using ShutdownRPC = asio::use_awaitable_t<>::as_default_on_t<agrpc::ServerRPC<&ExampleExtService::RequestShutdown>>;
 
 int main(int argc, const char** argv)
 {
     const auto port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("0.0.0.0:") + port;
 
-    example::v1::Example::AsyncService service;
-    example::v1::ExampleExt::AsyncService service_ext;
     std::unique_ptr<grpc::Server> server;
 
     grpc::ServerBuilder builder;
     agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
     builder.AddListeningPort(host, grpc::InsecureServerCredentials());
+    ExampleService service;
     builder.RegisterService(&service);
+    ExampleExtService service_ext;
     builder.RegisterService(&service_ext);
     server = builder.BuildAndStart();
     abort_if_not(bool{server});
@@ -262,11 +216,29 @@ int main(int argc, const char** argv)
 
     asio::thread_pool thread_pool{1};
 
-    register_client_streaming_handler(grpc_context, service);
-    register_server_streaming_handler(grpc_context, service);
-    asio::co_spawn(grpc_context, handle_bidirectional_streaming_request(service, thread_pool), asio::detached);
-    asio::co_spawn(grpc_context, handle_slow_unary_request(service_ext), asio::detached);
-    asio::co_spawn(grpc_context, handle_shutdown_request(service_ext, server_shutdown), asio::detached);
+    agrpc::register_awaitable_rpc_handler<ClientStreamingRPC>(grpc_context, service, &handle_client_streaming_request,
+                                                              asio::detached);
+
+    agrpc::register_awaitable_rpc_handler<ServerStreamingRPC>(grpc_context, service, &handle_server_streaming_request,
+                                                              asio::detached);
+
+    agrpc::register_awaitable_rpc_handler<BidiStreamingRPC>(
+        grpc_context, service, bidirectional_streaming_rpc_handler(thread_pool), asio::detached);
+
+    agrpc::register_awaitable_rpc_handler<SlowUnaryRPC>(grpc_context, service_ext, &handle_slow_unary_request,
+                                                        asio::detached);
+
+    agrpc::register_awaitable_rpc_handler<ShutdownRPC>(
+        grpc_context, service_ext,
+        [&](ShutdownRPC& rpc, const ShutdownRPC::Request&) -> asio::awaitable<void>
+        {
+            if (co_await rpc.finish({}, grpc::Status::OK))
+            {
+                std::cout << "Received shutdown request from client\n";
+                server_shutdown.shutdown();
+            }
+        },
+        asio::detached);
 
     grpc_context.run();
     std::cout << "Shutdown completed\n";
