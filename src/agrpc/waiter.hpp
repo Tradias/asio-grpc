@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_AGRPC_CANCELABLE_WAITER_HPP
-#define AGRPC_AGRPC_CANCELABLE_WAITER_HPP
+#ifndef AGRPC_AGRPC_WAITER_HPP
+#define AGRPC_AGRPC_WAITER_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
@@ -75,6 +75,8 @@ class Waiter
      * @brief Initiate an operation
      *
      * Only one operation may be running at a time.
+     *
+     * All operations must complete before this object is destructed.
      *
      * Example:
      *
@@ -148,4 +150,4 @@ class Waiter
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_AGRPC_CANCELABLE_WAITER_HPP
+#endif  // AGRPC_AGRPC_WAITER_HPP

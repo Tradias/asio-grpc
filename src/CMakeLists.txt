@@ -179,6 +179,7 @@ if(ASIO_GRPC_BUILD_TESTS AND ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/grpc_stream.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/notify_on_state_change.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/notify_when_done.hpp"
+                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/read.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/register_awaitable_rpc_handler.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/register_sender_rpc_handler.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/register_yield_rpc_handler.hpp"

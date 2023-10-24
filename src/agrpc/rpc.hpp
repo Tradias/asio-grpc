@@ -22,6 +22,7 @@
 #include <agrpc/detail/memory.hpp>
 #include <agrpc/detail/rpc.hpp>
 #include <agrpc/grpc_executor.hpp>
+#include <agrpc/read.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -517,81 +518,6 @@ struct RequestFn
         return detail::grpc_initiate(
             detail::ClientGenericStreamingRequestInitFunction{method, stub, client_context, reader_writer},
             static_cast<CompletionToken&&>(token));
-    }
-};
-
-/**
- * @brief Client and server-side function object to read from streaming RPCs
- *
- * The examples below are based on the following .proto file:
- *
- * @snippet example.proto example-proto
- *
- * @attention The completion handler created from the completion token that is provided to the functions described below
- * must have an associated executor that refers to a GrpcContext:
- * @snippet server.cpp bind-executor-to-use-awaitable
- *
- * **Per-Operation Cancellation**
- *
- * None. Operations will be cancelled when the deadline of the RPC has been reached
- * (see
- * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6))
- * or the call has been cancelled
- * (see
- * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984)
- * and
- * [grpc::ServerContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_context.html#a88d3a0c3d53e39f38654ce8fba968301)).
- */
-struct ReadFn
-{
-    /**
-     * @brief Read from a streaming RPC
-     *
-     * This is thread-safe with respect to write or writes_done methods. It should not be called concurrently with other
-     * streaming APIs on the same stream. It is not meaningful to call it concurrently with another read on the same
-     * stream since reads on the same stream are delivered in order (expect for server-side bidirectional streams where
-     * the order is undefined).
-     *
-     * Example server-side client-streaming:
-     *
-     * @snippet server.cpp read-client-streaming-server-side
-     *
-     * Example server-side bidirectional-streaming:
-     *
-     * @snippet server.cpp read-bidirectional-streaming-server-side
-     *
-     * Example client-side server-streaming:
-     *
-     * @snippet client.cpp read-server-streaming-client-side
-     *
-     * Example client-side bidirectional-streaming:
-     *
-     * @snippet client.cpp read-bidirectional-client-side
-     *
-     * @param reader A `grpc::Client/ServerAsyncReader(Writer)(Interface)` or a `std::unique_ptr` of it.
-     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
-     * completion signature is `void(bool)`. `true` indicates that a valid message was read. `false` when
-     * there will be no more incoming messages, either because the other side has called WritesDone() or the stream has
-     * failed (or been cancelled).
-     */
-    template <class Reader, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(Reader& reader, Response& response, CompletionToken&& token = {}) const
-        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
-    {
-        return detail::grpc_initiate(
-            detail::ReadInitFunction<Response, detail::UnwrapUniquePtrT<Reader>>{detail::unwrap_unique_ptr(reader),
-                                                                                 response},
-            static_cast<CompletionToken&&>(token));
-    }
-
-    template <auto RequestRPC, class Traits, class Executor,
-              class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    decltype(auto) operator()(agrpc::ServerRPC<RequestRPC, Traits, Executor>& rpc,
-                              typename agrpc::ServerRPC<RequestRPC, Traits, Executor>::Request & request,
-                              CompletionToken && token = detail::DefaultCompletionTokenT<Executor>{}) const
-        noexcept(noexcept(rpc.read(request, static_cast<CompletionToken&&>(token))))
-    {
-        return rpc.read(request, static_cast<CompletionToken&&>(token));
     }
 };
 
@@ -1272,15 +1198,6 @@ struct ReadInitialMetadataFn
  * @endlink
  */
 inline constexpr detail::RequestFn request{};
-
-/**
- * @brief Read from a streaming RPC
- *
- * @link detail::ReadFn
- * Client and server-side function to read from streaming RPCs.
- * @endlink
- */
-inline constexpr detail::ReadFn read{};
 
 /**
  * @brief Write to a streaming RPC

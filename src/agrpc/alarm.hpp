@@ -98,7 +98,7 @@ class BasicAlarm
      * @snippet server.cpp alarm-io-object-rvalue
      *
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
-     * completion signature is `void(BasicAlarm, bool)`. `true` if it expired, `false` if it was canceled.
+     * completion signature is `void(bool, BasicAlarm)`. `true` if it expired, `false` if it was canceled.
      */
     template <class Deadline, class CompletionToken = detail::LegacyDefaultCompletionTokenT<Executor>>
     auto wait(const Deadline& deadline, CompletionToken&& token = detail::LegacyDefaultCompletionTokenT<Executor>{}) &&

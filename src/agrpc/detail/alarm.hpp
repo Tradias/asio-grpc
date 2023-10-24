@@ -20,8 +20,6 @@
 #include <agrpc/detail/sender_implementation.hpp>
 #include <agrpc/detail/wait.hpp>
 
-#include <optional>
-
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail

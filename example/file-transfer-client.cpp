@@ -33,18 +33,20 @@
 
 namespace asio = boost::asio;
 
+inline constexpr asio::use_awaitable_t<agrpc::GrpcExecutor> USE_AWAITABLE{};
+
 // begin-snippet: client-side-file-transfer
 // ---------------------------------------------------
 // Example showing how to transfer files over a streaming RPC. Stack buffers are used to customize memory allocation.
 // ---------------------------------------------------
 // end-snippet
 
-// The use of `agrpc::GrpcAwaitable<bool>` is not required but `agrpc::GrpcExecutor` is slightly smaller and
-// faster to copy than the `asio::any_io_executor` of the default `asio::awaitable`.
-agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcContext& grpc_context,
-                                                                  asio::io_context& io_context,
-                                                                  example::v1::ExampleExt::Stub& stub,
-                                                                  const std::string& file_path)
+// The use of `asio::awaitable<bool, agrpc::GrpcExecutor>` is not required but `agrpc::GrpcExecutor` is slightly smaller
+// and faster to copy than the `asio::any_io_executor` of the default `asio::awaitable`.
+asio::awaitable<bool, agrpc::GrpcExecutor> make_double_buffered_send_file_request(agrpc::GrpcContext& grpc_context,
+                                                                                  asio::io_context& io_context,
+                                                                                  example::v1::ExampleExt::Stub& stub,
+                                                                                  const std::string& file_path)
 {
     using RPC = agrpc::ClientRPC<&example::v1::ExampleExt::Stub::PrepareAsyncSendFile>;
 
@@ -59,13 +61,13 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
     RPC rpc{grpc_context};
     rpc.context().set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
     google::protobuf::Empty response;
-    if (!co_await rpc.start(stub, response, buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE)))
+    if (!co_await rpc.start(stub, response, buffer1.bind_allocator(USE_AWAITABLE)))
     {
         co_return false;
     }
 
     // Switch to the io_context and open the file there to avoid blocking the GrpcContext.
-    co_await asio::post(buffer1.bind_allocator(asio::bind_executor(io_context, agrpc::GRPC_USE_AWAITABLE)));
+    co_await asio::post(buffer1.bind_allocator(asio::bind_executor(io_context, USE_AWAITABLE)));
 
     // Relying on CTAD here to create a `asio::basic_stream_file<asio::io_context::executor_type>` which is slightly
     // more performant than the default `asio::stream_file` that is templated on `asio::any_io_executor`.
@@ -81,7 +83,7 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
     // async_read_some completes. We do not need to switch because rpc::write is thread-safe.
     auto bytes_read = co_await file.async_read_some(
         asio::buffer(*first_read_buffer.mutable_content()),
-        buffer1.bind_allocator(asio::bind_executor(asio::system_executor{}, agrpc::GRPC_USE_AWAITABLE)));
+        buffer1.bind_allocator(asio::bind_executor(asio::system_executor{}, USE_AWAITABLE)));
 
     bool is_eof{false};
 
@@ -111,7 +113,7 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
                 {
                     return rpc.write(*current, buffer2.bind_allocator(std::move(token)));
                 })
-                .async_wait(asio::experimental::wait_for_all(), buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
+                .async_wait(asio::experimental::wait_for_all(), buffer1.bind_allocator(USE_AWAITABLE));
         if (!ok)
         {
             // Lost connection to server, no reason to finish this RPC.
@@ -127,10 +129,9 @@ agrpc::GrpcAwaitable<bool> make_double_buffered_send_file_request(agrpc::GrpcCon
 
     // Signal that we are done sending chunks
     current->mutable_content()->resize(bytes_read);
-    co_await rpc.write(*current, grpc::WriteOptions{}.set_last_message(),
-                       buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
+    co_await rpc.write(*current, grpc::WriteOptions{}.set_last_message(), buffer1.bind_allocator(USE_AWAITABLE));
 
-    co_return (co_await rpc.finish(buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE))).ok();
+    co_return (co_await rpc.finish(buffer1.bind_allocator(USE_AWAITABLE))).ok();
 }
 
 void run_io_context(asio::io_context& io_context)
@@ -170,7 +171,7 @@ int main(int argc, const char** argv)
 
         asio::co_spawn(
             grpc_context,
-            [&]() -> agrpc::GrpcAwaitable<void>
+            [&]() -> asio::awaitable<void, agrpc::GrpcExecutor>
             {
                 abort_if_not(
                     co_await make_double_buffered_send_file_request(grpc_context, io_context, stub_ext, file_path));

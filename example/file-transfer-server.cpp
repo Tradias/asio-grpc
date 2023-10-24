@@ -44,10 +44,12 @@ namespace asio = boost::asio;
 
 using RPC = agrpc::ServerRPC<&example::v1::ExampleExt::AsyncService::RequestSendFile>;
 
-// The use of `agrpc::GrpcAwaitable<bool>` is not required but `agrpc::GrpcExecutor` is slightly smaller and
-// faster to copy than the `asio::any_io_executor` of the default `asio::awaitable`.
-agrpc::GrpcAwaitable<bool> handle_send_file_request(asio::io_context& io_context, RPC& rpc,
-                                                    const std::string& file_path)
+inline constexpr asio::use_awaitable_t<agrpc::GrpcExecutor> USE_AWAITABLE{};
+
+// The use of ` asio::awaitable<bool, agrpc::GrpcExecutor>` is not required but `agrpc::GrpcExecutor` is slightly
+// smaller and faster to copy than the `asio::any_io_executor` of the default `asio::awaitable`.
+asio::awaitable<bool, agrpc::GrpcExecutor> handle_send_file_request(asio::io_context& io_context, RPC& rpc,
+                                                                    const std::string& file_path)
 {
     // These buffers are used to customize allocation of completion handlers.
     example::Buffer<300> buffer1;
@@ -56,19 +58,19 @@ agrpc::GrpcAwaitable<bool> handle_send_file_request(asio::io_context& io_context
     example::v1::SendFileRequest first_buffer;
 
     // Read the first chunk from the client
-    bool ok = co_await rpc.read(first_buffer, buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
+    bool ok = co_await rpc.read(first_buffer, buffer1.bind_allocator(USE_AWAITABLE));
 
     if (!ok)
     {
         // Client hung up
-        co_await rpc.finish({}, grpc::Status::OK, buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
+        co_await rpc.finish({}, grpc::Status::OK, buffer1.bind_allocator(USE_AWAITABLE));
         co_return false;
     }
 
     example::v1::SendFileRequest second_buffer;
 
     // Switch to the io_context and open the file there to avoid blocking the GrpcContext.
-    co_await asio::post(buffer1.bind_allocator(asio::bind_executor(io_context, agrpc::GRPC_USE_AWAITABLE)));
+    co_await asio::post(buffer1.bind_allocator(asio::bind_executor(io_context, USE_AWAITABLE)));
 
     // Relying on CTAD here to create a `asio::basic_stream_file<asio::io_context::executor_type>` which is slightly
     // more performant than the default `asio::stream_file` that is templated on `asio::any_io_executor`.
@@ -97,7 +99,7 @@ agrpc::GrpcAwaitable<bool> handle_send_file_request(asio::io_context& io_context
                        // associated executor.
                        return rpc.read(message_to_read, buffer2.bind_allocator(std::move(token)));
                    })
-            .async_wait(asio::experimental::wait_for_all(), buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
+            .async_wait(asio::experimental::wait_for_all(), buffer1.bind_allocator(USE_AWAITABLE));
     };
 
     auto* current = &first_buffer;
@@ -113,7 +115,7 @@ agrpc::GrpcAwaitable<bool> handle_send_file_request(asio::io_context& io_context
         std::swap(current, next);
     }
 
-    co_return co_await rpc.finish({}, grpc::Status::OK, buffer1.bind_allocator(agrpc::GRPC_USE_AWAITABLE));
+    co_return co_await rpc.finish({}, grpc::Status::OK, buffer1.bind_allocator(USE_AWAITABLE));
 }
 
 void rethrow_first_arg(const std::exception_ptr& ep)
@@ -165,7 +167,7 @@ int main(int argc, const char** argv)
 
         agrpc::register_awaitable_rpc_handler<RPC>(
             grpc_context, service_ext,
-            [&](RPC& rpc) -> agrpc::GrpcAwaitable<void>
+            [&](RPC& rpc) -> asio::awaitable<void, agrpc::GrpcExecutor>
             {
                 abort_if_not(co_await handle_send_file_request(io_context, rpc, file_path));
                 shutdown.shutdown();
