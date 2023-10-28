@@ -104,7 +104,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // Example showing how to transfer files over a streaming RPC. Stack buffers are used to customize memory allocation.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/file-transfer-client.cpp#L36-L40' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-file-transfer' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/file-transfer-client.cpp#L38-L42' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-file-transfer' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Asio server-side
