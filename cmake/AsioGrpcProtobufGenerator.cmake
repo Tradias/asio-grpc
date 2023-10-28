@@ -19,7 +19,7 @@ In the same directory that called `find_package(asio-grpc)` the following CMake 
 It can be used to generate Protobuf/gRPC source files from `.proto` schemas.<br>
 
 If you are using [cmake-format](https://github.com/cheshirekow/cmake_format) then you can copy the `asio_grpc_protobuf_generate` section from
-[cmake-format.yaml](https://github.com/Tradias/asio-grpc/blob/v2.6.0/cmake-format.yaml#L2-L14) to get proper formatting.
+[cmake-format.yaml](https://github.com/Tradias/asio-grpc/blob/v2.7.0/cmake-format.yaml#L2-L14) to get proper formatting.
 
 ```cmake
 asio_grpc_protobuf_generate(PROTOS <proto_file1> [<proto_file2>...]
