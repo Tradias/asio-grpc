@@ -147,6 +147,11 @@ jobs:
     - name: GCC 11 Coverage
       run: cmake --build ${{ github.workspace }}/build-11 --config Debug --target asio-grpc-test-coverage
 
+    - uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
     - name: Download sonar-scanner
       uses: warchant/setup-sonar-scanner@v7
       with:
