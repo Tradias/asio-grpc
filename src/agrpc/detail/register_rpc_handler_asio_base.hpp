@@ -25,12 +25,6 @@
 #include <agrpc/detail/work_tracking_completion_handler.hpp>
 #include <agrpc/grpc_context.hpp>
 
-#ifdef AGRPC_STANDALONE_ASIO
-#include <asio/spawn.hpp>
-#elif defined(AGRPC_BOOST_ASIO)
-#include <boost/asio/spawn.hpp>
-#endif
-
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
