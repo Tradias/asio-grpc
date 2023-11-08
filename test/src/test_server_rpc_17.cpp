@@ -530,3 +530,79 @@ TEST_CASE_TEMPLATE("ServerRPC resumable read can be cancelled", RPC, test::Clien
         });
 }
 #endif
+
+// Callback
+TEST_CASE_TEMPLATE("ServerRPCPtr unary success", RPC, test::UnaryServerRPC, test::NotifyWhenDoneUnaryServerRPC)
+{
+    ServerRPCTest<RPC> test{true};
+    bool use_finish_with_error{};
+    SUBCASE("finish") {}
+    SUBCASE("finish_with_error") { use_finish_with_error = true; }
+    test.register_callback_and_perform_three_requests(
+        [&](typename RPC::Ptr ptr, test::msg::Request& request)
+        {
+            CHECK_EQ(&request, &ptr.request());
+            CHECK_EQ(42, request.integer());
+            auto& rpc = *ptr;
+            if (use_finish_with_error)
+            {
+                rpc.finish_with_error(test::create_already_exists_status(),
+                                      [&, ptr = std::move(ptr)](bool ok)
+                                      {
+                                          CHECK(ok);
+                                      });
+            }
+            else
+            {
+                typename RPC::Response response;
+                response.set_integer(21);
+                rpc.finish(response, grpc::Status::OK,
+                           [&, ptr = std::move(ptr)](bool ok)
+                           {
+                               CHECK(ok);
+                           });
+            }
+        },
+        [&](auto&, auto&, const asio::yield_context& yield)
+        {
+            test::client_perform_unary_success(test.grpc_context, *test.stub, yield, {use_finish_with_error});
+        });
+}
+
+TEST_CASE_TEMPLATE("ServerRPCPtr automatic cancellation on destruction", RPC, test::UnaryServerRPC,
+                   test::NotifyWhenDoneUnaryServerRPC)
+{
+    ServerRPCTest<RPC> test{true};
+    test.register_callback_and_perform_three_requests(
+        [&](auto&&...) {},
+        [&](auto& request, auto& response, const asio::yield_context& yield)
+        {
+            grpc::ClientContext c;
+            test::set_default_deadline(c);
+            auto status = test.request_rpc(c, request, response, yield);
+            const auto status_code = status.error_code();
+            CHECK_MESSAGE(grpc::StatusCode::CANCELLED == status_code, status_code);
+        });
+}
+
+TEST_CASE_FIXTURE(ServerRPCTest<test::ClientStreamingServerRPC>, "ServerRPCPtr move-assignment")
+{
+    ServerRPC::Ptr ptr;
+    register_callback_and_perform_requests(
+        [&](ServerRPC::Ptr pointer)
+        {
+            ptr = std::move(pointer);
+            auto& rpc = *ptr;
+            rpc.finish({}, test::create_already_exists_status(),
+                       [ptr = std::move(ptr)](bool ok)
+                       {
+                           CHECK(ok);
+                       });
+        },
+        [&](auto& request, auto& response, const asio::yield_context& yield)
+        {
+            auto rpc = create_rpc();
+            CHECK(start_rpc(rpc, request, response, yield));
+            CHECK_EQ(grpc::StatusCode::ALREADY_EXISTS, rpc.finish(yield).error_code());
+        });
+}

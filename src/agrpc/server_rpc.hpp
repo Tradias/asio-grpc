@@ -83,6 +83,11 @@ class ServerRPC<RequestUnary, TraitsT, Executor>
     using Traits = TraitsT;
 
     /**
+     * @brief ServerRPCPtr specialized on this type
+     */
+    using Ptr = agrpc::ServerRPCPtr<ServerRPC>;
+
+    /**
      * @brief Rebind the ServerRPC to another executor
      */
     template <class OtherExecutor>
@@ -258,6 +263,11 @@ class ServerRPC<RequestClientStreaming, TraitsT, Executor>
      * @brief The traits type
      */
     using Traits = TraitsT;
+
+    /**
+     * @brief ServerRPCPtr specialized on this type
+     */
+    using Ptr = agrpc::ServerRPCPtr<ServerRPC>;
 
     /**
      * @brief Rebind the ServerRPC to another executor
@@ -454,6 +464,11 @@ class ServerRPC<RequestServerStreaming, TraitsT, Executor>
      * @brief The traits type
      */
     using Traits = TraitsT;
+
+    /**
+     * @brief ServerRPCPtr specialized on this type
+     */
+    using Ptr = agrpc::ServerRPCPtr<ServerRPC>;
 
     /**
      * @brief Rebind the ServerRPC to another executor
@@ -820,6 +835,11 @@ class ServerRPC<RequestBidiStreaming, TraitsT, Executor>
     static constexpr agrpc::ServerRPCType TYPE = agrpc::ServerRPCType::BIDIRECTIONAL_STREAMING;
 
     /**
+     * @brief ServerRPCPtr specialized on this type
+     */
+    using Ptr = agrpc::ServerRPCPtr<ServerRPC>;
+
+    /**
      * @brief Rebind the ServerRPC to another executor
      */
     template <class OtherExecutor>
@@ -915,6 +935,11 @@ class ServerRPC<agrpc::ServerRPCType::GENERIC, TraitsT, Executor>
      * @brief The rpc type
      */
     static constexpr agrpc::ServerRPCType TYPE = agrpc::ServerRPCType::GENERIC;
+
+    /**
+     * @brief ServerRPCPtr specialized on this type
+     */
+    using Ptr = agrpc::ServerRPCPtr<ServerRPC>;
 
     /**
      * @brief Rebind the ServerRPC to another executor

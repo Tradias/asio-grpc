@@ -107,9 +107,12 @@ class AllocationGuard
   public:
     AllocationGuard(Pointer ptr, const Allocator& allocator) noexcept : ptr_(ptr), allocator_(allocator) {}
 
-    AllocationGuard(const AllocationGuard&) = delete;
+    AllocationGuard(AllocationGuard&& other) noexcept
+        : ptr_(std::exchange(other.ptr_, nullptr)), allocator_(other.allocator_)
+    {
+    }
+
     AllocationGuard& operator=(const AllocationGuard&) = delete;
-    AllocationGuard(AllocationGuard&&) = delete;
     AllocationGuard& operator=(AllocationGuard&&) = delete;
 
     ~AllocationGuard() noexcept

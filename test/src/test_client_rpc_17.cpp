@@ -257,7 +257,6 @@ TEST_CASE_FIXTURE(ClientRPCTest<test::ServerStreamingClientRPC>, "ServerStreamin
         {
             auto rpc = create_rpc();
             start_rpc(rpc, request, response, yield);
-            rpc.cancel();
             CHECK_FALSE(rpc.read(response, yield));
             CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.finish(yield).error_code());
         });

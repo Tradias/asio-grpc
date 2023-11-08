@@ -138,7 +138,7 @@ bool writer(agrpc::GenericServerRPC& rpc, Channel& channel, asio::thread_pool& t
 
         process_request(buffer);
 
-        // reader_writer is thread-safe so we can just interact with it from the thread_pool.
+        // rpc.write() is thread-safe so we can interact with it from the thread_pool.
         ok = rpc.write(buffer, yield);
         // Now we are back on the main thread.
     }

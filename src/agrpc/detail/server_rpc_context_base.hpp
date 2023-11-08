@@ -73,7 +73,6 @@ class ServerRPCContextBase : private ServerContextBase<Responder>
     friend class detail::ServerRPCNotifyWhenDoneMixin;
 
     Responder responder_{&this->server_context_};
-    bool is_started_{};
     bool is_finished_{};
 };
 
@@ -103,12 +102,6 @@ struct ServerRPCContextBaseAccess
     static Responder& responder(ServerRPCContextBase<Responder>& rpc) noexcept
     {
         return rpc.responder_;
-    }
-
-    template <class Responder>
-    static void set_started(ServerRPCContextBase<Responder>& rpc) noexcept
-    {
-        rpc.is_started_ = true;
     }
 
     template <class Responder>

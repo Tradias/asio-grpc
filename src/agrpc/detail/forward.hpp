@@ -75,6 +75,9 @@ struct DefaultServerRPCTraits;
 template <auto RequestRPC, class Traits = agrpc::DefaultServerRPCTraits, class Executor = agrpc::BasicGrpcExecutor<>>
 class ServerRPC;
 
+template <class ServerRPCT>
+class ServerRPCPtr;
+
 template <class Signature, class Executor = agrpc::BasicGrpcExecutor<>>
 class Waiter;
 
@@ -131,6 +134,9 @@ template <bool IsNotifyWhenDone, class Responder, class Executor>
 class ServerRPCNotifyWhenDoneMixin;
 
 class NotifyWhenDoneEvent;
+
+template <class ServerRPC, class RPCHandler, class CompletionHandler>
+struct RegisterCallbackRPCHandlerOperation;
 
 AGRPC_NAMESPACE_CPP20_BEGIN()
 

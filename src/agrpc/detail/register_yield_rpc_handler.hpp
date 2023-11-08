@@ -106,7 +106,7 @@ struct RegisterYieldRPCHandlerOperation
     }
 
     template <class Yield>
-    constexpr decltype(auto) use_yield(const Yield& yield)
+    decltype(auto) use_yield(const Yield& yield)
     {
         if constexpr (detail::IS_STD_ALLOCATOR<Allocator>)
         {

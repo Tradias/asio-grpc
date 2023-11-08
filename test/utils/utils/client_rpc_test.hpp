@@ -33,6 +33,7 @@
 #include <type_traits>
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+#include <agrpc/register_callback_rpc_handler.hpp>
 #include <agrpc/register_yield_rpc_handler.hpp>
 #endif
 
@@ -62,6 +63,34 @@ struct ClientServerRPCTest : std::conditional_t<(agrpc::ClientRPCType::GENERIC_U
                                 typename ClientRPC::Response response;
                                 client_functions(request, response, yield);
                             }...);
+    }
+
+    template <class RPCHandler, class... ClientFunctions>
+    void register_callback_and_perform_requests(RPCHandler&& handler, ClientFunctions&&... client_functions)
+    {
+        int counter{};
+        agrpc::register_callback_rpc_handler<ServerRPC>(this->get_executor(), this->service, handler,
+                                                        test::RethrowFirstArg{});
+        test::spawn_and_run(
+            this->grpc_context,
+            [&counter, &client_functions, &server_shutdown = this->server_shutdown](const asio::yield_context& yield)
+            {
+                typename ClientRPC::Request request;
+                typename ClientRPC::Response response;
+                client_functions(request, response, yield);
+                ++counter;
+                if (counter == sizeof...(client_functions))
+                {
+                    server_shutdown.initiate();
+                }
+            }...);
+    }
+
+    template <class RPCHandler, class ClientFunction>
+    void register_callback_and_perform_three_requests(RPCHandler&& handler, ClientFunction&& client_function)
+    {
+        register_callback_and_perform_requests(std::forward<RPCHandler>(handler), client_function, client_function,
+                                               client_function);
     }
 
     template <class RPCHandler, class... ClientFunctions>
@@ -96,12 +125,7 @@ struct ClientServerRPCTest : std::conditional_t<(agrpc::ClientRPCType::GENERIC_U
         std::function<void(typename ClientRPC::Request&, typename ClientRPC::Response&, const asio::yield_context&)>
             client_func)
     {
-        register_and_perform_three_requests(
-            [](auto& rpc, auto&&...)
-            {
-                rpc.cancel();
-            },
-            client_func);
+        register_and_perform_three_requests([](auto&&...) {}, client_func);
     }
 #endif
 

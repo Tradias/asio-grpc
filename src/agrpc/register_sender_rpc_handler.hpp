@@ -20,7 +20,7 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief (experimental) Register an awaitable rpc handler for the given method
+ * @brief (experimental) Register an sender rpc handler for the given method
  *
  * The rpc handler will be invoked for every incoming request of this gRPC method. It must take `ServerRPC&` as
  * first argument and `ServerRPC::Request&` as second argument (only for unary and server-streaming rpcs). The ServerRPC

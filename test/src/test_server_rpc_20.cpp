@@ -271,7 +271,7 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ServerStreamingServerRPC>,
 {
     agrpc::register_awaitable_rpc_handler<ServerRPC>(
         get_executor(), service,
-        [&](test::ServerStreamingServerRPC& rpc, test::msg::Request&) -> asio::awaitable<void>
+        [&](ServerRPC& rpc, test::msg::Request&) -> asio::awaitable<void>
         {
             CHECK(co_await rpc.finish(grpc::Status::OK, asio::use_awaitable));
         },
@@ -287,7 +287,7 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ServerStreamingServerRPC>,
     std::exception_ptr eptr;
     agrpc::register_awaitable_rpc_handler<ServerRPC>(
         get_executor(), service,
-        [&](test::ServerStreamingServerRPC&, test::msg::Request&) -> asio::awaitable<void>
+        [&](ServerRPC&, test::msg::Request&) -> asio::awaitable<void>
         {
             throw test::Exception{};
             co_return;
@@ -311,8 +311,7 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableIoContextTest,
 {
     agrpc::register_awaitable_rpc_handler<ServerRPC>(
         get_executor(), service,
-        [&](test::ServerStreamingServerRPC& rpc,
-            test::msg::Request&) -> asio::awaitable<void, asio::io_context::executor_type>
+        [&](ServerRPC& rpc, test::msg::Request&) -> asio::awaitable<void, asio::io_context::executor_type>
         {
             CHECK(co_await rpc.finish(grpc::Status::OK, asio::use_awaitable_t<asio::io_context::executor_type>{}));
         },

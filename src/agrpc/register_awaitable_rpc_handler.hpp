@@ -62,7 +62,7 @@ auto register_awaitable_rpc_handler(const typename ServerRPC::executor_type& exe
 }
 
 /**
- * @brief (experimental) Register a rpc handler for the given method (GrpcContext overload)
+ * @brief (experimental) Register an awaitable rpc handler for the given method (GrpcContext overload)
  *
  * @since 2.7.0
  */

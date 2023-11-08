@@ -15,6 +15,7 @@
 #include "example/v1/example.grpc.pb.h"
 
 #include <agrpc/asio_grpc.hpp>
+#include <agrpc/register_callback_rpc_handler.hpp>
 #include <agrpc/register_yield_rpc_handler.hpp>
 #include <boost/asio/deferred.hpp>
 #include <boost/asio/detached.hpp>
@@ -213,3 +214,20 @@ void server_rpc_unary_yield(agrpc::GrpcContext& grpc_context, example::v1::Examp
         asio::detached);
 }
 /* [server-rpc-unary-yield] */
+
+/* [server-rpc-unary-callback] */
+void server_rpc_unary_callback(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
+{
+    using RPC = agrpc::ServerRPC<&example::v1::Example::AsyncService::RequestUnary>;
+    agrpc::register_callback_rpc_handler<RPC>(
+        grpc_context, service,
+        [](RPC::Ptr ptr, RPC::Request& request)
+        {
+            RPC::Response response;
+            response.set_integer(request.integer());
+            auto& rpc = *ptr;
+            rpc.finish(response, grpc::Status::OK, [p = std::move(ptr)](bool) {});
+        },
+        asio::detached);
+}
+/* [server-rpc-unary-callback] */

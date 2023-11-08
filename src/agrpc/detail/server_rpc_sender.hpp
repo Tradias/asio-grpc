@@ -71,7 +71,6 @@ struct ServerRequestSenderImplementation : detail::GrpcSenderImplementationBase
             {
                 grpc_context.work_started();
             }
-            ServerRPCAccess::set_started(rpc_);
         }
     }
 

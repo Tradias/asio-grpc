@@ -145,7 +145,7 @@ asio::awaitable<bool> writer(BidiStreamingRPC& rpc, Channel& channel, asio::thre
         example::v1::Response response;
         response.set_integer(request.integer() * 2);
 
-        // reader_writer is thread-safe so we can just interact with it from the thread_pool.
+        // rpc.write() is thread-safe so we can interact with it from the thread_pool.
         ok = co_await rpc.write(response);
         // Now we are back on the main thread.
     }
