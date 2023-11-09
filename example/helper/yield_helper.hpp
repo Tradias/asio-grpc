@@ -115,20 +115,6 @@ auto spawn_all_void(agrpc::GrpcContext& grpc_context, CompletionToken&& token, F
     return boost::asio::async_compose<CompletionToken, void()>(SpawnAllVoid{std::move(function)...}, token,
                                                                grpc_context);
 }
-
-template <class Executor, class CompletionToken, class... Function>
-auto when_all_bind_executor(const Executor& executor, CompletionToken&& token, Function&&... function)
-{
-    return boost::asio::experimental::make_parallel_group(
-               [&](auto& f)
-               {
-                   return [&](auto&& t)
-                   {
-                       return f(boost::asio::bind_executor(executor, std::forward<decltype(t)>(t)));
-                   };
-               }(function)...)
-        .async_wait(boost::asio::experimental::wait_for_all(), std::forward<CompletionToken>(token));
-}
 }  // namespace example
 
 #endif  // AGRPC_HELPER_YIELD_HELPER_HPP

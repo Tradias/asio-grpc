@@ -36,7 +36,7 @@ struct RegisterCallbackRPCHandlerOperation
     using typename Base::RPCRequest;
     using typename Base::ServerRPCExecutor;
     using typename Base::Service;
-    using ServerRPCWithRequest = ServerRPCWithRequest<ServerRPC>;
+    using ServerRPCWithRequest = detail::ServerRPCWithRequest<ServerRPC>;
     using ServerRPCPtr = agrpc::ServerRPCPtr<ServerRPC>;
 
     struct ServerRPCAllocation : ServerRPCWithRequest

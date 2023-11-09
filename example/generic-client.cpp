@@ -85,8 +85,8 @@ void make_generic_unary_request(agrpc::GrpcContext& grpc_context, grpc::GenericS
 
 // begin-snippet: client-side-generic-bidirectional-request
 // ---------------------------------------------------
-// A generic bidirectional-streaming request that simply sends the response from the server back to it.
-// Here we are using stackless coroutines and the low-level gRPC client API.
+// A generic bidirectional-streaming request that simply sends the response from the server back to it using Asio's
+// stackless coroutines.
 // ---------------------------------------------------
 // end-snippet
 struct BidirectionalStreamingRequest
@@ -115,13 +115,13 @@ struct BidirectionalStreamingRequest
     template <class Self>
     void operator()(Self& self, const std::array<std::size_t, 2>&, bool read_ok, bool write_ok)
     {
-        (*this)(self, read_ok, write_ok);
+        operator()(self, read_ok, write_ok);
     }
 
     template <class Self>
     void operator()(Self& self, const grpc::Status& status)
     {
-        (*this)(self, {}, {}, status);
+        operator()(self, {}, {}, status);
     }
 
     template <class Self>
@@ -147,11 +147,9 @@ struct BidirectionalStreamingRequest
                 BOOST_ASIO_CORO_YIELD
                 {
                     auto request_buffer = serialize(c.request);
-                    const auto executor = asio::get_associated_executor(self);
 
                     // Reads and writes can be performed simultaneously.
-                    example::when_all_bind_executor(
-                        executor, std::move(self),
+                    asio::experimental::make_parallel_group(
                         [&](auto&& token)
                         {
                             return c.rpc.read(c.response_buffer, std::move(token));
@@ -159,7 +157,8 @@ struct BidirectionalStreamingRequest
                         [&](auto&& token)
                         {
                             return c.rpc.write(request_buffer, std::move(token));
-                        });
+                        })
+                        .async_wait(asio::experimental::wait_for_all(), std::move(self));
                 }
                 c.read_ok = ok;
                 c.write_ok = write_ok;

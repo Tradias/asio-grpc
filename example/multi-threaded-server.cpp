@@ -30,27 +30,31 @@ namespace asio = boost::asio;
 
 // begin-snippet: server-side-multi-threaded
 // ---------------------------------------------------
-// Multi-threaded server performing 20 unary requests
+// Multi-threaded server performing 20 unary requests using callback API
 // ---------------------------------------------------
 // end-snippet
 
 void register_request_handler(agrpc::GrpcContext& grpc_context, helloworld::Greeter::AsyncService& service,
                               example::ServerShutdown& shutdown)
 {
-    agrpc::register_awaitable_rpc_handler<agrpc::ServerRPC<&helloworld::Greeter::AsyncService::RequestSayHello>>(
+    using RPC = agrpc::ServerRPC<&helloworld::Greeter::AsyncService::RequestSayHello>;
+    agrpc::register_callback_rpc_handler<RPC>(
         grpc_context, service,
-        [&](auto& rpc, helloworld::HelloRequest& request) -> asio::awaitable<void>
+        [&](RPC::Ptr ptr, helloworld::HelloRequest& request)
         {
             helloworld::HelloReply response;
             response.set_message("Hello " + request.name());
-            co_await rpc.finish(response, grpc::Status::OK, asio::use_awaitable);
-
-            // In this example we shut down the server after 20 requests
-            static std::atomic_int counter{};
-            if (19 == counter.fetch_add(1))
-            {
-                shutdown.shutdown();
-            }
+            auto& rpc = *ptr;
+            rpc.finish(response, grpc::Status::OK,
+                       [&, p = std::move(ptr)](bool)
+                       {
+                           // In this example we shut down the server after 20 requests
+                           static std::atomic_int counter{};
+                           if (19 == counter.fetch_add(1))
+                           {
+                               shutdown.shutdown();
+                           }
+                       });
         },
         asio::detached);
 }

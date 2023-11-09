@@ -38,7 +38,7 @@ using ExampleExtService = example::v1::ExampleExt::AsyncService;
 
 // begin-snippet: server-side-client-streaming
 // ---------------------------------------------------
-// A simple client-streaming rpc handler using coroutines.
+// A simple client-streaming rpc handler using C++20 coroutines.
 // ---------------------------------------------------
 // end-snippet
 using ClientStreamingRPC =
@@ -47,8 +47,6 @@ using ClientStreamingRPC =
 asio::awaitable<void> handle_client_streaming_request(ClientStreamingRPC& rpc)
 {
     // Optionally send initial metadata first.
-    // Since the default completion token in asio-grpc is asio::use_awaitable, this line is equivalent to:
-    // co_await agrpc::send_initial_metadata(reader, asio::use_awaitable);
     if (!co_await rpc.send_initial_metadata())
     {
         // Connection lost
@@ -75,7 +73,7 @@ asio::awaitable<void> handle_client_streaming_request(ClientStreamingRPC& rpc)
 
 // begin-snippet: server-side-server-streaming
 // ---------------------------------------------------
-// A simple server-streaming rpc handler using coroutines.
+// A simple server-streaming rpc handler using C++20 coroutines.
 // ---------------------------------------------------
 // end-snippet
 using ServerStreamingRPC =

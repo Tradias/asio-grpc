@@ -16,6 +16,9 @@
 #define AGRPC_AGRPC_REGISTER_CALLBACK_RPC_HANDLER_HPP
 
 #include <agrpc/detail/config.hpp>
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+
 #include <agrpc/detail/register_callback_rpc_handler.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -70,5 +73,7 @@ auto register_callback_rpc_handler(agrpc::GrpcContext& grpc_context, detail::Get
 }
 
 AGRPC_NAMESPACE_END
+
+#endif
 
 #endif  // AGRPC_AGRPC_REGISTER_CALLBACK_RPC_HANDLER_HPP
