@@ -75,7 +75,7 @@ class HealthCheckWatcher : public detail::IntrusiveListHook<detail::HealthCheckW
         {
             pending_status_ = status;
         }
-        else if (!this->is_finished())
+        else if (!this->is_finishing())
         {
             send_health_impl(status);
         }

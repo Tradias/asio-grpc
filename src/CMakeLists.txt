@@ -165,7 +165,6 @@ if(ASIO_GRPC_BUILD_TESTS AND ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/serving_status.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/start_server_rpc.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/stop_callback_lifetime.hpp"
-                  "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/tagged_ptr.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/tuple.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/type_erased_completion_handler.hpp"
                   "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/unbind.hpp"

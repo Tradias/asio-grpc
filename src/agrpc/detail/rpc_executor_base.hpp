@@ -19,7 +19,6 @@
 #include <agrpc/detail/default_completion_token.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/query_grpc_context.hpp>
-#include <agrpc/detail/tagged_ptr.hpp>
 #include <agrpc/grpc_executor.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
