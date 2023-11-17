@@ -37,8 +37,8 @@ TEST_CASE_TEMPLATE("awaitable server streaming", Stub, test::v1::Test::Stub, tes
         {
             test::msg::Request request;
             grpc::ServerAsyncWriter<test::msg::Response> writer{&test.server_context};
-            CHECK(co_await agrpc::request(&test::v1::Test::AsyncService::RequestServerStreaming, test.service,
-                                          test.server_context, request, writer));
+            CHECK_EQ(true, co_await agrpc::request(&test::v1::Test::AsyncService::RequestServerStreaming, test.service,
+                                                   test.server_context, request, writer));
             test::ServerAsyncWriter<IS_STUB_INTERFACE> writer_ref = writer;
             CHECK_EQ(42, request.integer());
             test::msg::Response response;
@@ -75,8 +75,8 @@ TEST_CASE_TEMPLATE("awaitable client streaming", Stub, test::v1::Test::Stub, tes
         [&]() -> asio::awaitable<void>
         {
             grpc::ServerAsyncReader<test::msg::Response, test::msg::Request> reader{&test.server_context};
-            CHECK(co_await agrpc::request(&test::v1::Test::AsyncService::RequestClientStreaming, test.service,
-                                          test.server_context, reader));
+            CHECK_EQ(true, co_await agrpc::request(&test::v1::Test::AsyncService::RequestClientStreaming, test.service,
+                                                   test.server_context, reader));
             test::ServerAsyncReader<IS_STUB_INTERFACE> reader_ref = reader;
             test::msg::Request request;
             CHECK(co_await agrpc::read(reader_ref, request));
@@ -117,18 +117,18 @@ TEST_CASE_TEMPLATE("awaitable unary", Stub, test::v1::Test::Stub, test::v1::Test
         {
             test::msg::Request request;
             grpc::ServerAsyncResponseWriter<test::msg::Response> writer{&test.server_context};
-            CHECK(co_await agrpc::request(&test::v1::Test::AsyncService::RequestUnary, test.service,
-                                          test.server_context, request, writer));
+            CHECK_EQ(true, co_await agrpc::request(&test::v1::Test::AsyncService::RequestUnary, test.service,
+                                                   test.server_context, request, writer));
             CHECK_EQ(42, request.integer());
             test::msg::Response response;
             response.set_integer(21);
             if (use_finish_with_error)
             {
-                CHECK(co_await agrpc::finish_with_error(writer, test::create_already_exists_status()));
+                CHECK_EQ(true, co_await agrpc::finish_with_error(writer, test::create_already_exists_status()));
             }
             else
             {
-                CHECK(co_await agrpc::finish(writer, response, grpc::Status::OK));
+                CHECK_EQ(true, co_await agrpc::finish(writer, response, grpc::Status::OK));
             }
         },
         [&]() -> asio::awaitable<void>
@@ -166,8 +166,8 @@ TEST_CASE_TEMPLATE("awaitable bidirectional streaming", Stub, test::v1::Test::St
         [&]() -> asio::awaitable<void>
         {
             grpc::ServerAsyncReaderWriter<test::msg::Response, test::msg::Request> reader_writer{&test.server_context};
-            CHECK(co_await agrpc::request(&test::v1::Test::AsyncService::RequestBidirectionalStreaming, test.service,
-                                          test.server_context, reader_writer));
+            CHECK_EQ(true, co_await agrpc::request(&test::v1::Test::AsyncService::RequestBidirectionalStreaming,
+                                                   test.service, test.server_context, reader_writer));
             test::ServerAsyncReaderWriter<IS_STUB_INTERFACE> reader_writer_ref = reader_writer;
             test::msg::Request request;
             CHECK(co_await agrpc::read(reader_writer_ref, request));

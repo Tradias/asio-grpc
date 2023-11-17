@@ -25,8 +25,10 @@ AGRPC_NAMESPACE_BEGIN()
  *
  * The rpc handler will be invoked for every incoming request of this gRPC method. It must take `ServerRPC&` as
  * first, `ServerRPC::Request&` as second (only for unary and server-streaming rpcs) and
- * `asio::basic_yield_context<CompletionExecutor>` as third argument. The ServerRPC is automatically cancelled at the
- * end of the rpc handler if `finish()` was not called earlier.
+ * `asio::basic_yield_context<Executor>` as third argument. The Executor is obtained by calling
+ * `asio::get_associated_executor(completion_handler, executor)`, where `completion_handler` is obtained from `token`
+ * and `executor` the first argument passed to this function. The ServerRPC is automatically cancelled at the end of the
+ * rpc handler if `finish()` was not called earlier.
  *
  * This asynchronous operation runs forever unless it is cancelled, the rpc handler throws an exception or the server is
  * shutdown
@@ -41,9 +43,10 @@ AGRPC_NAMESPACE_BEGIN()
  * @tparam ServerRPC An instantiation of `agrpc::ServerRPC`
  * @param executor The executor used to handle each rpc
  * @param service The service associated with the gRPC method of the ServerRPC
- * @param rpc_handler A callable that takes an `asio::basic_yield_context<CompletionExecutor>` as last argument. The
- * return value is ignored. The CompletionExecutor is the executor associated with the completion handler (defaulted to
- * `executor`).
+ * @param rpc_handler A callable that takes an `asio::basic_yield_context<Executor>` as last argument. The
+ * return value is ignored. The Executor must be constructible from `asio::get_associated_executor(completion_handler,
+ * executor)`, where `completion_handler` is obtained from `token` and `executor` the first argument passed to this
+ * function.
  * @param token A completion token for signature `void(std::exception_ptr)`.
  *
  * @since 2.7.0

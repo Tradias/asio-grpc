@@ -15,7 +15,6 @@
 #ifndef AGRPC_DETAIL_REGISTER_CALLBACK_RPC_HANDLER_HPP
 #define AGRPC_DETAIL_REGISTER_CALLBACK_RPC_HANDLER_HPP
 
-#include <agrpc/bind_allocator.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/register_rpc_handler_asio_base.hpp>
 #include <agrpc/detail/server_rpc_with_request.hpp>
@@ -47,6 +46,38 @@ struct RegisterCallbackRPCHandlerOperation
         }
 
         RegisterCallbackRPCHandlerOperation& self_;
+    };
+
+    struct StartCallback
+    {
+        using allocator_type = Allocator;
+
+        void operator()(bool ok)
+        {
+            if (ok)
+            {
+                self_.initiate_next();
+                AGRPC_TRY { ptr_.server_rpc_->invoke(self_.rpc_handler(), static_cast<ServerRPCPtr&&>(ptr_)); }
+                AGRPC_CATCH(...)
+                {
+                    // Technically `this` could already be deallocated at this point but we rely on the
+                    // fact that completing this operation is done in a manner similar to asio::post and
+                    // therefore never before this lambda ends.
+                    self_.set_error(std::current_exception());
+                }
+            }
+            else
+            {
+                [[maybe_unused]] RefCountGuard a{self_};
+                [[maybe_unused]] detail::AllocationGuard b{static_cast<ServerRPCAllocation*>(ptr_.release()),
+                                                           self_.get_allocator()};
+            }
+        }
+
+        Allocator get_allocator() const noexcept { return self_.get_allocator(); }
+
+        RegisterCallbackRPCHandlerOperation& self_;
+        ServerRPCPtr ptr_;
     };
 
     static void wait_for_done_deleter(ServerRPCWithRequest* ptr) noexcept
@@ -104,45 +135,7 @@ struct RegisterCallbackRPCHandlerOperation
     void perform_request_and_repeat(ServerRPCPtr&& ptr)
     {
         auto& rpc = *ptr.server_rpc_;
-        rpc.start(rpc.rpc_, this->service(),
-                  bind_allocator(
-                      [this, ptr = static_cast<ServerRPCPtr&&>(ptr)](bool ok) mutable
-                      {
-                          if (ok)
-                          {
-                              initiate_next();
-                              AGRPC_TRY
-                              {
-                                  ptr.server_rpc_->invoke(this->rpc_handler(), static_cast<ServerRPCPtr&&>(ptr));
-                              }
-                              AGRPC_CATCH(...)
-                              {
-                                  // Technically `this` could already be deallocated at this point but we rely on the
-                                  // fact that completing this operation is done in a manner similar to asio::post and
-                                  // therefore never before this lambda ends.
-                                  this->set_error(std::current_exception());
-                              }
-                          }
-                          else
-                          {
-                              [[maybe_unused]] RefCountGuard a{*this};
-                              [[maybe_unused]] detail::AllocationGuard b{
-                                  static_cast<ServerRPCAllocation*>(ptr.release()), this->get_allocator()};
-                          }
-                      }));
-    }
-
-    template <class Function>
-    decltype(auto) bind_allocator(Function&& function)
-    {
-        if constexpr (detail::IS_STD_ALLOCATOR<Allocator>)
-        {
-            return static_cast<Function&&>(function);
-        }
-        else
-        {
-            return agrpc::AllocatorBinder(this->get_allocator(), static_cast<Function&&>(function));
-        }
+        rpc.start(rpc.rpc_, this->service(), StartCallback{*this, static_cast<ServerRPCPtr&&>(ptr)});
     }
 };
 

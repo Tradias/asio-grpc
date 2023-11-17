@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "awaitable_server_rpc.hpp"
 #include "example/v1/example.grpc.pb.h"
 #include "helper.hpp"
 #include "server_shutdown_asio.hpp"
@@ -51,7 +52,7 @@ asio::awaitable<void> handle_tcp_request(asio::ip::port_type port)
 }
 
 // A unary RPC request that will be handled by the GrpcContext.
-using RPC = agrpc::ServerRPC<&example::v1::Example::AsyncService::RequestUnary>;
+using RPC = example::AwaitableServerRPC<&example::v1::Example::AsyncService::RequestUnary>;
 
 int main(int argc, const char** argv)
 {
@@ -79,7 +80,7 @@ int main(int argc, const char** argv)
         {
             example::v1::Response response;
             response.set_integer(request.integer());
-            co_await rpc.finish(response, grpc::Status::OK, asio::use_awaitable);
+            co_await rpc.finish(response, grpc::Status::OK);
             server_shutdown.shutdown();
         },
         asio::detached);

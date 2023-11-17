@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "awaitable_client_rpc.hpp"
 #include "example/v1/example.grpc.pb.h"
 #include "helper.hpp"
 
@@ -26,8 +27,6 @@
 #include <boost/asio/write.hpp>
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
-
-#include <optional>
 
 namespace asio = boost::asio;
 
@@ -50,14 +49,13 @@ asio::awaitable<void> make_tcp_request(asio::ip::port_type port)
 // A unary RPC request that will be handled by the GrpcContext
 asio::awaitable<void> make_grpc_request(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
-    using RPC = agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncUnary>;
+    using RPC = example::AwaitableClientRPC<&example::v1::Example::Stub::PrepareAsyncUnary>;
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
     RPC::Request request;
     request.set_integer(42);
     RPC::Response response;
-    const auto status =
-        co_await RPC::request(grpc_context, stub, client_context, request, response, asio::use_awaitable);
+    const auto status = co_await RPC::request(grpc_context, stub, client_context, request, response);
 
     abort_if_not(status.ok());
     abort_if_not(42 == response.integer());

@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "awaitable_server_rpc.hpp"
 #include "helloworld/helloworld.grpc.pb.h"
 
 #include <agrpc/asio_grpc.hpp>
@@ -42,14 +43,14 @@ int main(int argc, const char** argv)
     builder.RegisterService(&service);
     server = builder.BuildAndStart();
 
-    using RPC = agrpc::ServerRPC<&helloworld::Greeter::AsyncService::RequestSayHello>;
+    using RPC = example::AwaitableServerRPC<&helloworld::Greeter::AsyncService::RequestSayHello>;
     agrpc::register_awaitable_rpc_handler<RPC>(
         grpc_context, service,
         [&](RPC& rpc, RPC::Request& request) -> asio::awaitable<void>
         {
             helloworld::HelloReply response;
             response.set_message("Hello " + request.name());
-            co_await rpc.finish(response, grpc::Status::OK, asio::use_awaitable);
+            co_await rpc.finish(response, grpc::Status::OK);
             server->Shutdown();
         },
         asio::detached);

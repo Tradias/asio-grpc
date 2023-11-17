@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "awaitable_server_rpc.hpp"
 #include "example/v1/example.grpc.pb.h"
 #include "example/v1/example_ext.grpc.pb.h"
 #include "helper.hpp"
@@ -41,8 +42,7 @@ using ExampleExtService = example::v1::ExampleExt::AsyncService;
 // A simple client-streaming rpc handler using C++20 coroutines.
 // ---------------------------------------------------
 // end-snippet
-using ClientStreamingRPC =
-    asio::use_awaitable_t<>::as_default_on_t<agrpc::ServerRPC<&ExampleService::RequestClientStreaming>>;
+using ClientStreamingRPC = example::AwaitableServerRPC<&ExampleService::RequestClientStreaming>;
 
 asio::awaitable<void> handle_client_streaming_request(ClientStreamingRPC& rpc)
 {
@@ -76,8 +76,7 @@ asio::awaitable<void> handle_client_streaming_request(ClientStreamingRPC& rpc)
 // A simple server-streaming rpc handler using C++20 coroutines.
 // ---------------------------------------------------
 // end-snippet
-using ServerStreamingRPC =
-    asio::use_awaitable_t<>::as_default_on_t<agrpc::ServerRPC<&ExampleService::RequestServerStreaming>>;
+using ServerStreamingRPC = example::AwaitableServerRPC<&ExampleService::RequestServerStreaming>;
 
 asio::awaitable<void> handle_server_streaming_request(ServerStreamingRPC& rpc, example::v1::Request& request)
 {
@@ -98,8 +97,7 @@ asio::awaitable<void> handle_server_streaming_request(ServerStreamingRPC& rpc, e
 // back to the client.
 // ---------------------------------------------------
 // end-snippet
-using BidiStreamingRPC =
-    asio::use_awaitable_t<>::as_default_on_t<agrpc::ServerRPC<&ExampleService::RequestBidirectionalStreaming>>;
+using BidiStreamingRPC = example::AwaitableServerRPC<&ExampleService::RequestBidirectionalStreaming>;
 
 using Channel = asio::experimental::channel<void(boost::system::error_code, example::v1::Request)>;
 
@@ -176,6 +174,7 @@ auto bidirectional_streaming_rpc_handler(asio::thread_pool& thread_pool)
 
 // ---------------------------------------------------
 // The SlowUnary endpoint is used by the client to demonstrate per-RPC step cancellation. See streaming-client.cpp.
+// It also demonstrates how to use an awaitable with a different executor type.
 // ---------------------------------------------------
 using SlowUnaryRPC =
     asio::use_awaitable_t<agrpc::GrpcExecutor>::as_default_on_t<agrpc::ServerRPC<&ExampleExtService::RequestSlowUnary>>;
@@ -191,7 +190,7 @@ asio::awaitable<void, agrpc::GrpcExecutor> handle_slow_unary_request(SlowUnaryRP
 // ---------------------------------------------------
 //
 
-using ShutdownRPC = asio::use_awaitable_t<>::as_default_on_t<agrpc::ServerRPC<&ExampleExtService::RequestShutdown>>;
+using ShutdownRPC = example::AwaitableServerRPC<&ExampleExtService::RequestShutdown>;
 
 int main(int argc, const char** argv)
 {

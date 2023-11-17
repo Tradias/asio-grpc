@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "client_rpc.hpp"
+#include "awaitable_client_rpc.hpp"
 #include "example/v1/example.grpc.pb.h"
 #include "example/v1/example_ext.grpc.pb.h"
 #include "helper.hpp"

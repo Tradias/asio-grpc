@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "awaitable_client_rpc.hpp"
 #include "helloworld/helloworld.grpc.pb.h"
 #include "helper.hpp"
 
@@ -37,12 +38,12 @@ int main(int argc, const char** argv)
         grpc_context,
         [&]() -> asio::awaitable<void>
         {
-            using RPC = agrpc::ClientRPC<&helloworld::Greeter::Stub::PrepareAsyncSayHello>;
+            using RPC = example::AwaitableClientRPC<&helloworld::Greeter::Stub::PrepareAsyncSayHello>;
             grpc::ClientContext client_context;
             helloworld::HelloRequest request;
             request.set_name("world");
             helloworld::HelloReply response;
-            status = co_await RPC::request(grpc_context, stub, client_context, request, response, asio::use_awaitable);
+            status = co_await RPC::request(grpc_context, stub, client_context, request, response);
             std::cout << status.ok() << " response: " << response.message() << std::endl;
         },
         asio::detached);
