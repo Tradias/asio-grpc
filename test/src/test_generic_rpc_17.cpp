@@ -12,15 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "test/v1/test.grpc.pb.h"
+#include "test/msg/message.pb.h"
 #include "utils/asio_utils.hpp"
 #include "utils/doctest.hpp"
 #include "utils/grpc_generic_client_server_test.hpp"
 #include "utils/protobuf.hpp"
 
 #include <agrpc/rpc.hpp>
-
-#include <cstddef>
 
 TEST_CASE_FIXTURE(test::GrpcGenericClientServerTest, "yield_context generic unary")
 {

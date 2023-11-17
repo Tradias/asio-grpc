@@ -94,11 +94,11 @@ class ServerRPCPtr
     decltype(auto) request() const noexcept { return (server_rpc_->request_); }
 
   private:
-    template <class, class, class>
-    friend struct detail::RegisterCallbackRPCHandlerOperation;
-
     using Pointer = detail::ServerRPCWithRequest<ServerRPCT>*;
     using Deleter = void (*)(Pointer) noexcept;
+
+    template <class, class, class>
+    friend struct detail::RegisterCallbackRPCHandlerOperation;
 
     ServerRPCPtr(Pointer server_rpc, Deleter deleter) noexcept : server_rpc_(server_rpc), deleter_(deleter) {}
 

@@ -28,7 +28,6 @@
 #include <agrpc/asio_grpc.hpp>
 #include <agrpc/register_sender_rpc_handler.hpp>
 
-#include <cstddef>
 #include <optional>
 #include <thread>
 

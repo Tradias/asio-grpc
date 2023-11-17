@@ -17,7 +17,6 @@
 #include "utils/destruction_tracker.hpp"
 #include "utils/doctest.hpp"
 #include "utils/grpc_client_server_test.hpp"
-#include "utils/grpc_context_test.hpp"
 #include "utils/rpc.hpp"
 #include "utils/server_shutdown_initiator.hpp"
 #include "utils/test_server.hpp"

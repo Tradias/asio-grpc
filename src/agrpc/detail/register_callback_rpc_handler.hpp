@@ -101,7 +101,7 @@ struct RegisterCallbackRPCHandlerOperation
         {
             if (!rpc.is_done())
             {
-                rpc.wait_for_done([ptr = ServerRPCPtr{ptr, &wait_for_done_deleter}](const detail::ErrorCode&) {});
+                rpc.wait_for_done([p = ServerRPCPtr{ptr, &wait_for_done_deleter}](const detail::ErrorCode&) {});
                 guard.release();
                 alloc_guard.release();
             }

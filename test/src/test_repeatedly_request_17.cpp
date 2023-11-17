@@ -16,7 +16,6 @@
 #include "utils/asio_utils.hpp"
 #include "utils/doctest.hpp"
 #include "utils/grpc_client_server_test.hpp"
-#include "utils/grpc_context_test.hpp"
 #include "utils/grpc_generic_client_server_test.hpp"
 #include "utils/io_context_test.hpp"
 #include "utils/protobuf.hpp"
@@ -28,7 +27,6 @@
 #include <agrpc/wait.hpp>
 
 #include <cstddef>
-#include <optional>
 #include <thread>
 #include <vector>
 

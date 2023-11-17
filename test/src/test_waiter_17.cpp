@@ -20,8 +20,6 @@
 #include <agrpc/alarm.hpp>
 #include <agrpc/waiter.hpp>
 
-#include <cstddef>
-
 template <class Singature>
 inline constexpr auto IMMEDIATE = 0;
 

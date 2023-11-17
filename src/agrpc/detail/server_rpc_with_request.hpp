@@ -26,7 +26,7 @@ template <class ServerRPC>
 struct ServerRPCWithRequest
     : detail::RPCRequest<typename ServerRPC::Request, detail::has_initial_request(ServerRPC::TYPE)>
 {
-    ServerRPCWithRequest(const typename ServerRPC::executor_type& executor)
+    explicit ServerRPCWithRequest(const typename ServerRPC::executor_type& executor)
         : rpc_(detail::ServerRPCContextBaseAccess::construct<ServerRPC>(executor))
     {
     }

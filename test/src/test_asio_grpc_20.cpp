@@ -23,8 +23,6 @@
 #include <agrpc/client_rpc.hpp>
 #include <agrpc/rpc.hpp>
 
-#include <cstddef>
-
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 TEST_CASE_TEMPLATE("awaitable server streaming", Stub, test::v1::Test::Stub, test::v1::Test::StubInterface)
 {

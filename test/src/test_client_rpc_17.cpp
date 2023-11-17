@@ -12,16 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "test/v1/test.grpc.pb.h"
 #include "utils/asio_utils.hpp"
 #include "utils/client_rpc_test.hpp"
-#include "utils/delete_guard.hpp"
 #include "utils/doctest.hpp"
 #include "utils/exception.hpp"
-#include "utils/inline_executor.hpp"
 #include "utils/io_context_test.hpp"
-#include "utils/protobuf.hpp"
-#include "utils/rpc.hpp"
 #include "utils/server_rpc.hpp"
 #include "utils/time.hpp"
 #include "utils/utility.hpp"

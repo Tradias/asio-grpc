@@ -26,7 +26,7 @@ AGRPC_NAMESPACE_BEGIN()
  * The rpc handler will be invoked for every incoming request of this gRPC method. It must take `ServerRPC&` as
  * first, `ServerRPC::Request&` as second (only for unary and server-streaming rpcs) and
  * `asio::basic_yield_context<Executor>` as third argument. The Executor is obtained by calling
- * `asio::get_associated_executor(completion_handler, executor)`, where `completion_handler` is obtained from `token`
+ * `asio::get_associated_executor(completion_handler, executor)`, where `completion_handler` is created from `token`
  * and `executor` the first argument passed to this function. The ServerRPC is automatically cancelled at the end of the
  * rpc handler if `finish()` was not called earlier.
  *

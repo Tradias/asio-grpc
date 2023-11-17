@@ -15,7 +15,6 @@
 #include "utils/asio_utils.hpp"
 #include "utils/doctest.hpp"
 #include "utils/grpc_context_test.hpp"
-#include "utils/manual_lifetime.hpp"
 #include "utils/time.hpp"
 
 #include <agrpc/run.hpp>
