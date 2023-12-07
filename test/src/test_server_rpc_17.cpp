@@ -529,6 +529,29 @@ TEST_CASE_TEMPLATE("ServerRPC resumable read can be cancelled", RPC, test::Clien
             CHECK_EQ(grpc::StatusCode::OK, rpc.finish(yield).error_code());
         });
 }
+
+TEST_CASE_FIXTURE(ServerRPCTest<test::NotifyWhenDoneClientStreamingServerRPC>, "ServerRPC cancel wait_for_done")
+{
+    register_and_perform_three_requests(
+        [&](ServerRPC& rpc, const asio::yield_context& yield)
+        {
+            asio::experimental::make_parallel_group(rpc.wait_for_done(test::ASIO_DEFERRED),
+                                                    asio::post(asio::bind_executor(grpc_context, test::ASIO_DEFERRED)))
+                .async_wait(asio::experimental::wait_for_one(), yield);
+            CHECK_FALSE(rpc.is_done());
+            CHECK(rpc.send_initial_metadata(yield));
+            rpc.wait_for_done(yield);
+            CHECK(rpc.is_done());
+            CHECK(rpc.context().IsCancelled());
+            rpc.wait_for_done(yield);
+        },
+        [&](Request& request, Response& response, const asio::yield_context& yield)
+        {
+            auto rpc = create_rpc();
+            CHECK(start_rpc(rpc, request, response, yield));
+            CHECK(rpc.read_initial_metadata(yield));
+        });
+}
 #endif
 
 // Callback
