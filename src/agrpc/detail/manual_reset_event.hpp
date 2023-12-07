@@ -96,22 +96,21 @@ class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
         template <class CompletionHandler, class IOExecutor>
         void operator()(CompletionHandler&& completion_handler, const IOExecutor& io_executor) const
         {
-            const auto allocator = asio::get_associated_allocator(completion_handler);
             if (auto& event = event_; event.ready())
             {
-                auto executor = asio::get_associated_executor(completion_handler, io_executor);
-                detail::post_with_allocator(
-                    std::move(executor),
-                    [&event, ch = static_cast<CompletionHandler&&>(completion_handler)]() mutable
+                detail::complete_immediately(
+                    static_cast<CompletionHandler&&>(completion_handler),
+                    [&event](auto&& ch)
                     {
-                        detail::prepend_error_code_and_apply(static_cast<CompletionHandler&&>(ch),
+                        detail::prepend_error_code_and_apply(std::move(ch),
                                                              static_cast<ManualResetEvent&&>(event).args());
                     },
-                    allocator);
+                    io_executor);
                 return;
             }
             using Ch = detail::RemoveCrefT<CompletionHandler>;
             using Operation = ManualResetEventOperation<Signature, Ch>;
+            const auto allocator = asio::get_associated_allocator(completion_handler);
             detail::allocate<Operation>(allocator, static_cast<CompletionHandler&&>(completion_handler), event_)
                 .release();
         }

@@ -56,6 +56,12 @@
 
 #define AGRPC_ASIO_HAS_BIND_ALLOCATOR
 #endif
+
+#if (ASIO_VERSION >= 102700)
+#include <asio/associated_immediate_executor.hpp>
+
+#define AGRPC_ASIO_HAS_IMMEDIATE_EXECUTOR
+#endif
 #elif defined(AGRPC_BOOST_ASIO)
 //
 #include <boost/version.hpp>
@@ -98,6 +104,12 @@
 
 #if (BOOST_VERSION >= 108000)
 #define AGRPC_ASIO_HAS_NEW_SPAWN
+#endif
+
+#if (BOOST_VERSION >= 108200)
+#include <boost/asio/associated_immediate_executor.hpp>
+
+#define AGRPC_ASIO_HAS_IMMEDIATE_EXECUTOR
 #endif
 #endif
 

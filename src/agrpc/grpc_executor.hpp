@@ -395,7 +395,7 @@ class BasicGrpcExecutor
      *
      * Thread-safe
      */
-    [[nodiscard]] static constexpr asio::execution::blocking_t query(asio::execution::blocking_t) noexcept
+    [[nodiscard]] static constexpr auto query(asio::execution::blocking_t) noexcept
     {
         return typename detail::QueryStaticBlocking<detail::is_blocking_never(Options)>::result_type();
     }
@@ -409,9 +409,9 @@ class BasicGrpcExecutor
      *
      * Thread-safe
      */
-    [[nodiscard]] static constexpr asio::execution::mapping_t query(asio::execution::mapping_t) noexcept
+    [[nodiscard]] static constexpr detail::QueryStaticMapping::result_type query(asio::execution::mapping_t) noexcept
     {
-        return detail::QueryStaticMapping::result_type();
+        return {};
     }
 
     /**
@@ -437,7 +437,7 @@ class BasicGrpcExecutor
      *
      * Thread-safe
      */
-    [[nodiscard]] static constexpr asio::execution::relationship_t::fork_t query(
+    [[nodiscard]] static constexpr detail::QueryStaticRelationship::result_type query(
         asio::execution::relationship_t) noexcept
     {
         return {};
@@ -452,8 +452,7 @@ class BasicGrpcExecutor
      *
      * Thread-safe
      */
-    [[nodiscard]] static constexpr asio::execution::outstanding_work_t query(
-        asio::execution::outstanding_work_t) noexcept
+    [[nodiscard]] static constexpr auto query(asio::execution::outstanding_work_t) noexcept
     {
         return typename detail::QueryStaticWorkTracked<detail::is_outstanding_work_tracked(Options)>::result_type();
     }
