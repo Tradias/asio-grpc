@@ -139,26 +139,26 @@ class CancelSafe<void(CompletionArgs...)>
     struct Initiator
     {
         template <class CompletionHandler>
-        void operator()(CompletionHandler&& ch)
+        void operator()(CompletionHandler&& completion_handler)
         {
             if (self_.result_)
             {
-                auto executor = asio::get_associated_executor(ch);
-                const auto allocator = asio::get_associated_allocator(ch);
+                auto executor = asio::get_associated_executor(completion_handler);
+                const auto allocator = asio::get_associated_allocator(completion_handler);
                 auto local_result{static_cast<Result&&>(*self_.result_)};
                 self_.result_.reset();
                 detail::post_with_allocator(
                     std::move(executor),
-                    [ch = static_cast<CompletionHandler&&>(ch),
-                     local_result = static_cast<Result&&>(local_result)]() mutable
+                    [ch = static_cast<CompletionHandler&&>(completion_handler),
+                     result = static_cast<Result&&>(local_result)]() mutable
                     {
-                        detail::invoke_successfully_from_tuple(std::move(ch), static_cast<Result&&>(local_result));
+                        detail::invoke_successfully_from_tuple(std::move(ch), static_cast<Result&&>(result));
                     },
                     allocator);
                 return;
             }
-            auto cancellation_slot = asio::get_associated_cancellation_slot(ch);
-            self_.emplace_completion_handler(static_cast<CompletionHandler&&>(ch));
+            auto cancellation_slot = asio::get_associated_cancellation_slot(completion_handler);
+            self_.emplace_completion_handler(static_cast<CompletionHandler&&>(completion_handler));
             self_.install_cancellation_handler(cancellation_slot);
         }
 

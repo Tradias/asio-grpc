@@ -155,7 +155,7 @@ jobs:
     - name: Download sonar-scanner
       uses: warchant/setup-sonar-scanner@v7
       with:
-        version: 4.8.1.3023
+        version: 5.0.1.3006
 
     - name: Run sonar-scanner
       env:
@@ -163,7 +163,7 @@ jobs:
       run: |
         sonar-scanner \
           "-Dsonar.cfamily.compile-commands=${{ github.workspace }}/build-11/compile_commands.json" \
-          "-Dsonar.login=${{ secrets.SONAR_TOKEN }}" \
+          "-Dsonar.token=${{ secrets.SONAR_TOKEN }}" \
           "-Dsonar.coverageReportPaths=${{ github.workspace }}/build-11/sonarqube-coverage.xml"
 
 

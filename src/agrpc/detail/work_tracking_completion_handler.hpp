@@ -69,9 +69,9 @@ void dispatch_with_args(Handler&& handler, Args&&... args)
                                  asio::execution::allocator(asio::get_associated_allocator(handler)));
     detail::do_execute(
         std::move(executor),
-        [handler = static_cast<Handler&&>(handler), args = detail::Tuple{static_cast<Args&&>(args)...}]() mutable
+        [h = static_cast<Handler&&>(handler), arg_tuple = detail::Tuple{static_cast<Args&&>(args)...}]() mutable
         {
-            detail::apply(std::move(handler), std::move(args));
+            detail::apply(std::move(h), std::move(arg_tuple));
         });
 }
 
