@@ -67,7 +67,7 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
                 "utils/grpc_generic_client_server_test.cpp"
                 "utils/grpc_generic_client_server_test.hpp"
                 "utils/memory_resource.hpp")
-    if(NOT ${_asio_grpc_type} STREQUAL "UNIFEX")
+    if(NOT ${_asio_grpc_type} STREQUAL "UNIFEX" AND NOT ${_asio_grpc_type} STREQUAL "STDEXEC")
         target_sources(${_asio_grpc_name} PRIVATE # cmake-format: sort
                                                   "utils/rpc.cpp" "utils/rpc.hpp")
     endif()
@@ -97,6 +97,11 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
 
         target_compile_definitions(${_asio_grpc_name}
                                    PUBLIC "ASIO_GRPC_TEST_CPP_VERSION=\"unifex C++${_asio_grpc_cxx_standard}\"")
+    elseif(${_asio_grpc_type} STREQUAL "STDEXEC")
+        target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc-stdexec)
+
+        target_compile_definitions(${_asio_grpc_name}
+                                   PUBLIC "ASIO_GRPC_TEST_CPP_VERSION=\"stdexec C++${_asio_grpc_cxx_standard}\"")
     endif()
 
     convert_to_cpp_suffix(${_asio_grpc_cxx_standard})
@@ -113,4 +118,8 @@ if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
     asio_grpc_add_test_util(asio-grpc-test-util-boost-asio-cpp20 "BOOST_ASIO" "20")
     asio_grpc_add_test_util(asio-grpc-test-util-standalone-asio-cpp20 "STANDALONE_ASIO" "20")
     asio_grpc_add_test_util(asio-grpc-test-util-unifex-cpp20 "UNIFEX" "20")
+
+    if(ASIO_GRPC_ENABLE_STDEXEC_TESTS)
+        asio_grpc_add_test_util(asio-grpc-test-util-stdexec-cpp20 "STDEXEC" "20")
+    endif()
 endif()

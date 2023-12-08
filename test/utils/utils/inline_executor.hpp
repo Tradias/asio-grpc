@@ -33,7 +33,7 @@ struct InlineExecutor
 };
 }  // namespace test
 
-#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT) && \
+#if !defined(AGRPC_UNIFEX) && !defined(AGRPC_STDEXEC) && !defined(BOOST_ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT) && \
     !defined(ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT)
 template <>
 struct agrpc::asio::traits::equality_comparable<test::InlineExecutor>
@@ -43,7 +43,7 @@ struct agrpc::asio::traits::equality_comparable<test::InlineExecutor>
 };
 #endif
 
-#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT) && \
+#if !defined(AGRPC_UNIFEX) && !defined(AGRPC_STDEXEC) && !defined(BOOST_ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT) && \
     !defined(ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT)
 template <class F>
 struct agrpc::asio::traits::execute_member<test::InlineExecutor, F>

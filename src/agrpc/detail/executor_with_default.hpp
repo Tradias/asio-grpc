@@ -37,7 +37,7 @@ struct ExecutorWithDefault : Executor
 
 AGRPC_NAMESPACE_END
 
-#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT) && \
+#if !defined(AGRPC_UNIFEX) && !defined(AGRPC_STDEXEC) && !defined(BOOST_ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT) && \
     !defined(ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT)
 template <class Default, class Executor>
 struct agrpc::asio::traits::equality_comparable<agrpc::detail::ExecutorWithDefault<Default, Executor>>
@@ -46,7 +46,7 @@ struct agrpc::asio::traits::equality_comparable<agrpc::detail::ExecutorWithDefau
 };
 #endif
 
-#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT) && \
+#if !defined(AGRPC_UNIFEX) && !defined(AGRPC_STDEXEC) && !defined(BOOST_ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT) && \
     !defined(ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT)
 template <class Default, class Executor, class F>
 struct agrpc::asio::traits::execute_member<agrpc::detail::ExecutorWithDefault<Default, Executor>, F>
@@ -55,7 +55,7 @@ struct agrpc::asio::traits::execute_member<agrpc::detail::ExecutorWithDefault<De
 };
 #endif
 
-#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_REQUIRE_MEMBER_TRAIT) && \
+#if !defined(AGRPC_UNIFEX) && !defined(AGRPC_STDEXEC) && !defined(BOOST_ASIO_HAS_DEDUCED_REQUIRE_MEMBER_TRAIT) && \
     !defined(ASIO_HAS_DEDUCED_REQUIRE_MEMBER_TRAIT)
 template <class Default, class Executor>
 struct agrpc::asio::traits::require_member<agrpc::detail::ExecutorWithDefault<Default, Executor>,
@@ -120,7 +120,7 @@ struct agrpc::asio::traits::require_member<agrpc::detail::ExecutorWithDefault<De
 };
 #endif
 
-#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_PREFER_MEMBER_TRAIT) && \
+#if !defined(AGRPC_UNIFEX) && !defined(AGRPC_STDEXEC) && !defined(BOOST_ASIO_HAS_DEDUCED_PREFER_MEMBER_TRAIT) && \
     !defined(ASIO_HAS_DEDUCED_PREFER_MEMBER_TRAIT)
 template <class Default, class Executor>
 struct agrpc::asio::traits::prefer_member<agrpc::detail::ExecutorWithDefault<Default, Executor>,
@@ -144,7 +144,8 @@ struct agrpc::asio::traits::prefer_member<agrpc::detail::ExecutorWithDefault<Def
 };
 #endif
 
-#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_QUERY_STATIC_CONSTEXPR_MEMBER_TRAIT) && \
+#if !defined(AGRPC_UNIFEX) && !defined(AGRPC_STDEXEC) &&                    \
+    !defined(BOOST_ASIO_HAS_DEDUCED_QUERY_STATIC_CONSTEXPR_MEMBER_TRAIT) && \
     !defined(ASIO_HAS_DEDUCED_QUERY_STATIC_CONSTEXPR_MEMBER_TRAIT)
 template <class Default, class Executor, class Property>
 struct agrpc::asio::traits::query_static_constexpr_member<
@@ -205,7 +206,7 @@ struct agrpc::asio::traits::query_static_constexpr_member<
 };
 #endif
 
-#if !defined(AGRPC_UNIFEX) && !defined(BOOST_ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT) && \
+#if !defined(AGRPC_UNIFEX) && !defined(AGRPC_STDEXEC) && !defined(BOOST_ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT) && \
     !defined(ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT)
 template <class Default, class Executor>
 struct agrpc::asio::traits::query_member<agrpc::detail::ExecutorWithDefault<Default, Executor>,

@@ -162,8 +162,9 @@ class AllocatorBinder
      */
     constexpr Allocator get_allocator() const noexcept { return impl_.second(); }
 
-#ifdef AGRPC_UNIFEX
-    friend Allocator tag_invoke(unifex::tag_t<unifex::get_allocator>, const AllocatorBinder& binder) noexcept
+#if defined(AGRPC_UNIFEX) || defined(AGRPC_STDEXEC)
+    friend Allocator tag_invoke(detail::exec::tag_t<detail::exec::get_allocator>,
+                                const AllocatorBinder& binder) noexcept
     {
         return binder.get_allocator();
     }

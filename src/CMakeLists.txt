@@ -53,12 +53,20 @@ target_compile_definitions(asio-grpc-standalone-asio INTERFACE AGRPC_STANDALONE_
 asio_grpc_create_interface_target(asio-grpc-unifex)
 target_compile_definitions(asio-grpc-unifex INTERFACE AGRPC_UNIFEX)
 
+asio_grpc_create_interface_target(asio-grpc-stdexec)
+target_compile_definitions(asio-grpc-stdexec INTERFACE AGRPC_STDEXEC)
+target_compile_features(asio-grpc-stdexec INTERFACE cxx_std_20)
+
 if(ASIO_GRPC_BUILD_EXAMPLES)
     target_link_libraries(asio-grpc INTERFACE Boost::headers)
     target_link_libraries(asio-grpc-standalone-asio INTERFACE asio::asio)
 
     if(TARGET unifex::unifex)
         target_link_libraries(asio-grpc-unifex INTERFACE unifex::unifex)
+    endif()
+
+    if(TARGET STDEXEC::stdexec)
+        target_link_libraries(asio-grpc-stdexec INTERFACE STDEXEC::stdexec)
     endif()
 endif()
 

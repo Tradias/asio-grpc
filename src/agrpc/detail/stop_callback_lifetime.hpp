@@ -34,7 +34,7 @@ inline constexpr bool NEEDS_STOP_CALLBACK<StopToken, detail::Empty> = false;
 template <class StopToken, class StopFunction, bool = detail::NEEDS_STOP_CALLBACK<StopToken, StopFunction>>
 class StopCallbackLifetime
 {
-#ifdef AGRPC_UNIFEX
+#if defined(AGRPC_UNIFEX) || defined(AGRPC_STDEXEC)
   private:
     using StopCallback = std::optional<typename StopToken::template callback_type<StopFunction>>;
 

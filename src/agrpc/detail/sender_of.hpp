@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_SENDER_OF_HPP
 
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/execution.hpp>
 
 #include <exception>
 
@@ -36,6 +37,14 @@ struct SenderOf<void(Values...)>
     using error_types = Variant<std::exception_ptr>;
 
     static constexpr bool sends_done = true;
+
+#ifdef AGRPC_STDEXEC
+    using sender_concept = stdexec::sender_t;
+
+    using completion_signatures =
+        stdexec::completion_signatures<stdexec::set_value_t(Values...), stdexec::set_error_t(std::exception_ptr),
+                                       stdexec::set_stopped_t()>;
+#endif
 };
 }
 

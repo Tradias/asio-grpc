@@ -113,7 +113,7 @@
 #endif
 #endif
 
-#ifdef AGRPC_UNIFEX
+#if defined(AGRPC_UNIFEX) || defined(AGRPC_STDEXEC)
 #include <system_error>
 #endif
 
@@ -133,7 +133,7 @@ using ErrorCode = boost::system::error_code;
 using ErrorCode = std::error_code;
 #endif
 
-#ifdef AGRPC_UNIFEX
+#if defined(AGRPC_UNIFEX) || defined(AGRPC_STDEXEC)
 inline auto operation_aborted_error_code() { return ErrorCode{}; }
 #else
 inline auto operation_aborted_error_code() { return ErrorCode{asio::error::operation_aborted}; }

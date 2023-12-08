@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.14...3.24)
+cmake_minimum_required(VERSION 3.14...3.27)
 
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcOptionDefaults.cmake")
 
@@ -62,6 +62,8 @@ endif()
 option(ASIO_GRPC_DISCOVER_TESTS "Discover tests for ctest" off)
 option(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES
        "When tests and/or example builds are enabled then also create CMake targets for C++20" on)
+option(ASIO_GRPC_ENABLE_STDEXEC_TESTS "When tests builds are enabled then also create CMake targets for stdexec tests"
+       off)
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     option(
         ASIO_GRPC_ENABLE_IO_URING_EXAMPLES

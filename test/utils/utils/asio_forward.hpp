@@ -129,16 +129,20 @@
 #endif
 #endif
 
-#if defined(AGRPC_BOOST_ASIO)
+#ifdef AGRPC_STDEXEC
+#include <stdexec/execution.hpp>
+#endif
+
+#ifdef AGRPC_BOOST_ASIO
 namespace asio = ::boost::asio;
 #endif
 
 namespace test
 {
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_UNIFEX)
-using ErrorCode = std::error_code;
-#elif defined(AGRPC_BOOST_ASIO)
+#ifdef AGRPC_BOOST_ASIO
 using ErrorCode = boost::system::error_code;
+#else
+using ErrorCode = std::error_code;
 #endif
 
 #ifdef AGRPC_TEST_ASIO_HAS_NEW_SPAWN

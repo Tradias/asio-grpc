@@ -32,7 +32,7 @@ install(
     DESTINATION "${ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR}"
     RENAME "${PROJECT_NAME}.natvis")
 
-install(TARGETS asio-grpc asio-grpc-standalone-asio asio-grpc-unifex EXPORT ${PROJECT_NAME}Targets)
+install(TARGETS asio-grpc asio-grpc-standalone-asio asio-grpc-unifex asio-grpc-stdexec EXPORT ${PROJECT_NAME}Targets)
 
 install(
     EXPORT ${PROJECT_NAME}Targets

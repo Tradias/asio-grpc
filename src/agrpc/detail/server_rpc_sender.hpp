@@ -33,7 +33,7 @@ using ServerRPCAccess = ServerRPCContextBaseAccess;
 
 struct ServerContextCancellationFunction
 {
-#if !defined(AGRPC_UNIFEX)
+#if !defined(AGRPC_UNIFEX) && !defined(AGRPC_STDEXEC)
     explicit
 #endif
         ServerContextCancellationFunction(grpc::ServerContext& server_context) noexcept

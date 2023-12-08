@@ -93,6 +93,12 @@
     {                           \
     inline namespace u          \
     {
+#elif defined(AGRPC_STDEXEC)
+#define AGRPC_NAMESPACE_BEGIN() \
+    namespace agrpc             \
+    {                           \
+    inline namespace e          \
+    {
 #else
 static_assert(false,
               "asio-grpc backend macro is not defined. Did you forget to link with `asio-grpc::asio-grpc`, "

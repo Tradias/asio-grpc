@@ -124,6 +124,8 @@
 #if !UNIFEX_NO_COROUTINES
 #include <unifex/task.hpp>
 #endif
+#elif defined(AGRPC_STDEXEC)
+#include <stdexec/execution.hpp>
 #endif
 
 #include <array>

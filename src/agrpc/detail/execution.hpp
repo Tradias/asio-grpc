@@ -21,6 +21,8 @@
 #include <agrpc/detail/execution_asio.hpp>
 #elif defined(AGRPC_UNIFEX)
 #include <agrpc/detail/execution_unifex.hpp>
+#elif defined(AGRPC_STDEXEC)
+#include <agrpc/detail/execution_stdexec.hpp>
 #endif
 
 #endif  // AGRPC_DETAIL_EXECUTION_HPP

@@ -61,6 +61,23 @@ class BasicSender : public detail::SenderOf<typename Implementation::Signature>
         return {static_cast<Receiver&&>(receiver), grpc_context_, initiation_, implementation_};
     }
 
+#ifdef AGRPC_STDEXEC
+    template <class Receiver>
+    friend detail::BasicSenderOperationState<Initiation, Implementation, detail::RemoveCrefT<Receiver>> tag_invoke(
+        stdexec::connect_t, const BasicSender& s, Receiver&& r)
+    {
+        return {static_cast<Receiver&&>(r), s.grpc_context_, s.initiation_, s.implementation_};
+    }
+
+    template <class Receiver>
+    friend detail::BasicSenderOperationState<Initiation, Implementation, detail::RemoveCrefT<Receiver>> tag_invoke(
+        stdexec::connect_t, BasicSender&& s, Receiver&& r)
+    {
+        return {static_cast<Receiver&&>(r), s.grpc_context_, s.initiation_,
+                static_cast<Implementation&&>(s.implementation_)};
+    }
+#endif
+
   private:
     friend detail::BasicSenderAccess;
 
@@ -205,6 +222,10 @@ class BasicSenderOperationState
         op.restore_scratch_space();
         op.start(grpc_context, impl_.second(), std::move(stop_token));
     }
+
+#ifdef AGRPC_STDEXEC
+    friend void tag_invoke(stdexec::start_t, BasicSenderOperationState& s) noexcept { s.start(); }
+#endif
 
   private:
     friend detail::BasicSender<Initiation, Implementation>;

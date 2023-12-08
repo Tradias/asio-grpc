@@ -37,6 +37,10 @@ function(asio_grpc_add_test _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_stand
         target_link_libraries(${_asio_grpc_name} PRIVATE "asio-grpc-test-util-unifex${_asio_grpc_cxx_standard}")
 
         target_precompile_headers(${_asio_grpc_name} REUSE_FROM "asio-grpc-test-util-unifex${_asio_grpc_cxx_standard}")
+    elseif(${_asio_grpc_type} STREQUAL "STDEXEC")
+        target_link_libraries(${_asio_grpc_name} PRIVATE "asio-grpc-test-util-stdexec${_asio_grpc_cxx_standard}")
+
+        target_precompile_headers(${_asio_grpc_name} REUSE_FROM "asio-grpc-test-util-stdexec${_asio_grpc_cxx_standard}")
     endif()
 
     if(ASIO_GRPC_DISCOVER_TESTS)
@@ -62,6 +66,7 @@ set(ASIO_GRPC_CPP17_TEST_SOURCE_FILES
 set(ASIO_GRPC_CPP20_TEST_SOURCE_FILES
     "test_asio_grpc_20.cpp" "test_repeatedly_request_20.cpp" "test_bind_allocator_20.cpp" "test_grpc_context_20.cpp"
     "test_grpc_stream_20.cpp" "test_server_rpc_20.cpp")
+set_source_files_properties("test_test_17.cpp" PROPERTIES SKIP_UNITY_BUILD_INCLUSION on)
 
 asio_grpc_add_test(asio-grpc-test-boost-cpp17 "BOOST_ASIO" "17" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES})
 asio_grpc_add_test(asio-grpc-test-cpp17 "STANDALONE_ASIO" "17" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES})
@@ -74,7 +79,10 @@ if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
     asio_grpc_add_test(asio-grpc-test-unifex-cpp20 "UNIFEX" "20" "test_unifex_20.cpp")
 endif()
 
-set_source_files_properties("test_test_17.cpp" PROPERTIES SKIP_UNITY_BUILD_INCLUSION on)
+if(ASIO_GRPC_ENABLE_STDEXEC_TESTS)
+    asio_grpc_add_test(asio-grpc-test-stdexec "STDEXEC" "20" "test_stdexec.cpp")
+    target_link_libraries(asio-grpc-test-stdexec PRIVATE asio-grpc-stdexec)
+endif()
 
 unset(ASIO_GRPC_CPP17_TEST_SOURCE_FILES)
 unset(ASIO_GRPC_CPP20_TEST_SOURCE_FILES)
