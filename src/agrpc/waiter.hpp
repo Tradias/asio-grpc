@@ -66,6 +66,11 @@ class Waiter
     Waiter(const Waiter& other) = delete;
     Waiter(Waiter&& other) = delete;
 
+    /**
+     * @brief Destruct the Waiter
+     *
+     * All initiated operations have been `wait()`ed for, otherwise the behavior is undefined.
+     */
     ~Waiter() noexcept { destroy_executor(); }
 
     Waiter& operator=(const Waiter& other) = delete;

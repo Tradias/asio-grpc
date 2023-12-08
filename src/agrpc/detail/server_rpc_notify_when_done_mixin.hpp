@@ -52,7 +52,7 @@ class ServerRPCNotifyWhenDoneMixin : public RPCExecutorBase<Executor>,
      * Request notification of the completion of this rpc, either due to calling `finish` or because the rpc is dead
      * (i.e., canceled, deadline expired, other side dropped the channel, etc).
      * [rpc.context().IsCancelled()](https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_context.html#af2d0f087805b4b475d01b12d73508f09)
-     * may be called after this operation completes.
+     * may only be called after this operation completes.
      *
      * Cancelling this operation does not invoke
      * [grpc::ServerContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_context.html#a88d3a0c3d53e39f38654ce8fba968301).

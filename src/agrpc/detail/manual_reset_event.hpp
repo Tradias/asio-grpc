@@ -102,7 +102,7 @@ class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
                     static_cast<CompletionHandler&&>(completion_handler),
                     [&event](auto&& ch)
                     {
-                        detail::prepend_error_code_and_apply(std::move(ch),
+                        detail::prepend_error_code_and_apply(static_cast<decltype(ch)&&>(ch),
                                                              static_cast<ManualResetEvent&&>(event).args());
                     },
                     io_executor);

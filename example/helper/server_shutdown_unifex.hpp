@@ -56,7 +56,7 @@ struct ServerShutdown
         {
             shutdown_thread.join();
         }
-        else if (!is_shutdown.exchange(true))
+        else
         {
             server.Shutdown();
         }

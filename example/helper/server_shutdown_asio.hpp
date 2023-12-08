@@ -61,6 +61,7 @@ struct ServerShutdown
                 [&]
                 {
                     signals.cancel();
+                    // For Shutdown to ever complete some other thread must be calling grpc_context.run().
                     server.Shutdown();
                 });
         }
@@ -72,7 +73,7 @@ struct ServerShutdown
         {
             shutdown_thread.join();
         }
-        else if (!is_shutdown.exchange(true))
+        else
         {
             server.Shutdown();
         }

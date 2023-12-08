@@ -56,6 +56,7 @@ void complete_immediately(CompletionHandler&& completion_handler, Function&& fun
         {
             // Ensure that the io_executor is not already blocking::never because asio will try to convert const& to &&
             // due to chosing the `identity` overload of asio::require within the default_immediate_executor.
+            // https://github.com/chriskohlhoff/asio/issues/1392
             if constexpr (asio::traits::static_require<IOExecutor, asio::execution::blocking_t::never_t>::is_valid)
             {
                 return asio::prefer(io_executor, asio::execution::blocking_t::possibly);

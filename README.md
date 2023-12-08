@@ -6,6 +6,8 @@ An [Executor, Networking TS](https://www.boost.org/doc/libs/1_81_0/doc/html/boos
 
 # Features
 
+> In v3 the new [ClientRPC](https://tradias.github.io/asio-grpc/md_doc_client_rpc_cheat_sheet.html) and [ServerRPC](https://tradias.github.io/asio-grpc/md_doc_server_rpc_cheat_sheet.html) APIs will replace the current free-function API. Your feedback is highly appreciated. Please communicate via issues.
+
 * Asio [ExecutionContext](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio/reference/ExecutionContext.html) compatible wrapper around [grpc::CompletionQueue](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html)
 * Support for all RPC types: unary, client-streaming, server-streaming and bidirectional-streaming with any mix of Asio [CompletionToken](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers) as well as [Sender](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#sender-concept), including allocator customization
 * Support for asynchronously waiting for [grpc::Alarm](https://grpc.github.io/grpc/cpp/classgrpc_1_1_alarm.html)s including cancellation through [cancellation_slot](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio/reference/cancellation_slot.html)s and [StopToken](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#stoptoken-concept)s
@@ -43,8 +45,7 @@ Using [Boost.Asio](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio.htm
 add_subdirectory(/path/to/asio-grpc)
 target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
 
-# Also link with the equivalents of gRPC::grpc++_unsecure, Boost::headers and
-# Boost::container (if ASIO_GRPC_USE_BOOST_CONTAINER has been set)
+# Also link with the equivalents of gRPC::grpc++ and Boost::headers
 ```
 
 Or using [standalone Asio](https://github.com/chriskohlhoff/asio):
@@ -53,8 +54,7 @@ Or using [standalone Asio](https://github.com/chriskohlhoff/asio):
 add_subdirectory(/path/to/asio-grpc)
 target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-standalone-asio)
 
-# Also link with the equivalents of gRPC::grpc++_unsecure, asio::asio and
-# Boost::container (if ASIO_GRPC_USE_BOOST_CONTAINER has been set)
+# Also link with the equivalents of gRPC::grpc++ and asio::asio
 ```
 
 Or using [libunifex](https://github.com/facebookexperimental/libunifex):
@@ -63,15 +63,7 @@ Or using [libunifex](https://github.com/facebookexperimental/libunifex):
 add_subdirectory(/path/to/asio-grpc)
 target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-unifex)
 
-# Also link with the equivalents of gRPC::grpc++_unsecure, unifex::unifex and
-# Boost::container (if ASIO_GRPC_USE_BOOST_CONTAINER has been set)
-```
-
-Set [optional options](#cmake-options) before calling `add_subdirectory`. Example:
-
-```cmake
-set(ASIO_GRPC_USE_BOOST_CONTAINER on)
-add_subdirectory(/path/to/asio-grpc)
+# Also link with the equivalents of gRPC::grpc++ and unifex::unifex
 ```
 
 </p>
@@ -80,7 +72,7 @@ add_subdirectory(/path/to/asio-grpc)
 <details><summary><b>As a CMake package</b></summary>
 <p>
 
-Clone the repository and install it. Append any [optional options](#cmake-options) like `-DASIO_GRPC_USE_BOOST_CONTAINER=on` to the cmake configure call.
+Clone the repository and install it.
 
 ```shell
 cmake -B build -DCMAKE_INSTALL_PREFIX=/desired/installation/directory .
@@ -149,12 +141,6 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
 #target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-unifex)
 ```
 
-### Available features
-
-`boost-container` (deprecated) - Use Boost.Container instead of `<memory_resource>`.
-
-See [selecting-library-features](https://vcpkg.io/en/docs/users/selecting-library-features.html) to learn how to select features with vcpkg.
-
 </p>
 </details>
 
@@ -181,8 +167,6 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
 
 `backend` - One of "boost" for Boost.Asio, "asio" for standalone Asio or "unifex" for libunifex.
 
-`local_allocator` (deprecated) - One of "memory_resource" for `<memory_resource>`, "boost_container" for Boost.Container, "recycling_allocator" for [asio::recycling_allocator](https://think-async.com/Asio/asio-1.24.0/doc/asio/reference/recycling_allocator.html).
-
 </p>
 </details>
 
@@ -199,10 +183,6 @@ the backend's header files and libraries can be found correctly.
 </details>
 
 ## CMake Options
-
-`ASIO_GRPC_USE_BOOST_CONTAINER` (deprecated) - Use Boost.Container instead of `<memory_resource>`. Mutually exclusive with `ASIO_GRPC_USE_RECYCLING_ALLOCATOR`.
-
-`ASIO_GRPC_USE_RECYCLING_ALLOCATOR` (deprecated) - Use [asio::recycling_allocator](https://think-async.com/Asio/asio-1.24.0/doc/asio/reference/recycling_allocator.html) instead of `<memory_resource>`. Mutually exclusive with `ASIO_GRPC_USE_BOOST_CONTAINER`.
 
 `ASIO_GRPC_DISABLE_AUTOLINK` - Set before using `find_package(asio-grpc)` to prevent `asio-grpcConfig.cmake` from finding and setting up interface link libraries like `gRPC::grpc++`.
 
