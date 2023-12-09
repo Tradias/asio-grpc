@@ -24,7 +24,8 @@
             ]
         },
         "libunifex",
-        "gtest"
+        "gtest",
+        "stdexec"
     ],
     "builtin-baseline": "962e5e39f8a25f42522f51fffc574e05a3efd26b"
 }

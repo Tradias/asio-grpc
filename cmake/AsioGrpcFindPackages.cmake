@@ -41,9 +41,7 @@ if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
 endif()
 
 if(ASIO_GRPC_ENABLE_STDEXEC_TESTS)
-    set(STDEXEC_BUILD_TESTS off)
-    set(STDEXEC_BUILD_EXAMPLES off)
-    add_subdirectory(stdexec)
+    find_package(stdexec CONFIG)
 endif()
 
 # Fallback to pkg-config
