@@ -53,6 +53,15 @@ class RPCHandlerSender : public detail::SenderOf<void()>
     auto connect(Receiver&& receiver) && noexcept(detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver> &&
                                                   std::is_nothrow_move_constructible_v<RPCHandler>);
 
+#ifdef AGRPC_STDEXEC
+    template <class Receiver>
+    friend auto tag_invoke(stdexec::connect_t, RPCHandlerSender&& s, Receiver&& r) noexcept(
+        noexcept(static_cast<RPCHandlerSender&&>(s).connect(static_cast<Receiver&&>(r))))
+    {
+        return static_cast<RPCHandlerSender&&>(s).connect(static_cast<Receiver&&>(r));
+    }
+#endif
+
   private:
     template <class, class, class>
     friend struct detail::RegisterRPCHandlerSenderOperationBase;
@@ -97,7 +106,7 @@ using GetWaitForDoneOperationStateT =
 struct RPCHandlerOperationFinish
 {
     template <class Operation>
-    static void perform(Operation& op, std::exception_ptr* eptr)
+    static void perform(Operation& op, std::exception_ptr* eptr) noexcept
     {
         auto& rpc = op.rpc_;
         if (eptr)
@@ -123,7 +132,7 @@ struct RPCHandlerOperationFinish
 struct RPCHandlerOperationWaitForDone
 {
     template <class Operation>
-    static void perform(Operation& op, const std::exception_ptr*)
+    static void perform(Operation& op, const std::exception_ptr*) noexcept
     {
         detail::destroy_deallocate(&op, op.get_allocator());
     }
@@ -149,11 +158,15 @@ struct RPCHandlerOperation
 
     struct StartReceiver
     {
+#ifdef AGRPC_STDEXEC
+        using receiver_concept = stdexec::receiver_t;
+#endif
+
         RPCHandlerOperation& rpc_handler_op_;
 
         static constexpr void set_done() noexcept {}
 
-        void set_value(bool ok)
+        void set_value(bool ok) const noexcept
         {
             auto& op = rpc_handler_op_;
             detail::AllocationGuard guard{&op, op.get_allocator()};
@@ -171,7 +184,15 @@ struct RPCHandlerOperation
             }
         }
 
-        static constexpr void set_error(const std::exception_ptr&) noexcept {}
+        static void set_error(const std::exception_ptr&) noexcept {}
+
+#ifdef AGRPC_STDEXEC
+        friend void tag_invoke(stdexec::set_stopped_t, const StartReceiver&) noexcept {}
+
+        friend void tag_invoke(stdexec::set_value_t, const StartReceiver& r, bool ok) noexcept { r.set_value(ok); }
+
+        friend void tag_invoke(stdexec::set_error_t, const StartReceiver&, const std::exception_ptr&) noexcept {}
+#endif
 
         friend exec::inline_scheduler tag_invoke(exec::tag_t<exec::get_scheduler>, const StartReceiver&) noexcept
         {
@@ -187,19 +208,38 @@ struct RPCHandlerOperation
     template <class Action>
     struct Receiver
     {
+#ifdef AGRPC_STDEXEC
+        using receiver_concept = stdexec::receiver_t;
+#endif
+
         RPCHandlerOperation& op_;
 
-        void perform(std::exception_ptr* eptr) noexcept { Action::perform(op_, eptr); }
+        void perform(std::exception_ptr* eptr) const noexcept { Action::perform(op_, eptr); }
 
-        void set_done() noexcept { perform(nullptr); }
+        void set_done() const noexcept { perform(nullptr); }
 
         template <class... T>
-        void set_value(T&&...) noexcept
+        void set_value(T&&...) const noexcept
         {
             perform(nullptr);
         }
 
-        void set_error(std::exception_ptr eptr) noexcept { perform(&eptr); }
+        void set_error(std::exception_ptr eptr) const noexcept { perform(&eptr); }
+
+#ifdef AGRPC_STDEXEC
+        friend constexpr void tag_invoke(stdexec::set_stopped_t, const Receiver& r) noexcept { r.set_done(); }
+
+        template <class... T>
+        friend constexpr void tag_invoke(stdexec::set_value_t, const Receiver& r, T&&...) noexcept
+        {
+            r.set_value();
+        }
+
+        friend void tag_invoke(stdexec::set_error_t, const Receiver& r, std::exception_ptr e) noexcept
+        {
+            r.set_error(static_cast<std::exception_ptr&&>(e));
+        }
+#endif
 
         friend exec::inline_scheduler tag_invoke(exec::tag_t<exec::get_scheduler>, const Receiver&) noexcept
         {
@@ -248,7 +288,11 @@ struct RPCHandlerOperation
 
     void start() { std::get<StartOperationState>(operation_state()).value_.start(); }
 
-    std::optional<std::exception_ptr> emplace_rpc_handler_operation_state()
+#ifdef AGRPC_STDEXEC
+    friend void tag_invoke(stdexec::start_t, RPCHandlerOperation& o) noexcept { o.start(); }
+#endif
+
+    std::optional<std::exception_ptr> emplace_rpc_handler_operation_state() noexcept
     {
         AGRPC_TRY
         {
@@ -263,9 +307,12 @@ struct RPCHandlerOperation
         AGRPC_CATCH(...) { return std::current_exception(); }
     }
 
-    void start_rpc_handler_operation_state() { exec::start(std::get<FinishOperationState>(operation_state()).value_); }
+    void start_rpc_handler_operation_state() noexcept
+    {
+        exec::start(std::get<FinishOperationState>(operation_state()).value_);
+    }
 
-    void start_wait_for_done()
+    void start_wait_for_done() noexcept
     {
         auto& state = operation_state().template emplace<WaitForDoneOperationState>(
             detail::InplaceWithFunction{},
@@ -335,6 +382,10 @@ class RPCHandlerSenderOperation
         this->stop_context_.emplace(std::move(stop_token));
         detail::create_and_start_rpc_handler_operation(*this, get_allocator());
     }
+
+#ifdef AGRPC_STDEXEC
+    friend void tag_invoke(stdexec::start_t, RPCHandlerSenderOperation& o) noexcept { o.start(); }
+#endif
 
   private:
     friend RPCHandlerSender;

@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_EXECUTION_UNIFEX_HPP
 
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/utility.hpp>
 #include <unifex/config.hpp>
 #include <unifex/get_allocator.hpp>
 #include <unifex/get_stop_token.hpp>
@@ -31,6 +32,9 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail::exec
 {
 using ::unifex::get_allocator;
+
+using get_allocator_t = detail::RemoveCrefT<decltype(get_allocator)>;
+
 using ::unifex::get_scheduler;
 inline const auto& get_executor = get_scheduler;
 using ::unifex::scheduler;

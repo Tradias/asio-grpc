@@ -66,7 +66,11 @@ set(ASIO_GRPC_CPP17_TEST_SOURCE_FILES
 set(ASIO_GRPC_CPP20_TEST_SOURCE_FILES
     "test_asio_grpc_20.cpp" "test_repeatedly_request_20.cpp" "test_bind_allocator_20.cpp" "test_grpc_context_20.cpp"
     "test_grpc_stream_20.cpp" "test_server_rpc_20.cpp")
+
 set_source_files_properties("test_test_17.cpp" PROPERTIES SKIP_UNITY_BUILD_INCLUSION on)
+set_source_files_properties(
+    "test_client_rpc_17.cpp" "test_server_rpc_17.cpp" "test_server_rpc_20.cpp" "test_unifex_20.cpp"
+    PROPERTIES COMPILE_OPTIONS "$<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:Debug>>:/bigobj>")
 
 asio_grpc_add_test(asio-grpc-test-boost-cpp17 "BOOST_ASIO" "17" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES})
 asio_grpc_add_test(asio-grpc-test-cpp17 "STANDALONE_ASIO" "17" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES})

@@ -23,7 +23,21 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail::exec
 {
-using ::stdexec::get_allocator;
+using ::stdexec::get_allocator_t;
+
+template <class Receiver>
+decltype(auto) get_allocator(const Receiver& receiver)
+{
+    if constexpr (::stdexec::tag_invocable<::stdexec::get_allocator_t, ::stdexec::env_of_t<Receiver>>)
+    {
+        return ::stdexec::get_allocator(::stdexec::get_env(receiver));
+    }
+    else
+    {
+        return std::allocator<std::byte>{};
+    }
+}
+
 using ::stdexec::get_scheduler;
 inline const auto& get_executor = get_scheduler;
 using ::stdexec::scheduler;
@@ -40,7 +54,12 @@ inline constexpr bool is_sender_v = ::stdexec::sender<T>;
 using ::exec::inline_scheduler;
 using ::stdexec::connect;
 using ::stdexec::connect_result_t;
-using ::stdexec::get_stop_token;
+
+template <class Receiver>
+decltype(auto) get_stop_token(const Receiver& receiver)
+{
+    return ::stdexec::get_stop_token(::stdexec::get_env(receiver));
+}
 
 template <class Receiver>
 void set_done(Receiver&& receiver)
@@ -52,8 +71,8 @@ using ::stdexec::set_error;
 using ::stdexec::set_value;
 using ::stdexec::start;
 
-template <class T>
-using stop_token_type_t = ::stdexec::stop_token_of_t<T>;
+template <class Receiver>
+using stop_token_type_t = ::stdexec::stop_token_of_t<::stdexec::env_of_t<Receiver>>;
 
 using ::stdexec::tag_t;
 }  // namespace exec

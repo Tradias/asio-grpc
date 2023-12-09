@@ -64,17 +64,18 @@ class BasicSender : public detail::SenderOf<typename Implementation::Signature>
 #ifdef AGRPC_STDEXEC
     template <class Receiver>
     friend detail::BasicSenderOperationState<Initiation, Implementation, detail::RemoveCrefT<Receiver>> tag_invoke(
-        stdexec::connect_t, const BasicSender& s, Receiver&& r)
+        stdexec::connect_t, BasicSender&& s,
+        Receiver&& r) noexcept(noexcept(static_cast<BasicSender&&>(s).connect(static_cast<Receiver&&>(r))))
     {
-        return {static_cast<Receiver&&>(r), s.grpc_context_, s.initiation_, s.implementation_};
+        return static_cast<BasicSender&&>(s).connect(static_cast<Receiver&&>(r));
     }
 
     template <class Receiver>
     friend detail::BasicSenderOperationState<Initiation, Implementation, detail::RemoveCrefT<Receiver>> tag_invoke(
-        stdexec::connect_t, BasicSender&& s, Receiver&& r)
+        stdexec::connect_t, const BasicSender& s,
+        Receiver&& r) noexcept(noexcept(s.connect(static_cast<Receiver&&>(r))))
     {
-        return {static_cast<Receiver&&>(r), s.grpc_context_, s.initiation_,
-                static_cast<Implementation&&>(s.implementation_)};
+        return s.connect(static_cast<Receiver&&>(r));
     }
 #endif
 

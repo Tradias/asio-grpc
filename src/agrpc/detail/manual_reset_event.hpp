@@ -245,13 +245,18 @@ class ManualResetEventOperationState
             state.complete();
             return;
         }
-        if (detail::stop_requested(exec::get_stop_token(state.receiver())))
+        auto stop_token = exec::get_stop_token(state.receiver());
+        if (detail::stop_requested(stop_token))
         {
             exec::set_done(static_cast<Receiver&&>(state.receiver()));
             return;
         }
         state.start();
     }
+
+#ifdef AGRPC_STDEXEC
+    friend void tag_invoke(stdexec::start_t, ManualResetEventOperationState& o) noexcept { o.start(); }
+#endif
 
   private:
     friend ManualResetEventSender<Signature>;
@@ -275,6 +280,15 @@ class ManualResetEventSender : public detail::SenderOf<void()>
     {
         return {static_cast<R&&>(receiver), event_};
     }
+
+#ifdef AGRPC_STDEXEC
+    template <class Receiver>
+    friend auto tag_invoke(stdexec::connect_t, ManualResetEventSender&& s, Receiver&& r) noexcept(
+        noexcept(static_cast<ManualResetEventSender&&>(s).connect(static_cast<Receiver&&>(r))))
+    {
+        return static_cast<ManualResetEventSender&&>(s).connect(static_cast<Receiver&&>(r));
+    }
+#endif
 
   private:
     friend ManualResetEvent<Signature>;

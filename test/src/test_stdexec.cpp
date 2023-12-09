@@ -13,41 +13,116 @@
 // limitations under the License.
 
 #include "utils/client_rpc_test.hpp"
+#include "utils/server_rpc.hpp"
 #include "utils/time.hpp"
 
+#include <agrpc/asio_grpc.hpp>
+#include <exec/finally.hpp>
+#include <exec/task.hpp>
 #include <stdexec/execution.hpp>
 
-template <class... Sender>
-void run(agrpc::GrpcContext& grpc_context, Sender&&... sender)
+template <class ClientRPC>
+struct StdexecTest : test::ClientServerRPCTest<ClientRPC>
 {
-    grpc_context.work_started();
-    stdexec::sync_wait(stdexec::when_all(stdexec::then(stdexec::when_all(std::forward<Sender>(sender)...),
-                                                       [&](auto&&...)
-                                                       {
-                                                           grpc_context.work_finished();
-                                                       }),
-                                         stdexec::then(stdexec::just(),
-                                                       [&]
-                                                       {
-                                                           grpc_context.run();
-                                                       })));
+    template <class... Sender>
+    void run(Sender&&... sender)
+    {
+        this->grpc_context.work_started();
+        stdexec::sync_wait(stdexec::when_all(exec::finally(stdexec::when_all(std::forward<Sender>(sender)...),
+                                                           stdexec::then(stdexec::just(),
+                                                                         [&]()
+                                                                         {
+                                                                             this->grpc_context.work_finished();
+                                                                         })),
+                                             stdexec::then(stdexec::just(),
+                                                           [&]
+                                                           {
+                                                               this->grpc_context.run();
+                                                           })));
+    }
+};
+
+TEST_CASE_FIXTURE(StdexecTest<test::UnaryClientRPC>, "stdexec UnaryClientRPC success")
+{
+    run(agrpc::register_sender_rpc_handler<ServerRPC>(grpc_context, service,
+                                                      [&](ServerRPC& rpc, Request& request)
+                                                      {
+                                                          CHECK_EQ(1, request.integer());
+                                                          return stdexec::let_value(stdexec::just(Response{}),
+                                                                                    [&](Response& response)
+                                                                                    {
+                                                                                        response.set_integer(11);
+                                                                                        return rpc.finish(
+                                                                                            response, grpc::Status::OK);
+                                                                                    });
+                                                      }),
+        stdexec::just(Request{}, Response{}) |
+            stdexec::let_value(
+                [&](Request& request, Response& response)
+                {
+                    request.set_integer(1);
+                    return request_rpc(client_context, request, response, agrpc::use_sender);
+                }) |
+            stdexec::then(
+                [&](const grpc::Status& status)
+                {
+                    CHECK_EQ(grpc::StatusCode::OK, status.error_code());
+                    server_shutdown.initiate();
+                }));
 }
 
-TEST_CASE_FIXTURE(test::ClientServerRPCTest<test::UnaryClientRPC>,
+TEST_CASE_FIXTURE(StdexecTest<test::UnaryClientRPC>,
                   "stdexec Unary ClientRPC::request automatically finishes rpc on error")
 {
     server->Shutdown();
     client_context.set_deadline(test::ten_milliseconds_from_now());
     ClientRPC::Request request;
     ClientRPC::Response response;
-    auto s = stdexec::then(request_rpc(true, client_context, request, response, agrpc::use_sender),
-                           [](const auto& status)
-                           {
-                               const auto status_code = status.error_code();
-                               CHECK_MESSAGE((grpc::StatusCode::DEADLINE_EXCEEDED == status_code ||
-                                              grpc::StatusCode::UNAVAILABLE == status_code),
-                                             status_code);
-                           });
-    run(grpc_context, std::move(s));
-    grpc_context.run();
+    run(stdexec::then(request_rpc(true, client_context, request, response, agrpc::use_sender),
+                      [](const auto& status)
+                      {
+                          const auto status_code = status.error_code();
+                          CHECK_MESSAGE((grpc::StatusCode::DEADLINE_EXCEEDED == status_code ||
+                                         grpc::StatusCode::UNAVAILABLE == status_code),
+                                        status_code);
+                      }));
+}
+
+TEST_CASE_FIXTURE(StdexecTest<test::ClientStreamingClientRPC>, "stdexec ClientStreamingRPC wait_for_done")
+{
+    bool is_cancelled{true};
+    ClientRPC rpc{grpc_context};
+    Response response;
+    run(agrpc::register_sender_rpc_handler<test::NotifyWhenDoneClientStreamingServerRPC>(
+            grpc_context, service,
+            [&](test::NotifyWhenDoneClientStreamingServerRPC& rpc)
+            {
+                return stdexec::when_all(stdexec::then(rpc.wait_for_done(),
+                                                       [&]()
+                                                       {
+                                                           is_cancelled = rpc.context().IsCancelled();
+                                                       }),
+                                         stdexec::let_value(stdexec::just(Response{}),
+                                                            [&](Response& response)
+                                                            {
+                                                                return rpc.finish(response, grpc::Status::OK);
+                                                            }));
+            }),
+        stdexec::just(Request{}) |
+            stdexec::let_value(
+                [&](Request& request)
+                {
+                    return start_rpc(rpc, request, response, agrpc::use_sender);
+                }) |
+            stdexec::let_value(
+                [&](bool)
+                {
+                    return rpc.finish();
+                }) |
+            stdexec::then(
+                [&](const grpc::Status&)
+                {
+                    server_shutdown.initiate();
+                }));
+    CHECK_FALSE(is_cancelled);
 }
