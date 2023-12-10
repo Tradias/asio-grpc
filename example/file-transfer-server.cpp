@@ -16,6 +16,7 @@
 #include "example/v1/example.grpc.pb.h"
 #include "example/v1/example_ext.grpc.pb.h"
 #include "helper.hpp"
+#include "rethrow_first_arg.hpp"
 #include "scope_guard.hpp"
 #include "server_shutdown_asio.hpp"
 
@@ -118,14 +119,6 @@ asio::awaitable<bool, agrpc::GrpcExecutor> handle_send_file_request(asio::io_con
     co_return co_await rpc.finish({}, grpc::Status::OK, buffer1.bind_allocator(USE_AWAITABLE));
 }
 
-void rethrow_first_arg(const std::exception_ptr& ep)
-{
-    if (ep)
-    {
-        std::rethrow_exception(ep);
-    }
-}
-
 void run_io_context(asio::io_context& io_context)
 {
     try
@@ -172,7 +165,7 @@ int main(int argc, const char** argv)
                 abort_if_not(co_await handle_send_file_request(io_context, rpc, file_path));
                 shutdown.shutdown();
             },
-            &rethrow_first_arg);
+            example::RethrowFirstArg{});
 
         std::thread io_context_thread{&run_io_context, std::ref(io_context)};
         example::ScopeGuard on_exit{[&]

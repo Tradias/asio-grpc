@@ -16,6 +16,7 @@
 #include "example/v1/example.grpc.pb.h"
 #include "example/v1/example_ext.grpc.pb.h"
 #include "helper.hpp"
+#include "rethrow_first_arg.hpp"
 #include "server_shutdown_asio.hpp"
 
 #include <agrpc/asio_grpc.hpp>
@@ -214,16 +215,16 @@ int main(int argc, const char** argv)
     asio::thread_pool thread_pool{1};
 
     agrpc::register_awaitable_rpc_handler<ClientStreamingRPC>(grpc_context, service, &handle_client_streaming_request,
-                                                              asio::detached);
+                                                              example::RethrowFirstArg{});
 
     agrpc::register_awaitable_rpc_handler<ServerStreamingRPC>(grpc_context, service, &handle_server_streaming_request,
-                                                              asio::detached);
+                                                              example::RethrowFirstArg{});
 
     agrpc::register_awaitable_rpc_handler<BidiStreamingRPC>(
-        grpc_context, service, bidirectional_streaming_rpc_handler(thread_pool), asio::detached);
+        grpc_context, service, bidirectional_streaming_rpc_handler(thread_pool), example::RethrowFirstArg{});
 
     agrpc::register_awaitable_rpc_handler<SlowUnaryRPC>(grpc_context, service_ext, &handle_slow_unary_request,
-                                                        asio::detached);
+                                                        example::RethrowFirstArg{});
 
     agrpc::register_awaitable_rpc_handler<ShutdownRPC>(
         grpc_context, service_ext,
@@ -235,7 +236,7 @@ int main(int argc, const char** argv)
                 server_shutdown.shutdown();
             }
         },
-        asio::detached);
+        example::RethrowFirstArg{});
 
     grpc_context.run();
     std::cout << "Shutdown completed\n";

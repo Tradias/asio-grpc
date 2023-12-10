@@ -16,6 +16,7 @@
 #include "example/v1/example.grpc.pb.h"
 #include "example/v1/example_ext.grpc.pb.h"
 #include "helper.hpp"
+#include "rethrow_first_arg.hpp"
 
 #include <agrpc/alarm.hpp>
 #include <agrpc/client_rpc.hpp>
@@ -231,7 +232,7 @@ int main(int argc, const char** argv)
             co_await make_and_cancel_unary_request(grpc_context, stub_ext);
             co_await make_shutdown_request(grpc_context, stub_ext);
         },
-        asio::detached);
+        example::RethrowFirstArg{});
 
     grpc_context.run();
 }

@@ -15,6 +15,7 @@
 #include "awaitable_client_rpc.hpp"
 #include "helloworld/helloworld.grpc.pb.h"
 #include "helper.hpp"
+#include "rethrow_first_arg.hpp"
 
 #include <agrpc/asio_grpc.hpp>
 #include <boost/asio/co_spawn.hpp>
@@ -106,7 +107,7 @@ int main(int argc, const char** argv)
     for (size_t i{}; i < 20; ++i)
     {
         auto& grpc_context = round_robin_grpc_contexts.next()->context;
-        boost::asio::co_spawn(grpc_context, make_request(grpc_context, stub), boost::asio::detached);
+        asio::co_spawn(grpc_context, make_request(grpc_context, stub), example::RethrowFirstArg{});
     }
 
     for (auto& grpc_context : grpc_contexts)

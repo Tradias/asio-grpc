@@ -15,6 +15,7 @@
 #include "awaitable_client_rpc.hpp"
 #include "helloworld/helloworld.grpc.pb.h"
 #include "helper.hpp"
+#include "rethrow_first_arg.hpp"
 
 #include <agrpc/asio_grpc.hpp>
 #include <boost/asio/co_spawn.hpp>
@@ -46,7 +47,7 @@ int main(int argc, const char** argv)
             status = co_await RPC::request(grpc_context, stub, client_context, request, response);
             std::cout << status.ok() << " response: " << response.message() << std::endl;
         },
-        asio::detached);
+        example::RethrowFirstArg{});
 
     grpc_context.run();
 

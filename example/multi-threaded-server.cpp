@@ -14,6 +14,7 @@
 
 #include "grpc/health/v1/health.grpc.pb.h"
 #include "helloworld/helloworld.grpc.pb.h"
+#include "rethrow_first_arg.hpp"
 #include "server_shutdown_asio.hpp"
 
 #include <agrpc/asio_grpc.hpp>
@@ -56,7 +57,7 @@ void register_request_handler(agrpc::GrpcContext& grpc_context, helloworld::Gree
                            }
                        });
         },
-        asio::detached);
+        example::RethrowFirstArg{});
 }
 
 int main(int argc, const char** argv)

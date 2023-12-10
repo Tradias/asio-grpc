@@ -15,6 +15,8 @@
 #ifndef AGRPC_HELPER_YIELD_HELPER_HPP
 #define AGRPC_HELPER_YIELD_HELPER_HPP
 
+#include "rethrow_first_arg.hpp"
+
 #include <agrpc/grpc_context.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/compose.hpp>
@@ -30,7 +32,7 @@ template <class Executor, class Function>
 void spawn(Executor&& executor, Function&& function)
 {
 #if (BOOST_VERSION >= 108000)
-    boost::asio::spawn(std::forward<Executor>(executor), std::forward<Function>(function), boost::asio::detached);
+    boost::asio::spawn(std::forward<Executor>(executor), std::forward<Function>(function), example::RethrowFirstArg{});
 #else
     boost::asio::spawn(std::forward<Executor>(executor), std::forward<Function>(function));
 #endif
@@ -52,19 +54,6 @@ auto initiate_spawn(Executor&& executor, Function&& function, CompletionToken&& 
         },
         bound_token, std::forward<Function>(function));
 #endif
-}
-
-inline void rethrow_exception_ptr(std::exception_ptr ep)
-{
-    if (ep)
-    {
-        std::rethrow_exception(ep);
-    }
-}
-
-template <class T>
-void rethrow_exception_ptr(T&&)
-{
 }
 
 template <class... Function>
@@ -104,7 +93,7 @@ struct SpawnAllVoid
     template <class Self, class... T>
     void operator()(Self& self, T&&... t)
     {
-        (example::rethrow_exception_ptr(t), ...);
+        (example::RethrowFirstArg{}(t), ...);
         self.complete();
     }
 };

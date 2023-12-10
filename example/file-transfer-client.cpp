@@ -15,6 +15,7 @@
 #include "buffer.hpp"
 #include "example/v1/example_ext.grpc.pb.h"
 #include "helper.hpp"
+#include "rethrow_first_arg.hpp"
 #include "scope_guard.hpp"
 
 #include <agrpc/asio_grpc.hpp>
@@ -176,13 +177,7 @@ int main(int argc, const char** argv)
                 abort_if_not(
                     co_await make_double_buffered_send_file_request(grpc_context, io_context, stub_ext, file_path));
             },
-            [](auto&& ep)
-            {
-                if (ep)
-                {
-                    std::rethrow_exception(ep);
-                }
-            });
+            example::RethrowFirstArg{});
 
         std::thread io_context_thread{&run_io_context, std::ref(io_context)};
         example::ScopeGuard on_exit{[&]

@@ -223,7 +223,7 @@ jobs:
       run: cmake --build ${{ github.workspace }}/build-12 --config Release --parallel $(nproc)
 
     - name: Clang 12 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-12 -DCMAKE_CXX_COMPILER=$(which clang++-12) -DDOXYGEN_EXECUTABLE=${{ runner.workspace }}/doxygen/bin/doxygen -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on -DASIO_GRPC_ENABLE_STDEXEC_TESTS=on ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
+      run: cmake --preset default -B ${{ github.workspace }}/build-12 -DCMAKE_CXX_COMPILER=$(which clang++-12) -DDOXYGEN_EXECUTABLE=${{ runner.workspace }}/doxygen/bin/doxygen -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
 
     - name: Clang 12 Build
       run: cmake --build ${{ github.workspace }}/build-12 --config Release --parallel $(nproc) --target asio-grpc-check-header-syntax all

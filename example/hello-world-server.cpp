@@ -14,6 +14,7 @@
 
 #include "awaitable_server_rpc.hpp"
 #include "helloworld/helloworld.grpc.pb.h"
+#include "rethrow_first_arg.hpp"
 
 #include <agrpc/asio_grpc.hpp>
 #include <boost/asio/co_spawn.hpp>
@@ -53,7 +54,7 @@ int main(int argc, const char** argv)
             co_await rpc.finish(response, grpc::Status::OK);
             server->Shutdown();
         },
-        asio::detached);
+        example::RethrowFirstArg{});
 
     grpc_context.run();
 }

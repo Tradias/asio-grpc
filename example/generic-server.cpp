@@ -241,11 +241,11 @@ int main(int argc, const char** argv)
                 server_shutdown.shutdown();
             }
         },
-        asio::detached);
+        example::RethrowFirstArg{});
 
     asio::thread_pool thread_pool{1};
     agrpc::register_yield_rpc_handler<agrpc::GenericServerRPC>(
-        grpc_context, service, GenericRequestHandler{grpc_context, thread_pool}, asio::detached);
+        grpc_context, service, GenericRequestHandler{grpc_context, thread_pool}, example::RethrowFirstArg{});
 
     grpc_context.run();
 }

@@ -15,6 +15,7 @@
 #include "awaitable_client_rpc.hpp"
 #include "example/v1/example.grpc.pb.h"
 #include "helper.hpp"
+#include "rethrow_first_arg.hpp"
 
 #include <agrpc/asio_grpc.hpp>
 #include <boost/asio/bind_executor.hpp>
@@ -85,7 +86,7 @@ int main(int argc, const char** argv)
             co_await (make_grpc_request(grpc_context, stub) && make_tcp_request(tcp_port));
             grpc_context_work_guard.reset();
         },
-        asio::detached);
+        example::RethrowFirstArg{});
     /* [co_spawn_io_context_and_grpc_context] */
 
     /* [agrpc_run_io_context_shared_work_tracking] */

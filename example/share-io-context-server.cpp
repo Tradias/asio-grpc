@@ -15,6 +15,7 @@
 #include "awaitable_server_rpc.hpp"
 #include "example/v1/example.grpc.pb.h"
 #include "helper.hpp"
+#include "rethrow_first_arg.hpp"
 #include "server_shutdown_asio.hpp"
 
 #include <agrpc/asio_grpc.hpp>
@@ -83,9 +84,9 @@ int main(int argc, const char** argv)
             co_await rpc.finish(response, grpc::Status::OK);
             server_shutdown.shutdown();
         },
-        asio::detached);
+        example::RethrowFirstArg{});
 
-    asio::co_spawn(io_context, handle_tcp_request(tcp_port), asio::detached);
+    asio::co_spawn(io_context, handle_tcp_request(tcp_port), example::RethrowFirstArg{});
 
     // First, initiate the io_context's thread_local variables by posting on it. The io_context uses them to optimize
     // dynamic memory allocations. This is an optional step but it can improve performance.
