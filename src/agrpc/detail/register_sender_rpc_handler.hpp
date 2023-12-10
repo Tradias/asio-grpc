@@ -159,7 +159,7 @@ struct RPCHandlerOperation
     struct StartReceiver
     {
 #ifdef AGRPC_STDEXEC
-        using receiver_concept = stdexec::receiver_t;
+        using is_receiver = void;
 #endif
 
         RPCHandlerOperation& rpc_handler_op_;
@@ -209,7 +209,7 @@ struct RPCHandlerOperation
     struct Receiver
     {
 #ifdef AGRPC_STDEXEC
-        using receiver_concept = stdexec::receiver_t;
+        using is_receiver = void;
 #endif
 
         RPCHandlerOperation& op_;

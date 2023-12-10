@@ -15,14 +15,14 @@ An [Executor, Networking TS](https://www.boost.org/doc/libs/1_81_0/doc/html/boos
 * Support for generic gRPC clients and servers (aka. proxies)
 * No extra codegen required, works with the vanilla gRPC C++ plugin (`grpc_cpp_plugin`)
 * No-Boost version with [standalone Asio](https://github.com/chriskohlhoff/asio)
-* No-Asio version with [libunifex](https://github.com/facebookexperimental/libunifex)
+* No-Asio version with [libunifex](https://github.com/facebookexperimental/libunifex) or [stdexec](https://github.com/NVIDIA/stdexec)
 * CMake function to generate gRPC source files: [asio_grpc_protobuf_generate](/cmake/AsioGrpcProtobufGenerator.cmake)
 
 # Requirements
 
 Asio-grpc is a C++17, header-only library. To install it, CMake (3.14+) is all that is needed.
 
-To use it, [gRPC](https://grpc.io/) and either [Boost.Asio](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio.html) (min. 1.74.0), [standalone Asio](https://github.com/chriskohlhoff/asio) (min. 1.17.0) or [libunifex](https://github.com/facebookexperimental/libunifex) must be present and linked into your application.
+To use it, [gRPC](https://grpc.io/) and either [Boost.Asio](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio.html) (min. 1.74.0), [standalone Asio](https://github.com/chriskohlhoff/asio) (min. 1.17.0), [libunifex](https://github.com/facebookexperimental/libunifex) or [stdexec](https://github.com/NVIDIA/stdexec) must be present and linked into your application.
 
 Supported compilers are GCC 8+, Clang 10+, AppleClang 14+ and latest MSVC.
 
@@ -66,6 +66,15 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-unifex)
 # Also link with the equivalents of gRPC::grpc++ and unifex::unifex
 ```
 
+Or using [stdexec](https://github.com/NVIDIA/stdexec):
+
+```cmake
+add_subdirectory(/path/to/asio-grpc)
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-stdexec)
+
+# Also link with the equivalents of gRPC::grpc++ and STDEXEC::stdexec
+```
+
 </p>
 </details>
 
@@ -105,6 +114,14 @@ find_package(asio-grpc)
 target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-unifex)
 ```
 
+Or using [stdexec](https://github.com/NVIDIA/stdexec):
+
+```cmake
+# Make sure CMAKE_PREFIX_PATH contains /desired/installation/directory
+find_package(asio-grpc)
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-stdexec)
+```
+
 </p>
 </details>
 
@@ -124,7 +141,9 @@ Add [asio-grpc](https://github.com/microsoft/vcpkg/blob/master/ports/asio-grpc/v
         // To use the standalone Asio backend add
         // "asio",
         // To use the libunifex backend add
-        // "libunifex"
+        // "libunifex",
+        // To use the stdexec backend add
+        // "stdexec"
     ]
 }
 ```
@@ -139,6 +158,8 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
 #target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-standalone-asio)
 # Or use the libunifex backend
 #target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-unifex)
+# Or use the stdexec backend
+#target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-stdexec)
 ```
 
 </p>
@@ -176,7 +197,7 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
 This type of usage is unsupported. Future versions of asio-grpc might break it without notice.
 
 Copy the contents of the `src/` directory into your project and add it to your project's include directories. Depending on your desired backend: Boost.Asio, 
-standalone Asio or libunifex, set the preprocessor definitions `AGRPC_BOOST_ASIO`, `AGRPC_STANDALONE_ASIO` or `AGRPC_UNIFEX` respectively. Also make sure that 
+standalone Asio, libunifex or stdexec, set the preprocessor definitions `AGRPC_BOOST_ASIO`, `AGRPC_STANDALONE_ASIO`, `AGRPC_UNIFEX` or `AGRPC_STDEXEC` respectively. Also make sure that 
 the backend's header files and libraries can be found correctly.
 
 </p>

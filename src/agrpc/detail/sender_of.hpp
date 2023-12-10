@@ -39,7 +39,7 @@ struct SenderOf<void(Values...)>
     static constexpr bool sends_done = true;
 
 #ifdef AGRPC_STDEXEC
-    using sender_concept = stdexec::sender_t;
+    using is_sender = void;
 
     using completion_signatures =
         stdexec::completion_signatures<stdexec::set_value_t(Values...), stdexec::set_error_t(std::exception_ptr),

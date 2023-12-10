@@ -245,8 +245,7 @@ class ManualResetEventOperationState
             state.complete();
             return;
         }
-        auto stop_token = exec::get_stop_token(state.receiver());
-        if (detail::stop_requested(stop_token))
+        if (auto stop_token = exec::get_stop_token(state.receiver()); detail::stop_requested(stop_token))
         {
             exec::set_done(static_cast<Receiver&&>(state.receiver()));
             return;
