@@ -13,7 +13,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // A simple client-streaming request with coroutines.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/streaming-client.cpp#L40-L44' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-client-rpc-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-client.cpp#L41-L45' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-client-rpc-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: client-rpc-server-streaming -->
@@ -23,7 +23,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // A simple server-streaming request with coroutines.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/streaming-client.cpp#L74-L78' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-rpc-server-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-client.cpp#L75-L79' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-rpc-server-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: client-rpc-bidirectional-streaming -->
@@ -33,7 +33,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // A bidirectional-streaming request that simply sends the response from the server back to it.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/streaming-client.cpp#L105-L109' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-rpc-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-client.cpp#L106-L110' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-rpc-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: client-side-run-with-deadline -->
@@ -45,7 +45,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // For unary RPCs, `grpc::ClientContext::set_deadline` should be preferred.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/streaming-client.cpp#L149-L155' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-run-with-deadline' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-client.cpp#L150-L156' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-run-with-deadline' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Multi-threaded
@@ -57,7 +57,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // Multi-threaded client performing 20 unary requests
 // ---------------------------------------------------
 ```
-<sup><a href='/example/multi-threaded-client.cpp#L32-L36' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-multi-threaded' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/multi-threaded-client.cpp#L33-L37' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-multi-threaded' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Generic
@@ -92,7 +92,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // Example showing how to run an io_context and a GrpcContext on the same thread for gRPC clients.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/share-io-context-client.cpp#L33-L37' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-share-io-context' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/share-io-context-client.cpp#L34-L38' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-share-io-context' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### io_uring file transfer
@@ -104,7 +104,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // Example showing how to transfer files over a streaming RPC. Stack buffers are used to customize memory allocation.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/file-transfer-client.cpp#L38-L42' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-file-transfer' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/file-transfer-client.cpp#L39-L43' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-file-transfer' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Asio server-side
@@ -118,7 +118,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // Server-side hello world which handles exactly one request from the client before shutting down.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/hello-world-server.cpp#L27-L31' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/hello-world-server.cpp#L28-L32' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Streaming RPCs
@@ -130,7 +130,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // A simple client-streaming rpc handler using C++20 coroutines.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/streaming-server.cpp#L40-L44' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-client-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-server.cpp#L41-L45' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-client-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: server-side-server-streaming -->
@@ -140,7 +140,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // A simple server-streaming rpc handler using C++20 coroutines.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/streaming-server.cpp#L74-L78' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-server-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-server.cpp#L75-L79' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-server-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: server-side-bidirectional-streaming -->
@@ -151,7 +151,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // back to the client.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/streaming-server.cpp#L94-L99' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-server.cpp#L95-L100' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Multi-threaded
@@ -163,7 +163,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // Multi-threaded server performing 20 unary requests using callback API
 // ---------------------------------------------------
 ```
-<sup><a href='/example/multi-threaded-server.cpp#L31-L35' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-multi-threaded' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/multi-threaded-server.cpp#L32-L36' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-multi-threaded' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Generic
@@ -200,7 +200,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // creating a separate thread for the GrpcContext might be undesirable due to added synchronization complexity.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/share-io-context-server.cpp#L34-L40' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-share-io-context' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/share-io-context-server.cpp#L35-L41' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-share-io-context' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### io_uring file transfer
@@ -212,7 +212,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // Example showing how to transfer files over a streaming RPC. Stack buffers are used to customize memory allocation.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/file-transfer-server.cpp#L39-L43' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-file-transfer' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/file-transfer-server.cpp#L40-L44' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-file-transfer' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Libunifex
