@@ -79,6 +79,9 @@ using ::stdexec::start;
 template <class Receiver>
 using stop_token_type_t = ::stdexec::stop_token_of_t<::stdexec::env_of_t<Receiver>>;
 
+using ::stdexec::stoppable_token;
+using ::stdexec::unstoppable_token;
+
 using ::stdexec::tag_t;
 }  // namespace exec
 

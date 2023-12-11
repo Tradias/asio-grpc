@@ -121,6 +121,21 @@ constexpr UnstoppableToken get_stop_token(const Receiver&) noexcept
 template <class>
 using stop_token_type_t = UnstoppableToken;
 
+template <class T, class = void>
+inline constexpr bool stoppable_token = false;
+
+template <class T>
+inline constexpr bool stoppable_token<T, decltype((void)std::declval<T>().stop_possible())> = true;
+
+template <class T, class = std::false_type>
+inline constexpr bool unstoppable_token = false;
+
+template <class T>
+using UnstoppableTokenHelper = std::bool_constant<(T{}.stop_possible())>;
+
+template <class T>
+inline constexpr bool unstoppable_token<T, exec::UnstoppableTokenHelper<T>> = true;
+
 namespace detail
 {
 template <class T>

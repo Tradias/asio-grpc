@@ -25,14 +25,8 @@ namespace detail
 template <class CancellationSlot>
 inline constexpr bool IS_CANCELLATION_SLOT = false;
 
-template <class T, class = std::false_type>
-inline constexpr bool IS_STOP_EVER_POSSIBLE_V = true;
-
 template <class T>
-using IsStopEverPossibleHelper = std::bool_constant<(T{}.stop_possible())>;
-
-template <class T>
-inline constexpr bool IS_STOP_EVER_POSSIBLE_V<T, detail::IsStopEverPossibleHelper<T>> = false;
+inline constexpr bool IS_STOP_EVER_POSSIBLE_V = !exec::unstoppable_token<T>;
 
 template <class T>
 inline constexpr bool IS_EXECUTOR = exec::scheduler<T>;

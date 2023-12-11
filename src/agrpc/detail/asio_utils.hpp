@@ -15,6 +15,7 @@
 #ifndef AGRPC_DETAIL_ASIO_UTILS_HPP
 #define AGRPC_DETAIL_ASIO_UTILS_HPP
 
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/execution.hpp>
 
@@ -91,7 +92,7 @@ void complete_immediately(CompletionHandler&& completion_handler, Function&& fun
 #endif
 }
 
-struct UncancellableToken
+struct UncancellableSlot
 {
     static constexpr bool is_connected() noexcept { return false; }
 };
@@ -100,9 +101,9 @@ template <class Object>
 auto get_cancellation_slot([[maybe_unused]] const Object& object) noexcept
 {
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-    return asio::get_associated_cancellation_slot(object, UncancellableToken{});
+    return asio::get_associated_cancellation_slot(object, UncancellableSlot{});
 #else
-    return UncancellableToken{};
+    return UncancellableSlot{};
 #endif
 }
 

@@ -23,24 +23,14 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class CancellationSlot, class = void>
-inline constexpr bool IS_CANCELLATION_SLOT = true;
-
 template <class CancellationSlot>
-inline constexpr bool
-    IS_CANCELLATION_SLOT<CancellationSlot, decltype((void)std::declval<CancellationSlot>().stop_requested())> = false;
-
-template <class T, class = std::false_type>
-inline constexpr bool IS_STOP_EVER_POSSIBLE_V = IS_CANCELLATION_SLOT<T>;
+inline constexpr bool IS_CANCELLATION_SLOT = !exec::stoppable_token<CancellationSlot>;
 
 template <class T>
-using IsStopEverPossibleHelper = std::bool_constant<(T{}.stop_possible())>;
-
-template <class T>
-inline constexpr bool IS_STOP_EVER_POSSIBLE_V<T, detail::IsStopEverPossibleHelper<T>> = false;
+inline constexpr bool IS_STOP_EVER_POSSIBLE_V = !exec::unstoppable_token<T>;
 
 template <>
-inline constexpr bool IS_STOP_EVER_POSSIBLE_V<UncancellableToken> = false;
+inline constexpr bool IS_STOP_EVER_POSSIBLE_V<UncancellableSlot> = false;
 
 template <class T>
 inline constexpr bool IS_EXECUTOR = asio::is_executor<T>::value || asio::execution::is_executor_v<T>;
