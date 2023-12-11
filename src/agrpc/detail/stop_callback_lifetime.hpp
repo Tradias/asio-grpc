@@ -31,22 +31,34 @@ inline constexpr bool NEEDS_STOP_CALLBACK = detail::IS_STOP_EVER_POSSIBLE_V<Stop
 template <class StopToken>
 inline constexpr bool NEEDS_STOP_CALLBACK<StopToken, detail::Empty> = false;
 
-template <class StopToken, class StopFunction, bool = detail::NEEDS_STOP_CALLBACK<StopToken, StopFunction>>
-class StopCallbackLifetime
+template <class CancellationSlot, class StopFunction, bool = detail::IS_CANCELLATION_SLOT<CancellationSlot>>
+struct CancellationSlotToken
 {
-#if defined(AGRPC_UNIFEX) || defined(AGRPC_STDEXEC)
+    static constexpr void reset() noexcept {}
+
+    template <class... Args>
+    static void emplace(CancellationSlot&& slot, Args&&... args) noexcept
+    {
+        if (slot.is_connected())
+        {
+            slot.template emplace<StopFunction>(static_cast<Args&&>(args)...);
+        }
+    }
+};
+
+template <class StopToken, class StopFunction>
+struct CancellationSlotToken<StopToken, StopFunction, false>
+{
   private:
     using StopCallback = std::optional<typename StopToken::template callback_type<StopFunction>>;
 
   public:
-    static constexpr bool IS_STOPPABLE = true;
-
     void reset() noexcept { stop_callback_.reset(); }
 
     template <class... Args>
     void emplace(StopToken&& stop_token, Args&&... args) noexcept
     {
-        if (detail::stop_possible(stop_token))
+        if (stop_token.stop_possible())
         {
             stop_callback_.emplace(static_cast<StopToken&&>(stop_token), static_cast<Args&&>(args)...);
         }
@@ -54,21 +66,13 @@ class StopCallbackLifetime
 
   private:
     StopCallback stop_callback_;
-#else
+};
+
+template <class StopToken, class StopFunction, bool = detail::NEEDS_STOP_CALLBACK<StopToken, StopFunction>>
+class StopCallbackLifetime : public CancellationSlotToken<StopToken, StopFunction>
+{
   public:
     static constexpr bool IS_STOPPABLE = true;
-
-    static constexpr void reset() noexcept {}
-
-    template <class... Args>
-    static void emplace(StopToken&& stop_token, Args&&... args) noexcept
-    {
-        if (detail::stop_possible(stop_token))
-        {
-            stop_token.template emplace<StopFunction>(static_cast<Args&&>(args)...);
-        }
-    }
-#endif
 };
 
 template <class StopToken, class StopFunction>

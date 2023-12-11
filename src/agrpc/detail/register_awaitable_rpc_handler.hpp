@@ -16,7 +16,6 @@
 #define AGRPC_DETAIL_REGISTER_AWAITABLE_RPC_HANDLER_HPP
 
 #include <agrpc/bind_allocator.hpp>
-#include <agrpc/detail/allocate_operation.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/coroutine_traits.hpp>
 #include <agrpc/detail/register_rpc_handler_asio_base.hpp>

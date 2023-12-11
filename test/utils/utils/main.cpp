@@ -14,8 +14,6 @@
 
 #include <gmock/gmock.h>
 
-#include <string_view>
-
 #define DOCTEST_CONFIG_IMPLEMENT
 #include <doctest/doctest.h>
 
@@ -33,9 +31,9 @@ int main(int argc, char** argv)
             {
                 return;
             }
-            const auto file = result.file_name() ? result.file_name() : "unknown";
-            const auto line = result.line_number() != -1 ? result.line_number() : 0;
-            const std::string_view message = result.message() ? result.message() : "no message";
+            const char* file = result.file_name() ? result.file_name() : "unknown";
+            const int line = result.line_number() != -1 ? result.line_number() : 0;
+            const char* message = result.message() ? result.message() : "no message";
             if (result.nonfatally_failed())
             {
                 ADD_FAIL_CHECK_AT(file, line, message);

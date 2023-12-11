@@ -17,8 +17,8 @@
 
 #include <agrpc/detail/allocate.hpp>
 #include <agrpc/detail/allocation_type.hpp>
+#include <agrpc/detail/association.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
 #include <agrpc/detail/operation.hpp>
 #include <agrpc/detail/utility.hpp>
@@ -37,7 +37,7 @@ inline constexpr bool IS_STD_ALLOCATOR<std::allocator<T>> = true;
 template <template <class> class OperationTemplate, class Handler, class... Args>
 auto allocate_custom_operation(Handler&& handler, Args&&... args)
 {
-    const auto allocator = exec::get_allocator(handler);
+    const auto allocator = detail::get_allocator(handler);
     auto operation = detail::allocate<OperationTemplate<detail::RemoveCrefT<Handler>>>(
         allocator, detail::AllocationType::CUSTOM, static_cast<Handler&&>(handler), static_cast<Args&&>(args)...);
     return operation.release();
@@ -47,7 +47,7 @@ template <template <class> class OperationTemplate, class Handler, class... Args
 auto allocate_local_operation(agrpc::GrpcContext& grpc_context, Handler&& handler, Args&&... args)
 {
     using DecayedHandler = detail::RemoveCrefT<Handler>;
-    auto allocator = exec::get_allocator(handler);
+    auto allocator = detail::get_allocator(handler);
     if constexpr (detail::IS_STD_ALLOCATOR<decltype(allocator)>)
     {
         auto operation = detail::allocate<OperationTemplate<DecayedHandler>>(

@@ -17,8 +17,8 @@
 
 #include <agrpc/detail/allocate.hpp>
 #include <agrpc/detail/allocation_type.hpp>
+#include <agrpc/detail/association.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/operation_base.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -43,7 +43,7 @@ class NoArgOperation : public detail::QueueableOperationBase
 
     [[nodiscard]] Handler& completion_handler() noexcept { return handler_; }
 
-    [[nodiscard]] auto get_allocator() noexcept { return exec::get_allocator(handler_); }
+    [[nodiscard]] auto get_allocator() noexcept { return detail::get_allocator(handler_); }
 
   private:
     Handler handler_;
@@ -67,7 +67,7 @@ class GrpcTagOperation : public detail::OperationBase
 
     [[nodiscard]] Handler& completion_handler() noexcept { return handler_; }
 
-    [[nodiscard]] auto get_allocator() noexcept { return exec::get_allocator(handler_); }
+    [[nodiscard]] auto get_allocator() noexcept { return detail::get_allocator(handler_); }
 
   private:
     Handler handler_;

@@ -374,7 +374,7 @@ class RPCHandlerSenderOperation
             return;
         }
         auto stop_token = exec::get_stop_token(receiver_);
-        if (detail::stop_requested(stop_token))
+        if (stop_token.stop_requested())
         {
             exec::set_done(static_cast<Receiver&&>(receiver_));
             return;

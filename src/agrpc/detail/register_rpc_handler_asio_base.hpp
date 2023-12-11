@@ -35,13 +35,13 @@ inline constexpr auto REGISTER_RPC_HANDLER_COMPLETE =
 template <class ServerRPC, class RPCHandler, class CompletionHandlerT>
 class RegisterRPCHandlerOperationAsioBase
     : public detail::RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler,
-                                                     exec::stop_token_type_t<CompletionHandlerT&>>,
+                                                     detail::CancellationSlotT<CompletionHandlerT&>>,
       public detail::QueueableOperationBase,
       private detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandlerT>>
 {
   public:
     using CompletionHandler = CompletionHandlerT;
-    using StopToken = exec::stop_token_type_t<CompletionHandlerT&>;
+    using StopToken = detail::CancellationSlotT<CompletionHandlerT&>;
 
   private:
     using Base = detail::RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler, StopToken>;
@@ -73,14 +73,14 @@ class RegisterRPCHandlerOperationAsioBase
                                         Ch&& completion_handler, detail::OperationOnComplete on_complete)
         : Base(executor, service, static_cast<RPCHandler&&>(rpc_handler)),
           detail::QueueableOperationBase(on_complete),
-          WorkTracker(exec::get_executor(completion_handler)),
+          WorkTracker(asio::get_associated_executor(completion_handler)),
           completion_handler_(static_cast<Ch&&>(completion_handler))
     {
         this->grpc_context().work_started();
-        this->stop_context_.emplace(exec::get_stop_token(completion_handler_));
+        this->stop_context_.emplace(detail::get_cancellation_slot(completion_handler_));
     }
 
-    decltype(auto) get_allocator() noexcept { return exec::get_allocator(completion_handler_); }
+    decltype(auto) get_allocator() noexcept { return asio::get_associated_allocator(completion_handler_); }
 
     CompletionHandlerT& completion_handler() noexcept { return completion_handler_; }
 
@@ -98,7 +98,7 @@ struct RegisterRPCHandlerInitiator
     {
         using Ch = detail::RemoveCrefT<CompletionHandler>;
         using DecayedRPCHandler = detail::RemoveCrefT<RPCHandler>;
-        const auto allocator = exec::get_allocator(completion_handler);
+        const auto allocator = asio::get_associated_allocator(completion_handler);
         detail::allocate<Operation<ServerRPC, DecayedRPCHandler, Ch>>(
             allocator, executor, service_, static_cast<RPCHandler&&>(rpc_handler),
             static_cast<CompletionHandler&&>(completion_handler))

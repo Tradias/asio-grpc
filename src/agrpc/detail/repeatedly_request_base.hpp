@@ -54,7 +54,7 @@ class RepeatedlyRequestOperationBase
 {
   private:
     using Service = detail::GetServiceT<RPC>;
-    using StopContext = detail::RepeatedlyRequestBaseStopContext<exec::stop_token_type_t<CompletionHandler&>>;
+    using StopContext = detail::RepeatedlyRequestBaseStopContext<detail::CancellationSlotT<CompletionHandler&>>;
 
   public:
     template <class Ch, class Rh>
@@ -70,12 +70,12 @@ class RepeatedlyRequestOperationBase
 
     auto& completion_handler() noexcept { return impl1_.second(); }
 
-    decltype(auto) get_allocator() noexcept { return exec::get_allocator(request_handler_); }
+    decltype(auto) get_allocator() noexcept { return detail::get_allocator(request_handler_); }
 
   protected:
     [[nodiscard]] bool is_stopped() const noexcept { return impl2_.second().is_stopped(); }
 
-    decltype(auto) get_executor() noexcept { return exec::get_executor(request_handler_); }
+    decltype(auto) get_executor() noexcept { return detail::get_executor(request_handler_); }
 
     agrpc::GrpcContext& grpc_context() noexcept { return detail::query_grpc_context(get_executor()); }
 

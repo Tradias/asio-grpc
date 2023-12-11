@@ -17,12 +17,12 @@
 
 #include <agrpc/detail/config.hpp>
 
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-#include <agrpc/detail/execution_asio.hpp>
-#elif defined(AGRPC_UNIFEX)
+#ifdef AGRPC_UNIFEX
 #include <agrpc/detail/execution_unifex.hpp>
 #elif defined(AGRPC_STDEXEC)
 #include <agrpc/detail/execution_stdexec.hpp>
+#elif defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+#include <agrpc/detail/execution_asio.hpp>
 #endif
 
 #endif  // AGRPC_DETAIL_EXECUTION_HPP

@@ -133,10 +133,10 @@ using ErrorCode = boost::system::error_code;
 using ErrorCode = std::error_code;
 #endif
 
-#if defined(AGRPC_UNIFEX) || defined(AGRPC_STDEXEC)
-inline auto operation_aborted_error_code() { return ErrorCode{}; }
-#else
+#if defined(AGRPC_BOOST_ASIO) || defined(AGRPC_STANDALONE_ASIO)
 inline auto operation_aborted_error_code() { return ErrorCode{asio::error::operation_aborted}; }
+#else
+inline auto operation_aborted_error_code() { return ErrorCode{}; }
 #endif
 }  // namespace detail
 

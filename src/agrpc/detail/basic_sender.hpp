@@ -15,7 +15,6 @@
 #ifndef AGRPC_DETAIL_BASIC_SENDER_HPP
 #define AGRPC_DETAIL_BASIC_SENDER_HPP
 
-#include <agrpc/detail/allocate_operation.hpp>
 #include <agrpc/detail/allocation_type.hpp>
 #include <agrpc/detail/association.hpp>
 #include <agrpc/detail/config.hpp>
@@ -215,7 +214,7 @@ class BasicSenderOperationState
             return;
         }
         auto stop_token = exec::get_stop_token(receiver());
-        if (detail::stop_requested(stop_token))
+        if (stop_token.stop_requested())
         {
             exec::set_done(static_cast<Receiver&&>(receiver()));
             return;

@@ -67,7 +67,7 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
                                   agrpc::GrpcContext& grpc_context, const Initation& initiation,
                                   Implementation&& implementation)
         : Base(get_on_complete(allocation_type)),
-          WorkTracker(exec::get_executor(completion_handler)),
+          WorkTracker(asio::get_associated_executor(completion_handler)),
           impl_(static_cast<Ch&&>(completion_handler), static_cast<Implementation&&>(implementation))
     {
         grpc_context.work_started();
@@ -84,18 +84,18 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
         }
         else
         {
-            return exec::get_allocator(completion_handler());
+            return asio::get_associated_allocator(completion_handler());
         }
     }
 
     template <class Initiation>
     void emplace_stop_callback(const Initiation& initiation)
     {
-        if constexpr (detail::NEEDS_STOP_CALLBACK<exec::stop_token_type_t<CompletionHandler&>, StopFunction>)
+        if constexpr (detail::NEEDS_STOP_CALLBACK<detail::CancellationSlotT<CompletionHandler&>, StopFunction>)
         {
-            if (auto stop_token = exec::get_stop_token(completion_handler()); detail::stop_possible(stop_token))
+            if (auto slot = detail::get_cancellation_slot(completion_handler()); slot.is_connected())
             {
-                stop_token.template emplace<StopFunction>(detail::get_stop_function_arg(initiation, implementation()));
+                slot.template emplace<StopFunction>(detail::get_stop_function_arg(initiation, implementation()));
             }
         }
     }

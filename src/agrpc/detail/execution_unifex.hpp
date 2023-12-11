@@ -36,7 +36,6 @@ using ::unifex::get_allocator;
 using get_allocator_t = detail::RemoveCrefT<decltype(get_allocator)>;
 
 using ::unifex::get_scheduler;
-inline const auto& get_executor = get_scheduler;
 using ::unifex::scheduler;
 using ::unifex::scheduler_provider;
 

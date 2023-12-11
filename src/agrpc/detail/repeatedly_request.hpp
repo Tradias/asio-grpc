@@ -48,17 +48,17 @@ struct BasicRepeatedlyRequestInitiator
         using TrackingCompletionHandler = detail::WorkTrackingCompletionHandler<CompletionHandler>;
         using DecayedRequestHandler = detail::RemoveCrefT<RequestHandler>;
 
-        const auto& executor = exec::get_executor(request_handler);
+        const auto& executor = detail::get_executor(request_handler);
         auto& grpc_context = detail::query_grpc_context(executor);
-        const auto allocator = exec::get_allocator(request_handler);
-        auto stop_token = exec::get_stop_token(completion_handler);
-        const bool is_stop_possible = detail::stop_possible(stop_token);
+        const auto allocator = detail::get_allocator(request_handler);
+        auto slot = detail::get_cancellation_slot(completion_handler);
+        const bool is_stop_possible = slot.is_connected();
 
         auto operation = detail::allocate<Operation<DecayedRequestHandler, RPC, TrackingCompletionHandler>>(
             allocator, static_cast<RequestHandler&&>(request_handler), rpc, service,
             static_cast<CompletionHandler&&>(completion_handler), is_stop_possible);
 
-        operation->cancellation_context().emplace(std::move(stop_token));
+        operation->cancellation_context().emplace(std::move(slot));
         detail::StartWorkAndGuard guard{grpc_context};
         detail::initiate_repeatedly_request(grpc_context, *operation);
         guard.release();

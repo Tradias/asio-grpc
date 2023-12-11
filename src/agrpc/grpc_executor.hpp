@@ -16,7 +16,6 @@
 #define AGRPC_AGRPC_GRPC_EXECUTOR_HPP
 
 #include <agrpc/bind_allocator.hpp>
-#include <agrpc/detail/allocate_operation.hpp>
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/create_and_submit_no_arg_operation.hpp>
@@ -149,8 +148,8 @@ class BasicGrpcExecutor
         return detail::GrpcContextImplementation::running_in_this_thread(*this->grpc_context());
     }
 
-#if !defined(AGRPC_UNIFEX) && !defined(AGRPC_STDEXEC) && !defined(BOOST_ASIO_NO_TS_EXECUTORS) && \
-    !defined(ASIO_NO_TS_EXECUTORS)
+#if (defined(AGRPC_BOOST_ASIO) && !defined(BOOST_ASIO_NO_TS_EXECUTORS)) || \
+    (defined(AGRPC_STANDALONE_ASIO) && !defined(ASIO_NO_TS_EXECUTORS))
     /**
      * @brief Signal the GrpcContext that an asynchronous operation is in progress
      *
@@ -226,7 +225,7 @@ class BasicGrpcExecutor
     }
 #endif
 
-#if !defined(AGRPC_UNIFEX) && !defined(AGRPC_STDEXEC)
+#if defined(AGRPC_BOOST_ASIO) || defined(AGRPC_STANDALONE_ASIO)
     /**
      * @brief Request the GrpcContext to invoke the given function object
      *
@@ -517,8 +516,8 @@ struct agrpc::detail::container::uses_allocator<agrpc::BasicGrpcExecutor<Allocat
 {
 };
 
-#if !defined(AGRPC_UNIFEX) && !defined(AGRPC_STDEXEC) && !defined(BOOST_ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT) && \
-    !defined(ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT)
+#if (defined(AGRPC_BOOST_ASIO) && !defined(BOOST_ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT)) || \
+    (defined(AGRPC_STANDALONE_ASIO) && !defined(ASIO_HAS_DEDUCED_EQUALITY_COMPARABLE_TRAIT))
 template <class Allocator, std::uint32_t Options>
 struct agrpc::asio::traits::equality_comparable<agrpc::BasicGrpcExecutor<Allocator, Options>>
 {
@@ -527,8 +526,8 @@ struct agrpc::asio::traits::equality_comparable<agrpc::BasicGrpcExecutor<Allocat
 };
 #endif
 
-#if !defined(AGRPC_UNIFEX) && !defined(AGRPC_STDEXEC) && !defined(BOOST_ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT) && \
-    !defined(ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT)
+#if (defined(AGRPC_BOOST_ASIO) && !defined(BOOST_ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT)) || \
+    (defined(AGRPC_STANDALONE_ASIO) && !defined(ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT))
 template <class Allocator, std::uint32_t Options, class F>
 struct agrpc::asio::traits::execute_member<agrpc::BasicGrpcExecutor<Allocator, Options>, F>
 {
@@ -539,8 +538,8 @@ struct agrpc::asio::traits::execute_member<agrpc::BasicGrpcExecutor<Allocator, O
 };
 #endif
 
-#if !defined(AGRPC_UNIFEX) && !defined(AGRPC_STDEXEC) && !defined(BOOST_ASIO_HAS_DEDUCED_REQUIRE_MEMBER_TRAIT) && \
-    !defined(ASIO_HAS_DEDUCED_REQUIRE_MEMBER_TRAIT)
+#if (defined(AGRPC_BOOST_ASIO) && !defined(BOOST_ASIO_HAS_DEDUCED_REQUIRE_MEMBER_TRAIT)) || \
+    (defined(AGRPC_STANDALONE_ASIO) && !defined(ASIO_HAS_DEDUCED_REQUIRE_MEMBER_TRAIT))
 template <class Allocator, std::uint32_t Options>
 struct agrpc::asio::traits::require_member<agrpc::BasicGrpcExecutor<Allocator, Options>,
                                            agrpc::asio::execution::blocking_t::possibly_t>
@@ -603,8 +602,8 @@ struct agrpc::asio::traits::require_member<agrpc::BasicGrpcExecutor<Allocator, O
 };
 #endif
 
-#if !defined(AGRPC_UNIFEX) && !defined(AGRPC_STDEXEC) && !defined(BOOST_ASIO_HAS_DEDUCED_PREFER_MEMBER_TRAIT) && \
-    !defined(ASIO_HAS_DEDUCED_PREFER_MEMBER_TRAIT)
+#if (defined(AGRPC_BOOST_ASIO) && !defined(BOOST_ASIO_HAS_DEDUCED_PREFER_MEMBER_TRAIT)) || \
+    (defined(AGRPC_STANDALONE_ASIO) && !defined(ASIO_HAS_DEDUCED_PREFER_MEMBER_TRAIT))
 template <class Allocator, std::uint32_t Options>
 struct agrpc::asio::traits::prefer_member<agrpc::BasicGrpcExecutor<Allocator, Options>,
                                           agrpc::asio::execution::relationship_t::fork_t>
@@ -627,7 +626,7 @@ struct agrpc::asio::traits::prefer_member<agrpc::BasicGrpcExecutor<Allocator, Op
 };
 #endif
 
-#if !defined(AGRPC_UNIFEX) && !defined(AGRPC_STDEXEC)
+#if defined(AGRPC_BOOST_ASIO) || defined(AGRPC_STANDALONE_ASIO)
 template <class Allocator, std::uint32_t Options, class Property>
 struct agrpc::asio::traits::query_static_constexpr_member<
     agrpc::BasicGrpcExecutor<Allocator, Options>, Property,
@@ -661,8 +660,8 @@ struct agrpc::asio::traits::query_static_constexpr_member<
 };
 #endif
 
-#if !defined(AGRPC_UNIFEX) && !defined(AGRPC_STDEXEC) && !defined(BOOST_ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT) && \
-    !defined(ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT)
+#if (defined(AGRPC_BOOST_ASIO) && !defined(BOOST_ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT)) || \
+    (defined(AGRPC_STANDALONE_ASIO) && !defined(ASIO_HAS_DEDUCED_QUERY_MEMBER_TRAIT))
 template <class Allocator, std::uint32_t Options>
 struct agrpc::asio::traits::query_member<agrpc::BasicGrpcExecutor<Allocator, Options>,
                                          agrpc::asio::execution::context_t>

@@ -25,28 +25,33 @@ namespace detail::exec
 {
 using ::stdexec::get_allocator_t;
 
-template <class Receiver>
-decltype(auto) get_allocator(const Receiver& receiver)
+struct GetAllocatorFn
 {
-    if constexpr (::stdexec::tag_invocable<::stdexec::get_allocator_t, ::stdexec::env_of_t<Receiver>>)
+    template <class Receiver>
+    decltype(auto) operator()(const Receiver & receiver) const
     {
-        return ::stdexec::get_allocator(::stdexec::get_env(receiver));
+        if constexpr (::stdexec::tag_invocable<::stdexec::get_allocator_t, ::stdexec::env_of_t<Receiver>>)
+        {
+            return ::stdexec::get_allocator(::stdexec::get_env(receiver));
+        }
+        else
+        {
+            return std::allocator<std::byte>{};
+        }
     }
-    else
-    {
-        return std::allocator<std::byte>{};
-    }
-}
+};
+
+inline constexpr GetAllocatorFn get_allocator{};
 
 using ::stdexec::get_scheduler;
-inline const auto& get_executor = get_scheduler;
+
 using ::stdexec::scheduler;
 
 template <class, class = void>
 inline constexpr bool scheduler_provider = false;
 
 template <class T>
-inline constexpr bool scheduler_provider<T, decltype((void)std::declval<T>().get_scheduler())> = true;
+inline constexpr bool scheduler_provider<T, decltype((void)exec::get_scheduler(std::declval<const T&>()))> = true;
 
 template <class T>
 inline constexpr bool is_sender_v = ::stdexec::sender<T>;

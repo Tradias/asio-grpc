@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_ASSOCIATION_UNIFEX_HPP
-#define AGRPC_DETAIL_ASSOCIATION_UNIFEX_HPP
+#ifndef AGRPC_DETAIL_ASSOCIATION_EXECUTION_HPP
+#define AGRPC_DETAIL_ASSOCIATION_EXECUTION_HPP
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/execution.hpp>
@@ -22,17 +22,8 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class StopToken>
-constexpr bool stop_possible(StopToken& stop_token)
-{
-    return stop_token.stop_possible();
-}
-
-template <class StopToken>
-constexpr bool stop_requested(StopToken& stop_token)
-{
-    return stop_token.stop_requested();
-}
+template <class CancellationSlot>
+inline constexpr bool IS_CANCELLATION_SLOT = false;
 
 template <class T, class = std::false_type>
 inline constexpr bool IS_STOP_EVER_POSSIBLE_V = true;
@@ -43,13 +34,20 @@ using IsStopEverPossibleHelper = std::bool_constant<(T{}.stop_possible())>;
 template <class T>
 inline constexpr bool IS_STOP_EVER_POSSIBLE_V<T, detail::IsStopEverPossibleHelper<T>> = false;
 
+template <class T>
+inline constexpr bool IS_EXECUTOR = exec::scheduler<T>;
+
+template <class T, class...>
+using AssociatedExecutorT = decltype(exec::get_scheduler(std::declval<T>()));
+
 template <class T, class...>
 using AssociatedAllocatorT = decltype(exec::get_allocator(std::declval<T>()));
 
-template <class T, class...>
-using AssociatedExecutorT = decltype(exec::get_executor(std::declval<T>()));
+inline const auto& get_executor = exec::get_scheduler;
+
+using exec::get_allocator;
 }  // namespace detail
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_ASSOCIATION_UNIFEX_HPP
+#endif  // AGRPC_DETAIL_ASSOCIATION_EXECUTION_HPP

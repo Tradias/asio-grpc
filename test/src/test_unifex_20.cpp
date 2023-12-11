@@ -565,7 +565,8 @@ TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex repeatedly_request unary 
                     ++count;
                     if (count == 1)
                     {
-                        co_await agrpc::Alarm(grpc_context).wait(test::two_hundred_milliseconds_from_now());
+                        co_await agrpc::Alarm(grpc_context)
+                            .wait(test::two_hundred_milliseconds_from_now(), agrpc::use_sender);
                         count = 42;
                     }
                     else
@@ -759,7 +760,8 @@ TEST_CASE_FIXTURE(UnifexClientRPCTest<test::BidirectionalStreamingClientRPC>,
 {
     const auto with_deadline = [&](std::chrono::system_clock::time_point deadline)
     {
-        return unifex::stop_when(unifex::then(agrpc::Alarm(grpc_context).wait(deadline), [](auto&&...) {}));
+        return unifex::stop_when(
+            unifex::then(agrpc::Alarm(grpc_context).wait(deadline, agrpc::use_sender), [](auto&&...) {}));
     };
     const auto not_to_exceed = test::two_seconds_from_now();
     Request request;
@@ -901,7 +903,8 @@ TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex rpc_handler unary - keeps
                     ++count;
                     if (count == 1)
                     {
-                        co_await agrpc::Alarm(grpc_context).wait(test::two_hundred_milliseconds_from_now());
+                        co_await agrpc::Alarm(grpc_context)
+                            .wait(test::two_hundred_milliseconds_from_now(), agrpc::use_sender);
                         count = 42;
                     }
                     else

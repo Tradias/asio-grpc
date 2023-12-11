@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_ASIO_ASSOCIATION_HPP
-#define AGRPC_DETAIL_ASIO_ASSOCIATION_HPP
+#ifndef AGRPC_DETAIL_ASSOCIATION_ASIO_HPP
+#define AGRPC_DETAIL_ASSOCIATION_ASIO_HPP
 
+#include <agrpc/detail/asio_utils.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/execution.hpp>
 
@@ -22,93 +23,47 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
-template <class Executor, class Function>
-void do_execute(Executor&& executor, Function&& function)
-{
-    asio::execution::execute(static_cast<Executor&&>(executor), static_cast<Function&&>(function));
-}
-#else
-template <class Executor, class Function>
-void do_execute(Executor&& executor, Function&& function)
-{
-    static_cast<Executor&&>(executor).execute(static_cast<Function&&>(function));
-}
-#endif
-
-template <class Executor, class Function, class Allocator>
-void post_with_allocator(Executor&& executor, Function&& function, const Allocator& allocator)
-{
-    detail::do_execute(
-        asio::prefer(asio::require(static_cast<Executor&&>(executor), asio::execution::blocking_t::never),
-                     asio::execution::relationship_t::fork, asio::execution::allocator(allocator)),
-        static_cast<Function&&>(function));
-}
-
-template <class CompletionHandler, class Function, class IOExecutor>
-void complete_immediately(CompletionHandler&& completion_handler, Function&& function, const IOExecutor& io_executor)
-{
-    const auto allocator = asio::get_associated_allocator(completion_handler);
-#ifdef AGRPC_ASIO_HAS_IMMEDIATE_EXECUTOR
-    auto executor = asio::get_associated_immediate_executor(
-        completion_handler,
-        [&]() -> decltype(auto)
-        {
-            // Ensure that the io_executor is not already blocking::never because asio will try to convert const& to &&
-            // due to chosing the `identity` overload of asio::require within the default_immediate_executor.
-            // https://github.com/chriskohlhoff/asio/issues/1392
-            if constexpr (asio::traits::static_require<IOExecutor, asio::execution::blocking_t::never_t>::is_valid)
-            {
-                return asio::prefer(io_executor, asio::execution::blocking_t::possibly);
-            }
-            else
-            {
-                return (io_executor);
-            }
-        }());
-    detail::do_execute(
-        asio::prefer(std::move(executor), asio::execution::allocator(allocator)),
-        [ch = static_cast<CompletionHandler&&>(completion_handler), f = static_cast<Function&&>(function)]() mutable
-        {
-            static_cast<Function&&>(f)(static_cast<CompletionHandler&&>(ch));
-        });
-#else
-    auto executor = asio::get_associated_executor(completion_handler, io_executor);
-    detail::post_with_allocator(
-        std::move(executor),
-        [ch = static_cast<CompletionHandler&&>(completion_handler), f = static_cast<Function&&>(function)]() mutable
-        {
-            static_cast<Function&&>(f)(static_cast<CompletionHandler&&>(ch));
-        },
-        allocator);
-#endif
-}
+template <class CancellationSlot, class = void>
+inline constexpr bool IS_CANCELLATION_SLOT = true;
 
 template <class CancellationSlot>
-bool stop_possible(CancellationSlot& cancellation_slot)
-{
-    return cancellation_slot.is_connected();
-}
+inline constexpr bool
+    IS_CANCELLATION_SLOT<CancellationSlot, decltype((void)std::declval<CancellationSlot>().stop_requested())> = false;
+
+template <class T, class = std::false_type>
+inline constexpr bool IS_STOP_EVER_POSSIBLE_V = IS_CANCELLATION_SLOT<T>;
 
 template <class T>
-constexpr bool stop_requested(const T&) noexcept
-{
-    return false;
-}
+using IsStopEverPossibleHelper = std::bool_constant<(T{}.stop_possible())>;
 
-template <class CancellationSlot>
-inline constexpr bool IS_STOP_EVER_POSSIBLE_V = true;
+template <class T>
+inline constexpr bool IS_STOP_EVER_POSSIBLE_V<T, detail::IsStopEverPossibleHelper<T>> = false;
 
 template <>
-inline constexpr bool IS_STOP_EVER_POSSIBLE_V<detail::UnstoppableCancellationSlot> = false;
+inline constexpr bool IS_STOP_EVER_POSSIBLE_V<UncancellableToken> = false;
+
+template <class T>
+inline constexpr bool IS_EXECUTOR = asio::is_executor<T>::value || asio::execution::is_executor_v<T>;
+
+template <class T, class E = asio::system_executor>
+using AssociatedExecutorT = asio::associated_executor_t<T, E>;
 
 template <class T, class A = std::allocator<void>>
 using AssociatedAllocatorT = asio::associated_allocator_t<T, A>;
 
-template <class T, class E = asio::system_executor>
-using AssociatedExecutorT = asio::associated_executor_t<T, E>;
+template <class Object>
+decltype(auto) get_executor(const Object& object) noexcept
+{
+    return asio::get_associated_executor(object);
+}
+
+template <class Object>
+decltype(auto) get_allocator(const Object& object) noexcept
+{
+    return asio::get_associated_allocator(object);
+}
 }  // namespace detail
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_ASIO_ASSOCIATION_HPP
+#endif  // AGRPC_DETAIL_ASSOCIATION_ASIO_HPP

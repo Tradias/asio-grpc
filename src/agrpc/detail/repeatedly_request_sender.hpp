@@ -129,7 +129,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
                 return;
             }
             auto stop_token = exec::get_stop_token(receiver_);
-            if (detail::stop_requested(stop_token))
+            if (stop_token.stop_requested())
             {
                 exec::set_done(static_cast<Receiver&&>(receiver_));
                 return;
@@ -257,16 +257,16 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
 
   public:
     template <class Receiver>
-    auto connect(Receiver&& receiver) const& noexcept(
-        detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver>&& std::is_nothrow_copy_constructible_v<RequestHandler>)
+    auto connect(Receiver&& receiver) const& noexcept(detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver> &&
+                                                      std::is_nothrow_copy_constructible_v<RequestHandler>)
         -> Operation<detail::RemoveCrefT<Receiver>>
     {
         return {*this, static_cast<Receiver&&>(receiver)};
     }
 
     template <class Receiver>
-    auto connect(Receiver&& receiver) && noexcept(
-        detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver>&& std::is_nothrow_move_constructible_v<RequestHandler>)
+    auto connect(Receiver&& receiver) && noexcept(detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver> &&
+                                                  std::is_nothrow_move_constructible_v<RequestHandler>)
         -> Operation<detail::RemoveCrefT<Receiver>>
     {
         return {static_cast<RepeatedlyRequestSender&&>(*this), static_cast<Receiver&&>(receiver)};

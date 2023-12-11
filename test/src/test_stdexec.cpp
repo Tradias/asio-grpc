@@ -120,8 +120,9 @@ TEST_CASE_FIXTURE(StdexecTest<test::ClientStreamingClientRPC>, "stdexec ClientSt
                     return rpc.finish();
                 }) |
             stdexec::then(
-                [&](const grpc::Status&)
+                [&](const grpc::Status& status)
                 {
+                    CHECK_EQ(grpc::StatusCode::OK, status.error_code());
                     server_shutdown.initiate();
                 }));
     CHECK_FALSE(is_cancelled);

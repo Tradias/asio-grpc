@@ -67,10 +67,6 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
                 "utils/grpc_generic_client_server_test.cpp"
                 "utils/grpc_generic_client_server_test.hpp"
                 "utils/memory_resource.hpp")
-    if(NOT ${_asio_grpc_type} STREQUAL "UNIFEX" AND NOT ${_asio_grpc_type} STREQUAL "STDEXEC")
-        target_sources(${_asio_grpc_name} PRIVATE # cmake-format: sort
-                                                  "utils/rpc.cpp" "utils/rpc.hpp")
-    endif()
 
     target_include_directories(${_asio_grpc_name} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
 
@@ -79,11 +75,21 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
     if(${_asio_grpc_type} STREQUAL "BOOST_ASIO")
         target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc Boost::coroutine Boost::thread)
 
-        target_compile_definitions(
-            ${_asio_grpc_name} PUBLIC "ASIO_GRPC_TEST_CPP_VERSION=\"Boost.Asio C++${_asio_grpc_cxx_standard}\""
-                                      BOOST_ASIO_SEPARATE_COMPILATION BOOST_ASIO_NO_TS_EXECUTORS)
+        if(ARGN)
+            target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc-${ARGN})
 
-        target_sources(${_asio_grpc_name} PRIVATE "utils/io_context_test.cpp" "utils/io_context_test.hpp")
+            target_compile_definitions(
+                ${_asio_grpc_name}
+                PUBLIC "ASIO_GRPC_TEST_CPP_VERSION=\"Boost.Asio ${ARGN} C++${_asio_grpc_cxx_standard}\"")
+        else()
+            target_compile_definitions(${_asio_grpc_name}
+                                       PUBLIC "ASIO_GRPC_TEST_CPP_VERSION=\"Boost.Asio C++${_asio_grpc_cxx_standard}\"")
+        endif()
+
+        target_compile_definitions(${_asio_grpc_name} PUBLIC BOOST_ASIO_SEPARATE_COMPILATION BOOST_ASIO_NO_TS_EXECUTORS)
+
+        target_sources(${_asio_grpc_name} PRIVATE "utils/io_context_test.cpp" "utils/io_context_test.hpp"
+                                                  "utils/rpc.cpp" "utils/rpc.hpp")
     elseif(${_asio_grpc_type} STREQUAL "STANDALONE_ASIO")
         target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc-standalone-asio Boost::coroutine Boost::thread)
 
@@ -91,7 +97,8 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
             ${_asio_grpc_name} PUBLIC "ASIO_GRPC_TEST_CPP_VERSION=\"Standalone Asio C++${_asio_grpc_cxx_standard}\""
                                       ASIO_SEPARATE_COMPILATION ASIO_NO_TS_EXECUTORS)
 
-        target_sources(${_asio_grpc_name} PRIVATE "utils/io_context_test.cpp" "utils/io_context_test.hpp")
+        target_sources(${_asio_grpc_name} PRIVATE "utils/io_context_test.cpp" "utils/io_context_test.hpp"
+                                                  "utils/rpc.cpp" "utils/rpc.hpp")
     elseif(${_asio_grpc_type} STREQUAL "UNIFEX")
         target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc-unifex)
 
@@ -118,8 +125,13 @@ if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
     asio_grpc_add_test_util(asio-grpc-test-util-boost-asio-cpp20 "BOOST_ASIO" "20")
     asio_grpc_add_test_util(asio-grpc-test-util-standalone-asio-cpp20 "STANDALONE_ASIO" "20")
     asio_grpc_add_test_util(asio-grpc-test-util-unifex-cpp20 "UNIFEX" "20")
+    asio_grpc_add_test_util(asio-grpc-test-util-boost-asio-unifex-cpp20 "BOOST_ASIO" "20" "unifex")
+endif()
 
-    if(ASIO_GRPC_ENABLE_STDEXEC_TESTS)
-        asio_grpc_add_test_util(asio-grpc-test-util-stdexec-cpp20 "STDEXEC" "20")
+if(ASIO_GRPC_ENABLE_STDEXEC_TESTS)
+    asio_grpc_add_test_util(asio-grpc-test-util-stdexec-cpp20 "STDEXEC" "20")
+
+    if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
+        asio_grpc_add_test_util(asio-grpc-test-util-boost-asio-stdexec-cpp20 "BOOST_ASIO" "20" "stdexec")
     endif()
 endif()

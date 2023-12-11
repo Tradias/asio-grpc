@@ -16,12 +16,11 @@
 #define AGRPC_DETAIL_ASSOCIATION_HPP
 
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/execution.hpp>
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 #include <agrpc/detail/association_asio.hpp>
 #else
-#include <agrpc/detail/association_unifex.hpp>
+#include <agrpc/detail/association_execution.hpp>
 #endif
 
 #endif  // AGRPC_DETAIL_ASSOCIATION_HPP

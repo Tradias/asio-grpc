@@ -16,10 +16,9 @@
 #define AGRPC_DETAIL_WAITER_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/asio_utils.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/manual_reset_event.hpp>
-#include <agrpc/grpc_executor.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -28,22 +27,31 @@ namespace detail
 template <class ExecutorOrIoObject>
 decltype(auto) get_executor_from_io_object(ExecutorOrIoObject&& exec_or_io_object)
 {
-    if constexpr (exec::scheduler<detail::RemoveCrefT<ExecutorOrIoObject>>)
+    if constexpr (detail::IS_EXECUTOR<detail::RemoveCrefT<ExecutorOrIoObject>>)
     {
         return (exec_or_io_object);
     }
-    else if constexpr (exec::scheduler_provider<ExecutorOrIoObject&&>)
-    {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+    else if constexpr (detail::IS_EXECUTOR_PROVIDER<ExecutorOrIoObject>)
+    {
         return static_cast<ExecutorOrIoObject&&>(exec_or_io_object).get_executor();
-#else
-        return exec::get_scheduler(static_cast<ExecutorOrIoObject&&>(exec_or_io_object));
-#endif
     }
+#if defined(AGRPC_UNIFEX) || defined(AGRPC_STDEXEC)
+    else if constexpr (exec::scheduler_provider<ExecutorOrIoObject>)
+    {
+        return exec::get_scheduler(static_cast<ExecutorOrIoObject&&>(exec_or_io_object));
+    }
+#endif
     else
     {
-        return exec::get_executor(exec_or_io_object);
+        return asio::get_associated_executor(exec_or_io_object);
     }
+#else
+    else
+    {
+        return exec::get_scheduler(static_cast<ExecutorOrIoObject&&>(exec_or_io_object));
+    }
+#endif
 }
 
 template <class Signature>

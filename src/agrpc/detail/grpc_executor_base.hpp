@@ -120,7 +120,7 @@ class GrpcExecutorWorkTrackerBase : public detail::GrpcExecutorBase<Allocator>
     }
 };
 
-#if !defined(AGRPC_UNIFEX) && !defined(AGRPC_STDEXEC)
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <bool IsBlockingNever>
 struct QueryStaticBlocking
 {

@@ -99,7 +99,7 @@ auto unbind_recursively(asio::allocator_binder<CompletionHandler, Allocator>&& b
 template <class CompletionHandler>
 auto unbind_and_get_associates(CompletionHandler&& completion_handler)
 {
-    auto executor = exec::get_executor(completion_handler);
+    auto executor = detail::get_executor(completion_handler);
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
     auto cancellation_slot = asio::get_associated_cancellation_slot(completion_handler);
     return UnbindResult{detail::unbind_recursively(static_cast<CompletionHandler&&>(completion_handler)),

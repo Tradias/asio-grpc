@@ -73,7 +73,9 @@ struct ManualResetEventOperation<void(Args...), CompletionHandler>
 
     template <class Ch>
     ManualResetEventOperation(Ch&& ch, ManualResetEvent<Signature>& event)
-        : Base{event, &complete_impl}, WorkTracker(exec::get_executor(ch)), completion_handler_(static_cast<Ch&&>(ch))
+        : Base{event, &complete_impl},
+          WorkTracker(asio::get_associated_executor(ch)),
+          completion_handler_(static_cast<Ch&&>(ch))
     {
         emplace_stop_callback();
         this->event_.op_.store(this, std::memory_order_release);
@@ -81,11 +83,11 @@ struct ManualResetEventOperation<void(Args...), CompletionHandler>
 
     void emplace_stop_callback()
     {
-        if constexpr (detail::IS_STOP_EVER_POSSIBLE_V<exec::stop_token_type_t<CompletionHandler&>>)
+        if constexpr (detail::IS_STOP_EVER_POSSIBLE_V<detail::CancellationSlotT<CompletionHandler&>>)
         {
-            if (auto stop_token = exec::get_stop_token(completion_handler_); detail::stop_possible(stop_token))
+            if (auto slot = detail::get_cancellation_slot(completion_handler_); slot.is_connected())
             {
-                stop_token.template emplace<StopFunction>(*this);
+                slot.template emplace<StopFunction>(*this);
             }
         }
     }
@@ -93,7 +95,7 @@ struct ManualResetEventOperation<void(Args...), CompletionHandler>
     template <class... TArgs>
     void complete(TArgs&&... args)
     {
-        detail::AllocationGuard ptr{this, exec::get_allocator(completion_handler_)};
+        detail::AllocationGuard ptr{this, asio::get_associated_allocator(completion_handler_)};
         detail::dispatch_complete(ptr, static_cast<TArgs&&>(args)...);
     }
 

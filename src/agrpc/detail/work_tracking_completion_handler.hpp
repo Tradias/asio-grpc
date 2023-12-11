@@ -67,7 +67,7 @@ void dispatch_with_args(Handler&& handler, Args&&... args)
 {
     auto executor = asio::prefer(asio::get_associated_executor(handler), asio::execution::blocking_t::possibly,
                                  asio::execution::allocator(asio::get_associated_allocator(handler)));
-    detail::do_execute(
+    detail::execute(
         std::move(executor),
         [h = static_cast<Handler&&>(handler), arg_tuple = detail::Tuple{static_cast<Args&&>(args)...}]() mutable
         {

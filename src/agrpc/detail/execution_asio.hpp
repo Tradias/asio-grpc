@@ -40,44 +40,31 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-struct UnstoppableCancellationSlot
+struct UnstoppableToken
 {
-    static constexpr bool is_connected() noexcept { return false; }
+    static constexpr bool stop_possible() noexcept { return false; }
+
+    static constexpr bool stop_requested() noexcept { return false; }
 };
 
 namespace exec
 {
-struct GetSchedulerFn
-{
-    template <class Object>
-    decltype(auto) operator()(const Object& object) const
-    {
-        return asio::get_associated_executor(object);
-    }
-};
-
-inline constexpr GetSchedulerFn get_scheduler{};
-
-template <class Object>
-decltype(auto) get_executor(const Object& object)
-{
-    return asio::get_associated_executor(object);
-}
-
 template <class Object>
 decltype(auto) get_allocator(const Object& object)
 {
     return asio::get_associated_allocator(object);
 }
 
-template <class T>
-inline constexpr bool scheduler = asio::is_executor<T>::value || asio::execution::is_executor_v<T>;
+struct GetSchedulerFn
+{
+    template <class Object>
+    decltype(auto) operator()(const Object & object) const
+    {
+        return asio::get_associated_executor(object);
+    }
+};
 
-template <class, class = void>
-inline constexpr bool scheduler_provider = false;
-
-template <class T>
-inline constexpr bool scheduler_provider<T, decltype((void)std::declval<T>().get_executor())> = true;
+inline constexpr GetSchedulerFn get_scheduler{};
 
 #ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
 using asio::execution::connect;
@@ -126,17 +113,13 @@ void start(OperationState&& state)
 #endif
 
 template <class Receiver>
-auto get_stop_token([[maybe_unused]] const Receiver& receiver) noexcept
+constexpr UnstoppableToken get_stop_token(const Receiver&) noexcept
 {
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-    return asio::get_associated_cancellation_slot(receiver, UnstoppableCancellationSlot{});
-#else
-    return UnstoppableCancellationSlot{};
-#endif
+    return {};
 }
 
-template <class Receiver>
-using stop_token_type_t = decltype(exec::get_stop_token(std::declval<Receiver>()));
+template <class>
+using stop_token_type_t = UnstoppableToken;
 
 namespace detail
 {
