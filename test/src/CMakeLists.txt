@@ -74,7 +74,7 @@ if(ASIO_GRPC_ENABLE_STDEXEC_TESTS)
     asio_grpc_add_test(asio-grpc-test-stdexec "stdexec" "20" "test_stdexec.cpp")
 
     if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
-        asio_grpc_add_test(asio-grpc-test-boost-stdexec-cpp20 "boost-asio-stdexec" "20"
+        asio_grpc_add_test(asio-grpc-test-asio-stdexec-cpp20 "standalone-asio-stdexec" "20"
                            ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES} ${ASIO_GRPC_CPP20_TEST_SOURCE_FILES} "test_stdexec.cpp")
     endif()
 endif()
