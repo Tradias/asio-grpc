@@ -49,7 +49,7 @@ decltype(auto) get_executor_from_io_object(ExecutorOrIoObject&& exec_or_io_objec
 #else
     else
     {
-        return exec::get_scheduler(static_cast<ExecutorOrIoObject&&>(exec_or_io_object));
+        return static_cast<ExecutorOrIoObject&&>(exec_or_io_object).get_scheduler();
     }
 #endif
 }

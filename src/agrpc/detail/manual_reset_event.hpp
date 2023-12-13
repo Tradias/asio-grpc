@@ -270,7 +270,7 @@ class ManualResetEventOperationState
 };
 
 template <class Signature>
-class ManualResetEventSender : public detail::SenderOf<void()>
+class [[nodiscard]] ManualResetEventSender : public detail::SenderOf<Signature>
 {
   public:
     template <class R>

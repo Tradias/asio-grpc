@@ -38,7 +38,7 @@ template <class ServerRPC, class RPCHandler, class StopToken>
 struct RegisterRPCHandlerSenderOperationBase;
 
 template <class ServerRPC, class RPCHandler>
-class RPCHandlerSender : public detail::SenderOf<void()>
+class [[nodiscard]] RPCHandlerSender : public detail::SenderOf<void()>
 {
   private:
     using Service = detail::GetServerRPCServiceT<ServerRPC>;

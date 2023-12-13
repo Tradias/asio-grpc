@@ -88,18 +88,26 @@ class Waiter
      * @snippet server_rpc.cpp waiter-example
      *
      * @param function Callable that will be invoked with all subsequent arguments followed by the completion handler of
-     * this Waiter.
+     * this Waiter (Asio) or it returns a sender composed of the result of the call (unifex/stdexec only).
      * @param executor_or_io_object Either an executor itself or an object that implements `get_executor()`. This will
      * become the I/O executor of subsequent calls to `wait()`.
      */
     template <class Function, class ExecutorOrIoObject, class... Args>
-    void initiate(Function&& function, ExecutorOrIoObject&& executor_or_io_object, Args&&... args)
+    decltype(auto) initiate(Function&& function, ExecutorOrIoObject&& executor_or_io_object, Args&&... args)
     {
         destroy_executor();
         ::new (static_cast<void*>(&executor_)) Executor(detail::get_executor_from_io_object(executor_or_io_object));
         event_.reset();
-        std::invoke(static_cast<Function&&>(function), static_cast<ExecutorOrIoObject&&>(executor_or_io_object),
-                    static_cast<Args&&>(args)..., detail::WaiterCompletionHandler<Signature>{event_});
+        detail::WaiterCompletionHandler<Signature> token{event_};
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+        return std::invoke(static_cast<Function&&>(function), static_cast<ExecutorOrIoObject&&>(executor_or_io_object),
+                           static_cast<Args&&>(args)..., token);
+#else
+        return detail::exec::then(
+            std::invoke(static_cast<Function&&>(function), static_cast<ExecutorOrIoObject&&>(executor_or_io_object),
+                        static_cast<Args&&>(args)...),
+            token);
+#endif
     }
 
     /**

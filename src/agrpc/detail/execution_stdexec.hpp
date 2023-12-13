@@ -59,6 +59,7 @@ inline constexpr bool is_sender_v = ::stdexec::sender<T>;
 using ::exec::inline_scheduler;
 using ::stdexec::connect;
 using ::stdexec::connect_result_t;
+using ::stdexec::then;
 
 template <class Receiver>
 decltype(auto) get_stop_token(const Receiver& receiver)

@@ -126,6 +126,15 @@ class BasicAlarm
      */
     [[nodiscard]] const executor_type& get_executor() const noexcept { return executor_; }
 
+    /**
+     * @brief Get the scheduler
+     *
+     * Thread-safe
+     *
+     * @since 2.9.0
+     */
+    [[nodiscard]] const executor_type& get_scheduler() const noexcept { return executor_; }
+
   private:
     template <class>
     friend struct detail::MoveAlarmSenderImplementation;

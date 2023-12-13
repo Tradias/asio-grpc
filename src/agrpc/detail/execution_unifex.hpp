@@ -26,6 +26,7 @@
 #include <unifex/sender_concepts.hpp>
 #include <unifex/stop_token_concepts.hpp>
 #include <unifex/tag_invoke.hpp>
+#include <unifex/then.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -51,6 +52,7 @@ using ::unifex::set_error;
 using ::unifex::set_value;
 using ::unifex::start;
 using ::unifex::stop_token_type_t;
+using ::unifex::then;
 
 template <class T, class = void>
 inline constexpr bool stoppable_token = false;

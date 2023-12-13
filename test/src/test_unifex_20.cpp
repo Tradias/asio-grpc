@@ -922,3 +922,34 @@ TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex rpc_handler unary - keeps
     CHECK_EQ(42, count);
 }
 #endif
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+inline constexpr auto unifex_alarm_wait = [](agrpc::Alarm& alarm, auto deadline, auto token)
+{
+    return unifex::then(alarm.wait(deadline, agrpc::use_sender), token);
+};
+#else
+inline constexpr auto unifex_alarm_wait = [](agrpc::Alarm& alarm, auto deadline)
+{
+    return alarm.wait(deadline);
+};
+#endif
+
+TEST_CASE_FIXTURE(UnifexTest, "unifex Waiter: initiate alarm -> cancel alarm -> wait returns false")
+{
+    agrpc::Waiter<void(bool)> waiter;
+    agrpc::Alarm alarm{grpc_context};
+    run(waiter.initiate(unifex_alarm_wait, alarm, test::five_seconds_from_now()),
+        unifex::then(unifex::just(),
+                     [&]
+                     {
+                         CHECK_FALSE(waiter.is_ready());
+                         alarm.cancel();
+                     }),
+        unifex::then(waiter.wait(),
+                     [&](bool ok)
+                     {
+                         CHECK_FALSE(ok);
+                         CHECK(waiter.is_ready());
+                     }));
+}

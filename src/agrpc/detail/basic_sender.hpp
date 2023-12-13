@@ -38,7 +38,7 @@ template <class Initiation, class Implementation, class Receiver>
 class BasicSenderOperationState;
 
 template <class Initiation, class Implementation>
-class BasicSender : public detail::SenderOf<typename Implementation::Signature>
+class [[nodiscard]] BasicSender : public detail::SenderOf<typename Implementation::Signature>
 {
   public:
     template <class Receiver>
