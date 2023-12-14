@@ -18,6 +18,7 @@
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/default_completion_token.hpp>
+#include <agrpc/detail/functional.hpp>
 #include <agrpc/detail/manual_reset_event.hpp>
 #include <agrpc/detail/waiter.hpp>
 #include <agrpc/grpc_executor.hpp>
@@ -69,7 +70,7 @@ class Waiter
     /**
      * @brief Destruct the Waiter
      *
-     * All initiated operations have been `wait()`ed for, otherwise the behavior is undefined.
+     * All initiated operations must have been `wait()`ed for, otherwise the behavior is undefined.
      */
     ~Waiter() noexcept { destroy_executor(); }
 
@@ -87,27 +88,42 @@ class Waiter
      *
      * @snippet server_rpc.cpp waiter-example
      *
+     * @attention When using sender/receiver and `function` returns a sender then only the `set_value` channel is
+     * forwarded to the waiting operation.
+     *
      * @param function Callable that will be invoked with all subsequent arguments followed by the completion handler of
      * this Waiter (Asio) or it returns a sender composed of the result of the call (unifex/stdexec only).
      * @param executor_or_io_object Either an executor itself or an object that implements `get_executor()`. This will
      * become the I/O executor of subsequent calls to `wait()`.
      */
     template <class Function, class ExecutorOrIoObject, class... Args>
-    decltype(auto) initiate(Function&& function, ExecutorOrIoObject&& executor_or_io_object, Args&&... args)
+    auto initiate(Function&& function, ExecutorOrIoObject&& executor_or_io_object, Args&&... args)
     {
         destroy_executor();
         ::new (static_cast<void*>(&executor_)) Executor(detail::get_executor_from_io_object(executor_or_io_object));
         event_.reset();
         detail::WaiterCompletionHandler<Signature> token{event_};
+        auto result =
+            detail::invoke(static_cast<Function&&>(function), static_cast<ExecutorOrIoObject&&>(executor_or_io_object),
+                           static_cast<Args&&>(args)...
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-        return std::invoke(static_cast<Function&&>(function), static_cast<ExecutorOrIoObject&&>(executor_or_io_object),
-                           static_cast<Args&&>(args)..., token);
-#else
-        return detail::exec::then(
-            std::invoke(static_cast<Function&&>(function), static_cast<ExecutorOrIoObject&&>(executor_or_io_object),
-                        static_cast<Args&&>(args)...),
-            token);
+                           ,
+                           token
 #endif
+            );
+        if constexpr (std::is_same_v<detail::Empty, decltype(result)>)
+        {
+        }
+#if defined(AGRPC_UNIFEX) || defined(AGRPC_STDEXEC)
+        else if constexpr (detail::exec::is_sender_v<decltype(result)>)
+        {
+            return detail::exec::then(std::move(result), token);
+        }
+#endif
+        else
+        {
+            return result;
+        }
     }
 
     /**

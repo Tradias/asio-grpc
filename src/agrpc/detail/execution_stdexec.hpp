@@ -68,7 +68,7 @@ decltype(auto) get_stop_token(const Receiver& receiver)
 }
 
 template <class Receiver>
-void set_done(Receiver&& receiver)
+void set_done(Receiver&& receiver) noexcept
 {
     ::stdexec::set_stopped(static_cast<Receiver&&>(receiver));
 }

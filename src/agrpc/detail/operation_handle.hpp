@@ -38,6 +38,8 @@ struct BasicOperationHandle
             self_.template complete<AllocType>(grpc_context_, static_cast<Args&&>(args)...);
         }
 
+        void done() { self_.done(); }
+
         template <int NextId = Id>
         [[nodiscard]] auto* self() const noexcept
         {

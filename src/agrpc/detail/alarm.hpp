@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
+#include <agrpc/detail/grpc_sender.hpp>
 #include <agrpc/detail/sender_implementation.hpp>
 #include <agrpc/detail/wait.hpp>
 
@@ -45,6 +46,26 @@ struct MoveAlarmSenderImplementation
     Alarm alarm_;
 };
 
+template <class Executor>
+struct SenderMoveAlarmSenderImplementation : MoveAlarmSenderImplementation<Executor>
+{
+    using Alarm = agrpc::BasicAlarm<Executor>;
+    using Signature = void(Alarm);
+
+    template <class OnComplete>
+    void complete(OnComplete on_complete, bool ok)
+    {
+        if (ok)
+        {
+            on_complete(static_cast<Alarm&&>(this->alarm_));
+        }
+        else
+        {
+            on_complete.done();
+        }
+    }
+};
+
 template <class Deadline>
 struct MoveAlarmSenderInitiation
 {
@@ -61,6 +82,26 @@ struct MoveAlarmSenderInitiation
     }
 
     Deadline deadline_;
+};
+
+struct SenderAlarmSenderImplementation : detail::GrpcSenderImplementation<detail::AlarmCancellationFunction>
+{
+    static constexpr bool NEEDS_ON_COMPLETE = true;
+
+    using Signature = void();
+
+    template <class OnComplete>
+    void complete(OnComplete on_complete, bool ok)
+    {
+        if (ok)
+        {
+            on_complete();
+        }
+        else
+        {
+            on_complete.done();
+        }
+    }
 };
 }
 

@@ -64,9 +64,8 @@ TEST_CASE("unifex asio-grpc fulfills std::execution concepts")
     using UseSender = decltype(agrpc::use_sender(std::declval<agrpc::GrpcExecutor>()));
     using UseSenderFromGrpcContext = decltype(agrpc::use_sender(std::declval<agrpc::GrpcContext&>()));
     CHECK(std::is_same_v<UseSender, UseSenderFromGrpcContext>);
-    using GrpcSender =
-        decltype(agrpc::wait(std::declval<grpc::Alarm&>(), std::declval<std::chrono::system_clock::time_point>(),
-                             std::declval<UseSender>()));
+    using GrpcSender = decltype(std::declval<agrpc::Alarm&>().wait(
+        std::declval<std::chrono::system_clock::time_point>(), agrpc::use_sender));
     CHECK(unifex::sender<GrpcSender>);
     CHECK(unifex::typed_sender<GrpcSender>);
     CHECK(unifex::sender_to<GrpcSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
@@ -182,7 +181,7 @@ TEST_CASE_TEMPLATE("ScheduleSender start with shutdown GrpcContext", T, std::tru
     test::FunctionAsStatefulReceiver receiver{[](auto&&...) {}, state};
     {
         agrpc::GrpcContext grpc_context;
-        grpc::Alarm alarm;
+        agrpc::Alarm alarm{grpc_context};
         const auto sender = [&]
         {
             if constexpr (T::value)
@@ -191,7 +190,7 @@ TEST_CASE_TEMPLATE("ScheduleSender start with shutdown GrpcContext", T, std::tru
             }
             else
             {
-                return agrpc::wait(alarm, test::five_seconds_from_now(), agrpc::use_sender(grpc_context));
+                return alarm.wait(test::five_seconds_from_now(), agrpc::use_sender);
             }
         };
         std::optional<decltype(unifex::connect(sender(), receiver))> operation_state;
@@ -204,16 +203,16 @@ TEST_CASE_TEMPLATE("ScheduleSender start with shutdown GrpcContext", T, std::tru
         auto& op = del.emplace_with(
             [&]
             {
-                return unifex::connect(unifex::let_value(unifex::schedule(grpc_context.get_scheduler()),
-                                                         [&]
-                                                         {
-                                                             grpc_context.stop();
-                                                             return unifex::with_query_value(
-                                                                 agrpc::wait(alarm, test::five_seconds_from_now(),
-                                                                             agrpc::use_sender(grpc_context)),
-                                                                 unifex::get_allocator, std::move(guard));
-                                                         }),
-                                       test::FunctionAsReceiver{[](bool) {}});
+                return unifex::connect(
+                    unifex::let_value(unifex::schedule(grpc_context.get_scheduler()),
+                                      [&]
+                                      {
+                                          grpc_context.stop();
+                                          return unifex::with_query_value(
+                                              alarm.wait(test::five_seconds_from_now(), agrpc::use_sender),
+                                              unifex::get_allocator, std::move(guard));
+                                      }),
+                    test::FunctionAsReceiver{[]() {}});
             });
         unifex::start(op);
         grpc_context.run();
@@ -227,12 +226,12 @@ TEST_CASE_FIXTURE(UnifexTest, "unifex agrpc::wait from different thread")
 {
     bool invoked{false};
     unifex::new_thread_context ctx;
-    grpc::Alarm alarm;
+    agrpc::Alarm alarm{grpc_context};
     run(unifex::let_value(unifex::schedule(ctx.get_scheduler()),
                           [&]
                           {
-                              return unifex::then(agrpc::wait(alarm, test::ten_milliseconds_from_now(), use_sender()),
-                                                  [&](bool)
+                              return unifex::then(alarm.wait(test::ten_milliseconds_from_now(), agrpc::use_sender),
+                                                  [&]()
                                                   {
                                                       invoked = true;
                                                   });
@@ -243,16 +242,17 @@ TEST_CASE_FIXTURE(UnifexTest, "unifex agrpc::wait from different thread")
 TEST_CASE_FIXTURE(UnifexTest, "unifex cancel agrpc::wait")
 {
     bool ok{true};
-    grpc::Alarm alarm;
+    agrpc::Alarm alarm{grpc_context};
     run(unifex::let_value(unifex::schedule(get_executor()),
                           [&]
                           {
                               return unifex::stop_when(
-                                  unifex::then(agrpc::wait(alarm, test::five_seconds_from_now(), use_sender()),
-                                               [&](bool wait_ok)
-                                               {
-                                                   ok = wait_ok;
-                                               }),
+                                  unifex::let_done(alarm.wait(test::five_seconds_from_now(), agrpc::use_sender),
+                                                   [&]()
+                                                   {
+                                                       ok = false;
+                                                       return unifex::just();
+                                                   }),
                                   unifex::just());
                           }));
     CHECK_FALSE(ok);
@@ -261,15 +261,15 @@ TEST_CASE_FIXTURE(UnifexTest, "unifex cancel agrpc::wait")
 TEST_CASE_FIXTURE(UnifexTest, "unifex cancel agrpc::wait before starting")
 {
     bool invoked{false};
-    grpc::Alarm alarm;
+    agrpc::Alarm alarm{grpc_context};
     test::StatefulReceiverState state;
-    test::FunctionAsStatefulReceiver receiver{[&](bool)
+    test::FunctionAsStatefulReceiver receiver{[&]()
                                               {
                                                   invoked = true;
                                               },
                                               state};
     unifex::inplace_stop_source source;
-    auto sender = unifex::with_query_value(agrpc::wait(alarm, test::five_seconds_from_now(), use_sender()),
+    auto sender = unifex::with_query_value(alarm.wait(test::five_seconds_from_now(), agrpc::use_sender),
                                            unifex::get_stop_token, source.get_token());
     auto op = unifex::connect(std::move(sender), receiver);
     source.request_stop();
@@ -285,13 +285,12 @@ TEST_CASE("unifex GrpcContext.stop() with pending GrpcSender operation")
     bool invoked{false};
     unifex::new_thread_context ctx;
     std::optional<agrpc::GrpcContext> grpc_context{std::make_unique<grpc::CompletionQueue>()};
-    test::FunctionAsReceiver receiver{[&](bool)
+    test::FunctionAsReceiver receiver{[&]()
                                       {
                                           invoked = true;
                                       }};
-    grpc::Alarm alarm;
-    auto op = unifex::connect(agrpc::wait(alarm, test::ten_milliseconds_from_now(), agrpc::use_sender(*grpc_context)),
-                              receiver);
+    agrpc::Alarm alarm{*grpc_context};
+    auto op = unifex::connect(alarm.wait(test::ten_milliseconds_from_now(), agrpc::use_sender), receiver);
     unifex::start(op);
     grpc_context.reset();
     CHECK_FALSE(invoked);
@@ -923,23 +922,15 @@ TEST_CASE_FIXTURE(UnifexRepeatedlyRequestTest, "unifex rpc_handler unary - keeps
 }
 #endif
 
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-inline constexpr auto unifex_alarm_wait = [](agrpc::Alarm& alarm, auto deadline, auto token)
-{
-    return unifex::then(alarm.wait(deadline, agrpc::use_sender), token);
-};
-#else
-inline constexpr auto unifex_alarm_wait = [](agrpc::Alarm& alarm, auto deadline)
-{
-    return alarm.wait(deadline);
-};
-#endif
-
 TEST_CASE_FIXTURE(UnifexTest, "unifex Waiter: initiate alarm -> cancel alarm -> wait returns false")
 {
-    agrpc::Waiter<void(bool)> waiter;
+    const auto wait = [](agrpc::Alarm& alarm, auto deadline, auto&&...)
+    {
+        return alarm.wait(deadline, agrpc::use_sender);
+    };
+    agrpc::Waiter<void()> waiter;
     agrpc::Alarm alarm{grpc_context};
-    run(waiter.initiate(unifex_alarm_wait, alarm, test::five_seconds_from_now()),
+    run(waiter.initiate(wait, alarm, test::five_seconds_from_now()),
         unifex::then(unifex::just(),
                      [&]
                      {
@@ -947,9 +938,8 @@ TEST_CASE_FIXTURE(UnifexTest, "unifex Waiter: initiate alarm -> cancel alarm -> 
                          alarm.cancel();
                      }),
         unifex::then(waiter.wait(),
-                     [&](bool ok)
+                     [&]()
                      {
-                         CHECK_FALSE(ok);
                          CHECK(waiter.is_ready());
                      }));
 }

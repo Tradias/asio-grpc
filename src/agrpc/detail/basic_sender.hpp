@@ -180,10 +180,16 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
     }
 
     template <AllocationType, class... Args>
-    void complete(agrpc::GrpcContext&, Args... args)
+    void complete(const agrpc::GrpcContext&, Args... args)
     {
         reset_stop_callback();
         detail::satisfy_receiver(static_cast<Receiver&&>(receiver()), static_cast<Args&&>(args)...);
+    }
+
+    void done() noexcept
+    {
+        reset_stop_callback();
+        exec::set_done(static_cast<Receiver&&>(receiver()));
     }
 
     void put_into_scratch_space(void* ptr) noexcept { detail::OperationBaseAccess::set_scratch_space(*this, ptr); }

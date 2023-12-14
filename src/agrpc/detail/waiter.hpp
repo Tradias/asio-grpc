@@ -24,6 +24,26 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+template <class Signature>
+class WaiterCompletionHandler;
+
+template <class... Args>
+class WaiterCompletionHandler<void(Args...)>
+{
+  public:
+    void operator()(Args... args) { event_.set(static_cast<Args&&>(args)...); }
+
+  private:
+    using Event = detail::ManualResetEvent<void(Args...)>;
+
+    template <class, class>
+    friend class agrpc::Waiter;
+
+    explicit WaiterCompletionHandler(Event& event) noexcept : event_(event) {}
+
+    Event& event_;
+};
+
 template <class ExecutorOrIoObject>
 decltype(auto) get_executor_from_io_object(ExecutorOrIoObject&& exec_or_io_object)
 {
@@ -53,26 +73,6 @@ decltype(auto) get_executor_from_io_object(ExecutorOrIoObject&& exec_or_io_objec
     }
 #endif
 }
-
-template <class Signature>
-class WaiterCompletionHandler;
-
-template <class... Args>
-class WaiterCompletionHandler<void(Args...)>
-{
-  public:
-    void operator()(Args... args) { event_.set(static_cast<Args&&>(args)...); }
-
-  private:
-    using Event = detail::ManualResetEvent<void(Args...)>;
-
-    template <class, class>
-    friend class agrpc::Waiter;
-
-    explicit WaiterCompletionHandler(Event& event) noexcept : event_(event) {}
-
-    Event& event_;
-};
 }
 
 AGRPC_NAMESPACE_END

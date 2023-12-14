@@ -128,24 +128,16 @@ TEST_CASE_FIXTURE(StdexecTest<test::ClientStreamingClientRPC>, "stdexec ClientSt
     CHECK_FALSE(is_cancelled);
 }
 
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-inline constexpr auto stdexec_alarm_wait = [](agrpc::Alarm& alarm, auto deadline, auto token)
-{
-    return stdexec::then(alarm.wait(deadline, agrpc::use_sender), token);
-};
-#else
-inline constexpr auto stdexec_alarm_wait = [](agrpc::Alarm& alarm, auto deadline)
-{
-    return alarm.wait(deadline);
-};
-#endif
-
 TEST_CASE_FIXTURE(StdexecTest<test::UnaryClientRPC>,
                   "stdexec Waiter: initiate alarm -> cancel alarm -> wait returns false")
 {
-    agrpc::Waiter<void(bool)> waiter;
+    const auto wait = [](agrpc::Alarm& alarm, auto deadline, auto&&...)
+    {
+        return alarm.wait(deadline, agrpc::use_sender);
+    };
+    agrpc::Waiter<void()> waiter;
     agrpc::Alarm alarm{grpc_context};
-    run(waiter.initiate(stdexec_alarm_wait, alarm, test::five_seconds_from_now()),
+    run(waiter.initiate(wait, alarm, test::five_seconds_from_now()),
         stdexec::then(stdexec::just(),
                       [&]
                       {
@@ -153,9 +145,8 @@ TEST_CASE_FIXTURE(StdexecTest<test::UnaryClientRPC>,
                           alarm.cancel();
                       }),
         stdexec::then(waiter.wait(),
-                      [&](bool ok)
+                      [&]()
                       {
-                          CHECK_FALSE(ok);
                           CHECK(waiter.is_ready());
                       }));
 }

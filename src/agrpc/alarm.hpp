@@ -82,10 +82,19 @@ class BasicAlarm
     template <class Deadline, class CompletionToken = detail::LegacyDefaultCompletionTokenT<Executor>>
     auto wait(const Deadline& deadline, CompletionToken&& token = detail::LegacyDefaultCompletionTokenT<Executor>{}) &
     {
-        return detail::async_initiate_sender_implementation(
-            grpc_context(), detail::GrpcSenderInitiation<detail::AlarmInitFunction<Deadline>>{alarm_, deadline},
-            detail::GrpcSenderImplementation<detail::AlarmCancellationFunction>{},
-            static_cast<CompletionToken&&>(token));
+        using Initiation = detail::GrpcSenderInitiation<detail::AlarmInitFunction<Deadline>>;
+        if constexpr (std::is_same_v<agrpc::UseSender, detail::RemoveCrefT<CompletionToken>>)
+        {
+            return detail::BasicSenderAccess::create(grpc_context(), Initiation{alarm_, deadline},
+                                                     detail::SenderAlarmSenderImplementation{});
+        }
+        else
+        {
+            return detail::async_initiate_sender_implementation(
+                grpc_context(), Initiation{alarm_, deadline},
+                detail::GrpcSenderImplementation<detail::AlarmCancellationFunction>{},
+                static_cast<CompletionToken&&>(token));
+        }
     }
 
     /**
@@ -103,10 +112,20 @@ class BasicAlarm
     template <class Deadline, class CompletionToken = detail::LegacyDefaultCompletionTokenT<Executor>>
     auto wait(const Deadline& deadline, CompletionToken&& token = detail::LegacyDefaultCompletionTokenT<Executor>{}) &&
     {
-        return detail::async_initiate_sender_implementation(
-            grpc_context(), detail::MoveAlarmSenderInitiation<Deadline>{deadline},
-            detail::MoveAlarmSenderImplementation<Executor>{static_cast<BasicAlarm&&>(*this)},
-            static_cast<CompletionToken&&>(token));
+        using Initiation = detail::MoveAlarmSenderInitiation<Deadline>;
+        if constexpr (std::is_same_v<agrpc::UseSender, detail::RemoveCrefT<CompletionToken>>)
+        {
+            return detail::BasicSenderAccess::create(
+                grpc_context(), Initiation{deadline},
+                detail::SenderMoveAlarmSenderImplementation<Executor>{static_cast<BasicAlarm&&>(*this)});
+        }
+        else
+        {
+            return detail::async_initiate_sender_implementation(
+                grpc_context(), Initiation{deadline},
+                detail::MoveAlarmSenderImplementation<Executor>{static_cast<BasicAlarm&&>(*this)},
+                static_cast<CompletionToken&&>(token));
+        }
     }
 
     /**
