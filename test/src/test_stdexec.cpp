@@ -14,6 +14,7 @@
 
 #include "utils/client_rpc_test.hpp"
 #include "utils/server_rpc.hpp"
+#include "utils/test.hpp"
 #include "utils/time.hpp"
 
 #include <agrpc/asio_grpc.hpp>
@@ -21,8 +22,8 @@
 #include <exec/task.hpp>
 #include <stdexec/execution.hpp>
 
-template <class ClientRPC>
-struct StdexecTest : test::ClientServerRPCTest<ClientRPC>
+template <class Base>
+struct StdexecTestMixin : Base
 {
     template <class... Sender>
     void run(Sender&&... sender)
@@ -40,6 +41,11 @@ struct StdexecTest : test::ClientServerRPCTest<ClientRPC>
                                                                this->grpc_context.run();
                                                            })));
     }
+};
+
+template <class ClientRPC>
+struct StdexecTest : StdexecTestMixin<test::ClientServerRPCTest<ClientRPC>>
+{
 };
 
 TEST_CASE_FIXTURE(StdexecTest<test::UnaryClientRPC>, "stdexec UnaryClientRPC success")
@@ -149,4 +155,46 @@ TEST_CASE_FIXTURE(StdexecTest<test::UnaryClientRPC>,
                       {
                           CHECK(waiter.is_ready());
                       }));
+}
+
+struct StdexecMockTest : StdexecTestMixin<test::MockTest>
+{
+};
+
+TEST_CASE_FIXTURE(StdexecMockTest, "stdexec mock unary request")
+{
+    using RPC = test::UnaryInterfaceClientRPC;
+    auto mock_reader = test::set_up_unary_test(*this);
+    grpc::ClientContext client_context;
+    test::set_default_deadline(client_context);
+    RPC::Request request;
+    RPC::Response response;
+    run(RPC::request(grpc_context, stub, client_context, request, response, agrpc::use_sender) |
+        stdexec::then(
+            [&](const grpc::Status&)
+            {
+                CHECK_EQ(42, response.integer());
+            }));
+}
+
+TEST_CASE_FIXTURE(StdexecMockTest, "stdexec mock server streaming request")
+{
+    using RPC = test::ServerStreamingInterfaceClientRPC;
+    test::set_up_server_streaming_test(*this);
+    RPC::Request request;
+    RPC::Response response;
+    RPC rpc{grpc_context, &test::set_default_deadline};
+    run(rpc.start(stub, request, agrpc::use_sender) |
+        stdexec::let_value(
+            [&](bool ok)
+            {
+                CHECK(ok);
+                return rpc.read(response);
+            }) |
+        stdexec::then(
+            [&](bool ok)
+            {
+                CHECK(ok);
+                CHECK_EQ(42, response.integer());
+            }));
 }

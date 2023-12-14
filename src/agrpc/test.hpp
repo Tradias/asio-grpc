@@ -16,9 +16,9 @@
 #define AGRPC_AGRPC_TEST_HPP
 
 #include <agrpc/alarm.hpp>
-#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/grpc_context_implementation.hpp>
+#include <agrpc/detail/submit.hpp>
+#include <agrpc/detail/test.hpp>
 #include <agrpc/grpc_context.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -37,22 +37,16 @@ AGRPC_NAMESPACE_BEGIN()
  */
 inline void process_grpc_tag(agrpc::GrpcContext& grpc_context, void* tag, bool ok)
 {
-    struct ProcessTag
-    {
-        agrpc::GrpcContext& grpc_context_;
-        void* tag_;
-        bool ok_;
-
-        void operator()(bool, agrpc::Alarm&&)
-        {
-            detail::process_grpc_tag(tag_, ok_ ? detail::OperationResult::OK : detail::OperationResult::NOT_OK,
-                                     grpc_context_);
-        }
-    };
     if (tag != nullptr)
     {
-        agrpc::Alarm(grpc_context)
-            .wait(detail::GrpcContextImplementation::TIME_ZERO, ProcessTag{grpc_context, tag, ok});
+        detail::ProcessTag process_tag{grpc_context, tag, ok};
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+        agrpc::Alarm(grpc_context).wait(detail::GrpcContextImplementation::TIME_ZERO, process_tag);
+#else
+        detail::submit_to_function(
+            agrpc::Alarm(grpc_context).wait(detail::GrpcContextImplementation::TIME_ZERO, agrpc::use_sender),
+            process_tag);
+#endif
     }
 }
 

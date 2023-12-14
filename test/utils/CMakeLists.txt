@@ -66,7 +66,9 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
                 "utils/grpc_context_test.hpp"
                 "utils/grpc_generic_client_server_test.cpp"
                 "utils/grpc_generic_client_server_test.hpp"
-                "utils/memory_resource.hpp")
+                "utils/memory_resource.hpp"
+                "utils/test.cpp"
+                "utils/test.hpp")
 
     target_include_directories(${_asio_grpc_name} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
 
