@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/algorithm.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/utility.hpp>
 
 #include <string_view>
 #include <utility>
@@ -98,7 +99,7 @@ constexpr auto get_class_name()
 #elif defined(_MSC_VER)
     return StringView{__FUNCSIG__ + 52, sizeof(__FUNCSIG__) - 60};
 #else
-    static_assert(false, "compiler not supported");
+    static_assert(detail::ALWAYS_FALSE<T>, "compiler not supported");
 #endif
 }
 
@@ -124,7 +125,7 @@ constexpr auto get_function_name()
     // MSVC returns the entire function signature
     return StringView{__FUNCSIG__ + 49, sizeof(__FUNCSIG__) - 57};
 #else
-    static_assert(false, "compiler not supported");
+    static_assert(detail::ALWAYS_FALSE<T>, "compiler not supported");
 #endif
 }
 

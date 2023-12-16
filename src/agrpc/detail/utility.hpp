@@ -93,6 +93,9 @@ inline constexpr bool IS_EQUALITY_COMPARABLE<
                    decltype(static_cast<bool>(std::declval<const T&>() != std::declval<const T&>()))>> = true;
 #endif
 
+template <class...>
+inline constexpr bool ALWAYS_FALSE = false;
+
 template <class Signature>
 struct InvokeResultFromSignature;
 

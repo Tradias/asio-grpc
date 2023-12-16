@@ -146,6 +146,7 @@ class ClientRPCUnaryBase<PrepareAsyncUnary, Executor> : public detail::ClientRPC
         return ClientRPCUnaryBase::request(detail::query_grpc_context(executor), stub, context, request, response,
                                            static_cast<CompletionToken&&>(token));
     }
+
     using detail::ClientRPCBase<ResponderT<ResponseT>, Executor>::ClientRPCBase;
 
     /**
@@ -156,9 +157,9 @@ class ClientRPCUnaryBase<PrepareAsyncUnary, Executor> : public detail::ClientRPC
      */
     void start(StubT& stub, const RequestT& req)
     {
-        detail::ClientRPCContextBaseAccess::set_responder(
-            *this, (stub.*PrepareAsyncUnary)(&this->context(), req, this->grpc_context().get_completion_queue()));
-        detail::ClientRPCContextBaseAccess::responder(*this).StartCall();
+        auto responder = (stub.*PrepareAsyncUnary)(&this->context(), req, this->grpc_context().get_completion_queue());
+        responder->StartCall();
+        detail::ClientRPCContextBaseAccess::set_responder(*this, std::move(responder));
     }
 
     /**
