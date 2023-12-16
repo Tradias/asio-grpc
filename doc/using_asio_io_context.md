@@ -1,12 +1,12 @@
 # Using Asio io_context
 
-@note Due to limitations of the gRPC CompletionQueue and Callback API an [asio::io_context](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio/reference/io_context.html) cannot be used to handle RPCs directly. See the end of this document for a detailed explanation.
+@note Due to limitations of the gRPC CompletionQueue and Callback API an [asio::io_context](https://www.boost.org/doc/libs/1_84_0/doc/html/boost_asio/reference/io_context.html) cannot be used to handle RPCs directly. See the end of this document for a detailed explanation.
 
-This article describes how to interoperate between a GrpcContext and an [asio::io_context](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio/reference/io_context.html).
+This article describes how to interoperate between a GrpcContext and an [asio::io_context](https://www.boost.org/doc/libs/1_84_0/doc/html/boost_asio/reference/io_context.html).
 
 ## Implicitly constructed io_context
 
-Since a GrpcContext is also an [asio::execution_context](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio/reference/execution_context.html) it supports Asio's [Service](https://www.boost.org/doc/libs/1_81_0/doc/html/boost_asio/reference/Service.html) mechanism. The following code will therefore implicitly create an io_context, a background thread, run the io_context on that thread and post the completion of `async_wait` onto the GrpcContext where the lambda is being invoked.
+Since a GrpcContext is also an [asio::execution_context](https://www.boost.org/doc/libs/1_84_0/doc/html/boost_asio/reference/execution_context.html) it supports Asio's [Service](https://www.boost.org/doc/libs/1_84_0/doc/html/boost_asio/reference/Service.html) mechanism. The following code will therefore implicitly create an io_context, a background thread, run the io_context on that thread and post the completion of `async_wait` onto the GrpcContext where the lambda is being invoked.
 
 @snippet{code} io_context.cpp implicit_io_context
 

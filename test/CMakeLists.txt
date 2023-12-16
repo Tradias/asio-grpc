@@ -20,7 +20,7 @@ add_subdirectory(proto)
 
 add_subdirectory(utils)
 
-add_subdirectory(src)
+# add_subdirectory(src)
 
 if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
     add_subdirectory(example)

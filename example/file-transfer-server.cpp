@@ -53,7 +53,7 @@ asio::awaitable<bool, agrpc::GrpcExecutor> handle_send_file_request(asio::io_con
                                                                     const std::string& file_path)
 {
     // These buffers are used to customize allocation of completion handlers.
-    example::Buffer<300> buffer1;
+    example::Buffer<308> buffer1;
     example::Buffer<40> buffer2;
 
     example::v1::SendFileRequest first_buffer;

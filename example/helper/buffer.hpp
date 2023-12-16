@@ -17,7 +17,7 @@
 
 #include "one_shot_allocator.hpp"
 
-#include <agrpc/bind_allocator.hpp>
+#include <boost/asio/bind_allocator.hpp>
 
 #include <cstddef>
 #include <type_traits>
@@ -34,7 +34,7 @@ struct Buffer
     template <class Target>
     [[nodiscard]] auto bind_allocator(Target&& target) noexcept
     {
-        return agrpc::bind_allocator(allocator(), std::forward<Target>(target));
+        return boost::asio::bind_allocator(allocator(), std::forward<Target>(target));
     }
 
     alignas(std::max_align_t) std::byte data_[Capacity];
