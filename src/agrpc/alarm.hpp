@@ -117,7 +117,7 @@ class BasicAlarm
         {
             return detail::BasicSenderAccess::create(
                 grpc_context(), Initiation{deadline},
-                detail::SenderMoveAlarmSenderImplementation<Executor>{static_cast<BasicAlarm&&>(*this)});
+                detail::SenderMoveAlarmSenderImplementation<Executor>{{static_cast<BasicAlarm&&>(*this)}});
         }
         else
         {

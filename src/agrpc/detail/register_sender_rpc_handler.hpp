@@ -158,9 +158,7 @@ struct RPCHandlerOperation
 
     struct StartReceiver
     {
-#ifdef AGRPC_STDEXEC
         using is_receiver = void;
-#endif
 
         RPCHandlerOperation& rpc_handler_op_;
 
@@ -208,9 +206,7 @@ struct RPCHandlerOperation
     template <class Action>
     struct Receiver
     {
-#ifdef AGRPC_STDEXEC
         using is_receiver = void;
-#endif
 
         RPCHandlerOperation& op_;
 

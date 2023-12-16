@@ -111,16 +111,14 @@ class Waiter
                            token
 #endif
             );
-        if constexpr (std::is_same_v<detail::Empty, decltype(result)>)
-        {
-        }
 #if defined(AGRPC_UNIFEX) || defined(AGRPC_STDEXEC)
-        else if constexpr (detail::exec::is_sender_v<decltype(result)>)
+        if constexpr (detail::exec::is_sender_v<decltype(result)>)
         {
             return detail::exec::then(std::move(result), token);
         }
-#endif
         else
+#endif
+            if constexpr (!std::is_same_v<detail::Empty, decltype(result)>)
         {
             return result;
         }

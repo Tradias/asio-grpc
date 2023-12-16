@@ -91,7 +91,7 @@ struct SenderAlarmSenderImplementation : detail::GrpcSenderImplementation<detail
     using Signature = void();
 
     template <class OnComplete>
-    void complete(OnComplete on_complete, bool ok)
+    static void complete(OnComplete on_complete, bool ok)
     {
         if (ok)
         {
