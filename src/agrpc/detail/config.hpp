@@ -76,17 +76,45 @@
     namespace agrpc             \
     {
 #elif defined(AGRPC_STANDALONE_ASIO)
+#if defined(AGRPC_UNIFEX)
+#define AGRPC_NAMESPACE_BEGIN() \
+    namespace agrpc             \
+    {                           \
+    inline namespace r          \
+    {
+#elif defined(AGRPC_STDEXEC)
+#define AGRPC_NAMESPACE_BEGIN() \
+    namespace agrpc             \
+    {                           \
+    inline namespace t          \
+    {
+#else
 #define AGRPC_NAMESPACE_BEGIN() \
     namespace agrpc             \
     {                           \
     inline namespace s          \
     {
+#endif
 #elif defined(AGRPC_BOOST_ASIO)
+#if defined(AGRPC_UNIFEX)
+#define AGRPC_NAMESPACE_BEGIN() \
+    namespace agrpc             \
+    {                           \
+    inline namespace a          \
+    {
+#elif defined(AGRPC_STDEXEC)
+#define AGRPC_NAMESPACE_BEGIN() \
+    namespace agrpc             \
+    {                           \
+    inline namespace c          \
+    {
+#else
 #define AGRPC_NAMESPACE_BEGIN() \
     namespace agrpc             \
     {                           \
     inline namespace b          \
     {
+#endif
 #elif defined(AGRPC_UNIFEX)
 #define AGRPC_NAMESPACE_BEGIN() \
     namespace agrpc             \
