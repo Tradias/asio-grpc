@@ -23,17 +23,16 @@
 #include <unifex/when_all.hpp>
 
 /* [unifex-server-streaming-client-side] */
-unifex::task<void> unified_executors(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
+unifex::task<void> server_streaming_example(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
+    using RPC = agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncServerStreaming>;
     grpc::ClientContext client_context;
-    example::v1::Request request;
-    std::unique_ptr<grpc::ClientAsyncReader<example::v1::Response>> reader;
-    co_await agrpc::request(&example::v1::Example::Stub::PrepareAsyncServerStreaming, stub, client_context, request,
-                            reader, agrpc::use_sender(grpc_context));
-    example::v1::Response response;
-    co_await agrpc::read(*reader, response, agrpc::use_sender(grpc_context));
-    grpc::Status status;
-    co_await agrpc::finish(*reader, status, agrpc::use_sender(grpc_context));
+    RPC::Request request;
+    RPC rpc{grpc_context};
+    co_await rpc.start(stub, request, agrpc::use_sender);
+    RPC::Response response;
+    co_await rpc.read(response, agrpc::use_sender);
+    co_await rpc.finish(agrpc::use_sender);
 }
 /* [unifex-server-streaming-client-side] */
 
@@ -43,7 +42,7 @@ int main()
         example::v1::Example::NewStub(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
     agrpc::GrpcContext grpc_context;
 
-    unifex::sync_wait(unifex::when_all(unified_executors(grpc_context, *stub),
+    unifex::sync_wait(unifex::when_all(server_streaming_example(grpc_context, *stub),
                                        [&]() -> unifex::task<void>
                                        {
                                            grpc_context.run();

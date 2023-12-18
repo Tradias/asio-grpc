@@ -22,13 +22,13 @@ namespace asio = boost::asio;
 /* [client-rpc-unary] */
 asio::awaitable<void> client_rpc_unary(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
-    using RPC = agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncUnary>;
+    using RPC =
+        asio::use_awaitable_t<>::as_default_on_t<agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncUnary>>;
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
     RPC::Request request;
     RPC::Response response;
-    grpc::Status status =
-        co_await RPC::request(grpc_context, stub, client_context, request, response, asio::use_awaitable);
+    const grpc::Status status = co_await RPC::request(grpc_context, stub, client_context, request, response);
     if (!status.ok())
     {
         std::cerr << "Rpc failed: " << status.error_message();
@@ -41,16 +41,17 @@ asio::awaitable<void> client_rpc_unary(agrpc::GrpcContext& grpc_context, example
 asio::awaitable<void> client_rpc_unary_initial_metadata(agrpc::GrpcContext& grpc_context,
                                                         example::v1::Example::Stub& stub)
 {
-    using RPC = agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncUnary>;
+    using RPC =
+        asio::use_awaitable_t<>::as_default_on_t<agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncUnary>>;
     RPC rpc{grpc_context};
     rpc.context().set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
     RPC::Request request;
     rpc.start(stub, request);
-    co_await rpc.read_initial_metadata(asio::use_awaitable);
+    co_await rpc.read_initial_metadata();
     // Do something with:
     // rpc.context.GetServerInitialMetadata();
     RPC::Response response;
-    grpc::Status status = co_await rpc.finish(response, asio::use_awaitable);
+    const grpc::Status status = co_await rpc.finish(response);
     if (!status.ok())
     {
         std::cerr << "Rpc failed: " << status.error_message();
@@ -84,7 +85,7 @@ asio::awaitable<void> client_rpc_client_streaming(agrpc::GrpcContext& grpc_conte
         request.set_integer(request.integer() + 1);
     }
 
-    grpc::Status status = co_await rpc.finish();
+    const grpc::Status status = co_await rpc.finish();
     if (!status.ok())
     {
         std::cerr << "Rpc failed: " << status.error_message();
@@ -119,7 +120,7 @@ asio::awaitable<void> client_rpc_server_streaming(agrpc::GrpcContext& grpc_conte
         std::cout << "Response: " << response.integer() << '\n';
     }
 
-    grpc::Status status = co_await rpc.finish();
+    const grpc::Status status = co_await rpc.finish();
     if (!status.ok())
     {
         std::cerr << "Rpc failed: " << status.error_message();
@@ -156,7 +157,7 @@ asio::awaitable<void> client_rpc_bidirectional_streaming(agrpc::GrpcContext& grp
         write_ok = co_await rpc.write(request);
     }
 
-    grpc::Status status = co_await rpc.finish();
+    const grpc::Status status = co_await rpc.finish();
     if (!status.ok())
     {
         std::cerr << "Rpc failed: " << status.error_message();
@@ -180,8 +181,9 @@ asio::awaitable<void> client_rpc_generic_unary(agrpc::GrpcContext& grpc_context,
     grpc::ByteBuffer response_buffer;
 
     using RPC = agrpc::GenericUnaryClientRPC;
-    if (grpc::Status status = co_await RPC::request(grpc_context, "/example.v1.Example/Unary", stub, client_context,
-                                                    request_buffer, response_buffer, asio::use_awaitable);
+    if (const grpc::Status status =
+            co_await RPC::request(grpc_context, "/example.v1.Example/Unary", stub, client_context, request_buffer,
+                                  response_buffer, asio::use_awaitable);
         !status.ok())
     {
         std::cerr << "Rpc failed: " << status.error_message();
@@ -189,7 +191,7 @@ asio::awaitable<void> client_rpc_generic_unary(agrpc::GrpcContext& grpc_context,
     }
 
     example::v1::Response response;
-    if (grpc::Status status =
+    if (const grpc::Status status =
             grpc::GenericDeserialize<grpc::ProtoBufferReader, example::v1::Response>(&response_buffer, &response);
         !status.ok())
     {

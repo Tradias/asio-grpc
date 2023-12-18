@@ -6,9 +6,13 @@ The last argument to all async functions in this library is a [CompletionToken](
 
 @snippet server.cpp alarm-with-callback
 
+## Boost.Coroutine
+
+@snippet server.cpp alarm-with-spawn
+
 ## use_sender
 
-`agrpc::use_sender` causes free functions in this library to return a [Sender](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#typedsender-concept). They can e.g. be combined with `unifex::task` to asynchronously process RPCs using `co_await`:
+`agrpc::use_sender` causes free functions in this library to return a [Sender](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#typedsender-concept). They can for example be combined with `unifex::task` to asynchronously process RPCs using `co_await`. Note when using libunifex or stdexec exclusively then `agrpc::use_sender` is already the default completion token:
 
 @snippet unifex_client.cpp unifex-server-streaming-client-side
 

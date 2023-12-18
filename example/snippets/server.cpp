@@ -71,7 +71,8 @@ asio::awaitable<void> agrpc_alarm_rvalue(agrpc::GrpcContext& grpc_context)
     silence_unused(alarm, wait_ok);
 }
 
-asio::awaitable<void> timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context)
+asio::awaitable<void> timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context,
+                                                             asio::io_context& io_context)
 {
     std::allocator<void> my_allocator{};
     agrpc::Alarm alarm{grpc_context};
@@ -79,6 +80,17 @@ asio::awaitable<void> timer_with_different_completion_tokens(agrpc::GrpcContext&
     /* [alarm-with-callback] */
     alarm.wait(deadline, [&](bool /*wait_ok*/) {});
     /* [alarm-with-callback] */
+
+    /* [alarm-with-spawn] */
+    asio::spawn(
+        io_context,
+        [&](const asio::yield_context& yield)
+        {
+            agrpc::Alarm alarm{grpc_context};
+            alarm.wait(deadline, yield);  // suspend coroutine until alarm fires
+        },
+        asio::detached);
+    /* [alarm-with-spawn] */
 
     /* [alarm-with-allocator-aware-awaitable] */
     co_await alarm.wait(deadline, asio::bind_allocator(my_allocator, asio::use_awaitable));

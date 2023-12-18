@@ -339,13 +339,12 @@ asio::awaitable<void> mock_stub(agrpc::GrpcContext& grpc_context)
     EXPECT_CALL(mock_stub, AsyncUnaryRaw).WillOnce(testing::Return(&mock_reader));
 
     // Inject mock_stub into code under test
+    using RPC = agrpc::ClientRPC<&example::v1::Example::StubInterface::AsyncUnary>;
     grpc::ClientContext client_context;
-    example::v1::Request request;
-    const auto writer = agrpc::request(&example::v1::Example::StubInterface::AsyncUnary, mock_stub, client_context,
-                                       request, grpc_context);
-    grpc::Status status;
     example::v1::Response response;
-    co_await agrpc::finish(writer, response, status);
+    example::v1::Request request;
+    const grpc::Status status =
+        co_await RPC::request(grpc_context, mock_stub, client_context, request, response, asio::use_awaitable);
 
     assert(status.ok());
     assert(42 == response.integer());
