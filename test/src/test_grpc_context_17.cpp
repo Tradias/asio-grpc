@@ -496,14 +496,14 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post/execute with allocator")
     }
     SUBCASE("asio::execute before grpc_context.run()")
     {
-        agrpc::detail::execute(get_tracking_allocator_executor(), test::NoOp{});
+        agrpc::detail::do_execute(get_tracking_allocator_executor(), test::NoOp{});
     }
     SUBCASE("asio::execute after grpc_context.run() from same thread")
     {
         asio::post(grpc_context,
                    [&, exec = get_tracking_allocator_executor()]
                    {
-                       agrpc::detail::execute(exec, test::NoOp{});
+                       agrpc::detail::do_execute(exec, test::NoOp{});
                    });
     }
     grpc_context.run();
@@ -541,7 +541,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "dispatch with allocator")
 TEST_CASE_FIXTURE(test::GrpcContextTest, "execute with throwing allocator")
 {
     const auto executor = asio::require(get_executor(), asio::execution::allocator(test::ThrowingAllocator<>{}));
-    CHECK_THROWS(agrpc::detail::execute(executor, test::NoOp{}));
+    CHECK_THROWS(agrpc::detail::do_execute(executor, test::NoOp{}));
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post with throwing completion handler")
