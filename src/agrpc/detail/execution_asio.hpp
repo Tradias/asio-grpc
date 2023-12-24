@@ -18,7 +18,7 @@
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 
-#if defined(AGRPC_STANDALONE_ASIO) && ((ASIO_VERSION < 102500) || !defined(ASIO_NO_DEPRECATED))
+#if defined(AGRPC_STANDALONE_ASIO) && (ASIO_VERSION < 102500 || (ASIO_VERSION < 102900 && !defined(ASIO_NO_DEPRECATED)))
 #include <asio/execution/connect.hpp>
 #include <asio/execution/set_done.hpp>
 #include <asio/execution/set_error.hpp>
@@ -26,7 +26,8 @@
 #include <asio/execution/start.hpp>
 
 #define AGRPC_ASIO_HAS_SENDER_RECEIVER
-#elif defined(AGRPC_BOOST_ASIO) && ((BOOST_VERSION < 108100) || !defined(BOOST_ASIO_NO_DEPRECATED))
+#elif defined(AGRPC_BOOST_ASIO) && \
+    (BOOST_VERSION < 108100 || (BOOST_VERSION < 108400 && !defined(BOOST_ASIO_NO_DEPRECATED)))
 #include <boost/asio/execution/connect.hpp>
 #include <boost/asio/execution/set_done.hpp>
 #include <boost/asio/execution/set_error.hpp>
@@ -58,7 +59,7 @@ decltype(auto) get_allocator(const Object& object)
 struct GetSchedulerFn
 {
     template <class Object>
-    decltype(auto) operator()(const Object & object) const
+    decltype(auto) operator()(const Object& object) const
     {
         return asio::get_associated_executor(object);
     }

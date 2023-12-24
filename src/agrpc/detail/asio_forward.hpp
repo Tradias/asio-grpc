@@ -57,6 +57,10 @@
 #define AGRPC_ASIO_HAS_BIND_ALLOCATOR
 #endif
 
+#if (ASIO_VERSION >= 102400)
+#define AGRPC_ASIO_HAS_NEW_SPAWN
+#endif
+
 #if (ASIO_VERSION >= 102700)
 #include <asio/associated_immediate_executor.hpp>
 

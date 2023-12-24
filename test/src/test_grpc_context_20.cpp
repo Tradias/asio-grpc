@@ -30,7 +30,9 @@
 TEST_CASE("GrpcExecutor fulfills Executor TS concepts")
 {
     CHECK(asio::execution::executor<agrpc::GrpcExecutor>);
+#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
     CHECK(asio::execution::executor_of<agrpc::GrpcExecutor, test::InvocableArchetype>);
+#endif
 }
 
 #ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER

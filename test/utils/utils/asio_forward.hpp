@@ -21,7 +21,6 @@
 #include <asio/coroutine.hpp>
 #include <asio/error.hpp>
 #include <asio/execution.hpp>
-#include <asio/execution/submit.hpp>
 #include <asio/io_context.hpp>
 #include <asio/post.hpp>
 #include <asio/spawn.hpp>
@@ -41,6 +40,10 @@
 #include <asio/bind_cancellation_slot.hpp>
 #include <asio/cancellation_signal.hpp>
 #include <asio/experimental/parallel_group.hpp>
+#endif
+
+#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
+#include <asio/execution/submit.hpp>
 #endif
 
 #ifdef ASIO_HAS_CONCEPTS
