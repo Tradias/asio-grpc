@@ -18,7 +18,6 @@
 #include <agrpc/detail/association.hpp>
 #include <agrpc/detail/buffer_allocator.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/coroutine_traits.hpp>
 #include <agrpc/detail/register_rpc_handler_base.hpp>
 #include <agrpc/detail/rethrow_first_arg.hpp>
 #include <agrpc/detail/rpc_request.hpp>

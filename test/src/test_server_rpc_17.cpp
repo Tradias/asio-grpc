@@ -24,6 +24,7 @@
 #include "utils/time.hpp"
 
 #include <agrpc/client_rpc.hpp>
+#include <agrpc/read.hpp>
 #include <agrpc/register_yield_rpc_handler.hpp>
 #include <agrpc/server_rpc.hpp>
 #include <agrpc/waiter.hpp>

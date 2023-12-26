@@ -21,27 +21,6 @@ function(asio_grpc_create_interface_target _asio_grpc_name)
 
     target_include_directories(${_asio_grpc_name} INTERFACE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
                                                             $<INSTALL_INTERFACE:include>)
-
-    if(NOT ASIO_GRPC_PROJECT_IS_TOP_LEVEL OR ASIO_GRPC_BUILD_EXAMPLES)
-        if(ASIO_GRPC_USE_BOOST_CONTAINER)
-            target_compile_definitions(${_asio_grpc_name} INTERFACE AGRPC_USE_BOOST_CONTAINER)
-        elseif(ASIO_GRPC_USE_RECYCLING_ALLOCATOR)
-            target_compile_definitions(${_asio_grpc_name} INTERFACE AGRPC_USE_RECYCLING_ALLOCATOR)
-        endif()
-    endif()
-
-    if(ASIO_GRPC_INSTALL)
-        if(ASIO_GRPC_USE_BOOST_CONTAINER)
-            set(_asio_grpc_memory_resource_hpp "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/memory_resource_boost_pmr.hpp")
-        elseif(ASIO_GRPC_USE_RECYCLING_ALLOCATOR)
-            set(_asio_grpc_memory_resource_hpp
-                "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/memory_resource_recycling_allocator.hpp")
-        else()
-            set(_asio_grpc_memory_resource_hpp "${CMAKE_CURRENT_SOURCE_DIR}/agrpc/detail/memory_resource_std_pmr.hpp")
-        endif()
-        configure_file("${_asio_grpc_memory_resource_hpp}"
-                       "${CMAKE_CURRENT_BINARY_DIR}/generated/agrpc/detail/memory_resource.hpp" COPYONLY)
-    endif()
 endfunction()
 
 asio_grpc_create_interface_target(asio-grpc)
@@ -76,11 +55,8 @@ if(ASIO_GRPC_BUILD_TESTS AND ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
 
     file(GLOB_RECURSE _asio_grpc_sources "agrpc/*.hpp")
 
-    list(
-        TRANSFORM _asio_grpc_sources
-        REPLACE
-            "(execution_stdexec.hpp|association_execution.hpp|health_check_service.hpp|memory_resource_boost_pmr.hpp|memory_resource_std_pmr.hpp)$"
-            "")
+    list(TRANSFORM _asio_grpc_sources
+         REPLACE "(execution_stdexec.hpp|association_execution.hpp|health_check_service.hpp)$" "")
 
     target_sources(asio-grpc-sources INTERFACE ${_asio_grpc_sources})
 endif()

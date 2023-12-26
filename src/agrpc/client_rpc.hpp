@@ -15,11 +15,11 @@
 #ifndef AGRPC_AGRPC_CLIENT_RPC_HPP
 #define AGRPC_AGRPC_CLIENT_RPC_HPP
 
-#include <agrpc/default_completion_token.hpp>
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/client_rpc_base.hpp>
 #include <agrpc/detail/client_rpc_sender.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/default_completion_token.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/initiate_sender_implementation.hpp>
 #include <agrpc/detail/name.hpp>

@@ -19,7 +19,6 @@
 
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
-#include <agrpc/repeatedly_request_context.hpp>
 
 #include <functional>
 #include <type_traits>
@@ -198,37 +197,6 @@ void typed_spawn(Executor&& executor, Function&& function)
 #endif
 }
 
-template <class Handler, class Allocator = std::allocator<void>>
-struct RpcSpawner
-{
-    using executor_type = agrpc::GrpcContext::executor_type;
-    using allocator_type = Allocator;
-
-    agrpc::GrpcContext& grpc_context;
-    Handler handler;
-    Allocator allocator;
-
-    RpcSpawner(agrpc::GrpcContext& grpc_context, Handler handler, const Allocator& allocator = {})
-        : grpc_context(grpc_context), handler(std::move(handler)), allocator(allocator)
-    {
-    }
-
-    template <class T>
-    void operator()(agrpc::RepeatedlyRequestContext<T>&& context)
-    {
-        test::typed_spawn(grpc_context,
-                          [h = handler, context = std::move(context)](const asio::yield_context& yield_context) mutable
-                          {
-                              std::apply(std::move(h),
-                                         std::tuple_cat(context.args(), std::forward_as_tuple(yield_context)));
-                          });
-    }
-
-    [[nodiscard]] decltype(auto) get_executor() const noexcept { return grpc_context.get_executor(); }
-
-    [[nodiscard]] allocator_type get_allocator() const noexcept { return allocator; }
-};
-
 template <class... Functions>
 void spawn_and_run(agrpc::GrpcContext& grpc_context, Functions&&... functions)
 {
@@ -244,29 +212,9 @@ decltype(auto) initiate_using_async_completion(Initiation&& initiation, RawCompl
     return completion.result.get();
 }
 
-void wait(grpc::Alarm& alarm, std::chrono::system_clock::time_point deadline,
-          asio::executor_binder<std::function<void(bool)>, agrpc::GrpcExecutor> function);
-
 void post(agrpc::GrpcContext& grpc_context, const std::function<void()>& function);
 
 void post(const agrpc::GrpcExecutor& executor, const std::function<void()>& function);
-
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-template <class Executor, class CancellationCondition, class CompletionToken, class... Function>
-auto parallel_group_bind_executor(const Executor& executor, CancellationCondition cancellation_condition,
-                                  CompletionToken&& token, Function&&... function)
-{
-    return asio::experimental::make_parallel_group(
-               [&](auto& f)
-               {
-                   return [&](auto&& t)
-                   {
-                       return f(asio::bind_executor(executor, std::forward<decltype(t)>(t)));
-                   };
-               }(function)...)
-        .async_wait(cancellation_condition, std::forward<CompletionToken>(token));
-}
-#endif
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 void co_spawn(agrpc::GrpcContext& grpc_context, const std::function<asio::awaitable<void>()>& function);

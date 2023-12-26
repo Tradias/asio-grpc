@@ -15,8 +15,8 @@
 #ifndef AGRPC_AGRPC_NOTIFY_ON_STATE_CHANGE_HPP
 #define AGRPC_AGRPC_NOTIFY_ON_STATE_CHANGE_HPP
 
-#include <agrpc/default_completion_token.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/default_completion_token.hpp>
 #include <agrpc/detail/initiate_sender_implementation.hpp>
 #include <agrpc/detail/notify_on_state_change.hpp>
 #include <agrpc/grpc_context.hpp>
@@ -53,9 +53,9 @@ struct NotifyOnStateChangeFn
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` if the state changed, `false` if the deadline expired.
      */
-    template <class Deadline, class CompletionToken = agrpc::DefaultCompletionToken>
+    template <class Deadline, class CompletionToken>
     auto operator()(agrpc::GrpcContext& grpc_context, grpc::ChannelInterface& channel,
-                    ::grpc_connectivity_state last_observed, Deadline deadline, CompletionToken&& token = {}) const
+                    ::grpc_connectivity_state last_observed, Deadline deadline, CompletionToken&& token) const
         noexcept(detail::IS_USE_SENDER<CompletionToken> && std::is_nothrow_copy_constructible_v<Deadline>)
     {
         return detail::async_initiate_sender_implementation(

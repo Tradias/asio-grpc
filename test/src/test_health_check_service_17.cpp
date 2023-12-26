@@ -20,9 +20,9 @@
 #include "utils/grpc_context_test.hpp"
 #include "utils/time.hpp"
 
+#include <agrpc/alarm.hpp>
 #include <agrpc/client_rpc.hpp>
 #include <agrpc/health_check_service.hpp>
-#include <agrpc/rpc.hpp>
 #include <grpcpp/create_channel.h>
 #include <grpcpp/grpcpp.h>
 
@@ -41,7 +41,7 @@ struct HealthCheckServiceTest : test::GrpcContextTest
     grpc_health::HealthCheckRequest request;
     grpc_health::HealthCheckResponse response;
     std::optional<test::GrpcContextWorkTrackingExecutor> guard;
-    grpc::Alarm alarm;
+    agrpc::Alarm alarm{this->grpc_context};
 
     HealthCheckServiceTest()
     {
@@ -147,7 +147,7 @@ struct HealthCheckServiceTest : test::GrpcContextTest
                 rpc.cancel();
                 rpc.read(response, yield);
                 // wait for the server to receive the cancellation
-                wait(alarm, test::hundred_milliseconds_from_now(), test::NoOp{});
+                alarm.wait(test::hundred_milliseconds_from_now(), test::NoOp{});
             });
     }
 
@@ -213,8 +213,8 @@ struct HealthCheckServiceTest : test::GrpcContextTest
                       read_initiated = true;
                   });
         client_grpc_context.run_while(not_true(read_initiated));
-        std::this_thread::sleep_for(std::chrono::milliseconds(110));       // wait for deadline to expire
-        wait(alarm, test::hundred_milliseconds_from_now(), test::NoOp{});  // wait for the server to finish the Watch
+        std::this_thread::sleep_for(std::chrono::milliseconds(110));      // wait for deadline to expire
+        alarm.wait(test::hundred_milliseconds_from_now(), test::NoOp{});  // wait for the server to finish the Watch
         grpc_context.run();
         client_grpc_context.run();
     }

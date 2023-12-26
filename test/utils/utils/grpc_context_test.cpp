@@ -15,7 +15,6 @@
 #include "utils/grpc_context_test.hpp"
 
 #include "utils/asio_forward.hpp"
-#include "utils/memory_resource.hpp"
 
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
@@ -49,12 +48,6 @@ GrpcContextTrackingAllocatorExecutor GrpcContextTest::get_tracking_allocator_exe
 GrpcContextWorkTrackingExecutor GrpcContextTest::get_work_tracking_executor() noexcept
 {
     return test::work_tracking_executor(grpc_context);
-}
-
-void GrpcContextTest::wait(grpc::Alarm& alarm, std::chrono::system_clock::time_point deadline,
-                           const std::function<void(bool)>& callback)
-{
-    test::wait(alarm, deadline, asio::bind_executor(grpc_context, callback));
 }
 
 void GrpcContextTest::post(const std::function<void()>& function) { test::post(grpc_context, function); }

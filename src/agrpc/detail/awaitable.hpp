@@ -12,28 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_MEMORY_RESOURCE_RECYCLING_ALLOCATOR_HPP
-#define AGRPC_DETAIL_MEMORY_RESOURCE_RECYCLING_ALLOCATOR_HPP
+#ifndef AGRPC_DETAIL_AWAITABLE_HPP
+#define AGRPC_DETAIL_AWAITABLE_HPP
 
-#include <agrpc/detail/config.hpp>
+#ifdef AGRPC_STANDALONE_ASIO
+#include <asio/use_awaitable.hpp>
 
-AGRPC_NAMESPACE_BEGIN()
+#ifdef ASIO_HAS_CO_AWAIT
+#include <asio/co_spawn.hpp>
 
-namespace detail
-{
-namespace pmr
-{
-template <class>
-struct polymorphic_allocator;
-}
+#define AGRPC_ASIO_HAS_CO_AWAIT
+#endif
+#elif defined(AGRPC_BOOST_ASIO)
+#include <boost/asio/use_awaitable.hpp>
 
-namespace container
-{
-template <class, class>
-struct uses_allocator;
-}
-}
+#ifdef BOOST_ASIO_HAS_CO_AWAIT
+#include <boost/asio/co_spawn.hpp>
 
-AGRPC_NAMESPACE_END
+#define AGRPC_ASIO_HAS_CO_AWAIT
+#endif
+#endif
 
-#endif  // AGRPC_DETAIL_MEMORY_RESOURCE_RECYCLING_ALLOCATOR_HPP
+#endif  // AGRPC_DETAIL_AWAITABLE_HPP

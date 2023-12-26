@@ -15,10 +15,10 @@
 #ifndef AGRPC_AGRPC_ALARM_HPP
 #define AGRPC_AGRPC_ALARM_HPP
 
-#include <agrpc/default_completion_token.hpp>
 #include <agrpc/detail/alarm.hpp>
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
+#include <agrpc/detail/default_completion_token.hpp>
 #include <agrpc/detail/grpc_sender.hpp>
 #include <agrpc/detail/initiate_sender_implementation.hpp>
 #include <agrpc/detail/query_grpc_context.hpp>
@@ -79,8 +79,8 @@ class BasicAlarm
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool)`. `true` if it expired, `false` if it was canceled.
      */
-    template <class Deadline, class CompletionToken = detail::LegacyDefaultCompletionTokenT<Executor>>
-    auto wait(const Deadline& deadline, CompletionToken&& token = detail::LegacyDefaultCompletionTokenT<Executor>{}) &
+    template <class Deadline, class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    auto wait(const Deadline& deadline, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{}) &
     {
         using Initiation = detail::GrpcSenderInitiation<detail::AlarmInitFunction<Deadline>>;
         if constexpr (std::is_same_v<agrpc::UseSender, detail::RemoveCrefT<CompletionToken>>)
@@ -109,8 +109,8 @@ class BasicAlarm
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool, BasicAlarm)`. `true` if it expired, `false` if it was canceled.
      */
-    template <class Deadline, class CompletionToken = detail::LegacyDefaultCompletionTokenT<Executor>>
-    auto wait(const Deadline& deadline, CompletionToken&& token = detail::LegacyDefaultCompletionTokenT<Executor>{}) &&
+    template <class Deadline, class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    auto wait(const Deadline& deadline, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{}) &&
     {
         using Initiation = detail::MoveAlarmSenderInitiation<Deadline>;
         if constexpr (std::is_same_v<agrpc::UseSender, detail::RemoveCrefT<CompletionToken>>)

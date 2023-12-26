@@ -14,20 +14,12 @@
 
 #include "utils/asio_utils.hpp"
 
-#include <agrpc/wait.hpp>
-
 namespace test
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 void spawn(agrpc::GrpcContext& grpc_context, const std::function<void(const asio::yield_context&)>& function)
 {
     test::typed_spawn(grpc_context, function);
-}
-
-void wait(grpc::Alarm& alarm, std::chrono::system_clock::time_point deadline,
-          asio::executor_binder<std::function<void(bool)>, agrpc::GrpcExecutor> function)
-{
-    agrpc::wait(alarm, deadline, function);
 }
 
 void post(agrpc::GrpcContext& grpc_context, const std::function<void()>& function)

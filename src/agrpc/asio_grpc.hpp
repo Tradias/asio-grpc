@@ -22,40 +22,24 @@
  * @brief Public namespace
  */
 
-/**
- * @namespace agrpc::pmr
- * @brief Public namespace
- */
-
 #ifndef AGRPC_AGRPC_ASIO_GRPC_HPP
 #define AGRPC_AGRPC_ASIO_GRPC_HPP
 
 #include <agrpc/alarm.hpp>
-#include <agrpc/bind_allocator.hpp>
-#include <agrpc/cancel_safe.hpp>
 #include <agrpc/client_rpc.hpp>
-#include <agrpc/default_completion_token.hpp>
 #include <agrpc/default_server_rpc_traits.hpp>
-#include <agrpc/get_completion_queue.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
-#include <agrpc/grpc_initiate.hpp>
-#include <agrpc/grpc_stream.hpp>
 #include <agrpc/notify_on_state_change.hpp>
-#include <agrpc/notify_when_done.hpp>
+#include <agrpc/read.hpp>
 #include <agrpc/register_awaitable_rpc_handler.hpp>
 #include <agrpc/register_callback_rpc_handler.hpp>
 #include <agrpc/register_sender_rpc_handler.hpp>
-#include <agrpc/repeatedly_request.hpp>
-#include <agrpc/repeatedly_request_context.hpp>
-#include <agrpc/rpc.hpp>
 #include <agrpc/rpc_type.hpp>
 #include <agrpc/run.hpp>
 #include <agrpc/server_rpc.hpp>
 #include <agrpc/test.hpp>
-#include <agrpc/use_awaitable.hpp>
 #include <agrpc/use_sender.hpp>
-#include <agrpc/wait.hpp>
 #include <agrpc/waiter.hpp>
 
 #endif  // AGRPC_AGRPC_ASIO_GRPC_HPP

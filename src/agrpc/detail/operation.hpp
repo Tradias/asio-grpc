@@ -31,43 +31,36 @@ class NoArgOperation : public detail::QueueableOperationBase
   private:
     using Base = detail::QueueableOperationBase;
 
+    template <bool UseLocalAllocator>
+    static void do_complete(detail::OperationBase* op, OperationResult result, agrpc::GrpcContext& grpc_context)
+    {
+        auto* self = static_cast<NoArgOperation*>(op);
+        detail::AllocationGuard ptr{self, [&]
+                                    {
+                                        if constexpr (UseLocalAllocator)
+                                        {
+                                            return detail::get_local_allocator(grpc_context);
+                                        }
+                                        else
+                                        {
+                                            return detail::get_allocator(self->handler_);
+                                        }
+                                    }()};
+        if AGRPC_LIKELY (!detail::is_shutdown(result))
+        {
+            auto handler{std::move(self->handler_)};
+            ptr.reset();
+            std::move(handler)();
+        }
+    }
+
   public:
     template <class... Args>
     explicit NoArgOperation(detail::AllocationType allocation_type, Args&&... args)
-        : Base(detail::AllocationType::LOCAL == allocation_type
-                   ? detail::DO_COMPLETE_LOCAL_NO_ARG_HANDLER<NoArgOperation>
-                   : detail::DO_COMPLETE_NO_ARG_HANDLER<NoArgOperation>),
+        : Base(detail::AllocationType::LOCAL == allocation_type ? do_complete<true> : do_complete<false>),
           handler_(static_cast<Args&&>(args)...)
     {
     }
-
-    [[nodiscard]] Handler& completion_handler() noexcept { return handler_; }
-
-    [[nodiscard]] auto get_allocator() noexcept { return detail::get_allocator(handler_); }
-
-  private:
-    Handler handler_;
-};
-
-template <class Handler>
-class GrpcTagOperation : public detail::OperationBase
-{
-  private:
-    using Base = detail::OperationBase;
-
-  public:
-    template <class... Args>
-    explicit GrpcTagOperation(detail::AllocationType allocation_type, Args&&... args)
-        : Base(detail::AllocationType::LOCAL == allocation_type
-                   ? detail::DO_COMPLETE_LOCAL_GRPC_TAG_HANDLER<GrpcTagOperation>
-                   : detail::DO_COMPLETE_GRPC_TAG_HANDLER<GrpcTagOperation>),
-          handler_(static_cast<Args&&>(args)...)
-    {
-    }
-
-    [[nodiscard]] Handler& completion_handler() noexcept { return handler_; }
-
-    [[nodiscard]] auto get_allocator() noexcept { return detail::get_allocator(handler_); }
 
   private:
     Handler handler_;

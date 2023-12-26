@@ -17,12 +17,10 @@
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/get_completion_queue.hpp>
 #include <agrpc/detail/grpc_completion_queue_event.hpp>
 #include <agrpc/detail/grpc_context.hpp>
 #include <agrpc/detail/grpc_executor_options.hpp>
 #include <agrpc/detail/intrusive_queue.hpp>
-#include <agrpc/detail/memory_resource.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
 #include <grpcpp/alarm.h>
@@ -76,7 +74,6 @@ inline GrpcContext::~GrpcContext()
     asio::execution_context::shutdown();
     asio::execution_context::destroy();
 #endif
-    detail::GrpcContextImplementation::deallocate_notify_when_done_list(*this);
 }
 
 inline bool GrpcContext::run()

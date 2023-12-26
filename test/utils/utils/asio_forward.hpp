@@ -16,6 +16,7 @@
 #define AGRPC_UTILS_ASIO_FORWARD_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/awaitable.hpp>
 
 #ifdef AGRPC_STANDALONE_ASIO
 #include <asio/coroutine.hpp>
@@ -28,12 +29,8 @@
 #include <asio/thread_pool.hpp>
 #include <asio/use_future.hpp>
 
-#ifdef AGRPC_ASIO_HAS_CO_AWAIT
-#include <asio/co_spawn.hpp>
-
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+#if defined(AGRPC_ASIO_HAS_CO_AWAIT) && defined(AGRPC_ASIO_HAS_CANCELLATION_SLOT)
 #include <asio/experimental/awaitable_operators.hpp>
-#endif
 #endif
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
@@ -75,12 +72,8 @@
 #include <boost/asio/thread_pool.hpp>
 #include <boost/asio/use_future.hpp>
 
-#ifdef AGRPC_ASIO_HAS_CO_AWAIT
-#include <boost/asio/co_spawn.hpp>
-
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+#if defined(AGRPC_ASIO_HAS_CO_AWAIT) && defined(AGRPC_ASIO_HAS_CANCELLATION_SLOT)
 #include <boost/asio/experimental/awaitable_operators.hpp>
-#endif
 #endif
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT

@@ -18,7 +18,6 @@
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/association.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/memory_resource.hpp>
 #include <agrpc/detail/tuple.hpp>
 #include <agrpc/detail/utility.hpp>
 
@@ -146,8 +145,7 @@ struct agrpc::asio::associator<Associator, agrpc::detail::WorkTrackingCompletion
 #endif
 
 template <class CompletionHandler, class Alloc>
-struct agrpc::detail::container::uses_allocator<agrpc::detail::WorkTrackingCompletionHandler<CompletionHandler>, Alloc>
-    : std::false_type
+struct std::uses_allocator<agrpc::detail::WorkTrackingCompletionHandler<CompletionHandler>, Alloc> : std::false_type
 {
 };
 

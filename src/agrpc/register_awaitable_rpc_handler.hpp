@@ -16,6 +16,7 @@
 #define AGRPC_AGRPC_REGISTER_AWAITABLE_RPC_HANDLER_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/awaitable.hpp>
 #include <agrpc/detail/config.hpp>
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT

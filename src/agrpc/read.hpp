@@ -15,12 +15,8 @@
 #ifndef AGRPC_AGRPC_READ_HPP
 #define AGRPC_AGRPC_READ_HPP
 
-#include <agrpc/default_completion_token.hpp>
-#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/grpc_initiate.hpp>
-#include <agrpc/detail/memory.hpp>
-#include <agrpc/detail/rpc.hpp>
+#include <agrpc/detail/default_completion_token.hpp>
 #include <agrpc/grpc_executor.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -52,46 +48,6 @@ namespace detail
 struct ReadFn
 {
     /**
-     * @brief Read from a streaming RPC
-     *
-     * This is thread-safe with respect to write or writes_done methods. It should not be called concurrently with other
-     * streaming APIs on the same stream. It is not meaningful to call it concurrently with another read on the same
-     * stream since reads on the same stream are delivered in order (expect for server-side bidirectional streams where
-     * the order is undefined).
-     *
-     * Example server-side client-streaming:
-     *
-     * @snippet server.cpp read-client-streaming-server-side
-     *
-     * Example server-side bidirectional-streaming:
-     *
-     * @snippet server.cpp read-bidirectional-streaming-server-side
-     *
-     * Example client-side server-streaming:
-     *
-     * @snippet client.cpp read-server-streaming-client-side
-     *
-     * Example client-side bidirectional-streaming:
-     *
-     * @snippet client.cpp read-bidirectional-client-side
-     *
-     * @param reader A `grpc::Client/ServerAsyncReader(Writer)(Interface)` or a `std::unique_ptr` of it.
-     * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
-     * completion signature is `void(bool)`. `true` indicates that a valid message was read. `false` when
-     * there will be no more incoming messages, either because the other side has called WritesDone() or the stream has
-     * failed (or been cancelled).
-     */
-    template <class Reader, class Response, class CompletionToken = agrpc::DefaultCompletionToken>
-    auto operator()(Reader& reader, Response& response, CompletionToken&& token = {}) const
-        noexcept(detail::IS_NOTRHOW_GRPC_INITIATE_COMPLETION_TOKEN<CompletionToken>)
-    {
-        return detail::grpc_initiate(
-            detail::ReadInitFunction<Response, detail::UnwrapUniquePtrT<Reader>>{detail::unwrap_unique_ptr(reader),
-                                                                                 response},
-            static_cast<CompletionToken&&>(token));
-    }
-
-    /**
      * @brief (experimental) Read from a ServerRPC
      *
      * Equivalent to performing `rpc.read(req, token)`.
@@ -101,8 +57,8 @@ struct ReadFn
     template <auto RequestRPC, class Traits, class Executor,
               class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     decltype(auto) operator()(agrpc::ServerRPC<RequestRPC, Traits, Executor>& rpc,
-                              typename agrpc::ServerRPC<RequestRPC, Traits, Executor>::Request & req,
-                              CompletionToken && token = detail::DefaultCompletionTokenT<Executor>{}) const
+                              typename agrpc::ServerRPC<RequestRPC, Traits, Executor>::Request& req,
+                              CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{}) const
         noexcept(noexcept(rpc.read(req, static_cast<CompletionToken&&>(token))))
     {
         return rpc.read(req, static_cast<CompletionToken&&>(token));
@@ -117,8 +73,8 @@ struct ReadFn
      */
     template <auto PrepareAsync, class Executor, class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     decltype(auto) operator()(agrpc::ClientRPC<PrepareAsync, Executor>& rpc,
-                              typename agrpc::ClientRPC<PrepareAsync, Executor>::Response & response,
-                              CompletionToken && token = detail::DefaultCompletionTokenT<Executor>{}) const
+                              typename agrpc::ClientRPC<PrepareAsync, Executor>::Response& response,
+                              CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{}) const
         noexcept(noexcept(rpc.read(response, static_cast<CompletionToken&&>(token))))
     {
         return rpc.read(response, static_cast<CompletionToken&&>(token));

@@ -18,13 +18,11 @@
 #include "utils/asio_forward.hpp"
 #include "utils/asio_utils.hpp"
 #include "utils/grpc_format.hpp"
-#include "utils/memory_resource.hpp"
 #include "utils/tracking_allocator.hpp"
 
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
 #include <agrpc/use_sender.hpp>
-#include <agrpc/wait.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
@@ -66,17 +64,12 @@ struct GrpcContextTest
 
     test::TrackingAllocator<> get_allocator() noexcept;
 
-    auto use_sender() noexcept { return agrpc::use_sender(get_executor()); }
-
     bool allocator_has_been_used() const noexcept;
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     GrpcContextTrackingAllocatorExecutor get_tracking_allocator_executor() noexcept;
 
     GrpcContextWorkTrackingExecutor get_work_tracking_executor() noexcept;
-
-    void wait(grpc::Alarm& alarm, std::chrono::system_clock::time_point deadline,
-              const std::function<void(bool)>& callback);
 
     void post(const std::function<void()>& function);
 #endif

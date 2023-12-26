@@ -25,6 +25,11 @@ find_package(
     NO_SYSTEM_ENVIRONMENT_PATH
     NO_CMAKE_SYSTEM_PATH)
 
+set(Boost_NO_SYSTEM_PATHS on)
+find_package(Boost REQUIRED)
+
+find_package(asio REQUIRED)
+
 # common compile options
 add_library(compile-options INTERFACE)
 
@@ -42,7 +47,7 @@ endfunction()
 # TARGET option
 create_object_library(target-option target.cpp)
 
-target_link_libraries(target-option PRIVATE asio-grpc::asio-grpc-standalone-asio)
+target_link_libraries(target-option PRIVATE asio-grpc::asio-grpc-standalone-asio asio::asio)
 
 # /* [asio_grpc_protobuf_generate-example] */
 asio_grpc_protobuf_generate(
@@ -66,14 +71,14 @@ asio_grpc_protobuf_generate(
 
 create_object_library(out-var-option out_var.cpp ${OUT_VAR_GENERATED_SOURCES})
 
-target_link_libraries(out-var-option PRIVATE asio-grpc::asio-grpc)
+target_link_libraries(out-var-option PRIVATE asio-grpc::asio-grpc Boost::boost)
 
 target_include_directories(out-var-option PRIVATE "${OUT_VAR_GENERATED_PROTOS_OUT_DIR}")
 
 # DESCRIPTOR option
 create_object_library(descriptor-option descriptor.cpp)
 
-target_link_libraries(descriptor-option PRIVATE asio-grpc::asio-grpc)
+target_link_libraries(descriptor-option PRIVATE asio-grpc::asio-grpc Boost::boost)
 
 set(DESCRIPTOR_GENERATED_PROTOS_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/descriptor")
 

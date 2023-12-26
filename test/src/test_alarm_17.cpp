@@ -145,10 +145,8 @@ TEST_CASE_TEMPLATE("cancel agrpc::Alarm with cancellation_type::none", T, std::t
     test.post(
         [&]
         {
-            test::move_if<T>(alarm).wait(
-                test::hundred_milliseconds_from_now(),
-                asio::bind_cancellation_slot(signal.slot(),
-                                             asio::bind_executor(test.get_executor(), WaitOkAssigner{ok})));
+            test::move_if<T>(alarm).wait(test::hundred_milliseconds_from_now(),
+                                         asio::bind_cancellation_slot(signal.slot(), WaitOkAssigner{ok}));
             test.post(
                 [&]
                 {
@@ -167,14 +165,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel agrpc::Alarm with parallel_grou
     agrpc::Alarm alarm{grpc_context};
     asio::steady_timer timer{get_executor(), std::chrono::milliseconds(100)};
     const auto not_to_exceed = std::chrono::steady_clock::now() + std::chrono::seconds(5);
-    test::parallel_group_bind_executor(
-        get_executor(), asio::experimental::wait_for_one(),
-        [&](std::array<std::size_t, 2> actual_completion_order, test::ErrorCode timer_ec, bool wait_ok)
-        {
-            completion_order = actual_completion_order;
-            error_code.emplace(timer_ec);
-            ok = wait_ok;
-        },
+    asio::experimental::make_parallel_group(
         [&](auto&& t)
         {
             return timer.async_wait(std::move(t));
@@ -182,7 +173,14 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel agrpc::Alarm with parallel_grou
         [&](auto&& t)
         {
             return alarm.wait(test::five_seconds_from_now(), std::move(t));
-        });
+        })
+        .async_wait(asio::experimental::wait_for_one(),
+                    [&](std::array<std::size_t, 2> actual_completion_order, test::ErrorCode timer_ec, bool wait_ok)
+                    {
+                        completion_order = actual_completion_order;
+                        error_code.emplace(timer_ec);
+                        ok = wait_ok;
+                    });
     grpc_context.run();
     CHECK_GT(not_to_exceed, std::chrono::steady_clock::now());
     CHECK_EQ(0, completion_order[0]);

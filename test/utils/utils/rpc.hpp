@@ -17,81 +17,20 @@
 
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asio_forward.hpp"
-#include "utils/client_context.hpp"
-#include "utils/grpc_format.hpp"
-#include "utils/time.hpp"
 
 #include <agrpc/grpc_context.hpp>
-#include <agrpc/rpc.hpp>
 #include <doctest/doctest.h>
 
 namespace test
 {
-template <bool IsInterface>
-using ClientAsyncResponseReader =
-    std::unique_ptr<std::conditional_t<IsInterface, grpc::ClientAsyncResponseReaderInterface<test::msg::Response>,
-                                       grpc::ClientAsyncResponseReader<test::msg::Response>>>;
-
-template <bool IsInterface>
-using ClientAsyncReader =
-    std::unique_ptr<std::conditional_t<IsInterface, grpc::ClientAsyncReaderInterface<test::msg::Response>,
-                                       grpc::ClientAsyncReader<test::msg::Response>>>;
-
-template <bool IsInterface>
-using ClientAsyncWriter =
-    std::unique_ptr<std::conditional_t<IsInterface, grpc::ClientAsyncWriterInterface<test::msg::Request>,
-                                       grpc::ClientAsyncWriter<test::msg::Request>>>;
-
-template <bool IsInterface>
-using ClientAsyncReaderWriter = std::unique_ptr<
-    std::conditional_t<IsInterface, grpc::ClientAsyncReaderWriterInterface<test::msg::Request, test::msg::Response>,
-                       grpc::ClientAsyncReaderWriter<test::msg::Request, test::msg::Response>>>;
-
-template <bool IsInterface>
-using ServerAsyncWriter = std::conditional_t<IsInterface, grpc::ServerAsyncWriterInterface<test::msg::Response>&,
-                                             grpc::ServerAsyncWriter<test::msg::Response>&>;
-
-template <bool IsInterface>
-using ServerAsyncReader =
-    std::conditional_t<IsInterface, grpc::ServerAsyncReaderInterface<test::msg::Response, test::msg::Request>&,
-                       grpc::ServerAsyncReader<test::msg::Response, test::msg::Request>&>;
-
-template <bool IsInterface>
-using ServerAsyncReaderWriter =
-    std::conditional_t<IsInterface, grpc::ServerAsyncReaderWriterInterface<test::msg::Response, test::msg::Request>&,
-                       grpc::ServerAsyncReaderWriter<test::msg::Response, test::msg::Request>&>;
-
 struct PerformUnarySuccessOptions
 {
     bool finish_with_error{false};
     int32_t request_payload{42};
 };
 
-template <class Stub>
-void client_perform_unary_success(agrpc::GrpcContext& grpc_context, Stub& stub, const asio::yield_context& yield,
-                                  test::PerformUnarySuccessOptions options = {})
-{
-    const auto client_context = test::create_client_context();
-    test::msg::Request request;
-    request.set_integer(options.request_payload);
-    const auto reader = agrpc::request(&Stub::AsyncUnary, stub, *client_context, request, grpc_context);
-    test::msg::Response response;
-    grpc::Status status;
-    CHECK(agrpc::finish(*reader, response, status, yield));
-    if (options.finish_with_error)
-    {
-        CHECK_EQ(grpc::StatusCode::ALREADY_EXISTS, status.error_code());
-    }
-    else
-    {
-        CHECK(status.ok());
-        CHECK_EQ(21, response.integer());
-    }
-}
-
-bool client_perform_unary_unchecked(agrpc::GrpcContext& grpc_context, test::v1::Test::Stub& stub,
-                                    const asio::yield_context& yield,
-                                    std::chrono::system_clock::time_point deadline = test::five_seconds_from_now());
+void client_perform_unary_success(agrpc::GrpcContext& grpc_context, test::v1::Test::Stub& stub,
+                                  const asio::yield_context& yield, test::PerformUnarySuccessOptions options = {});
 
 struct PerformClientStreamingSuccessOptions
 {
@@ -99,19 +38,6 @@ struct PerformClientStreamingSuccessOptions
     bool use_write_last{false};
     int32_t request_payload{42};
 };
-
-void client_perform_client_streaming_success(test::v1::Test::Stub& stub, const asio::yield_context& yield,
-                                             test::PerformClientStreamingSuccessOptions options = {});
-
-void client_perform_client_streaming_success(test::msg::Response& response,
-                                             grpc::ClientAsyncWriter<test::msg::Request>& writer,
-                                             const asio::yield_context& yield,
-                                             test::PerformClientStreamingSuccessOptions options = {});
-
-void client_perform_client_streaming_success(test::msg::Response& response,
-                                             grpc::ClientAsyncWriterInterface<test::msg::Request>& writer,
-                                             const asio::yield_context& yield,
-                                             test::PerformClientStreamingSuccessOptions options = {});
 
 grpc::Status create_already_exists_status();
 }

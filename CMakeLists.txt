@@ -16,17 +16,6 @@ cmake_minimum_required(VERSION 3.14...3.27)
 
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcOptionDefaults.cmake")
 
-# user options
-option(ASIO_GRPC_USE_BOOST_CONTAINER "(deprecated) Use Boost.Container instead of <memory_resource>"
-       ${ASIO_GRPC_DEFAULT_USE_BOOST_CONTAINER})
-option(ASIO_GRPC_USE_RECYCLING_ALLOCATOR "(deprecated) Use asio::recycling_allocator instead of <memory_resource>" off)
-
-if(ASIO_GRPC_USE_BOOST_CONTAINER AND ASIO_GRPC_USE_RECYCLING_ALLOCATOR)
-    message(
-        FATAL_ERROR
-            "The options ASIO_GRPC_USE_BOOST_CONTAINER and ASIO_GRPC_USE_RECYCLING_ALLOCATOR are mutually exclusive.")
-endif()
-
 # Hunter package manager options
 option(HUNTER_ENABLED "Enable Hunter package manager" off)
 option(ASIO_GRPC_HUNTER_BACKEND_BOOST_ASIO "Build Boost.Asio using Hunter" on)
@@ -99,6 +88,7 @@ endif()
 if(ASIO_GRPC_BUILD_TESTS)
     include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcInstallGitHooks.cmake")
     include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcCoverage.cmake")
+    include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcCheckStdPmr.cmake")
 endif()
 
 if(NOT ASIO_GRPC_PROJECT_IS_TOP_LEVEL OR ASIO_GRPC_BUILD_EXAMPLES)

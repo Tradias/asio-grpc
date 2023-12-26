@@ -32,97 +32,6 @@ The library can be added to a CMake project using either `add_subdirectory` or `
 #include <agrpc/asio_grpc.hpp>
 ```
 
-<details><summary><b>As a CMake subdirectory</b></summary>
-<p>
-
-Clone the repository into a subdirectory of your CMake project. Then add it and link it to your target.
-
-Using [Boost.Asio](https://www.boost.org/doc/libs/1_84_0/doc/html/boost_asio.html):
-
-```cmake
-add_subdirectory(/path/to/asio-grpc)
-target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
-
-# Also link with the equivalents of gRPC::grpc++ and Boost::headers
-```
-
-Or using [standalone Asio](https://github.com/chriskohlhoff/asio):
-
-```cmake
-add_subdirectory(/path/to/asio-grpc)
-target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-standalone-asio)
-
-# Also link with the equivalents of gRPC::grpc++ and asio::asio
-```
-
-Or using [libunifex](https://github.com/facebookexperimental/libunifex):
-
-```cmake
-add_subdirectory(/path/to/asio-grpc)
-target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-unifex)
-
-# Also link with the equivalents of gRPC::grpc++ and unifex::unifex
-```
-
-Or using [stdexec](https://github.com/NVIDIA/stdexec):
-
-```cmake
-add_subdirectory(/path/to/asio-grpc)
-target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-stdexec)
-
-# Also link with the equivalents of gRPC::grpc++ and STDEXEC::stdexec
-```
-
-</p>
-</details>
-
-<details><summary><b>As a CMake package</b></summary>
-<p>
-
-Clone the repository and install it.
-
-```shell
-cmake -B build -DCMAKE_INSTALL_PREFIX=/desired/installation/directory .
-cmake --build build --target install
-```
-
-Locate it and link it to your target.
-
-Using [Boost.Asio](https://www.boost.org/doc/libs/1_84_0/doc/html/boost_asio.html):
-
-```cmake
-# Make sure CMAKE_PREFIX_PATH contains /desired/installation/directory
-find_package(asio-grpc)
-target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
-```
-
-Or using [standalone Asio](https://github.com/chriskohlhoff/asio):
-
-```cmake
-# Make sure CMAKE_PREFIX_PATH contains /desired/installation/directory
-find_package(asio-grpc)
-target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-standalone-asio)
-```
-
-Or using [libunifex](https://github.com/facebookexperimental/libunifex):
-
-```cmake
-# Make sure CMAKE_PREFIX_PATH contains /desired/installation/directory
-find_package(asio-grpc)
-target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-unifex)
-```
-
-Or using [stdexec](https://github.com/NVIDIA/stdexec):
-
-```cmake
-# Make sure CMAKE_PREFIX_PATH contains /desired/installation/directory
-find_package(asio-grpc)
-target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-stdexec)
-```
-
-</p>
-</details>
-
 <details><summary><b>Using vcpkg</b></summary>
 <p>
 
@@ -151,13 +60,17 @@ Locate asio-grpc and link it to your target in your `CMakeLists.txt`:
 ```cmake
 find_package(asio-grpc)
 # Using the Boost.Asio backend
-target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
+find_package(Boost)
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc Boost::headers)
 # Or use the standalone Asio backend
-#target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-standalone-asio)
+find_package(asio)
+#target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-standalone-asio asio::asio)
 # Or use the libunifex backend
-#target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-unifex)
+find_package(unifex)
+#target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-unifex unifex::unifex)
 # Or use the stdexec backend
-#target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-stdexec)
+find_package(stdexec)
+#target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-stdexec STDEXEC::stdexec)
 ```
 
 </p>
@@ -182,9 +95,103 @@ find_package(asio-grpc)
 target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
 ```
 
-### Available options
+</p>
+</details>
 
-`backend` - One of "boost" for Boost.Asio, "asio" for standalone Asio or "unifex" for libunifex.
+<details><summary><b>As a CMake package</b></summary>
+<p>
+
+Clone the repository and install it.
+
+```shell
+cmake -B build -DCMAKE_INSTALL_PREFIX=/desired/installation/directory .
+cmake --build build --target install
+```
+
+Locate it and link it to your target.
+
+Using [Boost.Asio](https://www.boost.org/doc/libs/1_84_0/doc/html/boost_asio.html):
+
+```cmake
+# Make sure CMAKE_PREFIX_PATH contains /desired/installation/directory
+find_package(asio-grpc)
+find_package(Boost)
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc Boost::headers)
+```
+
+Or using [standalone Asio](https://github.com/chriskohlhoff/asio):
+
+```cmake
+# Make sure CMAKE_PREFIX_PATH contains /desired/installation/directory
+find_package(asio-grpc)
+find_package(asio)
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-standalone-asio asio::asio)
+```
+
+Or using [libunifex](https://github.com/facebookexperimental/libunifex):
+
+```cmake
+# Make sure CMAKE_PREFIX_PATH contains /desired/installation/directory
+find_package(asio-grpc)
+find_package(unifex)
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-unifex unifex::unifex)
+```
+
+Or using [stdexec](https://github.com/NVIDIA/stdexec):
+
+```cmake
+# Make sure CMAKE_PREFIX_PATH contains /desired/installation/directory
+find_package(asio-grpc)
+find_package(stdexec)
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-stdexec STDEXEC::stdexec)
+```
+
+</p>
+</details>
+
+<details><summary><b>As a CMake subdirectory</b></summary>
+<p>
+
+Clone the repository into a subdirectory of your CMake project. Then add it and link it to your target.
+
+Independent of the backend you chose, find and link with gRPC:
+
+```cmake
+find_package(gRPC)
+target_link_libraries(your_app PUBLIC gRPC::grpc++)
+```
+
+Using [Boost.Asio](https://www.boost.org/doc/libs/1_84_0/doc/html/boost_asio.html):
+
+```cmake
+add_subdirectory(/path/to/asio-grpc)
+find_package(Boost)
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc Boost::headers)
+```
+
+Or using [standalone Asio](https://github.com/chriskohlhoff/asio):
+
+```cmake
+add_subdirectory(/path/to/asio-grpc)
+find_package(asio)
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-standalone-asio asio::asio)
+```
+
+Or using [libunifex](https://github.com/facebookexperimental/libunifex):
+
+```cmake
+add_subdirectory(/path/to/asio-grpc)
+find_package(unifex)
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-unifex unifex::unifex)
+```
+
+Or using [stdexec](https://github.com/NVIDIA/stdexec):
+
+```cmake
+add_subdirectory(/path/to/asio-grpc)
+find_package(stdexec)
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-stdexec STDEXEC::stdexec)
+```
 
 </p>
 </details>

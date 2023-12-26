@@ -18,7 +18,6 @@
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/association.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/memory_resource.hpp>
 
 #include <memory>
 #include <utility>
@@ -92,8 +91,7 @@ struct agrpc::asio::associator<Associator, agrpc::detail::AssociatedCompletionHa
 #endif
 
 template <class CompletionHandler, class Alloc>
-struct agrpc::detail::container::uses_allocator<agrpc::detail::AssociatedCompletionHandler<CompletionHandler>, Alloc>
-    : std::false_type
+struct std::uses_allocator<agrpc::detail::AssociatedCompletionHandler<CompletionHandler>, Alloc> : std::false_type
 {
 };
 

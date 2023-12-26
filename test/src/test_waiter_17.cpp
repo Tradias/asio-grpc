@@ -146,11 +146,11 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "Waiter: cancel wait for alarm and wait
     agrpc::Alarm alarm{grpc_context};
     waiter.initiate(alarm_wait, alarm, test::five_hundred_milliseconds_from_now());
     asio::cancellation_signal signal;
-    waiter.wait(agrpc::bind_allocator(get_allocator(), asio::bind_cancellation_slot(signal.slot(),
-                                                                                    [&](auto&& ec, bool)
-                                                                                    {
-                                                                                        done = !ec;
-                                                                                    })));
+    waiter.wait(agrpc::detail::bind_allocator(get_allocator(), asio::bind_cancellation_slot(signal.slot(),
+                                                                                            [&](auto&& ec, bool)
+                                                                                            {
+                                                                                                done = !ec;
+                                                                                            })));
     signal.emit(asio::cancellation_type::terminal);
     waiter.wait(
         [&](auto&&, bool)
@@ -175,12 +175,11 @@ TEST_CASE_FIXTURE(test::IoContextTest, "Waiter: wait for asio::steady_timer")
         timer);
     asio::cancellation_signal signal;
     waiter.wait(asio::bind_cancellation_slot(signal.slot(),
-                                             asio::bind_executor(io_context,
-                                                                 [&](test::ErrorCode ec)
-                                                                 {
-                                                                     CHECK_EQ(asio::error::operation_aborted, ec);
-                                                                     CHECK_EQ(1, timer.cancel());
-                                                                 })));
+                                             [&](test::ErrorCode ec)
+                                             {
+                                                 CHECK_EQ(asio::error::operation_aborted, ec);
+                                                 CHECK_EQ(1, timer.cancel());
+                                             }));
     signal.emit(asio::cancellation_type::all);
     io_context.run();
 }

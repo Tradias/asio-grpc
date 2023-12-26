@@ -17,7 +17,6 @@
 
 #include <agrpc/detail/allocate.hpp>
 #include <agrpc/detail/association.hpp>
-#include <agrpc/detail/cancel_safe.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/forward.hpp>

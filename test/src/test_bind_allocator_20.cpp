@@ -17,20 +17,20 @@
 #include "utils/grpc_context_test.hpp"
 #include "utils/time.hpp"
 
-#include <agrpc/bind_allocator.hpp>
-#include <agrpc/wait.hpp>
+#include <agrpc/alarm.hpp>
+#include <agrpc/detail/bind_allocator.hpp>
 
-#include <vector>
+#ifdef AGRPC_TEST_HAS_STD_PMR
+#include <memory_resource>
 
-#ifndef AGRPC_USE_RECYCLING_ALLOCATOR
 TEST_CASE(
     "AllocatorBinder can be constructed using allocator_traits<polymorphic_allocator>::construct with expected "
     "arguments")
 {
-    using PmrAllocator = agrpc::detail::pmr::polymorphic_allocator<std::byte>;
-    using Binder = agrpc::AllocatorBinder<int, PmrAllocator>;
-    PmrAllocator expected_allocator{agrpc::detail::pmr::new_delete_resource()};
-    std::vector<Binder, agrpc::detail::pmr::polymorphic_allocator<Binder>> vector;
+    using PmrAllocator = std::pmr::polymorphic_allocator<std::byte>;
+    using Binder = agrpc::detail::AllocatorBinder<int, PmrAllocator>;
+    PmrAllocator expected_allocator{std::pmr::new_delete_resource()};
+    std::vector<Binder, std::pmr::polymorphic_allocator<Binder>> vector;
     vector.emplace_back(expected_allocator);
     CHECK_EQ(expected_allocator, asio::get_associated_allocator(vector.front()));
 }
@@ -42,9 +42,9 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_allocator with awaitable")
     test::co_spawn_and_run(grpc_context,
                            [&]() -> asio::awaitable<void>
                            {
-                               grpc::Alarm alarm;
-                               co_await agrpc::wait(alarm, test::ten_milliseconds_from_now(),
-                                                    agrpc::bind_allocator(get_allocator(), asio::use_awaitable));
+                               agrpc::Alarm alarm{grpc_context};
+                               co_await alarm.wait(test::ten_milliseconds_from_now(),
+                                                   agrpc::detail::bind_allocator(get_allocator(), asio::use_awaitable));
                            });
     CHECK(allocator_has_been_used());
 }

@@ -12,21 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(HUNTER_PACKAGES gRPC)
-
-if(ASIO_GRPC_HUNTER_BACKEND_BOOST_ASIO OR ASIO_GRPC_BUILD_TESTS)
-    list(APPEND HUNTER_PACKAGES Boost)
-endif()
-
-if(ASIO_GRPC_HUNTER_BACKEND_STANDALONE_ASIO OR ASIO_GRPC_BUILD_TESTS)
-    list(APPEND HUNTER_PACKAGES asio)
-endif()
-
-if(ASIO_GRPC_BUILD_TESTS)
-    list(APPEND HUNTER_PACKAGES doctest)
-    list(APPEND HUNTER_Boost_COMPONENTS coroutine thread filesystem)
-endif()
-
-include(FetchContent)
-fetchcontent_declare(SetupHunter GIT_REPOSITORY https://github.com/cpp-pm/gate)
-fetchcontent_makeavailable(SetupHunter)
+try_compile(
+    ASIO_GRPC_HAS_STD_PMR "${CMAKE_CURRENT_BINARY_DIR}"
+    "${CMAKE_CURRENT_LIST_DIR}/check_std_pmr.cpp"
+    CMAKE_FLAGS "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}"
+    LINK_LIBRARIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED on)

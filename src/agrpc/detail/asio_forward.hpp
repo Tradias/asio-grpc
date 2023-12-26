@@ -37,13 +37,6 @@
 #include <asio/query.hpp>
 #include <asio/system_executor.hpp>
 
-#ifdef ASIO_HAS_CO_AWAIT
-#include <asio/co_spawn.hpp>
-#include <asio/use_awaitable.hpp>
-
-#define AGRPC_ASIO_HAS_CO_AWAIT
-#endif
-
 #if (ASIO_VERSION >= 101900)
 #include <asio/associated_cancellation_slot.hpp>
 #include <asio/bind_cancellation_slot.hpp>
@@ -85,13 +78,6 @@
 #include <boost/asio/execution_context.hpp>
 #include <boost/asio/query.hpp>
 #include <boost/asio/system_executor.hpp>
-
-#ifdef BOOST_ASIO_HAS_CO_AWAIT
-#include <boost/asio/co_spawn.hpp>
-#include <boost/asio/use_awaitable.hpp>
-
-#define AGRPC_ASIO_HAS_CO_AWAIT
-#endif
 
 #if (BOOST_VERSION >= 107700)
 #include <boost/asio/associated_cancellation_slot.hpp>

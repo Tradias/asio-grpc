@@ -16,49 +16,15 @@
 #define AGRPC_DETAIL_COROUTINE_TRAITS_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/awaitable.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/detail/rethrow_first_arg.hpp>
-#include <agrpc/detail/utility.hpp>
+
+#ifdef AGRPC_ASIO_HAS_CO_AWAIT
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-struct CompletionHandlerUnknown
-{
-};
-
-template <class CompletionToken, class Signature, class = void>
-struct HandlerType
-{
-    using Type = CompletionHandlerUnknown;
-};
-
-template <class CompletionToken, class Signature>
-struct HandlerType<CompletionToken, Signature,
-                   std::void_t<typename asio::async_result<CompletionToken, Signature>::handler_type>>
-{
-    using Type = typename asio::async_result<CompletionToken, Signature>::handler_type;
-};
-
-template <class CompletionToken, class Signature, class = void>
-struct CompletionHandlerType
-{
-    using Type = typename detail::HandlerType<CompletionToken, Signature>::Type;
-};
-
-template <class CompletionToken, class Signature>
-struct CompletionHandlerType<
-    CompletionToken, Signature,
-    std::void_t<typename asio::async_result<CompletionToken, Signature>::completion_handler_type>>
-{
-    using Type = typename asio::async_result<CompletionToken, Signature>::completion_handler_type;
-};
-
-template <class CompletionToken, class Signature>
-using CompletionHandlerTypeT = typename CompletionHandlerType<CompletionToken, Signature>::Type;
-
-#ifdef AGRPC_ASIO_HAS_CO_AWAIT
 template <class Coroutine>
 struct CoroutineTraits;
 
@@ -80,9 +46,10 @@ using CoroutineCompletionTokenT = typename detail::CoroutineTraits<Coroutine>::C
 
 template <class Coroutine>
 using CoroutineExecutorT = typename detail::CoroutineTraits<Coroutine>::ExecutorType;
-#endif
 }
 
 AGRPC_NAMESPACE_END
+
+#endif
 
 #endif  // AGRPC_DETAIL_COROUTINE_TRAITS_HPP

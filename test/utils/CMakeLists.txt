@@ -66,7 +66,6 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
                 "utils/grpc_context_test.hpp"
                 "utils/grpc_generic_client_server_test.cpp"
                 "utils/grpc_generic_client_server_test.hpp"
-                "utils/memory_resource.hpp"
                 "utils/test.cpp"
                 "utils/test.hpp")
 
@@ -113,7 +112,8 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
     endif()
 
     target_compile_definitions(
-        ${_asio_grpc_name} PUBLIC "ASIO_GRPC_TEST_CPP_VERSION=\"${_test_suite_name} C++${_asio_grpc_cxx_standard}\"")
+        ${_asio_grpc_name} PUBLIC "ASIO_GRPC_TEST_CPP_VERSION=\"${_test_suite_name} C++${_asio_grpc_cxx_standard}\""
+                                  $<$<BOOL:${ASIO_GRPC_HAS_STD_PMR}>:AGRPC_TEST_HAS_STD_PMR>)
 
     convert_to_cpp_suffix(${_asio_grpc_cxx_standard})
 

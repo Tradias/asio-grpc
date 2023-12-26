@@ -20,7 +20,6 @@
 #include <agrpc/detail/association.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
-#include <agrpc/detail/operation.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/grpc_context.hpp>
 

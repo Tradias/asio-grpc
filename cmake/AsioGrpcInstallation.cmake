@@ -44,11 +44,4 @@ install(
     TYPE INCLUDE
     FILES_MATCHING
     PATTERN "*.hpp"
-    PATTERN "*.ipp"
-    PATTERN "*memory_resource.hpp" EXCLUDE
-    PATTERN "*memory_resource_boost_pmr.hpp" EXCLUDE
-    PATTERN "*memory_resource_recycling_allocator.hpp" EXCLUDE
-    PATTERN "*memory_resource_std_pmr.hpp" EXCLUDE)
-
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/src/generated/agrpc/detail/memory_resource.hpp"
-        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/agrpc/detail")
+    PATTERN "*.ipp")

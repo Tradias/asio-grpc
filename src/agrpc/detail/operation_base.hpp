@@ -134,14 +134,6 @@ inline constexpr auto DO_COMPLETE_NO_ARG_HANDLER =
 template <class Operation>
 inline constexpr auto DO_COMPLETE_LOCAL_NO_ARG_HANDLER =
     &detail::do_complete_handler<true, Operation, detail::QueueableOperationBase>;
-
-template <class Operation>
-inline constexpr auto DO_COMPLETE_GRPC_TAG_HANDLER =
-    &detail::do_complete_handler<false, Operation, detail::OperationBase>;
-
-template <class Operation>
-inline constexpr auto DO_COMPLETE_LOCAL_GRPC_TAG_HANDLER =
-    &detail::do_complete_handler<true, Operation, detail::OperationBase>;
 }
 
 AGRPC_NAMESPACE_END
