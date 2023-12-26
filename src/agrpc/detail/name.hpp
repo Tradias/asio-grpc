@@ -153,7 +153,7 @@ template <auto PrepareAsync>
 struct ClientName
 {
     static constexpr auto FUNCTION = PrepareAsync;
-    static constexpr decltype(auto) METHOD_PREFIX = "::PrepareAsync";
+    static constexpr const char METHOD_PREFIX[] = "::PrepareAsync";
 
     static constexpr auto prepare_service_name()
     {
@@ -173,7 +173,7 @@ template <auto RequestRPC>
 struct ServerName
 {
     static constexpr auto FUNCTION = RequestRPC;
-    static constexpr decltype(auto) METHOD_PREFIX = "::Request";
+    static constexpr const char METHOD_PREFIX[] = "::Request";
 
     static constexpr auto prepare_service_name()
     {
