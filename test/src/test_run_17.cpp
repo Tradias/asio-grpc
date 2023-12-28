@@ -228,7 +228,7 @@ TEST_CASE_FIXTURE(
                               {
                                   has_posted = true;
                               });
-                   alarm.wait(test::ten_milliseconds_from_now(),
+                   test::wait(alarm, test::ten_milliseconds_from_now(),
                               [&](bool)
                               {
                                   CHECK_EQ(std::this_thread::get_id(), expected_thread);

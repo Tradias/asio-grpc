@@ -17,6 +17,7 @@
 
 #include "utils/asio_forward.hpp"
 
+#include <agrpc/alarm.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
 
@@ -184,6 +185,9 @@ struct HandlerWithAssociatedAllocator
 
     [[nodiscard]] allocator_type get_allocator() const noexcept { return allocator; }
 };
+
+void wait(agrpc::Alarm& alarm, std::chrono::system_clock::time_point deadline,
+          const std::function<void(bool)>& function);
 
 void spawn(agrpc::GrpcContext& grpc_context, const std::function<void(const asio::yield_context&)>& function);
 

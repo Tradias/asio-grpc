@@ -17,6 +17,12 @@
 namespace test
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+void wait(agrpc::Alarm& alarm, std::chrono::system_clock::time_point deadline,
+          const std::function<void(bool)>& function)
+{
+    alarm.wait(deadline, function);
+}
+
 void spawn(agrpc::GrpcContext& grpc_context, const std::function<void(const asio::yield_context&)>& function)
 {
     test::typed_spawn(grpc_context, function);

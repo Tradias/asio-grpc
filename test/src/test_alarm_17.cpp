@@ -23,10 +23,12 @@
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post a apgrc::Alarm and use variadic-arg callback for its wait")
 {
     bool ok{false};
+    std::chrono::system_clock::time_point not_to_exceed;
     agrpc::BasicAlarm alarm{grpc_context};
     post(
         [&]
         {
+            not_to_exceed = test::now();
             alarm.wait(test::ten_milliseconds_from_now(),
                        [&](auto&&... args)
                        {
@@ -34,6 +36,33 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post a apgrc::Alarm and use vari
                        });
         });
     grpc_context.run();
+    CHECK_LE(std::chrono::milliseconds(100), test::now() - not_to_exceed);
+    CHECK(ok);
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm")
+{
+    bool ok{false};
+    std::chrono::system_clock::time_point not_to_exceed;
+    bool use_yield_context = false;
+    SUBCASE("asio::yield_context") { use_yield_context = true; }
+    SUBCASE("asio::basic_yield_context") {}
+    test::typed_spawn(get_executor(),
+                      [&](auto&& yield)
+                      {
+                          agrpc::Alarm alarm{grpc_context};
+                          not_to_exceed = test::now();
+                          if (use_yield_context)
+                          {
+                              ok = alarm.wait(test::hundred_milliseconds_from_now(), asio::yield_context(yield));
+                          }
+                          else
+                          {
+                              ok = alarm.wait(test::hundred_milliseconds_from_now(), yield);
+                          }
+                      });
+    grpc_context.run();
+    CHECK_LE(std::chrono::milliseconds(100), test::now() - not_to_exceed);
     CHECK(ok);
 }
 
@@ -108,6 +137,28 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "agrpc::Alarm::cancel")
 }
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::deferred with Alarm")
+{
+    bool ok1{false};
+    bool ok2{false};
+    agrpc::Alarm alarm{grpc_context};
+    auto deferred_op = alarm.wait(test::ten_milliseconds_from_now(),
+                                  test::ASIO_DEFERRED(
+                                      [&](bool wait_ok)
+                                      {
+                                          ok1 = wait_ok;
+                                          return alarm.wait(test::ten_milliseconds_from_now(), test::ASIO_DEFERRED);
+                                      }));
+    std::move(deferred_op)(
+        [&](bool wait_ok)
+        {
+            ok2 = wait_ok;
+        });
+    grpc_context.run();
+    CHECK(ok1);
+    CHECK(ok2);
+}
+
 TEST_CASE_TEMPLATE("cancel agrpc::Alarm with cancellation_type::total", T, std::true_type, std::false_type)
 {
     test::GrpcContextTest test;
@@ -187,5 +238,22 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel agrpc::Alarm with parallel_grou
     CHECK_EQ(1, completion_order[1]);
     CHECK_EQ(test::ErrorCode{}, error_code);
     CHECK_FALSE(ok);
+}
+#endif
+
+#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
+TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::execution connect and start Alarm")
+{
+    bool ok{false};
+    agrpc::Alarm alarm{grpc_context};
+    auto wait_sender = alarm.wait(test::ten_milliseconds_from_now(), agrpc::use_sender);
+    test::FunctionAsReceiver receiver{[&]()
+                                      {
+                                          ok = true;
+                                      }};
+    auto operation_state = asio::execution::connect(std::move(wait_sender), std::move(receiver));
+    asio::execution::start(operation_state);
+    grpc_context.run();
+    CHECK(ok);
 }
 #endif

@@ -147,7 +147,7 @@ struct HealthCheckServiceTest : test::GrpcContextTest
                 rpc.cancel();
                 rpc.read(response, yield);
                 // wait for the server to receive the cancellation
-                alarm.wait(test::hundred_milliseconds_from_now(), test::NoOp{});
+                test::wait(alarm, test::hundred_milliseconds_from_now(), test::NoOp{});
             });
     }
 
@@ -213,8 +213,9 @@ struct HealthCheckServiceTest : test::GrpcContextTest
                       read_initiated = true;
                   });
         client_grpc_context.run_while(not_true(read_initiated));
-        std::this_thread::sleep_for(std::chrono::milliseconds(110));      // wait for deadline to expire
-        alarm.wait(test::hundred_milliseconds_from_now(), test::NoOp{});  // wait for the server to finish the Watch
+        std::this_thread::sleep_for(std::chrono::milliseconds(110));  // wait for deadline to expire
+        test::wait(alarm, test::hundred_milliseconds_from_now(),
+                   test::NoOp{});  // wait for the server to finish the Watch
         grpc_context.run();
         client_grpc_context.run();
     }

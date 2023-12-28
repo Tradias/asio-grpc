@@ -73,39 +73,15 @@ TEST_CASE_FIXTURE(
 #endif
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
-using GrpcAwaitable = asio::awaitable<void, agrpc::GrpcExecutor>;
-
-inline constexpr asio::use_awaitable_t<agrpc::GrpcExecutor> GRPC_USE_AWAITABLE{};
-
-TEST_CASE_FIXTURE(test::GrpcContextTest, "co_spawn two Alarms and await their ok")
-{
-    bool ok1{false};
-    bool ok2{false};
-    test::co_spawn_and_run(
-        grpc_context,
-        [&]() -> GrpcAwaitable
-        {
-            agrpc::Alarm alarm{grpc_context};
-            ok1 = co_await alarm.wait(test::ten_milliseconds_from_now(), GRPC_USE_AWAITABLE);
-        },
-        [&]() -> GrpcAwaitable
-        {
-            agrpc::Alarm alarm{grpc_context};
-            ok2 = co_await alarm.wait(test::ten_milliseconds_from_now(), GRPC_USE_AWAITABLE);
-        });
-    CHECK(ok1);
-    CHECK(ok2);
-}
-
-TEST_CASE_FIXTURE(test::GrpcContextTest, "stop GrpcContext within awaitable while waiting for an Alarm")
+TEST_CASE_FIXTURE(test::GrpcContextTest, "stop GrpcContext from awaitable while waiting for an Alarm")
 {
     bool ok{true};
     agrpc::Alarm alarm{grpc_context};
     const auto not_to_exceed = std::chrono::steady_clock::now() + std::chrono::seconds(4);
     test::co_spawn_and_run(grpc_context,
-                           [&]() -> GrpcAwaitable
+                           [&]() -> asio::awaitable<void>
                            {
-                               alarm.wait(test::five_seconds_from_now(),
+                               test::wait(alarm, test::five_seconds_from_now(),
                                           [&](bool wait_ok)
                                           {
                                               ok = wait_ok;
@@ -133,9 +109,9 @@ TEST_CASE("destruct GrpcContext while co_await'ing an alarm")
                        grpc_context.stop();
                    });
         test::co_spawn(grpc_context,
-                       [&]() -> GrpcAwaitable
+                       [&]() -> asio::awaitable<void>
                        {
-                           co_await alarm->wait(test::hundred_milliseconds_from_now(), GRPC_USE_AWAITABLE);
+                           co_await alarm->wait(test::hundred_milliseconds_from_now(), asio::use_awaitable);
                            invoked = true;
                        });
         grpc_context.run();
@@ -145,7 +121,7 @@ TEST_CASE("destruct GrpcContext while co_await'ing an alarm")
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest,
-                  "call agrpc::wait from destructor of an awaitable while GrpcContext is being destructed")
+                  "wait for Alarm from destructor of an awaitable while GrpcContext is being destructed")
 {
     bool invoked{false};
     post(
@@ -154,7 +130,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest,
             grpc_context.stop();
         });
     test::co_spawn(grpc_context,
-                   [&]() -> GrpcAwaitable
+                   [&]() -> asio::awaitable<void>
                    {
                        auto alarm = std::make_shared<agrpc::Alarm>(grpc_context);
                        agrpc::detail::ScopeGuard guard{[&, alarm]
@@ -165,91 +141,14 @@ TEST_CASE_FIXTURE(test::GrpcContextTest,
                                                                            invoked = true;
                                                                        });
                                                        }};
-                       co_await alarm->wait(test::hundred_milliseconds_from_now(), GRPC_USE_AWAITABLE);
+                       co_await alarm->wait(test::hundred_milliseconds_from_now(), asio::use_awaitable);
                    });
     grpc_context.run();
     CHECK_FALSE(invoked);
     grpc_context.reset();
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "co_await Alarm with asio::awaitable<>")
-{
-    bool ok{false};
-    test::co_spawn(get_executor(),
-                   [&]() -> asio::awaitable<void>
-                   {
-                       agrpc::Alarm alarm{grpc_context};
-                       ok = co_await alarm.wait(test::ten_milliseconds_from_now(), asio::use_awaitable);
-                   });
-    grpc_context.run();
-    CHECK(ok);
-}
-
-#ifdef AGRPC_TEST_HAS_STD_PMR
-TEST_CASE_FIXTURE(test::GrpcContextTest, "co_await Alarm with GrpcExecutor<std::pmr::polymorphic_allocator>")
-{
-    bool ok{false};
-    auto executor =
-        asio::require(get_executor(), asio::execution::allocator(std::pmr::polymorphic_allocator<std::byte>()));
-    test::co_spawn(executor,
-                   [&]() -> asio::awaitable<void, decltype(executor)>
-                   {
-                       agrpc::Alarm alarm{grpc_context};
-                       ok = co_await alarm.wait(test::ten_milliseconds_from_now(),
-                                                asio::use_awaitable_t<decltype(executor)>{});
-                   });
-    grpc_context.run();
-    CHECK(ok);
-}
-#endif
-
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with awaitable operators")
-{
-    std::size_t result_index{};
-    agrpc::Alarm alarm{grpc_context};
-    asio::steady_timer timer{get_executor(), std::chrono::milliseconds(100)};
-    const auto not_to_exceed = std::chrono::steady_clock::now() + std::chrono::seconds(4);
-    test::co_spawn(grpc_context,
-                   [&]() -> asio::awaitable<void>
-                   {
-                       using namespace asio::experimental::awaitable_operators;
-                       const auto variant = co_await (timer.async_wait(asio::use_awaitable) ||
-                                                      alarm.wait(test::five_seconds_from_now(), asio::use_awaitable));
-                       result_index = variant.index();
-                   });
-    grpc_context.run();
-    CHECK_GT(not_to_exceed, std::chrono::steady_clock::now());
-    CHECK_EQ(0, result_index);
-}
-
-TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_executor can be used to await Alarm from an io_context")
-{
-    bool ok{false};
-    std::thread::id expected_thread_id{};
-    std::thread::id actual_thread_id{};
-    std::optional guard{get_work_tracking_executor()};
-    asio::io_context io_context;
-    test::co_spawn(io_context,
-                   [&]() -> asio::awaitable<void>
-                   {
-                       agrpc::Alarm alarm{grpc_context};
-                       ok = co_await alarm.wait(test::ten_milliseconds_from_now(),
-                                                asio::bind_executor(asio::system_executor{}, asio::use_awaitable));
-                       actual_thread_id = std::this_thread::get_id();
-                       guard.reset();
-                   });
-    std::thread grpc_context_thread{[&]
-                                    {
-                                        expected_thread_id = std::this_thread::get_id();
-                                        grpc_context.run();
-                                    }};
-    io_context.run();
-    grpc_context_thread.join();
-    CHECK(ok);
-    CHECK_EQ(expected_thread_id, actual_thread_id);
-}
-
 TEST_CASE_FIXTURE(test::GrpcContextTest,
                   "bind_executor can be used to switch to io_context when awaiting asio::steady_timer from GrpcContext")
 {

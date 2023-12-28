@@ -315,7 +315,7 @@ TEST_CASE("GrpcContext::stop while waiting for Alarm will not invoke the Alarm's
         test::post(grpc_context,
                    [&]
                    {
-                       alarm.wait(test::five_seconds_from_now(),
+                       test::wait(alarm, test::five_seconds_from_now(),
                                   [&](bool)
                                   {
                                       ok = true;
@@ -345,70 +345,6 @@ TEST_CASE("GrpcContext::stop while waiting for Alarm will not invoke the Alarm's
     CHECK_FALSE(ok);
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wait")
-{
-    bool ok{false};
-    std::chrono::system_clock::time_point start;
-    auto handler = [&](auto&& yield)
-    {
-        agrpc::Alarm alarm{grpc_context};
-        start = test::now();
-        ok = alarm.wait(test::hundred_milliseconds_from_now(), yield);
-    };
-#ifdef AGRPC_TEST_ASIO_HAS_NEW_SPAWN
-    test::typed_spawn(get_executor(), handler);
-#else
-    test::typed_spawn(asio::bind_executor(get_executor(), [] {}), handler);
-#endif
-    grpc_context.run();
-    CHECK_LE(std::chrono::milliseconds(100), test::now() - start);
-    CHECK(ok);
-}
-
-TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post an Alarm and check time")
-{
-    bool ok{false};
-    std::chrono::system_clock::time_point start;
-    agrpc::Alarm alarm{grpc_context};
-    post(
-        [&]
-        {
-            start = test::now();
-            alarm.wait(test::hundred_milliseconds_from_now(),
-                       [&](bool)
-                       {
-                           ok = true;
-                       });
-        });
-    grpc_context.run();
-    CHECK_LE(std::chrono::milliseconds(100), test::now() - start);
-    CHECK(ok);
-}
-
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::deferred with Alarm")
-{
-    bool ok1{false};
-    bool ok2{false};
-    agrpc::Alarm alarm{grpc_context};
-    auto deferred_op = alarm.wait(test::ten_milliseconds_from_now(),
-                                  test::ASIO_DEFERRED(
-                                      [&](bool wait_ok)
-                                      {
-                                          ok1 = wait_ok;
-                                          return alarm.wait(test::ten_milliseconds_from_now(), test::ASIO_DEFERRED);
-                                      }));
-    std::move(deferred_op)(
-        [&](bool wait_ok)
-        {
-            ok2 = wait_ok;
-        });
-    grpc_context.run();
-    CHECK(ok1);
-    CHECK(ok2);
-}
-#endif
-
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post a asio::steady_timer")
 {
     std::optional<test::ErrorCode> error_code;
@@ -425,18 +361,6 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post a asio::steady_timer")
                });
     grpc_context.run();
     CHECK_EQ(test::ErrorCode{}, error_code);
-}
-
-TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn with yield_context")
-{
-    bool ok{false};
-    test::spawn_and_run(grpc_context,
-                        [&](const asio::yield_context& yield)
-                        {
-                            agrpc::Alarm alarm{grpc_context};
-                            ok = alarm.wait(test::ten_milliseconds_from_now(), yield);
-                        });
-    CHECK(ok);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "post from multiple threads")
@@ -558,7 +482,7 @@ TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll() with asio::po
     CHECK(invoked);
 }
 
-TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll() with grpc::Alarm")
+TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll() with agrpc::Alarm")
 {
     bool invoked{false};
     agrpc::Alarm alarm{grpc_context};
@@ -566,7 +490,7 @@ TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll() with grpc::Al
     asio::post(io_context,
                [&]()
                {
-                   alarm.wait(test::now(),
+                   test::wait(alarm, test::now(),
                               [&](bool)
                               {
                                   invoked = true;
@@ -597,7 +521,7 @@ TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll_completion_queu
                        {
                            post_completed = true;
                        });
-                   alarm.wait(test::now(),
+                   test::wait(alarm, test::now(),
                               [&](bool)
                               {
                                   alarm_completed = true;
@@ -629,7 +553,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_completion_queue()")
         {
             post_completed = true;
         });
-    alarm.wait(test::hundred_milliseconds_from_now(),
+    test::wait(alarm, test::hundred_milliseconds_from_now(),
                [&](bool)
                {
                    CHECK_FALSE(post_completed);
@@ -683,7 +607,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run() is not blocked by re
     post(
         [&]
         {
-            alarm.wait(test::now(),
+            test::wait(alarm, test::now(),
                        [&](bool)
                        {
                            alarm_completed = true;
@@ -693,11 +617,11 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run() is not blocked by re
     grpc_context.run();
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() can wait for grpc::Alarm")
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() can wait for agrpc::Alarm")
 {
     bool invoked{false};
     agrpc::Alarm alarm{grpc_context};
-    alarm.wait(test::now(),
+    test::wait(alarm, test::now(),
                [&](bool)
                {
                    invoked = true;
@@ -710,7 +634,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() can wait for g
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() times out correctly")
 {
     agrpc::Alarm alarm{grpc_context};
-    alarm.wait(test::one_second_from_now(), test::NoOp{});
+    test::wait(alarm, test::one_second_from_now(), test::NoOp{});
     CHECK_FALSE(grpc_context.run_until(test::now()));
     CHECK_FALSE(grpc_context.run_until(test::ten_milliseconds_from_now()));
 }
@@ -719,20 +643,20 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_while() runs until the
 {
     bool alarm1_finished{false};
     agrpc::Alarm alarm1{grpc_context};
-    alarm1.wait(test::one_second_from_now(),
-                [&](bool)
-                {
-                    alarm1_finished = true;
-                });
+    test::wait(alarm1, test::one_second_from_now(),
+               [&](bool)
+               {
+                   alarm1_finished = true;
+               });
     bool alarm2_finished{false};
     auto sync_api = [&]
     {
         agrpc::Alarm alarm2{grpc_context};
-        alarm2.wait(test::ten_milliseconds_from_now(),
-                    [&](bool)
-                    {
-                        alarm2_finished = true;
-                    });
+        test::wait(alarm2, test::ten_milliseconds_from_now(),
+                   [&](bool)
+                   {
+                       alarm2_finished = true;
+                   });
         grpc_context.run_while(
             [&]
             {
@@ -809,20 +733,5 @@ TEST_CASE("asio GrpcExecutor::schedule and destruct GrpcContext")
     CHECK_FALSE(invoked);
     CHECK_FALSE(state.exception);
     CHECK(state.was_done);
-}
-
-TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::execution connect and start Alarm")
-{
-    bool ok{false};
-    agrpc::Alarm alarm{grpc_context};
-    auto wait_sender = alarm.wait(test::ten_milliseconds_from_now(), agrpc::use_sender);
-    test::FunctionAsReceiver receiver{[&]()
-                                      {
-                                          ok = true;
-                                      }};
-    auto operation_state = asio::execution::connect(std::move(wait_sender), std::move(receiver));
-    asio::execution::start(operation_state);
-    grpc_context.run();
-    CHECK(ok);
 }
 #endif
