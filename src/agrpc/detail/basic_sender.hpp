@@ -37,6 +37,23 @@ namespace detail
 template <class Initiation, class Implementation, class Receiver>
 class BasicSenderOperationState;
 
+#ifdef AGRPC_STDEXEC
+struct BasicSenderEnv
+{
+    template <class Tag>
+    friend agrpc::GrpcContext::executor_type tag_invoke(stdexec::get_completion_scheduler_t<Tag>,
+                                                        const BasicSenderEnv& e) noexcept;
+
+    friend constexpr exec::inline_scheduler tag_invoke(stdexec::get_completion_scheduler_t<stdexec::set_stopped_t>,
+                                                       const BasicSenderEnv&) noexcept
+    {
+        return {};
+    }
+
+    agrpc::GrpcContext& grpc_context_;
+};
+#endif
+
 template <class Initiation, class Implementation>
 class [[nodiscard]] BasicSender : public detail::SenderOf<typename Implementation::Signature>
 {
@@ -76,6 +93,8 @@ class [[nodiscard]] BasicSender : public detail::SenderOf<typename Implementatio
     {
         return s.connect(static_cast<Receiver&&>(r));
     }
+
+    friend BasicSenderEnv tag_invoke(stdexec::get_env_t, const BasicSender& s) noexcept { return {s.grpc_context_}; }
 #endif
 
   private:

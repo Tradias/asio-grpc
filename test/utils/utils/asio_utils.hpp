@@ -29,7 +29,7 @@ namespace test
 struct InvocableArchetype
 {
     template <class... Args>
-    void operator()(Args&&...)
+    void operator()(Args&&...) const
     {
     }
 };
@@ -53,8 +53,33 @@ struct RethrowFirstArg
     }
 };
 
-template <class Function, class Allocator = std::allocator<void>>
+template <class Derived>
+struct ReceiverBase
+{
+    using is_receiver = void;
+
+#ifdef AGRPC_STDEXEC
+    friend constexpr void tag_invoke(stdexec::set_stopped_t, const ReceiverBase& r) noexcept
+    {
+        static_cast<const Derived&>(r).set_done();
+    }
+
+    template <class... T>
+    friend constexpr void tag_invoke(stdexec::set_value_t, const ReceiverBase& r, T&&... args) noexcept
+    {
+        static_cast<const Derived&>(r).set_value(std::forward<T>(args)...);
+    }
+
+    friend void tag_invoke(stdexec::set_error_t, const ReceiverBase& r, std::exception_ptr e) noexcept
+    {
+        static_cast<const Derived&>(r).set_error(static_cast<std::exception_ptr&&>(e));
+    }
+#endif
+};
+
+template <class Function, class Allocator = std::allocator<void>, class Derived = void>
 struct FunctionAsReceiver
+    : ReceiverBase<std::conditional_t<std::is_same_v<void, Derived>, FunctionAsReceiver<Function, Allocator>, Derived>>
 {
     using allocator_type = Allocator;
 
@@ -66,15 +91,15 @@ struct FunctionAsReceiver
     {
     }
 
-    void set_done() noexcept {}
+    static void set_done() noexcept {}
 
     template <class... Args>
-    void set_value(Args&&... args)
+    void set_value(Args&&... args) const
     {
         function(std::forward<Args>(args)...);
     }
 
-    void set_error(std::exception_ptr) noexcept {}
+    static void set_error(std::exception_ptr) noexcept {}
 
     auto get_allocator() const noexcept { return allocator; }
 
@@ -94,22 +119,24 @@ struct StatefulReceiverState
 };
 
 template <class Function, class Allocator = std::allocator<void>>
-struct FunctionAsStatefulReceiver : public test::FunctionAsReceiver<Function, Allocator>
+struct FunctionAsStatefulReceiver
+    : test::FunctionAsReceiver<Function, Allocator, FunctionAsStatefulReceiver<Function, Allocator>>
 {
     test::StatefulReceiverState& state;
 
     FunctionAsStatefulReceiver(Function function, StatefulReceiverState& state, const Allocator& allocator = {})
-        : test::FunctionAsReceiver<Function, Allocator>(std::move(function), allocator), state(state)
+        : test::FunctionAsReceiver<Function, Allocator, FunctionAsStatefulReceiver>(std::move(function), allocator),
+          state(state)
     {
     }
 
-    void set_done() noexcept { state.was_done = true; }
+    void set_done() const noexcept { state.was_done = true; }
 
-    void set_error(const std::exception_ptr& ptr) noexcept { state.exception = ptr; }
+    void set_error(const std::exception_ptr& ptr) const noexcept { state.exception = ptr; }
 };
 
 template <bool IsNothrow>
-struct ConditionallyNoexceptNoOpReceiver
+struct ConditionallyNoexceptNoOpReceiver : ReceiverBase<ConditionallyNoexceptNoOpReceiver<IsNothrow>>
 {
     ConditionallyNoexceptNoOpReceiver() noexcept(IsNothrow) {}
 
@@ -127,14 +154,14 @@ struct ConditionallyNoexceptNoOpReceiver
         return *this;
     }
 
-    void set_done() noexcept {}
+    static void set_done() noexcept {}
 
     template <class... Args>
-    void set_value(Args&&...) noexcept
+    static void set_value(Args&&...) noexcept
     {
     }
 
-    void set_error(std::exception_ptr) noexcept {}
+    static void set_error(std::exception_ptr) noexcept {}
 };
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)

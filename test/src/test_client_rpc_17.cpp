@@ -362,7 +362,7 @@ TEST_CASE_FIXTURE(ClientRPCTest<test::ClientStreamingClientRPC>, "ClientStreamin
             }
             auto& rpc_ref = *rpc;
             asio::execution::submit(rpc_ref.finish(agrpc::use_sender),
-                                    test::FunctionAsReceiver{[&, rpc = std::move(rpc)](grpc::Status status) mutable
+                                    test::FunctionAsReceiver{[&, rpc = std::move(rpc)](grpc::Status status)
                                                              {
                                                                  CHECK_EQ(expected_status_code, status.error_code());
                                                                  server_shutdown.initiate();

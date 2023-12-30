@@ -184,6 +184,17 @@ inline grpc::ServerCompletionQueue* GrpcContext::get_server_completion_queue() n
     return static_cast<grpc::ServerCompletionQueue*>(completion_queue_.get());
 }
 
+#ifdef AGRPC_STDEXEC
+namespace detail
+{
+template <class Tag>
+agrpc::GrpcContext::executor_type tag_invoke(stdexec::get_completion_scheduler_t<Tag>, const BasicSenderEnv& e) noexcept
+{
+    return e.grpc_context_.get_scheduler();
+}
+}
+#endif
+
 AGRPC_NAMESPACE_END
 
 #include <agrpc/detail/grpc_context_implementation.ipp>

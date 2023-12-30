@@ -266,6 +266,18 @@ class BasicGrpcExecutor
                                                  detail::ScheduleSenderImplementation{});
     }
 
+#ifdef AGRPC_STDEXEC
+    friend auto tag_invoke(stdexec::schedule_t, const BasicGrpcExecutor& executor) noexcept
+    {
+        return executor.schedule();
+    }
+
+    friend constexpr auto tag_invoke(stdexec::get_forward_progress_guarantee_t, const BasicGrpcExecutor&) noexcept
+    {
+        return stdexec::forward_progress_guarantee::parallel;
+    }
+#endif
+
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     /**
      * @brief Obtain an executor with the blocking.possibly property

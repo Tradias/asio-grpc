@@ -34,6 +34,15 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+struct InlineSchedulerEnv
+{
+    friend constexpr exec::inline_scheduler tag_invoke(exec::tag_t<exec::get_scheduler>,
+                                                       const InlineSchedulerEnv&) noexcept
+    {
+        return {};
+    }
+};
+
 template <class ServerRPC, class RPCHandler, class StopToken>
 struct RegisterRPCHandlerSenderOperationBase;
 
@@ -191,11 +200,6 @@ struct RPCHandlerOperation
 
         friend void tag_invoke(stdexec::set_error_t, const StartReceiver&, const std::exception_ptr&) noexcept {}
 #endif
-
-        friend exec::inline_scheduler tag_invoke(exec::tag_t<exec::get_scheduler>, const StartReceiver&) noexcept
-        {
-            return {};
-        }
     };
 
     using StartOperationState = detail::InplaceWithFunctionWrapper<
@@ -235,9 +239,11 @@ struct RPCHandlerOperation
         {
             r.set_error(static_cast<std::exception_ptr&&>(e));
         }
+
+        friend InlineSchedulerEnv tag_invoke(stdexec::get_env_t, const Receiver&) noexcept { return {}; }
 #endif
 
-        friend exec::inline_scheduler tag_invoke(exec::tag_t<exec::get_scheduler>, const Receiver&) noexcept
+        friend constexpr exec::inline_scheduler tag_invoke(exec::tag_t<exec::get_scheduler>, const Receiver&) noexcept
         {
             return {};
         }

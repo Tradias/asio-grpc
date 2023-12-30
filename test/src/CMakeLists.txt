@@ -52,9 +52,9 @@ set(ASIO_GRPC_CPP20_TEST_SOURCE_FILES
     "test_asio_grpc_20.cpp" "test_repeatedly_request_20.cpp" "test_bind_allocator_20.cpp" "test_grpc_context_20.cpp"
     "test_grpc_stream_20.cpp" "test_server_rpc_20.cpp")
 
-set_source_files_properties("test_test_17.cpp" "test_stdexec.cpp" PROPERTIES SKIP_UNITY_BUILD_INCLUSION on)
+set_source_files_properties("test_test_17.cpp" "test_execution.cpp" PROPERTIES SKIP_UNITY_BUILD_INCLUSION on)
 set_source_files_properties(
-    "test_client_rpc_17.cpp" "test_server_rpc_17.cpp" "test_server_rpc_20.cpp" "test_unifex_20.cpp"
+    "test_client_rpc_17.cpp" "test_server_rpc_17.cpp" "test_server_rpc_20.cpp" "test_unifex_20.cpp" "test_execution.cpp"
     PROPERTIES COMPILE_OPTIONS "$<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:Debug>>:/bigobj>")
 
 asio_grpc_add_test(asio-grpc-test-boost-cpp17 "boost-asio" "17" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES})
@@ -65,17 +65,24 @@ if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
                        ${ASIO_GRPC_CPP20_TEST_SOURCE_FILES})
     asio_grpc_add_test(asio-grpc-test-cpp20 "standalone-asio" "20" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES}
                        ${ASIO_GRPC_CPP20_TEST_SOURCE_FILES})
-    asio_grpc_add_test(asio-grpc-test-unifex-cpp20 "unifex" "20" "test_unifex_20.cpp")
-    asio_grpc_add_test(asio-grpc-test-boost-unifex-cpp20 "boost-asio-unifex" "20" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES}
-                       ${ASIO_GRPC_CPP20_TEST_SOURCE_FILES} "test_unifex_20.cpp")
+    asio_grpc_add_test(asio-grpc-test-unifex-cpp20 "unifex" "20" "test_unifex_20.cpp" "test_execution.cpp")
+    asio_grpc_add_test(
+        asio-grpc-test-boost-unifex-cpp20
+        "boost-asio-unifex"
+        "20"
+        ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES}
+        ${ASIO_GRPC_CPP20_TEST_SOURCE_FILES}
+        "test_unifex_20.cpp"
+        "test_execution.cpp")
 endif()
 
 if(ASIO_GRPC_ENABLE_STDEXEC_TESTS)
-    asio_grpc_add_test(asio-grpc-test-stdexec "stdexec" "20" "test_stdexec.cpp")
+    asio_grpc_add_test(asio-grpc-test-stdexec "stdexec" "20" "test_execution.cpp")
 
     if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
-        asio_grpc_add_test(asio-grpc-test-asio-stdexec-cpp20 "standalone-asio-stdexec" "20"
-                           ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES} ${ASIO_GRPC_CPP20_TEST_SOURCE_FILES} "test_stdexec.cpp")
+        asio_grpc_add_test(
+            asio-grpc-test-asio-stdexec-cpp20 "standalone-asio-stdexec" "20" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES}
+            ${ASIO_GRPC_CPP20_TEST_SOURCE_FILES} "test_execution.cpp")
     endif()
 endif()
 

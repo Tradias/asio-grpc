@@ -62,7 +62,9 @@
 #include <asio/experimental/deferred.hpp>
 #include <asio/experimental/parallel_group.hpp>
 #endif
-#elif defined(AGRPC_BOOST_ASIO)
+#endif
+
+#ifdef AGRPC_BOOST_ASIO
 //
 #include <boost/asio/version.hpp>
 //
@@ -98,7 +100,9 @@
 #include <boost/asio/experimental/deferred.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
 #endif
-#elif defined(AGRPC_UNIFEX)
+#endif
+
+#ifdef AGRPC_UNIFEX
 #include <unifex/config.hpp>
 #include <unifex/get_allocator.hpp>
 #include <unifex/get_stop_token.hpp>
@@ -108,11 +112,11 @@
 #include <unifex/let_value.hpp>
 #include <unifex/let_value_with.hpp>
 #include <unifex/let_value_with_stop_source.hpp>
-#include <unifex/new_thread_context.hpp>
 #include <unifex/receiver_concepts.hpp>
 #include <unifex/scheduler_concepts.hpp>
 #include <unifex/sender_concepts.hpp>
 #include <unifex/sequence.hpp>
+#include <unifex/single_thread_context.hpp>
 #include <unifex/spawn_detached.hpp>
 #include <unifex/stop_token_concepts.hpp>
 #include <unifex/stop_when.hpp>
@@ -124,7 +128,13 @@
 #if !UNIFEX_NO_COROUTINES
 #include <unifex/task.hpp>
 #endif
-#elif defined(AGRPC_STDEXEC)
+#endif
+
+#ifdef AGRPC_STDEXEC
+#include <exec/finally.hpp>
+#include <exec/inline_scheduler.hpp>
+#include <exec/single_thread_context.hpp>
+#include <exec/task.hpp>
 #include <stdexec/execution.hpp>
 #endif
 
