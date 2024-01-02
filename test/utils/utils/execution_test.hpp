@@ -174,6 +174,7 @@ struct ExecutionClientRPCTest : test::ExecutionTestMixin<test::ClientServerRPCTe
 {
     using Base = test::ClientServerRPCTest<RPC>;
 
+#if !UNIFEX_NO_COROUTINES
     template <class RPCHandler, class... ClientFunctions>
     void register_and_perform_requests(RPCHandler&& handler, ClientFunctions&&... client_functions)
     {
@@ -192,6 +193,7 @@ struct ExecutionClientRPCTest : test::ExecutionTestMixin<test::ClientServerRPCTe
                 }
             }()...);
     }
+#endif
 };
 }
 
