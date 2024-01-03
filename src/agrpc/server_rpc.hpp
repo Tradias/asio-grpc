@@ -344,17 +344,21 @@ class ServerRPC<RequestClientStreaming, TraitsT, Executor>
     /**
      * @brief Finish the rpc
      *
-     * Indicate that the RPC is to be finished and request notification when the server has sent the appropriate
-     * signals to the client to end the call. Should not be used concurrently with other operations.
+     * Indicate that the stream is to be finished with a certain status code and also send out a response to the client.
      *
-     * Side effect:
+     * Should not be used concurrently with other operations and may only be called once.
      *
-     * @arg Also sends initial metadata if not already sent (using the ServerContext associated with the call).
+     * It is appropriate to call this method when:
      *
-     * @note If status has a non-OK code, then message will not be sent, and the client will receive only the status
-     * with possible trailing metadata.
+     * * all messages from the client have been received (either known implicitly, or explicitly because a previous read
+     * operation completed with `false`).
      *
-     * GRPC does not take ownership or a reference to message and status, so it is safe to deallocate once finish
+     * This operation will end when the server has finished sending out initial and trailing metadata, response message,
+     * and status, or if some failure occurred when trying to do so.
+     *
+     * @note Response is not sent if status has a non-OK code.
+     *
+     * GRPC does not take ownership or a reference to `response` or `status`, so it is safe to deallocate once finish
      * returns, unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is used.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
@@ -374,19 +378,18 @@ class ServerRPC<RequestClientStreaming, TraitsT, Executor>
     /**
      * @brief Finish the rpc with an error
      *
-     * Indicate that the stream is to be finished with a non-OK status, and request notification for when the server has
-     * finished sending the appropriate signals to the client to end the call.
+     * Indicate that the stream is to be finished with a certain non-OK status code.
      *
-     * It should not be called concurrently with other streaming APIs on the same stream.
+     * Should not be used concurrently with other operations and may only be called once.
      *
-     * Side effect:
+     * This call is meant to end the call with some error, and can be called at any point that the server would like to
+     * "fail" the call (except during `send_initial_metadata`).
      *
-     * @arg Sends initial metadata if not already sent (using the ServerContext associated with this call).
+     * This operation will end when the server has finished sending out initial and trailing metadata and status, or if
+     * some failure occurred when trying to do so.
      *
-     * gRPC does not take ownership or a reference to status, so it is safe to deallocate once finish_with_error
+     * GRPC does not take ownership or a reference to `status`, so it is safe to to deallocate once finish_with_error
      * returns, unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is used.
-     *
-     * @note Status must have a non-OK code.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire. If it is `false`, it is
@@ -526,8 +529,10 @@ class ServerRPC<RequestServerStreaming, TraitsT, Executor>
     /**
      * @brief Send a message to the client
      *
-     * Only one write may be outstanding at any given time. GRPC does not take ownership or a reference to `response`,
-     * so it is safe to to deallocate once write returns.
+     * Only one write may be outstanding at any given time.
+     *
+     * GRPC does not take ownership or a reference to `response`, so it is safe to to deallocate once write returns,
+     * unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is used.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire. If it is `false`, it is
@@ -600,21 +605,15 @@ class ServerRPC<RequestServerStreaming, TraitsT, Executor>
     /**
      * @brief Finish this rpc
      *
-     * Indicate that the stream is to be finished with a certain status code. Should not be used concurrently with other
-     * operations.
+     * Indicate that the stream is to be finished with a certain status code.
      *
-     * It is appropriate to call this method when either:
-     *
-     * @arg All messages from the client have been received (either known implictly, or explicitly because a previous
-     * read operation returned `false`).
-     * @arg It is desired to end the call early with some non-OK status code.
+     * Should not be used concurrently with other operations and may only be called once.
      *
      * This operation will end when the server has finished sending out initial metadata (if not sent already) and
      * status, or if some failure occurred when trying to do so.
      *
-     * The ServerContext associated with the call is used for sending trailing (and initial if not already
-     * sent) metadata to the client. There are no restrictions to the code of status, it may be non-OK. GRPC does not
-     * take ownership or a reference to status, so it is safe to to deallocate once finish returns.
+     * GRPC does not take ownership or a reference to status, so it is safe to to deallocate once finish
+     * returns, unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is used.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire. If it is `false`, it is
@@ -687,8 +686,10 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
      * @brief Send a message to the client
      *
      * Only one write may be outstanding at any given time. It may not be called concurrently with operations other than
-     * `read()`. GRPC does not take ownership or a reference to `response`, so it is safe to to deallocate once write
-     * returns.
+     * `read`.
+     *
+     * GRPC does not take ownership or a reference to `response`, so it is safe to to deallocate once write returns,
+     * unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is used.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire. If it is `false`, it is
@@ -760,21 +761,23 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
     /**
      * @brief Finish this rpc
      *
-     * Indicate that the stream is to be finished with a certain status code. May not be used concurrently with other
-     * operations.
+     * Indicate that the stream is to be finished with a certain status code.
+     *
+     * Completes when the server has sent the appropriate signals to the client to end the call.
+     *
+     * Should not be used concurrently with other operations and may only be called once.
      *
      * It is appropriate to call this method when either:
      *
-     * @arg All messages from the client have been received (either known implictly, or explicitly because a previous
-     * read operation returned `false`).
-     * @arg It is desired to end the call early with some non-OK status code.
+     * * all messages from the client have been received (either known implicitly, or explicitly because a previous read
+     * operation completed with `false`).
+     * * it is desired to end the call early with some non-OK status code.
      *
      * This operation will end when the server has finished sending out initial metadata (if not sent already) and
      * status, or if some failure occurred when trying to do so.
      *
-     * The ServerContext associated with the call is used for sending trailing (and initial if not already
-     * sent) metadata to the client. There are no restrictions to the code of status, it may be non-OK. GRPC does not
-     * take ownership or a reference to status, so it is safe to to deallocate once finish returns.
+     * GRPC does not take ownership or a reference to status, so it is safe to to deallocate once Finish returns, unless
+     * a deferred completion token like `agrpc::use_sender` or `asio::deferred` is used.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire. If it is `false`, it is

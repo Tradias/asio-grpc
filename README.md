@@ -6,8 +6,6 @@ An [Executor, Networking TS](https://www.boost.org/doc/libs/1_84_0/doc/html/boos
 
 # Features
 
-> In v3 the new [ClientRPC](https://tradias.github.io/asio-grpc/md_doc_client_rpc_cheat_sheet.html) and [ServerRPC](https://tradias.github.io/asio-grpc/md_doc_server_rpc_cheat_sheet.html) APIs will replace the current free-function API. Your feedback is highly appreciated. Please communicate via issues.
-
 * Asio [ExecutionContext](https://www.boost.org/doc/libs/1_84_0/doc/html/boost_asio/reference/ExecutionContext.html) compatible wrapper around [grpc::CompletionQueue](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html)
 * Support for all RPC types: unary, client-streaming, server-streaming and bidirectional-streaming with any mix of Asio [CompletionToken](https://www.boost.org/doc/libs/1_84_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers) as well as [Sender](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#sender-concept), including allocator customization
 * Support for asynchronously waiting for [grpc::Alarms](https://grpc.github.io/grpc/cpp/classgrpc_1_1_alarm.html) including cancellation through [cancellation_slots](https://www.boost.org/doc/libs/1_84_0/doc/html/boost_asio/reference/cancellation_slot.html) and [StopTokens](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#stoptoken-concept)
