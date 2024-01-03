@@ -131,7 +131,7 @@ class ClientRPCUnaryBase<PrepareAsyncUnary, Executor> : public detail::ClientRPC
                         CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
-            grpc_context, detail::ClientUnaryRequestSenderInitiation<Response>{context, response},
+            grpc_context, detail::ClientUnaryRequestSenderInitiation<ResponseT>{context, response},
             detail::ClientUnaryRequestSenderImplementation<PrepareAsyncUnary>{grpc_context, stub, context, request},
             static_cast<CompletionToken&&>(token));
     }
@@ -185,8 +185,8 @@ class ClientRPCUnaryBase<PrepareAsyncUnary, Executor> : public detail::ClientRPC
     auto finish(ResponseT& response, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
-            this->grpc_context(), detail::ClientFinishUnarySenderInitation{},
-            detail::ClientFinishUnarySenderImplementation<Responder>{*this, response},
+            this->grpc_context(), detail::ClientFinishUnarySenderInitation<Response>{response},
+            detail::ClientFinishReadableStreamSenderImplementation<Responder>{*this},
             static_cast<CompletionToken&&>(token));
     }
 };
@@ -377,8 +377,8 @@ class ClientRPC<agrpc::ClientRPCType::GENERIC_UNARY, Executor>
     auto finish(grpc::ByteBuffer& response, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
-            this->grpc_context(), detail::ClientFinishUnarySenderInitation{},
-            detail::ClientFinishUnarySenderImplementation<Responder>{*this, response},
+            this->grpc_context(), detail::ClientFinishUnarySenderInitation<Response>{response},
+            detail::ClientFinishReadableStreamSenderImplementation<Responder>{*this},
             static_cast<CompletionToken&&>(token));
     }
 };
@@ -543,8 +543,9 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor> : public detail::ClientRP
     auto read_initial_metadata(CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
-            this->grpc_context(), detail::ReadInitialMetadataSenderInitiation<Responder>{*this},
-            detail::ReadInitialMetadataSenderImplementation{}, static_cast<CompletionToken&&>(token));
+            this->grpc_context(), detail::ClientReadInitialMetadataWritableStreamSenderInitiation{},
+            detail::ClientReadInitialMetadataWritableStreamSenderImplementation<Responder>{*this},
+            static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -558,15 +559,14 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor> : public detail::ClientRP
                CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
-            this->grpc_context(), detail::WriteClientStreamingSenderInitiation<Responder>{*this, request, options},
-            detail::WriteClientStreamingSenderImplementation{}, static_cast<CompletionToken&&>(token));
+            this->grpc_context(), detail::ClientWriteSenderInitiation<RequestT>{request, options},
+            detail::ClientWriteSenderImplementation<Responder>{*this}, static_cast<CompletionToken&&>(token));
     }
 
     /**
      * @brief Send a message to the server
      *
-     * Only one write may be outstanding at any given time. May not be called concurrently with
-     * `read_initial_metadata()`.
+     * Only one write may be outstanding at any given time. May not be called concurrently with `read_initial_metadata`.
      *
      * @param request The request message, save to delete when this function returns, unless a deferred completion token
      * is used like `agrpc::use_sender` or `asio::deferred`.
@@ -609,8 +609,9 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor> : public detail::ClientRP
     auto finish(CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
-            this->grpc_context(), detail::ClientFinishSenderInitiation{},
-            detail::ClientFinishSenderImplementation<Responder>{*this}, static_cast<CompletionToken&&>(token));
+            this->grpc_context(), detail::ClientFinishWritableStreamSenderInitiation{},
+            detail::ClientFinishWritableStreamSenderImplementation<Responder>{*this},
+            static_cast<CompletionToken&&>(token));
     }
 };
 
@@ -724,7 +725,7 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
     /**
      * @brief Receive a message from the server
      *
-     * May not be called concurrently with `read_initial_metadata()`. It is not meaningful to call it concurrently
+     * May not be called concurrently with `read_initial_metadata`. It is not meaningful to call it concurrently
      * with another read on the same stream since reads on the same stream are delivered in order.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
@@ -736,8 +737,8 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
     auto read(ResponseT& response, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
-            this->grpc_context(), detail::ReadServerStreamingSenderInitiation<Responder>{*this, response},
-            detail::ReadServerStreamingSenderImplementation{}, static_cast<CompletionToken&&>(token));
+            this->grpc_context(), detail::ClientReadSenderInitiation<Responder>{*this, response},
+            detail::ClientReadSenderImplementation{}, static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -773,7 +774,7 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::ClientFinishServerStreamingSenderInitation{},
-            detail::ClientFinishServerStreamingSenderImplementation<Responder>{*this},
+            detail::ClientFinishReadableStreamSenderImplementation<Responder>{*this},
             static_cast<CompletionToken&&>(token));
     }
 };
@@ -851,6 +852,34 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
     using detail::ClientRPCBase<ResponderT<RequestT, ResponseT>, Executor>::ClientRPCBase;
 
     /**
+     * @brief Read initial metadata
+     *
+     * Request notification of the reading of the initial metadata.
+     *
+     * This call is optional.
+     *
+     * Side effect:
+     *
+     * @arg Upon receiving initial metadata from the server, the ClientContext associated with this call is updated, and
+     * the calling code can access the received metadata through the ClientContext.
+     *
+     * @attention If the server does not explicitly send initial metadata (e.g. by calling
+     * `agrpc::send_initial_metadata`) but waits for a message from the client instead then this function won't
+     * complete until `write()` is called.
+     *
+     * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
+     * `void(bool)`. `true` indicates that the metadata was read. If it is `false`, then the call is dead.
+     */
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    auto read_initial_metadata(CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
+    {
+        return detail::async_initiate_sender_implementation(
+            this->grpc_context(), detail::ClientReadInitialMetadataWritableStreamSenderInitiation{},
+            detail::ClientReadInitialMetadataWritableStreamSenderImplementation<Responder>{*this},
+            static_cast<CompletionToken&&>(token));
+    }
+
+    /**
      * @brief Receive a message from the server
      *
      * This is thread-safe with respect to `write()` or `writes_done()` methods. It should not be called concurrently
@@ -866,14 +895,14 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
     auto read(ResponseT& response, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
-            this->grpc_context(), detail::ClientReadBidiStreamingSenderInitiation<Responder>{*this, response},
-            detail::ClientReadBidiStreamingSenderImplementation{}, static_cast<CompletionToken&&>(token));
+            this->grpc_context(), detail::ClientReadSenderInitiation<Responder>{*this, response},
+            detail::ClientReadSenderImplementation{}, static_cast<CompletionToken&&>(token));
     }
 
     /**
      * @brief Send a message to the server
      *
-     * Only one write may be outstanding at any given time. This is thread-safe with respect to `read()`. It should not
+     * Only one write may be outstanding at any given time. This is thread-safe with respect to `read`. It should not
      * be called concurrently with other operations.
      *
      * @param request The request message, save to delete when this function returns, unless a deferred completion token
@@ -888,8 +917,8 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
                CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
-            this->grpc_context(), detail::ClientWriteBidiStreamingSenderInitiation<Responder>{*this, request, options},
-            detail::ClientWriteBidiStreamingSenderImplementation{}, static_cast<CompletionToken&&>(token));
+            this->grpc_context(), detail::ClientWriteSenderInitiation<RequestT>{request, options},
+            detail::ClientWriteSenderImplementation<Responder>{*this}, static_cast<CompletionToken&&>(token));
     }
 
     /**
@@ -902,13 +931,15 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
     }
 
     /**
-     * @brief Signal WritesDone to the server
+     * @brief Signal writes done to the server
      *
-     * This function may be called multiple times, but subsequent calls have no effect.
+     * May only be called once. Should not be called after performing a write with the
+     * [set_last_message](https://grpc.github.io/grpc/cpp/classgrpc_1_1_write_options.html#ad930c28f5c32832e1d48ee30bf0858e3)
+     * option.
      *
      * Signal the client is done with the writes (half-close the client stream). Thread-safe with respect to read. May
-     * not be called concurrently with a `write()` that has the
-     * [last_message](https://grpc.github.io/grpc/cpp/classgrpc_1_1_write_options.html#ad930c28f5c32832e1d48ee30bf0858e3)
+     * not be called concurrently with a `write` that has the
+     * [set_last_message](https://grpc.github.io/grpc/cpp/classgrpc_1_1_write_options.html#ad930c28f5c32832e1d48ee30bf0858e3)
      * option set.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
@@ -924,7 +955,7 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
     }
 
     /**
-     * @brief Signal WritesDone and finish the rpc
+     * @brief Signal writes done and finish the rpc
      *
      * Indicate that the stream is to be finished and request notification for when the call has been ended.
      *
@@ -955,8 +986,9 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
     auto finish(CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
-            this->grpc_context(), detail::ClientFinishSenderInitiation{},
-            detail::ClientFinishSenderImplementation<Responder>{*this}, static_cast<CompletionToken&&>(token));
+            this->grpc_context(), detail::ClientFinishWritableStreamSenderInitiation{},
+            detail::ClientFinishWritableStreamSenderImplementation<Responder>{*this},
+            static_cast<CompletionToken&&>(token));
     }
 };
 }

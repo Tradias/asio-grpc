@@ -112,9 +112,9 @@ struct ClientRPCContextBaseAccess
     }
 
     template <class Responder>
-    static void set_writes_done(ClientRPCContextBase<Responder>& rpc) noexcept
+    static void set_writes_done(ClientRPCContextBase<Responder>& rpc, bool done) noexcept
     {
-        rpc.is_writes_done_ = true;
+        rpc.is_writes_done_ = done;
     }
 };
 

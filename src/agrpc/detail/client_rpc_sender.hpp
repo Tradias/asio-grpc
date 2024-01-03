@@ -29,10 +29,7 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <auto PrepareAsync, class Executor>
-class ClientRPCUnaryBase;
-
-using ClientRPCAccess = ClientRPCContextBaseAccess;
+using ClientRPCAccess = detail::ClientRPCContextBaseAccess;
 
 struct ClientContextCancellationFunction
 {
@@ -59,9 +56,6 @@ struct ClientContextCancellationFunction
     grpc::ClientContext& client_context_;
 };
 
-template <class Responder>
-struct ClientUnaryRequestSenderImplementationBase;
-
 struct StatusSenderImplementationBase
 {
     static constexpr auto TYPE = detail::SenderImplementationType::GRPC_TAG;
@@ -72,6 +66,10 @@ struct StatusSenderImplementationBase
 
     grpc::Status status_{};
 };
+
+// Request unary
+template <class Responder>
+struct ClientUnaryRequestSenderImplementationBase;
 
 template <class Response, template <class> class Responder>
 struct ClientUnaryRequestSenderImplementationBase<Responder<Response>> : StatusSenderImplementationBase
@@ -135,6 +133,7 @@ struct ClientGenericUnaryRequestSenderImplementation
     }
 };
 
+// Request streaming
 template <class Derived>
 struct ClientStreamingRequestSenderInitiationBase
 {
@@ -226,10 +225,11 @@ struct ClientRPCGrpcSenderImplementation : detail::GrpcSenderImplementationBase
 
 using ClientStreamingRequestSenderImplementation = ClientRPCGrpcSenderImplementation;
 
-using ReadInitialMetadataSenderImplementation = ClientRPCGrpcSenderImplementation;
+// Read initial metadata readable stream
+using ClientReadInitialMetadataReadableStreamSenderImplementation = ClientRPCGrpcSenderImplementation;
 
 template <class Responder>
-struct ReadInitialMetadataSenderInitiation
+struct ClientReadInitialMetadataReadableStreamSenderInitiation
 {
     auto& stop_function_arg() const noexcept { return rpc_.context(); }
 
@@ -241,13 +241,26 @@ struct ReadInitialMetadataSenderInitiation
     detail::ClientRPCContextBase<Responder>& rpc_;
 };
 
-using ReadServerStreamingSenderImplementation = ClientRPCGrpcSenderImplementation;
+// Read
+using ClientReadSenderImplementation = ClientRPCGrpcSenderImplementation;
 
 template <class Responder>
-struct ReadServerStreamingSenderInitiation;
+struct GetResponseFromReabableStream;
 
 template <template <class> class Responder, class Response>
-struct ReadServerStreamingSenderInitiation<Responder<Response>>
+struct GetResponseFromReabableStream<Responder<Response>>
+{
+    using Type = Response;
+};
+
+template <template <class, class> class Responder, class Request, class Response>
+struct GetResponseFromReabableStream<Responder<Request, Response>>
+{
+    using Type = Response;
+};
+
+template <class Responder>
+struct ClientReadSenderInitiation
 {
     auto& stop_function_arg() const noexcept { return rpc_.context(); }
 
@@ -256,87 +269,72 @@ struct ReadServerStreamingSenderInitiation<Responder<Response>>
         ClientRPCAccess::responder(rpc_).Read(&response_, tag);
     }
 
-    detail::ClientRPCContextBase<Responder<Response>>& rpc_;
-    Response& response_;
+    detail::ClientRPCContextBase<Responder>& rpc_;
+    typename GetResponseFromReabableStream<Responder>::Type& response_;
 };
 
-using WriteClientStreamingSenderImplementation = ClientRPCGrpcSenderImplementation;
-
+// Write
 template <class Responder>
-struct WriteClientStreamingSenderInitiation;
-
-template <template <class> class Responder, class Request>
-struct WriteClientStreamingSenderInitiation<Responder<Request>>
+struct ClientWriteSenderImplementation : ClientRPCGrpcSenderImplementation
 {
-    auto& stop_function_arg() const noexcept { return rpc_.context(); }
+    explicit ClientWriteSenderImplementation(detail::ClientRPCContextBase<Responder>& rpc) noexcept : rpc_(rpc) {}
 
-    void initiate(const agrpc::GrpcContext&, void* tag) const
+    void complete(const agrpc::GrpcContext&, bool ok)
     {
-        if (options_.is_last_message())
-        {
-            ClientRPCAccess::set_writes_done(rpc_);
-            ClientRPCAccess::responder(rpc_).Write(request_, options_, tag);
-        }
-        else
-        {
-            ClientRPCAccess::responder(rpc_).Write(request_, options_, tag);
-        }
+        ClientRPCAccess::set_writes_done(rpc_, ClientRPCAccess::is_writes_done(rpc_) || !ok);
     }
 
-    detail::ClientRPCContextBase<Responder<Request>>& rpc_;
+    detail::ClientRPCContextBase<Responder>& rpc_;
+};
+
+template <class Request>
+struct ClientWriteSenderInitiation
+{
+    template <class Responder>
+    auto& stop_function_arg(ClientWriteSenderImplementation<Responder>& impl) const noexcept
+    {
+        return impl.rpc_.context();
+    }
+
+    template <class Responder>
+    void initiate(const agrpc::GrpcContext&, ClientWriteSenderImplementation<Responder>& impl, void* tag) const
+    {
+        ClientRPCAccess::set_writes_done(impl.rpc_, options_.is_last_message());
+        ClientRPCAccess::responder(impl.rpc_).Write(request_, options_, tag);
+    }
+
     const Request& request_;
     grpc::WriteOptions options_;
 };
 
-using ClientReadBidiStreamingSenderImplementation = ClientRPCGrpcSenderImplementation;
-
+// Read initial metadata writable stream
 template <class Responder>
-struct ClientReadBidiStreamingSenderInitiation;
+using ClientReadInitialMetadataWritableStreamSenderImplementation = ClientWriteSenderImplementation<Responder>;
 
-template <template <class, class> class Responder, class Request, class Response>
-struct ClientReadBidiStreamingSenderInitiation<Responder<Request, Response>>
+struct ClientReadInitialMetadataWritableStreamSenderInitiation
 {
-    auto& stop_function_arg() const noexcept { return rpc_.context(); }
-
-    void initiate(const agrpc::GrpcContext&, void* tag) const
+    template <class Responder>
+    static auto& stop_function_arg(
+        ClientReadInitialMetadataWritableStreamSenderImplementation<Responder>& impl) noexcept
     {
-        ClientRPCAccess::responder(rpc_).Read(&response_, tag);
+        return impl.rpc_.context();
     }
 
-    detail::ClientRPCContextBase<Responder<Request, Response>>& rpc_;
-    Response& response_;
-};
-
-using ClientWriteBidiStreamingSenderImplementation = ClientRPCGrpcSenderImplementation;
-
-template <class Responder>
-struct ClientWriteBidiStreamingSenderInitiation;
-
-template <template <class, class> class Responder, class Request, class Response>
-struct ClientWriteBidiStreamingSenderInitiation<Responder<Request, Response>>
-{
-    auto& stop_function_arg() const noexcept { return rpc_.context(); }
-
-    void initiate(const agrpc::GrpcContext&, void* tag) const
+    template <class Responder>
+    static void initiate(const agrpc::GrpcContext&,
+                         ClientReadInitialMetadataWritableStreamSenderImplementation<Responder>& impl, void* tag)
     {
-        if (options_.is_last_message())
-        {
-            ClientRPCAccess::set_writes_done(rpc_);
-        }
-        ClientRPCAccess::responder(rpc_).Write(request_, options_, tag);
+        ClientRPCAccess::responder(impl.rpc_).ReadInitialMetadata(tag);
     }
-
-    detail::ClientRPCContextBase<Responder<Request, Response>>& rpc_;
-    const Request& request_;
-    grpc::WriteOptions options_;
 };
 
+// Writes done
 template <class Responder>
 struct ClientWritesDoneSenderImplementation : ClientRPCGrpcSenderImplementation
 {
     explicit ClientWritesDoneSenderImplementation(detail::ClientRPCContextBase<Responder>& rpc) noexcept : rpc_(rpc) {}
 
-    void complete(const agrpc::GrpcContext&, bool) { ClientRPCAccess::set_writes_done(rpc_); }
+    void complete(const agrpc::GrpcContext&, bool) { ClientRPCAccess::set_writes_done(rpc_, true); }
 
     detail::ClientRPCContextBase<Responder>& rpc_;
 };
@@ -357,10 +355,11 @@ struct ClientWritesDoneSenderInitiation
     }
 };
 
+// Finish writeable stream
 template <class Responder>
-struct ClientFinishSenderImplementation : StatusSenderImplementationBase
+struct ClientFinishWritableStreamSenderImplementation : StatusSenderImplementationBase
 {
-    explicit ClientFinishSenderImplementation(detail::ClientRPCContextBase<Responder>& rpc) : rpc_(rpc) {}
+    explicit ClientFinishWritableStreamSenderImplementation(detail::ClientRPCContextBase<Responder>& rpc) : rpc_(rpc) {}
 
     template <template <int> class OnComplete>
     void complete(OnComplete<0> on_complete, bool)
@@ -379,16 +378,16 @@ struct ClientFinishSenderImplementation : StatusSenderImplementationBase
     detail::ClientRPCContextBase<Responder>& rpc_;
 };
 
-struct ClientFinishSenderInitiation
+struct ClientFinishWritableStreamSenderInitiation
 {
-    template <class RPC>
-    static auto& stop_function_arg(const ClientFinishSenderImplementation<RPC>& impl) noexcept
+    template <class Responder>
+    static auto& stop_function_arg(const ClientFinishWritableStreamSenderImplementation<Responder>& impl) noexcept
     {
         return impl.rpc_.context();
     }
 
-    template <class Init, class RPC>
-    static void initiate(Init init, ClientFinishSenderImplementation<RPC>& impl)
+    template <class Init, class Responder>
+    static void initiate(Init init, ClientFinishWritableStreamSenderImplementation<Responder>& impl)
     {
         if (ClientRPCAccess::is_writes_done(impl.rpc_))
         {
@@ -401,15 +400,15 @@ struct ClientFinishSenderInitiation
     }
 };
 
+// Finish readable stream
 template <class Responder>
-struct ClientFinishUnarySenderImplementation;
+struct ClientFinishReadableStreamSenderImplementation;
 
 template <template <class> class Responder, class Response>
-struct ClientFinishUnarySenderImplementation<Responder<Response>> : StatusSenderImplementationBase
+struct ClientFinishReadableStreamSenderImplementation<Responder<Response>> : StatusSenderImplementationBase
 {
-    explicit ClientFinishUnarySenderImplementation(detail::ClientRPCContextBase<Responder<Response>>& rpc,
-                                                   Response& response)
-        : rpc_(rpc), response_(response)
+    explicit ClientFinishReadableStreamSenderImplementation(detail::ClientRPCContextBase<Responder<Response>>& rpc)
+        : rpc_(rpc)
     {
     }
 
@@ -421,51 +420,37 @@ struct ClientFinishUnarySenderImplementation<Responder<Response>> : StatusSender
     }
 
     detail::ClientRPCContextBase<Responder<Response>>& rpc_;
-    Response& response_;
 };
 
+template <class Response>
 struct ClientFinishUnarySenderInitation
 {
     template <class Responder>
-    static auto& stop_function_arg(const ClientFinishUnarySenderImplementation<Responder>& impl) noexcept
+    static auto& stop_function_arg(const ClientFinishReadableStreamSenderImplementation<Responder>& impl) noexcept
     {
         return impl.rpc_.context();
     }
 
     template <class Responder>
-    static void initiate(const agrpc::GrpcContext&, ClientFinishUnarySenderImplementation<Responder>& impl, void* tag)
+    void initiate(const agrpc::GrpcContext&, ClientFinishReadableStreamSenderImplementation<Responder>& impl,
+                  void* tag) const
     {
-        ClientRPCAccess::responder(impl.rpc_).Finish(&impl.response_, &impl.status_, tag);
-    }
-};
-
-template <class Responder>
-struct ClientFinishServerStreamingSenderImplementation : StatusSenderImplementationBase
-{
-    explicit ClientFinishServerStreamingSenderImplementation(detail::ClientRPCContextBase<Responder>& rpc) : rpc_(rpc)
-    {
+        ClientRPCAccess::responder(impl.rpc_).Finish(&response_, &impl.status_, tag);
     }
 
-    template <class OnComplete>
-    void complete(OnComplete on_complete, bool)
-    {
-        ClientRPCAccess::set_finished(rpc_);
-        on_complete(static_cast<grpc::Status&&>(status_));
-    }
-
-    detail::ClientRPCContextBase<Responder>& rpc_;
+    Response& response_;
 };
 
 struct ClientFinishServerStreamingSenderInitation
 {
     template <class Responder>
-    static auto& stop_function_arg(const ClientFinishServerStreamingSenderImplementation<Responder>& impl) noexcept
+    static auto& stop_function_arg(const ClientFinishReadableStreamSenderImplementation<Responder>& impl) noexcept
     {
         return impl.rpc_.context();
     }
 
     template <class Responder>
-    static void initiate(const agrpc::GrpcContext&, ClientFinishServerStreamingSenderImplementation<Responder>& impl,
+    static void initiate(const agrpc::GrpcContext&, ClientFinishReadableStreamSenderImplementation<Responder>& impl,
                          void* tag)
     {
         ClientRPCAccess::responder(impl.rpc_).Finish(&impl.status_, tag);

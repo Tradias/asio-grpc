@@ -20,6 +20,7 @@
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/initiate_sender_implementation.hpp>
 #include <agrpc/detail/rpc_executor_base.hpp>
+#include <agrpc/detail/rpc_type.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -96,8 +97,9 @@ class ClientRPCBase : public detail::RPCExecutorBase<Executor>, public detail::C
     auto read_initial_metadata(CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
     {
         return detail::async_initiate_sender_implementation(
-            this->grpc_context(), detail::ReadInitialMetadataSenderInitiation<Responder>{*this},
-            detail::ReadInitialMetadataSenderImplementation{}, static_cast<CompletionToken&&>(token));
+            this->grpc_context(), detail::ClientReadInitialMetadataReadableStreamSenderInitiation<Responder>{*this},
+            detail::ClientReadInitialMetadataReadableStreamSenderImplementation{},
+            static_cast<CompletionToken&&>(token));
     }
 };
 }

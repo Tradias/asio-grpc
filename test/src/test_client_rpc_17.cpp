@@ -184,7 +184,7 @@ TEST_CASE_FIXTURE(
 }
 
 TEST_CASE_TEMPLATE("ClientRPC::read_initial_metadata on cancelled RPC", RPC, test::ClientStreamingClientRPC,
-                   test::ServerStreamingClientRPC)
+                   test::ServerStreamingClientRPC, test::BidirectionalStreamingClientRPC)
 {
     ClientRPCTest<RPC> test;
     test.run_server_immediate_cancellation(

@@ -165,8 +165,8 @@ TEST_CASE_TEMPLATE("Awaitable ServerRPC/ClientRPC client streaming success", RPC
     SUBCASE("finish") {}
     SUBCASE("finish_with_error") { use_finish_with_error = true; }
     bool set_last_message{};
-    SUBCASE("no last_message") {}
-    SUBCASE("last_message") { set_last_message = true; }
+    SUBCASE("no set_last_message") {}
+    SUBCASE("set_last_message") { set_last_message = true; }
     test.register_and_perform_three_requests(
         [&](RPC& rpc) -> asio::awaitable<void>
         {
