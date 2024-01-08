@@ -71,7 +71,7 @@ class BasicAlarm
      *
      * Example:
      *
-     * @snippet server.cpp alarm-io-object-lvalue
+     * @snippet alarm.cpp alarm-io-object-lvalue
      *
      * @param deadline By default gRPC supports two types of deadlines: `gpr_timespec` and
      * `std::chrono::system_clock::time_point`. More types can be added by specializing
@@ -104,7 +104,7 @@ class BasicAlarm
      *
      * Example:
      *
-     * @snippet server.cpp alarm-io-object-rvalue
+     * @snippet alarm.cpp alarm-io-object-rvalue
      *
      * @param token A completion token like `asio::yield_context` or the one created by `agrpc::use_sender`. The
      * completion signature is `void(bool, BasicAlarm)`. `true` if it expired, `false` if it was canceled.

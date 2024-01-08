@@ -63,100 +63,6 @@ asio::awaitable<void> rpc_handler_using_waiter(ServerRPC& rpc)
 }
 /* [waiter-example] */
 
-/* [server-rpc-unary] */
-void server_rpc_unary(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
-{
-    using RPC =
-        asio::use_awaitable_t<>::as_default_on_t<agrpc::ServerRPC<&example::v1::Example::AsyncService::RequestUnary>>;
-    agrpc::register_awaitable_rpc_handler<RPC>(
-        grpc_context, service,
-        [](RPC& rpc, RPC::Request& request) -> asio::awaitable<void>
-        {
-            RPC::Response response;
-            response.set_integer(request.integer());
-            co_await rpc.finish(response, grpc::Status::OK);
-
-            // Alternatively finish with an error:
-            co_await rpc.finish_with_error(grpc::Status::CANCELLED);
-        },
-        asio::detached);
-}
-/* [server-rpc-unary] */
-
-/* [server-rpc-client-streaming] */
-void server_rpc_client_streaming(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
-{
-    using RPC = asio::use_awaitable_t<>::as_default_on_t<
-        agrpc::ServerRPC<&example::v1::Example::AsyncService::RequestClientStreaming>>;
-    agrpc::register_awaitable_rpc_handler<RPC>(
-        grpc_context, service,
-        [](RPC& rpc) -> asio::awaitable<void>
-        {
-            RPC::Request request;
-            while (co_await rpc.read(request))
-            {
-                std::cout << "Request: " << request.integer() << std::endl;
-            }
-            RPC::Response response;
-            response.set_integer(42);
-            co_await rpc.finish(response, grpc::Status::OK);
-
-            // Alternatively finish with an error:
-            co_await rpc.finish_with_error(grpc::Status::CANCELLED);
-        },
-        asio::detached);
-}
-/* [server-rpc-client-streaming] */
-
-/* [server-rpc-server-streaming] */
-void server_rpc_server_streaming(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
-{
-    using RPC = asio::use_awaitable_t<>::as_default_on_t<
-        agrpc::ServerRPC<&example::v1::Example::AsyncService::RequestServerStreaming>>;
-    agrpc::register_awaitable_rpc_handler<RPC>(
-        grpc_context, service,
-        [](RPC& rpc, RPC::Request& request) -> asio::awaitable<void>
-        {
-            RPC::Response response;
-            for (int i{}; i != request.integer(); ++i)
-            {
-                response.set_integer(i);
-                if (!co_await rpc.write(response))
-                {
-                    co_return;
-                }
-            }
-            co_await rpc.finish(grpc::Status::OK);
-        },
-        asio::detached);
-}
-/* [server-rpc-server-streaming] */
-
-/* [server-rpc-bidirectional-streaming] */
-void server_rpc_bidirectional_streaming(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
-{
-    using RPC = asio::use_awaitable_t<>::as_default_on_t<
-        agrpc::ServerRPC<&example::v1::Example::AsyncService::RequestBidirectionalStreaming>>;
-    agrpc::register_awaitable_rpc_handler<RPC>(
-        grpc_context, service,
-        [](RPC& rpc) -> asio::awaitable<void>
-        {
-            RPC::Request request;
-            RPC::Response response;
-            while (co_await rpc.read(request))
-            {
-                response.set_integer(request.integer());
-                if (!co_await rpc.write(response))
-                {
-                    co_return;
-                }
-            }
-            co_await rpc.finish(grpc::Status::OK);
-        },
-        asio::detached);
-}
-/* [server-rpc-bidirectional-streaming] */
-
 /* [server-rpc-generic] */
 void server_rpc_generic(agrpc::GrpcContext& grpc_context, grpc::AsyncGenericService& service)
 {
@@ -231,3 +137,106 @@ void server_rpc_unary_callback(agrpc::GrpcContext& grpc_context, example::v1::Ex
         asio::detached);
 }
 /* [server-rpc-unary-callback] */
+
+// Explicitly formatted using `ColumnLimit: 90`
+// clang-format off
+/* [server-rpc-unary] */
+void server_rpc_unary(agrpc::GrpcContext& grpc_context,
+                      example::v1::Example::AsyncService& service)
+{
+    using RPC = asio::use_awaitable_t<>::as_default_on_t<
+        agrpc::ServerRPC<&example::v1::Example::AsyncService::RequestUnary>>;
+    agrpc::register_awaitable_rpc_handler<RPC>(
+        grpc_context, service,
+        [](RPC& rpc, RPC::Request& request) -> asio::awaitable<void>
+        {
+            RPC::Response response;
+            response.set_integer(request.integer());
+            co_await rpc.finish(response, grpc::Status::OK);
+
+            // Alternatively finish with an error:
+            co_await rpc.finish_with_error(grpc::Status::CANCELLED);
+        },
+        asio::detached);
+}
+/* [server-rpc-unary] */
+
+/* [server-rpc-client-streaming] */
+void server_rpc_client_streaming(agrpc::GrpcContext& grpc_context,
+                                 example::v1::Example::AsyncService& service)
+{
+    using RPC = asio::use_awaitable_t<>::as_default_on_t<
+        agrpc::ServerRPC<&example::v1::Example::AsyncService::RequestClientStreaming>>;
+    agrpc::register_awaitable_rpc_handler<RPC>(
+        grpc_context, service,
+        [](RPC& rpc) -> asio::awaitable<void>
+        {
+            RPC::Request request;
+            while (co_await rpc.read(request))
+            {
+                std::cout << "Request: " << request.integer() << std::endl;
+            }
+            RPC::Response response;
+            response.set_integer(42);
+            co_await rpc.finish(response, grpc::Status::OK);
+
+            // Alternatively finish with an error:
+            co_await rpc.finish_with_error(grpc::Status::CANCELLED);
+        },
+        asio::detached);
+}
+/* [server-rpc-client-streaming] */
+
+/* [server-rpc-server-streaming] */
+void server_rpc_server_streaming(agrpc::GrpcContext& grpc_context,
+                                 example::v1::Example::AsyncService& service)
+{
+    using RPC = asio::use_awaitable_t<>::as_default_on_t<
+        agrpc::ServerRPC<&example::v1::Example::AsyncService::RequestServerStreaming>>;
+    agrpc::register_awaitable_rpc_handler<RPC>(
+        grpc_context, service,
+        [](RPC& rpc, RPC::Request& request) -> asio::awaitable<void>
+        {
+            RPC::Response response;
+            for (int i{}; i != request.integer(); ++i)
+            {
+                response.set_integer(i);
+                if (!co_await rpc.write(response))
+                {
+                    co_return;
+                }
+            }
+            co_await rpc.finish(grpc::Status::OK);
+        },
+        asio::detached);
+}
+/* [server-rpc-server-streaming] */
+
+/* [server-rpc-bidirectional-streaming] */
+void server_rpc_bidirectional_streaming(agrpc::GrpcContext& grpc_context,
+                                        example::v1::Example::AsyncService& service)
+{
+    using RPC = asio::use_awaitable_t<>::as_default_on_t<agrpc::ServerRPC<
+        &example::v1::Example::AsyncService::RequestBidirectionalStreaming>>;
+    agrpc::register_awaitable_rpc_handler<RPC>(
+        grpc_context, service,
+        [](RPC& rpc) -> asio::awaitable<void>
+        {
+            RPC::Request request;
+            RPC::Response response;
+            while (co_await rpc.read(request))
+            {
+                response.set_integer(request.integer());
+                if (!co_await rpc.write(response))
+                {
+                    co_return;
+                }
+            }
+            response.set_integer(42);
+            co_await rpc.write(response, grpc::WriteOptions{}.set_last_message());
+            co_await rpc.finish(grpc::Status::OK);
+        },
+        asio::detached);
+}
+/* [server-rpc-bidirectional-streaming] */
+// clang-format on

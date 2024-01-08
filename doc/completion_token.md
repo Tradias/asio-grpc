@@ -4,11 +4,11 @@ The last argument to all async functions in this library is a [CompletionToken](
 
 ## Callback
 
-@snippet server.cpp alarm-with-callback
+@snippet alarm.cpp alarm-with-callback
 
 ## Boost.Coroutine
 
-@snippet server.cpp alarm-with-spawn
+@snippet alarm.cpp alarm-with-spawn
 
 ## use_sender
 
@@ -22,4 +22,4 @@ Asio-grpc attempts to get the completion handler's associated allocator by calli
 
 The associated allocator can be customized using `asio::bind_allocator` (since Boost.Asio 1.79):
 
-@snippet server.cpp alarm-with-allocator-aware-awaitable
+@snippet alarm.cpp alarm-with-allocator-aware-awaitable

@@ -19,24 +19,6 @@
 
 namespace asio = boost::asio;
 
-/* [client-rpc-unary] */
-asio::awaitable<void> client_rpc_unary(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
-{
-    using RPC =
-        asio::use_awaitable_t<>::as_default_on_t<agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncUnary>>;
-    grpc::ClientContext client_context;
-    client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
-    RPC::Request request;
-    RPC::Response response;
-    const grpc::Status status = co_await RPC::request(grpc_context, stub, client_context, request, response);
-    if (!status.ok())
-    {
-        std::cerr << "Rpc failed: " << status.error_message();
-        co_return;
-    }
-}
-/* [client-rpc-unary] */
-
 /* [client-rpc-unary-initial-metadata] */
 asio::awaitable<void> client_rpc_unary_initial_metadata(agrpc::GrpcContext& grpc_context,
                                                         example::v1::Example::Stub& stub)
@@ -49,7 +31,7 @@ asio::awaitable<void> client_rpc_unary_initial_metadata(agrpc::GrpcContext& grpc
     rpc.start(stub, request);
     co_await rpc.read_initial_metadata();
     // Do something with:
-    // rpc.context.GetServerInitialMetadata();
+    // rpc.context().GetServerInitialMetadata();
     RPC::Response response;
     const grpc::Status status = co_await rpc.finish(response);
     if (!status.ok())
@@ -59,112 +41,6 @@ asio::awaitable<void> client_rpc_unary_initial_metadata(agrpc::GrpcContext& grpc
     }
 }
 /* [client-rpc-unary-initial-metadata] */
-
-/* [client-rpc-client-streaming] */
-asio::awaitable<void> client_rpc_client_streaming(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
-{
-    using RPC = asio::use_awaitable_t<>::as_default_on_t<
-        agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncClientStreaming>>;
-
-    RPC rpc{grpc_context};
-    rpc.context().set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
-
-    RPC::Response response;
-
-    if (!co_await rpc.start(stub, response))
-    {
-        grpc::Status status = co_await rpc.finish();
-        std::cerr << "Rpc failed: " << status.error_message();
-        co_return;
-    }
-
-    RPC::Request request;
-    request.set_integer(1);
-    while (co_await rpc.write(request) && request.integer() < 42)
-    {
-        request.set_integer(request.integer() + 1);
-    }
-
-    const grpc::Status status = co_await rpc.finish();
-    if (!status.ok())
-    {
-        std::cerr << "Rpc failed: " << status.error_message();
-        co_return;
-    }
-
-    std::cout << "Response: " << response.integer();
-}
-/* [client-rpc-client-streaming] */
-
-/* [client-rpc-server-streaming] */
-asio::awaitable<void> client_rpc_server_streaming(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
-{
-    using RPC = asio::use_awaitable_t<>::as_default_on_t<
-        agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncServerStreaming>>;
-
-    RPC rpc{grpc_context};
-    rpc.context().set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
-
-    RPC::Request request;
-    request.set_integer(42);
-    if (!co_await rpc.start(stub, request))
-    {
-        grpc::Status status = co_await rpc.finish();
-        std::cerr << "Rpc failed: " << status.error_message();
-        co_return;
-    }
-
-    RPC::Response response;
-    while (co_await rpc.read(response))
-    {
-        std::cout << "Response: " << response.integer() << '\n';
-    }
-
-    const grpc::Status status = co_await rpc.finish();
-    if (!status.ok())
-    {
-        std::cerr << "Rpc failed: " << status.error_message();
-        co_return;
-    }
-}
-/* [client-rpc-server-streaming] */
-
-/* [client-rpc-bidirectional-streaming] */
-asio::awaitable<void> client_rpc_bidirectional_streaming(agrpc::GrpcContext& grpc_context,
-                                                         example::v1::Example::Stub& stub)
-{
-    using RPC = asio::use_awaitable_t<>::as_default_on_t<
-        agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncBidirectionalStreaming>>;
-
-    RPC rpc{grpc_context};
-    rpc.context().set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
-
-    if (!co_await rpc.start(stub))
-    {
-        grpc::Status status = co_await rpc.finish();
-        std::cerr << "Rpc failed: " << status.error_message();
-        co_return;
-    }
-
-    RPC::Request request;
-    request.set_integer(42);
-
-    bool write_ok{true};
-    RPC::Response response;
-    while (co_await rpc.read(response) && write_ok)
-    {
-        request.set_integer(response.integer() + 1);
-        write_ok = co_await rpc.write(request);
-    }
-
-    const grpc::Status status = co_await rpc.finish();
-    if (!status.ok())
-    {
-        std::cerr << "Rpc failed: " << status.error_message();
-        co_return;
-    }
-}
-/* [client-rpc-bidirectional-streaming] */
 
 /* [client-rpc-generic-unary] */
 asio::awaitable<void> client_rpc_generic_unary(agrpc::GrpcContext& grpc_context, grpc::GenericStub& stub)
@@ -202,3 +78,138 @@ asio::awaitable<void> client_rpc_generic_unary(agrpc::GrpcContext& grpc_context,
     std::cout << "Response: " << response.integer();
 }
 /* [client-rpc-generic-unary] */
+
+// Explicitly formatted using `ColumnLimit: 90`
+// clang-format off
+/* [client-rpc-unary] */
+asio::awaitable<void> client_rpc_unary(agrpc::GrpcContext& grpc_context,
+                                       example::v1::Example::Stub& stub)
+{
+    using RPC = asio::use_awaitable_t<>::as_default_on_t<
+        agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncUnary>>;
+    grpc::ClientContext client_context;
+    client_context.set_deadline(std::chrono::system_clock::now() +
+                                std::chrono::seconds(5));
+    RPC::Request request;
+    RPC::Response response;
+    const grpc::Status status =
+        co_await RPC::request(grpc_context, stub, client_context, request, response);
+    if (!status.ok())
+    {
+        std::cerr << "Rpc failed: " << status.error_message();
+        co_return;
+    }
+    std::cout << "Response: " << response.integer();
+}
+/* [client-rpc-unary] */
+
+/* [client-rpc-client-streaming] */
+asio::awaitable<void> client_rpc_client_streaming(agrpc::GrpcContext& grpc_context,
+                                                  example::v1::Example::Stub& stub)
+{
+    using RPC = asio::use_awaitable_t<>::as_default_on_t<
+        agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncClientStreaming>>;
+
+    RPC rpc{grpc_context};
+    rpc.context().set_deadline(std::chrono::system_clock::now() +
+                               std::chrono::seconds(5));
+
+    RPC::Response response;
+    if (!co_await rpc.start(stub, response))
+    {
+        const grpc::Status status = co_await rpc.finish();
+        std::cerr << "Rpc failed: " << status.error_message();
+        co_return;
+    }
+
+    RPC::Request request;
+    request.set_integer(1);
+    while (co_await rpc.write(request) && request.integer() < 42)
+    {
+        request.set_integer(request.integer() + 1);
+    }
+
+    const grpc::Status status = co_await rpc.finish();
+    if (!status.ok())
+    {
+        std::cerr << "Rpc failed: " << status.error_message();
+        co_return;
+    }
+
+    std::cout << "Response: " << response.integer();
+}
+/* [client-rpc-client-streaming] */
+
+/* [client-rpc-server-streaming] */
+asio::awaitable<void> client_rpc_server_streaming(agrpc::GrpcContext& grpc_context,
+                                                  example::v1::Example::Stub& stub)
+{
+    using RPC = asio::use_awaitable_t<>::as_default_on_t<
+        agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncServerStreaming>>;
+
+    RPC rpc{grpc_context};
+    rpc.context().set_deadline(std::chrono::system_clock::now() +
+                               std::chrono::seconds(5));
+
+    RPC::Request request;
+    request.set_integer(42);
+    if (!co_await rpc.start(stub, request))
+    {
+        const grpc::Status status = co_await rpc.finish();
+        std::cerr << "Rpc failed: " << status.error_message();
+        co_return;
+    }
+
+    RPC::Response response;
+    while (co_await rpc.read(response))
+    {
+        std::cout << "Response: " << response.integer() << '\n';
+    }
+
+    const grpc::Status status = co_await rpc.finish();
+    if (!status.ok())
+    {
+        std::cerr << "Rpc failed: " << status.error_message();
+        co_return;
+    }
+}
+/* [client-rpc-server-streaming] */
+
+/* [client-rpc-bidirectional-streaming] */
+asio::awaitable<void> client_rpc_bidirectional_streaming(agrpc::GrpcContext& grpc_context,
+                                                         example::v1::Example::Stub& stub)
+{
+    using RPC = asio::use_awaitable_t<>::as_default_on_t<agrpc::ClientRPC<
+        &example::v1::Example::Stub::PrepareAsyncBidirectionalStreaming>>;
+
+    RPC rpc{grpc_context};
+    rpc.context().set_deadline(std::chrono::system_clock::now() +
+                               std::chrono::seconds(5));
+
+    if (!co_await rpc.start(stub))
+    {
+        const grpc::Status status = co_await rpc.finish();
+        std::cerr << "Rpc failed: " << status.error_message();
+        co_return;
+    }
+
+    RPC::Request request;
+    request.set_integer(42);
+
+    bool write_ok{true};
+    RPC::Response response;
+    while (co_await rpc.read(response) && write_ok)
+    {
+        request.set_integer(response.integer() + 1);
+        write_ok = co_await rpc.write(request);
+    }
+
+    const grpc::Status status = co_await rpc.finish();
+    if (!status.ok())
+    {
+        std::cerr << "Rpc failed: " << status.error_message();
+        co_return;
+    }
+}
+/* [client-rpc-bidirectional-streaming] */
+// clang-format on

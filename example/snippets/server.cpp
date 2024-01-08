@@ -19,57 +19,19 @@
 
 #include <agrpc/asio_grpc.hpp>
 #include <agrpc/health_check_service.hpp>
-#include <boost/asio/bind_executor.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/coroutine.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/experimental/promise.hpp>
-#include <boost/asio/io_context.hpp>
+#include <boost/asio/experimental/use_promise.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/use_awaitable.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
-#include <cassert>
-#include <chrono>
 #include <optional>
 
-#if (BOOST_VERSION >= 108100)
-#include <boost/asio/experimental/use_promise.hpp>
-#endif
-
 namespace asio = boost::asio;
-
-asio::awaitable<void> grpc_alarm()
-{
-    /* [alarm-awaitable] */
-    grpc::Alarm alarm;
-    bool wait_ok =
-        co_await agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::seconds(1), asio::use_awaitable);
-    /* [alarm-awaitable] */
-
-    silence_unused(wait_ok);
-}
-
-asio::awaitable<void> agrpc_alarm_lvalue(agrpc::GrpcContext& grpc_context)
-{
-    /* [alarm-io-object-lvalue] */
-    agrpc::Alarm alarm{grpc_context};
-    bool wait_ok = co_await alarm.wait(std::chrono::system_clock::now() + std::chrono::seconds(1), asio::use_awaitable);
-    /* [alarm-io-object-lvalue] */
-
-    silence_unused(wait_ok);
-}
-
-asio::awaitable<void> agrpc_alarm_rvalue(agrpc::GrpcContext& grpc_context)
-{
-    /* [alarm-io-object-rvalue] */
-    auto [alarm, wait_ok] = co_await agrpc::Alarm(grpc_context)
-                                .wait(std::chrono::system_clock::now() + std::chrono::seconds(1), asio::use_awaitable);
-    /* [alarm-io-object-rvalue] */
-
-    silence_unused(alarm, wait_ok);
-}
 
 asio::awaitable<void> timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context,
                                                              asio::io_context& io_context)
