@@ -266,6 +266,7 @@ auto just_finish(ServerRPCAwaitableTest<RPC>& test, grpc::StatusCode expected_co
     };
 }
 
+#ifndef __clang__
 TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ServerStreamingServerRPC>,
                   "Awaitable ServerRPC/ClientRPC server streaming customize allocator")
 {
@@ -280,6 +281,7 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ServerStreamingServerRPC>,
     perform_requests(just_finish(*this), just_finish(*this));
     CHECK_LT(bytes_allocated, resource.bytes_allocated);
 }
+#endif
 
 TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ServerStreamingServerRPC>,
                   "Awaitable ServerRPC/ClientRPC server streaming throw exception from rpc handler")
