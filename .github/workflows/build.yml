@@ -281,7 +281,7 @@ jobs:
       run: cmake --preset default -DCMAKE_CXX_COMPILER=$(which g++-10) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_ARGS }} ${{ env.CMAKE_EXTRA_ARGS }}
 
     - name: Build
-      run: cmake --build --preset default --config Release --parallel $(nproc)
+      run: cmake --build --preset default --config Release --parallel $(nproc) --target asio-grpc-check-header-syntax all
 
     - name: Test
       run: ctest --preset default --config Release

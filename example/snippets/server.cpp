@@ -33,32 +33,6 @@
 
 namespace asio = boost::asio;
 
-asio::awaitable<void> timer_with_different_completion_tokens(agrpc::GrpcContext& grpc_context,
-                                                             asio::io_context& io_context)
-{
-    std::allocator<void> my_allocator{};
-    agrpc::Alarm alarm{grpc_context};
-    const auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(1);
-    /* [alarm-with-callback] */
-    alarm.wait(deadline, [&](bool /*wait_ok*/) {});
-    /* [alarm-with-callback] */
-
-    /* [alarm-with-spawn] */
-    asio::spawn(
-        io_context,
-        [&](const asio::yield_context& yield)
-        {
-            agrpc::Alarm alarm{grpc_context};
-            alarm.wait(deadline, yield);  // suspend coroutine until alarm fires
-        },
-        asio::detached);
-    /* [alarm-with-spawn] */
-
-    /* [alarm-with-allocator-aware-awaitable] */
-    co_await alarm.wait(deadline, asio::bind_allocator(my_allocator, asio::use_awaitable));
-    /* [alarm-with-allocator-aware-awaitable] */
-}
-
 asio::awaitable<void> unary(example::v1::Example::AsyncService& service)
 {
     /* [request-unary-server-side] */
