@@ -20,6 +20,8 @@
 #include <agrpc/detail/operation_base.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
+#include <grpcpp/server_context.h>
+#include <grpcpp/support/async_stream.h>
 
 AGRPC_NAMESPACE_BEGIN()
 

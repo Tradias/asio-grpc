@@ -26,6 +26,7 @@
 #include <agrpc/health_check_service.hpp>
 #include <grpc/support/log.h>
 #include <grpcpp/server_context.h>
+#include <grpcpp/support/async_unary_call.h>
 
 AGRPC_NAMESPACE_BEGIN()
 
