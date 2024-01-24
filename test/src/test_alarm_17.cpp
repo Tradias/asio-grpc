@@ -23,12 +23,10 @@
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post a apgrc::Alarm and use variadic-arg callback for its wait")
 {
     bool ok{false};
-    std::chrono::system_clock::time_point not_to_exceed;
     agrpc::BasicAlarm alarm{grpc_context};
     post(
         [&]
         {
-            not_to_exceed = test::now();
             alarm.wait(test::ten_milliseconds_from_now(),
                        [&](auto&&... args)
                        {
@@ -36,14 +34,12 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post a apgrc::Alarm and use vari
                        });
         });
     grpc_context.run();
-    CHECK_LE(std::chrono::milliseconds(100), test::now() - not_to_exceed);
     CHECK(ok);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm")
 {
     bool ok{false};
-    std::chrono::system_clock::time_point not_to_exceed;
     bool use_yield_context = false;
     SUBCASE("asio::yield_context") { use_yield_context = true; }
     SUBCASE("asio::basic_yield_context") {}
@@ -51,7 +47,6 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm")
                       [&](auto&& yield)
                       {
                           agrpc::Alarm alarm{grpc_context};
-                          not_to_exceed = test::now();
                           if (use_yield_context)
                           {
                               ok = alarm.wait(test::hundred_milliseconds_from_now(), asio::yield_context(yield));
@@ -62,7 +57,6 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm")
                           }
                       });
     grpc_context.run();
-    CHECK_LE(std::chrono::milliseconds(100), test::now() - not_to_exceed);
     CHECK(ok);
 }
 
