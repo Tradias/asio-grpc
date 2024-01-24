@@ -27,7 +27,6 @@ if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPL
         "alarm.cpp"
         "client.cpp"
         "client_rpc.cpp"
-        "rpc_cheat_sheet.cpp"
         "server.cpp"
         "server_rpc.cpp"
         "io_context.cpp")

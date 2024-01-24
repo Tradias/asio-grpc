@@ -23,17 +23,6 @@
 
 namespace asio = boost::asio;
 
-asio::awaitable<void> grpc_alarm()
-{
-    /* [alarm-awaitable] */
-    grpc::Alarm alarm;
-    bool wait_ok =
-        co_await agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::seconds(1), asio::use_awaitable);
-    /* [alarm-awaitable] */
-
-    silence_unused(wait_ok);
-}
-
 asio::awaitable<void> agrpc_alarm_lvalue(agrpc::GrpcContext& grpc_context)
 {
     /* [alarm-io-object-lvalue] */
