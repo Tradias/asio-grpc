@@ -26,7 +26,7 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief (experimental) Register an awaitable rpc handler for the given method
+ * @brief Register an awaitable rpc handler for the given method
  *
  * The rpc handler will be invoked for every incoming request of this gRPC method. It must take `ServerRPC&` as
  * first argument and `ServerRPC::Request&` as second argument (only for unary and server-streaming rpcs). The ServerRPC
@@ -67,7 +67,7 @@ auto register_awaitable_rpc_handler(const typename ServerRPC::executor_type& exe
 }
 
 /**
- * @brief (experimental) Register an awaitable rpc handler for the given method (GrpcContext overload)
+ * @brief Register an awaitable rpc handler for the given method (GrpcContext overload)
  *
  * @since 2.7.0
  */

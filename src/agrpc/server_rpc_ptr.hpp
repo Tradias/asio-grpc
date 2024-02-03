@@ -24,7 +24,7 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief (experimental) Allocated ServerRPC created by register_callback_rpc_handler
+ * @brief Allocated ServerRPC created by register_callback_rpc_handler
  *
  * @since 2.8.0
  */

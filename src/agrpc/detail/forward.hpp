@@ -17,7 +17,6 @@
 
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_executor_options.hpp>
-#include <agrpc/detail/namespace_cpp20.hpp>
 
 #include <memory>
 
@@ -39,7 +38,7 @@ class BasicAlarm;
 struct UseSender;
 
 /**
- * @brief (experimental) Primary ClientRPC template
+ * @brief Primary ClientRPC template
  *
  * This is the main entrypoint into the recommended API for implementing asynchronous gRPC clients.
  *
@@ -59,7 +58,7 @@ class ClientRPC;
 struct DefaultServerRPCTraits;
 
 /**
- * @brief (experimental) Primary ServerRPC template
+ * @brief Primary ServerRPC template
  *
  * This is the main entrypoint into the recommended API for implementing asynchronous gRPC servers.
  *
@@ -90,10 +89,6 @@ template <class Item>
 class AtomicIntrusiveQueue;
 
 struct BasicSenderAccess;
-
-struct RepeatedlyRequestContextAccess;
-
-class GenericRPCContext;
 
 struct HealthCheckServiceData;
 
@@ -135,12 +130,6 @@ class NotifyWhenDoneEvent;
 
 template <class ServerRPC, class RPCHandler, class CompletionHandler>
 struct RegisterCallbackRPCHandlerOperation;
-
-AGRPC_NAMESPACE_CPP20_BEGIN()
-
-class RepeatedlyRequestFn;
-
-AGRPC_NAMESPACE_CPP20_END
 }
 
 AGRPC_NAMESPACE_END

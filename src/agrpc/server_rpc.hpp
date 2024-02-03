@@ -27,7 +27,7 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief (experimental) I/O object for server-side, unary rpcs
+ * @brief I/O object for server-side, unary rpcs
  *
  * Use one of the `agrpc::register_` functions to set up request handling.
  *
@@ -208,7 +208,7 @@ class ServerRPC<RequestUnary, TraitsT, Executor>
 };
 
 /**
- * @brief (experimental) I/O object for server-side, client-streaming rpcs
+ * @brief I/O object for server-side, client-streaming rpcs
  *
  * Use one of the `agrpc::register_` functions to set up request handling.
  *
@@ -412,7 +412,7 @@ class ServerRPC<RequestClientStreaming, TraitsT, Executor>
 };
 
 /**
- * @brief (experimental) I/O object for server-side, server-streaming rpcs
+ * @brief I/O object for server-side, server-streaming rpcs
  *
  * Use one of the `agrpc::register_` functions to set up request handling.
  *
@@ -637,7 +637,7 @@ class ServerRPC<RequestServerStreaming, TraitsT, Executor>
 namespace detail
 {
 /**
- * @brief (experimental) ServerRPC bidirectional-streaming base
+ * @brief ServerRPC bidirectional-streaming base
  *
  * @since 2.7.0
  */
@@ -800,7 +800,7 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
 }
 
 /**
- * @brief (experimental) I/O object for server-side, bidirectional-streaming rpcs
+ * @brief I/O object for server-side, bidirectional-streaming rpcs
  *
  * Use one of the `agrpc::register_` functions to set up request handling.
  *
@@ -904,7 +904,7 @@ class ServerRPC<RequestBidiStreaming, TraitsT, Executor>
 };
 
 /**
- * @brief (experimental) I/O object for server-side, generic rpcs
+ * @brief I/O object for server-side, generic rpcs
  *
  * Use one of the `agrpc::register_` functions to set up request handling.
  *
@@ -975,7 +975,7 @@ class ServerRPC<agrpc::ServerRPCType::GENERIC, TraitsT, Executor>
 };
 
 /**
- * @brief (experimental) I/O object for server-side, generic rpcs (type alias)
+ * @brief I/O object for server-side, generic rpcs (type alias)
  *
  * @see agrpc::ServerRPC<agrpc::ServerRPCType::GENERIC,TraitsT,Executor>
  *

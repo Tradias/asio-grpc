@@ -23,7 +23,7 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 /**
- * @brief (experimental) ServerRPC NotifyWhenDone base
+ * @brief ServerRPC NotifyWhenDone base
  *
  * @since 2.7.0
  */

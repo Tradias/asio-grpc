@@ -31,7 +31,7 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 /**
- * @brief (experimental) Unary ClientRPC base
+ * @brief Unary ClientRPC base
  *
  * @since 2.6.0
  */
@@ -193,7 +193,7 @@ class ClientRPCUnaryBase<PrepareAsyncUnary, Executor> : public detail::ClientRPC
 }
 
 /**
- * @brief (experimental) I/O object for client-side, unary rpcs
+ * @brief I/O object for client-side, unary rpcs
  *
  * Example:
  *
@@ -238,7 +238,7 @@ class ClientRPC<PrepareAsyncUnary, Executor> : public detail::ClientRPCUnaryBase
 };
 
 /**
- * @brief (experimental) I/O object for client-side, generic, unary rpcs
+ * @brief I/O object for client-side, generic, unary rpcs
  *
  * Example:
  *
@@ -384,7 +384,7 @@ class ClientRPC<agrpc::ClientRPCType::GENERIC_UNARY, Executor>
 };
 
 /**
- * @brief (experimental) I/O object for client-side, generic, unary rpcs (type alias)
+ * @brief I/O object for client-side, generic, unary rpcs (type alias)
  *
  * @see agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_UNARY,Executor>
  *
@@ -393,7 +393,7 @@ class ClientRPC<agrpc::ClientRPCType::GENERIC_UNARY, Executor>
 using GenericUnaryClientRPC = agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_UNARY>;
 
 /**
- * @brief (experimental) I/O object for client-side, client-streaming rpcs
+ * @brief I/O object for client-side, client-streaming rpcs
  *
  * Example:
  *
@@ -618,7 +618,7 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor> : public detail::ClientRP
 namespace detail
 {
 /**
- * @brief (experimental) Server-streaming ClientRPC base
+ * @brief Server-streaming ClientRPC base
  *
  * @since 2.6.0
  */
@@ -781,7 +781,7 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
 }
 
 /**
- * @brief (experimental) I/O object for client-side, server-streaming rpcs
+ * @brief I/O object for client-side, server-streaming rpcs
  *
  * Example:
  *
@@ -827,7 +827,7 @@ class ClientRPC<PrepareAsyncServerStreaming, Executor>
 namespace detail
 {
 /**
- * @brief (experimental) Bidirectional-streaming ClientRPC base
+ * @brief Bidirectional-streaming ClientRPC base
  *
  * @since 2.6.0
  */
@@ -994,7 +994,7 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
 }
 
 /**
- * @brief (experimental) I/O object for client-side, bidirectional-streaming rpcs
+ * @brief I/O object for client-side, bidirectional-streaming rpcs
  *
  * Example:
  *
@@ -1104,7 +1104,7 @@ class ClientRPC<PrepareAsyncBidiStreaming, Executor>
 };
 
 /**
- * @brief (experimental) I/O object for client-side, generic, streaming rpcs
+ * @brief I/O object for client-side, generic, streaming rpcs
  *
  * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
  *
@@ -1168,7 +1168,7 @@ class ClientRPC<agrpc::ClientRPCType::GENERIC_STREAMING, Executor>
 };
 
 /**
- * @brief (experimental) I/O object for client-side, generic, streaming rpcs (type alias)
+ * @brief I/O object for client-side, generic, streaming rpcs (type alias)
  *
  * @see agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_STREAMING,Executor>
  *

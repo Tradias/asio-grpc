@@ -20,7 +20,7 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief (experimental) The type of a ClientRPC
+ * @brief The type of a ClientRPC
  *
  * @since 2.1.0
  */
@@ -58,7 +58,7 @@ enum class ClientRPCType
 };
 
 /**
- * @brief (experimental) The type of a ServerRPC
+ * @brief The type of a ServerRPC
  *
  * @since 2.7.0
  */

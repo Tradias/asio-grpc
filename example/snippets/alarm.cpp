@@ -59,7 +59,7 @@ asio::awaitable<void> timer_with_different_completion_tokens(agrpc::GrpcContext&
         [&](const asio::yield_context& yield)
         {
             agrpc::Alarm alarm{grpc_context};
-            alarm.wait(deadline, yield);  // suspend coroutine until alarm fires
+            alarm.wait(deadline, yield);  // suspend coroutine until alarm goes off
         },
         asio::detached);
     /* [alarm-with-spawn] */

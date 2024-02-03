@@ -24,31 +24,12 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 /**
- * @brief Client and server-side function object to read from streaming RPCs
- *
- * The examples below are based on the following .proto file:
- *
- * @snippet example.proto example-proto
- *
- * @attention The completion handler created from the completion token that is provided to the functions described below
- * must have an associated executor that refers to a GrpcContext:
- * @snippet server.cpp bind-executor-to-use-awaitable
- *
- * **Per-Operation Cancellation**
- *
- * None. Operations will be cancelled when the deadline of the RPC has been reached
- * (see
- * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6))
- * or the call has been cancelled
- * (see
- * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984)
- * and
- * [grpc::ServerContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_context.html#a88d3a0c3d53e39f38654ce8fba968301)).
+ * @brief Server/ClientRPC.read in form of a function object
  */
 struct ReadFn
 {
     /**
-     * @brief (experimental) Read from a ServerRPC
+     * @brief Read from a ServerRPC
      *
      * Equivalent to performing `rpc.read(req, token)`.
      *
@@ -65,7 +46,7 @@ struct ReadFn
     }
 
     /**
-     * @brief (experimental) Read from a Client
+     * @brief Read from a Client
      *
      * Equivalent to performing `rpc.read(response, token)`.
      *

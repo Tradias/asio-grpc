@@ -24,7 +24,7 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief (experimental) Register a callback rpc handler for the given method
+ * @brief Register a callback rpc handler for the given method
  *
  * The rpc handler will be invoked for every incoming request of this gRPC method. It must take `ServerRPC::Ptr` as
  * first and `ServerRPC::Request&` as second (only for unary and server-streaming rpcs) argument. The ServerRPC is
@@ -59,7 +59,7 @@ auto register_callback_rpc_handler(const typename ServerRPC::executor_type& exec
 }
 
 /**
- * @brief (experimental) Register a callback rpc handler for the given method (GrpcContext overload)
+ * @brief Register a callback rpc handler for the given method (GrpcContext overload)
  *
  * @since 2.8.0
  */
