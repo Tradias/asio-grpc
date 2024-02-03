@@ -45,7 +45,7 @@ Or until both contexts stop:
 
 Both approaches come with their own different kind of overheads. Running on two threads might require additional synchronization in the user code while running on the same thread reduces peak performance. In the [Performance](https://github.com/Tradias/asio-grpc#performance) section of the README you can find results for using an idle io_context with a busy GrpcContext running on the same thread (look for `cpp_asio_grpc_io_context_coro`).
 
-## Why io_context cannot be used for gRPC directly
+## Why can an io_context not be used for gRPC directly?
 
 Event loops like the ones used in Asio and gRPC typically utilize system APIs (epoll, IOCompletionPorts, kqueue, ...) in the following order:
 

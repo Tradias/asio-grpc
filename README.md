@@ -9,7 +9,7 @@ An [Executor, Networking TS](https://www.boost.org/doc/libs/1_84_0/doc/html/boos
 * Asio [ExecutionContext](https://www.boost.org/doc/libs/1_84_0/doc/html/boost_asio/reference/ExecutionContext.html) compatible wrapper around [grpc::CompletionQueue](https://grpc.github.io/grpc/cpp/classgrpc_1_1_completion_queue.html)
 * Support for all RPC types: unary, client-streaming, server-streaming and bidirectional-streaming with any mix of Asio [CompletionToken](https://www.boost.org/doc/libs/1_84_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers) as well as [Sender](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#sender-concept), including allocator customization
 * Support for asynchronously waiting for [grpc::Alarms](https://grpc.github.io/grpc/cpp/classgrpc_1_1_alarm.html) including cancellation through [cancellation_slots](https://www.boost.org/doc/libs/1_84_0/doc/html/boost_asio/reference/cancellation_slot.html) and [StopTokens](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#stoptoken-concept)
-* Support for `std::execution` through either [libunifex](https://github.com/facebookexperimental/libunifex) or [stdexec](https://github.com/NVIDIA/stdexec)
+* Support for sender/receiver through either [libunifex](https://github.com/facebookexperimental/libunifex) or [stdexec](https://github.com/NVIDIA/stdexec)
 * Support for generic gRPC clients and servers
 * No extra codegen required, works with the vanilla gRPC C++ plugin (`grpc_cpp_plugin`)
 * No-Boost version with [standalone Asio](https://github.com/chriskohlhoff/asio)
@@ -26,7 +26,7 @@ Officially supported compilers are GCC 8+, Clang 10+, AppleClang 14+ and latest 
 
 # Usage
 
-The library can be added to a CMake project using either `add_subdirectory` or `find_package`. Once set up, include the individual headers from the agrpc/ directory or the convenience header:
+The library can be added to a CMake project using either `add_subdirectory` or `find_package`. Once set up, include the individual headers from the `agrpc` directory or the convenience header:
 
 ```cpp
 #include <agrpc/asio_grpc.hpp>
@@ -216,13 +216,13 @@ the backend's header files and libraries can be found correctly.
 
 asio-grpc is part of [grpc_bench](https://github.com/Tradias/grpc_bench). Head over there to compare its performance against other libraries and languages.
 
+<details><summary><b>Results</b></summary>
+<p>
+
 Below are the results from the helloworld unary RPC for:   
 Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz   
 Linux, GCC 12.2.0, Boost 1.80.0, gRPC 1.52.1, asio-grpc v2.5.0, jemalloc 5.2.1   
 Request scenario: string_100B
-
-<details><summary><b>Results</b></summary>
-<p>
 
 ### 1 CPU server
 
@@ -259,8 +259,7 @@ Request scenario: string_100B
 
 # Documentation
 
-[**Documentation**](https://tradias.github.io/asio-grpc/)
-[**Examples**](/example)
+[**Documentation**](https://tradias.github.io/asio-grpc/) | [**Examples**](/example)
 
 The main workhorses of this library are the [agrpc::GrpcContext](https://tradias.github.io/asio-grpc/classagrpc_1_1_grpc_context.html) and its `executor_type` - [agrpc::GrpcExecutor](https://tradias.github.io/asio-grpc/classagrpc_1_1_basic_grpc_executor.html). 
 
