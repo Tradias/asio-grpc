@@ -27,7 +27,7 @@ template <DeallocateOnComplete Deallocate, class Initiation, class Operation, cl
 void initiate(Operation& operation, agrpc::GrpcContext& grpc_context, const Initiation& initiation,
               detail::AllocationType alloc_type, T...)
 {
-    if constexpr (Deallocate == detail::DeallocateOnComplete::YES)
+    if constexpr (Deallocate == detail::DeallocateOnComplete::YES_)
     {
         if (AllocationType::LOCAL == alloc_type)
         {

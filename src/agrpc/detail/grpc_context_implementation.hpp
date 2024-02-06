@@ -94,8 +94,8 @@ struct IsGrpcContextStoppedPredicate
 
 enum class InvokeHandler
 {
-    NO,
-    YES
+    NO_,
+    YES_
 };
 
 struct GrpcContextImplementation
@@ -137,7 +137,7 @@ struct GrpcContextImplementation
 
     template <class StopPredicate = detail::IsGrpcContextStoppedPredicate>
     static bool do_one(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline,
-                       detail::InvokeHandler invoke = detail::InvokeHandler::YES, StopPredicate stop_predicate = {});
+                       detail::InvokeHandler invoke = detail::InvokeHandler::YES_, StopPredicate stop_predicate = {});
 
     static bool do_one_if_not_stopped(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline);
 

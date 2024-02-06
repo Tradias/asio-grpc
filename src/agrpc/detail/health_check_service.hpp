@@ -202,9 +202,9 @@ inline void HealthCheckRepeatedlyRequest<Implementation>::do_request_complete(Ba
     auto* self = static_cast<HealthCheckRepeatedlyRequest*>(op);
     self->service_.grpc_context_->work_started();
     auto* const impl = self->impl_;
-    if AGRPC_LIKELY (detail::OperationResult::OK == result || detail::OperationResult::SHUTDOWN_OK == result)
+    if AGRPC_LIKELY (detail::OperationResult::OK_ == result || detail::OperationResult::SHUTDOWN_OK == result)
     {
-        if AGRPC_LIKELY (detail::OperationResult::OK == result)
+        if AGRPC_LIKELY (detail::OperationResult::OK_ == result)
         {
             self->start();
             impl->run();

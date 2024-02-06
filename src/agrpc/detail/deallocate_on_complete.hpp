@@ -23,8 +23,8 @@ namespace detail
 {
 enum class DeallocateOnComplete
 {
-    NO,
-    YES
+    NO_,
+    YES_
 };
 }
 

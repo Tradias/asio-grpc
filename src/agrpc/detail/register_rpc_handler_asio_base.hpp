@@ -30,7 +30,7 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 inline constexpr auto REGISTER_RPC_HANDLER_COMPLETE =
-    static_cast<detail::OperationResult>(detail::to_underlying(detail::OperationResult::OK) + 1);
+    static_cast<detail::OperationResult>(detail::to_underlying(detail::OperationResult::OK_) + 1);
 
 template <class ServerRPC, class RPCHandler, class CompletionHandlerT>
 class RegisterRPCHandlerOperationAsioBase

@@ -30,7 +30,7 @@ enum class OperationResult
     SHUTDOWN_NOT_OK,
     SHUTDOWN_OK,
     NOT_OK,
-    OK
+    OK_
 };
 
 struct OperationBaseAccess;
@@ -90,7 +90,7 @@ struct OperationBaseAccess
     static void* get_scratch_space(const detail::OperationBase& operation) noexcept { return operation.scratch_space_; }
 };
 
-[[nodiscard]] constexpr bool is_ok(OperationResult result) noexcept { return result == OperationResult::OK; }
+[[nodiscard]] constexpr bool is_ok(OperationResult result) noexcept { return result == OperationResult::OK_; }
 
 [[nodiscard]] constexpr bool is_shutdown(OperationResult result) noexcept
 {

@@ -147,7 +147,7 @@ inline bool GrpcContextImplementation::process_local_queue(agrpc::GrpcContext& g
 {
     bool processed{};
     const auto result =
-        detail::InvokeHandler::NO == invoke ? detail::OperationResult::SHUTDOWN_NOT_OK : detail::OperationResult::OK;
+        detail::InvokeHandler::NO_ == invoke ? detail::OperationResult::SHUTDOWN_NOT_OK : detail::OperationResult::OK_;
     auto queue{std::move(grpc_context.local_work_queue_)};
     while (!queue.empty())
     {
@@ -179,9 +179,9 @@ inline bool GrpcContextImplementation::handle_next_completion_queue_event(agrpc:
         else
         {
             const auto result =
-                detail::InvokeHandler::NO == invoke
+                detail::InvokeHandler::NO_ == invoke
                     ? (event.ok_ ? detail::OperationResult::SHUTDOWN_OK : detail::OperationResult::SHUTDOWN_NOT_OK)
-                    : (event.ok_ ? detail::OperationResult::OK : detail::OperationResult::NOT_OK);
+                    : (event.ok_ ? detail::OperationResult::OK_ : detail::OperationResult::NOT_OK);
             detail::process_grpc_tag(event.tag_, result, grpc_context);
         }
         return true;
@@ -218,14 +218,14 @@ inline bool GrpcContextImplementation::do_one_if_not_stopped(agrpc::GrpcContext&
     {
         return false;
     }
-    return GrpcContextImplementation::do_one(grpc_context, deadline, detail::InvokeHandler::YES);
+    return GrpcContextImplementation::do_one(grpc_context, deadline, detail::InvokeHandler::YES_);
 }
 
 inline bool GrpcContextImplementation::do_one_completion_queue(agrpc::GrpcContext& grpc_context,
                                                                ::gpr_timespec deadline)
 {
     return GrpcContextImplementation::handle_next_completion_queue_event(grpc_context, deadline,
-                                                                         detail::InvokeHandler::YES);
+                                                                         detail::InvokeHandler::YES_);
 }
 
 inline bool GrpcContextImplementation::do_one_completion_queue_if_not_stopped(agrpc::GrpcContext& grpc_context,
@@ -236,7 +236,7 @@ inline bool GrpcContextImplementation::do_one_completion_queue_if_not_stopped(ag
         return false;
     }
     return GrpcContextImplementation::handle_next_completion_queue_event(grpc_context, deadline,
-                                                                         detail::InvokeHandler::YES);
+                                                                         detail::InvokeHandler::YES_);
 }
 
 template <class LoopFunction>

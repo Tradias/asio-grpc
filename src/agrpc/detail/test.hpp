@@ -31,7 +31,7 @@ struct ProcessTag
     template <class... T>
     void operator()(T&&...)
     {
-        detail::process_grpc_tag(tag_, ok_ ? detail::OperationResult::OK : detail::OperationResult::NOT_OK,
+        detail::process_grpc_tag(tag_, ok_ ? detail::OperationResult::OK_ : detail::OperationResult::NOT_OK,
                                  grpc_context_);
     }
 };

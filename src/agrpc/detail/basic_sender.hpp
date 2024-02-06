@@ -181,7 +181,7 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
     {
         grpc_context.work_started();
         emplace_stop_callback(static_cast<StopToken&&>(stop_token), initiation);
-        detail::initiate<detail::DeallocateOnComplete::NO>(*this, grpc_context, initiation, AllocationType::NONE);
+        detail::initiate<detail::DeallocateOnComplete::NO_>(*this, grpc_context, initiation, AllocationType::NONE);
     }
 
     Receiver& receiver() noexcept { return impl_.first().first(); }

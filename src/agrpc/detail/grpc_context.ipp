@@ -43,7 +43,7 @@ struct AlwaysFalsePredicate
 inline void drain_completion_queue(agrpc::GrpcContext& grpc_context)
 {
     while (detail::GrpcContextImplementation::do_one(grpc_context, detail::GrpcContextImplementation::INFINITE_FUTURE,
-                                                     detail::InvokeHandler::NO, detail::AlwaysFalsePredicate{}))
+                                                     detail::InvokeHandler::NO_, detail::AlwaysFalsePredicate{}))
     {
         //
     }

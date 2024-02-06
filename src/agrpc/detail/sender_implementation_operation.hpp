@@ -72,7 +72,7 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
     {
         grpc_context.work_started();
         emplace_stop_callback(initiation);
-        detail::initiate<detail::DeallocateOnComplete::YES>(*this, grpc_context, initiation, allocation_type);
+        detail::initiate<detail::DeallocateOnComplete::YES_>(*this, grpc_context, initiation, allocation_type);
     }
 
     template <AllocationType AllocType>

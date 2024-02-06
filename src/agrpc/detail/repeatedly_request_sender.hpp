@@ -188,7 +188,7 @@ class RepeatedlyRequestSender : public detail::SenderOf<void()>
         {
             auto* self = static_cast<Operation*>(op);
             detail::AllocationGuard ptr{self->request_handler_operation_, self->get_allocator()};
-            if AGRPC_LIKELY (detail::OperationResult::OK == result)
+            if AGRPC_LIKELY (detail::OperationResult::OK_ == result)
             {
                 if (auto exception_ptr = emplace_request_handler_operation(*ptr))
                 {
