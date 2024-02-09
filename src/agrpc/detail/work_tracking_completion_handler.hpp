@@ -64,56 +64,14 @@ class WorkTracker<Executor, true>
 template <class Handler, class... Args>
 void dispatch_with_args(Handler&& handler, Args&&... args)
 {
-    auto executor = asio::prefer(asio::get_associated_executor(handler), asio::execution::blocking_t::possibly,
-                                 asio::execution::allocator(asio::get_associated_allocator(handler)));
-    detail::do_execute(
-        std::move(executor),
-        [h = static_cast<Handler&&>(handler), arg_tuple = detail::Tuple{static_cast<Args&&>(args)...}]() mutable
-        {
-            detail::apply(std::move(h), std::move(arg_tuple));
-        });
+    asio::prefer(asio::get_associated_executor(handler), asio::execution::blocking_t::possibly,
+                 asio::execution::allocator(asio::get_associated_allocator(handler)))
+        .execute(
+            [h = static_cast<Handler&&>(handler), arg_tuple = detail::Tuple{static_cast<Args&&>(args)...}]() mutable
+            {
+                detail::apply(std::move(h), std::move(arg_tuple));
+            });
 }
-
-template <class CompletionHandler>
-class WorkTrackingCompletionHandler : private detail::EmptyBaseOptimization<CompletionHandler>,
-                                      private detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandler>>
-{
-  public:
-    using executor_type = detail::AssociatedExecutorT<CompletionHandler>;
-    using allocator_type = detail::AssociatedAllocatorT<CompletionHandler>;
-
-  private:
-    using CompletionHandlerBase = detail::EmptyBaseOptimization<CompletionHandler>;
-    using WorkTrackerBase = detail::WorkTracker<executor_type>;
-
-  public:
-    template <class Ch>
-    explicit WorkTrackingCompletionHandler(Ch&& ch)
-        : CompletionHandlerBase(static_cast<Ch&&>(ch)), WorkTrackerBase(get_executor())
-    {
-    }
-
-    [[nodiscard]] auto& completion_handler() noexcept { return this->get(); }
-
-    [[nodiscard]] auto& completion_handler() const noexcept { return this->get(); }
-
-    template <class... Args>
-    void operator()(Args&&... args) &&
-    {
-        detail::dispatch_with_args(static_cast<CompletionHandler&&>(completion_handler()),
-                                   static_cast<Args&&>(args)...);
-    }
-
-    [[nodiscard]] decltype(auto) get_executor() const noexcept
-    {
-        return asio::get_associated_executor(completion_handler());
-    }
-
-    [[nodiscard]] allocator_type get_allocator() const noexcept
-    {
-        return asio::get_associated_allocator(completion_handler());
-    }
-};
 
 template <class AllocationGuard, class... Args>
 void dispatch_complete(AllocationGuard& guard, Args&&... args)
@@ -126,27 +84,5 @@ void dispatch_complete(AllocationGuard& guard, Args&&... args)
 }
 
 AGRPC_NAMESPACE_END
-
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-
-template <template <class, class> class Associator, class CompletionHandler, class DefaultCandidate>
-struct agrpc::asio::associator<Associator, agrpc::detail::WorkTrackingCompletionHandler<CompletionHandler>,
-                               DefaultCandidate>
-{
-    using type = typename Associator<CompletionHandler, DefaultCandidate>::type;
-
-    static decltype(auto) get(const agrpc::detail::WorkTrackingCompletionHandler<CompletionHandler>& b,
-                              const DefaultCandidate& c = DefaultCandidate()) noexcept
-    {
-        return Associator<CompletionHandler, DefaultCandidate>::get(b.completion_handler(), c);
-    }
-};
-
-#endif
-
-template <class CompletionHandler, class Alloc>
-struct std::uses_allocator<agrpc::detail::WorkTrackingCompletionHandler<CompletionHandler>, Alloc> : std::false_type
-{
-};
 
 #endif  // AGRPC_DETAIL_WORK_TRACKING_COMPLETION_HANDLER_HPP

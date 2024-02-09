@@ -25,11 +25,6 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-struct NoArgOperationInitiation
-{
-    static void initiate(const agrpc::GrpcContext&, const detail::QueueableOperationBase*) noexcept {}
-};
-
 template <bool IsBlockingNever, class Handler>
 void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Handler&& handler)
 {

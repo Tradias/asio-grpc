@@ -235,7 +235,6 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel agrpc::Alarm with parallel_grou
 }
 #endif
 
-#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::execution connect and start Alarm")
 {
     bool ok{false};
@@ -245,9 +244,8 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::execution connect and start Alar
                                       {
                                           ok = true;
                                       }};
-    auto operation_state = asio::execution::connect(std::move(wait_sender), std::move(receiver));
-    asio::execution::start(operation_state);
+    auto operation_state = std::move(wait_sender).connect(std::move(receiver));
+    operation_state.start();
     grpc_context.run();
     CHECK(ok);
 }
-#endif

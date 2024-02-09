@@ -667,18 +667,6 @@ struct agrpc::asio::traits::query_member<agrpc::BasicGrpcExecutor<Allocator, Opt
 };
 #endif
 
-#if defined(AGRPC_ASIO_HAS_SENDER_RECEIVER) && !defined(BOOST_ASIO_HAS_DEDUCED_SCHEDULE_MEMBER_TRAIT) && \
-    !defined(ASIO_HAS_DEDUCED_SCHEDULE_MEMBER_TRAIT)
-template <class Allocator, std::uint32_t Options>
-struct agrpc::asio::traits::schedule_member<agrpc::BasicGrpcExecutor<Allocator, Options>>
-{
-    static constexpr bool is_valid = true;
-    static constexpr bool is_noexcept = true;
-
-    using result_type = agrpc::detail::ScheduleSender;
-};
-#endif
-
 #include <agrpc/detail/grpc_context.ipp>
 
 #endif  // AGRPC_AGRPC_GRPC_EXECUTOR_HPP

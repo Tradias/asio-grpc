@@ -22,7 +22,6 @@
 #include <agrpc/detail/grpc_sender.hpp>
 #include <agrpc/detail/initiate_sender_implementation.hpp>
 #include <agrpc/detail/query_grpc_context.hpp>
-#include <agrpc/detail/wait.hpp>
 #include <agrpc/grpc_executor.hpp>
 
 AGRPC_NAMESPACE_BEGIN()

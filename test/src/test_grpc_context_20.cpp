@@ -30,33 +30,7 @@
 #endif
 
 #ifdef AGRPC_TEST_ASIO_HAS_CONCEPTS
-TEST_CASE("GrpcExecutor fulfills Executor TS concepts")
-{
-    CHECK(asio::execution::executor<agrpc::GrpcExecutor>);
-#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
-    CHECK(asio::execution::executor_of<agrpc::GrpcExecutor, test::InvocableArchetype>);
-#endif
-}
-
-#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
-TEST_CASE("GrpcSender and ScheduleSender fulfill std::execution concepts")
-{
-    using GrpcSender = decltype(std::declval<agrpc::Alarm&>().wait(
-        std::declval<std::chrono::system_clock::time_point>(), std::declval<agrpc::UseSender>()));
-    CHECK(asio::execution::sender<GrpcSender>);
-    CHECK(asio::execution::typed_sender<GrpcSender>);
-    CHECK(asio::execution::sender_to<GrpcSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
-    using OperationState = asio::execution::connect_result_t<GrpcSender, test::InvocableArchetype>;
-    CHECK(asio::execution::operation_state<OperationState>);
-
-    using ScheduleSender = decltype(asio::execution::schedule(std::declval<agrpc::GrpcExecutor>()));
-    CHECK(asio::execution::sender<ScheduleSender>);
-    CHECK(asio::execution::typed_sender<ScheduleSender>);
-    CHECK(asio::execution::sender_to<ScheduleSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
-    using ScheduleSenderOperationState = asio::execution::connect_result_t<ScheduleSender, test::InvocableArchetype>;
-    CHECK(asio::execution::operation_state<ScheduleSenderOperationState>);
-}
-#endif
+TEST_CASE("GrpcExecutor fulfills Executor TS concepts") { CHECK(asio::execution::executor<agrpc::GrpcExecutor>); }
 #endif
 
 #ifdef AGRPC_TEST_HAS_STD_PMR

@@ -36,7 +36,8 @@ namespace detail
  * @since 2.6.0
  */
 template <class StubT, class RequestT, class ResponseT, template <class> class ResponderT,
-          detail::ClientUnaryRequest<StubT, RequestT, ResponderT<ResponseT>> PrepareAsyncUnary, class Executor>
+          detail::PrepareAsyncClientUnaryRequest<StubT, RequestT, ResponderT<ResponseT>> PrepareAsyncUnary,
+          class Executor>
 class ClientRPCUnaryBase<PrepareAsyncUnary, Executor> : public detail::ClientRPCBase<ResponderT<ResponseT>, Executor>
 {
   private:

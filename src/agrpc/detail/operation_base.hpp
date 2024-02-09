@@ -96,44 +96,6 @@ struct OperationBaseAccess
 {
     return result == OperationResult::SHUTDOWN_NOT_OK || result == OperationResult::SHUTDOWN_OK;
 }
-
-template <bool UseLocalAllocator, class Operation, class Base>
-void do_complete_handler(detail::OperationBase* op, OperationResult result, agrpc::GrpcContext& grpc_context)
-{
-    auto* self = static_cast<Operation*>(static_cast<Base*>(op));
-    detail::AllocationGuard ptr{self, [&]
-                                {
-                                    if constexpr (UseLocalAllocator)
-                                    {
-                                        return detail::get_local_allocator(grpc_context);
-                                    }
-                                    else
-                                    {
-                                        return self->get_allocator();
-                                    }
-                                }()};
-    if AGRPC_LIKELY (!detail::is_shutdown(result))
-    {
-        auto handler{std::move(self->completion_handler())};
-        ptr.reset();
-        if constexpr (std::is_same_v<detail::OperationBase, Base>)
-        {
-            std::move(handler)(detail::is_ok(result));
-        }
-        else
-        {
-            std::move(handler)();
-        }
-    }
-}
-
-template <class Operation>
-inline constexpr auto DO_COMPLETE_NO_ARG_HANDLER =
-    &detail::do_complete_handler<false, Operation, detail::QueueableOperationBase>;
-
-template <class Operation>
-inline constexpr auto DO_COMPLETE_LOCAL_NO_ARG_HANDLER =
-    &detail::do_complete_handler<true, Operation, detail::QueueableOperationBase>;
 }
 
 AGRPC_NAMESPACE_END

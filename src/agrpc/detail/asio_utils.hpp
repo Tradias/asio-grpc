@@ -31,28 +31,12 @@ inline constexpr bool IS_EXECUTOR_PROVIDER = false;
 template <class T>
 inline constexpr bool IS_EXECUTOR_PROVIDER<T, decltype((void)std::declval<T>().get_executor())> = true;
 
-#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
-// Must not be named `execute`
-template <class Executor, class Function>
-void do_execute(Executor&& executor, Function&& function)
-{
-    asio::execution::execute(static_cast<Executor&&>(executor), static_cast<Function&&>(function));
-}
-#else
-template <class Executor, class Function>
-void do_execute(Executor&& executor, Function&& function)
-{
-    static_cast<Executor&&>(executor).execute(static_cast<Function&&>(function));
-}
-#endif
-
 template <class Executor, class Function, class Allocator>
 void post_with_allocator(Executor&& executor, Function&& function, const Allocator& allocator)
 {
-    detail::do_execute(
-        asio::prefer(asio::require(static_cast<Executor&&>(executor), asio::execution::blocking_t::never),
-                     asio::execution::relationship_t::fork, asio::execution::allocator(allocator)),
-        static_cast<Function&&>(function));
+    asio::prefer(asio::require(static_cast<Executor&&>(executor), asio::execution::blocking_t::never),
+                 asio::execution::relationship_t::fork, asio::execution::allocator(allocator))
+        .execute(static_cast<Function&&>(function));
 }
 
 template <class CompletionHandler, class Function, class IOExecutor>
@@ -76,12 +60,12 @@ void complete_immediately(CompletionHandler&& completion_handler, Function&& fun
                 return (io_executor);
             }
         }());
-    detail::do_execute(
-        asio::prefer(std::move(executor), asio::execution::allocator(allocator)),
-        [ch = static_cast<CompletionHandler&&>(completion_handler), f = static_cast<Function&&>(function)]() mutable
-        {
-            static_cast<Function&&>(f)(static_cast<CompletionHandler&&>(ch));
-        });
+    asio::prefer(std::move(executor), asio::execution::allocator(allocator))
+        .execute(
+            [ch = static_cast<CompletionHandler&&>(completion_handler), f = static_cast<Function&&>(function)]() mutable
+            {
+                static_cast<Function&&>(f)(static_cast<CompletionHandler&&>(ch));
+            });
 #else
     auto executor = asio::get_associated_executor(completion_handler, io_executor);
     detail::post_with_allocator(

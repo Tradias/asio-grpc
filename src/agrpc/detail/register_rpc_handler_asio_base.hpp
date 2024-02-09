@@ -16,7 +16,6 @@
 #define AGRPC_DETAIL_REGISTER_RPC_HANDLER_ASIO_BASE_HPP
 
 #include <agrpc/detail/association.hpp>
-#include <agrpc/detail/buffer_allocator.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/register_rpc_handler_base.hpp>
 #include <agrpc/detail/rethrow_first_arg.hpp>

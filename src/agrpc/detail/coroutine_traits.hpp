@@ -43,9 +43,6 @@ using RebindCoroutineT = typename detail::CoroutineTraits<Coroutine>::template R
 
 template <class Coroutine>
 using CoroutineCompletionTokenT = typename detail::CoroutineTraits<Coroutine>::CompletionToken;
-
-template <class Coroutine>
-using CoroutineExecutorT = typename detail::CoroutineTraits<Coroutine>::ExecutorType;
 }
 
 AGRPC_NAMESPACE_END

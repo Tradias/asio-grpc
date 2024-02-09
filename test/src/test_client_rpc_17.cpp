@@ -198,16 +198,12 @@ TEST_CASE_TEMPLATE("ClientRPC::read_initial_metadata on cancelled RPC", RPC, tes
         });
 }
 
-#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
 TEST_CASE_FIXTURE(ClientRPCRequestResponseTest<test::UnaryClientRPC>,
                   "ClientRPC::request can have UseSender as default completion token")
 {
     using RPC = agrpc::UseSender::as_default_on_t<agrpc::ClientRPC<&test::v1::Test::Stub::PrepareAsyncUnary>>;
     bool ok{};
     test::DeleteGuard guard{};
-    bool use_submit{};
-    SUBCASE("submit") { use_submit = true; }
-    SUBCASE("start") {}
     register_perform_requests_no_shutdown(
         [&](auto& rpc, auto& request, const asio::yield_context& yield)
         {
@@ -225,26 +221,16 @@ TEST_CASE_FIXTURE(ClientRPCRequestResponseTest<test::UnaryClientRPC>,
                                                     {
                                                         ok = status.ok();
                                                     }};
-            if (use_submit)
-            {
-                CHECK_FALSE(asio::execution::can_submit_v<std::add_const_t<decltype(sender)>, decltype(receiver)>);
-                asio::execution::submit(std::move(sender), receiver);
-            }
-            else
-            {
-                CHECK_FALSE(asio::execution::can_connect_v<std::add_const_t<decltype(sender)>, decltype(receiver)>);
-                auto& operation_state = guard.emplace_with(
-                    [&]
-                    {
-                        return asio::execution::connect(std::move(sender), receiver);
-                    });
-                asio::execution::start(operation_state);
-            }
+            auto& operation_state = guard.emplace_with(
+                [&]
+                {
+                    return std::move(sender).connect(receiver);
+                });
+            operation_state.start();
         });
     CHECK(ok);
     CHECK_EQ(21, response.integer());
 }
-#endif
 
 TEST_CASE_FIXTURE(ClientRPCTest<test::ServerStreamingClientRPC>, "ServerStreamingClientRPC::read failure")
 {
@@ -329,47 +315,6 @@ TEST_CASE_FIXTURE(ClientRPCTest<test::ClientStreamingClientRPC>, "ClientStreamin
             CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.finish(yield).error_code());
         });
 }
-
-#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
-TEST_CASE_FIXTURE(ClientRPCTest<test::ClientStreamingClientRPC>, "ClientStreamingClientRPC::finish using sender")
-{
-    bool expected_ok = true;
-    auto expected_status_code = grpc::StatusCode::OK;
-    SUBCASE("success") {}
-    SUBCASE("failure")
-    {
-        expected_ok = false;
-        expected_status_code = grpc::StatusCode::CANCELLED;
-    }
-    Request request;
-    Response response;
-    register_perform_requests_no_shutdown(
-        [&](auto& rpc, const asio::yield_context& yield)
-        {
-            if (expected_ok)
-            {
-                Response response;
-                CHECK(rpc.finish(response, grpc::Status::OK, yield));
-            }
-        },
-        [&](Request&, Response&, asio::yield_context yield)
-        {
-            auto rpc = std::make_unique<test::ClientStreamingClientRPC>(grpc_context, test::set_default_deadline);
-            start_rpc(*rpc, request, response, yield);
-            if (!expected_ok)
-            {
-                rpc->cancel();
-            }
-            auto& rpc_ref = *rpc;
-            asio::execution::submit(rpc_ref.finish(agrpc::use_sender),
-                                    test::FunctionAsReceiver{[&, rpc = std::move(rpc)](grpc::Status status)
-                                                             {
-                                                                 CHECK_EQ(expected_status_code, status.error_code());
-                                                                 server_shutdown.initiate();
-                                                             }});
-        });
-}
-#endif
 
 TEST_CASE_FIXTURE(ClientRPCIoContextTest<test::BidirectionalStreamingClientRPC>,
                   "BidirectionalStreamingClientRPC concurrent read+write")

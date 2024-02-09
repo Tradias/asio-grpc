@@ -18,25 +18,6 @@
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 
-#if defined(AGRPC_STANDALONE_ASIO) && (ASIO_VERSION < 102500 || (ASIO_VERSION < 102900 && !defined(ASIO_NO_DEPRECATED)))
-#include <asio/execution/connect.hpp>
-#include <asio/execution/set_done.hpp>
-#include <asio/execution/set_error.hpp>
-#include <asio/execution/set_value.hpp>
-#include <asio/execution/start.hpp>
-
-#define AGRPC_ASIO_HAS_SENDER_RECEIVER
-#elif defined(AGRPC_BOOST_ASIO) && \
-    (BOOST_VERSION < 108100 || (BOOST_VERSION < 108400 && !defined(BOOST_ASIO_NO_DEPRECATED)))
-#include <boost/asio/execution/connect.hpp>
-#include <boost/asio/execution/set_done.hpp>
-#include <boost/asio/execution/set_error.hpp>
-#include <boost/asio/execution/set_value.hpp>
-#include <boost/asio/execution/start.hpp>
-
-#define AGRPC_ASIO_HAS_SENDER_RECEIVER
-#endif
-
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
@@ -67,15 +48,6 @@ struct GetSchedulerFn
 
 inline constexpr GetSchedulerFn get_scheduler{};
 
-#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
-using asio::execution::connect;
-using asio::execution::connect_result_t;
-using asio::execution::is_sender_v;
-using asio::execution::set_done;
-using asio::execution::set_error;
-using asio::execution::set_value;
-using asio::execution::start;
-#else
 template <class Sender>
 inline constexpr bool is_sender_v = true;
 
@@ -111,7 +83,6 @@ void start(OperationState&& state)
 {
     static_cast<OperationState&&>(state).start();
 }
-#endif
 
 template <class Receiver>
 constexpr UnstoppableToken get_stop_token(const Receiver&) noexcept

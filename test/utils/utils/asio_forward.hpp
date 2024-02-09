@@ -39,10 +39,6 @@
 #include <asio/experimental/parallel_group.hpp>
 #endif
 
-#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
-#include <asio/execution/submit.hpp>
-#endif
-
 #ifdef ASIO_HAS_CONCEPTS
 #define AGRPC_TEST_ASIO_HAS_CONCEPTS
 #endif
@@ -80,10 +76,6 @@
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
-#endif
-
-#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
-#include <boost/asio/execution/submit.hpp>
 #endif
 
 #ifdef BOOST_ASIO_HAS_CONCEPTS
