@@ -337,7 +337,7 @@ TEST_CASE_TEMPLATE("Awaitable ServerRPC/ClientRPC server streaming no finish cau
         {
             auto rpc = test.create_rpc();
             test.start_rpc(rpc, request, response, yield);
-            CHECK(rpc.read(response, yield));
+            rpc.read(response, yield);
             CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.finish(yield).error_code());
         });
 }

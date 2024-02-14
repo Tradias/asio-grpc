@@ -26,7 +26,7 @@ endif()
 
 project(
     asio-grpc
-    VERSION 2.9.3
+    VERSION 3.0.0
     DESCRIPTION "Asynchronous gRPC with Asio/unified executors"
     HOMEPAGE_URL "https://github.com/Tradias/asio-grpc"
     LANGUAGES CXX)
