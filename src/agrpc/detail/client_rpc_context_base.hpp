@@ -24,7 +24,7 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 /**
- * @brief (experimental) ClientRPC grpc::ClientContext base
+ * @brief ClientRPC grpc::ClientContext base
  *
  * @since 2.6.0
  */

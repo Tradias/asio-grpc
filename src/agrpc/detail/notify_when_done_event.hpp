@@ -19,13 +19,11 @@
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/manual_reset_event.hpp>
+#include <agrpc/detail/operation_base.hpp>
 #include <agrpc/detail/tuple.hpp>
+#include <agrpc/grpc_executor.hpp>
 #include <agrpc/use_sender.hpp>
 #include <grpcpp/server_context.h>
-
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-#include <agrpc/detail/cancel_safe.hpp>
-#endif
 
 #include <atomic>
 

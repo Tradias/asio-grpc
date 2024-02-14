@@ -109,7 +109,7 @@ template <auto PrepareAsync>
 struct ClientUnaryRequestSenderImplementation;
 
 template <class Stub, class Request, class Response, template <class> class Responder,
-          detail::ClientUnaryRequest<Stub, Request, Responder<Response>> PrepareAsync>
+          detail::PrepareAsyncClientUnaryRequest<Stub, Request, Responder<Response>> PrepareAsync>
 struct ClientUnaryRequestSenderImplementation<PrepareAsync>
     : ClientUnaryRequestSenderImplementationBase<Responder<Response>>
 {

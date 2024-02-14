@@ -26,12 +26,8 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class Stub, class Request, class Responder>
-using ClientUnaryRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*, const Request&,
-                                                                grpc::CompletionQueue*);
-
-template <class Stub, class Request, class Responder>
-using AsyncClientServerStreamingRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*, const Request&,
-                                                                               grpc::CompletionQueue*, void*);
+using PrepareAsyncClientUnaryRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*, const Request&,
+                                                                            grpc::CompletionQueue*);
 
 template <class Stub, class Request, class Responder>
 using PrepareAsyncClientServerStreamingRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*,
@@ -39,16 +35,8 @@ using PrepareAsyncClientServerStreamingRequest = std::unique_ptr<Responder> (Stu
                                                                                       grpc::CompletionQueue*);
 
 template <class Stub, class Responder, class Response>
-using AsyncClientClientStreamingRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*, Response*,
-                                                                               grpc::CompletionQueue*, void*);
-
-template <class Stub, class Responder, class Response>
 using PrepareAsyncClientClientStreamingRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*, Response*,
                                                                                       grpc::CompletionQueue*);
-
-template <class Stub, class Responder>
-using AsyncClientBidirectionalStreamingRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*,
-                                                                                      grpc::CompletionQueue*, void*);
 
 template <class Stub, class Responder>
 using PrepareAsyncClientBidirectionalStreamingRequest = std::unique_ptr<Responder> (Stub::*)(grpc::ClientContext*,

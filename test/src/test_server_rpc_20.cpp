@@ -23,8 +23,9 @@
 #include "utils/server_rpc.hpp"
 
 #include <agrpc/alarm.hpp>
-#include <agrpc/bind_allocator.hpp>
 #include <agrpc/client_rpc.hpp>
+#include <agrpc/detail/bind_allocator.hpp>
+#include <agrpc/read.hpp>
 #include <agrpc/register_awaitable_rpc_handler.hpp>
 #include <agrpc/server_rpc.hpp>
 #include <agrpc/waiter.hpp>
@@ -276,7 +277,7 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ServerStreamingServerRPC>,
         {
             CHECK(co_await rpc.finish(grpc::Status::OK, asio::use_awaitable));
         },
-        agrpc::bind_allocator(get_allocator(), test::RethrowFirstArg{}));
+        agrpc::detail::bind_allocator(get_allocator(), test::RethrowFirstArg{}));
     const auto bytes_allocated = resource.bytes_allocated;
     perform_requests(just_finish(*this), just_finish(*this));
     CHECK_LT(bytes_allocated, resource.bytes_allocated);

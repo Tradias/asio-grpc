@@ -34,8 +34,9 @@ void complete(Operation& operation, [[maybe_unused]] detail::OperationResult res
     {
         if constexpr (Implementation::NEEDS_ON_COMPLETE)
         {
-            operation.implementation().complete(OperationHandle<Operation, AllocType, Id>{operation, grpc_context},
-                                                static_cast<decltype(args)&&>(args)...);
+            operation.implementation().complete(
+                detail::OperationHandle<Operation, AllocType, Id>{operation, grpc_context},
+                static_cast<decltype(args)&&>(args)...);
         }
         else
         {

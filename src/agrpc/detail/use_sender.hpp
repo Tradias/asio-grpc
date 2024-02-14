@@ -23,11 +23,6 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-struct UseSender
-{
-    agrpc::GrpcContext& grpc_context_;
-};
-
 template <class T>
 inline constexpr bool IS_USE_SENDER = std::is_same_v<agrpc::UseSender, detail::RemoveCrefT<T>>;
 }

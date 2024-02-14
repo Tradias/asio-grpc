@@ -15,7 +15,7 @@
 #ifndef AGRPC_DETAIL_REGISTER_YIELD_RPC_HANDLER_HPP
 #define AGRPC_DETAIL_REGISTER_YIELD_RPC_HANDLER_HPP
 
-#include <agrpc/bind_allocator.hpp>
+#include <agrpc/detail/bind_allocator.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/register_rpc_handler_asio_base.hpp>
 #include <agrpc/detail/rethrow_first_arg.hpp>
@@ -114,7 +114,7 @@ struct RegisterYieldRPCHandlerOperation
         }
         else
         {
-            return agrpc::AllocatorBinder(this->get_allocator(), yield);
+            return detail::AllocatorBinder(this->get_allocator(), yield);
         }
     }
 };

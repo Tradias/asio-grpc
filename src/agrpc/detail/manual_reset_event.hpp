@@ -17,7 +17,6 @@
 
 #include <agrpc/detail/allocate.hpp>
 #include <agrpc/detail/association.hpp>
-#include <agrpc/detail/cancel_safe.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/forward.hpp>
@@ -33,6 +32,36 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+template <class Signature>
+struct PrependErrorCodeToSignature;
+
+template <class... Args>
+struct PrependErrorCodeToSignature<void(detail::ErrorCode, Args...)>
+{
+    using Type = void(detail::ErrorCode, Args...);
+
+    template <class Function>
+    static void invoke_with_default_args(Function&& function, detail::ErrorCode&& ec)
+    {
+        static_cast<Function&&>(function)(static_cast<detail::ErrorCode&&>(ec), Args{}...);
+    }
+};
+
+template <class... Args>
+struct PrependErrorCodeToSignature<void(Args...)>
+{
+    using Type = void(detail::ErrorCode, Args...);
+
+    template <class Function>
+    static void invoke_with_default_args(Function&& function, detail::ErrorCode&& ec)
+    {
+        static_cast<Function&&>(function)(static_cast<detail::ErrorCode&&>(ec), Args{}...);
+    }
+};
+
+template <class Signature>
+using PrependErrorCodeToSignatureT = typename detail::PrependErrorCodeToSignature<Signature>::Type;
+
 template <class Signature>
 class ManualResetEvent;
 

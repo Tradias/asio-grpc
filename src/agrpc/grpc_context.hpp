@@ -24,8 +24,6 @@
 #include <agrpc/detail/grpc_executor_options.hpp>
 #include <agrpc/detail/intrusive_list.hpp>
 #include <agrpc/detail/intrusive_queue.hpp>
-#include <agrpc/detail/memory_resource.hpp>
-#include <agrpc/detail/notify_when_done.hpp>
 #include <agrpc/detail/operation_base.hpp>
 #include <grpcpp/alarm.h>
 #include <grpcpp/completion_queue.h>
@@ -289,7 +287,6 @@ class GrpcContext
   private:
     using RemoteWorkQueue = detail::AtomicIntrusiveQueue<detail::QueueableOperationBase>;
     using LocalWorkQueue = detail::IntrusiveQueue<detail::QueueableOperationBase>;
-    using NotifyWhenDoneList = detail::IntrusiveList<detail::NotifyWhenDoneSenderImplementation>;
 
     friend detail::GrpcContextImplementation;
 
@@ -303,14 +300,13 @@ class GrpcContext
     std::unique_ptr<grpc::CompletionQueue> completion_queue_{std::make_unique<grpc::CompletionQueue>()};
     detail::GrpcContextLocalMemoryResource local_resource_;
     LocalWorkQueue local_work_queue_;
-    NotifyWhenDoneList notify_when_done_list_;
     RemoteWorkQueue remote_work_queue_{false};
 };
 
 AGRPC_NAMESPACE_END
 
 template <class Alloc>
-struct agrpc::detail::container::uses_allocator<agrpc::GrpcContext, Alloc> : std::false_type
+struct std::uses_allocator<agrpc::GrpcContext, Alloc> : std::false_type
 {
 };
 

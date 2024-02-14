@@ -17,7 +17,8 @@
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
-#include <agrpc/grpc_context.hpp>
+#include <agrpc/detail/use_sender.hpp>
+#include <agrpc/grpc_executor.hpp>
 #include <agrpc/use_sender.hpp>
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
@@ -53,7 +54,7 @@ auto async_initiate_sender_implementation(agrpc::GrpcContext& grpc_context, cons
                                           Implementation&& implementation, [[maybe_unused]] CompletionToken&& token)
 {
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    if constexpr (!std::is_same_v<agrpc::UseSender, detail::RemoveCrefT<CompletionToken>>)
+    if constexpr (!detail::IS_USE_SENDER<CompletionToken>)
     {
         return asio::async_initiate<CompletionToken, typename Implementation::Signature>(
             detail::SubmitSenderImplementationOperation{grpc_context}, token, initiation,

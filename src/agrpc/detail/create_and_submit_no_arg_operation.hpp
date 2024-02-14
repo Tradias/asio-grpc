@@ -18,17 +18,13 @@
 #include <agrpc/detail/allocate_operation.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
+#include <agrpc/detail/operation.hpp>
 #include <agrpc/grpc_context.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-struct NoArgOperationInitiation
-{
-    static void initiate(const agrpc::GrpcContext&, const detail::QueueableOperationBase*) noexcept {}
-};
-
 template <bool IsBlockingNever, class Handler>
 void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Handler&& handler)
 {

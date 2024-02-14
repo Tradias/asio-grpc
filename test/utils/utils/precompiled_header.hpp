@@ -14,7 +14,6 @@
 
 #include "test/v1/test.grpc.pb.h"
 
-#include <agrpc/detail/memory_resource.hpp>
 #include <doctest/doctest.h>
 #include <google/protobuf/arena.h>
 #include <google/protobuf/extension_set.h>

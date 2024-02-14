@@ -12,22 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_AGRPC_DEFAULT_COMPLETION_TOKEN_HPP
-#define AGRPC_AGRPC_DEFAULT_COMPLETION_TOKEN_HPP
+#include <memory_resource>
 
-#include <agrpc/detail/config.hpp>
-#include <agrpc/detail/default_completion_token.hpp>
-
-AGRPC_NAMESPACE_BEGIN()
-
-/**
- * @brief Default completion token for all asynchronous functions
- *
- * For Boost.Asio and standalone Asio: `asio::use_awaitable`
- * For libunifex: `agrpc::use_sender`
- */
-using DefaultCompletionToken = detail::DefaultCompletionToken;
-
-AGRPC_NAMESPACE_END
-
-#endif  // AGRPC_AGRPC_DEFAULT_COMPLETION_TOKEN_HPP
+int main() { (void)std::pmr::new_delete_resource(); }

@@ -21,10 +21,9 @@
 #include "utils/time.hpp"
 #include "utils/unassignable_allocator.hpp"
 
-#include <agrpc/get_completion_queue.hpp>
+#include <agrpc/alarm.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
-#include <agrpc/wait.hpp>
 
 #include <thread>
 
@@ -64,42 +63,6 @@ TEST_CASE("GrpcExecutor fulfills Executor TS traits")
              asio::query(asio::prefer(tracked_executor, asio::execution::outstanding_work_t::untracked),
                          asio::execution::outstanding_work));
 }
-
-#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
-TEST_CASE("GrpcSender and ScheduleSender fulfill std::execution traits")
-{
-    CHECK(asio::execution::can_execute_v<std::add_const_t<agrpc::GrpcExecutor>, asio::execution::invocable_archetype>);
-    CHECK(asio::execution::is_scheduler_v<agrpc::GrpcExecutor>);
-    using UseSender = decltype(agrpc::use_sender(std::declval<agrpc::GrpcExecutor>()));
-    using UseSenderFromGrpcContext = decltype(agrpc::use_sender(std::declval<agrpc::GrpcContext&>()));
-    CHECK(std::is_same_v<UseSender, UseSenderFromGrpcContext>);
-    using GrpcSender =
-        decltype(agrpc::wait(std::declval<grpc::Alarm&>(), std::declval<std::chrono::system_clock::time_point>(),
-                             std::declval<UseSender>()));
-    CHECK(asio::execution::is_sender_v<GrpcSender>);
-    CHECK(asio::execution::is_typed_sender_v<GrpcSender>);
-    CHECK(asio::execution::is_sender_to_v<GrpcSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
-    CHECK(asio::execution::is_nothrow_connect_v<GrpcSender, test::ConditionallyNoexceptNoOpReceiver<true>>);
-    CHECK_FALSE(asio::execution::is_nothrow_connect_v<GrpcSender, test::ConditionallyNoexceptNoOpReceiver<false>>);
-    CHECK(asio::execution::is_nothrow_connect_v<GrpcSender, const test::ConditionallyNoexceptNoOpReceiver<true>&>);
-    CHECK_FALSE(
-        asio::execution::is_nothrow_connect_v<GrpcSender, const test::ConditionallyNoexceptNoOpReceiver<false>&>);
-    using OperationState = asio::execution::connect_result_t<GrpcSender, test::InvocableArchetype>;
-    CHECK(asio::execution::is_operation_state_v<OperationState>);
-
-    using ScheduleSender = decltype(asio::execution::schedule(std::declval<agrpc::GrpcExecutor>()));
-    CHECK(asio::execution::is_sender_v<ScheduleSender>);
-    CHECK(asio::execution::is_typed_sender_v<ScheduleSender>);
-    CHECK(asio::execution::is_sender_to_v<ScheduleSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
-    CHECK(asio::execution::is_nothrow_connect_v<ScheduleSender, test::ConditionallyNoexceptNoOpReceiver<true>>);
-    CHECK_FALSE(asio::execution::is_nothrow_connect_v<ScheduleSender, test::ConditionallyNoexceptNoOpReceiver<false>>);
-    CHECK(asio::execution::is_nothrow_connect_v<ScheduleSender, const test::ConditionallyNoexceptNoOpReceiver<true>&>);
-    CHECK_FALSE(
-        asio::execution::is_nothrow_connect_v<ScheduleSender, const test::ConditionallyNoexceptNoOpReceiver<false>&>);
-    using ScheduleSenderOperationState = asio::execution::connect_result_t<ScheduleSender, test::InvocableArchetype>;
-    CHECK(asio::execution::is_operation_state_v<ScheduleSenderOperationState>);
-}
-#endif
 
 TEST_CASE("GrpcExecutor is mostly trivial")
 {
@@ -243,37 +206,25 @@ TEST_CASE_FIXTURE(GrpcExecutorTest, "GrpcExecutor comparison operator - differen
 TEST_CASE_FIXTURE(GrpcExecutorTest, "GrpcExecutor comparison operator - different allocator")
 {
     CHECK_EQ(get_executor(), asio::require(get_executor(), asio::execution::allocator));
-    auto default_pmr_executor = asio::require(get_executor(), asio::execution::allocator(test::TrackingAllocator<>()));
-    auto default_pmr_other_executor =
+    auto alloc_executor = asio::require(get_executor(), asio::execution::allocator(test::TrackingAllocator<>()));
+    auto other_alloc_executor =
         asio::require(other_executor(), asio::execution::allocator(test::TrackingAllocator<>()));
     SUBCASE("same options")
     {
-        CHECK_EQ(default_pmr_executor, default_pmr_executor);
-        CHECK_NE(default_pmr_executor,
-                 asio::require(default_pmr_executor, asio::execution::allocator(get_allocator())));
-        CHECK_NE(default_pmr_other_executor, default_pmr_executor);
-        CHECK_NE(default_pmr_other_executor,
-                 asio::require(default_pmr_executor, asio::execution::allocator(get_allocator())));
+        CHECK_EQ(alloc_executor, alloc_executor);
+        CHECK_NE(alloc_executor, asio::require(alloc_executor, asio::execution::allocator(get_allocator())));
+        CHECK_NE(other_alloc_executor, alloc_executor);
+        CHECK_NE(other_alloc_executor, asio::require(alloc_executor, asio::execution::allocator(get_allocator())));
     }
     SUBCASE("different options")
     {
-        CHECK_NE(default_pmr_executor, asio::require(default_pmr_executor, asio::execution::blocking_t::possibly));
-        CHECK_NE(default_pmr_executor, asio::require(default_pmr_executor, asio::execution::blocking_t::possibly,
+        CHECK_NE(alloc_executor, asio::require(alloc_executor, asio::execution::blocking_t::possibly));
+        CHECK_NE(alloc_executor, asio::require(alloc_executor, asio::execution::blocking_t::possibly,
+                                               asio::execution::allocator(get_allocator())));
+        CHECK_NE(other_alloc_executor, asio::require(alloc_executor, asio::execution::blocking_t::possibly));
+        CHECK_NE(other_alloc_executor, asio::require(alloc_executor, asio::execution::blocking_t::possibly,
                                                      asio::execution::allocator(get_allocator())));
-        CHECK_NE(default_pmr_other_executor,
-                 asio::require(default_pmr_executor, asio::execution::blocking_t::possibly));
-        CHECK_NE(default_pmr_other_executor, asio::require(default_pmr_executor, asio::execution::blocking_t::possibly,
-                                                           asio::execution::allocator(get_allocator())));
     }
-}
-
-TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext/GrpcExecutor: get_completion_queue")
-{
-    grpc::CompletionQueue* queue{};
-    SUBCASE("GrpcContext") { queue = agrpc::get_completion_queue(grpc_context); }
-    SUBCASE("GrpcExecutor") { queue = agrpc::get_completion_queue(grpc_context.get_executor()); }
-    SUBCASE("Work tracking GrpcExecutor") { queue = agrpc::get_completion_queue(get_work_tracking_executor()); }
-    CHECK_EQ(grpc_context.get_completion_queue(), queue);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::reset")
@@ -328,16 +279,15 @@ TEST_CASE("GrpcContext::stop while waiting for Alarm will not invoke the Alarm's
         std::thread thread;
         agrpc::GrpcContext grpc_context{std::make_unique<grpc::CompletionQueue>()};
         std::optional guard{test::work_tracking_executor(grpc_context)};
-        grpc::Alarm alarm;
+        agrpc::Alarm alarm{grpc_context};
         test::post(grpc_context,
                    [&]
                    {
                        test::wait(alarm, test::five_seconds_from_now(),
-                                  asio::bind_executor(grpc_context,
-                                                      [&](bool)
-                                                      {
-                                                          ok = true;
-                                                      }));
+                                  [&](bool)
+                                  {
+                                      ok = true;
+                                  });
                        if (is_stop_from_same_thread)
                        {
                            grpc_context.stop();
@@ -363,71 +313,6 @@ TEST_CASE("GrpcContext::stop while waiting for Alarm will not invoke the Alarm's
     CHECK_FALSE(ok);
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn an Alarm and yield its wait")
-{
-    bool ok{false};
-    std::chrono::system_clock::time_point start;
-    auto handler = [&](auto&& yield)
-    {
-        grpc::Alarm alarm;
-        start = test::now();
-        ok = agrpc::wait(alarm, test::hundred_milliseconds_from_now(), yield);
-    };
-#ifdef AGRPC_TEST_ASIO_HAS_NEW_SPAWN
-    test::typed_spawn(get_executor(), handler);
-#else
-    test::typed_spawn(asio::bind_executor(get_executor(), [] {}), handler);
-#endif
-    grpc_context.run();
-    CHECK_LE(std::chrono::milliseconds(100), test::now() - start);
-    CHECK(ok);
-}
-
-TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post an Alarm and check time")
-{
-    bool ok{false};
-    std::chrono::system_clock::time_point start;
-    grpc::Alarm alarm;
-    post(
-        [&]
-        {
-            start = test::now();
-            wait(alarm, test::hundred_milliseconds_from_now(),
-                 [&](bool)
-                 {
-                     ok = true;
-                 });
-        });
-    grpc_context.run();
-    CHECK_LE(std::chrono::milliseconds(100), test::now() - start);
-    CHECK(ok);
-}
-
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
-TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::deferred with Alarm")
-{
-    bool ok1{false};
-    bool ok2{false};
-    grpc::Alarm alarm;
-    auto deferred_op =
-        agrpc::wait(alarm, test::ten_milliseconds_from_now(),
-                    test::ASIO_DEFERRED(
-                        [&](bool wait_ok)
-                        {
-                            ok1 = wait_ok;
-                            return agrpc::wait(alarm, test::ten_milliseconds_from_now(), test::ASIO_DEFERRED);
-                        }));
-    std::move(deferred_op)(asio::bind_executor(grpc_context,
-                                               [&](bool wait_ok)
-                                               {
-                                                   ok2 = wait_ok;
-                                               }));
-    grpc_context.run();
-    CHECK(ok1);
-    CHECK(ok2);
-}
-#endif
-
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post a asio::steady_timer")
 {
     std::optional<test::ErrorCode> error_code;
@@ -444,18 +329,6 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post a asio::steady_timer")
                });
     grpc_context.run();
     CHECK_EQ(test::ErrorCode{}, error_code);
-}
-
-TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::spawn with yield_context")
-{
-    bool ok{false};
-    test::spawn_and_run(grpc_context,
-                        [&](const asio::yield_context& yield)
-                        {
-                            grpc::Alarm alarm;
-                            ok = agrpc::wait(alarm, test::ten_milliseconds_from_now(), yield);
-                        });
-    CHECK(ok);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "post from multiple threads")
@@ -494,16 +367,13 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post/execute with allocator")
     {
         asio::post(grpc_context, test::HandlerWithAssociatedAllocator{test::NoOp{}, get_allocator()});
     }
-    SUBCASE("asio::execute before grpc_context.run()")
-    {
-        agrpc::detail::do_execute(get_tracking_allocator_executor(), test::NoOp{});
-    }
+    SUBCASE("asio::execute before grpc_context.run()") { get_tracking_allocator_executor().execute(test::NoOp{}); }
     SUBCASE("asio::execute after grpc_context.run() from same thread")
     {
         asio::post(grpc_context,
                    [&, exec = get_tracking_allocator_executor()]
                    {
-                       agrpc::detail::do_execute(exec, test::NoOp{});
+                       exec.execute(test::NoOp{});
                    });
     }
     grpc_context.run();
@@ -541,7 +411,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "dispatch with allocator")
 TEST_CASE_FIXTURE(test::GrpcContextTest, "execute with throwing allocator")
 {
     const auto executor = asio::require(get_executor(), asio::execution::allocator(test::ThrowingAllocator<>{}));
-    CHECK_THROWS(agrpc::detail::do_execute(executor, test::NoOp{}));
+    CHECK_THROWS(executor.execute(test::NoOp{}));
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post with throwing completion handler")
@@ -577,19 +447,19 @@ TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll() with asio::po
     CHECK(invoked);
 }
 
-TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll() with grpc::Alarm")
+TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll() with agrpc::Alarm")
 {
     bool invoked{false};
-    grpc::Alarm alarm;
+    agrpc::Alarm alarm{grpc_context};
     asio::steady_timer timer{io_context};
     asio::post(io_context,
                [&]()
                {
-                   wait(alarm, test::now(),
-                        [&](bool)
-                        {
-                            invoked = true;
-                        });
+                   test::wait(alarm, test::now(),
+                              [&](bool)
+                              {
+                                  invoked = true;
+                              });
                    timer.expires_after(std::chrono::milliseconds(100));
                    timer.async_wait(
                        [&](auto&&)
@@ -606,7 +476,7 @@ TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll_completion_queu
 {
     bool post_completed{false};
     bool alarm_completed{false};
-    grpc::Alarm alarm;
+    agrpc::Alarm alarm{grpc_context};
     asio::steady_timer timer{io_context};
     asio::post(io_context,
                [&]()
@@ -616,11 +486,11 @@ TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll_completion_queu
                        {
                            post_completed = true;
                        });
-                   wait(alarm, test::now(),
-                        [&](bool)
-                        {
-                            alarm_completed = true;
-                        });
+                   test::wait(alarm, test::now(),
+                              [&](bool)
+                              {
+                                  alarm_completed = true;
+                              });
                    timer.expires_after(std::chrono::milliseconds(100));
                    timer.async_wait(
                        [&](auto&&)
@@ -642,19 +512,19 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_completion_queue()")
 {
     bool post_completed{false};
     bool alarm_completed{false};
-    grpc::Alarm alarm;
+    agrpc::Alarm alarm{grpc_context};
     post(
         [&]
         {
             post_completed = true;
         });
-    wait(alarm, test::hundred_milliseconds_from_now(),
-         [&](bool)
-         {
-             CHECK_FALSE(post_completed);
-             alarm_completed = true;
-             grpc_context.stop();
-         });
+    test::wait(alarm, test::hundred_milliseconds_from_now(),
+               [&](bool)
+               {
+                   CHECK_FALSE(post_completed);
+                   alarm_completed = true;
+                   grpc_context.stop();
+               });
     CHECK(grpc_context.run_completion_queue());
     CHECK_FALSE(post_completed);
     CHECK(grpc_context.run());
@@ -698,29 +568,29 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run() is not blocked by re
 {
     bool alarm_completed{false};
     recursively_post(grpc_context);
-    grpc::Alarm alarm;
+    agrpc::Alarm alarm{grpc_context};
     post(
         [&]
         {
-            wait(alarm, test::now(),
-                 [&](bool)
-                 {
-                     alarm_completed = true;
-                     grpc_context.stop();
-                 });
+            test::wait(alarm, test::now(),
+                       [&](bool)
+                       {
+                           alarm_completed = true;
+                           grpc_context.stop();
+                       });
         });
     grpc_context.run();
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() can wait for grpc::Alarm")
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() can wait for agrpc::Alarm")
 {
     bool invoked{false};
-    grpc::Alarm alarm;
-    wait(alarm, test::now(),
-         [&](bool)
-         {
-             invoked = true;
-         });
+    agrpc::Alarm alarm{grpc_context};
+    test::wait(alarm, test::now(),
+               [&](bool)
+               {
+                   invoked = true;
+               });
     CHECK(grpc_context.run_until(test::one_second_from_now()));
     CHECK(grpc_context.is_stopped());
     CHECK(invoked);
@@ -728,8 +598,8 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() can wait for g
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() times out correctly")
 {
-    grpc::Alarm alarm;
-    wait(alarm, test::one_second_from_now(), test::NoOp{});
+    agrpc::Alarm alarm{grpc_context};
+    test::wait(alarm, test::one_second_from_now(), test::NoOp{});
     CHECK_FALSE(grpc_context.run_until(test::now()));
     CHECK_FALSE(grpc_context.run_until(test::ten_milliseconds_from_now()));
 }
@@ -737,21 +607,21 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() times out corr
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_while() runs until the expected event")
 {
     bool alarm1_finished{false};
-    grpc::Alarm alarm1;
-    wait(alarm1, test::one_second_from_now(),
-         [&](bool)
-         {
-             alarm1_finished = true;
-         });
+    agrpc::Alarm alarm1{grpc_context};
+    test::wait(alarm1, test::one_second_from_now(),
+               [&](bool)
+               {
+                   alarm1_finished = true;
+               });
     bool alarm2_finished{false};
     auto sync_api = [&]
     {
-        grpc::Alarm alarm2;
-        wait(alarm2, test::ten_milliseconds_from_now(),
-             [&](bool)
-             {
-                 alarm2_finished = true;
-             });
+        agrpc::Alarm alarm2{grpc_context};
+        test::wait(alarm2, test::ten_milliseconds_from_now(),
+                   [&](bool)
+                   {
+                       alarm2_finished = true;
+                   });
         grpc_context.run_while(
             [&]
             {
@@ -764,13 +634,12 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_while() runs until the
             sync_api();
             CHECK_FALSE(alarm1_finished);
             CHECK(alarm2_finished);
-            alarm1.Cancel();
+            alarm1.cancel();
         });
     CHECK(grpc_context.run());
     CHECK(alarm1_finished);
 }
 
-#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::schedule")
 {
     bool invoked{false};
@@ -780,29 +649,13 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::schedule")
                                                   invoked = true;
                                               },
                                               state};
-    auto operation_state = asio::execution::connect(asio::execution::schedule(get_executor()), receiver);
-    asio::execution::start(operation_state);
+    auto operation_state = get_executor().schedule().connect(receiver);
+    operation_state.start();
     CHECK_FALSE(invoked);
     grpc_context.run();
     CHECK(invoked);
     CHECK_FALSE(state.was_done);
     CHECK_FALSE(state.exception);
-}
-
-TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::schedule with throwing receiver")
-{
-    test::StatefulReceiverState state;
-    test::FunctionAsStatefulReceiver receiver{[&]
-                                              {
-                                                  throw std::invalid_argument{"test"};
-                                              },
-                                              state};
-    auto operation_state = asio::execution::connect(asio::execution::schedule(get_executor()), receiver);
-    asio::execution::start(operation_state);
-    grpc_context.run();
-    CHECK_FALSE(state.was_done);
-    REQUIRE(state.exception);
-    CHECK_THROWS_WITH_AS(std::rethrow_exception(state.exception), "test", std::invalid_argument);
 }
 
 TEST_CASE("asio GrpcExecutor::schedule and destruct GrpcContext")
@@ -816,32 +669,12 @@ TEST_CASE("asio GrpcExecutor::schedule and destruct GrpcContext")
                                               state};
     {
         std::optional<agrpc::GrpcContext> grpc_context{std::make_unique<grpc::CompletionQueue>()};
-        auto sender = asio::execution::schedule(grpc_context->get_scheduler());
-        SUBCASE("connect")
-        {
-            auto operation_state = asio::execution::connect(sender, receiver);
-            asio::execution::start(operation_state);
-            grpc_context.reset();
-        }
-        SUBCASE("submit") { asio::execution::submit(sender, receiver); }
+        auto sender = grpc_context->get_scheduler().schedule();
+        auto operation_state = sender.connect(receiver);
+        operation_state.start();
+        grpc_context.reset();
     }
     CHECK_FALSE(invoked);
     CHECK_FALSE(state.exception);
     CHECK(state.was_done);
 }
-
-TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::execution connect and start Alarm")
-{
-    bool ok{false};
-    grpc::Alarm alarm;
-    auto wait_sender = agrpc::wait(alarm, test::ten_milliseconds_from_now(), use_sender());
-    test::FunctionAsReceiver receiver{[&](bool wait_ok)
-                                      {
-                                          ok = wait_ok;
-                                      }};
-    auto operation_state = asio::execution::connect(std::move(wait_sender), std::move(receiver));
-    asio::execution::start(operation_state);
-    grpc_context.run();
-    CHECK(ok);
-}
-#endif

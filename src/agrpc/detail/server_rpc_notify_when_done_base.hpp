@@ -15,7 +15,6 @@
 #ifndef AGRPC_DETAIL_SERVER_RPC_NOTIFY_WHEN_DONE_BASE_HPP
 #define AGRPC_DETAIL_SERVER_RPC_NOTIFY_WHEN_DONE_BASE_HPP
 
-#include <agrpc/detail/async_initiate.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/notify_when_done_event.hpp>

@@ -68,15 +68,6 @@ struct RemoveCref<const T&&>
 template <class T>
 using RemoveCrefT = typename detail::RemoveCref<T>::Type;
 
-template <class T>
-struct TypeIdentity
-{
-    using Type = T;
-};
-
-template <class T>
-using TypeIdentityT = typename detail::TypeIdentity<T>::Type;
-
 #ifdef AGRPC_HAS_CONCEPTS
 template <class T>
 concept IS_EQUALITY_COMPARABLE = requires(const T& lhs, const T& rhs) {
@@ -95,19 +86,6 @@ inline constexpr bool IS_EQUALITY_COMPARABLE<
 
 template <class...>
 inline constexpr bool ALWAYS_FALSE = false;
-
-template <class Signature>
-struct InvokeResultFromSignature;
-
-template <class... Args>
-struct InvokeResultFromSignature<void(Args...)>
-{
-    template <class Function>
-    using Type = std::invoke_result_t<Function, Args...>;
-};
-
-template <class Function, class Signature>
-using InvokeResultFromSignatureT = typename detail::InvokeResultFromSignature<Signature>::template Type<Function>;
 
 template <bool>
 struct Conditional
@@ -128,14 +106,6 @@ using ConditionalT = typename Conditional<Condition>::template Type<T, U>;
 
 struct Empty
 {
-};
-
-struct NoOp
-{
-    template <class... Args>
-    constexpr void operator()(Args&&...) const noexcept
-    {
-    }
 };
 
 struct SecondThenVariadic

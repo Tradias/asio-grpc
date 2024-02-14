@@ -26,7 +26,7 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 /**
- * @brief (experimental) RPC's executor base
+ * @brief RPC's executor base
  *
  * @since 2.1.0
  */

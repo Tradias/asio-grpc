@@ -23,12 +23,6 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-#ifdef AGRPC_ASIO_HAS_CO_AWAIT
-using DefaultCompletionToken = asio::use_awaitable_t<>;
-#else
-using DefaultCompletionToken = agrpc::UseSender;
-#endif
-
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 #if defined(AGRPC_UNIFEX) || defined(AGRPC_STDEXEC)
 template <class Executor>
@@ -40,17 +34,7 @@ using DefaultCompletionTokenT = asio::default_completion_token_t<Executor>;
 #endif
 #else
 template <class>
-using DefaultCompletionTokenT = detail::DefaultCompletionToken;
-#endif
-
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-template <class Executor>
-using LegacyDefaultCompletionTokenT =
-    detail::ConditionalT<std::is_same_v<void, asio::default_completion_token_t<Executor>>,
-                         detail::DefaultCompletionToken, asio::default_completion_token_t<Executor>>;
-#else
-template <class>
-using LegacyDefaultCompletionTokenT = detail::DefaultCompletionToken;
+using DefaultCompletionTokenT = agrpc::UseSender;
 #endif
 }
 

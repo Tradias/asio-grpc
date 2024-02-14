@@ -19,26 +19,6 @@
 #include <unifex/let_value.hpp>
 #include <unifex/let_value_with.hpp>
 
-/* [repeatedly-request-sender] */
-auto register_client_streaming_handler(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
-{
-    return agrpc::repeatedly_request(
-        &example::v1::Example::AsyncService::RequestUnary, service,
-        [&](grpc::ServerContext&, example::v1::Request& request,
-            grpc::ServerAsyncResponseWriter<example::v1::Response>& writer)
-        {
-            return unifex::let_value(unifex::just(example::v1::Response{}),
-                                     [&](auto& response)
-                                     {
-                                         response.set_integer(request.integer());
-                                         return agrpc::finish(writer, response, grpc::Status::OK,
-                                                              agrpc::use_sender(grpc_context));
-                                     });
-        },
-        agrpc::use_sender(grpc_context));
-}
-/* [repeatedly-request-sender] */
-
 /* [server-rpc-unary-sender] */
 auto server_rpc_unary_sender(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
 {

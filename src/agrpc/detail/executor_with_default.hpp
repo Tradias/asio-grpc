@@ -46,15 +46,6 @@ struct agrpc::asio::traits::equality_comparable<agrpc::detail::ExecutorWithDefau
 };
 #endif
 
-#if !defined(AGRPC_UNIFEX) && !defined(AGRPC_STDEXEC) && !defined(BOOST_ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT) && \
-    !defined(ASIO_HAS_DEDUCED_EXECUTE_MEMBER_TRAIT)
-template <class Default, class Executor, class F>
-struct agrpc::asio::traits::execute_member<agrpc::detail::ExecutorWithDefault<Default, Executor>, F>
-    : agrpc::asio::traits::execute_member<Executor, F>
-{
-};
-#endif
-
 #if !defined(AGRPC_UNIFEX) && !defined(AGRPC_STDEXEC) && !defined(BOOST_ASIO_HAS_DEDUCED_REQUIRE_MEMBER_TRAIT) && \
     !defined(ASIO_HAS_DEDUCED_REQUIRE_MEMBER_TRAIT)
 template <class Default, class Executor>

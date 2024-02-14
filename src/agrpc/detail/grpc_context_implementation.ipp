@@ -19,7 +19,6 @@
 #include <agrpc/detail/grpc_completion_queue_event.hpp>
 #include <agrpc/detail/grpc_context.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
-#include <agrpc/detail/notify_when_done.hpp>
 #include <agrpc/detail/operation_base.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <grpc/support/time.h>
@@ -95,28 +94,6 @@ inline void GrpcContextImplementation::add_operation(agrpc::GrpcContext& grpc_co
     else
     {
         GrpcContextImplementation::add_remote_operation(grpc_context, op);
-    }
-}
-
-inline void GrpcContextImplementation::add_notify_when_done_operation(
-    agrpc::GrpcContext& grpc_context, detail::NotifyWhenDoneSenderImplementation* implementation) noexcept
-{
-    grpc_context.notify_when_done_list_.push_back(implementation);
-}
-
-inline void GrpcContextImplementation::remove_notify_when_done_operation(
-    agrpc::GrpcContext& grpc_context, detail::NotifyWhenDoneSenderImplementation* implementation) noexcept
-{
-    grpc_context.notify_when_done_list_.remove(implementation);
-}
-
-inline void GrpcContextImplementation::deallocate_notify_when_done_list(agrpc::GrpcContext& grpc_context)
-{
-    auto& list = grpc_context.notify_when_done_list_;
-    while (!list.empty())
-    {
-        auto* implementation = list.pop_front();
-        implementation->complete(detail::OperationResult::SHUTDOWN_NOT_OK, grpc_context);
     }
 }
 

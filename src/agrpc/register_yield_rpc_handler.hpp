@@ -21,7 +21,7 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief (experimental) Register a Boost.Coroutine rpc handler for the given method
+ * @brief Register a Boost.Coroutine rpc handler for the given method
  *
  * The rpc handler will be invoked for every incoming request of this gRPC method. It must take `ServerRPC&` as
  * first, `ServerRPC::Request&` as second (only for unary and server-streaming rpcs) and
@@ -62,7 +62,7 @@ auto register_yield_rpc_handler(const typename ServerRPC::executor_type& executo
 }
 
 /**
- * @brief (experimental) Register a rpc handler for the given method (GrpcContext overload)
+ * @brief Register a rpc handler for the given method (GrpcContext overload)
  *
  * @since 2.7.0
  */

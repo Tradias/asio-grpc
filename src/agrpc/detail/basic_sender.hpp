@@ -274,30 +274,4 @@ class BasicSenderOperationState
 
 AGRPC_NAMESPACE_END
 
-#ifdef AGRPC_ASIO_HAS_SENDER_RECEIVER
-#if !defined(BOOST_ASIO_HAS_DEDUCED_CONNECT_MEMBER_TRAIT) && !defined(ASIO_HAS_DEDUCED_CONNECT_MEMBER_TRAIT)
-template <class Initiation, class Implementation, class R>
-struct agrpc::asio::traits::connect_member<agrpc::detail::BasicSender<Initiation, Implementation>, R>
-{
-    static constexpr bool is_valid = true;
-    static constexpr bool is_noexcept =
-        noexcept(std::declval<agrpc::detail::BasicSender<Initiation, Implementation>>().connect(std::declval<R>()));
-
-    using result_type =
-        decltype(std::declval<agrpc::detail::BasicSender<Initiation, Implementation>>().connect(std::declval<R>()));
-};
-#endif
-
-#if !defined(BOOST_ASIO_HAS_DEDUCED_START_MEMBER_TRAIT) && !defined(ASIO_HAS_DEDUCED_START_MEMBER_TRAIT)
-template <class Initiation, class Implementation, class Receiver>
-struct agrpc::asio::traits::start_member<agrpc::detail::BasicSenderOperationState<Initiation, Implementation, Receiver>>
-{
-    static constexpr bool is_valid = true;
-    static constexpr bool is_noexcept = true;
-
-    using result_type = void;
-};
-#endif
-#endif
-
 #endif  // AGRPC_DETAIL_BASIC_SENDER_HPP

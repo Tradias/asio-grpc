@@ -18,10 +18,6 @@
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/executor_with_default.hpp>
-#include <agrpc/detail/query_grpc_context.hpp>
-#include <agrpc/detail/use_sender.hpp>
-#include <agrpc/grpc_context.hpp>
-#include <agrpc/grpc_executor.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -49,32 +45,6 @@ struct UseSender
     template <class T>
     using as_default_on_t =
         typename T::template rebind_executor<detail::ExecutorWithDefault<UseSender, typename T::executor_type>>::other;
-
-    /**
-     * @brief Overload for BasicGrpcExecutor
-     */
-    template <class Allocator, std::uint32_t Options>
-    [[nodiscard]] constexpr detail::UseSender operator()(
-        const agrpc::BasicGrpcExecutor<Allocator, Options>& executor) const noexcept
-    {
-        return detail::UseSender{detail::query_grpc_context(executor)};
-    }
-
-    /**
-     * @brief Overload for GrpcContext
-     */
-    [[nodiscard]] constexpr detail::UseSender operator()(agrpc::GrpcContext& context) const noexcept
-    {
-        return detail::UseSender{context};
-    }
-
-    template <bool AlwaysFalse = false>
-    [[noreturn]] operator detail::UseSender() const
-    {
-        static_assert(AlwaysFalse,
-                      "You probably tried to use a free functions like `agrpc::read` without providing a completion "
-                      "token. Create one using `agrpc::use_sender(grpc_context)` and pass it as the last argument.");
-    }
 };
 
 /**

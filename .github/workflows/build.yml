@@ -16,8 +16,8 @@ on:
       - 'CMakePresets.json'
 
 env:
-  VCPKG_VERSION: '0e47c1985273129e4d0ee52ff73bed9125555de8' # Jul 02, 2023
-  CMAKE_ARGS: '-DCMAKE_BUILD_TYPE=Release -DVCPKG_MANIFEST_INSTALL=off -DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=off -DCMAKE_COMPILE_WARNING_AS_ERROR=on'
+  VCPKG_VERSION: '0e47c1985273129e4d0ee52ff73bed9125555de8'
+  CMAKE_ARGS: '-DCMAKE_BUILD_TYPE=Release -DVCPKG_MANIFEST_INSTALL=off -DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=off -DCMAKE_COMPILE_WARNING_AS_ERROR=on -DCMAKE_FIND_PACKAGE_PREFER_CONFIG=on'
   CTEST_ARGS: '-T test --output-on-failure --timeout 180 --no-tests=error --parallel 25'
 
 jobs:
@@ -274,7 +274,7 @@ jobs:
       run: |
         ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} \
           --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg \
-          libunifex boost-coroutine boost-asio boost-interprocess boost-thread boost-container boost-process asio[coroutine]
+          libunifex boost-coroutine boost-asio boost-interprocess boost-thread boost-process asio[coroutine]
       working-directory: ${{ env.VCPKG_ROOT }}
 
     - name: Configure CMake

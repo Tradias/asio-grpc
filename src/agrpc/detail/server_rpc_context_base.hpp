@@ -39,7 +39,7 @@ struct ServerContextBase<grpc::GenericServerAsyncReaderWriter>
 };
 
 /**
- * @brief (experimental) ServerRPC ServerContext base
+ * @brief ServerRPC ServerContext base
  *
  * @since 2.6.0
  */

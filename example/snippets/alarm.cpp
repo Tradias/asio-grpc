@@ -23,17 +23,6 @@
 
 namespace asio = boost::asio;
 
-asio::awaitable<void> grpc_alarm()
-{
-    /* [alarm-awaitable] */
-    grpc::Alarm alarm;
-    bool wait_ok =
-        co_await agrpc::wait(alarm, std::chrono::system_clock::now() + std::chrono::seconds(1), asio::use_awaitable);
-    /* [alarm-awaitable] */
-
-    silence_unused(wait_ok);
-}
-
 asio::awaitable<void> agrpc_alarm_lvalue(agrpc::GrpcContext& grpc_context)
 {
     /* [alarm-io-object-lvalue] */
@@ -70,7 +59,7 @@ asio::awaitable<void> timer_with_different_completion_tokens(agrpc::GrpcContext&
         [&](const asio::yield_context& yield)
         {
             agrpc::Alarm alarm{grpc_context};
-            alarm.wait(deadline, yield);  // suspend coroutine until alarm fires
+            alarm.wait(deadline, yield);  // suspend coroutine until alarm goes off
         },
         asio::detached);
     /* [alarm-with-spawn] */

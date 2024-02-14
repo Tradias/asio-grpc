@@ -20,9 +20,6 @@ unset(FPHSA_NAME_MISMATCHED)
 find_package(gRPC)
 
 set(ASIO_GRPC_FIND_BOOST_COMPONENTS coroutine)
-if(ASIO_GRPC_USE_BOOST_CONTAINER)
-    list(APPEND ASIO_GRPC_FIND_BOOST_COMPONENTS container)
-endif()
 if(ASIO_GRPC_BUILD_TESTS)
     list(APPEND ASIO_GRPC_FIND_BOOST_COMPONENTS thread filesystem)
 endif()
@@ -41,7 +38,7 @@ if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
 endif()
 
 if(ASIO_GRPC_ENABLE_STDEXEC_TESTS)
-    find_package(stdexec CONFIG)
+    find_package(stdexec)
 endif()
 
 # Fallback to pkg-config

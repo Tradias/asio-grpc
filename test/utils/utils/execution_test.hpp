@@ -118,31 +118,6 @@ struct ExecutionRpcHandlerTest : test::ExecutionTestMixin<test::GrpcClientServer
             });
     }
 
-    auto handle_unary_request_sender(test::msg::Request& request,
-                                     grpc::ServerAsyncResponseWriter<test::msg::Response>& writer)
-    {
-        CHECK_EQ(42, request.integer());
-        return stdexec::let_value(stdexec::just(test::msg::Response{}),
-                                  [&](auto& response)
-                                  {
-                                      response.set_integer(24);
-                                      return agrpc::finish(writer, response, grpc::Status::OK, use_sender());
-                                  });
-    }
-
-    auto make_unary_repeatedly_request_sender()
-    {
-        return test::with_query_value(agrpc::repeatedly_request(
-                                          &test::v1::Test::AsyncService::RequestUnary, service,
-                                          [&](grpc::ServerContext&, test::msg::Request& request,
-                                              grpc::ServerAsyncResponseWriter<test::msg::Response>& writer)
-                                          {
-                                              return handle_unary_request_sender(request, writer);
-                                          },
-                                          use_sender()),
-                                      stdexec::get_allocator, get_allocator());
-    }
-
     auto handle_unary_request_sender(test::UnaryServerRPC& rpc, test::msg::Request& request)
     {
         CHECK_EQ(42, request.integer());

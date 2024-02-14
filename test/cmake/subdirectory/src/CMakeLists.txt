@@ -18,9 +18,8 @@ project(asio-grpc-cmake-test-subdirectory LANGUAGES CXX)
 
 add_subdirectory(a-g)
 
-find_package(gRPC)
-find_package(asio)
-find_package(Boost COMPONENTS container)
+find_package(gRPC REQUIRED)
+find_package(asio REQUIRED)
 
 # main
 add_executable(main)
@@ -36,5 +35,4 @@ asio_grpc_protobuf_generate(
 target_compile_definitions(main INTERFACE $<$<CXX_COMPILER_ID:MSVC>:_WIN32_WINNT=0x0A00> # Windows 10
                                           ASIO_NO_DEPRECATED)
 
-target_link_libraries(main PRIVATE asio-grpc::asio-grpc-standalone-asio asio::asio Boost::container
-                                   gRPC::grpc++_unsecure)
+target_link_libraries(main PRIVATE asio-grpc::asio-grpc-standalone-asio asio::asio gRPC::grpc++_unsecure)

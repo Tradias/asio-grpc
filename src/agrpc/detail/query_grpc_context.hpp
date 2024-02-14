@@ -58,9 +58,7 @@ agrpc::GrpcContext& query_grpc_context(const Executor& executor)
 {
     auto&& context = detail::query_execution_context(executor);
     static_assert(detail::IS_CASTABLE_TO_GRPC_CONTEXT<decltype(context)>,
-                  "The completion handler's associated executor does not refer to a GrpcContext. Did you forget to "
-                  "bind a suitable executor to the completion token? E.g. using asio::bind_executor: "
-                  "`agrpc::write(writer, message, asio::bind_executor(grpc_context, completion_token));`.");
+                  "Only GrpcExecutors or asio::any_io_executors created from such can be used.");
     return static_cast<agrpc::GrpcContext&>(context);
 }
 }

@@ -15,15 +15,13 @@
 #ifndef AGRPC_AGRPC_GRPC_EXECUTOR_HPP
 #define AGRPC_AGRPC_GRPC_EXECUTOR_HPP
 
-#include <agrpc/bind_allocator.hpp>
 #include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/bind_allocator.hpp>
 #include <agrpc/detail/config.hpp>
 #include <agrpc/detail/create_and_submit_no_arg_operation.hpp>
 #include <agrpc/detail/forward.hpp>
-#include <agrpc/detail/get_completion_queue.hpp>
 #include <agrpc/detail/grpc_executor_base.hpp>
 #include <agrpc/detail/grpc_executor_options.hpp>
-#include <agrpc/detail/memory_resource.hpp>
 #include <agrpc/detail/schedule_sender.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/grpc_context.hpp>
@@ -185,7 +183,7 @@ class BasicGrpcExecutor
     void dispatch(Function&& function, const OtherAllocator& other_allocator) const
     {
         detail::create_and_submit_no_arg_operation<false>(
-            context(), agrpc::AllocatorBinder(other_allocator, static_cast<Function&&>(function)));
+            context(), detail::AllocatorBinder(other_allocator, static_cast<Function&&>(function)));
     }
 
     /**
@@ -203,7 +201,7 @@ class BasicGrpcExecutor
     void post(Function&& function, const OtherAllocator& other_allocator) const
     {
         detail::create_and_submit_no_arg_operation<true>(
-            context(), agrpc::AllocatorBinder(other_allocator, static_cast<Function&&>(function)));
+            context(), detail::AllocatorBinder(other_allocator, static_cast<Function&&>(function)));
     }
 
     /**
@@ -221,7 +219,7 @@ class BasicGrpcExecutor
     void defer(Function&& function, const OtherAllocator& other_allocator) const
     {
         detail::create_and_submit_no_arg_operation<true>(
-            context(), agrpc::AllocatorBinder(other_allocator, static_cast<Function&&>(function)));
+            context(), detail::AllocatorBinder(other_allocator, static_cast<Function&&>(function)));
     }
 #endif
 
@@ -246,7 +244,7 @@ class BasicGrpcExecutor
         else
         {
             detail::create_and_submit_no_arg_operation<detail::is_blocking_never(Options)>(
-                *this->grpc_context(), agrpc::AllocatorBinder(this->allocator(), static_cast<Function&&>(function)));
+                *this->grpc_context(), detail::AllocatorBinder(this->allocator(), static_cast<Function&&>(function)));
         }
     }
 #endif
@@ -495,36 +493,10 @@ class BasicGrpcExecutor
  */
 using GrpcExecutor = agrpc::BasicGrpcExecutor<>;
 
-namespace pmr
-{
-/**
- * @brief BasicGrpcExecutor specialized on `pmr::polymorphic_allocator`
- *
- * This BasicGrpcExecutor does not track outstanding work, has the relationship.fork and blocking.never properties and
- * uses the `pmr::polymorphic_allocator` allocator.
- */
-using GrpcExecutor
-    [[deprecated("Asio-grpc no longer depends on <memory_resource> or Boost.Container. All pmr type alias will "
-                 "therefore be removed in v3.")]] =
-        agrpc::BasicGrpcExecutor<agrpc::detail::pmr::polymorphic_allocator<std::byte>>;
-}  // namespace pmr
-
-// Implementation details
-#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-namespace detail
-{
-template <class Allocator, std::uint32_t Options>
-grpc::CompletionQueue* get_completion_queue(const agrpc::BasicGrpcExecutor<Allocator, Options>& executor) noexcept
-{
-    return asio::query(executor, asio::execution::context).get_completion_queue();
-}
-}  // namespace detail
-#endif
-
 AGRPC_NAMESPACE_END
 
 template <class Allocator, std::uint32_t Options, class Alloc>
-struct agrpc::detail::container::uses_allocator<agrpc::BasicGrpcExecutor<Allocator, Options>, Alloc> : std::false_type
+struct std::uses_allocator<agrpc::BasicGrpcExecutor<Allocator, Options>, Alloc> : std::false_type
 {
 };
 
@@ -692,18 +664,6 @@ struct agrpc::asio::traits::query_member<agrpc::BasicGrpcExecutor<Allocator, Opt
     static constexpr bool is_noexcept = true;
 
     using result_type = Allocator;
-};
-#endif
-
-#if defined(AGRPC_ASIO_HAS_SENDER_RECEIVER) && !defined(BOOST_ASIO_HAS_DEDUCED_SCHEDULE_MEMBER_TRAIT) && \
-    !defined(ASIO_HAS_DEDUCED_SCHEDULE_MEMBER_TRAIT)
-template <class Allocator, std::uint32_t Options>
-struct agrpc::asio::traits::schedule_member<agrpc::BasicGrpcExecutor<Allocator, Options>>
-{
-    static constexpr bool is_valid = true;
-    static constexpr bool is_noexcept = true;
-
-    using result_type = agrpc::detail::ScheduleSender;
 };
 #endif
 

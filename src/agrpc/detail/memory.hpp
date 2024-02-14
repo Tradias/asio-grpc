@@ -18,7 +18,6 @@
 #include <agrpc/detail/config.hpp>
 
 #include <cstddef>
-#include <limits>
 #include <memory>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -61,82 +60,6 @@ struct MaxAlignAllocator
     {
         std::allocator<MaxAlignedData>{}.deallocate(static_cast<MaxAlignedData*>(p), size / MAX_ALIGN);
     }
-};
-
-template <class T>
-struct UnwrapUniquePtr
-{
-    using Type = T;
-};
-
-template <class T>
-struct UnwrapUniquePtr<std::unique_ptr<T>>
-{
-    using Type = T;
-};
-
-template <class T>
-struct UnwrapUniquePtr<const std::unique_ptr<T>>
-{
-    using Type = T;
-};
-
-template <class T>
-using UnwrapUniquePtrT = typename detail::UnwrapUniquePtr<T>::Type;
-
-template <class T>
-auto& unwrap_unique_ptr(T& t) noexcept
-{
-    return t;
-}
-
-template <class T>
-auto& unwrap_unique_ptr(std::unique_ptr<T>& t) noexcept
-{
-    return *t;
-}
-
-template <class T>
-auto& unwrap_unique_ptr(const std::unique_ptr<T>& t) noexcept
-{
-    return *t;
-}
-
-template <std::size_t Size>
-class StackBuffer
-{
-  public:
-    [[nodiscard]] static constexpr std::size_t max_size() noexcept { return Size; }
-
-    [[nodiscard]] void* allocate(std::size_t) noexcept { return buffer_; }
-
-  private:
-    alignas(std::max_align_t) std::byte buffer_[Size];
-};
-
-class DelayedBuffer
-{
-  public:
-    [[nodiscard]] static constexpr std::size_t max_size() noexcept
-    {
-        return std::numeric_limits<std::size_t>::max() - (MAX_ALIGN - 1);
-    }
-
-    [[nodiscard]] void* allocate(std::size_t size)
-    {
-        if AGRPC_LIKELY (buffer_)
-        {
-            return buffer_.get();
-        }
-        else
-        {
-            buffer_.reset(new MaxAlignedData[MaxAlignedData::count(size)]);
-            return buffer_.get();
-        }
-    }
-
-  private:
-    std::unique_ptr<MaxAlignedData[]> buffer_;
 };
 }
 

@@ -19,12 +19,60 @@
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/grpc_sender.hpp>
 #include <agrpc/detail/sender_implementation.hpp>
-#include <agrpc/detail/wait.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+template <class Deadline>
+struct AlarmInitFunction
+{
+    grpc::Alarm& alarm_;
+    Deadline deadline_;
+
+    void operator()(agrpc::GrpcContext& grpc_context, void* tag) const
+    {
+        alarm_.Set(grpc_context.get_completion_queue(), deadline_, tag);
+    }
+};
+
+template <class Deadline>
+AlarmInitFunction(grpc::Alarm&, const Deadline&) -> AlarmInitFunction<Deadline>;
+
+struct AlarmCancellationFunction
+{
+    grpc::Alarm& alarm_;
+
+#if !defined(AGRPC_UNIFEX) && !defined(AGRPC_STDEXEC)
+    explicit
+#endif
+        AlarmCancellationFunction(grpc::Alarm& alarm) noexcept
+        : alarm_(alarm)
+    {
+    }
+
+    template <class Deadline>
+#if !defined(AGRPC_UNIFEX) && !defined(AGRPC_STDEXEC)
+    explicit
+#endif
+        AlarmCancellationFunction(const detail::AlarmInitFunction<Deadline>& init_function) noexcept
+        : alarm_(init_function.alarm_)
+    {
+    }
+
+    void operator()() const { alarm_.Cancel(); }
+
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+    void operator()(asio::cancellation_type type) const
+    {
+        if (static_cast<bool>(type & asio::cancellation_type::all))
+        {
+            operator()();
+        }
+    }
+#endif
+};
+
 template <class Executor>
 struct MoveAlarmSenderImplementation
 {
