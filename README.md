@@ -114,7 +114,7 @@ Using [Boost.Asio](https://www.boost.org/doc/libs/1_84_0/doc/html/boost_asio.htm
 
 ```cmake
 # Make sure CMAKE_PREFIX_PATH contains /desired/installation/directory
-find_package(asio-grpc)
+find_package(asio-grpc CONFIG REQUIRED)
 find_package(Boost)
 target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc Boost::headers)
 ```
@@ -123,7 +123,7 @@ Or using [standalone Asio](https://github.com/chriskohlhoff/asio):
 
 ```cmake
 # Make sure CMAKE_PREFIX_PATH contains /desired/installation/directory
-find_package(asio-grpc)
+find_package(asio-grpc CONFIG REQUIRED)
 find_package(asio)
 target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-standalone-asio asio::asio)
 ```
@@ -132,7 +132,7 @@ Or using [libunifex](https://github.com/facebookexperimental/libunifex):
 
 ```cmake
 # Make sure CMAKE_PREFIX_PATH contains /desired/installation/directory
-find_package(asio-grpc)
+find_package(asio-grpc CONFIG REQUIRED)
 find_package(unifex)
 target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-unifex unifex::unifex)
 ```
@@ -141,7 +141,7 @@ Or using [stdexec](https://github.com/NVIDIA/stdexec):
 
 ```cmake
 # Make sure CMAKE_PREFIX_PATH contains /desired/installation/directory
-find_package(asio-grpc)
+find_package(asio-grpc CONFIG REQUIRED)
 find_package(stdexec)
 target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-stdexec STDEXEC::stdexec)
 ```

@@ -609,13 +609,19 @@ TEST_CASE_TEMPLATE("ServerRPCPtr automatic cancellation on destruction", RPC, te
         });
 }
 
-TEST_CASE_FIXTURE(ServerRPCTest<test::ClientStreamingServerRPC>, "ServerRPCPtr move-assignment")
+TEST_CASE_FIXTURE(ServerRPCTest<test::ClientStreamingServerRPC>, "ServerRPCPtr move-assignment/swap")
 {
     ServerRPC::Ptr ptr;
     register_callback_and_perform_requests(
         [&](ServerRPC::Ptr pointer)
         {
-            ptr = std::move(pointer);
+            SUBCASE("move") { ptr = std::move(pointer); }
+            SUBCASE("swap")
+            {
+                using std::swap;
+                swap(ptr, pointer);
+                CHECK_FALSE(pointer);
+            }
             auto& rpc = *ptr;
             rpc.finish({}, test::create_already_exists_status(),
                        [ptr = std::move(ptr)](bool ok)

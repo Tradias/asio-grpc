@@ -40,7 +40,7 @@ class ServerRPCPtr
     /**
      * @brief Default constructor
      *
-     * The only valid operations after construction are move-assignment and destruction.
+     * The only valid operations after construction are move-assignment, operator bool, swap and destruction.
      */
     ServerRPCPtr() = default;
 
@@ -84,6 +84,13 @@ class ServerRPCPtr
     const ServerRPCT* operator->() const noexcept { return &server_rpc_->rpc_; }
 
     /**
+     * @brief Checks whether this pointer owns a ServerRPC
+     *
+     * @since 3.1.0
+     */
+    explicit operator bool() const noexcept { return server_rpc_ != nullptr; }
+
+    /**
      * @brief Get client's initial request message
      */
     decltype(auto) request() noexcept { return (server_rpc_->request_); }
@@ -92,6 +99,17 @@ class ServerRPCPtr
      * @brief Get client's initial request message (const overload)
      */
     decltype(auto) request() const noexcept { return (server_rpc_->request_); }
+
+    /**
+     * @brief Swap contents of two ServerRPCPtr
+     *
+     * @since 3.1.0
+     */
+    friend void swap(ServerRPCPtr& lhs, ServerRPCPtr& rhs) noexcept
+    {
+        std::swap(lhs.server_rpc_, rhs.server_rpc_);
+        std::swap(lhs.deleter_, rhs.deleter_);
+    }
 
   private:
     using Pointer = detail::ServerRPCWithRequest<ServerRPCT>*;
