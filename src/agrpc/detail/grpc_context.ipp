@@ -40,7 +40,9 @@ struct AlwaysFalsePredicate
 
 inline void drain_completion_queue(agrpc::GrpcContext& grpc_context)
 {
-    while (detail::GrpcContextImplementation::do_one(grpc_context, detail::GrpcContextImplementation::INFINITE_FUTURE,
+    detail::GrpcContextThreadContext thread_context{grpc_context};
+    detail::ThreadLocalGrpcContextGuard guard{thread_context};
+    while (detail::GrpcContextImplementation::do_one(thread_context, detail::GrpcContextImplementation::INFINITE_FUTURE,
                                                      detail::InvokeHandler::NO_, detail::AlwaysFalsePredicate{}))
     {
         //
@@ -80,10 +82,10 @@ inline bool GrpcContext::run()
 {
     return detail::GrpcContextImplementation::process_work(
         *this,
-        [](agrpc::GrpcContext& grpc_context)
+        [](detail::GrpcContextThreadContext& context)
         {
             return detail::GrpcContextImplementation::do_one_if_not_stopped(
-                grpc_context, detail::GrpcContextImplementation::INFINITE_FUTURE);
+                context, detail::GrpcContextImplementation::INFINITE_FUTURE);
         });
 }
 
@@ -91,10 +93,10 @@ inline bool GrpcContext::run_completion_queue()
 {
     return detail::GrpcContextImplementation::process_work(
         *this,
-        [](agrpc::GrpcContext& grpc_context)
+        [](detail::GrpcContextThreadContext& context)
         {
             return detail::GrpcContextImplementation::do_one_completion_queue_if_not_stopped(
-                grpc_context, detail::GrpcContextImplementation::INFINITE_FUTURE);
+                context, detail::GrpcContextImplementation::INFINITE_FUTURE);
         });
 }
 
@@ -102,10 +104,10 @@ inline bool GrpcContext::poll()
 {
     return detail::GrpcContextImplementation::process_work(
         *this,
-        [](agrpc::GrpcContext& grpc_context)
+        [](detail::GrpcContextThreadContext& context)
         {
             return detail::GrpcContextImplementation::do_one_if_not_stopped(
-                grpc_context, detail::GrpcContextImplementation::TIME_ZERO);
+                context, detail::GrpcContextImplementation::TIME_ZERO);
         });
 }
 
@@ -113,9 +115,9 @@ inline bool GrpcContext::run_until_impl(::gpr_timespec deadline)
 {
     return detail::GrpcContextImplementation::process_work(
         *this,
-        [deadline](agrpc::GrpcContext& grpc_context)
+        [deadline](detail::GrpcContextThreadContext& context)
         {
-            return detail::GrpcContextImplementation::do_one_if_not_stopped(grpc_context, deadline);
+            return detail::GrpcContextImplementation::do_one_if_not_stopped(context, deadline);
         });
 }
 
@@ -124,10 +126,10 @@ inline bool GrpcContext::run_while(Condition&& condition)
 {
     return detail::GrpcContextImplementation::process_work(
         *this,
-        [&](agrpc::GrpcContext& grpc_context)
+        [&](detail::GrpcContextThreadContext& context)
         {
             return condition() && detail::GrpcContextImplementation::do_one_if_not_stopped(
-                                      grpc_context, detail::GrpcContextImplementation::INFINITE_FUTURE);
+                                      context, detail::GrpcContextImplementation::INFINITE_FUTURE);
         });
 }
 
@@ -135,10 +137,10 @@ inline bool GrpcContext::poll_completion_queue()
 {
     return detail::GrpcContextImplementation::process_work(
         *this,
-        [](agrpc::GrpcContext& grpc_context)
+        [](detail::GrpcContextThreadContext& context)
         {
             return detail::GrpcContextImplementation::do_one_completion_queue_if_not_stopped(
-                grpc_context, detail::GrpcContextImplementation::TIME_ZERO);
+                context, detail::GrpcContextImplementation::TIME_ZERO);
         });
 }
 

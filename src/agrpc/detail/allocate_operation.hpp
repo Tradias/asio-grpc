@@ -64,14 +64,13 @@ auto allocate_local_operation(agrpc::GrpcContext& grpc_context, Handler&& handle
 }
 
 template <template <class> class OperationTemplate, class Handler, class... Args>
-auto allocate_operation(bool is_running_in_this_thread, agrpc::GrpcContext& grpc_context, Handler&& handler,
-                        Args&&... args)
+auto allocate_operation(bool, agrpc::GrpcContext&, Handler&& handler, Args&&... args)
 {
-    if (is_running_in_this_thread)
-    {
-        return detail::allocate_local_operation<OperationTemplate>(grpc_context, static_cast<Handler&&>(handler),
-                                                                   static_cast<Args&&>(args)...);
-    }
+    // if (is_running_in_this_thread)
+    // {
+    //     return detail::allocate_local_operation<OperationTemplate>(grpc_context, static_cast<Handler&&>(handler),
+    //                                                                static_cast<Args&&>(args)...);
+    // }
     return detail::allocate_custom_operation<OperationTemplate>(static_cast<Handler&&>(handler),
                                                                 static_cast<Args&&>(args)...);
 }

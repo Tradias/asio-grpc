@@ -290,6 +290,7 @@ class GrpcContext
     using LocalWorkQueue = detail::IntrusiveQueue<detail::QueueableOperationBase>;
 
     friend detail::GrpcContextImplementation;
+    friend detail::GrpcLocalContext;
     friend detail::ThreadLocalGrpcContextGuard;
 
     bool run_until_impl(::gpr_timespec deadline);
@@ -298,11 +299,8 @@ class GrpcContext
     std::atomic_long outstanding_work_{};
     std::atomic_bool stopped_{false};
     std::atomic_bool shutdown_{false};
-    std::atomic_bool running_{false};
-    bool check_remote_work_{false};
     std::unique_ptr<grpc::CompletionQueue> completion_queue_{std::make_unique<grpc::CompletionQueue>()};
     detail::GrpcContextLocalMemoryResource local_resource_;
-    LocalWorkQueue local_work_queue_;
     RemoteWorkQueue remote_work_queue_{false};
 };
 

@@ -48,7 +48,7 @@ void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Handle
     {
         auto operation =
             detail::allocate_local_operation<detail::NoArgOperation>(grpc_context, static_cast<Handler&&>(handler));
-        detail::GrpcContextImplementation::add_local_operation(grpc_context, operation);
+        detail::GrpcContextImplementation::add_local_operation(operation);
     }
     else
     {

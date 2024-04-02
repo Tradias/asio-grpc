@@ -97,6 +97,11 @@ class AtomicIntrusiveQueue
         return detail::IntrusiveQueue<Item>::make_reversed(static_cast<Item*>(old_value));
     }
 
+    [[nodiscard]] bool is_inactive() const noexcept
+    {
+        return head_.load(std::memory_order_relaxed) == producer_inactive_value();
+    }
+
   private:
     [[nodiscard]] void* producer_inactive_value() const noexcept
     {
