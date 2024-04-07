@@ -16,10 +16,11 @@
 #define AGRPC_AGRPC_TEST_HPP
 
 #include <agrpc/alarm.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/submit.hpp>
 #include <agrpc/detail/test.hpp>
 #include <agrpc/grpc_context.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -51,5 +52,7 @@ inline void process_grpc_tag(agrpc::GrpcContext& grpc_context, void* tag, bool o
 }
 
 AGRPC_NAMESPACE_END
+
+#include <agrpc/detail/epilogue.hpp>
 
 #endif  // AGRPC_AGRPC_TEST_HPP

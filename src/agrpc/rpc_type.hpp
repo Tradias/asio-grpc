@@ -92,4 +92,6 @@ enum class ServerRPCType
 
 AGRPC_NAMESPACE_END
 
+#include <agrpc/detail/epilogue.hpp>
+
 #endif  // AGRPC_AGRPC_RPC_TYPE_HPP

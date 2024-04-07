@@ -15,10 +15,11 @@
 #ifndef AGRPC_DETAIL_POOL_RESOURCE_ALLOCATOR_HPP
 #define AGRPC_DETAIL_POOL_RESOURCE_ALLOCATOR_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/pool_resource.hpp>
 
 #include <cstddef>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

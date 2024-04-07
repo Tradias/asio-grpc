@@ -15,7 +15,6 @@
 #ifndef AGRPC_AGRPC_HEALTH_CHECK_SERVICE_HPP
 #define AGRPC_AGRPC_HEALTH_CHECK_SERVICE_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/health_check_repeatedly_request.hpp>
 #include <agrpc/detail/serving_status.hpp>
@@ -26,6 +25,8 @@
 
 #include <map>
 #include <string>
+
+#include <agrpc/detail/config.hpp>
 
 #ifdef __has_include
 #if __has_include("grpc/health/v1/health.grpc.pb.h")
@@ -150,6 +151,8 @@ void start_health_check_service(grpc::Server& server, agrpc::GrpcContext& grpc_c
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_AGRPC_HEALTH_CHECK_SERVICE_HPP
-
 #include <agrpc/detail/health_check_service.hpp>
+
+#include <agrpc/detail/epilogue.hpp>
+
+#endif  // AGRPC_AGRPC_HEALTH_CHECK_SERVICE_HPP

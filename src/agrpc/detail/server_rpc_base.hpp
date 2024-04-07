@@ -15,10 +15,11 @@
 #ifndef AGRPC_DETAIL_SERVER_RPC_BASE_HPP
 #define AGRPC_DETAIL_SERVER_RPC_BASE_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/initiate_sender_implementation.hpp>
 #include <agrpc/detail/server_rpc_notify_when_done_mixin.hpp>
 #include <agrpc/detail/server_rpc_sender.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

@@ -15,9 +15,9 @@
 #ifndef AGRPC_DETAIL_RETHROW_FIRST_ARG_HPP
 #define AGRPC_DETAIL_RETHROW_FIRST_ARG_HPP
 
-#include <agrpc/detail/config.hpp>
-
 #include <exception>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

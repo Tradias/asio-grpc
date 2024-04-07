@@ -15,12 +15,13 @@
 #ifndef AGRPC_DETAIL_OPERATION_IMPLEMENTATION_HPP
 #define AGRPC_DETAIL_OPERATION_IMPLEMENTATION_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/deallocate_on_complete.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/operation_base.hpp>
 #include <agrpc/detail/operation_handle.hpp>
 #include <agrpc/detail/sender_implementation.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

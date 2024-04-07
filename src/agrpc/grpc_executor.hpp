@@ -17,7 +17,6 @@
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/bind_allocator.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/create_and_submit_no_arg_operation.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/grpc_executor_base.hpp>
@@ -29,6 +28,8 @@
 #include <cstddef>
 #include <memory>
 #include <utility>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -668,5 +669,7 @@ struct agrpc::asio::traits::query_member<agrpc::BasicGrpcExecutor<Allocator, Opt
 #endif
 
 #include <agrpc/detail/grpc_context.ipp>
+
+#include <agrpc/detail/epilogue.hpp>
 
 #endif  // AGRPC_AGRPC_GRPC_EXECUTOR_HPP

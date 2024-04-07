@@ -15,11 +15,12 @@
 #ifndef AGRPC_AGRPC_NOTIFY_ON_STATE_CHANGE_HPP
 #define AGRPC_AGRPC_NOTIFY_ON_STATE_CHANGE_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/default_completion_token.hpp>
 #include <agrpc/detail/initiate_sender_implementation.hpp>
 #include <agrpc/detail/notify_on_state_change.hpp>
 #include <agrpc/grpc_context.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -79,5 +80,7 @@ struct NotifyOnStateChangeFn
 inline constexpr detail::NotifyOnStateChangeFn notify_on_state_change{};
 
 AGRPC_NAMESPACE_END
+
+#include <agrpc/detail/epilogue.hpp>
 
 #endif  // AGRPC_AGRPC_NOTIFY_ON_STATE_CHANGE_HPP

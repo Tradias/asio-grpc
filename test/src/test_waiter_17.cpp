@@ -138,7 +138,7 @@ TEST_CASE_FIXTURE(test::IoContextTest, "Waiter: can handle lots of completion ar
     io_context.run();
 }
 
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+#ifdef AGRPC_TEST_ASIO_HAS_CANCELLATION_SLOT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "Waiter: cancel wait for alarm and wait again")
 {
     bool done{};

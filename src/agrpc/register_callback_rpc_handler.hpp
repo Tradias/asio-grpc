@@ -76,4 +76,6 @@ AGRPC_NAMESPACE_END
 
 #endif
 
+#include <agrpc/detail/epilogue.hpp>
+
 #endif  // AGRPC_AGRPC_REGISTER_CALLBACK_RPC_HANDLER_HPP

@@ -17,12 +17,13 @@
 
 #include <agrpc/detail/alarm.hpp>
 #include <agrpc/detail/asio_forward.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/default_completion_token.hpp>
 #include <agrpc/detail/grpc_sender.hpp>
 #include <agrpc/detail/initiate_sender_implementation.hpp>
 #include <agrpc/detail/query_grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -174,5 +175,7 @@ BasicAlarm(agrpc::GrpcContext&) -> BasicAlarm<agrpc::GrpcExecutor>;
 using Alarm = agrpc::BasicAlarm<agrpc::GrpcExecutor>;
 
 AGRPC_NAMESPACE_END
+
+#include <agrpc/detail/epilogue.hpp>
 
 #endif  // AGRPC_AGRPC_ALARM_HPP

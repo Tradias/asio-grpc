@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_AWAITABLE_HPP
-#define AGRPC_DETAIL_AWAITABLE_HPP
+#ifndef AGRPC_ASIO_HAS_CO_AWAIT
 
 #ifdef AGRPC_STANDALONE_ASIO
 #include <asio/use_awaitable.hpp>
@@ -33,4 +32,4 @@
 #endif
 #endif
 
-#endif  // AGRPC_DETAIL_AWAITABLE_HPP
+#endif

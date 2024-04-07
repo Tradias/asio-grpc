@@ -16,8 +16,9 @@
 #define AGRPC_AGRPC_USE_SENDER_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/executor_with_default.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -57,5 +58,7 @@ struct UseSender
 inline constexpr agrpc::UseSender use_sender{};
 
 AGRPC_NAMESPACE_END
+
+#include <agrpc/detail/epilogue.hpp>
 
 #endif  // AGRPC_AGRPC_USE_SENDER_HPP

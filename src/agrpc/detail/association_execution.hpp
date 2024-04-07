@@ -15,8 +15,9 @@
 #ifndef AGRPC_DETAIL_ASSOCIATION_EXECUTION_HPP
 #define AGRPC_DETAIL_ASSOCIATION_EXECUTION_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/execution.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

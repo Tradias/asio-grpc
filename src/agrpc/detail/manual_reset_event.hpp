@@ -17,7 +17,6 @@
 
 #include <agrpc/detail/allocate.hpp>
 #include <agrpc/detail/association.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/receiver.hpp>
@@ -27,6 +26,8 @@
 #include <agrpc/detail/utility.hpp>
 
 #include <atomic>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

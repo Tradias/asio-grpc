@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_HEALTH_CHECK_SERVICE_IPP
-#define AGRPC_DETAIL_HEALTH_CHECK_SERVICE_IPP
+#ifndef AGRPC_DETAIL_HEALTH_CHECK_SERVICE_HPP
+#define AGRPC_DETAIL_HEALTH_CHECK_SERVICE_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/create_and_submit_no_arg_operation.hpp>
 #include <agrpc/detail/intrusive_list.hpp>
 #include <agrpc/detail/intrusive_list_hook.hpp>
@@ -27,6 +26,8 @@
 #include <grpc/support/log.h>
 #include <grpcpp/server_context.h>
 #include <grpcpp/support/async_unary_call.h>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -315,4 +316,4 @@ inline void start_health_check_service(grpc::Server& server, agrpc::GrpcContext&
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_HEALTH_CHECK_SERVICE_IPP
+#endif  // AGRPC_DETAIL_HEALTH_CHECK_SERVICE_HPP

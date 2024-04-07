@@ -15,9 +15,10 @@
 #ifndef AGRPC_DETAIL_HEALTH_CHECK_REPEATEDLY_REQUEST_HPP
 #define AGRPC_DETAIL_HEALTH_CHECK_REPEATEDLY_REQUEST_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/operation_base.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

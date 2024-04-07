@@ -12,32 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_TEST_HPP
-#define AGRPC_DETAIL_TEST_HPP
+// config.hpp
+#undef AGRPC_UNLIKELY
+#undef AGRPC_LIKELY
 
-#include <agrpc/detail/grpc_context_implementation.hpp>
+#undef AGRPC_TRY
+#undef AGRPC_CATCH
 
-#include <agrpc/detail/config.hpp>
+#undef AGRPC_NAMESPACE_BEGIN
 
-AGRPC_NAMESPACE_BEGIN()
+#undef AGRPC_NAMESPACE_END
 
-namespace detail
-{
-struct ProcessTag
-{
-    agrpc::GrpcContext& grpc_context_;
-    void* tag_;
-    bool ok_;
+// asio_forward.hpp
+#undef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+#undef AGRPC_ASIO_HAS_BIND_ALLOCATOR
+#undef AGRPC_ASIO_HAS_NEW_SPAWN
+#undef AGRPC_ASIO_HAS_IMMEDIATE_EXECUTOR
 
-    template <class... T>
-    void operator()(T&&...)
-    {
-        detail::process_grpc_tag(tag_, ok_ ? detail::OperationResult::OK_ : detail::OperationResult::NOT_OK,
-                                 grpc_context_);
-    }
-};
-}
-
-AGRPC_NAMESPACE_END
-
-#endif  // AGRPC_DETAIL_TEST_HPP
+// awaitable.hpp
+#undef AGRPC_ASIO_HAS_CO_AWAIT

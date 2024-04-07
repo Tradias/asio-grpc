@@ -38,7 +38,7 @@ void post(const agrpc::GrpcExecutor& executor, const std::function<void()>& func
     asio::post(executor, function);
 }
 
-#ifdef AGRPC_ASIO_HAS_CO_AWAIT
+#ifdef AGRPC_TEST_ASIO_HAS_CO_AWAIT
 void co_spawn(agrpc::GrpcContext& grpc_context, const std::function<asio::awaitable<void>()>& function)
 {
     asio::co_spawn(grpc_context, function, test::RethrowFirstArg{});

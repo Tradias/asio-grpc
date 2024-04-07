@@ -15,8 +15,8 @@
 #ifndef AGRPC_DETAIL_REGISTER_YIELD_RPC_HANDLER_HPP
 #define AGRPC_DETAIL_REGISTER_YIELD_RPC_HANDLER_HPP
 
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/bind_allocator.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/register_rpc_handler_asio_base.hpp>
 #include <agrpc/detail/rethrow_first_arg.hpp>
 #include <agrpc/grpc_context.hpp>
@@ -26,6 +26,9 @@
 #elif defined(AGRPC_BOOST_ASIO)
 #include <boost/asio/spawn.hpp>
 #endif
+
+#include <agrpc/detail/asio_macros.hpp>
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

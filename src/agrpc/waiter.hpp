@@ -16,12 +16,13 @@
 #define AGRPC_AGRPC_WAITER_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/default_completion_token.hpp>
 #include <agrpc/detail/functional.hpp>
 #include <agrpc/detail/manual_reset_event.hpp>
 #include <agrpc/detail/waiter.hpp>
 #include <agrpc/grpc_executor.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -176,5 +177,7 @@ class Waiter
 };
 
 AGRPC_NAMESPACE_END
+
+#include <agrpc/detail/epilogue.hpp>
 
 #endif  // AGRPC_AGRPC_WAITER_HPP

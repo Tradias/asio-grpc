@@ -17,7 +17,6 @@
 
 #include <agrpc/detail/association.hpp>
 #include <agrpc/detail/atomic_bool_stop_context.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/register_rpc_handler_base.hpp>
@@ -29,6 +28,8 @@
 
 #include <optional>
 #include <variant>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

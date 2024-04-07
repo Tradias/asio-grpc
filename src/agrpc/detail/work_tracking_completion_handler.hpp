@@ -17,12 +17,12 @@
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/association.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/tuple.hpp>
 #include <agrpc/detail/utility.hpp>
 
-#include <memory>
 #include <utility>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

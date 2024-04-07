@@ -16,13 +16,14 @@
 #define AGRPC_DETAIL_REGISTER_RPC_HANDLER_BASE_HPP
 
 #include <agrpc/detail/atomic_bool_stop_context.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/server_rpc_context_base.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/grpc_context.hpp>
 
 #include <atomic>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

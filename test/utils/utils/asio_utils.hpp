@@ -220,7 +220,7 @@ void post(agrpc::GrpcContext& grpc_context, const std::function<void()>& functio
 
 void post(const agrpc::GrpcExecutor& executor, const std::function<void()>& function);
 
-#ifdef AGRPC_ASIO_HAS_CO_AWAIT
+#ifdef AGRPC_TEST_ASIO_HAS_CO_AWAIT
 void co_spawn(agrpc::GrpcContext& grpc_context, const std::function<asio::awaitable<void>()>& function);
 
 template <class Executor>

@@ -16,9 +16,10 @@
 #define AGRPC_DETAIL_OPERATION_HANDLE_HPP
 
 #include <agrpc/detail/allocation_type.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/deallocate_on_complete.hpp>
 #include <agrpc/detail/forward.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

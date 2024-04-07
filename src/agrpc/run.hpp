@@ -19,12 +19,13 @@
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/backoff.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
 #include <agrpc/grpc_context.hpp>
 
 #include <chrono>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -313,5 +314,7 @@ void run_completion_queue(agrpc::GrpcContext& grpc_context, ExecutionContext& ex
 AGRPC_NAMESPACE_END
 
 #endif
+
+#include <agrpc/detail/epilogue.hpp>
 
 #endif  // AGRPC_AGRPC_RUN_HPP

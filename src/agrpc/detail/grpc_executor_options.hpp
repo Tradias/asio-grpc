@@ -15,9 +15,9 @@
 #ifndef AGRPC_DETAIL_GRPC_EXECUTOR_OPTIONS_HPP
 #define AGRPC_DETAIL_GRPC_EXECUTOR_OPTIONS_HPP
 
-#include <agrpc/detail/config.hpp>
-
 #include <cstdint>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

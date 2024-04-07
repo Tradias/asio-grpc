@@ -15,9 +15,10 @@
 #ifndef AGRPC_DETAIL_EXECUTION_STDEXEC_HPP
 #define AGRPC_DETAIL_EXECUTION_STDEXEC_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <exec/inline_scheduler.hpp>
 #include <stdexec/execution.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -28,7 +29,7 @@ using ::stdexec::get_allocator_t;
 struct GetAllocatorFn
 {
     template <class Receiver>
-    decltype(auto) operator()(const Receiver & receiver) const
+    decltype(auto) operator()(const Receiver& receiver) const
     {
         if constexpr (::stdexec::tag_invocable<::stdexec::get_allocator_t, ::stdexec::env_of_t<Receiver>>)
         {

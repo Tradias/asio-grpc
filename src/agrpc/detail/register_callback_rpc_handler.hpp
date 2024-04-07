@@ -15,11 +15,12 @@
 #ifndef AGRPC_DETAIL_REGISTER_CALLBACK_RPC_HANDLER_HPP
 #define AGRPC_DETAIL_REGISTER_CALLBACK_RPC_HANDLER_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/register_rpc_handler_asio_base.hpp>
 #include <agrpc/detail/server_rpc_with_request.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/server_rpc_ptr.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

@@ -16,7 +16,6 @@
 #define AGRPC_DETAIL_GRPC_CONTEXT_IPP
 
 #include <agrpc/detail/asio_forward.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_completion_queue_event.hpp>
 #include <agrpc/detail/grpc_context.hpp>
 #include <agrpc/detail/grpc_executor_options.hpp>
@@ -28,6 +27,8 @@
 
 #include <atomic>
 #include <utility>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

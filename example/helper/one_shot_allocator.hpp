@@ -15,8 +15,6 @@
 #ifndef AGRPC_HELPER_ONE_SHOT_ALLOCATOR_HPP
 #define AGRPC_HELPER_ONE_SHOT_ALLOCATOR_HPP
 
-#include <agrpc/detail/config.hpp>
-
 #include <cassert>
 #include <cstddef>
 #include <utility>

@@ -52,4 +52,6 @@ template <class ServerRPC, class RPCHandler>
 
 AGRPC_NAMESPACE_END
 
+#include <agrpc/detail/epilogue.hpp>
+
 #endif  // AGRPC_AGRPC_REGISTER_SENDER_RPC_HANDLER_HPP

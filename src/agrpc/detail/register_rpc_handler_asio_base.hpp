@@ -16,12 +16,13 @@
 #define AGRPC_DETAIL_REGISTER_RPC_HANDLER_ASIO_BASE_HPP
 
 #include <agrpc/detail/association.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/register_rpc_handler_base.hpp>
 #include <agrpc/detail/rethrow_first_arg.hpp>
 #include <agrpc/detail/rpc_request.hpp>
 #include <agrpc/detail/work_tracking_completion_handler.hpp>
 #include <agrpc/grpc_context.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

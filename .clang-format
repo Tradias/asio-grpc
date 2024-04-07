@@ -72,6 +72,16 @@ ForEachMacros:
   - foreach
 IncludeBlocks: Regroup
 IncludeCategories:
+  # epilogue
+  - Regex: 'agrpc/detail/epilogue\.hpp'
+    Priority: 5
+    SortPriority: 0
+    CaseSensitive: false
+  # config
+  - Regex: 'agrpc/detail/(config|awaitable|asio_macros)\.hpp'
+    Priority: 4
+    SortPriority: 0
+    CaseSensitive: false
   # Headers in <> without extension.
   - Regex: '<([A-Za-z0-9\Q/-_\E])+>'
     Priority: 3

@@ -17,12 +17,14 @@
 
 #include <agrpc/detail/allocate.hpp>
 #include <agrpc/detail/association.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/tuple.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/detail/work_tracking_completion_handler.hpp>
+
+#include <agrpc/detail/asio_macros.hpp>
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

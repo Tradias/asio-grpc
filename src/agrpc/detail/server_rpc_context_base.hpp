@@ -15,12 +15,13 @@
 #ifndef AGRPC_DETAIL_SERVER_RPC_CONTEXT_BASE_HPP
 #define AGRPC_DETAIL_SERVER_RPC_CONTEXT_BASE_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/rpc_executor_base.hpp>
 #include <agrpc/detail/server_rpc_notify_when_done_base.hpp>
 #include <grpcpp/generic/async_generic_service.h>
 #include <grpcpp/server_context.h>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

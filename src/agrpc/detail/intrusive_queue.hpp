@@ -15,9 +15,9 @@
 #ifndef AGRPC_DETAIL_INTRUSIVE_QUEUE_HPP
 #define AGRPC_DETAIL_INTRUSIVE_QUEUE_HPP
 
-#include <agrpc/detail/config.hpp>
-
 #include <utility>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

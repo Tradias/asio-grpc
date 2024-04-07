@@ -16,19 +16,16 @@
 #define AGRPC_DETAIL_QUERY_GRPC_CONTEXT_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 
 #include <utility>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-#ifdef AGRPC_HAS_CONCEPTS
-template <class Context>
-concept IS_CASTABLE_TO_GRPC_CONTEXT = requires(Context& context) { static_cast<agrpc::GrpcContext&>(context); };
-#else
 template <class Context, class = void>
 inline constexpr bool IS_CASTABLE_TO_GRPC_CONTEXT = false;
 
@@ -36,7 +33,6 @@ template <class Context>
 inline constexpr bool
     IS_CASTABLE_TO_GRPC_CONTEXT<Context, decltype((void)static_cast<agrpc::GrpcContext&>(std::declval<Context&>()))> =
         true;
-#endif
 
 template <class Executor>
 decltype(auto) query_execution_context(const Executor& executor)

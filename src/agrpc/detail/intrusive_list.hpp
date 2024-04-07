@@ -15,10 +15,10 @@
 #ifndef AGRPC_DETAIL_INTRUSIVE_LIST_HPP
 #define AGRPC_DETAIL_INTRUSIVE_LIST_HPP
 
-#include <agrpc/detail/config.hpp>
-
 #include <iterator>
 #include <utility>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

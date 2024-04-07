@@ -15,10 +15,11 @@
 #ifndef AGRPC_DETAIL_NOTIFY_ON_STATE_CHANGE_HPP
 #define AGRPC_DETAIL_NOTIFY_ON_STATE_CHANGE_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_sender.hpp>
 #include <agrpc/grpc_executor.hpp>
 #include <grpcpp/channel.h>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

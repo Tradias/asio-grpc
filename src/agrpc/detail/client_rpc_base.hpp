@@ -17,10 +17,11 @@
 
 #include <agrpc/detail/client_rpc_context_base.hpp>
 #include <agrpc/detail/client_rpc_sender.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/initiate_sender_implementation.hpp>
 #include <agrpc/detail/rpc_executor_base.hpp>
 #include <agrpc/detail/rpc_type.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

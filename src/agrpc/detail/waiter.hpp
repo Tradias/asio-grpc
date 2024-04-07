@@ -17,8 +17,9 @@
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/asio_utils.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/manual_reset_event.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

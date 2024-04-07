@@ -15,9 +15,10 @@
 #ifndef AGRPC_DETAIL_CLIENT_RPC_CONTEXT_BASE_HPP
 #define AGRPC_DETAIL_CLIENT_RPC_CONTEXT_BASE_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <grpcpp/client_context.h>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

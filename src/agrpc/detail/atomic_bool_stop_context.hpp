@@ -16,12 +16,14 @@
 #define AGRPC_DETAIL_ATOMIC_BOOL_STOP_CONTEXT_HPP
 
 #include <agrpc/detail/association.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/stop_callback_lifetime.hpp>
 
 #include <atomic>
+
+#include <agrpc/detail/asio_macros.hpp>
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

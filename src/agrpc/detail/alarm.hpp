@@ -15,10 +15,12 @@
 #ifndef AGRPC_DETAIL_ALARM_HPP
 #define AGRPC_DETAIL_ALARM_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/grpc_sender.hpp>
 #include <agrpc/detail/sender_implementation.hpp>
+
+#include <agrpc/detail/asio_macros.hpp>
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

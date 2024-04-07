@@ -36,7 +36,7 @@ TEST_CASE(
 }
 #endif
 
-#ifdef AGRPC_ASIO_HAS_CO_AWAIT
+#ifdef AGRPC_TEST_ASIO_HAS_CO_AWAIT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_allocator with awaitable")
 {
     test::co_spawn_and_run(grpc_context,

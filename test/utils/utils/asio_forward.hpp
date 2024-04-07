@@ -15,9 +15,6 @@
 #ifndef AGRPC_UTILS_ASIO_FORWARD_HPP
 #define AGRPC_UTILS_ASIO_FORWARD_HPP
 
-#include <agrpc/detail/asio_forward.hpp>
-#include <agrpc/detail/awaitable.hpp>
-
 #ifdef AGRPC_STANDALONE_ASIO
 #include <asio/coroutine.hpp>
 #include <asio/error.hpp>
@@ -27,13 +24,28 @@
 #include <asio/spawn.hpp>
 #include <asio/steady_timer.hpp>
 #include <asio/thread_pool.hpp>
+#include <asio/use_awaitable.hpp>
 #include <asio/use_future.hpp>
+#include <asio/version.hpp>
 
-#if defined(AGRPC_ASIO_HAS_CO_AWAIT) && defined(AGRPC_ASIO_HAS_CANCELLATION_SLOT)
+#ifdef ASIO_HAS_CO_AWAIT
+#include <asio/co_spawn.hpp>
+
+#define AGRPC_TEST_ASIO_HAS_CO_AWAIT
+#endif
+
+#if (ASIO_VERSION >= 101900)
+#include <asio/associated_cancellation_slot.hpp>
+#include <asio/bind_cancellation_slot.hpp>
+
+#define AGRPC_TEST_ASIO_HAS_CANCELLATION_SLOT
+#endif
+
+#if defined(AGRPC_TEST_ASIO_HAS_CO_AWAIT) && defined(AGRPC_TEST_ASIO_HAS_CANCELLATION_SLOT)
 #include <asio/experimental/awaitable_operators.hpp>
 #endif
 
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+#ifdef AGRPC_TEST_ASIO_HAS_CANCELLATION_SLOT
 #include <asio/bind_cancellation_slot.hpp>
 #include <asio/cancellation_signal.hpp>
 #include <asio/experimental/parallel_group.hpp>
@@ -51,13 +63,10 @@
 #include <asio/deferred.hpp>
 
 #define AGRPC_TEST_ASIO_HAS_NEW_SPAWN
-#elif defined(AGRPC_ASIO_HAS_CANCELLATION_SLOT)
+#elif defined(AGRPC_TEST_ASIO_HAS_CANCELLATION_SLOT)
 #include <asio/experimental/deferred.hpp>
 #endif
 #elif defined(AGRPC_BOOST_ASIO)
-//
-#include <boost/version.hpp>
-//
 #include <boost/asio/coroutine.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/asio/execution.hpp>
@@ -66,13 +75,28 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/thread_pool.hpp>
+#include <boost/asio/use_awaitable.hpp>
 #include <boost/asio/use_future.hpp>
+#include <boost/version.hpp>
 
-#if defined(AGRPC_ASIO_HAS_CO_AWAIT) && defined(AGRPC_ASIO_HAS_CANCELLATION_SLOT)
+#ifdef BOOST_ASIO_HAS_CO_AWAIT
+#include <boost/asio/co_spawn.hpp>
+
+#define AGRPC_TEST_ASIO_HAS_CO_AWAIT
+#endif
+
+#if (BOOST_VERSION >= 107700)
+#include <boost/asio/associated_cancellation_slot.hpp>
+#include <boost/asio/bind_cancellation_slot.hpp>
+
+#define AGRPC_TEST_ASIO_HAS_CANCELLATION_SLOT
+#endif
+
+#if defined(AGRPC_TEST_ASIO_HAS_CO_AWAIT) && defined(AGRPC_TEST_ASIO_HAS_CANCELLATION_SLOT)
 #include <boost/asio/experimental/awaitable_operators.hpp>
 #endif
 
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+#ifdef AGRPC_TEST_ASIO_HAS_CANCELLATION_SLOT
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/cancellation_signal.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
@@ -90,7 +114,7 @@
 #include <boost/asio/deferred.hpp>
 
 #define AGRPC_TEST_ASIO_HAS_NEW_SPAWN
-#elif defined(AGRPC_ASIO_HAS_CANCELLATION_SLOT)
+#elif defined(AGRPC_TEST_ASIO_HAS_CANCELLATION_SLOT)
 #include <boost/asio/experimental/deferred.hpp>
 #endif
 #endif
@@ -145,7 +169,7 @@ using ErrorCode = std::error_code;
 
 #ifdef AGRPC_TEST_ASIO_HAS_NEW_SPAWN
 inline constexpr auto ASIO_DEFERRED = asio::deferred;
-#elif defined(AGRPC_ASIO_HAS_CANCELLATION_SLOT)
+#elif defined(AGRPC_TEST_ASIO_HAS_CANCELLATION_SLOT)
 inline constexpr auto ASIO_DEFERRED = asio::experimental::deferred;
 #endif
 }  // namespace test

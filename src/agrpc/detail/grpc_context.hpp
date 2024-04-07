@@ -15,12 +15,13 @@
 #ifndef AGRPC_DETAIL_GRPC_CONTEXT_HPP
 #define AGRPC_DETAIL_GRPC_CONTEXT_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/pool_resource.hpp>
 #include <agrpc/detail/pool_resource_allocator.hpp>
 
 #include <cstddef>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

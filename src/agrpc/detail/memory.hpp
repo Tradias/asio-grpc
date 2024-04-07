@@ -15,10 +15,10 @@
 #ifndef AGRPC_DETAIL_MEMORY_HPP
 #define AGRPC_DETAIL_MEMORY_HPP
 
-#include <agrpc/detail/config.hpp>
-
 #include <cstddef>
 #include <memory>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

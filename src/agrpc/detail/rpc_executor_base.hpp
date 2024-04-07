@@ -15,11 +15,12 @@
 #ifndef AGRPC_DETAIL_RPC_EXECUTOR_BASE_HPP
 #define AGRPC_DETAIL_RPC_EXECUTOR_BASE_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/default_completion_token.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/query_grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

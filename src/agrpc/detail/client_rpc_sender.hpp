@@ -16,7 +16,6 @@
 #define AGRPC_DETAIL_CLIENT_RPC_SENDER_HPP
 
 #include <agrpc/detail/client_rpc_context_base.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_sender.hpp>
 #include <agrpc/detail/rpc_executor_base.hpp>
 #include <agrpc/detail/rpc_type.hpp>
@@ -24,6 +23,9 @@
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
 #include <grpcpp/generic/generic_stub.h>
+
+#include <agrpc/detail/asio_macros.hpp>
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

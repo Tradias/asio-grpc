@@ -15,7 +15,6 @@
 #ifndef AGRPC_DETAIL_SERVER_RPC_SENDER_HPP
 #define AGRPC_DETAIL_SERVER_RPC_SENDER_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_sender.hpp>
 #include <agrpc/detail/rpc_executor_base.hpp>
 #include <agrpc/detail/rpc_type.hpp>
@@ -24,6 +23,8 @@
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
 #include <grpcpp/generic/async_generic_service.h>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

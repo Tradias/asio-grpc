@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_EXECUTOR_WITH_DEFAULT_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
+
 #include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()

@@ -479,7 +479,7 @@ TEST_CASE("ServerRPC::service_name/method_name")
     check_eq_and_null_terminated("BidirectionalStreaming", test::BidirectionalStreamingServerRPC::method_name());
 }
 
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+#ifdef AGRPC_TEST_ASIO_HAS_CANCELLATION_SLOT
 TEST_CASE_TEMPLATE("ServerRPC resumable read can be cancelled", RPC, test::ClientStreamingServerRPC,
                    test::BidirectionalStreamingServerRPC)
 {

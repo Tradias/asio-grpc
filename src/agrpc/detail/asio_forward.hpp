@@ -15,12 +15,9 @@
 #ifndef AGRPC_DETAIL_ASIO_FORWARD_HPP
 #define AGRPC_DETAIL_ASIO_FORWARD_HPP
 
-#include <agrpc/detail/config.hpp>
+#include <agrpc/detail/asio_macros.hpp>
 
 #ifdef AGRPC_STANDALONE_ASIO
-//
-#include <asio/version.hpp>
-//
 #include <asio/associated_allocator.hpp>
 #include <asio/associated_executor.hpp>
 #include <asio/async_result.hpp>
@@ -35,32 +32,15 @@
 #include <asio/query.hpp>
 #include <asio/system_executor.hpp>
 
-#if (ASIO_VERSION >= 101900)
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 #include <asio/associated_cancellation_slot.hpp>
 #include <asio/bind_cancellation_slot.hpp>
-
-#define AGRPC_ASIO_HAS_CANCELLATION_SLOT
 #endif
 
-#if (ASIO_VERSION >= 102201)
-#include <asio/bind_allocator.hpp>
-
-#define AGRPC_ASIO_HAS_BIND_ALLOCATOR
-#endif
-
-#if (ASIO_VERSION >= 102400)
-#define AGRPC_ASIO_HAS_NEW_SPAWN
-#endif
-
-#if (ASIO_VERSION >= 102700)
+#ifdef AGRPC_ASIO_HAS_IMMEDIATE_EXECUTOR
 #include <asio/associated_immediate_executor.hpp>
-
-#define AGRPC_ASIO_HAS_IMMEDIATE_EXECUTOR
 #endif
 #elif defined(AGRPC_BOOST_ASIO)
-//
-#include <boost/version.hpp>
-//
 #include <boost/asio/associated_allocator.hpp>
 #include <boost/asio/associated_executor.hpp>
 #include <boost/asio/async_result.hpp>
@@ -75,33 +55,19 @@
 #include <boost/asio/query.hpp>
 #include <boost/asio/system_executor.hpp>
 
-#if (BOOST_VERSION >= 107700)
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 #include <boost/asio/associated_cancellation_slot.hpp>
 #include <boost/asio/bind_cancellation_slot.hpp>
-
-#define AGRPC_ASIO_HAS_CANCELLATION_SLOT
 #endif
 
-#if (BOOST_VERSION >= 107900)
-#include <boost/asio/bind_allocator.hpp>
-
-#define AGRPC_ASIO_HAS_BIND_ALLOCATOR
-#endif
-
-#if (BOOST_VERSION >= 108000)
-#define AGRPC_ASIO_HAS_NEW_SPAWN
-#endif
-
-#if (BOOST_VERSION >= 108200)
+#ifdef AGRPC_ASIO_HAS_IMMEDIATE_EXECUTOR
 #include <boost/asio/associated_immediate_executor.hpp>
-
-#define AGRPC_ASIO_HAS_IMMEDIATE_EXECUTOR
 #endif
-#endif
-
-#if defined(AGRPC_UNIFEX) || defined(AGRPC_STDEXEC)
+#else
 #include <system_error>
 #endif
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

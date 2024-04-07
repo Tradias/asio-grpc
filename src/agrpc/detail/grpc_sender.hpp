@@ -16,8 +16,9 @@
 #define AGRPC_DETAIL_GRPC_SENDER_HPP
 
 #include <agrpc/detail/basic_sender.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

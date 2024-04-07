@@ -130,7 +130,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "agrpc::Alarm::cancel")
     CHECK_FALSE(ok);
 }
 
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+#ifdef AGRPC_TEST_ASIO_HAS_CANCELLATION_SLOT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::deferred with Alarm")
 {
     bool ok1{false};

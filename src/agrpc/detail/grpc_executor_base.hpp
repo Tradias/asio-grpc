@@ -15,12 +15,13 @@
 #ifndef AGRPC_DETAIL_GRPC_EXECUTOR_BASE_HPP
 #define AGRPC_DETAIL_GRPC_EXECUTOR_BASE_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/grpc_context.hpp>
 
 #include <type_traits>
 #include <utility>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

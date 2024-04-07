@@ -15,10 +15,11 @@
 #ifndef AGRPC_DETAIL_SENDER_OF_HPP
 #define AGRPC_DETAIL_SENDER_OF_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/execution.hpp>
 
 #include <exception>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

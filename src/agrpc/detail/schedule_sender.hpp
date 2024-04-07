@@ -16,9 +16,10 @@
 #define AGRPC_DETAIL_SCHEDULE_SENDER_HPP
 
 #include <agrpc/detail/basic_sender.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
 #include <agrpc/detail/utility.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

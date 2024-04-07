@@ -16,11 +16,12 @@
 #define AGRPC_DETAIL_NAME_HPP
 
 #include <agrpc/detail/algorithm.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/utility.hpp>
 
 #include <string_view>
 #include <utility>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

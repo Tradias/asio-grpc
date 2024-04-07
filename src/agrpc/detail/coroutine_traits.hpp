@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_COROUTINE_TRAITS_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
+
 #include <agrpc/detail/awaitable.hpp>
 #include <agrpc/detail/config.hpp>
 

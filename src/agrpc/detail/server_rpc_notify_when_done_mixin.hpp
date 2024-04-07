@@ -15,8 +15,9 @@
 #ifndef AGRPC_DETAIL_SERVER_RPC_NOTIFY_WHEN_DONE_MIXIN_HPP
 #define AGRPC_DETAIL_SERVER_RPC_NOTIFY_WHEN_DONE_MIXIN_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/server_rpc_context_base.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

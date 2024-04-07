@@ -411,7 +411,7 @@ TEST_CASE("ClientRPC derived class cannot access private base member")
     CHECK_FALSE(decltype(std::declval<Derived>().grpc_context(0))::value);
 }
 
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+#ifdef AGRPC_TEST_ASIO_HAS_CANCELLATION_SLOT
 // gRPC requests seem to be uncancellable on platforms other than Windows
 #ifdef _WIN32
 TEST_CASE_TEMPLATE("Unary RPC::request can be cancelled", RPC, test::UnaryClientRPC, test::GenericUnaryClientRPC)

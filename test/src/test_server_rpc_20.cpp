@@ -30,7 +30,7 @@
 #include <agrpc/server_rpc.hpp>
 #include <agrpc/waiter.hpp>
 
-#ifdef AGRPC_ASIO_HAS_CO_AWAIT
+#ifdef AGRPC_TEST_ASIO_HAS_CO_AWAIT
 template <class ServerRPC>
 struct ServerRPCAwaitableTest : test::ClientServerRPCTest<typename test::IntrospectRPC<ServerRPC>::ClientRPC, ServerRPC>
 {
@@ -473,7 +473,7 @@ TEST_CASE_TEMPLATE("Awaitable ServerRPC/ClientRPC generic streaming success", RP
         });
 }
 
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+#ifdef AGRPC_TEST_ASIO_HAS_CANCELLATION_SLOT
 TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::BidirectionalStreamingServerRPC>,
                   "Awaitable ServerRPC resumable read can be cancelled")
 {

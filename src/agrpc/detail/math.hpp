@@ -15,10 +15,10 @@
 #ifndef AGRPC_DETAIL_MATH_HPP
 #define AGRPC_DETAIL_MATH_HPP
 
-#include <agrpc/detail/config.hpp>
-
 #include <climits>
 #include <cstddef>
+
+#include <agrpc/detail/config.hpp>
 
 #if __cpp_lib_bitops >= 201907L
 #include <bit>

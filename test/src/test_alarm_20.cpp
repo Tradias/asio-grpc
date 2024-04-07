@@ -23,7 +23,7 @@
 #include <memory_resource>
 #endif
 
-#ifdef AGRPC_ASIO_HAS_CO_AWAIT
+#ifdef AGRPC_TEST_ASIO_HAS_CO_AWAIT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "co_spawn two Alarms and await their ok using GrpcExecutor")
 {
     using GrpcAwaitable = asio::awaitable<void, agrpc::GrpcExecutor>;
@@ -64,7 +64,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "co_await Alarm with GrpcExecutor<std::
 }
 #endif
 
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+#ifdef AGRPC_TEST_ASIO_HAS_CANCELLATION_SLOT
 // In older versions of asio `asio::bind_executor` cannot handle use_awaitable
 TEST_CASE_FIXTURE(test::GrpcContextTest,
                   "bind_executor can be used to control context switches while waiting for an Alarm from an io_context")

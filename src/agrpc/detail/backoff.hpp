@@ -15,11 +15,12 @@
 #ifndef AGRPC_DETAIL_BACKOFF_HPP
 #define AGRPC_DETAIL_BACKOFF_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/math.hpp>
 
 #include <chrono>
 #include <cstdint>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

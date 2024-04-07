@@ -16,13 +16,14 @@
 #define AGRPC_AGRPC_SERVER_RPC_HPP
 
 #include <agrpc/default_server_rpc_traits.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/default_completion_token.hpp>
 #include <agrpc/detail/initiate_sender_implementation.hpp>
 #include <agrpc/detail/name.hpp>
 #include <agrpc/detail/rpc_type.hpp>
 #include <agrpc/detail/server_rpc_base.hpp>
 #include <agrpc/detail/server_rpc_sender.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -984,5 +985,7 @@ class ServerRPC<agrpc::ServerRPCType::GENERIC, TraitsT, Executor>
 using GenericServerRPC = agrpc::ServerRPC<agrpc::ServerRPCType::GENERIC>;
 
 AGRPC_NAMESPACE_END
+
+#include <agrpc/detail/epilogue.hpp>
 
 #endif  // AGRPC_AGRPC_SERVER_RPC_HPP

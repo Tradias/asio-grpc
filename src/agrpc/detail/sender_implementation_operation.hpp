@@ -17,7 +17,6 @@
 
 #include <agrpc/detail/allocate_operation.hpp>
 #include <agrpc/detail/allocation_type.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/operation_implementation.hpp>
 #include <agrpc/detail/operation_initiation.hpp>
@@ -25,6 +24,8 @@
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/detail/work_tracking_completion_handler.hpp>
 #include <agrpc/grpc_context.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

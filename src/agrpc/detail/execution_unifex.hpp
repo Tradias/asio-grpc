@@ -15,7 +15,6 @@
 #ifndef AGRPC_DETAIL_EXECUTION_UNIFEX_HPP
 #define AGRPC_DETAIL_EXECUTION_UNIFEX_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <unifex/config.hpp>
 #include <unifex/get_allocator.hpp>
@@ -27,6 +26,8 @@
 #include <unifex/stop_token_concepts.hpp>
 #include <unifex/tag_invoke.hpp>
 #include <unifex/then.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

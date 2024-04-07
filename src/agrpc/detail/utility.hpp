@@ -15,10 +15,10 @@
 #ifndef AGRPC_DETAIL_UTILITY_HPP
 #define AGRPC_DETAIL_UTILITY_HPP
 
-#include <agrpc/detail/config.hpp>
-
 #include <type_traits>
 #include <utility>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -68,13 +68,6 @@ struct RemoveCref<const T&&>
 template <class T>
 using RemoveCrefT = typename detail::RemoveCref<T>::Type;
 
-#ifdef AGRPC_HAS_CONCEPTS
-template <class T>
-concept IS_EQUALITY_COMPARABLE = requires(const T& lhs, const T& rhs) {
-    static_cast<bool>(lhs == rhs);
-    static_cast<bool>(lhs != rhs);
-};
-#else
 template <class T, class = void>
 inline constexpr bool IS_EQUALITY_COMPARABLE = false;
 
@@ -82,7 +75,6 @@ template <class T>
 inline constexpr bool IS_EQUALITY_COMPARABLE<
     T, std::void_t<decltype(static_cast<bool>(std::declval<const T&>() == std::declval<const T&>())),
                    decltype(static_cast<bool>(std::declval<const T&>() != std::declval<const T&>()))>> = true;
-#endif
 
 template <class...>
 inline constexpr bool ALWAYS_FALSE = false;

@@ -17,7 +17,6 @@
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/atomic_intrusive_queue.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/grpc_context.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
@@ -30,6 +29,8 @@
 
 #include <atomic>
 #include <memory>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -309,5 +310,7 @@ template <class Alloc>
 struct std::uses_allocator<agrpc::GrpcContext, Alloc> : std::false_type
 {
 };
+
+#include <agrpc/detail/epilogue.hpp>
 
 #endif  // AGRPC_AGRPC_GRPC_CONTEXT_HPP

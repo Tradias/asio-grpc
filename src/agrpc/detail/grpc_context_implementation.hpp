@@ -16,7 +16,6 @@
 #define AGRPC_DETAIL_GRPC_CONTEXT_IMPLEMENTATION_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/grpc_completion_queue_event.hpp>
 #include <agrpc/detail/operation_base.hpp>
@@ -25,6 +24,8 @@
 
 #include <cstdint>
 #include <limits>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

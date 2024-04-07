@@ -46,7 +46,7 @@ TEST_CASE_FIXTURE(
 }
 #endif
 
-#ifdef AGRPC_ASIO_HAS_CO_AWAIT
+#ifdef AGRPC_TEST_ASIO_HAS_CO_AWAIT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "stop GrpcContext from awaitable while waiting for an Alarm")
 {
     bool ok{true};
@@ -122,7 +122,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest,
     grpc_context.reset();
 }
 
-#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+#ifdef AGRPC_TEST_ASIO_HAS_CANCELLATION_SLOT
 TEST_CASE_FIXTURE(test::GrpcContextTest,
                   "bind_executor can be used to switch to io_context when awaiting asio::steady_timer from GrpcContext")
 {

@@ -15,10 +15,11 @@
 #ifndef AGRPC_DETAIL_FORWARD_HPP
 #define AGRPC_DETAIL_FORWARD_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/grpc_executor_options.hpp>
 
 #include <memory>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

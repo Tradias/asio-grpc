@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_CONFIG_HPP
-#define AGRPC_DETAIL_CONFIG_HPP
-
 #ifdef __has_include
 #if __has_include(<version>)
 #include <version>
 #endif
 #endif
+
+// Unlikely
+#ifndef AGRPC_UNLIKELY
 
 #ifdef __has_cpp_attribute
 #if __has_cpp_attribute(unlikely) && ((defined(_MSVC_LANG) && _MSVC_LANG > 201703L) || __cplusplus > 201703L)
@@ -37,6 +37,11 @@
 #endif
 #endif
 
+#endif
+
+// Likely
+#ifndef AGRPC_LIKELY
+
 #ifdef __has_cpp_attribute
 #if __has_cpp_attribute(likely) && ((defined(_MSVC_LANG) && _MSVC_LANG > 201703L) || __cplusplus > 201703L)
 #if (defined(__GNUC__) && __GNUC__ > 9) || !defined(__GNUC__)
@@ -53,14 +58,14 @@
 #endif
 #endif
 
-#if __cpp_concepts >= 201907L
-#define AGRPC_HAS_CONCEPTS
 #endif
+
+// Try-catch
+#ifndef AGRPC_TRY
 
 #if __cpp_exceptions >= 199711L
 #define AGRPC_TRY try
 #define AGRPC_CATCH(...) catch (__VA_ARGS__)
-#define AGRPC_RETHROW() throw
 #else
 #define AGRPC_TRY
 #define AGRPC_CATCH(...) \
@@ -68,8 +73,12 @@
     {                    \
     }                    \
     else
-#define AGRPC_RETHROW() ((void)0)
 #endif
+
+#endif
+
+// Namespace
+#ifndef AGRPC_NAMESPACE_BEGIN
 
 #ifdef AGRPC_GENERATING_DOCUMENTATION
 #define AGRPC_NAMESPACE_BEGIN() \
@@ -141,4 +150,4 @@ static_assert(false,
     }
 #endif
 
-#endif  // AGRPC_DETAIL_CONFIG_HPP
+#endif

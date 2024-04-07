@@ -26,4 +26,6 @@ struct DefaultServerRPCTraits
 
 AGRPC_NAMESPACE_END
 
+#include <agrpc/detail/epilogue.hpp>
+
 #endif  // AGRPC_AGRPC_DEFAULT_SERVER_RPC_TRAITS_HPP

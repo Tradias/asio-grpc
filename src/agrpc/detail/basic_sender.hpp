@@ -17,7 +17,6 @@
 
 #include <agrpc/detail/allocation_type.hpp>
 #include <agrpc/detail/association.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/deallocate_on_complete.hpp>
 #include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/forward.hpp>
@@ -29,6 +28,8 @@
 #include <agrpc/detail/stop_callback_lifetime.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/grpc_context.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

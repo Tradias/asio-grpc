@@ -16,8 +16,9 @@
 #define AGRPC_DETAIL_ASSOCIATION_ASIO_HPP
 
 #include <agrpc/detail/asio_utils.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/execution.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

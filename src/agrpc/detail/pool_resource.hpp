@@ -15,13 +15,14 @@
 #ifndef AGRPC_DETAIL_POOL_RESOURCE_HPP
 #define AGRPC_DETAIL_POOL_RESOURCE_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/intrusive_circular_list.hpp>
 #include <agrpc/detail/intrusive_slist.hpp>
 #include <agrpc/detail/math.hpp>
 #include <agrpc/detail/memory.hpp>
 
 #include <cstddef>
+
+#include <agrpc/detail/config.hpp>
 
 // The following PoolResource and related functions have been adapted from
 // https://github.com/boostorg/container/blob/develop/src/pool_resource.cpp

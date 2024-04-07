@@ -16,10 +16,11 @@
 #define AGRPC_DETAIL_STOP_CALLBACK_LIFETIME_HPP
 
 #include <agrpc/detail/association.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/utility.hpp>
 
 #include <optional>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

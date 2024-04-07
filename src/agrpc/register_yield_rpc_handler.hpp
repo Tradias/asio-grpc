@@ -15,7 +15,6 @@
 #ifndef AGRPC_AGRPC_REGISTER_YIELD_RPC_HANDLER_HPP
 #define AGRPC_AGRPC_REGISTER_YIELD_RPC_HANDLER_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/register_yield_rpc_handler.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -76,5 +75,7 @@ auto register_yield_rpc_handler(agrpc::GrpcContext& grpc_context, detail::GetSer
 }
 
 AGRPC_NAMESPACE_END
+
+#include <agrpc/detail/epilogue.hpp>
 
 #endif  // AGRPC_AGRPC_REGISTER_YIELD_RPC_HANDLER_HPP

@@ -16,10 +16,12 @@
 #define AGRPC_DETAIL_BIND_ALLOCATOR_HPP
 
 #include <agrpc/detail/association.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/utility.hpp>
 
 #include <memory>
+
+#include <agrpc/detail/asio_macros.hpp>
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

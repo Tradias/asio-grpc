@@ -16,12 +16,13 @@
 #define AGRPC_DETAIL_SERVER_WRITE_REACTOR_HPP
 
 #include <agrpc/detail/allocate.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/operation_base.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
 #include <grpcpp/server_context.h>
 #include <grpcpp/support/async_stream.h>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

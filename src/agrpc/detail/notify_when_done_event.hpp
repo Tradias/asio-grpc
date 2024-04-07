@@ -17,7 +17,6 @@
 
 #include <agrpc/detail/allocate.hpp>
 #include <agrpc/detail/asio_forward.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/manual_reset_event.hpp>
 #include <agrpc/detail/operation_base.hpp>
 #include <agrpc/detail/tuple.hpp>
@@ -26,6 +25,8 @@
 #include <grpcpp/server_context.h>
 
 #include <atomic>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

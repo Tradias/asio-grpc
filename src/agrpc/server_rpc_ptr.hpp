@@ -15,11 +15,12 @@
 #ifndef AGRPC_AGRPC_SERVER_RPC_PTR_HPP
 #define AGRPC_AGRPC_SERVER_RPC_PTR_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/server_rpc_with_request.hpp>
 
 #include <utility>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -135,5 +136,7 @@ class ServerRPCPtr
 };
 
 AGRPC_NAMESPACE_END
+
+#include <agrpc/detail/epilogue.hpp>
 
 #endif  // AGRPC_AGRPC_SERVER_RPC_PTR_HPP

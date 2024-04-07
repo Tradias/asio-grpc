@@ -15,9 +15,10 @@
 #ifndef AGRPC_AGRPC_READ_HPP
 #define AGRPC_AGRPC_READ_HPP
 
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/default_completion_token.hpp>
 #include <agrpc/grpc_executor.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -73,5 +74,7 @@ struct ReadFn
 inline constexpr detail::ReadFn read{};
 
 AGRPC_NAMESPACE_END
+
+#include <agrpc/detail/epilogue.hpp>
 
 #endif  // AGRPC_AGRPC_READ_HPP

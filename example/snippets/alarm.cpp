@@ -15,6 +15,7 @@
 #include "helper.hpp"
 
 #include <agrpc/asio_grpc.hpp>
+#include <boost/asio/bind_allocator.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/use_awaitable.hpp>

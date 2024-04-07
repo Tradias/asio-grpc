@@ -16,10 +16,11 @@
 #define AGRPC_DETAIL_INITIATE_SENDER_IMPLEMENTATION_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
-#include <agrpc/detail/config.hpp>
 #include <agrpc/detail/use_sender.hpp>
 #include <agrpc/grpc_executor.hpp>
 #include <agrpc/use_sender.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 #include <agrpc/detail/sender_implementation_operation.hpp>
