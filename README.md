@@ -37,7 +37,7 @@ The library can be added to a CMake project using either `add_subdirectory` or `
 
 Add [asio-grpc](https://github.com/microsoft/vcpkg/blob/master/ports/asio-grpc/vcpkg.json) to the dependencies inside your `vcpkg.json`: 
 
-```
+```jsonc
 {
     "name": "your_app",
     "version": "0.1.0",
@@ -55,22 +55,38 @@ Add [asio-grpc](https://github.com/microsoft/vcpkg/blob/master/ports/asio-grpc/v
 }
 ```
 
-Locate asio-grpc and link it to your target in your `CMakeLists.txt`:
+Find asio-grpc and link it to your target.
+
+Using [Boost.Asio](https://www.boost.org/doc/libs/1_84_0/doc/html/boost_asio.html):
 
 ```cmake
-find_package(asio-grpc)
-# Using the Boost.Asio backend
-find_package(Boost)
+find_package(asio-grpc CONFIG REQUIRED)
+find_package(Boost REQUIRED)
 target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc Boost::headers)
-# Or use the standalone Asio backend
-find_package(asio)
-#target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-standalone-asio asio::asio)
-# Or use the libunifex backend
-find_package(unifex)
-#target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-unifex unifex::unifex)
-# Or use the stdexec backend
-find_package(stdexec)
-#target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-stdexec STDEXEC::stdexec)
+```
+
+Or using [standalone Asio](https://github.com/chriskohlhoff/asio):
+
+```cmake
+find_package(asio-grpc CONFIG REQUIRED)
+find_package(asio CONFIG REQUIRED)
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-standalone-asio asio::asio)
+```
+
+Or using [libunifex](https://github.com/facebookexperimental/libunifex):
+
+```cmake
+find_package(asio-grpc CONFIG REQUIRED)
+find_package(unifex CONFIG REQUIRED)
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-unifex unifex::unifex)
+```
+
+Or using [stdexec](https://github.com/NVIDIA/stdexec):
+
+```cmake
+find_package(asio-grpc CONFIG REQUIRED)
+find_package(stdexec CONFIG REQUIRED)
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-stdexec STDEXEC::stdexec)
 ```
 
 </p>
