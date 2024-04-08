@@ -85,7 +85,7 @@ class ServerRPCPtr
     const ServerRPCT* operator->() const noexcept { return &server_rpc_->rpc_; }
 
     /**
-     * @brief Checks whether this pointer owns a ServerRPC
+     * @brief Check whether this pointer owns a ServerRPC
      *
      * @since 3.1.0
      */
@@ -102,7 +102,7 @@ class ServerRPCPtr
     decltype(auto) request() const noexcept { return (server_rpc_->request_); }
 
     /**
-     * @brief Swap contents of two ServerRPCPtr
+     * @brief Swap the contents of two ServerRPCPtr
      *
      * @since 3.1.0
      */
