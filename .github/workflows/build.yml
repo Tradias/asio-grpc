@@ -37,16 +37,16 @@ jobs:
             parallel: 1,
           }
           - {
-            name: 'MacOSX/12/AppleClang',
-            os: macos-12,
+            name: 'MacOSX/13/AppleClang',
+            os: macos-13,
             triplet: 'x64-osx-release',
             build-type: 'Debug',
             cmake-extra-args: '-DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-osx-release',
-            parallel: 3,
+            parallel: 4,
           }
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Install vcpkg
       uses: lukka/run-vcpkg@v11
@@ -87,7 +87,7 @@ jobs:
         sudo update-alternatives --install /usr/bin/cpp cpp $(which g++-8) 50 &&\
         sudo update-alternatives --set cpp $(which g++-8)
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Install vcpkg
       uses: lukka/run-vcpkg@v11
@@ -120,7 +120,7 @@ jobs:
     - name: Install gcovr and (old) cmake
       run: sudo apt-get install gcovr cmake
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         # Disabling shallow clone is recommended for improving relevancy of sonarsource reporting
         fetch-depth: 0
@@ -147,13 +147,13 @@ jobs:
     - name: GCC 11 Coverage
       run: cmake --build ${{ github.workspace }}/build-11 --config Debug --target asio-grpc-test-coverage
 
-    - uses: actions/setup-java@v3
+    - uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '17'
 
     - name: Download sonar-scanner
-      uses: warchant/setup-sonar-scanner@v7
+      uses: warchant/setup-sonar-scanner@v8
       with:
         version: 5.0.1.3006
 
@@ -187,7 +187,7 @@ jobs:
         sudo update-alternatives --install /usr/bin/cpp cpp $(which clang++-10) 50 &&\
         sudo update-alternatives --set cpp $(which clang++-10)
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Install vcpkg
       uses: lukka/run-vcpkg@v11
@@ -261,7 +261,7 @@ jobs:
     - name: Install protobuf, gRPC and doctest
       run: sudo apt-get install libgrpc++-dev protobuf-compiler-grpc libprotobuf-dev doctest-dev libgtest-dev libgmock-dev
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Install vcpkg
       uses: lukka/run-vcpkg@v11
