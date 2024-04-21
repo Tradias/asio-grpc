@@ -41,7 +41,7 @@ jobs:
             os: macos-13,
             triplet: 'x64-osx-release',
             build-type: 'Debug',
-            cmake-extra-args: '-DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-osx-release -DCMAKE_TRY_COMPILE_TARGET_TYPE=EXECUTABLE',
+            cmake-extra-args: '-DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-osx-release',
             parallel: 4,
           }
 
@@ -59,7 +59,7 @@ jobs:
       run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ matrix.config.triplet }} --host-triplet ${{ matrix.config.triplet }} --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
 
     - name: Configure CMake
-      run: cmake --preset default --debug-trycompile -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_ARGS }} ${{ matrix.config.cmake-extra-args }}
+      run: cmake --preset default -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_ARGS }} ${{ matrix.config.cmake-extra-args }}
 
     - name: Build
       run: cmake --build --preset default --config ${{ matrix.config.build-type }} --parallel ${{ matrix.config.parallel }}
