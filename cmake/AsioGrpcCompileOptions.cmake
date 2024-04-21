@@ -62,7 +62,7 @@ endif()
 target_compile_definitions(
     asio-grpc-compile-options
     INTERFACE $<$<CXX_COMPILER_ID:MSVC>:_WIN32_WINNT=0x0A00> # Windows 10
-              $<$<CXX_COMPILER_ID:Clang>:BOOST_ASIO_HAS_STD_INVOKE_RESULT
+              $<$<CXX_COMPILER_ID:Clang,AppleClang>:BOOST_ASIO_HAS_STD_INVOKE_RESULT
               ASIO_HAS_STD_INVOKE_RESULT>
               BOOST_ASIO_NO_DEPRECATED
               ASIO_NO_DEPRECATED
