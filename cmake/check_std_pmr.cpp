@@ -13,5 +13,10 @@
 // limitations under the License.
 
 #include <memory_resource>
+#include <vector>
 
-int main() { (void)std::pmr::new_delete_resource(); }
+int main()
+{
+    std::pmr::vector<int> v(1, std::pmr::new_delete_resource());
+    return v.front();
+}
