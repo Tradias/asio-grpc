@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-try_compile(
-    ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT "${CMAKE_CURRENT_BINARY_DIR}"
-    "${CMAKE_CURRENT_LIST_DIR}/check_boost_asio_has_co_await.cpp"
-    CMAKE_FLAGS "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}" "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
-    LINK_LIBRARIES Boost::headers CXX_STANDARD 20 CXX_STANDARD_REQUIRED on)
+if(NOT DEFINED ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT)
+    try_compile(
+        ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT "${CMAKE_CURRENT_BINARY_DIR}"
+        "${CMAKE_CURRENT_LIST_DIR}/check_boost_asio_has_co_await.cpp"
+        CMAKE_FLAGS "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}"
+        LINK_LIBRARIES Boost::headers CXX_STANDARD 20 CXX_STANDARD_REQUIRED on)
+endif()
 
 message(STATUS "ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT: ${ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT}")

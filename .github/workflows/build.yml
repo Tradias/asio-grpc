@@ -41,7 +41,7 @@ jobs:
             os: macos-13,
             triplet: 'x64-osx-release',
             build-type: 'Debug',
-            cmake-extra-args: '-DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-osx-release',
+            cmake-extra-args: '-DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-osx-release -DASIO_GRPC_HAS_STD_PMR=off',
             parallel: 4,
           }
 

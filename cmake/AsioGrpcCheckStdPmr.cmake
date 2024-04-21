@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-try_compile(
-    ASIO_GRPC_HAS_STD_PMR "${CMAKE_CURRENT_BINARY_DIR}"
-    "${CMAKE_CURRENT_LIST_DIR}/check_std_pmr.cpp"
-    CMAKE_FLAGS "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}" "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}" CXX_STANDARD 17
-                CXX_STANDARD_REQUIRED on)
+if(NOT DEFINED ASIO_GRPC_HAS_STD_PMR)
+    try_compile(
+        ASIO_GRPC_HAS_STD_PMR "${CMAKE_CURRENT_BINARY_DIR}"
+        "${CMAKE_CURRENT_LIST_DIR}/check_std_pmr.cpp"
+        CMAKE_FLAGS "-DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}" CXX_STANDARD 17 CXX_STANDARD_REQUIRED on)
+endif()
 
 message(STATUS "ASIO_GRPC_HAS_STD_PMR: ${ASIO_GRPC_HAS_STD_PMR}")
