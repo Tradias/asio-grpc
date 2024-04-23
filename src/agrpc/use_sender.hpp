@@ -25,16 +25,13 @@ AGRPC_NAMESPACE_BEGIN()
 /**
  * @brief Sender completion token
  *
- * This function object can be used to create completion tokens that cause free functions in this library to return a
- * [sender](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#typedsender-concept). This is
- * particularly useful for libunifex where senders are also awaitable:
+ * This completion token causes functions in this library to return a
+ * [sender](https://github.com/facebookexperimental/libunifex/blob/main/doc/concepts.md#typedsender-concept).
+ * Particularly useful for libunifex where senders are also awaitable:
  *
  * @snippet unifex_client.cpp unifex-server-streaming-client-side
  *
- * For member functions in this library the `agrpc::UseSender` object must be used directly:
- * @code{cpp}
- * agrpc::ClientRPC<...>::request(..., agrpc::use_sender);
- * @endcode
+ * Note when using libunifex or stdexec exclusively then `agrpc::use_sender` is already the default completion token.
  */
 struct UseSender
 {
