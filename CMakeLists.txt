@@ -50,7 +50,8 @@ if(ASIO_GRPC_BUILD_TESTS)
 endif()
 option(ASIO_GRPC_DISCOVER_TESTS "Discover tests for ctest" off)
 option(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES
-       "When tests and/or example builds are enabled then also create CMake targets for C++20" on)
+       "When tests and/or example builds are enabled then also create CMake targets for C++20"
+       ${ASIO_GRPC_DEFAULT_ENABLE_CPP20_TESTS_AND_EXAMPLES})
 option(ASIO_GRPC_ENABLE_STDEXEC_TESTS "When tests builds are enabled then also create CMake targets for stdexec tests"
        off)
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
