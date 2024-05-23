@@ -16,13 +16,41 @@ An [Executor, Networking TS](https://www.boost.org/doc/libs/1_84_0/doc/html/boos
 * No-Asio version with [libunifex](https://github.com/facebookexperimental/libunifex) or [stdexec](https://github.com/NVIDIA/stdexec)
 * CMake function to easily generate gRPC source files: [asio_grpc_protobuf_generate](/cmake/AsioGrpcProtobufGenerator.cmake)
 
+# Example
+
+Hello world client using C++20 coroutines. Other Asio completion tokens are supported as well.
+
+<!-- snippet: client-side-hello-world -->
+<a id='snippet-client-side-hello-world'></a>
+```cpp
+helloworld::Greeter::Stub stub(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
+agrpc::GrpcContext grpc_context;
+asio::co_spawn(
+    grpc_context,
+    [&]() -> asio::awaitable<void>
+    {
+        using RPC = agrpc::ClientRPC<&helloworld::Greeter::Stub::PrepareAsyncSayHello>;
+        grpc::ClientContext client_context;
+        helloworld::HelloRequest request;
+        request.set_name("world");
+        helloworld::HelloReply response;
+        const grpc::Status status =
+            co_await RPC::request(grpc_context, stub, client_context, request, response, asio::use_awaitable);
+        assert(status.ok());
+    },
+    asio::detached);
+grpc_context.run();
+```
+<sup><a href='/example/snippets/client.cpp#L86-L104' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-hello-world' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
 # Requirements
 
 Asio-grpc is a C++17, header-only library. To install it, CMake (3.14+) is all that is needed.
 
 To use it, [gRPC](https://grpc.io/) and either [Boost.Asio](https://www.boost.org/doc/libs/1_84_0/doc/html/boost_asio.html) (min. 1.74.0), [standalone Asio](https://github.com/chriskohlhoff/asio) (min. 1.17.0), [libunifex](https://github.com/facebookexperimental/libunifex) or [stdexec](https://github.com/NVIDIA/stdexec) must be present and linked into your application.
 
-Officially supported compilers are GCC 8+, Clang 10+, AppleClang 14+ and latest MSVC.
+Officially supported compilers are GCC 8+, Clang 10+, AppleClang 15+ and latest MSVC.
 
 # Usage
 
@@ -32,7 +60,7 @@ The library can be added to a CMake project using either `add_subdirectory` or `
 #include <agrpc/asio_grpc.hpp>
 ```
 
-<details><summary><b>Using vcpkg</b></summary>
+<details><summary><b>vcpkg</b></summary>
 <p>
 
 Add [asio-grpc](https://github.com/microsoft/vcpkg/blob/master/ports/asio-grpc/vcpkg.json) to the dependencies inside your `vcpkg.json`: 
@@ -92,7 +120,7 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-stdexec STDEXEC::stde
 </p>
 </details>
 
-<details><summary><b>Using Hunter</b></summary>
+<details><summary><b>Hunter</b></summary>
 <p>
 
 See asio-grpc's documentation on the Hunter website: [https://hunter.readthedocs.io/en/latest/packages/pkg/asio-grpc.html](https://hunter.readthedocs.io/en/latest/packages/pkg/asio-grpc.html).
@@ -100,7 +128,7 @@ See asio-grpc's documentation on the Hunter website: [https://hunter.readthedocs
 </p>
 </details>
 
-<details><summary><b>Using conan</b></summary>
+<details><summary><b>conan</b></summary>
 <p>
 
 The recipe in conan-center is called [asio-grpc](https://conan.io/center/recipes/asio-grpc).   
@@ -114,7 +142,7 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
 </p>
 </details>
 
-<details><summary><b>As a CMake package</b></summary>
+<details><summary><b>CMake package</b></summary>
 <p>
 
 Clone the repository and install it.
@@ -165,7 +193,7 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-stdexec STDEXEC::stde
 </p>
 </details>
 
-<details><summary><b>As a CMake subdirectory</b></summary>
+<details><summary><b>CMake subdirectory</b></summary>
 <p>
 
 Clone the repository into a subdirectory of your CMake project. Then add it and link it to your target.
@@ -289,4 +317,4 @@ Instead of the `void*` tag in the gRPC API the functions in this library expect 
 
 If you are interested in learning more about the implementation details of this library then check out [this blog article](https://medium.com/3yourmind/c-20-coroutines-for-asynchronous-grpc-services-5b3dab1d1d61).
 
-Even more examples can be found in another [repository](https://github.com/Tradias/example-vcpkg-grpc#branches).
+Examples of entire projects can be found in another [repository](https://github.com/Tradias/example-vcpkg-grpc#branches).

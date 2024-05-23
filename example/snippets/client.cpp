@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "example/v1/example_mock.grpc.pb.h"
+#include "helloworld/helloworld.grpc.pb.h"
 #include "helper.hpp"
 
 #include <agrpc/asio_grpc.hpp>
@@ -82,22 +83,19 @@ asio::awaitable<void> mock_stub(agrpc::GrpcContext& grpc_context)
 
 void client_main()
 {
-    // begin-snippet: create-grpc_context-client-side
+    // begin-snippet: client-side-hello-world
+    helloworld::Greeter::Stub stub(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
     agrpc::GrpcContext grpc_context;
-    // end-snippet
-
-    // begin-snippet: run-grpc_context-client-side
-    example::v1::Example::Stub stub(grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials()));
     asio::co_spawn(
         grpc_context,
         [&]() -> asio::awaitable<void>
         {
+            using RPC = agrpc::ClientRPC<&helloworld::Greeter::Stub::PrepareAsyncSayHello>;
             grpc::ClientContext client_context;
-            example::v1::Request request;
-            request.set_integer(42);
-            example::v1::Response response;
-            using RPC = agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncUnary>;
-            grpc::Status status =
+            helloworld::HelloRequest request;
+            request.set_name("world");
+            helloworld::HelloReply response;
+            const grpc::Status status =
                 co_await RPC::request(grpc_context, stub, client_context, request, response, asio::use_awaitable);
             assert(status.ok());
         },
