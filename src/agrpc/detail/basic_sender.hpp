@@ -22,7 +22,6 @@
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/operation_implementation.hpp>
 #include <agrpc/detail/operation_initiation.hpp>
-#include <agrpc/detail/receiver.hpp>
 #include <agrpc/detail/sender_implementation.hpp>
 #include <agrpc/detail/sender_of.hpp>
 #include <agrpc/detail/stop_callback_lifetime.hpp>
@@ -200,10 +199,10 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
     }
 
     template <AllocationType, class... Args>
-    void complete(const agrpc::GrpcContext&, Args... args)
+    void complete(const agrpc::GrpcContext&, Args... args) noexcept
     {
         reset_stop_callback();
-        detail::satisfy_receiver(static_cast<Receiver&&>(receiver()), static_cast<Args&&>(args)...);
+        exec::set_value(static_cast<Receiver&&>(receiver()), static_cast<Args&&>(args)...);
     }
 
     void done() noexcept

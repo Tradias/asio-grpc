@@ -131,7 +131,6 @@ TEST_CASE_FIXTURE(test::ExecutionGrpcContextTest,
     CHECK_EQ(expected_thread_id, actual_thread_id);
 }
 
-#if !UNIFEX_NO_COROUTINES
 TEST_CASE_TEMPLATE("ScheduleSender start with shutdown GrpcContext", T, std::true_type, std::false_type)
 {
     test::DeleteGuard del;
@@ -174,7 +173,6 @@ TEST_CASE_TEMPLATE("ScheduleSender start with shutdown GrpcContext", T, std::tru
     CHECK(state.was_done);
     CHECK_FALSE(state.exception);
 }
-#endif
 
 TEST_CASE_FIXTURE(test::ExecutionGrpcContextTest, "stdexec agrpc::Alarm.wait from different thread")
 {
@@ -223,8 +221,33 @@ TEST_CASE_FIXTURE(test::GrpcClientServerTest, "RegisterSenderRPCHandlerSender fu
     CHECK(std::is_invocable_v<decltype(stdexec::start), OperationState&>);
 }
 
-#if !UNIFEX_NO_COROUTINES
-TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::UnaryClientRPC>, "stdexec UnaryClientRPC coroutine success")
+template <class RPC>
+struct StdexecExecutionClientRPCTest : test::ExecutionTestMixin<test::ClientServerRPCTest<RPC>>
+{
+    using Base = test::ClientServerRPCTest<RPC>;
+
+    template <class RPCHandler, class... ClientFunctions>
+    void register_and_perform_requests(RPCHandler&& handler, ClientFunctions&&... client_functions)
+    {
+        int counter{};
+        this->run(
+            agrpc::register_sender_rpc_handler<typename Base::ServerRPC>(this->grpc_context, this->service, handler),
+            stdexec::on(this->get_executor(),
+                        [&counter, &client_functions, &server_shutdown = this->server_shutdown]() -> exec::task<void>
+                        {
+                            typename Base::ClientRPC::Request request;
+                            typename Base::ClientRPC::Response response;
+                            co_await client_functions(request, response);
+                            ++counter;
+                            if (counter == sizeof...(client_functions))
+                            {
+                                server_shutdown.initiate();
+                            }
+                        }())...);
+    }
+};
+
+TEST_CASE_FIXTURE(StdexecExecutionClientRPCTest<test::UnaryClientRPC>, "stdexec UnaryClientRPC coroutine success")
 {
     auto client_func = [&](Request& request, Response& response) -> exec::task<void>
     {
@@ -248,7 +271,7 @@ TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::UnaryClientRPC>, "stdexec U
         client_func, client_func, client_func);
 }
 
-TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::BidirectionalStreamingClientRPC>,
+TEST_CASE_FIXTURE(StdexecExecutionClientRPCTest<test::BidirectionalStreamingClientRPC>,
                   "stdexec BidirectionalStreamingClientRPC coroutine success")
 {
     auto client_func = [&](Request& request, Response& response) -> exec::task<void>
@@ -278,7 +301,6 @@ TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::BidirectionalStreamingClien
         },
         client_func, client_func, client_func);
 }
-#endif
 
 TEST_CASE_FIXTURE(test::ExecutionRpcHandlerTest, "stdexec rpc_handler unary - shutdown server")
 {

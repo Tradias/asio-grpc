@@ -94,7 +94,7 @@ struct FunctionAsReceiver
     static void set_done() noexcept {}
 
     template <class... Args>
-    void set_value(Args&&... args) const
+    void set_value(Args&&... args) const noexcept
     {
         function(std::forward<Args>(args)...);
     }

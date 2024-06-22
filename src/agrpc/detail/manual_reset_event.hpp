@@ -19,7 +19,6 @@
 #include <agrpc/detail/association.hpp>
 #include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/forward.hpp>
-#include <agrpc/detail/receiver.hpp>
 #include <agrpc/detail/sender_of.hpp>
 #include <agrpc/detail/stop_callback_lifetime.hpp>
 #include <agrpc/detail/tuple.hpp>
@@ -247,12 +246,12 @@ struct ManualResetEventRunningOperationState<void(Args...), Receiver> : ManualRe
         this->event_.op_.store(this, std::memory_order_release);
     }
 
-    void complete()
+    void complete() noexcept
     {
         detail::apply(
             [&](Args&&... args)
             {
-                detail::satisfy_receiver(static_cast<Receiver&&>(receiver()), static_cast<Args&&>(args)...);
+                exec::set_value(static_cast<Receiver&&>(receiver()), static_cast<Args&&>(args)...);
             },
             static_cast<Event&&>(this->event_).args());
     }

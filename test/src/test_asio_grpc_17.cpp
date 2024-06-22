@@ -70,19 +70,20 @@ TEST_CASE("constexpr algorithm: replace_sequence_with_value")
     CHECK_EQ("find this x in the haystack", result);
 }
 
-TEST_CASE_FIXTURE(test::GrpcClientServerTest, " agrpc::notify_on_state_change")
+TEST_CASE_FIXTURE(test::GrpcClientServerTest, "agrpc::notify_on_state_change")
 {
     bool actual_ok{false};
     bool expected_ok{true};
     auto deadline = test::five_seconds_from_now();
-    SUBCASE("success") {}
+    grpc_connectivity_state state{};
+    SUBCASE("success") { state = channel->GetState(true); }
     SUBCASE("deadline expires")
     {
         actual_ok = true;
         expected_ok = false;
-        deadline = test::now() - std::chrono::seconds(5);
+        deadline = test::now();
+        state = channel->GetState(false);
     }
-    const auto state = channel->GetState(true);
     const auto callback = [&](bool ok)
     {
         actual_ok = ok;

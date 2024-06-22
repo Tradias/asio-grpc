@@ -431,6 +431,7 @@ struct GrpcContextAndIoContextTest : test::GrpcContextTest, test::IoContextTest
 TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll() with asio::post")
 {
     bool invoked{false};
+    asio::steady_timer timer{io_context};
     asio::post(io_context,
                [&]()
                {
@@ -440,8 +441,13 @@ TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll() with asio::po
                        {
                            invoked = true;
                        });
-                   CHECK_FALSE(invoked);
-                   CHECK(grpc_context.poll());
+                   timer.expires_after(std::chrono::milliseconds(100));
+                   timer.async_wait(
+                       [&](auto&&)
+                       {
+                           CHECK_FALSE(invoked);
+                           CHECK(grpc_context.poll());
+                       });
                });
     io_context.run();
     CHECK(invoked);
@@ -530,6 +536,43 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_completion_queue()")
     CHECK(grpc_context.run());
     CHECK(post_completed);
     CHECK_FALSE(grpc_context.run_completion_queue());
+}
+
+inline void wait_some(agrpc::GrpcContext& grpc_context)
+{
+    agrpc::Alarm{grpc_context}.wait(test::now(),
+                                    [&](auto&&...)
+                                    {
+                                        wait_some(grpc_context);
+                                    });
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_completion_queue() parallel")
+{
+    asio::thread_pool pool{3};
+    for (size_t i{}; i != 3; ++i)
+    {
+        asio::post(pool,
+                   [&]
+                   {
+                       wait_some(grpc_context);
+                   });
+    }
+    for (size_t i{}; i != 2; ++i)
+    {
+        asio::post(pool,
+                   [&]
+                   {
+                       grpc_context.run_completion_queue();
+                   });
+    }
+    asio::steady_timer timer{pool, std::chrono::seconds(1)};
+    timer.async_wait(
+        [&](auto&&...)
+        {
+            grpc_context.stop();
+        });
+    pool.wait();
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll() within run()")

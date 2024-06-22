@@ -34,7 +34,7 @@ struct SubmitToFunctionReceiver
         void set_done() noexcept { complete(); }
 
         template <class... Args>
-        void set_value(Args&&... args)
+        void set_value(Args&&... args) noexcept
         {
             complete(static_cast<Args&&>(args)...);
         }

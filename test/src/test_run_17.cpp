@@ -102,6 +102,7 @@ TEST_CASE_FIXTURE(RunTest, "agrpc::run Traits can specify zero max latency")
                {
                    invoked = true;
                });
+    std::this_thread::sleep_until(test::hundred_milliseconds_from_now());
     agrpc::run<MyIntrusiveTraits>(grpc_context, io_context,
                                   [count = 0]() mutable
                                   {

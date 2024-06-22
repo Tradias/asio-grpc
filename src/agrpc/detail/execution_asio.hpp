@@ -53,7 +53,8 @@ template <class Sender>
 inline constexpr bool is_sender_v = true;
 
 template <class Sender, class Receiver>
-auto connect(Sender&& sender, Receiver&& receiver)
+auto connect(Sender&& sender, Receiver&& receiver) noexcept(
+    noexcept(static_cast<Sender&&>(sender).connect(static_cast<Receiver&&>(receiver))))
 {
     return static_cast<Sender&&>(sender).connect(static_cast<Receiver&&>(receiver));
 }
@@ -62,25 +63,25 @@ template <class Sender, class Receiver>
 using connect_result_t = decltype(exec::connect(std::declval<Sender>(), std::declval<Receiver>()));
 
 template <class Receiver>
-void set_done(Receiver&& receiver)
+void set_done(Receiver&& receiver) noexcept
 {
     static_cast<Receiver&&>(receiver).set_done();
 }
 
 template <class Receiver, class... T>
-void set_error(Receiver&& receiver, T&&... t)
+void set_error(Receiver&& receiver, T&&... t) noexcept
 {
     static_cast<Receiver&&>(receiver).set_error(static_cast<T&&>(t)...);
 }
 
 template <class Receiver, class... T>
-void set_value(Receiver&& receiver, T&&... t)
+void set_value(Receiver&& receiver, T&&... t) noexcept
 {
     static_cast<Receiver&&>(receiver).set_value(static_cast<T&&>(t)...);
 }
 
 template <class OperationState>
-void start(OperationState&& state)
+void start(OperationState&& state) noexcept
 {
     static_cast<OperationState&&>(state).start();
 }
