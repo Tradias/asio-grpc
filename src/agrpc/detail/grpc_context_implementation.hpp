@@ -78,7 +78,7 @@ struct ThreadLocalGrpcContextGuard
 {
     const agrpc::GrpcContext* old_context_;
 
-    explicit ThreadLocalGrpcContextGuard(const agrpc::GrpcContext& grpc_context) noexcept;
+    explicit ThreadLocalGrpcContextGuard(agrpc::GrpcContext& grpc_context) noexcept;
 
     ~ThreadLocalGrpcContextGuard();
 
@@ -122,7 +122,9 @@ struct GrpcContextImplementation
 
     [[nodiscard]] static bool running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept;
 
-    static const agrpc::GrpcContext* set_thread_local_grpc_context(const agrpc::GrpcContext* grpc_context) noexcept;
+    static void set_thread_local_grpc_context(const agrpc::GrpcContext* grpc_context) noexcept;
+
+    static const agrpc::GrpcContext* exchange_thread_local_grpc_context(agrpc::GrpcContext& grpc_context) noexcept;
 
     static bool move_remote_work_to_local_queue(agrpc::GrpcContext& grpc_context) noexcept;
 

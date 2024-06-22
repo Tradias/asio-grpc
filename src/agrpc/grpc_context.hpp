@@ -18,8 +18,8 @@
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/atomic_intrusive_queue.hpp>
 #include <agrpc/detail/forward.hpp>
-#include <agrpc/detail/grpc_context.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
+#include <agrpc/detail/grpc_context_local_allocator.hpp>
 #include <agrpc/detail/grpc_executor_options.hpp>
 #include <agrpc/detail/intrusive_list.hpp>
 #include <agrpc/detail/intrusive_queue.hpp>
@@ -156,9 +156,9 @@ class GrpcContext
      * `asio::post(grpc_context, ...)` will not be processed. The GrpcContext will be brought into the ready state when
      * this function is invoked. Upon return, the GrpcContext will be in the stopped state.
      *
-     * @attention Only one thread may call run*()/poll*() at a time.
-     *
-     * Thread-safe with regards to other functions except run*(), poll*() and the destructor.
+     * @attention
+     * (until 3.2.0) Only one thread may call run*()/poll*() at a time.
+     * (since 3.2.0) No other thread may call run()/poll() at the same time.
      *
      * @return True if at least one event has been processed.
      */
@@ -185,9 +185,9 @@ class GrpcContext
      * created using `asio::post(grpc_context, ...)` will not be processed. The GrpcContext will be brought into the
      * ready state when this function is invoked.
      *
-     * @attention Only one thread may call run*()/poll*() at a time.
-     *
-     * Thread-safe with regards to other functions except run*(), poll*() and the destructor.
+     * @attention
+     * (until 3.2.0) Only one thread may call run*()/poll*() at a time.
+     * (since 3.2.0) No other thread may call run()/poll() at the same time.
      *
      * @return True if at least one operation has been processed.
      */
@@ -297,6 +297,7 @@ class GrpcContext
     std::atomic_long outstanding_work_{};
     std::atomic_bool stopped_{false};
     std::atomic_bool shutdown_{false};
+    std::atomic_bool running_{false};
     bool check_remote_work_{false};
     std::unique_ptr<grpc::CompletionQueue> completion_queue_{std::make_unique<grpc::CompletionQueue>()};
     detail::GrpcContextLocalMemoryResource local_resource_;

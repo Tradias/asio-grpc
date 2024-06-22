@@ -17,7 +17,6 @@
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/grpc_completion_queue_event.hpp>
-#include <agrpc/detail/grpc_context.hpp>
 #include <agrpc/detail/grpc_executor_options.hpp>
 #include <agrpc/detail/intrusive_queue.hpp>
 #include <agrpc/grpc_context.hpp>
@@ -160,10 +159,7 @@ inline GrpcContext::executor_type GrpcContext::get_executor() noexcept { return 
 
 inline GrpcContext::executor_type GrpcContext::get_scheduler() noexcept { return GrpcContext::executor_type{*this}; }
 
-inline GrpcContext::allocator_type GrpcContext::get_allocator() noexcept
-{
-    return detail::GrpcContextLocalAllocator{&local_resource_};
-}
+inline GrpcContext::allocator_type GrpcContext::get_allocator() noexcept { return allocator_type{&local_resource_}; }
 
 inline void GrpcContext::work_started() noexcept { outstanding_work_.fetch_add(1, std::memory_order_relaxed); }
 

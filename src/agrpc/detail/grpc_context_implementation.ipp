@@ -17,8 +17,8 @@
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/grpc_completion_queue_event.hpp>
-#include <agrpc/detail/grpc_context.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
+#include <agrpc/detail/grpc_context_local_allocator.hpp>
 #include <agrpc/detail/operation_base.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <grpc/support/time.h>
@@ -30,8 +30,8 @@ namespace detail
 {
 inline thread_local const agrpc::GrpcContext* thread_local_grpc_context{};
 
-inline ThreadLocalGrpcContextGuard::ThreadLocalGrpcContextGuard(const agrpc::GrpcContext& grpc_context) noexcept
-    : old_context_{GrpcContextImplementation::set_thread_local_grpc_context(&grpc_context)}
+inline ThreadLocalGrpcContextGuard::ThreadLocalGrpcContextGuard(agrpc::GrpcContext& grpc_context) noexcept
+    : old_context_{GrpcContextImplementation::exchange_thread_local_grpc_context(grpc_context)}
 {
 }
 
@@ -102,10 +102,19 @@ inline bool GrpcContextImplementation::running_in_this_thread(const agrpc::GrpcC
     return &grpc_context == detail::thread_local_grpc_context;
 }
 
-inline const agrpc::GrpcContext* GrpcContextImplementation::set_thread_local_grpc_context(
-    const agrpc::GrpcContext* grpc_context) noexcept
+inline void GrpcContextImplementation::set_thread_local_grpc_context(const agrpc::GrpcContext* grpc_context) noexcept
 {
-    return std::exchange(detail::thread_local_grpc_context, grpc_context);
+    detail::thread_local_grpc_context = grpc_context;
+}
+
+inline const agrpc::GrpcContext* GrpcContextImplementation::exchange_thread_local_grpc_context(
+    agrpc::GrpcContext& grpc_context) noexcept
+{
+    if (grpc_context.running_.exchange(true))
+    {
+        return nullptr;
+    }
+    return std::exchange(detail::thread_local_grpc_context, &grpc_context);
 }
 
 inline bool GrpcContextImplementation::move_remote_work_to_local_queue(agrpc::GrpcContext& grpc_context) noexcept
