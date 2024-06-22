@@ -18,6 +18,7 @@
 #include <agrpc/detail/allocate.hpp>
 #include <agrpc/detail/allocation_type.hpp>
 #include <agrpc/detail/association.hpp>
+#include <agrpc/detail/grpc_context_local_allocator.hpp>
 #include <agrpc/detail/operation_base.hpp>
 
 #include <agrpc/detail/config.hpp>
