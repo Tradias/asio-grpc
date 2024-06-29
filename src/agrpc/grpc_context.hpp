@@ -290,6 +290,7 @@ class GrpcContext
     using LocalWorkQueue = detail::IntrusiveQueue<detail::QueueableOperationBase>;
 
     friend detail::GrpcContextImplementation;
+    friend detail::ThreadLocalGrpcContextGuard;
 
     bool run_until_impl(::gpr_timespec deadline);
 

@@ -31,13 +31,18 @@ namespace detail
 inline thread_local const agrpc::GrpcContext* thread_local_grpc_context{};
 
 inline ThreadLocalGrpcContextGuard::ThreadLocalGrpcContextGuard(agrpc::GrpcContext& grpc_context) noexcept
-    : old_context_{GrpcContextImplementation::exchange_thread_local_grpc_context(grpc_context)}
+    : new_context_{!grpc_context.running_.exchange(true, std::memory_order_relaxed) ? &grpc_context : nullptr},
+      old_context_{new_context_ ? std::exchange(detail::thread_local_grpc_context, &grpc_context) : nullptr}
 {
 }
 
 inline ThreadLocalGrpcContextGuard::~ThreadLocalGrpcContextGuard()
 {
-    GrpcContextImplementation::set_thread_local_grpc_context(old_context_);
+    if (new_context_)
+    {
+        new_context_->running_.store(false, std::memory_order_relaxed);
+        detail::thread_local_grpc_context = old_context_;
+    }
 }
 
 inline void WorkFinishedOnExitFunctor::operator()() const noexcept { grpc_context_.work_finished(); }
@@ -100,21 +105,6 @@ inline void GrpcContextImplementation::add_operation(agrpc::GrpcContext& grpc_co
 inline bool GrpcContextImplementation::running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept
 {
     return &grpc_context == detail::thread_local_grpc_context;
-}
-
-inline void GrpcContextImplementation::set_thread_local_grpc_context(const agrpc::GrpcContext* grpc_context) noexcept
-{
-    detail::thread_local_grpc_context = grpc_context;
-}
-
-inline const agrpc::GrpcContext* GrpcContextImplementation::exchange_thread_local_grpc_context(
-    agrpc::GrpcContext& grpc_context) noexcept
-{
-    if (grpc_context.running_.exchange(true))
-    {
-        return nullptr;
-    }
-    return std::exchange(detail::thread_local_grpc_context, &grpc_context);
 }
 
 inline bool GrpcContextImplementation::move_remote_work_to_local_queue(agrpc::GrpcContext& grpc_context) noexcept
