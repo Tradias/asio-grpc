@@ -20,6 +20,8 @@
 #include <agrpc/detail/grpc_completion_queue_event.hpp>
 #include <agrpc/detail/intrusive_queue.hpp>
 #include <agrpc/detail/operation_base.hpp>
+#include <agrpc/detail/pool_resource.hpp>
+#include <agrpc/detail/stackable_pool_resource.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <grpcpp/completion_queue.h>
 
@@ -58,40 +60,31 @@ struct StartWorkAndGuard : detail::WorkFinishedOnExit
     StartWorkAndGuard& operator=(StartWorkAndGuard&&) = delete;
 };
 
-struct GrpcLocalContext
+struct GrpcContextThreadContext
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+    // Enables Boost.Asio's awaitable frame memory recycling
+    : asio::detail::thread_context
+#endif
 {
-    explicit GrpcLocalContext(agrpc::GrpcContext& grpc_context);
+    explicit GrpcContextThreadContext(agrpc::GrpcContext& grpc_context);
+
+    ~GrpcContextThreadContext() noexcept;
+
+    GrpcContextThreadContext(const GrpcContextThreadContext& other) = delete;
+    GrpcContextThreadContext(GrpcContextThreadContext&& other) = delete;
+    GrpcContextThreadContext& operator=(const GrpcContextThreadContext& other) = delete;
+    GrpcContextThreadContext& operator=(GrpcContextThreadContext&& other) = delete;
 
     agrpc::GrpcContext& grpc_context_;
     detail::IntrusiveQueue<detail::QueueableOperationBase> local_work_queue_;
     bool check_remote_work_;
-};
+    GrpcContextThreadContext* old_context_;
+    detail::StackablePoolResource& resource_;
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-// Enables Boost.Asio's awaitable frame memory recycling
-struct GrpcContextThreadContext : GrpcLocalContext, asio::detail::thread_context
-{
-    using GrpcLocalContext::GrpcLocalContext;
-
     asio::detail::thread_info_base this_thread_;
     thread_call_stack::context ctx_{this, this_thread_};
-};
-#else
-using GrpcContextThreadContext = GrpcLocalContext;
 #endif
-
-struct ThreadLocalGrpcContextGuard
-{
-    detail::GrpcContextThreadContext* old_context_;
-
-    explicit ThreadLocalGrpcContextGuard(detail::GrpcContextThreadContext& context) noexcept;
-
-    ~ThreadLocalGrpcContextGuard();
-
-    ThreadLocalGrpcContextGuard(const ThreadLocalGrpcContextGuard&) = delete;
-    ThreadLocalGrpcContextGuard(ThreadLocalGrpcContextGuard&&) = delete;
-    ThreadLocalGrpcContextGuard& operator=(const ThreadLocalGrpcContextGuard&) = delete;
-    ThreadLocalGrpcContextGuard& operator=(ThreadLocalGrpcContextGuard&&) = delete;
 };
 
 struct IsGrpcContextStoppedPredicate
@@ -126,6 +119,8 @@ struct GrpcContextImplementation
     static bool handle_next_completion_queue_event(detail::GrpcContextThreadContext& context, ::gpr_timespec deadline,
                                                    detail::InvokeHandler invoke);
 
+    [[nodiscard]] static bool running_in_this_thread() noexcept;
+
     [[nodiscard]] static bool running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept;
 
     static bool move_local_queue_to_remote_work(detail::GrpcContextThreadContext& context) noexcept;
@@ -147,6 +142,10 @@ struct GrpcContextImplementation
 
     template <class LoopFunction>
     static bool process_work(agrpc::GrpcContext& grpc_context, LoopFunction loop_function);
+
+    static detail::StackablePoolResource& pop_resource(agrpc::GrpcContext& grpc_context);
+
+    static void push_resource(agrpc::GrpcContext& grpc_context, detail::StackablePoolResource& resource);
 };
 
 void process_grpc_tag(void* tag, detail::OperationResult result, agrpc::GrpcContext& grpc_context);

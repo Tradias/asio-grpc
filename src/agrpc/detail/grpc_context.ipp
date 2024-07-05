@@ -41,7 +41,6 @@ struct AlwaysFalsePredicate
 inline void drain_completion_queue(agrpc::GrpcContext& grpc_context)
 {
     detail::GrpcContextThreadContext thread_context{grpc_context};
-    detail::ThreadLocalGrpcContextGuard guard{thread_context};
     while (detail::GrpcContextImplementation::do_one(thread_context, detail::GrpcContextImplementation::INFINITE_FUTURE,
                                                      detail::InvokeHandler::NO_, detail::AlwaysFalsePredicate{}))
     {
@@ -53,17 +52,45 @@ inline grpc::CompletionQueue* get_completion_queue(agrpc::GrpcContext& grpc_cont
 {
     return grpc_context.get_completion_queue();
 }
+
+template <class T>
+inline void create_resources(T& resources, std::size_t thread_count_hint = 1)
+{
+    for (size_t i{}; i != thread_count_hint; ++i)
+    {
+        auto resource = new detail::StackablePoolResource();
+        resources.push_front(*resource);
+    }
+}
+
+template <class T>
+inline void delete_resources(T& resources)
+{
+    while (!resources.empty())
+    {
+        delete &resources.pop_front();
+    }
+}
 }  // namespace detail
+
+inline GrpcContext::GrpcContext() { detail::create_resources(resources_); }
+
+inline GrpcContext::GrpcContext(std::size_t thread_count_hint) : multithreaded_{thread_count_hint > 1}
+{
+    detail::create_resources(resources_, thread_count_hint);
+}
 
 template <class>
 inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue>&& completion_queue)
     : completion_queue_(static_cast<std::unique_ptr<grpc::CompletionQueue>&&>(completion_queue))
 {
+    detail::create_resources(resources_);
 }
 
 inline GrpcContext::GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue> completion_queue)
     : completion_queue_(static_cast<std::unique_ptr<grpc::ServerCompletionQueue>&&>(completion_queue))
 {
+    detail::create_resources(resources_);
 }
 
 inline GrpcContext::~GrpcContext()
@@ -76,6 +103,7 @@ inline GrpcContext::~GrpcContext()
     asio::execution_context::shutdown();
     asio::execution_context::destroy();
 #endif
+    detail::delete_resources(resources_);
 }
 
 inline bool GrpcContext::run()
@@ -161,7 +189,7 @@ inline GrpcContext::executor_type GrpcContext::get_executor() noexcept { return 
 
 inline GrpcContext::executor_type GrpcContext::get_scheduler() noexcept { return GrpcContext::executor_type{*this}; }
 
-inline GrpcContext::allocator_type GrpcContext::get_allocator() noexcept { return allocator_type{&local_resource_}; }
+inline GrpcContext::allocator_type GrpcContext::get_allocator() noexcept { return allocator_type{}; }
 
 inline void GrpcContext::work_started() noexcept { outstanding_work_.fetch_add(1, std::memory_order_relaxed); }
 

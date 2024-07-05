@@ -250,7 +250,6 @@ void run_impl(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_cont
     using Backoff =
         detail::Backoff<std::chrono::duration_cast<detail::BackoffDelay>(ResolvedTraits::MAX_LATENCY).count()>;
     detail::GrpcContextThreadContext thread_context{grpc_context};
-    detail::ThreadLocalGrpcContextGuard guard{thread_context};
     Backoff backoff;
     auto delay = backoff.next();
     IsGrpcContextStopped is_grpc_context_stopped{};

@@ -23,12 +23,15 @@
 #include <agrpc/detail/grpc_executor_options.hpp>
 #include <agrpc/detail/intrusive_list.hpp>
 #include <agrpc/detail/intrusive_queue.hpp>
+#include <agrpc/detail/intrusive_stack.hpp>
 #include <agrpc/detail/operation_base.hpp>
+#include <agrpc/detail/stackable_pool_resource.hpp>
 #include <grpcpp/alarm.h>
 #include <grpcpp/completion_queue.h>
 
 #include <atomic>
 #include <memory>
+#include <mutex>
 
 #include <agrpc/detail/config.hpp>
 
@@ -57,14 +60,16 @@ class GrpcContext
     /**
      * @brief The associated allocator type
      */
-    using allocator_type = detail::GrpcContextLocalAllocator;
+    using allocator_type = std::allocator<std::byte>;
 
     /**
      * @brief Construct a GrpcContext for gRPC clients
      *
      * @since 2.4.0
      */
-    GrpcContext() = default;
+    GrpcContext();
+
+    explicit GrpcContext(std::size_t thread_count_hint);
 
     template <class = void>
     [[deprecated("For gRPC clients use the default constructor")]] explicit GrpcContext(
@@ -288,10 +293,10 @@ class GrpcContext
   private:
     using RemoteWorkQueue = detail::AtomicIntrusiveQueue<detail::QueueableOperationBase>;
     using LocalWorkQueue = detail::IntrusiveQueue<detail::QueueableOperationBase>;
+    using Resources = detail::IntrusiveStack<detail::StackablePoolResource>;
 
     friend detail::GrpcContextImplementation;
-    friend detail::GrpcLocalContext;
-    friend detail::ThreadLocalGrpcContextGuard;
+    friend detail::GrpcContextThreadContext;
 
     bool run_until_impl(::gpr_timespec deadline);
 
@@ -299,9 +304,13 @@ class GrpcContext
     std::atomic_long outstanding_work_{};
     std::atomic_bool stopped_{false};
     std::atomic_bool shutdown_{false};
+    bool check_remote_work_{false};
+    bool multithreaded_{false};
+    LocalWorkQueue local_work_queue_{};
     std::unique_ptr<grpc::CompletionQueue> completion_queue_{std::make_unique<grpc::CompletionQueue>()};
-    detail::GrpcContextLocalMemoryResource local_resource_;
     RemoteWorkQueue remote_work_queue_{false};
+    std::mutex resources_mutex_;
+    Resources resources_;
 };
 
 AGRPC_NAMESPACE_END

@@ -199,7 +199,7 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
     }
 
     template <AllocationType, class... Args>
-    void complete(const agrpc::GrpcContext&, Args... args) noexcept
+    void complete(Args... args) noexcept
     {
         reset_stop_callback();
         exec::set_value(static_cast<Receiver&&>(receiver()), static_cast<Args&&>(args)...);

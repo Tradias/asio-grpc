@@ -50,7 +50,7 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
         }
         else
         {
-            [[maybe_unused]] detail::AllocationGuard ptr{self, self->template get_allocator<AllocType>(grpc_context)};
+            [[maybe_unused]] detail::AllocationGuard ptr{self, self->template get_allocator<AllocType>()};
         }
     }
 
@@ -77,11 +77,11 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
     }
 
     template <AllocationType AllocType>
-    decltype(auto) get_allocator(agrpc::GrpcContext& grpc_context) noexcept
+    decltype(auto) get_allocator() noexcept
     {
         if constexpr (AllocType == detail::AllocationType::LOCAL)
         {
-            return grpc_context.get_allocator();
+            return detail::get_local_allocator();
         }
         else
         {
@@ -116,9 +116,9 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
     }
 
     template <AllocationType AllocType, class... Args>
-    void complete(agrpc::GrpcContext& grpc_context, Args... args)
+    void complete(Args... args)
     {
-        detail::AllocationGuard ptr{this, get_allocator<AllocType>(grpc_context)};
+        detail::AllocationGuard ptr{this, get_allocator<AllocType>()};
         detail::dispatch_complete(ptr, static_cast<Args&&>(args)...);
     }
 
@@ -142,7 +142,7 @@ void submit_sender_implementation_operation(agrpc::GrpcContext& grpc_context, Co
     }
     detail::allocate_operation<
         detail::SenderImplementationOperationTemplate<detail::RemoveCrefT<Implementation>>::template Type>(
-        grpc_context, static_cast<CompletionHandler&&>(completion_handler), grpc_context, initiation,
+        static_cast<CompletionHandler&&>(completion_handler), grpc_context, initiation,
         static_cast<Implementation&&>(implementation));
 }
 }

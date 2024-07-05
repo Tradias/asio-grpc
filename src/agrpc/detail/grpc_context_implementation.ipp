@@ -24,34 +24,44 @@
 #include <grpc/support/time.h>
 #include <grpcpp/completion_queue.h>
 
+#include <agrpc/detail/config.hpp>
+
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
 inline thread_local detail::GrpcContextThreadContext* thread_local_grpc_context{};
 
-inline GrpcLocalContext::GrpcLocalContext(agrpc::GrpcContext& grpc_context)
-    : grpc_context_(grpc_context), check_remote_work_{false}
+inline GrpcContextThreadContext::GrpcContextThreadContext(agrpc::GrpcContext& grpc_context)
+    : grpc_context_(grpc_context),
+      local_work_queue_{grpc_context.multithreaded_ ? agrpc::GrpcContext::LocalWorkQueue{}
+                                                    : std::move(grpc_context.local_work_queue_)},
+      check_remote_work_{grpc_context.multithreaded_ ? false : grpc_context.check_remote_work_},
+      old_context_{std::exchange(detail::thread_local_grpc_context, this)},
+      resource_{old_context_ ? old_context_->resource_ : GrpcContextImplementation::pop_resource(grpc_context)}
 {
 }
 
-inline ThreadLocalGrpcContextGuard::ThreadLocalGrpcContextGuard(detail::GrpcContextThreadContext& context) noexcept
-    : old_context_{std::exchange(detail::thread_local_grpc_context, &context)}
+inline GrpcContextThreadContext::~GrpcContextThreadContext() noexcept
 {
-}
-
-inline ThreadLocalGrpcContextGuard::~ThreadLocalGrpcContextGuard()
-{
-    auto* const context = detail::thread_local_grpc_context;
-    bool check_remote_work = context->check_remote_work_;
-    while (check_remote_work)
+    if (grpc_context_.multithreaded_)
     {
-        check_remote_work = GrpcContextImplementation::move_remote_work_to_local_queue(*context);
+        bool check_remote_work = check_remote_work_;
+        while (check_remote_work)
+        {
+            check_remote_work = GrpcContextImplementation::move_remote_work_to_local_queue(*this);
+        }
+        if (GrpcContextImplementation::move_local_queue_to_remote_work(*this))
+        {
+            GrpcContextImplementation::trigger_work_alarm(grpc_context_);
+        }
     }
-    if (GrpcContextImplementation::move_local_queue_to_remote_work(*context))
+    else
     {
-        GrpcContextImplementation::trigger_work_alarm(context->grpc_context_);
+        grpc_context_.local_work_queue_ = std::move(local_work_queue_);
+        grpc_context_.check_remote_work_ = check_remote_work_;
     }
+    GrpcContextImplementation::push_resource(grpc_context_, resource_);
     detail::thread_local_grpc_context = old_context_;
 }
 
@@ -111,9 +121,12 @@ inline void GrpcContextImplementation::add_operation(agrpc::GrpcContext& grpc_co
     }
 }
 
+inline bool GrpcContextImplementation::running_in_this_thread() noexcept { return detail::thread_local_grpc_context; }
+
 inline bool GrpcContextImplementation::running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept
 {
-    return detail::thread_local_grpc_context && &grpc_context == &detail::thread_local_grpc_context->grpc_context_;
+    auto* const context = detail::thread_local_grpc_context;
+    return context && &grpc_context == &context->grpc_context_;
 }
 
 inline bool GrpcContextImplementation::move_local_queue_to_remote_work(
@@ -266,13 +279,30 @@ inline bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_con
     }
     grpc_context.reset();
     detail::GrpcContextThreadContext thread_context{grpc_context};
-    detail::ThreadLocalGrpcContextGuard guard{thread_context};
     bool processed{};
     while (loop_function(thread_context))
     {
         processed = true;
     }
     return processed;
+}
+
+inline detail::StackablePoolResource& GrpcContextImplementation::pop_resource(agrpc::GrpcContext& grpc_context)
+{
+    std::lock_guard guard{grpc_context.resources_mutex_};
+    auto& resources = grpc_context.resources_;
+    if (resources.empty())
+    {
+        return *(new detail::StackablePoolResource());
+    }
+    return resources.pop_front();
+}
+
+inline void GrpcContextImplementation::push_resource(agrpc::GrpcContext& grpc_context,
+                                                     detail::StackablePoolResource& resource)
+{
+    std::lock_guard guard{grpc_context.resources_mutex_};
+    grpc_context.resources_.push_front(resource);
 }
 
 inline void process_grpc_tag(void* tag, detail::OperationResult result, agrpc::GrpcContext& grpc_context)
@@ -289,9 +319,50 @@ inline ::gpr_timespec gpr_timespec_from_now(std::chrono::nanoseconds duration) n
     return ::gpr_time_add(timespec, duration_timespec);
 }
 
-inline detail::GrpcContextLocalAllocator get_local_allocator(agrpc::GrpcContext& grpc_context) noexcept
+inline detail::GrpcContextLocalAllocator get_local_allocator() noexcept { return detail::GrpcContextLocalAllocator(); }
+
+inline detail::PoolResource& get_local_pool_resource() noexcept
 {
-    return grpc_context.get_allocator();
+    return detail::thread_local_grpc_context->resource_.resource_;
+}
+
+template <class T>
+inline T* PoolResourceAllocator<T>::allocate(std::size_t n)
+{
+    if constexpr (alignof(T) > MAX_ALIGN)
+    {
+        return std::allocator<T>{}.allocate(n);
+    }
+    else
+    {
+        const auto allocation_size = n * sizeof(T);
+        if (allocation_size > LARGEST_POOL_BLOCK_SIZE)
+        {
+            return std::allocator<T>{}.allocate(n);
+        }
+        return static_cast<T*>(detail::get_local_pool_resource().allocate(allocation_size));
+    }
+}
+
+template <class T>
+inline void PoolResourceAllocator<T>::deallocate(T* p, std::size_t n) noexcept
+{
+    if constexpr (alignof(T) > MAX_ALIGN)
+    {
+        return std::allocator<T>{}.deallocate(p);
+    }
+    else
+    {
+        const auto allocation_size = n * sizeof(T);
+        if (allocation_size > LARGEST_POOL_BLOCK_SIZE)
+        {
+            std::allocator<T>{}.deallocate(p, n);
+        }
+        else
+        {
+            detail::get_local_pool_resource().deallocate(p, allocation_size);
+        }
+    }
 }
 }
 

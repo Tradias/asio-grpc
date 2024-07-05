@@ -44,15 +44,13 @@ void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Handle
         }
     }
     detail::StartWorkAndGuard guard{grpc_context};
+    auto operation = detail::allocate_operation<detail::NoArgOperation>(static_cast<Handler&&>(handler));
     if (is_running_in_this_thread)
     {
-        auto operation =
-            detail::allocate_local_operation<detail::NoArgOperation>(grpc_context, static_cast<Handler&&>(handler));
         detail::GrpcContextImplementation::add_local_operation(operation);
     }
     else
     {
-        auto operation = detail::allocate_custom_operation<detail::NoArgOperation>(static_cast<Handler&&>(handler));
         detail::GrpcContextImplementation::add_remote_operation(grpc_context, operation);
     }
     guard.release();

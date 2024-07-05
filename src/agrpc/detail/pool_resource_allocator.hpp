@@ -15,8 +15,6 @@
 #ifndef AGRPC_DETAIL_POOL_RESOURCE_ALLOCATOR_HPP
 #define AGRPC_DETAIL_POOL_RESOURCE_ALLOCATOR_HPP
 
-#include <agrpc/detail/pool_resource.hpp>
-
 #include <cstddef>
 
 #include <agrpc/detail/config.hpp>
@@ -33,44 +31,32 @@ class PoolResourceAllocator
 
     PoolResourceAllocator() = default;
 
-    explicit PoolResourceAllocator(PoolResource* resource) noexcept : resource_(resource) {}
-
     PoolResourceAllocator(const PoolResourceAllocator&) = default;
 
     template <class U>
-    PoolResourceAllocator(const detail::PoolResourceAllocator<U>& other) noexcept : resource_(other.resource_)
+    PoolResourceAllocator(const detail::PoolResourceAllocator<U>&) noexcept
     {
     }
 
-    PoolResourceAllocator& operator=(const PoolResourceAllocator& other) = delete;
+    PoolResourceAllocator& operator=(const PoolResourceAllocator& other) = default;
 
-    PoolResourceAllocator& operator=(PoolResourceAllocator&& other) = delete;
+    PoolResourceAllocator& operator=(PoolResourceAllocator&& other) = default;
 
-    [[nodiscard]] T* allocate(std::size_t n)
-    {
-        static_assert(alignof(T) <= MAX_ALIGN, "Overaligned types are not supported");
-        return static_cast<T*>(resource_->allocate(n * sizeof(T), alignof(T)));
-    }
+    [[nodiscard]] static T* allocate(std::size_t n);
 
-    void deallocate(T* p, std::size_t n) noexcept { resource_->deallocate(p, n * sizeof(T), alignof(T)); }
+    static void deallocate(T* p, std::size_t n) noexcept;
 
     template <class U>
-    friend bool operator==(const PoolResourceAllocator& lhs, const detail::PoolResourceAllocator<U>& rhs) noexcept
+    friend bool operator==(const PoolResourceAllocator&, const detail::PoolResourceAllocator<U>&) noexcept
     {
-        return lhs.resource_ == rhs.resource_;
+        return true;
     }
 
     template <class U>
-    friend bool operator!=(const PoolResourceAllocator& lhs, const detail::PoolResourceAllocator<U>& rhs) noexcept
+    friend bool operator!=(const PoolResourceAllocator&, const detail::PoolResourceAllocator<U>&) noexcept
     {
-        return lhs.resource_ != rhs.resource_;
+        return false;
     }
-
-  private:
-    template <class>
-    friend class detail::PoolResourceAllocator;
-
-    PoolResource* resource_;
 };
 }
 

@@ -85,8 +85,7 @@ class HealthCheckWatcher : public detail::IntrusiveListHook<detail::HealthCheckW
 
     static auto create_and_initiate(agrpc::HealthCheckService& service, void* tag)
     {
-        auto& grpc_context = *service.grpc_context_;
-        return Base::create(grpc_context, service, tag);
+        return Base::create(service, tag);
     }
 
   private:
@@ -148,16 +147,13 @@ class HealthCheckChecker : public detail::OperationBase
 
     static auto create_and_initiate(agrpc::HealthCheckService& service, void* tag)
     {
-        auto& grpc_context = *service.grpc_context_;
-        return detail::allocate<HealthCheckChecker>(grpc_context.get_allocator(), service, tag).release();
+        return detail::allocate<HealthCheckChecker>(detail::get_local_allocator(), service, tag).release();
     }
 
-    void deallocate() { detail::destroy_deallocate(this, get_allocator()); }
+    void deallocate() { detail::destroy_deallocate(this, detail::get_local_allocator()); }
 
   private:
     agrpc::GrpcContext& grpc_context() const noexcept { return *service_.grpc_context_; }
-
-    agrpc::GrpcContext::allocator_type get_allocator() const noexcept { return grpc_context().get_allocator(); }
 
     static void do_complete(Base* op, detail::OperationResult, agrpc::GrpcContext& grpc_context)
     {

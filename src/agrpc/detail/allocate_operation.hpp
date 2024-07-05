@@ -35,52 +35,30 @@ template <class T>
 inline constexpr bool IS_STD_ALLOCATOR<std::allocator<T>> = true;
 
 template <template <class> class OperationTemplate, class Handler, class... Args>
-auto allocate_custom_operation(Handler&& handler, Args&&... args)
-{
-    const auto allocator = detail::get_allocator(handler);
-    auto operation = detail::allocate<OperationTemplate<detail::RemoveCrefT<Handler>>>(
-        allocator, detail::AllocationType::CUSTOM, static_cast<Handler&&>(handler), static_cast<Args&&>(args)...);
-    return operation.release();
-}
-
-template <template <class> class OperationTemplate, class Handler, class... Args>
-auto allocate_local_operation(agrpc::GrpcContext& grpc_context, Handler&& handler, Args&&... args)
+auto allocate_operation(Handler&& handler, Args&&... args)
 {
     using DecayedHandler = detail::RemoveCrefT<Handler>;
-    auto allocator = detail::get_allocator(handler);
-    if constexpr (detail::IS_STD_ALLOCATOR<decltype(allocator)>)
+    using Op = OperationTemplate<DecayedHandler>;
+    using Allocator = detail::AssociatedAllocatorT<DecayedHandler>;
+    if constexpr (detail::IS_STD_ALLOCATOR<Allocator>)
     {
-        auto operation = detail::allocate<OperationTemplate<DecayedHandler>>(
-            grpc_context.get_allocator(), detail::AllocationType::LOCAL, static_cast<Handler&&>(handler),
-            static_cast<Args&&>(args)...);
+        if (GrpcContextImplementation::running_in_this_thread())
+        {
+            auto operation = detail::allocate<Op>(PoolResourceAllocator<Op>{}, detail::AllocationType::LOCAL,
+                                                  static_cast<Handler&&>(handler), static_cast<Args&&>(args)...);
+            return operation.release();
+        }
+        auto operation = detail::allocate<Op>(std::allocator<Op>{}, detail::AllocationType::CUSTOM,
+                                              static_cast<Handler&&>(handler), static_cast<Args&&>(args)...);
         return operation.release();
     }
     else
     {
-        auto operation = detail::allocate<OperationTemplate<DecayedHandler>>(
-            allocator, detail::AllocationType::CUSTOM, static_cast<Handler&&>(handler), static_cast<Args&&>(args)...);
+        const auto allocator = detail::get_allocator(handler);
+        auto operation = detail::allocate<Op>(allocator, detail::AllocationType::CUSTOM,
+                                              static_cast<Handler&&>(handler), static_cast<Args&&>(args)...);
         return operation.release();
     }
-}
-
-template <template <class> class OperationTemplate, class Handler, class... Args>
-auto allocate_operation(bool, agrpc::GrpcContext&, Handler&& handler, Args&&... args)
-{
-    // if (is_running_in_this_thread)
-    // {
-    //     return detail::allocate_local_operation<OperationTemplate>(grpc_context, static_cast<Handler&&>(handler),
-    //                                                                static_cast<Args&&>(args)...);
-    // }
-    return detail::allocate_custom_operation<OperationTemplate>(static_cast<Handler&&>(handler),
-                                                                static_cast<Args&&>(args)...);
-}
-
-template <template <class> class OperationTemplate, class Handler, class... Args>
-auto allocate_operation(agrpc::GrpcContext& grpc_context, Handler&& handler, Args&&... args)
-{
-    return detail::allocate_operation<OperationTemplate>(
-        detail::GrpcContextImplementation::running_in_this_thread(grpc_context), grpc_context,
-        static_cast<Handler&&>(handler), static_cast<Args&&>(args)...);
 }
 }
 

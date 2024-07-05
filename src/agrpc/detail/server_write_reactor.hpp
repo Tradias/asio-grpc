@@ -56,9 +56,9 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
     }
 
     template <class... Args>
-    static auto create(agrpc::GrpcContext& grpc_context, Args&&... args)
+    static auto create(Args&&... args)
     {
-        return detail::allocate<Derived>(grpc_context.get_allocator(), static_cast<Args&&>(args)...).release();
+        return detail::allocate<Derived>(detail::get_local_allocator(), static_cast<Args&&>(args)...).release();
     }
 
     [[nodiscard]] bool is_writing() const noexcept { return &ServerWriteReactor::do_write_done == get_on_complete(); }
@@ -83,7 +83,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
     void deallocate() { detail::destroy_deallocate(static_cast<Derived*>(this), get_allocator()); }
 
   private:
-    auto get_allocator() const noexcept { return grpc_context_.get_allocator(); }
+    auto get_allocator() const noexcept { return detail::get_local_allocator(); }
 
     auto get_on_complete() const noexcept
     {
