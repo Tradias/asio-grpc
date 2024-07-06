@@ -92,8 +92,9 @@ inline GrpcContext::GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue> com
 }
 
 inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue, std::size_t thread_count_hint)
-    : completion_queue_(static_cast<std::unique_ptr<grpc::CompletionQueue>&&>(completion_queue)),
-      multithreaded_{thread_count_hint > 1}
+    : multithreaded_{thread_count_hint > 1},
+      completion_queue_(static_cast<std::unique_ptr<grpc::CompletionQueue>&&>(completion_queue))
+
 {
     detail::create_resources(memory_resources_, thread_count_hint);
 }
