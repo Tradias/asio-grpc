@@ -287,22 +287,22 @@ inline bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_con
     return processed;
 }
 
-inline detail::StackablePoolResource& GrpcContextImplementation::pop_resource(agrpc::GrpcContext& grpc_context)
+inline detail::ListablePoolResource& GrpcContextImplementation::pop_resource(agrpc::GrpcContext& grpc_context)
 {
-    std::lock_guard guard{grpc_context.resources_mutex_};
-    auto& resources = grpc_context.resources_;
+    std::lock_guard guard{grpc_context.memory_resources_mutex_};
+    auto& resources = grpc_context.memory_resources_;
     if (resources.empty())
     {
-        return *(new detail::StackablePoolResource());
+        return *(new detail::ListablePoolResource());
     }
     return resources.pop_front();
 }
 
 inline void GrpcContextImplementation::push_resource(agrpc::GrpcContext& grpc_context,
-                                                     detail::StackablePoolResource& resource)
+                                                     detail::ListablePoolResource& resource)
 {
-    std::lock_guard guard{grpc_context.resources_mutex_};
-    grpc_context.resources_.push_front(resource);
+    std::lock_guard guard{grpc_context.memory_resources_mutex_};
+    grpc_context.memory_resources_.push_front(resource);
 }
 
 inline void process_grpc_tag(void* tag, detail::OperationResult result, agrpc::GrpcContext& grpc_context)

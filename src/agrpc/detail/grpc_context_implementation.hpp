@@ -19,9 +19,9 @@
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/grpc_completion_queue_event.hpp>
 #include <agrpc/detail/intrusive_queue.hpp>
+#include <agrpc/detail/listable_pool_resource.hpp>
 #include <agrpc/detail/operation_base.hpp>
 #include <agrpc/detail/pool_resource.hpp>
-#include <agrpc/detail/stackable_pool_resource.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <grpcpp/completion_queue.h>
 
@@ -79,7 +79,7 @@ struct GrpcContextThreadContext
     detail::IntrusiveQueue<detail::QueueableOperationBase> local_work_queue_;
     bool check_remote_work_;
     GrpcContextThreadContext* old_context_;
-    detail::StackablePoolResource& resource_;
+    detail::ListablePoolResource& resource_;
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     asio::detail::thread_info_base this_thread_;
@@ -143,9 +143,9 @@ struct GrpcContextImplementation
     template <class LoopFunction>
     static bool process_work(agrpc::GrpcContext& grpc_context, LoopFunction loop_function);
 
-    static detail::StackablePoolResource& pop_resource(agrpc::GrpcContext& grpc_context);
+    static detail::ListablePoolResource& pop_resource(agrpc::GrpcContext& grpc_context);
 
-    static void push_resource(agrpc::GrpcContext& grpc_context, detail::StackablePoolResource& resource);
+    static void push_resource(agrpc::GrpcContext& grpc_context, detail::ListablePoolResource& resource);
 };
 
 void process_grpc_tag(void* tag, detail::OperationResult result, agrpc::GrpcContext& grpc_context);

@@ -58,7 +58,7 @@ inline void create_resources(T& resources, std::size_t thread_count_hint = 1)
 {
     for (size_t i{}; i != thread_count_hint; ++i)
     {
-        auto resource = new detail::StackablePoolResource();
+        auto resource = new detail::ListablePoolResource();
         resources.push_front(*resource);
     }
 }
@@ -73,24 +73,29 @@ inline void delete_resources(T& resources)
 }
 }  // namespace detail
 
-inline GrpcContext::GrpcContext() { detail::create_resources(resources_); }
+inline GrpcContext::GrpcContext() : GrpcContext(std::make_unique<grpc::CompletionQueue>(), 1) {}
 
-inline GrpcContext::GrpcContext(std::size_t thread_count_hint) : multithreaded_{thread_count_hint > 1}
+inline GrpcContext::GrpcContext(std::size_t thread_count_hint)
+    : GrpcContext(std::make_unique<grpc::CompletionQueue>(), thread_count_hint)
 {
-    detail::create_resources(resources_, thread_count_hint);
 }
 
 template <class>
 inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue>&& completion_queue)
-    : completion_queue_(static_cast<std::unique_ptr<grpc::CompletionQueue>&&>(completion_queue))
+    : GrpcContext(static_cast<std::unique_ptr<grpc::CompletionQueue>&&>(completion_queue), 1)
 {
-    detail::create_resources(resources_);
 }
 
 inline GrpcContext::GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue> completion_queue)
-    : completion_queue_(static_cast<std::unique_ptr<grpc::ServerCompletionQueue>&&>(completion_queue))
+    : GrpcContext(static_cast<std::unique_ptr<grpc::ServerCompletionQueue>&&>(completion_queue), 1)
 {
-    detail::create_resources(resources_);
+}
+
+inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue, std::size_t thread_count_hint)
+    : completion_queue_(static_cast<std::unique_ptr<grpc::CompletionQueue>&&>(completion_queue)),
+      multithreaded_{thread_count_hint > 1}
+{
+    detail::create_resources(memory_resources_, thread_count_hint);
 }
 
 inline GrpcContext::~GrpcContext()
@@ -103,7 +108,7 @@ inline GrpcContext::~GrpcContext()
     asio::execution_context::shutdown();
     asio::execution_context::destroy();
 #endif
-    detail::delete_resources(resources_);
+    detail::delete_resources(memory_resources_);
 }
 
 inline bool GrpcContext::run()

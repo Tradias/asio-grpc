@@ -15,6 +15,7 @@
 #ifndef AGRPC_DETAIL_POOL_RESOURCE_HPP
 #define AGRPC_DETAIL_POOL_RESOURCE_HPP
 
+#include <agrpc/detail/intrusive_slist.hpp>
 #include <agrpc/detail/math.hpp>
 #include <agrpc/detail/memory.hpp>
 
@@ -22,59 +23,123 @@
 
 #include <agrpc/detail/config.hpp>
 
+// The following PoolResource and related functions have been adapted from
+// https://github.com/boostorg/container/blob/develop/src/pool_resource.cpp
+
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+class MemoryBlockSlist
+{
+  private:
+    struct Header
+    {
+        Header* next_;
+        std::size_t size_;
+    };
+
+    using List = detail::IntrusiveSlist<Header>;
+
+    static constexpr std::size_t HEADER_SIZE = detail::align(sizeof(Header), MAX_ALIGN);
+
+  public:
+    void* allocate_already_max_aligned(std::size_t size)
+    {
+        const auto allocation_size = size + HEADER_SIZE;
+        void* p = MaxAlignAllocator::allocate_already_max_aligned(allocation_size);
+        auto* const header = ::new (p) Header;
+        header->size_ = allocation_size;
+        slist_.push_front(header);
+        return static_cast<char*>(p) + HEADER_SIZE;
+    }
+
+    void release_already_max_aligned() noexcept
+    {
+        for (auto it = slist_.begin(); it != slist_.end();)
+        {
+            auto& header = *it;
+            ++it;
+            const auto size = header.size_;
+            header.~Header();
+            MaxAlignAllocator::deallocate_already_max_aligned(&header, size);
+        }
+        slist_.clear();
+    }
+
+  private:
+    List slist_;
+};
+
 class Pool
 {
   private:
-    static constexpr std::size_t BLOCK_COUNT = 4;
+    struct FreeListEntry
+    {
+        FreeListEntry* next_;
+    };
+
+    using FreeList = detail::IntrusiveSlist<FreeListEntry>;
+
+    static constexpr std::size_t MINIMUM_MAX_BLOCKS_PER_CHUNK = 1u;
+    static constexpr std::size_t MAX_BLOCKS_PER_CHUNK = 32u;
 
   public:
-    void* allocate_block(std::size_t pool_size)
+    void* allocate_block() noexcept
     {
-        for (auto& block : blocks)
+        if (free_list_.empty())
         {
-            if (block)
-            {
-                return std::exchange(block, nullptr);
-            }
+            return nullptr;
         }
-        return MaxAlignAllocator::allocate_already_max_aligned(pool_size);
+        auto* pv = free_list_.pop_front();
+        pv->~FreeListEntry();
+        return pv;
     }
 
-    void deallocate_block(void* p, std::size_t pool_size) noexcept
+    void deallocate_block(void* p) noexcept
     {
-        for (auto& block : blocks)
-        {
-            if (!block)
-            {
-                block = p;
-                return;
-            }
-        }
-        MaxAlignAllocator::deallocate_already_max_aligned(p, pool_size);
+        auto* pv = ::new (p) FreeListEntry;
+        free_list_.push_front(pv);
     }
 
-    void release(std::size_t pool_size) noexcept
+    void release() noexcept
     {
-        for (auto& block : blocks)
+        free_list_.clear();
+        chunks_.release_already_max_aligned();
+        next_blocks_per_chunk_ = MINIMUM_MAX_BLOCKS_PER_CHUNK;
+    }
+
+    void replenish(std::size_t block_size)
+    {
+        const std::size_t blocks_per_chunk = next_blocks_per_chunk_;
+
+        // Minimum block size is at least max_align, so all pools allocate sizes that are multiple of max_align,
+        // meaning that all blocks are max_align-aligned.
+        auto* p = static_cast<char*>(chunks_.allocate_already_max_aligned(blocks_per_chunk * block_size));
+
+        for (std::size_t i{}; i != blocks_per_chunk; ++i)
         {
-            if (block)
-            {
-                MaxAlignAllocator::deallocate_already_max_aligned(block, pool_size);
-            }
+            auto* const pv = ::new (static_cast<void*>(p)) FreeListEntry;
+            free_list_.push_front(pv);
+            p += block_size;
         }
+
+        next_blocks_per_chunk_ =
+            MAX_BLOCKS_PER_CHUNK / 2u < blocks_per_chunk ? MAX_BLOCKS_PER_CHUNK : blocks_per_chunk * 2u;
     }
 
   private:
-    void* blocks[BLOCK_COUNT]{};
+    MemoryBlockSlist chunks_;
+    FreeList free_list_;
+    std::size_t next_blocks_per_chunk_{MINIMUM_MAX_BLOCKS_PER_CHUNK};
 };
 
-inline constexpr std::size_t SMALLEST_POOL_BLOCK_SIZE = 32u;
+inline constexpr std::size_t POWER_OF_TWO_SIZEOF_VOID_PTR = (sizeof(void*) % 2 == 0) ? sizeof(void*) : MAX_ALIGN;
+inline constexpr std::size_t SMALLEST_POOL_BLOCK_SIZE =
+    MAX_ALIGN > 2 * POWER_OF_TWO_SIZEOF_VOID_PTR ? MAX_ALIGN : 2 * POWER_OF_TWO_SIZEOF_VOID_PTR;
 inline constexpr std::size_t SMALLEST_POOL_BLOCK_SIZE_LOG2 = detail::ceil_log2(SMALLEST_POOL_BLOCK_SIZE);
-inline constexpr std::size_t LARGEST_POOL_BLOCK_SIZE = 512u;
+inline constexpr std::size_t LARGEST_POOL_BLOCK_SIZE =
+    SMALLEST_POOL_BLOCK_SIZE > 4096u ? SMALLEST_POOL_BLOCK_SIZE : 4096u;
 
 constexpr std::size_t get_pool_index(std::size_t size) noexcept
 {
@@ -83,18 +148,9 @@ constexpr std::size_t get_pool_index(std::size_t size) noexcept
     return detail::ceil_log2(size) - SMALLEST_POOL_BLOCK_SIZE_LOG2;
 }
 
-constexpr std::size_t get_pool_size(std::size_t pool_idx) noexcept { return SMALLEST_POOL_BLOCK_SIZE << pool_idx; }
-
-struct PoolIndexAndSize
+constexpr std::size_t get_block_size_of_pool_at(std::size_t index) noexcept
 {
-    std::size_t index;
-    std::size_t size;
-};
-
-constexpr PoolIndexAndSize get_pool_index_and_size(std::size_t size) noexcept
-{
-    const auto pool_idx = detail::get_pool_index(size);
-    return {pool_idx, detail::get_pool_size(pool_idx)};
+    return SMALLEST_POOL_BLOCK_SIZE << index;
 }
 
 class PoolResource
@@ -102,37 +158,45 @@ class PoolResource
   public:
     PoolResource() = default;
 
-    ~PoolResource() noexcept
-    {
-        auto pool_size = SMALLEST_POOL_BLOCK_SIZE;
-        for (auto& pool : pools_)
-        {
-            pool.release(pool_size);
-            pool_size <<= 1;
-        }
-    }
+    ~PoolResource() noexcept { release(); }
 
     PoolResource(const PoolResource& other) = delete;
     PoolResource(PoolResource&& other) = delete;
     PoolResource& operator=(const PoolResource& other) = delete;
     PoolResource& operator=(PoolResource&& other) = delete;
 
+    // Cannot handle allocations larger than LARGEST_POOL_BLOCK_SIZE or larger aligned than std::max_align_t
     [[nodiscard]] void* allocate(std::size_t size)
     {
-        const auto [pool_idx, pool_size] = detail::get_pool_index_and_size(size);
-        return pools_[pool_idx].allocate_block(pool_size);
+        const auto pool_idx = detail::get_pool_index(size);
+        Pool& pool = pools_[pool_idx];
+        void* p = pool.allocate_block();
+        if (p == nullptr)
+        {
+            pool.replenish(detail::get_block_size_of_pool_at(pool_idx));
+            p = pool.allocate_block();
+        }
+        return p;
     }
 
     void deallocate(void* p, std::size_t size)
     {
-        const auto [pool_idx, pool_size] = detail::get_pool_index_and_size(size);
-        pools_[pool_idx].deallocate_block(p, pool_size);
+        const auto pool_idx = detail::get_pool_index(size);
+        return pools_[pool_idx].deallocate_block(p);
+    }
+
+    void release() noexcept
+    {
+        for (auto& pool : pools_)
+        {
+            pool.release();
+        }
     }
 
   private:
     static constexpr std::size_t POOL_COUNT = detail::get_pool_index(LARGEST_POOL_BLOCK_SIZE) + 1u;
 
-    Pool pools_[POOL_COUNT]{};
+    Pool pools_[POOL_COUNT];
 };
 }
 

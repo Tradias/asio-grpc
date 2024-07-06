@@ -44,20 +44,20 @@ auto allocate_operation(Handler&& handler, Args&&... args)
     {
         if (GrpcContextImplementation::running_in_this_thread())
         {
-            auto operation = detail::allocate<Op>(PoolResourceAllocator<Op>{}, detail::AllocationType::LOCAL,
-                                                  static_cast<Handler&&>(handler), static_cast<Args&&>(args)...);
-            return operation.release();
+            return detail::allocate<Op>(PoolResourceAllocator<Op>{}, detail::AllocationType::LOCAL,
+                                        static_cast<Handler&&>(handler), static_cast<Args&&>(args)...)
+                .release();
         }
-        auto operation = detail::allocate<Op>(std::allocator<Op>{}, detail::AllocationType::CUSTOM,
-                                              static_cast<Handler&&>(handler), static_cast<Args&&>(args)...);
-        return operation.release();
+        return detail::allocate<Op>(std::allocator<Op>{}, detail::AllocationType::CUSTOM,
+                                    static_cast<Handler&&>(handler), static_cast<Args&&>(args)...)
+            .release();
     }
     else
     {
         const auto allocator = detail::get_allocator(handler);
-        auto operation = detail::allocate<Op>(allocator, detail::AllocationType::CUSTOM,
-                                              static_cast<Handler&&>(handler), static_cast<Args&&>(args)...);
-        return operation.release();
+        return detail::allocate<Op>(allocator, detail::AllocationType::CUSTOM, static_cast<Handler&&>(handler),
+                                    static_cast<Args&&>(args)...)
+            .release();
     }
 }
 }

@@ -24,8 +24,8 @@
 #include <agrpc/detail/intrusive_list.hpp>
 #include <agrpc/detail/intrusive_queue.hpp>
 #include <agrpc/detail/intrusive_stack.hpp>
+#include <agrpc/detail/listable_pool_resource.hpp>
 #include <agrpc/detail/operation_base.hpp>
-#include <agrpc/detail/stackable_pool_resource.hpp>
 #include <grpcpp/alarm.h>
 #include <grpcpp/completion_queue.h>
 
@@ -293,10 +293,12 @@ class GrpcContext
   private:
     using RemoteWorkQueue = detail::AtomicIntrusiveQueue<detail::QueueableOperationBase>;
     using LocalWorkQueue = detail::IntrusiveQueue<detail::QueueableOperationBase>;
-    using Resources = detail::IntrusiveStack<detail::StackablePoolResource>;
+    using MemoryResources = detail::IntrusiveStack<detail::ListablePoolResource>;
 
     friend detail::GrpcContextImplementation;
     friend detail::GrpcContextThreadContext;
+
+    GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue, std::size_t thread_count_hint);
 
     bool run_until_impl(::gpr_timespec deadline);
 
@@ -307,10 +309,10 @@ class GrpcContext
     bool check_remote_work_{false};
     bool multithreaded_{false};
     LocalWorkQueue local_work_queue_{};
-    std::unique_ptr<grpc::CompletionQueue> completion_queue_{std::make_unique<grpc::CompletionQueue>()};
+    std::unique_ptr<grpc::CompletionQueue> completion_queue_;
     RemoteWorkQueue remote_work_queue_{false};
-    std::mutex resources_mutex_;
-    Resources resources_;
+    std::mutex memory_resources_mutex_;
+    MemoryResources memory_resources_;
 };
 
 AGRPC_NAMESPACE_END

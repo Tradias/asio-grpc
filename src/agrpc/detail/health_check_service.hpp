@@ -296,9 +296,13 @@ inline grpc::ServerBuilder& add_health_check_service(grpc::ServerBuilder& builde
 
 inline void start_health_check_service(agrpc::HealthCheckService& service, agrpc::GrpcContext& grpc_context)
 {
-    service.grpc_context_ = &grpc_context;
-    service.repeatedly_request_watch_.start();
-    service.repeatedly_request_check_.start();
+    detail::create_and_submit_no_arg_operation<false>(grpc_context,
+                                                      [&]() mutable
+                                                      {
+                                                          service.grpc_context_ = &grpc_context;
+                                                          service.repeatedly_request_watch_.start();
+                                                          service.repeatedly_request_check_.start();
+                                                      });
 }
 
 inline void start_health_check_service(grpc::Server& server, agrpc::GrpcContext& grpc_context)

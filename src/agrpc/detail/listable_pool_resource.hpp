@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_STACKABLE_POOL_RESOURCE_HPP
-#define AGRPC_DETAIL_STACKABLE_POOL_RESOURCE_HPP
+#ifndef AGRPC_DETAIL_LISTABLE_POOL_RESOURCE_HPP
+#define AGRPC_DETAIL_LISTABLE_POOL_RESOURCE_HPP
 
 #include <agrpc/detail/pool_resource.hpp>
 
@@ -23,13 +23,13 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-struct StackablePoolResource
+struct ListablePoolResource
 {
-    StackablePoolResource* next_;
+    ListablePoolResource* next_;
     detail::PoolResource resource_;
 };
 }
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_STACKABLE_POOL_RESOURCE_HPP
+#endif  // AGRPC_DETAIL_LISTABLE_POOL_RESOURCE_HPP
