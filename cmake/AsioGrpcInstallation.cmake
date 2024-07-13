@@ -43,5 +43,4 @@ install(
     DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/src/agrpc"
     TYPE INCLUDE
     FILES_MATCHING
-    PATTERN "*.hpp"
-    PATTERN "*.ipp")
+    PATTERN "*.hpp")

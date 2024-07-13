@@ -5,7 +5,6 @@ on:
     paths:
       - '**.cpp'
       - '**.hpp'
-      - '**.ipp'
       - '**.cmake'
       - '**.cmake.in'
       - '**/CMakeLists.txt'

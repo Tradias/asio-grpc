@@ -86,6 +86,8 @@ class GrpcContext
      */
     explicit GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue> completion_queue);
 
+    GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue> completion_queue, std::size_t thread_count_hint);
+
     /**
      * @brief Destruct the GrpcContext
      *

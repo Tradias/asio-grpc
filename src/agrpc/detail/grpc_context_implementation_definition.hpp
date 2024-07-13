@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_GRPC_CONTEXT_IMPLEMENTATION_IPP
-#define AGRPC_DETAIL_GRPC_CONTEXT_IMPLEMENTATION_IPP
+#ifndef AGRPC_DETAIL_GRPC_CONTEXT_IMPLEMENTATION_DEFINITION_HPP
+#define AGRPC_DETAIL_GRPC_CONTEXT_IMPLEMENTATION_DEFINITION_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/grpc_completion_queue_event.hpp>
@@ -368,4 +368,4 @@ inline void PoolResourceAllocator<T>::deallocate(T* p, std::size_t n) noexcept
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_GRPC_CONTEXT_IMPLEMENTATION_IPP
+#endif  // AGRPC_DETAIL_GRPC_CONTEXT_IMPLEMENTATION_DEFINITION_HPP

@@ -12,20 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_GRPC_CONTEXT_IPP
-#define AGRPC_DETAIL_GRPC_CONTEXT_IPP
+#ifndef AGRPC_DETAIL_GRPC_CONTEXT_DEFINITION_HPP
+#define AGRPC_DETAIL_GRPC_CONTEXT_DEFINITION_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/grpc_completion_queue_event.hpp>
 #include <agrpc/detail/grpc_executor_options.hpp>
 #include <agrpc/detail/intrusive_queue.hpp>
 #include <agrpc/grpc_context.hpp>
-#include <agrpc/grpc_executor.hpp>
 #include <grpcpp/alarm.h>
 #include <grpcpp/completion_queue.h>
 
 #include <atomic>
-#include <utility>
 
 #include <agrpc/detail/config.hpp>
 
@@ -89,6 +87,15 @@ inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue>&& complet
 inline GrpcContext::GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue> completion_queue)
     : GrpcContext(static_cast<std::unique_ptr<grpc::ServerCompletionQueue>&&>(completion_queue), 1)
 {
+}
+
+inline GrpcContext::GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue> completion_queue,
+                                std::size_t thread_count_hint)
+    : multithreaded_{thread_count_hint > 1},
+      completion_queue_(static_cast<std::unique_ptr<grpc::ServerCompletionQueue>&&>(completion_queue))
+
+{
+    detail::create_resources(memory_resources_, thread_count_hint);
 }
 
 inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue, std::size_t thread_count_hint)
@@ -227,6 +234,6 @@ agrpc::GrpcContext::executor_type tag_invoke(stdexec::get_completion_scheduler_t
 
 AGRPC_NAMESPACE_END
 
-#include <agrpc/detail/grpc_context_implementation.ipp>
+#include <agrpc/detail/grpc_context_implementation_definition.hpp>
 
-#endif  // AGRPC_DETAIL_GRPC_CONTEXT_IPP
+#endif  // AGRPC_DETAIL_GRPC_CONTEXT_DEFINITION_HPP

@@ -131,6 +131,15 @@ class NotifyWhenDoneEvent;
 
 template <class ServerRPC, class RPCHandler, class CompletionHandler>
 struct RegisterCallbackRPCHandlerOperation;
+
+template <class Signature>
+class ManualResetEvent;
+
+template <class Signature>
+struct ManualResetEventOperationBase;
+
+template <class Signature, class Receiver>
+struct ManualResetEventOperation;
 }
 
 AGRPC_NAMESPACE_END
