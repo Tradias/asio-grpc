@@ -34,14 +34,14 @@ class NoArgOperation : public detail::QueueableOperationBase
     using Base = detail::QueueableOperationBase;
 
     template <bool UseLocalAllocator>
-    static void do_complete(detail::OperationBase* op, OperationResult result, agrpc::GrpcContext& grpc_context)
+    static void do_complete(detail::OperationBase* op, OperationResult result, agrpc::GrpcContext&)
     {
         auto* self = static_cast<NoArgOperation*>(op);
         detail::AllocationGuard ptr{self, [&]
                                     {
                                         if constexpr (UseLocalAllocator)
                                         {
-                                            return detail::get_local_allocator(grpc_context);
+                                            return detail::get_local_allocator();
                                         }
                                         else
                                         {

@@ -12,20 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_GRPC_CONTEXT_IPP
-#define AGRPC_DETAIL_GRPC_CONTEXT_IPP
+#ifndef AGRPC_DETAIL_GRPC_CONTEXT_DEFINITION_HPP
+#define AGRPC_DETAIL_GRPC_CONTEXT_DEFINITION_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/grpc_completion_queue_event.hpp>
 #include <agrpc/detail/grpc_executor_options.hpp>
 #include <agrpc/detail/intrusive_queue.hpp>
 #include <agrpc/grpc_context.hpp>
-#include <agrpc/grpc_executor.hpp>
 #include <grpcpp/alarm.h>
 #include <grpcpp/completion_queue.h>
 
 #include <atomic>
-#include <utility>
 
 #include <agrpc/detail/config.hpp>
 
@@ -40,7 +38,8 @@ struct AlwaysFalsePredicate
 
 inline void drain_completion_queue(agrpc::GrpcContext& grpc_context)
 {
-    while (detail::GrpcContextImplementation::do_one(grpc_context, detail::GrpcContextImplementation::INFINITE_FUTURE,
+    detail::GrpcContextThreadContext thread_context{grpc_context};
+    while (detail::GrpcContextImplementation::do_one(thread_context, detail::GrpcContextImplementation::INFINITE_FUTURE,
                                                      detail::InvokeHandler::NO_, detail::AlwaysFalsePredicate{}))
     {
         //
@@ -51,17 +50,60 @@ inline grpc::CompletionQueue* get_completion_queue(agrpc::GrpcContext& grpc_cont
 {
     return grpc_context.get_completion_queue();
 }
+
+template <class T>
+inline void create_resources(T& resources, std::size_t thread_count_hint = 1)
+{
+    for (size_t i{}; i != thread_count_hint; ++i)
+    {
+        auto resource = new detail::ListablePoolResource();
+        resources.push_front(*resource);
+    }
+}
+
+template <class T>
+inline void delete_resources(T& resources)
+{
+    while (!resources.empty())
+    {
+        delete &resources.pop_front();
+    }
+}
 }  // namespace detail
+
+inline GrpcContext::GrpcContext() : GrpcContext(std::make_unique<grpc::CompletionQueue>(), 1) {}
+
+inline GrpcContext::GrpcContext(std::size_t thread_count_hint)
+    : GrpcContext(std::make_unique<grpc::CompletionQueue>(), thread_count_hint)
+{
+}
 
 template <class>
 inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue>&& completion_queue)
-    : completion_queue_(static_cast<std::unique_ptr<grpc::CompletionQueue>&&>(completion_queue))
+    : GrpcContext(static_cast<std::unique_ptr<grpc::CompletionQueue>&&>(completion_queue), 1)
 {
 }
 
 inline GrpcContext::GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue> completion_queue)
-    : completion_queue_(static_cast<std::unique_ptr<grpc::ServerCompletionQueue>&&>(completion_queue))
+    : GrpcContext(static_cast<std::unique_ptr<grpc::ServerCompletionQueue>&&>(completion_queue), 1)
 {
+}
+
+inline GrpcContext::GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue> completion_queue,
+                                std::size_t thread_count_hint)
+    : multithreaded_{thread_count_hint > 1},
+      completion_queue_(static_cast<std::unique_ptr<grpc::ServerCompletionQueue>&&>(completion_queue))
+
+{
+    detail::create_resources(memory_resources_, thread_count_hint);
+}
+
+inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue, std::size_t thread_count_hint)
+    : multithreaded_{thread_count_hint > 1},
+      completion_queue_(static_cast<std::unique_ptr<grpc::CompletionQueue>&&>(completion_queue))
+
+{
+    detail::create_resources(memory_resources_, thread_count_hint);
 }
 
 inline GrpcContext::~GrpcContext()
@@ -74,16 +116,17 @@ inline GrpcContext::~GrpcContext()
     asio::execution_context::shutdown();
     asio::execution_context::destroy();
 #endif
+    detail::delete_resources(memory_resources_);
 }
 
 inline bool GrpcContext::run()
 {
     return detail::GrpcContextImplementation::process_work(
         *this,
-        [](agrpc::GrpcContext& grpc_context)
+        [](detail::GrpcContextThreadContext& context)
         {
             return detail::GrpcContextImplementation::do_one_if_not_stopped(
-                grpc_context, detail::GrpcContextImplementation::INFINITE_FUTURE);
+                context, detail::GrpcContextImplementation::INFINITE_FUTURE);
         });
 }
 
@@ -91,10 +134,10 @@ inline bool GrpcContext::run_completion_queue()
 {
     return detail::GrpcContextImplementation::process_work(
         *this,
-        [](agrpc::GrpcContext& grpc_context)
+        [](detail::GrpcContextThreadContext& context)
         {
             return detail::GrpcContextImplementation::do_one_completion_queue_if_not_stopped(
-                grpc_context, detail::GrpcContextImplementation::INFINITE_FUTURE);
+                context, detail::GrpcContextImplementation::INFINITE_FUTURE);
         });
 }
 
@@ -102,10 +145,10 @@ inline bool GrpcContext::poll()
 {
     return detail::GrpcContextImplementation::process_work(
         *this,
-        [](agrpc::GrpcContext& grpc_context)
+        [](detail::GrpcContextThreadContext& context)
         {
             return detail::GrpcContextImplementation::do_one_if_not_stopped(
-                grpc_context, detail::GrpcContextImplementation::TIME_ZERO);
+                context, detail::GrpcContextImplementation::TIME_ZERO);
         });
 }
 
@@ -113,9 +156,9 @@ inline bool GrpcContext::run_until_impl(::gpr_timespec deadline)
 {
     return detail::GrpcContextImplementation::process_work(
         *this,
-        [deadline](agrpc::GrpcContext& grpc_context)
+        [deadline](detail::GrpcContextThreadContext& context)
         {
-            return detail::GrpcContextImplementation::do_one_if_not_stopped(grpc_context, deadline);
+            return detail::GrpcContextImplementation::do_one_if_not_stopped(context, deadline);
         });
 }
 
@@ -124,10 +167,10 @@ inline bool GrpcContext::run_while(Condition&& condition)
 {
     return detail::GrpcContextImplementation::process_work(
         *this,
-        [&](agrpc::GrpcContext& grpc_context)
+        [&](detail::GrpcContextThreadContext& context)
         {
             return condition() && detail::GrpcContextImplementation::do_one_if_not_stopped(
-                                      grpc_context, detail::GrpcContextImplementation::INFINITE_FUTURE);
+                                      context, detail::GrpcContextImplementation::INFINITE_FUTURE);
         });
 }
 
@@ -135,10 +178,10 @@ inline bool GrpcContext::poll_completion_queue()
 {
     return detail::GrpcContextImplementation::process_work(
         *this,
-        [](agrpc::GrpcContext& grpc_context)
+        [](detail::GrpcContextThreadContext& context)
         {
             return detail::GrpcContextImplementation::do_one_completion_queue_if_not_stopped(
-                grpc_context, detail::GrpcContextImplementation::TIME_ZERO);
+                context, detail::GrpcContextImplementation::TIME_ZERO);
         });
 }
 
@@ -159,7 +202,7 @@ inline GrpcContext::executor_type GrpcContext::get_executor() noexcept { return 
 
 inline GrpcContext::executor_type GrpcContext::get_scheduler() noexcept { return GrpcContext::executor_type{*this}; }
 
-inline GrpcContext::allocator_type GrpcContext::get_allocator() noexcept { return allocator_type{&local_resource_}; }
+inline GrpcContext::allocator_type GrpcContext::get_allocator() noexcept { return allocator_type{}; }
 
 inline void GrpcContext::work_started() noexcept { outstanding_work_.fetch_add(1, std::memory_order_relaxed); }
 
@@ -191,6 +234,6 @@ agrpc::GrpcContext::executor_type tag_invoke(stdexec::get_completion_scheduler_t
 
 AGRPC_NAMESPACE_END
 
-#include <agrpc/detail/grpc_context_implementation.ipp>
+#include <agrpc/detail/grpc_context_implementation_definition.hpp>
 
-#endif  // AGRPC_DETAIL_GRPC_CONTEXT_IPP
+#endif  // AGRPC_DETAIL_GRPC_CONTEXT_DEFINITION_HPP

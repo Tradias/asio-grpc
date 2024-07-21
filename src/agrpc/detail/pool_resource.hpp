@@ -15,7 +15,6 @@
 #ifndef AGRPC_DETAIL_POOL_RESOURCE_HPP
 #define AGRPC_DETAIL_POOL_RESOURCE_HPP
 
-#include <agrpc/detail/intrusive_circular_list.hpp>
 #include <agrpc/detail/intrusive_slist.hpp>
 #include <agrpc/detail/math.hpp>
 #include <agrpc/detail/memory.hpp>
@@ -31,55 +30,6 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-class MemoryBlockList
-{
-  private:
-    struct Header : detail::IntrusiveCircularListHook
-    {
-        std::size_t size_;
-    };
-
-    using List = detail::IntrusiveCircularList;
-
-    static constexpr std::size_t HEADER_SIZE = detail::align(sizeof(Header), MAX_ALIGN);
-
-  public:
-    void* allocate(std::size_t size)
-    {
-        const auto allocation_size = size + HEADER_SIZE;
-        void* p = MaxAlignAllocator::allocate(allocation_size);
-        auto* const header = ::new (p) Header;
-        header->size_ = allocation_size;
-        list_.push_front(header);
-        return static_cast<char*>(p) + HEADER_SIZE;
-    }
-
-    static void deallocate(void* p)
-    {
-        auto* header = reinterpret_cast<Header*>(static_cast<char*>(p) - HEADER_SIZE);
-        List::remove(header);
-        const auto size = header->size_;
-        header->~Header();
-        MaxAlignAllocator::deallocate(header, size);
-    }
-
-    void release() noexcept
-    {
-        for (auto it = list_.begin(); it != list_.end();)
-        {
-            auto& header = static_cast<Header&>(*it);
-            ++it;
-            std::size_t size = header.size_;
-            header.~Header();
-            MaxAlignAllocator::deallocate(&header, size);
-        }
-        list_.clear();
-    }
-
-  private:
-    List list_;
-};
-
 class MemoryBlockSlist
 {
   private:
@@ -94,7 +44,7 @@ class MemoryBlockSlist
     static constexpr std::size_t HEADER_SIZE = detail::align(sizeof(Header), MAX_ALIGN);
 
   public:
-    void* allocate_already_max_aligned(std::size_t size)
+    [[nodiscard]] void* allocate_already_max_aligned(std::size_t size)
     {
         const auto allocation_size = size + HEADER_SIZE;
         void* p = MaxAlignAllocator::allocate_already_max_aligned(allocation_size);
@@ -131,71 +81,101 @@ class Pool
 
     using FreeList = detail::IntrusiveSlist<FreeListEntry>;
 
+    struct Header
+    {
+        bool unmanaged_{};
+    };
+
+    static constexpr std::size_t HEADER_SIZE = detail::align(sizeof(Header), MAX_ALIGN);
     static constexpr std::size_t MINIMUM_MAX_BLOCKS_PER_CHUNK = 1u;
     static constexpr std::size_t MAX_BLOCKS_PER_CHUNK = 32u;
 
   public:
-    void* allocate_block() noexcept
+    [[nodiscard]] void* allocate_block() noexcept
     {
-        if (free_slist_.empty())
+        if (free_list_.empty())
         {
             return nullptr;
         }
-        auto* pv = free_slist_.pop_front();
+        auto* pv = free_list_.pop_front();
         pv->~FreeListEntry();
         return pv;
     }
 
-    void deallocate_block(void* p) noexcept
+    [[nodiscard]] void* allocate_unmanaged_block(std::size_t block_size) noexcept
     {
-        auto* pv = ::new (p) FreeListEntry;
-        free_slist_.push_front(pv);
+        const auto allocation_size = block_size + HEADER_SIZE;
+        void* p = MaxAlignAllocator::allocate_already_max_aligned(allocation_size);
+        auto* const header = ::new (p) Header;
+        header->unmanaged_ = true;
+        return static_cast<char*>(p) + HEADER_SIZE;
+    }
+
+    [[nodiscard]] bool max_size_reached() const noexcept { return next_blocks_per_chunk_ == MAX_BLOCKS_PER_CHUNK; }
+
+    void deallocate_block(void* p, std::size_t block_size) noexcept
+    {
+        auto* const header = reinterpret_cast<Header*>(static_cast<char*>(p) - HEADER_SIZE);
+        if (header->unmanaged_)
+        {
+            header->~Header();
+            MaxAlignAllocator::deallocate_already_max_aligned(header, block_size + HEADER_SIZE);
+        }
+        else
+        {
+            auto* const pv = ::new (p) FreeListEntry;
+            free_list_.push_front(pv);
+        }
     }
 
     void release() noexcept
     {
-        free_slist_.clear();
-        block_slist_.release_already_max_aligned();
+        free_list_.clear();
+        chunks_.release_already_max_aligned();
         next_blocks_per_chunk_ = MINIMUM_MAX_BLOCKS_PER_CHUNK;
     }
 
     void replenish(std::size_t block_size)
     {
-        const std::size_t blocks_per_chunk = next_blocks_per_chunk_;
+        const auto blocks_per_chunk = next_blocks_per_chunk_;
 
         // Minimum block size is at least max_align, so all pools allocate sizes that are multiple of max_align,
         // meaning that all blocks are max_align-aligned.
-        auto* p = static_cast<char*>(block_slist_.allocate_already_max_aligned(blocks_per_chunk * block_size));
+        auto* p = static_cast<char*>(
+            chunks_.allocate_already_max_aligned(blocks_per_chunk * block_size + blocks_per_chunk * HEADER_SIZE));
 
         for (std::size_t i{}; i != blocks_per_chunk; ++i)
         {
-            auto* const pv = ::new (static_cast<void*>(p)) FreeListEntry;
-            free_slist_.push_front(pv);
-            p += block_size;
+            ::new (static_cast<void*>(p)) Header{};
+            auto* const pv = ::new (static_cast<void*>(p + HEADER_SIZE)) FreeListEntry;
+            free_list_.push_front(pv);
+            p += block_size + HEADER_SIZE;
         }
 
-        next_blocks_per_chunk_ =
-            MAX_BLOCKS_PER_CHUNK / 2u < blocks_per_chunk ? MAX_BLOCKS_PER_CHUNK : blocks_per_chunk * 2u;
+        next_blocks_per_chunk_ = blocks_per_chunk * 2u;
     }
 
   private:
-    MemoryBlockSlist block_slist_;
-    FreeList free_slist_;
+    MemoryBlockSlist chunks_;
+    FreeList free_list_;
     std::size_t next_blocks_per_chunk_{MINIMUM_MAX_BLOCKS_PER_CHUNK};
 };
 
-inline constexpr std::size_t POWER_OF_TWO_SIZEOF_VOID_PTR = (sizeof(void*) % 2 == 0) ? sizeof(void*) : MAX_ALIGN;
+inline constexpr std::size_t MINIMUM_POOL_BLOCK_SIZE = MAX_ALIGN > sizeof(void*)
+                                                           ? MAX_ALIGN
+                                                           : detail::align(sizeof(void*), MAX_ALIGN);
+inline constexpr std::size_t DESIRED_SMALLEST_POOL_BLOCK_SIZE = 32u;
 inline constexpr std::size_t SMALLEST_POOL_BLOCK_SIZE =
-    MAX_ALIGN > 2 * POWER_OF_TWO_SIZEOF_VOID_PTR ? MAX_ALIGN : 2 * POWER_OF_TWO_SIZEOF_VOID_PTR;
+    detail::align(DESIRED_SMALLEST_POOL_BLOCK_SIZE, MINIMUM_POOL_BLOCK_SIZE);
 inline constexpr std::size_t SMALLEST_POOL_BLOCK_SIZE_LOG2 = detail::ceil_log2(SMALLEST_POOL_BLOCK_SIZE);
 inline constexpr std::size_t LARGEST_POOL_BLOCK_SIZE =
-    SMALLEST_POOL_BLOCK_SIZE > 4096u ? SMALLEST_POOL_BLOCK_SIZE : 4096u;
+    SMALLEST_POOL_BLOCK_SIZE > 1024u ? SMALLEST_POOL_BLOCK_SIZE : 1024u;
 
-constexpr std::size_t get_pool_index(std::size_t block_size) noexcept
+constexpr std::size_t get_pool_index(std::size_t size) noexcept
 {
     // For allocations equal or less than SMALLEST_POOL_BLOCK_SIZE the smallest pool is used
-    block_size = detail::maximum(block_size, SMALLEST_POOL_BLOCK_SIZE);
-    return detail::ceil_log2(block_size) - SMALLEST_POOL_BLOCK_SIZE_LOG2;
+    size = detail::maximum(size, SMALLEST_POOL_BLOCK_SIZE);
+    return detail::ceil_log2(size) - SMALLEST_POOL_BLOCK_SIZE_LOG2;
 }
 
 constexpr std::size_t get_block_size_of_pool_at(std::size_t index) noexcept
@@ -215,36 +195,36 @@ class PoolResource
     PoolResource& operator=(const PoolResource& other) = delete;
     PoolResource& operator=(PoolResource&& other) = delete;
 
-    [[nodiscard]] void* allocate(std::size_t bytes, std::size_t /*alignment ignored, max_align is used by pools*/)
+    // Cannot handle allocations larger than LARGEST_POOL_BLOCK_SIZE or larger aligned than std::max_align_t
+    [[nodiscard]] void* allocate(std::size_t size)
     {
-        if (bytes > LARGEST_POOL_BLOCK_SIZE)
-        {
-            return oversized_list_.allocate(bytes);
-        }
-        const auto pool_idx = detail::get_pool_index(bytes);
+        const auto pool_idx = detail::get_pool_index(size);
         Pool& pool = pools_[pool_idx];
         void* p = pool.allocate_block();
         if (p == nullptr)
         {
-            pool.replenish(detail::get_block_size_of_pool_at(pool_idx));
-            p = pool.allocate_block();
+            const auto block_size = detail::get_block_size_of_pool_at(pool_idx);
+            if (pool.max_size_reached())
+            {
+                p = pool.allocate_unmanaged_block(block_size);
+            }
+            else
+            {
+                pool.replenish(block_size);
+                p = pool.allocate_block();
+            }
         }
         return p;
     }
 
-    void deallocate(void* p, std::size_t bytes, std::size_t /*alignment ignored, max_align is used by pools*/)
+    void deallocate(void* p, std::size_t size)
     {
-        if (bytes > LARGEST_POOL_BLOCK_SIZE)
-        {
-            return MemoryBlockList::deallocate(p);
-        }
-        const auto pool_idx = detail::get_pool_index(bytes);
-        return pools_[pool_idx].deallocate_block(p);
+        const auto pool_idx = detail::get_pool_index(size);
+        return pools_[pool_idx].deallocate_block(p, detail::get_block_size_of_pool_at(pool_idx));
     }
 
     void release() noexcept
     {
-        oversized_list_.release();
         for (auto& pool : pools_)
         {
             pool.release();
@@ -254,7 +234,6 @@ class PoolResource
   private:
     static constexpr std::size_t POOL_COUNT = detail::get_pool_index(LARGEST_POOL_BLOCK_SIZE) + 1u;
 
-    MemoryBlockList oversized_list_;
     Pool pools_[POOL_COUNT];
 };
 }

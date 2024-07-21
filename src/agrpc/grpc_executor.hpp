@@ -668,7 +668,7 @@ struct agrpc::asio::traits::query_member<agrpc::BasicGrpcExecutor<Allocator, Opt
 };
 #endif
 
-#include <agrpc/detail/grpc_context.ipp>
+#include <agrpc/detail/grpc_context_definition.hpp>
 
 #include <agrpc/detail/epilogue.hpp>
 

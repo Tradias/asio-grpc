@@ -216,17 +216,17 @@ struct AlwaysFalseCondition
 
 struct GrpcContextDoOne
 {
-    static bool poll(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline)
+    static bool poll(detail::GrpcContextThreadContext& context, ::gpr_timespec deadline)
     {
-        return detail::GrpcContextImplementation::do_one(grpc_context, deadline);
+        return detail::GrpcContextImplementation::do_one(context, deadline);
     }
 };
 
 struct GrpcContextDoOneCompletionQueue
 {
-    static bool poll(agrpc::GrpcContext& grpc_context, ::gpr_timespec deadline)
+    static bool poll(detail::GrpcContextThreadContext& context, ::gpr_timespec deadline)
     {
-        return detail::GrpcContextImplementation::do_one_completion_queue(grpc_context, deadline);
+        return detail::GrpcContextImplementation::do_one_completion_queue(context, deadline);
     }
 };
 
@@ -249,8 +249,7 @@ void run_impl(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_cont
     using ResolvedTraits = detail::ResolvedRunTraits<Traits>;
     using Backoff =
         detail::Backoff<std::chrono::duration_cast<detail::BackoffDelay>(ResolvedTraits::MAX_LATENCY).count()>;
-    [[maybe_unused]] detail::GrpcContextThreadContext thread_context;
-    detail::ThreadLocalGrpcContextGuard guard{grpc_context};
+    detail::GrpcContextThreadContext thread_context{grpc_context};
     Backoff backoff;
     auto delay = backoff.next();
     IsGrpcContextStopped is_grpc_context_stopped{};
@@ -270,7 +269,7 @@ void run_impl(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_cont
             const auto delay_timespec = detail::BackoffDelay::zero() == delay
                                             ? detail::GrpcContextImplementation::TIME_ZERO
                                             : detail::gpr_timespec_from_now(delay);
-            GrpcContextPoller::poll(grpc_context, delay_timespec);
+            GrpcContextPoller::poll(thread_context, delay_timespec);
         }
         if (has_polled)
         {

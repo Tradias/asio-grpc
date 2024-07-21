@@ -19,6 +19,7 @@
 #include <agrpc/detail/association.hpp>
 #include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/forward.hpp>
+#include <agrpc/detail/prepend_error_code.hpp>
 #include <agrpc/detail/sender_of.hpp>
 #include <agrpc/detail/stop_callback_lifetime.hpp>
 #include <agrpc/detail/tuple.hpp>
@@ -33,49 +34,10 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class Signature>
-struct PrependErrorCodeToSignature;
-
-template <class... Args>
-struct PrependErrorCodeToSignature<void(detail::ErrorCode, Args...)>
-{
-    using Type = void(detail::ErrorCode, Args...);
-
-    template <class Function>
-    static void invoke_with_default_args(Function&& function, detail::ErrorCode&& ec)
-    {
-        static_cast<Function&&>(function)(static_cast<detail::ErrorCode&&>(ec), Args{}...);
-    }
-};
-
-template <class... Args>
-struct PrependErrorCodeToSignature<void(Args...)>
-{
-    using Type = void(detail::ErrorCode, Args...);
-
-    template <class Function>
-    static void invoke_with_default_args(Function&& function, detail::ErrorCode&& ec)
-    {
-        static_cast<Function&&>(function)(static_cast<detail::ErrorCode&&>(ec), Args{}...);
-    }
-};
-
-template <class Signature>
-using PrependErrorCodeToSignatureT = typename detail::PrependErrorCodeToSignature<Signature>::Type;
-
-template <class Signature>
-class ManualResetEvent;
-
-template <class Signature>
 class ManualResetEventSender;
 
 template <class Signature, class Receiver>
 struct ManualResetEventRunningOperationState;
-
-template <class Signature, class Receiver>
-struct ManualResetEventOperation;
-
-template <class Signature>
-struct ManualResetEventOperationBase;
 
 template <class... Args>
 struct ManualResetEventOperationBase<void(Args...)>
@@ -87,30 +49,6 @@ struct ManualResetEventOperationBase<void(Args...)>
     ManualResetEvent<void(Args...)>& event_;
     Complete complete_;
 };
-
-template <class CompletionHandler, class... Args, std::size_t... I>
-void prepend_error_code_and_apply_impl(CompletionHandler&& ch, detail::Tuple<Args...>&& args,
-                                       const std::index_sequence<I...>&)
-{
-    static_cast<CompletionHandler&&>(ch)(detail::ErrorCode{},
-                                         detail::get<I>(static_cast<detail::Tuple<Args...>&&>(args))...);
-}
-
-template <class CompletionHandler, class... Args, std::size_t... I>
-void prepend_error_code_and_apply_impl(CompletionHandler&& ch, detail::Tuple<detail::ErrorCode, Args...>&& args,
-                                       const std::index_sequence<I...>&)
-{
-    static_cast<CompletionHandler&&>(ch)(
-        detail::get<I>(static_cast<detail::Tuple<detail::ErrorCode, Args...>&&>(args))...);
-}
-
-template <class CompletionHandler, class... Args>
-void prepend_error_code_and_apply(CompletionHandler&& ch, detail::Tuple<Args...>&& args)
-{
-    detail::prepend_error_code_and_apply_impl(static_cast<CompletionHandler&&>(ch),
-                                              static_cast<detail::Tuple<Args...>&&>(args),
-                                              std::make_index_sequence<sizeof...(Args)>{});
-}
 
 template <class... Args>
 class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
@@ -336,7 +274,7 @@ inline ManualResetEventSender<void(Args...)> ManualResetEvent<void(Args...)>::wa
 AGRPC_NAMESPACE_END
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-#include <agrpc/detail/manual_reset_event_operation.ipp>
+#include <agrpc/detail/manual_reset_event_operation.hpp>
 #endif
 
 #endif  // AGRPC_DETAIL_MANUAL_RESET_EVENT_HPP

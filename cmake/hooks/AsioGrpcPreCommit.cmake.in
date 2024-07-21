@@ -38,8 +38,7 @@ endforeach()
 
 # process cpp files
 foreach(_git_out IN LISTS _git_output_list)
-    string(REGEX MATCHALL ".*\\.tpp\$|.*\\.hpp\$|.*\\.ipp\$|.*\\.cpp\$|.*\\.proto\$|.*\\.h\$|.*\\.c\$" _file
-                 "${_git_out}")
+    string(REGEX MATCHALL ".*\\.tpp\$|.*\\.hpp\$|.*\\.cpp\$|.*\\.proto\$|.*\\.h\$|.*\\.c\$" _file "${_git_out}")
 
     if(NOT "${_file}" STREQUAL "")
         execute_process(COMMAND "@ASIO_GRPC_CLANG_FORMAT_PROGRAM@" "-i" "-style=file" "${_file}"

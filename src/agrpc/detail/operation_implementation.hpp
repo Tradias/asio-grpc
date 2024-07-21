@@ -42,7 +42,7 @@ void complete(Operation& operation, [[maybe_unused]] detail::OperationResult res
         else
         {
             operation.implementation().complete(grpc_context, args...);
-            operation.template complete<AllocType>(grpc_context, static_cast<decltype(args)&&>(args)...);
+            operation.template complete<AllocType>(static_cast<decltype(args)&&>(args)...);
         }
     };
     if constexpr (Implementation::TYPE == detail::SenderImplementationType::BOTH ||

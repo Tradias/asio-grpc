@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-enable_language(CXX)
-
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" AND "${CMAKE_CXX_COMPILER_VERSION}" VERSION_LESS "9")
     set(ASIO_GRPC_DEFAULT_ENABLE_CPP20_TESTS_AND_EXAMPLES off)
 else()

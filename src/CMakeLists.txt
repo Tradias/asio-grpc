@@ -38,7 +38,10 @@ target_compile_features(asio-grpc-stdexec INTERFACE cxx_std_20)
 
 if(ASIO_GRPC_BUILD_EXAMPLES)
     target_link_libraries(asio-grpc INTERFACE Boost::headers)
-    target_link_libraries(asio-grpc-standalone-asio INTERFACE asio::asio)
+
+    if(TARGET asio::asio)
+        target_link_libraries(asio-grpc-standalone-asio INTERFACE asio::asio)
+    endif()
 
     if(TARGET unifex::unifex)
         target_link_libraries(asio-grpc-unifex INTERFACE unifex::unifex)
@@ -55,8 +58,11 @@ if(ASIO_GRPC_BUILD_TESTS AND ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
 
     file(GLOB_RECURSE _asio_grpc_sources "agrpc/*.hpp")
 
-    list(TRANSFORM _asio_grpc_sources
-         REPLACE "(execution_stdexec.hpp|association_execution.hpp|health_check_service.hpp)$" "")
+    list(
+        TRANSFORM _asio_grpc_sources
+        REPLACE
+            "(execution_stdexec.hpp|association_execution.hpp|health_check_service.hpp|grpc_context_definition.hpp)$"
+            "")
 
     target_sources(asio-grpc-sources INTERFACE ${_asio_grpc_sources})
 endif()

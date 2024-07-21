@@ -547,32 +547,62 @@ inline void wait_some(agrpc::GrpcContext& grpc_context)
                                     });
 }
 
-TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_completion_queue() parallel")
+inline void post_some(agrpc::GrpcContext& grpc_context, asio::thread_pool& pool)
 {
-    asio::thread_pool pool{3};
-    for (size_t i{}; i != 3; ++i)
+    asio::post(pool,
+               [&]
+               {
+                   agrpc::Alarm{grpc_context}.wait(test::now(),
+                                                   [&](auto&&...)
+                                                   {
+                                                       post_some(grpc_context, pool);
+                                                   });
+               });
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run(_completion_queue) parallel")
+{
+    std::function<void()> run{[&]
+                              {
+                                  grpc_context.run();
+                              }};
+    SUBCASE("run()") {}
+    SUBCASE("run_completion_queue()")
     {
-        asio::post(pool,
-                   [&]
-                   {
-                       wait_some(grpc_context);
-                   });
-    }
-    for (size_t i{}; i != 2; ++i)
-    {
-        asio::post(pool,
-                   [&]
-                   {
-                       grpc_context.run_completion_queue();
-                   });
-    }
-    asio::steady_timer timer{pool, std::chrono::seconds(1)};
-    timer.async_wait(
-        [&](auto&&...)
+        run = [&]
         {
-            grpc_context.stop();
-        });
-    pool.wait();
+            grpc_context.run_completion_queue();
+        };
+    }
+    const auto thread_count = 4;
+    grpc_context_lifetime.emplace(thread_count / 2);
+    for (size_t j{}; j != 3; ++j)
+    {
+        asio::thread_pool pool{thread_count};
+        for (size_t i{}; i != thread_count / 2; ++i)
+        {
+            asio::post(pool,
+                       [&]
+                       {
+                           wait_some(grpc_context);
+                       });
+        }
+        for (size_t i{}; i != thread_count / 2; ++i)
+        {
+            post_some(grpc_context, pool);
+        }
+        for (size_t i{}; i != thread_count / 2; ++i)
+        {
+            asio::post(pool, run);
+        }
+        asio::steady_timer timer{pool, std::chrono::milliseconds(500)};
+        timer.async_wait(
+            [&](auto&&...)
+            {
+                grpc_context.stop();
+            });
+        pool.wait();
+    }
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll() within run()")

@@ -36,7 +36,7 @@ struct BasicOperationHandle
         template <class... Args>
         void operator()(Args&&... args)
         {
-            self_.template complete<AllocType>(grpc_context_, static_cast<Args&&>(args)...);
+            self_.template complete<AllocType>(static_cast<Args&&>(args)...);
         }
 
         void done() { self_.done(); }

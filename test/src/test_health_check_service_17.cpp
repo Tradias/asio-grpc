@@ -204,7 +204,7 @@ struct HealthCheckServiceTest : test::GrpcContextTest
     {
         bool read_initiated{};
         agrpc::GrpcContext client_grpc_context;
-        WatchRPC rpc{grpc_context};
+        WatchRPC rpc{client_grpc_context};
         rpc.context().set_deadline(test::hundred_milliseconds_from_now());
         rpc.start(*stub, request,
                   [&](bool)
@@ -224,7 +224,7 @@ struct HealthCheckServiceTest : test::GrpcContextTest
     {
         bool read_initiated{};
         agrpc::GrpcContext client_grpc_context;
-        WatchRPC rpc{grpc_context};
+        WatchRPC rpc{client_grpc_context};
         rpc.context().set_deadline(test::hundred_milliseconds_from_now());
         rpc.start(*stub, request,
                   [&](bool)

@@ -15,7 +15,6 @@
 #ifndef AGRPC_DETAIL_OPERATION_BASE_HPP
 #define AGRPC_DETAIL_OPERATION_BASE_HPP
 
-#include <agrpc/detail/allocate.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/utility.hpp>
 
