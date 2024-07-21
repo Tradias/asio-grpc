@@ -38,7 +38,10 @@ target_compile_features(asio-grpc-stdexec INTERFACE cxx_std_20)
 
 if(ASIO_GRPC_BUILD_EXAMPLES)
     target_link_libraries(asio-grpc INTERFACE Boost::headers)
-    target_link_libraries(asio-grpc-standalone-asio INTERFACE asio::asio)
+
+    if(TARGET asio::asio)
+        target_link_libraries(asio-grpc-standalone-asio INTERFACE asio::asio)
+    endif()
 
     if(TARGET unifex::unifex)
         target_link_libraries(asio-grpc-unifex INTERFACE unifex::unifex)

@@ -593,11 +593,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run(_completion_queue) par
         }
         for (size_t i{}; i != thread_count / 2; ++i)
         {
-            asio::post(pool,
-                       [&]
-                       {
-                           run();
-                       });
+            asio::post(pool, run);
         }
         asio::steady_timer timer{pool, std::chrono::milliseconds(500)};
         timer.async_wait(
