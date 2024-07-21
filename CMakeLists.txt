@@ -14,8 +14,6 @@
 
 cmake_minimum_required(VERSION 3.14...3.27)
 
-include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcOptionDefaults.cmake")
-
 # Hunter package manager options
 option(HUNTER_ENABLED "Enable Hunter package manager" off)
 option(ASIO_GRPC_HUNTER_BACKEND_BOOST_ASIO "Build Boost.Asio using Hunter" on)
@@ -31,6 +29,7 @@ project(
     HOMEPAGE_URL "https://github.com/Tradias/asio-grpc"
     LANGUAGES CXX)
 
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcOptionDefaults.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcProjectTopLevel.cmake")
 include(GNUInstallDirs)
 

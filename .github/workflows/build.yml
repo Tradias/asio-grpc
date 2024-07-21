@@ -64,7 +64,7 @@ jobs:
       run: cmake --build --preset default --config ${{ matrix.config.build-type }} --parallel ${{ matrix.config.parallel }}
 
     - name: Test
-      run: ctest --preset default --parallel 25 --build-config ${{ matrix.config.build-type }}
+      run: ctest --preset default --parallel 25 -C ${{ matrix.config.build-type }}
 
 
   gcc-8-build:
@@ -105,7 +105,7 @@ jobs:
       run: cmake --build ${{ github.workspace }}/build-8 --config Release --parallel $(nproc)
 
     - name: GCC 8 Test
-      run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-8 --build-config Release
+      run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-8 -C Release
 
 
   gcc-11-build:
@@ -141,7 +141,7 @@ jobs:
       run: cmake --build ${{ github.workspace }}/build-11 --config Debug --parallel $(nproc)
 
     - name: GCC 11 Test
-      run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-11 --build-config Debug
+      run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-11 -C Debug
 
     - name: GCC 11 Coverage
       run: cmake --build ${{ github.workspace }}/build-11 --config Debug --target asio-grpc-test-coverage
@@ -205,7 +205,7 @@ jobs:
       run: cmake --build ${{ github.workspace }}/build-10 --config Release --parallel $(nproc)
 
     - name: Clang 10 Test
-      run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-10 --build-config Release
+      run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-10 -C Release
 
     - name: Download doxygen
       working-directory: ${{ runner.workspace }}
@@ -228,7 +228,7 @@ jobs:
       run: cmake --build ${{ github.workspace }}/build-12 --config Release --parallel $(nproc) --target asio-grpc-check-header-syntax all
 
     - name: Clang 12 Test
-      run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-12 --build-config Release
+      run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-12 -C Release
 
     - name: Run doxygen
       run: |
@@ -283,4 +283,4 @@ jobs:
       run: cmake --build --preset default --config Release --parallel $(nproc) --target asio-grpc-check-header-syntax all
 
     - name: Test
-      run: ctest --preset default --config Release
+      run: ctest --preset default -C Release
