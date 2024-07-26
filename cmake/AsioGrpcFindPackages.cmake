@@ -17,6 +17,7 @@ set(FPHSA_NAME_MISMATCHED on)
 find_package(protobuf)
 unset(FPHSA_NAME_MISMATCHED)
 
+find_package(Threads REQUIRED)
 find_package(gRPC)
 
 set(ASIO_GRPC_FIND_BOOST_COMPONENTS coroutine)

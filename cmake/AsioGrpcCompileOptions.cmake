@@ -69,7 +69,8 @@ target_compile_definitions(
               BOOST_ASIO_DISABLE_BOOST_COROUTINE
               ASIO_DISABLE_BOOST_COROUTINE)
 
-target_link_libraries(asio-grpc-compile-options INTERFACE gRPC::grpc++_unsecure Boost::disable_autolinking)
+target_link_libraries(asio-grpc-compile-options INTERFACE gRPC::grpc++_unsecure Boost::disable_autolinking
+                                                          Threads::Threads)
 
 target_compile_features(asio-grpc-compile-options INTERFACE cxx_std_17)
 
