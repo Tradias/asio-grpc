@@ -24,8 +24,7 @@
         {
             "name": "default",
             "configurePreset": "default",
-            "configuration": "Debug",
-            "verbose": true
+            "configuration": "Debug"
         }
     ],
     "testPresets": [

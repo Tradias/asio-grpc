@@ -102,7 +102,7 @@ jobs:
       run: cmake --preset default -B ${{ github.workspace }}/build-8 -DCMAKE_CXX_COMPILER=$(which g++-8) -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed -DVCPKG_TARGET_TRIPLET=${{ env.TRIPLET }} -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold ${{ env.CMAKE_ARGS }}
 
     - name: GCC 8 Build
-      run: cmake --build ${{ github.workspace }}/build-8 --config Release --parallel $(nproc) --verbose
+      run: cmake --build ${{ github.workspace }}/build-8 --config Release --parallel $(nproc)
 
     - name: GCC 8 Test
       run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-8 -C Release
