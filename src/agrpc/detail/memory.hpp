@@ -25,42 +25,26 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 inline constexpr auto MAX_ALIGN = alignof(std::max_align_t);
-inline constexpr std::size_t MAX_ALIGN_MINUS_ONE = MAX_ALIGN - 1u;
+
+struct MaxAlignedData
+{
+    alignas(std::max_align_t) std::byte data_[MAX_ALIGN];
+};
+
+inline void* allocate_already_max_aligned(std::size_t size)
+{
+    return std::allocator<MaxAlignedData>{}.allocate(size / MAX_ALIGN);
+}
+
+inline void deallocate_already_max_aligned(void* p, std::size_t size)
+{
+    std::allocator<MaxAlignedData>{}.deallocate(static_cast<MaxAlignedData*>(p), size / MAX_ALIGN);
+}
 
 [[nodiscard]] constexpr auto align(std::size_t position, std::size_t alignment) noexcept
 {
     return (position + alignment - 1u) & ~(alignment - 1u);
 }
-
-struct MaxAlignedData
-{
-    static constexpr auto count(std::size_t size) noexcept { return detail::align(size, MAX_ALIGN) / MAX_ALIGN; }
-
-    alignas(std::max_align_t) std::byte data_[MAX_ALIGN];
-};
-
-struct MaxAlignAllocator
-{
-    static void* allocate(std::size_t size)
-    {
-        return std::allocator<MaxAlignedData>{}.allocate(MaxAlignedData::count(size));
-    }
-
-    static void* allocate_already_max_aligned(std::size_t size)
-    {
-        return std::allocator<MaxAlignedData>{}.allocate(size / MAX_ALIGN);
-    }
-
-    static void deallocate(void* p, std::size_t size)
-    {
-        std::allocator<MaxAlignedData>{}.deallocate(static_cast<MaxAlignedData*>(p), MaxAlignedData::count(size));
-    }
-
-    static void deallocate_already_max_aligned(void* p, std::size_t size)
-    {
-        std::allocator<MaxAlignedData>{}.deallocate(static_cast<MaxAlignedData*>(p), size / MAX_ALIGN);
-    }
-};
 }
 
 AGRPC_NAMESPACE_END

@@ -52,9 +52,9 @@ inline grpc::CompletionQueue* get_completion_queue(agrpc::GrpcContext& grpc_cont
 }
 
 template <class T>
-inline void create_resources(T& resources, std::size_t thread_count_hint = 1)
+inline void create_resources(T& resources, std::size_t concurrency_hint)
 {
-    for (size_t i{}; i != thread_count_hint; ++i)
+    for (size_t i{}; i != concurrency_hint; ++i)
     {
         auto resource = new detail::ListablePoolResource();
         resources.push_front(*resource);
@@ -73,8 +73,8 @@ inline void delete_resources(T& resources)
 
 inline GrpcContext::GrpcContext() : GrpcContext(std::make_unique<grpc::CompletionQueue>(), 1) {}
 
-inline GrpcContext::GrpcContext(std::size_t thread_count_hint)
-    : GrpcContext(std::make_unique<grpc::CompletionQueue>(), thread_count_hint)
+inline GrpcContext::GrpcContext(std::size_t concurrency_hint)
+    : GrpcContext(std::make_unique<grpc::CompletionQueue>(), concurrency_hint)
 {
 }
 
@@ -90,20 +90,20 @@ inline GrpcContext::GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue> com
 }
 
 inline GrpcContext::GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue> completion_queue,
-                                std::size_t thread_count_hint)
-    : multithreaded_{thread_count_hint > 1},
+                                std::size_t concurrency_hint)
+    : multithreaded_{concurrency_hint > 1},
       completion_queue_(static_cast<std::unique_ptr<grpc::ServerCompletionQueue>&&>(completion_queue))
 
 {
-    detail::create_resources(memory_resources_, thread_count_hint);
+    detail::create_resources(memory_resources_, concurrency_hint);
 }
 
-inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue, std::size_t thread_count_hint)
-    : multithreaded_{thread_count_hint > 1},
+inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue, std::size_t concurrency_hint)
+    : multithreaded_{concurrency_hint > 1},
       completion_queue_(static_cast<std::unique_ptr<grpc::CompletionQueue>&&>(completion_queue))
 
 {
-    detail::create_resources(memory_resources_, thread_count_hint);
+    detail::create_resources(memory_resources_, concurrency_hint);
 }
 
 inline GrpcContext::~GrpcContext()

@@ -47,7 +47,7 @@ class MemoryBlockSlist
     [[nodiscard]] void* allocate_already_max_aligned(std::size_t size)
     {
         const auto allocation_size = size + HEADER_SIZE;
-        void* p = MaxAlignAllocator::allocate_already_max_aligned(allocation_size);
+        void* p = detail::allocate_already_max_aligned(allocation_size);
         auto* const header = ::new (p) Header;
         header->size_ = allocation_size;
         slist_.push_front(header);
@@ -62,7 +62,7 @@ class MemoryBlockSlist
             ++it;
             const auto size = header.size_;
             header.~Header();
-            MaxAlignAllocator::deallocate_already_max_aligned(&header, size);
+            detail::deallocate_already_max_aligned(&header, size);
         }
         slist_.clear();
     }
@@ -105,7 +105,7 @@ class Pool
     [[nodiscard]] void* allocate_unmanaged_block(std::size_t block_size) noexcept
     {
         const auto allocation_size = block_size + HEADER_SIZE;
-        void* p = MaxAlignAllocator::allocate_already_max_aligned(allocation_size);
+        void* p = detail::allocate_already_max_aligned(allocation_size);
         auto* const header = ::new (p) Header;
         header->unmanaged_ = true;
         return static_cast<char*>(p) + HEADER_SIZE;
@@ -119,7 +119,7 @@ class Pool
         if (header->unmanaged_)
         {
             header->~Header();
-            MaxAlignAllocator::deallocate_already_max_aligned(header, block_size + HEADER_SIZE);
+            detail::deallocate_already_max_aligned(header, block_size + HEADER_SIZE);
         }
         else
         {

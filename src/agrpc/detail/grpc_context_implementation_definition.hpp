@@ -293,7 +293,7 @@ inline detail::ListablePoolResource& GrpcContextImplementation::pop_resource(agr
     auto& resources = grpc_context.memory_resources_;
     if (resources.empty())
     {
-        return *(new detail::ListablePoolResource());
+        return *(new detail::ListablePoolResource{});
     }
     return resources.pop_front();
 }

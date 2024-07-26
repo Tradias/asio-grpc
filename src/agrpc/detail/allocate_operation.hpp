@@ -44,7 +44,7 @@ auto allocate_operation(Handler&& handler, Args&&... args)
     {
         if (GrpcContextImplementation::running_in_this_thread())
         {
-            return detail::allocate<Op>(PoolResourceAllocator<Op>{}, detail::AllocationType::LOCAL,
+            return detail::allocate<Op>(detail::get_local_allocator(), detail::AllocationType::LOCAL,
                                         static_cast<Handler&&>(handler), static_cast<Args&&>(args)...)
                 .release();
         }

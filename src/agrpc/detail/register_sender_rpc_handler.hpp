@@ -135,7 +135,7 @@ struct RPCHandlerOperationFinish
                 return;
             }
         }
-        detail::destroy_deallocate(&op, op.get_allocator());
+        [[maybe_unused]] detail::AllocationGuard g{&op, op.get_allocator()};
     }
 };
 
@@ -144,7 +144,7 @@ struct RPCHandlerOperationWaitForDone
     template <class Operation>
     static void perform(Operation& op, const std::exception_ptr*) noexcept
     {
-        detail::destroy_deallocate(&op, op.get_allocator());
+        [[maybe_unused]] detail::AllocationGuard g{&op, op.get_allocator()};
     }
 };
 

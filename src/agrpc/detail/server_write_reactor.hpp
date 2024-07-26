@@ -80,7 +80,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
         writer_.Finish(status, static_cast<StepBase*>(this));
     }
 
-    void deallocate() { detail::destroy_deallocate(static_cast<Derived*>(this), get_allocator()); }
+    void deallocate() { [[maybe_unused]] detail::AllocationGuard g{static_cast<Derived*>(this), get_allocator()}; }
 
   private:
     auto get_allocator() const noexcept { return detail::get_local_allocator(); }

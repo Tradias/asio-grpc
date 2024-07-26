@@ -69,7 +69,7 @@ class GrpcContext
      */
     GrpcContext();
 
-    explicit GrpcContext(std::size_t thread_count_hint);
+    explicit GrpcContext(std::size_t concurrency_hint);
 
     template <class = void>
     [[deprecated("For gRPC clients use the default constructor")]] explicit GrpcContext(
@@ -86,7 +86,7 @@ class GrpcContext
      */
     explicit GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue> completion_queue);
 
-    GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue> completion_queue, std::size_t thread_count_hint);
+    GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue> completion_queue, std::size_t concurrency_hint);
 
     /**
      * @brief Destruct the GrpcContext
@@ -300,7 +300,7 @@ class GrpcContext
     friend detail::GrpcContextImplementation;
     friend detail::GrpcContextThreadContext;
 
-    GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue, std::size_t thread_count_hint);
+    GrpcContext(std::unique_ptr<grpc::CompletionQueue> completion_queue, std::size_t concurrency_hint);
 
     bool run_until_impl(::gpr_timespec deadline);
 
