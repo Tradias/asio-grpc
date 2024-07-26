@@ -135,7 +135,7 @@ struct RPCHandlerOperationFinish
                 return;
             }
         }
-        [[maybe_unused]] detail::AllocationGuard g{&op, op.get_allocator()};
+        [[maybe_unused]] detail::AllocationGuard g{op, op.get_allocator()};
     }
 };
 
@@ -144,7 +144,7 @@ struct RPCHandlerOperationWaitForDone
     template <class Operation>
     static void perform(Operation& op, const std::exception_ptr*) noexcept
     {
-        [[maybe_unused]] detail::AllocationGuard g{&op, op.get_allocator()};
+        [[maybe_unused]] detail::AllocationGuard g{op, op.get_allocator()};
     }
 };
 
@@ -177,7 +177,7 @@ struct RPCHandlerOperation
         void set_value(bool ok) const noexcept
         {
             auto& op = rpc_handler_op_;
-            detail::AllocationGuard guard{&op, op.get_allocator()};
+            detail::AllocationGuard guard{op, op.get_allocator()};
             if (ok)
             {
                 if (auto exception_ptr = op.emplace_rpc_handler_operation_state())

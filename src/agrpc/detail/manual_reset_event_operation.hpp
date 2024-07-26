@@ -94,7 +94,7 @@ struct ManualResetEventOperation<void(Args...), CompletionHandler>
     template <class... TArgs>
     void complete(TArgs&&... args)
     {
-        detail::AllocationGuard ptr{this, asio::get_associated_allocator(completion_handler_)};
+        detail::AllocationGuard ptr{*this, asio::get_associated_allocator(completion_handler_)};
         detail::dispatch_complete(ptr, static_cast<TArgs&&>(args)...);
     }
 

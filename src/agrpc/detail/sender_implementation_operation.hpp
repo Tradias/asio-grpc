@@ -43,14 +43,14 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
     template <detail::AllocationType AllocType, int Id = 0>
     static void do_complete(detail::OperationBase* op, detail::OperationResult result, agrpc::GrpcContext& grpc_context)
     {
-        auto* self = static_cast<SenderImplementationOperation*>(op);
+        auto& self = *static_cast<SenderImplementationOperation*>(op);
         if AGRPC_LIKELY (!detail::is_shutdown(result))
         {
-            detail::complete<AllocType, Id>(*self, result, grpc_context);
+            detail::complete<AllocType, Id>(self, result, grpc_context);
         }
         else
         {
-            [[maybe_unused]] detail::AllocationGuard ptr{self, self->template get_allocator<AllocType>()};
+            [[maybe_unused]] detail::AllocationGuard ptr{self, self.template get_allocator<AllocType>()};
         }
     }
 
@@ -118,7 +118,7 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
     template <AllocationType AllocType, class... Args>
     void complete(Args... args)
     {
-        detail::AllocationGuard ptr{this, get_allocator<AllocType>()};
+        detail::AllocationGuard ptr{*this, get_allocator<AllocType>()};
         detail::dispatch_complete(ptr, static_cast<Args&&>(args)...);
     }
 

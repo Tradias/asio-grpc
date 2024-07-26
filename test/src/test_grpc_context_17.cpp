@@ -25,6 +25,10 @@
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
 
+#ifdef AGRPC_BOOST_ASIO
+#include <boost/interprocess/managed_shared_memory.hpp>
+#endif
+
 #include <thread>
 
 TEST_CASE("GrpcExecutor fulfills Executor TS traits")
@@ -396,6 +400,21 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post large local allocation")
     grpc_context.run();
     CHECK(ok);
 }
+
+#ifdef AGRPC_BOOST_ASIO
+TEST_CASE_FIXTURE(test::GrpcContextTest, "post with allocator with fancy pointer")
+{
+    struct Cleanup
+    {
+        Cleanup() { boost::interprocess::shared_memory_object::remove("GrpcContextTest"); }
+        ~Cleanup() noexcept { boost::interprocess::shared_memory_object::remove("GrpcContextTest"); }
+    } cleanup;
+    boost::interprocess::managed_shared_memory segment(boost::interprocess::create_only, "GrpcContextTest", 1024);
+    asio::post(grpc_context, test::HandlerWithAssociatedAllocator{test::NoOp{}, segment.get_allocator<std::byte>()});
+    grpc_context.run();
+    CHECK(segment.all_memory_deallocated());
+}
+#endif
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "dispatch with allocator")
 {

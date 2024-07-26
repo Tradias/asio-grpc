@@ -32,11 +32,17 @@ template <class Traits>
 class AllocationGuard
 {
   private:
+    using ValueType = typename Traits::value_type;
     using Allocator = typename Traits::allocator_type;
     using Pointer = typename Traits::pointer;
 
   public:
-    AllocationGuard(Pointer ptr, const Allocator& allocator) noexcept : ptr_(ptr), allocator_(allocator) {}
+    AllocationGuard(Pointer&& ptr, const Allocator& allocator) noexcept : ptr_(ptr), allocator_(allocator) {}
+
+    AllocationGuard(ValueType& value, const Allocator& allocator) noexcept
+        : ptr_(std::pointer_traits<Pointer>::pointer_to(value)), allocator_(allocator)
+    {
+    }
 
     AllocationGuard(AllocationGuard&& other) noexcept
         : ptr_(std::exchange(other.ptr_, nullptr)), allocator_(other.allocator_)
@@ -54,11 +60,11 @@ class AllocationGuard
         }
     }
 
-    auto& operator*() const noexcept { return *ptr_; }
+    ValueType& operator*() const noexcept { return *ptr_; }
 
     void release() noexcept { ptr_ = nullptr; }
 
-    [[nodiscard]] Pointer extract() noexcept { return std::exchange(ptr_, nullptr); }
+    [[nodiscard]] ValueType* extract() noexcept { return std::addressof(*std::exchange(ptr_, nullptr)); }
 
     void reset() noexcept
     {
@@ -69,7 +75,7 @@ class AllocationGuard
   private:
     void destroy_deallocate_using_traits() noexcept
     {
-        Traits::destroy(allocator_, ptr_);
+        Traits::destroy(allocator_, std::addressof(*ptr_));
         Traits::deallocate(allocator_, ptr_, 1);
     }
 
@@ -78,7 +84,7 @@ class AllocationGuard
 };
 
 template <class T, class Allocator>
-AllocationGuard(T*, const Allocator&) -> AllocationGuard<detail::RebindAllocatorTraits<T, Allocator>>;
+AllocationGuard(T&, const Allocator&) -> AllocationGuard<detail::RebindAllocatorTraits<T, Allocator>>;
 
 template <class T, class Allocator, class... Args>
 detail::AllocationGuard<detail::RebindAllocatorTraits<T, Allocator>> allocate(const Allocator& allocator,
@@ -87,14 +93,14 @@ detail::AllocationGuard<detail::RebindAllocatorTraits<T, Allocator>> allocate(co
     using Traits = detail::RebindAllocatorTraits<T, Allocator>;
     using ReboundAllocator = typename Traits::allocator_type;
     ReboundAllocator rebound_allocator{allocator};
-    auto* ptr = Traits::allocate(rebound_allocator, 1);
+    auto&& ptr = Traits::allocate(rebound_allocator, 1);
     detail::ScopeGuard guard{[&]
                              {
                                  Traits::deallocate(rebound_allocator, ptr, 1);
                              }};
-    Traits::construct(rebound_allocator, ptr, static_cast<Args&&>(args)...);
+    Traits::construct(rebound_allocator, std::addressof(*ptr), static_cast<Args&&>(args)...);
     guard.release();
-    return {ptr, rebound_allocator};
+    return {static_cast<decltype(ptr)&&>(ptr), rebound_allocator};
 }
 }
 

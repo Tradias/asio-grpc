@@ -70,7 +70,7 @@ struct RegisterCallbackRPCHandlerOperation
             else
             {
                 [[maybe_unused]] RefCountGuard a{self_};
-                [[maybe_unused]] detail::AllocationGuard b{static_cast<ServerRPCAllocation*>(ptr_.release()),
+                [[maybe_unused]] detail::AllocationGuard b{*static_cast<ServerRPCAllocation*>(ptr_.release()),
                                                            self_.get_allocator()};
             }
         }
@@ -85,14 +85,14 @@ struct RegisterCallbackRPCHandlerOperation
     {
         auto& self = *static_cast<ServerRPCAllocation*>(ptr);
         [[maybe_unused]] RefCountGuard a{self.self_};
-        [[maybe_unused]] detail::AllocationGuard b{&self, self.self_.get_allocator()};
+        [[maybe_unused]] detail::AllocationGuard b{self, self.self_.get_allocator()};
     }
 
     static void deleter(ServerRPCWithRequest* ptr) noexcept
     {
         auto& self = *static_cast<ServerRPCAllocation*>(ptr);
         RefCountGuard guard{self.self_};
-        detail::AllocationGuard alloc_guard{&self, self.self_.get_allocator()};
+        detail::AllocationGuard alloc_guard{self, self.self_.get_allocator()};
         auto& rpc = ptr->rpc_;
         if (!detail::ServerRPCContextBaseAccess::is_finished(rpc))
         {

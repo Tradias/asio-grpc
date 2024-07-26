@@ -80,7 +80,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
         writer_.Finish(status, static_cast<StepBase*>(this));
     }
 
-    void deallocate() { [[maybe_unused]] detail::AllocationGuard g{static_cast<Derived*>(this), get_allocator()}; }
+    void deallocate() { [[maybe_unused]] detail::AllocationGuard g{static_cast<Derived&>(*this), get_allocator()}; }
 
   private:
     auto get_allocator() const noexcept { return detail::get_local_allocator(); }
@@ -115,24 +115,25 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
 
     static void do_write_done(detail::OperationBase* op, detail::OperationResult result, agrpc::GrpcContext&)
     {
-        auto* const self = static_cast<ServerWriteReactor*>(static_cast<StepBase*>(op));
-        self->set_step_done();
-        self->grpc_context_.work_started();
-        detail::AllocationGuard guard{static_cast<Derived*>(self), self->get_allocator()};
-        const bool completed = self->is_completed();
+        auto& self = *static_cast<ServerWriteReactor*>(static_cast<StepBase*>(op));
+        auto& derived = static_cast<Derived&>(self);
+        self.set_step_done();
+        self.grpc_context_.work_started();
+        detail::AllocationGuard guard{derived, self.get_allocator()};
+        const bool completed = self.is_completed();
         if (!completed)
         {
             guard.release();
         }
         if AGRPC_LIKELY (!detail::is_shutdown(result))
         {
-            static_cast<Derived*>(self)->on_write_done(detail::is_ok(result));
+            derived.on_write_done(detail::is_ok(result));
             if AGRPC_UNLIKELY (completed)
             {
-                static_cast<Derived*>(self)->on_done();
+                derived.on_done();
             }
         }
-        if (self->is_finishing())
+        if (self.is_finishing())
         {
             guard.release();
         }
@@ -140,31 +141,33 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
 
     static void do_finish_done(detail::OperationBase* op, detail::OperationResult result, agrpc::GrpcContext&)
     {
-        auto* const self = static_cast<ServerWriteReactor*>(static_cast<StepBase*>(op));
-        self->set_step_done();
-        self->grpc_context_.work_started();
-        detail::AllocationGuard guard{static_cast<Derived*>(self), self->get_allocator()};
-        if (!self->is_completed())
+        auto& self = *static_cast<ServerWriteReactor*>(static_cast<StepBase*>(op));
+        auto& derived = static_cast<Derived&>(self);
+        self.set_step_done();
+        self.grpc_context_.work_started();
+        detail::AllocationGuard guard{derived, self.get_allocator()};
+        if (!self.is_completed())
         {
             guard.release();
         }
         else if AGRPC_LIKELY (!detail::is_shutdown(result))
         {
-            static_cast<Derived*>(self)->on_done();
+            derived.on_done();
         }
     }
 
     static void do_done_notified(detail::OperationBase* op, detail::OperationResult result, agrpc::GrpcContext&)
     {
-        auto* const self = static_cast<ServerWriteReactor*>(static_cast<DoneBase*>(op));
-        self->set_completed();
-        self->grpc_context_.work_started();
-        if (!self->is_finishing_or_writing())
+        auto& self = *static_cast<ServerWriteReactor*>(static_cast<DoneBase*>(op));
+        auto& derived = static_cast<Derived&>(self);
+        self.set_completed();
+        self.grpc_context_.work_started();
+        if (!self.is_finishing_or_writing())
         {
-            detail::AllocationGuard guard{static_cast<Derived*>(self), self->get_allocator()};
+            detail::AllocationGuard guard{derived, self.get_allocator()};
             if AGRPC_LIKELY (!detail::is_shutdown(result))
             {
-                static_cast<Derived*>(self)->on_done();
+                derived.on_done();
             }
         }
     }

@@ -150,7 +150,7 @@ class HealthCheckChecker : public detail::OperationBase
         return detail::allocate<HealthCheckChecker>(detail::get_local_allocator(), service, tag).extract();
     }
 
-    void deallocate() { [[maybe_unused]] detail::AllocationGuard g{this, detail::get_local_allocator()}; }
+    void deallocate() { [[maybe_unused]] detail::AllocationGuard g{*this, detail::get_local_allocator()}; }
 
   private:
     agrpc::GrpcContext& grpc_context() const noexcept { return *service_.grpc_context_; }

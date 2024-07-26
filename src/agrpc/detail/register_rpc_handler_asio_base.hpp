@@ -112,7 +112,7 @@ static void register_rpc_handler_asio_do_complete(detail::OperationBase* operati
                                                   agrpc::GrpcContext&)
 {
     auto& self = *static_cast<Operation*>(operation);
-    detail::AllocationGuard guard{&self, self.get_allocator()};
+    detail::AllocationGuard guard{self, self.get_allocator()};
     if (REGISTER_RPC_HANDLER_COMPLETE == result)
     {
         if AGRPC_LIKELY (!detail::GrpcContextImplementation::is_shutdown(self.grpc_context()))
