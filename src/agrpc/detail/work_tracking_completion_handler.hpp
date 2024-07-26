@@ -76,8 +76,9 @@ void dispatch_with_args(Handler&& handler, Args&&... args)
 template <class AllocationGuard, class... Args>
 void dispatch_complete(AllocationGuard& guard, Args&&... args)
 {
-    auto handler{std::move(guard->completion_handler())};
-    [[maybe_unused]] auto tracker{std::move(guard->work_tracker())};
+    auto& operation = *guard;
+    auto handler{std::move(operation.completion_handler())};
+    [[maybe_unused]] auto tracker{std::move(operation.work_tracker())};
     guard.reset();
     detail::dispatch_with_args(std::move(handler), static_cast<Args&&>(args)...);
 }

@@ -350,9 +350,9 @@ void create_and_start_rpc_handler_operation(
         return;
     }
     using RPCHandlerOperation = detail::RPCHandlerOperation<ServerRPC, RPCHandler, StopToken, Allocator>;
-    auto rpc_handler_operation = detail::allocate<RPCHandlerOperation>(allocator, operation, allocator);
-    rpc_handler_operation->start();
-    rpc_handler_operation.release();
+    auto rpc_handler_operation_guard = detail::allocate<RPCHandlerOperation>(allocator, operation, allocator);
+    (*rpc_handler_operation_guard).start();
+    rpc_handler_operation_guard.release();
 }
 
 template <class ServerRPC, class RPCHandler, class Receiver>

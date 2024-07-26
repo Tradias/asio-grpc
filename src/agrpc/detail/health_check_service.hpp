@@ -147,7 +147,7 @@ class HealthCheckChecker : public detail::OperationBase
 
     static auto create_and_initiate(agrpc::HealthCheckService& service, void* tag)
     {
-        return detail::allocate<HealthCheckChecker>(detail::get_local_allocator(), service, tag).release();
+        return detail::allocate<HealthCheckChecker>(detail::get_local_allocator(), service, tag).extract();
     }
 
     void deallocate() { [[maybe_unused]] detail::AllocationGuard g{this, detail::get_local_allocator()}; }

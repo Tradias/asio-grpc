@@ -46,18 +46,18 @@ auto allocate_operation(Handler&& handler, Args&&... args)
         {
             return detail::allocate<Op>(detail::get_local_allocator(), detail::AllocationType::LOCAL,
                                         static_cast<Handler&&>(handler), static_cast<Args&&>(args)...)
-                .release();
+                .extract();
         }
         return detail::allocate<Op>(std::allocator<Op>{}, detail::AllocationType::CUSTOM,
                                     static_cast<Handler&&>(handler), static_cast<Args&&>(args)...)
-            .release();
+            .extract();
     }
     else
     {
         const auto allocator = detail::get_allocator(handler);
         return detail::allocate<Op>(allocator, detail::AllocationType::CUSTOM, static_cast<Handler&&>(handler),
                                     static_cast<Args&&>(args)...)
-            .release();
+            .extract();
     }
 }
 }

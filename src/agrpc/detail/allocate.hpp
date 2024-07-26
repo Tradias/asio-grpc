@@ -54,15 +54,11 @@ class AllocationGuard
         }
     }
 
-    Pointer get() const noexcept { return ptr_; }
-
-    Allocator get_allocator() const noexcept { return allocator_; }
-
-    Pointer operator->() const noexcept { return ptr_; }
-
     auto& operator*() const noexcept { return *ptr_; }
 
-    Pointer release() noexcept { return std::exchange(ptr_, nullptr); }
+    void release() noexcept { ptr_ = nullptr; }
+
+    [[nodiscard]] Pointer extract() noexcept { return std::exchange(ptr_, nullptr); }
 
     void reset() noexcept
     {

@@ -58,7 +58,7 @@ class ServerWriteReactor : public detail::ServerWriteReactorStepBase, public det
     template <class... Args>
     static auto create(Args&&... args)
     {
-        return detail::allocate<Derived>(detail::get_local_allocator(), static_cast<Args&&>(args)...).release();
+        return detail::allocate<Derived>(detail::get_local_allocator(), static_cast<Args&&>(args)...).extract();
     }
 
     [[nodiscard]] bool is_writing() const noexcept { return &ServerWriteReactor::do_write_done == get_on_complete(); }

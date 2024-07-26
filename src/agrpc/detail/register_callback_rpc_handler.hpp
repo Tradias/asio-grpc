@@ -122,7 +122,7 @@ struct RegisterCallbackRPCHandlerOperation
     {
         auto ptr = detail::allocate<ServerRPCAllocation>(this->get_allocator(), this->get_executor(), *this);
         this->increment_ref_count();
-        perform_request_and_repeat({ptr.release(), &deleter});
+        perform_request_and_repeat({ptr.extract(), &deleter});
     }
 
     void initiate_next()
