@@ -125,7 +125,7 @@ inline bool GrpcContextImplementation::running_in_this_thread() noexcept { retur
 
 inline bool GrpcContextImplementation::running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept
 {
-    auto* const context = detail::thread_local_grpc_context;
+    const auto* context = detail::thread_local_grpc_context;
     return context && &grpc_context == &context->grpc_context_;
 }
 

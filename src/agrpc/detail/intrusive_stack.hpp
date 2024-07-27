@@ -27,11 +27,14 @@ template <class T>
 class IntrusiveStack
 {
   public:
-    IntrusiveStack() : head_(nullptr) {}
+    IntrusiveStack() = default;
+
+    IntrusiveStack(const IntrusiveStack&) = delete;
 
     IntrusiveStack(IntrusiveStack&& other) noexcept : head_(std::exchange(other.head_, nullptr)) {}
 
-    IntrusiveStack(const IntrusiveStack&) = delete;
+    ~IntrusiveStack() = default;
+
     IntrusiveStack& operator=(const IntrusiveStack&) = delete;
     IntrusiveStack& operator=(IntrusiveStack&&) = delete;
 
@@ -51,7 +54,7 @@ class IntrusiveStack
     }
 
   private:
-    T* head_;
+    T* head_{};
 };
 }
 

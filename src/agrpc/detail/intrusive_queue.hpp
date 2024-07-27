@@ -32,14 +32,14 @@ class IntrusiveQueue
 
     IntrusiveQueue(const IntrusiveQueue&) = delete;
 
-    IntrusiveQueue& operator=(const IntrusiveQueue&) = delete;
-
     IntrusiveQueue(IntrusiveQueue&& other) noexcept
         : head_(std::exchange(other.head_, nullptr)), tail_(std::exchange(other.tail_, nullptr))
     {
     }
 
     ~IntrusiveQueue() = default;
+
+    IntrusiveQueue& operator=(const IntrusiveQueue&) = delete;
 
     IntrusiveQueue& operator=(IntrusiveQueue&& other) noexcept
     {
