@@ -41,6 +41,30 @@ void create_server_grpc_context()
     /* [create-grpc_context-server-side] */
 }
 
+void create_multi_threaded_server_grpc_context()
+{
+    /* [create-multi-threaded-grpc_context-server-side] */
+    const auto concurrency = std::thread::hardware_concurrency();
+    grpc::ServerBuilder builder;
+    agrpc::GrpcContext grpc_context{builder.AddCompletionQueue(), concurrency};
+    auto guard = asio::make_work_guard(grpc_context);
+    std::vector<std::thread> threads(concurrency);
+    for (auto& thread : threads)
+    {
+        thread = std::thread{[&]
+                             {
+                                 grpc_context.run();
+                             }};
+    }
+    // ...
+    guard.reset();
+    for (auto& thread : threads)
+    {
+        thread.join();
+    }
+    /* [create-multi-threaded-grpc_context-server-side] */
+}
+
 void health_check_service()
 {
     /* [add-health-check-service] */
@@ -58,10 +82,8 @@ void server_main()
     example::v1::Example::AsyncService service;
     std::unique_ptr<grpc::Server> server;
 
-    // begin-snippet: create-grpc_context-server-side
     grpc::ServerBuilder builder;
     agrpc::GrpcContext grpc_context{builder.AddCompletionQueue()};
-    // end-snippet
 
     builder.AddListeningPort("0.0.0.0:50051", grpc::InsecureServerCredentials());
     builder.RegisterService(&service);

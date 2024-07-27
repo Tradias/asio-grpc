@@ -60,7 +60,7 @@ class GrpcContext
     /**
      * @brief The associated allocator type
      */
-    using allocator_type = std::allocator<std::byte>;
+    using allocator_type = detail::GrpcContextLocalAllocator;
 
     /**
      * @brief Construct a GrpcContext for gRPC clients
@@ -69,6 +69,14 @@ class GrpcContext
      */
     GrpcContext();
 
+    /**
+     * @brief Construct a GrpcContext for multi-threaded gRPC clients
+     *
+     * @arg concurrency_hint If greater than one then this GrpcContext's run/poll functions may be called from multiple
+     * threads
+     *
+     * @since 3.2.0
+     */
     explicit GrpcContext(std::size_t concurrency_hint);
 
     template <class = void>
@@ -86,6 +94,20 @@ class GrpcContext
      */
     explicit GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue> completion_queue);
 
+    /**
+     * @brief Construct a GrpcContext for multi-threaded gRPC servers
+     *
+     * The resulting GrpcContext can also be used for clients.
+     *
+     * Example:
+     *
+     * @snippet server.cpp create-multi-threaded-grpc_context-server-side
+     *
+     * @arg concurrency_hint If greater than one then this GrpcContext's run/poll functions may be called from multiple
+     * threads
+     *
+     * @since 3.2.0
+     */
     GrpcContext(std::unique_ptr<grpc::ServerCompletionQueue> completion_queue, std::size_t concurrency_hint);
 
     /**
@@ -105,9 +127,8 @@ class GrpcContext
      * brought into the ready state when this function is invoked. Upon return, the GrpcContext will be in the stopped
      * state.
      *
-     * @attention Only one thread may call run*()/poll*() at a time.
-     *
-     * Thread-safe with regards to other functions except run*(), poll*() and the destructor.
+     * @attention Only one thread may call run*()/poll*() at a time [unless this context has been constructed with a
+     * `concurrency_hint` greater than one (since 3.2.0)].
      *
      * @return True if at least one operation has been processed.
      */
@@ -119,9 +140,8 @@ class GrpcContext
      * Runs the main event loop logic until the GrpcContext runs out of work, is stopped or the specified deadline has
      * been reached. The GrpcContext will be brought into the ready state when this function is invoked.
      *
-     * @attention Only one thread may call run*()/poll*() at a time.
-     *
-     * Thread-safe with regards to other functions except run*(), poll*() and the destructor.
+     * @attention Only one thread may call run*()/poll*() at a time [unless this context has been constructed with a
+     * `concurrency_hint` greater than one (since 3.2.0)].
      *
      * @tparam Deadline A type that is compatible with `grpc::TimePoint<Deadline>`.
      *
@@ -142,9 +162,8 @@ class GrpcContext
      * Runs the main event loop logic until the GrpcContext runs out of work, is stopped or the specified condition
      * returns false. The GrpcContext will be brought into the ready state when this function is invoked.
      *
-     * @attention Only one thread may call run*()/poll*() at a time.
-     *
-     * Thread-safe with regards to other functions except run*(), poll*() and the destructor.
+     * @attention Only one thread may call run*()/poll*() at a time [unless this context has been constructed with a
+     * `concurrency_hint` greater than one (since 3.2.0)].
      *
      * @tparam Condition A callable that returns false when the GrpcContext should stop.
      *
@@ -163,9 +182,8 @@ class GrpcContext
      * `asio::post(grpc_context, ...)` will not be processed. The GrpcContext will be brought into the ready state when
      * this function is invoked. Upon return, the GrpcContext will be in the stopped state.
      *
-     * @attention
-     * (until 3.2.0) Only one thread may call run*()/poll*() at a time.
-     * (since 3.2.0) No other thread may call run()/poll() at the same time.
+     * @attention Only one thread may call run*()/poll*() at a time [unless this context has been constructed with a
+     * `concurrency_hint` greater than one (since 3.2.0)].
      *
      * @return True if at least one event has been processed.
      */
@@ -177,9 +195,8 @@ class GrpcContext
      * Processes all ready completion handlers and ready events of the `grpc::CompletionQueue`. The GrpcContext will be
      * brought into the ready state when this function is invoked.
      *
-     * @attention Only one thread may call run*()/poll*() at a time.
-     *
-     * Thread-safe with regards to other functions except run*(), poll*() and the destructor.
+     * @attention Only one thread may call run*()/poll*() at a time [unless this context has been constructed with a
+     * `concurrency_hint` greater than one (since 3.2.0)].
      *
      * @return True if at least one operation has been processed.
      */
@@ -192,9 +209,8 @@ class GrpcContext
      * created using `asio::post(grpc_context, ...)` will not be processed. The GrpcContext will be brought into the
      * ready state when this function is invoked.
      *
-     * @attention
-     * (until 3.2.0) Only one thread may call run*()/poll*() at a time.
-     * (since 3.2.0) No other thread may call run()/poll() at the same time.
+     * @attention Only one thread may call run*()/poll*() at a time [unless this context has been constructed with a
+     * `concurrency_hint` greater than one (since 3.2.0)].
      *
      * @return True if at least one operation has been processed.
      */
@@ -243,7 +259,8 @@ class GrpcContext
     /**
      * @brief Get the associated allocator
      *
-     * @attention The returned allocator may only be used for allocations within the same thread that calls run().
+     * @attention The returned allocator may only be used for allocations/deallocations within the same thread(s) that
+     * calls run*()/poll*().
      *
      * Thread-safe
      */
