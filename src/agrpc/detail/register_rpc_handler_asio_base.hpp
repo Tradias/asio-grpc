@@ -64,7 +64,7 @@ class RegisterRPCHandlerOperationAsioBase
     using typename Base::Service;
     using Executor = detail::AssociatedExecutorT<CompletionHandlerT, ServerRPCExecutor>;
     using Allocator = detail::AssociatedAllocatorT<CompletionHandlerT>;
-    using RPCRequest = detail::RPCRequest<typename ServerRPC::Request, detail::has_initial_request(ServerRPC::TYPE)>;
+    using Starter = detail::ServerRPCStarterT<ServerRPC>;
     using RefCountGuard = detail::ScopeGuard<Decrementer>;
 
     template <class Ch>

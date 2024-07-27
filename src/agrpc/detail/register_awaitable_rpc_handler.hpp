@@ -36,12 +36,12 @@ struct RegisterAwaitableRPCHandlerOperation
     using Base = detail::RegisterRPCHandlerOperationAsioBase<ServerRPC, RPCHandler, CompletionHandler>;
     using typename Base::Allocator;
     using typename Base::RefCountGuard;
-    using typename Base::RPCRequest;
     using typename Base::ServerRPCExecutor;
     using typename Base::Service;
+    using typename Base::Starter;
 
-    using Awaitable = detail::RebindCoroutineT<
-        decltype(std::declval<RPCRequest&>().invoke(std::declval<RPCHandler&>(), std::declval<ServerRPC&>())), void>;
+    using Awaitable =
+        detail::RebindCoroutineT<detail::RPCHandlerInvokeResultT<Starter&, RPCHandler&, ServerRPC&>, void>;
     using UseAwaitable = detail::CoroutineCompletionTokenT<Awaitable>;
 
     template <class Ch>
@@ -79,13 +79,13 @@ struct RegisterAwaitableRPCHandlerOperation
     Awaitable perform_request_and_repeat()
     {
         auto rpc = detail::ServerRPCContextBaseAccess::construct<ServerRPC>(this->get_executor());
-        RPCRequest req;
-        if (!co_await req.start(rpc, this->service(), use_awaitable()))
+        Starter starter;
+        if (!co_await starter.start(rpc, this->service(), use_awaitable()))
         {
             co_return;
         }
         initiate_next();
-        AGRPC_TRY { co_await req.invoke(this->rpc_handler(), rpc); }
+        AGRPC_TRY { co_await starter.invoke(this->rpc_handler(), rpc); }
         AGRPC_CATCH(...) { this->set_error(std::current_exception()); }
         if (!detail::ServerRPCContextBaseAccess::is_finished(rpc))
         {

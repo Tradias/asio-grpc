@@ -33,7 +33,6 @@ struct RegisterCallbackRPCHandlerOperation
     using Base = detail::RegisterRPCHandlerOperationAsioBase<ServerRPC, RPCHandler, CompletionHandler>;
     using typename Base::Allocator;
     using typename Base::RefCountGuard;
-    using typename Base::RPCRequest;
     using typename Base::ServerRPCExecutor;
     using typename Base::Service;
     using ServerRPCWithRequest = detail::ServerRPCWithRequest<ServerRPC>;

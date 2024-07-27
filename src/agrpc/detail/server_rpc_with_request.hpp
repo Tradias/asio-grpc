@@ -23,8 +23,7 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class ServerRPC>
-struct ServerRPCWithRequest
-    : detail::RPCRequest<typename ServerRPC::Request, detail::has_initial_request(ServerRPC::TYPE)>
+struct ServerRPCWithRequest : detail::ServerRPCStarterT<ServerRPC>
 {
     explicit ServerRPCWithRequest(const typename ServerRPC::executor_type& executor)
         : rpc_(detail::ServerRPCContextBaseAccess::construct<ServerRPC>(executor))

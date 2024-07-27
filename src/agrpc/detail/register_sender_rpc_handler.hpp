@@ -157,14 +157,10 @@ struct RPCHandlerOperation
 {
     using Service = detail::GetServerRPCServiceT<ServerRPC>;
     using Traits = typename ServerRPC::Traits;
-    using InitialRequest =
-        detail::RPCRequest<typename ServerRPC::Request, detail::has_initial_request(ServerRPC::TYPE)>;
-    using RPCHandlerInvokeResult =
-        decltype(std::declval<InitialRequest>().invoke(std::declval<RPCHandler>(), std::declval<ServerRPC&>()));
+    using Starter = detail::ServerRPCStarterT<ServerRPC>;
+    using RPCHandlerInvokeResult = detail::RPCHandlerInvokeResultT<Starter&, RPCHandler&, ServerRPC&>;
     using RegisterRPCHandlerSenderOperationBase =
         detail::RegisterRPCHandlerSenderOperationBase<ServerRPC, RPCHandler, StopToken>;
-
-    static_assert(exec::is_sender_v<RPCHandlerInvokeResult>, "Request handler must return a sender.");
 
     struct StartReceiver
     {
@@ -204,8 +200,8 @@ struct RPCHandlerOperation
     };
 
     using StartOperationState = detail::InplaceWithFunctionWrapper<
-        exec::connect_result_t<decltype(std::declval<InitialRequest>().start(
-                                   std::declval<ServerRPC&>(), std::declval<Service&>(), agrpc::use_sender)),
+        exec::connect_result_t<decltype(std::declval<Starter>().start(std::declval<ServerRPC&>(),
+                                                                      std::declval<Service&>(), agrpc::use_sender)),
                                StartReceiver>>;
 
     template <class Action>
@@ -336,7 +332,7 @@ struct RPCHandlerOperation
 
     auto& get_allocator() noexcept { return impl2_.second(); }
 
-    detail::CompressedPair<RegisterRPCHandlerSenderOperationBase&, InitialRequest> impl1_;
+    detail::CompressedPair<RegisterRPCHandlerSenderOperationBase&, Starter> impl1_;
     ServerRPC rpc_;
     detail::CompressedPair<OperationState, Allocator> impl2_;
 };

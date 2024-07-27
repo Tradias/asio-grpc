@@ -30,7 +30,7 @@ constexpr bool has_initial_request(agrpc::ServerRPCType type) noexcept
 }
 
 template <class Request, bool HasInitialRequest>
-struct RPCRequest
+struct ServerRPCStarter
 {
     template <class RPC, class Service, class CompletionToken>
     auto start(RPC& rpc, Service& service, CompletionToken&& token)
@@ -48,7 +48,7 @@ struct RPCRequest
 };
 
 template <class Request>
-struct RPCRequest<Request, false>
+struct ServerRPCStarter<Request, false>
 {
     template <class RPC, class Service, class CompletionToken>
     auto start(RPC& rpc, Service& service, CompletionToken&& token)
@@ -62,6 +62,14 @@ struct RPCRequest<Request, false>
         return static_cast<Handler&&>(handler)(static_cast<RPC&&>(rpc), static_cast<Args&&>(args)...);
     }
 };
+
+template <class ServerRPC>
+using ServerRPCStarterT =
+    detail::ServerRPCStarter<typename ServerRPC::Request, detail::has_initial_request(ServerRPC::TYPE)>;
+
+template <class Starter, class Handler, class RPC, class... Args>
+using RPCHandlerInvokeResultT =
+    decltype(std::declval<Starter>().invoke(std::declval<Handler>(), std::declval<RPC>(), std::declval<Args>()...));
 }
 
 AGRPC_NAMESPACE_END
