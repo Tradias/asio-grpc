@@ -624,6 +624,38 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run(_completion_queue) par
     }
 }
 
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run(_completion_queue) parallel can run out of work")
+{
+    bool run_completion_queue{};
+    SUBCASE("run()") {}
+    SUBCASE("run_completion_queue()") { run_completion_queue = true; }
+    const auto thread_count = 3;
+    grpc_context_lifetime.emplace(thread_count);
+    asio::thread_pool pool{thread_count};
+    agrpc::Alarm{grpc_context}.wait(test::hundred_milliseconds_from_now(),
+                                    [&](auto&&...)
+                                    {
+                                        if (run_completion_queue)
+                                        {
+                                            agrpc::Alarm{grpc_context}.wait(test::hundred_milliseconds_from_now(),
+                                                                            test::NoOp{});
+                                        }
+                                        else
+                                        {
+                                            test::post(grpc_context, test::NoOp{});
+                                        }
+                                    });
+    for (size_t i{}; i != thread_count; ++i)
+    {
+        asio::post(pool,
+                   [&]
+                   {
+                       run_completion_queue ? grpc_context.run_completion_queue() : grpc_context.run();
+                   });
+    }
+    pool.join();
+}
+
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll() within run()")
 {
     int count{};
