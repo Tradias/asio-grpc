@@ -29,6 +29,7 @@ add_dependencies(
     asio-grpc-example-generic-client
     asio-grpc-example-generic-server
     asio-grpc-example-multi-threaded-client
+    asio-grpc-example-multi-threaded-alternative-client
     asio-grpc-example-multi-threaded-server
     asio-grpc-example-unifex-client
     asio-grpc-example-unifex-server)
@@ -38,19 +39,21 @@ file(MAKE_DIRECTORY "${ASIO_GRPC_TEMP_DIR}")
 
 target_compile_definitions(
     asio-grpc-test-examples
-    PRIVATE "ASIO_GRPC_EXAMPLE_TEMP_DIR=\"${ASIO_GRPC_TEMP_DIR}\""
-            "ASIO_GRPC_EXAMPLE_STREAMING_CLIENT=\"$<TARGET_FILE:asio-grpc-example-streaming-client>\""
-            "ASIO_GRPC_EXAMPLE_STREAMING_SERVER=\"$<TARGET_FILE:asio-grpc-example-streaming-server>\""
-            "ASIO_GRPC_EXAMPLE_SHARE_IO_CONTEXT_CLIENT=\"$<TARGET_FILE:asio-grpc-example-share-io-context-client>\""
-            "ASIO_GRPC_EXAMPLE_SHARE_IO_CONTEXT_SERVER=\"$<TARGET_FILE:asio-grpc-example-share-io-context-server>\""
-            "ASIO_GRPC_EXAMPLE_HELLO_WORLD_CLIENT=\"$<TARGET_FILE:asio-grpc-example-hello-world-client>\""
-            "ASIO_GRPC_EXAMPLE_HELLO_WORLD_SERVER=\"$<TARGET_FILE:asio-grpc-example-hello-world-server>\""
-            "ASIO_GRPC_EXAMPLE_GENERIC_CLIENT=\"$<TARGET_FILE:asio-grpc-example-generic-client>\""
-            "ASIO_GRPC_EXAMPLE_GENERIC_SERVER=\"$<TARGET_FILE:asio-grpc-example-generic-server>\""
-            "ASIO_GRPC_EXAMPLE_MULTI_THREADED_CLIENT=\"$<TARGET_FILE:asio-grpc-example-multi-threaded-client>\""
-            "ASIO_GRPC_EXAMPLE_MULTI_THREADED_SERVER=\"$<TARGET_FILE:asio-grpc-example-multi-threaded-server>\""
-            "ASIO_GRPC_EXAMPLE_UNIFEX_CLIENT=\"$<TARGET_FILE:asio-grpc-example-unifex-client>\""
-            "ASIO_GRPC_EXAMPLE_UNIFEX_SERVER=\"$<TARGET_FILE:asio-grpc-example-unifex-server>\"")
+    PRIVATE
+        "ASIO_GRPC_EXAMPLE_TEMP_DIR=\"${ASIO_GRPC_TEMP_DIR}\""
+        "ASIO_GRPC_EXAMPLE_STREAMING_CLIENT=\"$<TARGET_FILE:asio-grpc-example-streaming-client>\""
+        "ASIO_GRPC_EXAMPLE_STREAMING_SERVER=\"$<TARGET_FILE:asio-grpc-example-streaming-server>\""
+        "ASIO_GRPC_EXAMPLE_SHARE_IO_CONTEXT_CLIENT=\"$<TARGET_FILE:asio-grpc-example-share-io-context-client>\""
+        "ASIO_GRPC_EXAMPLE_SHARE_IO_CONTEXT_SERVER=\"$<TARGET_FILE:asio-grpc-example-share-io-context-server>\""
+        "ASIO_GRPC_EXAMPLE_HELLO_WORLD_CLIENT=\"$<TARGET_FILE:asio-grpc-example-hello-world-client>\""
+        "ASIO_GRPC_EXAMPLE_HELLO_WORLD_SERVER=\"$<TARGET_FILE:asio-grpc-example-hello-world-server>\""
+        "ASIO_GRPC_EXAMPLE_GENERIC_CLIENT=\"$<TARGET_FILE:asio-grpc-example-generic-client>\""
+        "ASIO_GRPC_EXAMPLE_GENERIC_SERVER=\"$<TARGET_FILE:asio-grpc-example-generic-server>\""
+        "ASIO_GRPC_EXAMPLE_MULTI_THREADED_CLIENT=\"$<TARGET_FILE:asio-grpc-example-multi-threaded-client>\""
+        "ASIO_GRPC_EXAMPLE_MULTI_THREADED_ALTERNATIVE_CLIENT=\"$<TARGET_FILE:asio-grpc-example-multi-threaded-alternative-client>\""
+        "ASIO_GRPC_EXAMPLE_MULTI_THREADED_SERVER=\"$<TARGET_FILE:asio-grpc-example-multi-threaded-server>\""
+        "ASIO_GRPC_EXAMPLE_UNIFEX_CLIENT=\"$<TARGET_FILE:asio-grpc-example-unifex-client>\""
+        "ASIO_GRPC_EXAMPLE_UNIFEX_SERVER=\"$<TARGET_FILE:asio-grpc-example-unifex-server>\"")
 
 if(ASIO_GRPC_ENABLE_IO_URING_EXAMPLES OR ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     add_dependencies(asio-grpc-test-examples asio-grpc-example-file-transfer-client

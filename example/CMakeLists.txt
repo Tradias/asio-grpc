@@ -62,6 +62,9 @@ if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPL
     asio_grpc_add_example(multi-threaded-client "20")
     target_link_libraries(asio-grpc-example-multi-threaded-client PRIVATE asio-grpc::asio-grpc)
 
+    asio_grpc_add_example(multi-threaded-alternative-client "20")
+    target_link_libraries(asio-grpc-example-multi-threaded-alternative-client PRIVATE asio-grpc::asio-grpc)
+
     asio_grpc_add_example(multi-threaded-server "20")
     target_link_libraries(asio-grpc-example-multi-threaded-server PRIVATE asio-grpc::asio-grpc)
 
