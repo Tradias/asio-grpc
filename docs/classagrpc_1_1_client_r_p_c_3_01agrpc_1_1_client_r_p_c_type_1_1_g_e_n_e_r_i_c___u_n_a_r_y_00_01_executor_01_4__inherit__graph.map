@@ -1,0 +1,6 @@
+<map id="agrpc::ClientRPC&lt; agrpc::ClientRPCType::GENERIC_UNARY, Executor &gt;" name="agrpc::ClientRPC&lt; agrpc::ClientRPCType::GENERIC_UNARY, Executor &gt;">
+<area shape="rect" id="node1" title="I/O object for client&#45;side, generic, unary rpcs." alt="" coords="659,35,849,91"/>
+<area shape="rect" id="node2" href="$classagrpc_1_1detail_1_1_client_r_p_c_base.html" title=" " alt="" coords="348,35,611,91"/>
+<area shape="rect" id="node3" href="$classagrpc_1_1detail_1_1_r_p_c_executor_base.html" title="RPC&#39;s executor base." alt="" coords="56,5,249,47"/>
+<area shape="rect" id="node4" href="$classagrpc_1_1detail_1_1_client_r_p_c_context_base.html" title=" " alt="" coords="5,71,300,127"/>
+</map>
