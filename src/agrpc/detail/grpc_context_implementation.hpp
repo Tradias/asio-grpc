@@ -127,11 +127,12 @@ struct GrpcContextImplementation
 
     static bool move_remote_work_to_local_queue(detail::GrpcContextThreadContext& context) noexcept;
 
+    static void distribute_local_work_to_other_threads(detail::GrpcContextThreadContext& context) noexcept;
+
     static bool process_local_queue(detail::GrpcContextThreadContext& context, detail::InvokeHandler invoke);
 
-    template <class StopPredicate = detail::IsGrpcContextStoppedPredicate>
     static bool do_one(detail::GrpcContextThreadContext& context, ::gpr_timespec deadline,
-                       detail::InvokeHandler invoke = detail::InvokeHandler::YES_, StopPredicate stop_predicate = {});
+                       detail::InvokeHandler invoke = detail::InvokeHandler::YES_);
 
     static bool do_one_if_not_stopped(detail::GrpcContextThreadContext& context, ::gpr_timespec deadline);
 
@@ -142,6 +143,8 @@ struct GrpcContextImplementation
 
     template <class LoopFunction>
     static bool process_work(agrpc::GrpcContext& grpc_context, LoopFunction loop_function);
+
+    static void drain_completion_queue(agrpc::GrpcContext& grpc_context) noexcept;
 
     static detail::ListablePoolResource& pop_resource(agrpc::GrpcContext& grpc_context);
 

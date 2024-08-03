@@ -31,21 +31,6 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-struct AlwaysFalsePredicate
-{
-    [[nodiscard]] constexpr bool operator()(const agrpc::GrpcContext&) const noexcept { return false; }
-};
-
-inline void drain_completion_queue(agrpc::GrpcContext& grpc_context)
-{
-    detail::GrpcContextThreadContext thread_context{grpc_context};
-    while (detail::GrpcContextImplementation::do_one(thread_context, detail::GrpcContextImplementation::INFINITE_FUTURE,
-                                                     detail::InvokeHandler::NO_, detail::AlwaysFalsePredicate{}))
-    {
-        //
-    }
-}
-
 inline grpc::CompletionQueue* get_completion_queue(agrpc::GrpcContext& grpc_context) noexcept
 {
     return grpc_context.get_completion_queue();
@@ -111,7 +96,7 @@ inline GrpcContext::~GrpcContext()
     stop();
     shutdown_.store(true, std::memory_order_relaxed);
     completion_queue_->Shutdown();
-    detail::drain_completion_queue(*this);
+    detail::GrpcContextImplementation::drain_completion_queue(*this);
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     asio::execution_context::shutdown();
     asio::execution_context::destroy();

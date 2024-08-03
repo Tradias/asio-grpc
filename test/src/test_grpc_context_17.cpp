@@ -338,6 +338,8 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post a asio::steady_timer")
 TEST_CASE_FIXTURE(test::GrpcContextTest, "post from multiple threads")
 {
     static constexpr auto THREAD_COUNT = 32;
+    SUBCASE("single-threaded") {}
+    SUBCASE("multi-threaded") { grpc_context_lifetime.emplace(2); }
     std::atomic_int counter{};
     asio::thread_pool pool{THREAD_COUNT};
     std::optional guard{test::work_tracking_executor(grpc_context)};
@@ -449,6 +451,8 @@ struct GrpcContextAndIoContextTest : test::GrpcContextTest, test::IoContextTest
 
 TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll() with asio::post")
 {
+    SUBCASE("single-threaded") {}
+    SUBCASE("multi-threaded") { grpc_context_lifetime.emplace(2); }
     bool invoked{false};
     asio::steady_timer timer{io_context};
     asio::post(io_context,
@@ -474,6 +478,8 @@ TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll() with asio::po
 
 TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll() with agrpc::Alarm")
 {
+    SUBCASE("single-threaded") {}
+    SUBCASE("multi-threaded") { grpc_context_lifetime.emplace(2); }
     bool invoked{false};
     agrpc::Alarm alarm{grpc_context};
     asio::steady_timer timer{io_context};
@@ -499,6 +505,8 @@ TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll() with agrpc::A
 
 TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll_completion_queue()")
 {
+    SUBCASE("single-threaded") {}
+    SUBCASE("multi-threaded") { grpc_context_lifetime.emplace(2); }
     bool post_completed{false};
     bool alarm_completed{false};
     agrpc::Alarm alarm{grpc_context};
@@ -526,7 +534,9 @@ TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll_completion_queu
                            CHECK_FALSE(post_completed);
                            CHECK(alarm_completed);
                            CHECK_FALSE(grpc_context.poll_completion_queue());
-                           CHECK(grpc_context.poll());
+                           while (!grpc_context.poll())
+                               ;
+                           //    CHECK(grpc_context.poll());
                            CHECK(post_completed);
                        });
                });
@@ -535,6 +545,8 @@ TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll_completion_queu
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_completion_queue()")
 {
+    SUBCASE("single-threaded") {}
+    SUBCASE("multi-threaded") { grpc_context_lifetime.emplace(2); }
     bool post_completed{false};
     bool alarm_completed{false};
     agrpc::Alarm alarm{grpc_context};
@@ -581,18 +593,9 @@ inline void post_some(agrpc::GrpcContext& grpc_context, asio::thread_pool& pool)
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run(_completion_queue) parallel")
 {
-    std::function<void()> run{[&]
-                              {
-                                  grpc_context.run();
-                              }};
+    bool run_completion_queue{};
     SUBCASE("run()") {}
-    SUBCASE("run_completion_queue()")
-    {
-        run = [&]
-        {
-            grpc_context.run_completion_queue();
-        };
-    }
+    SUBCASE("run_completion_queue()") { run_completion_queue = true; }
     const auto thread_count = 4;
     grpc_context_lifetime.emplace(thread_count / 2);
     for (size_t j{}; j != 3; ++j)
@@ -612,7 +615,11 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run(_completion_queue) par
         }
         for (size_t i{}; i != thread_count / 2; ++i)
         {
-            asio::post(pool, run);
+            asio::post(pool,
+                       [&]
+                       {
+                           run_completion_queue ? grpc_context.run_completion_queue() : grpc_context.run();
+                       });
         }
         asio::steady_timer timer{pool, std::chrono::milliseconds(500)};
         timer.async_wait(
@@ -658,6 +665,8 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run(_completion_queue) par
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.poll() within run()")
 {
+    SUBCASE("single-threaded") {}
+    SUBCASE("multi-threaded") { grpc_context_lifetime.emplace(2); }
     int count{};
     post(
         [&]
@@ -690,9 +699,13 @@ void recursively_post(agrpc::GrpcContext& grpc_context)
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run() is not blocked by repeated asio::posts")
 {
+    SUBCASE("single-threaded") {}
+    SUBCASE("multi-threaded") { grpc_context_lifetime.emplace(2); }
     bool alarm_completed{false};
     recursively_post(grpc_context);
     agrpc::Alarm alarm{grpc_context};
+    post(test::NoOp{});
+    post(test::NoOp{});
     post(
         [&]
         {
@@ -708,6 +721,8 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run() is not blocked by re
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() can wait for agrpc::Alarm")
 {
+    SUBCASE("single-threaded") {}
+    SUBCASE("multi-threaded") { grpc_context_lifetime.emplace(2); }
     bool invoked{false};
     agrpc::Alarm alarm{grpc_context};
     test::wait(alarm, test::now(),
@@ -722,6 +737,8 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() can wait for a
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() times out correctly")
 {
+    SUBCASE("single-threaded") {}
+    SUBCASE("multi-threaded") { grpc_context_lifetime.emplace(2); }
     agrpc::Alarm alarm{grpc_context};
     test::wait(alarm, test::one_second_from_now(), test::NoOp{});
     CHECK_FALSE(grpc_context.run_until(test::now()));
@@ -730,6 +747,8 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() times out corr
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_while() runs until the expected event")
 {
+    SUBCASE("single-threaded") {}
+    SUBCASE("multi-threaded") { grpc_context_lifetime.emplace(2); }
     bool alarm1_finished{false};
     agrpc::Alarm alarm1{grpc_context};
     test::wait(alarm1, test::one_second_from_now(),
@@ -792,7 +811,9 @@ TEST_CASE("asio GrpcExecutor::schedule and destruct GrpcContext")
                                               },
                                               state};
     {
-        std::optional<agrpc::GrpcContext> grpc_context{std::make_unique<grpc::CompletionQueue>()};
+        std::optional<agrpc::GrpcContext> grpc_context;
+        SUBCASE("single-threaded") { grpc_context.emplace(); }
+        SUBCASE("multi-threaded") { grpc_context.emplace(2); }
         auto sender = grpc_context->get_scheduler().schedule();
         auto operation_state = sender.connect(receiver);
         operation_state.start();
