@@ -98,9 +98,32 @@ enum class InvokeHandler
     YES_
 };
 
+struct CompletionQueueEventResult
+{
+    bool handled_completion_queue_event_;
+    bool check_remote_work_{};
+
+    explicit operator bool() const noexcept { return handled_completion_queue_event_; }
+
+    [[nodiscard]] bool handled_completion_queue_event() const noexcept
+    {
+        return handled_completion_queue_event_ && !check_remote_work_;
+    }
+};
+
+struct DoOneResult : CompletionQueueEventResult
+{
+    bool processed_local_work_;
+
+    explicit operator bool() const noexcept
+    {
+        return processed_local_work_ || CompletionQueueEventResult::operator bool();
+    }
+};
+
 struct GrpcContextImplementation
 {
-    static constexpr void* HAS_REMOTE_WORK_TAG = nullptr;
+    static constexpr void* CHECK_REMOTE_WORK_TAG = nullptr;
     static constexpr ::gpr_timespec TIME_ZERO{std::numeric_limits<std::int64_t>::min(), 0, ::GPR_CLOCK_MONOTONIC};
     static constexpr ::gpr_timespec INFINITE_FUTURE{std::numeric_limits<std::int64_t>::max(), 0, ::GPR_CLOCK_MONOTONIC};
 
@@ -116,8 +139,9 @@ struct GrpcContextImplementation
 
     static void add_operation(agrpc::GrpcContext& grpc_context, detail::QueueableOperationBase* op) noexcept;
 
-    static bool handle_next_completion_queue_event(detail::GrpcContextThreadContext& context, ::gpr_timespec deadline,
-                                                   detail::InvokeHandler invoke);
+    static CompletionQueueEventResult handle_next_completion_queue_event(detail::GrpcContextThreadContext& context,
+                                                                         ::gpr_timespec deadline,
+                                                                         detail::InvokeHandler invoke);
 
     [[nodiscard]] static bool running_in_this_thread() noexcept;
 
@@ -131,15 +155,15 @@ struct GrpcContextImplementation
 
     static bool process_local_queue(detail::GrpcContextThreadContext& context, detail::InvokeHandler invoke);
 
-    static bool do_one(detail::GrpcContextThreadContext& context, ::gpr_timespec deadline,
-                       detail::InvokeHandler invoke = detail::InvokeHandler::YES_);
+    static DoOneResult do_one(detail::GrpcContextThreadContext& context, ::gpr_timespec deadline,
+                              detail::InvokeHandler invoke = detail::InvokeHandler::YES_);
 
-    static bool do_one_if_not_stopped(detail::GrpcContextThreadContext& context, ::gpr_timespec deadline);
+    static DoOneResult do_one_if_not_stopped(detail::GrpcContextThreadContext& context, ::gpr_timespec deadline);
 
-    static bool do_one_completion_queue(detail::GrpcContextThreadContext& context, ::gpr_timespec deadline);
+    static DoOneResult do_one_completion_queue(detail::GrpcContextThreadContext& context, ::gpr_timespec deadline);
 
-    static bool do_one_completion_queue_if_not_stopped(detail::GrpcContextThreadContext& context,
-                                                       ::gpr_timespec deadline);
+    static DoOneResult do_one_completion_queue_if_not_stopped(detail::GrpcContextThreadContext& context,
+                                                              ::gpr_timespec deadline);
 
     template <class LoopFunction>
     static bool process_work(agrpc::GrpcContext& grpc_context, LoopFunction loop_function);

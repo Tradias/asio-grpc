@@ -31,6 +31,35 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+template <class Function>
+struct GrpcContextLoopFunction
+{
+    Function function_;
+
+    auto operator()(detail::GrpcContextThreadContext& context) const { return function_(context); }
+
+    [[nodiscard]] bool has_processed(detail::DoOneResult result) const noexcept { return bool{result}; }
+};
+
+template <class Function>
+GrpcContextLoopFunction(Function) -> GrpcContextLoopFunction<Function>;
+
+template <class Function>
+struct GrpcContextCompletionQueueLoopFunction
+{
+    Function function_;
+
+    auto operator()(detail::GrpcContextThreadContext& context) const { return function_(context); }
+
+    [[nodiscard]] bool has_processed(detail::DoOneResult result) const noexcept
+    {
+        return result.handled_completion_queue_event();
+    }
+};
+
+template <class Function>
+GrpcContextCompletionQueueLoopFunction(Function) -> GrpcContextCompletionQueueLoopFunction<Function>;
+
 inline grpc::CompletionQueue* get_completion_queue(agrpc::GrpcContext& grpc_context) noexcept
 {
     return grpc_context.get_completion_queue();
@@ -107,67 +136,70 @@ inline GrpcContext::~GrpcContext()
 inline bool GrpcContext::run()
 {
     return detail::GrpcContextImplementation::process_work(
-        *this,
-        [](detail::GrpcContextThreadContext& context)
-        {
-            return detail::GrpcContextImplementation::do_one_if_not_stopped(
-                context, detail::GrpcContextImplementation::INFINITE_FUTURE);
-        });
+        *this, detail::GrpcContextLoopFunction{[](detail::GrpcContextThreadContext& context)
+                                               {
+                                                   return detail::GrpcContextImplementation::do_one_if_not_stopped(
+                                                       context, detail::GrpcContextImplementation::INFINITE_FUTURE);
+                                               }});
 }
 
 inline bool GrpcContext::run_completion_queue()
 {
     return detail::GrpcContextImplementation::process_work(
         *this,
-        [](detail::GrpcContextThreadContext& context)
-        {
-            return detail::GrpcContextImplementation::do_one_completion_queue_if_not_stopped(
-                context, detail::GrpcContextImplementation::INFINITE_FUTURE);
-        });
+        detail::GrpcContextCompletionQueueLoopFunction{
+            [](detail::GrpcContextThreadContext& context)
+            {
+                return detail::GrpcContextImplementation::do_one_completion_queue_if_not_stopped(
+                    context, detail::GrpcContextImplementation::INFINITE_FUTURE);
+            }});
 }
 
 inline bool GrpcContext::poll()
 {
     return detail::GrpcContextImplementation::process_work(
-        *this,
-        [](detail::GrpcContextThreadContext& context)
-        {
-            return detail::GrpcContextImplementation::do_one_if_not_stopped(
-                context, detail::GrpcContextImplementation::TIME_ZERO);
-        });
+        *this, detail::GrpcContextLoopFunction{[](detail::GrpcContextThreadContext& context)
+                                               {
+                                                   return detail::GrpcContextImplementation::do_one_if_not_stopped(
+                                                       context, detail::GrpcContextImplementation::TIME_ZERO);
+                                               }});
 }
 
 inline bool GrpcContext::run_until_impl(::gpr_timespec deadline)
 {
     return detail::GrpcContextImplementation::process_work(
-        *this,
-        [deadline](detail::GrpcContextThreadContext& context)
-        {
-            return detail::GrpcContextImplementation::do_one_if_not_stopped(context, deadline);
-        });
+        *this, detail::GrpcContextLoopFunction{[deadline](detail::GrpcContextThreadContext& context)
+                                               {
+                                                   return detail::GrpcContextImplementation::do_one_if_not_stopped(
+                                                       context, deadline);
+                                               }});
 }
 
 template <class Condition>
 inline bool GrpcContext::run_while(Condition&& condition)
 {
     return detail::GrpcContextImplementation::process_work(
-        *this,
-        [&](detail::GrpcContextThreadContext& context)
-        {
-            return condition() && detail::GrpcContextImplementation::do_one_if_not_stopped(
-                                      context, detail::GrpcContextImplementation::INFINITE_FUTURE);
-        });
+        *this, detail::GrpcContextLoopFunction{[&](detail::GrpcContextThreadContext& context)
+                                               {
+                                                   if (!condition())
+                                                   {
+                                                       return detail::DoOneResult{};
+                                                   }
+                                                   return detail::GrpcContextImplementation::do_one_if_not_stopped(
+                                                       context, detail::GrpcContextImplementation::INFINITE_FUTURE);
+                                               }});
 }
 
 inline bool GrpcContext::poll_completion_queue()
 {
     return detail::GrpcContextImplementation::process_work(
         *this,
-        [](detail::GrpcContextThreadContext& context)
-        {
-            return detail::GrpcContextImplementation::do_one_completion_queue_if_not_stopped(
-                context, detail::GrpcContextImplementation::TIME_ZERO);
-        });
+        detail::GrpcContextCompletionQueueLoopFunction{
+            [](detail::GrpcContextThreadContext& context)
+            {
+                return detail::GrpcContextImplementation::do_one_completion_queue_if_not_stopped(
+                    context, detail::GrpcContextImplementation::TIME_ZERO);
+            }});
 }
 
 inline void GrpcContext::stop()

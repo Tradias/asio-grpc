@@ -536,7 +536,6 @@ TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll_completion_queu
                            CHECK_FALSE(grpc_context.poll_completion_queue());
                            while (!grpc_context.poll())
                                ;
-                           //    CHECK(grpc_context.poll());
                            CHECK(post_completed);
                        });
                });

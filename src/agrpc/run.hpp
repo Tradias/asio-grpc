@@ -216,7 +216,7 @@ struct AlwaysFalseCondition
 
 struct GrpcContextDoOne
 {
-    static bool poll(detail::GrpcContextThreadContext& context, ::gpr_timespec deadline)
+    static auto poll(detail::GrpcContextThreadContext& context, ::gpr_timespec deadline)
     {
         return detail::GrpcContextImplementation::do_one(context, deadline);
     }
@@ -224,7 +224,7 @@ struct GrpcContextDoOne
 
 struct GrpcContextDoOneCompletionQueue
 {
-    static bool poll(detail::GrpcContextThreadContext& context, ::gpr_timespec deadline)
+    static auto poll(detail::GrpcContextThreadContext& context, ::gpr_timespec deadline)
     {
         return detail::GrpcContextImplementation::do_one_completion_queue(context, deadline);
     }
