@@ -100,7 +100,7 @@ enum class InvokeHandler
 
 struct CompletionQueueEventResult
 {
-    bool handled_completion_queue_event_;
+    bool handled_completion_queue_event_{};
     bool check_remote_work_{};
 
     explicit operator bool() const noexcept { return handled_completion_queue_event_; }
@@ -113,7 +113,7 @@ struct CompletionQueueEventResult
 
 struct DoOneResult : CompletionQueueEventResult
 {
-    bool processed_local_work_;
+    bool processed_local_work_{};
 
     explicit operator bool() const noexcept
     {
