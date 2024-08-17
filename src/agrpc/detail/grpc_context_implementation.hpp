@@ -41,11 +41,6 @@ struct WorkFinishedOnExitFunctor
     explicit WorkFinishedOnExitFunctor(agrpc::GrpcContext& grpc_context) noexcept : grpc_context_(grpc_context) {}
 
     void operator()() const noexcept;
-
-    WorkFinishedOnExitFunctor(const WorkFinishedOnExitFunctor&) = delete;
-    WorkFinishedOnExitFunctor(WorkFinishedOnExitFunctor&&) = delete;
-    WorkFinishedOnExitFunctor& operator=(const WorkFinishedOnExitFunctor&) = delete;
-    WorkFinishedOnExitFunctor& operator=(WorkFinishedOnExitFunctor&&) = delete;
 };
 
 using WorkFinishedOnExit = detail::ScopeGuard<detail::WorkFinishedOnExitFunctor>;
@@ -53,11 +48,6 @@ using WorkFinishedOnExit = detail::ScopeGuard<detail::WorkFinishedOnExitFunctor>
 struct StartWorkAndGuard : detail::WorkFinishedOnExit
 {
     explicit StartWorkAndGuard(agrpc::GrpcContext& grpc_context) noexcept;
-
-    StartWorkAndGuard(const StartWorkAndGuard&) = delete;
-    StartWorkAndGuard(StartWorkAndGuard&&) = delete;
-    StartWorkAndGuard& operator=(const StartWorkAndGuard&) = delete;
-    StartWorkAndGuard& operator=(StartWorkAndGuard&&) = delete;
 };
 
 struct GrpcContextThreadContext

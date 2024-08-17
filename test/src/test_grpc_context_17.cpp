@@ -534,8 +534,7 @@ TEST_CASE_FIXTURE(GrpcContextAndIoContextTest, "GrpcContext.poll_completion_queu
                            CHECK_FALSE(post_completed);
                            CHECK(alarm_completed);
                            CHECK_FALSE(grpc_context.poll_completion_queue());
-                           while (!grpc_context.poll())
-                               ;
+                           while (!grpc_context.poll());
                            CHECK(post_completed);
                        });
                });
@@ -716,6 +715,29 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run() is not blocked by re
                        });
         });
     grpc_context.run();
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run() interrupted by an exception will not forget local work")
+{
+    grpc_context_lifetime.emplace(2);
+    bool post_completed{false};
+    std::thread t;
+    post(
+        [&]
+        {
+            t = std::thread{[&]
+                            {
+                                grpc_context.run();
+                            }};
+            post(
+                [&]
+                {
+                    post_completed = true;
+                });
+            throw test::Exception{};
+        });
+    CHECK_THROWS_AS(grpc_context.run(), test::Exception);
+    t.join();
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() can wait for agrpc::Alarm")
