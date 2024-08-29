@@ -25,6 +25,7 @@
 #include <boost/asio/detached.hpp>
 #include <boost/asio/experimental/awaitable_operators.hpp>
 #include <boost/asio/experimental/channel.hpp>
+#include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/asio/thread_pool.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
@@ -88,6 +89,56 @@ asio::awaitable<void> handle_server_streaming_request(ServerStreamingRPC& rpc, e
         response.set_integer(response.integer() - 1);
     }
     co_await rpc.finish(grpc::Status::OK);
+}
+// ---------------------------------------------------
+//
+
+// begin-snippet: server-side-notify-when-done
+// ---------------------------------------------------
+// A server-streaming rpc handler that sends a message every 30s but completes immediately if the client cancels the
+// rpc.
+// ---------------------------------------------------
+// end-snippet
+using ServerStreamingNotifyWhenDoneRPC =
+    example::AwaitableNotifyWhenDoneServerRPC<&ExampleService::RequestServerStreaming>;
+
+auto server_streaming_notify_when_done_request_handler(agrpc::GrpcContext& grpc_context)
+{
+    return [&grpc_context](ServerStreamingNotifyWhenDoneRPC& rpc,
+                           ServerStreamingNotifyWhenDoneRPC::Request& request) -> asio::awaitable<void>
+    {
+        ServerStreamingNotifyWhenDoneRPC::Response response;
+        response.set_integer(request.integer());
+        if (!co_await rpc.write(response))
+        {
+            co_return;
+        }
+        agrpc::Alarm alarm(grpc_context);
+        while (true)
+        {
+            const auto [completion_order, wait_ok, ec] =
+                co_await asio::experimental::make_parallel_group(
+                    alarm.wait(std::chrono::system_clock::now() + std::chrono::seconds(30), asio::deferred),
+                    rpc.wait_for_done(asio::deferred))
+                    .async_wait(asio::experimental::wait_for_one(), asio::use_awaitable);
+            if (completion_order[0] == 0)
+            {
+                // alarm completed, send the next message to the client:
+                response.set_integer(response.integer() + 1);
+                if (!co_await rpc.write(response))
+                {
+                    co_return;
+                }
+            }
+            else
+            {
+                // wait_for_done completed, IsCancelled can now be called:
+                abort_if_not(rpc.context().IsCancelled());
+                std::cout << "ServerRPC: Server streaming notify_when_done was successfully cancelled\n";
+                co_return;
+            }
+        }
+    };
 }
 // ---------------------------------------------------
 //
@@ -219,6 +270,10 @@ int main(int argc, const char** argv)
 
     agrpc::register_awaitable_rpc_handler<ServerStreamingRPC>(grpc_context, service, &handle_server_streaming_request,
                                                               example::RethrowFirstArg{});
+
+    agrpc::register_awaitable_rpc_handler<ServerStreamingNotifyWhenDoneRPC>(
+        grpc_context, service, server_streaming_notify_when_done_request_handler(grpc_context),
+        example::RethrowFirstArg{});
 
     agrpc::register_awaitable_rpc_handler<BidiStreamingRPC>(
         grpc_context, service, bidirectional_streaming_rpc_handler(thread_pool), example::RethrowFirstArg{});

@@ -33,7 +33,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // A bidirectional-streaming request that simply sends the response from the server back to it.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/streaming-client.cpp#L106-L110' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-rpc-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-client.cpp#L135-L139' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-rpc-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: client-side-run-with-deadline -->
@@ -45,7 +45,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // For unary RPCs, `grpc::ClientContext::set_deadline` should be preferred.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/streaming-client.cpp#L150-L156' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-run-with-deadline' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-client.cpp#L179-L185' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-run-with-deadline' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Multi-threaded
@@ -140,7 +140,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // A simple client-streaming rpc handler using C++20 coroutines.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/streaming-server.cpp#L41-L45' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-client-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-server.cpp#L42-L46' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-client-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: server-side-server-streaming -->
@@ -150,7 +150,18 @@ Click on `snippet source` to jump to the code of an individual example.
 // A simple server-streaming rpc handler using C++20 coroutines.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/streaming-server.cpp#L75-L79' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-server-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-server.cpp#L76-L80' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-server-streaming' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+<!-- snippet: server-side-notify-when-done -->
+<a id='snippet-server-side-notify-when-done'></a>
+```cpp
+// ---------------------------------------------------
+// A server-streaming rpc handler that sends a message every 30s but completes immediately if the client cancels the
+// rpc.
+// ---------------------------------------------------
+```
+<sup><a href='/example/streaming-server.cpp#L96-L101' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-notify-when-done' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: server-side-bidirectional-streaming -->
@@ -161,7 +172,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // back to the client.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/streaming-server.cpp#L95-L100' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-server.cpp#L146-L151' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Multi-threaded

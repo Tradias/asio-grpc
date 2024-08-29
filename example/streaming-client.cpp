@@ -103,6 +103,35 @@ asio::awaitable<void> make_server_streaming_request(agrpc::GrpcContext& grpc_con
 // ---------------------------------------------------
 //
 
+// ---------------------------------------------------
+// A server-streaming request that is cancelled.
+// ---------------------------------------------------
+asio::awaitable<void> make_server_streaming_notify_when_done_request(agrpc::GrpcContext& grpc_context,
+                                                                     ExampleStub& stub)
+{
+    using RPC = example::AwaitableClientRPC<&ExampleStub::PrepareAsyncServerStreaming>;
+
+    RPC rpc{grpc_context};
+    rpc.context().set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
+
+    example::v1::Request request;
+    request.set_integer(1);
+    abort_if_not(co_await rpc.start(stub, request));
+
+    example::v1::Response response;
+    co_await rpc.read(response);
+
+    // cancellation also happens automatically at the end of this scope
+    rpc.cancel();
+
+    const grpc::Status status = co_await rpc.finish();
+    abort_if_not(grpc::StatusCode::CANCELLED == status.error_code());
+
+    std::cout << "ClientRPC: Server streaming notify_when_done completed\n";
+}
+// ---------------------------------------------------
+//
+
 // begin-snippet: client-rpc-bidirectional-streaming
 // ---------------------------------------------------
 // A bidirectional-streaming request that simply sends the response from the server back to it.
@@ -228,6 +257,7 @@ int main(int argc, const char** argv)
         {
             co_await make_client_streaming_request(grpc_context, stub);
             co_await make_server_streaming_request(grpc_context, stub);
+            co_await make_server_streaming_notify_when_done_request(grpc_context, stub);
             co_await make_bidirectional_streaming_request(grpc_context, stub);
             co_await make_and_cancel_unary_request(grpc_context, stub_ext);
             co_await make_shutdown_request(grpc_context, stub_ext);

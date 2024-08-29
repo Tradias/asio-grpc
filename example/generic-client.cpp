@@ -152,11 +152,11 @@ struct BidirectionalStreamingRequest
                     asio::experimental::make_parallel_group(
                         [&](auto&& token)
                         {
-                            return c.rpc.read(c.response_buffer, std::move(token));
+                            return c.rpc.read(c.response_buffer, std::forward<decltype(token)>(token));
                         },
                         [&](auto&& token)
                         {
-                            return c.rpc.write(request_buffer, std::move(token));
+                            return c.rpc.write(request_buffer, std::forward<decltype(token)>(token));
                         })
                         .async_wait(asio::experimental::wait_for_all(), std::move(self));
                 }

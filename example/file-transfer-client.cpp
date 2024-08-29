@@ -106,13 +106,13 @@ asio::awaitable<bool, agrpc::GrpcExecutor> make_double_buffered_send_file_reques
                 {
                     // Again using bind_executor to avoid switching contexts in case this function completes after
                     // rpc::write.
-                    return file.async_read_some(
-                        asio::buffer(*next->mutable_content()),
-                        buffer1.bind_allocator(asio::bind_executor(asio::system_executor{}, std::move(token))));
+                    return file.async_read_some(asio::buffer(*next->mutable_content()),
+                                                buffer1.bind_allocator(asio::bind_executor(
+                                                    asio::system_executor{}, std::forward<decltype(token)>(token))));
                 },
                 [&](auto&& token)
                 {
-                    return rpc.write(*current, buffer2.bind_allocator(std::move(token)));
+                    return rpc.write(*current, buffer2.bind_allocator(std::forward<decltype(token)>(token)));
                 })
                 .async_wait(asio::experimental::wait_for_all(), buffer1.bind_allocator(USE_AWAITABLE));
         if (!ok)

@@ -22,6 +22,15 @@ namespace example
 {
 template <auto RequestRPC>
 using AwaitableServerRPC = boost::asio::use_awaitable_t<>::as_default_on_t<agrpc::ServerRPC<RequestRPC>>;
+
+struct ServerRPCNotifyWhenDoneTraits : agrpc::DefaultServerRPCTraits
+{
+    static constexpr bool NOTIFY_WHEN_DONE = true;
+};
+
+template <auto RequestRPC>
+using AwaitableNotifyWhenDoneServerRPC =
+    boost::asio::use_awaitable_t<>::as_default_on_t<agrpc::ServerRPC<RequestRPC, ServerRPCNotifyWhenDoneTraits>>;
 }
 
 #endif  // AGRPC_HELPER_AWAITABLE_SERVER_RPC_HPP
