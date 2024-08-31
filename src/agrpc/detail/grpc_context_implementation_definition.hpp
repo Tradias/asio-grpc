@@ -82,15 +82,8 @@ inline bool GrpcContextImplementation::is_shutdown(const agrpc::GrpcContext& grp
 
 inline void GrpcContextImplementation::trigger_work_alarm(agrpc::GrpcContext& grpc_context) noexcept
 {
-    if (grpc_context.multithreaded_)
-    {
-        if (!grpc_context.check_remote_work_.exchange(true, std::memory_order_relaxed))
-        {
-            grpc_context.work_alarm_.Set(grpc_context.completion_queue_.get(), GrpcContextImplementation::TIME_ZERO,
-                                         GrpcContextImplementation::CHECK_REMOTE_WORK_TAG);
-        }
-    }
-    else
+    if (!grpc_context.multithreaded_ ||
+        (grpc_context.multithreaded_ && !grpc_context.check_remote_work_.exchange(true, std::memory_order_relaxed)))
     {
         grpc_context.work_alarm_.Set(grpc_context.completion_queue_.get(), GrpcContextImplementation::TIME_ZERO,
                                      GrpcContextImplementation::CHECK_REMOTE_WORK_TAG);

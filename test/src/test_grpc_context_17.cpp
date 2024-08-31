@@ -233,6 +233,8 @@ TEST_CASE_FIXTURE(GrpcExecutorTest, "GrpcExecutor comparison operator - differen
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::reset")
 {
+    SUBCASE("single-threaded") {}
+    SUBCASE("multi-threaded") { grpc_context_lifetime.emplace(2); }
     bool ok{false};
     CHECK_FALSE(grpc_context.is_stopped());
     post(
@@ -258,6 +260,8 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::reset")
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::stop does not complete pending operations")
 {
+    SUBCASE("single-threaded") {}
+    SUBCASE("multi-threaded") { grpc_context_lifetime.emplace(2); }
     bool ok{false};
     post(
         [&]
@@ -738,6 +742,32 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run() interrupted by an ex
         });
     CHECK_THROWS_AS(grpc_context.run(), test::Exception);
     t.join();
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.stop() wakes up multiple threads")
+{
+    grpc_context_lifetime.emplace(2);
+    asio::thread_pool pool{3};
+    std::optional guard{test::work_tracking_executor(grpc_context)};
+    for (size_t i{}; i != 2; ++i)
+    {
+        asio::post(pool,
+                   [&]
+                   {
+                       grpc_context.run();
+                   });
+    }
+    post(
+        [&]
+        {
+            asio::post(pool,
+                       [&]
+                       {
+                           std::this_thread::sleep_for(std::chrono::seconds(1));
+                           guard.reset();
+                       });
+        });
+    pool.join();  // expect no timeout
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_until() can wait for agrpc::Alarm")
