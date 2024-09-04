@@ -326,7 +326,7 @@ class GrpcContext
     std::atomic_bool stopped_{false};
     std::atomic_bool shutdown_{false};
     bool local_check_remote_work_{false};
-    bool multithreaded_{false};
+    const bool multithreaded_{false};
     LocalWorkQueue local_work_queue_{};
     std::unique_ptr<grpc::CompletionQueue> completion_queue_;
     RemoteWorkQueue remote_work_queue_{false};

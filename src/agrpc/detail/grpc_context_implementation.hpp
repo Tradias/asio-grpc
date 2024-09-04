@@ -58,6 +58,8 @@ struct GrpcContextThreadContext
 {
     explicit GrpcContextThreadContext(agrpc::GrpcContext& grpc_context);
 
+    GrpcContextThreadContext(agrpc::GrpcContext& grpc_context, bool multithreaded);
+
     ~GrpcContextThreadContext() noexcept;
 
     GrpcContextThreadContext(const GrpcContextThreadContext& other) = delete;
@@ -65,9 +67,10 @@ struct GrpcContextThreadContext
     GrpcContextThreadContext& operator=(const GrpcContextThreadContext& other) = delete;
     GrpcContextThreadContext& operator=(GrpcContextThreadContext&& other) = delete;
 
+    const bool multithreaded_;
+    bool check_remote_work_;
     agrpc::GrpcContext& grpc_context_;
     detail::IntrusiveQueue<detail::QueueableOperationBase> local_work_queue_;
-    bool check_remote_work_;
     GrpcContextThreadContext* old_context_;
     detail::ListablePoolResource& resource_;
 
@@ -90,25 +93,29 @@ enum class InvokeHandler
 
 struct CompletionQueueEventResult
 {
-    bool handled_completion_queue_event_{};
-    bool check_remote_work_{};
+    static constexpr uint8_t CHECK_REMOTE_WORK = 1 << 0;
+    static constexpr uint8_t HANDLED_EVENT = 1 << 1;
 
-    explicit operator bool() const noexcept { return handled_completion_queue_event_; }
+    uint8_t flags_{};
 
-    [[nodiscard]] bool handled_completion_queue_event() const noexcept
-    {
-        return handled_completion_queue_event_ && !check_remote_work_;
-    }
+    [[nodiscard]] bool handled_event() const noexcept { return (flags_ & HANDLED_EVENT) != 0; }
+
+    [[nodiscard]] bool check_remote_work() const noexcept { return (flags_ & CHECK_REMOTE_WORK) != 0; }
 };
 
 struct DoOneResult : CompletionQueueEventResult
 {
-    bool processed_local_work_{};
+    static constexpr uint8_t PROCESSED_LOCAL_WORK = HANDLED_EVENT << 1;
 
-    explicit operator bool() const noexcept
+    static DoOneResult create(CompletionQueueEventResult handled_event, bool processed_local_work) noexcept
     {
-        return processed_local_work_ || CompletionQueueEventResult::operator bool();
+        return {static_cast<uint8_t>(handled_event.flags_ |
+                                     (processed_local_work ? DoOneResult::PROCESSED_LOCAL_WORK : uint8_t{}))};
     }
+
+    explicit operator bool() const noexcept { return processed_local_work() || handled_event(); }
+
+    [[nodiscard]] bool processed_local_work() const noexcept { return (flags_ & PROCESSED_LOCAL_WORK) != 0; }
 };
 
 struct GrpcContextImplementation

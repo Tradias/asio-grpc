@@ -37,7 +37,10 @@ class AllocationGuard
     using Pointer = typename Traits::pointer;
 
   public:
-    AllocationGuard(Pointer&& ptr, const Allocator& allocator) noexcept : ptr_(ptr), allocator_(allocator) {}
+    AllocationGuard(Pointer&& ptr, const Allocator& allocator) noexcept
+        : ptr_(static_cast<Pointer&&>(ptr)), allocator_(allocator)
+    {
+    }
 
     AllocationGuard(ValueType& value, const Allocator& allocator) noexcept
         : ptr_(std::pointer_traits<Pointer>::pointer_to(value)), allocator_(allocator)

@@ -42,7 +42,7 @@ struct CancellationSlotToken
     {
         if (slot.is_connected())
         {
-            slot.template emplace<StopFunction>(static_cast<Args&&>(args)...);
+            static_cast<CancellationSlot&&>(slot).template emplace<StopFunction>(static_cast<Args&&>(args)...);
         }
     }
 };

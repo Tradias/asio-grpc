@@ -53,7 +53,7 @@ struct GrpcContextCompletionQueueLoopFunction
 
     [[nodiscard]] bool has_processed(detail::DoOneResult result) const noexcept
     {
-        return result.handled_completion_queue_event();
+        return result.handled_event() && !result.check_remote_work();
     }
 };
 
