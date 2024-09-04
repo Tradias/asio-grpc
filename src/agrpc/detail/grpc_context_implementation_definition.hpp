@@ -266,11 +266,11 @@ inline DoOneResult GrpcContextImplementation::do_one(detail::GrpcContextThreadCo
     const bool is_more_completed_work_pending = check_remote_work || !context.local_work_queue_.empty();
     if (!is_more_completed_work_pending && grpc_context.is_stopped())
     {
-        return {DoOneResult::PROCESSED_LOCAL_WORK};
+        return {{DoOneResult::PROCESSED_LOCAL_WORK}};
     }
     const auto handled_event = GrpcContextImplementation::handle_next_completion_queue_event(
         context, is_more_completed_work_pending ? GrpcContextImplementation::TIME_ZERO : deadline, invoke);
-    return DoOneResult::create(handled_event, processed_local_work);
+    return DoOneResult::from(handled_event, processed_local_work);
 }
 
 inline DoOneResult GrpcContextImplementation::do_one_if_not_stopped(detail::GrpcContextThreadContext& context,

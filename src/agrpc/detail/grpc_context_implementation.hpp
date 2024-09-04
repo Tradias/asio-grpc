@@ -93,10 +93,10 @@ enum class InvokeHandler
 
 struct CompletionQueueEventResult
 {
-    static constexpr uint8_t CHECK_REMOTE_WORK = 1 << 0;
-    static constexpr uint8_t HANDLED_EVENT = 1 << 1;
+    static constexpr uint32_t CHECK_REMOTE_WORK = 1 << 0;
+    static constexpr uint32_t HANDLED_EVENT = 1 << 1;
 
-    uint8_t flags_{};
+    uint32_t flags_{};
 
     [[nodiscard]] bool handled_event() const noexcept { return (flags_ & HANDLED_EVENT) != 0; }
 
@@ -105,12 +105,12 @@ struct CompletionQueueEventResult
 
 struct DoOneResult : CompletionQueueEventResult
 {
-    static constexpr uint8_t PROCESSED_LOCAL_WORK = HANDLED_EVENT << 1;
+    static constexpr uint32_t PROCESSED_LOCAL_WORK = HANDLED_EVENT << 1;
 
-    static DoOneResult create(CompletionQueueEventResult handled_event, bool processed_local_work) noexcept
+    static DoOneResult from(CompletionQueueEventResult handled_event, bool processed_local_work) noexcept
     {
-        return {static_cast<uint8_t>(handled_event.flags_ |
-                                     (processed_local_work ? DoOneResult::PROCESSED_LOCAL_WORK : uint8_t{}))};
+        return {{static_cast<uint32_t>(handled_event.flags_ |
+                                       (processed_local_work ? DoOneResult::PROCESSED_LOCAL_WORK : uint32_t{}))}};
     }
 
     explicit operator bool() const noexcept { return processed_local_work() || handled_event(); }
