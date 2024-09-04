@@ -205,8 +205,7 @@ inline bool GrpcContext::poll_completion_queue()
 inline void GrpcContext::stop()
 {
     if (!stopped_.exchange(true, std::memory_order_relaxed) &&
-        !detail::GrpcContextImplementation::running_in_this_thread(*this) &&
-        (remote_work_queue_.try_mark_active() || multithreaded_))
+        !detail::GrpcContextImplementation::running_in_this_thread(*this) && remote_work_queue_.try_mark_active())
     {
         detail::GrpcContextImplementation::trigger_work_alarm(*this);
     }

@@ -46,9 +46,9 @@ inline GrpcContextThreadContext::~GrpcContextThreadContext() noexcept
 {
     if (grpc_context_.multithreaded_)
     {
-        const bool had_local_work = !local_work_queue_.empty();
-        (void)GrpcContextImplementation::move_local_queue_to_remote_work(*this);
-        if (had_local_work || check_remote_work_ || grpc_context_.is_stopped())
+        const bool moved_work = GrpcContextImplementation::move_local_queue_to_remote_work(*this);
+        if (moved_work || check_remote_work_ ||
+            (grpc_context_.is_stopped() && grpc_context_.remote_work_queue_.try_mark_active()))
         {
             GrpcContextImplementation::trigger_work_alarm(grpc_context_);
         }
@@ -82,12 +82,8 @@ inline bool GrpcContextImplementation::is_shutdown(const agrpc::GrpcContext& grp
 
 inline void GrpcContextImplementation::trigger_work_alarm(agrpc::GrpcContext& grpc_context) noexcept
 {
-    if (!grpc_context.multithreaded_ ||
-        (grpc_context.multithreaded_ && !grpc_context.check_remote_work_.exchange(true, std::memory_order_relaxed)))
-    {
-        grpc_context.work_alarm_.Set(grpc_context.completion_queue_.get(), GrpcContextImplementation::TIME_ZERO,
-                                     GrpcContextImplementation::CHECK_REMOTE_WORK_TAG);
-    }
+    grpc_context.work_alarm_.Set(grpc_context.completion_queue_.get(), GrpcContextImplementation::TIME_ZERO,
+                                 GrpcContextImplementation::CHECK_REMOTE_WORK_TAG);
 }
 
 inline void GrpcContextImplementation::work_started(agrpc::GrpcContext& grpc_context) noexcept
@@ -163,9 +159,8 @@ inline bool GrpcContextImplementation::move_remote_work_to_local_queue(
 inline void GrpcContextImplementation::distribute_local_work_to_other_threads(
     detail::GrpcContextThreadContext& context) noexcept
 {
-    if (!context.local_work_queue_.empty())
+    if (GrpcContextImplementation::move_local_queue_to_remote_work(context))
     {
-        (void)GrpcContextImplementation::move_local_queue_to_remote_work(context);
         GrpcContextImplementation::trigger_work_alarm(context.grpc_context_);
     }
 }
@@ -203,16 +198,7 @@ inline CompletionQueueEventResult GrpcContextImplementation::handle_next_complet
     {
         if (GrpcContextImplementation::CHECK_REMOTE_WORK_TAG == event.tag_)
         {
-            if (grpc_context.multithreaded_)
-            {
-                context.check_remote_work_ =
-                    grpc_context.check_remote_work_.exchange(false, std::memory_order_relaxed) ||
-                    context.check_remote_work_;
-            }
-            else
-            {
-                context.check_remote_work_ = true;
-            }
+            context.check_remote_work_ = true;
             return CompletionQueueEventResult{true, true};
         }
         const auto result =
@@ -245,23 +231,25 @@ inline DoOneResult GrpcContextImplementation::do_one(detail::GrpcContextThreadCo
 {
     const agrpc::GrpcContext& grpc_context = context.grpc_context_;
     bool check_remote_work = context.check_remote_work_;
-    if (grpc_context.multithreaded_)
+    if (check_remote_work)
     {
-        auto local_queue{std::move(context.local_work_queue_)};
-        if (check_remote_work)
+        if (grpc_context.multithreaded_)
         {
-            GrpcContextImplementation::move_remote_work_to_local_queue(context);
+            auto local_queue{std::move(context.local_work_queue_)};
+            check_remote_work = GrpcContextImplementation::move_remote_work_to_local_queue(context);
+            if (check_remote_work)
+            {
+                auto new_local_queue = detail::pop_front_each(local_queue, context.local_work_queue_);
+                context.local_work_queue_.append(std::move(local_queue));
+                GrpcContextImplementation::distribute_local_work_to_other_threads(context);
+                context.local_work_queue_ = std::move(new_local_queue);
+            }
+            else
+            {
+                context.local_work_queue_ = std::move(local_queue);
+            }
         }
-        auto new_local_queue = detail::pop_front_each(local_queue, context.local_work_queue_);
-        context.local_work_queue_.append(std::move(local_queue));
-        GrpcContextImplementation::distribute_local_work_to_other_threads(context);
-        check_remote_work = false;
-        context.check_remote_work_ = false;
-        context.local_work_queue_ = std::move(new_local_queue);
-    }
-    else
-    {
-        if (check_remote_work)
+        else
         {
             check_remote_work = GrpcContextImplementation::move_remote_work_to_local_queue(context);
         }
