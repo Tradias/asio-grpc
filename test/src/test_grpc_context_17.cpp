@@ -571,6 +571,33 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_completion_queue()")
     CHECK_FALSE(grpc_context.run_completion_queue());
 }
 
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run() nested two contexts")
+{
+    SUBCASE("single-threaded") {}
+    SUBCASE("multi-threaded") { grpc_context_lifetime.emplace(2); }
+    agrpc::GrpcContext grpc_context2{2};
+    bool post_completed{false};
+    bool post2_completed{false};
+    test::post(grpc_context2,
+               [&]
+               {
+                   post(
+                       [&]
+                       {
+                           post_completed = true;
+                           test::post(grpc_context2,
+                                      [&]
+                                      {
+                                          post2_completed = true;
+                                      });
+                       });
+                   grpc_context.run();
+               });
+    CHECK(grpc_context2.run());
+    CHECK(post_completed);
+    CHECK(post2_completed);
+}
+
 inline void wait_some(agrpc::GrpcContext& grpc_context)
 {
     agrpc::Alarm{grpc_context}.wait(test::now(),
@@ -639,7 +666,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run(_completion_queue) par
     SUBCASE("run()") {}
     SUBCASE("run_completion_queue()") { run_completion_queue = true; }
     const auto thread_count = 3;
-    grpc_context_lifetime.emplace(thread_count);
+    grpc_context_lifetime.emplace(2);
     asio::thread_pool pool{thread_count};
     agrpc::Alarm{grpc_context}.wait(test::hundred_milliseconds_from_now(),
                                     [&](auto&&...)

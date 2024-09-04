@@ -38,7 +38,9 @@ inline GrpcContextThreadContext::GrpcContextThreadContext(agrpc::GrpcContext& gr
                                                     : std::move(grpc_context.local_work_queue_)},
       check_remote_work_{grpc_context.multithreaded_ ? false : grpc_context.local_check_remote_work_},
       old_context_{std::exchange(detail::thread_local_grpc_context, this)},
-      resource_{old_context_ ? old_context_->resource_ : GrpcContextImplementation::pop_resource(grpc_context)}
+      resource_{(old_context_ && &old_context_->grpc_context_ == &grpc_context)
+                    ? old_context_->resource_
+                    : GrpcContextImplementation::pop_resource(grpc_context)}
 {
 }
 
