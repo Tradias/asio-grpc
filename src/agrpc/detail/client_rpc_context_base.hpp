@@ -33,6 +33,11 @@ template <class Responder>
 class ClientRPCContextBase
 {
   public:
+    ClientRPCContextBase(const ClientRPCContextBase&) = delete;
+    ClientRPCContextBase(ClientRPCContextBase&& other) = delete;
+    ClientRPCContextBase& operator=(const ClientRPCContextBase&) = delete;
+    ClientRPCContextBase& operator=(ClientRPCContextBase&& other) = delete;
+
     /**
      * @brief Get the underlying `grpc::ClientContext`
      */
@@ -61,15 +66,17 @@ class ClientRPCContextBase
         static_cast<ClientContextInitFunction&&>(init_function)(client_context_);
     }
 
-    ClientRPCContextBase(const ClientRPCContextBase&) = delete;
-
-    ClientRPCContextBase(ClientRPCContextBase&& other) = delete;
-
-    ~ClientRPCContextBase() noexcept;
-
-    ClientRPCContextBase& operator=(const ClientRPCContextBase&) = delete;
-
-    ClientRPCContextBase& operator=(ClientRPCContextBase&& other) = delete;
+    ~ClientRPCContextBase() noexcept
+    {
+        if (responder_)
+        {
+            if (!is_finished_)
+            {
+                client_context_.TryCancel();
+            }
+            std::default_delete<Responder>{}(responder_);
+        }
+    }
 
   private:
     friend detail::ClientRPCContextBaseAccess;
@@ -118,19 +125,6 @@ struct ClientRPCContextBaseAccess
         rpc.is_writes_done_ = done;
     }
 };
-
-template <class Responder>
-inline ClientRPCContextBase<Responder>::~ClientRPCContextBase() noexcept
-{
-    if (responder_)
-    {
-        if (!ClientRPCContextBaseAccess::is_finished(*this))
-        {
-            client_context_.TryCancel();
-        }
-        std::default_delete<Responder>{}(responder_);
-    }
-}
 }
 
 AGRPC_NAMESPACE_END

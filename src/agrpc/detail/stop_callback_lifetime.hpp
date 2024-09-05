@@ -61,7 +61,7 @@ struct CancellationSlotToken<StopToken, StopFunction, false>
     {
         if (stop_token.stop_possible())
         {
-            stop_callback_.emplace(static_cast<StopToken&&>(stop_token), static_cast<Args&&>(args)...);
+            stop_callback_.emplace(static_cast<StopToken&&>(stop_token), StopFunction{static_cast<Args&&>(args)...});
         }
     }
 

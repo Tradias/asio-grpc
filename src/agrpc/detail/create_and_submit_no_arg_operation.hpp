@@ -43,8 +43,8 @@ void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Handle
             return;
         }
     }
-    detail::StartWorkAndGuard guard{grpc_context};
     auto operation = detail::allocate_operation<detail::NoArgOperation>(static_cast<Handler&&>(handler));
+    GrpcContextImplementation::work_started(grpc_context);
     if (is_running_in_this_thread)
     {
         detail::GrpcContextImplementation::add_local_operation(operation);
@@ -53,7 +53,6 @@ void create_and_submit_no_arg_operation(agrpc::GrpcContext& grpc_context, Handle
     {
         detail::GrpcContextImplementation::add_remote_operation(grpc_context, operation);
     }
-    guard.release();
 }
 }
 

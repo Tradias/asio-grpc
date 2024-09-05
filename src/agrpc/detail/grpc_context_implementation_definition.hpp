@@ -71,17 +71,6 @@ inline GrpcContextThreadContext::~GrpcContextThreadContext() noexcept
 
 inline void WorkFinishedOnExitFunctor::operator()() const noexcept { grpc_context_.work_finished(); }
 
-inline StartWorkAndGuard::StartWorkAndGuard(agrpc::GrpcContext& grpc_context) noexcept
-    : detail::WorkFinishedOnExit(grpc_context)
-{
-    grpc_context.work_started();
-}
-
-inline bool IsGrpcContextStoppedPredicate::operator()(const agrpc::GrpcContext& grpc_context) const noexcept
-{
-    return grpc_context.is_stopped();
-}
-
 inline bool GrpcContextImplementation::is_shutdown(const agrpc::GrpcContext& grpc_context) noexcept
 {
     return grpc_context.shutdown_.load(std::memory_order_relaxed);

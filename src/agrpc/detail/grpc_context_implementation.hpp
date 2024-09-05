@@ -45,11 +45,6 @@ struct WorkFinishedOnExitFunctor
 
 using WorkFinishedOnExit = detail::ScopeGuard<detail::WorkFinishedOnExitFunctor>;
 
-struct StartWorkAndGuard : detail::WorkFinishedOnExit
-{
-    explicit StartWorkAndGuard(agrpc::GrpcContext& grpc_context) noexcept;
-};
-
 struct GrpcContextThreadContext
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     // Enables Boost.Asio's awaitable frame memory recycling
@@ -78,11 +73,6 @@ struct GrpcContextThreadContext
     asio::detail::thread_info_base this_thread_;
     thread_call_stack::context ctx_{this, this_thread_};
 #endif
-};
-
-struct IsGrpcContextStoppedPredicate
-{
-    [[nodiscard]] bool operator()(const agrpc::GrpcContext& grpc_context) const noexcept;
 };
 
 enum class InvokeHandler

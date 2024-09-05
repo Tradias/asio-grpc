@@ -35,10 +35,7 @@ using ClientRPCAccess = detail::ClientRPCContextBaseAccess;
 
 struct ClientContextCancellationFunction
 {
-#if !defined(AGRPC_UNIFEX) && !defined(AGRPC_STDEXEC)
-    explicit
-#endif
-        ClientContextCancellationFunction(grpc::ClientContext& client_context) noexcept
+    explicit ClientContextCancellationFunction(grpc::ClientContext& client_context) noexcept
         : client_context_(client_context)
     {
     }

@@ -180,49 +180,6 @@ struct InplaceWithFunction
 {
 };
 
-template <class T, bool = std::is_empty_v<T> && !std::is_final_v<T>>
-class EmptyBaseOptimization : private T
-{
-  public:
-    template <class... Args>
-    constexpr explicit EmptyBaseOptimization(Args&&... args) : T(static_cast<Args&&>(args)...)
-    {
-    }
-
-    template <class Function>
-    constexpr EmptyBaseOptimization(detail::InplaceWithFunction, Function&& function)
-        : T(static_cast<Function&&>(function)())
-    {
-    }
-
-    constexpr T& get() noexcept { return static_cast<T&>(*this); }
-
-    constexpr const T& get() const noexcept { return static_cast<const T&>(*this); }
-};
-
-template <class T>
-class EmptyBaseOptimization<T, false>
-{
-  public:
-    template <class... Args>
-    constexpr explicit EmptyBaseOptimization(Args&&... args) : value_(static_cast<Args&&>(args)...)
-    {
-    }
-
-    template <class Function>
-    constexpr EmptyBaseOptimization(detail::InplaceWithFunction, Function&& function)
-        : value_(static_cast<Function&&>(function)())
-    {
-    }
-
-    constexpr T& get() noexcept { return value_; }
-
-    constexpr const T& get() const noexcept { return value_; }
-
-  private:
-    T value_;
-};
-
 template <class OnExit>
 class ScopeGuard
 {
