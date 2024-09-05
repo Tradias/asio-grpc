@@ -32,7 +32,7 @@ namespace asio = boost::asio;
 
 // begin-snippet: client-side-multi-threaded
 // ---------------------------------------------------
-// Multi-threaded client performing 20 unary requests
+// Multi-threaded client using multiple GrpcContexts
 // ---------------------------------------------------
 // end-snippet
 

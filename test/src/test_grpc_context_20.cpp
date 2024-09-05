@@ -85,7 +85,7 @@ TEST_CASE("destruct GrpcContext while co_await'ing an alarm")
         test::co_spawn(grpc_context,
                        [&]() -> asio::awaitable<void>
                        {
-                           co_await alarm->wait(test::hundred_milliseconds_from_now(), asio::use_awaitable);
+                           co_await alarm->wait(test::one_second_from_now(), asio::use_awaitable);
                            invoked = true;
                        });
         grpc_context.run();

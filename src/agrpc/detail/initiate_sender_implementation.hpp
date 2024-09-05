@@ -44,7 +44,7 @@ struct SubmitSenderImplementationOperation
                                                        static_cast<Implementation&&>(implementation));
     }
 
-    executor_type get_executor() const noexcept { return grpc_context_.get_executor(); }
+    [[nodiscard]] executor_type get_executor() const noexcept { return grpc_context_.get_executor(); }
 
     agrpc::GrpcContext& grpc_context_;
 };

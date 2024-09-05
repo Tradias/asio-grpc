@@ -32,7 +32,7 @@ namespace asio = boost::asio;
 
 // begin-snippet: client-side-multi-threaded-alternative
 // ---------------------------------------------------
-// Multi-threaded client using single GrpcContext performing 20 unary requests
+// Multi-threaded client using single a GrpcContext
 // ---------------------------------------------------
 // end-snippet
 
@@ -48,12 +48,6 @@ asio::awaitable<void> make_request(agrpc::GrpcContext& grpc_context, helloworld:
 
     abort_if_not(status.ok());
 }
-
-struct GuardedGrpcContext
-{
-    agrpc::GrpcContext context;
-    asio::executor_work_guard<agrpc::GrpcContext::executor_type> guard{context.get_executor()};
-};
 
 int main(int argc, const char** argv)
 {

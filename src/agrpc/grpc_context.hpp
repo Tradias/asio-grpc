@@ -72,8 +72,8 @@ class GrpcContext
     /**
      * @brief Construct a GrpcContext for multi-threaded gRPC clients
      *
-     * @arg concurrency_hint If greater than one then this GrpcContext's run/poll functions may be called from multiple
-     * threads
+     * @arg concurrency_hint If greater than one then this GrpcContext's run*()/poll*() functions may be called from
+     * multiple threads
      *
      * @since 3.2.0
      */
@@ -103,8 +103,8 @@ class GrpcContext
      *
      * @snippet server.cpp create-multi-threaded-grpc_context-server-side
      *
-     * @arg concurrency_hint If greater than one then this GrpcContext's run/poll functions may be called from multiple
-     * threads
+     * @arg concurrency_hint If greater than one then this GrpcContext's run*()/poll*() functions may be called from
+     * multiple threads
      *
      * @since 3.2.0
      */
@@ -128,7 +128,8 @@ class GrpcContext
      * state.
      *
      * @attention Only one thread may call run*()/poll*() at a time [unless this context has been constructed with a
-     * `concurrency_hint` greater than one (since 3.2.0)].
+     * `concurrency_hint` greater than one. Even then it may not be called concurrently with *_completion_queue() member
+     * functions (since 3.2.0)].
      *
      * @return True if at least one operation has been processed.
      */
@@ -141,7 +142,8 @@ class GrpcContext
      * been reached. The GrpcContext will be brought into the ready state when this function is invoked.
      *
      * @attention Only one thread may call run*()/poll*() at a time [unless this context has been constructed with a
-     * `concurrency_hint` greater than one (since 3.2.0)].
+     * `concurrency_hint` greater than one. Even then it may not be called concurrently with *_completion_queue() member
+     * functions (since 3.2.0)].
      *
      * @tparam Deadline A type that is compatible with `grpc::TimePoint<Deadline>`.
      *
@@ -163,7 +165,8 @@ class GrpcContext
      * returns false. The GrpcContext will be brought into the ready state when this function is invoked.
      *
      * @attention Only one thread may call run*()/poll*() at a time [unless this context has been constructed with a
-     * `concurrency_hint` greater than one (since 3.2.0)].
+     * `concurrency_hint` greater than one. Even then it may not be called concurrently with *_completion_queue() member
+     * functions (since 3.2.0)].
      *
      * @tparam Condition A callable that returns false when the GrpcContext should stop.
      *
@@ -183,7 +186,8 @@ class GrpcContext
      * this function is invoked. Upon return, the GrpcContext will be in the stopped state.
      *
      * @attention Only one thread may call run*()/poll*() at a time [unless this context has been constructed with a
-     * `concurrency_hint` greater than one (since 3.2.0)].
+     * `concurrency_hint` greater than one. Even then it may not be called concurrently with run, run_until, run_while
+     * and poll member functions (since 3.2.0)].
      *
      * @return True if at least one event has been processed.
      */
@@ -196,7 +200,8 @@ class GrpcContext
      * brought into the ready state when this function is invoked.
      *
      * @attention Only one thread may call run*()/poll*() at a time [unless this context has been constructed with a
-     * `concurrency_hint` greater than one (since 3.2.0)].
+     * `concurrency_hint` greater than one. Even then it may not be called concurrently with *_completion_queue() member
+     * functions (since 3.2.0)].
      *
      * @return True if at least one operation has been processed.
      */
@@ -210,7 +215,8 @@ class GrpcContext
      * ready state when this function is invoked.
      *
      * @attention Only one thread may call run*()/poll*() at a time [unless this context has been constructed with a
-     * `concurrency_hint` greater than one (since 3.2.0)].
+     * `concurrency_hint` greater than one. Even then it may not be called concurrently with run, run_until, run_while
+     * and poll member functions (since 3.2.0)].
      *
      * @return True if at least one operation has been processed.
      */
