@@ -45,7 +45,7 @@ AGRPC_NAMESPACE_BEGIN()
  */
 template <class ServerRPC, class RPCHandler>
 [[nodiscard]] detail::RPCHandlerSender<ServerRPC, RPCHandler> register_sender_rpc_handler(
-    agrpc::GrpcContext& grpc_context, detail::GetServerRPCServiceT<ServerRPC>& service, RPCHandler rpc_handler)
+    agrpc::GrpcContext& grpc_context, detail::ServerRPCServiceT<ServerRPC>& service, RPCHandler rpc_handler)
 {
     using Starter = detail::ServerRPCStarterT<ServerRPC>;
     using RPCHandlerInvokeResult = detail::RPCHandlerInvokeResultT<Starter&, RPCHandler&, ServerRPC&>;

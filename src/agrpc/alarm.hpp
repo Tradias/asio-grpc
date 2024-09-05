@@ -80,7 +80,7 @@ class BasicAlarm
      * completion signature is `void(bool)`. `true` if it expired, `false` if it was canceled.
      */
     template <class Deadline, class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto wait(const Deadline& deadline, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{}) &
+    auto wait(const Deadline& deadline, CompletionToken&& token = CompletionToken{}) &
     {
         using Initiation = detail::GrpcSenderInitiation<detail::AlarmInitFunction<Deadline>>;
         if constexpr (std::is_same_v<agrpc::UseSender, detail::RemoveCrefT<CompletionToken>>)
@@ -110,7 +110,7 @@ class BasicAlarm
      * completion signature is `void(bool, BasicAlarm)`. `true` if it expired, `false` if it was canceled.
      */
     template <class Deadline, class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto wait(const Deadline& deadline, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{}) &&
+    auto wait(const Deadline& deadline, CompletionToken&& token = CompletionToken{}) &&
     {
         using Initiation = detail::MoveAlarmSenderInitiation<Deadline>;
         if constexpr (std::is_same_v<agrpc::UseSender, detail::RemoveCrefT<CompletionToken>>)

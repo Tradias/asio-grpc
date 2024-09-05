@@ -15,8 +15,8 @@
 #ifndef AGRPC_DETAIL_SERVER_RPC_WITH_REQUEST_HPP
 #define AGRPC_DETAIL_SERVER_RPC_WITH_REQUEST_HPP
 
-#include <agrpc/detail/rpc_request.hpp>
 #include <agrpc/detail/server_rpc_context_base.hpp>
+#include <agrpc/detail/server_rpc_starter.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 

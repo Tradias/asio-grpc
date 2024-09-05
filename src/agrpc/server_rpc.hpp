@@ -163,8 +163,7 @@ class ServerRPC<RequestUnary, TraitsT, Executor>
      * channel, etc).
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto finish(const ResponseT& response, const grpc::Status& status,
-                CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
+    auto finish(const ResponseT& response, const grpc::Status& status, CompletionToken&& token = CompletionToken{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::ServerFinishWithMessageInitation<Response>{response, status},
@@ -194,8 +193,7 @@ class ServerRPC<RequestUnary, TraitsT, Executor>
      * channel, etc).
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto finish_with_error(const grpc::Status& status,
-                           CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
+    auto finish_with_error(const grpc::Status& status, CompletionToken&& token = CompletionToken{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::ServerFinishWithErrorSenderInitation{status},
@@ -335,7 +333,7 @@ class ServerRPC<RequestClientStreaming, TraitsT, Executor>
      * failed (or been cancelled).
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto read(RequestT& req, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
+    auto read(RequestT& req, CompletionToken&& token = CompletionToken{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::ServerReadSenderInitiation<Responder>{*this, req},
@@ -368,8 +366,7 @@ class ServerRPC<RequestClientStreaming, TraitsT, Executor>
      * channel, etc).
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto finish(const ResponseT& response, const grpc::Status& status,
-                CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
+    auto finish(const ResponseT& response, const grpc::Status& status, CompletionToken&& token = CompletionToken{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::ServerFinishWithMessageInitation<Response>{response, status},
@@ -398,8 +395,7 @@ class ServerRPC<RequestClientStreaming, TraitsT, Executor>
      * channel, etc).
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto finish_with_error(const grpc::Status& status,
-                           CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
+    auto finish_with_error(const grpc::Status& status, CompletionToken&& token = CompletionToken{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::ServerFinishWithErrorSenderInitation{status},
@@ -541,8 +537,7 @@ class ServerRPC<RequestServerStreaming, TraitsT, Executor>
      * channel, etc).
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto write(const ResponseT& response, grpc::WriteOptions options,
-               CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
+    auto write(const ResponseT& response, grpc::WriteOptions options, CompletionToken&& token = CompletionToken{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::ServerWriteSenderInitiation<Responder>{*this, response, options},
@@ -553,7 +548,7 @@ class ServerRPC<RequestServerStreaming, TraitsT, Executor>
      * @brief Send a message to the client (default WriteOptions)
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto write(const ResponseT& response, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
+    auto write(const ResponseT& response, CompletionToken&& token = CompletionToken{})
     {
         return write(response, {}, static_cast<CompletionToken&&>(token));
     }
@@ -585,7 +580,7 @@ class ServerRPC<RequestServerStreaming, TraitsT, Executor>
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto write_and_finish(const ResponseT& response, grpc::WriteOptions options, const grpc::Status& status,
-                          CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
+                          CompletionToken&& token = CompletionToken{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::ServerWriteAndFinishSenderInitation<Response>{response, status, options},
@@ -597,7 +592,7 @@ class ServerRPC<RequestServerStreaming, TraitsT, Executor>
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto write_and_finish(const ResponseT& response, const grpc::Status& status,
-                          CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
+                          CompletionToken&& token = CompletionToken{})
     {
         return write_and_finish(response, {}, status,
                                 static_cast<CompletionToken&&>(static_cast<CompletionToken&&>(token)));
@@ -622,7 +617,7 @@ class ServerRPC<RequestServerStreaming, TraitsT, Executor>
      * channel, etc).
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto finish(const grpc::Status& status, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
+    auto finish(const grpc::Status& status, CompletionToken&& token = CompletionToken{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::ServerFinishSenderInitation{status},
@@ -676,7 +671,7 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
      * messages, either because the other side has called WritesDone() or the stream has failed (or been cancelled).
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto read(RequestT& req, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
+    auto read(RequestT& req, CompletionToken&& token = CompletionToken{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::ServerReadSenderInitiation<Responder>{*this, req},
@@ -698,8 +693,7 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
      * channel, etc).
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto write(const ResponseT& response, grpc::WriteOptions options,
-               CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
+    auto write(const ResponseT& response, grpc::WriteOptions options, CompletionToken&& token = CompletionToken{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::ServerWriteSenderInitiation<Responder>{*this, response, options},
@@ -710,7 +704,7 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
      * @brief Send a message to the client (default WriteOptions)
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto write(const ResponseT& response, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
+    auto write(const ResponseT& response, CompletionToken&& token = CompletionToken{})
     {
         return write(response, {}, static_cast<CompletionToken&&>(token));
     }
@@ -742,7 +736,7 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto write_and_finish(const ResponseT& response, grpc::WriteOptions options, const grpc::Status& status,
-                          CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
+                          CompletionToken&& token = CompletionToken{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::ServerWriteAndFinishSenderInitation<Response>{response, status, options},
@@ -754,7 +748,7 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto write_and_finish(const ResponseT& response, const grpc::Status& status,
-                          CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
+                          CompletionToken&& token = CompletionToken{})
     {
         return write_and_finish(response, {}, status, static_cast<CompletionToken&&>(token));
     }
@@ -786,7 +780,7 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
      * channel, etc).
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto finish(const grpc::Status& status, CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
+    auto finish(const grpc::Status& status, CompletionToken&& token = CompletionToken{})
     {
         return detail::async_initiate_sender_implementation(
             this->grpc_context(), detail::ServerFinishSenderInitation{status},

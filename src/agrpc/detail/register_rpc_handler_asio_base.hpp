@@ -18,7 +18,7 @@
 #include <agrpc/detail/association.hpp>
 #include <agrpc/detail/register_rpc_handler_base.hpp>
 #include <agrpc/detail/rethrow_first_arg.hpp>
-#include <agrpc/detail/rpc_request.hpp>
+#include <agrpc/detail/server_rpc_starter.hpp>
 #include <agrpc/detail/work_tracking_completion_handler.hpp>
 #include <agrpc/grpc_context.hpp>
 
@@ -104,7 +104,7 @@ struct RegisterRPCHandlerInitiator
             .release();
     }
 
-    detail::GetServerRPCServiceT<ServerRPC>& service_;
+    detail::ServerRPCServiceT<ServerRPC>& service_;
 };
 
 template <class Operation>

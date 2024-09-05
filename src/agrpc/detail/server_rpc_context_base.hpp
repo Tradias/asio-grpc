@@ -128,7 +128,7 @@ struct ServerRPCContextBaseAccess
 };
 
 template <class ServerRPC>
-using GetServerRPCServiceT = decltype(detail::ServerRPCContextBaseAccess::service(std::declval<ServerRPC&>()));
+using ServerRPCServiceT = decltype(detail::ServerRPCContextBaseAccess::service(std::declval<ServerRPC&>()));
 }
 
 AGRPC_NAMESPACE_END

@@ -144,7 +144,7 @@ class Waiter
      * All. Upon cancellation, the initiated operation continues to run.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
-    auto wait(CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{})
+    auto wait(CompletionToken&& token = CompletionToken{})
     {
         return wait_impl(static_cast<CompletionToken&&>(token));
     }

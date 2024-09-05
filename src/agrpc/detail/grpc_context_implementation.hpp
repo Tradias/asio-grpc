@@ -99,8 +99,7 @@ struct DoOneResult : CompletionQueueEventResult
 
     static DoOneResult from(CompletionQueueEventResult handled_event, bool processed_local_work) noexcept
     {
-        return {{static_cast<uint32_t>(handled_event.flags_ |
-                                       (processed_local_work ? DoOneResult::PROCESSED_LOCAL_WORK : uint32_t{}))}};
+        return {{handled_event.flags_ | (processed_local_work ? DoOneResult::PROCESSED_LOCAL_WORK : uint32_t{})}};
     }
 
     explicit operator bool() const noexcept { return processed_local_work() || handled_event(); }

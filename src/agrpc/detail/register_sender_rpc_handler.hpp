@@ -20,9 +20,9 @@
 #include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/register_rpc_handler_base.hpp>
-#include <agrpc/detail/rpc_request.hpp>
 #include <agrpc/detail/sender_of.hpp>
 #include <agrpc/detail/server_rpc_context_base.hpp>
+#include <agrpc/detail/server_rpc_starter.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/grpc_context.hpp>
 
@@ -51,7 +51,7 @@ template <class ServerRPC, class RPCHandler>
 class [[nodiscard]] RPCHandlerSender : public detail::SenderOf<void()>
 {
   private:
-    using Service = detail::GetServerRPCServiceT<ServerRPC>;
+    using Service = detail::ServerRPCServiceT<ServerRPC>;
 
   public:
     RPCHandlerSender(agrpc::GrpcContext& grpc_context, Service& service, RPCHandler&& rpc_handler)
@@ -155,7 +155,7 @@ void create_and_start_rpc_handler_operation(
 template <class ServerRPC, class RPCHandler, class StopToken, class Allocator>
 struct RPCHandlerOperation
 {
-    using Service = detail::GetServerRPCServiceT<ServerRPC>;
+    using Service = detail::ServerRPCServiceT<ServerRPC>;
     using Traits = typename ServerRPC::Traits;
     using Starter = detail::ServerRPCStarterT<ServerRPC>;
     using RPCHandlerInvokeResult = detail::RPCHandlerInvokeResultT<Starter&, RPCHandler&, ServerRPC&>;
@@ -263,9 +263,7 @@ struct RPCHandlerOperation
                  detail::InplaceWithFunction{},
                  [&]
                  {
-                     return initial_request()
-                         .start(rpc_, operation.service(), agrpc::use_sender)
-                         .connect(StartReceiver{*this});
+                     return starter().start(rpc_, operation.service(), agrpc::use_sender).connect(StartReceiver{*this});
                  })
     {
         base().increment_ref_count();
@@ -299,7 +297,7 @@ struct RPCHandlerOperation
                 detail::InplaceWithFunction{},
                 [&]
                 {
-                    return exec::connect(initial_request().invoke(rpc_handler(), rpc_), FinishReceiver{*this});
+                    return exec::connect(starter().invoke(rpc_handler(), rpc_), FinishReceiver{*this});
                 });
             return {};
         }
@@ -326,7 +324,7 @@ struct RPCHandlerOperation
 
     auto& rpc_handler() noexcept { return base().rpc_handler(); }
 
-    auto& initial_request() noexcept { return impl1_.second(); }
+    auto& starter() noexcept { return impl1_.second(); }
 
     auto& operation_state() noexcept { return impl2_.first(); }
 

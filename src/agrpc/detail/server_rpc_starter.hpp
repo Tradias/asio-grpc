@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_RPC_REQUEST_HPP
-#define AGRPC_DETAIL_RPC_REQUEST_HPP
+#ifndef AGRPC_DETAIL_SERVER_RPC_STARTER_HPP
+#define AGRPC_DETAIL_SERVER_RPC_STARTER_HPP
 
-#include <agrpc/detail/start_server_rpc.hpp>
 #include <agrpc/rpc_type.hpp>
+#include <agrpc/server_rpc.hpp>
 
 #include <agrpc/detail/config.hpp>
 
@@ -32,10 +32,15 @@ constexpr bool has_initial_request(agrpc::ServerRPCType type) noexcept
 template <class Request, bool HasInitialRequest>
 struct ServerRPCStarter
 {
-    template <class RPC, class Service, class CompletionToken>
-    auto start(RPC& rpc, Service& service, CompletionToken&& token)
+    template <auto RequestRPC, class TraitsT, class Executor, class Service, class CompletionToken>
+    auto start(agrpc::ServerRPC<RequestRPC, TraitsT, Executor>& rpc, Service& service, CompletionToken&& token)
     {
-        return detail::start(rpc, service, request_, static_cast<CompletionToken&&>(token));
+        using Responder = std::remove_reference_t<decltype(ServerRPCContextBaseAccess::responder(rpc))>;
+        return detail::async_initiate_sender_implementation(
+            RPCExecutorBaseAccess::grpc_context(rpc),
+            detail::ServerRequestSenderInitiation<RequestRPC, TraitsT::NOTIFY_WHEN_DONE>{service, request_},
+            detail::ServerRequestSenderImplementation<Responder, TraitsT::NOTIFY_WHEN_DONE>{rpc},
+            static_cast<CompletionToken&&>(token));
     }
 
     template <class Handler, class RPC, class... Args>
@@ -50,10 +55,15 @@ struct ServerRPCStarter
 template <class Request>
 struct ServerRPCStarter<Request, false>
 {
-    template <class RPC, class Service, class CompletionToken>
-    auto start(RPC& rpc, Service& service, CompletionToken&& token)
+    template <auto RequestRPC, class TraitsT, class Executor, class Service, class CompletionToken>
+    auto start(agrpc::ServerRPC<RequestRPC, TraitsT, Executor>& rpc, Service& service, CompletionToken&& token)
     {
-        return detail::start(rpc, service, static_cast<CompletionToken&&>(token));
+        using Responder = std::remove_reference_t<decltype(ServerRPCContextBaseAccess::responder(rpc))>;
+        return detail::async_initiate_sender_implementation(
+            RPCExecutorBaseAccess::grpc_context(rpc),
+            detail::ServerRequestSenderInitiation<RequestRPC, TraitsT::NOTIFY_WHEN_DONE>{service},
+            detail::ServerRequestSenderImplementation<Responder, TraitsT::NOTIFY_WHEN_DONE>{rpc},
+            static_cast<CompletionToken&&>(token));
     }
 
     template <class Handler, class RPC, class... Args>
@@ -74,4 +84,4 @@ using RPCHandlerInvokeResultT =
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_RPC_REQUEST_HPP
+#endif  // AGRPC_DETAIL_SERVER_RPC_STARTER_HPP

@@ -48,10 +48,11 @@ AGRPC_NAMESPACE_BEGIN()
  *
  * @since 2.8.0
  */
-template <class ServerRPC, class RPCHandler, class CompletionToken>
+template <class ServerRPC, class RPCHandler,
+          class CompletionToken = detail::DefaultCompletionTokenT<typename ServerRPC::executor_type>>
 auto register_callback_rpc_handler(const typename ServerRPC::executor_type& executor,
-                                   detail::GetServerRPCServiceT<ServerRPC>& service, RPCHandler rpc_handler,
-                                   CompletionToken&& token)
+                                   detail::ServerRPCServiceT<ServerRPC>& service, RPCHandler rpc_handler,
+                                   CompletionToken&& token = CompletionToken{})
 {
     return asio::async_initiate<CompletionToken, void(std::exception_ptr)>(
         detail::RegisterCallbackRPCHandlerInitiator<ServerRPC>{service}, token, executor,
@@ -64,7 +65,7 @@ auto register_callback_rpc_handler(const typename ServerRPC::executor_type& exec
  * @since 2.8.0
  */
 template <class ServerRPC, class RPCHandler, class CompletionToken>
-auto register_callback_rpc_handler(agrpc::GrpcContext& grpc_context, detail::GetServerRPCServiceT<ServerRPC>& service,
+auto register_callback_rpc_handler(agrpc::GrpcContext& grpc_context, detail::ServerRPCServiceT<ServerRPC>& service,
                                    RPCHandler&& rpc_handler, CompletionToken&& token)
 {
     return agrpc::register_callback_rpc_handler<ServerRPC>(grpc_context.get_executor(), service,

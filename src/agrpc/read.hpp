@@ -40,7 +40,7 @@ struct ReadFn
               class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     decltype(auto) operator()(agrpc::ServerRPC<RequestRPC, Traits, Executor>& rpc,
                               typename agrpc::ServerRPC<RequestRPC, Traits, Executor>::Request& req,
-                              CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{}) const
+                              CompletionToken&& token = CompletionToken{}) const
         noexcept(noexcept(rpc.read(req, static_cast<CompletionToken&&>(token))))
     {
         return rpc.read(req, static_cast<CompletionToken&&>(token));
@@ -56,7 +56,7 @@ struct ReadFn
     template <auto PrepareAsync, class Executor, class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     decltype(auto) operator()(agrpc::ClientRPC<PrepareAsync, Executor>& rpc,
                               typename agrpc::ClientRPC<PrepareAsync, Executor>::Response& response,
-                              CompletionToken&& token = detail::DefaultCompletionTokenT<Executor>{}) const
+                              CompletionToken&& token = CompletionToken{}) const
         noexcept(noexcept(rpc.read(response, static_cast<CompletionToken&&>(token))))
     {
         return rpc.read(response, static_cast<CompletionToken&&>(token));
