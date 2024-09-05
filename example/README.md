@@ -54,7 +54,7 @@ Click on `snippet source` to jump to the code of an individual example.
 <a id='snippet-client-side-multi-threaded'></a>
 ```cpp
 // ---------------------------------------------------
-// Multi-threaded client performing 20 unary requests
+// Multi-threaded client using multiple GrpcContexts
 // ---------------------------------------------------
 ```
 <sup><a href='/example/multi-threaded-client.cpp#L33-L37' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-multi-threaded' title='Start of snippet'>anchor</a></sup>
@@ -64,7 +64,7 @@ Click on `snippet source` to jump to the code of an individual example.
 <a id='snippet-client-side-multi-threaded-alternative'></a>
 ```cpp
 // ---------------------------------------------------
-// Multi-threaded client using single GrpcContext performing 20 unary requests
+// Multi-threaded client using single a GrpcContext
 // ---------------------------------------------------
 ```
 <sup><a href='/example/multi-threaded-alternative-client.cpp#L33-L37' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-multi-threaded-alternative' title='Start of snippet'>anchor</a></sup>
