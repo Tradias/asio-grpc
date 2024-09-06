@@ -84,6 +84,7 @@ struct RegisterAwaitableRPCHandlerOperation
         {
             co_return;
         }
+        this->notify_when_done_work_started();
         initiate_next();
         AGRPC_TRY { co_await starter.invoke(this->rpc_handler(), rpc); }
         AGRPC_CATCH(...) { this->set_error(std::current_exception()); }

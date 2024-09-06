@@ -80,6 +80,14 @@ struct RegisterRPCHandlerOperationBase
 
     [[nodiscard]] bool decrement_ref_count() noexcept { return 0 == --reference_count_; }
 
+    void notify_when_done_work_started() noexcept
+    {
+        if constexpr (ServerRPC::Traits::NOTIFY_WHEN_DONE)
+        {
+            grpc_context().work_started();
+        }
+    }
+
     ServerRPCExecutor executor_;
     Service& service_;
     std::atomic_size_t reference_count_{};

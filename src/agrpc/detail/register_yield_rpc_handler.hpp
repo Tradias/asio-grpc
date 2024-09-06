@@ -92,6 +92,7 @@ struct RegisterYieldRPCHandlerOperation
         {
             return;
         }
+        this->notify_when_done_work_started();
         initiate_next();
         AGRPC_TRY { starter.invoke(this->rpc_handler(), rpc, yield); }
         AGRPC_CATCH(...) { this->set_error(std::current_exception()); }

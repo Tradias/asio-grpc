@@ -61,17 +61,6 @@ struct ServerRequestSenderImplementation : detail::GrpcSenderImplementationBase
 
     explicit ServerRequestSenderImplementation(RPC& rpc) noexcept : rpc_(rpc) {}
 
-    void complete([[maybe_unused]] agrpc::GrpcContext& grpc_context, [[maybe_unused]] bool ok) const noexcept
-    {
-        if constexpr (IsNotifyWhenDone)
-        {
-            if (ok)
-            {
-                grpc_context.work_started();
-            }
-        }
-    }
-
     RPC& rpc_;
 };
 

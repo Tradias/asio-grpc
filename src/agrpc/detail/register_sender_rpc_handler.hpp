@@ -176,13 +176,15 @@ struct RPCHandlerOperation
             detail::AllocationGuard guard{op, op.get_allocator()};
             if (ok)
             {
+                auto& base = op.base();
+                base.notify_when_done_work_started();
                 if (auto exception_ptr = op.emplace_rpc_handler_operation_state())
                 {
                     op.rpc_.cancel();
-                    op.base().set_error(static_cast<std::exception_ptr&&>(*exception_ptr));
+                    base.set_error(static_cast<std::exception_ptr&&>(*exception_ptr));
                     return;
                 }
-                detail::create_and_start_rpc_handler_operation(op.base(), op.get_allocator());
+                detail::create_and_start_rpc_handler_operation(base, op.get_allocator());
                 op.start_rpc_handler_operation_state();
                 guard.release();
             }

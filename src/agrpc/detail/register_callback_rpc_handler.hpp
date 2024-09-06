@@ -56,6 +56,7 @@ struct RegisterCallbackRPCHandlerOperation
         {
             if (ok)
             {
+                self_.notify_when_done_work_started();
                 self_.initiate_next();
                 AGRPC_TRY { ptr_.server_rpc_->invoke(self_.rpc_handler(), static_cast<ServerRPCPtr&&>(ptr_)); }
                 AGRPC_CATCH(...)
@@ -90,7 +91,7 @@ struct RegisterCallbackRPCHandlerOperation
     static void deleter(ServerRPCWithRequest* ptr) noexcept
     {
         auto& self = *static_cast<ServerRPCAllocation*>(ptr);
-        RefCountGuard guard{self.self_};
+        RefCountGuard ref_count_guard{self.self_};
         detail::AllocationGuard alloc_guard{self, self.self_.get_allocator()};
         auto& rpc = ptr->rpc_;
         if (!detail::ServerRPCContextBaseAccess::is_finished(rpc))
@@ -102,7 +103,7 @@ struct RegisterCallbackRPCHandlerOperation
             if (!rpc.is_done())
             {
                 rpc.wait_for_done([p = ServerRPCPtr{ptr, &wait_for_done_deleter}](const detail::ErrorCode&) {});
-                guard.release();
+                ref_count_guard.release();
                 alloc_guard.release();
             }
         }
