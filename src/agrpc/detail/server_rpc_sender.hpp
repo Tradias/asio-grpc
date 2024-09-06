@@ -75,13 +75,13 @@ struct ServerRequestSenderImplementation : detail::GrpcSenderImplementationBase
     RPC& rpc_;
 };
 
-template <auto RequestRPC, bool IsNotifyWhenDone>
+template <auto RequestRPC>
 struct ServerRequestSenderInitiation;
 
-template <class Service, class Responder, detail::ServerSingleArgRequest<Service, Responder> RequestRPC,
-          bool IsNotifyWhenDone>
-struct ServerRequestSenderInitiation<RequestRPC, IsNotifyWhenDone>
+template <class Service, class Responder, detail::ServerSingleArgRequest<Service, Responder> RequestRPC>
+struct ServerRequestSenderInitiation<RequestRPC>
 {
+    template <bool IsNotifyWhenDone>
     void initiate(agrpc::GrpcContext& grpc_context,
                   ServerRequestSenderImplementation<Responder, IsNotifyWhenDone>& impl, void* tag) const
     {
@@ -95,9 +95,10 @@ struct ServerRequestSenderInitiation<RequestRPC, IsNotifyWhenDone>
 };
 
 template <class Service, class Request, class Responder,
-          detail::ServerMultiArgRequest<Service, Request, Responder> RequestRPC, bool IsNotifyWhenDone>
-struct ServerRequestSenderInitiation<RequestRPC, IsNotifyWhenDone>
+          detail::ServerMultiArgRequest<Service, Request, Responder> RequestRPC>
+struct ServerRequestSenderInitiation<RequestRPC>
 {
+    template <bool IsNotifyWhenDone>
     void initiate(agrpc::GrpcContext& grpc_context,
                   ServerRequestSenderImplementation<Responder, IsNotifyWhenDone>& impl, void* tag) const
     {
@@ -111,9 +112,10 @@ struct ServerRequestSenderInitiation<RequestRPC, IsNotifyWhenDone>
     Request& req_;
 };
 
-template <bool IsNotifyWhenDone>
-struct ServerRequestSenderInitiation<agrpc::ServerRPCType::GENERIC, IsNotifyWhenDone>
+template <>
+struct ServerRequestSenderInitiation<agrpc::ServerRPCType::GENERIC>
 {
+    template <bool IsNotifyWhenDone>
     void initiate(agrpc::GrpcContext& grpc_context,
                   ServerRequestSenderImplementation<grpc::GenericServerAsyncReaderWriter, IsNotifyWhenDone>& impl,
                   void* tag) const

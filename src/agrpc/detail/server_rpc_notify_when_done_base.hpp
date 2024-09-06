@@ -34,7 +34,10 @@ class ServerRPCNotifyWhenDoneBase
     template <bool, class, class>
     friend class detail::ServerRPCNotifyWhenDoneMixin;
 
-    void initiate(grpc::ServerContext& server_context) { server_context.AsyncNotifyWhenDone(event_.tag()); }
+    void initiate_notify_when_done(grpc::ServerContext& server_context)
+    {
+        server_context.AsyncNotifyWhenDone(event_.tag());
+    }
 
     NotifyWhenDoneEvent event_;
 };

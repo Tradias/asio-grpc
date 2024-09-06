@@ -38,7 +38,7 @@ struct ServerRPCStarter
         using Responder = std::remove_reference_t<decltype(ServerRPCContextBaseAccess::responder(rpc))>;
         return detail::async_initiate_sender_implementation(
             RPCExecutorBaseAccess::grpc_context(rpc),
-            detail::ServerRequestSenderInitiation<RequestRPC, TraitsT::NOTIFY_WHEN_DONE>{service, request_},
+            detail::ServerRequestSenderInitiation<RequestRPC>{service, request_},
             detail::ServerRequestSenderImplementation<Responder, TraitsT::NOTIFY_WHEN_DONE>{rpc},
             static_cast<CompletionToken&&>(token));
     }
@@ -60,8 +60,7 @@ struct ServerRPCStarter<Request, false>
     {
         using Responder = std::remove_reference_t<decltype(ServerRPCContextBaseAccess::responder(rpc))>;
         return detail::async_initiate_sender_implementation(
-            RPCExecutorBaseAccess::grpc_context(rpc),
-            detail::ServerRequestSenderInitiation<RequestRPC, TraitsT::NOTIFY_WHEN_DONE>{service},
+            RPCExecutorBaseAccess::grpc_context(rpc), detail::ServerRequestSenderInitiation<RequestRPC>{service},
             detail::ServerRequestSenderImplementation<Responder, TraitsT::NOTIFY_WHEN_DONE>{rpc},
             static_cast<CompletionToken&&>(token));
     }

@@ -122,7 +122,7 @@ struct ServerRPCContextBaseAccess
     {
         if constexpr (IsNotifyWhenDone)
         {
-            rpc.initiate(rpc.server_context_);
+            rpc.initiate_notify_when_done(rpc.server_context_);
         }
     }
 };

@@ -95,10 +95,8 @@ struct RegisterRPCHandlerInitiator
     void operator()(CompletionHandler&& completion_handler, const typename ServerRPC::executor_type& executor,
                     RPCHandler&& rpc_handler) const
     {
-        using Ch = detail::RemoveCrefT<CompletionHandler>;
-        using DecayedRPCHandler = detail::RemoveCrefT<RPCHandler>;
         const auto allocator = asio::get_associated_allocator(completion_handler);
-        detail::allocate<Operation<ServerRPC, DecayedRPCHandler, Ch>>(
+        detail::allocate<Operation<ServerRPC, detail::RemoveCrefT<RPCHandler>, detail::RemoveCrefT<CompletionHandler>>>(
             allocator, executor, service_, static_cast<RPCHandler&&>(rpc_handler),
             static_cast<CompletionHandler&&>(completion_handler))
             .release();

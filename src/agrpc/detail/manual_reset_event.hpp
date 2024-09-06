@@ -75,10 +75,9 @@ class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
                     io_executor);
                 return;
             }
-            using Ch = detail::RemoveCrefT<CompletionHandler>;
-            using Operation = ManualResetEventOperation<Signature, Ch>;
             const auto allocator = asio::get_associated_allocator(completion_handler);
-            detail::allocate<Operation>(allocator, static_cast<CompletionHandler&&>(completion_handler), event_)
+            detail::allocate<ManualResetEventOperation<Signature, detail::RemoveCrefT<CompletionHandler>>>(
+                allocator, static_cast<CompletionHandler&&>(completion_handler), event_)
                 .release();
         }
 
@@ -207,17 +206,17 @@ class ManualResetEventOperationState
   public:
     void start() noexcept
     {
-        if (state.event_.ready())
+        if (state_.event_.ready())
         {
-            state.complete();
+            state_.complete();
             return;
         }
-        if (auto stop_token = exec::get_stop_token(state.receiver()); stop_token.stop_requested())
+        if (auto stop_token = exec::get_stop_token(state_.receiver()); stop_token.stop_requested())
         {
-            exec::set_done(static_cast<Receiver&&>(state.receiver()));
+            exec::set_done(static_cast<Receiver&&>(state_.receiver()));
             return;
         }
-        state.start();
+        state_.start();
     }
 
 #ifdef AGRPC_STDEXEC
@@ -229,11 +228,11 @@ class ManualResetEventOperationState
 
     template <class R>
     ManualResetEventOperationState(R&& receiver, ManualResetEvent<Signature>& event)
-        : state(static_cast<R&&>(receiver), event)
+        : state_(static_cast<R&&>(receiver), event)
     {
     }
 
-    ManualResetEventRunningOperationState<Signature, Receiver> state;
+    ManualResetEventRunningOperationState<Signature, Receiver> state_;
 };
 
 template <class Signature>
