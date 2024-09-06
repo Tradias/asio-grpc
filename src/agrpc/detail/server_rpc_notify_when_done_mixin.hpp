@@ -58,6 +58,8 @@ class ServerRPCNotifyWhenDoneMixin : public RPCExecutorBase<Executor>,
      * Cancelling this operation does not invoke
      * [grpc::ServerContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_context.html#a88d3a0c3d53e39f38654ce8fba968301).
      *
+     * @attention Only one call to `wait_for_done()` may be outstanding at a time.
+     *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void()`.
      */
