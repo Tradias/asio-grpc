@@ -81,18 +81,31 @@ struct RegisterCallbackRPCHandlerOperation
         ServerRPCPtr ptr_;
     };
 
+    struct WaitForDoneCallback
+    {
+        using allocator_type = Allocator;
+
+        void operator()(const detail::ErrorCode&) const noexcept {}
+
+        Allocator get_allocator() const noexcept { return self_.get_allocator(); }
+
+        RegisterCallbackRPCHandlerOperation& self_;
+        ServerRPCPtr ptr_;
+    };
+
     static void wait_for_done_deleter(ServerRPCWithRequest* ptr) noexcept
     {
-        auto& self = *static_cast<ServerRPCAllocation*>(ptr);
-        [[maybe_unused]] RefCountGuard a{self.self_};
-        [[maybe_unused]] detail::AllocationGuard b{self, self.self_.get_allocator()};
+        auto& allocation = *static_cast<ServerRPCAllocation*>(ptr);
+        [[maybe_unused]] RefCountGuard a{allocation.self_};
+        [[maybe_unused]] detail::AllocationGuard b{allocation, allocation.self_.get_allocator()};
     }
 
     static void deleter(ServerRPCWithRequest* ptr) noexcept
     {
-        auto& self = *static_cast<ServerRPCAllocation*>(ptr);
-        RefCountGuard ref_count_guard{self.self_};
-        detail::AllocationGuard alloc_guard{self, self.self_.get_allocator()};
+        auto& allocation = *static_cast<ServerRPCAllocation*>(ptr);
+        auto& self = allocation.self_;
+        RefCountGuard ref_count_guard{self};
+        detail::AllocationGuard alloc_guard{allocation, self.get_allocator()};
         auto& rpc = ptr->rpc_;
         if (!detail::ServerRPCContextBaseAccess::is_finished(rpc))
         {
@@ -102,7 +115,7 @@ struct RegisterCallbackRPCHandlerOperation
         {
             if (!rpc.is_done())
             {
-                rpc.wait_for_done([p = ServerRPCPtr{ptr, &wait_for_done_deleter}](const detail::ErrorCode&) {});
+                rpc.wait_for_done(WaitForDoneCallback{self, ServerRPCPtr{ptr, &wait_for_done_deleter}});
                 ref_count_guard.release();
                 alloc_guard.release();
             }
