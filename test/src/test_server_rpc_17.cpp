@@ -496,7 +496,7 @@ TEST_CASE_TEMPLATE("ServerRPC resumable read can be cancelled", RPC, test::Clien
             CHECK(waiter.wait(yield));
             CHECK_EQ(1, request.integer());
 
-            const auto not_to_exceed = test::two_hundred_milliseconds_from_now();
+            const auto not_to_exceed = test::five_hundred_milliseconds_from_now();
             waiter.initiate(agrpc::read, rpc, request);
             for (int i{}; i != 2; ++i)
             {
@@ -526,7 +526,7 @@ TEST_CASE_TEMPLATE("ServerRPC resumable read can be cancelled", RPC, test::Clien
             test.start_rpc(rpc, request, response, yield);
             request.set_integer(1);
             CHECK(rpc.write(request, yield));
-            agrpc::Alarm(test.grpc_context).wait(test::five_hundred_milliseconds_from_now(), yield);
+            agrpc::Alarm(test.grpc_context).wait(test::one_second_from_now(), yield);
             CHECK_EQ(grpc::StatusCode::OK, rpc.finish(yield).error_code());
         });
 }

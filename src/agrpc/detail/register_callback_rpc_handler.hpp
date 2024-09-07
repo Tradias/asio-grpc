@@ -58,7 +58,11 @@ struct RegisterCallbackRPCHandlerOperation
             {
                 self_.notify_when_done_work_started();
                 self_.initiate_next();
-                AGRPC_TRY { ptr_.server_rpc_->invoke(self_.rpc_handler(), static_cast<ServerRPCPtr&&>(ptr_)); }
+                AGRPC_TRY
+                {
+                    auto& starter = ptr_.server_rpc_;
+                    starter->invoke(self_.rpc_handler(), static_cast<ServerRPCPtr&&>(ptr_));
+                }
                 AGRPC_CATCH(...)
                 {
                     // Technically `this` could already be deallocated at this point but we rely on the
