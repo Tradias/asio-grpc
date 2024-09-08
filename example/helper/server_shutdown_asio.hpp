@@ -52,7 +52,7 @@ struct ServerShutdown
         if (!is_shutdown.exchange(true))
         {
             // This will cause all coroutines to run to completion normally
-            // while returning `false` from RPC related steps. Also cancels the signals
+            // while returning `false` from rpc related steps. Also cancels the signals
             // so that the GrpcContext will eventually run out of work and return
             // from `run()`.
             // We cannot call server.Shutdown() on the same thread that runs a GrpcContext because that can lead to a
@@ -61,7 +61,9 @@ struct ServerShutdown
                 [&]
                 {
                     signals.cancel();
-                    // For Shutdown to ever complete some other thread must be calling grpc_context.run().
+                    // Shutdown will wait for all outstanding rpcs to complete normally. Alternatively use Shutdown with
+                    // deadline to cancel them after a certain time. For Shutdown to ever complete some other thread
+                    // must be calling grpc_context.run().
                     server.Shutdown();
                 });
         }

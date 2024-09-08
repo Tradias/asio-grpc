@@ -181,10 +181,20 @@ Click on `snippet source` to jump to the code of an individual example.
 <a id='snippet-server-side-multi-threaded'></a>
 ```cpp
 // ---------------------------------------------------
-// Multi-threaded server performing 20 unary requests using callback API
+// Multi-threaded server handling unary requests using callback API and multiple GrpcContexts
 // ---------------------------------------------------
 ```
 <sup><a href='/example/multi-threaded-server.cpp#L32-L36' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-multi-threaded' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
+
+<!-- snippet: server-side-multi-threaded-alternative -->
+<a id='snippet-server-side-multi-threaded-alternative'></a>
+```cpp
+// ---------------------------------------------------
+// Multi-threaded server handling unary requests using callback API and single GrpcContext
+// ---------------------------------------------------
+```
+<sup><a href='/example/multi-threaded-alternative-server.cpp#L30-L34' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-multi-threaded-alternative' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Generic

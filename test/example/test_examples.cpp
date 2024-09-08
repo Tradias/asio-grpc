@@ -68,7 +68,7 @@ TEST_CASE("examples")
     SUBCASE("multi-threaded-alternative")
     {
         client_program = ASIO_GRPC_EXAMPLE_MULTI_THREADED_ALTERNATIVE_CLIENT;
-        server_program = ASIO_GRPC_EXAMPLE_MULTI_THREADED_SERVER;
+        server_program = ASIO_GRPC_EXAMPLE_MULTI_THREADED_ALTERNATIVE_SERVER;
     }
     boost::process::child server(server_program, args);
     REQUIRE(server.valid());

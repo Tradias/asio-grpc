@@ -119,7 +119,7 @@ grpc::ServerBuilder& add_health_check_service(grpc::ServerBuilder& builder);
  * `agrpc::add_health_check_service()`. May only be called once for a given HealthCheckService.
  *
  * Does not contribute to the work tracking of the GrpcContext. May not be called concurrently with
- * `GrpcContext::run/poll`.
+ * `GrpcContext::run/poll`. May not be used with a multi-threaded GrpcContext.
  *
  * @note When using `GrpcContext::run/poll_completion_queue` then none of the member functions of the service may be
  * used.

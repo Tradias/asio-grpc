@@ -12,13 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "grpc/health/v1/health.grpc.pb.h"
 #include "helloworld/helloworld.grpc.pb.h"
 #include "rethrow_first_arg.hpp"
 #include "server_shutdown_asio.hpp"
 
 #include <agrpc/asio_grpc.hpp>
-#include <agrpc/health_check_service.hpp>
 #include <boost/asio/detached.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
@@ -29,9 +27,9 @@
 
 namespace asio = boost::asio;
 
-// begin-snippet: server-side-multi-threaded
+// begin-snippet: server-side-multi-threaded-alternative
 // ---------------------------------------------------
-// Multi-threaded server handling unary requests using callback API and multiple GrpcContexts
+// Multi-threaded server handling unary requests using callback API and single GrpcContext
 // ---------------------------------------------------
 // end-snippet
 
@@ -68,31 +66,22 @@ int main(int argc, const char** argv)
 
     helloworld::Greeter::AsyncService service;
     std::unique_ptr<grpc::Server> server;
-    std::vector<std::unique_ptr<agrpc::GrpcContext>> grpc_contexts;
 
-    {
-        grpc::ServerBuilder builder;
-        for (size_t i = 0; i < thread_count; ++i)
-        {
-            grpc_contexts.emplace_back(std::make_unique<agrpc::GrpcContext>(builder.AddCompletionQueue()));
-        }
-        builder.AddListeningPort(host, grpc::InsecureServerCredentials());
-        builder.RegisterService(&service);
-        agrpc::add_health_check_service(builder);
-        server = builder.BuildAndStart();
-        agrpc::start_health_check_service(*server, *grpc_contexts.front());
-    }
+    grpc::ServerBuilder builder;
+    agrpc::GrpcContext grpc_context(builder.AddCompletionQueue(), thread_count);
+    builder.AddListeningPort(host, grpc::InsecureServerCredentials());
+    builder.RegisterService(&service);
+    server = builder.BuildAndStart();
 
-    example::ServerShutdown shutdown{*server, *grpc_contexts.front()};
+    example::ServerShutdown shutdown{*server, grpc_context};
 
     // Create one thread per GrpcContext.
     std::vector<std::thread> threads;
     for (size_t i = 0; i < thread_count; ++i)
     {
         threads.emplace_back(
-            [&, i]
+            [&]
             {
-                auto& grpc_context = *grpc_contexts[i];
                 register_request_handler(grpc_context, service, shutdown);
                 grpc_context.run();
             });
