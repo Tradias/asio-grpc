@@ -452,7 +452,7 @@ struct StdexecMockTest : test::ExecutionTestMixin<test::MockTest>
 TEST_CASE_FIXTURE(StdexecMockTest, "stdexec mock unary request")
 {
     using RPC = test::UnaryInterfaceClientRPC;
-    auto mock_reader = test::set_up_unary_test(*this);
+    test::set_up_unary_test(*this);
     grpc::ClientContext client_context;
     test::set_default_deadline(client_context);
     RPC::Request request;
