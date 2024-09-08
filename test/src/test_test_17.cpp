@@ -20,7 +20,7 @@
 
 TEST_CASE_FIXTURE(test::MockTest, "mock unary request")
 {
-    auto mock_reader = test::set_up_unary_test(*this);
+    test::set_up_unary_test(*this);
     test::spawn_and_run(grpc_context,
                         [&](auto&& yield)
                         {

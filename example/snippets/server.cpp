@@ -47,17 +47,16 @@ void create_multi_threaded_server_grpc_context()
     const auto concurrency = std::thread::hardware_concurrency();
     grpc::ServerBuilder builder;
     agrpc::GrpcContext grpc_context{builder.AddCompletionQueue(), concurrency};
-    auto guard = asio::make_work_guard(grpc_context);
+    // ... register services, start server
     std::vector<std::thread> threads(concurrency);
     for (auto& thread : threads)
     {
         thread = std::thread{[&]
                              {
+                                 // ... register rpc handlers
                                  grpc_context.run();
                              }};
     }
-    // ...
-    guard.reset();
     for (auto& thread : threads)
     {
         thread.join();

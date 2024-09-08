@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef AGRPC_GENERATING_DOCUMENTATION
+
 // config.hpp
 #undef AGRPC_UNLIKELY
 #undef AGRPC_LIKELY
@@ -31,3 +33,5 @@
 
 // awaitable.hpp
 #undef AGRPC_ASIO_HAS_CO_AWAIT
+
+#endif

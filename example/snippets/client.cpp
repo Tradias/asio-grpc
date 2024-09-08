@@ -76,8 +76,8 @@ asio::awaitable<void> mock_stub(agrpc::GrpcContext& grpc_context)
     const grpc::Status status =
         co_await RPC::request(grpc_context, mock_stub, client_context, request, response, asio::use_awaitable);
 
-    assert(status.ok());
-    assert(42 == response.integer());
+    EXPECT_TRUE(status.ok());
+    EXPECT_EQ(42, response.integer());
     /* [mock-stub] */
 }
 

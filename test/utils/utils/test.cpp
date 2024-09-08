@@ -18,7 +18,7 @@
 
 namespace test
 {
-std::unique_ptr<testing::NiceMock<MockClientAsyncResponseReader>> set_up_unary_test(MockTest& test)
+void set_up_unary_test(MockTest& test)
 {
     auto mock_reader = std::make_unique<testing::NiceMock<MockClientAsyncResponseReader>>();
     EXPECT_CALL(*mock_reader, Finish)
@@ -28,26 +28,38 @@ std::unique_ptr<testing::NiceMock<MockClientAsyncResponseReader>> set_up_unary_t
                 response->set_integer(42);
                 agrpc::process_grpc_tag(test.grpc_context, tag, true);
             });
-    EXPECT_CALL(test.stub, PrepareAsyncUnaryRaw).WillOnce(testing::Return(mock_reader.get()));
-    return mock_reader;
+    EXPECT_CALL(test.stub, PrepareAsyncUnaryRaw)
+        .WillOnce(
+            [reader = std::move(mock_reader)]
+            {
+                // GRPC wraps the return value into a unique_ptr with a specialized std::default_delete that does
+                // nothing
+                return reader.get();
+            });
 }
 
 void set_up_server_streaming_test(MockTest& test)
 {
-    auto mock_reader = std::make_unique<testing::NiceMock<MockClientAsyncReader>>();
-    EXPECT_CALL(*mock_reader, Read)
+    EXPECT_CALL(test.stub, PrepareAsyncServerStreamingRaw)
         .WillOnce(
-            [&](test::msg::Response* response, void* tag)
+            [&]
             {
-                response->set_integer(42);
-                agrpc::process_grpc_tag(test.grpc_context, tag, true);
+                auto mock_reader = std::make_unique<testing::NiceMock<MockClientAsyncReader>>();
+                EXPECT_CALL(*mock_reader, Read)
+                    .WillOnce(
+                        [&](test::msg::Response* response, void* tag)
+                        {
+                            response->set_integer(42);
+                            agrpc::process_grpc_tag(test.grpc_context, tag, true);
+                        });
+                EXPECT_CALL(*mock_reader, StartCall)
+                    .WillOnce(
+                        [&](void* tag)
+                        {
+                            agrpc::process_grpc_tag(test.grpc_context, tag, true);
+                        });
+                // GRPC wraps the return value into a unique_ptr
+                return mock_reader.release();
             });
-    EXPECT_CALL(*mock_reader, StartCall)
-        .WillOnce(
-            [&](void* tag)
-            {
-                agrpc::process_grpc_tag(test.grpc_context, tag, true);
-            });
-    EXPECT_CALL(test.stub, PrepareAsyncServerStreamingRaw).WillOnce(testing::Return(mock_reader.release()));
 }
 }  // namespace test

@@ -1,6 +1,10 @@
 find_package(Doxygen)
 
-if(TARGET Doxygen::doxygen)
+function(asio_grpc_doxygen)
+    if(NOT TARGET Doxygen::doxygen)
+        return()
+    endif()
+
     set(DOXYGEN_PROJECT_NUMBER "v${PROJECT_VERSION}")
     set(DOXYGEN_OUTPUT_DIRECTORY "${ASIO_GRPC_PROJECT_ROOT}")
     set(DOXYGEN_SHOW_USED_FILES "NO")
@@ -28,11 +32,14 @@ if(TARGET Doxygen::doxygen)
     # `doxygen -w html header.html delete_me.html delete_me.css`
     set(DOXYGEN_HTML_HEADER "${CMAKE_CURRENT_LIST_DIR}/header.html")
 
+    set(DOXYGEN_DISABLE_INDEX "NO")
+    set(DOXYGEN_FULL_SIDEBAR "NO")
     set(DOXYGEN_HTML_EXTRA_FILES "${CMAKE_CURRENT_LIST_DIR}/doxygen-awesome-darkmode-toggle.js")
     set(DOXYGEN_HTML_EXTRA_STYLESHEET
         "${CMAKE_CURRENT_LIST_DIR}/doxygen-awesome.css" "${CMAKE_CURRENT_LIST_DIR}/doxygen-awesome-sidebar-only.css"
         "${CMAKE_CURRENT_LIST_DIR}/doxygen-awesome-sidebar-only-darkmode-toggle.css"
         "${CMAKE_CURRENT_LIST_DIR}/custom.css")
+    set(HTML_COLORSTYLE "LIGHT")
     set(DOXYGEN_HTML_COLORSTYLE_HUE "209")
     set(DOXYGEN_HTML_COLORSTYLE_SAT "255")
     set(DOXYGEN_HTML_COLORSTYLE_GAMMA "113")
@@ -42,9 +49,17 @@ if(TARGET Doxygen::doxygen)
     set(DOXYGEN_TREEVIEW_WIDTH "310")
     set(DOXYGEN_MACRO_EXPANSION "YES")
     set(DOXYGEN_INCLUDE_PATH "${ASIO_GRPC_PROJECT_ROOT}/src" "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
-    set(DOXYGEN_PREDEFINED "AGRPC_BOOST_ASIO" "AGRPC_GENERATING_DOCUMENTATION" "AGRPC_ASIO_HAS_CO_AWAIT"
-                           "AGRPC_ASIO_HAS_CANCELLATION_SLOT")
+    set(DOXYGEN_PREDEFINED
+        "AGRPC_BOOST_ASIO"
+        "AGRPC_GENERATING_DOCUMENTATION"
+        "AGRPC_ASIO_HAS_CO_AWAIT"
+        "AGRPC_ASIO_HAS_CANCELLATION_SLOT"
+        "AGRPC_ASIO_HAS_BIND_ALLOCATOR"
+        "AGRPC_ASIO_HAS_NEW_SPAWN"
+        "AGRPC_ASIO_HAS_IMMEDIATE_EXECUTOR")
     set(DOXYGEN_SKIP_FUNCTION_MACROS "NO")
 
     doxygen_add_docs(asio-grpc-doxygen WORKING_DIRECTORY "${ASIO_GRPC_PROJECT_ROOT}")
-endif()
+endfunction()
+
+asio_grpc_doxygen()

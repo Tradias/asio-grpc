@@ -40,7 +40,7 @@ struct MockClientAsyncReader : grpc::ClientAsyncReaderInterface<test::msg::Respo
     MOCK_METHOD2(Read, void(test::msg::Response*, void*));
 };
 
-std::unique_ptr<testing::NiceMock<MockClientAsyncResponseReader>> set_up_unary_test(MockTest& test);
+void set_up_unary_test(MockTest& test);
 
 void set_up_server_streaming_test(MockTest& test);
 }  // namespace test
