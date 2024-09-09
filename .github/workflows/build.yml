@@ -40,7 +40,7 @@ jobs:
             os: macos-13,
             triplet: 'x64-osx-release',
             build-type: 'Debug',
-            cmake-extra-args: '-DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-osx-release -DASIO_GRPC_HAS_STD_PMR=off',
+            cmake-extra-args: '-DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-osx-release -DASIO_GRPC_HAS_STD_PMR=off -DCMAKE_UNITY_BUILD=off',
             parallel: 4,
           }
 
@@ -135,7 +135,7 @@ jobs:
       run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
 
     - name: GCC 11 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which g++-11) -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DASIO_GRPC_TEST_COVERAGE=on -DASIO_GRPC_GCOV_PROGRAM=$(which gcov-11) -DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build-11/sonarqube-coverage.xml -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }} -DCMAKE_BUILD_TYPE=Debug -DDCMAKE_UNITY_BUILD=off
+      run: cmake --preset default -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which g++-11) -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DASIO_GRPC_TEST_COVERAGE=on -DASIO_GRPC_GCOV_PROGRAM=$(which gcov-11) -DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build-11/sonarqube-coverage.xml -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }} -DCMAKE_BUILD_TYPE=Debug -DCMAKE_UNITY_BUILD=off
 
     - name: GCC 11 Build
       run: cmake --build ${{ github.workspace }}/build-11 --config Debug --parallel $(nproc)

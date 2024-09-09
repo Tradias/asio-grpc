@@ -30,11 +30,11 @@ void set_up_unary_test(MockTest& test)
             });
     EXPECT_CALL(test.stub, PrepareAsyncUnaryRaw)
         .WillOnce(
-            [reader = std::make_shared<decltype(mock_reader)>(std::move(mock_reader))]
+            [reader = std::move(mock_reader)](auto&&...)
             {
                 // GRPC wraps the return value into a unique_ptr with a specialized std::default_delete that does
                 // nothing
-                return reader->get();
+                return reader.get();
             });
 }
 
@@ -42,7 +42,7 @@ void set_up_server_streaming_test(MockTest& test)
 {
     EXPECT_CALL(test.stub, PrepareAsyncServerStreamingRaw)
         .WillOnce(
-            [&]
+            [&](auto&&...)
             {
                 auto mock_reader = std::make_unique<testing::NiceMock<MockClientAsyncReader>>();
                 EXPECT_CALL(*mock_reader, Read)
