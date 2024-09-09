@@ -25,4 +25,4 @@ target_compile_options(asio-grpc-check-header-syntax
 
 target_link_libraries(asio-grpc-check-header-syntax PRIVATE asio-grpc-sources asio-grpc-compile-options asio-grpc)
 
-set_target_properties(asio-grpc-check-header-syntax PROPERTIES EXCLUDE_FROM_ALL on)
+set_target_properties(asio-grpc-check-header-syntax PROPERTIES EXCLUDE_FROM_ALL on UNITY_BUILD off)
