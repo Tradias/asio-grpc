@@ -47,7 +47,9 @@ target_compile_options(
               /Zc:preprocessor
               /Zc:externConstexpr
               /Zc:lambda
-              /Zc:throwingNew>
+              /Zc:throwingNew
+              $<$<BOOL:${CMAKE_UNITY_BUILD}>:/bigobj>
+              >
               $<$<OR:$<CXX_COMPILER_ID:GNU,AppleClang>,$<STREQUAL:${CMAKE_CXX_COMPILER_FRONTEND_VARIANT},GNU>>:
               -Wall
               -Wextra

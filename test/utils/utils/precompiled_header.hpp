@@ -15,11 +15,6 @@
 #include "test/v1/test.grpc.pb.h"
 
 #include <doctest/doctest.h>
-#include <google/protobuf/arena.h>
-#include <google/protobuf/extension_set.h>
-#include <google/protobuf/generated_message_reflection.h>
-#include <google/protobuf/generated_message_util.h>
-#include <google/protobuf/io/coded_stream.h>
 #include <grpcpp/alarm.h>
 #include <grpcpp/generic/async_generic_service.h>
 #include <grpcpp/generic/generic_stub.h>

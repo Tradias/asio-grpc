@@ -24,6 +24,7 @@
 #include <agrpc/grpc_executor.hpp>
 #include <grpcpp/generic/async_generic_service.h>
 
+#include <agrpc/detail/asio_macros.hpp>
 #include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()

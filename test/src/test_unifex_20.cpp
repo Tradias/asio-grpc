@@ -85,29 +85,6 @@ TEST_CASE_FIXTURE(test::ExecutionGrpcContextTest, "unifex cancel agrpc::Alarm.wa
     CHECK_FALSE(state.exception);
 }
 
-inline decltype(unifex::schedule(std::declval<agrpc::GrpcExecutor>())) request_handler_archetype(
-    grpc::ServerContext&, test::msg::Request&, grpc::ServerAsyncResponseWriter<test::msg::Response>&);
-
-TEST_CASE_FIXTURE(test::GrpcClientServerTest, "RegisterSenderRPCHandlerSender fulfills unified executor concepts")
-{
-    using RegisterSenderRPCHandlerSender = decltype(agrpc::register_sender_rpc_handler<test::UnaryServerRPC>(
-        grpc_context, service, &request_handler_archetype));
-    CHECK(unifex::sender<RegisterSenderRPCHandlerSender>);
-    CHECK(unifex::typed_sender<RegisterSenderRPCHandlerSender>);
-    CHECK(unifex::sender_to<RegisterSenderRPCHandlerSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
-    CHECK(unifex::is_nothrow_connectable_v<RegisterSenderRPCHandlerSender,
-                                           test::ConditionallyNoexceptNoOpReceiver<true>>);
-    CHECK_FALSE(unifex::is_nothrow_connectable_v<RegisterSenderRPCHandlerSender,
-                                                 test::ConditionallyNoexceptNoOpReceiver<false>>);
-    CHECK(unifex::is_nothrow_connectable_v<RegisterSenderRPCHandlerSender,
-                                           const test::ConditionallyNoexceptNoOpReceiver<true>&>);
-    CHECK_FALSE(unifex::is_nothrow_connectable_v<RegisterSenderRPCHandlerSender,
-                                                 const test::ConditionallyNoexceptNoOpReceiver<false>&>);
-    using OperationState =
-        unifex::connect_result_t<RegisterSenderRPCHandlerSender, test::FunctionAsReceiver<test::InvocableArchetype>>;
-    CHECK(std::is_invocable_v<decltype(unifex::start), OperationState&>);
-}
-
 #if !UNIFEX_NO_COROUTINES
 TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::BidirectionalStreamingClientRPC>,
                   "unifex BidirectionalStreamingClientRPC can be cancelled")

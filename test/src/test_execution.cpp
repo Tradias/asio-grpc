@@ -207,15 +207,24 @@ TEST_CASE("stdexec GrpcContext.stop() with pending GrpcSender operation")
     CHECK_FALSE(invoked);
 }
 
-inline decltype(stdexec::schedule(std::declval<agrpc::GrpcExecutor>())) request_handler_archetype(test::UnaryServerRPC&,
-                                                                                                  test::msg::Request&);
+decltype(stdexec::schedule(std::declval<agrpc::GrpcExecutor>())) request_handler_archetype(test::UnaryServerRPC&,
+                                                                                           test::msg::Request&);
 
-TEST_CASE_FIXTURE(test::GrpcClientServerTest, "RegisterSenderRPCHandlerSender fulfills unified executor concepts")
+TEST_CASE("stdexec RegisterSenderRPCHandlerSender fulfills unified executor concepts")
 {
     using RegisterSenderRPCHandlerSender = decltype(agrpc::register_sender_rpc_handler<test::UnaryServerRPC>(
-        grpc_context, service, &request_handler_archetype));
+        std::declval<agrpc::GrpcContext&>(), std::declval<test::v1::Test::AsyncService&>(),
+        &request_handler_archetype));
     CHECK(stdexec::sender<RegisterSenderRPCHandlerSender>);
     CHECK(stdexec::sender_to<RegisterSenderRPCHandlerSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
+    CHECK(noexcept(stdexec::connect(std::declval<RegisterSenderRPCHandlerSender>(),
+                                    std::declval<test::ConditionallyNoexceptNoOpReceiver<true>>())));
+    CHECK_FALSE(noexcept(stdexec::connect(std::declval<RegisterSenderRPCHandlerSender>(),
+                                          std::declval<test::ConditionallyNoexceptNoOpReceiver<false>>())));
+    CHECK(noexcept(stdexec::connect(std::declval<RegisterSenderRPCHandlerSender>(),
+                                    std::declval<const test::ConditionallyNoexceptNoOpReceiver<true>&>())));
+    CHECK_FALSE(noexcept(stdexec::connect(std::declval<RegisterSenderRPCHandlerSender>(),
+                                          std::declval<const test::ConditionallyNoexceptNoOpReceiver<false>&>())));
     using OperationState =
         stdexec::connect_result_t<RegisterSenderRPCHandlerSender, test::FunctionAsReceiver<test::InvocableArchetype>>;
     CHECK(std::is_invocable_v<decltype(stdexec::start), OperationState&>);
