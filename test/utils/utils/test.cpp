@@ -30,11 +30,11 @@ void set_up_unary_test(MockTest& test)
             });
     EXPECT_CALL(test.stub, PrepareAsyncUnaryRaw)
         .WillOnce(
-            [reader = std::move(mock_reader)](auto&&...)
+            [reader = std::make_shared<decltype(mock_reader)>(std::move(mock_reader))](auto&&...)
             {
                 // GRPC wraps the return value into a unique_ptr with a specialized std::default_delete that does
                 // nothing
-                return reader.get();
+                return reader->get();
             });
 }
 

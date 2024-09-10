@@ -75,6 +75,7 @@ asio::awaitable<void> timer_with_different_completion_tokens(agrpc::GrpcContext&
 /* [agrpc-alarm] */
 asio::awaitable<void> agrpc_alarm(agrpc::GrpcContext& grpc_context)
 {
+    // used GrpcContext is explicit:
     agrpc::Alarm alarm{grpc_context};
     bool wait_ok = co_await alarm.wait(
         std::chrono::system_clock::now() + std::chrono::seconds(1), asio::use_awaitable);
