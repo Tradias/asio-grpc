@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.14...3.28)
+cmake_minimum_required(VERSION 3.14...3.27)
 
 # Hunter package manager options
 option(HUNTER_ENABLED "Enable Hunter package manager" off)
