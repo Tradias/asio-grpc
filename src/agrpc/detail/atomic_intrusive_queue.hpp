@@ -18,7 +18,6 @@
 #include <agrpc/detail/intrusive_queue.hpp>
 
 #include <atomic>
-#include <utility>
 
 #include <agrpc/detail/config.hpp>
 
@@ -102,7 +101,7 @@ class AtomicIntrusiveQueue
     {
         // Pick some pointer that is not nullptr and that is
         // guaranteed to not be the address of a valid item.
-        const void* head_address = std::addressof(head_);
+        const void* head_address = &head_;
         return const_cast<void*>(head_address);
     }
 

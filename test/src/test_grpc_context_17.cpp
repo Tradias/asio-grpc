@@ -728,8 +728,6 @@ void recursively_post(agrpc::GrpcContext& grpc_context)
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run() is not blocked by repeated asio::posts")
 {
-    SUBCASE("single-threaded") {}
-    SUBCASE("multi-threaded") { grpc_context_lifetime.emplace(2); }
     bool alarm_completed{false};
     recursively_post(grpc_context);
     agrpc::Alarm alarm{grpc_context};
@@ -746,6 +744,43 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run() is not blocked by re
                        });
         });
     grpc_context.run();
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run() distributes local work to other threads")
+{
+    bool nested_poll{};
+    SUBCASE("no nested poll") {}
+    SUBCASE("nested poll") { nested_poll = true; }
+    grpc_context_lifetime.emplace(2);
+    std::atomic<uint32_t> are_both_threads_used{false};
+    std::thread::id t_id;
+    auto check = [&]
+    {
+        are_both_threads_used |= t_id != std::this_thread::get_id();
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    };
+    post(
+        [&]
+        {
+            t_id = std::this_thread::get_id();
+            post(check);
+            post(check);
+            if (nested_poll)
+            {
+                grpc_context.poll();
+            }
+        });
+    std::thread t0{[&]
+                   {
+                       grpc_context.run();
+                   }};
+    std::thread t1{[&]
+                   {
+                       grpc_context.run();
+                   }};
+    t0.join();
+    t1.join();
+    CHECK_NE(0, are_both_threads_used.load());
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run() interrupted by an exception will not forget local work")

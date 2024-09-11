@@ -133,11 +133,12 @@ struct GrpcContextImplementation
 
     [[nodiscard]] static bool running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept;
 
-    static bool move_local_queue_to_remote_work(detail::GrpcContextThreadContext& context) noexcept;
+    [[nodiscard]] static bool move_local_queue_to_remote_work(detail::GrpcContextThreadContext& context) noexcept;
 
-    static bool move_remote_work_to_local_queue(detail::GrpcContextThreadContext& context) noexcept;
+    [[nodiscard]] static bool move_remote_work_to_local_queue(detail::GrpcContextThreadContext& context) noexcept;
 
-    static void distribute_local_work_to_other_threads(detail::GrpcContextThreadContext& context) noexcept;
+    [[nodiscard]] static bool distribute_all_local_work_to_other_threads_but_one(
+        detail::GrpcContextThreadContext& context) noexcept;
 
     static bool process_local_queue(detail::GrpcContextThreadContext& context, detail::InvokeHandler invoke);
 

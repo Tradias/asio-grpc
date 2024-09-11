@@ -152,13 +152,23 @@ inline bool GrpcContextImplementation::move_remote_work_to_local_queue(
     return true;
 }
 
-inline void GrpcContextImplementation::distribute_local_work_to_other_threads(
+inline bool GrpcContextImplementation::distribute_all_local_work_to_other_threads_but_one(
     detail::GrpcContextThreadContext& context) noexcept
 {
-    if (GrpcContextImplementation::move_local_queue_to_remote_work(context))
+    auto& local_work_queue = context.local_work_queue_;
+    if (!local_work_queue.empty())
     {
-        GrpcContextImplementation::trigger_work_alarm(context.grpc_context_);
+        const auto first = local_work_queue.pop_front();
+        bool needs_trigger = !local_work_queue.empty();
+        if (GrpcContextImplementation::move_local_queue_to_remote_work(context))
+        {
+            needs_trigger = false;
+            GrpcContextImplementation::trigger_work_alarm(context.grpc_context_);
+        }
+        local_work_queue.push_back(first);
+        return needs_trigger;
     }
+    return false;
 }
 
 inline bool GrpcContextImplementation::process_local_queue(detail::GrpcContextThreadContext& context,
@@ -226,33 +236,31 @@ inline DoOneResult GrpcContextImplementation::do_one(detail::GrpcContextThreadCo
                                                      detail::InvokeHandler invoke)
 {
     const agrpc::GrpcContext& grpc_context = context.grpc_context_;
+    const bool multithreaded = context.multithreaded_;
+    auto& local_work_queue = context.local_work_queue_;
     bool check_remote_work = context.check_remote_work_;
     if (check_remote_work)
     {
-        if (context.multithreaded_)
-        {
-            auto local_queue{std::move(context.local_work_queue_)};
-            check_remote_work = GrpcContextImplementation::move_remote_work_to_local_queue(context);
-            if (check_remote_work)
-            {
-                auto new_local_queue = detail::pop_front_each(local_queue, context.local_work_queue_);
-                context.local_work_queue_.append(std::move(local_queue));
-                GrpcContextImplementation::distribute_local_work_to_other_threads(context);
-                context.local_work_queue_ = std::move(new_local_queue);
-            }
-            else
-            {
-                context.local_work_queue_ = std::move(local_queue);
-            }
-        }
-        else
-        {
-            check_remote_work = GrpcContextImplementation::move_remote_work_to_local_queue(context);
-        }
+        check_remote_work = GrpcContextImplementation::move_remote_work_to_local_queue(context);
         context.check_remote_work_ = check_remote_work;
     }
+    const auto distribute = [&]
+    {
+        if (multithreaded)
+        {
+            if (GrpcContextImplementation::distribute_all_local_work_to_other_threads_but_one(context) &&
+                check_remote_work)
+            {
+                GrpcContextImplementation::trigger_work_alarm(context.grpc_context_);
+                check_remote_work = false;
+                context.check_remote_work_ = check_remote_work;
+            }
+        }
+    };
+    distribute();
     const bool processed_local_work = GrpcContextImplementation::process_local_queue(context, invoke);
-    const bool is_more_completed_work_pending = check_remote_work || !context.local_work_queue_.empty();
+    distribute();
+    const bool is_more_completed_work_pending = check_remote_work || !local_work_queue.empty();
     if (!is_more_completed_work_pending && grpc_context.is_stopped())
     {
         return {{DoOneResult::PROCESSED_LOCAL_WORK}};
@@ -321,7 +329,7 @@ inline void GrpcContextImplementation::drain_completion_queue(agrpc::GrpcContext
 {
     detail::GrpcContextThreadContext thread_context{grpc_context, false};
     (void)grpc_context.remote_work_queue_.try_mark_active();
-    GrpcContextImplementation::move_remote_work_to_local_queue(thread_context);
+    (void)GrpcContextImplementation::move_remote_work_to_local_queue(thread_context);
     GrpcContextImplementation::process_local_queue(thread_context, detail::InvokeHandler::NO_);
     while (GrpcContextImplementation::handle_next_completion_queue_event(
                thread_context, detail::GrpcContextImplementation::INFINITE_FUTURE, detail::InvokeHandler::NO_)
