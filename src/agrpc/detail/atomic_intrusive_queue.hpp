@@ -71,7 +71,25 @@ class AtomicIntrusiveQueue
         return old_value == inactive;
     }
 
-    bool try_mark_inactive() noexcept
+    // Returns true if the producer is inactive and needs to be
+    // woken up. The calling thread has responsibility for waking
+    // up the producer.
+    [[nodiscard]] bool prepend(IntrusiveQueue<Item> items) noexcept
+    {
+        if (items.empty())
+        {
+            return false;
+        }
+        const void* const inactive = producer_inactive_value();
+        void* old_value = head_.load(std::memory_order_relaxed);
+        do
+        {
+            items.tail_->next_ = (old_value == inactive) ? nullptr : static_cast<Item*>(old_value);
+        } while (!head_.compare_exchange_weak(old_value, items.head_, std::memory_order_acq_rel));
+        return old_value == inactive;
+    }
+
+    [[nodiscard]] bool try_mark_inactive() noexcept
     {
         void* const inactive = producer_inactive_value();
         if (void* old_value = head_.load(std::memory_order_relaxed); old_value == nullptr)

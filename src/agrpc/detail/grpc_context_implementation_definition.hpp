@@ -126,17 +126,7 @@ inline bool GrpcContextImplementation::move_local_queue_to_remote_work(
     detail::GrpcContextThreadContext& context) noexcept
 {
     agrpc::GrpcContext& grpc_context = context.grpc_context_;
-    bool is_queue_inactive{};
-    auto queue{std::move(context.local_work_queue_)};
-    while (!queue.empty())
-    {
-        auto* op = queue.pop_front();
-        if (grpc_context.remote_work_queue_.enqueue(op))
-        {
-            is_queue_inactive = true;
-        }
-    }
-    return is_queue_inactive;
+    return grpc_context.remote_work_queue_.prepend(std::move(context.local_work_queue_));
 }
 
 inline bool GrpcContextImplementation::move_remote_work_to_local_queue(
@@ -241,7 +231,31 @@ inline DoOneResult GrpcContextImplementation::do_one(detail::GrpcContextThreadCo
     bool check_remote_work = context.check_remote_work_;
     if (check_remote_work)
     {
-        check_remote_work = GrpcContextImplementation::move_remote_work_to_local_queue(context);
+        if (multithreaded)
+        {
+            if (local_work_queue.empty())
+            {
+                check_remote_work = GrpcContextImplementation::move_remote_work_to_local_queue(context);
+                if (check_remote_work)
+                {
+                    check_remote_work = GrpcContextImplementation::move_remote_work_to_local_queue(context);
+                }
+                if (check_remote_work)
+                {
+                    GrpcContextImplementation::trigger_work_alarm(context.grpc_context_);
+                    check_remote_work = false;
+                }
+            }
+            else if (local_work_queue.has_exactly_one_element())
+            {
+                GrpcContextImplementation::trigger_work_alarm(context.grpc_context_);
+                check_remote_work = false;
+            }
+        }
+        else
+        {
+            check_remote_work = GrpcContextImplementation::move_remote_work_to_local_queue(context);
+        }
         context.check_remote_work_ = check_remote_work;
     }
     const auto distribute = [&]
