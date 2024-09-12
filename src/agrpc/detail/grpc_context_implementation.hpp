@@ -51,18 +51,9 @@ struct GrpcContextThreadContext
     : asio::detail::thread_context
 #endif
 {
-    explicit GrpcContextThreadContext(agrpc::GrpcContext& grpc_context);
+    template <bool IsMultithreaded>
+    explicit GrpcContextThreadContext(agrpc::GrpcContext& grpc_context, std::bool_constant<IsMultithreaded>);
 
-    GrpcContextThreadContext(agrpc::GrpcContext& grpc_context, bool multithreaded);
-
-    ~GrpcContextThreadContext() noexcept;
-
-    GrpcContextThreadContext(const GrpcContextThreadContext& other) = delete;
-    GrpcContextThreadContext(GrpcContextThreadContext&& other) = delete;
-    GrpcContextThreadContext& operator=(const GrpcContextThreadContext& other) = delete;
-    GrpcContextThreadContext& operator=(GrpcContextThreadContext&& other) = delete;
-
-    const bool multithreaded_;
     bool check_remote_work_;
     agrpc::GrpcContext& grpc_context_;
     detail::IntrusiveQueue<detail::QueueableOperationBase> local_work_queue_;
@@ -70,9 +61,22 @@ struct GrpcContextThreadContext
     detail::ListablePoolResource& resource_;
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-    asio::detail::thread_info_base this_thread_;
+    asio::detail::thread_info_base this_thread_{};
     thread_call_stack::context ctx_{this, this_thread_};
 #endif
+};
+
+template <bool IsMultithreaded>
+struct GrpcContextThreadContextImpl : GrpcContextThreadContext
+{
+    explicit GrpcContextThreadContextImpl(agrpc::GrpcContext& grpc_context);
+
+    ~GrpcContextThreadContextImpl() noexcept;
+
+    GrpcContextThreadContextImpl(const GrpcContextThreadContextImpl& other) = delete;
+    GrpcContextThreadContextImpl(GrpcContextThreadContextImpl&& other) = delete;
+    GrpcContextThreadContextImpl& operator=(const GrpcContextThreadContextImpl& other) = delete;
+    GrpcContextThreadContextImpl& operator=(GrpcContextThreadContextImpl&& other) = delete;
 };
 
 enum class InvokeHandler
@@ -142,10 +146,13 @@ struct GrpcContextImplementation
 
     static bool process_local_queue(detail::GrpcContextThreadContext& context, detail::InvokeHandler invoke);
 
-    static DoOneResult do_one(detail::GrpcContextThreadContext& context, ::gpr_timespec deadline,
+    template <bool IsMultithreaded>
+    static DoOneResult do_one(detail::GrpcContextThreadContextImpl<IsMultithreaded>& context, ::gpr_timespec deadline,
                               detail::InvokeHandler invoke = detail::InvokeHandler::YES_);
 
-    static DoOneResult do_one_if_not_stopped(detail::GrpcContextThreadContext& context, ::gpr_timespec deadline);
+    template <bool IsMultithreaded>
+    static DoOneResult do_one_if_not_stopped(detail::GrpcContextThreadContextImpl<IsMultithreaded>& context,
+                                             ::gpr_timespec deadline);
 
     static DoOneResult do_one_completion_queue(detail::GrpcContextThreadContext& context, ::gpr_timespec deadline);
 
@@ -160,6 +167,9 @@ struct GrpcContextImplementation
     static detail::ListablePoolResource& pop_resource(agrpc::GrpcContext& grpc_context);
 
     static void push_resource(agrpc::GrpcContext& grpc_context, detail::ListablePoolResource& resource);
+
+    template <class Function>
+    static decltype(auto) visit_is_multithreaded(agrpc::GrpcContext& grpc_context, Function function);
 };
 
 void process_grpc_tag(void* tag, detail::OperationResult result, agrpc::GrpcContext& grpc_context);

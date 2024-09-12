@@ -216,7 +216,8 @@ struct AlwaysFalseCondition
 
 struct GrpcContextDoOne
 {
-    static auto poll(detail::GrpcContextThreadContext& context, ::gpr_timespec deadline)
+    template <bool IsMultithreaded>
+    static auto poll(detail::GrpcContextThreadContextImpl<IsMultithreaded>& context, ::gpr_timespec deadline)
     {
         return detail::GrpcContextImplementation::do_one(context, deadline);
     }
@@ -224,7 +225,8 @@ struct GrpcContextDoOne
 
 struct GrpcContextDoOneCompletionQueue
 {
-    static auto poll(detail::GrpcContextThreadContext& context, ::gpr_timespec deadline)
+    template <bool IsMultithreaded>
+    static auto poll(detail::GrpcContextThreadContextImpl<IsMultithreaded>& context, ::gpr_timespec deadline)
     {
         return detail::GrpcContextImplementation::do_one_completion_queue(context, deadline);
     }
@@ -243,13 +245,13 @@ struct IsGrpcContextStopped
     constexpr explicit operator bool() const noexcept { return is_stopped_; }
 };
 
-template <class GrpcContextPoller, class Traits, class ExecutionContext, class StopCondition>
+template <bool IsMultithreaded, class GrpcContextPoller, class Traits, class ExecutionContext, class StopCondition>
 void run_impl(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context, StopCondition stop_condition)
 {
     using ResolvedTraits = detail::ResolvedRunTraits<Traits>;
     using Backoff =
         detail::Backoff<std::chrono::duration_cast<detail::BackoffDelay>(ResolvedTraits::MAX_LATENCY).count()>;
-    detail::GrpcContextThreadContext thread_context{grpc_context};
+    detail::GrpcContextThreadContextImpl<IsMultithreaded> thread_context{grpc_context};
     Backoff backoff;
     auto delay = backoff.next();
     IsGrpcContextStopped is_grpc_context_stopped{};
@@ -292,8 +294,13 @@ void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context)
 template <class Traits, class ExecutionContext, class StopCondition>
 void run(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context, StopCondition stop_condition)
 {
-    detail::run_impl<detail::GrpcContextDoOne, Traits>(grpc_context, execution_context,
-                                                       static_cast<StopCondition&&>(stop_condition));
+    detail::GrpcContextImplementation::visit_is_multithreaded(
+        grpc_context,
+        [&](auto v)
+        {
+            detail::run_impl<decltype(v)::value, detail::GrpcContextDoOne, Traits>(
+                grpc_context, execution_context, static_cast<StopCondition&&>(stop_condition));
+        });
 }
 
 template <class Traits, class ExecutionContext>
@@ -306,8 +313,13 @@ template <class Traits, class ExecutionContext, class StopCondition>
 void run_completion_queue(agrpc::GrpcContext& grpc_context, ExecutionContext& execution_context,
                           StopCondition stop_condition)
 {
-    detail::run_impl<detail::GrpcContextDoOneCompletionQueue, Traits>(grpc_context, execution_context,
-                                                                      static_cast<StopCondition&&>(stop_condition));
+    detail::GrpcContextImplementation::visit_is_multithreaded(
+        grpc_context,
+        [&](auto v)
+        {
+            detail::run_impl<decltype(v)::value, detail::GrpcContextDoOneCompletionQueue, Traits>(
+                grpc_context, execution_context, static_cast<StopCondition&&>(stop_condition));
+        });
 }
 
 AGRPC_NAMESPACE_END

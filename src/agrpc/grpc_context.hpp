@@ -320,6 +320,9 @@ class GrpcContext
     using LocalWorkQueue = detail::IntrusiveQueue<detail::QueueableOperationBase>;
     using MemoryResources = detail::IntrusiveStack<detail::ListablePoolResource>;
 
+    template <bool>
+    friend struct detail::GrpcContextThreadContextImpl;
+
     friend detail::GrpcContextImplementation;
     friend detail::GrpcContextThreadContext;
 
