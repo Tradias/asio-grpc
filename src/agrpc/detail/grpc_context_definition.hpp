@@ -32,15 +32,9 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class Function>
-struct GrpcContextLoopFunction
+struct GrpcContextLoopFunction : Function
 {
-    Function function_;
-
-    template <class Context>
-    auto operator()(Context& context) const
-    {
-        return function_(context);
-    }
+    using Function::operator();
 
     [[nodiscard]] bool has_processed(detail::DoOneResult result) const noexcept { return bool{result}; }
 };
@@ -49,15 +43,9 @@ template <class Function>
 GrpcContextLoopFunction(Function) -> GrpcContextLoopFunction<Function>;
 
 template <class Function>
-struct GrpcContextCompletionQueueLoopFunction
+struct GrpcContextCompletionQueueLoopFunction : Function
 {
-    Function function_;
-
-    template <class Context>
-    auto operator()(Context& context) const
-    {
-        return function_(context);
-    }
+    using Function::operator();
 
     [[nodiscard]] bool has_processed(detail::DoOneResult result) const noexcept
     {

@@ -148,16 +148,10 @@ inline bool GrpcContextImplementation::move_remote_work_to_local_queue(
 inline bool GrpcContextImplementation::distribute_all_local_work_to_other_threads_but_one(
     detail::GrpcContextThreadContext& context) noexcept
 {
-    auto& local_work_queue = context.local_work_queue_;
-    if (!local_work_queue.empty())
+    if (auto& local_work_queue = context.local_work_queue_; !local_work_queue.empty())
     {
         const auto first = local_work_queue.pop_front();
-        bool needs_trigger = !local_work_queue.empty();
-        if (GrpcContextImplementation::move_local_queue_to_remote_work(context))
-        {
-            needs_trigger = false;
-            GrpcContextImplementation::trigger_work_alarm(context.grpc_context_);
-        }
+        const bool needs_trigger = GrpcContextImplementation::move_local_queue_to_remote_work(context);
         local_work_queue.push_back(first);
         return needs_trigger;
     }
@@ -215,53 +209,36 @@ inline DoOneResult GrpcContextImplementation::do_one(detail::GrpcContextThreadCo
                                                      ::gpr_timespec deadline, detail::InvokeHandler invoke)
 {
     const agrpc::GrpcContext& grpc_context = context.grpc_context_;
-    auto& local_work_queue = context.local_work_queue_;
+    const auto& local_work_queue = context.local_work_queue_;
     bool check_remote_work = context.check_remote_work_;
-    if (check_remote_work)
+    if constexpr (IsMultithreaded)
     {
-        if constexpr (IsMultithreaded)
-        {
-            if (local_work_queue.empty())
-            {
-                check_remote_work = GrpcContextImplementation::move_remote_work_to_local_queue(context);
-                if (check_remote_work)
-                {
-                    check_remote_work = GrpcContextImplementation::move_remote_work_to_local_queue(context);
-                }
-                if (check_remote_work)
-                {
-                    GrpcContextImplementation::trigger_work_alarm(context.grpc_context_);
-                    check_remote_work = false;
-                }
-            }
-            else if (local_work_queue.has_exactly_one_element())
-            {
-                GrpcContextImplementation::trigger_work_alarm(context.grpc_context_);
-                check_remote_work = false;
-            }
-        }
-        else
+        if (local_work_queue.empty() && check_remote_work)
         {
             check_remote_work = GrpcContextImplementation::move_remote_work_to_local_queue(context);
         }
-        context.check_remote_work_ = check_remote_work;
-    }
-    const auto distribute_local_work = [&]
-    {
-        if constexpr (IsMultithreaded)
+        if (GrpcContextImplementation::distribute_all_local_work_to_other_threads_but_one(context) || check_remote_work)
         {
-            if (GrpcContextImplementation::distribute_all_local_work_to_other_threads_but_one(context) &&
-                check_remote_work)
-            {
-                GrpcContextImplementation::trigger_work_alarm(context.grpc_context_);
-                check_remote_work = false;
-                context.check_remote_work_ = check_remote_work;
-            }
+            GrpcContextImplementation::trigger_work_alarm(context.grpc_context_);
         }
-    };
-    distribute_local_work();
+        check_remote_work = false;
+    }
+    else
+    {
+        if (check_remote_work)
+        {
+            check_remote_work = GrpcContextImplementation::move_remote_work_to_local_queue(context);
+        }
+    }
+    context.check_remote_work_ = check_remote_work;
     const bool processed_local_work = GrpcContextImplementation::process_local_queue(context, invoke);
-    distribute_local_work();
+    if constexpr (IsMultithreaded)
+    {
+        if (GrpcContextImplementation::distribute_all_local_work_to_other_threads_but_one(context))
+        {
+            GrpcContextImplementation::trigger_work_alarm(context.grpc_context_);
+        }
+    }
     const bool is_more_completed_work_pending = check_remote_work || !local_work_queue.empty();
     if (!is_more_completed_work_pending && grpc_context.is_stopped())
     {
