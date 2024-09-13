@@ -136,13 +136,7 @@ inline bool GrpcContextImplementation::move_remote_work_to_local_queue(
     detail::GrpcContextThreadContext& context) noexcept
 {
     agrpc::GrpcContext& grpc_context = context.grpc_context_;
-    auto remote_work_queue = grpc_context.remote_work_queue_.try_mark_inactive_or_dequeue_all();
-    if (remote_work_queue.empty())
-    {
-        return false;
-    }
-    context.local_work_queue_.append(std::move(remote_work_queue));
-    return true;
+    return !grpc_context.remote_work_queue_.dequeue_all_and_try_mark_inactive(context.local_work_queue_);
 }
 
 inline bool GrpcContextImplementation::distribute_all_local_work_to_other_threads_but_one(
@@ -349,7 +343,7 @@ inline void GrpcContextImplementation::push_resource(agrpc::GrpcContext& grpc_co
 }
 
 template <class Function>
-inline decltype(auto) GrpcContextImplementation::visit_is_multithreaded(agrpc::GrpcContext& grpc_context,
+inline decltype(auto) GrpcContextImplementation::visit_is_multithreaded(const agrpc::GrpcContext& grpc_context,
                                                                         Function function)
 {
     if (grpc_context.multithreaded_)

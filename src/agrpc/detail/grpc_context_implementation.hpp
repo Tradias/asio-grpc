@@ -169,7 +169,7 @@ struct GrpcContextImplementation
     static void push_resource(agrpc::GrpcContext& grpc_context, detail::ListablePoolResource& resource);
 
     template <class Function>
-    static decltype(auto) visit_is_multithreaded(agrpc::GrpcContext& grpc_context, Function function);
+    static decltype(auto) visit_is_multithreaded(const agrpc::GrpcContext& grpc_context, Function function);
 };
 
 void process_grpc_tag(void* tag, detail::OperationResult result, agrpc::GrpcContext& grpc_context);

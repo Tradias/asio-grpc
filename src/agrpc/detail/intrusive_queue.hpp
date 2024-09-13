@@ -69,8 +69,6 @@ class IntrusiveQueue
 
     [[nodiscard]] bool empty() const noexcept { return head_ == nullptr; }
 
-    [[nodiscard]] bool has_exactly_one_element() const noexcept { return !empty() && head_ == tail_; }
-
     [[nodiscard]] Item* pop_front() noexcept
     {
         Item* item = std::exchange(head_, head_->next_);

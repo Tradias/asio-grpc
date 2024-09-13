@@ -89,29 +89,16 @@ class AtomicIntrusiveQueue
         return old_value == inactive;
     }
 
-    [[nodiscard]] bool try_mark_inactive() noexcept
-    {
-        void* const inactive = producer_inactive_value();
-        if (void* old_value = head_.load(std::memory_order_relaxed); old_value == nullptr)
-        {
-            return head_.compare_exchange_strong(old_value, inactive, std::memory_order_release,
-                                                 std::memory_order_relaxed);
-        }
-        return false;
-    }
-
-    // Atomically either mark the producer as inactive if the queue was empty
-    // or dequeue pending items from the queue.
-    //
     // Not valid to call if the producer is already marked as inactive.
-    [[nodiscard]] detail::IntrusiveQueue<Item> try_mark_inactive_or_dequeue_all() noexcept
+    [[nodiscard]] bool dequeue_all_and_try_mark_inactive(detail::IntrusiveQueue<Item>& output) noexcept
     {
-        if (try_mark_inactive())
-        {
-            return {};
-        }
         void* const old_value = head_.exchange(nullptr, std::memory_order_acquire);
-        return detail::IntrusiveQueue<Item>::make_reversed(static_cast<Item*>(old_value));
+        void* const inactive = producer_inactive_value();
+        void* expect_empty = nullptr;
+        const bool marked_inactive =
+            head_.compare_exchange_strong(expect_empty, inactive, std::memory_order_release, std::memory_order_relaxed);
+        output.append(detail::IntrusiveQueue<Item>::make_reversed(static_cast<Item*>(old_value)));
+        return marked_inactive;
     }
 
   private:
