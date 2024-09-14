@@ -241,3 +241,29 @@ TEST_CASE_FIXTURE(
     CHECK(invoked);
     CHECK_FALSE(has_posted);
 }
+
+TEST_CASE_FIXTURE(RunTest, "agrpc::run runs io_context even when grpc_context is stopped")
+{
+    bool posted{false};
+    bool timer_expired{false};
+    agrpc::Alarm alarm{grpc_context};
+    asio::post(grpc_context,
+               [&]
+               {
+                   posted = true;
+               });
+    grpc_context.stop();
+    asio::steady_timer timer{io_context};
+    asio::post(io_context,
+               [&]
+               {
+                   timer.async_wait(
+                       [&](auto&&...)
+                       {
+                           timer_expired = true;
+                       });
+               });
+    agrpc::run(grpc_context, io_context);
+    CHECK_FALSE(posted);
+    CHECK(timer_expired);
+}
