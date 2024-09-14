@@ -104,8 +104,8 @@ struct FunctionAsReceiver
     auto get_allocator() const noexcept { return allocator; }
 
 #ifdef AGRPC_UNIFEX
-    friend auto tag_invoke(unifex::tag_t<unifex::get_allocator>, const FunctionAsReceiver& receiver) noexcept
-        -> Allocator
+    friend auto tag_invoke(unifex::tag_t<unifex::get_allocator>,
+                           const FunctionAsReceiver& receiver) noexcept -> Allocator
     {
         return receiver.allocator;
     }
@@ -165,23 +165,39 @@ struct ConditionallyNoexceptNoOpReceiver : ReceiverBase<ConditionallyNoexceptNoO
 };
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
-template <class Handler, class Allocator>
-struct HandlerWithAssociatedAllocator
+template <class Handler, class = void>
+struct HandlerWithAssociatedAllocatorExecutor
 {
-    using executor_type = asio::associated_executor_t<Handler>;
+    Handler handler;
+};
+
+template <class Handler>
+struct HandlerWithAssociatedAllocatorExecutor<Handler, std::void_t<typename Handler::executor_type>>
+{
+    Handler handler;
+
+    using executor_type = typename Handler::executor_type;
+
+    [[nodiscard]] decltype(auto) get_executor() const noexcept { return asio::get_associated_executor(handler); }
+};
+
+template <class Handler, class Allocator>
+struct HandlerWithAssociatedAllocator : HandlerWithAssociatedAllocatorExecutor<Handler>
+{
     using allocator_type = Allocator;
 
-    Handler handler;
     Allocator allocator;
 
     HandlerWithAssociatedAllocator(Handler handler, const Allocator& allocator)
-        : handler(std::move(handler)), allocator(allocator)
+        : HandlerWithAssociatedAllocatorExecutor<Handler>{std::move(handler)}, allocator(allocator)
     {
     }
 
-    decltype(auto) operator()() { return handler(); }
-
-    [[nodiscard]] decltype(auto) get_executor() const noexcept { return asio::get_associated_executor(handler); }
+    template <class... Args>
+    decltype(auto) operator()(Args&&... args)
+    {
+        return this->handler(std::forward<Args>(args)...);
+    }
 
     [[nodiscard]] allocator_type get_allocator() const noexcept { return allocator; }
 };

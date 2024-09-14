@@ -32,12 +32,10 @@ namespace detail
 {
 inline thread_local detail::GrpcContextThreadContext* thread_local_grpc_context{};
 
-template <bool IsMultithreaded>
-inline GrpcContextThreadContext::GrpcContextThreadContext(agrpc::GrpcContext& grpc_context,
-                                                          std::bool_constant<IsMultithreaded>)
-    : check_remote_work_{IsMultithreaded ? false : grpc_context.local_check_remote_work_},
+inline GrpcContextThreadContext::GrpcContextThreadContext(agrpc::GrpcContext& grpc_context, bool multithreaded)
+    : check_remote_work_{multithreaded ? false : grpc_context.local_check_remote_work_},
       grpc_context_(grpc_context),
-      local_work_queue_{IsMultithreaded ? decltype(local_work_queue_){} : std::move(grpc_context.local_work_queue_)},
+      local_work_queue_{multithreaded ? decltype(local_work_queue_){} : std::move(grpc_context.local_work_queue_)},
       old_context_{std::exchange(detail::thread_local_grpc_context, this)},
       resource_{(old_context_ && &old_context_->grpc_context_ == &grpc_context)
                     ? old_context_->resource_
@@ -47,7 +45,7 @@ inline GrpcContextThreadContext::GrpcContextThreadContext(agrpc::GrpcContext& gr
 
 template <bool IsMultithreaded>
 inline GrpcContextThreadContextImpl<IsMultithreaded>::GrpcContextThreadContextImpl(agrpc::GrpcContext& grpc_context)
-    : GrpcContextThreadContext(grpc_context, std::bool_constant<IsMultithreaded>{})
+    : GrpcContextThreadContext(grpc_context, IsMultithreaded)
 {
 }
 

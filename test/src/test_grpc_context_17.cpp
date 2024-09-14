@@ -435,7 +435,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "dispatch with allocator")
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "execute with throwing allocator")
 {
-    const auto executor = asio::require(get_executor(), asio::execution::allocator(test::ThrowingAllocator<>{}));
+    const auto executor = asio::require(get_executor(), asio::execution::allocator(test::ThrowingAllocator{}));
     CHECK_THROWS(executor.execute(test::NoOp{}));
 }
 

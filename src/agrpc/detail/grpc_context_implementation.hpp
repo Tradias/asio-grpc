@@ -51,8 +51,7 @@ struct GrpcContextThreadContext
     : asio::detail::thread_context
 #endif
 {
-    template <bool IsMultithreaded>
-    explicit GrpcContextThreadContext(agrpc::GrpcContext& grpc_context, std::bool_constant<IsMultithreaded>);
+    explicit GrpcContextThreadContext(agrpc::GrpcContext& grpc_context, bool multithreaded);
 
     bool check_remote_work_;
     agrpc::GrpcContext& grpc_context_;

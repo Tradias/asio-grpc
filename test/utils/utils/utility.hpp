@@ -40,6 +40,11 @@ auto&& move_if(T&& t)
         return t;
     }
 }
+
+struct AlwaysTrue
+{
+    bool operator()() const { return true; }
+};
 }  // namespace test
 
 #endif  // AGRPC_UTILS_UTILITY_HPP

@@ -15,12 +15,14 @@
 #ifndef AGRPC_UTILS_THROWING_ALLOCATOR_HPP
 #define AGRPC_UTILS_THROWING_ALLOCATOR_HPP
 
+#include "utils/utility.hpp"
+
 #include <cstddef>
 #include <memory>
 
 namespace test
 {
-template <class T = std::byte>
+template <class T = std::byte, class Condition = test::AlwaysTrue>
 class ThrowingAllocator
 {
   public:
@@ -28,8 +30,11 @@ class ThrowingAllocator
 
     ThrowingAllocator() = default;
 
+    explicit ThrowingAllocator(Condition condition) : condition_(condition) {}
+
     template <class U>
-    constexpr ThrowingAllocator(const test::ThrowingAllocator<U>&) noexcept
+    constexpr ThrowingAllocator(const test::ThrowingAllocator<U, Condition>& other) noexcept
+        : condition_(other.condition_)
     {
     }
 
@@ -41,7 +46,17 @@ class ThrowingAllocator
 
     ThrowingAllocator& operator=(ThrowingAllocator&&) = default;
 
-    T* allocate(std::size_t) { throw std::bad_alloc(); }
+    T* allocate(std::size_t count)
+    {
+        if (condition_())
+        {
+            throw std::bad_alloc();
+        }
+        else
+        {
+            return std::allocator<T>{}.allocate(count);
+        }
+    }
 
     void deallocate(T*, std::size_t) {}
 
@@ -56,6 +71,12 @@ class ThrowingAllocator
     {
         return false;
     }
+
+  private:
+    template <class, class>
+    friend class ThrowingAllocator;
+
+    Condition condition_;
 };
 }
 

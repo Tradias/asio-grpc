@@ -67,12 +67,13 @@ struct RegisterYieldRPCHandlerOperation
     void initiate()
     {
         this->increment_ref_count();
-        detail::spawn(
-            asio::get_associated_executor(this->completion_handler(), this->get_executor()),
-            [g = RefCountGuard{*this}](const auto& yield)
-            {
-                static_cast<RegisterYieldRPCHandlerOperation&>(g.get().self_).perform_request_and_repeat(yield);
-            });
+        detail::spawn(asio::get_associated_executor(this->completion_handler(), this->get_executor()),
+                      [g = RefCountGuard{*this}](const auto& yield)
+                      {
+                          auto& self = static_cast<RegisterYieldRPCHandlerOperation&>(g.get().self_);
+                          AGRPC_TRY { self.perform_request_and_repeat(yield); }
+                          AGRPC_CATCH(...) { self.set_error(std::current_exception()); }
+                      });
     }
 
     void initiate_next()
@@ -93,8 +94,11 @@ struct RegisterYieldRPCHandlerOperation
             return;
         }
         this->notify_when_done_work_started();
-        initiate_next();
-        AGRPC_TRY { starter.invoke(this->rpc_handler(), rpc, yield); }
+        AGRPC_TRY
+        {
+            initiate_next();
+            starter.invoke(this->rpc_handler(), rpc, yield);
+        }
         AGRPC_CATCH(...) { this->set_error(std::current_exception()); }
         if (!detail::ServerRPCContextBaseAccess::is_finished(rpc))
         {
