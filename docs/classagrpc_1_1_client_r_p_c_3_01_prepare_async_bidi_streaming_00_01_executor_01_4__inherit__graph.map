@@ -1,0 +1,7 @@
+<map id="agrpc::ClientRPC&lt; PrepareAsyncBidiStreaming, Executor &gt;" name="agrpc::ClientRPC&lt; PrepareAsyncBidiStreaming, Executor &gt;">
+<area shape="rect" id="node1" title="I/O object for client&#45;side, bidirectional&#45;streaming rpcs." alt="" coords="908,43,1140,84"/>
+<area shape="rect" id="node2" href="$classagrpc_1_1detail_1_1_client_r_p_c_bidi_streaming_base_3_01_responder_t_3_01_request_t_00_01_ee3885a4767d154ee2c386c451f018bf.html" title="Bidirectional&#45;streaming ClientRPC base." alt="" coords="589,35,860,91"/>
+<area shape="rect" id="node3" href="$classagrpc_1_1detail_1_1_client_r_p_c_base.html" title=" " alt="" coords="280,35,541,91"/>
+<area shape="rect" id="node4" href="$classagrpc_1_1detail_1_1_r_p_c_executor_base.html" title="RPC&#39;s executor base." alt="" coords="22,5,215,47"/>
+<area shape="rect" id="node5" href="$classagrpc_1_1detail_1_1_client_r_p_c_context_base.html" title=" " alt="" coords="5,71,232,127"/>
+</map>

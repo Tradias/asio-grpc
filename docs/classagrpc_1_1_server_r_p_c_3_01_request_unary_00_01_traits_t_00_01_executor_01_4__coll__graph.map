@@ -1,0 +1,6 @@
+<map id="agrpc::ServerRPC&lt; RequestUnary, TraitsT, Executor &gt;" name="agrpc::ServerRPC&lt; RequestUnary, TraitsT, Executor &gt;">
+<area shape="rect" id="node1" title="I/O object for server&#45;side, unary rpcs." alt="" coords="903,20,1105,61"/>
+<area shape="rect" id="node2" href="$classagrpc_1_1detail_1_1_server_r_p_c_base.html" title=" " alt="" coords="597,13,855,69"/>
+<area shape="rect" id="node3" href="$classagrpc_1_1detail_1_1_server_r_p_c_notify_when_done_mixin.html" title=" " alt="" coords="247,5,549,76"/>
+<area shape="rect" id="node4" href="$classagrpc_1_1detail_1_1_r_p_c_executor_base.html" title="RPC&#39;s executor base." alt="" coords="5,20,199,61"/>
+</map>
