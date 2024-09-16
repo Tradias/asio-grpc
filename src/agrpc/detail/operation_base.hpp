@@ -72,6 +72,9 @@ class QueueableOperationBase : public detail::OperationBase
     QueueableOperationBase* next_;
 };
 
+using NoArgOperationBase = detail::QueueableOperationBase;
+using GrpcTagOperationBase = detail::OperationBase;
+
 struct OperationBaseAccess
 {
     static void set_on_complete(detail::OperationBase& operation, OperationOnComplete on_complete) noexcept

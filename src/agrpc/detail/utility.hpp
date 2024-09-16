@@ -176,10 +176,6 @@ class CompressedPair<First, Second, false> final
 template <class First, class Second>
 CompressedPair(First, Second) -> CompressedPair<First, Second>;
 
-struct InplaceWithFunction
-{
-};
-
 template <class OnExit>
 class ScopeGuard
 {
@@ -218,6 +214,10 @@ class ScopeGuard
   private:
     OnExit on_exit_;
     bool is_armed_{true};
+};
+
+struct InplaceWithFunction
+{
 };
 
 template <class T>

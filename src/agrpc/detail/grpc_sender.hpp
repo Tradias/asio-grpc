@@ -26,9 +26,9 @@ namespace detail
 {
 struct GrpcSenderImplementationBase
 {
-    static constexpr auto TYPE = detail::SenderImplementationType::GRPC_TAG;
     static constexpr bool NEEDS_ON_COMPLETE = false;
 
+    using BaseType = detail::GrpcTagOperationBase;
     using Signature = void(bool);
     using StopFunction = detail::Empty;
 

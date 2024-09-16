@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_OPERATION_HPP
-#define AGRPC_DETAIL_OPERATION_HPP
+#ifndef AGRPC_DETAIL_NO_ARG_OPERATION_HPP
+#define AGRPC_DETAIL_NO_ARG_OPERATION_HPP
 
 #include <agrpc/detail/allocate.hpp>
 #include <agrpc/detail/allocation_type.hpp>
@@ -28,10 +28,10 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class Handler>
-class NoArgOperation : public detail::QueueableOperationBase
+class NoArgOperation : public detail::NoArgOperationBase
 {
   private:
-    using Base = detail::QueueableOperationBase;
+    using Base = detail::NoArgOperationBase;
 
     template <bool UseLocalAllocator>
     static void do_complete(detail::OperationBase* op, OperationResult result, agrpc::GrpcContext&)
@@ -71,4 +71,4 @@ class NoArgOperation : public detail::QueueableOperationBase
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_OPERATION_HPP
+#endif  // AGRPC_DETAIL_NO_ARG_OPERATION_HPP

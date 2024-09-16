@@ -21,38 +21,16 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-enum class SenderImplementationType
-{
-    NO_ARG,
-    GRPC_TAG,
-    BOTH
-};
-
-template <detail::SenderImplementationType>
-struct BaseForSenderImplementationType
-{
-    using Type = detail::QueueableOperationBase;
-};
-
-template <>
-struct BaseForSenderImplementationType<detail::SenderImplementationType::GRPC_TAG>
-{
-    using Type = detail::OperationBase;
-};
-
-template <detail::SenderImplementationType ImplementationType>
-using BaseForSenderImplementationTypeT = typename detail::BaseForSenderImplementationType<ImplementationType>::Type;
-
 template <class Initiation, class Implementation>
-auto get_stop_function_arg(const Initiation& initiation, Implementation& implementation)
-    -> decltype(initiation.stop_function_arg(implementation))
+auto get_stop_function_arg(const Initiation& initiation,
+                           Implementation& implementation) -> decltype(initiation.stop_function_arg(implementation))
 {
     return initiation.stop_function_arg(implementation);
 }
 
 template <class Initiation, class Implementation>
-auto get_stop_function_arg(const Initiation& initiation, const Implementation&)
-    -> decltype(initiation.stop_function_arg())
+auto get_stop_function_arg(const Initiation& initiation,
+                           const Implementation&) -> decltype(initiation.stop_function_arg())
 {
     return initiation.stop_function_arg();
 }

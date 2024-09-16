@@ -57,9 +57,9 @@ struct ClientContextCancellationFunction
 
 struct StatusSenderImplementationBase
 {
-    static constexpr auto TYPE = detail::SenderImplementationType::GRPC_TAG;
     static constexpr bool NEEDS_ON_COMPLETE = true;
 
+    using BaseType = detail::GrpcTagOperationBase;
     using Signature = void(grpc::Status);
     using StopFunction = detail::ClientContextCancellationFunction;
 
@@ -222,6 +222,15 @@ struct ClientRPCGrpcSenderImplementation : detail::GrpcSenderImplementationBase
     using StopFunction = detail::ClientContextCancellationFunction;
 };
 
+struct ClientRPCSenderInitiationBase
+{
+    template <class Impl>
+    static auto& stop_function_arg(Impl& impl) noexcept
+    {
+        return impl.rpc_.context();
+    }
+};
+
 using ClientStreamingRequestSenderImplementation = ClientRPCGrpcSenderImplementation;
 
 // Read initial metadata readable stream
@@ -287,12 +296,11 @@ struct ClientWriteSenderImplementation : ClientRPCGrpcSenderImplementation
 };
 
 template <class Request>
-struct ClientWriteSenderInitiation
+struct ClientWriteSenderInitiation : ClientRPCSenderInitiationBase
 {
-    template <class Responder>
-    auto& stop_function_arg(ClientWriteSenderImplementation<Responder>& impl) const noexcept
+    ClientWriteSenderInitiation(const Request& request, grpc::WriteOptions options)
+        : request_(request), options_(options)
     {
-        return impl.rpc_.context();
     }
 
     template <class Responder>
@@ -310,15 +318,8 @@ struct ClientWriteSenderInitiation
 template <class Responder>
 using ClientReadInitialMetadataWritableStreamSenderImplementation = ClientWriteSenderImplementation<Responder>;
 
-struct ClientReadInitialMetadataWritableStreamSenderInitiation
+struct ClientReadInitialMetadataWritableStreamSenderInitiation : ClientRPCSenderInitiationBase
 {
-    template <class Responder>
-    static auto& stop_function_arg(
-        ClientReadInitialMetadataWritableStreamSenderImplementation<Responder>& impl) noexcept
-    {
-        return impl.rpc_.context();
-    }
-
     template <class Responder>
     static void initiate(const agrpc::GrpcContext&,
                          ClientReadInitialMetadataWritableStreamSenderImplementation<Responder>& impl, void* tag)
@@ -338,14 +339,8 @@ struct ClientWritesDoneSenderImplementation : ClientRPCGrpcSenderImplementation
     detail::ClientRPCContextBase<Responder>& rpc_;
 };
 
-struct ClientWritesDoneSenderInitiation
+struct ClientWritesDoneSenderInitiation : ClientRPCSenderInitiationBase
 {
-    template <class Responder>
-    static auto& stop_function_arg(const ClientWritesDoneSenderImplementation<Responder>& impl) noexcept
-    {
-        return impl.rpc_.context();
-    }
-
     template <class Responder>
     static void initiate(const agrpc::GrpcContext&, const ClientWritesDoneSenderImplementation<Responder>& impl,
                          void* tag)
@@ -364,7 +359,7 @@ struct ClientFinishWritableStreamSenderImplementation : StatusSenderImplementati
     void complete(OnComplete<0> on_complete, bool)
     {
         on_complete.grpc_context().work_started();
-        ClientRPCAccess::responder(rpc_).Finish(&status_, on_complete.template self<1>());
+        ClientRPCAccess::responder(rpc_).Finish(&status_, on_complete.template tag<1>());
     }
 
     template <template <int> class OnComplete>
@@ -377,24 +372,18 @@ struct ClientFinishWritableStreamSenderImplementation : StatusSenderImplementati
     detail::ClientRPCContextBase<Responder>& rpc_;
 };
 
-struct ClientFinishWritableStreamSenderInitiation
+struct ClientFinishWritableStreamSenderInitiation : ClientRPCSenderInitiationBase
 {
-    template <class Responder>
-    static auto& stop_function_arg(const ClientFinishWritableStreamSenderImplementation<Responder>& impl) noexcept
-    {
-        return impl.rpc_.context();
-    }
-
     template <class Init, class Responder>
     static void initiate(Init init, ClientFinishWritableStreamSenderImplementation<Responder>& impl)
     {
         if (ClientRPCAccess::is_writes_done(impl.rpc_))
         {
-            ClientRPCAccess::responder(impl.rpc_).Finish(&impl.status_, init.template self<1>());
+            ClientRPCAccess::responder(impl.rpc_).Finish(&impl.status_, init.template tag<1>());
         }
         else
         {
-            ClientRPCAccess::responder(impl.rpc_).WritesDone(init.template self<0>());
+            ClientRPCAccess::responder(impl.rpc_).WritesDone(init.template tag<0>());
         }
     }
 };
@@ -422,13 +411,9 @@ struct ClientFinishReadableStreamSenderImplementation<Responder<Response>> : Sta
 };
 
 template <class Response>
-struct ClientFinishUnarySenderInitation
+struct ClientFinishUnarySenderInitation : ClientRPCSenderInitiationBase
 {
-    template <class Responder>
-    static auto& stop_function_arg(const ClientFinishReadableStreamSenderImplementation<Responder>& impl) noexcept
-    {
-        return impl.rpc_.context();
-    }
+    explicit ClientFinishUnarySenderInitation(Response& response) noexcept : response_(response) {}
 
     template <class Responder>
     void initiate(const agrpc::GrpcContext&, ClientFinishReadableStreamSenderImplementation<Responder>& impl,
@@ -440,14 +425,8 @@ struct ClientFinishUnarySenderInitation
     Response& response_;
 };
 
-struct ClientFinishServerStreamingSenderInitation
+struct ClientFinishServerStreamingSenderInitation : ClientRPCSenderInitiationBase
 {
-    template <class Responder>
-    static auto& stop_function_arg(const ClientFinishReadableStreamSenderImplementation<Responder>& impl) noexcept
-    {
-        return impl.rpc_.context();
-    }
-
     template <class Responder>
     static void initiate(const agrpc::GrpcContext&, ClientFinishReadableStreamSenderImplementation<Responder>& impl,
                          void* tag)

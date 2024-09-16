@@ -29,9 +29,10 @@ template <class Operation, detail::AllocationType AllocType>
 struct BasicOperationHandle
 {
     template <int Id = 0>
-    struct Type
+    class Type
     {
-        static constexpr auto ALLOCATION_TYPE = AllocType;
+      public:
+        Type(Operation& self, agrpc::GrpcContext& grpc_context) noexcept : self_(self), grpc_context_(grpc_context) {}
 
         template <class... Args>
         void operator()(Args&&... args)
@@ -42,7 +43,7 @@ struct BasicOperationHandle
         void done() { self_.done(); }
 
         template <int NextId = Id>
-        [[nodiscard]] auto* self() const noexcept
+        [[nodiscard]] auto* tag() const noexcept
         {
             if constexpr (NextId != Id)
             {
@@ -53,6 +54,7 @@ struct BasicOperationHandle
 
         [[nodiscard]] agrpc::GrpcContext& grpc_context() const noexcept { return grpc_context_; }
 
+      private:
         Operation& self_;
         agrpc::GrpcContext& grpc_context_;
     };

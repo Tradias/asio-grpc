@@ -82,7 +82,6 @@ void complete_immediately(CompletionHandler&& completion_handler, Function&& fun
 
 struct UncancellableSlot
 {
-    static constexpr bool is_connected() noexcept { return false; }
 };
 
 template <class Object>

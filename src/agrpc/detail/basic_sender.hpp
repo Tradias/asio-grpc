@@ -126,14 +126,14 @@ struct BasicSenderAccess
 };
 
 template <class ImplementationT, class Receiver>
-class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTypeT<ImplementationT::TYPE>
+class BasicSenderRunningOperation : public ImplementationT::BaseType
 {
   public:
     using Implementation = ImplementationT;
 
   private:
-    using Base = detail::BaseForSenderImplementationTypeT<Implementation::TYPE>;
-    using StopFunction = typename Implementation::StopFunction;
+    using Base = typename ImplementationT::BaseType;
+    using StopFunction = typename ImplementationT::StopFunction;
     using StopToken = exec::stop_token_type_t<Receiver&>;
     using StopCallback = detail::StopCallbackLifetime<StopToken, StopFunction>;
 
@@ -165,13 +165,13 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
 
   public:
     template <class R>
-    BasicSenderRunningOperation(R&& receiver, Implementation&& implementation)
-        : Base(&do_complete), impl_(static_cast<R&&>(receiver), static_cast<Implementation&&>(implementation))
+    BasicSenderRunningOperation(R&& receiver, ImplementationT&& implementation)
+        : Base(&do_complete), impl_(static_cast<R&&>(receiver), static_cast<ImplementationT&&>(implementation))
     {
     }
 
     template <class R>
-    BasicSenderRunningOperation(R&& receiver, const Implementation& implementation)
+    BasicSenderRunningOperation(R&& receiver, const ImplementationT& implementation)
         : Base(&do_complete), impl_(static_cast<R&&>(receiver), implementation)
     {
     }
@@ -188,7 +188,7 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
 
     StopCallback& stop_callback() noexcept { return impl_.first().second(); }
 
-    Implementation& implementation() noexcept { return impl_.second(); }
+    ImplementationT& implementation() noexcept { return impl_.second(); }
 
     Base* tag() noexcept { return this; }
 
@@ -221,7 +221,7 @@ class BasicSenderRunningOperation : public detail::BaseForSenderImplementationTy
     void restore_scratch_space() noexcept { detail::OperationBaseAccess::set_on_complete(*this, &do_complete); }
 
   private:
-    detail::CompressedPair<detail::CompressedPair<Receiver, StopCallback>, Implementation> impl_;
+    detail::CompressedPair<detail::CompressedPair<Receiver, StopCallback>, ImplementationT> impl_;
 };
 
 template <class Initiation, class Implementation, class Receiver>

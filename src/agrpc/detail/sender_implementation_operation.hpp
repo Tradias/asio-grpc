@@ -32,13 +32,13 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class ImplementationT, class CompletionHandler>
-struct SenderImplementationOperation : public detail::BaseForSenderImplementationTypeT<ImplementationT::TYPE>,
+struct SenderImplementationOperation : public ImplementationT::BaseType,
                                        private detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandler>>
 {
     using Implementation = ImplementationT;
-    using Base = detail::BaseForSenderImplementationTypeT<Implementation::TYPE>;
+    using Base = typename ImplementationT::BaseType;
     using WorkTracker = detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandler>>;
-    using StopFunction = typename Implementation::StopFunction;
+    using StopFunction = typename ImplementationT::StopFunction;
 
     template <detail::AllocationType AllocType, int Id = 0>
     static void do_complete(detail::OperationBase* op, detail::OperationResult result, agrpc::GrpcContext& grpc_context)
@@ -66,10 +66,10 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
     template <class Ch, class Initation>
     SenderImplementationOperation(detail::AllocationType allocation_type, Ch&& completion_handler,
                                   agrpc::GrpcContext& grpc_context, const Initation& initiation,
-                                  Implementation&& implementation)
+                                  ImplementationT&& implementation)
         : Base(get_on_complete(allocation_type)),
           WorkTracker(asio::get_associated_executor(completion_handler)),
-          impl_(static_cast<Ch&&>(completion_handler), static_cast<Implementation&&>(implementation))
+          impl_(static_cast<Ch&&>(completion_handler), static_cast<ImplementationT&&>(implementation))
     {
         grpc_context.work_started();
         emplace_stop_callback(initiation);
@@ -105,7 +105,7 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
 
     WorkTracker& work_tracker() noexcept { return *this; }
 
-    Implementation& implementation() noexcept { return impl_.second(); }
+    ImplementationT& implementation() noexcept { return impl_.second(); }
 
     Base* tag() noexcept { return this; }
 
@@ -122,7 +122,7 @@ struct SenderImplementationOperation : public detail::BaseForSenderImplementatio
         detail::dispatch_complete(ptr, static_cast<Args&&>(args)...);
     }
 
-    detail::CompressedPair<CompletionHandler, Implementation> impl_;
+    detail::CompressedPair<CompletionHandler, ImplementationT> impl_;
 };
 
 template <class Implementation>

@@ -17,7 +17,7 @@
 
 #include <agrpc/detail/allocate_operation.hpp>
 #include <agrpc/detail/grpc_context_implementation.hpp>
-#include <agrpc/detail/operation.hpp>
+#include <agrpc/detail/no_arg_operation.hpp>
 #include <agrpc/grpc_context.hpp>
 
 #include <agrpc/detail/config.hpp>

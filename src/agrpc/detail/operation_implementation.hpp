@@ -45,8 +45,7 @@ void complete(Operation& operation, [[maybe_unused]] detail::OperationResult res
             operation.template complete<AllocType>(static_cast<decltype(args)&&>(args)...);
         }
     };
-    if constexpr (Implementation::TYPE == detail::SenderImplementationType::BOTH ||
-                  Implementation::TYPE == detail::SenderImplementationType::GRPC_TAG)
+    if constexpr (std::is_same_v<detail::GrpcTagOperationBase, typename Operation::Base>)
     {
         impl(detail::is_ok(result));
     }

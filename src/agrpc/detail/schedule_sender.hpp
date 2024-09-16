@@ -27,9 +27,9 @@ namespace detail
 {
 struct ScheduleSenderImplementation
 {
-    static constexpr auto TYPE = detail::SenderImplementationType::NO_ARG;
     static constexpr bool NEEDS_ON_COMPLETE = false;
 
+    using BaseType = detail::NoArgOperationBase;
     using Signature = void();
     using StopFunction = detail::Empty;
 

@@ -69,9 +69,9 @@ struct AlarmCancellationFunction
 template <class Executor>
 struct MoveAlarmSenderImplementation
 {
-    static constexpr auto TYPE = detail::SenderImplementationType::GRPC_TAG;
     static constexpr bool NEEDS_ON_COMPLETE = true;
 
+    using BaseType = detail::GrpcTagOperationBase;
     using Alarm = agrpc::BasicAlarm<Executor>;
     using Signature = void(bool, Alarm);
     using StopFunction = detail::AlarmCancellationFunction;
