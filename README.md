@@ -41,7 +41,7 @@ asio::co_spawn(
     asio::detached);
 grpc_context.run();
 ```
-<sup><a href='/example/snippets/client.cpp#L86-L104' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-hello-world' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/snippets/client.cpp#L83-L101' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-hello-world' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 # Requirements
