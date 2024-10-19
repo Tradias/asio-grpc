@@ -19,7 +19,6 @@
 #include "utils/doctest.hpp"
 #include "utils/exception.hpp"
 #include "utils/execution_test.hpp"
-#include "utils/grpc_client_server_test.hpp"
 #include "utils/server_rpc.hpp"
 #include "utils/test.hpp"
 #include "utils/time.hpp"
@@ -274,7 +273,7 @@ TEST_CASE_FIXTURE(StdexecExecutionClientRPCTest<test::UnaryClientRPC>, "stdexec 
                                       [&](auto& response)
                                       {
                                           response.set_integer(request.integer());
-                                          return rpc.finish(response, grpc::Status::OK);
+                                          return rpc.finish(response, grpc::Status::OK, agrpc::use_sender);
                                       });
         },
         client_func, client_func, client_func);
@@ -286,15 +285,15 @@ TEST_CASE_FIXTURE(StdexecExecutionClientRPCTest<test::BidirectionalStreamingClie
     auto client_func = [&](Request& request, Response& response) -> exec::task<void>
     {
         auto rpc = create_rpc();
-        co_await rpc.start(*stub);
+        co_await rpc.start(*stub, agrpc::use_sender);
         request.set_integer(42);
-        CHECK(co_await rpc.write(request));
-        CHECK(co_await rpc.writes_done());
-        CHECK(co_await rpc.read(response));
+        CHECK(co_await rpc.write(request, agrpc::use_sender));
+        CHECK(co_await rpc.writes_done(agrpc::use_sender));
+        CHECK(co_await rpc.read(response, agrpc::use_sender));
         CHECK_EQ(1, response.integer());
-        CHECK_FALSE(co_await rpc.read(response));
+        CHECK_FALSE(co_await rpc.read(response, agrpc::use_sender));
         CHECK_EQ(1, response.integer());
-        CHECK_EQ(grpc::StatusCode::OK, (co_await rpc.finish()).error_code());
+        CHECK_EQ(grpc::StatusCode::OK, (co_await rpc.finish(agrpc::use_sender)).error_code());
     };
     register_and_perform_requests(
         [&](ServerRPC& rpc) -> exec::task<void>
@@ -302,11 +301,11 @@ TEST_CASE_FIXTURE(StdexecExecutionClientRPCTest<test::BidirectionalStreamingClie
             Response response;
             response.set_integer(1);
             Request request;
-            CHECK(co_await rpc.read(request));
-            CHECK_FALSE(co_await rpc.read(request));
+            CHECK(co_await rpc.read(request, agrpc::use_sender));
+            CHECK_FALSE(co_await rpc.read(request, agrpc::use_sender));
             CHECK_EQ(42, request.integer());
-            CHECK(co_await rpc.write(response));
-            CHECK(co_await rpc.finish(grpc::Status::OK));
+            CHECK(co_await rpc.write(response, agrpc::use_sender));
+            CHECK(co_await rpc.finish(grpc::Status::OK, agrpc::use_sender));
         },
         client_func, client_func, client_func);
 }
@@ -346,18 +345,18 @@ TEST_CASE_FIXTURE(test::ExecutionRpcHandlerTest,
 
 TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::UnaryClientRPC>, "stdexec UnaryClientRPC success")
 {
-    run(agrpc::register_sender_rpc_handler<ServerRPC>(grpc_context, service,
-                                                      [&](ServerRPC& rpc, Request& request)
-                                                      {
-                                                          CHECK_EQ(1, request.integer());
-                                                          return stdexec::let_value(stdexec::just(Response{}),
-                                                                                    [&](Response& response)
-                                                                                    {
-                                                                                        response.set_integer(11);
-                                                                                        return rpc.finish(
-                                                                                            response, grpc::Status::OK);
-                                                                                    });
-                                                      }),
+    run(agrpc::register_sender_rpc_handler<ServerRPC>(
+            grpc_context, service,
+            [&](ServerRPC& rpc, Request& request)
+            {
+                CHECK_EQ(1, request.integer());
+                return stdexec::let_value(stdexec::just(Response{}),
+                                          [&](Response& response)
+                                          {
+                                              response.set_integer(11);
+                                              return rpc.finish(response, grpc::Status::OK, agrpc::use_sender);
+                                          });
+            }),
         stdexec::just(Request{}, Response{}) |
             stdexec::let_value(
                 [&](Request& request, Response& response)
@@ -400,7 +399,7 @@ TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::ClientStreamingClientRPC>,
             grpc_context, service,
             [&](test::NotifyWhenDoneClientStreamingServerRPC& rpc)
             {
-                return stdexec::when_all(stdexec::then(rpc.wait_for_done(),
+                return stdexec::when_all(stdexec::then(rpc.wait_for_done(agrpc::use_sender),
                                                        [&]()
                                                        {
                                                            is_cancelled = rpc.context().IsCancelled();
@@ -408,7 +407,8 @@ TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::ClientStreamingClientRPC>,
                                          stdexec::let_value(stdexec::just(Response{}),
                                                             [&](Response& response)
                                                             {
-                                                                return rpc.finish(response, grpc::Status::OK);
+                                                                return rpc.finish(response, grpc::Status::OK,
+                                                                                  agrpc::use_sender);
                                                             }));
             }),
         stdexec::just(Request{}) |
@@ -420,7 +420,7 @@ TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::ClientStreamingClientRPC>,
             stdexec::let_value(
                 [&](bool)
                 {
-                    return rpc.finish();
+                    return rpc.finish(agrpc::use_sender);
                 }) |
             stdexec::then(
                 [&](const grpc::Status& status)
@@ -447,7 +447,7 @@ TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::UnaryClientRPC>,
                           CHECK_FALSE(waiter.is_ready());
                           alarm.cancel();
                       }),
-        stdexec::then(waiter.wait(),
+        stdexec::then(waiter.wait(agrpc::use_sender),
                       [&]()
                       {
                           CHECK(waiter.is_ready());
@@ -486,7 +486,7 @@ TEST_CASE_FIXTURE(StdexecMockTest, "stdexec mock server streaming request")
             [&](bool ok)
             {
                 CHECK(ok);
-                return rpc.read(response);
+                return rpc.read(response, agrpc::use_sender);
             }) |
         stdexec::then(
             [&](bool ok)

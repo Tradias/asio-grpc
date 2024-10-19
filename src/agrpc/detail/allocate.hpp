@@ -28,6 +28,12 @@ namespace detail
 template <class T, class Allocator>
 using RebindAllocatorTraits = typename std::allocator_traits<Allocator>::template rebind_traits<T>;
 
+template <class T>
+inline constexpr bool IS_STD_ALLOCATOR = false;
+
+template <class T>
+inline constexpr bool IS_STD_ALLOCATOR<std::allocator<T>> = true;
+
 template <class Traits>
 class AllocationGuard
 {

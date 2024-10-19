@@ -473,7 +473,7 @@ TEST_CASE_TEMPLATE("Awaitable ServerRPC/ClientRPC generic streaming success", RP
         });
 }
 
-#ifdef AGRPC_TEST_ASIO_HAS_CANCELLATION_SLOT
+#ifdef AGRPC_TEST_ASIO_PARALLEL_GROUP
 TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::BidirectionalStreamingServerRPC>,
                   "Awaitable ServerRPC resumable read can be cancelled")
 {
@@ -523,7 +523,9 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::BidirectionalStreamingServerRPC>,
             waiter.wait(yield);
         });
 }
+#endif
 
+#ifdef AGRPC_TEST_ASIO_HAS_CANCELLATION_SLOT
 TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ServerStreamingServerRPC>,
                   "Awaitable ServerRPC/ClientRPC server streaming cancel register_awaitable_rpc_handler")
 {

@@ -34,6 +34,9 @@
 TEST_CASE("GrpcExecutor fulfills Executor TS traits")
 {
     using Exec = agrpc::GrpcContext::executor_type;
+#if !defined(ASIO_NO_TS_EXECUTORS) && !defined(BOOST_ASIO_NO_TS_EXECUTORS)
+    CHECK(asio::is_executor<agrpc::GrpcExecutor>::value);
+#endif
     CHECK(asio::execution::is_executor_v<Exec>);
     CHECK(asio::can_require_v<Exec, asio::execution::blocking_t::never_t>);
     CHECK(asio::can_prefer_v<Exec, asio::execution::blocking_t::possibly_t>);

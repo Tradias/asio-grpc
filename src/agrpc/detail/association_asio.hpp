@@ -15,8 +15,8 @@
 #ifndef AGRPC_DETAIL_ASSOCIATION_ASIO_HPP
 #define AGRPC_DETAIL_ASSOCIATION_ASIO_HPP
 
-#include <agrpc/detail/asio_utils.hpp>
 #include <agrpc/detail/execution.hpp>
+#include <agrpc/detail/forward.hpp>
 
 #include <agrpc/detail/config.hpp>
 
@@ -24,6 +24,10 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+struct UncancellableSlot
+{
+};
+
 template <class CancellationSlot>
 inline constexpr bool IS_CANCELLATION_SLOT = !exec::stoppable_token<CancellationSlot>;
 

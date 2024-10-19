@@ -16,7 +16,9 @@
 #define AGRPC_DETAIL_ASIO_UTILS_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/association.hpp>
 #include <agrpc/detail/execution.hpp>
+#include <agrpc/detail/utility.hpp>
 
 #include <agrpc/detail/asio_macros.hpp>
 #include <agrpc/detail/config.hpp>
@@ -33,18 +35,25 @@ inline constexpr bool IS_EXECUTOR_PROVIDER = false;
 template <class T>
 inline constexpr bool IS_EXECUTOR_PROVIDER<T, decltype((void)std::declval<T>().get_executor())> = true;
 
-template <class Executor, class Function, class Allocator>
-void post_with_allocator(Executor&& executor, Function&& function, const Allocator& allocator)
+template <class Handler, class Function>
+struct AllocatorAssociator
 {
-    asio::prefer(asio::require(static_cast<Executor&&>(executor), asio::execution::blocking_t::never),
-                 asio::execution::relationship_t::fork, asio::execution::allocator(allocator))
-        .execute(static_cast<Function&&>(function));
-}
+    using allocator_type = asio::associated_allocator_t<Handler>;
+
+    void operator()() { static_cast<Function&&>(function_)(static_cast<Handler&&>(handler_)); }
+
+    allocator_type get_allocator() const noexcept { return asio::get_associated_allocator(handler_); }
+
+    Handler handler_;
+    Function function_;
+};
+
+template <class Handler, class Function>
+AllocatorAssociator(const Handler&, const Function&) -> AllocatorAssociator<Handler, Function>;
 
 template <class CompletionHandler, class Function, class IOExecutor>
 void complete_immediately(CompletionHandler&& completion_handler, Function&& function, const IOExecutor& io_executor)
 {
-    const auto allocator = asio::get_associated_allocator(completion_handler);
 #ifdef AGRPC_ASIO_HAS_IMMEDIATE_EXECUTOR
     auto executor = asio::get_associated_immediate_executor(
         completion_handler,
@@ -62,27 +71,21 @@ void complete_immediately(CompletionHandler&& completion_handler, Function&& fun
                 return (io_executor);
             }
         }());
-    asio::prefer(std::move(executor), asio::execution::allocator(allocator))
-        .execute(
-            [ch = static_cast<CompletionHandler&&>(completion_handler), f = static_cast<Function&&>(function)]() mutable
-            {
-                static_cast<Function&&>(f)(static_cast<CompletionHandler&&>(ch));
-            });
+    asio::dispatch(std::move(executor),
+                   AllocatorAssociator{static_cast<CompletionHandler&&>(completion_handler),
+                                       [f = static_cast<Function&&>(function)](auto&& ch) mutable
+                                       {
+                                           static_cast<Function&&>(f)(static_cast<decltype(ch)&&>(ch));
+                                       }});
 #else
     auto executor = asio::get_associated_executor(completion_handler, io_executor);
-    detail::post_with_allocator(
-        std::move(executor),
-        [ch = static_cast<CompletionHandler&&>(completion_handler), f = static_cast<Function&&>(function)]() mutable
-        {
-            static_cast<Function&&>(f)(static_cast<CompletionHandler&&>(ch));
-        },
-        allocator);
+    asio::post(std::move(executor), AllocatorAssociator{static_cast<CompletionHandler&&>(completion_handler),
+                                                        [f = static_cast<Function&&>(function)](auto&& ch) mutable
+                                                        {
+                                                            static_cast<Function&&>(f)(static_cast<decltype(ch)&&>(ch));
+                                                        }});
 #endif
 }
-
-struct UncancellableSlot
-{
-};
 
 template <class Object>
 auto get_cancellation_slot([[maybe_unused]] const Object& object) noexcept

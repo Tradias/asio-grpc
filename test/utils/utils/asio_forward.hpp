@@ -48,7 +48,12 @@
 #ifdef AGRPC_TEST_ASIO_HAS_CANCELLATION_SLOT
 #include <asio/bind_cancellation_slot.hpp>
 #include <asio/cancellation_signal.hpp>
+
+#ifndef ASIO_USE_TS_EXECUTOR_AS_DEFAULT
 #include <asio/experimental/parallel_group.hpp>
+
+#define AGRPC_TEST_ASIO_PARALLEL_GROUP
+#endif
 #endif
 
 #ifdef ASIO_HAS_CONCEPTS
@@ -99,7 +104,12 @@
 #ifdef AGRPC_TEST_ASIO_HAS_CANCELLATION_SLOT
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/cancellation_signal.hpp>
+
+#ifndef BOOST_ASIO_USE_TS_EXECUTOR_AS_DEFAULT
 #include <boost/asio/experimental/parallel_group.hpp>
+
+#define AGRPC_TEST_ASIO_PARALLEL_GROUP
+#endif
 #endif
 
 #ifdef BOOST_ASIO_HAS_CONCEPTS

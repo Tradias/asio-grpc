@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_WORK_TRACKING_COMPLETION_HANDLER_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/asio_utils.hpp>
 #include <agrpc/detail/association.hpp>
 #include <agrpc/detail/tuple.hpp>
 #include <agrpc/detail/utility.hpp>
@@ -44,6 +45,13 @@ inline constexpr bool
 template <class Executor, bool = detail::IS_INLINE_EXECUTOR<Executor>>
 class WorkTracker
 {
+#if defined(ASIO_USE_TS_EXECUTOR_AS_DEFAULT) || defined(BOOST_ASIO_USE_TS_EXECUTOR_AS_DEFAULT)
+  public:
+    explicit WorkTracker(Executor&& executor) : work_(std::move(executor)) {}
+
+  private:
+    asio::executor_work_guard<Executor> work_;
+#else
   public:
     explicit WorkTracker(Executor&& executor)
         : work_(asio::prefer(std::move(executor), asio::execution::outstanding_work_t::tracked))
@@ -52,6 +60,7 @@ class WorkTracker
 
   private:
     typename asio::prefer_result<Executor, asio::execution::outstanding_work_t::tracked_t>::type work_;
+#endif
 };
 
 template <class Executor>
@@ -64,13 +73,13 @@ class WorkTracker<Executor, true>
 template <class Handler, class... Args>
 void dispatch_with_args(Handler&& handler, Args&&... args)
 {
-    asio::prefer(asio::get_associated_executor(handler), asio::execution::blocking_t::possibly,
-                 asio::execution::allocator(asio::get_associated_allocator(handler)))
-        .execute(
-            [h = static_cast<Handler&&>(handler), arg_tuple = detail::Tuple{static_cast<Args&&>(args)...}]() mutable
-            {
-                detail::apply(std::move(h), std::move(arg_tuple));
-            });
+    auto executor = asio::get_associated_executor(handler);
+    asio::dispatch(std::move(executor),
+                   AllocatorAssociator{static_cast<Handler&&>(handler),
+                                       [arg_tuple = detail::Tuple{static_cast<Args&&>(args)...}](auto&& ch) mutable
+                                       {
+                                           detail::apply(static_cast<decltype(ch)&&>(ch), std::move(arg_tuple));
+                                       }});
 }
 
 template <class AllocationGuard, class... Args>

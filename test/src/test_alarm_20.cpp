@@ -93,7 +93,9 @@ TEST_CASE_FIXTURE(test::GrpcContextTest,
     CHECK(ok);
     CHECK_EQ(expected_thread_id, actual_thread_id);
 }
+#endif
 
+#ifdef AGRPC_TEST_ASIO_PARALLEL_GROUP
 TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel grpc::Alarm with awaitable operators")
 {
     std::size_t result_index{};

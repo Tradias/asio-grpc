@@ -25,11 +25,8 @@
 #include <grpcpp/create_channel.h>
 
 #include <cassert>
-#include <optional>
 
 namespace asio = boost::asio;
-
-static_assert(asio::is_executor<agrpc::GrpcExecutor>::value);
 
 asio::awaitable<void> agrpc_notify_on_state_change(agrpc::GrpcContext& grpc_context, const std::string& host)
 {

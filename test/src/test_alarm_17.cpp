@@ -202,6 +202,7 @@ TEST_CASE_TEMPLATE("cancel agrpc::Alarm with cancellation_type::none", T, std::t
     CHECK(ok);
 }
 
+#ifdef AGRPC_TEST_ASIO_PARALLEL_GROUP
 TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel agrpc::Alarm with parallel_group")
 {
     std::array<std::size_t, 2> completion_order;
@@ -233,6 +234,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "cancel agrpc::Alarm with parallel_grou
     CHECK_EQ(test::ErrorCode{}, error_code);
     CHECK_FALSE(ok);
 }
+#endif
 #endif
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::execution connect and start Alarm")

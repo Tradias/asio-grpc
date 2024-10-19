@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_MANUAL_RESET_EVENT_HPP
 
 #include <agrpc/detail/allocate.hpp>
+#include <agrpc/detail/asio_utils.hpp>
 #include <agrpc/detail/association.hpp>
 #include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/forward.hpp>

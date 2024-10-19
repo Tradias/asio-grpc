@@ -82,13 +82,14 @@ struct ExecutionRpcHandlerTest : test::ExecutionTestMixin<test::GrpcClientServer
                    [this, on_request_done](auto& context)
                    {
                        auto& [client_context, request, response] = *context;
-                       return stdexec::then(test::unstoppable(test::UnaryClientRPC::request(
-                                                grpc_context, *stub, client_context, request, response)),
-                                            [&context, on_request_done](const grpc::Status& status)
-                                            {
-                                                auto& [client_context, request, response] = *context;
-                                                on_request_done(response, status);
-                                            });
+                       return stdexec::then(
+                           test::unstoppable(test::UnaryClientRPC::request(grpc_context, *stub, client_context, request,
+                                                                           response, agrpc::use_sender)),
+                           [&context, on_request_done](const grpc::Status& status)
+                           {
+                               auto& [client_context, request, response] = *context;
+                               on_request_done(response, status);
+                           });
                    });
     }
 
@@ -125,7 +126,7 @@ struct ExecutionRpcHandlerTest : test::ExecutionTestMixin<test::GrpcClientServer
                                   [&](auto& response)
                                   {
                                       response.set_integer(24);
-                                      return rpc.finish(response, grpc::Status::OK);
+                                      return rpc.finish(response, grpc::Status::OK, agrpc::use_sender);
                                   });
     }
 

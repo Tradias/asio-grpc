@@ -99,15 +99,15 @@ TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::BidirectionalStreamingClien
     run(agrpc::register_sender_rpc_handler<ServerRPC>(grpc_context, service,
                                                       [&](ServerRPC& rpc)
                                                       {
-                                                          return rpc.read(request);
+                                                          return rpc.read(request, agrpc::use_sender);
                                                       }),
         [&]() -> unifex::task<void>
         {
             auto rpc = create_rpc();
-            co_await rpc.start(*stub);
+            co_await rpc.start(*stub, agrpc::use_sender);
             Response response;
-            co_await (rpc.read(response) | with_deadline(test::now()));
-            CHECK_EQ(grpc::StatusCode::CANCELLED, (co_await rpc.finish()).error_code());
+            co_await (rpc.read(response, agrpc::use_sender) | with_deadline(test::now()));
+            CHECK_EQ(grpc::StatusCode::CANCELLED, (co_await rpc.finish(agrpc::use_sender)).error_code());
             server_shutdown.initiate();
         }());
     CHECK_LT(test::now(), not_to_exceed);
@@ -237,7 +237,7 @@ TEST_CASE_FIXTURE(test::ExecutionGrpcContextTest, "unifex Waiter: initiate alarm
                          CHECK_FALSE(waiter.is_ready());
                          alarm.cancel();
                      }),
-        unifex::then(waiter.wait(),
+        unifex::then(waiter.wait(agrpc::use_sender),
                      [&]()
                      {
                          CHECK(waiter.is_ready());

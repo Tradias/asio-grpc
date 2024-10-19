@@ -21,6 +21,7 @@
 #include <asio/associated_allocator.hpp>
 #include <asio/associated_executor.hpp>
 #include <asio/async_result.hpp>
+#include <asio/dispatch.hpp>
 #include <asio/error.hpp>
 #include <asio/execution/allocator.hpp>
 #include <asio/execution/blocking.hpp>
@@ -29,8 +30,13 @@
 #include <asio/execution/outstanding_work.hpp>
 #include <asio/execution/relationship.hpp>
 #include <asio/execution_context.hpp>
+#include <asio/post.hpp>
 #include <asio/query.hpp>
 #include <asio/system_executor.hpp>
+
+#ifdef ASIO_USE_TS_EXECUTOR_AS_DEFAULT
+#include <boost/asio/executor_work_guard.hpp>
+#endif
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 #include <asio/associated_cancellation_slot.hpp>
@@ -44,6 +50,7 @@
 #include <boost/asio/associated_allocator.hpp>
 #include <boost/asio/associated_executor.hpp>
 #include <boost/asio/async_result.hpp>
+#include <boost/asio/dispatch.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/asio/execution/allocator.hpp>
 #include <boost/asio/execution/blocking.hpp>
@@ -52,8 +59,13 @@
 #include <boost/asio/execution/outstanding_work.hpp>
 #include <boost/asio/execution/relationship.hpp>
 #include <boost/asio/execution_context.hpp>
+#include <boost/asio/post.hpp>
 #include <boost/asio/query.hpp>
 #include <boost/asio/system_executor.hpp>
+
+#ifdef BOOST_ASIO_USE_TS_EXECUTOR_AS_DEFAULT
+#include <boost/asio/executor_work_guard.hpp>
+#endif
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
 #include <boost/asio/associated_cancellation_slot.hpp>

@@ -28,12 +28,6 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class T>
-inline constexpr bool IS_STD_ALLOCATOR = false;
-
-template <class T>
-inline constexpr bool IS_STD_ALLOCATOR<std::allocator<T>> = true;
-
 template <template <class> class OperationTemplate, class Handler, class... Args>
 auto allocate_operation(Handler&& handler, Args&&... args)
 {
