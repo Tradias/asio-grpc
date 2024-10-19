@@ -1,0 +1,5 @@
+<map id="agrpc::detail::ClientRPCBase&lt; Responder, Executor &gt;" name="agrpc::detail::ClientRPCBase&lt; Responder, Executor &gt;">
+<area shape="rect" id="node1" title="ServerRPC base." alt="" coords="280,39,487,80"/>
+<area shape="rect" id="node2" href="$classagrpc_1_1detail_1_1_r_p_c_executor_base.html" title="RPC&#39;s executor base." alt="" coords="22,5,215,47"/>
+<area shape="rect" id="node3" href="$classagrpc_1_1detail_1_1_client_r_p_c_context_base.html" title="ClientRPC grpc::ClientContext base." alt="" coords="5,71,232,112"/>
+</map>

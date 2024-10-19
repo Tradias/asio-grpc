@@ -1,0 +1,6 @@
+<map id="agrpc::detail::ClientRPCUnaryBase&lt; PrepareAsyncUnary, Executor &gt;" name="agrpc::detail::ClientRPCUnaryBase&lt; PrepareAsyncUnary, Executor &gt;">
+<area shape="rect" id="node1" title="Unary ClientRPC base." alt="" coords="579,31,793,87"/>
+<area shape="rect" id="node2" href="$classagrpc_1_1detail_1_1_client_r_p_c_base.html" title=" " alt="" coords="316,31,531,87"/>
+<area shape="rect" id="node3" href="$classagrpc_1_1detail_1_1_r_p_c_executor_base.html" title="RPC&#39;s executor base." alt="" coords="40,5,233,47"/>
+<area shape="rect" id="node4" href="$classagrpc_1_1detail_1_1_client_r_p_c_context_base.html" title=" " alt="" coords="5,71,268,112"/>
+</map>

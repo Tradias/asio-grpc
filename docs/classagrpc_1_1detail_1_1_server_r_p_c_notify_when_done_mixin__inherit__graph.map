@@ -1,0 +1,4 @@
+<map id="agrpc::detail::ServerRPCNotifyWhenDoneMixin&lt; IsNotifyWhenDone, Responder, Executor &gt;" name="agrpc::detail::ServerRPCNotifyWhenDoneMixin&lt; IsNotifyWhenDone, Responder, Executor &gt;">
+<area shape="rect" id="node1" title="ServerRPC NotifyWhenDone base." alt="" coords="5,95,275,151"/>
+<area shape="rect" id="node2" href="$classagrpc_1_1detail_1_1_r_p_c_executor_base.html" title="RPC&#39;s executor base." alt="" coords="43,5,237,47"/>
+</map>

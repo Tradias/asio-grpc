@@ -1,0 +1,6 @@
+<map id="agrpc::detail::ClientRPCBidiStreamingBase&lt; ResponderT&lt; RequestT, ResponseT &gt;, Executor &gt;" name="agrpc::detail::ClientRPCBidiStreamingBase&lt; ResponderT&lt; RequestT, ResponseT &gt;, Executor &gt;">
+<area shape="rect" id="node1" title="Bidirectional&#45;streaming ClientRPC base." alt="" coords="589,35,860,91"/>
+<area shape="rect" id="node2" href="$classagrpc_1_1detail_1_1_client_r_p_c_base.html" title=" " alt="" coords="280,35,541,91"/>
+<area shape="rect" id="node3" href="$classagrpc_1_1detail_1_1_r_p_c_executor_base.html" title="RPC&#39;s executor base." alt="" coords="22,5,215,47"/>
+<area shape="rect" id="node4" href="$classagrpc_1_1detail_1_1_client_r_p_c_context_base.html" title=" " alt="" coords="5,71,232,127"/>
+</map>
