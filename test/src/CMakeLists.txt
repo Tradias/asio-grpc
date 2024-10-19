@@ -70,12 +70,9 @@ if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
         ${ASIO_GRPC_CPP20_TEST_SOURCE_FILES}
         "test_unifex_20.cpp"
         "test_execution.cpp")
-endif()
 
-if(ASIO_GRPC_ENABLE_STDEXEC_TESTS)
-    asio_grpc_add_test(asio-grpc-test-stdexec "stdexec" "20" "test_execution.cpp")
-
-    if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
+    if(ASIO_GRPC_ENABLE_STDEXEC_TESTS)
+        asio_grpc_add_test(asio-grpc-test-stdexec "stdexec" "20" "test_execution.cpp")
         asio_grpc_add_test(
             asio-grpc-test-asio-stdexec-cpp20 "standalone-asio-stdexec" "20" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES}
             ${ASIO_GRPC_CPP20_TEST_SOURCE_FILES} "test_execution.cpp")

@@ -47,7 +47,9 @@ endfunction()
 set_source_files_properties("utils/main.cpp" PROPERTIES SKIP_UNITY_BUILD_INCLUSION on)
 
 asio_grpc_add_test_main(asio-grpc-test-main "17")
-asio_grpc_add_test_main(asio-grpc-test-main-cpp20 "20")
+if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
+    asio_grpc_add_test_main(asio-grpc-test-main-cpp20 "20")
+endif()
 
 # test utils
 function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_standard)
@@ -131,12 +133,9 @@ if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
     asio_grpc_add_test_util(asio-grpc-test-util-standalone-asio-cpp20 "STANDALONE_ASIO" "20")
     asio_grpc_add_test_util(asio-grpc-test-util-unifex-cpp20 "UNIFEX" "20")
     asio_grpc_add_test_util(asio-grpc-test-util-boost-asio-unifex-cpp20 "BOOST_ASIO" "20" "unifex")
-endif()
 
-if(ASIO_GRPC_ENABLE_STDEXEC_TESTS)
-    asio_grpc_add_test_util(asio-grpc-test-util-stdexec-cpp20 "STDEXEC" "20")
-
-    if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
+    if(ASIO_GRPC_ENABLE_STDEXEC_TESTS)
+        asio_grpc_add_test_util(asio-grpc-test-util-stdexec-cpp20 "STDEXEC" "20")
         asio_grpc_add_test_util(asio-grpc-test-util-standalone-asio-stdexec-cpp20 "STANDALONE_ASIO" "20" "stdexec")
     endif()
 endif()

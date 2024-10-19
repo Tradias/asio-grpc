@@ -37,4 +37,6 @@ function(asio_grpc_add_test_proto_target _asio_grpc_name _asio_grpc_cxx_standard
 endfunction()
 
 asio_grpc_add_test_proto_target(asio-grpc-test-protos "17")
-asio_grpc_add_test_proto_target(asio-grpc-test-protos-cpp20 "20")
+if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
+    asio_grpc_add_test_proto_target(asio-grpc-test-protos-cpp20 "20")
+endif()
