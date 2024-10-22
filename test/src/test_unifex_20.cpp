@@ -243,3 +243,58 @@ TEST_CASE_FIXTURE(test::ExecutionGrpcContextTest, "unifex Waiter: initiate alarm
                          CHECK(waiter.is_ready());
                      }));
 }
+
+#if defined(AGRPC_TEST_ASIO_HAS_CORO) && !UNIFEX_NO_COROUTINES
+struct UnifexCoroutineTraits : agrpc::DefaultServerRPCTraits
+{
+    template <class U>
+    using Rebind = unifex::task<U>;
+
+    template <class RPCHandler, class CompletionHandler>
+    static auto completion_token(RPCHandler&, CompletionHandler&)
+    {
+        return agrpc::use_sender;
+    }
+
+    template <class RPCHandler, class CompletionHandler, class IoExecutor, class Function>
+    static void co_spawn(const IoExecutor& scheduler, RPCHandler& handler, CompletionHandler&, Function&& function)
+    {
+        handler.scope_.detached_spawn_on(scheduler, static_cast<Function&&>(function)());
+    }
+};
+
+TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::ClientStreamingClientRPC>,
+                  "unifex ClientStreamingRPC with register_coroutine_rpc_handler")
+{
+    unifex::async_scope scope;
+    struct Handler
+    {
+        unifex::task<void> operator()(ServerRPC& rpc) const
+        {
+            Request request;
+            co_await rpc.read(request, agrpc::use_sender);
+            CHECK_EQ(1, request.integer());
+            Response response;
+            response.set_integer(11);
+            co_await rpc.finish(response, grpc::Status::OK, agrpc::use_sender);
+        }
+
+        unifex::async_scope& scope_;
+    };
+    agrpc::register_coroutine_rpc_handler<ServerRPC, UnifexCoroutineTraits>(grpc_context, service, Handler{scope},
+                                                                            test::RethrowFirstArg{});
+    run(scope.complete(),
+        [&]() -> unifex::task<void>
+        {
+            auto rpc = create_rpc();
+            Response response;
+            co_await rpc.start(*stub, response, agrpc::use_sender);
+            Request request;
+            request.set_integer(1);
+            co_await rpc.write(request, agrpc::use_sender);
+            CHECK_EQ(grpc::StatusCode::OK, (co_await rpc.finish(agrpc::use_sender)).error_code());
+            CHECK_EQ(11, response.integer());
+            server_shutdown.initiate();
+        }());
+}
+#endif

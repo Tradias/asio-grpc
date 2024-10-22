@@ -28,15 +28,15 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class Responder>
-struct ServerContextBase
+struct ServerContextForResponder
 {
-    grpc::ServerContext server_context_;
+    using Type = grpc::ServerContext;
 };
 
 template <>
-struct ServerContextBase<grpc::GenericServerAsyncReaderWriter>
+struct ServerContextForResponder<grpc::GenericServerAsyncReaderWriter>
 {
-    grpc::GenericServerContext server_context_;
+    using Type = grpc::GenericServerContext;
 };
 
 /**
@@ -45,18 +45,18 @@ struct ServerContextBase<grpc::GenericServerAsyncReaderWriter>
  * @since 2.6.0
  */
 template <class Responder>
-class ServerRPCContextBase : private ServerContextBase<Responder>
+class ServerRPCContextBase
 {
   public:
     /**
      * @brief Get the underlying `ServerContext`
      */
-    [[nodiscard]] auto& context() { return this->server_context_; }
+    [[nodiscard]] auto& context() { return server_context_; }
 
     /**
      * @brief Get the underlying `ServerContext` (const overload)
      */
-    [[nodiscard]] const auto& context() const { return this->server_context_; }
+    [[nodiscard]] const auto& context() const { return server_context_; }
 
     /**
      * @brief Cancel this RPC
@@ -65,15 +65,18 @@ class ServerRPCContextBase : private ServerContextBase<Responder>
      *
      * Thread-safe
      */
-    void cancel() noexcept { this->server_context_.TryCancel(); }
+    void cancel() noexcept { server_context_.TryCancel(); }
 
   private:
+    using ServerContext = typename ServerContextForResponder<Responder>::Type;
+
     friend detail::ServerRPCContextBaseAccess;
 
     template <bool, class, class>
     friend class detail::ServerRPCNotifyWhenDoneMixin;
 
-    Responder responder_{&this->server_context_};
+    ServerContext server_context_;
+    Responder responder_{&server_context_};
     bool is_finished_{};
 };
 

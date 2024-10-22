@@ -32,6 +32,13 @@
 #include <asio/co_spawn.hpp>
 
 #define AGRPC_TEST_ASIO_HAS_CO_AWAIT
+
+#if (ASIO_VERSION >= 103002)
+#include <asio/experimental/co_spawn.hpp>
+#include <asio/experimental/coro.hpp>
+
+#define AGRPC_TEST_ASIO_HAS_CORO
+#endif
 #endif
 
 #if (ASIO_VERSION >= 101900)
@@ -88,6 +95,13 @@
 #include <boost/asio/co_spawn.hpp>
 
 #define AGRPC_TEST_ASIO_HAS_CO_AWAIT
+
+#if (BOOST_VERSION >= 108500)
+#include <boost/asio/experimental/co_spawn.hpp>
+#include <boost/asio/experimental/coro.hpp>
+
+#define AGRPC_TEST_ASIO_HAS_CORO
+#endif
 #endif
 
 #if (BOOST_VERSION >= 107700)
@@ -130,6 +144,7 @@
 #endif
 
 #ifdef AGRPC_UNIFEX
+#include <unifex/async_scope.hpp>
 #include <unifex/config.hpp>
 #include <unifex/finally.hpp>
 #include <unifex/just.hpp>

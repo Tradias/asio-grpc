@@ -15,12 +15,15 @@
 #ifndef AGRPC_DETAIL_COROUTINE_TRAITS_HPP
 #define AGRPC_DETAIL_COROUTINE_TRAITS_HPP
 
-#include <agrpc/detail/asio_forward.hpp>
-
 #include <agrpc/detail/awaitable.hpp>
-#include <agrpc/detail/config.hpp>
 
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
+
+#include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/co_spawn.hpp>
+#include <agrpc/detail/rethrow_first_arg.hpp>
+
+#include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
@@ -32,18 +35,23 @@ struct CoroutineTraits;
 template <class T, class Executor>
 struct CoroutineTraits<asio::awaitable<T, Executor>>
 {
-    using ExecutorType = Executor;
-    using CompletionToken = asio::use_awaitable_t<Executor>;
-
     template <class U>
     using Rebind = asio::awaitable<U, Executor>;
+
+    template <class RPCHandler, class CompletionHandler>
+    static asio::use_awaitable_t<Executor> completion_token(RPCHandler&, CompletionHandler&)
+    {
+        return {};
+    }
+
+    template <class RPCHandler, class CompletionHandler, class IoExecutor, class Function>
+    static void co_spawn(const IoExecutor& io_executor, RPCHandler&, CompletionHandler& completion_handler,
+                         Function&& function)
+    {
+        asio::co_spawn(asio::get_associated_executor(completion_handler, io_executor),
+                       static_cast<Function&&>(function), detail::RethrowFirstArg{});
+    }
 };
-
-template <class Coroutine, class ReturnType>
-using RebindCoroutineT = typename detail::CoroutineTraits<Coroutine>::template Rebind<ReturnType>;
-
-template <class Coroutine>
-using CoroutineCompletionTokenT = typename detail::CoroutineTraits<Coroutine>::CompletionToken;
 }
 
 AGRPC_NAMESPACE_END

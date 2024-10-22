@@ -12,20 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_ASIO_HAS_CO_AWAIT
+#ifndef AGRPC_DETAIL_CO_SPAWN_HPP
+#define AGRPC_DETAIL_CO_SPAWN_HPP
 
 #ifdef AGRPC_STANDALONE_ASIO
-#include <asio/awaitable.hpp>
-
-#ifdef ASIO_HAS_CO_AWAIT
-#define AGRPC_ASIO_HAS_CO_AWAIT
-#endif
+#include <asio/co_spawn.hpp>
+#include <asio/use_awaitable.hpp>
 #elif defined(AGRPC_BOOST_ASIO)
-#include <boost/asio/awaitable.hpp>
-
-#ifdef BOOST_ASIO_HAS_CO_AWAIT
-#define AGRPC_ASIO_HAS_CO_AWAIT
-#endif
+#include <boost/asio/co_spawn.hpp>
+#include <boost/asio/use_awaitable.hpp>
 #endif
 
-#endif
+#endif  // AGRPC_DETAIL_CO_SPAWN_HPP

@@ -27,6 +27,7 @@
 #include <agrpc/detail/bind_allocator.hpp>
 #include <agrpc/read.hpp>
 #include <agrpc/register_awaitable_rpc_handler.hpp>
+#include <agrpc/register_coroutine_rpc_handler.hpp>
 #include <agrpc/server_rpc.hpp>
 #include <agrpc/waiter.hpp>
 
@@ -546,6 +547,79 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ServerStreamingServerRPC>,
     perform_requests_in_order(just_finish(*this), just_finish(*this, grpc::StatusCode::DEADLINE_EXCEEDED,
                                                               test::two_hundred_milliseconds_from_now()));
     CHECK_FALSE(eptr);
+}
+#endif
+
+#ifdef AGRPC_TEST_ASIO_HAS_CORO
+template <class Yield, class Return, class Executor>
+struct CoroTraits : agrpc::DefaultServerRPCTraits
+{
+    template <class U>
+    using Rebind = asio::experimental::coro<Yield, U, Executor>;
+
+    template <class RPCHandler, class CompletionHandler>
+    static asio::deferred_t completion_token(RPCHandler&, CompletionHandler&)
+    {
+        return {};
+    }
+
+    template <class RPCHandler, class CompletionHandler, class IoExecutor, class Function>
+    static void co_spawn(const IoExecutor& io_executor, RPCHandler&, CompletionHandler& completion_handler,
+                         Function&& function)
+    {
+        asio::experimental::co_spawn(
+            static_cast<Function&&>(function)(asio::get_associated_executor(completion_handler, io_executor)),
+            test::RethrowFirstArg{});
+    }
+};
+
+TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ClientStreamingServerRPC>,
+                  "Awaitable ServerRPC/ClientRPC client streaming using asio::experimental::coro success")
+{
+    using Exec = asio::io_context::executor_type;
+    struct Handler
+    {
+        auto reads(Exec, ServerRPC& rpc) -> asio::experimental::coro<Request*, void, Exec>
+        {
+            Request request;
+            while (co_await rpc.read(request, asio::deferred))
+            {
+                co_yield &request;
+            }
+        }
+
+        auto operator()(Exec exec, ServerRPC& rpc) -> asio::experimental::coro<void, void, Exec>
+        {
+            auto generator = reads(exec, rpc);
+            while (auto request = co_await generator)
+            {
+                CHECK((1 == request.value()->integer() || 2 == request.value()->integer()));
+            }
+            Response response;
+            response.set_integer(11);
+            CHECK(co_await rpc.finish(response, grpc::Status::OK, asio::deferred));
+        }
+    };
+    asio::io_context io_context{1};
+    agrpc::register_coroutine_rpc_handler<ServerRPC, CoroTraits<void, void, Exec>>(
+        get_executor(), service, Handler{}, asio::bind_executor(io_context.get_executor(), test::RethrowFirstArg{}));
+    std::thread t{[&]
+                  {
+                      io_context.run();
+                  }};
+    auto client_function = [&](auto& request, auto& response, const asio::yield_context& yield)
+    {
+        auto rpc = create_rpc();
+        start_rpc(rpc, request, response, yield);
+        request.set_integer(1);
+        CHECK(rpc.write(request, yield));
+        request.set_integer(2);
+        CHECK(rpc.write(request, yield));
+        CHECK_EQ(grpc::StatusCode::OK, rpc.finish(yield).error_code());
+        CHECK_EQ(11, response.integer());
+    };
+    perform_requests(client_function, client_function, client_function);
+    t.join();
 }
 #endif
 #endif

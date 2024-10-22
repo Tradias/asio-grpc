@@ -29,7 +29,7 @@ constexpr bool has_initial_request(agrpc::ServerRPCType type) noexcept
     return type == agrpc::ServerRPCType::SERVER_STREAMING || type == agrpc::ServerRPCType::UNARY;
 }
 
-template <class Request, bool HasInitialRequest>
+template <class Request, bool HasInitialRequest, class... PrependedArgs>
 struct ServerRPCStarter
 {
     template <auto RequestRPC, class TraitsT, class Executor, class Service, class CompletionToken>
@@ -43,17 +43,18 @@ struct ServerRPCStarter
             static_cast<CompletionToken&&>(token));
     }
 
-    template <class Handler, class RPC, class... Args>
-    decltype(auto) invoke(Handler&& handler, RPC&& rpc, Args&&... args)
+    template <class Handler, class RPC, class... AppendedArgs>
+    decltype(auto) invoke(Handler&& handler, PrependedArgs&&... prepend, RPC&& rpc, AppendedArgs&&... append)
     {
-        return static_cast<Handler&&>(handler)(static_cast<RPC&&>(rpc), request_, static_cast<Args&&>(args)...);
+        return static_cast<Handler&&>(handler)(static_cast<PrependedArgs&&>(prepend)..., static_cast<RPC&&>(rpc),
+                                               request_, static_cast<AppendedArgs&&>(append)...);
     }
 
     Request request_;
 };
 
-template <class Request>
-struct ServerRPCStarter<Request, false>
+template <class Request, class... PrependedArgs>
+struct ServerRPCStarter<Request, false, PrependedArgs...>
 {
     template <auto RequestRPC, class TraitsT, class Executor, class Service, class CompletionToken>
     auto start(agrpc::ServerRPC<RequestRPC, TraitsT, Executor>& rpc, Service& service, CompletionToken&& token)
@@ -65,16 +66,17 @@ struct ServerRPCStarter<Request, false>
             static_cast<CompletionToken&&>(token));
     }
 
-    template <class Handler, class RPC, class... Args>
-    decltype(auto) invoke(Handler&& handler, RPC&& rpc, Args&&... args)
+    template <class Handler, class RPC, class... AppendedArgs>
+    decltype(auto) invoke(Handler&& handler, PrependedArgs&&... prepend, RPC&& rpc, AppendedArgs&&... append)
     {
-        return static_cast<Handler&&>(handler)(static_cast<RPC&&>(rpc), static_cast<Args&&>(args)...);
+        return static_cast<Handler&&>(handler)(static_cast<PrependedArgs&&>(prepend)..., static_cast<RPC&&>(rpc),
+                                               static_cast<AppendedArgs&&>(append)...);
     }
 };
 
-template <class ServerRPC>
-using ServerRPCStarterT =
-    detail::ServerRPCStarter<typename ServerRPC::Request, detail::has_initial_request(ServerRPC::TYPE)>;
+template <class ServerRPC, class... PrependedArgs>
+using ServerRPCStarterT = detail::ServerRPCStarter<typename ServerRPC::Request,
+                                                   detail::has_initial_request(ServerRPC::TYPE), PrependedArgs...>;
 
 template <class Starter, class Handler, class RPC, class... Args>
 using RPCHandlerInvokeResultT =
