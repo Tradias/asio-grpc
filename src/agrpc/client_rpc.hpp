@@ -1117,8 +1117,13 @@ class ClientRPC<PrepareAsyncBidiStreaming, Executor>
  * @since 2.6.0
  */
 template <class Executor>
-class ClientRPC<agrpc::ClientRPCType::GENERIC_STREAMING, Executor>
-    : public detail::ClientRPCBidiStreamingBase<grpc::GenericClientAsyncReaderWriter, Executor>
+class ClientRPC<agrpc::ClientRPCType::GENERIC_STREAMING, Executor> : public detail::ClientRPCBidiStreamingBase<
+#ifdef AGRPC_GENERATING_DOCUMENTATION
+                                                                         ResponderT<RequestT, ResponseT>,
+#else
+                                                                         grpc::GenericClientAsyncReaderWriter,
+#endif
+                                                                         Executor>
 {
   public:
     /**

@@ -19,8 +19,29 @@
 
 AGRPC_NAMESPACE_BEGIN()
 
+/**
+ * @brief Default ServerRPC traits
+ *
+ * Users that intend to customize ServerRPC traits should publicly inherit from this type to ensure forwards
+ * compatibility.
+ *
+ * Example showing how to enable `ServerRPC::wait_for_done`:
+ *
+ * @code{cpp}
+ * struct MyTraits : agrpc::DefaultServerRPCTraits
+ * {
+ *     static constexpr bool NOTIFY_WHEN_DONE = true;
+ * };
+ *
+ * template<auto RequestRPC>
+ * using MyServerRPC = agrpc::ServerRPC<RequestRPC, MyTraits>;
+ * @endcode
+ */
 struct DefaultServerRPCTraits
 {
+    /**
+     * @brief Whether the ServerRPC should support `wait_for_done`
+     */
     static constexpr bool NOTIFY_WHEN_DONE = false;
 };
 

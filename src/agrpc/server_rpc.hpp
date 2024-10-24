@@ -823,8 +823,13 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
 template <class ServiceT, class RequestT, class ResponseT,
           detail::ServerBidiStreamingRequest<ServiceT, RequestT, ResponseT> RequestBidiStreaming, class TraitsT,
           class Executor>
-class ServerRPC<RequestBidiStreaming, TraitsT, Executor>
-    : public detail::ServerRPCBidiStreamingBase<grpc::ServerAsyncReaderWriter<ResponseT, RequestT>, TraitsT, Executor>
+class ServerRPC<RequestBidiStreaming, TraitsT, Executor> : public detail::ServerRPCBidiStreamingBase<
+#ifdef AGRPC_GENERATING_DOCUMENTATION
+                                                               ResponderT<ResponseT, RequestT>,
+#else
+                                                               grpc::ServerAsyncReaderWriter<ResponseT, RequestT>,
+#endif
+                                                               TraitsT, Executor>
 {
   public:
     /**
@@ -925,8 +930,13 @@ class ServerRPC<RequestBidiStreaming, TraitsT, Executor>
  * @since 2.7.0
  */
 template <class TraitsT, class Executor>
-class ServerRPC<agrpc::ServerRPCType::GENERIC, TraitsT, Executor>
-    : public detail::ServerRPCBidiStreamingBase<grpc::GenericServerAsyncReaderWriter, TraitsT, Executor>
+class ServerRPC<agrpc::ServerRPCType::GENERIC, TraitsT, Executor> : public detail::ServerRPCBidiStreamingBase<
+#ifdef AGRPC_GENERATING_DOCUMENTATION
+                                                                        ResponderT<ResponseT, RequestT>,
+#else
+                                                                        grpc::GenericServerAsyncReaderWriter,
+#endif
+                                                                        TraitsT, Executor>
 {
   public:
     /**

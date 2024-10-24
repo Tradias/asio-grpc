@@ -15,6 +15,7 @@
 #ifndef AGRPC_DETAIL_ASSOCIATION_ASIO_HPP
 #define AGRPC_DETAIL_ASSOCIATION_ASIO_HPP
 
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/forward.hpp>
 
