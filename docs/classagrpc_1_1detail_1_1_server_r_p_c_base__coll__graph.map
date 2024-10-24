@@ -1,0 +1,5 @@
+<map id="agrpc::detail::ServerRPCBase&lt; Responder, Traits, Executor &gt;" name="agrpc::detail::ServerRPCBase&lt; Responder, Traits, Executor &gt;">
+<area shape="rect" id="node1" title="ServerRPC base." alt="" coords="565,13,793,54"/>
+<area shape="rect" id="node2" href="$classagrpc_1_1detail_1_1_server_r_p_c_notify_when_done_mixin.html" title=" " alt="" coords="247,5,517,61"/>
+<area shape="rect" id="node3" href="$classagrpc_1_1detail_1_1_r_p_c_executor_base.html" title="RPC&#39;s executor base." alt="" coords="5,13,199,54"/>
+</map>
