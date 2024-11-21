@@ -32,7 +32,7 @@ AGRPC_NAMESPACE_BEGIN()
  *
  * Wraps a [grpc::Alarm](https://grpc.github.io/grpc/cpp/classgrpc_1_1_alarm.html) as an I/O object.
  *
- * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
+ * @tparam Executor The executor type, must be capable of referring to a GrpcContext.
  *
  * **Per-Operation Cancellation**
  *

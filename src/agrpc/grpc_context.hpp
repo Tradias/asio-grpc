@@ -41,7 +41,7 @@ AGRPC_NAMESPACE_BEGIN()
  * @brief Execution context based on `grpc::CompletionQueue`
  *
  * Satisfies the
- * [ExecutionContext](https://www.boost.org/doc/libs/1_79_0/doc/html/boost_asio/reference/ExecutionContext.html)
+ * [ExecutionContext](https://www.boost.org/doc/libs/1_86_0/doc/html/boost_asio/reference/ExecutionContext.html)
  * requirements and can therefore be used in all places where Asio expects an `ExecutionContext`.
  *
  * Performance recommendation: Use exactly one GrpcContext per thread.
@@ -127,9 +127,9 @@ class GrpcContext
      * brought into the ready state when this function is invoked. Upon return, the GrpcContext will be in the stopped
      * state.
      *
-     * @attention Only one thread may call run*()/poll*() at a time [unless this context has been constructed with a
-     * `concurrency_hint` greater than one. Even then it may not be called concurrently with *_completion_queue() member
-     * functions (since 3.2.0)].
+     * @attention Only one thread may call run(), run_until(), run_while() or poll() at a time [unless this context has
+     * been constructed with a `concurrency_hint` greater than one. Even then it may not be called concurrently with
+     * run_completion_queue() or poll_completion_queue() (since 3.2.0)].
      *
      * @return True if at least one operation has been processed.
      */
@@ -141,9 +141,9 @@ class GrpcContext
      * Runs the main event loop logic until the GrpcContext runs out of work, is stopped or the specified deadline has
      * been reached. The GrpcContext will be brought into the ready state when this function is invoked.
      *
-     * @attention Only one thread may call run*()/poll*() at a time [unless this context has been constructed with a
-     * `concurrency_hint` greater than one. Even then it may not be called concurrently with *_completion_queue() member
-     * functions (since 3.2.0)].
+     * @attention Only one thread may call run(), run_until(), run_while() or poll() at a time [unless this context has
+     * been constructed with a `concurrency_hint` greater than one. Even then it may not be called concurrently with
+     * run_completion_queue() or poll_completion_queue() (since 3.2.0)].
      *
      * @tparam Deadline A type that is compatible with `grpc::TimePoint<Deadline>`.
      *
@@ -164,9 +164,9 @@ class GrpcContext
      * Runs the main event loop logic until the GrpcContext runs out of work, is stopped or the specified condition
      * returns false. The GrpcContext will be brought into the ready state when this function is invoked.
      *
-     * @attention Only one thread may call run*()/poll*() at a time [unless this context has been constructed with a
-     * `concurrency_hint` greater than one. Even then it may not be called concurrently with *_completion_queue() member
-     * functions (since 3.2.0)].
+     * @attention Only one thread may call run(), run_until(), run_while() or poll() at a time [unless this context has
+     * been constructed with a `concurrency_hint` greater than one. Even then it may not be called concurrently with
+     * run_completion_queue() or poll_completion_queue() (since 3.2.0)].
      *
      * @tparam Condition A callable that returns false when the GrpcContext should stop.
      *
@@ -185,9 +185,9 @@ class GrpcContext
      * `asio::post(grpc_context, ...)` will not be processed. The GrpcContext will be brought into the ready state when
      * this function is invoked. Upon return, the GrpcContext will be in the stopped state.
      *
-     * @attention Only one thread may call run*()/poll*() at a time [unless this context has been constructed with a
-     * `concurrency_hint` greater than one. Even then it may not be called concurrently with run, run_until, run_while
-     * and poll member functions (since 3.2.0)].
+     * @attention Only one thread may call run_completion_queue() or poll_completion_queue() at a time [unless this
+     * context has been constructed with a `concurrency_hint` greater than one. Even then it may not be called
+     * concurrently with run, run_until, run_while and poll (since 3.2.0)].
      *
      * @return True if at least one event has been processed.
      */
@@ -199,9 +199,9 @@ class GrpcContext
      * Processes all ready completion handlers and ready events of the `grpc::CompletionQueue`. The GrpcContext will be
      * brought into the ready state when this function is invoked.
      *
-     * @attention Only one thread may call run*()/poll*() at a time [unless this context has been constructed with a
-     * `concurrency_hint` greater than one. Even then it may not be called concurrently with *_completion_queue() member
-     * functions (since 3.2.0)].
+     * @attention Only one thread may call run(), run_until(), run_while() or poll() at a time [unless this context has
+     * been constructed with a `concurrency_hint` greater than one. Even then it may not be called concurrently with
+     * run_completion_queue() or poll_completion_queue() (since 3.2.0)].
      *
      * @return True if at least one operation has been processed.
      */
@@ -214,9 +214,9 @@ class GrpcContext
      * created using `asio::post(grpc_context, ...)` will not be processed. The GrpcContext will be brought into the
      * ready state when this function is invoked.
      *
-     * @attention Only one thread may call run*()/poll*() at a time [unless this context has been constructed with a
-     * `concurrency_hint` greater than one. Even then it may not be called concurrently with run, run_until, run_while
-     * and poll member functions (since 3.2.0)].
+     * @attention Only one thread may call run_completion_queue() or poll_completion_queue() at a time [unless this
+     * context has been constructed with a `concurrency_hint` greater than one. Even then it may not be called
+     * concurrently with run, run_until, run_while and poll (since 3.2.0)].
      *
      * @return True if at least one operation has been processed.
      */

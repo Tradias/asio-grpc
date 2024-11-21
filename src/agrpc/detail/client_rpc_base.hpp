@@ -87,10 +87,6 @@ class ClientRPCBase : public detail::RPCExecutorBase<Executor>, public detail::C
      * @arg Upon receiving initial metadata from the server, the ClientContext associated with this call is updated, and
      * the calling code can access the received metadata through the ClientContext.
      *
-     * @attention If the server does not explicitly send initial metadata (e.g. by calling
-     * `agrpc::send_initial_metadata`) but waits for a message from the client instead then this function won't
-     * complete until `write()` is called.
-     *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` indicates that the metadata was read. If it is `false`, then the call is dead.
      */

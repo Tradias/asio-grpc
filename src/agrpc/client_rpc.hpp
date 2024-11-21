@@ -210,7 +210,7 @@ class ClientRPCUnaryBase<PrepareAsyncUnary, Executor> : public detail::ClientRPC
  *
  * @tparam PrepareAsyncUnary A pointer to the generated, async version of the gRPC method. The async version starts with
  * `PrepareAsync`.
- * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
+ * @tparam Executor The executor type, must be capable of referring to a GrpcContext.
  *
  * **Per-Operation Cancellation**
  *
@@ -249,7 +249,7 @@ class ClientRPC<PrepareAsyncUnary, Executor> : public detail::ClientRPCUnaryBase
  *
  * @snippet example.proto example-proto
  *
- * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
+ * @tparam Executor The executor type, must be capable of referring to a GrpcContext.
  *
  * **Per-Operation Cancellation**
  *
@@ -406,13 +406,13 @@ using GenericUnaryClientRPC = agrpc::ClientRPC<agrpc::ClientRPCType::GENERIC_UNA
  *
  * @tparam PrepareAsyncClientStreaming A pointer to the generated, async version of the gRPC method. The async version
  * starts with `PrepareAsync`.
- * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
+ * @tparam Executor The executor type, must be capable of referring to a GrpcContext.
  *
  * **Per-Operation Cancellation**
  *
  * Terminal and partial. Cancellation is performed by invoking
  * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984).
- * After successful cancellation no further operations may be started on the rpc (except `finish`). Operations are also
+ * After successful cancellation no further operations may be started on the rpc (except finish()). Operations are also
  * cancelled when the deadline of the rpc has been reached (see
  * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6)).
  *
@@ -508,8 +508,8 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor> : public detail::ClientRP
      * @param response The response message, will be filled by the server upon finishing this rpc. Must remain alive
      * until this rpc is finished.
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
-     * `void(bool)`. `true` means that the rpc was started successfully. If it is `false`, then call `finish` to obtain
-     * error details.
+     * `void(bool)`. `true` means that the rpc was started successfully. If it is `false`, then call `finish()` to
+     * obtain error details.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto start(StubT& stub, ResponseT& response, CompletionToken&& token = CompletionToken{})
@@ -533,9 +533,8 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor> : public detail::ClientRP
      * @arg Upon receiving initial metadata from the server, the ClientContext associated with this call is updated, and
      * the calling code can access the received metadata through the ClientContext.
      *
-     * @attention If the server does not explicitly send initial metadata (e.g. by calling
-     * `agrpc::send_initial_metadata`) but waits for a message from the client instead then this function won't
-     * complete until `write()` is called.
+     * @attention If the server does not explicitly send initial metadata (e.g. by calling send_initial_metadata()) but
+     * waits for a message from the client instead then this function won't complete until `write()` is called.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` indicates that the metadata was read. If it is `false`, then the call is dead.
@@ -566,7 +565,8 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor> : public detail::ClientRP
     /**
      * @brief Send a message to the server
      *
-     * Only one write may be outstanding at any given time. May not be called concurrently with `read_initial_metadata`.
+     * Only one write may be outstanding at any given time. May not be called concurrently with
+     * `read_initial_metadata()`.
      *
      * @param request The request message, save to delete when this function returns, unless a deferred completion token
      * is used like `agrpc::use_sender` or `asio::deferred`.
@@ -600,7 +600,7 @@ class ClientRPC<PrepareAsyncClientStreaming, Executor> : public detail::ClientRP
      *
      * @arg The ClientContext associated with the call is updated with possible initial and trailing metadata received
      * from the server.
-     * @arg Attempts to fill in the response parameter that was passed to `start`.
+     * @arg Attempts to fill in the response parameter that was passed to `start()`.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The
      * completion signature is `void(grpc::Status)`.
@@ -709,8 +709,8 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
      * @param request The request message, save to delete when this function returns, unless a deferred completion token
      * is used like `agrpc::use_sender` or `asio::deferred`.
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
-     * `void(bool)`. `true` means that the rpc was started successfully. If it is `false`, then call `finish` to obtain
-     * error details.
+     * `void(bool)`. `true` means that the rpc was started successfully. If it is `false`, then call `finish()` to
+     * obtain error details.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto start(StubT& stub, const RequestT& request, CompletionToken&& token = CompletionToken{})
@@ -724,7 +724,7 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
     /**
      * @brief Receive a message from the server
      *
-     * May not be called concurrently with `read_initial_metadata`. It is not meaningful to call it concurrently
+     * May not be called concurrently with `read_initial_metadata()`. It is not meaningful to call it concurrently
      * with another read on the same stream since reads on the same stream are delivered in order.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
@@ -792,13 +792,13 @@ class ClientRPCServerStreamingBase<PrepareAsyncServerStreaming, Executor>
  *
  * @tparam PrepareAsyncServerStreaming A pointer to the generated, async version of the gRPC method. The async version
  * starts with `PrepareAsync`.
- * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
+ * @tparam Executor The executor type, must be capable of referring to a GrpcContext.
  *
  * **Per-Operation Cancellation**
  *
  * Terminal and partial. Cancellation is performed by invoking
  * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984).
- * After successful cancellation no further operations may be started on the rpc (except `finish`). Operations are also
+ * After successful cancellation no further operations may be started on the rpc (except finish()). Operations are also
  * cancelled when the deadline of the rpc has been reached (see
  * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6)).
  *
@@ -862,9 +862,8 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
      * @arg Upon receiving initial metadata from the server, the ClientContext associated with this call is updated, and
      * the calling code can access the received metadata through the ClientContext.
      *
-     * @attention If the server does not explicitly send initial metadata (e.g. by calling
-     * `agrpc::send_initial_metadata`) but waits for a message from the client instead then this function won't
-     * complete until `write()` is called.
+     * @attention If the server does not explicitly send initial metadata (e.g. by calling send_initial_metadata()) but
+     * waits for a message from the client instead then this function won't complete until `write()` is called.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` indicates that the metadata was read. If it is `false`, then the call is dead.
@@ -901,7 +900,7 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
     /**
      * @brief Send a message to the server
      *
-     * Only one write may be outstanding at any given time. This is thread-safe with respect to `read`. It should not
+     * Only one write may be outstanding at any given time. This is thread-safe with respect to `read()`. It should not
      * be called concurrently with other operations.
      *
      * @param request The request message, save to delete when this function returns, unless a deferred completion token
@@ -936,7 +935,7 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
      * option.
      *
      * Signal the client is done with the writes (half-close the client stream). Thread-safe with respect to read. May
-     * not be called concurrently with a `write` that has the
+     * not be called concurrently with a `write()` that has the
      * [set_last_message](https://grpc.github.io/grpc/cpp/classgrpc_1_1_write_options.html#ad930c28f5c32832e1d48ee30bf0858e3)
      * option set.
      *
@@ -1004,13 +1003,13 @@ class ClientRPCBidiStreamingBase<ResponderT<RequestT, ResponseT>, Executor>
  *
  * @tparam PrepareAsyncBidiStreaming A pointer to the generated, async version of the gRPC method. The async version
  * starts with `PrepareAsync`.
- * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
+ * @tparam Executor The executor type, must be capable of referring to a GrpcContext.
  *
  * **Per-Operation Cancellation**
  *
  * Terminal and partial. Cancellation is performed by invoking
  * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984).
- * After successful cancellation no further operations may be started on the rpc (except `finish`). Operations are also
+ * After successful cancellation no further operations may be started on the rpc (except finish()). Operations are also
  * cancelled when the deadline of the rpc has been reached (see
  * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6)).
  *
@@ -1088,8 +1087,8 @@ class ClientRPC<PrepareAsyncBidiStreaming, Executor>
      *
      * @param stub The Stub that corresponds to the gRPC method.
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
-     * `void(bool)`. `true` means that the rpc was started successfully. If it is `false`, then call `finish` to obtain
-     * error details.
+     * `void(bool)`. `true` means that the rpc was started successfully. If it is `false`, then call `finish()` to
+     * obtain error details.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto start(StubT& stub, CompletionToken&& token = CompletionToken{})
@@ -1104,13 +1103,13 @@ class ClientRPC<PrepareAsyncBidiStreaming, Executor>
 /**
  * @brief I/O object for client-side, generic, streaming rpcs
  *
- * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
+ * @tparam Executor The executor type, must be capable of referring to a GrpcContext.
  *
  * **Per-Operation Cancellation**
  *
  * Terminal and partial. Cancellation is performed by invoking
  * [grpc::ClientContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#abd0f6715c30287b75288015eee628984).
- * After successful cancellation no further operations may be started on the rpc (except `finish`). Operations are also
+ * After successful cancellation no further operations may be started on the rpc (except finish()). Operations are also
  * cancelled when the deadline of the rpc has been reached (see
  * [grpc::ClientContext::set_deadline](https://grpc.github.io/grpc/cpp/classgrpc_1_1_client_context.html#ad4e16866fee3f6ee5a10efb5be6f4da6)).
  *
@@ -1155,8 +1154,8 @@ class ClientRPC<agrpc::ClientRPCType::GENERIC_STREAMING, Executor> : public deta
      * @brief Start a generic streaming request
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
-     * `void(bool)`. `true` means that the rpc was started successfully. If it is `false`, then call `finish` to obtain
-     * error details.
+     * `void(bool)`. `true` means that the rpc was started successfully. If it is `false`, then call `finish()` to
+     * obtain error details.
      */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto start(const std::string& method, grpc::GenericStub& stub, CompletionToken&& token = CompletionToken{})

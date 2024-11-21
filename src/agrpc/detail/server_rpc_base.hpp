@@ -40,7 +40,7 @@ class ServerRPCBase : public ServerRPCNotifyWhenDoneMixin<Traits::NOTIFY_WHEN_DO
      * Request notification of the sending of initial metadata to the client.
      *
      * This call is optional, but if it is used, it cannot be used concurrently with or after the
-     * `finish`/`finish_with_error` method.
+     * `finish()`/`finish_with_error()` method.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire. If it is `false`, it is

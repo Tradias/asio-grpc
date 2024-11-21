@@ -42,11 +42,11 @@ AGRPC_NAMESPACE_BEGIN()
  *
  * @tparam RequestUnary A pointer to the generated gRPC method.
  * @tparam Traits A type used to customize this rpc. See `agrpc::DefaultServerRPCTraits`.
- * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
+ * @tparam Executor The executor type, must be capable of referring to a GrpcContext.
  *
  * **Per-Operation Cancellation**
  *
- * (except `wait_for_done`) Terminal and partial. Cancellation is performed by invoking
+ * (except `wait_for_done()`) Terminal and partial. Cancellation is performed by invoking
  * [grpc::ServerContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_context.html#a88d3a0c3d53e39f38654ce8fba968301).
  * After successful cancellation no further operations should be started on the rpc. Operations are also cancelled when
  * the deadline of the rpc has been reached.
@@ -154,8 +154,8 @@ class ServerRPC<RequestUnary, TraitsT, Executor>
      * @note If status has a non-OK code, then message will not be sent, and the client will receive only the status
      * with possible trailing metadata.
      *
-     * GRPC does not take ownership or a reference to message and status, so it is safe to deallocate once finish
-     * returns, unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is used.
+     * GRPC does not take ownership or a reference to `response` and `status`, so it is safe to deallocate once
+     * `finish()` returns, unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is used.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire. If it is `false`, it is
@@ -182,7 +182,7 @@ class ServerRPC<RequestUnary, TraitsT, Executor>
      *
      * @arg Sends initial metadata if not already sent (using the ServerContext associated with this call).
      *
-     * GRPC does not take ownership or a reference to status, so it is safe to deallocate once finish_with_error
+     * GRPC does not take ownership or a reference to `status`, so it is safe to deallocate once `finish_with_error()`
      * returns, unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is used.
      *
      * @note Status must have a non-OK code.
@@ -221,11 +221,11 @@ class ServerRPC<RequestUnary, TraitsT, Executor>
  *
  * @tparam RequestUnary A pointer to the generated gRPC method.
  * @tparam Traits A type used to customize this rpc. See `agrpc::DefaultServerRPCTraits`.
- * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
+ * @tparam Executor The executor type, must be capable of referring to a GrpcContext.
  *
  * **Per-Operation Cancellation**
  *
- * (except `wait_for_done`) Terminal and partial. Cancellation is performed by invoking
+ * (except `wait_for_done()`) Terminal and partial. Cancellation is performed by invoking
  * [grpc::ServerContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_context.html#a88d3a0c3d53e39f38654ce8fba968301).
  * After successful cancellation no further operations should be started on the rpc. Operations are also cancelled when
  * the deadline of the rpc has been reached.
@@ -324,8 +324,8 @@ class ServerRPC<RequestClientStreaming, TraitsT, Executor>
     /**
      * @brief Receive a message from the client
      *
-     * May not be called currently with `finish`/`finish_with_error`. It is not meaningful to call it concurrently with
-     * another read on the same rpc since reads on the same stream are delivered in order.
+     * May not be called currently with `finish()`/`finish_with_error()`. It is not meaningful to call it concurrently
+     * with another read on the same rpc since reads on the same stream are delivered in order.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The
      * completion signature is `void(bool)`. `true` indicates that a valid message was read. `false` when
@@ -357,8 +357,8 @@ class ServerRPC<RequestClientStreaming, TraitsT, Executor>
      *
      * @note Response is not sent if status has a non-OK code.
      *
-     * GRPC does not take ownership or a reference to `response` or `status`, so it is safe to deallocate once finish
-     * returns, unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is used.
+     * GRPC does not take ownership or a reference to `response` or `status`, so it is safe to deallocate once
+     * `finish()` returns, unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is used.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire. If it is `false`, it is
@@ -386,8 +386,9 @@ class ServerRPC<RequestClientStreaming, TraitsT, Executor>
      * This operation will end when the server has finished sending out initial and trailing metadata and status, or if
      * some failure occurred when trying to do so.
      *
-     * GRPC does not take ownership or a reference to `status`, so it is safe to to deallocate once finish_with_error
-     * returns, unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is used.
+     * GRPC does not take ownership or a reference to `status`, so it is safe to to deallocate once
+     * `finish_with_error()` returns, unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is
+     * used.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire. If it is `false`, it is
@@ -423,11 +424,11 @@ class ServerRPC<RequestClientStreaming, TraitsT, Executor>
  *
  * @tparam RequestUnary A pointer to the generated gRPC method.
  * @tparam Traits A type used to customize this rpc. See `agrpc::DefaultServerRPCTraits`.
- * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
+ * @tparam Executor The executor type, must be capable of referring to a GrpcContext.
  *
  * **Per-Operation Cancellation**
  *
- * (except `wait_for_done`) Terminal and partial. Cancellation is performed by invoking
+ * (except `wait_for_done()`) Terminal and partial. Cancellation is performed by invoking
  * [grpc::ServerContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_context.html#a88d3a0c3d53e39f38654ce8fba968301).
  * After successful cancellation no further operations should be started on the rpc. Operations are also cancelled when
  * the deadline of the rpc has been reached.
@@ -528,7 +529,7 @@ class ServerRPC<RequestServerStreaming, TraitsT, Executor>
      *
      * Only one write may be outstanding at any given time.
      *
-     * GRPC does not take ownership or a reference to `response`, so it is safe to to deallocate once write returns,
+     * GRPC does not take ownership or a reference to `response`, so it is safe to to deallocate once `write()` returns,
      * unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is used.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
@@ -562,8 +563,8 @@ class ServerRPC<RequestServerStreaming, TraitsT, Executor>
      * write_and_finish is equivalent of performing write with `WriteOptions.set_last_message()` and finish in a single
      * step.
      *
-     * GRPC does not take ownership or a reference to response and status, so it is safe to deallocate once
-     * write_and_finish returns, unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is
+     * GRPC does not take ownership or a reference to `response` and `status`, so it is safe to deallocate once
+     * `write_and_finish()` returns, unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is
      * used.
      *
      * Implicit input parameter:
@@ -608,7 +609,7 @@ class ServerRPC<RequestServerStreaming, TraitsT, Executor>
      * This operation will end when the server has finished sending out initial metadata (if not sent already) and
      * status, or if some failure occurred when trying to do so.
      *
-     * GRPC does not take ownership or a reference to status, so it is safe to to deallocate once finish
+     * GRPC does not take ownership or a reference to `status`, so it is safe to to deallocate once `finish()`
      * returns, unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is used.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
@@ -663,8 +664,8 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
     /**
      * @brief Receive a message from the client
      *
-     * May not be called currently with `finish`/`write_and_finish`. It is not meaningful to call it concurrently with
-     * another read on the same rpc since reads on the same stream are delivered in order.
+     * May not be called currently with `finish()`/`write_and_finish()`. It is not meaningful to call it concurrently
+     * with another read on the same rpc since reads on the same stream are delivered in order.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` indicates that a valid message was read. `false` when there will be no more incoming
@@ -682,9 +683,9 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
      * @brief Send a message to the client
      *
      * Only one write may be outstanding at any given time. It may not be called concurrently with operations other than
-     * `read`.
+     * `read()`.
      *
-     * GRPC does not take ownership or a reference to `response`, so it is safe to to deallocate once write returns,
+     * GRPC does not take ownership or a reference to `response`, so it is safe to to deallocate once `write()` returns,
      * unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is used.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
@@ -712,14 +713,16 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
     /**
      * @brief Coalesce write and finish of this rpc
      *
-     * Write response and coalesce it with trailing metadata which contains status, using WriteOptions
-     * options. May not be used concurrently with other operations.
+     * Write response and coalesce it with trailing metadata which contains status, using
+     * [WriteOptions](https://grpc.github.io/grpc/cpp/classgrpc_1_1_write_options.html) options. May not be used
+     * concurrently with other operations.
      *
-     * write_and_finish is equivalent of performing write with `WriteOptions.set_last_message()` and finish in a single
-     * step.
+     * write_and_finish is equivalent of performing write with
+     * [WriteOptions.set_last_message()](https://grpc.github.io/grpc/cpp/classgrpc_1_1_write_options.html#ad930c28f5c32832e1d48ee30bf0858e3)
+     * and finish in a single step.
      *
-     * GRPC does not take ownership or a reference to response and status, so it is safe to deallocate once
-     * write_and_finish returns, unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is
+     * GRPC does not take ownership or a reference to `response` and `status`, so it is safe to deallocate once
+     * `write_and_finish()` returns, unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is
      * used.
      *
      * Implicit input parameter:
@@ -771,8 +774,8 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
      * This operation will end when the server has finished sending out initial metadata (if not sent already) and
      * status, or if some failure occurred when trying to do so.
      *
-     * GRPC does not take ownership or a reference to status, so it is safe to to deallocate once Finish returns, unless
-     * a deferred completion token like `agrpc::use_sender` or `asio::deferred` is used.
+     * GRPC does not take ownership or a reference to `status`, so it is safe to to deallocate once `finish()` returns,
+     * unless a deferred completion token like `agrpc::use_sender` or `asio::deferred` is used.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` means that the data/metadata/status/etc is going to go to the wire. If it is `false`, it is
@@ -809,11 +812,11 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
  *
  * @tparam RequestUnary A pointer to the generated gRPC method.
  * @tparam Traits A type used to customize this rpc. See `agrpc::DefaultServerRPCTraits`.
- * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
+ * @tparam Executor The executor type, must be capable of referring to a GrpcContext.
  *
  * **Per-Operation Cancellation**
  *
- * (except `wait_for_done`) Terminal and partial. Cancellation is performed by invoking
+ * (except `wait_for_done()`) Terminal and partial. Cancellation is performed by invoking
  * [grpc::ServerContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_context.html#a88d3a0c3d53e39f38654ce8fba968301).
  * After successful cancellation no further operations should be started on the rpc. Operations are also cancelled when
  * the deadline of the rpc has been reached.
@@ -918,11 +921,11 @@ class ServerRPC<RequestBidiStreaming, TraitsT, Executor> : public detail::Server
  *
  * @tparam RequestUnary A pointer to the generated gRPC method.
  * @tparam Traits A type used to customize this rpc. See `agrpc::DefaultServerRPCTraits`.
- * @tparam Executor The executor type, must be capable of referring to a `agrpc::GrpcContext`.
+ * @tparam Executor The executor type, must be capable of referring to a GrpcContext.
  *
  * **Per-Operation Cancellation**
  *
- * (except `wait_for_done`) Terminal and partial. Cancellation is performed by invoking
+ * (except `wait_for_done()`) Terminal and partial. Cancellation is performed by invoking
  * [grpc::ServerContext::TryCancel](https://grpc.github.io/grpc/cpp/classgrpc_1_1_server_context.html#a88d3a0c3d53e39f38654ce8fba968301).
  * After successful cancellation no further operations should be started on the rpc. Operations are also cancelled when
  * the deadline of the rpc has been reached.

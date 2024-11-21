@@ -40,7 +40,7 @@ AGRPC_NAMESPACE_BEGIN()
  * @brief CompletionQueue-based implementation of grpc::HealthCheckServiceInterface
  *
  * This class is a drop-in replacement for the `grpc::DefaultHealthCheckService`. It should be added to a
- * `grpc::ServerBuilder` using `agrpc::add_health_check_service`.
+ * `grpc::ServerBuilder` using `add_health_check_service()`.
  *
  * **Motivation**: `grpc::DefaultHealthCheckService` is implemented in terms of gRPC's generic callback API. Mixing
  * callback services and CompletionQueue-based services in one `grpc::Server` significantly degrades performance.
@@ -100,7 +100,7 @@ class HealthCheckService final : public grpc::HealthCheckServiceInterface
  * @brief Add a HealthCheckService to a `grpc::Server`
  *
  * Must be called before `grpc::ServerBuilder.BuildAndStart()` and the service must be started using
- * `agrpc::start_health_check_service` afterwards. May only be called once for a given ServerBuilder.
+ * `start_health_check_service()` afterwards. May only be called once for a given ServerBuilder.
  *
  * Example:
  *
@@ -115,11 +115,13 @@ grpc::ServerBuilder& add_health_check_service(grpc::ServerBuilder& builder);
 /**
  * @brief Start a previously added HealthCheckService
  *
- * Must be called after `grpc::ServerBuilder.BuildAndStart(). The service must have been added using
- * `agrpc::add_health_check_service()`. May only be called once for a given HealthCheckService.
+ * Must be called after `grpc::ServerBuilder.BuildAndStart()`. The service must have been added using
+ * `add_health_check_service()`. May only be called once for a given HealthCheckService.
  *
- * Does not contribute to the work tracking of the GrpcContext. May not be called concurrently with
- * `GrpcContext::run/poll`. May not be used with a multi-threaded GrpcContext.
+ * Does not contribute to the work tracking of the GrpcContext.
+ *
+ * @attention May not be called concurrently with `GrpcContext::run/poll`. May not be used with a multi-threaded
+ * GrpcContext.
  *
  * @note When using `GrpcContext::run/poll_completion_queue` then none of the member functions of the service may be
  * used.
@@ -133,7 +135,7 @@ void start_health_check_service(agrpc::HealthCheckService& service, agrpc::GrpcC
 /**
  * @brief Start a previously added HealthCheckService (`grpc::Server` overload)
  *
- * The service must have been added using `agrpc::add_health_check_service()`. May only be called once for a given
+ * The service must have been added using `add_health_check_service()`. May only be called once for a given
  * HealthCheckService.
  *
  * Effectively performs:

@@ -29,7 +29,7 @@ AGRPC_NAMESPACE_BEGIN()
  *
  * This function can be used to process gRPC tags in places where the tag does not go through the
  * `grpc::CompletionQueue`, for example in mocked stubs. It processes the tag in a manner equivalent to `asio::post`
- * while being compatible with GrpcContext.run/poll_completion_queue().
+ * while being compatible with `GrpcContext::run_completion_queue()`/`GrpcContext::poll_completion_queue()`.
  *
  * Example using Google Mock:
  *
