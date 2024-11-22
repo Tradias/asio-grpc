@@ -14,7 +14,7 @@
 
 #include "utils/free_port.hpp"
 
-#include <boost/process/child.hpp>
+#include <boost/process/v1/child.hpp>
 #include <doctest/doctest.h>
 
 #include <thread>
