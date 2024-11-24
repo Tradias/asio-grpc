@@ -166,7 +166,7 @@ jobs:
           "-Dsonar.coverageReportPaths=${{ github.workspace }}/build-11/sonarqube-coverage.xml"
 
 
-  multi-clang-build:
+  clang-10-build:
     name: 'Ubuntu/20.04/Clang'
     runs-on: ubuntu-20.04
     env:
@@ -207,6 +207,15 @@ jobs:
     - name: Clang 10 Test
       run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-10 -C Release
 
+
+  clang-latest-build:
+    name: 'Ubuntu/24.04/Clang'
+    runs-on: ubuntu-24.04
+    env:
+      TRIPLET: 'x64-linux-clang-release'
+      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-clang-release -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-10/include/c++/v1/ -Wno-unused-command-line-argument" -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld'
+
+    steps:
     - name: Download doxygen
       working-directory: ${{ runner.workspace }}
       run: |
@@ -215,26 +224,26 @@ jobs:
         wget --quiet https://download.sourceforge.net/project/doxygen/rel-1.12.0/doxygen-1.12.0.linux.bin.tar.gz &&\
         tar xf doxygen-1.12.0.linux.bin.tar.gz --strip-components=1
 
-    - name: Clang 12 Configure CMake for examples
-      run: cmake --preset default -B ${{ github.workspace }}/build-12 -DCMAKE_CXX_COMPILER=$(which clang++-12) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }} -DASIO_GRPC_BUILD_TESTS=off -DASIO_GRPC_BUILD_EXAMPLES=on
+    - name: Clang Configure CMake for examples
+      run: cmake --preset default -B ${{ github.workspace }}/build -DCMAKE_CXX_COMPILER=$(which clang++) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }} -DASIO_GRPC_BUILD_TESTS=off -DASIO_GRPC_BUILD_EXAMPLES=on
 
-    - name: Clang 12 Build examples
-      run: cmake --build ${{ github.workspace }}/build-12 --config Release --parallel $(nproc)
+    - name: Clang Build examples
+      run: cmake --build ${{ github.workspace }}/build --config Release --parallel $(nproc)
 
-    - name: Clang 12 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-12 -DCMAKE_CXX_COMPILER=$(which clang++-12) -DDOXYGEN_EXECUTABLE=${{ runner.workspace }}/doxygen/bin/doxygen -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
+    - name: Clang Configure CMake
+      run: cmake --preset default -B ${{ github.workspace }}/build -DCMAKE_CXX_COMPILER=$(which clang++) -DDOXYGEN_EXECUTABLE=${{ runner.workspace }}/doxygen/bin/doxygen -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
 
-    - name: Clang 12 Build
-      run: cmake --build ${{ github.workspace }}/build-12 --config Release --parallel $(nproc) --target asio-grpc-check-header-syntax all
+    - name: Clang Build
+      run: cmake --build ${{ github.workspace }}/build --config Release --parallel $(nproc) --target asio-grpc-check-header-syntax all
 
-    - name: Clang 12 Test
-      run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-12 -C Release
+    - name: Clang Test
+      run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build -C Release
 
     - name: Run doxygen
       run: |
         cmake -E make_directory ${{ github.workspace }}/docs &&\
         cmake -E touch ${{ github.workspace }}/docs/.nojekyll &&\
-        cmake --build ${{ github.workspace }}/build-12 --config Release --target asio-grpc-doxygen
+        cmake --build ${{ github.workspace }}/build --config Release --target asio-grpc-doxygen
 
     - name: Push doxygen changes
       if: ${{ github.ref_name == 'master' }}
