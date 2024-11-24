@@ -15,7 +15,8 @@ vcpkg_from_github(
     fix-utf8-range.patch
     fix-arm64-msvc.patch
     fix-install-dirs.patch
-    static-assert.patch)
+    static-assert.patch
+    compare.patch)
 
 string(COMPARE EQUAL "${TARGET_TRIPLET}" "${HOST_TRIPLET}" protobuf_BUILD_PROTOC_BINARIES)
 string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "dynamic" protobuf_BUILD_SHARED_LIBS)
