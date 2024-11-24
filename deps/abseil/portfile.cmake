@@ -23,7 +23,8 @@ vcpkg_from_github(
     HEAD_REF
     master
     PATCHES
-    ${TIME_PATCH})
+    ${TIME_PATCH}
+    chord.patch)
 
 # With ABSL_PROPAGATE_CXX_STD=ON abseil automatically detect if it is being compiled with C++14 or C++17, and modifies
 # the installed `absl/base/options.h` header accordingly. This works even if CMAKE_CXX_STANDARD is not set. Abseil uses
