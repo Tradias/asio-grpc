@@ -23,7 +23,6 @@
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
 #include <agrpc/health_check_service.hpp>
-#include <grpc/support/log.h>
 #include <grpcpp/server_context.h>
 #include <grpcpp/support/async_unary_call.h>
 
@@ -308,9 +307,6 @@ inline void start_health_check_service(agrpc::HealthCheckService& service, agrpc
 inline void start_health_check_service(grpc::Server& server, agrpc::GrpcContext& grpc_context)
 {
     auto* const service = server.GetHealthCheckService();
-    // clang-format off
-    GPR_ASSERT(service && "Use `agrpc::add_health_check_service` to add the HealthCheckService to a ServerBuilder before calling this function");
-    // clang-format on
     agrpc::start_health_check_service(*static_cast<agrpc::HealthCheckService*>(service), grpc_context);
 }
 
