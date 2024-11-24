@@ -1,5 +1,5 @@
 diff --git a/src/google/protobuf/message_lite.h b/src/google/protobuf/message_lite.h
-index cae4e6bbe..8b643609b 100644
+index cae4e6bbe..ab5da650c 100644
 --- a/src/google/protobuf/message_lite.h
 +++ b/src/google/protobuf/message_lite.h
 @@ -22,6 +22,9 @@
@@ -12,3 +12,12 @@ index cae4e6bbe..8b643609b 100644
  
  #include "absl/base/attributes.h"
  #include "absl/log/absl_check.h"
+@@ -907,7 +910,7 @@ class TypeId {
+     return a.data_ >= b.data_;
+   }
+ 
+-#if defined(__cpp_impl_three_way_comparison) && \
++#if defined (__cpp_lib_three_way_comparison) && defined(__cpp_impl_three_way_comparison) && \
+     __cpp_impl_three_way_comparison >= 201907L
+   friend constexpr auto operator<=>(TypeId a, TypeId b) {
+     return a.data_ <=> b.data_;
