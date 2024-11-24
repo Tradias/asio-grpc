@@ -41,7 +41,7 @@ struct UseSender;
 /**
  * @brief Primary ClientRPC template
  *
- * This is the main entrypoint into the recommended API for implementing asynchronous gRPC clients.
+ * This is the main entrypoint for implementing asynchronous gRPC clients.
  *
  * @see
  * @c agrpc::ClientRPC<PrepareAsyncUnary,Executor> <br>
@@ -61,7 +61,7 @@ struct DefaultServerRPCTraits;
 /**
  * @brief Primary ServerRPC template
  *
- * This is the main entrypoint into the recommended API for implementing asynchronous gRPC servers.
+ * This is the main entrypoint for implementing asynchronous gRPC servers.
  *
  * @see
  * @c agrpc::ServerRPC<RequestUnary,TraitsT,Executor> <br>
