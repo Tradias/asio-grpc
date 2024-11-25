@@ -213,8 +213,8 @@ jobs:
       CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-clang-latest-release -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -Wno-unused-command-line-argument" -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld'
 
     steps:
-    - name: Install dot for doxygen
-      run: sudo apt-get install graphviz
+    - name: Install dot for doxygen and libc++ 18
+      run: sudo apt-get install graphviz libc++-18-dev
 
     - uses: actions/checkout@v4
 
@@ -224,12 +224,6 @@ jobs:
         vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
         vcpkgJsonGlob: 'vcpkg.json'
-
-    - name: Clang version
-      run: clang++ --version && which clang++
-
-    - name: Clang Configure CMake for examples
-      run: cmake --preset default -B ${{ github.workspace }}/build -DCMAKE_CXX_COMPILER=$(which clang++) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }} -DASIO_GRPC_BUILD_TESTS=off -DASIO_GRPC_BUILD_EXAMPLES=on
 
     - name: Run vcpkg
       run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
