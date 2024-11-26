@@ -71,6 +71,12 @@ if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPL
     asio_grpc_add_example(multi-threaded-alternative-server "20")
     target_link_libraries(asio-grpc-example-multi-threaded-alternative-server PRIVATE asio-grpc::asio-grpc)
 
+    asio_grpc_add_example(async-generator-client "20")
+    target_link_libraries(asio-grpc-example-async-generator-client PRIVATE asio-grpc::asio-grpc)
+
+    asio_grpc_add_example(async-generator-server "20")
+    target_link_libraries(asio-grpc-example-async-generator-server PRIVATE asio-grpc::asio-grpc)
+
     if(ASIO_GRPC_ENABLE_IO_URING_EXAMPLES OR "${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
         asio_grpc_add_example(file-transfer-client "20")
         target_link_libraries(asio-grpc-example-file-transfer-client

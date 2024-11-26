@@ -175,6 +175,8 @@ Click on `snippet source` to jump to the code of an individual example.
 <sup><a href='/example/streaming-server.cpp#L146-L151' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
+snippet: server-side-server-streaming-async-generator
+
 ### Multi-threaded
 
 <!-- snippet: server-side-multi-threaded -->

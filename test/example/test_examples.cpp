@@ -70,6 +70,11 @@ TEST_CASE("examples")
         client_program = ASIO_GRPC_EXAMPLE_MULTI_THREADED_ALTERNATIVE_CLIENT;
         server_program = ASIO_GRPC_EXAMPLE_MULTI_THREADED_ALTERNATIVE_SERVER;
     }
+    SUBCASE("async-generator")
+    {
+        client_program = ASIO_GRPC_EXAMPLE_ASYNC_GENERATOR_CLIENT;
+        server_program = ASIO_GRPC_EXAMPLE_ASYNC_GENERATOR_SERVER;
+    }
     boost::process::child server(server_program, args);
     REQUIRE(server.valid());
     std::this_thread::sleep_for(std::chrono::milliseconds(100));

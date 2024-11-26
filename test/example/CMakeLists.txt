@@ -20,6 +20,8 @@ target_link_libraries(asio-grpc-test-examples PRIVATE asio-grpc-test-main Boost:
 
 add_dependencies(
     asio-grpc-test-examples
+    asio-grpc-example-async-generator-client
+    asio-grpc-example-async-generator-server
     asio-grpc-example-streaming-client
     asio-grpc-example-streaming-server
     asio-grpc-example-share-io-context-client
@@ -42,6 +44,8 @@ target_compile_definitions(
     asio-grpc-test-examples
     PRIVATE
         "ASIO_GRPC_EXAMPLE_TEMP_DIR=\"${ASIO_GRPC_TEMP_DIR}\""
+        "ASIO_GRPC_EXAMPLE_ASYNC_GENERATOR_CLIENT=\"$<TARGET_FILE:asio-grpc-example-async-generator-client>\""
+        "ASIO_GRPC_EXAMPLE_ASYNC_GENERATOR_SERVER=\"$<TARGET_FILE:asio-grpc-example-async-generator-server>\""
         "ASIO_GRPC_EXAMPLE_STREAMING_CLIENT=\"$<TARGET_FILE:asio-grpc-example-streaming-client>\""
         "ASIO_GRPC_EXAMPLE_STREAMING_SERVER=\"$<TARGET_FILE:asio-grpc-example-streaming-server>\""
         "ASIO_GRPC_EXAMPLE_SHARE_IO_CONTEXT_CLIENT=\"$<TARGET_FILE:asio-grpc-example-share-io-context-client>\""
