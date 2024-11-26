@@ -175,7 +175,15 @@ Click on `snippet source` to jump to the code of an individual example.
 <sup><a href='/example/streaming-server.cpp#L146-L151' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
-snippet: server-side-server-streaming-async-generator
+<!-- snippet: server-side-server-streaming-async-generator -->
+<a id='snippet-server-side-server-streaming-async-generator'></a>
+```cpp
+// ---------------------------------------------------
+// (experimental) Server handling a server-streaming request using co_yield
+// ---------------------------------------------------
+```
+<sup><a href='/example/async-generator-server.cpp#L31-L35' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-server-streaming-async-generator' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
 
 ### Multi-threaded
 
