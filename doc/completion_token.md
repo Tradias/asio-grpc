@@ -1,6 +1,6 @@
 # Completion token
 
-The last argument to all async functions in this library is a [CompletionToken](https://www.boost.org/doc/libs/1_84_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers). It can be used to customize how to receive notification of the completion of the asynchronous operation. Some examples:
+The last argument to all async functions in this library is a [CompletionToken](https://www.boost.org/doc/libs/1_86_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers). It can be used to customize how to receive notification of the completion of the asynchronous operation. Some examples:
 
 ## Callback
 
@@ -18,8 +18,8 @@ The last argument to all async functions in this library is a [CompletionToken](
 
 ## Custom allocator
 
-Asio-grpc attempts to get the completion handler's associated allocator by calling [asio::get_associated_allocator](https://www.boost.org/doc/libs/1_84_0/doc/html/boost_asio/reference/get_associated_allocator.html) and uses to allocate intermediate storage, typically for the completion handler itself. Prior to invocation of the completion handler all storage is deallocated.
+Asio-grpc attempts to get the completion handler's associated allocator by calling [asio::get_associated_allocator](https://www.boost.org/doc/libs/1_86_0/doc/html/boost_asio/reference/get_associated_allocator.html) and uses to allocate intermediate storage, typically for the completion handler itself. Prior to invocation of the completion handler all storage is deallocated.
 
-The associated allocator can be customized using `asio::bind_allocator` (since Boost.Asio 1.79):
+The associated allocator can be customized using [asio::bind_allocator](https://www.boost.org/doc/libs/1_86_0/doc/html/boost_asio/reference/bind_allocator.html) (since Boost.Asio 1.79):
 
 @snippet alarm.cpp alarm-with-allocator-aware-awaitable
