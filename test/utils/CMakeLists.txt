@@ -77,7 +77,7 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
     target_precompile_headers(${_asio_grpc_name} PRIVATE "utils/precompiled_header.hpp")
 
     if(${_asio_grpc_type} STREQUAL "BOOST_ASIO")
-        target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc Boost::coroutine Boost::thread)
+        target_link_libraries(${_asio_grpc_name} PUBLIC asio-grpc Boost::coroutine Boost::thread Boost::cobalt)
 
         set(_test_suite_name "Boost.Asio")
         if(ARGN)
@@ -86,7 +86,7 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
             set(_test_suite_name "${_test_suite_name} ${ARGN}")
         endif()
 
-        target_compile_definitions(${_asio_grpc_name} PUBLIC BOOST_ASIO_SEPARATE_COMPILATION BOOST_ASIO_NO_TS_EXECUTORS)
+        target_compile_definitions(${_asio_grpc_name} PUBLIC BOOST_ASIO_SEPARATE_COMPILATION)
 
         target_sources(${_asio_grpc_name} PRIVATE "utils/io_context_test.cpp" "utils/io_context_test.hpp"
                                                   "utils/rpc.cpp" "utils/rpc.hpp")

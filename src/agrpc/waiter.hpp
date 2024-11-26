@@ -32,6 +32,10 @@ AGRPC_NAMESPACE_BEGIN()
  * Provides cancellation support for otherwise uncancelable operations by canceling only the act of waiting for
  * completion as opposed to the operation itself.
  *
+ * Note, this is a general purpose Asio utility and as such does not belong into asio-grpc. For coroutines, Boost.Cobalt
+ * offers a replacement in the form of `boost::cobalt::promise` with its [interrupt
+ * wait](https://www.boost.org/doc/libs/1_86_0/libs/cobalt/doc/html/index.html#interrupt_await) feature.
+ *
  * @tparam Signature Completion signature of the operation. For example, for `agrpc::Alarm::wait` this would be
  * `void(bool)`.
  * @tparam Executor Type of the I/O executor. For `agrpc::Alarm` this would be `agrpc::GrpcExecutor` or

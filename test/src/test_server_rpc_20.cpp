@@ -31,6 +31,13 @@
 #include <agrpc/server_rpc.hpp>
 #include <agrpc/waiter.hpp>
 
+#ifdef BOOST_ASIO_SEPARATE_COMPILATION
+#include <boost/cobalt/promise.hpp>
+#include <boost/cobalt/race.hpp>
+#include <boost/cobalt/spawn.hpp>
+#include <boost/cobalt/task.hpp>
+#endif
+
 #ifdef AGRPC_TEST_ASIO_HAS_CO_AWAIT
 template <class ServerRPC>
 struct ServerRPCAwaitableTest : test::ClientServerRPCTest<typename test::IntrospectRPC<ServerRPC>::ClientRPC, ServerRPC>
@@ -552,7 +559,7 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ServerStreamingServerRPC>,
 
 #ifdef AGRPC_TEST_ASIO_HAS_CORO
 template <class Yield, class Return, class Executor>
-struct CoroTraits : agrpc::DefaultServerRPCTraits
+struct CoroTraits
 {
     template <class U>
     using Rebind = asio::experimental::coro<Yield, U, Executor>;
@@ -620,6 +627,95 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ClientStreamingServerRPC>,
     };
     perform_requests(client_function, client_function, client_function);
     t.join();
+}
+#endif
+
+#ifdef BOOST_ASIO_SEPARATE_COMPILATION
+struct BoostCobaltTraits
+{
+    template <class U>
+    using Rebind = boost::cobalt::task<U>;
+
+    template <class RPCHandler, class CompletionHandler>
+    static boost::cobalt::use_op_t completion_token(RPCHandler&, CompletionHandler&)
+    {
+        return {};
+    }
+
+    template <class RPCHandler, class CompletionHandler, class IoExecutor, class Function>
+    static void co_spawn(const IoExecutor& io_executor, RPCHandler&, CompletionHandler& completion_handler,
+                         Function&& function)
+    {
+        boost::cobalt::spawn(asio::get_associated_executor(completion_handler, io_executor),
+                             static_cast<Function&&>(function)(), test::RethrowFirstArg{});
+    }
+};
+
+template <class ServerRPC>
+boost::cobalt::promise<bool> start_read(ServerRPC& rpc, typename ServerRPC::Request& request)
+{
+    return [](asio::executor_arg_t, agrpc::GrpcExecutor, ServerRPC& rpc,
+              typename ServerRPC::Request& request) -> boost::cobalt::promise<bool>
+    {
+        co_return co_await rpc.read(request, boost::cobalt::use_op);
+    }({}, rpc.get_executor(), rpc, request);
+}
+
+TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::BidirectionalStreamingServerRPC>,
+                  "Boost.Cobalt ServerRPC interrupted read")
+{
+    agrpc::register_coroutine_rpc_handler<ServerRPC, BoostCobaltTraits>(
+        get_executor(), service,
+        [&](ServerRPC& rpc) -> boost::cobalt::task<void>
+        {
+            Request request;
+            Response response;
+            agrpc::Alarm alarm{rpc.get_executor()};
+            std::optional read{start_read(rpc, request)};
+            auto next_deadline = test::two_hundred_milliseconds_from_now();
+            while (true)
+            {
+                auto result = co_await boost::cobalt::race(*read, alarm.wait(next_deadline, boost::cobalt::use_op));
+                if (result.index() == 0)  // read completed
+                {
+                    const bool ok = boost::variant2::get<0>(result);
+                    if (!ok)
+                    {
+                        break;
+                    }
+                    read.emplace(start_read(rpc, request));
+                }
+                else  // alarm expired
+                {
+                    response.set_integer(request.integer() * 10);
+                    CHECK(co_await rpc.write(response, boost::cobalt::use_op));
+                    next_deadline = test::two_hundred_milliseconds_from_now();
+                }
+            }
+            CHECK(co_await rpc.finish(grpc::Status::OK, boost::cobalt::use_op));
+            if (!read->ready())
+            {
+                co_await *std::move(read);
+            }
+        },
+        test::RethrowFirstArg{});
+    const auto client_function = [&](auto& request, auto& response, const asio::yield_context& yield)
+    {
+        auto rpc = create_rpc();
+        start_rpc(rpc, request, response, yield);
+        request.set_integer(1);
+        CHECK(rpc.write(request, yield));
+        CHECK(rpc.read(response, yield));
+        CHECK_EQ(10, response.integer());
+        request.set_integer(2);
+        CHECK(rpc.write(request, yield));
+        CHECK(rpc.read(response, yield));
+        CHECK_EQ(20, response.integer());
+        CHECK(rpc.writes_done(yield));
+        CHECK_FALSE(rpc.read(response, yield));
+        CHECK_EQ(grpc::StatusCode::OK, rpc.finish(yield).error_code());
+    };
+    perform_requests(client_function, client_function, client_function);
 }
 #endif
 #endif
