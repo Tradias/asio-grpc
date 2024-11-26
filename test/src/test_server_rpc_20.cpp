@@ -31,7 +31,7 @@
 #include <agrpc/server_rpc.hpp>
 #include <agrpc/waiter.hpp>
 
-#ifdef BOOST_ASIO_SEPARATE_COMPILATION
+#ifdef AGRPC_TEST_HAS_BOOST_COBALT
 #include <boost/cobalt/promise.hpp>
 #include <boost/cobalt/race.hpp>
 #include <boost/cobalt/spawn.hpp>
@@ -630,7 +630,7 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ClientStreamingServerRPC>,
 }
 #endif
 
-#ifdef BOOST_ASIO_SEPARATE_COMPILATION
+#ifdef AGRPC_TEST_HAS_BOOST_COBALT
 struct BoostCobaltTraits
 {
     template <class U>
