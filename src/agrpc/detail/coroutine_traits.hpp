@@ -35,8 +35,7 @@ struct CoroutineTraits;
 template <class T, class Executor>
 struct CoroutineTraits<asio::awaitable<T, Executor>>
 {
-    template <class U>
-    using Rebind = asio::awaitable<U, Executor>;
+    using ReturnType = asio::awaitable<void, Executor>;
 
     template <class RPCHandler, class CompletionHandler>
     static asio::use_awaitable_t<Executor> completion_token(RPCHandler&, CompletionHandler&)

@@ -21,11 +21,11 @@
 
 namespace example
 {
-template <class Executor = boost::asio::any_io_executor>
+/* [asio-coro-traits] */
+template <class Executor = boost::asio::any_io_executor, class Allocator = std::allocator<void>>
 struct AsioCoroTraits
 {
-    template <class U>
-    using Rebind = boost::asio::experimental::coro<void, U, Executor>;
+    using ReturnType = boost::asio::experimental::coro<void, void, Executor, Allocator>;
 
     template <class RPCHandler, class CompletionHandler>
     static boost::asio::deferred_t completion_token(RPCHandler&, CompletionHandler&)
@@ -42,6 +42,7 @@ struct AsioCoroTraits
             boost::asio::detached);
     }
 };
+/* [asio-coro-traits] */
 }  // namespace example
 
 #endif  // AGRPC_HELPER_CORO_TRAITS_HPP

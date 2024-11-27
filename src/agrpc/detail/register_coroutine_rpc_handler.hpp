@@ -36,12 +36,11 @@ struct RegisterCoroutineRPCHandlerOperation
     struct Type : detail::RegisterRPCHandlerOperationAsioBase<ServerRPC, RPCHandler, CompletionHandler>
     {
         using Base = detail::RegisterRPCHandlerOperationAsioBase<ServerRPC, RPCHandler, CompletionHandler>;
+        using Awaitable = typename CoroTraits::ReturnType;
         using typename Base::Allocator;
         using typename Base::RefCountGuard;
         using typename Base::ServerRPCExecutor;
         using typename Base::Service;
-
-        using Awaitable = typename CoroTraits::template Rebind<void>;
 
         template <class Ch>
         Type(const ServerRPCExecutor& executor, Service& service, RPCHandler&& rpc_handler, Ch&& completion_handler)

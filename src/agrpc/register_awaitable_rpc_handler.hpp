@@ -34,7 +34,7 @@ AGRPC_NAMESPACE_BEGIN()
  * first argument and `ServerRPC::Request&` as second argument (only for unary and server-streaming rpcs). The ServerRPC
  * is automatically cancelled at the end of the rpc handler if `finish()` was not called earlier. The return value of
  * the rpc handler is `co_spawn`ed in a manner similar to:
- * `asio::co_spawn(asio::get_associated_executor(completion_handler, executor), rpc_handler())`, where
+ * `asio::co_spawn(asio::get_associated_executor(completion_handler, executor), rpc_handler)`, where
  * `completion_handler` is created from `token` and `executor` the first argument passed to this function.
  *
  * This asynchronous operation runs forever unless it is cancelled, the rpc handler throws an exception or the server is

@@ -558,11 +558,10 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ServerStreamingServerRPC>,
 #endif
 
 #ifdef AGRPC_TEST_ASIO_HAS_CORO
-template <class Yield, class Return, class Executor>
+template <class Executor>
 struct CoroTraits
 {
-    template <class U>
-    using Rebind = asio::experimental::coro<Yield, U, Executor>;
+    using ReturnType = asio::experimental::coro<void, void, Executor>;
 
     template <class RPCHandler, class CompletionHandler>
     static asio::deferred_t completion_token(RPCHandler&, CompletionHandler&)
@@ -608,7 +607,7 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ClientStreamingServerRPC>,
         }
     };
     asio::io_context io_context{1};
-    agrpc::register_coroutine_rpc_handler<ServerRPC, CoroTraits<void, void, Exec>>(
+    agrpc::register_coroutine_rpc_handler<ServerRPC, CoroTraits<Exec>>(
         get_executor(), service, Handler{}, asio::bind_executor(io_context.get_executor(), test::RethrowFirstArg{}));
     std::thread t{[&]
                   {
@@ -633,8 +632,7 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ClientStreamingServerRPC>,
 #ifdef AGRPC_TEST_HAS_BOOST_COBALT
 struct BoostCobaltTraits
 {
-    template <class U>
-    using Rebind = boost::cobalt::task<U>;
+    using ReturnType = boost::cobalt::task<void>;
 
     template <class RPCHandler, class CompletionHandler>
     static boost::cobalt::use_op_t completion_token(RPCHandler&, CompletionHandler&)

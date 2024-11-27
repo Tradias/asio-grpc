@@ -247,8 +247,7 @@ TEST_CASE_FIXTURE(test::ExecutionGrpcContextTest, "unifex Waiter: initiate alarm
 #if defined(AGRPC_TEST_ASIO_HAS_CORO) && !UNIFEX_NO_COROUTINES
 struct UnifexCoroutineTraits
 {
-    template <class U>
-    using Rebind = unifex::task<U>;
+    using ReturnType = unifex::task<void>;
 
     template <class RPCHandler, class CompletionHandler>
     static auto completion_token(RPCHandler&, CompletionHandler&)
