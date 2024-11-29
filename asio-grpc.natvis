@@ -1,73 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
-    <!-- CompressedPair -->
     <Type Name="agrpc::b::detail::CompressedPair&lt;*,*,1&gt;">
-        <DisplayString>{*($T2 *)this} ({"$T2",sb})</DisplayString>
-        <Expand>
-            <ExpandedItem>*($T2 *)this</ExpandedItem>
-        </Expand>
-    </Type>
-    <Type Name="agrpc::s::detail::CompressedPair&lt;*,*,1&gt;">
-        <DisplayString>{*($T2 *)this} ({"$T2",sb})</DisplayString>
-        <Expand>
-            <ExpandedItem>*($T2 *)this</ExpandedItem>
-        </Expand>
-    </Type>
-    <Type Name="agrpc::u::detail::CompressedPair&lt;*,*,1&gt;">
-        <DisplayString>{*($T2 *)this} ({"$T2",sb})</DisplayString>
-        <Expand>
-            <ExpandedItem>*($T2 *)this</ExpandedItem>
-        </Expand>
-    </Type>
-    <Type Name="agrpc::e::detail::CompressedPair&lt;*,*,1&gt;">
+        <AlternativeType Name="agrpc::s::detail::CompressedPair&lt;*,*,1&gt;" />
+        <AlternativeType Name="agrpc::u::detail::CompressedPair&lt;*,*,1&gt;" />
+        <AlternativeType Name="agrpc::e::detail::CompressedPair&lt;*,*,1&gt;" />
+        <AlternativeType Name="agrpc::r::detail::CompressedPair&lt;*,*,1&gt;" />
+        <AlternativeType Name="agrpc::t::detail::CompressedPair&lt;*,*,1&gt;" />
+        <AlternativeType Name="agrpc::a::detail::CompressedPair&lt;*,*,1&gt;" />
+        <AlternativeType Name="agrpc::c::detail::CompressedPair&lt;*,*,1&gt;" />
         <DisplayString>{*($T2 *)this} ({"$T2",sb})</DisplayString>
         <Expand>
             <ExpandedItem>*($T2 *)this</ExpandedItem>
         </Expand>
     </Type>
     <Type Name="agrpc::b::detail::CompressedPair&lt;*,*,0&gt;">
+        <AlternativeType Name="agrpc::s::detail::CompressedPair&lt;*,*,0&gt;" />
+        <AlternativeType Name="agrpc::u::detail::CompressedPair&lt;*,*,0&gt;" />
+        <AlternativeType Name="agrpc::e::detail::CompressedPair&lt;*,*,0&gt;" />
+        <AlternativeType Name="agrpc::r::detail::CompressedPair&lt;*,*,0&gt;" />
+        <AlternativeType Name="agrpc::t::detail::CompressedPair&lt;*,*,0&gt;" />
+        <AlternativeType Name="agrpc::a::detail::CompressedPair&lt;*,*,0&gt;" />
+        <AlternativeType Name="agrpc::c::detail::CompressedPair&lt;*,*,0&gt;" />
         <DisplayString>{second_} ({"$T2",sb})</DisplayString>
         <Expand>
             <ExpandedItem>second_</ExpandedItem>
         </Expand>
     </Type>
-    <Type Name="agrpc::s::detail::CompressedPair&lt;*,*,0&gt;">
-        <DisplayString>{second_} ({"$T2",sb})</DisplayString>
-        <Expand>
-            <ExpandedItem>second_</ExpandedItem>
-        </Expand>
-    </Type>
-    <Type Name="agrpc::u::detail::CompressedPair&lt;*,*,0&gt;">
-        <DisplayString>{second_} ({"$T2",sb})</DisplayString>
-        <Expand>
-            <ExpandedItem>second_</ExpandedItem>
-        </Expand>
-    </Type>
-    <Type Name="agrpc::e::detail::CompressedPair&lt;*,*,0&gt;">
-        <DisplayString>{second_} ({"$T2",sb})</DisplayString>
-        <Expand>
-            <ExpandedItem>second_</ExpandedItem>
-        </Expand>
-    </Type>
-    <!-- RepeatedlyRequestContext -->
-    <Type Name="agrpc::b::RepeatedlyRequestContext&lt;*&gt;">
-        <DisplayString>{impl_.impl_.first_}</DisplayString>
-        <Expand>
-            <Item Name="[server_context]">impl_.impl_.first_->context_</Item>
-            <Item Name="[request]" Optional="true">impl_.impl_.first_->request_</Item>
-            <Item Name="[responder]">impl_.impl_.first_->responder_</Item>
-        </Expand>
-    </Type>
-    <Type Name="agrpc::s::RepeatedlyRequestContext&lt;*&gt;">
-        <DisplayString>{impl_.impl_.first_}</DisplayString>
-        <Expand>
-            <Item Name="[server_context_]">impl_.impl_.first_->context_</Item>
-            <Item Name="[request]" Optional="true">impl_.impl_.first_->request_</Item>
-            <Item Name="[responder]">impl_.impl_.first_->responder_</Item>
-        </Expand>
-    </Type>
-    <!-- BasicGrpcExecutor -->
     <Type Name="agrpc::b::BasicGrpcExecutor&lt;*,*&gt;">
+        <AlternativeType Name="agrpc::s::BasicGrpcExecutor&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::u::BasicGrpcExecutor&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::e::BasicGrpcExecutor&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::r::BasicGrpcExecutor&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::t::BasicGrpcExecutor&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::a::BasicGrpcExecutor&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::c::BasicGrpcExecutor&lt;*,*&gt;" />
         <DisplayString>{this->impl_}</DisplayString>
         <Expand>
             <Item Name="[grpc_context]">this->impl_.first_</Item>
@@ -76,79 +42,40 @@
             <Item Name="&lt;outstanding_work_tracked&gt;">($T2 &amp; 2) != 0</Item>
         </Expand>
     </Type>
-    <Type Name="agrpc::s::BasicGrpcExecutor&lt;*,*&gt;">
-        <DisplayString>{this->impl_}</DisplayString>
-        <Expand>
-            <Item Name="[grpc_context]">this->impl_.first_</Item>
-            <Item Name="[allocator]">this->impl_</Item>
-            <Item Name="&lt;blocking_never&gt;">($T2 &amp; 1) != 0</Item>
-            <Item Name="&lt;outstanding_work_tracked&gt;">($T2 &amp; 2) != 0</Item>
-        </Expand>
-    </Type>
-    <Type Name="agrpc::u::BasicGrpcExecutor&lt;*,*&gt;">
-        <DisplayString>{this->impl_}</DisplayString>
-        <Expand>
-            <Item Name="[grpc_context]">this->impl_.first_</Item>
-            <Item Name="[allocator]">this->impl_</Item>
-            <Item Name="&lt;blocking_never&gt;">($T2 &amp; 1) != 0</Item>
-            <Item Name="&lt;outstanding_work_tracked&gt;">($T2 &amp; 2) != 0</Item>
-        </Expand>
-    </Type>
-    <Type Name="agrpc::e::BasicGrpcExecutor&lt;*,*&gt;">
-        <DisplayString>{this->impl_}</DisplayString>
-        <Expand>
-            <Item Name="[grpc_context]">this->impl_.first_</Item>
-            <Item Name="[allocator]">this->impl_</Item>
-            <Item Name="&lt;blocking_never&gt;">($T2 &amp; 1) != 0</Item>
-            <Item Name="&lt;outstanding_work_tracked&gt;">($T2 &amp; 2) != 0</Item>
-        </Expand>
-    </Type>
-    <!-- AllocatorBinder -->
-    <Type Name="agrpc::b::AllocatorBinder&lt;*,*&gt;">
+    <Type Name="agrpc::b::detail::AllocatorBinder&lt;*,*&gt;">
+        <AlternativeType Name="agrpc::s::detail::AllocatorBinder&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::r::detail::AllocatorBinder&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::t::detail::AllocatorBinder&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::a::detail::AllocatorBinder&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::c::detail::AllocatorBinder&lt;*,*&gt;" />
         <DisplayString>{impl_.first_}</DisplayString>
         <Expand>
             <Item Name="[target]">impl_.first_</Item>
             <Item Name="[allocator]" Optional="true">impl_.second_</Item>
         </Expand>
     </Type>
-    <Type Name="agrpc::s::AllocatorBinder&lt;*,*&gt;">
-        <DisplayString>{impl_.first_}</DisplayString>
-        <Expand>
-            <Item Name="[target]">impl_.first_</Item>
-            <Item Name="[allocator]" Optional="true">impl_.second_</Item>
-        </Expand>
-    </Type>
-    <!-- Alarm -->
     <Type Name="agrpc::b::BasicAlarm&lt;*&gt;">
+        <AlternativeType Name="agrpc::s::BasicAlarm&lt;*&gt;" />
+        <AlternativeType Name="agrpc::u::BasicAlarm&lt;*&gt;" />
+        <AlternativeType Name="agrpc::e::BasicAlarm&lt;*&gt;" />
+        <AlternativeType Name="agrpc::r::BasicAlarm&lt;*&gt;" />
+        <AlternativeType Name="agrpc::t::BasicAlarm&lt;*&gt;" />
+        <AlternativeType Name="agrpc::a::BasicAlarm&lt;*&gt;" />
+        <AlternativeType Name="agrpc::c::BasicAlarm&lt;*&gt;" />
         <DisplayString>{alarm_}</DisplayString>
         <Expand>
             <Item Name="[alarm]">alarm_</Item>
             <Item Name="[executor]">executor_</Item>
         </Expand>
     </Type>
-    <Type Name="agrpc::s::BasicAlarm&lt;*&gt;">
-        <DisplayString>{alarm_}</DisplayString>
-        <Expand>
-            <Item Name="[alarm]">alarm_</Item>
-            <Item Name="[executor]">executor_</Item>
-        </Expand>
-    </Type>
-    <Type Name="agrpc::u::BasicAlarm&lt;*&gt;">
-        <DisplayString>{alarm_}</DisplayString>
-        <Expand>
-            <Item Name="[alarm]">alarm_</Item>
-            <Item Name="[executor]">executor_</Item>
-        </Expand>
-    </Type>
-    <Type Name="agrpc::e::BasicAlarm&lt;*&gt;">
-        <DisplayString>{alarm_}</DisplayString>
-        <Expand>
-            <Item Name="[alarm]">alarm_</Item>
-            <Item Name="[executor]">executor_</Item>
-        </Expand>
-    </Type>
-    <!-- ClientRPC -->
     <Type Name="agrpc::b::ClientRPC&lt;*,*&gt;">
+        <AlternativeType Name="agrpc::s::ClientRPC&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::u::ClientRPC&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::e::ClientRPC&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::r::ClientRPC&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::t::ClientRPC&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::a::ClientRPC&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::c::ClientRPC&lt;*,*&gt;" />
         <DisplayString Condition="this->is_finished_">finished</DisplayString>
         <DisplayString Condition="!this->is_finished_">active</DisplayString>
         <Expand>
@@ -156,44 +83,17 @@
             <Item Name="[client_context]">this->client_context_</Item>
             <Item Name="[responder]">this->responder_</Item>
             <Item Name="[finished]">this->is_finished_</Item>
-            <Item Name="[writes_done]" Condition="TYPE == agrpc::e::ClientRPCType::BIDIRECTIONAL_STREAMING">this->is_writes_done_</Item>
+            <Item Name="[writes_done]" Condition="(int)TYPE == 3 || (int)TYPE == 4 || (int)TYPE == 5">this->is_writes_done_</Item>
         </Expand>
     </Type>
-    <Type Name="agrpc::s::ClientRPC&lt;*,*&gt;">
-        <DisplayString Condition="this->is_finished_">finished</DisplayString>
-        <DisplayString Condition="!this->is_finished_">active</DisplayString>
-        <Expand>
-            <Item Name="[executor]">this->executor_</Item>
-            <Item Name="[client_context]">this->client_context_</Item>
-            <Item Name="[responder]">this->responder_</Item>
-            <Item Name="[finished]">this->is_finished_</Item>
-            <Item Name="[writes_done]" Condition="TYPE == agrpc::e::ClientRPCType::BIDIRECTIONAL_STREAMING">this->is_writes_done_</Item>
-        </Expand>
-    </Type>
-    <Type Name="agrpc::u::ClientRPC&lt;*,*&gt;">
-        <DisplayString Condition="this->is_finished_">finished</DisplayString>
-        <DisplayString Condition="!this->is_finished_">active</DisplayString>
-        <Expand>
-            <Item Name="[executor]">this->executor_</Item>
-            <Item Name="[client_context]">this->client_context_</Item>
-            <Item Name="[responder]">this->responder_</Item>
-            <Item Name="[finished]">this->is_finished_</Item>
-            <Item Name="[writes_done]" Condition="TYPE == agrpc::e::ClientRPCType::BIDIRECTIONAL_STREAMING">this->is_writes_done_</Item>
-        </Expand>
-    </Type>
-    <Type Name="agrpc::e::ClientRPC&lt;*,*&gt;">
-        <DisplayString Condition="this->is_finished_">finished</DisplayString>
-        <DisplayString Condition="!this->is_finished_">active</DisplayString>
-        <Expand>
-            <Item Name="[executor]">this->executor_</Item>
-            <Item Name="[client_context]">this->client_context_</Item>
-            <Item Name="[responder]">this->responder_</Item>
-            <Item Name="[finished]">this->is_finished_</Item>
-            <Item Name="[writes_done]" Condition="TYPE == agrpc::e::ClientRPCType::BIDIRECTIONAL_STREAMING">this->is_writes_done_</Item>
-        </Expand>
-    </Type>
-    <!-- ServerRPC -->
     <Type Name="agrpc::b::ServerRPC&lt;*,*,*&gt;">
+        <AlternativeType Name="agrpc::s::ServerRPC&lt;*,*,*&gt;" />
+        <AlternativeType Name="agrpc::u::ServerRPC&lt;*,*,*&gt;" />
+        <AlternativeType Name="agrpc::e::ServerRPC&lt;*,*,*&gt;" />
+        <AlternativeType Name="agrpc::r::ServerRPC&lt;*,*,*&gt;" />
+        <AlternativeType Name="agrpc::t::ServerRPC&lt;*,*,*&gt;" />
+        <AlternativeType Name="agrpc::a::ServerRPC&lt;*,*,*&gt;" />
+        <AlternativeType Name="agrpc::c::ServerRPC&lt;*,*,*&gt;" />
         <DisplayString Condition="this->is_finished_">finished</DisplayString>
         <DisplayString Condition="!this->is_finished_">active</DisplayString>
         <Expand>
@@ -204,139 +104,80 @@
             <Item Name="[alive]" Optional="true">this->event_</Item>
         </Expand>
     </Type>
-    <Type Name="agrpc::s::ServerRPC&lt;*,*,*&gt;">
-        <DisplayString Condition="this->is_finished_">finished</DisplayString>
-        <DisplayString Condition="!this->is_finished_">active</DisplayString>
-        <Expand>
-            <Item Name="[executor]">this->executor_</Item>
-            <Item Name="[server_context]">this->server_context_</Item>
-            <Item Name="[responder]">this->responder_</Item>
-            <Item Name="[finished]">this->is_finished_</Item>
-            <Item Name="[alive]" Optional="true">this->event_</Item>
-        </Expand>
-    </Type>
-    <Type Name="agrpc::u::ServerRPC&lt;*,*,*&gt;">
-        <DisplayString Condition="this->is_finished_">finished</DisplayString>
-        <DisplayString Condition="!this->is_finished_">active</DisplayString>
-        <Expand>
-            <Item Name="[executor]">this->executor_</Item>
-            <Item Name="[server_context]">this->server_context_</Item>
-            <Item Name="[responder]">this->responder_</Item>
-            <Item Name="[finished]">this->is_finished_</Item>
-            <Item Name="[alive]" Optional="true">this->event_</Item>
-        </Expand>
-    </Type>
-    <Type Name="agrpc::e::ServerRPC&lt;*,*,*&gt;">
-        <DisplayString Condition="this->is_finished_">finished</DisplayString>
-        <DisplayString Condition="!this->is_finished_">active</DisplayString>
-        <Expand>
-            <Item Name="[executor]">this->executor_</Item>
-            <Item Name="[server_context]">this->server_context_</Item>
-            <Item Name="[responder]">this->responder_</Item>
-            <Item Name="[finished]">this->is_finished_</Item>
-            <Item Name="[alive]" Optional="true">this->event_</Item>
-        </Expand>
-    </Type>
-    <!-- ServerRPCPtr -->
     <Type Name="agrpc::b::ServerRPCPtr&lt;*&gt;">
+        <AlternativeType Name="agrpc::s::ServerRPCPtr&lt;*&gt;" />
+        <AlternativeType Name="agrpc::r::ServerRPCPtr&lt;*&gt;" />
+        <AlternativeType Name="agrpc::t::ServerRPCPtr&lt;*&gt;" />
+        <AlternativeType Name="agrpc::a::ServerRPCPtr&lt;*&gt;" />
+        <AlternativeType Name="agrpc::c::ServerRPCPtr&lt;*&gt;" />
         <DisplayString>{server_rpc_}</DisplayString>
         <Expand>
             <ExpandedItem>server_rpc_->rpc_</ExpandedItem>
             <Item Name="[request]" Optional="true">server_rpc_->request_</Item>
         </Expand>
     </Type>
-    <Type Name="agrpc::s::ServerRPCPtr&lt;*&gt;">
-        <DisplayString>{server_rpc_}</DisplayString>
-        <Expand>
-            <ExpandedItem>server_rpc_->rpc_</ExpandedItem>
-            <Item Name="[request]" Optional="true">server_rpc_->request_</Item>
-        </Expand>
-    </Type>
-    <!-- ServerRPCWithRequest -->
     <Type Name="agrpc::b::detail::ServerRPCWithRequest&lt;*&gt;">
+        <AlternativeType Name="agrpc::s::ServerRPCPtr&lt;*&gt;" />
+        <AlternativeType Name="agrpc::r::ServerRPCPtr&lt;*&gt;" />
+        <AlternativeType Name="agrpc::t::ServerRPCPtr&lt;*&gt;" />
+        <AlternativeType Name="agrpc::a::ServerRPCPtr&lt;*&gt;" />
+        <AlternativeType Name="agrpc::c::ServerRPCPtr&lt;*&gt;" />
         <DisplayString>{rpc_}</DisplayString>
     </Type>
-    <Type Name="agrpc::s::detail::ServerRPCWithRequest&lt;*&gt;">
-        <DisplayString>{rpc_}</DisplayString>
-    </Type>
-    <!-- NotifyWhenDoneEvent -->
     <Type Name="agrpc::b::detail::NotifyWhenDoneEvent">
+        <AlternativeType Name="agrpc::s::detail::NotifyWhenDoneEvent" />
+        <AlternativeType Name="agrpc::u::detail::NotifyWhenDoneEvent" />
+        <AlternativeType Name="agrpc::e::detail::NotifyWhenDoneEvent" />
+        <AlternativeType Name="agrpc::r::detail::NotifyWhenDoneEvent" />
+        <AlternativeType Name="agrpc::t::detail::NotifyWhenDoneEvent" />
+        <AlternativeType Name="agrpc::a::detail::NotifyWhenDoneEvent" />
+        <AlternativeType Name="agrpc::c::detail::NotifyWhenDoneEvent" />
         <DisplayString>{this->running_}</DisplayString>
     </Type>
-    <Type Name="agrpc::s::detail::NotifyWhenDoneEvent">
-        <DisplayString>{this->running_}</DisplayString>
-    </Type>
-    <Type Name="agrpc::u::detail::NotifyWhenDoneEvent">
-        <DisplayString>{this->running_}</DisplayString>
-    </Type>
-    <Type Name="agrpc::e::detail::NotifyWhenDoneEvent">
-        <DisplayString>{this->running_}</DisplayString>
-    </Type>
-    <!-- Waiter -->
     <Type Name="agrpc::b::Waiter&lt;*,*&gt;">
+        <AlternativeType Name="agrpc::s::Waiter&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::u::Waiter&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::e::Waiter&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::r::Waiter&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::t::Waiter&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::a::Waiter&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::c::Waiter&lt;*,*&gt;" />
         <DisplayString>{event_}</DisplayString>
         <Expand>
             <Item Name="[executor]">executor_</Item>
             <Item Name="[event]">event_</Item>
         </Expand>
     </Type>
-    <Type Name="agrpc::s::Waiter&lt;*,*&gt;">
-        <DisplayString>{event_}</DisplayString>
-        <Expand>
-            <Item Name="[executor]">executor_</Item>
-            <Item Name="[event]">event_</Item>
-        </Expand>
-    </Type>
-    <Type Name="agrpc::u::Waiter&lt;*,*&gt;">
-        <DisplayString>{event_}</DisplayString>
-        <Expand>
-            <Item Name="[executor]">executor_</Item>
-            <Item Name="[event]">event_</Item>
-        </Expand>
-    </Type>
-    <Type Name="agrpc::e::Waiter&lt;*,*&gt;">
-        <DisplayString>{event_}</DisplayString>
-        <Expand>
-            <Item Name="[executor]">executor_</Item>
-            <Item Name="[event]">event_</Item>
-        </Expand>
-    </Type>
-    <!-- ManualResetEvent -->
     <Type Name="agrpc::b::detail::ManualResetEvent&lt;*&gt;">
+        <AlternativeType Name="agrpc::s::detail::ManualResetEvent&lt;*&gt;" />
+        <AlternativeType Name="agrpc::u::detail::ManualResetEvent&lt;*&gt;" />
+        <AlternativeType Name="agrpc::e::detail::ManualResetEvent&lt;*&gt;" />
+        <AlternativeType Name="agrpc::r::detail::ManualResetEvent&lt;*&gt;" />
+        <AlternativeType Name="agrpc::t::detail::ManualResetEvent&lt;*&gt;" />
+        <AlternativeType Name="agrpc::a::detail::ManualResetEvent&lt;*&gt;" />
+        <AlternativeType Name="agrpc::c::detail::ManualResetEvent&lt;*&gt;" />
         <DisplayString Condition="!op_._Storage._Value">reset</DisplayString>
         <DisplayString Condition="(void*)op_._Storage._Value == this">ready</DisplayString>
         <DisplayString Condition="op_._Storage._Value &amp;&amp; (void*)op_._Storage._Value != this">waiting</DisplayString>
     </Type>
-    <Type Name="agrpc::s::detail::ManualResetEvent&lt;*&gt;">
-        <DisplayString Condition="!op_._Storage._Value">reset</DisplayString>
-        <DisplayString Condition="(void*)op_._Storage._Value == this">ready</DisplayString>
-        <DisplayString Condition="op_._Storage._Value &amp;&amp; (void*)op_._Storage._Value != this">waiting</DisplayString>
-    </Type>
-    <Type Name="agrpc::u::detail::ManualResetEvent&lt;*&gt;">
-        <DisplayString Condition="!op_._Storage._Value">reset</DisplayString>
-        <DisplayString Condition="(void*)op_._Storage._Value == this">ready</DisplayString>
-        <DisplayString Condition="op_._Storage._Value &amp;&amp; (void*)op_._Storage._Value != this">waiting</DisplayString>
-    </Type>
-    <Type Name="agrpc::e::detail::ManualResetEvent&lt;*&gt;">
-        <DisplayString Condition="!op_._Storage._Value">reset</DisplayString>
-        <DisplayString Condition="(void*)op_._Storage._Value == this">ready</DisplayString>
-        <DisplayString Condition="op_._Storage._Value &amp;&amp; (void*)op_._Storage._Value != this">waiting</DisplayString>
-    </Type>
-    <!-- OperationBase -->
     <Type Name="agrpc::b::detail::OperationBase">
+        <AlternativeType Name="agrpc::s::detail::OperationBase" />
+        <AlternativeType Name="agrpc::u::detail::OperationBase" />
+        <AlternativeType Name="agrpc::e::detail::OperationBase" />
+        <AlternativeType Name="agrpc::r::detail::OperationBase" />
+        <AlternativeType Name="agrpc::t::detail::OperationBase" />
+        <AlternativeType Name="agrpc::a::detail::OperationBase" />
+        <AlternativeType Name="agrpc::c::detail::OperationBase" />
         <DisplayString>{this->on_complete_}</DisplayString>
     </Type>
-    <Type Name="agrpc::s::detail::OperationBase">
-        <DisplayString>{this->on_complete_}</DisplayString>
-    </Type>
-    <Type Name="agrpc::u::detail::OperationBase">
-        <DisplayString>{this->on_complete_}</DisplayString>
-    </Type>
-    <Type Name="agrpc::e::detail::OperationBase">
-        <DisplayString>{this->on_complete_}</DisplayString>
-    </Type>
-    <!-- IntrusiveQueue -->
     <Type Name="agrpc::b::detail::IntrusiveQueue&lt;*&gt;">
+        <AlternativeType Name="agrpc::s::detail::IntrusiveQueue&lt;*&gt;" />
+        <AlternativeType Name="agrpc::u::detail::IntrusiveQueue&lt;*&gt;" />
+        <AlternativeType Name="agrpc::e::detail::IntrusiveQueue&lt;*&gt;" />
+        <AlternativeType Name="agrpc::r::detail::IntrusiveQueue&lt;*&gt;" />
+        <AlternativeType Name="agrpc::t::detail::IntrusiveQueue&lt;*&gt;" />
+        <AlternativeType Name="agrpc::a::detail::IntrusiveQueue&lt;*&gt;" />
+        <AlternativeType Name="agrpc::c::detail::IntrusiveQueue&lt;*&gt;" />
         <DisplayString>{this->head_}</DisplayString>
         <Expand>
             <LinkedListItems>
@@ -346,79 +187,33 @@
             </LinkedListItems>
         </Expand>
     </Type>
-    <Type Name="agrpc::s::detail::IntrusiveQueue&lt;*&gt;">
-        <DisplayString>{this->head_}</DisplayString>
-        <Expand>
-            <LinkedListItems>
-                <HeadPointer>head_</HeadPointer>
-                <NextPointer>next_</NextPointer>
-                <ValueNode>this</ValueNode>
-            </LinkedListItems>
-        </Expand>
-    </Type>
-    <Type Name="agrpc::u::detail::IntrusiveQueue&lt;*&gt;">
-        <DisplayString>{this->head_}</DisplayString>
-        <Expand>
-            <LinkedListItems>
-                <HeadPointer>head_</HeadPointer>
-                <NextPointer>next_</NextPointer>
-                <ValueNode>this</ValueNode>
-            </LinkedListItems>
-        </Expand>
-    </Type>
-    <Type Name="agrpc::e::detail::IntrusiveQueue&lt;*&gt;">
-        <DisplayString>{this->head_}</DisplayString>
-        <Expand>
-            <LinkedListItems>
-                <HeadPointer>head_</HeadPointer>
-                <NextPointer>next_</NextPointer>
-                <ValueNode>this</ValueNode>
-            </LinkedListItems>
-        </Expand>
-    </Type>
-    <!-- AtomicIntrusiveQueue -->
     <Type Name="agrpc::b::detail::AtomicIntrusiveQueue&lt;*&gt;">
-        <DisplayString>{this->head_}</DisplayString>
+        <AlternativeType Name="agrpc::s::detail::AtomicIntrusiveQueue&lt;*&gt;" />
+        <AlternativeType Name="agrpc::u::detail::AtomicIntrusiveQueue&lt;*&gt;" />
+        <AlternativeType Name="agrpc::e::detail::AtomicIntrusiveQueue&lt;*&gt;" />
+        <AlternativeType Name="agrpc::r::detail::AtomicIntrusiveQueue&lt;*&gt;" />
+        <AlternativeType Name="agrpc::t::detail::AtomicIntrusiveQueue&lt;*&gt;" />
+        <AlternativeType Name="agrpc::a::detail::AtomicIntrusiveQueue&lt;*&gt;" />
+        <AlternativeType Name="agrpc::c::detail::AtomicIntrusiveQueue&lt;*&gt;" />
+        <Intrinsic Name="inactive" Expression="head_._Storage._Value == (void*) &amp;head_"/>
+        <DisplayString Condition="inactive()">inactive</DisplayString>
+        <DisplayString Condition="!inactive()">active</DisplayString>
         <Expand>
-            <LinkedListItems>
+            <LinkedListItems Condition="!inactive()">
                 <HeadPointer>($T1 *)head_._Storage._Value</HeadPointer>
                 <NextPointer>next_</NextPointer>
                 <ValueNode>this</ValueNode>
             </LinkedListItems>
         </Expand>
     </Type>
-    <Type Name="agrpc::s::detail::AtomicIntrusiveQueue&lt;*&gt;">
-        <DisplayString>{this->head_}</DisplayString>
-        <Expand>
-            <LinkedListItems>
-                <HeadPointer>($T1 *)head_._Storage._Value</HeadPointer>
-                <NextPointer>next_</NextPointer>
-                <ValueNode>this</ValueNode>
-            </LinkedListItems>
-        </Expand>
-    </Type>
-    <Type Name="agrpc::u::detail::AtomicIntrusiveQueue&lt;*&gt;">
-        <DisplayString>{this->head_}</DisplayString>
-        <Expand>
-            <LinkedListItems>
-                <HeadPointer>($T1 *)head_._Storage._Value</HeadPointer>
-                <NextPointer>next_</NextPointer>
-                <ValueNode>this</ValueNode>
-            </LinkedListItems>
-        </Expand>
-    </Type>
-    <Type Name="agrpc::e::detail::AtomicIntrusiveQueue&lt;*&gt;">
-        <DisplayString>{this->head_}</DisplayString>
-        <Expand>
-            <LinkedListItems>
-                <HeadPointer>($T1 *)head_._Storage._Value</HeadPointer>
-                <NextPointer>next_</NextPointer>
-                <ValueNode>this</ValueNode>
-            </LinkedListItems>
-        </Expand>
-    </Type>
-    <!-- IntrusiveList -->
     <Type Name="agrpc::b::detail::IntrusiveList&lt;*&gt;">
+        <AlternativeType Name="agrpc::s::detail::IntrusiveList&lt;*&gt;" />
+        <AlternativeType Name="agrpc::u::detail::IntrusiveList&lt;*&gt;" />
+        <AlternativeType Name="agrpc::e::detail::IntrusiveList&lt;*&gt;" />
+        <AlternativeType Name="agrpc::r::detail::IntrusiveList&lt;*&gt;" />
+        <AlternativeType Name="agrpc::t::detail::IntrusiveList&lt;*&gt;" />
+        <AlternativeType Name="agrpc::a::detail::IntrusiveList&lt;*&gt;" />
+        <AlternativeType Name="agrpc::c::detail::IntrusiveList&lt;*&gt;" />
         <DisplayString>{this->head_}</DisplayString>
         <Expand>
             <LinkedListItems>
@@ -428,32 +223,36 @@
             </LinkedListItems>
         </Expand>
     </Type>
-    <Type Name="agrpc::s::detail::IntrusiveList&lt;*&gt;">
+    <Type Name="agrpc::b::detail::IntrusiveStack&lt;*&gt;">
+        <AlternativeType Name="agrpc::s::detail::IntrusiveStack&lt;*&gt;" />
+        <AlternativeType Name="agrpc::u::detail::IntrusiveStack&lt;*&gt;" />
+        <AlternativeType Name="agrpc::e::detail::IntrusiveStack&lt;*&gt;" />
+        <AlternativeType Name="agrpc::r::detail::IntrusiveStack&lt;*&gt;" />
+        <AlternativeType Name="agrpc::t::detail::IntrusiveStack&lt;*&gt;" />
+        <AlternativeType Name="agrpc::a::detail::IntrusiveStack&lt;*&gt;" />
+        <AlternativeType Name="agrpc::c::detail::IntrusiveStack&lt;*&gt;" />
         <DisplayString>{this->head_}</DisplayString>
         <Expand>
             <LinkedListItems>
                 <HeadPointer>head_</HeadPointer>
-                <NextPointer>list_next_</NextPointer>
+                <NextPointer>next_</NextPointer>
                 <ValueNode>this</ValueNode>
             </LinkedListItems>
         </Expand>
     </Type>
-    <Type Name="agrpc::u::detail::IntrusiveList&lt;*&gt;">
+    <Type Name="agrpc::b::detail::IntrusiveSlist&lt;*&gt;">
+        <AlternativeType Name="agrpc::s::detail::IntrusiveSlist&lt;*&gt;" />
+        <AlternativeType Name="agrpc::u::detail::IntrusiveSlist&lt;*&gt;" />
+        <AlternativeType Name="agrpc::e::detail::IntrusiveSlist&lt;*&gt;" />
+        <AlternativeType Name="agrpc::r::detail::IntrusiveSlist&lt;*&gt;" />
+        <AlternativeType Name="agrpc::t::detail::IntrusiveSlist&lt;*&gt;" />
+        <AlternativeType Name="agrpc::a::detail::IntrusiveSlist&lt;*&gt;" />
+        <AlternativeType Name="agrpc::c::detail::IntrusiveSlist&lt;*&gt;" />
         <DisplayString>{this->head_}</DisplayString>
         <Expand>
             <LinkedListItems>
                 <HeadPointer>head_</HeadPointer>
-                <NextPointer>list_next_</NextPointer>
-                <ValueNode>this</ValueNode>
-            </LinkedListItems>
-        </Expand>
-    </Type>
-    <Type Name="agrpc::e::detail::IntrusiveList&lt;*&gt;">
-        <DisplayString>{this->head_}</DisplayString>
-        <Expand>
-            <LinkedListItems>
-                <HeadPointer>head_</HeadPointer>
-                <NextPointer>list_next_</NextPointer>
+                <NextPointer>next_</NextPointer>
                 <ValueNode>this</ValueNode>
             </LinkedListItems>
         </Expand>
