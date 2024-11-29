@@ -114,7 +114,7 @@ inline GrpcContext::GrpcContext(std::unique_ptr<grpc::CompletionQueue> completio
 inline GrpcContext::~GrpcContext()
 {
     stop();
-    shutdown_.store(true, std::memory_order_relaxed);
+    shutdown_ = true;
     completion_queue_->Shutdown();
     detail::GrpcContextImplementation::drain_completion_queue(*this);
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)

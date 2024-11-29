@@ -74,7 +74,7 @@ inline void WorkFinishedOnExitFunctor::operator()() const noexcept { grpc_contex
 
 inline bool GrpcContextImplementation::is_shutdown(const agrpc::GrpcContext& grpc_context) noexcept
 {
-    return grpc_context.shutdown_.load(std::memory_order_relaxed);
+    return grpc_context.shutdown_;
 }
 
 inline void GrpcContextImplementation::trigger_work_alarm(agrpc::GrpcContext& grpc_context) noexcept

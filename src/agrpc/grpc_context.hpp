@@ -333,7 +333,7 @@ class GrpcContext
     grpc::Alarm work_alarm_;
     std::atomic_long outstanding_work_{};
     std::atomic_bool stopped_{false};
-    std::atomic_bool shutdown_{false};
+    bool shutdown_{false};
     bool local_check_remote_work_{false};
     const bool multithreaded_{false};
     LocalWorkQueue local_work_queue_{};
