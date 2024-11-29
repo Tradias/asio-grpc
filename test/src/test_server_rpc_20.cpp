@@ -285,7 +285,7 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::ServerStreamingServerRPC>,
         {
             CHECK(co_await rpc.finish(grpc::Status::OK, asio::use_awaitable));
         },
-        agrpc::detail::bind_allocator(get_allocator(), test::RethrowFirstArg{}));
+        agrpc::detail::AllocatorBinder(get_allocator(), test::RethrowFirstArg{}));
     const auto bytes_allocated = resource.bytes_allocated;
     perform_requests(just_finish(*this), just_finish(*this));
     CHECK_LT(bytes_allocated, resource.bytes_allocated);

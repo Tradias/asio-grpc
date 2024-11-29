@@ -43,8 +43,9 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_allocator with awaitable")
                            [&]() -> asio::awaitable<void>
                            {
                                agrpc::Alarm alarm{grpc_context};
-                               co_await alarm.wait(test::ten_milliseconds_from_now(),
-                                                   agrpc::detail::bind_allocator(get_allocator(), asio::use_awaitable));
+                               co_await alarm.wait(
+                                   test::ten_milliseconds_from_now(),
+                                   agrpc::detail::AllocatorBinder(get_allocator(), asio::use_awaitable));
                            });
     CHECK(allocator_has_been_used());
 }

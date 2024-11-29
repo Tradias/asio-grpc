@@ -146,11 +146,11 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "Waiter: cancel wait for alarm and wait
     agrpc::Alarm alarm{grpc_context};
     waiter.initiate(alarm_wait, alarm, test::five_hundred_milliseconds_from_now());
     asio::cancellation_signal signal;
-    waiter.wait(agrpc::detail::bind_allocator(get_allocator(), asio::bind_cancellation_slot(signal.slot(),
-                                                                                            [&](auto&& ec, bool)
-                                                                                            {
-                                                                                                done = !ec;
-                                                                                            })));
+    waiter.wait(agrpc::detail::AllocatorBinder(get_allocator(), asio::bind_cancellation_slot(signal.slot(),
+                                                                                             [&](auto&& ec, bool)
+                                                                                             {
+                                                                                                 done = !ec;
+                                                                                             })));
     signal.emit(asio::cancellation_type::terminal);
     waiter.wait(
         [&](auto&&, bool)

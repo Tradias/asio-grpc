@@ -50,11 +50,11 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "AllocatorBinder constructor and member
     CHECK_EQ(1L, long_binder3.get());
 
     bool invoked{false};
-    auto allocator_binder = agrpc::detail::bind_allocator(default_allocator, asio::bind_executor(get_executor(),
-                                                                                                 [&](bool ok)
-                                                                                                 {
-                                                                                                     invoked = ok;
-                                                                                                 }));
+    auto allocator_binder = agrpc::detail::AllocatorBinder(default_allocator, asio::bind_executor(get_executor(),
+                                                                                                  [&](bool ok)
+                                                                                                  {
+                                                                                                      invoked = ok;
+                                                                                                  }));
     CHECK_EQ(get_executor(), asio::get_associated_executor(allocator_binder));
     allocator_binder(true);
     CHECK(invoked);
@@ -65,21 +65,21 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "AllocatorBinder constructor and member
     {
         constexpr bool operator()(bool ok) && { return ok; }
     };
-    auto move_invocable_binder = agrpc::detail::bind_allocator(default_allocator, MoveInvocable{});
+    auto move_invocable_binder = agrpc::detail::AllocatorBinder(default_allocator, MoveInvocable{});
     CHECK(std::move(move_invocable_binder)(true));
 
-    static constexpr auto ALLOCATOR_BINDER = agrpc::detail::bind_allocator(test::TrackingAllocator{},
-                                                                           []
-                                                                           {
-                                                                               return 42;
-                                                                           });
+    static constexpr auto ALLOCATOR_BINDER = agrpc::detail::AllocatorBinder(test::TrackingAllocator{},
+                                                                            []
+                                                                            {
+                                                                                return 42;
+                                                                            });
     static constexpr auto ALLOCATOR_BINDER_INVOKE_RESULT = ALLOCATOR_BINDER();
     CHECK_EQ(42, ALLOCATOR_BINDER_INVOKE_RESULT);
 }
 
 TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_allocator with old async_completion")
 {
-    auto completion_token = agrpc::detail::bind_allocator(get_allocator(), test::NoOp{});
+    auto completion_token = agrpc::detail::AllocatorBinder(get_allocator(), test::NoOp{});
     std::optional<decltype(get_allocator())> actual_allocator{};
     test::initiate_using_async_completion<decltype(completion_token), void()>(
         [&](auto&& ch)
@@ -97,7 +97,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_allocator with yield_context")
                         {
                             agrpc::Alarm alarm{grpc_context};
                             alarm.wait(test::ten_milliseconds_from_now(),
-                                       agrpc::detail::bind_allocator(get_allocator(), yield));
+                                       agrpc::detail::AllocatorBinder(get_allocator(), yield));
                         });
     CHECK(allocator_has_been_used());
 }
@@ -106,7 +106,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "bind_allocator with asio::steady_timer
 {
     asio::io_context io_context;
     asio::steady_timer timer{io_context};
-    timer.async_wait(agrpc::detail::bind_allocator(get_allocator(), [](auto&&) {}));
+    timer.async_wait(agrpc::detail::AllocatorBinder(get_allocator(), [](auto&&) {}));
     io_context.run();
     CHECK(allocator_has_been_used());
 }

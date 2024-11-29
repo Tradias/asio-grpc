@@ -122,13 +122,6 @@ class AllocatorBinder
 template <class Allocator, class Target>
 AllocatorBinder(const Allocator& allocator, Target&& target) -> AllocatorBinder<detail::RemoveCrefT<Target>, Allocator>;
 
-template <class Allocator, class Target>
-constexpr detail::AllocatorBinder<detail::RemoveCrefT<Target>, Allocator> bind_allocator(const Allocator& allocator,
-                                                                                         Target&& target)
-{
-    return detail::AllocatorBinder{allocator, static_cast<Target&&>(target)};
-}
-
 // Implementation details
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 
