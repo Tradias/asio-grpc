@@ -211,6 +211,15 @@ class ScopeGuard
 
     constexpr const OnExit& get() const noexcept { return on_exit_; }
 
+    constexpr void execute()
+    {
+        if (is_armed_)
+        {
+            is_armed_ = false;
+            on_exit_();
+        }
+    }
+
   private:
     OnExit on_exit_;
     bool is_armed_{true};

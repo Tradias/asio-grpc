@@ -25,7 +25,6 @@
 
 #include <agrpc/client_rpc.hpp>
 #include <agrpc/read.hpp>
-#include <agrpc/register_yield_rpc_handler.hpp>
 #include <agrpc/server_rpc.hpp>
 #include <agrpc/waiter.hpp>
 
@@ -457,6 +456,62 @@ TEST_CASE_TEMPLATE("ServerRPC/ClientRPC generic streaming success", RPC, test::G
 
             CHECK_EQ(grpc::StatusCode::OK, rpc.finish(yield).error_code());
         });
+}
+
+TEST_CASE("ServerRPC/ClientRPC bidi streaming on io_context success")
+{
+    using RPC = test::NotifyWhenDoneBidirectionalStreamingServerRPC;
+    ServerRPCTest<RPC> test{true};
+    asio::io_context io_context{1};
+    const auto io_context_thread_id = std::this_thread::get_id();
+    std::thread::id final_thread_id{};
+    agrpc::register_yield_rpc_handler<RPC>(
+        test.get_executor(), test.service,
+        [&](RPC& rpc, const asio::yield_context& yield)
+        {
+            CHECK_EQ(io_context_thread_id, std::this_thread::get_id());
+            auto future = test.set_up_notify_when_done(rpc);
+            RPC::Request request;
+            CHECK(rpc.read(request, yield));
+            CHECK_EQ(1, request.integer());
+            CHECK_FALSE(rpc.read(request, yield));
+            RPC::Response response;
+            response.set_integer(11);
+            CHECK(rpc.write(response, grpc::WriteOptions{}, yield));
+            response.set_integer(12);
+            CHECK(rpc.write_and_finish(response, grpc::Status::OK, yield));
+            CHECK_EQ(io_context_thread_id, std::this_thread::get_id());
+            test.check_notify_when_done(future, rpc, yield);
+        },
+        asio::bind_executor(io_context,
+                            [&](auto&& ep)
+                            {
+                                final_thread_id = std::this_thread::get_id();
+                                test::RethrowFirstArg{}(ep);
+                            }));
+    auto client_function = [&](RPC::Request& request, RPC::Response& response, const asio::yield_context& yield)
+    {
+        auto rpc = test.create_rpc();
+        test.start_rpc(rpc, request, response, yield);
+        request.set_integer(1);
+        CHECK(rpc.write(request, yield));
+        CHECK(rpc.writes_done(yield));
+        CHECK(rpc.read(response, yield));
+        CHECK_EQ(11, response.integer());
+        CHECK(rpc.read(response, yield));
+        CHECK_EQ(12, response.integer());
+        CHECK_FALSE(rpc.read(response, yield));
+        CHECK_EQ(12, response.integer());
+        CHECK_EQ(grpc::StatusCode::OK, rpc.finish(yield).error_code());
+    };
+    test.spawn_client_functions(io_context, client_function, client_function, client_function);
+    std::thread t{[&]
+                  {
+                      test.grpc_context.run_completion_queue();
+                  }};
+    io_context.run();
+    t.join();
+    CHECK_EQ(final_thread_id, std::this_thread::get_id());
 }
 
 TEST_CASE("ServerRPC::service_name/method_name")

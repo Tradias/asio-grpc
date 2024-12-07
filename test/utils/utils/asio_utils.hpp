@@ -104,8 +104,7 @@ struct FunctionAsReceiver
     auto get_allocator() const noexcept { return allocator; }
 
 #ifdef AGRPC_UNIFEX
-    friend auto tag_invoke(unifex::tag_t<unifex::get_allocator>,
-                           const FunctionAsReceiver& receiver) noexcept -> Allocator
+    friend Allocator tag_invoke(unifex::tag_t<unifex::get_allocator>, const FunctionAsReceiver& receiver) noexcept
     {
         return receiver.allocator;
     }
@@ -207,6 +206,8 @@ void wait(agrpc::Alarm& alarm, std::chrono::system_clock::time_point deadline,
 
 void spawn(agrpc::GrpcContext& grpc_context, const std::function<void(const asio::yield_context&)>& function);
 
+void spawn(asio::io_context& io_context, const std::function<void(const asio::yield_context&)>& function);
+
 template <class Executor, class Function>
 void typed_spawn(Executor&& executor, Function&& function)
 {
@@ -215,6 +216,12 @@ void typed_spawn(Executor&& executor, Function&& function)
 #else
     asio::spawn(std::forward<Executor>(executor), std::forward<Function>(function));
 #endif
+}
+
+template <class Executor, class... Functions>
+void spawn_many(Executor&& executor, Functions&&... functions)
+{
+    (test::spawn(executor, std::forward<Functions>(functions)), ...);
 }
 
 template <class... Functions>

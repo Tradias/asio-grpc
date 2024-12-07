@@ -71,12 +71,12 @@ struct ClientRPCIoContextTest : ClientRPCRequestResponseTest<RPC>, test::IoConte
         std::function<void(test::TypeIdentityT<SRPC>&, const asio::yield_context&)> server_func,
         std::function<void(const asio::yield_context&)> client_func)
     {
-        test::typed_spawn(io_context,
-                          [this, client_func, g = this->get_work_tracking_executor()](const asio::yield_context& yield)
-                          {
-                              client_func(yield);
-                              this->server_shutdown.initiate();
-                          });
+        test::spawn(io_context,
+                    [this, client_func, g = this->get_work_tracking_executor()](const asio::yield_context& yield)
+                    {
+                        client_func(yield);
+                        this->server_shutdown.initiate();
+                    });
         agrpc::register_yield_rpc_handler<SRPC>(this->grpc_context, this->service, server_func,
                                                 test::RethrowFirstArg{});
         this->run_io_context_detached(false);
@@ -204,7 +204,7 @@ TEST_CASE_FIXTURE(ClientRPCRequestResponseTest<test::UnaryClientRPC>,
     using RPC = agrpc::UseSender::as_default_on_t<agrpc::ClientRPC<&test::v1::Test::Stub::PrepareAsyncUnary>>;
     bool ok{};
     test::DeleteGuard guard{};
-    register_perform_requests_no_shutdown(
+    register_and_perform_requests_no_shutdown(
         [&](auto& rpc, auto& request, const asio::yield_context& yield)
         {
             CHECK_EQ(42, request.integer());

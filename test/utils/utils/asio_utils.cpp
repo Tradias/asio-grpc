@@ -28,6 +28,11 @@ void spawn(agrpc::GrpcContext& grpc_context, const std::function<void(const asio
     test::typed_spawn(grpc_context, function);
 }
 
+void spawn(asio::io_context& io_context, const std::function<void(const asio::yield_context&)>& function)
+{
+    test::typed_spawn(io_context, function);
+}
+
 void post(agrpc::GrpcContext& grpc_context, const std::function<void()>& function)
 {
     asio::post(grpc_context, function);

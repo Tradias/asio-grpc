@@ -51,8 +51,43 @@ struct ClientServerRPCTest : std::conditional_t<(agrpc::ClientRPCType::GENERIC_U
     using Response = typename ClientRPC::Response;
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+    template <class Executor, class... ClientFunctions>
+    void spawn_client_functions(Executor&& executor, ClientFunctions&&... client_functions)
+    {
+        auto counter = std::make_shared<int>();
+        test::spawn_many(
+            executor,
+            [counter, &client_functions, &server_shutdown = this->server_shutdown](const asio::yield_context& yield)
+            {
+                typename ClientRPC::Request request;
+                typename ClientRPC::Response response;
+                client_functions(request, response, yield);
+                ++(*counter);
+                if (*counter == sizeof...(client_functions))
+                {
+                    server_shutdown.initiate();
+                }
+            }...);
+    }
+
     template <class RPCHandler, class... ClientFunctions>
-    void register_perform_requests_no_shutdown(RPCHandler&& handler, ClientFunctions&&... client_functions)
+    void register_callback_and_perform_requests(RPCHandler&& handler, ClientFunctions&&... client_functions)
+    {
+        agrpc::register_callback_rpc_handler<ServerRPC>(this->get_executor(), this->service, handler,
+                                                        test::RethrowFirstArg{});
+        spawn_client_functions(this->grpc_context, static_cast<ClientFunctions&&>(client_functions)...);
+        this->grpc_context.run();
+    }
+
+    template <class RPCHandler, class ClientFunction>
+    void register_callback_and_perform_three_requests(RPCHandler&& handler, ClientFunction&& client_function)
+    {
+        register_callback_and_perform_requests(static_cast<RPCHandler&&>(handler), client_function, client_function,
+                                               client_function);
+    }
+
+    template <class RPCHandler, class... ClientFunctions>
+    void register_and_perform_requests_no_shutdown(RPCHandler&& handler, ClientFunctions&&... client_functions)
     {
         agrpc::register_yield_rpc_handler<ServerRPC>(this->get_executor(), this->service, handler,
                                                      test::RethrowFirstArg{});
@@ -66,58 +101,18 @@ struct ClientServerRPCTest : std::conditional_t<(agrpc::ClientRPCType::GENERIC_U
     }
 
     template <class RPCHandler, class... ClientFunctions>
-    void register_callback_and_perform_requests(RPCHandler&& handler, ClientFunctions&&... client_functions)
-    {
-        int counter{};
-        agrpc::register_callback_rpc_handler<ServerRPC>(this->get_executor(), this->service, handler,
-                                                        test::RethrowFirstArg{});
-        test::spawn_and_run(
-            this->grpc_context,
-            [&counter, &client_functions, &server_shutdown = this->server_shutdown](const asio::yield_context& yield)
-            {
-                typename ClientRPC::Request request;
-                typename ClientRPC::Response response;
-                client_functions(request, response, yield);
-                ++counter;
-                if (counter == sizeof...(client_functions))
-                {
-                    server_shutdown.initiate();
-                }
-            }...);
-    }
-
-    template <class RPCHandler, class ClientFunction>
-    void register_callback_and_perform_three_requests(RPCHandler&& handler, ClientFunction&& client_function)
-    {
-        register_callback_and_perform_requests(std::forward<RPCHandler>(handler), client_function, client_function,
-                                               client_function);
-    }
-
-    template <class RPCHandler, class... ClientFunctions>
     void register_and_perform_requests(RPCHandler&& handler, ClientFunctions&&... client_functions)
     {
-        int counter{};
         agrpc::register_yield_rpc_handler<ServerRPC>(this->get_executor(), this->service, handler,
                                                      test::RethrowFirstArg{});
-        test::spawn_and_run(
-            this->grpc_context,
-            [&counter, &client_functions, &server_shutdown = this->server_shutdown](const asio::yield_context& yield)
-            {
-                typename ClientRPC::Request request;
-                typename ClientRPC::Response response;
-                client_functions(request, response, yield);
-                ++counter;
-                if (counter == sizeof...(client_functions))
-                {
-                    server_shutdown.initiate();
-                }
-            }...);
+        spawn_client_functions(this->grpc_context, static_cast<ClientFunctions&&>(client_functions)...);
+        this->grpc_context.run();
     }
 
     template <class RPCHandler, class ClientFunction>
     void register_and_perform_three_requests(RPCHandler&& handler, ClientFunction&& client_function)
     {
-        register_and_perform_requests(std::forward<RPCHandler>(handler), client_function, client_function,
+        register_and_perform_requests(static_cast<RPCHandler&&>(handler), client_function, client_function,
                                       client_function);
     }
 

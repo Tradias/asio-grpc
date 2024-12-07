@@ -181,7 +181,7 @@ class GrpcContext
      * @brief Run the `grpc::CompletionQueue`
      *
      * Runs the main event loop logic until the GrpcContext runs out of work or is stopped. Only events from the
-     * `grpc::CompletionQueue` will be handled. That means that completion handler that were e.g. created using
+     * `grpc::CompletionQueue` will be handled. Completion handlers that were, for example, created using
      * `asio::post(grpc_context, ...)` will not be processed. The GrpcContext will be brought into the ready state when
      * this function is invoked. Upon return, the GrpcContext will be in the stopped state.
      *
@@ -210,9 +210,9 @@ class GrpcContext
     /**
      * @brief Poll the `grpc::CompletionQueue`
      *
-     * Processes only ready events of the `grpc::CompletionQueue`. That means that completion handler that were e.g.
-     * created using `asio::post(grpc_context, ...)` will not be processed. The GrpcContext will be brought into the
-     * ready state when this function is invoked.
+     * Processes only ready events of the `grpc::CompletionQueue`. Completion handlers that were, for example, created
+     * using `asio::post(grpc_context, ...)` will not be processed. The GrpcContext will be brought into the ready state
+     * when this function is invoked.
      *
      * @attention Only one thread may call run_completion_queue() or poll_completion_queue() at a time [unless this
      * context has been constructed with a `concurrency_hint` greater than one. Even then it may not be called

@@ -15,6 +15,7 @@
 #ifndef AGRPC_DETAIL_REGISTER_RPC_HANDLER_ASIO_BASE_HPP
 #define AGRPC_DETAIL_REGISTER_RPC_HANDLER_ASIO_BASE_HPP
 
+#include <agrpc/alarm.hpp>
 #include <agrpc/detail/association.hpp>
 #include <agrpc/detail/register_rpc_handler_base.hpp>
 #include <agrpc/detail/rethrow_first_arg.hpp>
@@ -28,14 +29,14 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-inline constexpr auto REGISTER_RPC_HANDLER_COMPLETE =
-    static_cast<detail::OperationResult>(detail::to_underlying(detail::OperationResult::OK_) + 1);
+void register_rpc_handler_asio_completion_trampoline(agrpc::GrpcContext& grpc_context,
+                                                     detail::RegisterRPCHandlerOperationComplete& operation);
 
 template <class ServerRPC, class RPCHandler, class CompletionHandlerT>
 class RegisterRPCHandlerOperationAsioBase
     : public detail::RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler,
                                                      detail::CancellationSlotT<CompletionHandlerT&>>,
-      public detail::QueueableOperationBase,
+      public detail::RegisterRPCHandlerOperationComplete,
       private detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandlerT>>
 {
   public:
@@ -44,6 +45,7 @@ class RegisterRPCHandlerOperationAsioBase
 
   private:
     using Base = detail::RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler, StopToken>;
+    using CompletionBase = detail::RegisterRPCHandlerOperationComplete;
     using WorkTracker = detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandlerT>>;
 
     struct Decrementer
@@ -52,7 +54,7 @@ class RegisterRPCHandlerOperationAsioBase
         {
             if (self_.decrement_ref_count())
             {
-                self_.complete(REGISTER_RPC_HANDLER_COMPLETE, self_.grpc_context());
+                detail::register_rpc_handler_asio_completion_trampoline(self_.grpc_context(), self_);
             }
         }
 
@@ -69,9 +71,9 @@ class RegisterRPCHandlerOperationAsioBase
 
     template <class Ch>
     RegisterRPCHandlerOperationAsioBase(const ServerRPCExecutor& executor, Service& service, RPCHandler&& rpc_handler,
-                                        Ch&& completion_handler, detail::OperationOnComplete on_complete)
+                                        Ch&& completion_handler, CompletionBase::Complete on_complete)
         : Base(executor, service, static_cast<RPCHandler&&>(rpc_handler)),
-          detail::QueueableOperationBase(on_complete),
+          CompletionBase(on_complete),
           WorkTracker(asio::get_associated_executor(completion_handler)),
           completion_handler_(static_cast<Ch&&>(completion_handler))
     {
@@ -105,26 +107,28 @@ struct RegisterRPCHandlerInitiator
     detail::ServerRPCServiceT<ServerRPC>& service_;
 };
 
-template <class Operation>
-static void register_rpc_handler_asio_do_complete(detail::OperationBase* operation, detail::OperationResult result,
-                                                  agrpc::GrpcContext&)
+inline void register_rpc_handler_asio_completion_trampoline(agrpc::GrpcContext& grpc_context,
+                                                            detail::RegisterRPCHandlerOperationComplete& operation)
 {
-    auto& self = *static_cast<Operation*>(operation);
+    detail::ScopeGuard guard{[&operation]
+                             {
+                                 operation.complete();
+                             }};
+    agrpc::Alarm{grpc_context}.wait(detail::GrpcContextImplementation::TIME_ZERO,
+                                    [g = std::move(guard)](auto&&...) mutable
+                                    {
+                                        g.execute();
+                                    });
+    grpc_context.work_finished();
+}
+
+template <class Operation>
+void register_rpc_handler_asio_do_complete(detail::RegisterRPCHandlerOperationComplete& operation) noexcept
+{
+    auto& self = static_cast<Operation&>(operation);
     detail::AllocationGuard guard{self, self.get_allocator()};
-    if (REGISTER_RPC_HANDLER_COMPLETE == result)
-    {
-        if AGRPC_LIKELY (!detail::GrpcContextImplementation::is_shutdown(self.grpc_context()))
-        {
-            detail::GrpcContextImplementation::add_operation(self.grpc_context(), &self);
-            guard.release();
-        }
-        return;
-    }
-    if AGRPC_LIKELY (!detail::is_shutdown(result))
-    {
-        auto eptr{static_cast<std::exception_ptr&&>(self.error())};
-        detail::dispatch_complete(guard, static_cast<std::exception_ptr&&>(eptr));
-    }
+    auto eptr{static_cast<std::exception_ptr&&>(self.error())};
+    detail::dispatch_complete(guard, static_cast<std::exception_ptr&&>(eptr));
 }
 }
 
