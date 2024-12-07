@@ -253,7 +253,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // Example showing how to use an io_context as the main context and a GrpcContext on a separate thread for gRPC servers.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/main-io-context-server.cpp#L32-L36' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-main-io-context' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/main-io-context-server.cpp#L33-L37' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-main-io-context' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### io_uring file transfer
