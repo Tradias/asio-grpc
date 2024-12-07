@@ -244,6 +244,10 @@ Click on `snippet source` to jump to the code of an individual example.
 <sup><a href='/example/share-io-context-server.cpp#L35-L41' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-share-io-context' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
+### Main io_context
+
+snippet: server-side-main-io-context
+
 ### io_uring file transfer
 
 <!-- snippet: server-side-file-transfer -->

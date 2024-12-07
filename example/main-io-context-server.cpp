@@ -16,12 +16,10 @@
 #include "example/v1/example.grpc.pb.h"
 #include "helper.hpp"
 #include "rethrow_first_arg.hpp"
-#include "server_shutdown_asio.hpp"
 
 #include <agrpc/asio_grpc.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/co_spawn.hpp>
-#include <boost/asio/detached.hpp>
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <grpcpp/server.h>
@@ -31,11 +29,9 @@
 
 namespace asio = boost::asio;
 
-// begin-snippet: server-side-share-io-context
+// begin-snippet: server-side-main-io-context
 // ---------------------------------------------------
-// Example showing how to run an io_context and a GrpcContext on the same thread for gRPC servers.
-// This can i.e. be useful when writing an HTTP server that occasionally reaches out to a gRPC server. In that case
-// creating a separate thread for the GrpcContext might be undesirable due to added synchronization complexity.
+// Example showing how to use an io_context as the main context and a GrpcContext on a separate thread for gRPC servers.
 // ---------------------------------------------------
 // end-snippet
 
@@ -52,7 +48,23 @@ asio::awaitable<void> handle_tcp_request(asio::ip::port_type port)
 }
 
 // A unary RPC request that will be handled by the GrpcContext.
-using RPC = example::AwaitableServerRPC<&example::v1::Example::AsyncService::RequestUnary>;
+void register_rpc_handler(asio::io_context& io_context, agrpc::GrpcContext& grpc_context,
+                          example::v1::Example::AsyncService& service, grpc::Server& server)
+{
+    using RPC = example::AwaitableServerRPC<&example::v1::Example::AsyncService::RequestUnary>;
+    agrpc::register_awaitable_rpc_handler<RPC>(
+        grpc_context, service,
+        [&](RPC& rpc, RPC::Request& request) -> asio::awaitable<void>
+        {
+            // This executes on the io_context thread
+            example::v1::Response response;
+            response.set_integer(request.integer());
+            co_await rpc.finish(response, grpc::Status::OK);
+            server.Shutdown();
+        },
+        // Bind the io_context such that the above rpc handler is invoked on it
+        asio::bind_executor(io_context, example::RethrowFirstArg{}));
+}
 
 int main(int argc, const char** argv)
 {
@@ -72,32 +84,13 @@ int main(int argc, const char** argv)
     server = builder.BuildAndStart();
     abort_if_not(bool{server});
 
-    example::ServerShutdown server_shutdown{*server, grpc_context};
-
-    agrpc::register_awaitable_rpc_handler<RPC>(
-        grpc_context, service,
-        [&](RPC& rpc, RPC::Request& request) -> asio::awaitable<void>
-        {
-            example::v1::Response response;
-            response.set_integer(request.integer());
-            co_await rpc.finish(response, grpc::Status::OK);
-            server_shutdown.shutdown();
-        },
-        example::RethrowFirstArg{});
-
+    register_rpc_handler(io_context, grpc_context, service, *server);
     asio::co_spawn(io_context, handle_tcp_request(tcp_port), example::RethrowFirstArg{});
 
-    // First, initiate the io_context's thread_local variables by posting on it. The io_context uses them to optimize
-    // dynamic memory allocations. This is an optional step but it can improve performance.
-    // Then undo the work counting of asio::post.
-    // Run GrpcContext and io_context until both stop.
-    // Finally, redo the work counting.
-    asio::post(io_context,
-               [&]
-               {
-                   io_context.get_executor().on_work_finished();
-                   agrpc::run(grpc_context, io_context);
-                   io_context.get_executor().on_work_started();
-               });
+    std::thread t{[&]
+                  {
+                      grpc_context.run_completion_queue();
+                  }};
     io_context.run();
+    t.join();
 }

@@ -40,6 +40,12 @@ TEST_CASE("examples")
         server_program = ASIO_GRPC_EXAMPLE_SHARE_IO_CONTEXT_SERVER;
         args.emplace_back(std::to_string(test::get_free_port()));
     }
+    SUBCASE("Boost.Asio main io_context")
+    {
+        client_program = ASIO_GRPC_EXAMPLE_SHARE_IO_CONTEXT_CLIENT;
+        server_program = ASIO_GRPC_EXAMPLE_MAIN_IO_CONTEXT_SERVER;
+        args.emplace_back(std::to_string(test::get_free_port()));
+    }
 #ifdef ASIO_GRPC_EXAMPLE_FILE_TRANSFER_CLIENT
     SUBCASE("Boost.Asio file transfer")
     {

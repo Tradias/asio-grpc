@@ -26,6 +26,7 @@ add_dependencies(
     asio-grpc-example-streaming-server
     asio-grpc-example-share-io-context-client
     asio-grpc-example-share-io-context-server
+    asio-grpc-example-main-io-context-server
     asio-grpc-example-hello-world-client
     asio-grpc-example-hello-world-server
     asio-grpc-example-generic-client
@@ -50,6 +51,7 @@ target_compile_definitions(
         "ASIO_GRPC_EXAMPLE_STREAMING_SERVER=\"$<TARGET_FILE:asio-grpc-example-streaming-server>\""
         "ASIO_GRPC_EXAMPLE_SHARE_IO_CONTEXT_CLIENT=\"$<TARGET_FILE:asio-grpc-example-share-io-context-client>\""
         "ASIO_GRPC_EXAMPLE_SHARE_IO_CONTEXT_SERVER=\"$<TARGET_FILE:asio-grpc-example-share-io-context-server>\""
+        "ASIO_GRPC_EXAMPLE_MAIN_IO_CONTEXT_SERVER=\"$<TARGET_FILE:asio-grpc-example-main-io-context-server>\""
         "ASIO_GRPC_EXAMPLE_HELLO_WORLD_CLIENT=\"$<TARGET_FILE:asio-grpc-example-hello-world-client>\""
         "ASIO_GRPC_EXAMPLE_HELLO_WORLD_SERVER=\"$<TARGET_FILE:asio-grpc-example-hello-world-server>\""
         "ASIO_GRPC_EXAMPLE_GENERIC_CLIENT=\"$<TARGET_FILE:asio-grpc-example-generic-client>\""
