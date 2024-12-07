@@ -539,7 +539,17 @@ TEST_CASE_TEMPLATE("ServerRPC resumable read can be cancelled", RPC, test::Clien
                    test::BidirectionalStreamingServerRPC)
 {
     ServerRPCTest<RPC> test{true};
-    test.register_and_perform_three_requests(
+    agrpc::Waiter<void()> client_waiter;
+    const auto complete_client_waiter = [&]
+    {
+        client_waiter.initiate(
+            [&](auto&& e, auto&& token)
+            {
+                asio::post(e, token);
+            },
+            test.grpc_context);
+    };
+    test.register_and_perform_requests(
         [&](RPC& rpc, const asio::yield_context& yield)
         {
             typename RPC::Request request;
@@ -551,7 +561,6 @@ TEST_CASE_TEMPLATE("ServerRPC resumable read can be cancelled", RPC, test::Clien
             CHECK(waiter.wait(yield));
             CHECK_EQ(1, request.integer());
 
-            const auto not_to_exceed = test::five_hundred_milliseconds_from_now();
             waiter.initiate(agrpc::read, rpc, request);
             for (int i{}; i != 2; ++i)
             {
@@ -560,10 +569,10 @@ TEST_CASE_TEMPLATE("ServerRPC resumable read can be cancelled", RPC, test::Clien
                         waiter.wait(test::ASIO_DEFERRED),
                         asio::post(asio::bind_executor(test.grpc_context, test::ASIO_DEFERRED)))
                         .async_wait(asio::experimental::wait_for_one(), yield);
-                CHECK_LT(test::now(), not_to_exceed);
                 CHECK_EQ(asio::error::operation_aborted, ec);
                 CHECK_EQ(1, request.integer());
             }
+            complete_client_waiter();
             CHECK_FALSE(waiter.wait(yield));
 
             if constexpr (agrpc::ServerRPCType::BIDIRECTIONAL_STREAMING == RPC::TYPE)
@@ -581,7 +590,7 @@ TEST_CASE_TEMPLATE("ServerRPC resumable read can be cancelled", RPC, test::Clien
             test.start_rpc(rpc, request, response, yield);
             request.set_integer(1);
             CHECK(rpc.write(request, yield));
-            agrpc::Alarm(test.grpc_context).wait(test::one_second_from_now(), yield);
+            client_waiter.wait(yield);
             CHECK_EQ(grpc::StatusCode::OK, rpc.finish(yield).error_code());
         });
 }
