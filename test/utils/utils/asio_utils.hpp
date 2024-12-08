@@ -20,6 +20,7 @@
 #include <agrpc/alarm.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
+#include <agrpc/waiter.hpp>
 
 #include <functional>
 #include <type_traits>
@@ -242,6 +243,17 @@ decltype(auto) initiate_using_async_completion(Initiation&& initiation, RawCompl
 void post(agrpc::GrpcContext& grpc_context, const std::function<void()>& function);
 
 void post(const agrpc::GrpcExecutor& executor, const std::function<void()>& function);
+
+template <class Signature, class Executor>
+void complete_immediately(agrpc::GrpcContext& grpc_context, agrpc::Waiter<Signature, Executor>& waiter)
+{
+    waiter.initiate(
+        [&](auto&& context, auto&& token)
+        {
+            asio::post(context, token);
+        },
+        grpc_context);
+}
 
 #ifdef AGRPC_TEST_ASIO_HAS_CO_AWAIT
 void co_spawn(agrpc::GrpcContext& grpc_context, const std::function<asio::awaitable<void>()>& function);

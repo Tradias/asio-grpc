@@ -556,15 +556,6 @@ TEST_CASE_TEMPLATE("ServerRPC resumable read can be cancelled", RPC, test::Clien
 {
     ServerRPCTest<RPC> test{true};
     agrpc::Waiter<void()> client_waiter;
-    const auto complete_client_waiter = [&]
-    {
-        client_waiter.initiate(
-            [&](auto&& e, auto&& token)
-            {
-                asio::post(e, token);
-            },
-            test.grpc_context);
-    };
     test.register_and_perform_requests(
         [&](RPC& rpc, const asio::yield_context& yield)
         {
@@ -588,7 +579,7 @@ TEST_CASE_TEMPLATE("ServerRPC resumable read can be cancelled", RPC, test::Clien
                 CHECK_EQ(asio::error::operation_aborted, ec);
                 CHECK_EQ(1, request.integer());
             }
-            complete_client_waiter();
+            test::complete_immediately(test.grpc_context, client_waiter);
             CHECK_FALSE(waiter.wait(yield));
 
             if constexpr (agrpc::ServerRPCType::BIDIRECTIONAL_STREAMING == RPC::TYPE)

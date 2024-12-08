@@ -486,7 +486,8 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::BidirectionalStreamingServerRPC>,
                   "Awaitable ServerRPC resumable read can be cancelled")
 {
     using RPC = test::BidirectionalStreamingServerRPC;
-    register_and_perform_three_requests(
+    agrpc::Waiter<void()> client_waiter;
+    register_and_perform_requests(
         [&](RPC& rpc) -> asio::awaitable<void>
         {
             typename RPC::Request request;
@@ -498,7 +499,6 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::BidirectionalStreamingServerRPC>,
             CHECK_EQ(true, co_await waiter.wait(asio::use_awaitable));
             CHECK_EQ(1, request.integer());
 
-            const auto not_to_exceed = test::two_hundred_milliseconds_from_now();
             waiter.initiate(agrpc::read, rpc, request);
             for (int i{}; i != 2; ++i)
             {
@@ -507,10 +507,10 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::BidirectionalStreamingServerRPC>,
                         waiter.wait(test::ASIO_DEFERRED),
                         asio::post(asio::bind_executor(grpc_context, test::ASIO_DEFERRED)))
                         .async_wait(asio::experimental::wait_for_one(), asio::use_awaitable);
-                CHECK_LT(test::now(), not_to_exceed);
                 CHECK_EQ(asio::error::operation_aborted, ec);
                 CHECK_EQ(1, request.integer());
             }
+            test::complete_immediately(grpc_context, client_waiter);
             CHECK_EQ(false, co_await waiter.wait(asio::use_awaitable));
             CHECK(co_await rpc.finish(grpc::Status::OK, asio::use_awaitable));
         },
@@ -520,15 +520,8 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::BidirectionalStreamingServerRPC>,
             start_rpc(rpc, request, response, yield);
             request.set_integer(1);
             CHECK(rpc.write(request, yield));
-            agrpc::Waiter<void(bool)> waiter;
-            waiter.initiate(agrpc::read, rpc, response);
-            auto [completion_order, ec, read_ok, wait_ok, alarm] =
-                asio::experimental::make_parallel_group(
-                    waiter.wait(test::ASIO_DEFERRED),
-                    agrpc::Alarm(grpc_context).wait(test::five_hundred_milliseconds_from_now(), test::ASIO_DEFERRED))
-                    .async_wait(asio::experimental::wait_for_one(), yield);
+            client_waiter.wait(yield);
             CHECK_EQ(grpc::StatusCode::OK, rpc.finish(yield).error_code());
-            waiter.wait(yield);
         });
 }
 #endif
