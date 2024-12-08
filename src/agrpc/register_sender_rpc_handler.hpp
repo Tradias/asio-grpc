@@ -47,7 +47,7 @@ template <class ServerRPC, class RPCHandler>
 [[nodiscard]] detail::RPCHandlerSender<ServerRPC, RPCHandler> register_sender_rpc_handler(
     agrpc::GrpcContext& grpc_context, detail::ServerRPCServiceT<ServerRPC>& service, RPCHandler rpc_handler)
 {
-    using Starter = detail::ServerRPCStarterT<ServerRPC>;
+    using Starter = detail::RequestMessageFactoryServerRPCStarter<ServerRPC, RPCHandler>;
     static_assert(detail::exec::is_sender_v<detail::RPCHandlerInvokeResultT<Starter&, RPCHandler&, ServerRPC&>>,
                   "Rpc handler must return a sender.");
     return {grpc_context, service, static_cast<RPCHandler&&>(rpc_handler)};

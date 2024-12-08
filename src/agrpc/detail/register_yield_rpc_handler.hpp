@@ -53,7 +53,6 @@ struct RegisterYieldRPCHandlerOperation
     using typename Base::RefCountGuard;
     using typename Base::ServerRPCExecutor;
     using typename Base::Service;
-    using typename Base::Starter;
 
     template <class Ch>
     RegisterYieldRPCHandlerOperation(const ServerRPCExecutor& executor, Service& service, RPCHandler&& rpc_handler,
@@ -61,7 +60,6 @@ struct RegisterYieldRPCHandlerOperation
         : Base(executor, service, static_cast<RPCHandler&&>(rpc_handler), static_cast<Ch&&>(completion_handler),
                &detail::register_rpc_handler_asio_do_complete<RegisterYieldRPCHandlerOperation>)
     {
-        initiate();
     }
 
     void initiate()
@@ -88,7 +86,7 @@ struct RegisterYieldRPCHandlerOperation
     void perform_request_and_repeat(const Yield& yield)
     {
         auto rpc = detail::ServerRPCContextBaseAccess::construct<ServerRPC>(this->get_executor());
-        Starter starter;
+        detail::RequestMessageFactoryServerRPCStarter<ServerRPC, RPCHandler> starter{this->rpc_handler()};
         if (!starter.start(rpc, this->service(), use_yield(yield)))
         {
             return;

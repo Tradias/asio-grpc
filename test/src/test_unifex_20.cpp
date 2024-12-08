@@ -12,16 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "test/v1/test.grpc.pb.h"
 #include "utils/asio_utils.hpp"
-#include "utils/client_context.hpp"
 #include "utils/client_rpc.hpp"
 #include "utils/client_rpc_test.hpp"
 #include "utils/doctest.hpp"
 #include "utils/exception.hpp"
 #include "utils/execution_test.hpp"
-#include "utils/grpc_client_server_test.hpp"
-#include "utils/grpc_context_test.hpp"
+#include "utils/requestMessageFactory.hpp"
 #include "utils/server_rpc.hpp"
 
 #include <agrpc/asio_grpc.hpp>
@@ -96,11 +93,12 @@ TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::BidirectionalStreamingClien
     };
     const auto not_to_exceed = test::two_seconds_from_now();
     Request request;
-    run(agrpc::register_sender_rpc_handler<ServerRPC>(grpc_context, service,
-                                                      [&](ServerRPC& rpc)
+    run(agrpc::register_sender_rpc_handler<ServerRPC>(
+            grpc_context, service,
+            test::RPCHandlerWithRequestMessageFactory{[&](ServerRPC& rpc)
                                                       {
                                                           return rpc.read(request, agrpc::use_sender);
-                                                      }),
+                                                      }}),
         [&]() -> unifex::task<void>
         {
             auto rpc = create_rpc();
@@ -118,14 +116,15 @@ TEST_CASE_FIXTURE(test::ExecutionRpcHandlerTest, "unifex rpc_handler unary - cli
 {
     auto request_count{0};
     unifex::inplace_stop_source stop;
-    auto repeater = unifex::with_query_value(make_unary_rpc_handler_sender(), unifex::get_stop_token, stop.get_token());
+    auto rpc_handler_sender =
+        unifex::with_query_value(make_unary_rpc_handler_sender(), unifex::get_stop_token, stop.get_token());
     auto request_sender = make_client_unary_request_sender(request_count, std::numeric_limits<int>::max());
     auto make_three_requests_then_stop = unifex::then(unifex::sequence(request_sender, request_sender, request_sender),
                                                       [&]()
                                                       {
                                                           stop.request_stop();
                                                       });
-    run(unifex::sequence(make_three_requests_then_stop, request_sender), std::move(repeater));
+    run(unifex::sequence(make_three_requests_then_stop, request_sender), std::move(rpc_handler_sender));
     CHECK_EQ(4, request_count);
     CHECK(allocator_has_been_used());
 }
@@ -133,7 +132,7 @@ TEST_CASE_FIXTURE(test::ExecutionRpcHandlerTest, "unifex rpc_handler unary - cli
 TEST_CASE_FIXTURE(test::ExecutionRpcHandlerTest, "unifex rpc_handler unary - server requests stop")
 {
     auto request_count{0};
-    auto repeater = unifex::let_value_with_stop_source(
+    auto rpc_handler_sender = unifex::let_value_with_stop_source(
         [&](unifex::inplace_stop_source& stop)
         {
             return unifex::let_done(agrpc::register_sender_rpc_handler<test::UnaryServerRPC>(
@@ -150,20 +149,81 @@ TEST_CASE_FIXTURE(test::ExecutionRpcHandlerTest, "unifex rpc_handler unary - ser
                                     });
         });
     auto request_sender = make_client_unary_request_sender(request_count, std::numeric_limits<int>::max());
-    run(request_sender, std::move(repeater));
+    run(request_sender, std::move(rpc_handler_sender));
     CHECK_EQ(1, request_count);
+}
+
+TEST_CASE_FIXTURE(test::ExecutionRpcHandlerTest, "unifex rpc_handler unary with request message factory")
+{
+    auto rpc_handler_sender = agrpc::register_sender_rpc_handler<test::UnaryServerRPC>(
+        grpc_context, service,
+        test::RPCHandlerWithRequestMessageFactory{
+            [&](test::UnaryServerRPC& rpc, auto& request, test::ArenaRequestMessageFactory& factory)
+            {
+                CHECK_EQ(42, request.integer());
+                CHECK_EQ(&factory.arena, request.GetArena());
+                return handle_unary_request_sender(rpc, request);
+            }});
+    run(make_client_unary_request_sender(test::five_seconds_from_now(),
+                                         [&](const test::msg::Response& response, const grpc::Status& status)
+                                         {
+                                             check_response_ok(response, status);
+                                             shutdown.initiate();
+                                         }),
+        std::move(rpc_handler_sender));
 }
 
 TEST_CASE_FIXTURE(test::ExecutionRpcHandlerTest, "unifex rpc_handler unary - stop with token before start")
 {
-    auto repeater = unifex::let_value_with_stop_source(
+    auto rpc_handler_sender = unifex::let_value_with_stop_source(
         [&](unifex::inplace_stop_source& stop)
         {
             stop.request_stop();
             return make_unary_rpc_handler_sender();
         });
-    run(std::move(repeater));
+    run(std::move(rpc_handler_sender));
     CHECK_FALSE(allocator_has_been_used());
+}
+
+TEST_CASE_FIXTURE(test::ExecutionRpcHandlerTest,
+                  "unifex rpc_handler unary - throw exception from request message factory")
+{
+    struct RPCHandler
+    {
+        auto operator()(test::UnaryServerRPC& rpc, test::UnaryServerRPC::Request& request,
+                        test::ArenaRequestMessageFactory&)
+        {
+            return test.handle_unary_request_sender(rpc, request);
+        }
+
+        test::ArenaRequestMessageFactory request_message_factory()
+        {
+            if (counter++ == throw_counter)
+            {
+                throw test::Exception{};
+            }
+            return {};
+        }
+
+        test::ExecutionRpcHandlerTest& test;
+        int throw_counter;
+        int counter{};
+    };
+    int counter{};
+    SUBCASE("throw on first request") {}
+    SUBCASE("throw on second request") { counter = 1; }
+    std::exception_ptr eptr;
+    auto rpc_handler = unifex::let_error(
+        agrpc::register_sender_rpc_handler<test::UnaryServerRPC>(grpc_context, service, RPCHandler{*this, counter}),
+        [&](auto&& ep)
+        {
+            eptr = ep;
+            return unifex::just();
+        });
+    run(unifex::sequence(make_client_unary_request_sender(test::ten_milliseconds_from_now()),
+                         make_client_unary_request_sender(test::ten_milliseconds_from_now())),
+        std::move(rpc_handler));
+    CHECK_THROWS_AS(std::rethrow_exception(eptr), test::Exception);
 }
 
 #if !UNIFEX_NO_COROUTINES

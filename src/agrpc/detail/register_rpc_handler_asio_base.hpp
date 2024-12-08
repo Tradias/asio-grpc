@@ -66,7 +66,6 @@ class RegisterRPCHandlerOperationAsioBase
     using typename Base::Service;
     using Executor = detail::AssociatedExecutorT<CompletionHandlerT, ServerRPCExecutor>;
     using Allocator = detail::AssociatedAllocatorT<CompletionHandlerT>;
-    using Starter = detail::ServerRPCStarterT<ServerRPC>;
     using RefCountGuard = detail::ScopeGuard<Decrementer>;
 
     template <class Ch>
@@ -98,10 +97,12 @@ struct RegisterRPCHandlerInitiator
                     RPCHandler&& rpc_handler) const
     {
         const auto allocator = asio::get_associated_allocator(completion_handler);
-        detail::allocate<Operation<ServerRPC, detail::RemoveCrefT<RPCHandler>, detail::RemoveCrefT<CompletionHandler>>>(
+        auto op = detail::allocate<
+            Operation<ServerRPC, detail::RemoveCrefT<RPCHandler>, detail::RemoveCrefT<CompletionHandler>>>(
             allocator, executor, service_, static_cast<RPCHandler&&>(rpc_handler),
-            static_cast<CompletionHandler&&>(completion_handler))
-            .release();
+            static_cast<CompletionHandler&&>(completion_handler));
+        (*op).initiate();
+        op.release();
     }
 
     detail::ServerRPCServiceT<ServerRPC>& service_;

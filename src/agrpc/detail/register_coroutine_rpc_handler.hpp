@@ -47,7 +47,6 @@ struct RegisterCoroutineRPCHandlerOperation
             : Base(executor, service, static_cast<RPCHandler&&>(rpc_handler), static_cast<Ch&&>(completion_handler),
                    &detail::register_rpc_handler_asio_do_complete<Type>)
         {
-            initiate();
         }
 
         void initiate()
@@ -74,7 +73,7 @@ struct RegisterCoroutineRPCHandlerOperation
         {
             auto& self = static_cast<Type&>(g.get().self_);
             auto rpc = detail::ServerRPCContextBaseAccess::construct<ServerRPC>(self.get_executor());
-            detail::ServerRPCStarterT<ServerRPC, Args...> starter;
+            detail::RequestMessageFactoryServerRPCStarter<ServerRPC, RPCHandler, Args...> starter{self.rpc_handler()};
             if (!co_await starter.start(rpc, self.service(), self.completion_token()))
             {
                 co_return;

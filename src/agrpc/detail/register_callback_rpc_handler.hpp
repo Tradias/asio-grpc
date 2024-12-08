@@ -38,10 +38,11 @@ struct RegisterCallbackRPCHandlerOperation
     using ServerRPCWithRequest = detail::ServerRPCWithRequest<ServerRPC>;
     using ServerRPCPtr = agrpc::ServerRPCPtr<ServerRPC>;
 
-    struct ServerRPCAllocation : ServerRPCWithRequest
+    struct ServerRPCAllocation
+        : detail::RequestMessageFactoryServerRPCMixinT<ServerRPCWithRequest, ServerRPC, RPCHandler>
     {
         ServerRPCAllocation(const ServerRPCExecutor& executor, RegisterCallbackRPCHandlerOperation& self)
-            : ServerRPCWithRequest(executor), self_(self)
+            : ServerRPCAllocation::RequestMessageFactoryMixin(self.rpc_handler(), executor), self_(self)
         {
         }
 
@@ -57,11 +58,11 @@ struct RegisterCallbackRPCHandlerOperation
             if (ok)
             {
                 self_.notify_when_done_work_started();
-                self_.initiate_next();
                 AGRPC_TRY
                 {
-                    auto& starter = ptr_.server_rpc_;
-                    starter->invoke(self_.rpc_handler(), static_cast<ServerRPCPtr&&>(ptr_));
+                    self_.initiate_next();
+                    auto& starter = *static_cast<ServerRPCAllocation*>(ptr_.server_rpc_);
+                    starter.invoke(self_.rpc_handler(), static_cast<ServerRPCPtr&&>(ptr_));
                 }
                 AGRPC_CATCH(...)
                 {
@@ -132,7 +133,6 @@ struct RegisterCallbackRPCHandlerOperation
         : Base(executor, service, static_cast<RPCHandler&&>(rpc_handler), static_cast<Ch&&>(completion_handler),
                &detail::register_rpc_handler_asio_do_complete<RegisterCallbackRPCHandlerOperation>)
     {
-        initiate();
     }
 
     void initiate()

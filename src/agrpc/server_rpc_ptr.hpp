@@ -94,12 +94,12 @@ class ServerRPCPtr
     /**
      * @brief Get client's initial request message
      */
-    decltype(auto) request() noexcept { return (server_rpc_->request_); }
+    decltype(auto) request() noexcept { return *server_rpc_->request_; }
 
     /**
      * @brief Get client's initial request message (const overload)
      */
-    decltype(auto) request() const noexcept { return (server_rpc_->request_); }
+    decltype(auto) request() const noexcept { return *server_rpc_->request_; }
 
     /**
      * @brief Swap the contents of two ServerRPCPtr

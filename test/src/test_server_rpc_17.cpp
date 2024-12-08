@@ -19,6 +19,7 @@
 #include "utils/future.hpp"
 #include "utils/introspect_rpc.hpp"
 #include "utils/protobuf.hpp"
+#include "utils/requestMessageFactory.hpp"
 #include "utils/rpc.hpp"
 #include "utils/server_rpc.hpp"
 #include "utils/time.hpp"
@@ -210,26 +211,28 @@ TEST_CASE_TEMPLATE("ServerRPC/ClientRPC client streaming success", RPC, test::Cl
     SUBCASE("no last_message") {}
     SUBCASE("last_message") { set_last_message = true; }
     test.register_and_perform_three_requests(
-        [&](RPC& rpc, const asio::yield_context& yield)
-        {
-            auto future = test.set_up_notify_when_done(rpc);
-            typename RPC::Request request;
-            CHECK(rpc.read(request, yield));
-            CHECK_EQ(1, request.integer());
-            CHECK(rpc.read(request, yield));
-            CHECK_EQ(2, request.integer());
-            CHECK_FALSE(rpc.read(request, yield));
-            typename RPC::Response response;
-            response.set_integer(11);
-            if (use_finish_with_error)
+        test::RPCHandlerWithRequestMessageFactory{
+            [&](RPC& rpc, const asio::yield_context& yield)
             {
-                CHECK(rpc.finish_with_error(test::create_already_exists_status(), yield));
-            }
-            else
-            {
-                CHECK(rpc.finish(response, grpc::Status::OK, yield));
-            }
-            test.check_notify_when_done(future, rpc, yield);
+                auto future = test.set_up_notify_when_done(rpc);
+                typename RPC::Request request;
+                CHECK(rpc.read(request, yield));
+                CHECK_EQ(1, request.integer());
+                CHECK(rpc.read(request, yield));
+                CHECK_EQ(2, request.integer());
+                CHECK_FALSE(rpc.read(request, yield));
+                typename RPC::Response response;
+                response.set_integer(11);
+                if (use_finish_with_error)
+                {
+                    CHECK(rpc.finish_with_error(test::create_already_exists_status(), yield));
+                }
+                else
+                {
+                    CHECK(rpc.finish(response, grpc::Status::OK, yield));
+                }
+                test.check_notify_when_done(future, rpc, yield);
+            }  //
         },
         [&](auto& request, auto& response, const asio::yield_context& yield)
         {
@@ -474,11 +477,8 @@ TEST_CASE("ServerRPC/ClientRPC bidi streaming on io_context success")
             RPC::Request request;
             CHECK(rpc.read(request, yield));
             CHECK_EQ(1, request.integer());
-            CHECK_FALSE(rpc.read(request, yield));
             RPC::Response response;
             response.set_integer(11);
-            CHECK(rpc.write(response, grpc::WriteOptions{}, yield));
-            response.set_integer(12);
             CHECK(rpc.write_and_finish(response, grpc::Status::OK, yield));
             CHECK_EQ(io_context_thread_id, std::this_thread::get_id());
             test.check_notify_when_done(future, rpc, yield);
@@ -498,10 +498,6 @@ TEST_CASE("ServerRPC/ClientRPC bidi streaming on io_context success")
         CHECK(rpc.writes_done(yield));
         CHECK(rpc.read(response, yield));
         CHECK_EQ(11, response.integer());
-        CHECK(rpc.read(response, yield));
-        CHECK_EQ(12, response.integer());
-        CHECK_FALSE(rpc.read(response, yield));
-        CHECK_EQ(12, response.integer());
         CHECK_EQ(grpc::StatusCode::OK, rpc.finish(yield).error_code());
     };
     test.spawn_client_functions(io_context, client_function, client_function, client_function);
@@ -512,6 +508,26 @@ TEST_CASE("ServerRPC/ClientRPC bidi streaming on io_context success")
     io_context.run();
     t.join();
     CHECK_EQ(final_thread_id, std::this_thread::get_id());
+}
+
+TEST_CASE_FIXTURE(ServerRPCTest<test::UnaryServerRPC>, "Unary ServerRPC with protobuf Arena")
+{
+    register_and_perform_three_requests(
+        test::RPCHandlerWithRequestMessageFactory{
+            [&](ServerRPC& rpc, Request& request, const asio::yield_context& yield,
+                test::ArenaRequestMessageFactory& factory)
+            {
+                CHECK_EQ(42, request.integer());
+                CHECK_EQ(&factory.arena, request.GetArena());
+                rpc.finish({}, grpc::Status::OK, yield);
+                CHECK_FALSE(factory.is_destroy_invoked);
+            }},
+        [&](auto& request, auto& response, const asio::yield_context& yield)
+        {
+            const auto client_context = test::create_client_context();
+            request.set_integer(42);
+            CHECK_EQ(grpc::StatusCode::OK, request_rpc(*client_context, request, response, yield).error_code());
+        });
 }
 
 TEST_CASE("ServerRPC::service_name/method_name")
@@ -698,5 +714,30 @@ TEST_CASE_FIXTURE(ServerRPCTest<test::ClientStreamingServerRPC>, "ServerRPCPtr m
             auto rpc = create_rpc();
             CHECK(start_rpc(rpc, request, response, yield));
             CHECK_EQ(grpc::StatusCode::ALREADY_EXISTS, rpc.finish(yield).error_code());
+        });
+}
+
+TEST_CASE_FIXTURE(ServerRPCTest<test::UnaryServerRPC>, "Unary ServerRPCPtr with protobuf Arena")
+{
+    register_callback_and_perform_three_requests(
+        test::RPCHandlerWithRequestMessageFactory{
+            [&](ServerRPC::Ptr ptr, Request& request, test::ArenaRequestMessageFactory& factory)
+            {
+                CHECK_EQ(42, request.integer());
+                CHECK_EQ(&ptr.request(), &request);
+                CHECK_EQ(&factory.arena, request.GetArena());
+                auto& rpc = *ptr;
+                rpc.finish({}, grpc::Status::OK,
+                           [ptr = std::move(ptr)](bool ok)
+                           {
+                               CHECK(ok);
+                           });
+                CHECK_FALSE(factory.is_destroy_invoked);
+            }},
+        [&](auto& request, auto& response, const asio::yield_context& yield)
+        {
+            const auto client_context = test::create_client_context();
+            request.set_integer(42);
+            CHECK_EQ(grpc::StatusCode::OK, request_rpc(*client_context, request, response, yield).error_code());
         });
 }

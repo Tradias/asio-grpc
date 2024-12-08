@@ -15,7 +15,6 @@
 #ifndef AGRPC_UTILS_EXECUTION_TEST_HPP
 #define AGRPC_UTILS_EXECUTION_TEST_HPP
 
-#include "test/v1/test.grpc.pb.h"
 #include "utils/client_rpc.hpp"
 #include "utils/client_rpc_test.hpp"
 #include "utils/execution_utils.hpp"
@@ -69,9 +68,9 @@ struct ExecutionRpcHandlerTest : test::ExecutionTestMixin<test::GrpcClientServer
         test::msg::Response response;
     };
 
-    template <class OnRequestDone>
+    template <class OnRequestDone = test::NoOp>
     auto make_client_unary_request_sender(std::chrono::system_clock::time_point deadline,
-                                          OnRequestDone on_request_done = test::NoOp{})
+                                          OnRequestDone on_request_done = {})
     {
         return stdexec::then(stdexec::just(),
                              [deadline]()
