@@ -16,6 +16,8 @@
 #define AGRPC_UTILS_PROTOBUF_HPP
 
 #include <doctest/doctest.h>
+#include <google/protobuf/arena.h>
+#include <google/protobuf/stubs/common.h>
 #include <grpcpp/impl/codegen/proto_utils.h>
 #include <grpcpp/support/proto_buffer_reader.h>
 #include <grpcpp/support/proto_buffer_writer.h>
@@ -39,6 +41,15 @@ grpc::ByteBuffer message_to_grpc_buffer(const Message& message)
     const auto status = grpc::GenericSerialize<grpc::ProtoBufferWriter, Message>(message, &buffer, &own_buffer);
     CHECK_MESSAGE(status.ok(), status.error_message());
     return buffer;
+}
+
+inline bool has_arena(const google::protobuf::MessageLite& message, const google::protobuf::Arena& arena)
+{
+#if GOOGLE_PROTOBUF_VERSION < 4000000
+    return true;
+#else
+    return message.GetArena() == &arena;
+#endif
 }
 }
 

@@ -518,7 +518,7 @@ TEST_CASE_FIXTURE(ServerRPCTest<test::UnaryServerRPC>, "Unary ServerRPC with pro
                 test::ArenaRequestMessageFactory& factory)
             {
                 CHECK_EQ(42, request.integer());
-                CHECK_EQ(&factory.arena, request.GetArena());
+                CHECK(test::has_arena(request, factory.arena));
                 rpc.finish({}, grpc::Status::OK, yield);
                 CHECK_FALSE(factory.is_destroy_invoked);
             }},
@@ -716,7 +716,7 @@ TEST_CASE_FIXTURE(ServerRPCTest<test::UnaryServerRPC>, "Unary ServerRPCPtr with 
             {
                 CHECK_EQ(42, request.integer());
                 CHECK_EQ(&ptr.request(), &request);
-                CHECK_EQ(&factory.arena, request.GetArena());
+                CHECK(test::has_arena(request, factory.arena));
                 auto& rpc = *ptr;
                 rpc.finish({}, grpc::Status::OK,
                            [ptr = std::move(ptr)](bool ok)

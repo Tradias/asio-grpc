@@ -18,6 +18,7 @@
 #include "utils/doctest.hpp"
 #include "utils/exception.hpp"
 #include "utils/execution_test.hpp"
+#include "utils/protobuf.hpp"
 #include "utils/requestMessageFactory.hpp"
 #include "utils/server_rpc.hpp"
 
@@ -161,7 +162,7 @@ TEST_CASE_FIXTURE(test::ExecutionRpcHandlerTest, "unifex rpc_handler unary with 
             [&](test::UnaryServerRPC& rpc, auto& request, test::ArenaRequestMessageFactory& factory)
             {
                 CHECK_EQ(42, request.integer());
-                CHECK_EQ(&factory.arena, request.GetArena());
+                CHECK(test::has_arena(request, factory.arena));
                 return handle_unary_request_sender(rpc, request);
             }});
     run(make_client_unary_request_sender(test::five_seconds_from_now(),
