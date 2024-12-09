@@ -68,7 +68,20 @@ struct ExecutionRpcHandlerTest : test::ExecutionTestMixin<test::GrpcClientServer
         test::msg::Response response;
     };
 
-    template <class OnRequestDone = test::NoOp>
+    template <bool IsUnstoppable, class Sender>
+    decltype(auto) maybe_unstoppable(Sender&& sender)
+    {
+        if constexpr (IsUnstoppable)
+        {
+            return test::unstoppable(std::forward<Sender>(sender));
+        }
+        else
+        {
+            return std::forward<Sender>(sender);
+        }
+    }
+
+    template <bool IsUnstoppable = true, class OnRequestDone = test::NoOp>
     auto make_client_unary_request_sender(std::chrono::system_clock::time_point deadline,
                                           OnRequestDone on_request_done = {})
     {
@@ -82,8 +95,8 @@ struct ExecutionRpcHandlerTest : test::ExecutionTestMixin<test::GrpcClientServer
                    {
                        auto& [client_context, request, response] = *context;
                        return stdexec::then(
-                           test::unstoppable(test::UnaryClientRPC::request(grpc_context, *stub, client_context, request,
-                                                                           response, agrpc::use_sender)),
+                           maybe_unstoppable<IsUnstoppable>(test::UnaryClientRPC::request(
+                               grpc_context, *stub, client_context, request, response, agrpc::use_sender)),
                            [&context, on_request_done](const grpc::Status& status)
                            {
                                auto& [client_context, request, response] = *context;

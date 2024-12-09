@@ -220,9 +220,9 @@ TEST_CASE_FIXTURE(test::ExecutionRpcHandlerTest,
             eptr = ep;
             return unifex::just();
         });
-    run(unifex::sequence(make_client_unary_request_sender(test::ten_milliseconds_from_now()),
-                         make_client_unary_request_sender(test::ten_milliseconds_from_now())),
-        std::move(rpc_handler));
+    run(unifex::stop_when(unifex::sequence(make_client_unary_request_sender<false>(test::five_seconds_from_now()),
+                                           make_client_unary_request_sender<false>(test::five_seconds_from_now())),
+                          std::move(rpc_handler)));
     CHECK_THROWS_AS(std::rethrow_exception(eptr), test::Exception);
 }
 
