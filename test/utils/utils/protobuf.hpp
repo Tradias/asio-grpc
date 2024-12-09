@@ -43,7 +43,8 @@ grpc::ByteBuffer message_to_grpc_buffer(const Message& message)
     return buffer;
 }
 
-inline bool has_arena(const google::protobuf::MessageLite& message, const google::protobuf::Arena& arena)
+inline bool has_arena([[maybe_unused]] const google::protobuf::MessageLite& message,
+                      [[maybe_unused]] const google::protobuf::Arena& arena)
 {
 #if GOOGLE_PROTOBUF_VERSION < 4000000
     return true;

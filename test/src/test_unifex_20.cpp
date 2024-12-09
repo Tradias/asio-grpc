@@ -29,11 +29,11 @@ TEST_CASE("unifex asio-grpc fulfills std::execution concepts")
     CHECK(unifex::scheduler<agrpc::GrpcExecutor>);
     using GrpcSender = decltype(std::declval<agrpc::Alarm&>().wait(
         std::declval<std::chrono::system_clock::time_point>(), agrpc::use_sender));
-    CHECK(unifex::typed_sender<GrpcSender>);
+    CHECK(unifex::sender<GrpcSender>);
     CHECK(unifex::is_nothrow_connectable_v<GrpcSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
 
     using ScheduleSender = decltype(unifex::schedule(std::declval<agrpc::GrpcExecutor>()));
-    CHECK(unifex::typed_sender<ScheduleSender>);
+    CHECK(unifex::sender<ScheduleSender>);
     CHECK(unifex::is_nothrow_connectable_v<ScheduleSender, test::FunctionAsReceiver<test::InvocableArchetype>>);
 }
 
