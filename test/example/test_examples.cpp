@@ -29,6 +29,11 @@ TEST_CASE("examples")
         client_program = ASIO_GRPC_EXAMPLE_HELLO_WORLD_CLIENT;
         server_program = ASIO_GRPC_EXAMPLE_HELLO_WORLD_SERVER;
     }
+    SUBCASE("Boost.Asio hello world arena")
+    {
+        client_program = ASIO_GRPC_EXAMPLE_HELLO_WORLD_CLIENT;
+        server_program = ASIO_GRPC_EXAMPLE_HELLO_WORLD_SERVER_ARENA;
+    }
     SUBCASE("Boost.Asio streaming")
     {
         client_program = ASIO_GRPC_EXAMPLE_STREAMING_CLIENT;

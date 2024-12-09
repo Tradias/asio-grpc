@@ -47,6 +47,9 @@ if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPL
     asio_grpc_add_example(hello-world-server "20")
     target_link_libraries(asio-grpc-example-hello-world-server PRIVATE asio-grpc::asio-grpc)
 
+    asio_grpc_add_example(hello-world-server-arena "20")
+    target_link_libraries(asio-grpc-example-hello-world-server-arena PRIVATE asio-grpc::asio-grpc)
+
     asio_grpc_add_example(streaming-client "20")
     target_link_libraries(asio-grpc-example-streaming-client PRIVATE asio-grpc::asio-grpc)
 

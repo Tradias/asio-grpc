@@ -29,6 +29,7 @@ add_dependencies(
     asio-grpc-example-main-io-context-server
     asio-grpc-example-hello-world-client
     asio-grpc-example-hello-world-server
+    asio-grpc-example-hello-world-server-arena
     asio-grpc-example-generic-client
     asio-grpc-example-generic-server
     asio-grpc-example-multi-threaded-client
@@ -54,6 +55,7 @@ target_compile_definitions(
         "ASIO_GRPC_EXAMPLE_MAIN_IO_CONTEXT_SERVER=\"$<TARGET_FILE:asio-grpc-example-main-io-context-server>\""
         "ASIO_GRPC_EXAMPLE_HELLO_WORLD_CLIENT=\"$<TARGET_FILE:asio-grpc-example-hello-world-client>\""
         "ASIO_GRPC_EXAMPLE_HELLO_WORLD_SERVER=\"$<TARGET_FILE:asio-grpc-example-hello-world-server>\""
+        "ASIO_GRPC_EXAMPLE_HELLO_WORLD_SERVER_ARENA=\"$<TARGET_FILE:asio-grpc-example-hello-world-server-arena>\""
         "ASIO_GRPC_EXAMPLE_GENERIC_CLIENT=\"$<TARGET_FILE:asio-grpc-example-generic-client>\""
         "ASIO_GRPC_EXAMPLE_GENERIC_SERVER=\"$<TARGET_FILE:asio-grpc-example-generic-server>\""
         "ASIO_GRPC_EXAMPLE_MULTI_THREADED_CLIENT=\"$<TARGET_FILE:asio-grpc-example-multi-threaded-client>\""

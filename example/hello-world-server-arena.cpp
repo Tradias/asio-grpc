@@ -22,11 +22,49 @@
 
 namespace asio = boost::asio;
 
-// begin-snippet: server-side-helloworld
+// begin-snippet: server-side-helloworld-arena
 // ---------------------------------------------------
-// Server-side hello world which handles exactly one request from the client before shutting down.
+// Server-side hello world with google::protobuf::Arena allocation
 // ---------------------------------------------------
 // end-snippet
+
+class ArenaRequestMessageFactory
+{
+  public:
+    template <class Request>
+    Request& create()
+    {
+        return *google::protobuf::Arena::Create<Request>(&arena_);
+    }
+
+    // This method is optional and can be omitted
+    template <class Request>
+    void destroy(Request&) noexcept
+    {
+    }
+
+  private:
+    google::protobuf::Arena arena_;
+};
+
+template <class Handler>
+class RPCHandlerWithArenaRequestMessageFactory
+{
+  public:
+    explicit RPCHandlerWithArenaRequestMessageFactory(Handler handler) : handler_(std::move(handler)) {}
+
+    template <class... Args>
+    decltype(auto) operator()(Args&&... args)
+    {
+        return handler_(std::forward<Args>(args)...);
+    }
+
+    ArenaRequestMessageFactory request_message_factory() { return {}; }
+
+  private:
+    Handler handler_;
+};
+
 int main(int argc, const char** argv)
 {
     const auto port = argc >= 2 ? argv[1] : "50051";
@@ -44,13 +82,14 @@ int main(int argc, const char** argv)
     using RPC = example::AwaitableServerRPC<&helloworld::Greeter::AsyncService::RequestSayHello>;
     agrpc::register_awaitable_rpc_handler<RPC>(
         grpc_context, service,
-        [&](RPC& rpc, helloworld::HelloRequest& request) -> asio::awaitable<void>
-        {
-            helloworld::HelloReply response;
-            response.set_message("Hello " + request.name());
-            co_await rpc.finish(response, grpc::Status::OK);
-            server->Shutdown();
-        },
+        RPCHandlerWithArenaRequestMessageFactory{
+            [&](RPC& rpc, RPC::Request& request, ArenaRequestMessageFactory& factory) -> asio::awaitable<void>
+            {
+                auto& response = *google::protobuf::Arena::Create<RPC::Response>(request.GetArena());
+                response.set_message("Hello " + request.name());
+                co_await rpc.finish(response, grpc::Status::OK);
+                server->Shutdown();
+            }},
         example::RethrowFirstArg{});
 
     grpc_context.run();

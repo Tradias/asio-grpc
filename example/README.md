@@ -131,6 +131,8 @@ Click on `snippet source` to jump to the code of an individual example.
 <sup><a href='/example/hello-world-server.cpp#L28-L32' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
+snippet: server-side-helloworld-arena
+
 ### Streaming RPCs
 
 <!-- snippet: server-side-client-streaming -->

@@ -19,7 +19,6 @@
 
 #include <agrpc/asio_grpc.hpp>
 #include <boost/asio/co_spawn.hpp>
-#include <boost/asio/detached.hpp>
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 
