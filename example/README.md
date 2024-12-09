@@ -128,10 +128,18 @@ Click on `snippet source` to jump to the code of an individual example.
 // Server-side hello world which handles exactly one request from the client before shutting down.
 // ---------------------------------------------------
 ```
-<sup><a href='/example/hello-world-server.cpp#L28-L32' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/hello-world-server.cpp#L25-L29' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
-snippet: server-side-helloworld-arena
+<!-- snippet: server-side-helloworld-arena -->
+<a id='snippet-server-side-helloworld-arena'></a>
+```cpp
+// ---------------------------------------------------
+// Server-side hello world with google::protobuf::Arena allocation
+// ---------------------------------------------------
+```
+<sup><a href='/example/hello-world-server-arena.cpp#L25-L29' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld-arena' title='Start of snippet'>anchor</a></sup>
+<!-- endSnippet -->
 
 ### Streaming RPCs
 
