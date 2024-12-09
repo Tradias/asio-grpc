@@ -83,7 +83,7 @@ TEST_CASE("examples")
     }
     boost::process::child server(server_program, args);
     REQUIRE(server.valid());
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(350));
     boost::process::child client(client_program, std::move(args));
     REQUIRE(client.valid());
     server.join();
