@@ -36,6 +36,14 @@ AGRPC_NAMESPACE_BEGIN()
  *
  * @snippet unifex_server.cpp server-rpc-unary-sender
  *
+ * [(experimental) Additionally, the rpc handler may have a method called `request_message_factory()`. If it does then
+ * that method will be invoked and the returned object used to create and destroy the initial request message for unary
+ * and server-streaming rpcs.
+ *
+ * Example: (since 3.4.0)]
+ *
+ * @snippet server_rpc.cpp server-rpc-handler-with-arena
+ *
  * @tparam ServerRPC An instantiation of `agrpc::ServerRPC`
  * @param grpc_context The GrpcContext used to handle each rpc
  * @param service The service associated with the gRPC method of the ServerRPC

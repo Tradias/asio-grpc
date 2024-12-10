@@ -240,3 +240,63 @@ void server_rpc_bidirectional_streaming(agrpc::GrpcContext& grpc_context,
 }
 /* [server-rpc-bidirectional-streaming] */
 // clang-format on
+
+/* [server-rpc-handler-with-arena] */
+class ArenaRequestMessageFactory
+{
+  public:
+    template <class Request>
+    Request& create()
+    {
+        return *google::protobuf::Arena::Create<Request>(&arena_);
+    }
+
+    // This method is optional and can be omitted
+    template <class Request>
+    void destroy(Request&) noexcept
+    {
+    }
+
+  private:
+    google::protobuf::Arena arena_;
+};
+
+template <class Handler>
+class RPCHandlerWithArenaRequestMessageFactory
+{
+  public:
+    explicit RPCHandlerWithArenaRequestMessageFactory(Handler handler) : handler_(std::move(handler)) {}
+
+    // unary and server-streaming rpcs
+    template <class ServerRPC, class Request>
+    decltype(auto) operator()(ServerRPC&& rpc, Request&& request, ArenaRequestMessageFactory&)
+    {
+        return handler_(std::forward<ServerRPC>(rpc), std::forward<Request>(request));
+    }
+
+    // client-streaming and bidi-streaming rpcs
+    template <class ServerRPC>
+    decltype(auto) operator()(ServerRPC&& rpc)
+    {
+        return handler_(std::forward<ServerRPC>(rpc));
+    }
+
+    ArenaRequestMessageFactory request_message_factory() { return {}; }
+
+  private:
+    Handler handler_;
+};
+
+template <class ServerRPC>
+void register_rpc_handler(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
+{
+    agrpc::register_awaitable_rpc_handler<ServerRPC>(
+        grpc_context, service,
+        RPCHandlerWithArenaRequestMessageFactory{[&](ServerRPC&, typename ServerRPC::Request&) -> asio::awaitable<void>
+                                                 {
+                                                     // ...
+                                                     co_return;
+                                                 }},
+        asio::detached);
+}
+/* [server-rpc-handler-with-arena] */

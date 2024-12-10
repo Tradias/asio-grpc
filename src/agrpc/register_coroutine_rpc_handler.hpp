@@ -47,6 +47,13 @@ AGRPC_NAMESPACE_BEGIN()
  * is called). At which point it invokes the completion handler (passing forward the exception thrown by the request
  * handler, if any) after all coroutines produced by invoking the rpc handler complete.
  *
+ * [(experimental) Additionally, the rpc handler may have a method called `request_message_factory()`. If it does then
+ * that method will be invoked and the returned object used to create and destroy the initial request message for unary
+ * and server-streaming rpcs.
+ *
+ * Example: (since 3.4.0)]
+ *
+ * @snippet server_rpc.cpp server-rpc-handler-with-arena
  * @tparam ServerRPC An instantiation of `agrpc::ServerRPC`
  * @tparam CoroutineTraits A class that provides functions for spawning the coroutine of each rpc. Example:
  *
