@@ -83,7 +83,7 @@ int main(int argc, const char** argv)
     agrpc::register_awaitable_rpc_handler<RPC>(
         grpc_context, service,
         RPCHandlerWithArenaRequestMessageFactory{
-            [&](RPC& rpc, RPC::Request& request, ArenaRequestMessageFactory& factory) -> asio::awaitable<void>
+            [&](RPC& rpc, RPC::Request& request, ArenaRequestMessageFactory&) -> asio::awaitable<void>
             {
                 auto& response = *google::protobuf::Arena::Create<RPC::Response>(request.GetArena());
                 response.set_message("Hello " + request.name());
