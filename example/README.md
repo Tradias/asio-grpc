@@ -27,7 +27,7 @@ Click on `snippet source` to jump to the code of an individual example.
 ```cpp
 // A bidirectional-streaming request that simply sends the response from the server back to it.
 ```
-<sup><a href='/example/streaming-client.cpp#L134-L138' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-rpc-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-client.cpp#L133-L137' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-rpc-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: client-side-run-with-deadline -->
@@ -37,7 +37,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // applied to streaming RPCs, where it is arguably more useful.
 // For unary RPCs, `grpc::ClientContext::set_deadline` should be preferred.
 ```
-<sup><a href='/example/streaming-client.cpp#L178-L184' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-run-with-deadline' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-client.cpp#L177-L183' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-run-with-deadline' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Multi-threaded
