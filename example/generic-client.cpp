@@ -47,9 +47,9 @@ bool deserialize(grpc::ByteBuffer& buffer, Message& message)
 }
 
 // begin-snippet: client-side-generic-unary-request
-// ---------------------------------------------------
+
 // A simple generic unary with Boost.Coroutine.
-// ---------------------------------------------------
+
 // end-snippet
 void make_generic_unary_request(agrpc::GrpcContext& grpc_context, grpc::GenericStub& stub,
                                 const asio::yield_context& yield)
@@ -84,10 +84,10 @@ void make_generic_unary_request(agrpc::GrpcContext& grpc_context, grpc::GenericS
 //
 
 // begin-snippet: client-side-generic-bidirectional-request
-// ---------------------------------------------------
+
 // A generic bidirectional-streaming request that simply sends the response from the server back to it using Asio's
 // stackless coroutines.
-// ---------------------------------------------------
+
 // end-snippet
 struct BidirectionalStreamingRequest
 {

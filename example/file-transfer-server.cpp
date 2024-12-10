@@ -38,9 +38,9 @@
 namespace asio = boost::asio;
 
 // begin-snippet: server-side-file-transfer
-// ---------------------------------------------------
+
 // Example showing how to transfer files over a streaming RPC. Stack buffers are used to customize memory allocation.
-// ---------------------------------------------------
+
 // end-snippet
 
 using RPC = agrpc::ServerRPC<&example::v1::ExampleExt::AsyncService::RequestSendFile>;

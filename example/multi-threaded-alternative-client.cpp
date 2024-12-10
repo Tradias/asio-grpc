@@ -31,9 +31,9 @@
 namespace asio = boost::asio;
 
 // begin-snippet: client-side-multi-threaded-alternative
-// ---------------------------------------------------
+
 // Multi-threaded client using single a GrpcContext
-// ---------------------------------------------------
+
 // end-snippet
 
 asio::awaitable<void> make_request(agrpc::GrpcContext& grpc_context, helloworld::Greeter::Stub& stub)

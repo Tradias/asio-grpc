@@ -37,9 +37,9 @@ namespace asio = boost::asio;
 inline constexpr asio::use_awaitable_t<agrpc::GrpcExecutor> USE_AWAITABLE{};
 
 // begin-snippet: client-side-file-transfer
-// ---------------------------------------------------
+
 // Example showing how to transfer files over a streaming RPC. Stack buffers are used to customize memory allocation.
-// ---------------------------------------------------
+
 // end-snippet
 
 // The use of `asio::awaitable<bool, agrpc::GrpcExecutor>` is not required but `agrpc::GrpcExecutor` is slightly smaller

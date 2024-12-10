@@ -31,9 +31,9 @@
 namespace asio = boost::asio;
 
 // begin-snippet: server-side-main-io-context
-// ---------------------------------------------------
+
 // Example showing how to use an io_context as the main context and a GrpcContext on a separate thread for gRPC servers.
-// ---------------------------------------------------
+
 // end-snippet
 
 //  A simple tcp request that will be handled by the io_context.

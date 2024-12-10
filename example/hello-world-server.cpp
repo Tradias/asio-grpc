@@ -23,9 +23,9 @@
 namespace asio = boost::asio;
 
 // begin-snippet: server-side-helloworld
-// ---------------------------------------------------
+
 // Server-side hello world which handles exactly one request from the client before shutting down.
-// ---------------------------------------------------
+
 // end-snippet
 int main(int argc, const char** argv)
 {

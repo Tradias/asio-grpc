@@ -40,10 +40,10 @@ using UnaryRPC = agrpc::ServerRPC<&ExampleService::RequestUnary>;
 using ServerStreamingRPC = agrpc::ServerRPC<&ExampleService::RequestServerStreaming>;
 
 // begin-snippet: server-side-unifex-unary
-// ---------------------------------------------------
+
 // Register a request handler to unary requests. A bit of boilerplate code regarding stop_source has been added to make
 // the example testable.
-// ---------------------------------------------------
+
 // end-snippet
 auto register_unary_request_handler(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
 {
@@ -67,9 +67,9 @@ auto register_unary_request_handler(agrpc::GrpcContext& grpc_context, example::v
 //
 
 // begin-snippet: server-side-unifex-server-streaming
-// ---------------------------------------------------
+
 // A simple server-streaming request handler using coroutines.
-// ---------------------------------------------------
+
 // end-snippet
 auto handle_server_streaming_request(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
 {
@@ -93,9 +93,7 @@ auto handle_server_streaming_request(agrpc::GrpcContext& grpc_context, example::
 // ---------------------------------------------------
 //
 
-// ---------------------------------------------------
 // The SlowUnary endpoint is used by the client to demonstrate per-RPC step cancellation. See unifex-client.cpp.
-// ---------------------------------------------------
 auto handle_slow_unary_request(agrpc::GrpcContext& grpc_context, example::v1::ExampleExt::AsyncService& service)
 {
     using RPC = agrpc::ServerRPC<&example::v1::ExampleExt::AsyncService::RequestSlowUnary>;

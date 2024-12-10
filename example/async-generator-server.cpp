@@ -29,9 +29,9 @@ using ExampleService = example::v1::Example::AsyncService;
 using ExampleExtService = example::v1::ExampleExt::AsyncService;
 
 // begin-snippet: server-side-server-streaming-async-generator
-// ---------------------------------------------------
+
 // (experimental) Server handling a server-streaming request using co_yield
-// ---------------------------------------------------
+
 // end-snippet
 
 template <class RPCHandler>

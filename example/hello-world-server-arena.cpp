@@ -23,9 +23,9 @@
 namespace asio = boost::asio;
 
 // begin-snippet: server-side-helloworld-arena
-// ---------------------------------------------------
+
 // Server-side hello world with google::protobuf::Arena allocation
-// ---------------------------------------------------
+
 // end-snippet
 
 class ArenaRequestMessageFactory

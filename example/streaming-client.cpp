@@ -39,9 +39,9 @@ using ExampleExtStub = example::v1::ExampleExt::Stub;
 // Example showing some of the features of the ClientRPC API of asio-grpc with Boost.Asio.
 
 // begin-snippet: client-side-client-rpc-streaming
-// ---------------------------------------------------
+
 // A simple client-streaming request with coroutines.
-// ---------------------------------------------------
+
 // end-snippet
 asio::awaitable<void> make_client_streaming_request(agrpc::GrpcContext& grpc_context, ExampleStub& stub)
 {
@@ -73,9 +73,9 @@ asio::awaitable<void> make_client_streaming_request(agrpc::GrpcContext& grpc_con
 //
 
 // begin-snippet: client-rpc-server-streaming
-// ---------------------------------------------------
+
 // A simple server-streaming request with coroutines.
-// ---------------------------------------------------
+
 // end-snippet
 asio::awaitable<void> make_server_streaming_request(agrpc::GrpcContext& grpc_context, ExampleStub& stub)
 {
@@ -103,9 +103,7 @@ asio::awaitable<void> make_server_streaming_request(agrpc::GrpcContext& grpc_con
 // ---------------------------------------------------
 //
 
-// ---------------------------------------------------
 // A server-streaming request that is cancelled.
-// ---------------------------------------------------
 asio::awaitable<void> make_server_streaming_notify_when_done_request(agrpc::GrpcContext& grpc_context,
                                                                      ExampleStub& stub)
 {
@@ -133,9 +131,9 @@ asio::awaitable<void> make_server_streaming_notify_when_done_request(agrpc::Grpc
 //
 
 // begin-snippet: client-rpc-bidirectional-streaming
-// ---------------------------------------------------
+
 // A bidirectional-streaming request that simply sends the response from the server back to it.
-// ---------------------------------------------------
+
 // end-snippet
 asio::awaitable<void> make_bidirectional_streaming_request(agrpc::GrpcContext& grpc_context, ExampleStub& stub)
 {
@@ -177,11 +175,11 @@ asio::awaitable<void> make_bidirectional_streaming_request(agrpc::GrpcContext& g
 //
 
 // begin-snippet: client-side-run-with-deadline
-// ---------------------------------------------------
+
 // A unary request with a per-RPC step timeout. Using a unary RPC for demonstration purposes, the same mechanism can be
 // applied to streaming RPCs, where it is arguably more useful.
 // For unary RPCs, `grpc::ClientContext::set_deadline` should be preferred.
-// ---------------------------------------------------
+
 // end-snippet
 asio::awaitable<void> make_and_cancel_unary_request(agrpc::GrpcContext& grpc_context, ExampleExtStub& stub)
 {
@@ -215,9 +213,7 @@ asio::awaitable<void> make_and_cancel_unary_request(agrpc::GrpcContext& grpc_con
 // ---------------------------------------------------
 //
 
-// ---------------------------------------------------
 // The Shutdown endpoint is used by unit tests.
-// ---------------------------------------------------
 asio::awaitable<void> make_shutdown_request(agrpc::GrpcContext& grpc_context, ExampleExtStub& stub)
 {
     using RPC = example::AwaitableClientRPC<&ExampleExtStub::PrepareAsyncShutdown>;

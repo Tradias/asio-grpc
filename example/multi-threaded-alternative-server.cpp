@@ -28,9 +28,9 @@
 namespace asio = boost::asio;
 
 // begin-snippet: server-side-multi-threaded-alternative
-// ---------------------------------------------------
+
 // Multi-threaded server handling unary requests using callback API and single GrpcContext
-// ---------------------------------------------------
+
 // end-snippet
 
 void register_request_handler(agrpc::GrpcContext& grpc_context, helloworld::Greeter::AsyncService& service,

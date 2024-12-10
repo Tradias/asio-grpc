@@ -35,9 +35,9 @@
 // Example showing some of the features of using asio-grpc with libunifex.
 
 // begin-snippet: client-side-unifex-unary
-// ---------------------------------------------------
+
 // A simple unary request with unifex coroutines.
-// ---------------------------------------------------
+
 // end-snippet
 unifex::task<void> make_unary_request(agrpc::GrpcContext& grpc_context, example::v1::Example::Stub& stub)
 {
@@ -57,9 +57,9 @@ unifex::task<void> make_unary_request(agrpc::GrpcContext& grpc_context, example:
 //
 
 // begin-snippet: client-side-unifex-server-streaming
-// ---------------------------------------------------
+
 // A server-streaming request with unifex sender/receiver.
-// ---------------------------------------------------
+
 // end-snippet
 using ServerStreamingClientRPC = agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncServerStreaming>;
 
@@ -145,11 +145,11 @@ auto make_server_streaming_request(agrpc::GrpcContext& grpc_context, example::v1
 //
 
 // begin-snippet: client-side-unifex-with-deadline
-// ---------------------------------------------------
+
 // A unifex, unary request with a per-RPC step timeout. Using a unary RPC for demonstration purposes, the same mechanism
 // can be applied to streaming RPCs, where it is arguably more useful. For unary RPCs,
 // `grpc::ClientContext::set_deadline` is the preferred way of specifying a timeout.
-// ---------------------------------------------------
+
 // end-snippet
 auto with_deadline(agrpc::GrpcContext& grpc_context, std::chrono::system_clock::time_point deadline)
 {

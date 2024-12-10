@@ -27,12 +27,6 @@ namespace asio = boost::asio;
 using ExampleStub = example::v1::Example::Stub;
 using ExampleExtStub = example::v1::ExampleExt::Stub;
 
-// begin-snippet: client-side-server-streaming-async-generator
-// ---------------------------------------------------
-// (experimental) Client handling a server-streaming request using co_yield
-// ---------------------------------------------------
-// end-snippet
-
 asio::awaitable<void> make_server_streaming_request(agrpc::GrpcContext& grpc_context, ExampleStub& stub)
 {
     using RPC = example::AwaitableClientRPC<&ExampleStub::PrepareAsyncServerStreaming>;

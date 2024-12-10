@@ -35,12 +35,10 @@
 
 namespace asio = boost::asio;
 
-// Examples showing how to write generic servers for unary and bidirectional streaming RPCs.
-
 // begin-snippet: server-side-generic-unary-request
-// ---------------------------------------------------
+
 // Handle a simple generic unary request with Boost.Coroutine.
-// ---------------------------------------------------
+
 // end-snippet
 void process_request(grpc::ByteBuffer& buffer)
 {
@@ -74,10 +72,10 @@ void handle_generic_unary_request(agrpc::GenericServerRPC& rpc, const asio::yiel
 //
 
 // begin-snippet: server-side-generic-bidirectional-request
-// ---------------------------------------------------
+
 // A bidirectional-streaming example that shows how to dispatch requests to a thread_pool and write responses
 // back to the client.
-// ---------------------------------------------------
+
 // end-snippet
 using Channel = asio::experimental::channel<agrpc::GrpcExecutor, void(boost::system::error_code, grpc::ByteBuffer)>;
 
@@ -100,19 +98,6 @@ void reader(agrpc::GenericServerRPC& rpc, Channel& channel, const asio::basic_yi
     channel.close();
 }
 
-// When switching threads in a Boost.Coroutine calls to `std::this_thread::get_id` before and after the switch can
-// produce unexpected results. Disabling optimizations seems to correct that.
-auto
-#if defined(__clang__)
-    __attribute__((optnone))
-#elif defined(__GNUC__)
-    __attribute__((optimize("O0")))
-#endif
-    get_thread_id()
-{
-    return std::this_thread::get_id();
-}
-
 // The writer will pick up reads from the reader through the channel and switch
 // to the thread_pool to compute their response.
 template <class Handler>
@@ -128,13 +113,8 @@ bool writer(agrpc::GenericServerRPC& rpc, Channel& channel, asio::thread_pool& t
         {
             break;
         }
-        auto main_thread = std::this_thread::get_id();
-
         // In this example we switch to the thread_pool to compute the response.
         asio::post(asio::bind_executor(thread_pool, yield));
-
-        auto thread_pool_thread = get_thread_id();
-        abort_if_not(main_thread != thread_pool_thread);
 
         process_request(buffer);
 

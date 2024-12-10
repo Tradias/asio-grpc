@@ -31,9 +31,9 @@
 namespace asio = boost::asio;
 
 // begin-snippet: client-side-multi-threaded
-// ---------------------------------------------------
+
 // Multi-threaded client using multiple GrpcContexts
-// ---------------------------------------------------
+
 // end-snippet
 
 // A simple round robin strategy for picking the next GrpcContext to use for an RPC.

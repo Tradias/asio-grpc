@@ -40,9 +40,9 @@ using ExampleExtService = example::v1::ExampleExt::AsyncService;
 // Example showing some of the features of using asio-grpc with Boost.Asio.
 
 // begin-snippet: server-side-client-streaming
-// ---------------------------------------------------
+
 // A simple client-streaming rpc handler using C++20 coroutines.
-// ---------------------------------------------------
+
 // end-snippet
 using ClientStreamingRPC = example::AwaitableServerRPC<&ExampleService::RequestClientStreaming>;
 
@@ -74,9 +74,9 @@ asio::awaitable<void> handle_client_streaming_request(ClientStreamingRPC& rpc)
 //
 
 // begin-snippet: server-side-server-streaming
-// ---------------------------------------------------
+
 // A simple server-streaming rpc handler using C++20 coroutines.
-// ---------------------------------------------------
+
 // end-snippet
 using ServerStreamingRPC = example::AwaitableServerRPC<&ExampleService::RequestServerStreaming>;
 
@@ -94,10 +94,10 @@ asio::awaitable<void> handle_server_streaming_request(ServerStreamingRPC& rpc, e
 //
 
 // begin-snippet: server-side-notify-when-done
-// ---------------------------------------------------
+
 // A server-streaming rpc handler that sends a message every 30s but completes immediately if the client cancels the
 // rpc.
-// ---------------------------------------------------
+
 // end-snippet
 using ServerStreamingNotifyWhenDoneRPC =
     example::AwaitableNotifyWhenDoneServerRPC<&ExampleService::RequestServerStreaming>;
@@ -144,10 +144,10 @@ auto server_streaming_notify_when_done_request_handler(agrpc::GrpcContext& grpc_
 //
 
 // begin-snippet: server-side-bidirectional-streaming
-// ---------------------------------------------------
+
 // The following bidirectional-streaming example shows how to dispatch requests to a thread_pool and write responses
 // back to the client.
-// ---------------------------------------------------
+
 // end-snippet
 using BidiStreamingRPC = example::AwaitableServerRPC<&ExampleService::RequestBidirectionalStreaming>;
 
@@ -224,10 +224,8 @@ auto bidirectional_streaming_rpc_handler(asio::thread_pool& thread_pool)
 // ---------------------------------------------------
 //
 
-// ---------------------------------------------------
 // The SlowUnary endpoint is used by the client to demonstrate per-RPC step cancellation. See streaming-client.cpp.
 // It also demonstrates how to use an awaitable with a different executor type.
-// ---------------------------------------------------
 using SlowUnaryRPC =
     asio::use_awaitable_t<agrpc::GrpcExecutor>::as_default_on_t<agrpc::ServerRPC<&ExampleExtService::RequestSlowUnary>>;
 
