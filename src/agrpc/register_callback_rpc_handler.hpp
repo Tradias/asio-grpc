@@ -62,9 +62,9 @@ auto register_callback_rpc_handler(const typename ServerRPC::executor_type& exec
                                    detail::ServerRPCServiceT<ServerRPC>& service, RPCHandler rpc_handler,
                                    CompletionToken&& token = CompletionToken{})
 {
-    using Starter = detail::RequestMessageFactoryServerRPCStarter<ServerRPC, RPCHandler>;
+    using RequestMessageFactory = detail::ServerRPCPtrRequestMessageFactoryT<ServerRPC, RPCHandler>;
     using CheckRPCHandlerTakesServerRPCPtrAsArg [[maybe_unused]] =
-        detail::RPCHandlerInvokeResultT<Starter&, RPCHandler&, typename ServerRPC::Ptr>;
+        detail::RPCHandlerInvokeResultT<typename ServerRPC::Ptr, RPCHandler&, RequestMessageFactory&>;
     return asio::async_initiate<CompletionToken, void(std::exception_ptr)>(
         detail::RegisterCallbackRPCHandlerInitiator<ServerRPC>{service}, token, executor,
         static_cast<RPCHandler&&>(rpc_handler));

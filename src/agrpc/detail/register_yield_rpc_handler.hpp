@@ -53,6 +53,7 @@ struct RegisterYieldRPCHandlerOperation
     using typename Base::RefCountGuard;
     using typename Base::ServerRPCExecutor;
     using typename Base::Service;
+    using Starter = detail::ServerRPCStarter<>;
 
     template <class Ch>
     RegisterYieldRPCHandlerOperation(const ServerRPCExecutor& executor, Service& service, RPCHandler&& rpc_handler,
@@ -86,8 +87,8 @@ struct RegisterYieldRPCHandlerOperation
     void perform_request_and_repeat(const Yield& yield)
     {
         auto rpc = detail::ServerRPCContextBaseAccess::construct<ServerRPC>(this->get_executor());
-        detail::RequestMessageFactoryServerRPCStarter<ServerRPC, RPCHandler> starter{this->rpc_handler()};
-        if (!starter.start(rpc, this->service(), use_yield(yield)))
+        detail::ServerRPCRequestMessageFactoryT<ServerRPC, RPCHandler> factory{this->rpc_handler()};
+        if (!Starter::start(rpc, this->service(), factory, use_yield(yield)))
         {
             return;
         }
@@ -95,7 +96,7 @@ struct RegisterYieldRPCHandlerOperation
         AGRPC_TRY
         {
             initiate_next();
-            starter.invoke(this->rpc_handler(), rpc, yield);
+            Starter::invoke(this->rpc_handler(), rpc, factory, yield);
         }
         AGRPC_CATCH(...) { this->set_error(std::current_exception()); }
         if (!detail::ServerRPCContextBaseAccess::is_finished(rpc))

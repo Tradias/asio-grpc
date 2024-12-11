@@ -15,6 +15,7 @@
 #ifndef AGRPC_DETAIL_SERVER_RPC_STARTER_HPP
 #define AGRPC_DETAIL_SERVER_RPC_STARTER_HPP
 
+#include <agrpc/detail/server_rpc_request_message.hpp>
 #include <agrpc/rpc_type.hpp>
 #include <agrpc/server_rpc.hpp>
 
@@ -24,95 +25,6 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-constexpr bool has_initial_request(agrpc::ServerRPCType type) noexcept
-{
-    return type == agrpc::ServerRPCType::SERVER_STREAMING || type == agrpc::ServerRPCType::UNARY;
-}
-
-template <class Request, bool HasInitialRequest, class... PrependedArgs>
-struct ServerRPCStarter
-{
-    template <auto RequestRPC, class TraitsT, class Executor, class Service, class CompletionToken>
-    auto start(agrpc::ServerRPC<RequestRPC, TraitsT, Executor>& rpc, Service& service, CompletionToken&& token)
-    {
-        using Responder = std::remove_reference_t<decltype(ServerRPCContextBaseAccess::responder(rpc))>;
-        return detail::async_initiate_sender_implementation(
-            RPCExecutorBaseAccess::grpc_context(rpc),
-            detail::ServerRequestSenderInitiation<RequestRPC>{service, *request_},
-            detail::ServerRequestSenderImplementation<Responder, TraitsT::NOTIFY_WHEN_DONE>{rpc},
-            static_cast<CompletionToken&&>(token));
-    }
-
-    template <class RPCHandler, class RPC, class... AppendedArgs>
-    decltype(auto) invoke(RPCHandler&& handler, PrependedArgs&&... prepend, RPC&& rpc, AppendedArgs&&... append)
-    {
-        return static_cast<RPCHandler&&>(handler)(static_cast<PrependedArgs&&>(prepend)..., static_cast<RPC&&>(rpc),
-                                                  *request_, static_cast<AppendedArgs&&>(append)...);
-    }
-
-    Request* request_;
-};
-
-template <class Request, class... PrependedArgs>
-struct ServerRPCStarter<Request, false, PrependedArgs...>
-{
-    template <auto RequestRPC, class TraitsT, class Executor, class Service, class CompletionToken>
-    auto start(agrpc::ServerRPC<RequestRPC, TraitsT, Executor>& rpc, Service& service, CompletionToken&& token)
-    {
-        using Responder = std::remove_reference_t<decltype(ServerRPCContextBaseAccess::responder(rpc))>;
-        return detail::async_initiate_sender_implementation(
-            RPCExecutorBaseAccess::grpc_context(rpc), detail::ServerRequestSenderInitiation<RequestRPC>{service},
-            detail::ServerRequestSenderImplementation<Responder, TraitsT::NOTIFY_WHEN_DONE>{rpc},
-            static_cast<CompletionToken&&>(token));
-    }
-
-    template <class RPCHandler, class RPC, class... AppendedArgs>
-    decltype(auto) invoke(RPCHandler&& handler, PrependedArgs&&... prepend, RPC&& rpc, AppendedArgs&&... append)
-    {
-        return static_cast<RPCHandler&&>(handler)(static_cast<PrependedArgs&&>(prepend)..., static_cast<RPC&&>(rpc),
-                                                  static_cast<AppendedArgs&&>(append)...);
-    }
-};
-
-template <class ServerRPC, class... PrependedArgs>
-using ServerRPCStarterT = detail::ServerRPCStarter<typename ServerRPC::Request,
-                                                   detail::has_initial_request(ServerRPC::TYPE), PrependedArgs...>;
-
-template <class Request>
-struct DefaultRequestMessageFactory
-{
-    template <class>
-    Request& create()
-    {
-        return request_;
-    }
-
-    Request request_;
-};
-
-template <class RequestT, class RPCHandler, class = void>
-struct RequestMessageFactoryBuilder
-{
-    static constexpr bool IS_DEFAULT = true;
-
-    using Request = RequestT;
-    using Type = DefaultRequestMessageFactory<RequestT>;
-
-    static Type build(RPCHandler&) { return Type{}; }
-};
-
-template <class RequestT, class RPCHandler>
-struct RequestMessageFactoryBuilder<RequestT, RPCHandler,
-                                    decltype((void)std::declval<RPCHandler&>().request_message_factory())>
-{
-    static constexpr bool IS_DEFAULT = false;
-
-    using Request = RequestT;
-    using Type = decltype(std::declval<RPCHandler&>().request_message_factory());
-
-    static Type build(RPCHandler& rpc_handler) { return rpc_handler.request_message_factory(); }
-};
-
 template <class Request, class RequestMessageFactory, class = void>
 inline constexpr bool REQUEST_MESSAGE_FACTORY_HAS_DESTROY = false;
 
@@ -121,25 +33,41 @@ inline constexpr bool REQUEST_MESSAGE_FACTORY_HAS_DESTROY<Request, RequestMessag
                                                           decltype((void)std::declval<RequestMessageFactory&>().destroy(
                                                               std::declval<Request&>()))> = true;
 
-template <class Base, class RequestMessageFactoryBuilder, bool HasInitialRequest>
-struct RequestMessageFactoryMixin : Base
+using DefaultRequestMessageFactory = void;
+
+template <class RPCHandler, class = void>
+struct GetRPCHandlerRequestMessageFactory
 {
-    using RequestMessageFactory = typename RequestMessageFactoryBuilder::Type;
-    using Request = typename RequestMessageFactoryBuilder::Request;
+    using Type = DefaultRequestMessageFactory;
+};
+
+template <class RPCHandler>
+struct GetRPCHandlerRequestMessageFactory<RPCHandler,
+                                          decltype((void)std::declval<RPCHandler&>().request_message_factory())>
+{
+    using Type = decltype(std::declval<RPCHandler&>().request_message_factory());
+};
+
+template <class RPCHandler>
+using RPCHandlerRequestMessageFactoryT = typename GetRPCHandlerRequestMessageFactory<RPCHandler>::Type;
+
+template <template <class, bool> class BaseT, class RequestT, class Factory>
+struct RequestMessageFactoryBuilderMixin : BaseT<RequestT, true>
+{
+    static constexpr bool HAS_CUSTOM_FACTORY = true;
+
+    using Base = BaseT<RequestT, true>;
 
     template <class RPCHandler, class... Args>
-    explicit RequestMessageFactoryMixin(RPCHandler& rpc_handler, Args&&... args)
-        : Base{static_cast<Args&&>(args)...}, request_factory_(RequestMessageFactoryBuilder::build(rpc_handler))
+    explicit RequestMessageFactoryBuilderMixin(RPCHandler& rpc_handler, Args&&... args)
+        : Base{static_cast<Args&&>(args)...}, request_factory_(rpc_handler.request_message_factory())
     {
-        this->request_ = &request_factory_.template create<Request>();
+        this->request_ = &request_factory_.template create<RequestT>();
     }
 
-    RequestMessageFactoryMixin(const RequestMessageFactoryMixin& other) = delete;
-    RequestMessageFactoryMixin(RequestMessageFactoryMixin&& other) = delete;
-
-    ~RequestMessageFactoryMixin()
+    ~RequestMessageFactoryBuilderMixin() noexcept
     {
-        if constexpr (REQUEST_MESSAGE_FACTORY_HAS_DESTROY<Request, RequestMessageFactory>)
+        if constexpr (REQUEST_MESSAGE_FACTORY_HAS_DESTROY<RequestT, Factory>)
         {
             static_assert(noexcept(request_factory_.destroy(*this->request_)),
                           "Request message factory `destroy(Request&)` must be noexcept");
@@ -147,52 +75,132 @@ struct RequestMessageFactoryMixin : Base
         }
     }
 
-    RequestMessageFactoryMixin& operator=(const RequestMessageFactoryMixin& other) = delete;
-    RequestMessageFactoryMixin& operator=(RequestMessageFactoryMixin&& other) = delete;
+    RequestT& get_request() noexcept { return *this->request_; }
 
-    template <class... Args>
-    decltype(auto) invoke(Args&&... args)
+    Factory& get_factory() noexcept { return request_factory_; }
+
+    Factory request_factory_;
+};
+
+template <template <class, bool> class BaseT, class RequestT>
+struct RequestMessageFactoryBuilderMixin<BaseT, RequestT, DefaultRequestMessageFactory> : BaseT<RequestT, false>
+{
+    static constexpr bool HAS_CUSTOM_FACTORY = false;
+
+    using Base = BaseT<RequestT, false>;
+
+    template <class RPCHandler, class... Args>
+    explicit RequestMessageFactoryBuilderMixin(RPCHandler&, Args&&... args) : Base{static_cast<Args&&>(args)...}
     {
-        if constexpr (RequestMessageFactoryBuilder::IS_DEFAULT)
+        if constexpr (Base::HAS_REQUEST_PTR)
         {
-            return Base::invoke(static_cast<Args&&>(args)...);
-        }
-        else
-        {
-            return Base::invoke(static_cast<Args&&>(args)..., request_factory_);
+            this->request_ = &request_message_;
         }
     }
 
-    RequestMessageFactory request_factory_;
+    RequestT& get_request() noexcept { return request_message_; }
+
+    RequestT request_message_;
 };
 
-template <class Base, class RequestMessageFactoryBuilder>
-struct RequestMessageFactoryMixin<Base, RequestMessageFactoryBuilder, false> : Base
+template <template <class, bool> class BaseT, class RequestT, class Factory, bool HasInitialRequest>
+struct RequestMessageFactoryMixin : RequestMessageFactoryBuilderMixin<BaseT, RequestT, Factory>
 {
+    static constexpr bool HAS_INITIAL_REQUEST = true;
+
+    template <class RPCHandler, class... Args>
+    explicit RequestMessageFactoryMixin(RPCHandler& rpc_handler, Args&&... args)
+        : RequestMessageFactoryMixin::RequestMessageFactoryBuilderMixin(rpc_handler, static_cast<Args&&>(args)...)
+    {
+    }
+};
+
+template <template <class, bool> class BaseT, class RequestT, class Factory>
+struct RequestMessageFactoryMixin<BaseT, RequestT, Factory, false> : BaseT<RequestT, false>
+{
+    static constexpr bool HAS_INITIAL_REQUEST = false;
+
+    using Base = BaseT<RequestT, false>;
+
     template <class RPCHandler, class... Args>
     explicit RequestMessageFactoryMixin(RPCHandler&, Args&&... args) : Base{static_cast<Args&&>(args)...}
     {
     }
-
-    RequestMessageFactoryMixin(const RequestMessageFactoryMixin& other) = delete;
-    RequestMessageFactoryMixin(RequestMessageFactoryMixin&& other) = delete;
-    RequestMessageFactoryMixin& operator=(const RequestMessageFactoryMixin& other) = delete;
-    RequestMessageFactoryMixin& operator=(RequestMessageFactoryMixin&& other) = delete;
 };
 
-template <class Base, class ServerRPC, class RPCHandler>
+struct PickServerRPCRequestMessage
+{
+    template <class Request, bool NeedsRequestPtr>
+    using Type = detail::ServerRPCRequestMessage<Request, NeedsRequestPtr>;
+};
+
+template <template <class, bool> class Base, class ServerRPC, class RPCHandler>
 using RequestMessageFactoryServerRPCMixinT =
-    detail::RequestMessageFactoryMixin<Base,
-                                       detail::RequestMessageFactoryBuilder<typename ServerRPC::Request, RPCHandler>,
+    detail::RequestMessageFactoryMixin<Base, typename ServerRPC::Request,
+                                       detail::RPCHandlerRequestMessageFactoryT<RPCHandler>,
                                        detail::has_initial_request(ServerRPC::TYPE)>;
 
-template <class ServerRPC, class RPCHandler, class... Args>
-using RequestMessageFactoryServerRPCStarter =
-    detail::RequestMessageFactoryServerRPCMixinT<detail::ServerRPCStarterT<ServerRPC, Args...>, ServerRPC, RPCHandler>;
+template <class ServerRPC, class RPCHandler>
+using ServerRPCRequestMessageFactoryT =
+    detail::RequestMessageFactoryServerRPCMixinT<PickServerRPCRequestMessage::template Type, ServerRPC, RPCHandler>;
 
-template <class Starter, class Handler, class RPC, class... Args>
+template <class... PrependedArgs>
+struct ServerRPCStarter
+{
+    template <auto RequestRPC, class TraitsT, class Executor, class Service, class RequestMessageFactory,
+              class CompletionToken>
+    static auto start(agrpc::ServerRPC<RequestRPC, TraitsT, Executor>& rpc, Service& service,
+                      RequestMessageFactory& factory, CompletionToken&& token)
+    {
+        using Responder = std::remove_reference_t<decltype(ServerRPCContextBaseAccess::responder(rpc))>;
+        if constexpr (RequestMessageFactory::HAS_INITIAL_REQUEST)
+        {
+            return detail::async_initiate_sender_implementation(
+                RPCExecutorBaseAccess::grpc_context(rpc),
+                detail::ServerRequestSenderInitiation<RequestRPC>{service, factory.get_request()},
+                detail::ServerRequestSenderImplementation<Responder, TraitsT::NOTIFY_WHEN_DONE>{rpc},
+                static_cast<CompletionToken&&>(token));
+        }
+        else
+        {
+            return detail::async_initiate_sender_implementation(
+                RPCExecutorBaseAccess::grpc_context(rpc), detail::ServerRequestSenderInitiation<RequestRPC>{service},
+                detail::ServerRequestSenderImplementation<Responder, TraitsT::NOTIFY_WHEN_DONE>{rpc},
+                static_cast<CompletionToken&&>(token));
+        }
+    }
+
+    template <class RPCHandler, class RPC, class RequestMessageFactory, class... AppendedArgs>
+    static decltype(auto) invoke(RPCHandler&& handler, PrependedArgs&&... prepend, RPC&& rpc,
+                                 RequestMessageFactory& factory, AppendedArgs&&... append)
+    {
+        if constexpr (RequestMessageFactory::HAS_INITIAL_REQUEST)
+        {
+            if constexpr (RequestMessageFactory::HAS_CUSTOM_FACTORY)
+            {
+                return static_cast<RPCHandler&&>(handler)(
+                    static_cast<PrependedArgs&&>(prepend)..., static_cast<RPC&&>(rpc), factory.get_request(),
+                    static_cast<AppendedArgs&&>(append)..., factory.get_factory());
+            }
+            else
+            {
+                return static_cast<RPCHandler&&>(handler)(static_cast<PrependedArgs&&>(prepend)...,
+                                                          static_cast<RPC&&>(rpc), factory.get_request(),
+                                                          static_cast<AppendedArgs&&>(append)...);
+            }
+        }
+        else
+        {
+            return static_cast<RPCHandler&&>(handler)(static_cast<PrependedArgs&&>(prepend)..., static_cast<RPC&&>(rpc),
+                                                      static_cast<AppendedArgs&&>(append)...);
+        }
+    }
+};
+
+template <class ServerRPC, class RPCHandler, class RequestMessageFactory, class... Args>
 using RPCHandlerInvokeResultT =
-    decltype(std::declval<Starter>().invoke(std::declval<Handler>(), std::declval<RPC>(), std::declval<Args>()...));
+    decltype(ServerRPCStarter<Args...>::invoke(std::declval<RPCHandler>(), std::declval<ServerRPC>(),
+                                               std::declval<RequestMessageFactory>(), std::declval<Args>()...));
 }
 
 AGRPC_NAMESPACE_END

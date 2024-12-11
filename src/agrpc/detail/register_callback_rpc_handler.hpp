@@ -37,12 +37,13 @@ struct RegisterCallbackRPCHandlerOperation
     using typename Base::Service;
     using ServerRPCWithRequest = detail::ServerRPCWithRequest<ServerRPC>;
     using ServerRPCPtr = agrpc::ServerRPCPtr<ServerRPC>;
+    using Starter = detail::ServerRPCStarter<>;
 
-    struct ServerRPCAllocation
-        : detail::RequestMessageFactoryServerRPCMixinT<ServerRPCWithRequest, ServerRPC, RPCHandler>
+    struct ServerRPCAllocation : detail::ServerRPCPtrRequestMessageFactoryT<ServerRPC, RPCHandler>
     {
         ServerRPCAllocation(const ServerRPCExecutor& executor, RegisterCallbackRPCHandlerOperation& self)
-            : ServerRPCAllocation::RequestMessageFactoryMixin(self.rpc_handler(), executor), self_(self)
+            : detail::ServerRPCPtrRequestMessageFactoryT<ServerRPC, RPCHandler>(self.rpc_handler(), executor),
+              self_(self)
         {
         }
 
@@ -61,8 +62,8 @@ struct RegisterCallbackRPCHandlerOperation
                 AGRPC_TRY
                 {
                     self_.initiate_next();
-                    auto& starter = *static_cast<ServerRPCAllocation*>(ptr_.server_rpc_);
-                    starter.invoke(self_.rpc_handler(), static_cast<ServerRPCPtr&&>(ptr_));
+                    auto& rpc = *static_cast<ServerRPCAllocation*>(ptr_.server_rpc_);
+                    Starter::invoke(self_.rpc_handler(), static_cast<ServerRPCPtr&&>(ptr_), rpc);
                 }
                 AGRPC_CATCH(...)
                 {
@@ -152,8 +153,8 @@ struct RegisterCallbackRPCHandlerOperation
 
     void perform_request_and_repeat(ServerRPCPtr&& ptr)
     {
-        auto& rpc = *ptr.server_rpc_;
-        rpc.start(rpc.rpc_, this->service(), StartCallback{*this, static_cast<ServerRPCPtr&&>(ptr)});
+        auto& rpc = *static_cast<ServerRPCAllocation*>(ptr.server_rpc_);
+        Starter::start(rpc.rpc_, this->service(), rpc, StartCallback{*this, static_cast<ServerRPCPtr&&>(ptr)});
     }
 };
 

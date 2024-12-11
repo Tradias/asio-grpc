@@ -72,8 +72,9 @@ auto register_awaitable_rpc_handler(const typename ServerRPC::executor_type& exe
                                     detail::ServerRPCServiceT<ServerRPC>& service, RPCHandler rpc_handler,
                                     CompletionToken&& token = CompletionToken{})
 {
-    using Starter = detail::RequestMessageFactoryServerRPCStarter<ServerRPC, RPCHandler>;
-    using CoroutineTraits = detail::CoroutineTraits<detail::RPCHandlerInvokeResultT<Starter&, RPCHandler&, ServerRPC&>>;
+    using RequestMessageFactory = detail::ServerRPCRequestMessageFactoryT<ServerRPC, RPCHandler>;
+    using CoroutineTraits =
+        detail::CoroutineTraits<detail::RPCHandlerInvokeResultT<ServerRPC&, RPCHandler&, RequestMessageFactory&>>;
     static_assert(sizeof(CoroutineTraits) > 0,
                   "Rpc handler must return an asio::awaitable and take ServerRPC& and, for server-streaming and unary "
                   "rpcs, Request& as arguments.");

@@ -157,8 +157,8 @@ struct RPCHandlerOperation
 {
     using Service = detail::ServerRPCServiceT<ServerRPC>;
     using Traits = typename ServerRPC::Traits;
-    using Starter = detail::RequestMessageFactoryServerRPCStarter<ServerRPC, RPCHandler>;
-    using RPCHandlerInvokeResult = detail::RPCHandlerInvokeResultT<Starter&, RPCHandler&, ServerRPC&>;
+    using RequestMessageFactory = detail::ServerRPCRequestMessageFactoryT<ServerRPC, RPCHandler>;
+    using RPCHandlerInvokeResult = detail::RPCHandlerInvokeResultT<ServerRPC&, RPCHandler&, RequestMessageFactory&>;
     using RegisterRPCHandlerSenderOperationBase =
         detail::RegisterRPCHandlerSenderOperationBase<ServerRPC, RPCHandler, StopToken>;
 
@@ -206,10 +206,10 @@ struct RPCHandlerOperation
 #endif
     };
 
-    using StartOperationState = detail::InplaceWithFunctionWrapper<
-        exec::connect_result_t<decltype(std::declval<Starter>().start(std::declval<ServerRPC&>(),
-                                                                      std::declval<Service&>(), agrpc::use_sender)),
-                               StartReceiver>>;
+    using StartOperationState = detail::InplaceWithFunctionWrapper<exec::connect_result_t<
+        decltype(detail::ServerRPCStarter<>::start(std::declval<ServerRPC&>(), std::declval<Service&>(),
+                                                   std::declval<RequestMessageFactory&>(), agrpc::use_sender)),
+        StartReceiver>>;
 
     template <class Action>
     struct Receiver
@@ -337,7 +337,7 @@ struct RPCHandlerOperation
 
     auto& get_allocator() noexcept { return impl2_.second(); }
 
-    detail::CompressedPair<RegisterRPCHandlerSenderOperationBase&, Starter> impl1_;
+    detail::CompressedPair<RegisterRPCHandlerSenderOperationBase&, RequestMessageFactory> impl1_;
     ServerRPC rpc_;
     detail::CompressedPair<OperationState, Allocator> impl2_;
 };

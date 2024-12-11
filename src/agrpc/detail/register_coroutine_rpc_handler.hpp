@@ -71,10 +71,11 @@ struct RegisterCoroutineRPCHandlerOperation
         template <class... Args>
         static Awaitable perform_request_and_repeat(RefCountGuard g, Args... args)
         {
+            using Starter = detail::ServerRPCStarter<Args...>;
             auto& self = static_cast<Type&>(g.get().self_);
             auto rpc = detail::ServerRPCContextBaseAccess::construct<ServerRPC>(self.get_executor());
-            detail::RequestMessageFactoryServerRPCStarter<ServerRPC, RPCHandler, Args...> starter{self.rpc_handler()};
-            if (!co_await starter.start(rpc, self.service(), self.completion_token()))
+            detail::ServerRPCRequestMessageFactoryT<ServerRPC, RPCHandler> factory{self.rpc_handler()};
+            if (!co_await Starter::start(rpc, self.service(), factory, self.completion_token()))
             {
                 co_return;
             }
@@ -82,7 +83,7 @@ struct RegisterCoroutineRPCHandlerOperation
             AGRPC_TRY
             {
                 self.initiate_next();
-                co_await starter.invoke(self.rpc_handler(), static_cast<Args&&>(args)..., rpc);
+                co_await Starter::invoke(self.rpc_handler(), static_cast<Args&&>(args)..., rpc, factory);
             }
             AGRPC_CATCH(...) { self.set_error(std::current_exception()); }
             if (!detail::ServerRPCContextBaseAccess::is_finished(rpc))
