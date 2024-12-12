@@ -32,19 +32,23 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class Function>
-struct GrpcContextLoopFunction : Function
+struct GrpcContextLoopCondition : Function
 {
+    static constexpr bool COMPLETION_QUEUE_ONLY = false;
+
     using Function::operator();
 
     [[nodiscard]] bool has_processed(detail::DoOneResult result) const noexcept { return bool{result}; }
 };
 
 template <class Function>
-GrpcContextLoopFunction(Function) -> GrpcContextLoopFunction<Function>;
+GrpcContextLoopCondition(Function) -> GrpcContextLoopCondition<Function>;
 
 template <class Function>
-struct GrpcContextCompletionQueueLoopFunction : Function
+struct GrpcContextCompletionQueueLoopCondition : Function
 {
+    static constexpr bool COMPLETION_QUEUE_ONLY = true;
+
     using Function::operator();
 
     [[nodiscard]] bool has_processed(detail::DoOneResult result) const noexcept
@@ -54,7 +58,14 @@ struct GrpcContextCompletionQueueLoopFunction : Function
 };
 
 template <class Function>
-GrpcContextCompletionQueueLoopFunction(Function) -> GrpcContextCompletionQueueLoopFunction<Function>;
+GrpcContextCompletionQueueLoopCondition(Function) -> GrpcContextCompletionQueueLoopCondition<Function>;
+
+struct GrpcContextIsNotStopped
+{
+    [[nodiscard]] bool operator()() const noexcept { return !grpc_context_.is_stopped(); }
+
+    agrpc::GrpcContext& grpc_context_;
+};
 
 template <class T>
 inline void create_resources(T& resources, std::size_t concurrency_hint)
@@ -127,70 +138,47 @@ inline GrpcContext::~GrpcContext()
 inline bool GrpcContext::run()
 {
     return detail::GrpcContextImplementation::process_work(
-        *this, detail::GrpcContextLoopFunction{[](auto& context)
-                                               {
-                                                   return detail::GrpcContextImplementation::do_one_if_not_stopped(
-                                                       context, detail::GrpcContextImplementation::INFINITE_FUTURE);
-                                               }});
+        *this, detail::GrpcContextLoopCondition{detail::GrpcContextIsNotStopped{*this}},
+        detail::GrpcContextImplementation::INFINITE_FUTURE);
 }
 
 inline bool GrpcContext::run_completion_queue()
 {
     return detail::GrpcContextImplementation::process_work(
-        *this,
-        detail::GrpcContextCompletionQueueLoopFunction{
-            [](detail::GrpcContextThreadContext& context)
-            {
-                return detail::GrpcContextImplementation::do_one_completion_queue_if_not_stopped(
-                    context, detail::GrpcContextImplementation::INFINITE_FUTURE);
-            }});
+        *this, detail::GrpcContextCompletionQueueLoopCondition{detail::GrpcContextIsNotStopped{*this}},
+        detail::GrpcContextImplementation::INFINITE_FUTURE);
 }
 
 inline bool GrpcContext::poll()
 {
     return detail::GrpcContextImplementation::process_work(
-        *this, detail::GrpcContextLoopFunction{[](auto& context)
-                                               {
-                                                   return detail::GrpcContextImplementation::do_one_if_not_stopped(
-                                                       context, detail::GrpcContextImplementation::TIME_ZERO);
-                                               }});
+        *this, detail::GrpcContextLoopCondition{detail::GrpcContextIsNotStopped{*this}},
+        detail::GrpcContextImplementation::TIME_ZERO);
 }
 
 inline bool GrpcContext::run_until_impl(::gpr_timespec deadline)
 {
     return detail::GrpcContextImplementation::process_work(
-        *this, detail::GrpcContextLoopFunction{[deadline](auto& context)
-                                               {
-                                                   return detail::GrpcContextImplementation::do_one_if_not_stopped(
-                                                       context, deadline);
-                                               }});
+        *this, detail::GrpcContextLoopCondition{detail::GrpcContextIsNotStopped{*this}}, deadline);
 }
 
 template <class Condition>
 inline bool GrpcContext::run_while(Condition&& condition)
 {
-    return detail::GrpcContextImplementation::process_work(
-        *this, detail::GrpcContextLoopFunction{[&](auto& context)
-                                               {
-                                                   if (!condition())
-                                                   {
-                                                       return detail::DoOneResult{};
-                                                   }
-                                                   return detail::GrpcContextImplementation::do_one_if_not_stopped(
-                                                       context, detail::GrpcContextImplementation::INFINITE_FUTURE);
-                                               }});
+    return detail::GrpcContextImplementation::process_work(*this,
+                                                           detail::GrpcContextLoopCondition{[&]
+                                                                                            {
+                                                                                                return condition() &&
+                                                                                                       !is_stopped();
+                                                                                            }},
+                                                           detail::GrpcContextImplementation::INFINITE_FUTURE);
 }
 
 inline bool GrpcContext::poll_completion_queue()
 {
     return detail::GrpcContextImplementation::process_work(
-        *this,
-        detail::GrpcContextCompletionQueueLoopFunction{
-            [](detail::GrpcContextThreadContext& context)
-            {
-                return detail::GrpcContextImplementation::do_one_completion_queue_if_not_stopped(
-                    context, detail::GrpcContextImplementation::TIME_ZERO);
-            }});
+        *this, detail::GrpcContextCompletionQueueLoopCondition{detail::GrpcContextIsNotStopped{*this}},
+        detail::GrpcContextImplementation::TIME_ZERO);
 }
 
 inline void GrpcContext::stop()

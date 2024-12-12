@@ -174,7 +174,7 @@ inline bool get_next_event(grpc::CompletionQueue* cq, detail::GrpcCompletionQueu
     return grpc::CompletionQueue::GOT_EVENT == cq->AsyncNext(&event.tag_, &event.ok_, deadline);
 }
 
-inline CompletionQueueEventResult GrpcContextImplementation::handle_next_completion_queue_event(
+inline CompletionQueueEventResult GrpcContextImplementation::do_one_completion_queue_event(
     detail::GrpcContextThreadContext& context, ::gpr_timespec deadline, detail::InvokeHandler invoke)
 {
     agrpc::GrpcContext& grpc_context = context.grpc_context_;
@@ -236,62 +236,45 @@ inline DoOneResult GrpcContextImplementation::do_one(detail::GrpcContextThreadCo
     {
         return {{DoOneResult::PROCESSED_LOCAL_WORK}};
     }
-    const auto handled_event = GrpcContextImplementation::handle_next_completion_queue_event(
+    const auto handled_event = GrpcContextImplementation::do_one_completion_queue_event(
         context, is_more_completed_work_pending ? GrpcContextImplementation::TIME_ZERO : deadline, invoke);
     return DoOneResult::from(handled_event, processed_local_work);
 }
 
-template <bool IsMultithreaded>
-inline DoOneResult GrpcContextImplementation::do_one_if_not_stopped(
-    detail::GrpcContextThreadContextImpl<IsMultithreaded>& context, ::gpr_timespec deadline)
+template <class LoopCondition>
+inline bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, LoopCondition loop_condition,
+                                                    ::gpr_timespec deadline)
 {
-    if (context.grpc_context_.is_stopped())
-    {
-        return {};
-    }
-    return {GrpcContextImplementation::do_one(context, deadline, detail::InvokeHandler::YES_)};
-}
-
-inline DoOneResult GrpcContextImplementation::do_one_completion_queue(detail::GrpcContextThreadContext& context,
-                                                                      ::gpr_timespec deadline)
-{
-    return {
-        GrpcContextImplementation::handle_next_completion_queue_event(context, deadline, detail::InvokeHandler::YES_)};
-}
-
-inline DoOneResult GrpcContextImplementation::do_one_completion_queue_if_not_stopped(
-    detail::GrpcContextThreadContext& context, ::gpr_timespec deadline)
-{
-    if (context.grpc_context_.is_stopped())
-    {
-        return {};
-    }
-    return {
-        GrpcContextImplementation::handle_next_completion_queue_event(context, deadline, detail::InvokeHandler::YES_)};
-}
-
-template <class LoopFunction>
-inline bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, LoopFunction loop_function)
-{
-    const auto run = [&loop_function](auto& thread_context)
+    const auto run = [&loop_condition, deadline](auto& thread_context)
     {
         bool processed{};
         DoOneResult result;
-        while ((result = loop_function(thread_context)))
+        while (loop_condition())
         {
-            processed = processed || loop_function.has_processed(result);
+            if constexpr (LoopCondition::COMPLETION_QUEUE_ONLY)
+            {
+                result = {GrpcContextImplementation::do_one_completion_queue_event(thread_context, deadline)};
+            }
+            else
+            {
+                result = GrpcContextImplementation::do_one(thread_context, deadline);
+            }
+            if (!result)
+            {
+                break;
+            }
+            processed = processed || loop_condition.has_processed(result);
         }
         return processed;
     };
     if (GrpcContextImplementation::running_in_this_thread(grpc_context))
     {
-        return GrpcContextImplementation::visit_is_multithreaded(
-            grpc_context,
-            [&](auto v)
-            {
-                return run(
-                    static_cast<GrpcContextThreadContextImpl<decltype(v)::value>&>(*detail::thread_local_grpc_context));
-            });
+        auto& context = *detail::thread_local_grpc_context;
+        if (grpc_context.multithreaded_)
+        {
+            return run(static_cast<GrpcContextThreadContextImpl<true>&>(context));
+        }
+        return run(static_cast<GrpcContextThreadContextImpl<false>&>(context));
     }
     if (grpc_context.outstanding_work_.load(std::memory_order_relaxed) == 0)
     {
@@ -299,13 +282,13 @@ inline bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_con
         return false;
     }
     grpc_context.reset();
-    return GrpcContextImplementation::visit_is_multithreaded(
-        grpc_context,
-        [&](auto v)
-        {
-            detail::GrpcContextThreadContextImpl<decltype(v)::value> thread_context{grpc_context};
-            return run(thread_context);
-        });
+    if (grpc_context.multithreaded_)
+    {
+        detail::GrpcContextThreadContextImpl<true> thread_context{grpc_context};
+        return run(thread_context);
+    }
+    detail::GrpcContextThreadContextImpl<false> thread_context{grpc_context};
+    return run(thread_context);
 }
 
 inline void GrpcContextImplementation::drain_completion_queue(agrpc::GrpcContext& grpc_context) noexcept
@@ -314,7 +297,7 @@ inline void GrpcContextImplementation::drain_completion_queue(agrpc::GrpcContext
     (void)grpc_context.remote_work_queue_.try_mark_active();
     (void)GrpcContextImplementation::move_remote_work_to_local_queue(thread_context);
     GrpcContextImplementation::process_local_queue(thread_context, detail::InvokeHandler::NO_);
-    while (GrpcContextImplementation::handle_next_completion_queue_event(
+    while (GrpcContextImplementation::do_one_completion_queue_event(
                thread_context, detail::GrpcContextImplementation::INFINITE_FUTURE, detail::InvokeHandler::NO_)
                .handled_event())
     {
@@ -340,15 +323,9 @@ inline void GrpcContextImplementation::push_resource(agrpc::GrpcContext& grpc_co
     grpc_context.memory_resources_.push_front(resource);
 }
 
-template <class Function>
-inline decltype(auto) GrpcContextImplementation::visit_is_multithreaded(const agrpc::GrpcContext& grpc_context,
-                                                                        Function function)
+inline bool GrpcContextImplementation::is_multithreaded(const agrpc::GrpcContext& grpc_context)
 {
-    if (grpc_context.multithreaded_)
-    {
-        return function(std::true_type{});
-    }
-    return function(std::false_type{});
+    return grpc_context.multithreaded_;
 }
 
 inline void process_grpc_tag(void* tag, detail::OperationResult result, agrpc::GrpcContext& grpc_context)

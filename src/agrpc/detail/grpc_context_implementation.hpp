@@ -128,9 +128,9 @@ struct GrpcContextImplementation
 
     static void add_operation(agrpc::GrpcContext& grpc_context, detail::QueueableOperationBase* op) noexcept;
 
-    static CompletionQueueEventResult handle_next_completion_queue_event(detail::GrpcContextThreadContext& context,
-                                                                         ::gpr_timespec deadline,
-                                                                         detail::InvokeHandler invoke);
+    static CompletionQueueEventResult do_one_completion_queue_event(
+        detail::GrpcContextThreadContext& context, ::gpr_timespec deadline,
+        detail::InvokeHandler invoke = detail::InvokeHandler::YES_);
 
     [[nodiscard]] static bool running_in_this_thread() noexcept;
 
@@ -149,17 +149,8 @@ struct GrpcContextImplementation
     static DoOneResult do_one(detail::GrpcContextThreadContextImpl<IsMultithreaded>& context, ::gpr_timespec deadline,
                               detail::InvokeHandler invoke = detail::InvokeHandler::YES_);
 
-    template <bool IsMultithreaded>
-    static DoOneResult do_one_if_not_stopped(detail::GrpcContextThreadContextImpl<IsMultithreaded>& context,
-                                             ::gpr_timespec deadline);
-
-    static DoOneResult do_one_completion_queue(detail::GrpcContextThreadContext& context, ::gpr_timespec deadline);
-
-    static DoOneResult do_one_completion_queue_if_not_stopped(detail::GrpcContextThreadContext& context,
-                                                              ::gpr_timespec deadline);
-
-    template <class LoopFunction>
-    static bool process_work(agrpc::GrpcContext& grpc_context, LoopFunction loop_function);
+    template <class LoopCondition>
+    static bool process_work(agrpc::GrpcContext& grpc_context, LoopCondition loop_condition, ::gpr_timespec deadline);
 
     static void drain_completion_queue(agrpc::GrpcContext& grpc_context) noexcept;
 
@@ -167,8 +158,7 @@ struct GrpcContextImplementation
 
     static void push_resource(agrpc::GrpcContext& grpc_context, detail::ListablePoolResource& resource);
 
-    template <class Function>
-    static decltype(auto) visit_is_multithreaded(const agrpc::GrpcContext& grpc_context, Function function);
+    static bool is_multithreaded(const agrpc::GrpcContext& grpc_context);
 };
 
 void process_grpc_tag(void* tag, detail::OperationResult result, agrpc::GrpcContext& grpc_context);
