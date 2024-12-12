@@ -157,6 +157,7 @@ struct RPCHandlerOperation
 {
     using Service = detail::ServerRPCServiceT<ServerRPC>;
     using Traits = typename ServerRPC::Traits;
+    using Starter = detail::ServerRPCStarter<>;
     using RequestMessageFactory = detail::ServerRPCRequestMessageFactoryT<ServerRPC, RPCHandler>;
     using RPCHandlerInvokeResult = detail::RPCHandlerInvokeResultT<ServerRPC&, RPCHandler&, RequestMessageFactory&>;
     using RegisterRPCHandlerSenderOperationBase =
@@ -206,10 +207,10 @@ struct RPCHandlerOperation
 #endif
     };
 
-    using StartOperationState = detail::InplaceWithFunctionWrapper<exec::connect_result_t<
-        decltype(detail::ServerRPCStarter<>::start(std::declval<ServerRPC&>(), std::declval<Service&>(),
-                                                   std::declval<RequestMessageFactory&>(), agrpc::use_sender)),
-        StartReceiver>>;
+    using StartOperationState = detail::InplaceWithFunctionWrapper<
+        exec::connect_result_t<decltype(Starter::start(std::declval<ServerRPC&>(), std::declval<Service&>(),
+                                                       std::declval<RequestMessageFactory&>(), agrpc::use_sender)),
+                               StartReceiver>>;
 
     template <class Action>
     struct Receiver
@@ -270,7 +271,8 @@ struct RPCHandlerOperation
                  detail::InplaceWithFunction{},
                  [&]
                  {
-                     return starter().start(rpc_, operation.service(), agrpc::use_sender).connect(StartReceiver{*this});
+                     return Starter::start(rpc_, operation.service(), request_message_factory(), agrpc::use_sender)
+                         .connect(StartReceiver{*this});
                  })
     {
         base().increment_ref_count();
@@ -304,7 +306,8 @@ struct RPCHandlerOperation
                 detail::InplaceWithFunction{},
                 [&]
                 {
-                    return exec::connect(starter().invoke(rpc_handler(), rpc_), FinishReceiver{*this});
+                    return exec::connect(Starter::invoke(rpc_handler(), rpc_, request_message_factory()),
+                                         FinishReceiver{*this});
                 });
             return {};
         }
@@ -331,7 +334,7 @@ struct RPCHandlerOperation
 
     auto& rpc_handler() noexcept { return base().rpc_handler(); }
 
-    auto& starter() noexcept { return impl1_.second(); }
+    auto& request_message_factory() noexcept { return impl1_.second(); }
 
     auto& operation_state() noexcept { return impl2_.first(); }
 

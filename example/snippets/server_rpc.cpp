@@ -267,18 +267,11 @@ class RPCHandlerWithArenaRequestMessageFactory
   public:
     explicit RPCHandlerWithArenaRequestMessageFactory(Handler handler) : handler_(std::move(handler)) {}
 
-    // unary and server-streaming rpcs
-    template <class ServerRPC, class Request>
-    decltype(auto) operator()(ServerRPC&& rpc, Request&& request, ArenaRequestMessageFactory&)
+    template <class... Args>
+    decltype(auto) operator()(Args&&... args)
     {
-        return handler_(std::forward<ServerRPC>(rpc), std::forward<Request>(request));
-    }
-
-    // client-streaming and bidi-streaming rpcs
-    template <class ServerRPC>
-    decltype(auto) operator()(ServerRPC&& rpc)
-    {
-        return handler_(std::forward<ServerRPC>(rpc));
+        // for unary and server-streaming rpcs args are: ServerRPC&, Request&, ArenaRequestMessageFactory&
+        return handler_(std::forward<Args>(args)...);
     }
 
     ArenaRequestMessageFactory request_message_factory() { return {}; }
@@ -287,16 +280,12 @@ class RPCHandlerWithArenaRequestMessageFactory
     Handler handler_;
 };
 
-template <class ServerRPC>
-void register_rpc_handler(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service)
+template <class ServerRPC, class RPCHandler>
+void register_rpc_handler(agrpc::GrpcContext& grpc_context, example::v1::Example::AsyncService& service,
+                          RPCHandler&& handler)
 {
     agrpc::register_awaitable_rpc_handler<ServerRPC>(
-        grpc_context, service,
-        RPCHandlerWithArenaRequestMessageFactory{[&](ServerRPC&, typename ServerRPC::Request&) -> asio::awaitable<void>
-                                                 {
-                                                     // ...
-                                                     co_return;
-                                                 }},
+        grpc_context, service, RPCHandlerWithArenaRequestMessageFactory{std::forward<RPCHandler>(handler)},
         asio::detached);
 }
 /* [server-rpc-handler-with-arena] */
