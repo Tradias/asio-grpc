@@ -44,8 +44,8 @@ struct InlineSchedulerEnv
     }
 };
 
-template <class ServerRPC, class RPCHandler, class StopToken>
-struct RegisterRPCHandlerSenderOperationBase;
+template <class ServerRPC, class RPCHandler, class Receiver>
+class RPCHandlerSenderOperation;
 
 template <class ServerRPC, class RPCHandler>
 class [[nodiscard]] RPCHandlerSender : public detail::SenderOf<void()>
@@ -74,7 +74,7 @@ class [[nodiscard]] RPCHandlerSender : public detail::SenderOf<void()>
 
   private:
     template <class, class, class>
-    friend struct detail::RegisterRPCHandlerOperationBase;
+    friend class detail::RPCHandlerSenderOperation;
 
     agrpc::GrpcContext& grpc_context_;
     Service& service_;
@@ -391,7 +391,9 @@ class RPCHandlerSenderOperation
 
     template <class R>
     RPCHandlerSenderOperation(RPCHandlerSender&& sender, R&& receiver)
-        : Base(static_cast<RPCHandlerSender&&>(sender), &complete_impl), receiver_(static_cast<R&&>(receiver))
+        : Base(sender.grpc_context_.get_executor(), sender.service_, static_cast<RPCHandler&&>(sender.rpc_handler_),
+               &complete_impl),
+          receiver_(static_cast<R&&>(receiver))
     {
     }
 
