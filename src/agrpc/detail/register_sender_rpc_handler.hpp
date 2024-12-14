@@ -74,26 +74,11 @@ class [[nodiscard]] RPCHandlerSender : public detail::SenderOf<void()>
 
   private:
     template <class, class, class>
-    friend struct detail::RegisterRPCHandlerSenderOperationBase;
+    friend struct detail::RegisterRPCHandlerOperationBase;
 
     agrpc::GrpcContext& grpc_context_;
     Service& service_;
     RPCHandler rpc_handler_;
-};
-
-template <class ServerRPC, class RPCHandler, class StopToken>
-struct RegisterRPCHandlerSenderOperationBase : RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler, StopToken>,
-                                               RegisterRPCHandlerOperationComplete
-{
-    RegisterRPCHandlerSenderOperationBase(RPCHandlerSender<ServerRPC, RPCHandler>&& sender,
-                                          RegisterRPCHandlerOperationComplete::Complete complete)
-        : RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler, StopToken>{sender.grpc_context_.get_executor(),
-                                                                            sender.service_,
-                                                                            static_cast<RPCHandler&&>(
-                                                                                sender.rpc_handler_)},
-          RegisterRPCHandlerOperationComplete{complete}
-    {
-    }
 };
 
 template <class Receiver, class Signature, bool IsNotifyWhenDone>
@@ -150,7 +135,7 @@ struct RPCHandlerOperationWaitForDone
 
 template <class ServerRPC, class RPCHandler, class StopToken, class Allocator>
 std::optional<std::exception_ptr> create_and_start_rpc_handler_operation(
-    RegisterRPCHandlerSenderOperationBase<ServerRPC, RPCHandler, StopToken>& operation, const Allocator& allocator);
+    RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler, StopToken>& operation, const Allocator& allocator);
 
 template <class ServerRPC, class RPCHandler, class StopToken, class Allocator>
 struct RPCHandlerOperation
@@ -160,8 +145,7 @@ struct RPCHandlerOperation
     using Starter = detail::ServerRPCStarter<>;
     using RequestMessageFactory = detail::ServerRPCRequestMessageFactoryT<ServerRPC, RPCHandler>;
     using RPCHandlerInvokeResult = detail::RPCHandlerInvokeResultT<ServerRPC&, RPCHandler&, RequestMessageFactory&>;
-    using RegisterRPCHandlerSenderOperationBase =
-        detail::RegisterRPCHandlerSenderOperationBase<ServerRPC, RPCHandler, StopToken>;
+    using RegisterRPCHandlerOperationBase = detail::RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler, StopToken>;
 
     struct StartReceiver
     {
@@ -264,7 +248,7 @@ struct RPCHandlerOperation
 
     using OperationState = std::variant<StartOperationState, FinishOperationState, WaitForDoneOperationState>;
 
-    explicit RPCHandlerOperation(RegisterRPCHandlerSenderOperationBase& operation, const Allocator& allocator)
+    explicit RPCHandlerOperation(RegisterRPCHandlerOperationBase& operation, const Allocator& allocator)
         : impl1_(operation, operation.rpc_handler()),
           rpc_(detail::ServerRPCContextBaseAccess::construct<ServerRPC>(operation.get_executor())),
           impl2_(detail::SecondThenVariadic{}, allocator, std::in_place_type<StartOperationState>,
@@ -340,14 +324,14 @@ struct RPCHandlerOperation
 
     auto& get_allocator() noexcept { return impl2_.second(); }
 
-    detail::CompressedPair<RegisterRPCHandlerSenderOperationBase&, RequestMessageFactory> impl1_;
+    detail::CompressedPair<RegisterRPCHandlerOperationBase&, RequestMessageFactory> impl1_;
     ServerRPC rpc_;
     detail::CompressedPair<OperationState, Allocator> impl2_;
 };
 
 template <class ServerRPC, class RPCHandler, class StopToken, class Allocator>
 std::optional<std::exception_ptr> create_and_start_rpc_handler_operation(
-    RegisterRPCHandlerSenderOperationBase<ServerRPC, RPCHandler, StopToken>& operation, const Allocator& allocator)
+    RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler, StopToken>& operation, const Allocator& allocator)
 {
     if AGRPC_UNLIKELY (operation.is_stopped())
     {
@@ -366,11 +350,11 @@ std::optional<std::exception_ptr> create_and_start_rpc_handler_operation(
 
 template <class ServerRPC, class RPCHandler, class Receiver>
 class RPCHandlerSenderOperation
-    : public detail::RegisterRPCHandlerSenderOperationBase<ServerRPC, RPCHandler, exec::stop_token_type_t<Receiver&>>
+    : public detail::RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler, exec::stop_token_type_t<Receiver&>>
 {
   private:
     using StopToken = exec::stop_token_type_t<Receiver&>;
-    using Base = detail::RegisterRPCHandlerSenderOperationBase<ServerRPC, RPCHandler, StopToken>;
+    using Base = detail::RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler, StopToken>;
     using Allocator = detail::RemoveCrefT<decltype(exec::get_allocator(std::declval<Receiver&>()))>;
     using RPCHandlerOperation = detail::RPCHandlerOperation<ServerRPC, RPCHandler, StopToken, Allocator>;
     using RPCHandlerSender = detail::RPCHandlerSender<ServerRPC, RPCHandler>;

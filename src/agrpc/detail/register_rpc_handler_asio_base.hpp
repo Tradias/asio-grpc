@@ -36,7 +36,6 @@ template <class ServerRPC, class RPCHandler, class CompletionHandlerT>
 class RegisterRPCHandlerOperationAsioBase
     : public detail::RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler,
                                                      detail::CancellationSlotT<CompletionHandlerT&>>,
-      public detail::RegisterRPCHandlerOperationComplete,
       private detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandlerT>>
 {
   public:
@@ -58,7 +57,7 @@ class RegisterRPCHandlerOperationAsioBase
             }
         }
 
-        RegisterRPCHandlerOperationAsioBase& self_;
+        Base& self_;
     };
 
   public:
@@ -71,8 +70,7 @@ class RegisterRPCHandlerOperationAsioBase
     template <class Ch>
     RegisterRPCHandlerOperationAsioBase(const ServerRPCExecutor& executor, Service& service, RPCHandler&& rpc_handler,
                                         Ch&& completion_handler, CompletionBase::Complete on_complete)
-        : Base(executor, service, static_cast<RPCHandler&&>(rpc_handler)),
-          CompletionBase(on_complete),
+        : Base(executor, service, static_cast<RPCHandler&&>(rpc_handler), on_complete),
           WorkTracker(asio::get_associated_executor(completion_handler)),
           completion_handler_(static_cast<Ch&&>(completion_handler))
     {

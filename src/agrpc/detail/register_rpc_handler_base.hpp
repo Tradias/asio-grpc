@@ -43,13 +43,17 @@ class RegisterRPCHandlerOperationComplete
 };
 
 template <class ServerRPC, class RPCHandler, class StopToken>
-struct RegisterRPCHandlerOperationBase
+struct RegisterRPCHandlerOperationBase : RegisterRPCHandlerOperationComplete
 {
     using Service = detail::ServerRPCServiceT<ServerRPC>;
     using ServerRPCExecutor = typename ServerRPC::executor_type;
 
-    RegisterRPCHandlerOperationBase(const ServerRPCExecutor& executor, Service& service, RPCHandler&& rpc_handler)
-        : executor_(executor), service_(service), rpc_handler_(static_cast<RPCHandler&&>(rpc_handler))
+    RegisterRPCHandlerOperationBase(const ServerRPCExecutor& executor, Service& service, RPCHandler&& rpc_handler,
+                                    RegisterRPCHandlerOperationComplete::Complete complete)
+        : RegisterRPCHandlerOperationComplete{complete},
+          executor_(executor),
+          service_(service),
+          rpc_handler_(static_cast<RPCHandler&&>(rpc_handler))
     {
     }
 
