@@ -241,40 +241,44 @@ inline DoOneResult GrpcContextImplementation::do_one(detail::GrpcContextThreadCo
     return DoOneResult::from(handled_event, processed_local_work);
 }
 
+template <bool IsMultithreaded, class LoopCondition>
+bool run_loop(detail::GrpcContextThreadContextImpl<IsMultithreaded>& thread_context, LoopCondition loop_condition,
+              ::gpr_timespec deadline)
+{
+    bool processed{};
+    DoOneResult result;
+    while (loop_condition())
+    {
+        if constexpr (LoopCondition::COMPLETION_QUEUE_ONLY)
+        {
+            result = {GrpcContextImplementation::do_one_completion_queue_event(thread_context, deadline)};
+        }
+        else
+        {
+            result = GrpcContextImplementation::do_one(thread_context, deadline);
+        }
+        if (!result)
+        {
+            break;
+        }
+        processed = processed || loop_condition.has_processed(result);
+    }
+    return processed;
+}
+
 template <class LoopCondition>
 inline bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_context, LoopCondition loop_condition,
                                                     ::gpr_timespec deadline)
 {
-    const auto run = [&loop_condition, deadline](auto& thread_context)
-    {
-        bool processed{};
-        DoOneResult result;
-        while (loop_condition())
-        {
-            if constexpr (LoopCondition::COMPLETION_QUEUE_ONLY)
-            {
-                result = {GrpcContextImplementation::do_one_completion_queue_event(thread_context, deadline)};
-            }
-            else
-            {
-                result = GrpcContextImplementation::do_one(thread_context, deadline);
-            }
-            if (!result)
-            {
-                break;
-            }
-            processed = processed || loop_condition.has_processed(result);
-        }
-        return processed;
-    };
     if (GrpcContextImplementation::running_in_this_thread(grpc_context))
     {
         auto& context = *detail::thread_local_grpc_context;
         if (grpc_context.multithreaded_)
         {
-            return run(static_cast<GrpcContextThreadContextImpl<true>&>(context));
+            return detail::run_loop(static_cast<GrpcContextThreadContextImpl<true>&>(context), loop_condition,
+                                    deadline);
         }
-        return run(static_cast<GrpcContextThreadContextImpl<false>&>(context));
+        return detail::run_loop(static_cast<GrpcContextThreadContextImpl<false>&>(context), loop_condition, deadline);
     }
     if (grpc_context.outstanding_work_.load(std::memory_order_relaxed) == 0)
     {
@@ -285,10 +289,10 @@ inline bool GrpcContextImplementation::process_work(agrpc::GrpcContext& grpc_con
     if (grpc_context.multithreaded_)
     {
         detail::GrpcContextThreadContextImpl<true> thread_context{grpc_context};
-        return run(thread_context);
+        return detail::run_loop(thread_context, loop_condition, deadline);
     }
     detail::GrpcContextThreadContextImpl<false> thread_context{grpc_context};
-    return run(thread_context);
+    return detail::run_loop(thread_context, loop_condition, deadline);
 }
 
 inline void GrpcContextImplementation::drain_completion_queue(agrpc::GrpcContext& grpc_context) noexcept
