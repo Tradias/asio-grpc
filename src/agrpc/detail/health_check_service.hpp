@@ -281,7 +281,7 @@ inline void HealthCheckService::Shutdown()
                                                       });
 }
 
-detail::ServingStatus HealthCheckService::get_serving_status(const std::string& service_name) const
+inline detail::ServingStatus HealthCheckService::get_serving_status(const std::string& service_name) const
 {
     const auto it = services_map_.find(service_name);
     return it == services_map_.end() ? detail::ServingStatus::NOT_FOUND : it->second.status_;
