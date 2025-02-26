@@ -392,7 +392,7 @@ TEST_CASE_FIXTURE(ServerRPCTest<test::BidirectionalStreamingServerRPC>,
             auto rpc = create_rpc();
             start_rpc(rpc, request, response, yield);
             CHECK(rpc.write(request, yield));
-            wait(test::one_second_from_now(), yield);
+            agrpc::Alarm(grpc_context).wait(test::one_second_from_now(), yield);
             order = true;
             CHECK_EQ(grpc::StatusCode::ALREADY_EXISTS, rpc.finish(yield).error_code());
         });
