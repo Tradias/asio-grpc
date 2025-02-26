@@ -21,6 +21,7 @@
 
 #include <array>
 #include <charconv>
+#include <chrono>
 #include <cstdint>
 #include <fstream>
 #include <iostream>

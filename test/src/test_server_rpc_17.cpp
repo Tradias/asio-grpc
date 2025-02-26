@@ -368,6 +368,36 @@ TEST_CASE_TEMPLATE("ServerRPC/ClientRPC bidi streaming success", RPC, test::Bidi
         });
 }
 
+TEST_CASE_FIXTURE(ServerRPCTest<test::BidirectionalStreamingServerRPC>,
+                  "BidirectionalStreamingServerRPC concurrent read+finish")
+{
+    bool order{};
+    register_and_perform_requests(
+        [&](ServerRPC& rpc, const asio::yield_context& yield)
+        {
+            Request request;
+            CHECK(rpc.read(request, yield));
+            std::promise<bool> promise;
+            rpc.read(request,
+                     [&](bool ok)
+                     {
+                         promise.set_value(ok);
+                     });
+            CHECK(rpc.finish(grpc::Status{grpc::StatusCode::ALREADY_EXISTS, ""}, yield));
+            CHECK_FALSE(order);
+            CHECK_FALSE(promise.get_future().get());
+        },
+        [&](auto& request, auto& response, const asio::yield_context& yield)
+        {
+            auto rpc = create_rpc();
+            start_rpc(rpc, request, response, yield);
+            CHECK(rpc.write(request, yield));
+            wait(test::one_second_from_now(), yield);
+            order = true;
+            CHECK_EQ(grpc::StatusCode::ALREADY_EXISTS, rpc.finish(yield).error_code());
+        });
+}
+
 TEST_CASE_FIXTURE(ServerRPCTest<test::GenericServerRPC>, "ServerRPC/ClientRPC generic unary RPC success")
 {
     int option{};
