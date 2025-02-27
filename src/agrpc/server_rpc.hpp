@@ -324,8 +324,8 @@ class ServerRPC<RequestClientStreaming, TraitsT, Executor>
     /**
      * @brief Receive a message from the client
      *
-     * May not be called currently with `finish()`/`finish_with_error()`. It is not meaningful to call it concurrently
-     * with another read on the same rpc since reads on the same stream are delivered in order.
+     * It is not meaningful to call it concurrently with another read on the same rpc since reads on the same stream are
+     * delivered in order.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The
      * completion signature is `void(bool)`. `true` indicates that a valid message was read. `false` when
