@@ -1,0 +1,9 @@
+<map id="agrpc::ServerRPC&lt; RequestServerStreaming, TraitsT, Executor &gt;" name="agrpc::ServerRPC&lt; RequestServerStreaming, TraitsT, Executor &gt;">
+<area shape="rect" id="Node000001" title="I/O object for server&#45;side, server&#45;streaming rpcs." alt="" coords="876,13,1079,67"/>
+<area shape="rect" id="Node000002" href="$classagrpc_1_1detail_1_1_server_r_p_c_base.html" title=" " alt="" coords="575,13,828,67"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="842,37,876,37,876,43,842,43"/>
+<area shape="rect" id="Node000003" href="$classagrpc_1_1detail_1_1_server_r_p_c_notify_when_done_mixin.html" title=" " alt="" coords="247,5,527,75"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="540,37,574,37,574,43,540,43"/>
+<area shape="rect" id="Node000004" href="$classagrpc_1_1detail_1_1_r_p_c_executor_base.html" title="RPC&#39;s executor base." alt="" coords="5,20,199,60"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="212,37,246,37,246,43,212,43"/>
+</map>
