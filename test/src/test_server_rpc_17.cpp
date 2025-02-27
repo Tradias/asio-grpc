@@ -369,7 +369,7 @@ TEST_CASE_TEMPLATE("ServerRPC/ClientRPC bidi streaming success", RPC, test::Bidi
 }
 
 TEST_CASE_FIXTURE(ServerRPCTest<test::BidirectionalStreamingServerRPC>,
-                  "BidirectionalStreamingServerRPC concurrent read+finish")
+                  "BidirectionalStreamingServerRPC initiate finish during read")
 {
     bool order{};
     register_and_perform_requests(

@@ -664,8 +664,8 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
     /**
      * @brief Receive a message from the client
      *
-     * May not be called currently with `finish()`/`write_and_finish()`. It is not meaningful to call it concurrently
-     * with another read on the same rpc since reads on the same stream are delivered in order.
+     * It may not be called concurrently with operations other than `write()`. It is not meaningful to call it
+     * concurrently with another read on the same rpc since reads on the same stream are delivered in order.
      *
      * @param token A completion token like `asio::yield_context` or `agrpc::use_sender`. The completion signature is
      * `void(bool)`. `true` indicates that a valid message was read. `false` when there will be no more incoming

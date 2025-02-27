@@ -317,7 +317,7 @@ TEST_CASE_FIXTURE(ClientRPCTest<test::ClientStreamingClientRPC>, "ClientStreamin
 }
 
 TEST_CASE_FIXTURE(ClientRPCIoContextTest<test::BidirectionalStreamingClientRPC>,
-                  "BidirectionalStreamingClientRPC concurrent read+write")
+                  "BidirectionalStreamingClientRPC initiate write during read")
 {
     bool set_last_message{};
     SUBCASE("no WriteOptions") {}
@@ -352,6 +352,36 @@ TEST_CASE_FIXTURE(ClientRPCIoContextTest<test::BidirectionalStreamingClientRPC>,
             CHECK_FALSE(rpc.read(response, yield));
             CHECK(promise.get_future().get());
             CHECK_EQ(grpc::StatusCode::ALREADY_EXISTS, rpc.finish(yield).error_code());
+        });
+}
+
+TEST_CASE_FIXTURE(ClientRPCIoContextTest<test::BidirectionalStreamingClientRPC>,
+                  "BidirectionalStreamingClientRPC initiate finish during read")
+{
+    run_server_client_on_separate_threads(
+        [&](auto& rpc, const asio::yield_context& yield)
+        {
+            CHECK(rpc.finish(grpc::Status{grpc::StatusCode::ALREADY_EXISTS, ""}, yield));
+        },
+        [&](const asio::yield_context& yield)
+        {
+            auto rpc = create_rpc();
+            start_rpc(rpc, yield);
+            std::promise<bool> promise;
+            bool read{};
+            rpc.read_initial_metadata(
+                [&](auto&& ok)
+                {
+                    read = ok;
+                });
+            rpc.read(response,
+                     [&](bool ok)
+                     {
+                         promise.set_value(ok);
+                     });
+            CHECK_EQ(grpc::StatusCode::ALREADY_EXISTS, rpc.finish(yield).error_code());
+            CHECK_FALSE(promise.get_future().get());
+            CHECK(read);
         });
 }
 
