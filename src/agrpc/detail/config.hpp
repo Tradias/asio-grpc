@@ -63,7 +63,7 @@
 // Try-catch
 #ifndef AGRPC_TRY
 
-#if __cpp_exceptions >= 199711L
+#if defined(__cpp_exceptions) && (__cpp_exceptions >= 199711L)
 #define AGRPC_TRY try
 #define AGRPC_CATCH(...) catch (__VA_ARGS__)
 #else
