@@ -20,7 +20,7 @@
 
 #include <agrpc/detail/config.hpp>
 
-#if __cpp_lib_bitops >= 201907L
+#if defined(__cpp_lib_bitops) && (__cpp_lib_bitops >= 201907L)
 #include <bit>
 #endif
 
@@ -34,7 +34,7 @@ constexpr auto maximum(T a, T b) noexcept
     return (a < b) ? b : a;
 }
 
-#if __cpp_lib_bitops >= 201907L
+#if defined(__cpp_lib_bitops) && (__cpp_lib_bitops >= 201907L)
 constexpr std::size_t floor_log2(std::size_t x) noexcept
 {
     constexpr auto SIZE_T_BIT_COUNT_MINUS_ONE = sizeof(std::size_t) * CHAR_BIT - std::size_t{1};
