@@ -54,6 +54,7 @@ target_compile_options(
               -Wall
               -Wextra
               -Wno-deprecated-declarations
+              -Wundef
               -pedantic-errors>
               $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-self-move>)
 
