@@ -208,7 +208,7 @@ target_link_libraries(your_app PUBLIC gRPC::grpc++)
 Using [Boost.Asio](https://www.boost.org/doc/libs/1_86_0/doc/html/boost_asio.html):
 
 ```cmake
-add_subdirectory(/path/to/asio-grpc)
+add_subdirectory(/path/to/asio-grpc SYSTEM)
 find_package(Boost)
 target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc Boost::headers)
 ```
@@ -216,7 +216,7 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc Boost::headers)
 Or using [standalone Asio](https://github.com/chriskohlhoff/asio):
 
 ```cmake
-add_subdirectory(/path/to/asio-grpc)
+add_subdirectory(/path/to/asio-grpc SYSTEM)
 find_package(asio)
 target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-standalone-asio asio::asio)
 ```
@@ -224,7 +224,7 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-standalone-asio asio:
 Or using [libunifex](https://github.com/facebookexperimental/libunifex):
 
 ```cmake
-add_subdirectory(/path/to/asio-grpc)
+add_subdirectory(/path/to/asio-grpc SYSTEM)
 find_package(unifex)
 target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-unifex unifex::unifex)
 ```
@@ -232,7 +232,7 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-unifex unifex::unifex
 Or using [stdexec](https://github.com/NVIDIA/stdexec):
 
 ```cmake
-add_subdirectory(/path/to/asio-grpc)
+add_subdirectory(/path/to/asio-grpc SYSTEM)
 find_package(stdexec)
 target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-stdexec STDEXEC::stdexec)
 ```
