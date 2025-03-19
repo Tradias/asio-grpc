@@ -219,7 +219,8 @@ struct GrpcContextDoOne
     template <bool IsMultithreaded>
     static DoOneResult poll(detail::GrpcContextThreadContextImpl<IsMultithreaded>& context, ::gpr_timespec deadline)
     {
-        return GrpcContextImplementation::do_one(context, deadline);
+        return GrpcContextImplementation::do_one(context, detail::GrpcContextIsNotStopped{context.grpc_context_},
+                                                 deadline);
     }
 };
 

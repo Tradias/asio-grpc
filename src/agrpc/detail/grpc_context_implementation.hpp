@@ -78,6 +78,13 @@ struct GrpcContextThreadContextImpl : GrpcContextThreadContext
     GrpcContextThreadContextImpl& operator=(GrpcContextThreadContextImpl&& other) = delete;
 };
 
+struct GrpcContextIsNotStopped
+{
+    [[nodiscard]] bool operator()() const noexcept;
+
+    agrpc::GrpcContext& grpc_context_;
+};
+
 enum class InvokeHandler
 {
     NO_,
@@ -145,8 +152,9 @@ struct GrpcContextImplementation
 
     static bool process_local_queue(detail::GrpcContextThreadContext& context, detail::InvokeHandler invoke);
 
-    template <bool IsMultithreaded>
-    static DoOneResult do_one(detail::GrpcContextThreadContextImpl<IsMultithreaded>& context, ::gpr_timespec deadline,
+    template <bool IsMultithreaded, class LoopCondition>
+    static DoOneResult do_one(detail::GrpcContextThreadContextImpl<IsMultithreaded>& context,
+                              LoopCondition loop_condition, ::gpr_timespec deadline,
                               detail::InvokeHandler invoke = detail::InvokeHandler::YES_);
 
     template <class LoopCondition>

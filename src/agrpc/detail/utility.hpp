@@ -29,6 +29,10 @@ struct TypeList
 {
 };
 
+#if defined(__cpp_lib_remove_cvref) && (__cpp_lib_remove_cvref >= 201711L)
+template <class T>
+using RemoveCrefT = std::remove_cvref_t<T>;
+#else
 template <class T>
 struct RemoveCref
 {
@@ -67,6 +71,7 @@ struct RemoveCref<const T&&>
 
 template <class T>
 using RemoveCrefT = typename detail::RemoveCref<T>::Type;
+#endif
 
 template <class T, class = void>
 inline constexpr bool IS_EQUALITY_COMPARABLE = false;

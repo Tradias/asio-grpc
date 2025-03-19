@@ -72,6 +72,8 @@ inline GrpcContextThreadContextImpl<IsMultithreaded>::~GrpcContextThreadContextI
 
 inline void WorkFinishedOnExitFunctor::operator()() const noexcept { grpc_context_.work_finished(); }
 
+inline bool GrpcContextIsNotStopped::operator()() const noexcept { return !grpc_context_.is_stopped(); }
+
 inline bool GrpcContextImplementation::is_shutdown(const agrpc::GrpcContext& grpc_context) noexcept
 {
     return grpc_context.shutdown_;
@@ -196,11 +198,11 @@ inline CompletionQueueEventResult GrpcContextImplementation::do_one_completion_q
     return {};
 }
 
-template <bool IsMultithreaded>
+template <bool IsMultithreaded, class LoopCondition>
 inline DoOneResult GrpcContextImplementation::do_one(detail::GrpcContextThreadContextImpl<IsMultithreaded>& context,
-                                                     ::gpr_timespec deadline, detail::InvokeHandler invoke)
+                                                     LoopCondition loop_condition, ::gpr_timespec deadline,
+                                                     detail::InvokeHandler invoke)
 {
-    const agrpc::GrpcContext& grpc_context = context.grpc_context_;
     const auto& local_work_queue = context.local_work_queue_;
     bool check_remote_work = context.check_remote_work_;
     if constexpr (IsMultithreaded)
@@ -232,7 +234,7 @@ inline DoOneResult GrpcContextImplementation::do_one(detail::GrpcContextThreadCo
         }
     }
     const bool is_more_completed_work_pending = check_remote_work || !local_work_queue.empty();
-    if (!is_more_completed_work_pending && grpc_context.is_stopped())
+    if (!is_more_completed_work_pending && !loop_condition())
     {
         return {{DoOneResult::PROCESSED_LOCAL_WORK}};
     }
@@ -255,7 +257,7 @@ bool run_loop(detail::GrpcContextThreadContextImpl<IsMultithreaded>& thread_cont
         }
         else
         {
-            result = GrpcContextImplementation::do_one(thread_context, deadline);
+            result = GrpcContextImplementation::do_one(thread_context, loop_condition, deadline);
         }
         if (!result)
         {

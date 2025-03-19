@@ -139,6 +139,7 @@ class GrpcContext
      * @brief Run ready completion handlers and `grpc::CompletionQueue` until deadline
      *
      * Runs the main event loop logic until the GrpcContext runs out of work, is stopped or the specified deadline has
+     * been reached. It is unspecified how many additional completed operations will be processed after deadline has
      * been reached. The GrpcContext will be brought into the ready state when this function is invoked.
      *
      * @attention Only one thread may call run(), run_until(), run_while() or poll() at a time [unless this context has
@@ -162,6 +163,7 @@ class GrpcContext
      * @brief Run ready completion handlers and `grpc::CompletionQueue` while a condition holds
      *
      * Runs the main event loop logic until the GrpcContext runs out of work, is stopped or the specified condition
+     * returns false. It is unspecified how many additional completed operations will be processed after the condition
      * returns false. The GrpcContext will be brought into the ready state when this function is invoked.
      *
      * @attention Only one thread may call run(), run_until(), run_while() or poll() at a time [unless this context has

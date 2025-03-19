@@ -899,6 +899,37 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_while() runs until the
     CHECK(alarm1_finished);
 }
 
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext.run_while() checks condition after processing local queue")
+{
+    SUBCASE("single-threaded") {}
+    SUBCASE("multi-threaded") { grpc_context_lifetime.emplace(2); }
+    bool post_completed{};
+    bool alarm_ok{true};
+    agrpc::Alarm alarm{grpc_context};
+    test::wait(alarm, test::five_seconds_from_now(),
+               [&](bool ok)
+               {
+                   alarm_ok = ok;
+               });
+    post(
+        [&]
+        {
+            post(
+                [&]
+                {
+                    post_completed = true;
+                });
+            grpc_context.run_while(
+                [&]
+                {
+                    return !post_completed;
+                });
+            alarm.cancel();
+        });
+    CHECK(grpc_context.run());
+    CHECK_FALSE(alarm_ok);
+}
+
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio GrpcExecutor::schedule")
 {
     bool invoked{false};

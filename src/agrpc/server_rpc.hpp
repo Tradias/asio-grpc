@@ -595,8 +595,7 @@ class ServerRPC<RequestServerStreaming, TraitsT, Executor>
     auto write_and_finish(const ResponseT& response, const grpc::Status& status,
                           CompletionToken&& token = CompletionToken{})
     {
-        return write_and_finish(response, {}, status,
-                                static_cast<CompletionToken&&>(static_cast<CompletionToken&&>(token)));
+        return write_and_finish(response, {}, status, static_cast<CompletionToken&&>(token));
     }
 
     /**

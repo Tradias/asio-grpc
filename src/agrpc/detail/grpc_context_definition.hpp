@@ -60,13 +60,6 @@ struct GrpcContextCompletionQueueLoopCondition : Function
 template <class Function>
 GrpcContextCompletionQueueLoopCondition(Function) -> GrpcContextCompletionQueueLoopCondition<Function>;
 
-struct GrpcContextIsNotStopped
-{
-    [[nodiscard]] bool operator()() const noexcept { return !grpc_context_.is_stopped(); }
-
-    agrpc::GrpcContext& grpc_context_;
-};
-
 template <class T>
 inline void create_resources(T& resources, std::size_t concurrency_hint)
 {
