@@ -53,8 +53,13 @@
 #include <asio/associated_cancellation_slot.hpp>
 #include <asio/bind_cancellation_slot.hpp>
 #include <asio/cancellation_signal.hpp>
-#include <asio/experimental/deferred.hpp>
 #include <asio/experimental/parallel_group.hpp>
+
+#if (ASIO_VERSION >= 102400)
+#include <asio/deferred.hpp>
+#else
+#include <asio/experimental/deferred.hpp>
+#endif
 #endif
 #endif
 
@@ -91,8 +96,13 @@
 #include <boost/asio/associated_cancellation_slot.hpp>
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/cancellation_signal.hpp>
-#include <boost/asio/experimental/deferred.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
+
+#if (BOOST_VERSION >= 108000)
+#include <boost/asio/deferred.hpp>
+#else
+#include <boost/asio/experimental/deferred.hpp>
+#endif
 #endif
 #endif
 
