@@ -79,7 +79,7 @@ int main(int argc, const char** argv)
     builder.RegisterService(&service);
     server = builder.BuildAndStart();
 
-    using RPC = example::AwaitableServerRPC<&helloworld::Greeter::AsyncService::RequestSayHello>;
+    using RPC = agrpc::ServerRPC<&helloworld::Greeter::AsyncService::RequestSayHello>;
     agrpc::register_awaitable_rpc_handler<RPC>(
         grpc_context, service,
         RPCHandlerWithArenaRequestMessageFactory{

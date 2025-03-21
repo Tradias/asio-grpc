@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "awaitable_client_rpc.hpp"
 #include "example/v1/example.grpc.pb.h"
 #include "example/v1/example_ext.grpc.pb.h"
 #include "helper.hpp"
@@ -29,7 +28,7 @@ using ExampleExtStub = example::v1::ExampleExt::Stub;
 
 asio::awaitable<void> make_server_streaming_request(agrpc::GrpcContext& grpc_context, ExampleStub& stub)
 {
-    using RPC = example::AwaitableClientRPC<&ExampleStub::PrepareAsyncServerStreaming>;
+    using RPC = agrpc::ClientRPC<&ExampleStub::PrepareAsyncServerStreaming>;
 
     RPC rpc{grpc_context};
     rpc.context().set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
@@ -56,7 +55,7 @@ asio::awaitable<void> make_server_streaming_request(agrpc::GrpcContext& grpc_con
 // ---------------------------------------------------
 asio::awaitable<void> make_shutdown_request(agrpc::GrpcContext& grpc_context, ExampleExtStub& stub)
 {
-    using RPC = example::AwaitableClientRPC<&ExampleExtStub::PrepareAsyncShutdown>;
+    using RPC = agrpc::ClientRPC<&ExampleExtStub::PrepareAsyncShutdown>;
 
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "awaitable_client_rpc.hpp"
 #include "helloworld/helloworld.grpc.pb.h"
 #include "helper.hpp"
 #include "rethrow_first_arg.hpp"
@@ -58,7 +57,7 @@ class RoundRobin
 
 asio::awaitable<void> make_request(agrpc::GrpcContext& grpc_context, helloworld::Greeter::Stub& stub)
 {
-    using RPC = example::AwaitableClientRPC<&helloworld::Greeter::Stub::PrepareAsyncSayHello>;
+    using RPC = agrpc::ClientRPC<&helloworld::Greeter::Stub::PrepareAsyncSayHello>;
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
     RPC::Request request;

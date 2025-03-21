@@ -66,7 +66,7 @@ asio::awaitable<void> rpc_handler_using_waiter(ServerRPC& rpc)
 /* [server-rpc-generic] */
 void server_rpc_generic(agrpc::GrpcContext& grpc_context, grpc::AsyncGenericService& service)
 {
-    using RPC = asio::use_awaitable_t<>::as_default_on_t<agrpc::GenericServerRPC>;
+    using RPC = agrpc::GenericServerRPC;
     agrpc::register_awaitable_rpc_handler<RPC>(
         grpc_context, service,
         [](RPC& rpc) -> asio::awaitable<void>
@@ -144,8 +144,7 @@ void server_rpc_unary_callback(agrpc::GrpcContext& grpc_context, example::v1::Ex
 void server_rpc_unary(agrpc::GrpcContext& grpc_context,
                       example::v1::Example::AsyncService& service)
 {
-    using RPC = asio::use_awaitable_t<>::as_default_on_t<
-        agrpc::ServerRPC<&example::v1::Example::AsyncService::RequestUnary>>;
+    using RPC = agrpc::ServerRPC<&example::v1::Example::AsyncService::RequestUnary>;
     agrpc::register_awaitable_rpc_handler<RPC>(
         grpc_context, service,
         [](RPC& rpc, RPC::Request& request) -> asio::awaitable<void>
@@ -165,8 +164,8 @@ void server_rpc_unary(agrpc::GrpcContext& grpc_context,
 void server_rpc_client_streaming(agrpc::GrpcContext& grpc_context,
                                  example::v1::Example::AsyncService& service)
 {
-    using RPC = asio::use_awaitable_t<>::as_default_on_t<
-        agrpc::ServerRPC<&example::v1::Example::AsyncService::RequestClientStreaming>>;
+    using RPC =
+        agrpc::ServerRPC<&example::v1::Example::AsyncService::RequestClientStreaming>;
     agrpc::register_awaitable_rpc_handler<RPC>(
         grpc_context, service,
         [](RPC& rpc) -> asio::awaitable<void>
@@ -191,8 +190,8 @@ void server_rpc_client_streaming(agrpc::GrpcContext& grpc_context,
 void server_rpc_server_streaming(agrpc::GrpcContext& grpc_context,
                                  example::v1::Example::AsyncService& service)
 {
-    using RPC = asio::use_awaitable_t<>::as_default_on_t<
-        agrpc::ServerRPC<&example::v1::Example::AsyncService::RequestServerStreaming>>;
+    using RPC =
+        agrpc::ServerRPC<&example::v1::Example::AsyncService::RequestServerStreaming>;
     agrpc::register_awaitable_rpc_handler<RPC>(
         grpc_context, service,
         [](RPC& rpc, RPC::Request& request) -> asio::awaitable<void>
@@ -216,8 +215,8 @@ void server_rpc_server_streaming(agrpc::GrpcContext& grpc_context,
 void server_rpc_bidirectional_streaming(agrpc::GrpcContext& grpc_context,
                                         example::v1::Example::AsyncService& service)
 {
-    using RPC = asio::use_awaitable_t<>::as_default_on_t<agrpc::ServerRPC<
-        &example::v1::Example::AsyncService::RequestBidirectionalStreaming>>;
+    using RPC = agrpc::ServerRPC<
+        &example::v1::Example::AsyncService::RequestBidirectionalStreaming>;
     agrpc::register_awaitable_rpc_handler<RPC>(
         grpc_context, service,
         [](RPC& rpc) -> asio::awaitable<void>
@@ -270,7 +269,8 @@ class RPCHandlerWithArenaRequestMessageFactory
     template <class... Args>
     decltype(auto) operator()(Args&&... args)
     {
-        // for unary and server-streaming rpcs args are: ServerRPC&, Request&, ArenaRequestMessageFactory&
+        // for unary and server-streaming rpcs args are: ServerRPC&, Request&,
+        // ArenaRequestMessageFactory&
         return handler_(std::forward<Args>(args)...);
     }
 

@@ -52,7 +52,7 @@ asio::awaitable<void> handle_tcp_request(asio::ip::port_type port)
 void register_rpc_handler(asio::io_context& io_context, agrpc::GrpcContext& grpc_context,
                           example::v1::Example::AsyncService& service, grpc::Server& server)
 {
-    using RPC = example::AwaitableServerRPC<&example::v1::Example::AsyncService::RequestUnary>;
+    using RPC = agrpc::ServerRPC<&example::v1::Example::AsyncService::RequestUnary>;
     agrpc::register_awaitable_rpc_handler<RPC>(
         grpc_context, service,
         [&](RPC& rpc, RPC::Request& request) -> asio::awaitable<void>

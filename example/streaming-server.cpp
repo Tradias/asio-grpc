@@ -44,7 +44,7 @@ using ExampleExtService = example::v1::ExampleExt::AsyncService;
 // A simple client-streaming rpc handler using C++20 coroutines.
 
 // end-snippet
-using ClientStreamingRPC = example::AwaitableServerRPC<&ExampleService::RequestClientStreaming>;
+using ClientStreamingRPC = agrpc::ServerRPC<&ExampleService::RequestClientStreaming>;
 
 asio::awaitable<void> handle_client_streaming_request(ClientStreamingRPC& rpc)
 {
@@ -78,7 +78,7 @@ asio::awaitable<void> handle_client_streaming_request(ClientStreamingRPC& rpc)
 // A simple server-streaming rpc handler using C++20 coroutines.
 
 // end-snippet
-using ServerStreamingRPC = example::AwaitableServerRPC<&ExampleService::RequestServerStreaming>;
+using ServerStreamingRPC = agrpc::ServerRPC<&ExampleService::RequestServerStreaming>;
 
 asio::awaitable<void> handle_server_streaming_request(ServerStreamingRPC& rpc, example::v1::Request& request)
 {
@@ -99,8 +99,7 @@ asio::awaitable<void> handle_server_streaming_request(ServerStreamingRPC& rpc, e
 // rpc.
 
 // end-snippet
-using ServerStreamingNotifyWhenDoneRPC =
-    example::AwaitableNotifyWhenDoneServerRPC<&ExampleService::RequestServerStreaming>;
+using ServerStreamingNotifyWhenDoneRPC = example::NotifyWhenDoneServerRPC<&ExampleService::RequestServerStreaming>;
 
 auto server_streaming_notify_when_done_request_handler(agrpc::GrpcContext& grpc_context)
 {
@@ -149,7 +148,7 @@ auto server_streaming_notify_when_done_request_handler(agrpc::GrpcContext& grpc_
 // back to the client.
 
 // end-snippet
-using BidiStreamingRPC = example::AwaitableServerRPC<&ExampleService::RequestBidirectionalStreaming>;
+using BidiStreamingRPC = agrpc::ServerRPC<&ExampleService::RequestBidirectionalStreaming>;
 
 using Channel = asio::experimental::channel<void(boost::system::error_code, example::v1::Request)>;
 
@@ -226,21 +225,19 @@ auto bidirectional_streaming_rpc_handler(asio::thread_pool& thread_pool)
 
 // The SlowUnary endpoint is used by the client to demonstrate per-RPC step cancellation. See streaming-client.cpp.
 // It also demonstrates how to use an awaitable with a different executor type.
-using SlowUnaryRPC =
-    asio::use_awaitable_t<agrpc::GrpcExecutor>::as_default_on_t<agrpc::ServerRPC<&ExampleExtService::RequestSlowUnary>>;
+using SlowUnaryRPC = agrpc::ServerRPC<&ExampleExtService::RequestSlowUnary>;
 
 asio::awaitable<void, agrpc::GrpcExecutor> handle_slow_unary_request(SlowUnaryRPC& rpc, SlowUnaryRPC::Request& request)
 {
     agrpc::Alarm alarm{co_await asio::this_coro::executor};
-    co_await alarm.wait(std::chrono::system_clock::now() + std::chrono::milliseconds(request.delay()),
-                        asio::use_awaitable_t<agrpc::GrpcExecutor>{});
+    co_await alarm.wait(std::chrono::system_clock::now() + std::chrono::milliseconds(request.delay()));
 
     co_await rpc.finish({}, grpc::Status::OK);
 }
 // ---------------------------------------------------
 //
 
-using ShutdownRPC = example::AwaitableServerRPC<&ExampleExtService::RequestShutdown>;
+using ShutdownRPC = agrpc::ServerRPC<&ExampleExtService::RequestShutdown>;
 
 int main(int argc, const char** argv)
 {

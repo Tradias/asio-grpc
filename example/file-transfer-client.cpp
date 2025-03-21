@@ -34,8 +34,6 @@
 
 namespace asio = boost::asio;
 
-inline constexpr asio::use_awaitable_t<agrpc::GrpcExecutor> USE_AWAITABLE{};
-
 // begin-snippet: client-side-file-transfer
 
 // Example showing how to transfer files over a streaming RPC. Stack buffers are used to customize memory allocation.
@@ -62,13 +60,13 @@ asio::awaitable<bool, agrpc::GrpcExecutor> make_double_buffered_send_file_reques
     RPC rpc{grpc_context};
     rpc.context().set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
     google::protobuf::Empty response;
-    if (!co_await rpc.start(stub, response, buffer1.bind_allocator(USE_AWAITABLE)))
+    if (!co_await rpc.start(stub, response, buffer1.bind_allocator()))
     {
         co_return false;
     }
 
     // Switch to the io_context and open the file there to avoid blocking the GrpcContext.
-    co_await asio::post(buffer1.bind_allocator(asio::bind_executor(io_context, USE_AWAITABLE)));
+    co_await asio::post(buffer1.bind_allocator(asio::bind_executor(io_context)));
 
     // Relying on CTAD here to create a `asio::basic_stream_file<asio::io_context::executor_type>` which is slightly
     // more performant than the default `asio::stream_file` that is templated on `asio::any_io_executor`.
@@ -82,9 +80,9 @@ asio::awaitable<bool, agrpc::GrpcExecutor> make_double_buffered_send_file_reques
 
     // `asio::bind_executor` prevents context switching to this_coro::executor (the GrpcContext in our case) when
     // async_read_some completes. We do not need to switch because rpc::write is thread-safe.
-    auto bytes_read = co_await file.async_read_some(
-        asio::buffer(*first_read_buffer.mutable_content()),
-        buffer1.bind_allocator(asio::bind_executor(asio::system_executor{}, USE_AWAITABLE)));
+    auto bytes_read =
+        co_await file.async_read_some(asio::buffer(*first_read_buffer.mutable_content()),
+                                      buffer1.bind_allocator(asio::bind_executor(asio::system_executor{})));
 
     bool is_eof{false};
 
@@ -102,19 +100,10 @@ asio::awaitable<bool, agrpc::GrpcExecutor> make_double_buffered_send_file_reques
 
         auto [completion_order, ec, next_bytes_read, ok] =
             co_await asio::experimental::make_parallel_group(
-                [&](auto&& token)
-                {
-                    // Again using bind_executor to avoid switching contexts in case this function completes after
-                    // rpc::write.
-                    return file.async_read_some(asio::buffer(*next->mutable_content()),
-                                                buffer1.bind_allocator(asio::bind_executor(
-                                                    asio::system_executor{}, std::forward<decltype(token)>(token))));
-                },
-                [&](auto&& token)
-                {
-                    return rpc.write(*current, buffer2.bind_allocator(std::forward<decltype(token)>(token)));
-                })
-                .async_wait(asio::experimental::wait_for_all(), buffer1.bind_allocator(USE_AWAITABLE));
+                file.async_read_some(asio::buffer(*next->mutable_content()),
+                                     buffer1.bind_allocator(asio::bind_executor(asio::system_executor{}))),
+                rpc.write(*current, buffer2.bind_allocator()))
+                .async_wait(asio::experimental::wait_for_all(), buffer1.bind_allocator());
         if (!ok)
         {
             // Lost connection to server, no reason to finish this RPC.
@@ -130,9 +119,9 @@ asio::awaitable<bool, agrpc::GrpcExecutor> make_double_buffered_send_file_reques
 
     // Signal that we are done sending chunks
     current->mutable_content()->resize(bytes_read);
-    co_await rpc.write(*current, grpc::WriteOptions{}.set_last_message(), buffer1.bind_allocator(USE_AWAITABLE));
+    co_await rpc.write(*current, grpc::WriteOptions{}.set_last_message(), buffer1.bind_allocator());
 
-    co_return (co_await rpc.finish(buffer1.bind_allocator(USE_AWAITABLE))).ok();
+    co_return (co_await rpc.finish(buffer1.bind_allocator())).ok();
 }
 
 void run_io_context(asio::io_context& io_context)

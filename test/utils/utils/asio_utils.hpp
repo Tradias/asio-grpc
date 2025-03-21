@@ -248,7 +248,7 @@ template <class Signature, class Executor>
 void complete_immediately(agrpc::GrpcContext& grpc_context, agrpc::Waiter<Signature, Executor>& waiter)
 {
     waiter.initiate(
-        [&](auto&& context, auto&& token)
+        [](auto&& context, auto&& token)
         {
             asio::post(context, token);
         },

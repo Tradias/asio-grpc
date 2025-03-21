@@ -52,7 +52,7 @@ asio::awaitable<void> handle_tcp_request(asio::ip::port_type port)
 }
 
 // A unary RPC request that will be handled by the GrpcContext.
-using RPC = example::AwaitableServerRPC<&example::v1::Example::AsyncService::RequestUnary>;
+using RPC = agrpc::ServerRPC<&example::v1::Example::AsyncService::RequestUnary>;
 
 int main(int argc, const char** argv)
 {

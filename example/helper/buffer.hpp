@@ -31,10 +31,10 @@ struct Buffer
 
     [[nodiscard]] allocator_type allocator() noexcept { return allocator_type{data_}; }
 
-    template <class Target>
-    [[nodiscard]] auto bind_allocator(Target&& target) noexcept
+    template <class... Target>
+    [[nodiscard]] auto bind_allocator(Target&&... target) noexcept
     {
-        return boost::asio::bind_allocator(allocator(), std::forward<Target>(target));
+        return boost::asio::bind_allocator(allocator(), std::forward<Target>(target)...);
     }
 
     alignas(std::max_align_t) std::byte data_[Capacity];

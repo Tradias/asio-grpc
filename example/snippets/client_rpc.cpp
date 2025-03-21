@@ -23,8 +23,7 @@ namespace asio = boost::asio;
 asio::awaitable<void> client_rpc_unary_initial_metadata(agrpc::GrpcContext& grpc_context,
                                                         example::v1::Example::Stub& stub)
 {
-    using RPC =
-        asio::use_awaitable_t<>::as_default_on_t<agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncUnary>>;
+    using RPC = agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncUnary>;
     RPC rpc{grpc_context};
     rpc.context().set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(5));
     RPC::Request request;
@@ -85,8 +84,7 @@ asio::awaitable<void> client_rpc_generic_unary(agrpc::GrpcContext& grpc_context,
 asio::awaitable<void> client_rpc_unary(agrpc::GrpcContext& grpc_context,
                                        example::v1::Example::Stub& stub)
 {
-    using RPC = asio::use_awaitable_t<>::as_default_on_t<
-        agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncUnary>>;
+    using RPC = agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncUnary>;
     grpc::ClientContext client_context;
     client_context.set_deadline(std::chrono::system_clock::now() +
                                 std::chrono::seconds(5));
@@ -107,8 +105,8 @@ asio::awaitable<void> client_rpc_unary(agrpc::GrpcContext& grpc_context,
 asio::awaitable<void> client_rpc_client_streaming(agrpc::GrpcContext& grpc_context,
                                                   example::v1::Example::Stub& stub)
 {
-    using RPC = asio::use_awaitable_t<>::as_default_on_t<
-        agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncClientStreaming>>;
+    using RPC =
+        agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncClientStreaming>;
 
     RPC rpc{grpc_context};
     rpc.context().set_deadline(std::chrono::system_clock::now() +
@@ -144,8 +142,8 @@ asio::awaitable<void> client_rpc_client_streaming(agrpc::GrpcContext& grpc_conte
 asio::awaitable<void> client_rpc_server_streaming(agrpc::GrpcContext& grpc_context,
                                                   example::v1::Example::Stub& stub)
 {
-    using RPC = asio::use_awaitable_t<>::as_default_on_t<
-        agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncServerStreaming>>;
+    using RPC =
+        agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncServerStreaming>;
 
     RPC rpc{grpc_context};
     rpc.context().set_deadline(std::chrono::system_clock::now() +
@@ -179,8 +177,8 @@ asio::awaitable<void> client_rpc_server_streaming(agrpc::GrpcContext& grpc_conte
 asio::awaitable<void> client_rpc_bidirectional_streaming(agrpc::GrpcContext& grpc_context,
                                                          example::v1::Example::Stub& stub)
 {
-    using RPC = asio::use_awaitable_t<>::as_default_on_t<agrpc::ClientRPC<
-        &example::v1::Example::Stub::PrepareAsyncBidirectionalStreaming>>;
+    using RPC =
+        agrpc::ClientRPC<&example::v1::Example::Stub::PrepareAsyncBidirectionalStreaming>;
 
     RPC rpc{grpc_context};
     rpc.context().set_deadline(std::chrono::system_clock::now() +

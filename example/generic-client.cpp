@@ -149,15 +149,7 @@ struct BidirectionalStreamingRequest
                     auto request_buffer = serialize(c.request);
 
                     // Reads and writes can be performed simultaneously.
-                    asio::experimental::make_parallel_group(
-                        [&](auto&& token)
-                        {
-                            return c.rpc.read(c.response_buffer, std::forward<decltype(token)>(token));
-                        },
-                        [&](auto&& token)
-                        {
-                            return c.rpc.write(request_buffer, std::forward<decltype(token)>(token));
-                        })
+                    asio::experimental::make_parallel_group(c.rpc.read(c.response_buffer), c.rpc.write(request_buffer))
                         .async_wait(asio::experimental::wait_for_all(), std::move(self));
                 }
                 c.read_ok = ok;
