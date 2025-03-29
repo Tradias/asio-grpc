@@ -49,7 +49,7 @@ int main(int argc, const char** argv)
             helloworld::HelloReply response;
             response.set_message("Hello " + request.name());
             co_await rpc.finish(response, grpc::Status::OK);
-            server->Shutdown();
+            // server->Shutdown();
         },
         example::RethrowFirstArg{});
 
