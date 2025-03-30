@@ -80,6 +80,7 @@ TEST_CASE_TEMPLATE("ServerRPC unary success", RPC, test::UnaryServerRPC, test::N
     test.register_and_perform_three_requests(
         [&](RPC& rpc, test::msg::Request& request, const asio::yield_context& yield)
         {
+            auto future = test.set_up_notify_when_done(rpc);
             CHECK_EQ(42, request.integer());
             if (use_finish_with_error)
             {
@@ -91,6 +92,7 @@ TEST_CASE_TEMPLATE("ServerRPC unary success", RPC, test::UnaryServerRPC, test::N
                 response.set_integer(21);
                 CHECK(rpc.finish(response, grpc::Status::OK, yield));
             }
+            test.check_notify_when_done(future, rpc, yield);
         },
         [&](auto&, auto&, const asio::yield_context& yield)
         {
@@ -108,6 +110,7 @@ TEST_CASE_TEMPLATE("ServerRPC unary start+finish success", RPC, test::UnaryServe
     test.register_and_perform_three_requests(
         [&](RPC& rpc, test::msg::Request& request, const asio::yield_context& yield)
         {
+            auto future = test.set_up_notify_when_done(rpc);
             CHECK_EQ(42, request.integer());
             if (use_finish_with_error)
             {
@@ -119,6 +122,7 @@ TEST_CASE_TEMPLATE("ServerRPC unary start+finish success", RPC, test::UnaryServe
                 response.set_integer(21);
                 CHECK(rpc.finish(response, grpc::Status::OK, yield));
             }
+            test.check_notify_when_done(future, rpc, yield);
         },
         [&](auto& request, auto& response, const asio::yield_context& yield)
         {
@@ -149,7 +153,7 @@ TEST_CASE_TEMPLATE("Unary ClientRPC/ServerRPC read/send_initial_metadata success
     test.register_and_perform_three_requests(
         [&](RPC& rpc, auto&, const asio::yield_context& yield)
         {
-            auto future = test.set_up_notify_when_done(rpc);
+            test.set_up_notify_when_done(rpc);
             rpc.context().AddInitialMetadata("test", "a");
             CHECK(rpc.send_initial_metadata(yield));
         },
@@ -187,7 +191,7 @@ TEST_CASE_TEMPLATE("Streaming ClientRPC/ServerRPC read/send_initial_metadata suc
     test.register_and_perform_three_requests(
         [&](RPC& rpc, auto&&... args)
         {
-            auto future = test.set_up_notify_when_done(rpc);
+            test.set_up_notify_when_done(rpc);
             rpc.context().AddInitialMetadata("test", "a");
             CHECK(rpc.send_initial_metadata(GetYield::get(args...)));
         },
@@ -305,7 +309,7 @@ TEST_CASE_TEMPLATE("ServerRPC/ClientRPC server streaming success", RPC, test::Se
 TEST_CASE_TEMPLATE("ServerRPC/ClientRPC server streaming no finish causes cancellation", RPC,
                    test::ServerStreamingServerRPC, test::NotifyWhenDoneServerStreamingServerRPC)
 {
-    ServerRPCTest<RPC> test{};
+    ServerRPCTest<RPC> test;
     test.register_and_perform_three_requests(
         [&](RPC& rpc, auto&, const asio::yield_context& yield)
         {
@@ -585,7 +589,7 @@ TEST_CASE("ServerRPC::service_name/method_name")
 TEST_CASE_TEMPLATE("ServerRPC resumable read can be cancelled", RPC, test::ClientStreamingServerRPC,
                    test::BidirectionalStreamingServerRPC)
 {
-    ServerRPCTest<RPC> test{true};
+    ServerRPCTest<RPC> test;
     agrpc::Waiter<void()> client_waiter;
     test.register_and_perform_requests(
         [&](RPC& rpc, const asio::yield_context& yield)
@@ -660,7 +664,7 @@ TEST_CASE_FIXTURE(ServerRPCTest<test::NotifyWhenDoneClientStreamingServerRPC>, "
 // Callback
 TEST_CASE_TEMPLATE("ServerRPCPtr unary success", RPC, test::UnaryServerRPC, test::NotifyWhenDoneUnaryServerRPC)
 {
-    ServerRPCTest<RPC> test{true};
+    ServerRPCTest<RPC> test;
     bool use_finish_with_error{};
     SUBCASE("finish") {}
     SUBCASE("finish_with_error") { use_finish_with_error = true; }
@@ -698,7 +702,7 @@ TEST_CASE_TEMPLATE("ServerRPCPtr unary success", RPC, test::UnaryServerRPC, test
 TEST_CASE_TEMPLATE("ServerRPCPtr automatic cancellation on destruction", RPC, test::UnaryServerRPC,
                    test::NotifyWhenDoneUnaryServerRPC)
 {
-    ServerRPCTest<RPC> test{true};
+    ServerRPCTest<RPC> test;
     test.register_callback_and_perform_three_requests(
         [&](auto&&...) {},
         [&](auto& request, auto& response, const asio::yield_context& yield)

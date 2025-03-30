@@ -100,7 +100,7 @@ struct ServerRPCAwaitableTest : test::ClientServerRPCTest<typename test::Introsp
 
 TEST_CASE_TEMPLATE("Awaitable ServerRPC unary success", RPC, test::UnaryServerRPC, test::NotifyWhenDoneUnaryServerRPC)
 {
-    ServerRPCAwaitableTest<RPC> test{};
+    ServerRPCAwaitableTest<RPC> test;
     bool use_finish_with_error{};
     SUBCASE("finish") {}
     SUBCASE("finish_with_error") { use_finish_with_error = true; }
@@ -128,7 +128,7 @@ TEST_CASE_TEMPLATE("Awaitable ServerRPC unary success", RPC, test::UnaryServerRP
 TEST_CASE_TEMPLATE("Awaitable unary ClientRPC/ServerRPC read/send_initial_metadata successfully", RPC,
                    test::UnaryServerRPC, test::NotifyWhenDoneUnaryServerRPC)
 {
-    ServerRPCAwaitableTest<RPC> test{};
+    ServerRPCAwaitableTest<RPC> test;
     test.register_and_perform_three_requests(
         [&](RPC& rpc, test::msg::Request&) -> asio::awaitable<void>
         {
@@ -150,7 +150,7 @@ TEST_CASE_TEMPLATE("Awaitable streaming ClientRPC/ServerRPC read/send_initial_me
                    test::ServerStreamingServerRPC, test::NotifyWhenDoneServerStreamingServerRPC,
                    test::BidirectionalStreamingServerRPC, test::NotifyWhenDoneBidirectionalStreamingServerRPC)
 {
-    ServerRPCAwaitableTest<RPC> test{};
+    ServerRPCAwaitableTest<RPC> test;
     test.register_and_perform_three_requests(
         [&](RPC& rpc, auto&&...) -> asio::awaitable<void>
         {
@@ -169,7 +169,7 @@ TEST_CASE_TEMPLATE("Awaitable streaming ClientRPC/ServerRPC read/send_initial_me
 TEST_CASE_TEMPLATE("Awaitable ServerRPC/ClientRPC client streaming success", RPC, test::ClientStreamingServerRPC,
                    test::NotifyWhenDoneClientStreamingServerRPC)
 {
-    ServerRPCAwaitableTest<RPC> test{};
+    ServerRPCAwaitableTest<RPC> test;
     bool use_finish_with_error{};
     SUBCASE("finish") {}
     SUBCASE("finish_with_error") { use_finish_with_error = true; }
@@ -226,7 +226,7 @@ TEST_CASE_TEMPLATE("Awaitable ServerRPC/ClientRPC client streaming success", RPC
 TEST_CASE_TEMPLATE("Awaitable ServerRPC/ClientRPC server streaming success", RPC, test::ServerStreamingServerRPC,
                    test::NotifyWhenDoneServerStreamingServerRPC)
 {
-    ServerRPCAwaitableTest<RPC> test{};
+    ServerRPCAwaitableTest<RPC> test;
     bool use_write_and_finish{};
     SUBCASE("finish") {}
     SUBCASE("write_and_finish") { use_write_and_finish = true; }
@@ -334,7 +334,7 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableIoContextTest,
 TEST_CASE_TEMPLATE("Awaitable ServerRPC/ClientRPC server streaming no finish causes cancellation", RPC,
                    test::ServerStreamingServerRPC, test::NotifyWhenDoneServerStreamingServerRPC)
 {
-    ServerRPCAwaitableTest<RPC> test{};
+    ServerRPCAwaitableTest<RPC> test;
     test.register_and_perform_three_requests(
         [&](RPC& rpc, typename RPC::Request&) -> asio::awaitable<void>
         {
@@ -353,7 +353,7 @@ TEST_CASE_TEMPLATE("Awaitable ServerRPC/ClientRPC server streaming no finish cau
 TEST_CASE_TEMPLATE("Awaitable ServerRPC/ClientRPC bidi streaming success", RPC, test::BidirectionalStreamingServerRPC,
                    test::NotifyWhenDoneBidirectionalStreamingServerRPC)
 {
-    ServerRPCAwaitableTest<RPC> test{};
+    ServerRPCAwaitableTest<RPC> test;
     bool use_write_and_finish{};
     SUBCASE("finish") {}
     SUBCASE("write_and_finish") { use_write_and_finish = true; }
@@ -437,7 +437,7 @@ TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::GenericServerRPC>,
 TEST_CASE_TEMPLATE("Awaitable ServerRPC/ClientRPC generic streaming success", RPC, test::GenericServerRPC,
                    test::NotifyWhenDoneGenericServerRPC)
 {
-    ServerRPCAwaitableTest<RPC> test{};
+    ServerRPCAwaitableTest<RPC> test;
     bool use_write_and_finish{};
     SUBCASE("finish") {}
     SUBCASE("write_and_finish") { use_write_and_finish = true; }
@@ -485,12 +485,11 @@ TEST_CASE_TEMPLATE("Awaitable ServerRPC/ClientRPC generic streaming success", RP
 TEST_CASE_FIXTURE(ServerRPCAwaitableTest<test::BidirectionalStreamingServerRPC>,
                   "Awaitable ServerRPC resumable read can be cancelled")
 {
-    using RPC = test::BidirectionalStreamingServerRPC;
     agrpc::Waiter<void()> client_waiter;
     register_and_perform_requests(
-        [&](RPC& rpc) -> asio::awaitable<void>
+        [&](ServerRPC& rpc) -> asio::awaitable<void>
         {
-            typename RPC::Request request;
+            Request request;
             agrpc::Waiter<void(bool)> waiter;
 
             waiter.initiate(agrpc::read, rpc, request);
