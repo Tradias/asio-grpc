@@ -22,15 +22,15 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class Initiation, class Implementation>
-auto get_stop_function_arg(const Initiation& initiation,
-                           Implementation& implementation) -> decltype(initiation.stop_function_arg(implementation))
+auto get_stop_function_arg(const Initiation& initiation, Implementation& implementation)
+    -> decltype(initiation.stop_function_arg(implementation))
 {
     return initiation.stop_function_arg(implementation);
 }
 
 template <class Initiation, class Implementation>
-auto get_stop_function_arg(const Initiation& initiation,
-                           const Implementation&) -> decltype(initiation.stop_function_arg())
+auto get_stop_function_arg(const Initiation& initiation, const Implementation&)
+    -> decltype(initiation.stop_function_arg())
 {
     return initiation.stop_function_arg();
 }
