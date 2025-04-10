@@ -150,20 +150,12 @@ class Waiter
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto wait(CompletionToken&& token = CompletionToken{})
     {
-        return wait_impl(static_cast<CompletionToken&&>(token));
+        return event_.wait(static_cast<CompletionToken&&>(token), executor_);
     }
 
   private:
     template <class>
     friend class detail::WaiterCompletionHandler;
-
-    template <class CompletionToken>
-    auto wait_impl(CompletionToken&& token)
-    {
-        return event_.wait(static_cast<CompletionToken&&>(token), executor_);
-    }
-
-    auto wait_impl(agrpc::UseSender) noexcept { return event_.wait(); }
 
     void destroy_executor() noexcept
     {

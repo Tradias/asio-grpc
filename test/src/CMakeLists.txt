@@ -43,6 +43,7 @@ set(ASIO_GRPC_CPP17_TEST_SOURCE_FILES
     "test_health_check_service_17.cpp"
     "test_client_rpc_17.cpp"
     "test_server_rpc_17.cpp"
+    "test_server_callback_17.cpp"
     "test_waiter_17.cpp")
 set(ASIO_GRPC_CPP20_TEST_SOURCE_FILES "test_alarm_20.cpp" "test_bind_allocator_20.cpp" "test_grpc_context_20.cpp"
                                       "test_server_rpc_20.cpp")

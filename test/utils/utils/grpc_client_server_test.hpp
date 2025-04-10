@@ -22,17 +22,48 @@
 
 namespace test
 {
-struct GrpcClientServerTest : test::GrpcClientServerTestBase
+struct CallbackService : test::v1::Test::CallbackService
 {
-    test::v1::Test::AsyncService service;
+    grpc::ServerUnaryReactor* Unary(grpc::CallbackServerContext* context, const test::msg::Request* request,
+                                    test::msg::Response* response) override;
+
+    grpc::ServerWriteReactor<::test::msg::Response>* ServerStreaming(grpc::CallbackServerContext* context,
+                                                                     const test::msg::Request* request) override;
+
+    grpc::ServerReadReactor<::test::msg::Request>* ClientStreaming(grpc::CallbackServerContext* context,
+                                                                   test::msg::Response* response) override;
+
+    grpc::ServerBidiReactor<::test::msg::Request, ::test::msg::Response>* BidirectionalStreaming(
+        grpc::CallbackServerContext* context) override;
+
+    std::function<grpc::ServerUnaryReactor*(grpc::CallbackServerContext*, const test::msg::Request*,
+                                            test::msg::Response*)>
+        unary;
+    std::function<grpc::ServerWriteReactor<::test::msg::Response>*(grpc::CallbackServerContext*,
+                                                                   const test::msg::Request*)>
+        server_streaming;
+    std::function<grpc::ServerReadReactor<::test::msg::Request>*(grpc::CallbackServerContext*, test::msg::Response*)>
+        client_streaming;
+    std::function<grpc::ServerBidiReactor<::test::msg::Request, ::test::msg::Response>*(grpc::CallbackServerContext*)>
+        bidirectional_streaming;
+};
+
+template <class Service>
+struct GrpcClientServerTestTemplate : test::GrpcClientServerTestBase
+{
+    Service service;
     std::unique_ptr<test::v1::Test::Stub> stub;
     std::optional<grpc::ServerContext> server_context_lifetime;
     grpc::ServerContext& server_context;
 
-    GrpcClientServerTest();
+    GrpcClientServerTestTemplate();
 
-    ~GrpcClientServerTest();
+    ~GrpcClientServerTestTemplate();
 };
+
+using GrpcClientServerTest = GrpcClientServerTestTemplate<test::v1::Test::AsyncService>;
+
+using GrpcClientServerCallbackTest = GrpcClientServerTestTemplate<test::CallbackService>;
 }  // namespace test
 
 #endif  // AGRPC_UTILS_GRPC_CLIENT_SERVER_TEST_HPP

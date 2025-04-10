@@ -18,6 +18,7 @@
 #include <agrpc/detail/asio_macros.hpp>
 
 #ifdef AGRPC_STANDALONE_ASIO
+#include <asio/any_io_executor.hpp>
 #include <asio/associated_allocator.hpp>
 #include <asio/associated_executor.hpp>
 #include <asio/async_result.hpp>
@@ -47,6 +48,7 @@
 #include <asio/associated_immediate_executor.hpp>
 #endif
 #elif defined(AGRPC_BOOST_ASIO)
+#include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/associated_allocator.hpp>
 #include <boost/asio/associated_executor.hpp>
 #include <boost/asio/async_result.hpp>

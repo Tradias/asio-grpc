@@ -25,6 +25,7 @@
 #include <agrpc/detail/stop_callback_lifetime.hpp>
 #include <agrpc/detail/tuple.hpp>
 #include <agrpc/detail/utility.hpp>
+#include <agrpc/use_sender.hpp>
 
 #include <atomic>
 
@@ -106,7 +107,11 @@ class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
         op_.compare_exchange_strong(expected, nullptr, std::memory_order_release);
     }
 
-    [[nodiscard]] ManualResetEventSender<Signature> wait() noexcept;
+    template <class IOExecutor>
+    [[nodiscard]] ManualResetEventSender<Signature> wait(agrpc::UseSender, const IOExecutor&) noexcept
+    {
+        return wait();
+    }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     template <class CompletionToken, class IOExecutor>
@@ -137,6 +142,8 @@ class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
     }
 
     auto* signalled_state() const { return const_cast<Op*>(reinterpret_cast<const Op*>(this)); }
+
+    [[nodiscard]] ManualResetEventSender<Signature> wait() noexcept;
 
     std::atomic<Op*> op_{};
 };

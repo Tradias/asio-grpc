@@ -81,6 +81,12 @@ class ServerRPCPtr;
 template <class Signature, class Executor = agrpc::BasicGrpcExecutor<>>
 class Waiter;
 
+template <class Executor>
+class BasicServerUnaryReactor;
+
+template <class Reactor>
+class ReactorPtr;
+
 namespace detail
 {
 template <class Item>
@@ -140,6 +146,9 @@ struct ManualResetEventOperationBase;
 
 template <class Signature, class Receiver>
 struct ManualResetEventOperation;
+
+template <class Executor>
+class BasicRefCountedServerUnaryReactor;
 }
 
 AGRPC_NAMESPACE_END
