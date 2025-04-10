@@ -15,8 +15,8 @@
 #ifndef AGRPC_DETAIL_SERVER_CALLBACK_PTR_HPP
 #define AGRPC_DETAIL_SERVER_CALLBACK_PTR_HPP
 
+#include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/reactor_ptr.hpp>
-#include <agrpc/server_callback.hpp>
 
 #include <agrpc/detail/config.hpp>
 
@@ -24,48 +24,57 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class Executor>
-class BasicRefCountedServerUnaryReactor final : public BasicServerUnaryReactor<Executor>
+template <class Reactor>
+class RefCountedReactor : public Reactor
 {
-  private:
-    using Base = BasicServerUnaryReactor<Executor>;
-    using RefCountGuard = detail::RefCountGuard<BasicRefCountedServerUnaryReactor>;
-
   public:
-    BasicRefCountedServerUnaryReactor(ReactorPtrDeallocateFn deallocate, Executor executor)
-        : Base(static_cast<Executor&&>(executor)), deallocate_(deallocate)
+    struct InitArg
+    {
+        typename Reactor::executor_type executor_;
+        ReactorDeallocateFn deallocate_;
+    };
+
+    explicit RefCountedReactor(InitArg init_arg) noexcept
+        : Reactor(static_cast<typename Reactor::executor_type&&>(init_arg.executor_)), deallocate_(init_arg.deallocate_)
     {
     }
 
-    using Base::increment_ref_count;
+  private:
+    template <class>
+    friend class agrpc::ReactorPtr;
 
-    void decrement_ref_count() noexcept
+    void increment_ref_count() noexcept { ++ref_count_; }
+
+    void decrement_ref_count()
     {
-        if (Base::decrement_ref_count())
+        const auto count = --ref_count_;
+        if (1 == count)
         {
-            if (this->is_finished())
-            {
-                deallocate_(this);
-            }
-            else
+            if (!this->is_finished())
             {
                 this->initiate_finish({grpc::StatusCode::CANCELLED, {}});
             }
         }
+        else if (0 == count)
+        {
+            deallocate_(this);
+        }
     }
 
-  private:
-    void OnSendInitialMetadataDone(bool ok) override { this->on_send_initial_metadata_done(ok); }
-
-    void OnDone() override
+    void OnDone() final
     {
-        RefCountGuard g{*this};
+        struct Guard
+        {
+            ~Guard() { self_.decrement_ref_count(); }
+
+            RefCountedReactor& self_;
+        };
+        Guard g{*this};
         this->on_done();
     }
 
-    void OnCancel() override { this->on_cancel(); }
-
-    ReactorPtrDeallocateFn deallocate_;
+    std::atomic_size_t ref_count_{2};  // shared ptr + OnDone
+    ReactorDeallocateFn deallocate_;
 };
 }
 

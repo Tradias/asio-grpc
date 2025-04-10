@@ -148,7 +148,7 @@ template <class Signature, class Receiver>
 struct ManualResetEventOperation;
 
 template <class Executor>
-class BasicRefCountedServerUnaryReactor;
+class RefCountedReactor;
 }
 
 AGRPC_NAMESPACE_END

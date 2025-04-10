@@ -19,7 +19,6 @@
 #include <agrpc/detail/default_completion_token.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/manual_reset_event.hpp>
-#include <agrpc/detail/ref_count.hpp>
 #include <grpcpp/support/server_callback.h>
 
 #include <agrpc/detail/config.hpp>
@@ -47,7 +46,6 @@ class BasicServerUnaryReactor : private grpc::ServerUnaryReactor
     void initiate_finish(grpc::Status status)
     {
         is_finished_ = true;
-        increment_ref_count();
         this->Finish(static_cast<grpc::Status&&>(status));
     }
 
@@ -57,32 +55,26 @@ class BasicServerUnaryReactor : private grpc::ServerUnaryReactor
         return finish_.wait(static_cast<CompletionToken&&>(token), executor_);
     }
 
-  protected:
+  private:
+    template <class>
+    friend class detail::RefCountedReactor;
+
+    explicit BasicServerUnaryReactor(Executor executor) : executor_(static_cast<Executor&&>(executor)) {}
+
     [[nodiscard]] bool is_finished() const noexcept { return is_finished_; }
 
-    void increment_ref_count() noexcept { ref_count_.increment(); }
-
-    [[nodiscard]] bool decrement_ref_count() noexcept { return ref_count_.decrement(); }
-
-    void on_send_initial_metadata_done(bool ok) { initial_metadata_.set(static_cast<bool&&>(ok)); }
+    void OnSendInitialMetadataDone(bool ok) final { initial_metadata_.set(static_cast<bool&&>(ok)); }
 
     void on_done()
     {
         is_finished_ = true;
-        finish_.set();
+        finish_.set(true);
     }
 
-    void on_cancel() { finish_.set(); }
+    void OnCancel() final { finish_.set(false); }
 
-  private:
-    template <class>
-    friend class detail::BasicRefCountedServerUnaryReactor;
-
-    explicit BasicServerUnaryReactor(Executor executor) : executor_(static_cast<Executor&&>(executor)) {}
-
-    detail::RefCount ref_count_{1};
     detail::ManualResetEvent<void(bool)> initial_metadata_{};
-    detail::ManualResetEvent<void()> finish_{};
+    detail::ManualResetEvent<void(bool)> finish_{};
     Executor executor_;
     bool is_finished_{};
 };

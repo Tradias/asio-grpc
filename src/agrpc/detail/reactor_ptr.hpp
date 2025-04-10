@@ -29,8 +29,9 @@ class ReactorPtrAllocation
 {
   public:
     template <class... Args>
-    ReactorPtrAllocation(Allocator allocator, Args&&... args)
-        : value_(detail::SecondThenVariadic{}, static_cast<Allocator&&>(allocator), &deallocate,
+    ReactorPtrAllocation(Allocator allocator, typename T::executor_type&& executor, Args&&... args)
+        : value_(detail::SecondThenVariadic{}, static_cast<Allocator&&>(allocator),
+                 typename T::InitArg{static_cast<typename T::executor_type&&>(executor), &deallocate},
                  static_cast<Args&&>(args)...)
     {
     }
@@ -68,7 +69,7 @@ struct ReactorPtrAccess
     }
 };
 
-using ReactorPtrDeallocateFn = void (*)(void*) noexcept;
+using ReactorDeallocateFn = void (*)(void*) noexcept;
 }
 
 AGRPC_NAMESPACE_END

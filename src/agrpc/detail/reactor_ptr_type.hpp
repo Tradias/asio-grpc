@@ -24,12 +24,15 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class Reactor>
-struct RefCountedReactorType;
+struct RefCountedReactorType
+{
+    using Type = Reactor;
+};
 
 template <class Executor>
 struct RefCountedReactorType<agrpc::BasicServerUnaryReactor<Executor>>
 {
-    using Type = BasicRefCountedServerUnaryReactor<Executor>;
+    using Type = RefCountedReactor<agrpc::BasicServerUnaryReactor<Executor>>;
 };
 
 template <class Reactor>

@@ -15,6 +15,7 @@
 #ifndef AGRPC_AGRPC_SERVER_CALLBACK_PTR_HPP
 #define AGRPC_AGRPC_SERVER_CALLBACK_PTR_HPP
 
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/reactor_ptr.hpp>
 #include <agrpc/detail/reactor_ptr_type.hpp>
 #include <agrpc/detail/server_callback_ptr.hpp>
@@ -22,6 +23,11 @@
 #include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
+
+template <class Executor = asio::any_io_executor>
+using BasicServerUnaryReactorBase = detail::RefCountedReactor<agrpc::BasicServerUnaryReactor<Executor>>;
+
+using ServerUnaryReactorBase = BasicServerUnaryReactorBase<>;
 
 template <class Reactor>
 class ReactorPtr
@@ -102,11 +108,18 @@ class ReactorPtr
     Ptr ptr_{};
 };
 
-template <class Reactor, class Allocator = std::allocator<void>>
-[[nodiscard]] inline ReactorPtr<Reactor> allocate_reactor(typename Reactor::executor_type executor,
-                                                          Allocator allocator = {})
+template <class Reactor, class Allocator, class... Args>
+[[nodiscard]] inline ReactorPtr<Reactor> allocate_reactor(Allocator allocator, typename Reactor::executor_type executor,
+                                                          Args&&... args)
 {
-    return detail::ReactorPtrAccess::create<ReactorPtr<Reactor>>(allocator, executor);
+    return detail::ReactorPtrAccess::create<ReactorPtr<Reactor>>(allocator, std::move(executor),
+                                                                 static_cast<Args&&>(args)...);
+}
+
+template <class Reactor, class... Args>
+[[nodiscard]] inline ReactorPtr<Reactor> make_reactor(typename Reactor::executor_type executor, Args&&... args)
+{
+    return agrpc::allocate_reactor<Reactor>(std::allocator<void>{}, std::move(executor), static_cast<Args&&>(args)...);
 }
 
 AGRPC_NAMESPACE_END
