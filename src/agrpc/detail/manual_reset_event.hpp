@@ -38,17 +38,64 @@ namespace detail
 template <class Signature, template <class...> class Storage>
 class ManualResetEventSender;
 
-template <class Signature, template <class...> class Storage, class Receiver>
+template <class Signature, class Receiver>
 struct ManualResetEventRunningOperationState;
 
-template <template <class...> class Storage, class... Args>
-struct ManualResetEventOperationBase<void(Args...), Storage>
+template <class Signature>
+class ManualResetEventBase;
+
+template <class... Args>
+class ManualResetEventBase<void(Args...)>
 {
-    using Complete = void (*)(ManualResetEventOperationBase*);
+  private:
+    using Signature = void(Args...);
+    using Op = ManualResetEventOperationBase<Signature>;
 
-    void complete() noexcept { complete_(this); }
+  public:
+    [[nodiscard]] bool ready() const noexcept { return op_.load(std::memory_order_acquire) == signalled_state(); }
 
-    BasicManualResetEvent<void(Args...), Storage>& event_;
+    void reset() noexcept
+    {
+        auto* expected = signalled_state();
+        op_.compare_exchange_strong(expected, nullptr, std::memory_order_release);
+    }
+
+  protected:
+    [[nodiscard]] Op* signal() noexcept
+    {
+        auto* const op = this->op_.exchange(signalled_state(), std::memory_order_acq_rel);
+        if (op == signalled_state() || op == nullptr)
+        {
+            return nullptr;
+        }
+        return op;
+    }
+
+  private:
+    template <class, class>
+    friend struct detail::ManualResetEventRunningOperationState;
+
+    template <class, class>
+    friend struct detail::ManualResetEventOperation;
+
+    [[nodiscard]] bool compare_exchange(Op* op) noexcept
+    {
+        return op_.compare_exchange_strong(op, nullptr, std::memory_order_acq_rel);
+    }
+
+    auto* signalled_state() const { return const_cast<Op*>(reinterpret_cast<const Op*>(this)); }
+
+    std::atomic<Op*> op_{};
+};
+
+template <class... Args>
+struct ManualResetEventOperationBase<void(Args...)>
+{
+    using Complete = void (*)(ManualResetEventOperationBase*, Args...);
+
+    void complete(Args... args) noexcept { complete_(this, static_cast<Args&&>(args)...); }
+
+    ManualResetEventBase<void(Args...)>& event_;
     Complete complete_;
 };
 
@@ -65,15 +112,18 @@ class ManualResetEventTupleStorage : private detail::Tuple<Args...>
 };
 
 template <template <class...> class StorageT, class... Args>
-class BasicManualResetEvent<void(Args...), StorageT> : private StorageT<Args...>
+class BasicManualResetEvent<void(Args...), StorageT> : private StorageT<Args...>,
+                                                       public ManualResetEventBase<void(Args...)>
+
 {
+  private:
+    using Signature = void(Args...);
+    using SignatureWithErrorCode = detail::PrependErrorCodeToSignatureT<void(Args...)>;
+
   public:
     using Storage = StorageT<Args...>;
-    using Signature = void(Args...);
 
   private:
-    using Op = ManualResetEventOperationBase<Signature, StorageT>;
-
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     struct InitiateWait
     {
@@ -93,7 +143,7 @@ class BasicManualResetEvent<void(Args...), StorageT> : private StorageT<Args...>
                 return;
             }
             const auto allocator = asio::get_associated_allocator(completion_handler);
-            detail::allocate<ManualResetEventOperation<Signature, StorageT, detail::RemoveCrefT<CompletionHandler>>>(
+            detail::allocate<ManualResetEventOperation<Signature, detail::RemoveCrefT<CompletionHandler>>>(
                 allocator, static_cast<CompletionHandler&&>(completion_handler), event_)
                 .release();
         }
@@ -105,21 +155,18 @@ class BasicManualResetEvent<void(Args...), StorageT> : private StorageT<Args...>
   public:
     void set(Args&&... args)
     {
-        auto* const op = op_.exchange(signalled_state(), std::memory_order_acq_rel);
-        if (op == signalled_state() || op == nullptr)
+        Storage::set_value(static_cast<Args&&>(args)...);
+        auto* const op = this->signal();
+        if (op == nullptr)
         {
             return;
         }
-        Storage::set_value(static_cast<Args&&>(args)...);
-        op->complete();
-    }
-
-    [[nodiscard]] bool ready() const noexcept { return op_.load(std::memory_order_acquire) == signalled_state(); }
-
-    void reset() noexcept
-    {
-        auto* expected = signalled_state();
-        op_.compare_exchange_strong(expected, nullptr, std::memory_order_release);
+        detail::apply(
+            [&op](Args&&... args)
+            {
+                op->complete(static_cast<Args&&>(args)...);
+            },
+            static_cast<Storage&&>(*this).get_value());
     }
 
     template <class IOExecutor>
@@ -132,39 +179,23 @@ class BasicManualResetEvent<void(Args...), StorageT> : private StorageT<Args...>
     template <class CompletionToken, class IOExecutor>
     auto wait(CompletionToken&& token, const IOExecutor& io_executor)
     {
-        using Sig = detail::PrependErrorCodeToSignatureT<Signature>;
-        return asio::async_initiate<CompletionToken, Sig>(InitiateWait{*this}, token, io_executor);
+        return asio::async_initiate<CompletionToken, SignatureWithErrorCode>(InitiateWait{*this}, token, io_executor);
     }
 #endif
 
-    using Storage::get_value;
-
   private:
     template <class, template <class...> class, class>
-    friend struct ManualResetEventRunningOperationState;
+    friend class detail::ManualResetEventOperationState;
 
-    template <class, template <class...> class, class>
-    friend struct ManualResetEventOperation;
-
-    [[nodiscard]] bool compare_exchange(Op* op) noexcept
-    {
-        return op_.compare_exchange_strong(op, nullptr, std::memory_order_acq_rel);
-    }
-
-    auto* signalled_state() const { return const_cast<Op*>(reinterpret_cast<const Op*>(this)); }
-
-    [[nodiscard]] ManualResetEventSender<Signature, StorageT> wait() noexcept;
-
-    std::atomic<Op*> op_{};
+    ManualResetEventSender<Signature, StorageT> wait() noexcept;
 };
 
-template <class... Args, template <class...> class Storage, class Receiver>
-struct ManualResetEventRunningOperationState<void(Args...), Storage, Receiver>
-    : ManualResetEventOperationBase<void(Args...), Storage>
+template <class... Args, class Receiver>
+struct ManualResetEventRunningOperationState<void(Args...), Receiver> : ManualResetEventOperationBase<void(Args...)>
 {
     using Signature = void(Args...);
-    using Base = ManualResetEventOperationBase<Signature, Storage>;
-    using Event = BasicManualResetEvent<Signature, Storage>;
+    using Base = ManualResetEventOperationBase<Signature>;
+    using Event = ManualResetEventBase<Signature>;
 
     struct StopFunction
     {
@@ -184,11 +215,11 @@ struct ManualResetEventRunningOperationState<void(Args...), Storage, Receiver>
     using StopToken = exec::stop_token_type_t<Receiver&>;
     using StopCallback = detail::StopCallbackLifetime<StopToken, StopFunction>;
 
-    static void complete_impl(Base* base)
+    static void complete_impl(Base* base, Args... args)
     {
         auto& self = *static_cast<ManualResetEventRunningOperationState*>(base);
         self.stop_callback().reset();
-        self.complete();
+        self.complete(static_cast<Args&&>(args)...);
     }
 
     template <class R>
@@ -203,14 +234,9 @@ struct ManualResetEventRunningOperationState<void(Args...), Storage, Receiver>
         this->event_.op_.store(this, std::memory_order_release);
     }
 
-    void complete() noexcept
+    void complete(Args&&... args)
     {
-        detail::apply(
-            [&](Args&&... args)
-            {
-                exec::set_value(static_cast<Receiver&&>(receiver()), static_cast<Args&&>(args)...);
-            },
-            static_cast<Event&&>(this->event_).get_value());
+        exec::set_value(static_cast<Receiver&&>(receiver()), static_cast<Args&&>(args)...);
     }
 
     auto& receiver() noexcept { return impl_.first(); }
@@ -223,12 +249,15 @@ struct ManualResetEventRunningOperationState<void(Args...), Storage, Receiver>
 template <class Signature, template <class...> class Storage, class Receiver>
 class ManualResetEventOperationState
 {
+  private:
+    using Event = BasicManualResetEvent<Signature, Storage>;
+
   public:
     void start() noexcept
     {
         if (state_.event_.ready())
         {
-            state_.complete();
+            complete();
             return;
         }
         auto stop_token = exec::get_stop_token(state_.receiver());
@@ -245,20 +274,33 @@ class ManualResetEventOperationState
 #endif
 
   private:
-    friend ManualResetEventSender<Signature, Storage>;
+    friend detail::ManualResetEventSender<Signature, Storage>;
 
     template <class R>
-    ManualResetEventOperationState(R&& receiver, BasicManualResetEvent<Signature, Storage>& event)
-        : state_(static_cast<R&&>(receiver), event)
+    ManualResetEventOperationState(R&& receiver, Event& event) : state_(static_cast<R&&>(receiver), event)
     {
     }
 
-    ManualResetEventRunningOperationState<Signature, Storage, Receiver> state_;
+    void complete()
+    {
+        detail::apply(
+            [&](auto&&... args)
+            {
+                state_.complete(static_cast<decltype(args)&&>(args)...);
+            },
+            static_cast<Event&&>(state_.event_).get_value());
+    }
+
+    ManualResetEventRunningOperationState<Signature, Receiver> state_;
 };
 
-template <class Signature, template <class...> class Storage>
-class [[nodiscard]] ManualResetEventSender : public detail::SenderOf<Signature>
+template <class... Args, template <class...> class Storage>
+class ManualResetEventSender<void(Args...), Storage> : public detail::SenderOf<void(Args...)>
 {
+  private:
+    using Signature = void(Args...);
+    using Event = BasicManualResetEvent<Signature, Storage>;
+
   public:
     template <class R>
     [[nodiscard]] auto connect(R&& receiver) && noexcept(detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<R>)
@@ -277,11 +319,11 @@ class [[nodiscard]] ManualResetEventSender : public detail::SenderOf<Signature>
 #endif
 
   private:
-    friend ManualResetEvent<Signature>;
+    friend Event;
 
-    explicit ManualResetEventSender(ManualResetEvent<Signature>& event) noexcept : event_(event) {}
+    explicit ManualResetEventSender(Event& event) noexcept : event_(event) {}
 
-    ManualResetEvent<Signature>& event_;
+    Event& event_;
 };
 
 template <template <class...> class StorageT, class... Args>

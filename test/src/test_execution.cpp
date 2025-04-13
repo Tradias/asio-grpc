@@ -503,6 +503,25 @@ TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::UnaryClientRPC>,
                       }));
 }
 
+TEST_CASE("stdexec Waiter with completion arg")
+{
+    const auto initiate = [](auto&&...)
+    {
+        return stdexec::just(42);
+    };
+    int value{};
+    agrpc::Waiter<void(int), exec::inline_scheduler> waiter;
+    stdexec::sync_wait(stdexec::when_all(waiter.initiate(initiate, exec::inline_scheduler()),
+                                         stdexec::then(waiter.wait(agrpc::use_sender),
+                                                       [&](int v)
+                                                       {
+                                                           value = v;
+                                                           CHECK(waiter.is_ready());
+                                                       })));
+    CHECK(waiter.is_ready());
+    CHECK_EQ(42, value);
+}
+
 struct StdexecMockTest : test::ExecutionTestMixin<test::MockTest>
 {
 };

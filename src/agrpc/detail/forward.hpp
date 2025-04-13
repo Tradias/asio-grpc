@@ -147,11 +147,17 @@ class BasicManualResetEvent;
 template <class Signature>
 using ManualResetEvent = BasicManualResetEvent<Signature, ManualResetEventTupleStorage>;
 
-template <class Signature, template <class...> class Storage>
+template <class Signature>
+class ManualResetEventBase;
+
+template <class Signature>
 struct ManualResetEventOperationBase;
 
-template <class Signature, template <class...> class Storage, class Receiver>
+template <class Signature, class Receiver>
 struct ManualResetEventOperation;
+
+template <class Signature, template <class...> class Storage, class Receiver>
+class ManualResetEventOperationState;
 
 template <class Executor>
 class RefCountedReactor;

@@ -84,8 +84,8 @@ class [[nodiscard]] RPCHandlerSender : public detail::SenderOf<void()>
 template <class Receiver, class Signature, bool IsNotifyWhenDone>
 struct GetWaitForDoneOperationState
 {
-    using Type =
-        detail::InplaceWithFunctionWrapper<exec::connect_result_t<ManualResetEventSender<Signature>, Receiver>>;
+    using Type = detail::InplaceWithFunctionWrapper<
+        ManualResetEventOperationState<Signature, ManualResetEventTupleStorage, Receiver>>;
 };
 
 template <class Receiver, class Signature>
