@@ -24,10 +24,10 @@
 
 AGRPC_NAMESPACE_BEGIN()
 
-template <class Executor = asio::any_io_executor>
+template <class Executor>
 using BasicServerUnaryReactorBase = detail::RefCountedReactor<agrpc::BasicServerUnaryReactor<Executor>>;
 
-using ServerUnaryReactorBase = BasicServerUnaryReactorBase<>;
+using ServerUnaryReactorBase = BasicServerUnaryReactorBase<asio::any_io_executor>;
 
 template <class Reactor>
 class ReactorPtr

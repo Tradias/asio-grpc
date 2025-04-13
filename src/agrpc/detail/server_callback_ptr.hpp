@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/reactor_ptr.hpp>
+#include <grpcpp/support/status.h>
 
 #include <agrpc/detail/config.hpp>
 

@@ -148,14 +148,14 @@
             <Item Name="[event]">event_</Item>
         </Expand>
     </Type>
-    <Type Name="agrpc::b::detail::ManualResetEvent&lt;*&gt;">
-        <AlternativeType Name="agrpc::s::detail::ManualResetEvent&lt;*&gt;" />
-        <AlternativeType Name="agrpc::u::detail::ManualResetEvent&lt;*&gt;" />
-        <AlternativeType Name="agrpc::e::detail::ManualResetEvent&lt;*&gt;" />
-        <AlternativeType Name="agrpc::r::detail::ManualResetEvent&lt;*&gt;" />
-        <AlternativeType Name="agrpc::t::detail::ManualResetEvent&lt;*&gt;" />
-        <AlternativeType Name="agrpc::a::detail::ManualResetEvent&lt;*&gt;" />
-        <AlternativeType Name="agrpc::c::detail::ManualResetEvent&lt;*&gt;" />
+    <Type Name="agrpc::b::detail::BasicManualResetEvent&lt;*,*&gt;">
+        <AlternativeType Name="agrpc::s::detail::BasicManualResetEvent&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::u::detail::BasicManualResetEvent&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::e::detail::BasicManualResetEvent&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::r::detail::BasicManualResetEvent&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::t::detail::BasicManualResetEvent&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::a::detail::BasicManualResetEvent&lt;*,*&gt;" />
+        <AlternativeType Name="agrpc::c::detail::BasicManualResetEvent&lt;*,*&gt;" />
         <DisplayString Condition="!op_._Storage._Value">reset</DisplayString>
         <DisplayString Condition="(void*)op_._Storage._Value == this">ready</DisplayString>
         <DisplayString Condition="op_._Storage._Value &amp;&amp; (void*)op_._Storage._Value != this">waiting</DisplayString>

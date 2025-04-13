@@ -28,15 +28,15 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class... Args, class CompletionHandler>
-struct ManualResetEventOperation<void(Args...), CompletionHandler>
-    : public ManualResetEventOperationBase<void(Args...)>,
+template <class... Args, template <class...> class Storage, class CompletionHandler>
+struct ManualResetEventOperation<void(Args...), Storage, CompletionHandler>
+    : public ManualResetEventOperationBase<void(Args...), Storage>,
       private detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandler>>
 {
     using Signature = void(Args...);
-    using Base = ManualResetEventOperationBase<Signature>;
+    using Base = ManualResetEventOperationBase<Signature, Storage>;
     using WorkTracker = detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandler>>;
-    using Event = ManualResetEvent<Signature>;
+    using Event = BasicManualResetEvent<Signature, Storage>;
 
     struct StopFunction
     {
@@ -67,11 +67,11 @@ struct ManualResetEventOperation<void(Args...), CompletionHandler>
             {
                 self.complete(static_cast<decltype(args)&&>(args)...);
             },
-            static_cast<Event&&>(self.event_).args());
+            static_cast<Event&&>(self.event_).get_value());
     }
 
     template <class Ch>
-    ManualResetEventOperation(Ch&& ch, ManualResetEvent<Signature>& event)
+    ManualResetEventOperation(Ch&& ch, BasicManualResetEvent<Signature, Storage>& event)
         : Base{event, &complete_impl},
           WorkTracker(asio::get_associated_executor(ch)),
           completion_handler_(static_cast<Ch&&>(ch))

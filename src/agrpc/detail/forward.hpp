@@ -138,13 +138,19 @@ class NotifyWhenDoneEvent;
 template <class ServerRPC, class RPCHandler, class CompletionHandler>
 struct RegisterCallbackRPCHandlerOperation;
 
-template <class Signature>
-class ManualResetEvent;
+template <class... Args>
+class ManualResetEventTupleStorage;
+
+template <class Signature, template <class...> class Storage>
+class BasicManualResetEvent;
 
 template <class Signature>
+using ManualResetEvent = BasicManualResetEvent<Signature, ManualResetEventTupleStorage>;
+
+template <class Signature, template <class...> class Storage>
 struct ManualResetEventOperationBase;
 
-template <class Signature, class Receiver>
+template <class Signature, template <class...> class Storage, class Receiver>
 struct ManualResetEventOperation;
 
 template <class Executor>

@@ -35,29 +35,44 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class Signature>
+template <class Signature, template <class...> class Storage>
 class ManualResetEventSender;
 
-template <class Signature, class Receiver>
+template <class Signature, template <class...> class Storage, class Receiver>
 struct ManualResetEventRunningOperationState;
 
-template <class... Args>
-struct ManualResetEventOperationBase<void(Args...)>
+template <template <class...> class Storage, class... Args>
+struct ManualResetEventOperationBase<void(Args...), Storage>
 {
     using Complete = void (*)(ManualResetEventOperationBase*);
 
     void complete() noexcept { complete_(this); }
 
-    ManualResetEvent<void(Args...)>& event_;
+    BasicManualResetEvent<void(Args...), Storage>& event_;
     Complete complete_;
 };
 
 template <class... Args>
-class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
+class ManualResetEventTupleStorage : private detail::Tuple<Args...>
 {
-  private:
+  public:
+    void set_value(Args&&... args)
+    {
+        static_cast<detail::Tuple<Args...>&>(*this) = detail::Tuple<Args...>{static_cast<Args&&>(args)...};
+    }
+
+    auto&& get_value() && noexcept { return static_cast<detail::Tuple<Args...>&&>(*this); }
+};
+
+template <template <class...> class StorageT, class... Args>
+class BasicManualResetEvent<void(Args...), StorageT> : private StorageT<Args...>
+{
+  public:
+    using Storage = StorageT<Args...>;
     using Signature = void(Args...);
-    using Op = ManualResetEventOperationBase<Signature>;
+
+  private:
+    using Op = ManualResetEventOperationBase<Signature, StorageT>;
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
     struct InitiateWait
@@ -72,18 +87,18 @@ class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
                     [&event](auto&& ch)
                     {
                         detail::prepend_error_code_and_apply(static_cast<decltype(ch)&&>(ch),
-                                                             static_cast<ManualResetEvent&&>(event).args());
+                                                             static_cast<Storage&&>(event).get_value());
                     },
                     io_executor);
                 return;
             }
             const auto allocator = asio::get_associated_allocator(completion_handler);
-            detail::allocate<ManualResetEventOperation<Signature, detail::RemoveCrefT<CompletionHandler>>>(
+            detail::allocate<ManualResetEventOperation<Signature, StorageT, detail::RemoveCrefT<CompletionHandler>>>(
                 allocator, static_cast<CompletionHandler&&>(completion_handler), event_)
                 .release();
         }
 
-        ManualResetEvent& event_;
+        BasicManualResetEvent& event_;
     };
 #endif
 
@@ -95,7 +110,7 @@ class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
         {
             return;
         }
-        store_value(static_cast<Args&&>(args)...);
+        Storage::set_value(static_cast<Args&&>(args)...);
         op->complete();
     }
 
@@ -108,7 +123,7 @@ class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
     }
 
     template <class IOExecutor>
-    [[nodiscard]] ManualResetEventSender<Signature> wait(agrpc::UseSender, const IOExecutor&) noexcept
+    [[nodiscard]] ManualResetEventSender<Signature, StorageT> wait(agrpc::UseSender, const IOExecutor&) noexcept
     {
         return wait();
     }
@@ -122,19 +137,14 @@ class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
     }
 #endif
 
-    auto&& args() && noexcept { return static_cast<detail::Tuple<Args...>&&>(*this); }
+    using Storage::get_value;
 
   private:
-    template <class, class>
+    template <class, template <class...> class, class>
     friend struct ManualResetEventRunningOperationState;
 
-    template <class, class>
+    template <class, template <class...> class, class>
     friend struct ManualResetEventOperation;
-
-    void store_value(Args&&... args)
-    {
-        static_cast<detail::Tuple<Args...>&>(*this) = detail::Tuple<Args...>{static_cast<Args&&>(args)...};
-    }
 
     [[nodiscard]] bool compare_exchange(Op* op) noexcept
     {
@@ -143,17 +153,18 @@ class ManualResetEvent<void(Args...)> : private detail::Tuple<Args...>
 
     auto* signalled_state() const { return const_cast<Op*>(reinterpret_cast<const Op*>(this)); }
 
-    [[nodiscard]] ManualResetEventSender<Signature> wait() noexcept;
+    [[nodiscard]] ManualResetEventSender<Signature, StorageT> wait() noexcept;
 
     std::atomic<Op*> op_{};
 };
 
-template <class... Args, class Receiver>
-struct ManualResetEventRunningOperationState<void(Args...), Receiver> : ManualResetEventOperationBase<void(Args...)>
+template <class... Args, template <class...> class Storage, class Receiver>
+struct ManualResetEventRunningOperationState<void(Args...), Storage, Receiver>
+    : ManualResetEventOperationBase<void(Args...), Storage>
 {
     using Signature = void(Args...);
-    using Base = ManualResetEventOperationBase<Signature>;
-    using Event = ManualResetEvent<Signature>;
+    using Base = ManualResetEventOperationBase<Signature, Storage>;
+    using Event = BasicManualResetEvent<Signature, Storage>;
 
     struct StopFunction
     {
@@ -181,7 +192,7 @@ struct ManualResetEventRunningOperationState<void(Args...), Receiver> : ManualRe
     }
 
     template <class R>
-    ManualResetEventRunningOperationState(R&& receiver, ManualResetEvent<Signature>& event)
+    ManualResetEventRunningOperationState(R&& receiver, Event& event)
         : Base{event, &complete_impl}, impl_(static_cast<R&&>(receiver))
     {
     }
@@ -199,7 +210,7 @@ struct ManualResetEventRunningOperationState<void(Args...), Receiver> : ManualRe
             {
                 exec::set_value(static_cast<Receiver&&>(receiver()), static_cast<Args&&>(args)...);
             },
-            static_cast<Event&&>(this->event_).args());
+            static_cast<Event&&>(this->event_).get_value());
     }
 
     auto& receiver() noexcept { return impl_.first(); }
@@ -209,7 +220,7 @@ struct ManualResetEventRunningOperationState<void(Args...), Receiver> : ManualRe
     detail::CompressedPair<Receiver, StopCallback> impl_;
 };
 
-template <class Signature, class Receiver>
+template <class Signature, template <class...> class Storage, class Receiver>
 class ManualResetEventOperationState
 {
   public:
@@ -234,24 +245,24 @@ class ManualResetEventOperationState
 #endif
 
   private:
-    friend ManualResetEventSender<Signature>;
+    friend ManualResetEventSender<Signature, Storage>;
 
     template <class R>
-    ManualResetEventOperationState(R&& receiver, ManualResetEvent<Signature>& event)
+    ManualResetEventOperationState(R&& receiver, BasicManualResetEvent<Signature, Storage>& event)
         : state_(static_cast<R&&>(receiver), event)
     {
     }
 
-    ManualResetEventRunningOperationState<Signature, Receiver> state_;
+    ManualResetEventRunningOperationState<Signature, Storage, Receiver> state_;
 };
 
-template <class Signature>
+template <class Signature, template <class...> class Storage>
 class [[nodiscard]] ManualResetEventSender : public detail::SenderOf<Signature>
 {
   public:
     template <class R>
     [[nodiscard]] auto connect(R&& receiver) && noexcept(detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<R>)
-        -> ManualResetEventOperationState<Signature, detail::RemoveCrefT<R>>
+        -> ManualResetEventOperationState<Signature, Storage, detail::RemoveCrefT<R>>
     {
         return {static_cast<R&&>(receiver), event_};
     }
@@ -273,10 +284,10 @@ class [[nodiscard]] ManualResetEventSender : public detail::SenderOf<Signature>
     ManualResetEvent<Signature>& event_;
 };
 
-template <class... Args>
-inline ManualResetEventSender<void(Args...)> ManualResetEvent<void(Args...)>::wait() noexcept
+template <template <class...> class StorageT, class... Args>
+inline ManualResetEventSender<void(Args...), StorageT> BasicManualResetEvent<void(Args...), StorageT>::wait() noexcept
 {
-    return ManualResetEventSender<void(Args...)>{*this};
+    return ManualResetEventSender<void(Args...), StorageT>{*this};
 }
 }
 
