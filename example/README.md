@@ -150,7 +150,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // The following bidirectional-streaming example shows how to dispatch requests to a thread_pool and write responses
 // back to the client.
 ```
-<sup><a href='/example/streaming-server.cpp#L145-L150' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-server.cpp#L146-L151' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: server-side-server-streaming-async-generator -->
