@@ -99,7 +99,8 @@ asio::awaitable<void> handle_server_streaming_request(ServerStreamingRPC& rpc, e
 // rpc.
 
 // end-snippet
-using ServerStreamingNotifyWhenDoneRPC = example::NotifyWhenDoneServerRPC<&ExampleService::RequestServerStreaming>;
+using ServerStreamingNotifyWhenDoneRPC =
+    example::NotifyWhenDoneServerRPC<&ExampleExtService::RequestServerStreamingNotifyWhenDone>;
 
 auto server_streaming_notify_when_done_request_handler(agrpc::GrpcContext& grpc_context)
 {
@@ -267,7 +268,7 @@ int main(int argc, const char** argv)
                                                               example::RethrowFirstArg{});
 
     agrpc::register_awaitable_rpc_handler<ServerStreamingNotifyWhenDoneRPC>(
-        grpc_context, service, server_streaming_notify_when_done_request_handler(grpc_context),
+        grpc_context, service_ext, server_streaming_notify_when_done_request_handler(grpc_context),
         example::RethrowFirstArg{});
 
     agrpc::register_awaitable_rpc_handler<BidiStreamingRPC>(

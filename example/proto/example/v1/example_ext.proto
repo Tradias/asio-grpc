@@ -17,6 +17,7 @@ syntax = "proto3";
 package example.v1;
 
 import "google/protobuf/empty.proto";
+import "example/v1/example.proto";
 
 service ExampleExt {
   rpc SlowUnary(SlowRequest) returns (google.protobuf.Empty) {}
@@ -24,6 +25,8 @@ service ExampleExt {
   rpc Shutdown(google.protobuf.Empty) returns (google.protobuf.Empty) {}
 
   rpc SendFile(stream SendFileRequest) returns (google.protobuf.Empty) {}
+
+  rpc ServerStreamingNotifyWhenDone(Request) returns (stream Response) {}
 }
 
 message SlowRequest {
