@@ -1,7 +1,7 @@
 if(NOT _VCPKG_LINUX_CLANG_TOOLCHAIN)
     set(_VCPKG_LINUX_CLANG_TOOLCHAIN 1)
-    set(CMAKE_C_COMPILER "clang-13")
-    set(CMAKE_CXX_COMPILER "clang++-13")
+    set(CMAKE_C_COMPILER "cc")
+    set(CMAKE_CXX_COMPILER "c++")
 
     set(CMAKE_CROSSCOMPILING
         OFF
