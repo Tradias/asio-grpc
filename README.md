@@ -50,7 +50,7 @@ Asio-grpc is a C++17, header-only library. To install it, CMake (3.14+) is all t
 
 To use it, [gRPC](https://grpc.io/) and either [Boost.Asio](https://www.boost.org/doc/libs/1_86_0/doc/html/boost_asio.html) (min. 1.74.0), [standalone Asio](https://github.com/chriskohlhoff/asio) (min. 1.17.0), [libunifex](https://github.com/facebookexperimental/libunifex) or [stdexec](https://github.com/NVIDIA/stdexec) must be present and linked into your application.
 
-Officially supported compilers are GCC 8+, Clang 10+, AppleClang 15+ and latest MSVC.
+Officially supported compilers are GCC 10+, Clang 13+, AppleClang 15+ and latest MSVC.
 
 # Usage
 

@@ -1,7 +1,7 @@
 if(NOT _VCPKG_LINUX_CLANG_TOOLCHAIN)
     set(_VCPKG_LINUX_CLANG_TOOLCHAIN 1)
-    set(CMAKE_C_COMPILER "clang")
-    set(CMAKE_CXX_COMPILER "clang++")
+    set(CMAKE_C_COMPILER "clang-13")
+    set(CMAKE_CXX_COMPILER "clang++-13")
 
     set(CMAKE_CROSSCOMPILING
         OFF
@@ -18,7 +18,7 @@ if(NOT _VCPKG_LINUX_CLANG_TOOLCHAIN)
         string(APPEND CMAKE_C_FLAGS_INIT " -fPIC ${VCPKG_C_FLAGS} ")
         string(
             APPEND CMAKE_CXX_FLAGS_INIT
-            " -fPIC ${VCPKG_CXX_FLAGS} -Wno-error -stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-10/include/c++/v1/ ")
+            " -fPIC ${VCPKG_CXX_FLAGS} -Wno-error -stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-13/include/c++/v1/ ")
         string(APPEND CMAKE_C_FLAGS_DEBUG_INIT " ${VCPKG_C_FLAGS_DEBUG} ")
         string(APPEND CMAKE_CXX_FLAGS_DEBUG_INIT " ${VCPKG_CXX_FLAGS_DEBUG}  ")
         string(APPEND CMAKE_C_FLAGS_RELEASE_INIT " ${VCPKG_C_FLAGS_RELEASE} ")

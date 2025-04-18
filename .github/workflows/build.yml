@@ -33,7 +33,7 @@ jobs:
             triplet: 'x64-windows-release',
             build-type: 'Release',
             cmake-extra-args: '-DVCPKG_TARGET_TRIPLET=x64-windows-release -DCMAKE_COMPILE_WARNING_AS_ERROR=off',
-            parallel: 1,
+            parallel: 4,
           }
           - {
             name: 'MacOSX/13/AppleClang',
@@ -67,24 +67,25 @@ jobs:
       run: ctest --preset default --parallel 10 -C ${{ matrix.config.build-type }}
 
 
-  gcc-8-build:
-    name: 'Ubuntu/20.04/GCC'
-    runs-on: ubuntu-20.04
+  gcc-10-build:
+    name: 'Ubuntu/22.04/Default'
+    runs-on: ubuntu-22.04
     env:
       TRIPLET: 'x64-linux-release'
+      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-release -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=on -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold'
 
     steps:
-    - name: Install GCC 8
-      run: sudo apt-get install g++-8
-
-    - name: Make gcc-8 default compiler
+    - name: Make gcc-10 default compiler
       run: |
-        sudo update-alternatives --install /usr/bin/cc cc $(which gcc-8) 50 &&\
-        sudo update-alternatives --set cc $(which gcc-8) &&\
-        sudo update-alternatives --install /usr/bin/c++ c++ $(which g++-8) 50 &&\
-        sudo update-alternatives --set c++ $(which g++-8)  &&\
-        sudo update-alternatives --install /usr/bin/cpp cpp $(which g++-8) 50 &&\
-        sudo update-alternatives --set cpp $(which g++-8)
+        sudo update-alternatives --install /usr/bin/cc cc $(which gcc-10) 50 &&\
+        sudo update-alternatives --set cc $(which gcc-10) &&\
+        sudo update-alternatives --install /usr/bin/c++ c++ $(which g++-10) 50 &&\
+        sudo update-alternatives --set c++ $(which g++-10)  &&\
+        sudo update-alternatives --install /usr/bin/cpp cpp $(which g++-10) 50 &&\
+        sudo update-alternatives --set cpp $(which g++-10)
+
+    - name: Install protobuf, gRPC and doctest
+      run: sudo apt-get install libgrpc++-dev protobuf-compiler-grpc libprotobuf-dev doctest-dev libgtest-dev libgmock-dev
 
     - uses: actions/checkout@v4
 
@@ -96,28 +97,41 @@ jobs:
         vcpkgJsonGlob: 'vcpkg.json'
 
     - name: Run vcpkg
-      run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
+      run: |
+        ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} \
+          --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg \
+          libunifex boost-coroutine boost-asio boost-interprocess boost-thread boost-process asio[coroutine]
+      working-directory: ${{ env.VCPKG_ROOT }}
 
-    - name: GCC 8 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-8 -DCMAKE_CXX_COMPILER=$(which g++-8) -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed -DVCPKG_TARGET_TRIPLET=${{ env.TRIPLET }} -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold ${{ env.CMAKE_ARGS }}
+    - name: Configure CMake
+      run: cmake --preset default -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_ARGS }} ${{ env.CMAKE_EXTRA_ARGS }}
 
-    - name: GCC 8 Build
-      run: cmake --build ${{ github.workspace }}/build-8 --config Release --parallel $(nproc)
+    - name: Build
+      run: cmake --build --preset default --config Release --parallel $(nproc) --target asio-grpc-check-header-syntax all
 
-    - name: GCC 8 Test
-      run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-8 -C Release
+    - name: Test
+      run: ctest --preset default -C Release
 
 
-  gcc-11-build:
-    name: 'Ubuntu/22.04/GCC'
-    runs-on: ubuntu-22.04
+  gcc-latest-build:
+    name: 'Ubuntu/24.04/GCC'
+    runs-on: ubuntu-24.04
     env:
       TRIPLET: 'x64-linux-release'
-      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-release -DASIO_GRPC_ENABLE_STDEXEC_TESTS=on -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_CMAKE_INSTALL_TEST_CTEST_COMMAND=/usr/bin/ctest -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on'
+      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-release -DASIO_GRPC_ENABLE_STDEXEC_TESTS=on -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on'
 
     steps:
-    - name: Install gcovr and (old) cmake
-      run: sudo apt-get install gcovr cmake
+    - name: Make gcc-14 default compiler
+      run: |
+        sudo update-alternatives --install /usr/bin/cc cc $(which gcc-14) 50 &&\
+        sudo update-alternatives --set cc $(which gcc-14) &&\
+        sudo update-alternatives --install /usr/bin/c++ c++ $(which g++-14) 50 &&\
+        sudo update-alternatives --set c++ $(which g++-14)  &&\
+        sudo update-alternatives --install /usr/bin/cpp cpp $(which g++-14) 50 &&\
+        sudo update-alternatives --set cpp $(which g++-14)
+
+    - name: Install gcovr
+      run: sudo apt-get install gcovr
 
     - uses: actions/checkout@v4
       with:
@@ -134,17 +148,17 @@ jobs:
     - name: Run vcpkg
       run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
 
-    - name: GCC 11 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-11 -DCMAKE_CXX_COMPILER=$(which g++-11) -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DASIO_GRPC_TEST_COVERAGE=on -DASIO_GRPC_GCOV_PROGRAM=$(which gcov-11) -DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build-11/sonarqube-coverage.xml -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }} -DCMAKE_BUILD_TYPE=Debug -DCMAKE_UNITY_BUILD=off
+    - name: GCC Configure CMake
+      run: cmake --preset default -B ${{ github.workspace }}/build -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DASIO_GRPC_TEST_COVERAGE=on -DASIO_GRPC_GCOV_PROGRAM=$(which gcov-14) -DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build/sonarqube-coverage.xml -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }} -DCMAKE_BUILD_TYPE=Debug -DCMAKE_UNITY_BUILD=off
 
-    - name: GCC 11 Build
-      run: cmake --build ${{ github.workspace }}/build-11 --config Debug --parallel $(nproc)
+    - name: GCC Build
+      run: cmake --build ${{ github.workspace }}/build --config Debug --parallel $(nproc)
 
-    - name: GCC 11 Test
-      run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-11 -C Debug
+    - name: GCC Test
+      run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build -C Debug
 
-    - name: GCC 11 Coverage
-      run: cmake --build ${{ github.workspace }}/build-11 --config Debug --target asio-grpc-test-coverage
+    - name: GCC Coverage
+      run: cmake --build ${{ github.workspace }}/build --config Debug --target asio-grpc-test-coverage
 
     - uses: actions/setup-java@v4
       with:
@@ -161,27 +175,30 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         sonar-scanner \
-          "-Dsonar.cfamily.compile-commands=${{ github.workspace }}/build-11/compile_commands.json" \
+          "-Dsonar.cfamily.compile-commands=${{ github.workspace }}/build/compile_commands.json" \
           "-Dsonar.token=${{ secrets.SONAR_TOKEN }}" \
-          "-Dsonar.coverageReportPaths=${{ github.workspace }}/build-11/sonarqube-coverage.xml"
+          "-Dsonar.coverageReportPaths=${{ github.workspace }}/build/sonarqube-coverage.xml"
 
 
-  clang-10-build:
-    name: 'Ubuntu/20.04/Clang'
-    runs-on: ubuntu-20.04
+  clang-13-build:
+    name: 'Ubuntu/22.04/Clang'
+    runs-on: ubuntu-22.04
     env:
-      TRIPLET: 'x64-linux-clang10-release'
-      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-clang10-release -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on -DASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES=off -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-10/include/c++/v1/ -Wno-unused-command-line-argument" -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld'
+      TRIPLET: 'x64-linux-clang13-release'
+      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-clang13-release -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_CMAKE_INSTALL_TEST_CTEST_COMMAND=/usr/bin/ctest "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-13/include/c++/v1/ -Wno-unused-command-line-argument" -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld'
 
     steps:
-    - name: Make clang-10 default compiler
+    - name: Make clang-13 default compiler
       run: |
-        sudo update-alternatives --install /usr/bin/cc cc $(which clang-10) 50 &&\
-        sudo update-alternatives --set cc $(which clang-10) &&\
-        sudo update-alternatives --install /usr/bin/c++ c++ $(which clang++-10) 50 &&\
-        sudo update-alternatives --set c++ $(which clang++-10)  &&\
-        sudo update-alternatives --install /usr/bin/cpp cpp $(which clang++-10) 50 &&\
-        sudo update-alternatives --set cpp $(which clang++-10)
+        sudo update-alternatives --install /usr/bin/cc cc $(which clang-13) 50 &&\
+        sudo update-alternatives --set cc $(which clang-13) &&\
+        sudo update-alternatives --install /usr/bin/c++ c++ $(which clang++-13) 50 &&\
+        sudo update-alternatives --set c++ $(which clang++-13)  &&\
+        sudo update-alternatives --install /usr/bin/cpp cpp $(which clang++-13) 50 &&\
+        sudo update-alternatives --set cpp $(which clang++-13)
+
+    - name: Install (old) cmake
+      run: sudo apt-get install cmake
 
     - uses: actions/checkout@v4
 
@@ -195,14 +212,14 @@ jobs:
     - name: Run vcpkg
       run: ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg
 
-    - name: Clang 10 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build-10 -DCMAKE_CXX_COMPILER=$(which clang++-10) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
+    - name: Clang 13 Configure CMake
+      run: cmake --preset default -B ${{ github.workspace }}/build -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
 
-    - name: Clang 10 Build
-      run: cmake --build ${{ github.workspace }}/build-10 --config Release --parallel $(nproc)
+    - name: Clang 13 Build
+      run: cmake --build ${{ github.workspace }}/build --config Release --parallel $(nproc)
 
-    - name: Clang 10 Test
-      run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build-10 -C Release
+    - name: Clang 13 Test
+      run: ctest ${{ env.CTEST_ARGS }} --test-dir ${{ github.workspace }}/build -C Release
 
 
   clang-latest-build:
@@ -268,40 +285,3 @@ jobs:
         git commit -m "Re-generate Github Pages" && \
         git push --force "${remote}" $(git log -n 1 --pretty=format:"%H"):gh-pages || echo "nothing to push"
       shell: bash
-
-
-  default-gcc-build:
-    name: 'Ubuntu/20.04/Default'
-    runs-on: ubuntu-20.04
-    env:
-      TRIPLET: 'x64-linux-release'
-      CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-release -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=on -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold'
-
-    steps:
-    - name: Install protobuf, gRPC and doctest
-      run: sudo apt-get install libgrpc++-dev protobuf-compiler-grpc libprotobuf-dev doctest-dev libgtest-dev libgmock-dev
-
-    - uses: actions/checkout@v4
-
-    - name: Install vcpkg
-      uses: lukka/run-vcpkg@v11
-      with:
-        vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
-        vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
-        vcpkgJsonGlob: 'vcpkg.json'
-
-    - name: Run vcpkg
-      run: |
-        ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} \
-          --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg \
-          libunifex boost-coroutine boost-asio boost-interprocess boost-thread boost-process asio[coroutine]
-      working-directory: ${{ env.VCPKG_ROOT }}
-
-    - name: Configure CMake
-      run: cmake --preset default -DCMAKE_CXX_COMPILER=$(which g++-10) -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_ARGS }} ${{ env.CMAKE_EXTRA_ARGS }}
-
-    - name: Build
-      run: cmake --build --preset default --config Release --parallel $(nproc) --target asio-grpc-check-header-syntax all
-
-    - name: Test
-      run: ctest --preset default -C Release
