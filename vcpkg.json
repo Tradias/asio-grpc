@@ -26,5 +26,5 @@
         "gtest",
         "stdexec"
     ],
-    "builtin-baseline": "b02e341c927f16d991edbd915d8ea43eac52096c"
+    "builtin-baseline": "fd22bbac96555f6c43ee35f143a634daed53369c"
 }

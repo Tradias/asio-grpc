@@ -14,8 +14,6 @@
 
 #include "utils/free_port.hpp"
 
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 
@@ -23,6 +21,7 @@
 #include <charconv>
 #include <chrono>
 #include <cstdint>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <mutex>
@@ -31,7 +30,7 @@ namespace test
 {
 namespace
 {
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 constexpr uint16_t START_PORT = 16397u;
 constexpr auto MAX_PORT_FILE_AGE = std::chrono::minutes(1);
@@ -57,8 +56,8 @@ void recreate_if_old(const fs::path& port_file, std::chrono::nanoseconds max_age
 {
     if (fs::exists(port_file))
     {
-        const auto last_write_time = std::chrono::system_clock::from_time_t(fs::last_write_time(port_file));
-        if (last_write_time + max_age < std::chrono::system_clock::now())
+        const auto last_write_time = fs::last_write_time(port_file);
+        if (last_write_time + max_age < std::filesystem::file_time_type::clock::now())
         {
             fs::remove(port_file);
             std::ofstream create_file{port_file.native()};

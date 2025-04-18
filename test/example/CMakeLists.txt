@@ -16,7 +16,10 @@ add_executable(asio-grpc-test-examples)
 
 target_sources(asio-grpc-test-examples PRIVATE "test_examples.cpp")
 
-target_link_libraries(asio-grpc-test-examples PRIVATE asio-grpc-test-main Boost::filesystem)
+target_link_libraries(asio-grpc-test-examples PRIVATE asio-grpc-compile-options asio-grpc-test-util-boost-asio
+                                                      asio-grpc-test-main asio-grpc-test-protos Boost::process)
+
+target_precompile_headers(asio-grpc-test-examples REUSE_FROM "asio-grpc-test-util-boost-asio")
 
 add_dependencies(
     asio-grpc-test-examples
@@ -71,7 +74,8 @@ if(ASIO_GRPC_ENABLE_IO_URING_EXAMPLES OR ${CMAKE_SYSTEM_NAME} STREQUAL "Windows"
 
     target_compile_definitions(
         asio-grpc-test-examples
-        PRIVATE "ASIO_GRPC_EXAMPLE_FILE_TRANSFER_CLIENT=\"$<TARGET_FILE:asio-grpc-example-file-transfer-client>\""
+        PRIVATE BOOST_PROCESS_USE_STD_FS
+                "ASIO_GRPC_EXAMPLE_FILE_TRANSFER_CLIENT=\"$<TARGET_FILE:asio-grpc-example-file-transfer-client>\""
                 "ASIO_GRPC_EXAMPLE_FILE_TRANSFER_SERVER=\"$<TARGET_FILE:asio-grpc-example-file-transfer-server>\"")
 endif()
 

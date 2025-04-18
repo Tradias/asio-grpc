@@ -22,7 +22,7 @@ find_package(gRPC)
 
 set(ASIO_GRPC_FIND_BOOST_COMPONENTS coroutine)
 if(ASIO_GRPC_BUILD_TESTS)
-    list(APPEND ASIO_GRPC_FIND_BOOST_COMPONENTS thread filesystem)
+    list(APPEND ASIO_GRPC_FIND_BOOST_COMPONENTS thread process)
 endif()
 find_package(Boost REQUIRED COMPONENTS ${ASIO_GRPC_FIND_BOOST_COMPONENTS})
 

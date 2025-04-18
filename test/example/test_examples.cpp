@@ -14,7 +14,7 @@
 
 #include "utils/free_port.hpp"
 
-#include <boost/process/v1/child.hpp>
+#include <boost/process/v2/process.hpp>
 #include <doctest/doctest.h>
 
 #include <thread>
@@ -86,13 +86,13 @@ TEST_CASE("examples")
         client_program = ASIO_GRPC_EXAMPLE_ASYNC_GENERATOR_CLIENT;
         server_program = ASIO_GRPC_EXAMPLE_ASYNC_GENERATOR_SERVER;
     }
-    boost::process::child server(server_program, args);
-    REQUIRE(server.valid());
+    boost::asio::io_context io_context{1};
+    boost::process::process server{io_context, server_program, args};
     std::this_thread::sleep_for(std::chrono::milliseconds(350));
-    boost::process::child client(client_program, std::move(args));
-    REQUIRE(client.valid());
-    server.join();
-    client.join();
+    boost::process::process client(io_context, client_program, std::move(args));
+    io_context.run();
+    server.wait();
+    client.wait();
     CHECK_EQ(0, server.exit_code());
     CHECK_EQ(0, client.exit_code());
 }
