@@ -56,7 +56,8 @@ target_compile_options(
               -Wno-deprecated-declarations
               -Wundef
               -pedantic-errors>
-              $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-self-move>)
+              $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-self-move>
+              $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,12>>:-Wno-self-move>)
 
 if("${CMAKE_GENERATOR}" STRGREATER_EQUAL "Visual Studio")
     target_compile_options(asio-grpc-compile-options INTERFACE /MP)

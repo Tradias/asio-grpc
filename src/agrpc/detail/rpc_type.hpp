@@ -18,6 +18,7 @@
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/rpc_type.hpp>
 #include <grpcpp/client_context.h>
+#include <grpcpp/completion_queue.h>
 #include <grpcpp/server_context.h>
 #include <grpcpp/support/async_stream.h>
 #include <grpcpp/support/async_unary_call.h>

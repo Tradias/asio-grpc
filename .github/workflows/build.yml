@@ -191,8 +191,8 @@ jobs:
         sudo update-alternatives --install /usr/bin/c++ c++ $(which clang++-13) 50 &&\
         sudo update-alternatives --set c++ $(which clang++-13)
 
-    - name: Install (old) cmake
-      run: sudo apt-get install cmake
+    - name: Install (old) cmake and libc++
+      run: sudo apt-get install cmake libc++-13-dev
 
     - uses: actions/checkout@v4
 
