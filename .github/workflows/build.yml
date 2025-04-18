@@ -80,9 +80,7 @@ jobs:
         sudo update-alternatives --install /usr/bin/cc cc $(which gcc-10) 50 &&\
         sudo update-alternatives --set cc $(which gcc-10) &&\
         sudo update-alternatives --install /usr/bin/c++ c++ $(which g++-10) 50 &&\
-        sudo update-alternatives --set c++ $(which g++-10)  &&\
-        sudo update-alternatives --install /usr/bin/cpp cpp $(which g++-10) 50 &&\
-        sudo update-alternatives --set cpp $(which g++-10)
+        sudo update-alternatives --set c++ $(which g++-10)
 
     - name: Install protobuf, gRPC and doctest
       run: sudo apt-get install libgrpc++-dev protobuf-compiler-grpc libprotobuf-dev doctest-dev libgtest-dev libgmock-dev
@@ -126,9 +124,7 @@ jobs:
         sudo update-alternatives --install /usr/bin/cc cc $(which gcc-14) 50 &&\
         sudo update-alternatives --set cc $(which gcc-14) &&\
         sudo update-alternatives --install /usr/bin/c++ c++ $(which g++-14) 50 &&\
-        sudo update-alternatives --set c++ $(which g++-14)  &&\
-        sudo update-alternatives --install /usr/bin/cpp cpp $(which g++-14) 50 &&\
-        sudo update-alternatives --set cpp $(which g++-14)
+        sudo update-alternatives --set c++ $(which g++-14)
 
     - name: Install gcovr
       run: sudo apt-get install gcovr
@@ -193,9 +189,7 @@ jobs:
         sudo update-alternatives --install /usr/bin/cc cc $(which clang-13) 50 &&\
         sudo update-alternatives --set cc $(which clang-13) &&\
         sudo update-alternatives --install /usr/bin/c++ c++ $(which clang++-13) 50 &&\
-        sudo update-alternatives --set c++ $(which clang++-13)  &&\
-        sudo update-alternatives --install /usr/bin/cpp cpp $(which clang++-13) 50 &&\
-        sudo update-alternatives --set cpp $(which clang++-13)
+        sudo update-alternatives --set c++ $(which clang++-13)
 
     - name: Install (old) cmake
       run: sudo apt-get install cmake
