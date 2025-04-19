@@ -35,18 +35,38 @@ jobs:
             os: windows-2022,
             triplet: 'x64-windows-release',
             build-type: 'Release',
-            cmake-extra-args: '-DVCPKG_TARGET_TRIPLET=x64-windows-release -DCMAKE_COMPILE_WARNING_AS_ERROR=off',
+            cmake-extra-args: '-DCMAKE_COMPILE_WARNING_AS_ERROR=off',
           }
           - {
             name: 'MacOSX/13/AppleClang',
             os: macos-13,
             triplet: 'x64-osx-release',
             build-type: 'Debug',
-            cmake-extra-args: '-DCMAKE_BUILD_TYPE=Debug -DVCPKG_TARGET_TRIPLET=x64-osx-release -DASIO_GRPC_HAS_STD_PMR=off -DCMAKE_UNITY_BUILD=off',
+            cmake-extra-args: '-DCMAKE_BUILD_TYPE=Debug -DASIO_GRPC_HAS_STD_PMR=off -DCMAKE_UNITY_BUILD=off',
           }
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Install vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
+        vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
+
+    - name: Add NuGet sources
+      shell: pwsh
+      run: |
+        .$(${{ env.VCPKG_EXE }} fetch nuget) `
+          sources add `
+          -Source "${{ env.FEED_URL }}" `
+          -StorePasswordInClearText `
+          -Name GitHubPackages `
+          -UserName "${{ env.USERNAME }}" `
+          -Password "${{ secrets.GH_PACKAGES_TOKEN }}"
+        .$(${{ env.VCPKG_EXE }} fetch nuget) `
+          setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" `
+          -Source "${{ env.FEED_URL }}
 
     - name: Install vcpkg
       uses: lukka/run-vcpkg@v11
@@ -59,7 +79,7 @@ jobs:
         runVcpkgInstall: true
 
     - name: Configure CMake
-      run: cmake --preset default -DVCPKG_INSTALLED_DIR=${{ env.VCPKG_INSTALLED_DIR }} ${{ env.CMAKE_ARGS }} ${{ matrix.config.cmake-extra-args }}
+      run: cmake --preset default -DVCPKG_INSTALLED_DIR=${{ env.VCPKG_INSTALLED_DIR }} -DVCPKG_TARGET_TRIPLET=${{ matrix.config.triplet }} ${{ env.CMAKE_ARGS }} ${{ matrix.config.cmake-extra-args }}
 
     - name: Build
       run: cmake --build --preset default --config ${{ matrix.config.build-type }}
