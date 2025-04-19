@@ -68,7 +68,7 @@ jobs:
           -Password "${{ secrets.GH_PACKAGES_TOKEN }}"
         .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
           setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" `
-          -Source "${{ env.FEED_URL }}
+          -Source "${{ env.FEED_URL }}"
 
     - name: Install vcpkg
       uses: lukka/run-vcpkg@v11
