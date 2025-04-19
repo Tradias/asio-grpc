@@ -57,18 +57,18 @@ jobs:
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
 
     - name: Add NuGet sources
-      shell: bash
+      shell: pwsh
       run: |
-        ${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
-        $(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) \
-          sources add \
-          -Source "${{ env.FEED_URL }}" \
-          -StorePasswordInClearText \
-          -Name GitHubPackages \
-          -UserName "${{ env.USERNAME }}" \
+        .${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
+          sources add `
+          -Source "${{ env.FEED_URL }}" `
+          -StorePasswordInClearText `
+          -Name GitHubPackages `
+          -UserName "${{ env.USERNAME }}" `
           -Password "${{ secrets.GH_PACKAGES_TOKEN }}"
-        $(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) \
-          setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" \
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
+          setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" `
           -Source "${{ env.FEED_URL }}"
 
     - name: Install vcpkg
@@ -119,18 +119,18 @@ jobs:
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
 
     - name: Add NuGet sources
-      shell: bash
+      shell: pwsh
       run: |
-        ${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
-        $(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) \
-          sources add \
-          -Source "${{ env.FEED_URL }}" \
-          -StorePasswordInClearText \
-          -Name GitHubPackages \
-          -UserName "${{ env.USERNAME }}" \
+        .${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
+          sources add `
+          -Source "${{ env.FEED_URL }}" `
+          -StorePasswordInClearText `
+          -Name GitHubPackages `
+          -UserName "${{ env.USERNAME }}" `
           -Password "${{ secrets.GH_PACKAGES_TOKEN }}"
-        $(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) \
-          setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" \
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
+          setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" `
           -Source "${{ env.FEED_URL }}"
 
     - name: Run vcpkg
@@ -183,18 +183,18 @@ jobs:
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
 
     - name: Add NuGet sources
-      shell: bash
+      shell: pwsh
       run: |
-        ${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
-        $(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) \
-          sources add \
-          -Source "${{ env.FEED_URL }}" \
-          -StorePasswordInClearText \
-          -Name GitHubPackages \
-          -UserName "${{ env.USERNAME }}" \
+        .${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
+          sources add `
+          -Source "${{ env.FEED_URL }}" `
+          -StorePasswordInClearText `
+          -Name GitHubPackages `
+          -UserName "${{ env.USERNAME }}" `
           -Password "${{ secrets.GH_PACKAGES_TOKEN }}"
-        $(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) \
-          setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" \
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
+          setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" `
           -Source "${{ env.FEED_URL }}"
 
     - name: Install vcpkg
@@ -268,18 +268,18 @@ jobs:
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
 
     - name: Add NuGet sources
-      shell: bash
+      shell: pwsh
       run: |
-        ${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
-        $(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) \
-          sources add \
-          -Source "${{ env.FEED_URL }}" \
-          -StorePasswordInClearText \
-          -Name GitHubPackages \
-          -UserName "${{ env.USERNAME }}" \
+        .${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
+          sources add `
+          -Source "${{ env.FEED_URL }}" `
+          -StorePasswordInClearText `
+          -Name GitHubPackages `
+          -UserName "${{ env.USERNAME }}" `
           -Password "${{ secrets.GH_PACKAGES_TOKEN }}"
-        $(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) \
-          setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" \
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
+          setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" `
           -Source "${{ env.FEED_URL }}"
 
     - name: Install vcpkg
@@ -324,18 +324,18 @@ jobs:
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
 
     - name: Add NuGet sources
-      shell: bash
+      shell: pwsh
       run: |
-        ${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
-        $(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) \
-          sources add \
-          -Source "${{ env.FEED_URL }}" \
-          -StorePasswordInClearText \
-          -Name GitHubPackages \
-          -UserName "${{ env.USERNAME }}" \
+        .${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
+          sources add `
+          -Source "${{ env.FEED_URL }}" `
+          -StorePasswordInClearText `
+          -Name GitHubPackages `
+          -UserName "${{ env.USERNAME }}" `
           -Password "${{ secrets.GH_PACKAGES_TOKEN }}"
-        $(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) \
-          setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" \
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
+          setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" `
           -Source "${{ env.FEED_URL }}"
 
     - name: Install vcpkg
