@@ -59,7 +59,7 @@ jobs:
         runVcpkgInstall: true
 
     - name: Configure CMake
-      run: cmake --preset default ${{ env.CMAKE_ARGS }} ${{ matrix.config.cmake-extra-args }}
+      run: cmake --preset default -DVCPKG_INSTALLED_DIR=${{ env.VCPKG_INSTALLED_DIR }} ${{ env.CMAKE_ARGS }} ${{ matrix.config.cmake-extra-args }}
 
     - name: Build
       run: cmake --build --preset default --config ${{ matrix.config.build-type }}
@@ -74,6 +74,7 @@ jobs:
     env:
       TRIPLET: 'x64-linux-release'
       CMAKE_EXTRA_ARGS: '-DVCPKG_TARGET_TRIPLET=x64-linux-release -DASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES=off -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=on -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold'
+      VCPKG_INSTALLED_DIR: '${{ github.workspace }}/../vcpkg_installed'
 
     steps:
     - name: Make gcc-10 default compiler
@@ -103,7 +104,7 @@ jobs:
       working-directory: ${{ env.VCPKG_ROOT }}
 
     - name: Configure CMake
-      run: cmake --preset default -DVCPKG_INSTALLED_DIR=${{ github.workspace }}/../vcpkg_installed ${{ env.CMAKE_ARGS }} ${{ env.CMAKE_EXTRA_ARGS }}
+      run: cmake --preset default -DVCPKG_INSTALLED_DIR=${{ env.VCPKG_INSTALLED_DIR }} ${{ env.CMAKE_ARGS }} ${{ env.CMAKE_EXTRA_ARGS }}
 
     - name: Build
       run: cmake --build --preset default --config Release --target asio-grpc-check-header-syntax all
@@ -147,7 +148,7 @@ jobs:
         runVcpkgInstall: true
 
     - name: GCC Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DASIO_GRPC_TEST_COVERAGE=on -DASIO_GRPC_GCOV_PROGRAM=$(which gcov-14) -DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build/sonarqube-coverage.xml ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }} -DCMAKE_BUILD_TYPE=Debug -DCMAKE_UNITY_BUILD=off
+      run: cmake --preset default -B ${{ github.workspace }}/build -DVCPKG_INSTALLED_DIR=${{ env.VCPKG_INSTALLED_DIR }} -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DASIO_GRPC_TEST_COVERAGE=on -DASIO_GRPC_GCOV_PROGRAM=$(which gcov-14) -DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build/sonarqube-coverage.xml ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }} -DCMAKE_BUILD_TYPE=Debug -DCMAKE_UNITY_BUILD=off
 
     - name: GCC Build
       run: cmake --build --preset default
@@ -211,7 +212,7 @@ jobs:
         runVcpkgInstall: true
 
     - name: Clang 13 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
+      run: cmake --preset default -B ${{ github.workspace }}/build -DVCPKG_INSTALLED_DIR=${{ env.VCPKG_INSTALLED_DIR }} ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
 
     - name: Clang 13 Build
       run: cmake --build --preset default --config Release
@@ -254,13 +255,13 @@ jobs:
         tar xf doxygen-1.12.0.linux.bin.tar.gz --strip-components=1
 
     - name: Clang Configure CMake for examples
-      run: cmake --preset default -B ${{ github.workspace }}/build -DCMAKE_CXX_COMPILER=$(which clang++) ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }} -DASIO_GRPC_BUILD_TESTS=off -DASIO_GRPC_BUILD_EXAMPLES=on
+      run: cmake --preset default -B ${{ github.workspace }}/build -DCMAKE_CXX_COMPILER=$(which clang++) -DVCPKG_INSTALLED_DIR=${{ env.VCPKG_INSTALLED_DIR }} ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }} -DASIO_GRPC_BUILD_TESTS=off -DASIO_GRPC_BUILD_EXAMPLES=on
 
     - name: Clang Build examples
       run: cmake --build --preset default --config Release
 
     - name: Clang Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build -DCMAKE_CXX_COMPILER=$(which clang++) -DDOXYGEN_EXECUTABLE=${{ runner.workspace }}/doxygen/bin/doxygen ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
+      run: cmake --preset default -B ${{ github.workspace }}/build -DCMAKE_CXX_COMPILER=$(which clang++) -DVCPKG_INSTALLED_DIR=${{ env.VCPKG_INSTALLED_DIR }} -DDOXYGEN_EXECUTABLE=${{ runner.workspace }}/doxygen/bin/doxygen ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
 
     - name: Clang Build
       run: cmake --build --preset default --config Release --target asio-grpc-check-header-syntax all
