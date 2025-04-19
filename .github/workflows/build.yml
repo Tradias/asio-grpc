@@ -59,7 +59,7 @@ jobs:
     - name: Add NuGet sources
       shell: pwsh
       run: |
-        .${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
+        ${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
         .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
           sources add `
           -Source "${{ env.FEED_URL }}" `
@@ -121,7 +121,7 @@ jobs:
     - name: Add NuGet sources
       shell: pwsh
       run: |
-        .${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
+        ${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
         .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
           sources add `
           -Source "${{ env.FEED_URL }}" `
@@ -185,7 +185,7 @@ jobs:
     - name: Add NuGet sources
       shell: pwsh
       run: |
-        .${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
+        ${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
         .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
           sources add `
           -Source "${{ env.FEED_URL }}" `
@@ -270,7 +270,7 @@ jobs:
     - name: Add NuGet sources
       shell: pwsh
       run: |
-        .${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
+        ${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
         .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
           sources add `
           -Source "${{ env.FEED_URL }}" `
@@ -326,7 +326,7 @@ jobs:
     - name: Add NuGet sources
       shell: pwsh
       run: |
-        .${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
+        ${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
         .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
           sources add `
           -Source "${{ env.FEED_URL }}" `
