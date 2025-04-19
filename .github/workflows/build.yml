@@ -107,8 +107,8 @@ jobs:
         sudo update-alternatives --install /usr/bin/c++ c++ $(which g++-10) 50 &&\
         sudo update-alternatives --set c++ $(which g++-10)
 
-    - name: Install protobuf, gRPC and doctest
-      run: sudo apt-get install libgrpc++-dev protobuf-compiler-grpc libprotobuf-dev doctest-dev libgtest-dev libgmock-dev
+    - name: Install protobuf, gRPC, doctest and mono
+      run: sudo apt-get install libgrpc++-dev protobuf-compiler-grpc libprotobuf-dev doctest-dev libgtest-dev libgmock-dev mono-complete
 
     - uses: actions/checkout@v4
 
@@ -168,8 +168,8 @@ jobs:
         sudo update-alternatives --install /usr/bin/c++ c++ $(which g++-14) 50 &&\
         sudo update-alternatives --set c++ $(which g++-14)
 
-    - name: Install gcovr
-      run: sudo apt-get install gcovr
+    - name: Install gcovr and mono
+      run: sudo apt-get install gcovr mono-complete
 
     - uses: actions/checkout@v4
       with:
@@ -256,8 +256,8 @@ jobs:
         sudo update-alternatives --install /usr/bin/c++ c++ $(which clang++-13) 50 &&\
         sudo update-alternatives --set c++ $(which clang++-13)
 
-    - name: Install (old) cmake and libc++
-      run: sudo apt-get install cmake libc++-13-dev libc++abi-13-dev
+    - name: Install (old) cmake, libc++ and mono
+      run: sudo apt-get install cmake libc++-13-dev libc++abi-13-dev mono-complete
 
     - uses: actions/checkout@v4
 
@@ -312,8 +312,8 @@ jobs:
       VCPKG_INSTALLED_DIR: '${{ github.workspace }}/../vcpkg_installed'
 
     steps:
-    - name: Install dot for doxygen and libc++
-      run: sudo apt-get install graphviz libc++-18-dev
+    - name: Install dot for doxygen, libc++ and mono
+      run: sudo apt-get install graphviz libc++-18-dev mono-complete
 
     - uses: actions/checkout@v4
 
