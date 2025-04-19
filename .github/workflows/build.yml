@@ -17,8 +17,10 @@ on:
 env:
   VCPKG_VERSION: 'fd22bbac96555f6c43ee35f143a634daed53369c'
   CMAKE_ARGS: '-DCMAKE_BUILD_TYPE=Release -DVCPKG_MANIFEST_INSTALL=off -DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=off -DCMAKE_COMPILE_WARNING_AS_ERROR=on -DCMAKE_FIND_PACKAGE_PREFER_CONFIG=on -DTHREADS_PREFER_PTHREAD_FLAG=on -DCMAKE_UNITY_BUILD=on'
-  CTEST_ARGS: '-T test --output-on-failure --timeout 180 --no-tests=error --parallel 10'
   CMAKE_BUILD_PARALLEL_LEVEL: 4
+  USERNAME: Tradias
+  FEED_URL: https://nuget.pkg.github.com/Tradias/index.json
+  VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/Tradias/index.json,readwrite"
 
 jobs:
   build:
@@ -57,14 +59,14 @@ jobs:
     - name: Add NuGet sources
       shell: pwsh
       run: |
-        .$(${{ env.VCPKG_EXE }} fetch nuget) `
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
           sources add `
           -Source "${{ env.FEED_URL }}" `
           -StorePasswordInClearText `
           -Name GitHubPackages `
           -UserName "${{ env.USERNAME }}" `
           -Password "${{ secrets.GH_PACKAGES_TOKEN }}"
-        .$(${{ env.VCPKG_EXE }} fetch nuget) `
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
           setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" `
           -Source "${{ env.FEED_URL }}
 
