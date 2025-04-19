@@ -57,17 +57,17 @@ jobs:
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
 
     - name: Add NuGet sources
-      shell: pwsh
       run: |
-        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
-          sources add `
-          -Source "${{ env.FEED_URL }}" `
-          -StorePasswordInClearText `
-          -Name GitHubPackages `
-          -UserName "${{ env.USERNAME }}" `
+        ${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) \
+          sources add \
+          -Source "${{ env.FEED_URL }}" \
+          -StorePasswordInClearText \
+          -Name GitHubPackages \
+          -UserName "${{ env.USERNAME }}" \
           -Password "${{ secrets.GH_PACKAGES_TOKEN }}"
-        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
-          setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" `
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) \
+          setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" \
           -Source "${{ env.FEED_URL }}"
 
     - name: Install vcpkg
@@ -116,7 +116,20 @@ jobs:
       with:
         vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
-        vcpkgJsonGlob: 'vcpkg.json'
+
+    - name: Add NuGet sources
+      run: |
+        ${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) \
+          sources add \
+          -Source "${{ env.FEED_URL }}" \
+          -StorePasswordInClearText \
+          -Name GitHubPackages \
+          -UserName "${{ env.USERNAME }}" \
+          -Password "${{ secrets.GH_PACKAGES_TOKEN }}"
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) \
+          setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" \
+          -Source "${{ env.FEED_URL }}"
 
     - name: Run vcpkg
       run: |
@@ -160,6 +173,26 @@ jobs:
       with:
         # Disabling shallow clone is recommended for improving relevancy of sonarsource reporting
         fetch-depth: 0
+
+    - name: Install vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
+        vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
+
+    - name: Add NuGet sources
+      run: |
+        ${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) \
+          sources add \
+          -Source "${{ env.FEED_URL }}" \
+          -StorePasswordInClearText \
+          -Name GitHubPackages \
+          -UserName "${{ env.USERNAME }}" \
+          -Password "${{ secrets.GH_PACKAGES_TOKEN }}"
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) \
+          setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" \
+          -Source "${{ env.FEED_URL }}"
 
     - name: Install vcpkg
       uses: lukka/run-vcpkg@v11
@@ -230,6 +263,26 @@ jobs:
       with:
         vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
+
+    - name: Add NuGet sources
+      run: |
+        ${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) \
+          sources add \
+          -Source "${{ env.FEED_URL }}" \
+          -StorePasswordInClearText \
+          -Name GitHubPackages \
+          -UserName "${{ env.USERNAME }}" \
+          -Password "${{ secrets.GH_PACKAGES_TOKEN }}"
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) \
+          setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" \
+          -Source "${{ env.FEED_URL }}"
+
+    - name: Install vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
+        vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
         vcpkgJsonGlob: 'vcpkg.json'
         runVcpkgInstall: true
 
@@ -259,6 +312,26 @@ jobs:
       run: sudo apt-get install graphviz libc++-18-dev
 
     - uses: actions/checkout@v4
+
+    - name: Install vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
+        vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
+
+    - name: Add NuGet sources
+      run: |
+        ${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) \
+          sources add \
+          -Source "${{ env.FEED_URL }}" \
+          -StorePasswordInClearText \
+          -Name GitHubPackages \
+          -UserName "${{ env.USERNAME }}" \
+          -Password "${{ secrets.GH_PACKAGES_TOKEN }}"
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) \
+          setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" \
+          -Source "${{ env.FEED_URL }}"
 
     - name: Install vcpkg
       uses: lukka/run-vcpkg@v11
