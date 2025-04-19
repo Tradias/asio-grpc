@@ -25,7 +25,7 @@ jobs:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
     env:
-      VCPKG_INSTALLED_DIR: '${{ runner.workspace }}/vcpkg_installed'
+      VCPKG_INSTALLED_DIR: '${{ github.workspace }}/../vcpkg_installed'
     strategy:
       fail-fast: false
       matrix:
@@ -98,12 +98,12 @@ jobs:
     - name: Run vcpkg
       run: |
         ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} \
-          --x-install-root=${{ runner.workspace }}/vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg \
+          --x-install-root=${{ github.workspace }}/../vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg \
           libunifex boost-coroutine boost-asio boost-interprocess boost-thread boost-process asio[coroutine]
       working-directory: ${{ env.VCPKG_ROOT }}
 
     - name: Configure CMake
-      run: cmake --preset default -DVCPKG_INSTALLED_DIR=${{ runner.workspace }}/vcpkg_installed ${{ env.CMAKE_ARGS }} ${{ env.CMAKE_EXTRA_ARGS }}
+      run: cmake --preset default -DVCPKG_INSTALLED_DIR=${{ github.workspace }}/../vcpkg_installed ${{ env.CMAKE_ARGS }} ${{ env.CMAKE_EXTRA_ARGS }}
 
     - name: Build
       run: cmake --build --preset default --config Release --target asio-grpc-check-header-syntax all
@@ -120,7 +120,7 @@ jobs:
       VCPKG_DEFAULT_TRIPLET: 'x64-linux-release'
       VCPKG_DEFAULT_HOST_TRIPLET: 'x64-linux-release'
       VCPKG_OVERLAY_PORTS: '${{ github.workspace }}/deps'
-      VCPKG_INSTALLED_DIR: '${{ runner.workspace }}/vcpkg_installed'
+      VCPKG_INSTALLED_DIR: '${{ github.workspace }}/../vcpkg_installed'
 
     steps:
     - name: Make gcc-14 default compiler
@@ -187,7 +187,7 @@ jobs:
       VCPKG_DEFAULT_HOST_TRIPLET: 'x64-linux-clang13-release'
       VCPKG_OVERLAY_PORTS: '${{ github.workspace }}/deps'
       VCPKG_OVERLAY_TRIPLETS: '${{ github.workspace }}/.github/vcpkg'
-      VCPKG_INSTALLED_DIR: '${{ runner.workspace }}/vcpkg_installed'
+      VCPKG_INSTALLED_DIR: '${{ github.workspace }}/../vcpkg_installed'
 
     steps:
     - name: Make clang-13 default compiler
@@ -229,7 +229,7 @@ jobs:
       VCPKG_DEFAULT_HOST_TRIPLET: 'x64-linux-clang-latest-release'
       VCPKG_OVERLAY_PORTS: '${{ github.workspace }}/deps'
       VCPKG_OVERLAY_TRIPLETS: '${{ github.workspace }}/.github/vcpkg'
-      VCPKG_INSTALLED_DIR: '${{ runner.workspace }}/vcpkg_installed'
+      VCPKG_INSTALLED_DIR: '${{ github.workspace }}/../vcpkg_installed'
 
     steps:
     - name: Install dot for doxygen and libc++
