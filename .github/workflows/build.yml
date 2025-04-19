@@ -60,14 +60,14 @@ jobs:
       shell: pwsh
       run: |
         ${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
-        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
+        mono $(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
           sources add `
           -Source "${{ env.FEED_URL }}" `
           -StorePasswordInClearText `
           -Name GitHubPackages `
           -UserName "${{ env.USERNAME }}" `
           -Password "${{ secrets.GH_PACKAGES_TOKEN }}"
-        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
+        mono $(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
           setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" `
           -Source "${{ env.FEED_URL }}"
 
@@ -107,8 +107,8 @@ jobs:
         sudo update-alternatives --install /usr/bin/c++ c++ $(which g++-10) 50 &&\
         sudo update-alternatives --set c++ $(which g++-10)
 
-    - name: Install protobuf, gRPC, doctest and mono
-      run: sudo apt-get install libgrpc++-dev protobuf-compiler-grpc libprotobuf-dev doctest-dev libgtest-dev libgmock-dev mono-complete
+    - name: Install protobuf, gRPC, doctest
+      run: sudo apt-get install libgrpc++-dev protobuf-compiler-grpc libprotobuf-dev doctest-dev libgtest-dev libgmock-dev
 
     - uses: actions/checkout@v4
 
@@ -256,8 +256,8 @@ jobs:
         sudo update-alternatives --install /usr/bin/c++ c++ $(which clang++-13) 50 &&\
         sudo update-alternatives --set c++ $(which clang++-13)
 
-    - name: Install (old) cmake, libc++ and mono
-      run: sudo apt-get install cmake libc++-13-dev libc++abi-13-dev mono-complete
+    - name: Install (old) cmake, libc++
+      run: sudo apt-get install cmake libc++-13-dev libc++abi-13-dev
 
     - uses: actions/checkout@v4
 
