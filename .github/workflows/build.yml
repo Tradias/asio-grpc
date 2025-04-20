@@ -56,11 +56,11 @@ jobs:
       uses: lukka/run-cmake@v10
       with:
         configurePreset: 'default'
-        configurePresetAdditionalArgs: '[${{ env.CMAKE_ARGS }}, "-DVCPKG_TARGET_TRIPLET=x64-windows-release", "-DVCPKG_HOST_TRIPLET=x64-windows-release", "-DCMAKE_COMPILE_WARNING_AS_ERROR=off"]'
+        configurePresetAdditionalArgs: '["-GNinja", ${{ env.CMAKE_ARGS }}, "-DVCPKG_TARGET_TRIPLET=x64-windows-release", "-DVCPKG_HOST_TRIPLET=x64-windows-release", "-DCMAKE_COMPILE_WARNING_AS_ERROR=off"]'
         buildPreset: 'default'
-        buildPresetAdditionalArgs: '["--config Release"]'
+        buildPresetAdditionalArgs: '["--config", "Release"]'
         testPreset: 'default'
-        testPresetAdditionalArgs: '["-C Release"]'
+        testPresetAdditionalArgs: '["-C", "Release"]'
 
 
   # region: macos
@@ -157,9 +157,9 @@ jobs:
         configurePreset: 'default'
         configurePresetAdditionalArgs: '[${{ env.CMAKE_ARGS }}, "-DVCPKG_TARGET_TRIPLET=${{ env.VCPKG_DEFAULT_TRIPLET }}", "-DVCPKG_HOST_TRIPLET=${{ env.VCPKG_DEFAULT_HOST_TRIPLET }}", "-DVCPKG_INSTALLED_DIR=${{ env.VCPKG_INSTALLED_DIR }}", "-DVCPKG_MANIFEST_INSTALL=off", "-DASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES=off", "-DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off", "-DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=on", "-DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold"]'
         buildPreset: 'default'
-        buildPresetAdditionalArgs: '["--config Release", "--target", "asio-grpc-check-header-syntax", "all"]'
+        buildPresetAdditionalArgs: '["--config", "Release", "--target", "asio-grpc-check-header-syntax", "all"]'
         testPreset: 'default'
-        testPresetAdditionalArgs: '["-C Release"]'
+        testPresetAdditionalArgs: '["-C", "Release"]'
 
 
   # region: gcc latest
@@ -285,9 +285,9 @@ jobs:
         configurePreset: 'default'
         configurePresetAdditionalArgs: '[${{ env.CMAKE_ARGS }}, "-DCMAKE_CXX_COMPILER=${{ env.CLANG_PROGRAM }}", "-DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}/.github/vcpkg", "-DVCPKG_TARGET_TRIPLET=x64-linux-clang13-release", "-DVCPKG_HOST_TRIPLET=x64-linux-clang13-release", "-DCMAKE_DISABLE_PRECOMPILE_HEADERS=on", "-DASIO_GRPC_CMAKE_INSTALL_TEST_CTEST_COMMAND=/usr/bin/ctest", "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-13/include/c++/v1/ -Wno-unused-command-line-argument", "-DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld"]'
         buildPreset: 'default'
-        buildPresetAdditionalArgs: '["--config Release"]'
+        buildPresetAdditionalArgs: '["--config", "Release"]'
         testPreset: 'default'
-        testPresetAdditionalArgs: '["-C Release"]'
+        testPresetAdditionalArgs: '["-C", "Release"]'
 
 
   # region: clang latest
@@ -339,7 +339,7 @@ jobs:
         configurePreset: 'default'
         configurePresetAdditionalArgs: '[${{ env.CMAKE_ARGS }}, "-DCMAKE_CXX_COMPILER=${{ env.CLANG_PROGRAM }}", "-DASIO_GRPC_BUILD_TESTS=off", "-DASIO_GRPC_BUILD_EXAMPLES=on", "-DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}/.github/vcpkg", "-DVCPKG_TARGET_TRIPLET=x64-linux-clang-latest-release", "-DVCPKG_HOST_TRIPLET=x64-linux-clang-latest-release", "-DCMAKE_DISABLE_PRECOMPILE_HEADERS=on", "-DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off", "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -Wno-unused-command-line-argument", "-DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld"]'
         buildPreset: 'default'
-        buildPresetAdditionalArgs: '["--config Release"]'
+        buildPresetAdditionalArgs: '["--config", "Release"]'
 
     - name: Run CMake
       uses: lukka/run-cmake@v10
@@ -347,9 +347,9 @@ jobs:
         configurePreset: 'default'
         configurePresetAdditionalArgs: '["-DDOXYGEN_EXECUTABLE=${{ runner.workspace }}/doxygen/bin/doxygen", "-DASIO_GRPC_BUILD_TESTS=on"]'
         buildPreset: 'default'
-        buildPresetAdditionalArgs: '["--config Release", "--target", "asio-grpc-check-header-syntax", "all"]'
+        buildPresetAdditionalArgs: '["--config", "Release", "--target", "asio-grpc-check-header-syntax", "all"]'
         testPreset: 'default'
-        testPresetAdditionalArgs: '["-C Release"]'
+        testPresetAdditionalArgs: '["-C", "Release"]'
 
     - name: Run doxygen
       run: |
