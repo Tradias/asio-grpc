@@ -14,6 +14,11 @@ on:
       - 'vcpkg.json'
       - 'CMakePresets.json'
 
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
 env:
   VCPKG_VERSION: 'fd22bbac96555f6c43ee35f143a634daed53369c'
   CMAKE_ARGS: '"-DCMAKE_BUILD_TYPE=Release", "-DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=off", "-DCMAKE_COMPILE_WARNING_AS_ERROR=on", "-DCMAKE_FIND_PACKAGE_PREFER_CONFIG=on", "-DTHREADS_PREFER_PTHREAD_FLAG=on", "-DCMAKE_UNITY_BUILD=on"'
@@ -62,10 +67,19 @@ jobs:
         testPreset: 'default'
         testPresetAdditionalArgs: '["-C", "Release"]'
 
+    - name: Create test report
+      uses: dorny/test-reporter@v2
+      if: success() || failure()
+      with:
+        name: Windows tests
+        path: build/junit.xml
+        reporter: java-junit
+        badge-title: 'test-windows'
+
 
   # region: macos
   macos-build:
-    name: 'MacOSX/13/AppleClang'
+    name: 'MacOS/13/AppleClang'
     runs-on: macos-13
 
     steps:
@@ -99,6 +113,15 @@ jobs:
         configurePresetAdditionalArgs: '[${{ env.CMAKE_ARGS }}, "-DVCPKG_TARGET_TRIPLET=x64-osx-release", "-DVCPKG_HOST_TRIPLET=x64-osx-release", "-DCMAKE_BUILD_TYPE=Debug", "-DASIO_GRPC_HAS_STD_PMR=off", "-DCMAKE_UNITY_BUILD=off"]'
         buildPreset: 'default'
         testPreset: 'default'
+
+    - name: Create test report
+      uses: dorny/test-reporter@v2
+      if: success() || failure()
+      with:
+        name: 'MacOS latest tests'
+        path: 'build/junit.xml'
+        reporter: 'java-junit'
+        badge-title: 'test-macos'
 
 
   # region: gcc 10
@@ -161,6 +184,15 @@ jobs:
         testPreset: 'default'
         testPresetAdditionalArgs: '["-C", "Release"]'
 
+    - name: Create test report
+      uses: dorny/test-reporter@v2
+      if: success() || failure()
+      with:
+        name: 'GCC 10 tests'
+        path: 'build/junit.xml'
+        reporter: 'java-junit'
+        badge-title: 'test-gcc-10'
+
 
   # region: gcc latest
   gcc-latest-build:
@@ -214,6 +246,15 @@ jobs:
         configurePresetAdditionalArgs: '[${{ env.CMAKE_ARGS }}, "-DVCPKG_TARGET_TRIPLET=x64-linux-release", "-DVCPKG_HOST_TRIPLET=x64-linux-release", "-DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off", "-DCMAKE_EXPORT_COMPILE_COMMANDS=on", "-DASIO_GRPC_TEST_COVERAGE=on", "-DASIO_GRPC_GCOV_PROGRAM=${{ env.GCOV_PROGRAM }}", "-DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build/sonarqube-coverage.xml", "-DCMAKE_BUILD_TYPE=Debug", "-DCMAKE_UNITY_BUILD=off", "-DASIO_GRPC_ENABLE_STDEXEC_TESTS=on", "-DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold", "-DCMAKE_DISABLE_PRECOMPILE_HEADERS=on"]'
         buildPreset: 'default'
         testPreset: 'default'
+
+    - name: Create test report
+      uses: dorny/test-reporter@v2
+      if: success() || failure()
+      with:
+        name: 'GCC latest tests'
+        path: 'build/junit.xml'
+        reporter: 'java-junit'
+        badge-title: 'test-gcc-latest'
 
     - name: GCC Coverage
       run: cmake --build --preset default --target asio-grpc-test-coverage
@@ -289,6 +330,15 @@ jobs:
         testPreset: 'default'
         testPresetAdditionalArgs: '["-C", "Release"]'
 
+    - name: Create test report
+      uses: dorny/test-reporter@v2
+      if: success() || failure()
+      with:
+        name: 'Clang 13 tests'
+        path: 'build/junit.xml'
+        reporter: 'java-junit'
+        badge-title: 'test-clang-13'
+
 
   # region: clang latest
   clang-latest-build:
@@ -350,6 +400,15 @@ jobs:
         buildPresetAdditionalArgs: '["--config", "Release", "--target", "asio-grpc-check-header-syntax", "all"]'
         testPreset: 'default'
         testPresetAdditionalArgs: '["-C", "Release"]'
+
+    - name: Create test report
+      uses: dorny/test-reporter@v2
+      if: success() || failure()
+      with:
+        name: 'Clang latest tests'
+        path: 'build/junit.xml'
+        reporter: 'java-junit'
+        badge-title: 'test-clang-latest'
 
     - name: Run doxygen
       run: |

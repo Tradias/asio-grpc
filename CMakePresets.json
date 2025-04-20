@@ -1,5 +1,5 @@
 {
-    "version": 3,
+    "version": 10,
     "cmakeMinimumRequired": {
         "major": 3,
         "minor": 19,
@@ -34,7 +34,8 @@
             "configurePreset": "default",
             "configuration": "Debug",
             "output": {
-                "outputOnFailure": true
+                "outputOnFailure": true,
+                "outputJUnitFile": "${sourceDir}/build/junit.xml"
             },
             "execution": {
                 "noTestsAction": "error",
