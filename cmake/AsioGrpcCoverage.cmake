@@ -36,4 +36,9 @@ if(ASIO_GRPC_TEST_COVERAGE)
                 "${ASIO_GRPC_COVERAGE_OUTPUT_FILE}" --root "${ASIO_GRPC_PROJECT_ROOT}"
         WORKING_DIRECTORY "${ASIO_GRPC_PROJECT_ROOT}"
         VERBATIM)
+
+    message(
+        STATUS
+            "Code coverage: ${ASIO_GRPC_GCOVR_PROGRAM} --gcov-executable ${_asio_grpc_gcov_command} --sonarqube --output ${ASIO_GRPC_COVERAGE_OUTPUT_FILE} --root ${ASIO_GRPC_PROJECT_ROOT}"
+    )
 endif()
