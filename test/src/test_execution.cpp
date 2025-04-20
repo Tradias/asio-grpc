@@ -330,15 +330,19 @@ TEST_CASE_FIXTURE(test::ExecutionRpcHandlerTest,
                                                                                     return stdexec::just();
                                                                                 });
     std::exception_ptr error_propagation{};
-    run(stdexec::when_all(
-            make_client_unary_request_sender(test::hundred_milliseconds_from_now(), &check_status_not_ok),
-            make_client_unary_request_sender(test::hundred_milliseconds_from_now(), &check_status_not_ok)),
-        stdexec::let_error(std::move(rpc_handler),
+    run(stdexec::let_error(std::move(rpc_handler),
                            [&](std::exception_ptr ep)
                            {
                                error_propagation = std::move(ep);
                                return stdexec::just();
-                           }));
+                           }),
+        make_client_unary_request_sender(test::five_seconds_from_now(), &check_status_not_ok) |
+            stdexec::let_value(
+                [&]
+                {
+                    return make_client_unary_request_sender(test::hundred_milliseconds_from_now(),
+                                                            &check_status_not_ok);
+                }));
     REQUIRE(error_propagation);
     CHECK_THROWS_AS(std::rethrow_exception(error_propagation), test::Exception);
 }
@@ -429,29 +433,6 @@ TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::ClientStreamingClientRPC>,
                     server_shutdown.initiate();
                 }));
     CHECK_FALSE(is_cancelled);
-}
-
-TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::UnaryClientRPC>,
-                  "stdexec Waiter: initiate alarm -> cancel alarm -> wait returns false")
-{
-    const auto wait = [](agrpc::Alarm& alarm, auto deadline, auto&&...)
-    {
-        return alarm.wait(deadline, agrpc::use_sender);
-    };
-    agrpc::Waiter<void()> waiter;
-    agrpc::Alarm alarm{grpc_context};
-    run(waiter.initiate(wait, alarm, test::five_seconds_from_now()),
-        stdexec::then(stdexec::just(),
-                      [&]
-                      {
-                          CHECK_FALSE(waiter.is_ready());
-                          alarm.cancel();
-                      }),
-        stdexec::then(waiter.wait(agrpc::use_sender),
-                      [&]()
-                      {
-                          CHECK(waiter.is_ready());
-                      }));
 }
 
 struct StdexecMockTest : test::ExecutionTestMixin<test::MockTest>

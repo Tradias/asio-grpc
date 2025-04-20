@@ -47,7 +47,7 @@ decltype(auto) with_query_value(Sender&& sender, T&&...)
 template <class Sender>
 decltype(auto) with_inline_scheduler(Sender&& sender)
 {
-    return stdexec::on(exec::inline_scheduler{}, std::forward<Sender>(sender));
+    return stdexec::starts_on(exec::inline_scheduler{}, std::forward<Sender>(sender));
 }
 #endif
 }

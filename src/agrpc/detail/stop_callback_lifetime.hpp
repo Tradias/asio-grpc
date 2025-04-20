@@ -56,12 +56,12 @@ struct CancellationSlotToken<StopToken, StopFunction, false>
   public:
     void reset() noexcept { stop_callback_.reset(); }
 
-    template <class... Args>
-    void emplace(StopToken&& stop_token, Args&&... args) noexcept
+    template <class S, class... Args>
+    void emplace(S&& stop_token, Args&&... args) noexcept
     {
         if (stop_token.stop_possible())
         {
-            stop_callback_.emplace(static_cast<StopToken&&>(stop_token), StopFunction{static_cast<Args&&>(args)...});
+            stop_callback_.emplace(static_cast<S&&>(stop_token), StopFunction{static_cast<Args&&>(args)...});
         }
     }
 

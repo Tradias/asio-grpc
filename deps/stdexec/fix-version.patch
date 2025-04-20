@@ -1,0 +1,22 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 8e29cfed..f2ac5c01 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -42,7 +42,7 @@ if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/execution.bs)
+       ${CMAKE_CURRENT_BINARY_DIR}/execution.bs)
+ endif()
+ file(STRINGS "${CMAKE_CURRENT_BINARY_DIR}/execution.bs" STD_EXECUTION_BS_REVISION_LINE REGEX "Revision: [0-9]+")
+-string(REGEX REPLACE "Revision: ([0-9]+)" "\\1" STD_EXECUTION_BS_REVISION ${STD_EXECUTION_BS_REVISION_LINE})
++string(REGEX REPLACE "Revision: ([0-9]+).*" "\\1" STD_EXECUTION_BS_REVISION ${STD_EXECUTION_BS_REVISION_LINE})
+ 
+ # nvc++ isn't supported by (s)ccache yet, so unset these before the `project()`
+ # call so CMake's CXX compiler detection doesn't throw attempting to use it
+@@ -543,7 +543,7 @@ endif()
+ 
+ include(CPack)
+ 
+-install(TARGETS stdexec system_context
++install(TARGETS stdexec
+ 	EXPORT stdexec-exports
+ 	FILE_SET headers
+ 	FILE_SET version_config)
