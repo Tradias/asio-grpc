@@ -23,7 +23,48 @@ env:
   VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/Tradias/index.json,readwrite"
 
 jobs:
-  build:
+  windows-build:
+    name: Windows/2022/MSVC
+    runs-on: windows-2022
+    env:
+      VCPKG_DEFAULT_TRIPLET: 'x64-windows-release'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
+        vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
+
+    - name: Add NuGet sources
+      shell: pwsh
+      run: |
+        ${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
+          sources add `
+          -Source "${{ env.FEED_URL }}" `
+          -StorePasswordInClearText `
+          -Name GitHubPackages `
+          -UserName "${{ env.USERNAME }}" `
+          -Password "${{ secrets.GH_PACKAGES_TOKEN }}"
+        .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
+          setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" `
+          -Source "${{ env.FEED_URL }}"
+
+    - name: Run CMake
+      uses: lukka/run-cmake@v10
+      with:
+        configurePreset: 'default'
+        buildPreset: 'default'
+        configurePresetAdditionalArgs: '["${{ env.CMAKE_ARGS }}", "-DCMAKE_COMPILE_WARNING_AS_ERROR=off", "-DVCPKG_MANIFEST_INSTALL=on"]'
+        buildPresetAdditionalArgs: '["--config Release"]'
+        testPreset: 'default'
+        testPresetAdditionalArgs: '["-C Release"]'
+
+
+  macos-build:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
     env:
@@ -71,7 +112,7 @@ jobs:
           setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" `
           -Source "${{ env.FEED_URL }}"
 
-    - name: Install vcpkg
+    - name: Run vcpkg
       uses: lukka/run-vcpkg@v11
       env: 
         VCPKG_TARGET_TRIPLET: '${{ matrix.config.triplet }}'
@@ -197,7 +238,7 @@ jobs:
           setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" `
           -Source "${{ env.FEED_URL }}"
 
-    - name: Install vcpkg
+    - name: Run vcpkg
       uses: lukka/run-vcpkg@v11
       with:
         vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
@@ -282,7 +323,7 @@ jobs:
           setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" `
           -Source "${{ env.FEED_URL }}"
 
-    - name: Install vcpkg
+    - name: Run vcpkg
       uses: lukka/run-vcpkg@v11
       with:
         vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
@@ -338,7 +379,7 @@ jobs:
           setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" `
           -Source "${{ env.FEED_URL }}"
 
-    - name: Install vcpkg
+    - name: Run vcpkg
       uses: lukka/run-vcpkg@v11
       with:
         vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
