@@ -16,7 +16,7 @@ on:
 
 env:
   VCPKG_VERSION: 'fd22bbac96555f6c43ee35f143a634daed53369c'
-  CMAKE_ARGS: '-DCMAKE_BUILD_TYPE=Release -DVCPKG_MANIFEST_INSTALL=off -DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=off -DCMAKE_COMPILE_WARNING_AS_ERROR=on -DCMAKE_FIND_PACKAGE_PREFER_CONFIG=on -DTHREADS_PREFER_PTHREAD_FLAG=on -DCMAKE_UNITY_BUILD=on'
+  CMAKE_ARGS: '-DCMAKE_BUILD_TYPE=Release -DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=off -DCMAKE_COMPILE_WARNING_AS_ERROR=on -DCMAKE_FIND_PACKAGE_PREFER_CONFIG=on -DTHREADS_PREFER_PTHREAD_FLAG=on -DCMAKE_UNITY_BUILD=on'
   CMAKE_BUILD_PARALLEL_LEVEL: 4
   USERNAME: Tradias
   FEED_URL: https://nuget.pkg.github.com/Tradias/index.json
@@ -58,8 +58,8 @@ jobs:
       uses: lukka/run-cmake@v10
       with:
         configurePreset: 'default'
+        configurePresetAdditionalArgs: '["${{ env.CMAKE_ARGS }}", "-DVCPKG_TARGET_TRIPLET=${{ env.VCPKG_DEFAULT_TRIPLET }}", "-DCMAKE_COMPILE_WARNING_AS_ERROR=off"]'
         buildPreset: 'default'
-        configurePresetAdditionalArgs: '["${{ env.CMAKE_ARGS }}", "-DCMAKE_COMPILE_WARNING_AS_ERROR=off", "-DVCPKG_MANIFEST_INSTALL=on"]'
         buildPresetAdditionalArgs: '["--config Release"]'
         testPreset: 'default'
         testPresetAdditionalArgs: '["-C Release"]'
@@ -68,9 +68,6 @@ jobs:
   macos-build:
     name: 'MacOSX/13/AppleClang'
     runs-on: macos-13
-    env:
-      VCPKG_DEFAULT_TRIPLET: 'x64-osx-release'
-      VCPKG_DEFAULT_HOST_TRIPLET: 'x64-osx-release'
 
     steps:
     - uses: actions/checkout@v4
@@ -100,8 +97,8 @@ jobs:
       uses: lukka/run-cmake@v10
       with:
         configurePreset: 'default'
+        configurePresetAdditionalArgs: '["${{ env.CMAKE_ARGS }}", "-DVCPKG_TARGET_TRIPLET=x64-osx-release", "-DCMAKE_BUILD_TYPE=Debug", "-DASIO_GRPC_HAS_STD_PMR=off", "-DCMAKE_UNITY_BUILD=off"]'
         buildPreset: 'default'
-        configurePresetAdditionalArgs: '["${{ env.CMAKE_ARGS }}", "-DCMAKE_BUILD_TYPE=Debug", "-DVCPKG_MANIFEST_INSTALL=on", "-DASIO_GRPC_HAS_STD_PMR=off", "-DCMAKE_UNITY_BUILD=off"]'
         testPreset: 'default'
 
 
@@ -149,8 +146,8 @@ jobs:
 
     - name: Run vcpkg
       run: |
-        ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build --triplet ${{ env.TRIPLET }} --host-triplet ${{ env.TRIPLET }} \
-          --x-install-root=${{ github.workspace }}/../vcpkg_installed --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg \
+        ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build \
+          --x-install-root=${{ env.VCPKG_INSTALLED_DIR }} --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg \
           libunifex boost-coroutine boost-asio boost-interprocess boost-thread boost-process asio[coroutine]
       working-directory: ${{ env.VCPKG_ROOT }}
 
@@ -158,8 +155,8 @@ jobs:
       uses: lukka/run-cmake@v10
       with:
         configurePreset: 'default'
+        configurePresetAdditionalArgs: '["${{ env.CMAKE_ARGS }}", "-DVCPKG_INSTALLED_DIR=${{ env.VCPKG_INSTALLED_DIR }}", "-DVCPKG_MANIFEST_INSTALL=off", "-DASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES=off -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=on -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold"]'
         buildPreset: 'default'
-        configurePresetAdditionalArgs: '["${{ env.CMAKE_ARGS }}", "-DVCPKG_INSTALLED_DIR=${{ env.VCPKG_INSTALLED_DIR }}", "-DASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES=off -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=on -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold"]'
         buildPresetAdditionalArgs: '["--config Release", "--target asio-grpc-check-header-syntax all"]'
         testPreset: 'default'
         testPresetAdditionalArgs: '["-C Release"]'
@@ -168,12 +165,6 @@ jobs:
   gcc-latest-build:
     name: 'Ubuntu/24.04/GCC'
     runs-on: ubuntu-24.04
-    env:
-      CMAKE_EXTRA_ARGS: '-DASIO_GRPC_ENABLE_STDEXEC_TESTS=on -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on'
-      VCPKG_DEFAULT_TRIPLET: 'x64-linux-release'
-      VCPKG_DEFAULT_HOST_TRIPLET: 'x64-linux-release'
-      VCPKG_OVERLAY_PORTS: '${{ github.workspace }}/deps'
-      VCPKG_INSTALLED_DIR: '${{ github.workspace }}/../vcpkg_installed'
 
     steps:
     - name: Make gcc-14 default compiler
@@ -212,22 +203,13 @@ jobs:
           setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" `
           -Source "${{ env.FEED_URL }}"
 
-    - name: Run vcpkg
-      uses: lukka/run-vcpkg@v11
+    - name: Run CMake
+      uses: lukka/run-cmake@v10
       with:
-        vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
-        vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
-        vcpkgJsonGlob: 'vcpkg.json'
-        runVcpkgInstall: true
-
-    - name: GCC Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build -DVCPKG_INSTALLED_DIR=${{ env.VCPKG_INSTALLED_DIR }} -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DASIO_GRPC_TEST_COVERAGE=on -DASIO_GRPC_GCOV_PROGRAM=$(which gcov-14) -DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build/sonarqube-coverage.xml ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }} -DCMAKE_BUILD_TYPE=Debug -DCMAKE_UNITY_BUILD=off
-
-    - name: GCC Build
-      run: cmake --build --preset default
-
-    - name: GCC Test
-      run: ctest --preset default
+        configurePreset: 'default'
+        configurePresetAdditionalArgs: '["${{ env.CMAKE_ARGS }}", "-DVCPKG_TARGET_TRIPLET=x64-linux-release", "-DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DASIO_GRPC_TEST_COVERAGE=on -DASIO_GRPC_GCOV_PROGRAM=$(which gcov-14) -DASIO_GRPC_COVERAGE_OUTPUT_FILE=${{ github.workspace }}/build/sonarqube-coverage.xml -DCMAKE_BUILD_TYPE=Debug -DCMAKE_UNITY_BUILD=off -DASIO_GRPC_ENABLE_STDEXEC_TESTS=on -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on"]'
+        buildPreset: 'default'
+        testPreset: 'default'
 
     - name: GCC Coverage
       run: cmake --build --preset default --target asio-grpc-test-coverage
@@ -257,11 +239,6 @@ jobs:
     runs-on: ubuntu-22.04
     env:
       CMAKE_EXTRA_ARGS: '-DCMAKE_DISABLE_PRECOMPILE_HEADERS=on -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_CMAKE_INSTALL_TEST_CTEST_COMMAND=/usr/bin/ctest "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-13/include/c++/v1/ -Wno-unused-command-line-argument" -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld'
-      VCPKG_DEFAULT_TRIPLET: 'x64-linux-clang13-release'
-      VCPKG_DEFAULT_HOST_TRIPLET: 'x64-linux-clang13-release'
-      VCPKG_OVERLAY_PORTS: '${{ github.workspace }}/deps'
-      VCPKG_OVERLAY_TRIPLETS: '${{ github.workspace }}/.github/vcpkg'
-      VCPKG_INSTALLED_DIR: '${{ github.workspace }}/../vcpkg_installed'
 
     steps:
     - name: Make clang-13 default compiler
@@ -297,34 +274,22 @@ jobs:
           setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" `
           -Source "${{ env.FEED_URL }}"
 
-    - name: Run vcpkg
-      uses: lukka/run-vcpkg@v11
+    - name: Run CMake
+      uses: lukka/run-cmake@v10
       with:
-        vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
-        vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
-        vcpkgJsonGlob: 'vcpkg.json'
-        runVcpkgInstall: true
-
-    - name: Clang 13 Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build -DVCPKG_INSTALLED_DIR=${{ env.VCPKG_INSTALLED_DIR }} ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
-
-    - name: Clang 13 Build
-      run: cmake --build --preset default --config Release
-
-    - name: Clang 13 Test
-      run: ctest --preset default -C Release
+        configurePreset: 'default'
+        configurePresetAdditionalArgs: '["${{ env.CMAKE_ARGS }}", "-DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}/.github/vcpkg", "-DVCPKG_TARGET_TRIPLET=x64-linux-clang13-release", "${{ env.CMAKE_EXTRA_ARGS }}"]'
+        buildPreset: 'default'
+        buildPresetAdditionalArgs: '["--config Release"]'
+        testPreset: 'default'
+        testPresetAdditionalArgs: '["-C Release"]'
 
 
   clang-latest-build:
     name: 'Ubuntu/24.04/Clang'
     runs-on: ubuntu-24.04
     env:
-      CMAKE_EXTRA_ARGS: '-DCMAKE_DISABLE_PRECOMPILE_HEADERS=on -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -Wno-unused-command-line-argument" -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld'
-      VCPKG_DEFAULT_TRIPLET: 'x64-linux-clang-latest-release'
-      VCPKG_DEFAULT_HOST_TRIPLET: 'x64-linux-clang-latest-release'
-      VCPKG_OVERLAY_PORTS: '${{ github.workspace }}/deps'
-      VCPKG_OVERLAY_TRIPLETS: '${{ github.workspace }}/.github/vcpkg'
-      VCPKG_INSTALLED_DIR: '${{ github.workspace }}/../vcpkg_installed'
+      CMAKE_EXTRA_ARGS: '-DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}/.github/vcpkg -DVCPKG_TARGET_TRIPLET=x64-linux-clang13-release -DCMAKE_CXX_COMPILER=$(which clang++) -DCMAKE_DISABLE_PRECOMPILE_HEADERS=on -DASIO_GRPC_ENABLE_IO_URING_EXAMPLES=off -DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -Wno-unused-command-line-argument" -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld -DASIO_GRPC_BUILD_TESTS=off -DASIO_GRPC_BUILD_EXAMPLES=on'
 
     steps:
     - name: Install dot for doxygen, libc++ and mono
@@ -353,14 +318,6 @@ jobs:
           setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" `
           -Source "${{ env.FEED_URL }}"
 
-    - name: Run vcpkg
-      uses: lukka/run-vcpkg@v11
-      with:
-        vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
-        vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
-        vcpkgJsonGlob: 'vcpkg.json'
-        runVcpkgInstall: true
-
     - name: Download doxygen
       working-directory: ${{ runner.workspace }}
       run: |
@@ -369,20 +326,23 @@ jobs:
         wget --quiet https://download.sourceforge.net/project/doxygen/rel-1.12.0/doxygen-1.12.0.linux.bin.tar.gz &&\
         tar xf doxygen-1.12.0.linux.bin.tar.gz --strip-components=1
 
-    - name: Clang Configure CMake for examples
-      run: cmake --preset default -B ${{ github.workspace }}/build -DCMAKE_CXX_COMPILER=$(which clang++) -DVCPKG_INSTALLED_DIR=${{ env.VCPKG_INSTALLED_DIR }} ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }} -DASIO_GRPC_BUILD_TESTS=off -DASIO_GRPC_BUILD_EXAMPLES=on
+    - name: Run CMake for examples
+      uses: lukka/run-cmake@v10
+      with:
+        configurePreset: 'default'
+        configurePresetAdditionalArgs: '["${{ env.CMAKE_ARGS }}", "${{ env.CMAKE_EXTRA_ARGS }}", "-DASIO_GRPC_BUILD_TESTS=off -DASIO_GRPC_BUILD_EXAMPLES=on"]'
+        buildPreset: 'default'
+        buildPresetAdditionalArgs: '["--config Release"]'
 
-    - name: Clang Build examples
-      run: cmake --build --preset default --config Release
-
-    - name: Clang Configure CMake
-      run: cmake --preset default -B ${{ github.workspace }}/build -DCMAKE_CXX_COMPILER=$(which clang++) -DVCPKG_INSTALLED_DIR=${{ env.VCPKG_INSTALLED_DIR }} -DDOXYGEN_EXECUTABLE=${{ runner.workspace }}/doxygen/bin/doxygen ${{ env.CMAKE_EXTRA_ARGS }} ${{ env.CMAKE_ARGS }}
-
-    - name: Clang Build
-      run: cmake --build --preset default --config Release --target asio-grpc-check-header-syntax all
-
-    - name: Clang Test
-      run: ctest --preset default -C Release
+    - name: Run CMake for examples
+      uses: lukka/run-cmake@v10
+      with:
+        configurePreset: 'default'
+        configurePresetAdditionalArgs: '["${{ env.CMAKE_ARGS }}", "${{ env.CMAKE_EXTRA_ARGS }}", "-DDOXYGEN_EXECUTABLE=${{ runner.workspace }}/doxygen/bin/doxygen"]'
+        buildPreset: 'default'
+        buildPresetAdditionalArgs: '["--config Release", "--target asio-grpc-check-header-syntax all"]'
+        testPreset: 'default'
+        testPresetAdditionalArgs: '["-C Release"]'
 
     - name: Run doxygen
       run: |
