@@ -33,8 +33,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - &install-vcpkg
-      name: Install vcpkg
+    - name: Install vcpkg
       uses: lukka/run-vcpkg@v11
       with:
         vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
@@ -76,10 +75,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - *install-vcpkg
+    - name: Install vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
+        vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
 
-    - &set-nuget-sources
-      name: Add NuGet sources
+    - name: Add NuGet sources
       shell: pwsh
       run: |
         ${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
@@ -124,9 +126,26 @@ jobs:
 
     - uses: actions/checkout@v4
 
-    - *install-vcpkg
+    - name: Install vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
+        vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
 
-    - *set-nuget-sources
+    - name: Add NuGet sources
+      shell: pwsh
+      run: |
+        ${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
+        mono $(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
+          sources add `
+          -Source "${{ env.FEED_URL }}" `
+          -StorePasswordInClearText `
+          -Name GitHubPackages `
+          -UserName "${{ env.USERNAME }}" `
+          -Password "${{ secrets.GH_PACKAGES_TOKEN }}"
+        mono $(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
+          setapikey "${{ secrets.GH_PACKAGES_TOKEN }}" `
+          -Source "${{ env.FEED_URL }}"
 
     - name: Run vcpkg
       run: |
