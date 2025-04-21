@@ -11,7 +11,7 @@ Click on `snippet source` to jump to the code of an individual example.
 ```cpp
 // A simple client-streaming request with coroutines.
 ```
-<sup><a href='/example/streaming-client.cpp#L40-L44' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-client-rpc-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-client.cpp#L38-L42' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-client-rpc-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: client-rpc-server-streaming -->
@@ -19,7 +19,7 @@ Click on `snippet source` to jump to the code of an individual example.
 ```cpp
 // A simple server-streaming request with coroutines.
 ```
-<sup><a href='/example/streaming-client.cpp#L74-L78' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-rpc-server-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-client.cpp#L72-L76' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-rpc-server-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: client-rpc-bidirectional-streaming -->
@@ -27,7 +27,7 @@ Click on `snippet source` to jump to the code of an individual example.
 ```cpp
 // A bidirectional-streaming request that simply sends the response from the server back to it.
 ```
-<sup><a href='/example/streaming-client.cpp#L132-L136' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-rpc-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-client.cpp#L130-L134' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-rpc-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: client-side-run-with-deadline -->
@@ -37,7 +37,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // applied to streaming RPCs, where it is arguably more useful.
 // For unary RPCs, `grpc::ClientContext::set_deadline` should be preferred.
 ```
-<sup><a href='/example/streaming-client.cpp#L178-L184' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-run-with-deadline' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-client.cpp#L176-L182' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-run-with-deadline' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Multi-threaded
@@ -47,7 +47,7 @@ Click on `snippet source` to jump to the code of an individual example.
 ```cpp
 // Multi-threaded client using multiple GrpcContexts
 ```
-<sup><a href='/example/multi-threaded-client.cpp#L32-L36' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-multi-threaded' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/multi-threaded-client.cpp#L31-L35' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-multi-threaded' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: client-side-multi-threaded-alternative -->
@@ -55,7 +55,7 @@ Click on `snippet source` to jump to the code of an individual example.
 ```cpp
 // Multi-threaded client using single a GrpcContext
 ```
-<sup><a href='/example/multi-threaded-alternative-client.cpp#L32-L36' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-multi-threaded-alternative' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/multi-threaded-alternative-client.cpp#L31-L35' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-multi-threaded-alternative' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Generic
@@ -65,7 +65,7 @@ Click on `snippet source` to jump to the code of an individual example.
 ```cpp
 // A simple generic unary with Boost.Coroutine.
 ```
-<sup><a href='/example/generic-client.cpp#L49-L53' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-generic-unary-request' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/generic-client.cpp#L47-L51' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-generic-unary-request' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: client-side-generic-bidirectional-request -->
@@ -74,7 +74,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // A generic bidirectional-streaming request that simply sends the response from the server back to it using Asio's
 // stackless coroutines.
 ```
-<sup><a href='/example/generic-client.cpp#L86-L91' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-generic-bidirectional-request' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/generic-client.cpp#L84-L89' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-generic-bidirectional-request' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Share io_context
@@ -96,7 +96,7 @@ Click on `snippet source` to jump to the code of an individual example.
 ```cpp
 // Server-side hello world which handles exactly one request from the client before shutting down.
 ```
-<sup><a href='/example/hello-world-server.cpp#L25-L29' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/hello-world-server.cpp#L24-L28' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: server-side-helloworld-arena -->
@@ -104,7 +104,7 @@ Click on `snippet source` to jump to the code of an individual example.
 ```cpp
 // Server-side hello world with google::protobuf::Arena allocation
 ```
-<sup><a href='/example/hello-world-server-arena.cpp#L25-L29' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld-arena' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/hello-world-server-arena.cpp#L24-L28' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-helloworld-arena' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Streaming RPCs
@@ -114,7 +114,7 @@ Click on `snippet source` to jump to the code of an individual example.
 ```cpp
 // A simple client-streaming rpc handler using C++20 coroutines.
 ```
-<sup><a href='/example/streaming-server.cpp#L42-L46' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-client-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-server.cpp#L43-L47' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-client-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: server-side-server-streaming -->
@@ -122,7 +122,7 @@ Click on `snippet source` to jump to the code of an individual example.
 ```cpp
 // A simple server-streaming rpc handler using C++20 coroutines.
 ```
-<sup><a href='/example/streaming-server.cpp#L76-L80' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-server-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-server.cpp#L77-L81' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-server-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: server-side-notify-when-done -->
@@ -131,7 +131,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // A server-streaming rpc handler that sends a message every 30s but completes immediately if the client cancels the
 // rpc.
 ```
-<sup><a href='/example/streaming-server.cpp#L96-L101' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-notify-when-done' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-server.cpp#L97-L102' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-notify-when-done' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: server-side-bidirectional-streaming -->
@@ -140,7 +140,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // The following bidirectional-streaming example shows how to dispatch requests to a thread_pool and write responses
 // back to the client.
 ```
-<sup><a href='/example/streaming-server.cpp#L146-L151' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/streaming-server.cpp#L147-L152' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-bidirectional-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: server-side-server-streaming-async-generator -->
@@ -148,7 +148,7 @@ Click on `snippet source` to jump to the code of an individual example.
 ```cpp
 // (experimental) Server handling a server-streaming request using co_yield
 ```
-<sup><a href='/example/async-generator-server.cpp#L31-L35' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-server-streaming-async-generator' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/async-generator-server.cpp#L32-L36' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-server-streaming-async-generator' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Multi-threaded
@@ -158,7 +158,7 @@ Click on `snippet source` to jump to the code of an individual example.
 ```cpp
 // Multi-threaded server handling unary requests using callback API and multiple GrpcContexts
 ```
-<sup><a href='/example/multi-threaded-server.cpp#L32-L36' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-multi-threaded' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/multi-threaded-server.cpp#L31-L35' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-multi-threaded' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: server-side-multi-threaded-alternative -->
@@ -166,7 +166,7 @@ Click on `snippet source` to jump to the code of an individual example.
 ```cpp
 // Multi-threaded server handling unary requests using callback API and single GrpcContext
 ```
-<sup><a href='/example/multi-threaded-alternative-server.cpp#L30-L34' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-multi-threaded-alternative' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/multi-threaded-alternative-server.cpp#L29-L33' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-multi-threaded-alternative' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Generic
@@ -176,7 +176,7 @@ Click on `snippet source` to jump to the code of an individual example.
 ```cpp
 // Handle a simple generic unary request with Boost.Coroutine.
 ```
-<sup><a href='/example/generic-server.cpp#L38-L42' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-generic-unary-request' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/generic-server.cpp#L36-L40' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-generic-unary-request' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: server-side-generic-bidirectional-request -->
@@ -185,7 +185,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // A bidirectional-streaming example that shows how to dispatch requests to a thread_pool and write responses
 // back to the client.
 ```
-<sup><a href='/example/generic-server.cpp#L74-L79' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-generic-bidirectional-request' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/generic-server.cpp#L72-L77' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-generic-bidirectional-request' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Share io_context
@@ -197,7 +197,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // This can i.e. be useful when writing an HTTP server that occasionally reaches out to a gRPC server. In that case
 // creating a separate thread for the GrpcContext might be undesirable due to added synchronization complexity.
 ```
-<sup><a href='/example/share-io-context-server.cpp#L34-L40' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-share-io-context' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/share-io-context-server.cpp#L32-L38' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-share-io-context' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Main io_context
@@ -207,7 +207,7 @@ Click on `snippet source` to jump to the code of an individual example.
 ```cpp
 // Example showing how to use an io_context as the main context and a GrpcContext on a separate thread for gRPC servers.
 ```
-<sup><a href='/example/main-io-context-server.cpp#L33-L37' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-main-io-context' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/main-io-context-server.cpp#L32-L36' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-main-io-context' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ## Libunifex
@@ -219,7 +219,7 @@ Click on `snippet source` to jump to the code of an individual example.
 ```cpp
 // A simple unary request with unifex coroutines.
 ```
-<sup><a href='/example/unifex-client.cpp#L37-L41' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-unifex-unary' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/unifex-client.cpp#L38-L42' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-unifex-unary' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: client-side-unifex-server-streaming -->
@@ -227,7 +227,7 @@ Click on `snippet source` to jump to the code of an individual example.
 ```cpp
 // A server-streaming request with unifex sender/receiver.
 ```
-<sup><a href='/example/unifex-client.cpp#L59-L63' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-unifex-server-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/unifex-client.cpp#L60-L64' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-unifex-server-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: client-side-unifex-with-deadline -->
@@ -237,7 +237,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // can be applied to streaming RPCs, where it is arguably more useful. For unary RPCs,
 // `grpc::ClientContext::set_deadline` is the preferred way of specifying a timeout.
 ```
-<sup><a href='/example/unifex-client.cpp#L147-L153' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-unifex-with-deadline' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/unifex-client.cpp#L148-L154' title='Snippet source file'>snippet source</a> | <a href='#snippet-client-side-unifex-with-deadline' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 ### Server-side
@@ -248,7 +248,7 @@ Click on `snippet source` to jump to the code of an individual example.
 // Register a request handler to unary requests. A bit of boilerplate code regarding stop_source has been added to make
 // the example testable.
 ```
-<sup><a href='/example/unifex-server.cpp#L42-L47' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-unifex-unary' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/unifex-server.cpp#L43-L48' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-unifex-unary' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
 
 <!-- snippet: server-side-unifex-server-streaming -->
@@ -256,5 +256,5 @@ Click on `snippet source` to jump to the code of an individual example.
 ```cpp
 // A simple server-streaming request handler using coroutines.
 ```
-<sup><a href='/example/unifex-server.cpp#L69-L73' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-unifex-server-streaming' title='Start of snippet'>anchor</a></sup>
+<sup><a href='/example/unifex-server.cpp#L70-L74' title='Snippet source file'>snippet source</a> | <a href='#snippet-server-side-unifex-server-streaming' title='Start of snippet'>anchor</a></sup>
 <!-- endSnippet -->
