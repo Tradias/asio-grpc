@@ -16,7 +16,7 @@
 #include "helper.hpp"
 #include "rethrow_first_arg.hpp"
 
-#include <agrpc/asio_grpc.hpp>
+#include <agrpc/client_rpc.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
@@ -25,7 +25,7 @@ namespace asio = boost::asio;
 
 int main(int argc, const char** argv)
 {
-    const auto port = argc >= 2 ? argv[1] : "50051";
+    const char* port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("localhost:") + port;
 
     grpc::Status status;

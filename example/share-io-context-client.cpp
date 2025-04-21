@@ -16,10 +16,10 @@
 #include "helper.hpp"
 #include "rethrow_first_arg.hpp"
 
-#include <agrpc/asio_grpc.hpp>
+#include <agrpc/client_rpc.hpp>
+#include <agrpc/run.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/co_spawn.hpp>
-#include <boost/asio/detached.hpp>
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/experimental/awaitable_operators.hpp>
 #include <boost/asio/io_context.hpp>
@@ -63,7 +63,7 @@ asio::awaitable<void> make_grpc_request(agrpc::GrpcContext& grpc_context, exampl
 
 int main(int argc, const char** argv)
 {
-    const auto grpc_port = argc >= 2 ? argv[1] : "50051";
+    const char* grpc_port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("localhost:") + grpc_port;
     const auto tcp_port = static_cast<asio::ip::port_type>(argc >= 3 ? std::stoul(argv[2]) : 8000);
 

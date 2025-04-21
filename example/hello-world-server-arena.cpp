@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "awaitable_server_rpc.hpp"
 #include "helloworld/helloworld.grpc.pb.h"
 #include "rethrow_first_arg.hpp"
 
-#include <agrpc/asio_grpc.hpp>
+#include <agrpc/register_awaitable_rpc_handler.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
@@ -67,7 +66,7 @@ class RPCHandlerWithArenaRequestMessageFactory
 
 int main(int argc, const char** argv)
 {
-    const auto port = argc >= 2 ? argv[1] : "50051";
+    const char* port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("0.0.0.0:") + port;
 
     helloworld::Greeter::AsyncService service;

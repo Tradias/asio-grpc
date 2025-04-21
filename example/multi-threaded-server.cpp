@@ -17,9 +17,8 @@
 #include "rethrow_first_arg.hpp"
 #include "server_shutdown_asio.hpp"
 
-#include <agrpc/asio_grpc.hpp>
 #include <agrpc/health_check_service.hpp>
-#include <boost/asio/detached.hpp>
+#include <agrpc/register_callback_rpc_handler.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 

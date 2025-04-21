@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "awaitable_server_rpc.hpp"
 #include "example/v1/example.grpc.pb.h"
 #include "example/v1/example_ext.grpc.pb.h"
 #include "helper.hpp"
+#include "notify_when_done_server_rpc.hpp"
 #include "rethrow_first_arg.hpp"
 #include "server_shutdown_asio.hpp"
 
-#include <agrpc/asio_grpc.hpp>
+#include <agrpc/alarm.hpp>
+#include <agrpc/register_awaitable_rpc_handler.hpp>
 #include <boost/asio/as_tuple.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/detached.hpp>
@@ -242,7 +243,7 @@ using ShutdownRPC = agrpc::ServerRPC<&ExampleExtService::RequestShutdown>;
 
 int main(int argc, const char** argv)
 {
-    const auto port = argc >= 2 ? argv[1] : "50051";
+    const char* port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("0.0.0.0:") + port;
 
     std::unique_ptr<grpc::Server> server;

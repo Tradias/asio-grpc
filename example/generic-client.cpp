@@ -12,19 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "example/v1/example.grpc.pb.h"
 #include "example/v1/example_ext.grpc.pb.h"
 #include "helper.hpp"
 #include "yield_helper.hpp"
 
-#include <agrpc/asio_grpc.hpp>
+#include <agrpc/client_rpc.hpp>
 #include <boost/asio/compose.hpp>
 #include <boost/asio/coroutine.hpp>
 #include <boost/asio/spawn.hpp>
 #include <grpcpp/create_channel.h>
 #include <grpcpp/generic/generic_stub.h>
 
-#include <functional>
 #include <iostream>
 
 namespace asio = boost::asio;
@@ -205,7 +203,7 @@ void make_shutdown_request(agrpc::GrpcContext& grpc_context, example::v1::Exampl
 
 int main(int argc, const char** argv)
 {
-    const auto port = argc >= 2 ? argv[1] : "50051";
+    const char* port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("localhost:") + port;
 
     const auto channel = grpc::CreateChannel(host, grpc::InsecureChannelCredentials());

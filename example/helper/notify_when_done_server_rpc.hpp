@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_HELPER_AWAITABLE_SERVER_RPC_HPP
-#define AGRPC_HELPER_AWAITABLE_SERVER_RPC_HPP
+#ifndef AGRPC_HELPER_NOTIFY_WHEN_DONE_SERVER_RPC_HPP
+#define AGRPC_HELPER_NOTIFY_WHEN_DONE_SERVER_RPC_HPP
 
 #include <agrpc/server_rpc.hpp>
-#include <boost/asio/use_awaitable.hpp>
 
 namespace example
 {
@@ -29,4 +28,4 @@ template <auto RequestRPC>
 using NotifyWhenDoneServerRPC = agrpc::ServerRPC<RequestRPC, ServerRPCNotifyWhenDoneTraits>;
 }
 
-#endif  // AGRPC_HELPER_AWAITABLE_SERVER_RPC_HPP
+#endif  // AGRPC_HELPER_NOTIFY_WHEN_DONE_SERVER_RPC_HPP

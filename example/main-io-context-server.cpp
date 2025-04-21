@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "awaitable_server_rpc.hpp"
 #include "example/v1/example.grpc.pb.h"
 #include "helper.hpp"
 #include "rethrow_first_arg.hpp"
 
-#include <agrpc/asio_grpc.hpp>
+#include <agrpc/register_awaitable_rpc_handler.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/executor_work_guard.hpp>
@@ -69,7 +68,7 @@ void register_rpc_handler(asio::io_context& io_context, agrpc::GrpcContext& grpc
 
 int main(int argc, const char** argv)
 {
-    const auto grpc_port = argc >= 2 ? argv[1] : "50051";
+    const char* grpc_port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("0.0.0.0:") + grpc_port;
     const auto tcp_port = static_cast<asio::ip::port_type>(argc >= 3 ? std::stoul(argv[2]) : 8000);
 

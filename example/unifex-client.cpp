@@ -16,7 +16,8 @@
 #include "example/v1/example_ext.grpc.pb.h"
 #include "helper.hpp"
 
-#include <agrpc/asio_grpc.hpp>
+#include <agrpc/alarm.hpp>
+#include <agrpc/client_rpc.hpp>
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 #include <unifex/finally.hpp>

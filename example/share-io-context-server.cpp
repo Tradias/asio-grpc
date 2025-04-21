@@ -12,16 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "awaitable_server_rpc.hpp"
 #include "example/v1/example.grpc.pb.h"
 #include "helper.hpp"
 #include "rethrow_first_arg.hpp"
 #include "server_shutdown_asio.hpp"
 
-#include <agrpc/asio_grpc.hpp>
-#include <boost/asio/bind_executor.hpp>
+#include <agrpc/register_awaitable_rpc_handler.hpp>
+#include <agrpc/run.hpp>
 #include <boost/asio/co_spawn.hpp>
-#include <boost/asio/detached.hpp>
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <grpcpp/server.h>
@@ -56,7 +54,7 @@ using RPC = agrpc::ServerRPC<&example::v1::Example::AsyncService::RequestUnary>;
 
 int main(int argc, const char** argv)
 {
-    const auto grpc_port = argc >= 2 ? argv[1] : "50051";
+    const char* grpc_port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("0.0.0.0:") + grpc_port;
     const auto tcp_port = static_cast<asio::ip::port_type>(argc >= 3 ? std::stoul(argv[2]) : 8000);
 

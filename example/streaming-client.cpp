@@ -19,10 +19,8 @@
 
 #include <agrpc/alarm.hpp>
 #include <agrpc/client_rpc.hpp>
-#include <boost/asio/bind_executor.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/deferred.hpp>
-#include <boost/asio/detached.hpp>
 #include <boost/asio/experimental/awaitable_operators.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
 #include <grpcpp/client_context.h>
@@ -240,7 +238,7 @@ asio::awaitable<void> make_shutdown_request(agrpc::GrpcContext& grpc_context, Ex
 
 int main(int argc, const char** argv)
 {
-    const auto port = argc >= 2 ? argv[1] : "50051";
+    const char* port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("localhost:") + port;
 
     const auto channel = grpc::CreateChannel(host, grpc::InsecureChannelCredentials());

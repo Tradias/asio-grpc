@@ -16,9 +16,8 @@
 #include "helper.hpp"
 #include "rethrow_first_arg.hpp"
 
-#include <agrpc/asio_grpc.hpp>
+#include <agrpc/client_rpc.hpp>
 #include <boost/asio/co_spawn.hpp>
-#include <boost/asio/detached.hpp>
 #include <boost/asio/executor_work_guard.hpp>
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
@@ -50,7 +49,7 @@ asio::awaitable<void> make_request(agrpc::GrpcContext& grpc_context, helloworld:
 
 int main(int argc, const char** argv)
 {
-    const auto port = argc >= 2 ? argv[1] : "50051";
+    const char* port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("localhost:") + port;
     const auto thread_count = std::thread::hardware_concurrency();
 

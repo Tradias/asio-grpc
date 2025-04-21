@@ -17,8 +17,9 @@
 #include "helper.hpp"
 #include "rethrow_first_arg.hpp"
 
-#include <agrpc/asio_grpc.hpp>
-#include <grpcpp/client_context.h>
+#include <agrpc/client_rpc.hpp>
+#include <boost/asio/awaitable.hpp>
+#include <boost/asio/co_spawn.hpp>
 #include <grpcpp/create_channel.h>
 
 namespace asio = boost::asio;
@@ -70,7 +71,7 @@ asio::awaitable<void> make_shutdown_request(agrpc::GrpcContext& grpc_context, Ex
 
 int main(int argc, const char** argv)
 {
-    const auto port = argc >= 2 ? argv[1] : "50051";
+    const char* port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("localhost:") + port;
 
     const auto channel = grpc::CreateChannel(host, grpc::InsecureChannelCredentials());

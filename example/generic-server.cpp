@@ -18,7 +18,6 @@
 #include "server_shutdown_asio.hpp"
 #include "yield_helper.hpp"
 
-#include <agrpc/asio_grpc.hpp>
 #include <agrpc/register_yield_rpc_handler.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/detached.hpp>
@@ -31,7 +30,6 @@
 
 #include <iostream>
 #include <memory>
-#include <thread>
 
 namespace asio = boost::asio;
 
@@ -190,7 +188,7 @@ using ShutdownRPC = agrpc::ServerRPC<&ShutdownService::RequestShutdown>;
 
 int main(int argc, const char** argv)
 {
-    const auto port = argc >= 2 ? argv[1] : "50051";
+    const char* port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("0.0.0.0:") + port;
 
     grpc::AsyncGenericService service;

@@ -18,8 +18,9 @@
 #include "helper.hpp"
 #include "server_shutdown_unifex.hpp"
 
-#include <agrpc/asio_grpc.hpp>
+#include <agrpc/alarm.hpp>
 #include <agrpc/health_check_service.hpp>
+#include <agrpc/register_sender_rpc_handler.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 #include <unifex/finally.hpp>

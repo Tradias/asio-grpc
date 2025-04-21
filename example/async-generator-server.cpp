@@ -19,7 +19,8 @@
 #include "rethrow_first_arg.hpp"
 #include "server_shutdown_asio.hpp"
 
-#include <agrpc/asio_grpc.hpp>
+#include <agrpc/register_awaitable_rpc_handler.hpp>
+#include <agrpc/register_coroutine_rpc_handler.hpp>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
@@ -87,7 +88,7 @@ ServerStreamingAsyncGeneratorT<example::v1::Response> handle_server_streaming_re
 
 int main(int argc, const char** argv)
 {
-    const auto port = argc >= 2 ? argv[1] : "50051";
+    const char* port = argc >= 2 ? argv[1] : "50051";
     const auto host = std::string("0.0.0.0:") + port;
 
     std::unique_ptr<grpc::Server> server;

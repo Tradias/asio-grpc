@@ -54,11 +54,7 @@ Officially supported compilers are GCC 10+, Clang 13+, AppleClang 15+ and latest
 
 # Usage
 
-The library can be added to a CMake project using either `add_subdirectory` or `find_package`. Once set up, include the individual headers from the `agrpc` directory or the convenience header:
-
-```cpp
-#include <agrpc/asio_grpc.hpp>
-```
+The library can be added to a CMake project using either `add_subdirectory` or `find_package`. Once set up, include the individual headers from the `agrpc` directory.
 
 <details><summary><b>vcpkg</b></summary>
 <p>
