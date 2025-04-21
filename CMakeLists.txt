@@ -53,12 +53,6 @@ option(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES
        ${ASIO_GRPC_DEFAULT_ENABLE_CPP20_TESTS_AND_EXAMPLES})
 option(ASIO_GRPC_ENABLE_STDEXEC_TESTS "When tests builds are enabled then also create CMake targets for stdexec tests"
        off)
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-    option(
-        ASIO_GRPC_ENABLE_IO_URING_EXAMPLES
-        "When tests and/or example builds are enabled then also create CMake targets for examples that depend on io_uring"
-        on)
-endif()
 option(ASIO_GRPC_TEST_COVERAGE "Compile tests with --coverage" off)
 set(ASIO_GRPC_COVERAGE_OUTPUT_FILE
     "${CMAKE_CURRENT_BINARY_DIR}/sonarqube-coverage.xml"

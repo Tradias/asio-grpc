@@ -48,6 +48,7 @@ file(MAKE_DIRECTORY "${ASIO_GRPC_TEMP_DIR}")
 target_compile_definitions(
     asio-grpc-test-examples
     PRIVATE
+        BOOST_PROCESS_USE_STD_FS
         "ASIO_GRPC_EXAMPLE_TEMP_DIR=\"${ASIO_GRPC_TEMP_DIR}\""
         "ASIO_GRPC_EXAMPLE_ASYNC_GENERATOR_CLIENT=\"$<TARGET_FILE:asio-grpc-example-async-generator-client>\""
         "ASIO_GRPC_EXAMPLE_ASYNC_GENERATOR_SERVER=\"$<TARGET_FILE:asio-grpc-example-async-generator-server>\""
@@ -67,17 +68,6 @@ target_compile_definitions(
         "ASIO_GRPC_EXAMPLE_MULTI_THREADED_ALTERNATIVE_SERVER=\"$<TARGET_FILE:asio-grpc-example-multi-threaded-alternative-server>\""
         "ASIO_GRPC_EXAMPLE_UNIFEX_CLIENT=\"$<TARGET_FILE:asio-grpc-example-unifex-client>\""
         "ASIO_GRPC_EXAMPLE_UNIFEX_SERVER=\"$<TARGET_FILE:asio-grpc-example-unifex-server>\"")
-
-if(ASIO_GRPC_ENABLE_IO_URING_EXAMPLES OR ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-    add_dependencies(asio-grpc-test-examples asio-grpc-example-file-transfer-client
-                     asio-grpc-example-file-transfer-server)
-
-    target_compile_definitions(
-        asio-grpc-test-examples
-        PRIVATE BOOST_PROCESS_USE_STD_FS
-                "ASIO_GRPC_EXAMPLE_FILE_TRANSFER_CLIENT=\"$<TARGET_FILE:asio-grpc-example-file-transfer-client>\""
-                "ASIO_GRPC_EXAMPLE_FILE_TRANSFER_SERVER=\"$<TARGET_FILE:asio-grpc-example-file-transfer-server>\"")
-endif()
 
 if(ASIO_GRPC_DISCOVER_TESTS)
     doctest_discover_tests(asio-grpc-test-examples)

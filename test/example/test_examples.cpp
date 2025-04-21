@@ -51,14 +51,6 @@ TEST_CASE("examples")
         server_program = ASIO_GRPC_EXAMPLE_MAIN_IO_CONTEXT_SERVER;
         args.emplace_back(std::to_string(test::get_free_port()));
     }
-#ifdef ASIO_GRPC_EXAMPLE_FILE_TRANSFER_CLIENT
-    SUBCASE("Boost.Asio file transfer")
-    {
-        client_program = ASIO_GRPC_EXAMPLE_FILE_TRANSFER_CLIENT;
-        server_program = ASIO_GRPC_EXAMPLE_FILE_TRANSFER_SERVER;
-        args.emplace_back(ASIO_GRPC_EXAMPLE_TEMP_DIR);
-    }
-#endif
 #ifdef ASIO_GRPC_EXAMPLE_UNIFEX_CLIENT
     SUBCASE("unifex")
     {

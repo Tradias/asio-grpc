@@ -83,20 +83,6 @@ if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPL
     asio_grpc_add_example(async-generator-server "20")
     target_link_libraries(asio-grpc-example-async-generator-server PRIVATE asio-grpc::asio-grpc)
 
-    if(ASIO_GRPC_ENABLE_IO_URING_EXAMPLES OR "${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
-        asio_grpc_add_example(file-transfer-client "20")
-        target_link_libraries(asio-grpc-example-file-transfer-client
-                              PRIVATE asio-grpc::asio-grpc $<$<PLATFORM_ID:Linux>:PkgConfig::liburing>)
-        target_compile_definitions(asio-grpc-example-file-transfer-client
-                                   PRIVATE $<$<PLATFORM_ID:Linux>:BOOST_ASIO_HAS_IO_URING BOOST_ASIO_DISABLE_EPOLL>)
-
-        asio_grpc_add_example(file-transfer-server "20")
-        target_link_libraries(asio-grpc-example-file-transfer-server
-                              PRIVATE asio-grpc::asio-grpc $<$<PLATFORM_ID:Linux>:PkgConfig::liburing>)
-        target_compile_definitions(asio-grpc-example-file-transfer-server
-                                   PRIVATE $<$<PLATFORM_ID:Linux>:BOOST_ASIO_HAS_IO_URING BOOST_ASIO_DISABLE_EPOLL>)
-    endif()
-
     if(TARGET unifex::unifex)
         asio_grpc_add_example(unifex-server "20")
         target_link_libraries(asio-grpc-example-unifex-server PRIVATE asio-grpc::asio-grpc-unifex)

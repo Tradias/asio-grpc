@@ -435,6 +435,29 @@ TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::ClientStreamingClientRPC>,
     CHECK_FALSE(is_cancelled);
 }
 
+TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::UnaryClientRPC>,
+                  "stdexec Waiter: initiate alarm -> cancel alarm -> wait returns false")
+{
+    const auto wait = [](agrpc::Alarm& alarm, auto deadline, auto&&...)
+    {
+        return alarm.wait(deadline, agrpc::use_sender);
+    };
+    agrpc::Waiter<void()> waiter;
+    agrpc::Alarm alarm{grpc_context};
+    run(waiter.initiate(wait, alarm, test::five_seconds_from_now()),
+        stdexec::then(stdexec::just(),
+                      [&]
+                      {
+                          CHECK_FALSE(waiter.is_ready());
+                          alarm.cancel();
+                      }),
+        stdexec::then(waiter.wait(agrpc::use_sender),
+                      [&]()
+                      {
+                          CHECK(waiter.is_ready());
+                      }));
+}
+
 struct StdexecMockTest : test::ExecutionTestMixin<test::MockTest>
 {
 };
