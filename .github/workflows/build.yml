@@ -207,8 +207,14 @@ jobs:
         sudo update-alternatives --install /usr/bin/c++ c++ $(which g++-14) 50 &&\
         sudo update-alternatives --set c++ $(which g++-14)
 
-    - name: Install gcovr and mono
-      run: sudo apt-get install gcovr mono-complete
+    - name: Install mono
+      run: sudo apt-get install mono-complete
+
+    - uses: actions/setup-python@v5
+      with:
+        cache: 'pip'
+        
+    - run: pip install gcovr
 
     - uses: actions/checkout@v4
       with:
