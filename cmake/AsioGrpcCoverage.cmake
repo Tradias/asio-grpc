@@ -34,8 +34,8 @@ if(ASIO_GRPC_TEST_COVERAGE)
         asio-grpc-test-coverage
         COMMAND
             "${ASIO_GRPC_GCOVR_PROGRAM}" --gcov-executable "${_asio_grpc_gcov_command}" --sonarqube --output
-            "${ASIO_GRPC_COVERAGE_OUTPUT_FILE}" --root "${ASIO_GRPC_PROJECT_ROOT}" --gcov-ignore-parse-errors
-            "negative_hits.warn"
+            "${ASIO_GRPC_COVERAGE_OUTPUT_FILE}" --root "${ASIO_GRPC_PROJECT_ROOT}" --filter "src/agrpc"
+            --gcov-ignore-parse-errors "negative_hits.warn"
         WORKING_DIRECTORY "${ASIO_GRPC_PROJECT_ROOT}"
         VERBATIM)
 
