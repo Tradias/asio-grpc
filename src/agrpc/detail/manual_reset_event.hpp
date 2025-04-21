@@ -163,7 +163,8 @@ struct ManualResetEventRunningOperationState<void(Args...), Receiver> : ManualRe
         ManualResetEventRunningOperationState& op_;
     };
 
-    using StopCallback = detail::StopCallbackLifetime<exec::stop_token_type_t<Receiver&>, StopFunction>;
+    using StopToken = exec::stop_token_type_t<Receiver&>;
+    using StopCallback = detail::StopCallbackLifetime<StopToken, StopFunction>;
 
     static void complete_impl(Base* base)
     {
@@ -178,9 +179,9 @@ struct ManualResetEventRunningOperationState<void(Args...), Receiver> : ManualRe
     {
     }
 
-    void start() noexcept
+    void start(StopToken&& stop_token) noexcept
     {
-        stop_callback().emplace(exec::get_stop_token(receiver()), StopFunction{*this});
+        stop_callback().emplace(static_cast<StopToken&&>(stop_token), StopFunction{*this});
         this->event_.op_.store(this, std::memory_order_release);
     }
 
@@ -212,12 +213,13 @@ class ManualResetEventOperationState
             state_.complete();
             return;
         }
-        if (auto stop_token = exec::get_stop_token(state_.receiver()); stop_token.stop_requested())
+        auto stop_token = exec::get_stop_token(state_.receiver());
+        if (stop_token.stop_requested())
         {
             exec::set_done(static_cast<Receiver&&>(state_.receiver()));
             return;
         }
-        state_.start();
+        state_.start(std::move(stop_token));
     }
 
 #ifdef AGRPC_STDEXEC
