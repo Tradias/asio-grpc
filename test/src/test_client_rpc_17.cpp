@@ -293,7 +293,8 @@ TEST_CASE_FIXTURE(ClientRPCIoContextTest<test::ClientStreamingClientRPC>,
             }
             {
                 auto rpc = create_rpc();
-                CHECK(start_rpc(rpc, yield));
+                Response response;
+                CHECK(start_rpc(rpc, request, response, yield));
                 CHECK_EQ(grpc::StatusCode::OK, rpc.finish(yield).error_code());
                 CHECK_EQ(11, response.integer());
             }
