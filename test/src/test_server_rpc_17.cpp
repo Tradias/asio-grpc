@@ -62,7 +62,7 @@ struct ServerRPCTest : test::ClientServerRPCTest<typename test::IntrospectRPC<Se
         {
             if (use_notify_when_done_)
             {
-                CHECK(test::wait_for_future(this->grpc_context, future, yield));
+                CHECK(test::wait_for_future(this->grpc_context, std::move(future), yield));
                 CHECK_FALSE(rpc.context().IsCancelled());
             }
         }
@@ -324,6 +324,36 @@ TEST_CASE_TEMPLATE("ServerRPC/ClientRPC server streaming no finish causes cancel
             CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.finish(yield).error_code());
         });
 }
+
+#ifdef AGRPC_TEST_ASIO_HAS_CANCELLATION_SLOT
+TEST_CASE_TEMPLATE("ServerRPC/ClientRPC client streaming cancelling read causes rpc cancellation", RPC,
+                   test::ClientStreamingServerRPC, test::NotifyWhenDoneClientStreamingServerRPC)
+{
+    ServerRPCTest<RPC> test;
+    test.register_and_perform_three_requests(
+        [&](RPC& rpc, const asio::yield_context& yield)
+        {
+            asio::cancellation_signal signal;
+            std::promise<void> p;
+            typename RPC::Request request;
+            rpc.read(request, asio::bind_cancellation_slot(signal.slot(),
+                                                           [&](bool)
+                                                           {
+                                                               p.set_value();
+                                                           }));
+            signal.emit(asio::cancellation_type::terminal);
+            typename RPC::Response response;
+            rpc.finish(response, grpc::Status::OK, yield);
+            test::wait_for_future(test.grpc_context, p.get_future(), yield);
+        },
+        [&](auto& request, auto& response, const asio::yield_context& yield)
+        {
+            auto rpc = test.create_rpc();
+            test.start_rpc(rpc, request, response, yield);
+            CHECK_EQ(grpc::StatusCode::CANCELLED, rpc.finish(yield).error_code());
+        });
+}
+#endif
 
 TEST_CASE_TEMPLATE("ServerRPC/ClientRPC bidi streaming success", RPC, test::BidirectionalStreamingServerRPC,
                    test::NotifyWhenDoneBidirectionalStreamingServerRPC)

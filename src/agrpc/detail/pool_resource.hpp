@@ -102,7 +102,7 @@ class Pool
         return pv;
     }
 
-    [[nodiscard]] void* allocate_unmanaged_block(std::size_t block_size) noexcept
+    [[nodiscard]] static void* allocate_unmanaged_block(std::size_t block_size) noexcept
     {
         const auto allocation_size = block_size + HEADER_SIZE;
         void* p = detail::allocate_already_max_aligned(allocation_size);
@@ -220,7 +220,7 @@ class PoolResource
     void deallocate(void* p, std::size_t size)
     {
         const auto pool_idx = detail::get_pool_index(size);
-        return pools_[pool_idx].deallocate_block(p, detail::get_block_size_of_pool_at(pool_idx));
+        pools_[pool_idx].deallocate_block(p, detail::get_block_size_of_pool_at(pool_idx));
     }
 
     void release() noexcept

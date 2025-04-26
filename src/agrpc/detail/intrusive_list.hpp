@@ -101,21 +101,6 @@ class IntrusiveList
         tail_ = item;
     }
 
-    [[nodiscard]] T* pop_front() noexcept
-    {
-        auto* item = head_;
-        head_ = item->list_next_;
-        if (head_ != nullptr)
-        {
-            head_->list_prev_ = nullptr;
-        }
-        else
-        {
-            tail_ = nullptr;
-        }
-        return item;
-    }
-
     void remove(T* item) noexcept
     {
         auto* const prev = item->list_prev_;

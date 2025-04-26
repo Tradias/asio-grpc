@@ -161,6 +161,7 @@ struct HealthCheckServiceTest : test::GrpcContextTest
                 CHECK(rpc.start(*stub, request, yield));
                 CHECK(rpc.read(response, yield));
                 health_check_service->Shutdown();
+                health_check_service->Shutdown();
                 CHECK(rpc.read(response, yield));
                 CHECK_EQ(grpc_health::HealthCheckResponse_ServingStatus_NOT_SERVING, response.status());
                 response.Clear();

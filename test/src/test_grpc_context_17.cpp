@@ -25,6 +25,8 @@
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
 
+#include <forward_list>
+
 #ifdef AGRPC_BOOST_ASIO
 #include <boost/interprocess/managed_shared_memory.hpp>
 #endif
@@ -408,6 +410,25 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "post large local allocation")
         });
     grpc_context.run();
     CHECK(ok);
+}
+
+TEST_CASE_FIXTURE(test::GrpcContextTest, "GrpcContext::allocator perform many small allocations")
+{
+    post(
+        [&]
+        {
+            auto allocator = grpc_context.get_allocator();
+            std::forward_list<int, std::allocator_traits<decltype(allocator)>::rebind_alloc<int>> list{allocator};
+            for (size_t i{}; i != 100; ++i)
+            {
+                list.emplace_front(42);
+            }
+            for (auto&& v : list)
+            {
+                CHECK_EQ(42, v);
+            }
+        });
+    grpc_context.run();
 }
 
 #ifdef AGRPC_BOOST_ASIO

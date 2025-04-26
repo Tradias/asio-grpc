@@ -398,16 +398,23 @@ TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::ClientStreamingClientRPC>,
 {
     bool is_cancelled{true};
     ClientRPC rpc{grpc_context};
+    Request request;
     Response response;
     run(agrpc::register_sender_rpc_handler<test::NotifyWhenDoneClientStreamingServerRPC>(
             grpc_context, service,
             [&](test::NotifyWhenDoneClientStreamingServerRPC& rpc)
             {
-                return stdexec::when_all(stdexec::then(rpc.wait_for_done(agrpc::use_sender),
-                                                       [&]()
-                                                       {
-                                                           is_cancelled = rpc.context().IsCancelled();
-                                                       }),
+                return stdexec::when_all(rpc.wait_for_done(agrpc::use_sender) |
+                                             stdexec::then(
+                                                 [&]
+                                                 {
+                                                     is_cancelled = rpc.context().IsCancelled();
+                                                 }) |
+                                             stdexec::let_value(
+                                                 [&]
+                                                 {
+                                                     return rpc.wait_for_done(agrpc::use_sender);
+                                                 }),
                                          stdexec::let_value(stdexec::just(Response{}),
                                                             [&](Response& response)
                                                             {
@@ -415,12 +422,7 @@ TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::ClientStreamingClientRPC>,
                                                                                   agrpc::use_sender);
                                                             }));
             }),
-        stdexec::just(Request{}) |
-            stdexec::let_value(
-                [&](Request& request)
-                {
-                    return start_rpc(rpc, request, response, agrpc::use_sender);
-                }) |
+        start_rpc(rpc, request, response, agrpc::use_sender) |
             stdexec::let_value(
                 [&](bool)
                 {
@@ -433,6 +435,49 @@ TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::ClientStreamingClientRPC>,
                     server_shutdown.initiate();
                 }));
     CHECK_FALSE(is_cancelled);
+}
+
+TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::ClientStreamingClientRPC>,
+                  "stdexec ClientStreamingRPC automatic wait_for_done")
+{
+    ClientRPC rpc{grpc_context};
+    Request request;
+    Response response;
+    agrpc::Alarm alarm{grpc_context};
+    bool cancelled{};
+    run(agrpc::register_sender_rpc_handler<test::NotifyWhenDoneClientStreamingServerRPC>(
+            grpc_context, service,
+            [&](test::NotifyWhenDoneClientStreamingServerRPC&)
+            {
+                return stdexec::just(agrpc::detail::ScopeGuard{[&]
+                                                               {
+                                                                   cancelled = true;
+                                                                   alarm.cancel();
+                                                               }});
+            }),
+        start_rpc(rpc, request, response, agrpc::use_sender) |
+            stdexec::let_value(
+                [&](bool)
+                {
+                    auto deadline = cancelled ? test::now() : test::five_hundred_milliseconds_from_now();
+                    return test::let_stopped(alarm.wait(deadline, agrpc::use_sender),
+                                             [&]
+                                             {
+                                                 return stdexec::just();
+                                             });
+                }) |
+            stdexec::let_value(
+                [&]()
+                {
+                    return rpc.finish(agrpc::use_sender);
+                }) |
+            stdexec::then(
+                [&](const grpc::Status& status)
+                {
+                    CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
+                    server_shutdown.initiate();
+                }));
+    CHECK(cancelled);
 }
 
 TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::UnaryClientRPC>,

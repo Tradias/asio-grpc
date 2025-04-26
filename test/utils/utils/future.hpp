@@ -26,7 +26,7 @@ namespace test
 {
 template <class T, class Yield>
 std::optional<std::conditional_t<std::is_same_v<void, T>, bool, T>> wait_for_future(agrpc::GrpcContext& grpc_context,
-                                                                                    std::future<T>& future,
+                                                                                    std::future<T> future,
                                                                                     const Yield& yield)
 {
     agrpc::Alarm alarm{grpc_context};
