@@ -68,13 +68,12 @@ jobs:
         testPresetAdditionalArgs: '["-C", "Release"]'
 
     - name: Create test report
-      uses: dorny/test-reporter@v2
+      uses: EnricoMi/publish-unit-test-result-action/windows@v2
       if: success() || failure()
       with:
-        name: Windows tests
-        path: build/junit.xml
-        reporter: java-junit
-        badge-title: 'test-windows'
+        check_name: 'Windows tests'
+        files: 'build/junit.xml'
+        comment_mode: 'off'
 
 
   # region: macos
@@ -115,13 +114,12 @@ jobs:
         testPreset: 'default'
 
     - name: Create test report
-      uses: dorny/test-reporter@v2
+      uses: EnricoMi/publish-unit-test-result-action/macos@v2
       if: success() || failure()
       with:
-        name: 'MacOS latest tests'
-        path: 'build/junit.xml'
-        reporter: 'java-junit'
-        badge-title: 'test-macos'
+        check_name: 'MacOS latest tests'
+        files: 'build/junit.xml'
+        comment_mode: 'off'
 
 
   # region: gcc 10
@@ -185,13 +183,12 @@ jobs:
         testPresetAdditionalArgs: '["-C", "Release"]'
 
     - name: Create test report
-      uses: dorny/test-reporter@v2
+      uses: EnricoMi/publish-unit-test-result-action/linux@v2
       if: success() || failure()
       with:
-        name: 'GCC 10 tests'
-        path: 'build/junit.xml'
-        reporter: 'java-junit'
-        badge-title: 'test-gcc-10'
+        check_name: 'GCC 10 tests'
+        files: 'build/junit.xml'
+        comment_mode: 'off'
 
 
   # region: gcc latest
@@ -210,10 +207,6 @@ jobs:
     - name: Install mono
       run: sudo apt-get install mono-complete
 
-    - uses: actions/setup-python@v5
-      with:
-        cache: 'pip'
-        
     - run: pip install gcovr
 
     - uses: actions/checkout@v4
@@ -254,13 +247,12 @@ jobs:
         testPreset: 'default'
 
     - name: Create test report
-      uses: dorny/test-reporter@v2
+      uses: EnricoMi/publish-unit-test-result-action/linux@v2
       if: success() || failure()
       with:
-        name: 'GCC latest tests'
-        path: 'build/junit.xml'
-        reporter: 'java-junit'
-        badge-title: 'test-gcc-latest'
+        check_name: 'GCC latest tests'
+        files: 'build/junit.xml'
+        comment_mode: 'off'
 
     - name: GCC Coverage
       run: cmake --build --preset default --target asio-grpc-test-coverage
@@ -337,13 +329,12 @@ jobs:
         testPresetAdditionalArgs: '["-C", "Release"]'
 
     - name: Create test report
-      uses: dorny/test-reporter@v2
+      uses: EnricoMi/publish-unit-test-result-action/linux@v2
       if: success() || failure()
       with:
-        name: 'Clang 13 tests'
-        path: 'build/junit.xml'
-        reporter: 'java-junit'
-        badge-title: 'test-clang-13'
+        check_name: 'Clang 13 tests'
+        files: 'build/junit.xml'
+        comment_mode: 'off'
 
 
   # region: clang latest
@@ -408,13 +399,12 @@ jobs:
         testPresetAdditionalArgs: '["-C", "Release"]'
 
     - name: Create test report
-      uses: dorny/test-reporter@v2
+      uses: EnricoMi/publish-unit-test-result-action/linux@v2
       if: success() || failure()
       with:
-        name: 'Clang latest tests'
-        path: 'build/junit.xml'
-        reporter: 'java-junit'
-        badge-title: 'test-clang-latest'
+        check_name: 'Clang latest tests'
+        files: 'build/junit.xml'
+        comment_mode: 'off'
 
     - name: Run doxygen
       run: |
