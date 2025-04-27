@@ -37,8 +37,6 @@ class ReactorPtr
     using Ptr = Allocation*;
 
   public:
-    using ValueType = Reactor;
-
     ReactorPtr() = default;
 
     ReactorPtr(const ReactorPtr& other) noexcept : ptr_(other.ptr_)
@@ -96,9 +94,9 @@ class ReactorPtr
 
     [[nodiscard]] explicit operator bool() const noexcept { return ptr_ != nullptr; }
 
-    [[nodiscard]] ValueType* operator->() const noexcept { return ptr_; }
+    [[nodiscard]] Reactor* operator->() const noexcept { return ptr_; }
 
-    [[nodiscard]] ValueType& operator*() const noexcept { return *ptr_; }
+    [[nodiscard]] Reactor& operator*() const noexcept { return *ptr_; }
 
   private:
     friend detail::ReactorPtrAccess;

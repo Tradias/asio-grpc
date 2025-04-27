@@ -17,7 +17,6 @@
 #include "utils/doctest.hpp"
 #include "utils/grpc_client_server_test.hpp"
 #include "utils/io_context_test.hpp"
-#include "utils/time.hpp"
 
 #include <agrpc/server_callback.hpp>
 #include <agrpc/server_callback_ptr.hpp>
