@@ -39,17 +39,6 @@ class ManualResetEventOffsetStorage
   private:
     T& value() noexcept { return *reinterpret_cast<T*>(reinterpret_cast<std::byte*>(this) + Offset); }
 };
-
-template <std::ptrdiff_t Offset>
-struct ManualResetEventOffsetStorageTemplate
-{
-    template <class T>
-    using Type = ManualResetEventOffsetStorage<Offset, T>;
-};
-
-template <class Signature, std::ptrdiff_t Offset>
-using OffsetManualResetEvent =
-    detail::BasicManualResetEvent<Signature, ManualResetEventOffsetStorageTemplate<Offset>::template Type>;
 }
 
 AGRPC_NAMESPACE_END

@@ -16,8 +16,7 @@
 #define AGRPC_DETAIL_SERVER_CALLBACK_HPP
 
 #include <agrpc/detail/forward.hpp>
-#include <agrpc/detail/manual_reset_event.hpp>
-#include <agrpc/detail/manual_reset_event_offset_storage.hpp>
+#include <agrpc/detail/offset_manual_reset_event.hpp>
 
 #include <cstdint>
 
@@ -48,8 +47,6 @@ class ReactorRPCState
 
 #define AGRPC_STORAGE_HAS_CORRECT_OFFSET(D, E, S) \
     static_assert(decltype(std::declval<D>().E)::Storage::OFFSET == offsetof(D, S) - offsetof(D, E))
-
-inline constexpr auto OFFSET_MANUAL_RESET_EVENT_SIZE = sizeof(detail::OffsetManualResetEvent<void(bool), 0>);
 
 struct ServerUnaryReactorData
 {

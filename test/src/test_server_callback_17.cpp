@@ -18,6 +18,7 @@
 #include "utils/grpc_client_server_test.hpp"
 #include "utils/io_context_test.hpp"
 
+#include <agrpc/client_callback.hpp>
 #include <agrpc/server_callback.hpp>
 #include <agrpc/server_callback_ptr.hpp>
 
@@ -27,17 +28,14 @@ struct ServerCallbackTest : test::GrpcClientServerCallbackTest, test::IoContextT
 {
     ServerCallbackTest() { run_io_context_detached(); }
 
-    auto make_unary_request(const test::msg::Request& request = {})
+    auto make_unary_request()
     {
-        std::promise<grpc::Status> promise;
         test::set_default_deadline(client_context);
+        test::msg::Request request;
         test::msg::Response response;
-        stub->async()->Unary(&client_context, &request, &response,
-                             [&](auto&& status)
-                             {
-                                 promise.set_value(status);
-                             });
-        auto status = promise.get_future().get();
+        auto status = agrpc::request(&test::v1::Test::Stub::async::Unary, stub->async(), client_context, request,
+                                     response, asio::use_future)
+                          .get();
         return std::pair{std::move(status), std::move(response)};
     }
 };
@@ -143,9 +141,16 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr read/send_initial_meta
             });
         return rpc.get();
     };
-    auto [status, response] = make_unary_request();
-    CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
+    test::set_default_deadline(client_context);
+    agrpc::ClientUnaryReactor rpc(io_context.get_executor());
+    test::msg::Request request;
+    test::msg::Response response;
+    stub->async()->Unary(&client_context, &request, &response, rpc.get());
+    rpc.start();
+    CHECK(rpc.wait_for_initial_metadata(asio::use_future).get());
     CHECK_EQ(0, client_context.GetServerInitialMetadata().find("test")->second.compare("a"));
+    auto status = rpc.wait_for_finish(asio::use_future).get();
+    CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
     CHECK(send_ok);
     CHECK(allocator_has_been_used());
 }

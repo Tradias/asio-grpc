@@ -84,6 +84,9 @@ class Waiter;
 template <class Executor>
 class BasicServerUnaryReactor;
 
+template <class Executor>
+class BasicClientUnaryReactor;
+
 template <class Reactor>
 class ReactorPtr;
 

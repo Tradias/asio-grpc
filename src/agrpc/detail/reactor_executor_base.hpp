@@ -29,13 +29,11 @@ class ReactorExecutorBase
   public:
     using executor_type = Executor;
 
+    explicit ReactorExecutorBase(Executor executor) : executor_(static_cast<Executor&&>(executor)) {}
+
     [[nodiscard]] const Executor& get_executor() const noexcept { return executor_; }
 
   private:
-    friend agrpc::BasicServerUnaryReactor<Executor>;
-
-    explicit ReactorExecutorBase(Executor executor) : executor_(static_cast<Executor&&>(executor)) {}
-
     Executor executor_;
 };
 }
