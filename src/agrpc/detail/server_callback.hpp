@@ -19,12 +19,33 @@
 #include <agrpc/detail/manual_reset_event.hpp>
 #include <agrpc/detail/manual_reset_event_offset_storage.hpp>
 
+#include <cstdint>
+
 #include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+class ReactorRPCState
+{
+  private:
+    static constexpr std::uint8_t FINISH_CALLED_BIT = 1u << 0u;
+    static constexpr std::uint8_t CANCELLED_BIT = 1u << 1u;
+
+  public:
+    [[nodiscard]] constexpr bool is_finish_called() const noexcept { return (state_ & FINISH_CALLED_BIT) != 0u; }
+
+    constexpr void set_finish_called() noexcept { state_ |= FINISH_CALLED_BIT; }
+
+    [[nodiscard]] constexpr bool is_cancelled() const noexcept { return (state_ & CANCELLED_BIT) != 0u; }
+
+    constexpr void set_cancelled() noexcept { state_ |= CANCELLED_BIT; }
+
+  private:
+    std::uint8_t state_{};
+};
+
 #define AGRPC_STORAGE_HAS_CORRECT_OFFSET(D, E, S) \
     static_assert(decltype(std::declval<D>().E)::Storage::OFFSET == offsetof(D, S) - offsetof(D, E))
 
@@ -36,7 +57,7 @@ struct ServerUnaryReactorData
     detail::OffsetManualResetEvent<void(bool), OFFSET_MANUAL_RESET_EVENT_SIZE + sizeof(bool)> finish_{};
     bool ok_initial_metadata_{};
     bool ok_finish_{};
-    bool is_finished_{};
+    ReactorRPCState state_{};
 };
 
 static_assert(std::is_standard_layout_v<ServerUnaryReactorData>);
@@ -51,7 +72,7 @@ struct ServerReadReactorData
     bool ok_initial_metadata_{};
     bool ok_read_{};
     bool ok_finish_{};
-    bool is_finished_{};
+    ReactorRPCState state_{};
 };
 
 static_assert(std::is_standard_layout_v<ServerReadReactorData>);

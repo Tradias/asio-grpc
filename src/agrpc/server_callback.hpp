@@ -43,7 +43,7 @@ class BasicServerUnaryReactor : private grpc::ServerUnaryReactor, public detail:
 
     void initiate_finish(grpc::Status status)
     {
-        data_.is_finished_ = true;
+        data_.state_.set_finish_called();
         this->Finish(static_cast<grpc::Status&&>(status));
     }
 
@@ -59,17 +59,17 @@ class BasicServerUnaryReactor : private grpc::ServerUnaryReactor, public detail:
 
     using BasicServerUnaryReactor::ReactorExecutorBase::ReactorExecutorBase;
 
-    [[nodiscard]] bool is_finished() const noexcept { return data_.is_finished_; }
+    [[nodiscard]] bool is_finished_called() const noexcept { return data_.state_.is_finish_called(); }
 
     void OnSendInitialMetadataDone(bool ok) final { data_.initial_metadata_.set(static_cast<bool&&>(ok)); }
 
-    void on_done()
-    {
-        data_.is_finished_ = true;
-        data_.finish_.set(true);
-    }
+    void on_done() { data_.finish_.set(!data_.state_.is_cancelled()); }
 
-    void OnCancel() final { data_.finish_.set(false); }
+    void OnCancel() final
+    {
+        data_.state_.set_cancelled();
+        data_.finish_.set(false);
+    }
 
     detail::ServerUnaryReactorData data_;
 };
@@ -105,7 +105,7 @@ class BasicServerReadReactor : private grpc::ServerReadReactor<Request>, public 
 
     void initiate_finish(grpc::Status status)
     {
-        data_.is_finished_ = true;
+        data_.state_.set_finish_called();
         this->Finish(static_cast<grpc::Status&&>(status));
     }
 
@@ -121,19 +121,19 @@ class BasicServerReadReactor : private grpc::ServerReadReactor<Request>, public 
 
     using BasicServerReadReactor::ReactorExecutorBase::ReactorExecutorBase;
 
-    [[nodiscard]] bool is_finished() const noexcept { return data_.is_finished_; }
+    [[nodiscard]] bool is_finished_called() const noexcept { return data_.state_.is_finish_called(); }
 
     void OnSendInitialMetadataDone(bool ok) final { data_.initial_metadata_.set(static_cast<bool&&>(ok)); }
 
     void OnReadDone(bool ok) final { data_.read_.set(static_cast<bool&&>(ok)); }
 
-    void on_done()
-    {
-        data_.is_finished_ = true;
-        data_.finish_.set(true);
-    }
+    void on_done() { data_.finish_.set(!data_.state_.is_cancelled()); }
 
-    void OnCancel() final { data_.finish_.set(false); }
+    void OnCancel() final
+    {
+        data_.state_.set_cancelled();
+        data_.finish_.set(false);
+    }
 
     detail::ServerReadReactorData data_;
 };

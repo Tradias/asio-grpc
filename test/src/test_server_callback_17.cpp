@@ -55,23 +55,29 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr automatic cancellation
 
 TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr TryCancel")
 {
-    bool finish_ok{true};
+    std::promise<bool> finish_ok;
+    asio::steady_timer timer{io_context};
     service.unary = [&](grpc::CallbackServerContext* context, const test::msg::Request*,
                         test::msg::Response*) -> grpc::ServerUnaryReactor*
     {
         auto ptr = agrpc::make_reactor<agrpc::ServerUnaryReactor>(io_context.get_executor());
         auto& rpc = *ptr;
-        ptr->wait_for_finish(
-            [&, ptr](auto&&, bool ok)
-            {
-                finish_ok = ok;
-            });
         context->TryCancel();
+        timer.expires_after(std::chrono::milliseconds(200));
+        timer.async_wait(
+            [&, ptr](auto&&)
+            {
+                ptr->wait_for_finish(
+                    [&, ptr](auto&&, bool ok)
+                    {
+                        finish_ok.set_value(ok);
+                    });
+            });
         return rpc.get();
     };
     auto [status, response] = make_unary_request();
     CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
-    CHECK_FALSE(finish_ok);
+    CHECK_FALSE(finish_ok.get_future().get());
 }
 
 TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr finish successfully")

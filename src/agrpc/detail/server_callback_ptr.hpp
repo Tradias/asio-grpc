@@ -51,7 +51,7 @@ class RefCountedReactor : public Reactor
         const auto count = --ref_count_;
         if (1 == count)
         {
-            if (!this->is_finished())
+            if (!this->is_finished_called())
             {
                 this->initiate_finish({grpc::StatusCode::CANCELLED, {}});
             }
@@ -74,7 +74,7 @@ class RefCountedReactor : public Reactor
         this->on_done();
     }
 
-    std::atomic_size_t ref_count_{2};  // shared ptr + OnDone
+    std::atomic_size_t ref_count_{2};  // user + OnDone
     ReactorDeallocateFn deallocate_;
 };
 }
