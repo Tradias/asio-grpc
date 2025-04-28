@@ -26,7 +26,10 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class Reactor>
-class RefCountedReactor : public Reactor
+class RefCountedServerReactor;
+
+template <class Reactor>
+class RefCountedReactorBase : public Reactor
 {
   public:
     struct InitArg
@@ -35,7 +38,7 @@ class RefCountedReactor : public Reactor
         ReactorDeallocateFn deallocate_;
     };
 
-    explicit RefCountedReactor(InitArg init_arg) noexcept
+    explicit RefCountedReactorBase(InitArg init_arg) noexcept
         : Reactor(static_cast<typename Reactor::executor_type&&>(init_arg.executor_)), deallocate_(init_arg.deallocate_)
     {
     }
@@ -43,6 +46,19 @@ class RefCountedReactor : public Reactor
   private:
     template <class>
     friend class agrpc::ReactorPtr;
+
+    template <class>
+    friend class detail::RefCountedServerReactor;
+
+    template <class>
+    friend class detail::RefCountedClientReactor;
+
+    struct Guard
+    {
+        ~Guard() { self_.decrement_ref_count(); }
+
+        RefCountedReactorBase& self_;
+    };
 
     void increment_ref_count() noexcept { ++ref_count_; }
 
@@ -62,20 +78,36 @@ class RefCountedReactor : public Reactor
         }
     }
 
-    void OnDone() final
-    {
-        struct Guard
-        {
-            ~Guard() { self_.decrement_ref_count(); }
-
-            RefCountedReactor& self_;
-        };
-        Guard g{*this};
-        this->on_done();
-    }
-
     std::atomic_size_t ref_count_{2};  // user + OnDone
     ReactorDeallocateFn deallocate_;
+};
+
+template <class Reactor>
+class RefCountedServerReactor : public RefCountedReactorBase<Reactor>
+{
+  public:
+    using RefCountedServerReactor::RefCountedReactorBase::RefCountedReactorBase;
+
+  private:
+    void OnDone() final
+    {
+        typename RefCountedServerReactor::Guard g{*this};
+        this->on_done();
+    }
+};
+
+template <class Reactor>
+class RefCountedClientReactor : public RefCountedReactorBase<Reactor>
+{
+  public:
+    using RefCountedClientReactor::RefCountedReactorBase::RefCountedReactorBase;
+
+  private:
+    void OnDone(const grpc::Status& status) final
+    {
+        typename RefCountedClientReactor::Guard g{*this};
+        this->on_done(status);
+    }
 };
 }
 

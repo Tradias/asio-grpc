@@ -25,7 +25,7 @@
 AGRPC_NAMESPACE_BEGIN()
 
 template <class Executor>
-using BasicServerUnaryReactorBase = detail::RefCountedReactor<agrpc::BasicServerUnaryReactor<Executor>>;
+using BasicServerUnaryReactorBase = detail::RefCountedServerReactor<agrpc::BasicServerUnaryReactor<Executor>>;
 
 using ServerUnaryReactorBase = BasicServerUnaryReactorBase<asio::any_io_executor>;
 

@@ -84,6 +84,9 @@ class Waiter;
 template <class Executor>
 class BasicServerUnaryReactor;
 
+template <class Request, class Executor>
+class BasicServerReadReactor;
+
 template <class Executor>
 class BasicClientUnaryReactor;
 
@@ -162,8 +165,14 @@ struct ManualResetEventOperation;
 template <class Signature, template <class...> class Storage, class Receiver>
 class ManualResetEventOperationState;
 
+template <class Reactor>
+class RefCountedReactorBase;
+
 template <class Executor>
-class RefCountedReactor;
+class RefCountedServerReactor;
+
+template <class Executor>
+class RefCountedClientReactor;
 }
 
 AGRPC_NAMESPACE_END

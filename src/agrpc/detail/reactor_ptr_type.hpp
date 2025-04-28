@@ -32,7 +32,19 @@ struct RefCountedReactorType
 template <class Executor>
 struct RefCountedReactorType<agrpc::BasicServerUnaryReactor<Executor>>
 {
-    using Type = RefCountedReactor<agrpc::BasicServerUnaryReactor<Executor>>;
+    using Type = RefCountedServerReactor<agrpc::BasicServerUnaryReactor<Executor>>;
+};
+
+template <class Request, class Executor>
+struct RefCountedReactorType<agrpc::BasicServerReadReactor<Request, Executor>>
+{
+    using Type = RefCountedServerReactor<agrpc::BasicServerReadReactor<Request, Executor>>;
+};
+
+template <class Executor>
+struct RefCountedReactorType<agrpc::BasicClientUnaryReactor<Executor>>
+{
+    using Type = RefCountedClientReactor<agrpc::BasicClientUnaryReactor<Executor>>;
 };
 
 template <class Reactor>

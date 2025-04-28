@@ -55,7 +55,10 @@ class BasicServerUnaryReactor : private grpc::ServerUnaryReactor, public detail:
 
   private:
     template <class>
-    friend class detail::RefCountedReactor;
+    friend class detail::RefCountedReactorBase;
+
+    template <class>
+    friend class detail::RefCountedServerReactor;
 
     using BasicServerUnaryReactor::ReactorExecutorBase::ReactorExecutorBase;
 
@@ -117,7 +120,10 @@ class BasicServerReadReactor : private grpc::ServerReadReactor<Request>, public 
 
   private:
     template <class>
-    friend class detail::RefCountedReactor;
+    friend class detail::RefCountedReactorBase;
+
+    template <class>
+    friend class detail::RefCountedServerReactor;
 
     using BasicServerReadReactor::ReactorExecutorBase::ReactorExecutorBase;
 

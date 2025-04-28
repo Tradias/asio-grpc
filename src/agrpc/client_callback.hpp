@@ -32,8 +32,6 @@ template <class Executor>
 class BasicClientUnaryReactor : private grpc::ClientUnaryReactor, public detail::ReactorExecutorBase<Executor>
 {
   public:
-    using BasicClientUnaryReactor::ReactorExecutorBase::ReactorExecutorBase;
-
     [[nodiscard]] grpc::ClientUnaryReactor* get() noexcept { return this; }
 
     void start() { this->StartCall(); }
@@ -51,9 +49,21 @@ class BasicClientUnaryReactor : private grpc::ClientUnaryReactor, public detail:
     }
 
   private:
+    template <class>
+    friend class detail::RefCountedReactorBase;
+
+    template <class>
+    friend class detail::RefCountedClientReactor;
+
+    using BasicClientUnaryReactor::ReactorExecutorBase::ReactorExecutorBase;
+
+    [[nodiscard]] bool is_finished_called() const noexcept { return true; }
+
+    void initiate_finish(const grpc::Status&) {}
+
     void OnReadInitialMetadataDone(bool ok) final { data_.initial_metadata_.set(static_cast<bool&&>(ok)); }
 
-    void OnDone(const grpc::Status& status) final { data_.finish_.set(grpc::Status{status}); }
+    void on_done(const grpc::Status& status) { data_.finish_.set(grpc::Status{status}); }
 
     detail::ClientUnaryReactorData data_;
 };
