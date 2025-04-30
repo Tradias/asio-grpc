@@ -19,6 +19,7 @@
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/manual_reset_event.hpp>
 #include <grpcpp/client_context.h>
+#include <grpcpp/support/client_callback.h>
 #include <grpcpp/support/status.h>
 
 #include <agrpc/detail/config.hpp>
@@ -36,6 +37,14 @@ struct ClientUnaryReactorData
 template <class StubAsync, class Request, class Response>
 using AsyncUnaryFn = void (StubAsync::*)(grpc::ClientContext*, const Request*, Response*,
                                          std::function<void(::grpc::Status)>);
+
+template <class StubAsync, class Request, class Response>
+using AsyncUnaryReactorFn = void (StubAsync::*)(grpc::ClientContext*, const Request*, Response*,
+                                                grpc::ClientUnaryReactor*);
+
+template <class StubAsync, class Request, class Response>
+using AsyncClientStreamingReactorFn = void (StubAsync::*)(grpc::ClientContext*, Response*,
+                                                          grpc::ClientWriteReactor<Request>*);
 
 template <class CompletionHandler>
 class UnaryRequestCallback

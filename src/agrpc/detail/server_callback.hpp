@@ -33,16 +33,16 @@ class ReactorRPCState
     static constexpr std::uint8_t CANCELLED_BIT = 1u << 1u;
 
   public:
-    [[nodiscard]] constexpr bool is_finish_called() const noexcept { return (state_ & FINISH_CALLED_BIT) != 0u; }
+    [[nodiscard]] bool is_finish_called() const noexcept { return (state_ & FINISH_CALLED_BIT) != 0u; }
 
-    constexpr void set_finish_called() noexcept { state_ |= FINISH_CALLED_BIT; }
+    void set_finish_called() noexcept { state_ |= FINISH_CALLED_BIT; }
 
-    [[nodiscard]] constexpr bool is_cancelled() const noexcept { return (state_ & CANCELLED_BIT) != 0u; }
+    [[nodiscard]] bool is_cancelled() const noexcept { return (state_ & CANCELLED_BIT) != 0u; }
 
-    constexpr void set_cancelled() noexcept { state_ |= CANCELLED_BIT; }
+    void set_cancelled() noexcept { state_ |= CANCELLED_BIT; }
 
   private:
-    std::uint8_t state_{};
+    std::atomic<std::uint8_t> state_{};
 };
 
 #define AGRPC_STORAGE_HAS_CORRECT_OFFSET(D, E, S) \

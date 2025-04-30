@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_DETAIL_SERVER_CALLBACK_PTR_HPP
-#define AGRPC_DETAIL_SERVER_CALLBACK_PTR_HPP
+#ifndef AGRPC_DETAIL_REF_COUNTED_REACTOR_HPP
+#define AGRPC_DETAIL_REF_COUNTED_REACTOR_HPP
 
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/reactor_ptr.hpp>
@@ -67,10 +67,7 @@ class RefCountedReactorBase : public Reactor
         const auto count = --ref_count_;
         if (1 == count)
         {
-            if (!this->is_finished_called())
-            {
-                this->initiate_finish({grpc::StatusCode::CANCELLED, {}});
-            }
+            this->on_user_done();
         }
         else if (0 == count)
         {
@@ -113,4 +110,4 @@ class RefCountedClientReactor : public RefCountedReactorBase<Reactor>
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_DETAIL_SERVER_CALLBACK_PTR_HPP
+#endif  // AGRPC_DETAIL_REF_COUNTED_REACTOR_HPP

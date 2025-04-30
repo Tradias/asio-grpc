@@ -62,7 +62,13 @@ class BasicServerUnaryReactor : private grpc::ServerUnaryReactor, public detail:
 
     using BasicServerUnaryReactor::ReactorExecutorBase::ReactorExecutorBase;
 
-    [[nodiscard]] bool is_finished_called() const noexcept { return data_.state_.is_finish_called(); }
+    void on_user_done()
+    {
+        if (!data_.state_.is_finish_called())
+        {
+            initiate_finish({grpc::StatusCode::CANCELLED, {}});
+        }
+    }
 
     void OnSendInitialMetadataDone(bool ok) final { data_.initial_metadata_.set(static_cast<bool&&>(ok)); }
 
@@ -127,7 +133,13 @@ class BasicServerReadReactor : private grpc::ServerReadReactor<Request>, public 
 
     using BasicServerReadReactor::ReactorExecutorBase::ReactorExecutorBase;
 
-    [[nodiscard]] bool is_finished_called() const noexcept { return data_.state_.is_finish_called(); }
+    void on_user_done()
+    {
+        if (!data_.state_.is_finish_called())
+        {
+            initiate_finish({grpc::StatusCode::CANCELLED, {}});
+        }
+    }
 
     void OnSendInitialMetadataDone(bool ok) final { data_.initial_metadata_.set(static_cast<bool&&>(ok)); }
 

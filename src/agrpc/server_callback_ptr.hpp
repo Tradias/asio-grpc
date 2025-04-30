@@ -18,7 +18,7 @@
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/reactor_ptr.hpp>
 #include <agrpc/detail/reactor_ptr_type.hpp>
-#include <agrpc/detail/server_callback_ptr.hpp>
+#include <agrpc/detail/ref_counted_reactor.hpp>
 
 #include <agrpc/detail/config.hpp>
 

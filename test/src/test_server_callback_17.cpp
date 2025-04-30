@@ -141,14 +141,13 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr read/send_initial_meta
             });
         return rpc.get();
     };
-    test::set_default_deadline(client_context);
     auto rpc = agrpc::make_reactor<agrpc::ClientUnaryReactor>(io_context.get_executor());
+    test::set_default_deadline(rpc->context());
     test::msg::Request request;
     test::msg::Response response;
-    stub->async()->Unary(&client_context, &request, &response, rpc->get());
-    rpc->start();
+    agrpc::start(*rpc, &test::v1::Test::Stub::async::Unary, stub->async(), request, response);
     CHECK(rpc->wait_for_initial_metadata(asio::use_future).get());
-    CHECK_EQ(0, client_context.GetServerInitialMetadata().find("test")->second.compare("a"));
+    CHECK_EQ(0, rpc->context().GetServerInitialMetadata().find("test")->second.compare("a"));
     auto status = rpc->wait_for_finish(asio::use_future).get();
     CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
     CHECK(send_ok);

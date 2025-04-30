@@ -20,6 +20,7 @@
 #include <agrpc/detail/client_callback.hpp>
 #include <agrpc/detail/default_completion_token.hpp>
 #include <agrpc/detail/forward.hpp>
+#include <agrpc/detail/reactor_client_context_base.hpp>
 #include <agrpc/detail/reactor_executor_base.hpp>
 #include <grpcpp/support/client_callback.h>
 
@@ -29,12 +30,12 @@ AGRPC_NAMESPACE_BEGIN()
 
 // Unary
 template <class Executor>
-class BasicClientUnaryReactor : private grpc::ClientUnaryReactor, public detail::ReactorExecutorBase<Executor>
+class BasicClientUnaryReactor : private grpc::ClientUnaryReactor,
+                                public detail::ReactorExecutorBase<Executor>,
+                                public detail::ReactorClientContextBase
 {
   public:
     [[nodiscard]] grpc::ClientUnaryReactor* get() noexcept { return this; }
-
-    void start() { this->StartCall(); }
 
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto wait_for_initial_metadata(CompletionToken&& token = CompletionToken{})
@@ -57,9 +58,7 @@ class BasicClientUnaryReactor : private grpc::ClientUnaryReactor, public detail:
 
     using BasicClientUnaryReactor::ReactorExecutorBase::ReactorExecutorBase;
 
-    [[nodiscard]] bool is_finished_called() const noexcept { return true; }
-
-    void initiate_finish(const grpc::Status&) {}
+    static void on_user_done() {}
 
     void OnReadInitialMetadataDone(bool ok) final { data_.initial_metadata_.set(static_cast<bool&&>(ok)); }
 
@@ -82,6 +81,15 @@ auto request(detail::AsyncUnaryFn<StubAsync, Request, Response> fn, StubAsync* s
                         detail::UnaryRequestCallback{static_cast<decltype(handler)&&>(handler)});
         },
         token, stub, &client_context, &request, &response);
+}
+
+template <class Executor, class StubAsync, class Request, class Response>
+void start(agrpc::BasicClientUnaryReactor<Executor>& reactor,
+           detail::AsyncUnaryReactorFn<StubAsync, Request, Response> fn, StubAsync* stub, const Request& request,
+           Response& response)
+{
+    (*stub.*fn)(&reactor.context(), &request, &response, reactor.get());
+    reactor.get()->StartCall();
 }
 
 AGRPC_NAMESPACE_END
