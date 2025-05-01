@@ -35,7 +35,13 @@ class BasicClientUnaryReactor : private grpc::ClientUnaryReactor,
                                 public detail::ReactorClientContextBase
 {
   public:
-    [[nodiscard]] grpc::ClientUnaryReactor* get() noexcept { return this; }
+    template <class StubAsync, class Request, class Response>
+    void start(detail::AsyncUnaryReactorFn<StubAsync, Request, Response> fn, StubAsync* stub, const Request& request,
+               Response& response)
+    {
+        (*stub.*fn)(&this->context(), &request, &response, get());
+        this->StartCall();
+    }
 
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto wait_for_initial_metadata(CompletionToken&& token = CompletionToken{})
@@ -58,6 +64,8 @@ class BasicClientUnaryReactor : private grpc::ClientUnaryReactor,
 
     using BasicClientUnaryReactor::ReactorExecutorBase::ReactorExecutorBase;
 
+    [[nodiscard]] grpc::ClientUnaryReactor* get() noexcept { return this; }
+
     static void on_user_done() {}
 
     void OnReadInitialMetadataDone(bool ok) final { data_.initial_metadata_.set(static_cast<bool&&>(ok)); }
@@ -68,6 +76,76 @@ class BasicClientUnaryReactor : private grpc::ClientUnaryReactor,
 };
 
 using ClientUnaryReactor = BasicClientUnaryReactor<asio::any_io_executor>;
+
+// Client-streaming
+template <class Request, class Executor>
+class BasicClientWriteReactor : private grpc::ClientWriteReactor<Request>,
+                                public detail::ReactorExecutorBase<Executor>,
+                                public detail::ReactorClientContextBase
+{
+  public:
+    template <class StubAsync, class Response>
+    void start(detail::AsyncClientStreamingReactorFn<StubAsync, Request, Response> fn, StubAsync* stub,
+               Response& response)
+    {
+        (*stub.*fn)(&this->context(), &response, get());
+        this->AddHold();
+        this->StartCall();
+    }
+
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    auto wait_for_initial_metadata(CompletionToken&& token = CompletionToken{})
+    {
+        return data_.initial_metadata_.wait(static_cast<CompletionToken&&>(token), this->get_executor());
+    }
+
+    void initiate_write(const Request& request) { this->StartWrite(&request, {}); }
+
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    auto wait_for_write(CompletionToken&& token = CompletionToken{})
+    {
+        return data_.write_.wait(static_cast<CompletionToken&&>(token), this->get_executor());
+    }
+
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    auto wait_for_finish(CompletionToken&& token = CompletionToken{})
+    {
+        remove_hold();
+        return data_.finish_.wait(static_cast<CompletionToken&&>(token), this->get_executor());
+    }
+
+  private:
+    template <class>
+    friend class detail::RefCountedReactorBase;
+
+    template <class>
+    friend class detail::RefCountedClientReactor;
+
+    using BasicClientWriteReactor::ReactorExecutorBase::ReactorExecutorBase;
+
+    [[nodiscard]] grpc::ClientWriteReactor<Request>* get() noexcept { return this; }
+
+    void on_user_done() { remove_hold(); }
+
+    void OnReadInitialMetadataDone(bool ok) final { data_.initial_metadata_.set(static_cast<bool&&>(ok)); }
+
+    void OnWriteDone(bool ok) final { data_.write_.set(static_cast<bool&&>(ok)); }
+
+    void on_done(const grpc::Status& status) { data_.finish_.set(grpc::Status{status}); }
+
+    void remove_hold()
+    {
+        if (!data_.is_hold_removed_.exchange(true, std::memory_order_relaxed))
+        {
+            this->RemoveHold();
+        }
+    }
+
+    detail::ClientWriteReactorData data_;
+};
+
+template <class Request>
+using ClientWriteReactor = BasicClientWriteReactor<Request, asio::any_io_executor>;
 
 template <class StubAsync, class Request, class Response, class CompletionToken>
 auto request(detail::AsyncUnaryFn<StubAsync, Request, Response> fn, StubAsync* stub,
@@ -81,15 +159,6 @@ auto request(detail::AsyncUnaryFn<StubAsync, Request, Response> fn, StubAsync* s
                         detail::UnaryRequestCallback{static_cast<decltype(handler)&&>(handler)});
         },
         token, stub, &client_context, &request, &response);
-}
-
-template <class Executor, class StubAsync, class Request, class Response>
-void start(agrpc::BasicClientUnaryReactor<Executor>& reactor,
-           detail::AsyncUnaryReactorFn<StubAsync, Request, Response> fn, StubAsync* stub, const Request& request,
-           Response& response)
-{
-    (*stub.*fn)(&reactor.context(), &request, &response, reactor.get());
-    reactor.get()->StartCall();
 }
 
 AGRPC_NAMESPACE_END

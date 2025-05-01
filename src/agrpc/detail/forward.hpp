@@ -90,6 +90,9 @@ class BasicServerReadReactor;
 template <class Executor>
 class BasicClientUnaryReactor;
 
+template <class Request, class Executor>
+class BasicClientWriteReactor;
+
 template <class Reactor>
 class ReactorPtr;
 

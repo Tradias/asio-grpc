@@ -26,13 +26,16 @@
 
 struct ServerCallbackTest : test::GrpcClientServerCallbackTest, test::IoContextTest
 {
+    using Request = test::msg::Request;
+    using Response = test::msg::Response;
+
     ServerCallbackTest() { run_io_context_detached(); }
 
     auto make_unary_request()
     {
         test::set_default_deadline(client_context);
-        test::msg::Request request;
-        test::msg::Response response;
+        Request request;
+        Response response;
         auto status = agrpc::request(&test::v1::Test::Stub::async::Unary, stub->async(), client_context, request,
                                      response, asio::use_future)
                           .get();
@@ -42,8 +45,7 @@ struct ServerCallbackTest : test::GrpcClientServerCallbackTest, test::IoContextT
 
 TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr automatic cancellation")
 {
-    service.unary = [&](grpc::CallbackServerContext*, const test::msg::Request*,
-                        test::msg::Response*) -> grpc::ServerUnaryReactor*
+    service.unary = [&](grpc::CallbackServerContext*, const Request*, Response*) -> grpc::ServerUnaryReactor*
     {
         return agrpc::make_reactor<agrpc::ServerUnaryReactor>(io_context.get_executor())->get();
     };
@@ -55,8 +57,7 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr TryCancel")
 {
     std::promise<bool> finish_ok;
     asio::steady_timer timer{io_context};
-    service.unary = [&](grpc::CallbackServerContext* context, const test::msg::Request*,
-                        test::msg::Response*) -> grpc::ServerUnaryReactor*
+    service.unary = [&](grpc::CallbackServerContext* context, const Request*, Response*) -> grpc::ServerUnaryReactor*
     {
         auto ptr = agrpc::make_reactor<agrpc::ServerUnaryReactor>(io_context.get_executor());
         auto& rpc = *ptr;
@@ -80,22 +81,21 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr TryCancel")
 
 TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr finish successfully")
 {
-    struct MyReactor : agrpc::ServerUnaryReactorBase
-    {
-        explicit MyReactor(InitArg init_arg, int integer)
-            : agrpc::ServerUnaryReactorBase(std::move(init_arg)), integer_(integer)
-        {
-        }
-
-        int integer_;
-    };
     bool use_wait_for_finish{};
     SUBCASE("wait_for_finish") { use_wait_for_finish = true; }
     SUBCASE("no wait_for_finish") {}
     bool finish_ok{};
-    service.unary = [&](grpc::CallbackServerContext*, const test::msg::Request*,
-                        test::msg::Response* response) -> grpc::ServerUnaryReactor*
+    service.unary = [&](grpc::CallbackServerContext*, const Request*, Response* response) -> grpc::ServerUnaryReactor*
     {
+        struct MyReactor : agrpc::ServerUnaryReactorBase
+        {
+            explicit MyReactor(InitArg init_arg, int integer)
+                : agrpc::ServerUnaryReactorBase(std::move(init_arg)), integer_(integer)
+            {
+            }
+
+            int integer_;
+        };
         auto ptr = agrpc::allocate_reactor<MyReactor>(get_allocator(), io_context.get_executor(), 42);
         MyReactor& r = *ptr;
         response->set_integer(r.integer_);
@@ -127,8 +127,7 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr read/send_initial_meta
     SUBCASE("early_finish") { use_early_finish = true; }
     SUBCASE("no early_finish") {}
     bool send_ok{};
-    service.unary = [&](grpc::CallbackServerContext* context, const test::msg::Request*,
-                        test::msg::Response*) -> grpc::ServerUnaryReactor*
+    service.unary = [&](grpc::CallbackServerContext* context, const Request*, Response*) -> grpc::ServerUnaryReactor*
     {
         auto ptr = agrpc::allocate_reactor<agrpc::ServerUnaryReactor>(get_allocator(), io_context.get_executor());
         auto& rpc = *ptr;
@@ -143,13 +142,42 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr read/send_initial_meta
     };
     auto rpc = agrpc::make_reactor<agrpc::ClientUnaryReactor>(io_context.get_executor());
     test::set_default_deadline(rpc->context());
-    test::msg::Request request;
-    test::msg::Response response;
-    agrpc::start(*rpc, &test::v1::Test::Stub::async::Unary, stub->async(), request, response);
+    Request request;
+    Response response;
+    rpc->start(&test::v1::Test::Stub::async::Unary, stub->async(), request, response);
     CHECK(rpc->wait_for_initial_metadata(asio::use_future).get());
     CHECK_EQ(0, rpc->context().GetServerInitialMetadata().find("test")->second.compare("a"));
     auto status = rpc->wait_for_finish(asio::use_future).get();
     CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
     CHECK(send_ok);
     CHECK(allocator_has_been_used());
+}
+
+TEST_CASE_FIXTURE(ServerCallbackTest, "Client-streaming callback ptr")
+{
+    Request server_request;
+    service.client_streaming = [&](grpc::CallbackServerContext*, Response*) -> grpc::ServerReadReactor<Request>*
+    {
+        auto ptr = agrpc::make_reactor<agrpc::ServerReadReactor<Request>>(io_context.get_executor());
+        auto& rpc = *ptr;
+        rpc.initiate_read(server_request);
+        rpc.wait_for_read(
+            [&, ptr](auto&&, bool ok)
+            {
+                CHECK(ok);
+                CHECK_EQ(42, server_request.integer());
+                rpc.initiate_finish(grpc::Status::OK);
+                rpc.wait_for_finish([](auto&&, bool) {});
+            });
+        return rpc.get();
+    };
+    auto rpc = agrpc::make_reactor<agrpc::ClientWriteReactor<Request>>(io_context.get_executor());
+    test::set_default_deadline(rpc->context());
+    Response response;
+    rpc->start(&test::v1::Test::Stub::async::ClientStreaming, stub->async(), response);
+    Request request;
+    request.set_integer(42);
+    rpc->initiate_write(request);
+    auto status = rpc->wait_for_finish(asio::use_future).get();
+    CHECK_EQ(grpc::StatusCode::OK, status.error_code());
 }

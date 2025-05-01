@@ -90,7 +90,7 @@ template <class Request, class Executor>
 class BasicServerReadReactor : private grpc::ServerReadReactor<Request>, public detail::ReactorExecutorBase<Executor>
 {
   public:
-    [[nodiscard]] grpc::ServerUnaryReactor* get() noexcept { return this; }
+    [[nodiscard]] grpc::ServerReadReactor<Request>* get() noexcept { return this; }
 
     void initiate_send_initial_metadata() { this->StartSendInitialMetadata(); }
 

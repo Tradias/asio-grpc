@@ -47,6 +47,12 @@ struct RefCountedReactorType<agrpc::BasicClientUnaryReactor<Executor>>
     using Type = RefCountedClientReactor<agrpc::BasicClientUnaryReactor<Executor>>;
 };
 
+template <class Request, class Executor>
+struct RefCountedReactorType<agrpc::BasicClientWriteReactor<Request, Executor>>
+{
+    using Type = RefCountedClientReactor<agrpc::BasicClientWriteReactor<Request, Executor>>;
+};
+
 template <class Reactor>
 using RefCountedReactorTypeT = typename RefCountedReactorType<Reactor>::Type;
 }

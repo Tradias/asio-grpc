@@ -18,6 +18,7 @@
 #include <agrpc/detail/bind_allocator.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/manual_reset_event.hpp>
+#include <agrpc/detail/offset_manual_reset_event.hpp>
 #include <grpcpp/client_context.h>
 #include <grpcpp/support/client_callback.h>
 #include <grpcpp/support/status.h>
@@ -28,12 +29,6 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-struct ClientUnaryReactorData
-{
-    detail::ManualResetEvent<void(bool)> initial_metadata_{};
-    detail::ManualResetEvent<void(grpc::Status)> finish_{};
-};
-
 template <class StubAsync, class Request, class Response>
 using AsyncUnaryFn = void (StubAsync::*)(grpc::ClientContext*, const Request*, Response*,
                                          std::function<void(::grpc::Status)>);
@@ -78,6 +73,35 @@ class UnaryRequestCallback
     CompletionHandler handler_;
     decltype(asio::make_work_guard(std::declval<CompletionHandler&>())) work_;
 };
+
+#define AGRPC_STORAGE_HAS_CORRECT_OFFSET(D, E, S) \
+    static_assert(decltype(std::declval<D>().E)::Storage::OFFSET == offsetof(D, S) - offsetof(D, E))
+
+struct ClientUnaryReactorData
+{
+    detail::ManualResetEvent<void(bool)> initial_metadata_{};
+    detail::ManualResetEvent<void(grpc::Status)> finish_{};
+};
+
+struct ClientWriteReactorDataBase
+{
+    detail::OffsetManualResetEvent<void(bool), 2 * OFFSET_MANUAL_RESET_EVENT_SIZE> initial_metadata_{};
+    detail::OffsetManualResetEvent<void(bool), OFFSET_MANUAL_RESET_EVENT_SIZE + sizeof(bool)> write_{};
+    bool ok_initial_metadata_{};
+    bool ok_write_{};
+    std::atomic_bool is_hold_removed_{};
+};
+
+static_assert(std::is_standard_layout_v<ClientWriteReactorDataBase>);
+AGRPC_STORAGE_HAS_CORRECT_OFFSET(ClientWriteReactorDataBase, initial_metadata_, ok_initial_metadata_);
+AGRPC_STORAGE_HAS_CORRECT_OFFSET(ClientWriteReactorDataBase, write_, ok_write_);
+
+struct ClientWriteReactorData : ClientWriteReactorDataBase
+{
+    detail::ManualResetEvent<void(grpc::Status)> finish_{};
+};
+
+#undef AGRPC_STORAGE_HAS_CORRECT_OFFSET
 }
 
 AGRPC_NAMESPACE_END
