@@ -99,7 +99,11 @@ class BasicClientWriteReactor : private grpc::ClientWriteReactor<Request>,
         return data_.initial_metadata_.wait(static_cast<CompletionToken&&>(token), this->get_executor());
     }
 
-    void initiate_write(const Request& request) { this->StartWrite(&request, {}); }
+    void initiate_write(const Request& request)
+    {
+        data_.write_.reset();
+        this->StartWrite(&request);
+    }
 
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto wait_for_write(CompletionToken&& token = CompletionToken{})

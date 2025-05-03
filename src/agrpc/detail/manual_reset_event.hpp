@@ -54,11 +54,7 @@ class ManualResetEventBase<void(Args...)>
   public:
     [[nodiscard]] bool ready() const noexcept { return op_.load(std::memory_order_acquire) == signalled_state(); }
 
-    void reset() noexcept
-    {
-        auto* expected = signalled_state();
-        op_.compare_exchange_strong(expected, nullptr, std::memory_order_release);
-    }
+    void reset() noexcept { op_.store(nullptr, std::memory_order_release); }
 
   protected:
     [[nodiscard]] Op* signal() noexcept
@@ -78,9 +74,18 @@ class ManualResetEventBase<void(Args...)>
     template <class, class>
     friend struct detail::ManualResetEventOperation;
 
+    template <class, template <class...> class>
+    friend class detail::BasicManualResetEvent;
+
     [[nodiscard]] bool compare_exchange(Op* op) noexcept
     {
         return op_.compare_exchange_strong(op, nullptr, std::memory_order_acq_rel);
+    }
+
+    [[nodiscard]] bool store(Op* op) noexcept
+    {
+        Op* n = nullptr;
+        return op_.compare_exchange_strong(n, op, std::memory_order_acq_rel);
     }
 
     auto* signalled_state() const { return const_cast<Op*>(reinterpret_cast<const Op*>(this)); }
@@ -130,22 +135,33 @@ class BasicManualResetEvent<void(Args...), StorageT> : private StorageT<Args...>
         template <class CompletionHandler, class IOExecutor>
         void operator()(CompletionHandler&& completion_handler, const IOExecutor& io_executor) const
         {
-            if (auto& event = event_; event.ready())
+            const auto complete_immediately = [&io_executor, &event = event_](auto&& ch)
             {
                 detail::complete_immediately(
-                    static_cast<CompletionHandler&&>(completion_handler),
+                    static_cast<CompletionHandler&&>(ch),
                     [&event](auto&& ch)
                     {
                         detail::prepend_error_code_and_apply(static_cast<decltype(ch)&&>(ch),
                                                              static_cast<Storage&&>(event).get_value());
                     },
                     io_executor);
+            };
+            if (event_.ready())
+            {
+                complete_immediately(completion_handler);
                 return;
             }
             const auto allocator = asio::get_associated_allocator(completion_handler);
-            detail::allocate<ManualResetEventOperation<Signature, detail::RemoveCrefT<CompletionHandler>>>(
-                allocator, static_cast<CompletionHandler&&>(completion_handler), event_)
-                .release();
+            auto ptr = detail::allocate<ManualResetEventOperation<Signature, detail::RemoveCrefT<CompletionHandler>>>(
+                allocator, static_cast<CompletionHandler&&>(completion_handler), event_);
+            if (event_.store(ptr.get()))
+            {
+                ptr.release();
+                return;
+            }
+            auto ch = static_cast<CompletionHandler&&>(ptr->completion_handler());
+            ptr.reset();
+            complete_immediately(ch);
         }
 
         BasicManualResetEvent& event_;
@@ -228,10 +244,10 @@ struct ManualResetEventRunningOperationState<void(Args...), Receiver> : ManualRe
     {
     }
 
-    void start(StopToken&& stop_token) noexcept
+    bool start(StopToken&& stop_token) noexcept
     {
         stop_callback().emplace(static_cast<StopToken&&>(stop_token), StopFunction{*this});
-        this->event_.op_.store(this, std::memory_order_release);
+        return static_cast<bool>(this->event_.store(this));
     }
 
     void complete(Args&&... args)
@@ -255,18 +271,16 @@ class ManualResetEventOperationState
   public:
     void start() noexcept
     {
-        if (state_.event_.ready())
-        {
-            complete();
-            return;
-        }
         auto stop_token = exec::get_stop_token(state_.receiver());
         if (stop_token.stop_requested())
         {
             exec::set_done(static_cast<Receiver&&>(state_.receiver()));
             return;
         }
-        state_.start(std::move(stop_token));
+        if (!state_.start(std::move(stop_token)))
+        {
+            complete();
+        }
     }
 
 #ifdef AGRPC_STDEXEC

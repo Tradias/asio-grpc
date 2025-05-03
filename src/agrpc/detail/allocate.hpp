@@ -71,7 +71,11 @@ class AllocationGuard
 
     ValueType& operator*() const noexcept { return *ptr_; }
 
+    ValueType* operator->() const noexcept { return std::addressof(*ptr_); }
+
     void release() noexcept { ptr_ = nullptr; }
+
+    [[nodiscard]] ValueType* get() noexcept { return std::addressof(*ptr_); }
 
     [[nodiscard]] ValueType* extract() noexcept { return std::addressof(*std::exchange(ptr_, nullptr)); }
 

@@ -72,7 +72,6 @@ struct ManualResetEventOperation<void(Args...), CompletionHandler>
           completion_handler_(static_cast<Ch&&>(ch))
     {
         emplace_stop_callback();
-        this->event_.op_.store(this, std::memory_order_release);
     }
 
     void emplace_stop_callback()
