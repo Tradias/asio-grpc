@@ -62,8 +62,6 @@ class BasicClientUnaryReactor : private grpc::ClientUnaryReactor,
     template <class>
     friend class detail::RefCountedClientReactor;
 
-    using BasicClientUnaryReactor::ReactorExecutorBase::ReactorExecutorBase;
-
     [[nodiscard]] grpc::ClientUnaryReactor* get() noexcept { return this; }
 
     static void on_user_done() {}
@@ -76,6 +74,11 @@ class BasicClientUnaryReactor : private grpc::ClientUnaryReactor,
 };
 
 using ClientUnaryReactor = BasicClientUnaryReactor<asio::any_io_executor>;
+
+template <class Executor>
+using BasicClientUnaryReactorBase = detail::RefCountedClientReactor<agrpc::BasicClientUnaryReactor<Executor>>;
+
+using ClientUnaryReactorBase = BasicClientUnaryReactorBase<asio::any_io_executor>;
 
 // Client-streaming
 template <class Request, class Executor>
@@ -124,8 +127,6 @@ class BasicClientWriteReactor : private grpc::ClientWriteReactor<Request>,
 
     template <class>
     friend class detail::RefCountedClientReactor;
-
-    using BasicClientWriteReactor::ReactorExecutorBase::ReactorExecutorBase;
 
     [[nodiscard]] grpc::ClientWriteReactor<Request>* get() noexcept { return this; }
 

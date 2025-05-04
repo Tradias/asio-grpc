@@ -29,19 +29,34 @@ class ReactorExecutorBase
   public:
     using executor_type = Executor;
 
+    ReactorExecutorBase() {}
+
+    ~ReactorExecutorBase() {}
+
     [[nodiscard]] const Executor& get_executor() const noexcept { return executor_; }
 
   private:
-    template <class>
-    friend class agrpc::BasicServerUnaryReactor;
+    friend detail::ReactorAccess;
 
-    template <class>
-    friend class agrpc::BasicClientUnaryReactor;
-
-    explicit ReactorExecutorBase(Executor executor) : executor_(static_cast<Executor&&>(executor)) {}
-
-    Executor executor_;
+    union
+    {
+        Executor executor_;
+    };
 };
+
+template <>
+class ReactorExecutorBase<void>
+{
+};
+
+struct ReactorExecutorType
+{
+    template <class Executor>
+    static Executor get(ReactorExecutorBase<Executor>*);
+};
+
+template <class Reactor>
+using ReactorExecutorTypeT = decltype(ReactorExecutorType::get(static_cast<Reactor*>(nullptr)));
 }
 
 AGRPC_NAMESPACE_END

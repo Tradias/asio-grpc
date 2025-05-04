@@ -26,23 +26,8 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <class Reactor>
-class RefCountedServerReactor;
-
-template <class Reactor>
 class RefCountedReactorBase : public Reactor
 {
-  public:
-    struct InitArg
-    {
-        typename Reactor::executor_type executor_;
-        ReactorDeallocateFn deallocate_;
-    };
-
-    explicit RefCountedReactorBase(InitArg init_arg) noexcept
-        : Reactor(static_cast<typename Reactor::executor_type&&>(init_arg.executor_)), deallocate_(init_arg.deallocate_)
-    {
-    }
-
   private:
     template <class>
     friend class agrpc::ReactorPtr;
@@ -52,6 +37,9 @@ class RefCountedReactorBase : public Reactor
 
     template <class>
     friend class detail::RefCountedClientReactor;
+
+    template <class, class>
+    friend class detail::ReactorPtrAllocation;
 
     struct Guard
     {
@@ -75,6 +63,8 @@ class RefCountedReactorBase : public Reactor
         }
     }
 
+    void set_deallocate_function(ReactorDeallocateFn fn) noexcept { deallocate_ = fn; }
+
     std::atomic_size_t ref_count_{2};  // user + OnDone
     ReactorDeallocateFn deallocate_;
 };
@@ -82,9 +72,6 @@ class RefCountedReactorBase : public Reactor
 template <class Reactor>
 class RefCountedServerReactor : public RefCountedReactorBase<Reactor>
 {
-  public:
-    using RefCountedServerReactor::RefCountedReactorBase::RefCountedReactorBase;
-
   private:
     void OnDone() final
     {
@@ -96,9 +83,6 @@ class RefCountedServerReactor : public RefCountedReactorBase<Reactor>
 template <class Reactor>
 class RefCountedClientReactor : public RefCountedReactorBase<Reactor>
 {
-  public:
-    using RefCountedClientReactor::RefCountedReactorBase::RefCountedReactorBase;
-
   private:
     void OnDone(const grpc::Status& status) final
     {

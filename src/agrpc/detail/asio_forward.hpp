@@ -31,6 +31,7 @@
 #include <asio/execution/outstanding_work.hpp>
 #include <asio/execution/relationship.hpp>
 #include <asio/execution_context.hpp>
+#include <asio/executor_work_guard.hpp>
 #include <asio/post.hpp>
 #include <asio/query.hpp>
 #include <asio/system_executor.hpp>
@@ -61,6 +62,7 @@
 #include <boost/asio/execution/outstanding_work.hpp>
 #include <boost/asio/execution/relationship.hpp>
 #include <boost/asio/execution_context.hpp>
+#include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/query.hpp>
 #include <boost/asio/system_executor.hpp>

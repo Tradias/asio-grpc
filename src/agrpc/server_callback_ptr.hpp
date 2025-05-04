@@ -16,6 +16,7 @@
 #define AGRPC_AGRPC_SERVER_CALLBACK_PTR_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/reactor_executor_base.hpp>
 #include <agrpc/detail/reactor_ptr.hpp>
 #include <agrpc/detail/reactor_ptr_type.hpp>
 #include <agrpc/detail/ref_counted_reactor.hpp>
@@ -23,11 +24,6 @@
 #include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
-
-template <class Executor>
-using BasicServerUnaryReactorBase = detail::RefCountedServerReactor<agrpc::BasicServerUnaryReactor<Executor>>;
-
-using ServerUnaryReactorBase = BasicServerUnaryReactorBase<asio::any_io_executor>;
 
 template <class Reactor>
 class ReactorPtr
@@ -99,19 +95,30 @@ class ReactorPtr
     [[nodiscard]] Reactor& operator*() const noexcept { return *ptr_; }
 
   private:
-    friend detail::ReactorPtrAccess;
+    friend detail::ReactorAccess;
 
     explicit ReactorPtr(Ptr ptr) noexcept : ptr_(ptr) {}
 
     Ptr ptr_{};
 };
 
-template <class Reactor, class Allocator, class... Args>
-[[nodiscard]] inline ReactorPtr<Reactor> allocate_reactor(Allocator allocator, typename Reactor::executor_type executor,
-                                                          Args&&... args)
+template <class Reactor, class Allocator, class... Args,
+          class = std::enable_if_t<!std::is_same_v<void, detail::ReactorExecutorTypeT<Reactor>>>>
+[[nodiscard]] inline auto allocate_reactor(Allocator allocator, detail::ReactorExecutorTypeT<Reactor> executor,
+                                           Args&&... args)
+
 {
-    return detail::ReactorPtrAccess::create<ReactorPtr<Reactor>>(allocator, std::move(executor),
-                                                                 static_cast<Args&&>(args)...);
+    static_assert(std::is_constructible_v<detail::RefCountedReactorTypeT<Reactor>, Args...>);
+    return detail::ReactorAccess::create<ReactorPtr<Reactor>>(allocator, std::move(executor),
+                                                              static_cast<Args&&>(args)...);
+}
+
+template <class Reactor, class Allocator, class... Args,
+          class = std::enable_if_t<std::is_same_v<void, detail::ReactorExecutorTypeT<Reactor>>>>
+[[nodiscard]] inline ReactorPtr<Reactor> allocate_reactor(Allocator allocator, Args&&... args)
+{
+    static_assert(std::is_constructible_v<detail::RefCountedReactorTypeT<Reactor>, Args...>);
+    return detail::ReactorAccess::create<ReactorPtr<Reactor>>(allocator, detail::Empty{}, static_cast<Args&&>(args)...);
 }
 
 template <class Reactor, class... Args>

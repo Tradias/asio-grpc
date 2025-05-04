@@ -60,8 +60,6 @@ class BasicServerUnaryReactor : private grpc::ServerUnaryReactor, public detail:
     template <class>
     friend class detail::RefCountedServerReactor;
 
-    using BasicServerUnaryReactor::ReactorExecutorBase::ReactorExecutorBase;
-
     void on_user_done()
     {
         if (!data_.state_.is_finish_called())
@@ -84,6 +82,11 @@ class BasicServerUnaryReactor : private grpc::ServerUnaryReactor, public detail:
 };
 
 using ServerUnaryReactor = BasicServerUnaryReactor<asio::any_io_executor>;
+
+template <class Executor>
+using BasicServerUnaryReactorBase = detail::RefCountedServerReactor<agrpc::BasicServerUnaryReactor<Executor>>;
+
+using ServerUnaryReactorBase = BasicServerUnaryReactorBase<asio::any_io_executor>;
 
 // Client-streaming
 template <class Request, class Executor>
@@ -130,8 +133,6 @@ class BasicServerReadReactor : private grpc::ServerReadReactor<Request>, public 
 
     template <class>
     friend class detail::RefCountedServerReactor;
-
-    using BasicServerReadReactor::ReactorExecutorBase::ReactorExecutorBase;
 
     void on_user_done()
     {

@@ -89,10 +89,7 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr finish successfully")
     {
         struct MyReactor : agrpc::ServerUnaryReactorBase
         {
-            explicit MyReactor(InitArg init_arg, int integer)
-                : agrpc::ServerUnaryReactorBase(std::move(init_arg)), integer_(integer)
-            {
-            }
+            explicit MyReactor(int integer) : integer_(integer) {}
 
             int integer_;
         };
@@ -140,7 +137,14 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr read/send_initial_meta
             });
         return rpc.get();
     };
-    auto rpc = agrpc::make_reactor<agrpc::ClientUnaryReactor>(io_context.get_executor());
+    struct MyReactor : agrpc::ClientUnaryReactorBase
+    {
+        explicit MyReactor(int integer) : integer_(integer) {}
+
+        int integer_;
+    };
+    auto rpc = agrpc::make_reactor<MyReactor>(io_context.get_executor(), 42);
+    CHECK_EQ(42, rpc->integer_);
     test::set_default_deadline(rpc->context());
     Request request;
     Response response;

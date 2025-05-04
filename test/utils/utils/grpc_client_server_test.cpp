@@ -82,7 +82,7 @@ GrpcClientServerTestTemplate<Service>::~GrpcClientServerTestTemplate()
     server_context_lifetime.reset();
     if (server)
     {
-        server->Shutdown(std::chrono::system_clock::now() + std::chrono::milliseconds(10));
+        server->Shutdown();
     }
     grpc_context_lifetime.reset();
     server.reset();

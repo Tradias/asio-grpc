@@ -168,6 +168,14 @@ struct ManualResetEventOperation;
 template <class Signature, template <class...> class Storage, class Receiver>
 class ManualResetEventOperationState;
 
+struct ReactorAccess;
+
+template <class T, class Allocator>
+class ReactorPtrAllocation;
+
+template <class Executor>
+class ReactorExecutorBase;
+
 template <class Reactor>
 class RefCountedReactorBase;
 

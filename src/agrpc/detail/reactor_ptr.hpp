@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_REACTOR_PTR_HPP
 
 #include <agrpc/detail/allocate.hpp>
+#include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/utility.hpp>
 
 #include <agrpc/detail/config.hpp>
@@ -24,16 +25,47 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
-template <class T, class Allocator>
+struct ReactorAccess
+{
+    template <class Ptr, class Allocator, class... Args>
+    static auto create(Allocator allocator, Args&&... args)
+    {
+        return Ptr{detail::allocate<ReactorPtrAllocation<typename Ptr::Allocation, Allocator>>(
+                       allocator, allocator, static_cast<Args&&>(args)...)
+                       .extract()
+                       ->get()};
+    }
+
+    template <class Executor, class Arg>
+    static void set_executor(detail::ReactorExecutorBase<Executor>& base, Arg&& arg)
+    {
+        ::new (static_cast<void*>(&base.executor_)) Executor(static_cast<Arg&&>(arg));
+    }
+
+    template <class Arg>
+    static void set_executor(detail::ReactorExecutorBase<void>&, Arg&&)
+    {
+    }
+
+    template <class Executor>
+    static void destroy_executor(detail::ReactorExecutorBase<Executor>& base)
+    {
+        base.executor_.~Executor();
+    }
+
+    static void destroy_executor(detail::ReactorExecutorBase<void>&) {}
+};
+
+template <class RefCountedReactor, class Allocator>
 class ReactorPtrAllocation
 {
   public:
-    template <class... Args>
-    ReactorPtrAllocation(Allocator allocator, typename T::executor_type&& executor, Args&&... args)
-        : value_(detail::SecondThenVariadic{}, static_cast<Allocator&&>(allocator),
-                 typename T::InitArg{static_cast<typename T::executor_type&&>(executor), &deallocate},
-                 static_cast<Args&&>(args)...)
+    template <class Executor, class... Args>
+    ReactorPtrAllocation(Allocator allocator, Executor&& executor, Args&&... args)
+        : value_(detail::SecondThenVariadic{}, static_cast<Allocator&&>(allocator), static_cast<Args&&>(args)...)
     {
+        ReactorAccess::set_executor(value_.first(), static_cast<Executor&&>(executor));
+        value_.first().set_deallocate_function(&deallocate);
     }
 
     auto* get() noexcept
@@ -51,22 +83,11 @@ class ReactorPtrAllocation
     static void deallocate(void* self) noexcept
     {
         auto* const ptr = static_cast<ReactorPtrAllocation*>(self);
+        ReactorAccess::destroy_executor(ptr->value_.first());
         [[maybe_unused]] detail::AllocationGuard g{*ptr, ptr->value_.second()};
     }
 
-    detail::CompressedPair<T, Allocator> value_;
-};
-
-struct ReactorPtrAccess
-{
-    template <class Ptr, class Allocator, class... Args>
-    static auto create(Allocator allocator, Args&&... args)
-    {
-        return Ptr{detail::allocate<ReactorPtrAllocation<typename Ptr::Allocation, Allocator>>(
-                       allocator, allocator, static_cast<Args&&>(args)...)
-                       .extract()
-                       ->get()};
-    }
+    detail::CompressedPair<RefCountedReactor, Allocator> value_;
 };
 
 using ReactorDeallocateFn = void (*)(void*) noexcept;
