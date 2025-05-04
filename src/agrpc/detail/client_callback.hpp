@@ -45,33 +45,70 @@ template <class CompletionHandler>
 class UnaryRequestCallback
 {
   private:
-    struct DispatchCallback
+    using WorkTracker = detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandler>>;
+
+    struct State : WorkTracker
     {
-        //, asio::recycling_allocator<void>());
-        using allocator_type = asio::associated_allocator_t<CompletionHandler>;
-
-        void operator()() { std::move(handler_)(std::move(status_)); }
-
-        allocator_type get_allocator() const noexcept { return asio::get_associated_allocator(handler_); }
+        explicit State(CompletionHandler&& handler)
+            : WorkTracker(asio::get_associated_executor(handler)), handler_(static_cast<CompletionHandler&&>(handler))
+        {
+        }
 
         CompletionHandler handler_;
-        grpc::Status status_;
     };
+
+    struct PtrLikeState : State
+    {
+        using State::State;
+
+        State& operator*() { return *this; }
+
+        static void reset() {}
+    };
+
+    static auto create(CompletionHandler&& handler)
+    {
+        if constexpr (std::is_copy_constructible_v<State>)
+        {
+            return PtrLikeState{static_cast<CompletionHandler&&>(handler)};
+        }
+        else
+        {
+            auto allocator = asio::get_associated_allocator(handler);
+            return std::allocate_shared<State>(allocator, static_cast<CompletionHandler&&>(handler));
+        }
+    }
+
+    using Storage = decltype(create(std::declval<CompletionHandler&&>()));
 
   public:
     explicit UnaryRequestCallback(CompletionHandler&& handler)
-        : handler_(static_cast<CompletionHandler&&>(handler)), work_(asio::make_work_guard(handler_))
+        : storage_(create(static_cast<CompletionHandler&&>(handler)))
     {
     }
 
     void operator()(grpc::Status status)
     {
-        asio::dispatch(work_.get_executor(), DispatchCallback{std::move(handler_), std::move(status)});
+        struct DispatchCallback
+        {
+            //, asio::recycling_allocator<void>());
+            using allocator_type = asio::associated_allocator_t<CompletionHandler>;
+
+            void operator()() { std::move(handler_)(std::move(status_)); }
+
+            allocator_type get_allocator() const noexcept { return asio::get_associated_allocator(handler_); }
+
+            CompletionHandler handler_;
+            grpc::Status status_;
+        };
+        auto state = std::move(*storage_);
+        storage_.reset();
+        auto executor = asio::get_associated_executor(state.handler_);
+        asio::dispatch(std::move(executor), DispatchCallback{std::move(state.handler_), std::move(status)});
     }
 
   private:
-    CompletionHandler handler_;
-    decltype(asio::make_work_guard(std::declval<CompletionHandler&>())) work_;
+    Storage storage_;
 };
 
 #define AGRPC_STORAGE_HAS_CORRECT_OFFSET(D, E, S) \

@@ -29,11 +29,14 @@ struct ServerCallbackTest : test::GrpcClientServerCallbackTest, test::IoContextT
     using Request = test::msg::Request;
     using Response = test::msg::Response;
 
-    ServerCallbackTest() { run_io_context_detached(); }
+    ServerCallbackTest()
+    {
+        run_io_context_detached();
+        test::set_default_deadline(client_context);
+    }
 
     auto make_unary_request()
     {
-        test::set_default_deadline(client_context);
         Request request;
         Response response;
         auto status = agrpc::request(&test::v1::Test::Stub::async::Unary, stub->async(), client_context, request,
@@ -49,8 +52,15 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr automatic cancellation
     {
         return agrpc::make_reactor<agrpc::ServerUnaryReactor>(io_context.get_executor())->get();
     };
-    auto [status, response] = make_unary_request();
-    CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
+    Request request;
+    Response response;
+    std::promise<grpc::Status> p;
+    agrpc::request(&test::v1::Test::Stub::async::Unary, stub->async(), client_context, request, response,
+                   [&](auto&& status)
+                   {
+                       p.set_value(status);
+                   });
+    CHECK_EQ(grpc::StatusCode::CANCELLED, p.get_future().get().error_code());
 }
 
 TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr TryCancel")
