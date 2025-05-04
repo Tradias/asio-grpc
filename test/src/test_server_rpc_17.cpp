@@ -146,14 +146,13 @@ TEST_CASE_TEMPLATE("ServerRPC unary start+finish success", RPC, test::UnaryServe
 TEST_CASE_TEMPLATE("Unary ClientRPC/ServerRPC read/send_initial_metadata successfully", RPC, test::UnaryServerRPC,
                    test::NotifyWhenDoneUnaryServerRPC)
 {
-    ServerRPCTest<RPC> test{true};
+    ServerRPCTest<RPC> test;
     bool use_start{};
     SUBCASE("use request") {}
     SUBCASE("use start") { use_start = true; }
     test.register_and_perform_three_requests(
         [&](RPC& rpc, auto&, const asio::yield_context& yield)
         {
-            test.set_up_notify_when_done(rpc);
             rpc.context().AddInitialMetadata("test", "a");
             CHECK(rpc.send_initial_metadata(yield));
         },
@@ -187,11 +186,10 @@ TEST_CASE_TEMPLATE("Streaming ClientRPC/ServerRPC read/send_initial_metadata suc
                    test::ServerStreamingServerRPC, test::NotifyWhenDoneServerStreamingServerRPC,
                    test::BidirectionalStreamingServerRPC, test::NotifyWhenDoneBidirectionalStreamingServerRPC)
 {
-    ServerRPCTest<RPC> test{true};
+    ServerRPCTest<RPC> test;
     test.register_and_perform_three_requests(
         [&](RPC& rpc, auto&&... args)
         {
-            test.set_up_notify_when_done(rpc);
             rpc.context().AddInitialMetadata("test", "a");
             CHECK(rpc.send_initial_metadata(GetYield::get(args...)));
         },

@@ -54,7 +54,11 @@ class ManualResetEventBase<void(Args...)>
   public:
     [[nodiscard]] bool ready() const noexcept { return op_.load(std::memory_order_acquire) == signalled_state(); }
 
-    void reset() noexcept { op_.store(nullptr, std::memory_order_release); }
+    void reset() noexcept
+    {
+        auto* expected = signalled_state();
+        op_.compare_exchange_strong(expected, nullptr, std::memory_order_release);
+    }
 
   protected:
     [[nodiscard]] Op* signal() noexcept
@@ -135,7 +139,7 @@ class BasicManualResetEvent<void(Args...), StorageT> : private StorageT<Args...>
         template <class CompletionHandler, class IOExecutor>
         void operator()(CompletionHandler&& completion_handler, const IOExecutor& io_executor) const
         {
-            const auto complete_immediately = [&io_executor, &event = event_](auto&& ch)
+            const auto complete_immediately = [&io_executor, &event = event_](CompletionHandler& ch)
             {
                 detail::complete_immediately(
                     static_cast<CompletionHandler&&>(ch),
