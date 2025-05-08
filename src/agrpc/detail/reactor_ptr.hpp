@@ -68,16 +68,7 @@ class ReactorPtrAllocation
         value_.first().set_deallocate_function(&deallocate);
     }
 
-    auto* get() noexcept
-    {
-        auto ptr = &value_.first();
-        // TODO
-        if ((void*)ptr != (void*)this)
-        {
-            std::abort();
-        }
-        return ptr;
-    }
+    auto* get() noexcept { return &value_.first(); }
 
   private:
     static void deallocate(void* self) noexcept

@@ -110,7 +110,7 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr finish successfully")
         if (use_wait_for_finish)
         {
             ptr->wait_for_finish(
-                [&](auto&&, bool ok)
+                [&, ptr](auto&&, bool ok)
                 {
                     finish_ok = ok;
                 });
