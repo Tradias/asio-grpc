@@ -62,6 +62,10 @@ decltype(auto) get_executor_from_io_object(ExecutorOrIoObject&& exec_or_io_objec
     {
         return exec::get_scheduler(static_cast<ExecutorOrIoObject&&>(exec_or_io_object));
     }
+    else if constexpr (exec::scheduler<ExecutorOrIoObject>)
+    {
+        return static_cast<ExecutorOrIoObject&&>(exec_or_io_object);
+    }
 #endif
     else
     {

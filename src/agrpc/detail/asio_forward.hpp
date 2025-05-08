@@ -18,6 +18,7 @@
 #include <agrpc/detail/asio_macros.hpp>
 
 #ifdef AGRPC_STANDALONE_ASIO
+#include <asio/any_io_executor.hpp>
 #include <asio/associated_allocator.hpp>
 #include <asio/associated_executor.hpp>
 #include <asio/async_result.hpp>
@@ -35,7 +36,7 @@
 #include <asio/system_executor.hpp>
 
 #ifdef ASIO_USE_TS_EXECUTOR_AS_DEFAULT
-#include <boost/asio/executor_work_guard.hpp>
+#include <asio/executor_work_guard.hpp>
 #endif
 
 #ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
@@ -47,6 +48,7 @@
 #include <asio/associated_immediate_executor.hpp>
 #endif
 #elif defined(AGRPC_BOOST_ASIO)
+#include <boost/asio/any_io_executor.hpp>
 #include <boost/asio/associated_allocator.hpp>
 #include <boost/asio/associated_executor.hpp>
 #include <boost/asio/async_result.hpp>

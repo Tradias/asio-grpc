@@ -53,6 +53,10 @@ if(NOT CMAKE_UNITY_BUILD)
         "test_execution.cpp" PROPERTIES COMPILE_OPTIONS "$<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:Debug>>:/bigobj>")
 endif()
 
+if(ASIO_GRPC_TEST_CALLBACK_API)
+    list(APPEND ASIO_GRPC_CPP17_TEST_SOURCE_FILES "test_callback_17.cpp")
+endif()
+
 asio_grpc_add_test(asio-grpc-test-boost-cpp17 "boost-asio" "17" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES})
 asio_grpc_add_test(asio-grpc-test-cpp17 "standalone-asio" "17" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES})
 

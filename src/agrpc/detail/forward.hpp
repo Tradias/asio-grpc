@@ -81,6 +81,21 @@ class ServerRPCPtr;
 template <class Signature, class Executor = agrpc::BasicGrpcExecutor<>>
 class Waiter;
 
+template <class Executor>
+class BasicServerUnaryReactor;
+
+template <class Request, class Executor>
+class BasicServerReadReactor;
+
+template <class Executor>
+class BasicClientUnaryReactor;
+
+template <class Request, class Executor>
+class BasicClientWriteReactor;
+
+template <class Reactor>
+class ReactorPtr;
+
 namespace detail
 {
 template <class Item>
@@ -132,14 +147,43 @@ class NotifyWhenDoneEvent;
 template <class ServerRPC, class RPCHandler, class CompletionHandler>
 struct RegisterCallbackRPCHandlerOperation;
 
+template <class... Args>
+class ManualResetEventTupleStorage;
+
+template <class Signature, template <class...> class Storage>
+class BasicManualResetEvent;
+
 template <class Signature>
-class ManualResetEvent;
+using ManualResetEvent = BasicManualResetEvent<Signature, ManualResetEventTupleStorage>;
+
+template <class Signature>
+class ManualResetEventBase;
 
 template <class Signature>
 struct ManualResetEventOperationBase;
 
 template <class Signature, class Receiver>
 struct ManualResetEventOperation;
+
+template <class Signature, template <class...> class Storage, class Receiver>
+class ManualResetEventOperationState;
+
+struct ReactorAccess;
+
+template <class T, class Allocator>
+class ReactorPtrAllocation;
+
+template <class Executor>
+class ReactorExecutorBase;
+
+template <class Reactor>
+class RefCountedReactorBase;
+
+template <class Executor>
+class RefCountedServerReactor;
+
+template <class Executor>
+class RefCountedClientReactor;
 }
 
 AGRPC_NAMESPACE_END

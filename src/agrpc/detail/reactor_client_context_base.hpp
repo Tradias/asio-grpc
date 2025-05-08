@@ -12,13 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utils/grpc_client_server_test.hpp"
+#ifndef AGRPC_DETAIL_REACTOR_CLIENT_CONTEXT_BASE_HPP
+#define AGRPC_DETAIL_REACTOR_CLIENT_CONTEXT_BASE_HPP
 
-#include "utils/grpc_client_server_test_impl.hpp"
+#include <grpcpp/client_context.h>
 
-namespace test
+#include <agrpc/detail/config.hpp>
+
+AGRPC_NAMESPACE_BEGIN()
+
+namespace detail
 {
-template GrpcClientServerTestTemplate<test::v1::Test::AsyncService>::GrpcClientServerTestTemplate();
+class ReactorClientContextBase
+{
+  public:
+    [[nodiscard]] grpc::ClientContext& context() noexcept { return client_context_; }
 
-template GrpcClientServerTestTemplate<test::v1::Test::AsyncService>::~GrpcClientServerTestTemplate();
-}  // namespace test
+    [[nodiscard]] const grpc::ClientContext& context() const noexcept { return client_context_; }
+
+  private:
+    grpc::ClientContext client_context_;
+};
+}
+
+AGRPC_NAMESPACE_END
+
+#endif  // AGRPC_DETAIL_REACTOR_CLIENT_CONTEXT_BASE_HPP

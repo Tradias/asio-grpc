@@ -53,6 +53,7 @@ option(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES
        ${ASIO_GRPC_DEFAULT_ENABLE_CPP20_TESTS_AND_EXAMPLES})
 option(ASIO_GRPC_ENABLE_STDEXEC_TESTS "When tests builds are enabled then also create CMake targets for stdexec tests"
        off)
+option(ASIO_GRPC_TEST_CALLBACK_API "Enable tests for the gRPC callback API" on)
 option(ASIO_GRPC_TEST_COVERAGE "Compile tests with --coverage" off)
 set(ASIO_GRPC_COVERAGE_OUTPUT_FILE
     "${CMAKE_CURRENT_BINARY_DIR}/sonarqube-coverage.xml"

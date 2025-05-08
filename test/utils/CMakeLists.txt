@@ -72,6 +72,13 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
                 "utils/test.cpp"
                 "utils/test.hpp")
 
+    if(ASIO_GRPC_TEST_CALLBACK_API)
+        target_sources(
+            ${_asio_grpc_name}
+            PRIVATE # cmake-format: sort
+                    "utils/grpc_client_server_callback_test.cpp" "utils/grpc_client_server_callback_test.hpp")
+    endif()
+
     target_include_directories(${_asio_grpc_name} PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
 
     target_precompile_headers(${_asio_grpc_name} PRIVATE "utils/precompiled_header.hpp")

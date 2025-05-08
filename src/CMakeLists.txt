@@ -64,5 +64,9 @@ if(ASIO_GRPC_BUILD_TESTS AND ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
             "(execution_stdexec.hpp|association_execution.hpp|health_check_service.hpp|grpc_context_definition.hpp)$"
             "")
 
+    if(NOT ASIO_GRPC_TEST_CALLBACK_API)
+        list(TRANSFORM _asio_grpc_sources REPLACE "(reactor_ptr.hpp|server_callback.hpp|client_callback.hpp)$" "")
+    endif()
+
     target_sources(asio-grpc-sources INTERFACE ${_asio_grpc_sources})
 endif()

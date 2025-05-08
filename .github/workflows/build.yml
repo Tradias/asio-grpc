@@ -176,7 +176,7 @@ jobs:
       uses: lukka/run-cmake@v10
       with:
         configurePreset: 'default'
-        configurePresetAdditionalArgs: '[${{ env.CMAKE_ARGS }}, "-DVCPKG_TARGET_TRIPLET=${{ env.VCPKG_DEFAULT_TRIPLET }}", "-DVCPKG_HOST_TRIPLET=${{ env.VCPKG_DEFAULT_HOST_TRIPLET }}", "-DVCPKG_INSTALLED_DIR=${{ env.VCPKG_INSTALLED_DIR }}", "-DVCPKG_MANIFEST_INSTALL=off", "-DASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES=off", "-DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off", "-DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=on", "-DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold"]'
+        configurePresetAdditionalArgs: '[${{ env.CMAKE_ARGS }}, "-DVCPKG_TARGET_TRIPLET=${{ env.VCPKG_DEFAULT_TRIPLET }}", "-DVCPKG_HOST_TRIPLET=${{ env.VCPKG_DEFAULT_HOST_TRIPLET }}", "-DVCPKG_INSTALLED_DIR=${{ env.VCPKG_INSTALLED_DIR }}", "-DVCPKG_MANIFEST_INSTALL=off", "-DASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES=off", "-DASIO_GRPC_TEST_CALLBACK_API=off", "-DASIO_GRPC_ENABLE_CMAKE_INSTALL_TEST=off", "-DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=on", "-DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=gold"]'
         buildPreset: 'default'
         buildPresetAdditionalArgs: '["--config", "Release", "--target", "asio-grpc-check-header-syntax", "all"]'
         testPreset: 'default'

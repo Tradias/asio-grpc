@@ -36,7 +36,7 @@ struct ManualResetEventOperation<void(Args...), CompletionHandler>
     using Signature = void(Args...);
     using Base = ManualResetEventOperationBase<Signature>;
     using WorkTracker = detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandler>>;
-    using Event = ManualResetEvent<Signature>;
+    using Event = ManualResetEventBase<Signature>;
 
     struct StopFunction
     {
@@ -59,25 +59,19 @@ struct ManualResetEventOperation<void(Args...), CompletionHandler>
         ManualResetEventOperation& op_;
     };
 
-    static void complete_impl(Base* base)
+    static void complete_impl(Base* base, Args... args)
     {
         auto& self = *static_cast<ManualResetEventOperation*>(base);
-        detail::prepend_error_code_and_apply(
-            [&](auto&&... args)
-            {
-                self.complete(static_cast<decltype(args)&&>(args)...);
-            },
-            static_cast<Event&&>(self.event_).args());
+        self.complete(static_cast<Args&&>(args)...);
     }
 
     template <class Ch>
-    ManualResetEventOperation(Ch&& ch, ManualResetEvent<Signature>& event)
+    ManualResetEventOperation(Ch&& ch, Event& event)
         : Base{event, &complete_impl},
           WorkTracker(asio::get_associated_executor(ch)),
           completion_handler_(static_cast<Ch&&>(ch))
     {
         emplace_stop_callback();
-        this->event_.op_.store(this, std::memory_order_release);
     }
 
     void emplace_stop_callback()
@@ -92,10 +86,16 @@ struct ManualResetEventOperation<void(Args...), CompletionHandler>
     }
 
     template <class... TArgs>
-    void complete(TArgs&&... args)
+    void complete(detail::ErrorCode&& ec, TArgs&&... args)
     {
         detail::AllocationGuard ptr{*this, asio::get_associated_allocator(completion_handler_)};
-        detail::dispatch_complete(ptr, static_cast<TArgs&&>(args)...);
+        detail::dispatch_complete(ptr, static_cast<detail::ErrorCode&&>(ec), static_cast<TArgs&&>(args)...);
+    }
+
+    template <class... TArgs>
+    void complete(TArgs&&... args)
+    {
+        complete(detail::ErrorCode{}, static_cast<TArgs&&>(args)...);
     }
 
     void cancel()
@@ -103,7 +103,7 @@ struct ManualResetEventOperation<void(Args...), CompletionHandler>
         detail::PrependErrorCodeToSignature<Signature>::invoke_with_default_args(
             [&](detail::ErrorCode&& ec, auto&&... args)
             {
-                complete(static_cast<detail::ErrorCode&&>(ec), args...);
+                complete(static_cast<detail::ErrorCode&&>(ec), static_cast<decltype(args)&&>(args)...);
             },
             detail::operation_aborted_error_code());
     }

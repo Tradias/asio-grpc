@@ -22,17 +22,20 @@
 
 namespace test
 {
-struct GrpcClientServerTest : test::GrpcClientServerTestBase
+template <class Service>
+struct GrpcClientServerTestTemplate : test::GrpcClientServerTestBase
 {
-    test::v1::Test::AsyncService service;
+    Service service;
     std::unique_ptr<test::v1::Test::Stub> stub;
     std::optional<grpc::ServerContext> server_context_lifetime;
     grpc::ServerContext& server_context;
 
-    GrpcClientServerTest();
+    GrpcClientServerTestTemplate();
 
-    ~GrpcClientServerTest();
+    ~GrpcClientServerTestTemplate();
 };
+
+using GrpcClientServerTest = GrpcClientServerTestTemplate<test::v1::Test::AsyncService>;
 }  // namespace test
 
 #endif  // AGRPC_UTILS_GRPC_CLIENT_SERVER_TEST_HPP
