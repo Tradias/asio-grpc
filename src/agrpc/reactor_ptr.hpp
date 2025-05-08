@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_AGRPC_SERVER_CALLBACK_PTR_HPP
-#define AGRPC_AGRPC_SERVER_CALLBACK_PTR_HPP
+#ifndef AGRPC_AGRPC_REACTOR_PTR_HPP
+#define AGRPC_AGRPC_REACTOR_PTR_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/reactor_executor_base.hpp>
@@ -129,4 +129,4 @@ template <class Reactor, class... Args>
 
 AGRPC_NAMESPACE_END
 
-#endif  // AGRPC_AGRPC_SERVER_CALLBACK_PTR_HPP
+#endif  // AGRPC_AGRPC_REACTOR_PTR_HPP

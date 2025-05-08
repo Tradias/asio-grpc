@@ -43,7 +43,6 @@ set(ASIO_GRPC_CPP17_TEST_SOURCE_FILES
     "test_health_check_service_17.cpp"
     "test_client_rpc_17.cpp"
     "test_server_rpc_17.cpp"
-    "test_server_callback_17.cpp"
     "test_waiter_17.cpp")
 set(ASIO_GRPC_CPP20_TEST_SOURCE_FILES "test_alarm_20.cpp" "test_bind_allocator_20.cpp" "test_grpc_context_20.cpp"
                                       "test_server_rpc_20.cpp")
@@ -52,6 +51,10 @@ if(NOT CMAKE_UNITY_BUILD)
     set_source_files_properties(
         "test_client_rpc_17.cpp" "test_server_rpc_17.cpp" "test_server_rpc_20.cpp" "test_unifex_20.cpp"
         "test_execution.cpp" PROPERTIES COMPILE_OPTIONS "$<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:Debug>>:/bigobj>")
+endif()
+
+if(ASIO_GRPC_TEST_CALLBACK_API)
+    list(APPEND ASIO_GRPC_CPP17_TEST_SOURCE_FILES "test_callback_17.cpp")
 endif()
 
 asio_grpc_add_test(asio-grpc-test-boost-cpp17 "boost-asio" "17" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES})

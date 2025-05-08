@@ -15,12 +15,12 @@
 #include "test/v1/test.grpc.pb.h"
 #include "utils/client_context.hpp"
 #include "utils/doctest.hpp"
-#include "utils/grpc_client_server_test.hpp"
+#include "utils/grpc_client_server_callback_test.hpp"
 #include "utils/io_context_test.hpp"
 
 #include <agrpc/client_callback.hpp>
+#include <agrpc/reactor_ptr.hpp>
 #include <agrpc/server_callback.hpp>
-#include <agrpc/server_callback_ptr.hpp>
 
 #include <utility>
 

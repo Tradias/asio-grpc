@@ -19,6 +19,8 @@
 #include <agrpc/detail/reactor_ptr.hpp>
 #include <grpcpp/support/status.h>
 
+#include <atomic>
+
 #include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
