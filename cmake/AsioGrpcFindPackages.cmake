@@ -20,7 +20,7 @@ unset(FPHSA_NAME_MISMATCHED)
 find_package(Threads REQUIRED)
 find_package(gRPC)
 
-set(ASIO_GRPC_FIND_BOOST_COMPONENTS coroutine)
+set(ASIO_GRPC_FIND_BOOST_COMPONENTS coroutine cobalt)
 if(ASIO_GRPC_BUILD_TESTS)
     list(APPEND ASIO_GRPC_FIND_BOOST_COMPONENTS thread process)
 endif()

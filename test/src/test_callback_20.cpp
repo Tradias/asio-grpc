@@ -20,14 +20,15 @@
 #include <agrpc/client_callback.hpp>
 #include <agrpc/reactor_ptr.hpp>
 #include <agrpc/server_callback.hpp>
+#include <agrpc/server_callback_coroutine.hpp>
 
 using ServerCallbackTest = test::ServerCallbackTest;
 
-TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr automatic cancellation")
+TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback coroutine automatic cancellation")
 {
-    service.unary = [&](grpc::CallbackServerContext*, const Request*, Response*) -> grpc::ServerUnaryReactor*
+    service.unary = [](grpc::CallbackServerContext*, const Request*, Response*) -> grpc::ServerUnaryReactor*
     {
-        return agrpc::make_reactor<agrpc::ServerUnaryReactor>(io_context.get_executor())->get();
+        co_return;
     };
     Request request;
     Response response;
@@ -40,33 +41,23 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr automatic cancellation
     CHECK_EQ(grpc::StatusCode::CANCELLED, p.get_future().get().error_code());
 }
 
-TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr TryCancel")
+TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback coroutine TryCancel")
 {
     std::promise<bool> finish_ok;
     asio::steady_timer timer{io_context};
     service.unary = [&](grpc::CallbackServerContext* context, const Request*, Response*) -> grpc::ServerUnaryReactor*
     {
-        auto ptr = agrpc::make_reactor<agrpc::ServerUnaryReactor>(io_context.get_executor());
-        auto& rpc = *ptr;
         context->TryCancel();
         timer.expires_after(std::chrono::milliseconds(200));
-        timer.async_wait(
-            [&, ptr](auto&&)
-            {
-                ptr->wait_for_finish(
-                    [&, ptr](auto&&, bool ok)
-                    {
-                        finish_ok.set_value(ok);
-                    });
-            });
-        return rpc.get();
+        co_await timer.async_wait(asio::deferred);
+        finish_ok.set_value(co_await agrpc::wait_for_finish);
     };
     auto [status, response] = make_unary_request();
     CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
     CHECK_FALSE(finish_ok.get_future().get());
 }
 
-TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr finish successfully")
+TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback coroutine finish successfully")
 {
     bool use_wait_for_finish{};
     SUBCASE("wait_for_finish") { use_wait_for_finish = true; }
@@ -74,65 +65,35 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr finish successfully")
     std::promise<bool> finish_ok;
     service.unary = [&](grpc::CallbackServerContext*, const Request*, Response* response) -> grpc::ServerUnaryReactor*
     {
-        struct MyReactor : agrpc::ServerUnaryReactorBase
-        {
-            explicit MyReactor(int integer) : integer_(integer) {}
-
-            int integer_;
-        };
-        auto ptr = agrpc::allocate_reactor<MyReactor>(get_allocator(), io_context.get_executor(), 42);
-        MyReactor& r = *ptr;
-        response->set_integer(r.integer_);
-        ptr->initiate_finish(grpc::Status::OK);
+        response->set_integer(42);
+        co_await agrpc::initiate_finish(grpc::Status::OK);
         if (use_wait_for_finish)
         {
-            ptr->wait_for_finish(
-                [&, ptr](auto&&, bool ok)
-                {
-                    finish_ok.set_value(ok);
-                });
+            finish_ok.set_value(co_await agrpc::wait_for_finish);
         }
         else
         {
             finish_ok.set_value(true);
         }
-        return ptr->get();
     };
     auto [status, response] = make_unary_request();
     CHECK_EQ(grpc::StatusCode::OK, status.error_code());
     CHECK_EQ(42, response.integer());
     CHECK(finish_ok.get_future().get());
-    CHECK(allocator_has_been_used());
 }
 
-TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr read/send_initial_metadata successfully")
+TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback coroutine read/send_initial_metadata successfully")
 {
-    bool use_early_finish{};
-    SUBCASE("early_finish") { use_early_finish = true; }
-    SUBCASE("no early_finish") {}
     std::promise<bool> send_ok;
     service.unary = [&](grpc::CallbackServerContext* context, const Request*, Response*) -> grpc::ServerUnaryReactor*
     {
-        auto ptr = agrpc::allocate_reactor<agrpc::ServerUnaryReactor>(get_allocator(), io_context.get_executor());
-        auto& rpc = *ptr;
         context->AddInitialMetadata("test", "a");
-        rpc.initiate_send_initial_metadata();
-        rpc.wait_for_send_initial_metadata(
-            [&, ptr = use_early_finish ? ptr : agrpc::ReactorPtr<agrpc::ServerUnaryReactor>{}](auto&&, bool ok)
-            {
-                send_ok.set_value(ok);
-                server_done();
-            });
-        return rpc.get();
+        co_await agrpc::initiate_send_initial_metadata;
+        bool ok = co_await agrpc::wait_for_send_initial_metadata;
+        send_ok.set_value(ok);
+        server_done();
     };
-    struct MyReactor : agrpc::ClientUnaryReactorBase
-    {
-        explicit MyReactor(int integer) : integer_(integer) {}
-
-        int integer_;
-    };
-    auto rpc = agrpc::make_reactor<MyReactor>(io_context.get_executor(), 42);
-    CHECK_EQ(42, rpc->integer_);
+    auto rpc = agrpc::make_reactor<agrpc::ClientUnaryReactor>(io_context.get_executor());
     test::set_default_deadline(rpc->context());
     Request request;
     Response response;
@@ -142,32 +103,23 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr read/send_initial_meta
     auto status = rpc->wait_for_finish(asio::use_future).get();
     CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
     CHECK(send_ok.get_future().get());
-    CHECK(allocator_has_been_used());
 }
 
-TEST_CASE_FIXTURE(ServerCallbackTest, "Client-streaming callback ptr")
+TEST_CASE_FIXTURE(ServerCallbackTest, "Client-streaming callback coroutine")
 {
     Request server_request;
     service.client_streaming = [&](grpc::CallbackServerContext*, Response*) -> grpc::ServerReadReactor<Request>*
     {
-        auto ptr = agrpc::make_reactor<agrpc::ServerReadReactor<Request>>(io_context.get_executor());
-        auto& rpc = *ptr;
-        rpc.initiate_read(server_request);
-        rpc.wait_for_read(
-            [&, ptr](auto&&, bool ok)
-            {
-                CHECK(ok);
-                CHECK_EQ(1, server_request.integer());
-                rpc.initiate_read(server_request);
-                rpc.wait_for_read(
-                    [&, ptr](auto&&, bool ok)
-                    {
-                        CHECK(ok);
-                        CHECK_EQ(2, server_request.integer());
-                        rpc.initiate_finish(grpc::Status::OK);
-                    });
-            });
-        return rpc.get();
+        auto& reactor = co_await agrpc::get_reactor;
+        reactor.initiate_read(server_request);
+        bool ok = co_await reactor.wait_for_read(asio::deferred);
+        CHECK(ok);
+        CHECK_EQ(1, server_request.integer());
+        reactor.initiate_read(server_request);
+        ok = co_await reactor.wait_for_read(asio::deferred);
+        CHECK(ok);
+        CHECK_EQ(2, server_request.integer());
+        reactor.initiate_finish(grpc::Status::OK);
     };
     auto rpc = agrpc::make_reactor<agrpc::ClientWriteReactor<Request>>(io_context.get_executor());
     test::set_default_deadline(rpc->context());
@@ -184,28 +136,19 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Client-streaming callback ptr")
     CHECK_EQ(grpc::StatusCode::OK, status.error_code());
 }
 
-TEST_CASE_FIXTURE(ServerCallbackTest, "Client-streaming callback ptr cancel after write")
+TEST_CASE_FIXTURE(ServerCallbackTest, "Client-streaming callback coroutine cancel after write")
 {
     Request server_request;
     service.client_streaming = [&](grpc::CallbackServerContext*, Response*) -> grpc::ServerReadReactor<Request>*
     {
-        auto ptr = agrpc::make_reactor<agrpc::ServerReadReactor<Request>>(io_context.get_executor());
-        auto& rpc = *ptr;
-        rpc.initiate_read(server_request);
-        rpc.wait_for_read(
-            [&, ptr](auto&&, bool ok)
-            {
-                server_done();
-                CHECK(ok);
-                CHECK_EQ(1, server_request.integer());
-                rpc.initiate_read(server_request);
-                rpc.wait_for_read(
-                    [&, ptr](auto&&, bool ok)
-                    {
-                        CHECK_FALSE(ok);
-                    });
-            });
-        return rpc.get();
+        co_await agrpc::initiate_read(server_request);
+        bool ok = co_await agrpc::wait_for_read;
+        server_done();
+        CHECK(ok);
+        CHECK_EQ(1, server_request.integer());
+        co_await agrpc::initiate_read(server_request);
+        ok = co_await agrpc::wait_for_read;
+        CHECK_FALSE(ok);
     };
     auto rpc = agrpc::make_reactor<agrpc::ClientWriteReactor<Request>>(io_context.get_executor());
     test::set_default_deadline(rpc->context());

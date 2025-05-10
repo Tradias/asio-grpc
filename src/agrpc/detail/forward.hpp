@@ -184,6 +184,9 @@ class RefCountedServerReactor;
 
 template <class Executor>
 class RefCountedClientReactor;
+
+template <class Reactor>
+class ServerReactorPromiseType;
 }
 
 AGRPC_NAMESPACE_END

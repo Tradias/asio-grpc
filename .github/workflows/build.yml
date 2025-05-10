@@ -169,7 +169,7 @@ jobs:
       run: |
         ${{ env.VCPKG_ROOT }}/vcpkg install --recurse --clean-after-build \
           --x-install-root=${{ env.VCPKG_INSTALLED_DIR }} --overlay-ports=${{ github.workspace }}/deps --overlay-triplets=${{ github.workspace }}/.github/vcpkg \
-          libunifex boost-coroutine boost-asio boost-interprocess boost-thread boost-process asio[coroutine]
+          libunifex boost-cobalt boost-coroutine boost-asio boost-interprocess boost-thread boost-process asio[coroutine]
       working-directory: ${{ env.VCPKG_ROOT }}
 
     - name: Run CMake

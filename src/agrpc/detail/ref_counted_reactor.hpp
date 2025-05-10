@@ -43,6 +43,9 @@ class RefCountedReactorBase : public Reactor
     template <class, class>
     friend class detail::ReactorPtrAllocation;
 
+    template <class>
+    friend class detail::ServerReactorPromiseType;
+
     struct Guard
     {
         ~Guard() { self_.decrement_ref_count(); }

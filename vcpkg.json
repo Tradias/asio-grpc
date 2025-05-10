@@ -11,6 +11,7 @@
         },
         "doctest",
         "grpc",
+        "boost-cobalt",
         "boost-coroutine",
         "boost-asio",
         "boost-interprocess",
