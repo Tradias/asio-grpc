@@ -109,13 +109,13 @@ class ServerReactorPromiseType final : private detail::ServerReactorPromiseBase<
 
     auto* get_return_object() noexcept { return reactor().get(); }
 
-    static std::suspend_never initial_suspend() noexcept { return {}; }
+    std::suspend_never initial_suspend() const noexcept { return {}; }
 
-    static void return_void() noexcept {}
+    void return_void() const noexcept {}
 
     void unhandled_exception() noexcept { finish({grpc::StatusCode::INTERNAL, "Unhandled exception"}); }
 
-    static std::suspend_never final_suspend() noexcept { return {}; }
+    std::suspend_never final_suspend() const noexcept { return {}; }
 
     decltype(auto) get_executor() noexcept { return reactor().get_executor(); }
 
@@ -127,8 +127,8 @@ class ServerReactorPromiseType final : private detail::ServerReactorPromiseBase<
     {
         struct Awaitable
         {
-            static constexpr bool await_ready() noexcept { return true; }
-            static constexpr void await_suspend(std::coroutine_handle<>) noexcept {}
+            constexpr bool await_ready() noexcept { return true; }
+            constexpr void await_suspend(std::coroutine_handle<>) noexcept {}
             constexpr Reactor& await_resume() noexcept { return reactor_; }
 
             Reactor& reactor_;

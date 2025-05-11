@@ -71,7 +71,8 @@ target_compile_definitions(
               BOOST_ASIO_NO_DEPRECATED
               ASIO_NO_DEPRECATED
               BOOST_ASIO_DISABLE_BOOST_COROUTINE
-              ASIO_DISABLE_BOOST_COROUTINE)
+              ASIO_DISABLE_BOOST_COROUTINE
+              BOOST_COBALT_NO_PMR)
 
 target_link_libraries(asio-grpc-compile-options INTERFACE gRPC::grpc++_unsecure Boost::disable_autolinking
                                                           Threads::Threads)
