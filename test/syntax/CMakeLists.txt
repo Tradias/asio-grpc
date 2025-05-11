@@ -16,6 +16,13 @@ get_target_property(_asio_grpc_headers asio-grpc-sources INTERFACE_SOURCES)
 
 set_source_files_properties(${_asio_grpc_headers} PROPERTIES LANGUAGE CXX)
 
+if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES AND ASIO_GRPC_TEST_CALLBACK_API)
+    set(_asio_grpc_cpp20_headers ${_asio_grpc_headers})
+    list(FILTER _asio_grpc_cpp20_headers INCLUDE REGEX "server_callback_coroutine.hpp$")
+    set_source_files_properties(${_asio_grpc_cpp20_headers}
+                                PROPERTIES COMPILE_OPTIONS "$<IF:$<CXX_COMPILER_ID:MSVC>,/std:c++20,-std=c++20>")
+endif()
+
 add_library(asio-grpc-check-header-syntax OBJECT)
 
 target_sources(asio-grpc-check-header-syntax PRIVATE ${_asio_grpc_headers})
