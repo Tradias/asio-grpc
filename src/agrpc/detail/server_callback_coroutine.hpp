@@ -91,7 +91,7 @@ class ServerReactorPromiseType final : private detail::ServerReactorPromiseBase<
   public:
     using executor_type = typename Reactor::executor_type;
 
-    static void* operator new(std::size_t size) noexcept { return ::operator new(size); }
+    static void* operator new(std::size_t size) { return ::operator new(size); }
 
     static void operator delete(void* ptr) noexcept
     {

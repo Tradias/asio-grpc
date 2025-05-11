@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AGRPC_UTILS_SERVER_RPC_HPP
-#define AGRPC_UTILS_SERVER_RPC_HPP
+#ifndef AGRPC_UTILS_SERVER_CALLBACK_TEST_HPP
+#define AGRPC_UTILS_SERVER_CALLBACK_TEST_HPP
 
 #include "test/v1/test.grpc.pb.h"
 #include "utils/asio_forward.hpp"
@@ -57,4 +57,4 @@ struct ServerCallbackTest : test::GrpcClientServerCallbackTest, test::IoContextT
 };
 }
 
-#endif  // AGRPC_UTILS_SERVER_RPC_HPP
+#endif  // AGRPC_UTILS_SERVER_CALLBACK_TEST_HPP
