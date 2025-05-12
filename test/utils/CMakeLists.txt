@@ -77,7 +77,9 @@ function(asio_grpc_add_test_util _asio_grpc_name _asio_grpc_type _asio_grpc_cxx_
             ${_asio_grpc_name}
             PRIVATE # cmake-format: sort
                     "utils/grpc_client_server_callback_test.cpp" "utils/grpc_client_server_callback_test.hpp")
+    endif()
 
+    if(ASIO_GRPC_TEST_CALLBACK_API_CPP20)
         target_link_libraries(${_asio_grpc_name} PUBLIC Boost::cobalt)
     endif()
 

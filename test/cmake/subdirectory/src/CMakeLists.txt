@@ -14,10 +14,6 @@
 
 cmake_minimum_required(VERSION 3.14)
 
-if(TEST_CALLBACK_API_CPP20)
-    list(APPEND VCPKG_MANIFEST_FEATURES "callback-api")
-endif()
-
 project(asio-grpc-cmake-test-subdirectory LANGUAGES CXX)
 
 add_subdirectory(a-g)
