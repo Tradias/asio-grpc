@@ -11,7 +11,6 @@
         },
         "doctest",
         "grpc",
-        "boost-cobalt",
         "boost-coroutine",
         "boost-asio",
         "boost-interprocess",
@@ -27,5 +26,13 @@
         "gtest",
         "stdexec"
     ],
+    "features": {
+        "callback-api": {
+            "description": "Enable C++20 callback api",
+            "dependencies": [
+                "boost-cobalt"
+            ]
+        }
+    },
     "builtin-baseline": "fd22bbac96555f6c43ee35f143a634daed53369c"
 }

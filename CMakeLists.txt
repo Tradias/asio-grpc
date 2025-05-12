@@ -14,12 +14,37 @@
 
 cmake_minimum_required(VERSION 3.14...3.27)
 
+include(CMakeDependentOption)
+
 # Hunter package manager options
 option(HUNTER_ENABLED "Enable Hunter package manager" off)
 option(ASIO_GRPC_HUNTER_BACKEND_BOOST_ASIO "Build Boost.Asio using Hunter" on)
 option(ASIO_GRPC_HUNTER_BACKEND_STANDALONE_ASIO "Build standalone Asio using Hunter" off)
 if(HUNTER_ENABLED)
     include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcHunter.cmake")
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcOptionDefaults.cmake")
+
+# maintainer options
+option(ASIO_GRPC_BUILD_TESTS "Build tests" off)
+if(ASIO_GRPC_BUILD_TESTS)
+    set(ASIO_GRPC_BUILD_EXAMPLES
+        on
+        CACHE BOOL "Build examples" FORCE)
+endif()
+option(ASIO_GRPC_DISCOVER_TESTS "Discover tests for ctest" off)
+option(ASIO_GRPC_ENABLE_STDEXEC_TESTS "When tests builds are enabled then also create CMake targets for stdexec tests"
+       off)
+option(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES
+       "When tests and/or example builds are enabled then also create CMake targets for C++20"
+       ${ASIO_GRPC_DEFAULT_ENABLE_CPP20_TESTS_AND_EXAMPLES})
+option(ASIO_GRPC_TEST_CALLBACK_API "Enable tests for the gRPC callback API" on)
+cmake_dependent_option(ASIO_GRPC_TEST_CALLBACK_API_CPP20 "Enable tests for the gRPC callback API that required C++20"
+                       on "ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES;ASIO_GRPC_TEST_CALLBACK_API" off)
+
+if(ASIO_GRPC_TEST_CALLBACK_API_CPP20)
+    list(APPEND VCPKG_MANIFEST_FEATURES "callback-api")
 endif()
 
 project(
@@ -29,7 +54,6 @@ project(
     HOMEPAGE_URL "https://github.com/Tradias/asio-grpc"
     LANGUAGES CXX)
 
-include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcOptionDefaults.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/AsioGrpcProjectTopLevel.cmake")
 include(GNUInstallDirs)
 
@@ -40,20 +64,7 @@ set(ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR
     CACHE STRING "Install directory for CMake config files")
 option(ASIO_GRPC_BUILD_EXAMPLES "Build examples" off)
 
-# maintainer options
-option(ASIO_GRPC_BUILD_TESTS "Build tests" off)
-if(ASIO_GRPC_BUILD_TESTS)
-    set(ASIO_GRPC_BUILD_EXAMPLES
-        on
-        CACHE BOOL "Build examples" FORCE)
-endif()
-option(ASIO_GRPC_DISCOVER_TESTS "Discover tests for ctest" off)
-option(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES
-       "When tests and/or example builds are enabled then also create CMake targets for C++20"
-       ${ASIO_GRPC_DEFAULT_ENABLE_CPP20_TESTS_AND_EXAMPLES})
-option(ASIO_GRPC_ENABLE_STDEXEC_TESTS "When tests builds are enabled then also create CMake targets for stdexec tests"
-       off)
-option(ASIO_GRPC_TEST_CALLBACK_API "Enable tests for the gRPC callback API" on)
+# more maintainer options
 option(ASIO_GRPC_TEST_COVERAGE "Compile tests with --coverage" off)
 set(ASIO_GRPC_COVERAGE_OUTPUT_FILE
     "${CMAKE_CURRENT_BINARY_DIR}/sonarqube-coverage.xml"

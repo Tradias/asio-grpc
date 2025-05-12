@@ -109,7 +109,7 @@ jobs:
       uses: lukka/run-cmake@v10
       with:
         configurePreset: 'default'
-        configurePresetAdditionalArgs: '[${{ env.CMAKE_ARGS }}, "-DVCPKG_TARGET_TRIPLET=x64-osx-custom-release", "-DVCPKG_HOST_TRIPLET=x64-osx-custom-release", "-DCMAKE_BUILD_TYPE=Debug", "-DASIO_GRPC_HAS_STD_PMR=off", "-DCMAKE_UNITY_BUILD=off"]'
+        configurePresetAdditionalArgs: '[${{ env.CMAKE_ARGS }}, "-DVCPKG_TARGET_TRIPLET=x64-osx-custom-release", "-DVCPKG_HOST_TRIPLET=x64-osx-custom-release", "-DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}/.github/vcpkg", "-DCMAKE_BUILD_TYPE=Debug", "-DASIO_GRPC_HAS_STD_PMR=off", "-DCMAKE_UNITY_BUILD=off"]'
         buildPreset: 'default'
         testPreset: 'default'
 
@@ -322,7 +322,7 @@ jobs:
       uses: lukka/run-cmake@v10
       with:
         configurePreset: 'default'
-        configurePresetAdditionalArgs: '[${{ env.CMAKE_ARGS }}, "-DCMAKE_CXX_COMPILER=${{ env.CLANG_PROGRAM }}", "-DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}/.github/vcpkg", "-DVCPKG_TARGET_TRIPLET=x64-linux-clang13-release", "-DVCPKG_HOST_TRIPLET=x64-linux-clang13-release", "-DCMAKE_DISABLE_PRECOMPILE_HEADERS=on", "-DASIO_GRPC_CMAKE_INSTALL_TEST_CTEST_COMMAND=/usr/bin/ctest", "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-13/include/c++/v1/ -Wno-unused-command-line-argument", "-DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld"]'
+        configurePresetAdditionalArgs: '[${{ env.CMAKE_ARGS }}, "-DCMAKE_CXX_COMPILER=${{ env.CLANG_PROGRAM }}", "-DVCPKG_OVERLAY_TRIPLETS=${{ github.workspace }}/.github/vcpkg", "-DVCPKG_TARGET_TRIPLET=x64-linux-clang13-release", "-DVCPKG_HOST_TRIPLET=x64-linux-clang13-release", "-DCMAKE_DISABLE_PRECOMPILE_HEADERS=on", "-DASIO_GRPC_CMAKE_INSTALL_TEST_CTEST_COMMAND=/usr/bin/ctest", "-DCMAKE_CXX_FLAGS=-stdlib=libc++ -stdlib++-isystem /usr/lib/llvm-13/include/c++/v1/ -Wno-unused-command-line-argument", "-DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld", "-DASIO_GRPC_TEST_CALLBACK_API_CPP20=off"]'
         buildPreset: 'default'
         buildPresetAdditionalArgs: '["--config", "Release"]'
         testPreset: 'default'

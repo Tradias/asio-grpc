@@ -16,7 +16,7 @@ get_target_property(_asio_grpc_headers asio-grpc-sources INTERFACE_SOURCES)
 
 set_source_files_properties(${_asio_grpc_headers} PROPERTIES LANGUAGE CXX)
 
-if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES AND ASIO_GRPC_TEST_CALLBACK_API)
+if(ASIO_GRPC_TEST_CALLBACK_API_CPP20)
     set(_asio_grpc_cpp20_headers ${_asio_grpc_headers})
     list(FILTER _asio_grpc_cpp20_headers INCLUDE REGEX "server_callback_coroutine.hpp$")
     set_source_files_properties(${_asio_grpc_cpp20_headers}

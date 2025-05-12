@@ -67,7 +67,7 @@ if(ASIO_GRPC_BUILD_TESTS AND ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
     if(NOT ASIO_GRPC_TEST_CALLBACK_API)
         list(TRANSFORM _asio_grpc_sources
              REPLACE "(reactor_ptr.hpp|server_callback.hpp|server_callback_coroutine.hpp|client_callback.hpp)$" "")
-    elseif(NOT ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
+    elseif(NOT ASIO_GRPC_TEST_CALLBACK_API_CPP20)
         list(TRANSFORM _asio_grpc_sources REPLACE "(server_callback_coroutine.hpp)$" "")
     endif()
 
