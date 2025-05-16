@@ -25,6 +25,8 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+using ReactorDeallocateFn = void (*)(void*) noexcept;
+
 struct ReactorAccess
 {
     template <class Ptr, class Allocator, class... Args>
@@ -54,6 +56,13 @@ struct ReactorAccess
     }
 
     static void destroy_executor(detail::ReactorExecutorBase<void>&) {}
+
+    template <class Reactor, class Executor>
+    static void initialize_reactor(Reactor& reactor, Executor&& executor, ReactorDeallocateFn deallocate)
+    {
+        ReactorAccess::set_executor(reactor, static_cast<Executor&&>(executor));
+        reactor.set_deallocate_function(deallocate);
+    }
 };
 
 template <class RefCountedReactor, class Allocator>
@@ -64,8 +73,7 @@ class ReactorPtrAllocation
     ReactorPtrAllocation(Allocator allocator, Executor&& executor, Args&&... args)
         : value_(detail::SecondThenVariadic{}, static_cast<Allocator&&>(allocator), static_cast<Args&&>(args)...)
     {
-        ReactorAccess::set_executor(value_.first(), static_cast<Executor&&>(executor));
-        value_.first().set_deallocate_function(&deallocate);
+        ReactorAccess::initialize_reactor(value_.first(), static_cast<Executor&&>(executor), &deallocate);
     }
 
     auto* get() noexcept { return &value_.first(); }
@@ -80,8 +88,6 @@ class ReactorPtrAllocation
 
     detail::CompressedPair<RefCountedReactor, Allocator> value_;
 };
-
-using ReactorDeallocateFn = void (*)(void*) noexcept;
 }
 
 AGRPC_NAMESPACE_END

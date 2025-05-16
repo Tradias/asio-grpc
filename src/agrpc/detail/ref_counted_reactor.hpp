@@ -31,6 +31,8 @@ template <class Reactor>
 class RefCountedReactorBase : public Reactor
 {
   private:
+    friend detail::ReactorAccess;
+
     template <class>
     friend class agrpc::ReactorPtr;
 
@@ -39,9 +41,6 @@ class RefCountedReactorBase : public Reactor
 
     template <class>
     friend class detail::RefCountedClientReactor;
-
-    template <class, class>
-    friend class detail::ReactorPtrAllocation;
 
     template <class>
     friend class detail::ServerReactorPromiseType;
