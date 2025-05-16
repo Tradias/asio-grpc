@@ -51,6 +51,7 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback coroutine TryCancel")
         context->TryCancel();
         timer.expires_after(std::chrono::milliseconds(200));
         co_await timer.async_wait(asio::deferred);
+        co_await timer.async_wait(boost::cobalt::use_op);
         finish_ok.set_value(co_await agrpc::wait_for_finish);
     };
     auto [status, response] = make_unary_request();

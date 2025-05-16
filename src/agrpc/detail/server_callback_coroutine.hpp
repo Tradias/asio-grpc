@@ -144,7 +144,7 @@ class ServerReactorPromiseType final : private detail::ServerReactorPromiseBase<
 
     auto await_transform(detail::WaitForSendInitialMetadataArg) noexcept
     {
-        return await_transform(reactor().wait_for_send_initial_metadata(asio::deferred));
+        return reactor().wait_for_send_initial_metadata(boost::cobalt::use_op);
     }
 
     template <class Request>
@@ -154,10 +154,7 @@ class ServerReactorPromiseType final : private detail::ServerReactorPromiseBase<
         return {};
     }
 
-    auto await_transform(detail::WaitForReadArg) noexcept
-    {
-        return await_transform(reactor().wait_for_read(asio::deferred));
-    }
+    auto await_transform(detail::WaitForReadArg) noexcept { return reactor().wait_for_read(boost::cobalt::use_op); }
 
     std::suspend_never await_transform(detail::InitiateFinishArg arg) noexcept
     {
@@ -165,9 +162,12 @@ class ServerReactorPromiseType final : private detail::ServerReactorPromiseBase<
         return {};
     }
 
-    auto await_transform(detail::WaitForFinishArg) noexcept
+    auto await_transform(detail::WaitForFinishArg) noexcept { return reactor().wait_for_finish(boost::cobalt::use_op); }
+
+    template <class Arg>
+    Arg&& await_transform(Arg&& arg) noexcept
     {
-        return await_transform(reactor().wait_for_finish(asio::deferred));
+        return static_cast<Arg&&>(arg);
     }
 
   private:
