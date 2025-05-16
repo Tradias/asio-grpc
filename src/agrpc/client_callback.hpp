@@ -157,7 +157,7 @@ auto request(detail::AsyncUnaryFn<StubAsync, Request, Response> fn, StubAsync* s
              grpc::ClientContext& client_context, const Request& request, Response& response, CompletionToken&& token)
 {
     return asio::async_initiate<CompletionToken, void(grpc::Status)>(
-        [fn](auto&& handler, StubAsync* stub, grpc::ClientContext* client_context, const Request* request,
+        [fn](auto handler, StubAsync* stub, grpc::ClientContext* client_context, const Request* request,
              Response* response)
         {
             (*stub.*fn)(client_context, request, response,

@@ -127,9 +127,9 @@ class ServerReactorPromiseType final : private detail::ServerReactorPromiseBase<
     {
         struct Awaitable
         {
-            constexpr bool await_ready() noexcept { return true; }
-            constexpr void await_suspend(std::coroutine_handle<>) noexcept {}
-            constexpr Reactor& await_resume() noexcept { return reactor_; }
+            bool await_ready() const noexcept { return true; }
+            void await_suspend(std::coroutine_handle<>) const noexcept {}
+            Reactor& await_resume() const noexcept { return reactor_; }
 
             Reactor& reactor_;
         };

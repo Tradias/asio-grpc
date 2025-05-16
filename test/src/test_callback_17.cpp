@@ -87,7 +87,7 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr finish successfully")
         if (use_wait_for_finish)
         {
             ptr->wait_for_finish(
-                [&, ptr](auto&&, bool ok)
+                [&](auto&&, bool ok)
                 {
                     finish_ok.set_value(ok);
                 });
@@ -115,7 +115,7 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr read/send_initial_meta
     {
         auto ptr = agrpc::allocate_reactor<agrpc::ServerUnaryReactor>(get_allocator(), io_context.get_executor());
         auto& rpc = *ptr;
-        context->AddInitialMetadata("test", "a");
+        context->AddInitialMetadata("test", test::to_string(context->client_metadata().find("test")->second));
         rpc.initiate_send_initial_metadata();
         rpc.wait_for_send_initial_metadata(
             [&, ptr = use_early_finish ? ptr : agrpc::ReactorPtr<agrpc::ServerUnaryReactor>{}](auto&&, bool ok)
@@ -134,6 +134,7 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr read/send_initial_meta
     auto rpc = agrpc::make_reactor<MyReactor>(io_context.get_executor(), 42);
     CHECK_EQ(42, rpc->integer_);
     test::set_default_deadline(rpc->context());
+    rpc->context().AddMetadata("test", "a");
     Request request;
     Response response;
     rpc->start(&test::v1::Test::Stub::async::Unary, stub->async(), request, response);

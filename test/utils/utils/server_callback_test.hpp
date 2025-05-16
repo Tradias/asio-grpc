@@ -55,6 +55,8 @@ struct ServerCallbackTest : test::GrpcClientServerCallbackTest, test::IoContextT
 
     std::promise<void> server_done_promise;
 };
+
+inline std::string to_string(const grpc::string_ref& string) { return {string.data(), string.size()}; }
 }
 
 #endif  // AGRPC_UTILS_SERVER_CALLBACK_TEST_HPP

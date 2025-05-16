@@ -15,6 +15,7 @@
 #include "test/v1/test.grpc.pb.h"
 #include "utils/client_context.hpp"
 #include "utils/doctest.hpp"
+#include "utils/exception.hpp"
 #include "utils/server_callback_test.hpp"
 
 #include <agrpc/client_callback.hpp>
@@ -57,6 +58,18 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback coroutine TryCancel")
     CHECK_FALSE(finish_ok.get_future().get());
 }
 
+TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback coroutine exception")
+{
+    service.unary = [&](grpc::CallbackServerContext*, const Request*, Response*) -> grpc::ServerUnaryReactor*
+    {
+        co_await agrpc::get_reactor;
+        throw test::Exception{};
+    };
+    auto [status, response] = make_unary_request();
+    CHECK_EQ(grpc::StatusCode::INTERNAL, status.error_code());
+    CHECK_EQ("Unhandled exception", status.error_message());
+}
+
 TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback coroutine finish successfully")
 {
     bool use_wait_for_finish{};
@@ -87,7 +100,7 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback coroutine read/send_initia
     std::promise<bool> send_ok;
     service.unary = [&](grpc::CallbackServerContext* context, const Request*, Response*) -> grpc::ServerUnaryReactor*
     {
-        context->AddInitialMetadata("test", "a");
+        context->AddInitialMetadata("test", test::to_string(context->client_metadata().find("test")->second));
         co_await agrpc::initiate_send_initial_metadata;
         bool ok = co_await agrpc::wait_for_send_initial_metadata;
         send_ok.set_value(ok);
@@ -95,6 +108,7 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback coroutine read/send_initia
     };
     auto rpc = agrpc::make_reactor<agrpc::ClientUnaryReactor>(io_context.get_executor());
     test::set_default_deadline(rpc->context());
+    rpc->context().AddMetadata("test", "a");
     Request request;
     Response response;
     rpc->start(&test::v1::Test::Stub::async::Unary, stub->async(), request, response);
