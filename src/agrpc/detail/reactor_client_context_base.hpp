@@ -26,8 +26,14 @@ namespace detail
 class ReactorClientContextBase
 {
   public:
+    /**
+     * @brief Get the underlying `grpc::ClientContext`
+     */
     [[nodiscard]] grpc::ClientContext& context() noexcept { return client_context_; }
 
+    /**
+     * @brief Get the underlying `grpc::ClientContext` (const overload)
+     */
     [[nodiscard]] const grpc::ClientContext& context() const noexcept { return client_context_; }
 
   private:

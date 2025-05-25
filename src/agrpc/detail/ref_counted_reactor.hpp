@@ -69,6 +69,13 @@ class RefCountedReactorBase : public Reactor
 
     void set_deallocate_function(ReactorDeallocateFn fn) noexcept { deallocate_ = fn; }
 
+    template <class... Args>
+    void invoke_on_done(Args&&... args)
+    {
+        Guard g{*this};
+        this->on_done(static_cast<Args&&>(args)...);
+    }
+
     std::atomic_size_t ref_count_{2};  // user + OnDone
     ReactorDeallocateFn deallocate_;
 };
@@ -77,22 +84,14 @@ template <class Reactor>
 class RefCountedServerReactor : public RefCountedReactorBase<Reactor>
 {
   private:
-    void OnDone() final
-    {
-        typename RefCountedServerReactor::Guard g{*this};
-        this->on_done();
-    }
+    void OnDone() final { this->invoke_on_done(); }
 };
 
 template <class Reactor>
 class RefCountedClientReactor : public RefCountedReactorBase<Reactor>
 {
   private:
-    void OnDone(const grpc::Status& status) final
-    {
-        typename RefCountedClientReactor::Guard g{*this};
-        this->on_done(status);
-    }
+    void OnDone(const grpc::Status& status) final { this->invoke_on_done(status); }
 };
 }
 

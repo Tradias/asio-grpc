@@ -23,16 +23,29 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+/**
+ * @brief Reactor's executor base
+ *
+ * @since 3.5.0
+ */
 template <class Executor>
 class ReactorExecutorBase
 {
   public:
+    /**
+     * @brief The executor type
+     */
     using executor_type = Executor;
 
     ReactorExecutorBase() {}
 
     ~ReactorExecutorBase() {}
 
+    /**
+     * @brief Get the executor
+     *
+     * Thread-safe
+     */
     [[nodiscard]] const Executor& get_executor() const noexcept { return executor_; }
 
   private:

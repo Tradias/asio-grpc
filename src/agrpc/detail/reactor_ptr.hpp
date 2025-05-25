@@ -32,7 +32,7 @@ struct ReactorAccess
     template <class Ptr, class Allocator, class... Args>
     static auto create(Allocator allocator, Args&&... args)
     {
-        return Ptr{detail::allocate<ReactorPtrAllocation<typename Ptr::Allocation, Allocator>>(
+        return Ptr{detail::allocate<ReactorPtrAllocation<typename Ptr::ValueType, Allocator>>(
                        allocator, allocator, static_cast<Args&&>(args)...)
                        .extract()
                        ->get()};

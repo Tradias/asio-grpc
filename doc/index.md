@@ -5,6 +5,7 @@
 Feature overview, installation and performance benchmark can be found on [github](https://github.com/Tradias/asio-grpc).
 
 * View of the entire API: [agrpc namespace](namespaceagrpc.html)
+* (New) Asio'nized gRPC callback API: `agrpc::BasicServerUnaryReactor`, `agrpc::BasicServerReadReactor`, `agrpc::BasicClientUnaryReactor`, `agrpc::BasicClientWriteReactor`
 * Main workhorses of this library: `agrpc::GrpcContext`, `agrpc::GrpcExecutor`.
 * Asynchronous gRPC clients: [cheat sheet](md_doc_2client__rpc__cheat__sheet.html), `agrpc::ClientRPC`, 
 * Asynchronous gRPC servers: [cheat sheet](md_doc_2server__rpc__cheat__sheet.html), `agrpc::ServerRPC`, `agrpc::register_awaitable_rpc_handler`, 

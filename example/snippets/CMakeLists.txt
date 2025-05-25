@@ -26,8 +26,10 @@ if(ASIO_GRPC_BOOST_ASIO_HAS_CO_AWAIT AND ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPL
         asio-grpc-documentation-boost-asio
         "alarm.cpp"
         "client.cpp"
+        "client_callback.cpp"
         "client_rpc.cpp"
         "server.cpp"
+        "server_callback.cpp"
         "server_rpc.cpp"
         "io_context.cpp")
     target_link_libraries(asio-grpc-documentation-boost-asio PRIVATE asio-grpc::asio-grpc)

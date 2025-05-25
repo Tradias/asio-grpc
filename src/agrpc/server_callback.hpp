@@ -19,6 +19,7 @@
 #include <agrpc/detail/default_completion_token.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/reactor_executor_base.hpp>
+#include <agrpc/detail/ref_counted_reactor.hpp>
 #include <agrpc/detail/server_callback.hpp>
 #include <grpcpp/support/server_callback.h>
 
@@ -26,27 +27,98 @@
 
 AGRPC_NAMESPACE_BEGIN()
 
-// Unary
+/**
+ * @brief I/O object for server-side, unary rpcs
+ *
+ * Create an object of this type using `agrpc::make_reactor`/`agrpc::allocate_reactor` or
+ * `server_callback_coroutine.hpp`. Note that `grpc::CallbackServerContext::DefaultReactor()` should be use instead
+ * of this class whenever possible.
+ *
+ * Example:
+ *
+ * @snippet server_callback.cpp server-rpc-unary-callback
+ *
+ * Based on `.proto` file:
+ *
+ * @snippet example.proto example-proto
+ *
+ * @tparam Executor The executor type.
+ *
+ * **Per-Operation Cancellation**
+ *
+ * All. Cancellation will merely interrupt the act of waiting and does not cancel the underlying rpc.
+ *
+ * @since 3.5.0
+ */
 template <class Executor>
 class BasicServerUnaryReactor : private grpc::ServerUnaryReactor, public detail::ReactorExecutorBase<Executor>
 {
   public:
+    /**
+     * @brief Rebind the BasicServerUnaryReactor to another executor
+     */
+    template <class OtherExecutor>
+    struct rebind_executor
+    {
+        /**
+         * @brief The BasicServerUnaryReactor type when rebound to the specified executor
+         */
+        using other = BasicServerUnaryReactor<OtherExecutor>;
+    };
+
+    /**
+     * @brief Get underlying gRPC reactor
+     *
+     * The returned object should be passed to the gRPC library. Invoking any of its functions may result in undefined
+     * behavior.
+     */
     [[nodiscard]] grpc::ServerUnaryReactor* get() noexcept { return this; }
 
+    /**
+     * @brief Send initial metadata
+     *
+     * Send any initial metadata stored in the CallbackServerContext. If not invoked, any initial metadata will be
+     * passed along with `initiate_finish`.
+     */
     void initiate_send_initial_metadata() { this->StartSendInitialMetadata(); }
 
+    /**
+     * @brief Wait for send initial metadata
+     *
+     * Waits for the completion of `initiate_send_initial_metadata`. Only one wait for send initial metadata may be
+     * outstanding at any time.
+     *
+     * Completion signature is `void(error_code, bool)`. If the bool is `false` then the rpc failed (cancelled,
+     * disconnected, deadline reached, ...).
+     */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto wait_for_send_initial_metadata(CompletionToken&& token = CompletionToken{})
     {
         return data_.initial_metadata_.wait(static_cast<CompletionToken&&>(token), this->get_executor());
     }
 
+    /**
+     * @brief Finish rpc
+     *
+     * Indicate that the stream is to be finished and the trailing metadata and rpc status are to be sent. May only be
+     * called once. If the status is non-OK, any message will not be sent. Instead, the client will only receive the
+     * status and any trailing metadata.
+     */
     void initiate_finish(grpc::Status status)
     {
         data_.state_.set_finish_called();
         this->Finish(static_cast<grpc::Status&&>(status));
     }
 
+    /**
+     * @brief Wait for finish
+     *
+     * Waits for the completion of `initiate_finish` or cancellation of this rpc. Only one wait for finish may be
+     * outstanding at any time.
+     *
+     * Completion signature is `void(error_code, bool)`. If the bool is `false` then the rpc failed (cancelled,
+     * disconnected, deadline reached, ...).
+     */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto wait_for_finish(CompletionToken&& token = CompletionToken{})
     {
@@ -56,9 +128,6 @@ class BasicServerUnaryReactor : private grpc::ServerUnaryReactor, public detail:
   private:
     template <class>
     friend class detail::RefCountedReactorBase;
-
-    template <class>
-    friend class detail::RefCountedServerReactor;
 
     void on_user_done()
     {
@@ -81,6 +150,9 @@ class BasicServerUnaryReactor : private grpc::ServerUnaryReactor, public detail:
     detail::ServerUnaryReactorData data_;
 };
 
+/**
+ * @brief I/O object for server-side, unary rpcs (specialized on `asio::any_io_executor`)
+ */
 using ServerUnaryReactor = BasicServerUnaryReactor<asio::any_io_executor>;
 
 template <class Executor>
@@ -88,39 +160,123 @@ using BasicServerUnaryReactorBase = detail::RefCountedServerReactor<agrpc::Basic
 
 using ServerUnaryReactorBase = BasicServerUnaryReactorBase<asio::any_io_executor>;
 
-// Client-streaming
+/**
+ * @brief I/O object for server-side, client-streaming rpcs
+ *
+ * Create an object of this type using `agrpc::make_reactor`/`agrpc::allocate_reactor` or
+ * `server_callback_coroutine.hpp`.
+ *
+ * Example:
+ *
+ * @snippet server_callback.cpp server-rpc-client-streaming-callback
+ *
+ * Based on `.proto` file:
+ *
+ * @snippet example.proto example-proto
+ *
+ * @tparam Executor The executor type.
+ *
+ * **Per-Operation Cancellation**
+ *
+ * All. Cancellation will merely interrupt the act of waiting and does not cancel the underlying rpc.
+ *
+ * @since 3.5.0
+ */
 template <class Request, class Executor>
 class BasicServerReadReactor : private grpc::ServerReadReactor<Request>, public detail::ReactorExecutorBase<Executor>
 {
   public:
+    /**
+     * @brief Rebind the BasicServerReadReactor to another executor
+     */
+    template <class OtherExecutor>
+    struct rebind_executor
+    {
+        /**
+         * @brief The BasicServerReadReactor type when rebound to the specified executor
+         */
+        using other = BasicServerReadReactor<Request, OtherExecutor>;
+    };
+
+    /**
+     * @brief Get underlying gRPC reactor
+     *
+     * The returned object should be passed to the gRPC library. Invoking any of its functions may result in undefined
+     * behavior.
+     */
     [[nodiscard]] grpc::ServerReadReactor<Request>* get() noexcept { return this; }
 
+    /**
+     * @brief Send initial metadata
+     *
+     * Send any initial metadata stored in the CallbackServerContext. If not invoked, any initial metadata will be
+     * passed along with `initiate_finish`.
+     */
     void initiate_send_initial_metadata() { this->StartSendInitialMetadata(); }
 
+    /**
+     * @brief Wait for send initial metadata
+     *
+     * Waits for the completion of `initiate_send_initial_metadata`. Only one wait for send initial metadata may be
+     * outstanding at any time.
+     *
+     * Completion signature is `void(error_code, bool)`. If the bool is `false` then the rpc failed (cancelled,
+     * disconnected, deadline reached, ...).
+     */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto wait_for_send_initial_metadata(CompletionToken&& token = CompletionToken{})
     {
         return data_.initial_metadata_.wait(static_cast<CompletionToken&&>(token), this->get_executor());
     }
 
+    /**
+     * @brief Read message
+     *
+     * Initiate the read of a message from the client. The argument must remain valid until the read completes (use
+     * `wait_for_read()`).
+     */
     void initiate_read(Request& request)
     {
         data_.read_.reset();
         this->StartRead(&request);
     }
 
+    /**
+     * @brief Wait for read
+     *
+     * Waits for the completion of `initiate_read`. Only one wait for read may be outstanding at any time.
+     *
+     * Completion signature is `void(error_code, bool)`. If the bool is `false` then the rpc failed (cancelled,
+     * disconnected, deadline reached, ...).
+     */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto wait_for_read(CompletionToken&& token = CompletionToken{})
     {
         return data_.read_.wait(static_cast<CompletionToken&&>(token), this->get_executor());
     }
 
+    /**
+     * @brief Finish rpc
+     *
+     * Indicate that the stream is to be finished and the trailing metadata and rpc status are to be sent. May only be
+     * called once. If the status is non-OK, any message will not be sent. Instead, the client will only receive the
+     * status and any trailing metadata.
+     */
     void initiate_finish(grpc::Status status)
     {
         data_.state_.set_finish_called();
         this->Finish(static_cast<grpc::Status&&>(status));
     }
 
+    /**
+     * @brief Wait for finish
+     *
+     * Waits for the completion of `initiate_finish` or cancellation of this rpc. Only one wait for finish may be
+     * outstanding at any time.
+     *
+     * Completion signature is `void(error_code, bool)`. If the bool is `false` then the rpc failed (cancelled,
+     * disconnected, deadline reached, ...).
+     */
     template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
     auto wait_for_finish(CompletionToken&& token = CompletionToken{})
     {
@@ -130,9 +286,6 @@ class BasicServerReadReactor : private grpc::ServerReadReactor<Request>, public 
   private:
     template <class>
     friend class detail::RefCountedReactorBase;
-
-    template <class>
-    friend class detail::RefCountedServerReactor;
 
     void on_user_done()
     {
@@ -157,6 +310,9 @@ class BasicServerReadReactor : private grpc::ServerReadReactor<Request>, public 
     detail::ServerReadReactorData data_;
 };
 
+/**
+ * @brief I/O object for server-side, client-streaming rpcs (specialized on `asio::any_io_executor`)
+ */
 template <class Request>
 using ServerReadReactor = BasicServerReadReactor<Request, asio::any_io_executor>;
 

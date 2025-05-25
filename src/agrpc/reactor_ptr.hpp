@@ -25,14 +25,27 @@
 
 AGRPC_NAMESPACE_BEGIN()
 
+/**
+ * @brief Shared pointer-like object for reactors
+ *
+ * This smart pointer guarantees that the reactor remains alive until OnDone is called and all user-held objects of this
+ * pointer are destroyed.
+ *
+ * @tparam Reactor The reactor type like `agrpc::ServerUnaryReactor`, `agrpc::ClientUnaryReactor` or a class derived
+ * from their base equivalents.
+ *
+ * @since 3.5.0
+ */
 template <class Reactor>
 class ReactorPtr
 {
   private:
-    using Allocation = detail::RefCountedReactorTypeT<Reactor>;
-    using Ptr = Allocation*;
+    using ValueType = detail::RefCountedReactorTypeT<Reactor>;
 
   public:
+    /**
+     * @brief Default constructor
+     */
     ReactorPtr() = default;
 
     ReactorPtr(const ReactorPtr& other) noexcept : ptr_(other.ptr_)
@@ -84,24 +97,52 @@ class ReactorPtr
         return *this;
     }
 
+    /**
+     * @brief Check whether two pointers refer to the same reactor
+     */
     [[nodiscard]] bool operator==(const ReactorPtr& other) const noexcept { return ptr_ == other.ptr_; }
 
+    /**
+     * @brief Check whether two pointers do not refer to the same reactor
+     */
     [[nodiscard]] bool operator!=(const ReactorPtr& other) const noexcept { return !(*this == other); }
 
-    [[nodiscard]] explicit operator bool() const noexcept { return ptr_ != nullptr; }
+    /**
+     * @brief Get reference to underlying reactor
+     */
+    [[nodiscard]] Reactor& operator*() const noexcept { return *ptr_; }
 
+    /**
+     * @brief Access underlying reactor
+     */
     [[nodiscard]] Reactor* operator->() const noexcept { return ptr_; }
 
-    [[nodiscard]] Reactor& operator*() const noexcept { return *ptr_; }
+    /**
+     * @brief Check whether this pointer owns a reactor
+     */
+    [[nodiscard]] explicit operator bool() const noexcept { return ptr_ != nullptr; }
+
+    /**
+     * @brief Swap the contents of two ReactorPtr
+     */
+    friend void swap(ReactorPtr& lhs, ReactorPtr& rhs) noexcept { std::swap(lhs.ptr_, rhs.ptr_); }
 
   private:
     friend detail::ReactorAccess;
 
-    explicit ReactorPtr(Ptr ptr) noexcept : ptr_(ptr) {}
+    explicit ReactorPtr(ValueType* ptr) noexcept : ptr_(ptr) {}
 
-    Ptr ptr_{};
+    ValueType* ptr_{};
 };
 
+/**
+ * @brief Create ReactorPtr using allocator
+ *
+ * @tparam Reactor The reactor type like `agrpc::ServerUnaryReactor`, `agrpc::ClientUnaryReactor` or a class derived
+ * from their base equivalents.
+ *
+ * @since 3.5.0
+ */
 template <class Reactor, class Allocator, class... Args,
           class = std::enable_if_t<!std::is_same_v<void, detail::ReactorExecutorTypeT<Reactor>>>>
 [[nodiscard]] inline auto allocate_reactor(Allocator allocator, detail::ReactorExecutorTypeT<Reactor> executor,
@@ -113,6 +154,14 @@ template <class Reactor, class Allocator, class... Args,
                                                               static_cast<Args&&>(args)...);
 }
 
+/**
+ * @brief Create ReactorPtr using allocator (sender/receiver overload)
+ *
+ * @tparam Reactor The reactor type like `agrpc::ServerUnaryReactor`, `agrpc::ClientUnaryReactor` or a class derived
+ * from their base equivalents.
+ *
+ * @since 3.5.0
+ */
 template <class Reactor, class Allocator, class... Args,
           class = std::enable_if_t<std::is_same_v<void, detail::ReactorExecutorTypeT<Reactor>>>>
 [[nodiscard]] inline ReactorPtr<Reactor> allocate_reactor(Allocator allocator, Args&&... args)
@@ -121,10 +170,34 @@ template <class Reactor, class Allocator, class... Args,
     return detail::ReactorAccess::create<ReactorPtr<Reactor>>(allocator, detail::Empty{}, static_cast<Args&&>(args)...);
 }
 
-template <class Reactor, class... Args>
-[[nodiscard]] inline ReactorPtr<Reactor> make_reactor(typename Reactor::executor_type executor, Args&&... args)
+/**
+ * @brief Create ReactorPtr
+ *
+ * @tparam Reactor The reactor type like `agrpc::ServerUnaryReactor`, `agrpc::ClientUnaryReactor` or a class derived
+ * from their base equivalents.
+ *
+ * @since 3.5.0
+ */
+template <class Reactor, class... Args,
+          class = std::enable_if_t<!std::is_same_v<void, detail::ReactorExecutorTypeT<Reactor>>>>
+[[nodiscard]] inline ReactorPtr<Reactor> make_reactor(detail::ReactorExecutorTypeT<Reactor> executor, Args&&... args)
 {
     return agrpc::allocate_reactor<Reactor>(std::allocator<void>{}, std::move(executor), static_cast<Args&&>(args)...);
+}
+
+/**
+ * @brief Create ReactorPtr (sender/receiver overload)
+ *
+ * @tparam Reactor The reactor type like `agrpc::ServerUnaryReactor`, `agrpc::ClientUnaryReactor` or a class derived
+ * from their base equivalents.
+ *
+ * @since 3.5.0
+ */
+template <class Reactor, class... Args,
+          class = std::enable_if_t<std::is_same_v<void, detail::ReactorExecutorTypeT<Reactor>>>>
+[[nodiscard]] inline ReactorPtr<Reactor> make_reactor(Args&&... args)
+{
+    return agrpc::allocate_reactor<Reactor>(std::allocator<void>{}, detail::Empty{}, static_cast<Args&&>(args)...);
 }
 
 AGRPC_NAMESPACE_END
