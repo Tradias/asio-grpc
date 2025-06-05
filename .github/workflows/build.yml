@@ -343,6 +343,8 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: write
+      actions: read
+      checks: write
 
     steps:
     - name: Install dot for doxygen, libc++ and mono
