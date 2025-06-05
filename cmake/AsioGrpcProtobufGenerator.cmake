@@ -31,7 +31,9 @@ asio_grpc_protobuf_generate(PROTOS <proto_file1> [<proto_file2>...]
                             [EXTRA_ARGS <arguments>...]
                             [GENERATE_GRPC]
                             [GENERATE_DESCRIPTORS]
-                            [GENERATE_MOCK_CODE])
+                            [GENERATE_MOCK_CODE]
+                            [PROTOC <protoc_path>]
+                            [GRPC_PLUGIN <grpc_plugin_path>])
 ```
 
 __PROTOS__: Input `.proto` schema files.<br>
@@ -52,7 +54,11 @@ __GENERATE_GRPC__: Generate gRPC files (.grpc.pb.h and .grpc.pb.cc).<br>
 <br>
 __GENERATE_DESCRIPTORS__: Generate descriptor files named `<proto_file_base_name>.desc`.<br>
 <br>
-__GENERATE_MOCK_CODE__: Generate gRPC client stub mock files named `_mock.grpc.pb.h`.
+__GENERATE_MOCK_CODE__: Generate gRPC client stub mock files named `_mock.grpc.pb.h`.<br>
+<br>
+__PROTOC__: Path to the Protocol Buffers compiler (`protoc`). Default: `$<TARGET_FILE:protobuf::protoc>`.<br>
+<br>
+__GRPC_PLUGIN__: Path to the gRPC plugin for C++ code generation. Default: `$<TARGET_FILE:gRPC::grpc_cpp_plugin>`.
 
 # /* [asio_grpc_protobuf_generate] */
 ===]]
@@ -61,7 +67,7 @@ function(asio_grpc_protobuf_generate)
     include(CMakeParseArguments)
 
     set(_asio_grpc_options GENERATE_GRPC GENERATE_DESCRIPTORS GENERATE_MOCK_CODE)
-    set(_asio_grpc_singleargs OUT_VAR OUT_DIR TARGET USAGE_REQUIREMENT)
+    set(_asio_grpc_singleargs OUT_VAR OUT_DIR TARGET USAGE_REQUIREMENT PROTOC GRPC_PLUGIN)
     set(_asio_grpc_multiargs PROTOS IMPORT_DIRS EXTRA_ARGS)
 
     cmake_parse_arguments(asio_grpc_protobuf_generate "${_asio_grpc_options}" "${_asio_grpc_singleargs}"
@@ -105,6 +111,17 @@ function(asio_grpc_protobuf_generate)
 
     if(NOT asio_grpc_protobuf_generate_OUT_DIR)
         set(asio_grpc_protobuf_generate_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+    endif()
+
+    # Verify PROTOC and GRPC_PLUGIN paths if provided
+    if(asio_grpc_protobuf_generate_PROTOC AND NOT EXISTS "${asio_grpc_protobuf_generate_PROTOC}")
+        message(SEND_ERROR "asio_grpc_protobuf_generate PROTOC path does not exist: ${asio_grpc_protobuf_generate_PROTOC}")
+        return()
+    endif()
+
+    if(asio_grpc_protobuf_generate_GRPC_PLUGIN AND NOT EXISTS "${asio_grpc_protobuf_generate_GRPC_PLUGIN}")
+        message(SEND_ERROR "asio_grpc_protobuf_generate GRPC_PLUGIN path does not exist: ${asio_grpc_protobuf_generate_GRPC_PLUGIN}")
+        return()
     endif()
 
     set(_asio_grpc_generated_extensions ".pb.cc" ".pb.h")
@@ -186,6 +203,15 @@ function(asio_grpc_protobuf_generate)
         endif()
     endforeach()
 
+    # Set default values for PROTOC and GRPC_PLUGIN if not provided
+    if(NOT asio_grpc_protobuf_generate_PROTOC)
+        set(asio_grpc_protobuf_generate_PROTOC $<TARGET_FILE:protobuf::protoc>)
+    endif()
+
+    if(NOT asio_grpc_protobuf_generate_GRPC_PLUGIN)
+        set(asio_grpc_protobuf_generate_GRPC_PLUGIN $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
+    endif()
+
     # Run protoc
     set(_asio_grpc_command_arguments --cpp_out "${asio_grpc_protobuf_generate_OUT_DIR}"
                                      "${_asio_grpc_descriptor_command}" "${_asio_grpc_protobuf_include_args}")
@@ -195,15 +221,15 @@ function(asio_grpc_protobuf_generate)
         endif()
         list(APPEND _asio_grpc_command_arguments --grpc_out
              "${_asio_grpc_generate_mock_code}${asio_grpc_protobuf_generate_OUT_DIR}"
-             "--plugin=protoc-gen-grpc=$<TARGET_FILE:gRPC::grpc_cpp_plugin>")
+             "--plugin=protoc-gen-grpc=${asio_grpc_protobuf_generate_GRPC_PLUGIN}")
     endif()
     list(APPEND _asio_grpc_command_arguments ${asio_grpc_protobuf_generate_EXTRA_ARGS} ${_asio_grpc_abs_input_files})
     string(REPLACE ";" " " _asio_grpc_pretty_command_arguments "${_asio_grpc_command_arguments}")
     add_custom_command(
         OUTPUT ${_asio_grpc_generated_srcs}
         COMMAND "${CMAKE_COMMAND}" "-E" "make_directory" "${asio_grpc_protobuf_generate_OUT_DIR}"
-        COMMAND protobuf::protoc ${_asio_grpc_command_arguments}
-        DEPENDS protobuf::protoc ${_asio_grpc_abs_input_files}
+        COMMAND ${asio_grpc_protobuf_generate_PROTOC} ${_asio_grpc_command_arguments}
+        DEPENDS ${asio_grpc_protobuf_generate_PROTOC} ${_asio_grpc_abs_input_files}
         COMMENT "protoc ${_asio_grpc_pretty_command_arguments}"
         VERBATIM)
 

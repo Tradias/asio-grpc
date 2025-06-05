@@ -53,6 +53,11 @@ target_link_libraries(target-option PRIVATE asio-grpc::asio-grpc-standalone-asio
 asio_grpc_protobuf_generate(
     GENERATE_GRPC GENERATE_MOCK_CODE
     TARGET target-option
+
+    # Optional: override host tools (useful for cross-compilation)
+    # PROTOC "/usr/bin/protoc"
+    # GRPC_PLUGIN "/usr/bin/grpc_cpp_plugin"
+
     OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/target"
     PROTOS "${CMAKE_CURRENT_SOURCE_DIR}/proto/target.proto")
 # /* [asio_grpc_protobuf_generate-example] */
