@@ -41,6 +41,10 @@ template <class StubAsync, class Request, class Response>
 using AsyncClientStreamingReactorFn = void (StubAsync::*)(grpc::ClientContext*, Response*,
                                                           grpc::ClientWriteReactor<Request>*);
 
+template <class StubAsync, class Request, class Response>
+using AsyncServerStreamingReactorFn = void (StubAsync::*)(grpc::ClientContext*, const Request*,
+                                                          grpc::ClientReadReactor<Response>*);
+
 template <class CompletionHandler>
 class UnaryRequestCallback
 {
@@ -137,6 +141,24 @@ AGRPC_STORAGE_HAS_CORRECT_OFFSET(ClientWriteReactorDataBase, write_, ok_write_);
 AGRPC_STORAGE_HAS_CORRECT_OFFSET(ClientWriteReactorDataBase, writes_done_, ok_writes_done_);
 
 struct ClientWriteReactorData : ClientWriteReactorDataBase
+{
+    detail::ManualResetEvent<void(grpc::Status)> finish_{};
+};
+
+struct ClientReadReactorDataBase
+{
+    detail::OffsetManualResetEvent<void(bool), 2 * OFFSET_MANUAL_RESET_EVENT_SIZE> initial_metadata_{};
+    detail::OffsetManualResetEvent<void(bool), OFFSET_MANUAL_RESET_EVENT_SIZE + sizeof(bool)> read_{};
+    bool ok_initial_metadata_{};
+    bool ok_read_{};
+    std::atomic_bool is_hold_removed_{};
+};
+
+static_assert(std::is_standard_layout_v<ClientReadReactorDataBase>);
+AGRPC_STORAGE_HAS_CORRECT_OFFSET(ClientReadReactorDataBase, initial_metadata_, ok_initial_metadata_);
+AGRPC_STORAGE_HAS_CORRECT_OFFSET(ClientReadReactorDataBase, read_, ok_read_);
+
+struct ClientReadReactorData : ClientReadReactorDataBase
 {
     detail::ManualResetEvent<void(grpc::Status)> finish_{};
 };

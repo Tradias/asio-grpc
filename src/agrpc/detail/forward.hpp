@@ -87,11 +87,17 @@ class BasicServerUnaryReactor;
 template <class Request, class Executor>
 class BasicServerReadReactor;
 
+template <class Response, class Executor>
+class BasicServerWriteReactor;
+
 template <class Executor>
 class BasicClientUnaryReactor;
 
 template <class Request, class Executor>
 class BasicClientWriteReactor;
+
+template <class Response, class Executor>
+class BasicClientReadReactor;
 
 template <class Reactor>
 class ReactorPtr;

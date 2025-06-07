@@ -100,12 +100,18 @@ class ReactorPtr
     /**
      * @brief Check whether two pointers refer to the same reactor
      */
-    [[nodiscard]] bool operator==(const ReactorPtr& other) const noexcept { return ptr_ == other.ptr_; }
+    [[nodiscard]] friend bool operator==(const ReactorPtr& lhs, const ReactorPtr& rhs) noexcept
+    {
+        return lhs.ptr_ == rhs.ptr_;
+    }
 
     /**
      * @brief Check whether two pointers do not refer to the same reactor
      */
-    [[nodiscard]] bool operator!=(const ReactorPtr& other) const noexcept { return !(*this == other); }
+    [[nodiscard]] friend bool operator!=(const ReactorPtr& lhs, const ReactorPtr& rhs) noexcept
+    {
+        return !(lhs == rhs);
+    }
 
     /**
      * @brief Get reference to underlying reactor

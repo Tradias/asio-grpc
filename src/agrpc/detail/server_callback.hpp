@@ -77,6 +77,22 @@ AGRPC_STORAGE_HAS_CORRECT_OFFSET(ServerReadReactorData, initial_metadata_, ok_in
 AGRPC_STORAGE_HAS_CORRECT_OFFSET(ServerReadReactorData, read_, ok_read_);
 AGRPC_STORAGE_HAS_CORRECT_OFFSET(ServerReadReactorData, finish_, ok_finish_);
 
+struct ServerWriteReactorData
+{
+    detail::OffsetManualResetEvent<void(bool), 3 * OFFSET_MANUAL_RESET_EVENT_SIZE> initial_metadata_{};
+    detail::OffsetManualResetEvent<void(bool), 2 * OFFSET_MANUAL_RESET_EVENT_SIZE + sizeof(bool)> write_{};
+    detail::OffsetManualResetEvent<void(bool), OFFSET_MANUAL_RESET_EVENT_SIZE + 2 * sizeof(bool)> finish_{};
+    bool ok_initial_metadata_{};
+    bool ok_write_{};
+    bool ok_finish_{};
+    ReactorRPCState state_{};
+};
+
+static_assert(std::is_standard_layout_v<ServerWriteReactorData>);
+AGRPC_STORAGE_HAS_CORRECT_OFFSET(ServerWriteReactorData, initial_metadata_, ok_initial_metadata_);
+AGRPC_STORAGE_HAS_CORRECT_OFFSET(ServerWriteReactorData, write_, ok_write_);
+AGRPC_STORAGE_HAS_CORRECT_OFFSET(ServerWriteReactorData, finish_, ok_finish_);
+
 #undef AGRPC_STORAGE_HAS_CORRECT_OFFSET
 }
 

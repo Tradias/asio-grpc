@@ -244,3 +244,44 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Client-streaming callback ptr cancel afte
     rpc->wait_for_finish(asio::use_future).get();
     CHECK_EQ(grpc::StatusCode::CANCELLED, status.error_code());
 }
+
+TEST_CASE_FIXTURE(ServerCallbackTest, "Server-streaming callback ptr")
+{
+    service.server_streaming = [&](grpc::CallbackServerContext*,
+                                   const Request* request) -> grpc::ServerWriteReactor<Response>*
+    {
+        CHECK_EQ(10, request->integer());
+        auto ptr = agrpc::make_reactor<agrpc::ServerWriteReactor<Response>>(io_context.get_executor());
+        auto& rpc = *ptr;
+        server_response.set_integer(1);
+        rpc.initiate_write(server_response);
+        rpc.wait_for_write(
+            [&, ptr](auto&&, bool ok)
+            {
+                CHECK(ok);
+                server_response.set_integer(2);
+                rpc.initiate_write(server_response);
+                rpc.wait_for_write(
+                    [&, ptr](auto&&, bool ok)
+                    {
+                        CHECK(ok);
+                        rpc.initiate_finish(grpc::Status::OK);
+                    });
+            });
+        return rpc.get();
+    };
+    auto rpc = agrpc::make_reactor<agrpc::ClientReadReactor<Response>>(io_context.get_executor());
+    test::set_default_deadline(rpc->context());
+    client_request.set_integer(10);
+    rpc->start(&test::v1::Test::Stub::async::ServerStreaming, stub->async(), client_request);
+    rpc->initiate_read(client_response);
+    CHECK(rpc->wait_for_read(asio::use_future).get());
+    CHECK_EQ(1, client_response.integer());
+    rpc->initiate_read(client_response);
+    CHECK(rpc->wait_for_read(asio::use_future).get());
+    CHECK_EQ(2, client_response.integer());
+    rpc->initiate_read(client_response);
+    CHECK_FALSE(rpc->wait_for_read(asio::use_future).get());
+    auto status = rpc->wait_for_finish(asio::use_future).get();
+    CHECK_EQ(grpc::StatusCode::OK, status.error_code());
+}

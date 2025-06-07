@@ -198,7 +198,7 @@ class BasicClientWriteReactor : private grpc::ClientWriteReactor<Request>,
     void start(detail::AsyncClientStreamingReactorFn<StubAsync, Request, Response> fn, StubAsync* stub,
                Response& response)
     {
-        (*stub.*fn)(&this->context(), &response, static_cast<BasicClientWriteReactor*>(this));
+        (*stub.*fn)(&this->context(), &response, static_cast<grpc::ClientWriteReactor<Request>*>(this));
         this->AddHold();
         this->StartCall();
     }
@@ -220,7 +220,7 @@ class BasicClientWriteReactor : private grpc::ClientWriteReactor<Request>,
     /**
      * @brief Write message
      *
-     * Initiate the write of a message. The argument must remain valid until the write completes (use `wait_for_write`).
+     * Initiate the write of a message. The argument must remain valid until the write completes (`wait_for_write`).
      * If `WriteOptions::set_last_message()` is present then no more calls to `initiate_write` or `initiate_writes_done`
      * are allowed.
      */
@@ -246,7 +246,7 @@ class BasicClientWriteReactor : private grpc::ClientWriteReactor<Request>,
     /**
      * @brief Wait for write
      *
-     * Waits for the completion of `initiate_write`. Only one wait for write may be outstanding at any time.
+     * Waits for the completion of a write. Only one wait for write may be outstanding at any time.
      *
      * Completion signature is `void(error_code, bool)`. If the bool is `false` then the rpc failed (cancelled,
      * disconnected, deadline reached, ...).
@@ -260,7 +260,7 @@ class BasicClientWriteReactor : private grpc::ClientWriteReactor<Request>,
     /**
      * @brief Wait for writes done
      *
-     * Waits for the completion of `initiate_writes_done`. Only one wait for write may be outstanding at any time.
+     * Waits for the completion of `writes_done`. Only one wait for write may be outstanding at any time.
      *
      * Completion signature is `void(error_code, bool)`. If the bool is `false` then the rpc failed (cancelled,
      * disconnected, deadline reached, ...).
@@ -274,7 +274,7 @@ class BasicClientWriteReactor : private grpc::ClientWriteReactor<Request>,
     /**
      * @brief Wait for finish
      *
-     * Wait until all operations associated with this rpc have completed. No more writes may be initiated on thie rpc
+     * Wait until all operations associated with this rpc have completed. No more writes may be initiated on this rpc
      * after this function has been called. Only one wait for finish may be outstanding at any time.
      *
      * Completion signature is `void(error_code, grpc::Status)`. Once this operation completes the response passed to
@@ -321,18 +321,159 @@ class BasicClientWriteReactor : private grpc::ClientWriteReactor<Request>,
 template <class Request>
 using ClientWriteReactor = BasicClientWriteReactor<Request, asio::any_io_executor>;
 
+/**
+ * @brief I/O object for client-side, server-streaming rpcs
+ *
+ * Create an object of this type using `agrpc::make_reactor`/`agrpc::allocate_reactor`.
+ *
+ * Example:
+ *
+ * @snippet client_callback.cpp client-rpc-server-streaming-callback
+ *
+ * Based on `.proto` file:
+ *
+ * @snippet example.proto example-proto
+ *
+ * @tparam Executor The executor type.
+ *
+ * **Per-Operation Cancellation**
+ *
+ * All. Cancellation will merely interrupt the act of waiting and does not cancel the underlying rpc.
+ *
+ * @since 3.5.0
+ */
+template <class Response, class Executor>
+class BasicClientReadReactor : private grpc::ClientReadReactor<Response>,
+                               public detail::ReactorExecutorBase<Executor>,
+                               public detail::ReactorClientContextBase
+{
+  public:
+    /**
+     * @brief Rebind the BasicClientReadReactor to another executor
+     */
+    template <class OtherExecutor>
+    struct rebind_executor
+    {
+        /**
+         * @brief The BasicClientReadReactor type when rebound to the specified executor
+         */
+        using other = BasicClientReadReactor<Response, OtherExecutor>;
+    };
+
+    /**
+     * @brief Start a codegen-ed rpc
+     *
+     * The response object must remain valid until the rpc is finished. May only be called once.
+     *
+     * @arg fn Pointer to the protoc generated `Stub::async::Method`.
+     */
+    template <class StubAsync, class Request>
+    void start(detail::AsyncServerStreamingReactorFn<StubAsync, Request, Response> fn, StubAsync* stub,
+               const Request& request)
+    {
+        (*stub.*fn)(&this->context(), &request, static_cast<grpc::ClientReadReactor<Response>*>(this));
+        this->AddHold();
+        this->StartCall();
+    }
+
+    /**
+     * @brief Wait for initial metadata
+     *
+     * Only one wait for initial metadata may be outstanding at any time.
+     *
+     * Completion signature is `void(error_code, bool)`. If the bool is `false` then the rpc failed (cancelled,
+     * disconnected, deadline reached, ...).
+     */
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    auto wait_for_initial_metadata(CompletionToken&& token = CompletionToken{})
+    {
+        return data_.initial_metadata_.wait(static_cast<CompletionToken&&>(token), this->get_executor());
+    }
+
+    /**
+     * @brief Read message
+     *
+     * Initiate the read of a message. The argument must remain valid until the write completes (`wait_for_read`).
+     */
+    void initiate_read(Response& response)
+    {
+        data_.read_.reset();
+        this->StartRead(&response);
+    }
+
+    /**
+     * @brief Wait for write
+     *
+     * Waits for the completion of a read. Only one wait for write may be outstanding at any time.
+     *
+     * Completion signature is `void(error_code, bool)`. If the bool is `false` then the rpc failed (cancelled,
+     * disconnected, deadline reached, ...).
+     */
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    auto wait_for_read(CompletionToken&& token = CompletionToken{})
+    {
+        return data_.read_.wait(static_cast<CompletionToken&&>(token), this->get_executor());
+    }
+
+    /**
+     * @brief Wait for finish
+     *
+     * Wait until all operations associated with this rpc have completed. No more reads may be initiated on this rpc
+     * after this function has been called. Only one wait for finish may be outstanding at any time.
+     *
+     * Completion signature is `void(error_code, grpc::Status)`. Once this operation completes the response passed to
+     * `start()` will have been be populated if `grpc::Status::ok()` is true.
+     */
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    auto wait_for_finish(CompletionToken&& token = CompletionToken{})
+    {
+        remove_hold();
+        return data_.finish_.wait(static_cast<CompletionToken&&>(token), this->get_executor());
+    }
+
+  protected:
+    BasicClientReadReactor() = default;
+
+  private:
+    template <class>
+    friend class detail::RefCountedReactorBase;
+
+    void on_user_done() { remove_hold(); }
+
+    void OnReadInitialMetadataDone(bool ok) final { data_.initial_metadata_.set(static_cast<bool&&>(ok)); }
+
+    void OnReadDone(bool ok) final { data_.read_.set(static_cast<bool&&>(ok)); }
+
+    void on_done(const grpc::Status& status) { data_.finish_.set(grpc::Status{status}); }
+
+    void remove_hold()
+    {
+        if (!data_.is_hold_removed_.exchange(true, std::memory_order_relaxed))
+        {
+            this->RemoveHold();
+        }
+    }
+
+    detail::ClientReadReactorData data_;
+};
+
+/**
+ * @brief I/O object for client-side, server-streaming rpcs (specialized on `asio::any_io_executor`)
+ */
+template <class Request>
+using ClientReadReactor = BasicClientReadReactor<Request, asio::any_io_executor>;
+
 template <class StubAsync, class Request, class Response, class CompletionToken>
 auto request(detail::AsyncUnaryFn<StubAsync, Request, Response> fn, StubAsync* stub,
-             grpc::ClientContext& client_context, const Request& request, Response& response, CompletionToken&& token)
+             grpc::ClientContext& client_context, const Request& req, Response& response, CompletionToken&& token)
 {
     return asio::async_initiate<CompletionToken, void(grpc::Status)>(
-        [fn](auto handler, StubAsync* stub, grpc::ClientContext* client_context, const Request* request,
-             Response* response)
+        [fn](auto handler, StubAsync* stub, grpc::ClientContext* client_context, const Request* req, Response* response)
         {
-            (*stub.*fn)(client_context, request, response,
+            (*stub.*fn)(client_context, req, response,
                         detail::UnaryRequestCallback{static_cast<decltype(handler)&&>(handler)});
         },
-        token, stub, &client_context, &request, &response);
+        token, stub, &client_context, &req, &response);
 }
 
 AGRPC_NAMESPACE_END
