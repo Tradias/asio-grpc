@@ -122,16 +122,19 @@ struct ClientUnaryReactorData
 
 struct ClientWriteReactorDataBase
 {
-    detail::OffsetManualResetEvent<void(bool), 2 * OFFSET_MANUAL_RESET_EVENT_SIZE> initial_metadata_{};
-    detail::OffsetManualResetEvent<void(bool), OFFSET_MANUAL_RESET_EVENT_SIZE + sizeof(bool)> write_{};
+    detail::OffsetManualResetEvent<void(bool), 3 * OFFSET_MANUAL_RESET_EVENT_SIZE> initial_metadata_{};
+    detail::OffsetManualResetEvent<void(bool), 2 * OFFSET_MANUAL_RESET_EVENT_SIZE + sizeof(bool)> write_{};
+    detail::OffsetManualResetEvent<void(bool), OFFSET_MANUAL_RESET_EVENT_SIZE + 2 * sizeof(bool)> writes_done_{};
     bool ok_initial_metadata_{};
     bool ok_write_{};
+    bool ok_writes_done_{};
     std::atomic_bool is_hold_removed_{};
 };
 
 static_assert(std::is_standard_layout_v<ClientWriteReactorDataBase>);
 AGRPC_STORAGE_HAS_CORRECT_OFFSET(ClientWriteReactorDataBase, initial_metadata_, ok_initial_metadata_);
 AGRPC_STORAGE_HAS_CORRECT_OFFSET(ClientWriteReactorDataBase, write_, ok_write_);
+AGRPC_STORAGE_HAS_CORRECT_OFFSET(ClientWriteReactorDataBase, writes_done_, ok_writes_done_);
 
 struct ClientWriteReactorData : ClientWriteReactorDataBase
 {

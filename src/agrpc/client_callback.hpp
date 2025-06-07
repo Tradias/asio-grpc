@@ -221,18 +221,32 @@ class BasicClientWriteReactor : private grpc::ClientWriteReactor<Request>,
      * @brief Write message
      *
      * Initiate the write of a message. The argument must remain valid until the write completes (use `wait_for_write`).
+     * If `WriteOptions::set_last_message()` is present then no more calls to `initiate_write` or `initiate_writes_done`
+     * are allowed.
      */
-    void initiate_write(const Request& request)
+    void initiate_write(const Request& request, grpc::WriteOptions options = {})
     {
         data_.write_.reset();
-        this->StartWrite(&request);
+        this->StartWrite(&request, options);
+    }
+
+    /**
+     * @brief Indicate that the rpc will have no more write operations
+     *
+     * This can only be issued once for a given rpc. This is not required or allowed if `initiate_write` with
+     * `set_last_message()` is used since that already has the same implication. Note that calling this means that no
+     * more calls to `initiate_write` or `initiate_writes_done` are allowed.
+     */
+    void initiate_writes_done()
+    {
+        remove_hold();
+        this->StartWritesDone();
     }
 
     /**
      * @brief Wait for write
      *
-     * Waits for the completion of `initiate_write` or `initiate_write_last`. Only one wait for write may be outstanding
-     * at any time.
+     * Waits for the completion of `initiate_write`. Only one wait for write may be outstanding at any time.
      *
      * Completion signature is `void(error_code, bool)`. If the bool is `false` then the rpc failed (cancelled,
      * disconnected, deadline reached, ...).
@@ -241,6 +255,20 @@ class BasicClientWriteReactor : private grpc::ClientWriteReactor<Request>,
     auto wait_for_write(CompletionToken&& token = CompletionToken{})
     {
         return data_.write_.wait(static_cast<CompletionToken&&>(token), this->get_executor());
+    }
+
+    /**
+     * @brief Wait for writes done
+     *
+     * Waits for the completion of `initiate_writes_done`. Only one wait for write may be outstanding at any time.
+     *
+     * Completion signature is `void(error_code, bool)`. If the bool is `false` then the rpc failed (cancelled,
+     * disconnected, deadline reached, ...).
+     */
+    template <class CompletionToken = detail::DefaultCompletionTokenT<Executor>>
+    auto wait_for_writes_done(CompletionToken&& token = CompletionToken{})
+    {
+        return data_.writes_done_.wait(static_cast<CompletionToken&&>(token), this->get_executor());
     }
 
     /**
@@ -271,6 +299,8 @@ class BasicClientWriteReactor : private grpc::ClientWriteReactor<Request>,
     void OnReadInitialMetadataDone(bool ok) final { data_.initial_metadata_.set(static_cast<bool&&>(ok)); }
 
     void OnWriteDone(bool ok) final { data_.write_.set(static_cast<bool&&>(ok)); }
+
+    void OnWritesDoneDone(bool ok) final { data_.writes_done_.set(static_cast<bool&&>(ok)); }
 
     void on_done(const grpc::Status& status) { data_.finish_.set(grpc::Status{status}); }
 
