@@ -138,6 +138,26 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
 </p>
 </details>
 
+<details><summary><b>CPM</b></summary>
+<p>
+
+To use asio-grpc via [CPM.cmake](https://github.com/cpm-cmake/CPM.cmake), add it directly from GitHub:
+
+```cmake
+CPMAddPackage(
+        NAME asio-grpc
+        GITHUB_REPOSITORY Tradias/asio-grpc
+        VERSION 3.4.3
+)
+
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
+```
+
+This links the Boost.Asio backend. If you're using a different backend (like standalone Asio, libunifex, or stdexec), you need to link against the corresponding target, e.g., `asio-grpc::asio-grpc-standalone-asio`.
+
+</p>
+</details>
+
 <details><summary><b>CMake package</b></summary>
 <p>
 
