@@ -1,9 +1,9 @@
 additional_commands:
   asio_grpc_protobuf_generate:
     flags:
-    - GENERATE_GRPC
-    - GENERATE_DESCRIPTORS
-    - GENERATE_MOCK_CODE
+      - GENERATE_GRPC
+      - GENERATE_DESCRIPTORS
+      - GENERATE_MOCK_CODE
     kwargs:
       OUT_VAR: '1'
       OUT_DIR: '1'
@@ -12,6 +12,8 @@ additional_commands:
       PROTOS: '*'
       IMPORT_DIRS: '*'
       EXTRA_ARGS: '*'
+      PROTOC: '1'
+      GRPC_PLUGIN: '1'
   doxygen_add_docs:
     kwargs:
       WORKING_DIRECTORY: '1'
