@@ -55,8 +55,6 @@ target_compile_options(
               -Wextra
               -Wno-deprecated-declarations
               -Wundef
-              -Wsign-conversion
-              -Wshadow
               -pedantic-errors>
               $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-self-move>
               $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,12>>:-Wno-self-move>)

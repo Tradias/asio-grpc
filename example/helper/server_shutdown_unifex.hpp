@@ -28,39 +28,39 @@ namespace example
 // ---------------------------------------------------
 struct ServerShutdown
 {
-    grpc::Server& server;
-    std::atomic_bool is_shutdown{};
-    std::thread shutdown_thread;
-
-    explicit ServerShutdown(grpc::Server& server) : server(server) {}
+    explicit ServerShutdown(grpc::Server& server) : server_(server) {}
 
     void shutdown()
     {
-        if (!is_shutdown.exchange(true))
+        if (!is_shutdown_.exchange(true))
         {
             // This will cause all coroutines to run to completion normally
             // while returning `false` from rpc related steps.
             // We cannot call server.Shutdown() on the same thread that runs a GrpcContext because that can lead to a
             // deadlock, therefore create a new thread.
-            shutdown_thread = std::thread(
+            shutdown_thread_ = std::thread(
                 [&]
                 {
-                    server.Shutdown();
+                    server_.Shutdown();
                 });
         }
     }
 
     ~ServerShutdown()
     {
-        if (shutdown_thread.joinable())
+        if (shutdown_thread_.joinable())
         {
-            shutdown_thread.join();
+            shutdown_thread_.join();
         }
         else
         {
-            server.Shutdown();
+            server_.Shutdown();
         }
     }
+
+    grpc::Server& server_;
+    std::atomic_bool is_shutdown_{};
+    std::thread shutdown_thread_;
 };
 }
 

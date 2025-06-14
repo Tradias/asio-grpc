@@ -39,19 +39,19 @@ template <class Iterator>
 class RoundRobin
 {
   public:
-    RoundRobin(Iterator begin, std::size_t size) : begin(begin), size(size) {}
+    RoundRobin(Iterator begin, std::size_t size) : begin_(begin), size_(size) {}
 
     decltype(auto) next()
     {
-        const auto cur = current.fetch_add(1, std::memory_order_relaxed);
-        const auto pos = cur % size;
-        return *std::next(begin, pos);
+        const auto cur = current_.fetch_add(1, std::memory_order_relaxed);
+        const auto pos = cur % size_;
+        return *std::next(begin_, static_cast<std::ptrdiff_t>(pos));
     }
 
   private:
-    Iterator begin;
-    std::size_t size;
-    std::atomic_size_t current{};
+    Iterator begin_;
+    std::size_t size_;
+    std::atomic_size_t current_{};
 };
 
 asio::awaitable<void> make_request(agrpc::GrpcContext& grpc_context, helloworld::Greeter::Stub& stub)

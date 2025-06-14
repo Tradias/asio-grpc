@@ -143,9 +143,9 @@ class BasicManualResetEvent<void(Args...), StorageT> : private StorageT<Args...>
             {
                 detail::complete_immediately(
                     static_cast<CompletionHandler&&>(ch),
-                    [&event](auto&& ch)
+                    [&event](auto&& inner_ch)
                     {
-                        detail::prepend_error_code_and_apply(static_cast<decltype(ch)&&>(ch),
+                        detail::prepend_error_code_and_apply(static_cast<decltype(inner_ch)&&>(inner_ch),
                                                              static_cast<Storage&&>(event).get_value());
                     },
                     io_executor);
@@ -182,9 +182,9 @@ class BasicManualResetEvent<void(Args...), StorageT> : private StorageT<Args...>
             return;
         }
         detail::apply(
-            [&op](Args&&... args)
+            [&op](Args&&... inner_args)
             {
-                op->complete(static_cast<Args&&>(args)...);
+                op->complete(static_cast<Args&&>(inner_args)...);
             },
             static_cast<Storage&&>(*this).get_value());
     }
