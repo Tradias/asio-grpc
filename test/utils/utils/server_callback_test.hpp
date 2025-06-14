@@ -53,6 +53,10 @@ struct ServerCallbackTest : test::GrpcClientServerCallbackTest, test::IoContextT
 
     void server_done() { server_done_promise.set_value(); }
 
+    Request client_request;
+    Response client_response;
+    Request server_request;
+    Response server_response;
     std::promise<void> server_done_promise;
 };
 

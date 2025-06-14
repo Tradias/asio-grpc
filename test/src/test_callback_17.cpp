@@ -21,13 +21,7 @@
 #include <agrpc/reactor_ptr.hpp>
 #include <agrpc/server_callback.hpp>
 
-struct ServerCallbackTest : test::ServerCallbackTest
-{
-    Request client_request;
-    Response client_response;
-    Request server_request;
-    Response server_response;
-};
+using ServerCallbackTest = test::ServerCallbackTest;
 
 TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr automatic cancellation")
 {

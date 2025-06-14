@@ -95,7 +95,6 @@ class UnaryRequestCallback
     {
         struct DispatchCallback
         {
-            //, asio::recycling_allocator<void>());
             using allocator_type = asio::associated_allocator_t<CompletionHandler>;
 
             void operator()() { std::move(handler_)(std::move(status_)); }
