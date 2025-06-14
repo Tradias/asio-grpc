@@ -38,7 +38,7 @@ constexpr auto maximum(T a, T b) noexcept
 constexpr std::size_t floor_log2(std::size_t x) noexcept
 {
     constexpr auto SIZE_T_BIT_COUNT_MINUS_ONE = sizeof(std::size_t) * CHAR_BIT - std::size_t{1};
-    return SIZE_T_BIT_COUNT_MINUS_ONE - std::countl_zero(x);
+    return SIZE_T_BIT_COUNT_MINUS_ONE - static_cast<std::size_t>(std::countl_zero(x));
 }
 #else
 inline constexpr std::size_t SIZE_T_BIT_COUNT = sizeof(std::size_t) * CHAR_BIT;

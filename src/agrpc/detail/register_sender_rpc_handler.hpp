@@ -85,12 +85,12 @@ struct RegisterRPCHandlerSenderOperationBase : RegisterRPCHandlerOperationBase<S
                                                RegisterRPCHandlerOperationComplete
 {
     RegisterRPCHandlerSenderOperationBase(RPCHandlerSender<ServerRPC, RPCHandler>&& sender,
-                                          RegisterRPCHandlerOperationComplete::Complete complete)
+                                          RegisterRPCHandlerOperationComplete::Complete complete_fn)
         : RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler, StopToken>{sender.grpc_context_.get_executor(),
                                                                             sender.service_,
                                                                             static_cast<RPCHandler&&>(
                                                                                 sender.rpc_handler_)},
-          RegisterRPCHandlerOperationComplete{complete}
+          RegisterRPCHandlerOperationComplete{complete_fn}
     {
     }
 };

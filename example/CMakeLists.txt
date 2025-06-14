@@ -32,6 +32,11 @@ function(asio_grpc_add_example _asio_grpc_name _asio_grpc_cxx_standard)
         asio-grpc-example-${_asio_grpc_name}
         PRIVATE asio-grpc-example-helper asio-grpc-compile-options${_asio_grpc_cxx_standard}
                 asio-grpc-example-protos${_asio_grpc_cxx_standard})
+
+    target_compile_options(
+        asio-grpc-example-${_asio_grpc_name}
+        PRIVATE $<$<OR:$<CXX_COMPILER_ID:GNU,AppleClang>,$<STREQUAL:${CMAKE_CXX_COMPILER_FRONTEND_VARIANT},GNU>>:
+                -Wsign-conversion -Wshadow>)
 endfunction()
 
 asio_grpc_add_example(generic-server "17")

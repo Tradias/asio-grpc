@@ -158,13 +158,13 @@ void handle_generic_bidistream_request(agrpc::GrpcContext& grpc_context, agrpc::
 
     example::spawn_all_void(
         grpc_context, yield,
-        [&](const auto& yield)
+        [&](const auto& inner_yield)
         {
-            reader(rpc, channel, yield);
+            reader(rpc, channel, inner_yield);
         },
-        [&](const auto& yield)
+        [&](const auto& inner_yield)
         {
-            ok = writer(rpc, channel, thread_pool, yield);
+            ok = writer(rpc, channel, thread_pool, inner_yield);
         });
 
     if (!ok)

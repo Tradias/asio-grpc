@@ -33,7 +33,7 @@ class RegisterRPCHandlerOperationComplete
   public:
     using Complete = void (*)(RegisterRPCHandlerOperationComplete&) noexcept;
 
-    explicit RegisterRPCHandlerOperationComplete(Complete complete) noexcept : complete_(complete) {}
+    explicit RegisterRPCHandlerOperationComplete(Complete complete_fn) noexcept : complete_(complete_fn) {}
 
     void complete() noexcept { complete_(*this); }
 

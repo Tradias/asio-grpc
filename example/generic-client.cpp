@@ -101,7 +101,10 @@ struct BidirectionalStreamingRequest
         bool write_ok{true};
         bool read_ok{true};
 
-        Context(agrpc::GrpcContext& grpc_context, grpc::GenericStub& stub) : stub(stub), rpc(grpc_context) {}
+        Context(agrpc::GrpcContext& grpc_context, grpc::GenericStub& generic_stub)
+            : stub(generic_stub), rpc(grpc_context)
+        {
+        }
     };
 
     std::unique_ptr<Context> context;

@@ -29,15 +29,10 @@ namespace example
 // ---------------------------------------------------
 struct ServerShutdown
 {
-    grpc::Server& server;
-    boost::asio::basic_signal_set<agrpc::GrpcExecutor> signals;
-    std::atomic_bool is_shutdown{};
-    std::thread shutdown_thread;
-
     ServerShutdown(grpc::Server& server, agrpc::GrpcContext& grpc_context)
-        : server(server), signals(grpc_context, SIGINT, SIGTERM)
+        : server_(server), signals_(grpc_context, SIGINT, SIGTERM)
     {
-        signals.async_wait(
+        signals_.async_wait(
             [&](auto&& ec, auto&&)
             {
                 if (boost::asio::error::operation_aborted != ec)
@@ -49,7 +44,7 @@ struct ServerShutdown
 
     void shutdown()
     {
-        if (!is_shutdown.exchange(true))
+        if (!is_shutdown_.exchange(true))
         {
             // This will cause all coroutines to run to completion normally
             // while returning `false` from RPC related steps. Also cancels the signals
@@ -57,27 +52,32 @@ struct ServerShutdown
             // from `run()`.
             // We cannot call server.Shutdown() on the same thread that runs a GrpcContext because that can lead to a
             // deadlock, therefore create a new thread.
-            shutdown_thread = std::thread(
+            shutdown_thread_ = std::thread(
                 [&]
                 {
-                    signals.cancel();
+                    signals_.cancel();
                     // For Shutdown to ever complete some other thread must be calling grpc_context.run().
-                    server.Shutdown();
+                    server_.Shutdown();
                 });
         }
     }
 
     ~ServerShutdown()
     {
-        if (shutdown_thread.joinable())
+        if (shutdown_thread_.joinable())
         {
-            shutdown_thread.join();
+            shutdown_thread_.join();
         }
         else
         {
-            server.Shutdown();
+            server_.Shutdown();
         }
     }
+
+    grpc::Server& server_;
+    boost::asio::basic_signal_set<agrpc::GrpcExecutor> signals_;
+    std::atomic_bool is_shutdown_{};
+    std::thread shutdown_thread_;
 };
 }
 

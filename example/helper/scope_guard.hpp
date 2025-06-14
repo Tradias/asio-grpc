@@ -15,16 +15,18 @@
 #ifndef AGRPC_HELPER_SCOPE_GUARD_HPP
 #define AGRPC_HELPER_SCOPE_GUARD_HPP
 
+#include <utility>
+
 namespace example
 {
 template <class OnExit>
 struct ScopeGuard
 {
-    OnExit on_exit;
+    explicit ScopeGuard(OnExit on_exit) : on_exit_(std::move(on_exit)) {}
 
-    explicit ScopeGuard(OnExit on_exit) : on_exit(std::move(on_exit)) {}
+    ~ScopeGuard() { on_exit_(); }
 
-    ~ScopeGuard() { on_exit(); }
+    OnExit on_exit_;
 };
 }  // namespace example
 

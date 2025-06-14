@@ -97,8 +97,8 @@ class BasicTypeErasedCompletionHandler<void(Args...), VoidPointer>
     template <class, class>
     friend class detail::BasicTypeErasedCompletionHandler;
 
-    BasicTypeErasedCompletionHandler(void* completion_handler, Complete complete)
-        : completion_handler_(completion_handler), complete_(complete)
+    BasicTypeErasedCompletionHandler(void* completion_handler, Complete complete_fn)
+        : completion_handler_(completion_handler), complete_(complete_fn)
     {
     }
 

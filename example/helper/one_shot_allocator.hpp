@@ -37,10 +37,10 @@ class OneShotAllocator
 
     OneShotAllocator() = default;
 
-    explicit OneShotAllocator(void* buffer) noexcept : buffer(buffer) {}
+    explicit OneShotAllocator(void* buffer) noexcept : buffer_(buffer) {}
 
     template <class U>
-    OneShotAllocator(const OneShotAllocator<U, Capacity>& other) noexcept : buffer(other.buffer)
+    OneShotAllocator(const OneShotAllocator<U, Capacity>& other) noexcept : buffer_(other.buffer_)
     {
     }
 
@@ -49,7 +49,7 @@ class OneShotAllocator
         static_assert(Capacity >= sizeof(T), "OneShotAllocator has insufficient capacity");
         static_assert(alignof(std::max_align_t) >= alignof(T), "Overaligned types are not supported");
         assert(Capacity >= n * sizeof(T));
-        return static_cast<T*>(buffer);
+        return static_cast<T*>(buffer_);
     }
 
     static void deallocate(T*, std::size_t) noexcept {}
@@ -57,20 +57,20 @@ class OneShotAllocator
     template <class U, std::size_t OtherCapacity>
     friend bool operator==(const OneShotAllocator& lhs, const OneShotAllocator<U, OtherCapacity>& rhs) noexcept
     {
-        return lhs.buffer == rhs.buffer;
+        return lhs.buffer_ == rhs.buffer_;
     }
 
     template <class U, std::size_t OtherCapacity>
     friend bool operator!=(const OneShotAllocator& lhs, const OneShotAllocator<U, OtherCapacity>& rhs) noexcept
     {
-        return lhs.buffer != rhs.buffer;
+        return lhs.buffer_ != rhs.buffer_;
     }
 
   private:
     template <class, std::size_t>
     friend class OneShotAllocator;
 
-    void* buffer;
+    void* buffer_;
 };
 }
 
