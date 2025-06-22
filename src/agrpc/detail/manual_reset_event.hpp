@@ -26,6 +26,7 @@
 #include <agrpc/detail/tuple.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/use_sender.hpp>
+#include <boost/cobalt/op.hpp>
 
 #include <atomic>
 
@@ -202,6 +203,59 @@ class BasicManualResetEvent<void(Args...), StorageT> : private StorageT<Args...>
         return asio::async_initiate<CompletionToken, SignatureWithErrorCode>(InitiateWait{*this}, token, io_executor);
     }
 #endif
+
+    template <class IOExecutor>
+    auto wait(boost::cobalt::use_op_t, const IOExecutor& io_executor)
+    {
+        struct Op final : boost::cobalt::op<detail::ErrorCode, Args...>
+        {
+            explicit Op(BasicManualResetEvent& self, const IOExecutor& io_executor)
+                : self_(self), io_executor_(io_executor)
+            {
+            }
+
+            void ready(boost::cobalt::handler<detail::ErrorCode, Args...> ch) override
+            {
+                if (self_.ready())
+                {
+                    detail::prepend_error_code_and_apply(static_cast<decltype(ch)&&>(ch),
+                                                         static_cast<Storage&&>(self_).get_value());
+                }
+            }
+
+            void initiate(boost::cobalt::completion_handler<detail::ErrorCode, Args...> completion_handler) override
+            {
+                using CompletionHandler = boost::cobalt::completion_handler<detail::ErrorCode, Args...>;
+                const auto complete_immediately = [&io_executor = io_executor_, &event = self_](CompletionHandler& ch)
+                {
+                    detail::complete_immediately(
+                        static_cast<CompletionHandler&&>(ch),
+                        [&event](auto&& ch)
+                        {
+                            detail::prepend_error_code_and_apply(static_cast<decltype(ch)&&>(ch),
+                                                                 static_cast<Storage&&>(event).get_value());
+                        },
+                        io_executor);
+                };
+                const auto allocator = asio::get_associated_allocator(completion_handler);
+                auto ptr =
+                    detail::allocate<ManualResetEventOperation<Signature, detail::RemoveCrefT<CompletionHandler>>>(
+                        allocator, static_cast<CompletionHandler&&>(completion_handler), self_);
+                if (self_.store(ptr.get()))
+                {
+                    ptr.release();
+                    return;
+                }
+                auto ch = static_cast<CompletionHandler&&>(ptr->completion_handler());
+                ptr.reset();
+                complete_immediately(ch);
+            }
+
+            BasicManualResetEvent& self_;
+            IOExecutor io_executor_;
+        };
+        return Op{*this, io_executor};
+    }
 
   private:
     template <class, template <class...> class, class>

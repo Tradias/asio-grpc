@@ -121,7 +121,6 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback coroutine read/send_initia
 
 TEST_CASE_FIXTURE(ServerCallbackTest, "Client-streaming callback coroutine")
 {
-    Request server_request;
     service.client_streaming = [&](grpc::CallbackServerContext*, Response*) -> grpc::ServerReadReactor<Request>*
     {
         auto& reactor = co_await agrpc::get_reactor;
@@ -137,14 +136,12 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Client-streaming callback coroutine")
     };
     auto rpc = agrpc::make_reactor<agrpc::ClientWriteReactor<Request>>(io_context.get_executor());
     test::set_default_deadline(rpc->context());
-    Response response;
-    rpc->start(&test::v1::Test::Stub::async::ClientStreaming, stub->async(), response);
-    Request request;
-    request.set_integer(1);
-    rpc->initiate_write(request);
+    rpc->start(&test::v1::Test::Stub::async::ClientStreaming, stub->async(), client_response);
+    client_request.set_integer(1);
+    rpc->initiate_write(client_request);
     CHECK(rpc->wait_for_write(asio::use_future).get());
-    request.set_integer(2);
-    rpc->initiate_write(request);
+    client_request.set_integer(2);
+    rpc->initiate_write(client_request);
     CHECK(rpc->wait_for_write(asio::use_future).get());
     auto status = rpc->wait_for_finish(asio::use_future).get();
     CHECK_EQ(grpc::StatusCode::OK, status.error_code());
@@ -152,7 +149,6 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Client-streaming callback coroutine")
 
 TEST_CASE_FIXTURE(ServerCallbackTest, "Client-streaming callback coroutine cancel after write")
 {
-    Request server_request;
     service.client_streaming = [&](grpc::CallbackServerContext*, Response*) -> grpc::ServerReadReactor<Request>*
     {
         co_await agrpc::initiate_read(server_request);
@@ -166,15 +162,13 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Client-streaming callback coroutine cance
     };
     auto rpc = agrpc::make_reactor<agrpc::ClientWriteReactor<Request>>(io_context.get_executor());
     test::set_default_deadline(rpc->context());
-    Response response;
-    rpc->start(&test::v1::Test::Stub::async::ClientStreaming, stub->async(), response);
-    Request request;
-    request.set_integer(1);
-    rpc->initiate_write(request);
+    rpc->start(&test::v1::Test::Stub::async::ClientStreaming, stub->async(), client_response);
+    client_request.set_integer(1);
+    rpc->initiate_write(client_request);
     CHECK(rpc->wait_for_write(asio::use_future).get());
     wait_for_server_done();
     rpc->context().TryCancel();
-    rpc->initiate_write(request);
+    rpc->initiate_write(client_request);
     CHECK_FALSE(rpc->wait_for_write(asio::use_future).get());
     auto status = rpc->wait_for_finish(asio::use_future).get();
     rpc->wait_for_finish(asio::use_future).get();

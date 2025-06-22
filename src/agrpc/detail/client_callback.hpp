@@ -45,6 +45,10 @@ template <class StubAsync, class Request, class Response>
 using AsyncServerStreamingReactorFn = void (StubAsync::*)(grpc::ClientContext*, const Request*,
                                                           grpc::ClientReadReactor<Response>*);
 
+template <class StubAsync, class Request, class Response>
+using AsyncBidiStreamingReactorFn = void (StubAsync::*)(grpc::ClientContext*,
+                                                        grpc::ClientBidiReactor<Request, Response>*);
+
 template <class CompletionHandler>
 class UnaryRequestCallback
 {
@@ -158,6 +162,30 @@ AGRPC_STORAGE_HAS_CORRECT_OFFSET(ClientReadReactorDataBase, initial_metadata_, o
 AGRPC_STORAGE_HAS_CORRECT_OFFSET(ClientReadReactorDataBase, read_, ok_read_);
 
 struct ClientReadReactorData : ClientReadReactorDataBase
+{
+    detail::ManualResetEvent<void(grpc::Status)> finish_{};
+};
+
+struct ClientBidiReactorDataBase
+{
+    detail::OffsetManualResetEvent<void(bool), 4 * OFFSET_MANUAL_RESET_EVENT_SIZE> initial_metadata_{};
+    detail::OffsetManualResetEvent<void(bool), 3 * OFFSET_MANUAL_RESET_EVENT_SIZE + sizeof(bool)> read_{};
+    detail::OffsetManualResetEvent<void(bool), 2 * OFFSET_MANUAL_RESET_EVENT_SIZE + 2 * sizeof(bool)> write_{};
+    detail::OffsetManualResetEvent<void(bool), OFFSET_MANUAL_RESET_EVENT_SIZE + 3 * sizeof(bool)> writes_done_{};
+    bool ok_initial_metadata_{};
+    bool ok_read_{};
+    bool ok_write_{};
+    bool ok_writes_done_{};
+    std::atomic_bool is_hold_removed_{};
+};
+
+static_assert(std::is_standard_layout_v<ClientBidiReactorDataBase>);
+AGRPC_STORAGE_HAS_CORRECT_OFFSET(ClientBidiReactorDataBase, initial_metadata_, ok_initial_metadata_);
+AGRPC_STORAGE_HAS_CORRECT_OFFSET(ClientBidiReactorDataBase, read_, ok_read_);
+AGRPC_STORAGE_HAS_CORRECT_OFFSET(ClientBidiReactorDataBase, write_, ok_write_);
+AGRPC_STORAGE_HAS_CORRECT_OFFSET(ClientBidiReactorDataBase, writes_done_, ok_writes_done_);
+
+struct ClientBidiReactorData : ClientBidiReactorDataBase
 {
     detail::ManualResetEvent<void(grpc::Status)> finish_{};
 };

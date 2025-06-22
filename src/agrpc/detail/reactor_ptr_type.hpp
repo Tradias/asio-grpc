@@ -47,6 +47,12 @@ struct RefCountedReactorType<agrpc::BasicServerWriteReactor<Response, Executor>>
     using Type = RefCountedServerReactor<agrpc::BasicServerWriteReactor<Response, Executor>>;
 };
 
+template <class Request, class Response, class Executor>
+struct RefCountedReactorType<agrpc::BasicServerBidiReactor<Request, Response, Executor>>
+{
+    using Type = RefCountedServerReactor<agrpc::BasicServerBidiReactor<Request, Response, Executor>>;
+};
+
 template <class Executor>
 struct RefCountedReactorType<agrpc::BasicClientUnaryReactor<Executor>>
 {
@@ -63,6 +69,12 @@ template <class Response, class Executor>
 struct RefCountedReactorType<agrpc::BasicClientReadReactor<Response, Executor>>
 {
     using Type = RefCountedClientReactor<agrpc::BasicClientReadReactor<Response, Executor>>;
+};
+
+template <class Request, class Response, class Executor>
+struct RefCountedReactorType<agrpc::BasicClientBidiReactor<Request, Response, Executor>>
+{
+    using Type = RefCountedClientReactor<agrpc::BasicClientBidiReactor<Request, Response, Executor>>;
 };
 
 template <class Reactor>

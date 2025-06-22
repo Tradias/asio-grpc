@@ -29,7 +29,7 @@ struct ExampleService final : example::v1::Example::CallbackService
 
     /* [server-rpc-unary-callback] */
     grpc::ServerUnaryReactor* Unary(grpc::CallbackServerContext* context, const example::v1::Request*,
-                                    example::v1::Response* response)
+                                    example::v1::Response* response) override
     {
         auto ptr = agrpc::make_reactor<agrpc::ServerUnaryReactor>(get_executor());
         auto& rpc = *ptr;
@@ -59,7 +59,7 @@ struct ExampleService final : example::v1::Example::CallbackService
 
     /* [server-rpc-client-streaming-callback] */
     grpc::ServerReadReactor<example::v1::Request>* ClientStreaming(grpc::CallbackServerContext*,
-                                                                   example::v1::Response* response)
+                                                                   example::v1::Response* response) override
     {
         auto ptr = agrpc::make_reactor<agrpc::ServerReadReactor<example::v1::Request>>(get_executor());
         auto& rpc = *ptr;
@@ -78,6 +78,64 @@ struct ExampleService final : example::v1::Example::CallbackService
         return rpc.get();
     }
     /* [server-rpc-client-streaming-callback] */
+
+    /* [server-rpc-server-streaming-callback] */
+    grpc::ServerWriteReactor<example::v1::Response>* ServerStreaming(grpc::CallbackServerContext*,
+                                                                     const example::v1::Request* request) override
+    {
+        auto ptr = agrpc::make_reactor<agrpc::ServerWriteReactor<example::v1::Response>>(get_executor());
+        auto& rpc = *ptr;
+        auto response = std::make_unique<example::v1::Response>();
+        response->set_integer(request->integer());
+        rpc.initiate_write(*response);
+        rpc.wait_for_write(
+            [ptr = std::move(ptr), response = std::move(response)](const error_code&, bool ok)
+            {
+                if (!ok)
+                {
+                    return;
+                }
+                ptr->initiate_finish(grpc::Status::OK);
+            });
+        return rpc.get();
+    }
+    /* [server-rpc-server-streaming-callback] */
+
+    /* [server-rpc-bidi-streaming-callback] */
+    grpc::ServerBidiReactor<example::v1::Request, example::v1::Response>* BidirectionalStreaming(
+        grpc::CallbackServerContext*) override
+    {
+        struct Reactor : agrpc::ServerBidiReactorBase<example::v1::Request, example::v1::Response>
+        {
+            example::v1::Request request_;
+            example::v1::Response response_;
+        };
+        auto ptr = agrpc::make_reactor<Reactor>(get_executor());
+        auto& rpc = *ptr;
+        rpc.initiate_read(rpc.request_);
+        rpc.wait_for_read(
+            [ptr = std::move(ptr)](const error_code&, bool ok) mutable
+            {
+                if (!ok)
+                {
+                    return;
+                }
+                auto& rpc = *ptr;
+                rpc.response_.set_integer(rpc.request_.integer());
+                rpc.initiate_write(rpc.response_);
+                rpc.wait_for_write(
+                    [ptr = std::move(ptr)](const error_code&, bool ok)
+                    {
+                        if (!ok)
+                        {
+                            return;
+                        }
+                        ptr->initiate_finish(grpc::Status::OK);
+                    });
+            });
+        return rpc.get();
+    }
+    /* [server-rpc-bidi-streaming-callback] */
 
     executor_type get_executor() noexcept { return io_context_.get_executor(); }
 

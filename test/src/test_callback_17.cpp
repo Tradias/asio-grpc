@@ -279,3 +279,59 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Server-streaming callback ptr")
     auto status = rpc->wait_for_finish(asio::use_future).get();
     CHECK_EQ(grpc::StatusCode::OK, status.error_code());
 }
+
+TEST_CASE_FIXTURE(ServerCallbackTest, "Bidi-streaming callback ptr")
+{
+    service.bidirectional_streaming = [&](grpc::CallbackServerContext*) -> grpc::ServerBidiReactor<Request, Response>*
+    {
+        auto ptr = agrpc::make_reactor<agrpc::ServerBidiReactor<Request, Response>>(io_context.get_executor());
+        auto& rpc = *ptr;
+        server_response.set_integer(1);
+        rpc.initiate_write(server_response);
+        rpc.initiate_read(server_request);
+        rpc.wait_for_write(
+            [&, ptr](auto&&, bool ok)
+            {
+                CHECK(ok);
+                server_response.set_integer(2);
+                rpc.initiate_write(server_response);
+                rpc.wait_for_write(
+                    [&, ptr](auto&&, bool ok)
+                    {
+                        CHECK(ok);
+                    });
+            });
+        rpc.wait_for_read(
+            [&, ptr](auto&&, bool ok)
+            {
+                CHECK(ok);
+                CHECK_EQ(10, server_request.integer());
+                rpc.initiate_read(server_request);
+                rpc.wait_for_read(
+                    [&, ptr](auto&&, bool ok)
+                    {
+                        CHECK_FALSE(ok);
+                        rpc.initiate_finish(grpc::Status::OK);
+                    });
+            });
+        return rpc.get();
+    };
+    auto rpc = agrpc::make_reactor<agrpc::ClientBidiReactor<Request, Response>>(io_context.get_executor());
+    test::set_default_deadline(rpc->context());
+    rpc->start(&test::v1::Test::Stub::async::BidirectionalStreaming, stub->async());
+    rpc->initiate_read(client_response);
+    client_request.set_integer(10);
+    rpc->initiate_write(client_request);
+    CHECK(rpc->wait_for_read(asio::use_future).get());
+    CHECK_EQ(1, client_response.integer());
+    rpc->initiate_read(client_response);
+    CHECK(rpc->wait_for_read(asio::use_future).get());
+    CHECK_EQ(2, client_response.integer());
+    rpc->initiate_read(client_response);
+    CHECK(rpc->wait_for_write(asio::use_future).get());
+    rpc->initiate_writes_done();
+    CHECK_FALSE(rpc->wait_for_read(asio::use_future).get());
+    CHECK(rpc->wait_for_writes_done(asio::use_future).get());
+    auto status = rpc->wait_for_finish(asio::use_future).get();
+    CHECK_EQ(grpc::StatusCode::OK, status.error_code());
+}
