@@ -1,4 +1,4 @@
-# Copyright 2024 Dennis Hezel
+# Copyright 2025 Dennis Hezel
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -115,12 +115,16 @@ function(asio_grpc_protobuf_generate)
 
     # Verify PROTOC and GRPC_PLUGIN paths if provided
     if(asio_grpc_protobuf_generate_PROTOC AND NOT EXISTS "${asio_grpc_protobuf_generate_PROTOC}")
-        message(SEND_ERROR "asio_grpc_protobuf_generate PROTOC path does not exist: ${asio_grpc_protobuf_generate_PROTOC}")
+        message(
+            SEND_ERROR "asio_grpc_protobuf_generate PROTOC path does not exist: ${asio_grpc_protobuf_generate_PROTOC}")
         return()
     endif()
 
     if(asio_grpc_protobuf_generate_GRPC_PLUGIN AND NOT EXISTS "${asio_grpc_protobuf_generate_GRPC_PLUGIN}")
-        message(SEND_ERROR "asio_grpc_protobuf_generate GRPC_PLUGIN path does not exist: ${asio_grpc_protobuf_generate_GRPC_PLUGIN}")
+        message(
+            SEND_ERROR
+                "asio_grpc_protobuf_generate GRPC_PLUGIN path does not exist: ${asio_grpc_protobuf_generate_GRPC_PLUGIN}"
+        )
         return()
     endif()
 
