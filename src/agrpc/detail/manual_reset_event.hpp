@@ -26,7 +26,10 @@
 #include <agrpc/detail/tuple.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/use_sender.hpp>
+
+#if 0
 #include <boost/cobalt/op.hpp>
+#endif
 
 #include <atomic>
 
