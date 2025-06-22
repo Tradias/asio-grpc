@@ -204,6 +204,7 @@ class BasicManualResetEvent<void(Args...), StorageT> : private StorageT<Args...>
     }
 #endif
 
+#if 0
     template <class IOExecutor>
     auto wait(boost::cobalt::use_op_t, const IOExecutor& io_executor)
     {
@@ -256,6 +257,7 @@ class BasicManualResetEvent<void(Args...), StorageT> : private StorageT<Args...>
         };
         return Op{*this, io_executor};
     }
+#endif
 
   private:
     template <class, template <class...> class, class>
