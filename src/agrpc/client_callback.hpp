@@ -30,7 +30,7 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief I/O object for client-side, unary rpcs
+ * @brief (experimental) I/O object for client-side, unary rpcs
  *
  * Create an object of this type using `agrpc::make_reactor`/`agrpc::allocate_reactor`. This class should only be used
  * if the unary rpc wants to receive initial metadata without waiting for the server's response message.
@@ -139,7 +139,7 @@ class BasicClientUnaryReactor : private grpc::ClientUnaryReactor,
 };
 
 /**
- * @brief I/O object for client-side, unary rpcs (specialized on `asio::any_io_executor`)
+ * @brief (experimental) I/O object for client-side, unary rpcs (specialized on `asio::any_io_executor`)
  */
 using ClientUnaryReactor = BasicClientUnaryReactor<asio::any_io_executor>;
 
@@ -149,7 +149,7 @@ using BasicClientUnaryReactorBase = detail::RefCountedClientReactor<agrpc::Basic
 using ClientUnaryReactorBase = BasicClientUnaryReactorBase<asio::any_io_executor>;
 
 /**
- * @brief I/O object for client-side, client-streaming rpcs
+ * @brief (experimental) I/O object for client-side, client-streaming rpcs
  *
  * Create an object of this type using `agrpc::make_reactor`/`agrpc::allocate_reactor`.
  *
@@ -316,7 +316,7 @@ class BasicClientWriteReactor : private grpc::ClientWriteReactor<Request>,
 };
 
 /**
- * @brief I/O object for client-side, client-streaming rpcs (specialized on `asio::any_io_executor`)
+ * @brief (experimental) I/O object for client-side, client-streaming rpcs (specialized on `asio::any_io_executor`)
  */
 template <class Request>
 using ClientWriteReactor = BasicClientWriteReactor<Request, asio::any_io_executor>;
@@ -328,7 +328,7 @@ template <class Request>
 using ClientWriteReactorBase = BasicClientWriteReactorBase<Request, asio::any_io_executor>;
 
 /**
- * @brief I/O object for client-side, server-streaming rpcs
+ * @brief (experimental) I/O object for client-side, server-streaming rpcs
  *
  * Create an object of this type using `agrpc::make_reactor`/`agrpc::allocate_reactor`.
  *
@@ -463,7 +463,7 @@ class BasicClientReadReactor : private grpc::ClientReadReactor<Response>,
 };
 
 /**
- * @brief I/O object for client-side, server-streaming rpcs (specialized on `asio::any_io_executor`)
+ * @brief (experimental) I/O object for client-side, server-streaming rpcs (specialized on `asio::any_io_executor`)
  */
 template <class Response>
 using ClientReadReactor = BasicClientReadReactor<Response, asio::any_io_executor>;
@@ -475,7 +475,7 @@ template <class Response>
 using ClientReadReactorBase = BasicClientReadReactorBase<Response, asio::any_io_executor>;
 
 /**
- * @brief I/O object for client-side, bidi-streaming rpcs
+ * @brief (experimental) I/O object for client-side, bidi-streaming rpcs
  *
  * Create an object of this type using `agrpc::make_reactor`/`agrpc::allocate_reactor`.
  *
@@ -667,7 +667,7 @@ class BasicClientBidiReactor : private grpc::ClientBidiReactor<Request, Response
 };
 
 /**
- * @brief I/O object for client-side, bidi-streaming rpcs (specialized on `asio::any_io_executor`)
+ * @brief (experimental) I/O object for client-side, bidi-streaming rpcs (specialized on `asio::any_io_executor`)
  */
 template <class Request, class Response>
 using ClientBidiReactor = BasicClientBidiReactor<Request, Response, asio::any_io_executor>;
@@ -679,9 +679,30 @@ using BasicClientBidiReactorBase =
 template <class Request, class Response>
 using ClientBidiReactorBase = BasicClientBidiReactorBase<Request, Response, asio::any_io_executor>;
 
-template <class StubAsync, class Request, class Response, class CompletionToken>
-auto request(detail::AsyncUnaryFn<StubAsync, Request, Response> fn, StubAsync* stub,
-             grpc::ClientContext& client_context, const Request& req, Response& response, CompletionToken&& token)
+/**
+ * @brief (experimental) Perform a unary rpc
+ *
+ * Completion signature is `void(error_code, grpc::Status)`. Once this operation completes the response passed to
+ * it will have been be populated if `grpc::Status::ok()` is true.
+ *
+ * Example:
+ *
+ * @snippet client_callback.cpp client-rpc-unary-call
+ *
+ * Based on `.proto` file:
+ *
+ * @snippet example.proto example-proto
+ *
+ * **Per-Operation Cancellation**
+ *
+ * None (still in development)
+ *
+ * @since 3.5.0
+ */
+template <class StubAsync, class Request, class Response, class CompletionToken = detail::DefaultCompletionTokenT<void>>
+auto unary_call(detail::AsyncUnaryFn<StubAsync, Request, Response> fn, StubAsync* stub,
+                grpc::ClientContext& client_context, const Request& req, Response& response,
+                CompletionToken&& token = CompletionToken{})
 {
     return asio::async_initiate<CompletionToken, void(grpc::Status)>(
         [fn](auto handler, StubAsync* stub, grpc::ClientContext* client_context, const Request* req, Response* response)

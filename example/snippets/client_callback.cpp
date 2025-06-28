@@ -21,6 +21,17 @@
 namespace asio = boost::asio;
 using error_code = boost::system::error_code;
 
+/* [client-rpc-unary-call] */
+void unary_call(example::v1::Example::Stub& stub, example::v1::Request request)
+{
+    auto state = std::make_unique<std::tuple<example::v1::Request, grpc::ClientContext, example::v1::Response>>();
+    auto& [req, context, rsp] = *state;
+    req = std::move(request);
+    agrpc::unary_call(&example::v1::Example::Stub::async::Unary, stub.async(), context, req, rsp,
+                      [state = std::move(state)](const grpc::Status& /*status*/) {});
+}
+/* [client-rpc-unary-call] */
+
 /* [client-rpc-unary-callback] */
 void unary(asio::io_context& io_context, example::v1::Example::Stub& stub, const example::v1::Request& request)
 {

@@ -43,8 +43,8 @@ struct ServerCallbackTest : test::GrpcClientServerCallbackTest, test::IoContextT
     {
         Request request;
         Response response;
-        auto status = agrpc::request(&test::v1::Test::Stub::async::Unary, stub->async(), client_context, request,
-                                     response, asio::use_future)
+        auto status = agrpc::unary_call(&test::v1::Test::Stub::async::Unary, stub->async(), client_context, request,
+                                        response, asio::use_future)
                           .get();
         return std::pair{std::move(status), std::move(response)};
     }

@@ -34,11 +34,11 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback coroutine automatic cancel
     Request request;
     Response response;
     std::promise<grpc::Status> p;
-    agrpc::request(&test::v1::Test::Stub::async::Unary, stub->async(), client_context, request, response,
-                   [&](auto&& status)
-                   {
-                       p.set_value(status);
-                   });
+    agrpc::unary_call(&test::v1::Test::Stub::async::Unary, stub->async(), client_context, request, response,
+                      [&](auto&& status)
+                      {
+                          p.set_value(status);
+                      });
     CHECK_EQ(grpc::StatusCode::CANCELLED, p.get_future().get().error_code());
 }
 

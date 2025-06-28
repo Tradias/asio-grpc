@@ -28,7 +28,7 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief I/O object for server-side, unary rpcs
+ * @brief (experimental) I/O object for server-side, unary rpcs
  *
  * Create an object of this type using `agrpc::make_reactor`/`agrpc::allocate_reactor` or
  * `server_callback_coroutine.hpp`. Note that `grpc::CallbackServerContext::DefaultReactor()` should be use instead
@@ -151,7 +151,7 @@ class BasicServerUnaryReactor : private grpc::ServerUnaryReactor, public detail:
 };
 
 /**
- * @brief I/O object for server-side, unary rpcs (specialized on `asio::any_io_executor`)
+ * @brief (experimental) I/O object for server-side, unary rpcs (specialized on `asio::any_io_executor`)
  */
 using ServerUnaryReactor = BasicServerUnaryReactor<asio::any_io_executor>;
 
@@ -161,7 +161,7 @@ using BasicServerUnaryReactorBase = detail::RefCountedServerReactor<agrpc::Basic
 using ServerUnaryReactorBase = BasicServerUnaryReactorBase<asio::any_io_executor>;
 
 /**
- * @brief I/O object for server-side, client-streaming rpcs
+ * @brief (experimental) I/O object for server-side, client-streaming rpcs
  *
  * Create an object of this type using `agrpc::make_reactor`/`agrpc::allocate_reactor` or
  * `server_callback_coroutine.hpp`.
@@ -311,7 +311,7 @@ class BasicServerReadReactor : private grpc::ServerReadReactor<Request>, public 
 };
 
 /**
- * @brief I/O object for server-side, client-streaming rpcs (specialized on `asio::any_io_executor`)
+ * @brief (experimental) I/O object for server-side, client-streaming rpcs (specialized on `asio::any_io_executor`)
  */
 template <class Request>
 using ServerReadReactor = BasicServerReadReactor<Request, asio::any_io_executor>;
@@ -323,7 +323,7 @@ template <class Request>
 using ServerReadReactorBase = BasicServerReadReactorBase<Request, asio::any_io_executor>;
 
 /**
- * @brief I/O object for server-side, server-streaming rpcs
+ * @brief (experimental) I/O object for server-side, server-streaming rpcs
  *
  * Create an object of this type using `agrpc::make_reactor`/`agrpc::allocate_reactor` or
  * `server_callback_coroutine.hpp`.
@@ -487,7 +487,7 @@ class BasicServerWriteReactor : private grpc::ServerWriteReactor<Response>, publ
 };
 
 /**
- * @brief I/O object for server-side, server-streaming rpcs (specialized on `asio::any_io_executor`)
+ * @brief (experimental) I/O object for server-side, server-streaming rpcs (specialized on `asio::any_io_executor`)
  */
 template <class Response>
 using ServerWriteReactor = BasicServerWriteReactor<Response, asio::any_io_executor>;
@@ -499,7 +499,7 @@ template <class Response>
 using ServerWriteReactorBase = BasicServerWriteReactorBase<Response, asio::any_io_executor>;
 
 /**
- * @brief I/O object for server-side, bidi-streaming rpcs
+ * @brief (experimental) I/O object for server-side, bidi-streaming rpcs
  *
  * Create an object of this type using `agrpc::make_reactor`/`agrpc::allocate_reactor` or
  * `server_callback_coroutine.hpp`.
@@ -692,7 +692,7 @@ class BasicServerBidiReactor : private grpc::ServerBidiReactor<Request, Response
 };
 
 /**
- * @brief I/O object for server-side, bidi-streaming rpcs (specialized on `asio::any_io_executor`)
+ * @brief (experimental) I/O object for server-side, bidi-streaming rpcs (specialized on `asio::any_io_executor`)
  */
 template <class Request, class Response>
 using ServerBidiReactor = BasicServerBidiReactor<Request, Response, asio::any_io_executor>;

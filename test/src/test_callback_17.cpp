@@ -30,11 +30,12 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr automatic cancellation
         return agrpc::make_reactor<agrpc::ServerUnaryReactor>(io_context.get_executor())->get();
     };
     std::promise<grpc::Status> p;
-    agrpc::request(&test::v1::Test::Stub::async::Unary, stub->async(), client_context, client_request, client_response,
-                   [&](auto&& status)
-                   {
-                       p.set_value(status);
-                   });
+    agrpc::unary_call(&test::v1::Test::Stub::async::Unary, stub->async(), client_context, client_request,
+                      client_response,
+                      [&](auto&& status)
+                      {
+                          p.set_value(status);
+                      });
     CHECK_EQ(grpc::StatusCode::CANCELLED, p.get_future().get().error_code());
 }
 
