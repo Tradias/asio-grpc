@@ -378,8 +378,8 @@ jobs:
       run: |
         cmake -E make_directory doxygen &&\
         cd doxygen &&\
-        wget --quiet https://download.sourceforge.net/project/doxygen/rel-1.12.0/doxygen-1.12.0.linux.bin.tar.gz &&\
-        tar xf doxygen-1.12.0.linux.bin.tar.gz --strip-components=1
+        wget --quiet https://download.sourceforge.net/project/doxygen/rel-1.14.0/doxygen-1.14.0.linux.bin.tar.gz &&\
+        tar xf doxygen-1.14.0.linux.bin.tar.gz --strip-components=1
 
     - name: Set env
       run: echo "CLANG_PROGRAM=$(which clang++)" >> "$GITHUB_ENV"
