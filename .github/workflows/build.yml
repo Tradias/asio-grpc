@@ -263,9 +263,9 @@ jobs:
         java-version: '17'
 
     - name: Download sonar-scanner
-      uses: warchant/setup-sonar-scanner@v8
+      uses: warchant/setup-sonar-scanner@v9
       with:
-        version: 5.0.1.3006
+        version: 7.3.0.5189
 
     - name: Run sonar-scanner
       env:
