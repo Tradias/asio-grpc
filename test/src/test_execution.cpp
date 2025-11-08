@@ -338,6 +338,7 @@ TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::BidirectionalStreamingClien
                                                  alarm.cancel();
                                                  CHECK_EQ(grpc::StatusCode::CANCELLED,
                                                           (co_await rpc.finish(agrpc::use_sender)).error_code());
+                                                 server_shutdown.initiate();
                                              });
     run(std::move(rpc_handler), std::move(request_sender));
     CHECK_GT(not_to_exceed, std::chrono::steady_clock::now());
