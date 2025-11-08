@@ -35,7 +35,10 @@ namespace detail::exec
 {
 using ::unifex::get_allocator;
 
-using get_allocator_t = detail::RemoveCrefT<decltype(get_allocator)>;
+using get_allocator_t = ::unifex::tag_t<::unifex::get_allocator>;
+
+template <class Env>
+using allocator_of_t = detail::RemoveCrefT<decltype(exec::get_allocator(std::declval<Env>()))>;
 
 using ::unifex::get_scheduler;
 using ::unifex::scheduler;
@@ -52,8 +55,12 @@ using ::unifex::set_done;
 using ::unifex::set_error;
 using ::unifex::set_value;
 using ::unifex::start;
-using ::unifex::stop_token_type_t;
 using ::unifex::then;
+
+using ::unifex::stop_token_type_t;
+
+template <class Env>
+using stop_token_of_t = typename Env::StopToken;
 
 template <class T, class = void>
 inline constexpr bool stoppable_token = false;
@@ -70,6 +77,41 @@ using UnstoppableTokenHelper = std::bool_constant<(T{}.stop_possible())>;
 template <class T>
 inline constexpr bool unstoppable_token<T, exec::UnstoppableTokenHelper<T>> = true;
 
+namespace env_ns
+{
+template <class StopTokenT, class AllocatorT>
+struct Env
+{
+    using StopToken = StopTokenT;
+    using Allocator = AllocatorT;
+
+    friend StopTokenT tag_invoke(::unifex::tag_t<::unifex::get_stop_token>, const Env& env) noexcept
+    {
+        return env.stop_token_;
+    }
+
+    friend AllocatorT tag_invoke(get_allocator_t, const Env& env) noexcept { return env.allocator_; }
+
+    StopTokenT stop_token_;
+    AllocatorT allocator_;
+};
+
+template <class StopTokenT, class AllocatorT>
+Env(StopTokenT, AllocatorT) -> Env<StopTokenT, AllocatorT>;
+}
+
+using env_ns::Env;
+
+template <class Receiver>
+auto get_env(const Receiver& receiver) noexcept
+{
+    return Env{::unifex::get_stop_token(receiver), ::unifex::get_allocator(receiver)};
+}
+
+template <class Receiver>
+using env_of_t = decltype(exec::get_env(std::declval<Receiver>()));
+
+using ::unifex::tag_invoke;
 using ::unifex::tag_t;
 }  // namespace exec
 

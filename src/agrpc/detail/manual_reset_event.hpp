@@ -334,7 +334,7 @@ class ManualResetEventOperationState
   public:
     void start() noexcept
     {
-        auto stop_token = exec::get_stop_token(state_.receiver());
+        auto stop_token = exec::get_stop_token(exec::get_env(state_.receiver()));
         if (stop_token.stop_requested())
         {
             exec::set_done(static_cast<Receiver&&>(state_.receiver()));

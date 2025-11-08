@@ -125,14 +125,15 @@ TEST_CASE_FIXTURE(test::ExecutionRpcHandlerTest, "unifex rpc_handler unary - cli
                                                       {
                                                           stop.request_stop();
                                                       });
-    run(unifex::sequence(make_three_requests_then_stop, request_sender), std::move(rpc_handler_sender));
-    CHECK_EQ(4, request_count);
+    run(unifex::sequence(make_three_requests_then_stop,
+                         make_client_unary_request_sender(test::five_seconds_from_now(), &check_status_not_ok)),
+        std::move(rpc_handler_sender));
+    CHECK_EQ(3, request_count);
     CHECK(allocator_has_been_used());
 }
 
 TEST_CASE_FIXTURE(test::ExecutionRpcHandlerTest, "unifex rpc_handler unary - server requests stop")
 {
-    auto request_count{0};
     auto rpc_handler_sender = unifex::let_value_with_stop_source(
         [&](unifex::inplace_stop_source& stop)
         {
@@ -143,15 +144,14 @@ TEST_CASE_FIXTURE(test::ExecutionRpcHandlerTest, "unifex rpc_handler unary - ser
                                             stop.request_stop();
                                             return handle_unary_request_sender(rpc, request);
                                         }),
-                                    []()
+                                    []
                                     {
                                         // Prevent stop request from propagating up
                                         return unifex::just();
                                     });
         });
-    auto request_sender = make_client_unary_request_sender(request_count, std::numeric_limits<int>::max());
+    auto request_sender = make_client_unary_request_sender(test::five_seconds_from_now(), &check_status_not_ok);
     run(request_sender, std::move(rpc_handler_sender));
-    CHECK_EQ(1, request_count);
 }
 
 TEST_CASE_FIXTURE(test::ExecutionRpcHandlerTest, "unifex rpc_handler unary with request message factory")
@@ -263,8 +263,9 @@ TEST_CASE_FIXTURE(test::ExecutionRpcHandlerTest, "unifex rpc_handler unary - kee
                     ++count;
                     if (count == 1)
                     {
-                        co_await agrpc::Alarm(grpc_context)
-                            .wait(test::two_hundred_milliseconds_from_now(), agrpc::use_sender);
+                        co_await unifex::unstoppable(
+                            agrpc::Alarm(grpc_context)
+                                .wait(test::two_hundred_milliseconds_from_now(), agrpc::use_sender));
                         count = 42;
                     }
                     else
@@ -276,9 +277,9 @@ TEST_CASE_FIXTURE(test::ExecutionRpcHandlerTest, "unifex rpc_handler unary - kee
         });
     auto op = unifex::connect(std::move(rpc_handler), test::ConditionallyNoexceptNoOpReceiver<true>{});
     op.start();
-    run(unifex::when_all(make_client_unary_request_sender(test::five_seconds_from_now(), &check_response_ok),
-                         make_client_unary_request_sender(test::five_seconds_from_now(), &check_response_ok),
-                         make_client_unary_request_sender(test::five_seconds_from_now(), &check_response_ok)));
+    run(unifex::when_all(make_client_unary_request_sender(test::five_seconds_from_now(), &check_status_not_ok),
+                         make_client_unary_request_sender(test::five_seconds_from_now(), &check_status_not_ok),
+                         make_client_unary_request_sender(test::five_seconds_from_now(), &check_status_not_ok)));
     CHECK_EQ(42, count);
 }
 #endif

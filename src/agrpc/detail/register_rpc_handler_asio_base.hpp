@@ -17,6 +17,7 @@
 
 #include <agrpc/alarm.hpp>
 #include <agrpc/detail/association.hpp>
+#include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/register_rpc_handler_base.hpp>
 #include <agrpc/detail/rethrow_first_arg.hpp>
 #include <agrpc/detail/server_rpc_starter.hpp>
@@ -34,8 +35,9 @@ void register_rpc_handler_asio_completion_trampoline(agrpc::GrpcContext& grpc_co
 
 template <class ServerRPC, class RPCHandler, class CompletionHandlerT>
 class RegisterRPCHandlerOperationAsioBase
-    : public detail::RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler,
-                                                     detail::CancellationSlotT<CompletionHandlerT&>>,
+    : public detail::RegisterRPCHandlerOperationBase<
+          ServerRPC, RPCHandler,
+          exec::Env<detail::CancellationSlotT<CompletionHandlerT&>, detail::AssociatedAllocatorT<CompletionHandlerT>>>,
       private detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandlerT>>
 {
   public:
@@ -43,7 +45,9 @@ class RegisterRPCHandlerOperationAsioBase
     using StopToken = detail::CancellationSlotT<CompletionHandlerT&>;
 
   private:
-    using Base = detail::RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler, StopToken>;
+    using Base = detail::RegisterRPCHandlerOperationBase<
+        ServerRPC, RPCHandler,
+        exec::Env<detail::CancellationSlotT<CompletionHandlerT&>, detail::AssociatedAllocatorT<CompletionHandlerT>>>;
     using CompletionBase = detail::RegisterRPCHandlerOperationComplete;
     using WorkTracker = detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandlerT>>;
 

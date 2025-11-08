@@ -238,7 +238,7 @@ class BasicSenderOperationState
             exec::set_done(static_cast<Receiver&&>(receiver()));
             return;
         }
-        auto stop_token = exec::get_stop_token(receiver());
+        auto stop_token = exec::get_stop_token(exec::get_env(receiver()));
         if (stop_token.stop_requested())
         {
             exec::set_done(static_cast<Receiver&&>(receiver()));

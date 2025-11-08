@@ -165,7 +165,7 @@ TEST_CASE_TEMPLATE("ScheduleSender start with shutdown GrpcContext", T, std::tru
                                                               [[maybe_unused]] auto gg = std::move(g);
                                                               return stdexec::just();
                                                           }),
-                                        test::FunctionAsReceiver{[]() {}});
+                                        test::FunctionAsReceiver{[] {}});
             });
         stdexec::start(op);
     }
@@ -307,7 +307,41 @@ TEST_CASE_FIXTURE(StdexecExecutionClientRPCTest<test::BidirectionalStreamingClie
             CHECK(co_await rpc.write(response, agrpc::use_sender));
             CHECK(co_await rpc.finish(grpc::Status::OK, agrpc::use_sender));
         },
-        client_func, client_func, client_func);
+        client_func);
+}
+
+TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::BidirectionalStreamingClientRPC>,
+                  "unifex rpc_handler stop token is propagated")
+{
+    bool cancelled{};
+    const auto not_to_exceed = std::chrono::steady_clock::now() + std::chrono::seconds(4);
+    agrpc::Alarm alarm{grpc_context};
+    auto rpc_handler = stdexec::when_all(
+        alarm.wait(test::five_seconds_from_now()),
+        agrpc::register_sender_rpc_handler<test::BidirectionalStreamingServerRPC>(
+            grpc_context, service,
+            [&](test::BidirectionalStreamingServerRPC&)
+            {
+                return agrpc::Alarm(grpc_context).wait(test::five_seconds_from_now(), agrpc::use_sender) |
+                       test::let_stopped(
+                           [&]
+                           {
+                               cancelled = true;
+                               return stdexec::just();
+                           });
+            }));
+    auto request_sender = stdexec::let_value(stdexec::schedule(get_executor()),
+                                             [&]() -> exec::task<void>
+                                             {
+                                                 auto rpc = create_rpc();
+                                                 co_await rpc.start(*stub, agrpc::use_sender);
+                                                 alarm.cancel();
+                                                 CHECK_EQ(grpc::StatusCode::CANCELLED,
+                                                          (co_await rpc.finish(agrpc::use_sender)).error_code());
+                                             });
+    run(std::move(rpc_handler), std::move(request_sender));
+    CHECK_GT(not_to_exceed, std::chrono::steady_clock::now());
+    CHECK(cancelled);
 }
 
 TEST_CASE_FIXTURE(test::ExecutionRpcHandlerTest, "stdexec rpc_handler unary - shutdown server")

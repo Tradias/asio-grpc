@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_EXECUTION_ASIO_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/utility.hpp>
 
 #include <agrpc/detail/config.hpp>
 
@@ -37,6 +38,9 @@ decltype(auto) get_allocator(const Object& object)
 {
     return asio::get_associated_allocator(object);
 }
+
+template <class Env>
+using allocator_of_t = asio::associated_allocator_t<Env>;
 
 struct GetSchedulerFn
 {
@@ -95,6 +99,9 @@ constexpr UnstoppableToken get_stop_token(const Receiver&) noexcept
 template <class>
 using stop_token_type_t = UnstoppableToken;
 
+template <class Env>
+using stop_token_of_t = typename Env::StopToken;
+
 template <class T, class = void>
 inline constexpr bool stoppable_token = false;
 
@@ -110,6 +117,22 @@ using UnstoppableTokenHelper = std::bool_constant<(T{}.stop_possible())>;
 template <class T>
 inline constexpr bool unstoppable_token<T, exec::UnstoppableTokenHelper<T>> = true;
 
+template <class StopTokenT, class AllocatorT>
+struct Env
+{
+    using StopToken = StopTokenT;
+    using Allocator = AllocatorT;
+};
+
+template <class Receiver>
+Env<UnstoppableToken, allocator_of_t<Receiver>> get_env(const Receiver&) noexcept
+{
+    return {};
+}
+
+template <class Receiver>
+using env_of_t = decltype(exec::get_env(std::declval<Receiver>()));
+
 namespace detail
 {
 template <class T>
@@ -122,6 +145,11 @@ using tag_t = decltype(detail::tag_t_helper(CPO));
 struct inline_scheduler
 {
 };
+
+template <class... Args>
+constexpr void tag_invoke(Args&&...) noexcept
+{
+}
 }  // namespace exec
 }  // namespace detail
 

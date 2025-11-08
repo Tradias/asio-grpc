@@ -35,12 +35,22 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
 {
+template <class Env>
 struct InlineSchedulerEnv
 {
+    Env env_;
+
     friend constexpr exec::inline_scheduler tag_invoke(exec::tag_t<exec::get_scheduler>,
                                                        const InlineSchedulerEnv&) noexcept
     {
         return {};
+    }
+
+    template <class Tag>
+    friend auto tag_invoke(Tag tag, const InlineSchedulerEnv& env) noexcept(noexcept(exec::tag_invoke(tag, env.env_)))
+        -> decltype(exec::tag_invoke(tag, env.env_))
+    {
+        return exec::tag_invoke(tag, env.env_);
     }
 };
 
@@ -133,11 +143,11 @@ struct RPCHandlerOperationWaitForDone
     }
 };
 
-template <class ServerRPC, class RPCHandler, class StopToken, class Allocator>
+template <class ServerRPC, class RPCHandler, class Env>
 std::optional<std::exception_ptr> create_and_start_rpc_handler_operation(
-    RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler, StopToken>& operation, const Allocator& allocator);
+    RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler, Env>& operation, const exec::allocator_of_t<Env>& allocator);
 
-template <class ServerRPC, class RPCHandler, class StopToken, class Allocator>
+template <class ServerRPC, class RPCHandler, class Env>
 struct RPCHandlerOperation
 {
     using Service = detail::ServerRPCServiceT<ServerRPC>;
@@ -145,7 +155,7 @@ struct RPCHandlerOperation
     using Starter = detail::ServerRPCStarter<>;
     using RequestMessageFactory = detail::ServerRPCRequestMessageFactoryT<ServerRPC, RPCHandler>;
     using RPCHandlerInvokeResult = detail::RPCHandlerInvokeResultT<ServerRPC&, RPCHandler&, RequestMessageFactory&>;
-    using RegisterRPCHandlerOperationBase = detail::RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler, StopToken>;
+    using RegisterRPCHandlerOperationBase = detail::RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler, Env>;
 
     struct StartReceiver
     {
@@ -229,13 +239,26 @@ struct RPCHandlerOperation
             r.set_error(static_cast<std::exception_ptr&&>(e));
         }
 
-        friend InlineSchedulerEnv tag_invoke(stdexec::get_env_t, const Receiver&) noexcept { return {}; }
-#endif
+        friend InlineSchedulerEnv<Env> tag_invoke(stdexec::get_env_t, const Receiver& r) noexcept
+        {
+            return {r.op_.base().get_env()};
+        }
+#elif defined(AGRPC_UNIFEX)
+        friend typename Env::StopToken tag_invoke(exec::tag_t<exec::get_stop_token>, const Receiver& r) noexcept
+        {
+            return exec::get_stop_token(r.op_.base().get_env());
+        }
+
+        friend typename Env::Allocator tag_invoke(exec::tag_t<exec::get_allocator>, const Receiver& r) noexcept
+        {
+            return r.op_.get_allocator();
+        }
 
         friend constexpr exec::inline_scheduler tag_invoke(exec::tag_t<exec::get_scheduler>, const Receiver&) noexcept
         {
             return {};
         }
+#endif
     };
 
     using FinishReceiver = Receiver<RPCHandlerOperationFinish>;
@@ -248,16 +271,16 @@ struct RPCHandlerOperation
 
     using OperationState = std::variant<StartOperationState, FinishOperationState, WaitForDoneOperationState>;
 
-    explicit RPCHandlerOperation(RegisterRPCHandlerOperationBase& operation, const Allocator& allocator)
+    explicit RPCHandlerOperation(RegisterRPCHandlerOperationBase& operation)
         : impl1_(operation, operation.rpc_handler()),
           rpc_(detail::ServerRPCContextBaseAccess::construct<ServerRPC>(operation.get_executor())),
-          impl2_(detail::SecondThenVariadic{}, allocator, std::in_place_type<StartOperationState>,
-                 detail::InplaceWithFunction{},
-                 [&]
-                 {
-                     return Starter::start(rpc_, operation.service(), request_message_factory(), agrpc::use_sender)
-                         .connect(StartReceiver{*this});
-                 })
+          operation_state_(std::in_place_type<StartOperationState>, detail::InplaceWithFunction{},
+                           [&]
+                           {
+                               return Starter::start(rpc_, operation.service(), request_message_factory(),
+                                                     agrpc::use_sender)
+                                   .connect(StartReceiver{*this});
+                           })
     {
         base().increment_ref_count();
     }
@@ -276,7 +299,7 @@ struct RPCHandlerOperation
     RPCHandlerOperation& operator=(const RPCHandlerOperation& other) = delete;
     RPCHandlerOperation& operator=(RPCHandlerOperation&& other) = delete;
 
-    void start() { std::get<StartOperationState>(operation_state()).value_.start(); }
+    void start() { std::get<StartOperationState>(operation_state_).value_.start(); }
 
 #ifdef AGRPC_STDEXEC
     friend void tag_invoke(stdexec::start_t, RPCHandlerOperation& o) noexcept { o.start(); }
@@ -286,7 +309,7 @@ struct RPCHandlerOperation
     {
         AGRPC_TRY
         {
-            operation_state().template emplace<FinishOperationState>(
+            operation_state_.template emplace<FinishOperationState>(
                 detail::InplaceWithFunction{},
                 [&]
                 {
@@ -300,12 +323,12 @@ struct RPCHandlerOperation
 
     void start_rpc_handler_operation_state() noexcept
     {
-        exec::start(std::get<FinishOperationState>(operation_state()).value_);
+        exec::start(std::get<FinishOperationState>(operation_state_).value_);
     }
 
     void start_wait_for_done() noexcept
     {
-        auto& state = operation_state().template emplace<WaitForDoneOperationState>(
+        auto& state = operation_state_.template emplace<WaitForDoneOperationState>(
             detail::InplaceWithFunction{},
             [&]
             {
@@ -320,18 +343,16 @@ struct RPCHandlerOperation
 
     auto& request_message_factory() noexcept { return impl1_.second(); }
 
-    auto& operation_state() noexcept { return impl2_.first(); }
-
-    auto& get_allocator() noexcept { return impl2_.second(); }
+    auto get_allocator() noexcept { return exec::get_allocator(base().get_env()); }
 
     detail::CompressedPair<RegisterRPCHandlerOperationBase&, RequestMessageFactory> impl1_;
     ServerRPC rpc_;
-    detail::CompressedPair<OperationState, Allocator> impl2_;
+    OperationState operation_state_;
 };
 
-template <class ServerRPC, class RPCHandler, class StopToken, class Allocator>
+template <class ServerRPC, class RPCHandler, class Env>
 std::optional<std::exception_ptr> create_and_start_rpc_handler_operation(
-    RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler, StopToken>& operation, const Allocator& allocator)
+    RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler, Env>& operation, const exec::allocator_of_t<Env>& allocator)
 {
     if AGRPC_UNLIKELY (operation.is_stopped())
     {
@@ -339,8 +360,8 @@ std::optional<std::exception_ptr> create_and_start_rpc_handler_operation(
     }
     AGRPC_TRY
     {
-        using RPCHandlerOperation = detail::RPCHandlerOperation<ServerRPC, RPCHandler, StopToken, Allocator>;
-        auto rpc_handler_operation_guard = detail::allocate<RPCHandlerOperation>(allocator, operation, allocator);
+        using RPCHandlerOperation = detail::RPCHandlerOperation<ServerRPC, RPCHandler, Env>;
+        auto rpc_handler_operation_guard = detail::allocate<RPCHandlerOperation>(allocator, operation);
         (*rpc_handler_operation_guard).start();
         rpc_handler_operation_guard.release();
         return {};
@@ -350,13 +371,13 @@ std::optional<std::exception_ptr> create_and_start_rpc_handler_operation(
 
 template <class ServerRPC, class RPCHandler, class Receiver>
 class RPCHandlerSenderOperation
-    : public detail::RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler, exec::stop_token_type_t<Receiver&>>
+    : public detail::RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler, exec::env_of_t<Receiver&>>
 {
   private:
-    using StopToken = exec::stop_token_type_t<Receiver&>;
-    using Base = detail::RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler, StopToken>;
+    using Env = exec::env_of_t<Receiver&>;
+    using Base = detail::RegisterRPCHandlerOperationBase<ServerRPC, RPCHandler, Env>;
     using Allocator = detail::RemoveCrefT<decltype(exec::get_allocator(std::declval<Receiver&>()))>;
-    using RPCHandlerOperation = detail::RPCHandlerOperation<ServerRPC, RPCHandler, StopToken, Allocator>;
+    using RPCHandlerOperation = detail::RPCHandlerOperation<ServerRPC, RPCHandler, Env>;
     using RPCHandlerSender = detail::RPCHandlerSender<ServerRPC, RPCHandler>;
 
     friend RPCHandlerOperation;
@@ -369,7 +390,7 @@ class RPCHandlerSenderOperation
             exec::set_done(static_cast<Receiver&&>(receiver_));
             return;
         }
-        auto stop_token = exec::get_stop_token(receiver_);
+        auto stop_token = exec::get_stop_token(exec::get_env(receiver_));
         if (stop_token.stop_requested())
         {
             exec::set_done(static_cast<Receiver&&>(receiver_));
@@ -392,7 +413,7 @@ class RPCHandlerSenderOperation
     template <class R>
     RPCHandlerSenderOperation(RPCHandlerSender&& sender, R&& receiver)
         : Base(sender.grpc_context_.get_executor(), sender.service_, static_cast<RPCHandler&&>(sender.rpc_handler_),
-               &complete_impl),
+               &complete_impl, &get_env_impl),
           receiver_(static_cast<R&&>(receiver))
     {
     }
@@ -411,7 +432,13 @@ class RPCHandlerSenderOperation
         }
     }
 
-    decltype(auto) get_allocator() noexcept { return exec::get_allocator(receiver_); }
+    static Env get_env_impl(RegisterRPCHandlerOperationGetEnv<Env>& operation) noexcept
+    {
+        auto& self = static_cast<RPCHandlerSenderOperation&>(operation);
+        return exec::get_env(self.receiver_);
+    }
+
+    decltype(auto) get_allocator() noexcept { return exec::get_allocator(exec::get_env(receiver_)); }
 
     Receiver receiver_;
 };

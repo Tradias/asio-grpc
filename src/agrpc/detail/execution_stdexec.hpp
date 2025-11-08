@@ -15,6 +15,7 @@
 #ifndef AGRPC_DETAIL_EXECUTION_STDEXEC_HPP
 #define AGRPC_DETAIL_EXECUTION_STDEXEC_HPP
 
+#include <agrpc/detail/utility.hpp>
 #include <exec/inline_scheduler.hpp>
 #include <stdexec/execution.hpp>
 
@@ -24,16 +25,14 @@ AGRPC_NAMESPACE_BEGIN()
 
 namespace detail::exec
 {
-using ::stdexec::get_allocator_t;
-
 struct GetAllocatorFn
 {
-    template <class Receiver>
-    decltype(auto) operator()(const Receiver& receiver) const
+    template <class Env>
+    decltype(auto) operator()(const Env& env) const
     {
-        if constexpr (::stdexec::tag_invocable<::stdexec::get_allocator_t, ::stdexec::env_of_t<Receiver>>)
+        if constexpr (requires { ::stdexec::get_allocator(env); })
         {
-            return ::stdexec::get_allocator(::stdexec::get_env(receiver));
+            return ::stdexec::get_allocator(env);
         }
         else
         {
@@ -43,6 +42,11 @@ struct GetAllocatorFn
 };
 
 inline constexpr GetAllocatorFn get_allocator{};
+
+using ::stdexec::get_allocator_t;
+
+template <class Env>
+using allocator_of_t = detail::RemoveCrefT<decltype(exec::get_allocator(std::declval<Env>()))>;
 
 using ::stdexec::get_scheduler;
 
@@ -60,13 +64,8 @@ inline constexpr bool is_sender_v = ::stdexec::sender<T>;
 using ::exec::inline_scheduler;
 using ::stdexec::connect;
 using ::stdexec::connect_result_t;
+using ::stdexec::get_stop_token;
 using ::stdexec::then;
-
-template <class Receiver>
-decltype(auto) get_stop_token(const Receiver& receiver)
-{
-    return ::stdexec::get_stop_token(::stdexec::get_env(receiver));
-}
 
 template <class Receiver>
 void set_done(Receiver&& receiver) noexcept
@@ -78,12 +77,34 @@ using ::stdexec::set_error;
 using ::stdexec::set_value;
 using ::stdexec::start;
 
+using ::stdexec::stop_token_of_t;
+
 template <class Receiver>
-using stop_token_type_t = ::stdexec::stop_token_of_t<::stdexec::env_of_t<Receiver>>;
+using stop_token_type_t = stop_token_of_t<::stdexec::env_of_t<Receiver>>;
 
 using ::stdexec::stoppable_token;
 using ::stdexec::unstoppable_token;
 
+namespace env_ns
+{
+template <class StopTokenT, class AllocatorT>
+struct Env
+{
+    using StopToken = StopTokenT;
+    using Allocator = AllocatorT;
+
+    friend StopTokenT tag_invoke(::stdexec::tag_t<::stdexec::get_stop_token>, const Env&) noexcept;
+
+    friend AllocatorT tag_invoke(get_allocator_t, const Env&) noexcept;
+};
+}
+
+using env_ns::Env;
+
+using ::stdexec::env_of_t;
+using ::stdexec::get_env;
+
+using ::stdexec::tag_invoke;
 using ::stdexec::tag_t;
 }  // namespace exec
 
