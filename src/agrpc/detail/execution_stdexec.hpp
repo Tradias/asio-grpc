@@ -93,9 +93,15 @@ struct Env
     using StopToken = StopTokenT;
     using Allocator = AllocatorT;
 
-    friend StopTokenT tag_invoke(::stdexec::tag_t<::stdexec::get_stop_token>, const Env&) noexcept;
+    friend StopTokenT tag_invoke(::stdexec::tag_t<::stdexec::get_stop_token>, const Env& env) noexcept
+    {
+        return env.stop_token_;
+    }
 
-    friend AllocatorT tag_invoke(get_allocator_t, const Env&) noexcept;
+    friend AllocatorT tag_invoke(get_allocator_t, const Env& env) noexcept { return env.allocator_; }
+
+    StopTokenT stop_token_;
+    AllocatorT allocator_;
 };
 }
 

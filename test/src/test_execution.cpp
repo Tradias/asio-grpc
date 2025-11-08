@@ -317,7 +317,7 @@ TEST_CASE_FIXTURE(test::ExecutionClientRPCTest<test::BidirectionalStreamingClien
     const auto not_to_exceed = std::chrono::steady_clock::now() + std::chrono::seconds(4);
     agrpc::Alarm alarm{grpc_context};
     auto rpc_handler = stdexec::when_all(
-        alarm.wait(test::five_seconds_from_now()),
+        alarm.wait(test::five_seconds_from_now(), agrpc::use_sender),
         agrpc::register_sender_rpc_handler<test::BidirectionalStreamingServerRPC>(
             grpc_context, service,
             [&](test::BidirectionalStreamingServerRPC&)
