@@ -64,7 +64,7 @@ struct RegisterRPCHandlerOperationBase : RegisterRPCHandlerOperationComplete, Re
 
     RegisterRPCHandlerOperationBase(const ServerRPCExecutor& executor, Service& service, RPCHandler&& rpc_handler,
                                     RegisterRPCHandlerOperationComplete::Complete complete_fn,
-                                    RegisterRPCHandlerOperationGetEnv<Env>::GetEnv get_env_fn = nullptr)
+                                    typename RegisterRPCHandlerOperationGetEnv<Env>::GetEnv get_env_fn = nullptr)
         : RegisterRPCHandlerOperationComplete{complete_fn},
           RegisterRPCHandlerOperationGetEnv<Env>{get_env_fn},
           executor_(executor),
