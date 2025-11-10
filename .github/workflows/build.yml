@@ -378,7 +378,7 @@ jobs:
       run: |
         cmake -E make_directory doxygen &&\
         cd doxygen &&\
-        wget --quiet https://downloads.sourceforge.net/project/doxygen/rel-1.14.0/doxygen-1.14.0.linux.bin.tar.gz &&\
+        wget --no-verbose https://github.com/doxygen/doxygen/releases/download/Release_1_14_0/doxygen-1.14.0.linux.bin.tar.gz &&\
         tar xf doxygen-1.14.0.linux.bin.tar.gz --strip-components=1
 
     - name: Set env
