@@ -23,6 +23,7 @@
 #include <agrpc/detail/sender_of.hpp>
 #include <agrpc/detail/server_rpc_context_base.hpp>
 #include <agrpc/detail/server_rpc_starter.hpp>
+#include <agrpc/detail/tuple.hpp>
 #include <agrpc/detail/utility.hpp>
 #include <agrpc/grpc_context.hpp>
 
@@ -108,6 +109,26 @@ template <class Receiver, class Signature, bool IsNotifyWhenDone>
 using GetWaitForDoneOperationStateT =
     typename GetWaitForDoneOperationState<Receiver, Signature, IsNotifyWhenDone>::Type;
 
+template <class T>
+auto create_rpc_handler_operation_guard(T& t)
+{
+    return detail::Tuple{detail::ScopeGuard{[&base = t.base()]
+                                            {
+                                                if (base.decrement_ref_count())
+                                                {
+                                                    base.complete();
+                                                }
+                                            }},
+                         detail::AllocationGuard{t, t.get_allocator()}};
+}
+
+template <class Guard>
+auto release_rpc_handler_operation_guard(Guard& guard)
+{
+    detail::get<0>(guard).release();
+    detail::get<1>(guard).release();
+}
+
 struct RPCHandlerOperationFinish
 {
     template <class Operation>
@@ -130,7 +151,7 @@ struct RPCHandlerOperationFinish
                 return;
             }
         }
-        [[maybe_unused]] detail::AllocationGuard g{op, op.get_allocator()};
+        (void)detail::create_rpc_handler_operation_guard(op);
     }
 };
 
@@ -139,7 +160,7 @@ struct RPCHandlerOperationWaitForDone
     template <class Operation>
     static void perform(Operation& op, const std::exception_ptr*) noexcept
     {
-        [[maybe_unused]] detail::AllocationGuard g{op, op.get_allocator()};
+        (void)detail::create_rpc_handler_operation_guard(op);
     }
 };
 
@@ -168,7 +189,7 @@ struct RPCHandlerOperation
         void set_value(bool ok) const noexcept
         {
             auto& op = rpc_handler_op_;
-            detail::AllocationGuard guard{op, op.get_allocator()};
+            auto guard = detail::create_rpc_handler_operation_guard(op);
             if (ok)
             {
                 auto& base = op.base();
@@ -186,7 +207,7 @@ struct RPCHandlerOperation
                     return;
                 }
                 op.start_rpc_handler_operation_state();
-                guard.release();
+                detail::release_rpc_handler_operation_guard(guard);
             }
         }
 
@@ -287,14 +308,6 @@ struct RPCHandlerOperation
 
     RPCHandlerOperation(const RPCHandlerOperation& other) = delete;
     RPCHandlerOperation(RPCHandlerOperation&& other) = delete;
-
-    ~RPCHandlerOperation() noexcept
-    {
-        if (base().decrement_ref_count())
-        {
-            base().complete();
-        }
-    }
 
     RPCHandlerOperation& operator=(const RPCHandlerOperation& other) = delete;
     RPCHandlerOperation& operator=(RPCHandlerOperation&& other) = delete;
