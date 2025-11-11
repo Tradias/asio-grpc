@@ -111,7 +111,6 @@ auto get_env(const Receiver& receiver) noexcept
 template <class Receiver>
 using env_of_t = decltype(exec::get_env(std::declval<Receiver>()));
 
-using ::unifex::tag_invoke;
 using ::unifex::tag_t;
 }  // namespace exec
 

@@ -145,11 +145,6 @@ using tag_t = decltype(detail::tag_t_helper(CPO));
 struct inline_scheduler
 {
 };
-
-template <class... Args>
-constexpr void tag_invoke(Args&&...) noexcept
-{
-}
 }  // namespace exec
 }  // namespace detail
 

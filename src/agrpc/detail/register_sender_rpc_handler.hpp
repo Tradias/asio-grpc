@@ -47,11 +47,12 @@ struct InlineSchedulerEnv
         return {};
     }
 
-    template <class Tag>
-    friend auto tag_invoke(Tag tag, const InlineSchedulerEnv& env) noexcept(noexcept(exec::tag_invoke(tag, env.env_)))
-        -> decltype(exec::tag_invoke(tag, env.env_))
+    template <class Tag, class... Args>
+    friend auto tag_invoke(Tag tag, const InlineSchedulerEnv& env,
+                           Args&&... args) noexcept(noexcept(tag(env.env_, static_cast<Args&&>(args)...)))
+        -> decltype(tag(env.env_, static_cast<Args&&>(args)...))
     {
-        return exec::tag_invoke(tag, env.env_);
+        return tag(env.env_, static_cast<Args&&>(args)...);
     }
 };
 

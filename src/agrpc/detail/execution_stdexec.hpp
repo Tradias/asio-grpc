@@ -110,7 +110,6 @@ using env_ns::Env;
 using ::stdexec::env_of_t;
 using ::stdexec::get_env;
 
-using ::stdexec::tag_invoke;
 using ::stdexec::tag_t;
 }  // namespace exec
 
