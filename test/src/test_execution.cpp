@@ -240,18 +240,19 @@ struct StdexecExecutionClientRPCTest : test::ExecutionTestMixin<test::ClientServ
         int counter{};
         this->run(
             agrpc::register_sender_rpc_handler<typename Base::ServerRPC>(this->grpc_context, this->service, handler),
-            stdexec::on(this->get_executor(),
-                        [&counter, &client_functions, &server_shutdown = this->server_shutdown]() -> exec::task<void>
-                        {
-                            typename Base::ClientRPC::Request request;
-                            typename Base::ClientRPC::Response response;
-                            co_await client_functions(request, response);
-                            ++counter;
-                            if (counter == sizeof...(client_functions))
-                            {
-                                server_shutdown.initiate();
-                            }
-                        }())...);
+            stdexec::let_value(
+                stdexec::schedule(this->get_executor()),
+                [&counter, &client_functions, &server_shutdown = this->server_shutdown]() -> exec::task<void>
+                {
+                    typename Base::ClientRPC::Request request;
+                    typename Base::ClientRPC::Response response;
+                    co_await client_functions(request, response);
+                    ++counter;
+                    if (counter == sizeof...(client_functions))
+                    {
+                        server_shutdown.initiate();
+                    }
+                })...);
     }
 };
 
