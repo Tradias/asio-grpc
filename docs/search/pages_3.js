@@ -1,0 +1,4 @@
+var searchData=
+[
+  ['directly_0',['Why not use io_context for gRPC directly?',['../md_doc_2using__asio__io__context.html#autotoc_md23',1,'']]]
+];
