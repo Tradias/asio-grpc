@@ -771,6 +771,23 @@ TEST_CASE_FIXTURE(ServerRPCTest<test::ClientStreamingServerRPC>, "ServerRPCPtr m
         });
 }
 
+TEST_CASE_FIXTURE(ServerRPCTest<test::UnaryServerRPC>, "Destroy context before Server RPC finish")
+{
+    agrpc::register_yield_rpc_handler<ServerRPC>(this->get_executor(), this->service, [&, this](auto &rpc, auto& request, const asio::yield_context& yield) {
+            this->grpc_context.stop();
+            agrpc::Alarm alarm{this->grpc_context};
+	    alarm.wait(test::hundred_milliseconds_from_now(), yield);
+	}, test::RethrowFirstArg{});
+    spawn_client_functions(this->grpc_context, [this](auto& request, auto& response, const asio::yield_context& yield) {
+        const auto client_context = test::create_client_context();
+        request.set_integer(42);
+
+        // Can't use CHECK_EQ here as it will catch boost::forced_unwind exception
+        request_rpc(*client_context, request, response, yield);
+	});
+    this->grpc_context.run();
+}
+
 TEST_CASE_FIXTURE(ServerRPCTest<test::UnaryServerRPC>, "Unary ServerRPCPtr with protobuf Arena")
 {
     register_callback_and_perform_three_requests(

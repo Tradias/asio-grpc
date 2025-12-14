@@ -30,6 +30,26 @@
 #include <agrpc/detail/asio_macros.hpp>
 #include <agrpc/detail/config.hpp>
 
+#ifndef AGRPC_HAS_BOOST_COROUTINE
+
+#ifdef AGRPC_STANDALONE_ASIO
+#define AGRPC_HAS_BOOST_COROUTINE 0
+#elif defined(AGRPC_BOOST_ASIO)
+#define AGRPC_HAS_BOOST_COROUTINE BOOST_ASIO_HAS_BOOST_COROUTINE
+#endif
+
+#endif
+
+#ifndef AGRPC_HAS_BOOST_CONTEXT_FIBER
+
+#ifdef AGRPC_STANDALONE_ASIO
+#define AGRPC_HAS_BOOST_CONTEXT_FIBER ASIO_HAS_BOOST_CONTEXT_FIBER
+#elif defined(AGRPC_BOOST_ASIO)
+#define AGRPC_HAS_BOOST_CONTEXT_FIBER BOOST_ASIO_HAS_BOOST_CONTEXT_FIBER
+#endif
+
+#endif
+
 AGRPC_NAMESPACE_BEGIN()
 
 namespace detail
@@ -71,6 +91,12 @@ struct RegisterYieldRPCHandlerOperation
                       {
                           auto& self = static_cast<RegisterYieldRPCHandlerOperation&>(g.get().self_);
                           AGRPC_TRY { self.perform_request_and_repeat(yield); }
+#if AGRPC_HAS_BOOST_COROUTINE
+                          AGRPC_CATCH(const boost::coroutines::detail::forced_unwind&) { throw; }
+#endif
+#if AGRPC_HAS_BOOST_CONTEXT_FIBER
+                          AGRPC_CATCH(const boost::context::detail::forced_unwind&) { throw; }
+#endif
                           AGRPC_CATCH(...) { self.set_error(std::current_exception()); }
                       });
     }
@@ -98,6 +124,12 @@ struct RegisterYieldRPCHandlerOperation
             initiate_next();
             Starter::invoke(this->rpc_handler(), rpc, factory, yield);
         }
+#if AGRPC_HAS_BOOST_COROUTINE
+        AGRPC_CATCH(const boost::coroutines::detail::forced_unwind&) { throw; }
+#endif
+#if AGRPC_HAS_BOOST_CONTEXT_FIBER
+        AGRPC_CATCH(const boost::context::detail::forced_unwind&) { throw; }
+#endif
         AGRPC_CATCH(...) { this->set_error(std::current_exception()); }
         if (!detail::ServerRPCContextBaseAccess::is_finished(rpc))
         {
