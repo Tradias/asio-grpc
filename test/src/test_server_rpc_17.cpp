@@ -175,6 +175,24 @@ TEST_CASE_TEMPLATE("Unary ClientRPC/ServerRPC read/send_initial_metadata success
         });
 }
 
+TEST_CASE_FIXTURE(ServerRPCTest<test::UnaryServerRPC>,
+                  "Destroy GrpcContext with pending yield inside register_yield_rpc_handler")
+{
+    register_and_perform_requests(
+        [&](auto&, auto&, const asio::yield_context& yield)
+        {
+            grpc_context.stop();
+            agrpc::Alarm alarm{grpc_context};
+            alarm.wait(test::hundred_milliseconds_from_now(), yield);
+        },
+        [&](auto& request, auto& response, const asio::yield_context& yield)
+        {
+            const auto client_context = test::create_client_context(test::five_hundred_milliseconds_from_now());
+            // Can't use CHECK_EQ here as it will catch boost::forced_unwind exception
+            request_rpc(*client_context, request, response, yield);
+        });
+}
+
 struct GetYield
 {
     static auto& get(test::msg::Request&, const asio::yield_context& yield) { return yield; }

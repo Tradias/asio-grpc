@@ -71,7 +71,7 @@ struct RegisterYieldRPCHandlerOperation
                       {
                           auto& self = static_cast<RegisterYieldRPCHandlerOperation&>(g.get().self_);
                           AGRPC_TRY { self.perform_request_and_repeat(yield); }
-                          AGRPC_CATCH(...) { self.set_error(std::current_exception()); }
+                          AGRPC_CATCH(const std::exception&) { self.set_error(std::current_exception()); }
                       });
     }
 
@@ -98,7 +98,7 @@ struct RegisterYieldRPCHandlerOperation
             initiate_next();
             Starter::invoke(this->rpc_handler(), rpc, factory, yield);
         }
-        AGRPC_CATCH(...) { this->set_error(std::current_exception()); }
+        AGRPC_CATCH(const std::exception&) { this->set_error(std::current_exception()); }
         if (!detail::ServerRPCContextBaseAccess::is_finished(rpc))
         {
             rpc.cancel();
