@@ -76,13 +76,19 @@ if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
         "test_execution.cpp")
     if(ASIO_GRPC_TEST_CALLBACK_API_CPP20)
         target_sources(asio-grpc-test-boost-cpp20 PRIVATE "test_callback_20.cpp")
-        target_sources(asio-grpc-test-boost-unifex-cpp20 PRIVATE "test_callback_20.cpp")
+        target_sources(asio-grpc-test-boost-unifex-cpp20 PRIVATE "test_callback_20.cpp"
+                                                                 "test_callback_sender_receiver.cpp")
+        target_sources(asio-grpc-test-unifex-cpp20 PRIVATE "test_callback_sender_receiver.cpp")
     endif()
     if(ASIO_GRPC_ENABLE_STDEXEC_TESTS)
         asio_grpc_add_test(asio-grpc-test-stdexec "stdexec" "20" "test_execution.cpp")
         asio_grpc_add_test(
             asio-grpc-test-asio-stdexec-cpp20 "standalone-asio-stdexec" "20" ${ASIO_GRPC_CPP17_TEST_SOURCE_FILES}
             ${ASIO_GRPC_CPP20_TEST_SOURCE_FILES} "test_execution.cpp")
+        if(ASIO_GRPC_TEST_CALLBACK_API_CPP20)
+            target_sources(asio-grpc-test-stdexec PRIVATE "test_callback_sender_receiver.cpp")
+            target_sources(asio-grpc-test-asio-stdexec-cpp20 PRIVATE "test_callback_sender_receiver.cpp")
+        endif()
     endif()
 endif()
 

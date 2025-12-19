@@ -153,12 +153,12 @@ class BasicServerUnaryReactor : private grpc::ServerUnaryReactor, public detail:
 /**
  * @brief (experimental) I/O object for server-side, unary rpcs (specialized on `asio::any_io_executor`)
  */
-using ServerUnaryReactor = BasicServerUnaryReactor<asio::any_io_executor>;
+using ServerUnaryReactor = BasicServerUnaryReactor<detail::DefaultReactorExecutor>;
 
 template <class Executor>
 using BasicServerUnaryReactorBase = detail::RefCountedServerReactor<agrpc::BasicServerUnaryReactor<Executor>>;
 
-using ServerUnaryReactorBase = BasicServerUnaryReactorBase<asio::any_io_executor>;
+using ServerUnaryReactorBase = BasicServerUnaryReactorBase<detail::DefaultReactorExecutor>;
 
 /**
  * @brief (experimental) I/O object for server-side, client-streaming rpcs
@@ -314,13 +314,13 @@ class BasicServerReadReactor : private grpc::ServerReadReactor<Request>, public 
  * @brief (experimental) I/O object for server-side, client-streaming rpcs (specialized on `asio::any_io_executor`)
  */
 template <class Request>
-using ServerReadReactor = BasicServerReadReactor<Request, asio::any_io_executor>;
+using ServerReadReactor = BasicServerReadReactor<Request, detail::DefaultReactorExecutor>;
 
 template <class Request, class Executor>
 using BasicServerReadReactorBase = detail::RefCountedServerReactor<agrpc::BasicServerReadReactor<Request, Executor>>;
 
 template <class Request>
-using ServerReadReactorBase = BasicServerReadReactorBase<Request, asio::any_io_executor>;
+using ServerReadReactorBase = BasicServerReadReactorBase<Request, detail::DefaultReactorExecutor>;
 
 /**
  * @brief (experimental) I/O object for server-side, server-streaming rpcs
@@ -490,13 +490,13 @@ class BasicServerWriteReactor : private grpc::ServerWriteReactor<Response>, publ
  * @brief (experimental) I/O object for server-side, server-streaming rpcs (specialized on `asio::any_io_executor`)
  */
 template <class Response>
-using ServerWriteReactor = BasicServerWriteReactor<Response, asio::any_io_executor>;
+using ServerWriteReactor = BasicServerWriteReactor<Response, detail::DefaultReactorExecutor>;
 
 template <class Response, class Executor>
 using BasicServerWriteReactorBase = detail::RefCountedServerReactor<agrpc::BasicServerWriteReactor<Response, Executor>>;
 
 template <class Response>
-using ServerWriteReactorBase = BasicServerWriteReactorBase<Response, asio::any_io_executor>;
+using ServerWriteReactorBase = BasicServerWriteReactorBase<Response, detail::DefaultReactorExecutor>;
 
 /**
  * @brief (experimental) I/O object for server-side, bidi-streaming rpcs
@@ -695,14 +695,14 @@ class BasicServerBidiReactor : private grpc::ServerBidiReactor<Request, Response
  * @brief (experimental) I/O object for server-side, bidi-streaming rpcs (specialized on `asio::any_io_executor`)
  */
 template <class Request, class Response>
-using ServerBidiReactor = BasicServerBidiReactor<Request, Response, asio::any_io_executor>;
+using ServerBidiReactor = BasicServerBidiReactor<Request, Response, detail::DefaultReactorExecutor>;
 
 template <class Request, class Response, class Executor>
 using BasicServerBidiReactorBase =
     detail::RefCountedServerReactor<agrpc::BasicServerBidiReactor<Request, Response, Executor>>;
 
 template <class Request, class Response>
-using ServerBidiReactorBase = BasicServerBidiReactorBase<Request, Response, asio::any_io_executor>;
+using ServerBidiReactorBase = BasicServerBidiReactorBase<Request, Response, detail::DefaultReactorExecutor>;
 
 AGRPC_NAMESPACE_END
 

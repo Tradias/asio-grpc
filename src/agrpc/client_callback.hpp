@@ -22,6 +22,7 @@
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/reactor_client_context_base.hpp>
 #include <agrpc/detail/reactor_executor_base.hpp>
+#include <agrpc/detail/sender_create.hpp>
 #include <grpcpp/generic/generic_stub_callback.h>
 #include <grpcpp/support/client_callback.h>
 
@@ -141,12 +142,12 @@ class BasicClientUnaryReactor : private grpc::ClientUnaryReactor,
 /**
  * @brief (experimental) I/O object for client-side, unary rpcs (specialized on `asio::any_io_executor`)
  */
-using ClientUnaryReactor = BasicClientUnaryReactor<asio::any_io_executor>;
+using ClientUnaryReactor = BasicClientUnaryReactor<detail::DefaultReactorExecutor>;
 
 template <class Executor>
 using BasicClientUnaryReactorBase = detail::RefCountedClientReactor<agrpc::BasicClientUnaryReactor<Executor>>;
 
-using ClientUnaryReactorBase = BasicClientUnaryReactorBase<asio::any_io_executor>;
+using ClientUnaryReactorBase = BasicClientUnaryReactorBase<detail::DefaultReactorExecutor>;
 
 /**
  * @brief (experimental) I/O object for client-side, client-streaming rpcs
@@ -319,13 +320,13 @@ class BasicClientWriteReactor : private grpc::ClientWriteReactor<Request>,
  * @brief (experimental) I/O object for client-side, client-streaming rpcs (specialized on `asio::any_io_executor`)
  */
 template <class Request>
-using ClientWriteReactor = BasicClientWriteReactor<Request, asio::any_io_executor>;
+using ClientWriteReactor = BasicClientWriteReactor<Request, detail::DefaultReactorExecutor>;
 
 template <class Request, class Executor>
 using BasicClientWriteReactorBase = detail::RefCountedClientReactor<agrpc::BasicClientWriteReactor<Request, Executor>>;
 
 template <class Request>
-using ClientWriteReactorBase = BasicClientWriteReactorBase<Request, asio::any_io_executor>;
+using ClientWriteReactorBase = BasicClientWriteReactorBase<Request, detail::DefaultReactorExecutor>;
 
 /**
  * @brief (experimental) I/O object for client-side, server-streaming rpcs
@@ -466,13 +467,13 @@ class BasicClientReadReactor : private grpc::ClientReadReactor<Response>,
  * @brief (experimental) I/O object for client-side, server-streaming rpcs (specialized on `asio::any_io_executor`)
  */
 template <class Response>
-using ClientReadReactor = BasicClientReadReactor<Response, asio::any_io_executor>;
+using ClientReadReactor = BasicClientReadReactor<Response, detail::DefaultReactorExecutor>;
 
 template <class Response, class Executor>
 using BasicClientReadReactorBase = detail::RefCountedClientReactor<agrpc::BasicClientReadReactor<Response, Executor>>;
 
 template <class Response>
-using ClientReadReactorBase = BasicClientReadReactorBase<Response, asio::any_io_executor>;
+using ClientReadReactorBase = BasicClientReadReactorBase<Response, detail::DefaultReactorExecutor>;
 
 /**
  * @brief (experimental) I/O object for client-side, bidi-streaming rpcs
@@ -670,14 +671,14 @@ class BasicClientBidiReactor : private grpc::ClientBidiReactor<Request, Response
  * @brief (experimental) I/O object for client-side, bidi-streaming rpcs (specialized on `asio::any_io_executor`)
  */
 template <class Request, class Response>
-using ClientBidiReactor = BasicClientBidiReactor<Request, Response, asio::any_io_executor>;
+using ClientBidiReactor = BasicClientBidiReactor<Request, Response, detail::DefaultReactorExecutor>;
 
 template <class Request, class Response, class Executor>
 using BasicClientBidiReactorBase =
     detail::RefCountedClientReactor<agrpc::BasicClientBidiReactor<Request, Response, Executor>>;
 
 template <class Request, class Response>
-using ClientBidiReactorBase = BasicClientBidiReactorBase<Request, Response, asio::any_io_executor>;
+using ClientBidiReactorBase = BasicClientBidiReactorBase<Request, Response, detail::DefaultReactorExecutor>;
 
 /**
  * @brief (experimental) Perform a unary rpc
@@ -702,15 +703,33 @@ using ClientBidiReactorBase = BasicClientBidiReactorBase<Request, Response, asio
 template <class StubAsync, class Request, class Response, class CompletionToken = detail::DefaultCompletionTokenT<void>>
 auto unary_call(detail::AsyncUnaryFn<StubAsync, Request, Response> fn, StubAsync* stub,
                 grpc::ClientContext& client_context, const Request& req, Response& response,
-                CompletionToken&& token = CompletionToken{})
+                [[maybe_unused]] CompletionToken&& token = CompletionToken{})
 {
-    return asio::async_initiate<CompletionToken, void(grpc::Status)>(
-        [fn](auto handler, StubAsync* stub, grpc::ClientContext* client_context, const Request* req, Response* response)
-        {
-            (*stub.*fn)(client_context, req, response,
-                        detail::UnaryRequestCallback{static_cast<decltype(handler)&&>(handler)});
-        },
-        token, stub, &client_context, &req, &response);
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+    if constexpr (!detail::IS_USE_SENDER<CompletionToken>)
+    {
+        return asio::async_initiate<CompletionToken, void(grpc::Status)>(
+            [fn](auto handler, StubAsync* stub, grpc::ClientContext* client_context, const Request* req,
+                 Response* response)
+            {
+                (*stub.*fn)(client_context, req, response,
+                            detail::UnaryRequestCallback{static_cast<decltype(handler)&&>(handler)});
+            },
+            token, stub, &client_context, &req, &response);
+    }
+    else
+#endif
+    {
+        return detail::sender_create<grpc::Status>(
+            [stub, fn, &client_context, &req, &response](auto& receiver)
+            {
+                (*stub.*fn)(&client_context, &req, &response,
+                            [&receiver](grpc::Status status)
+                            {
+                                receiver.set_value(static_cast<grpc::Status&&>(status));
+                            });
+            });
+    }
 }
 
 AGRPC_NAMESPACE_END

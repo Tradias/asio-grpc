@@ -49,6 +49,7 @@ template <class StubAsync, class Request, class Response>
 using AsyncBidiStreamingReactorFn = void (StubAsync::*)(grpc::ClientContext*,
                                                         grpc::ClientBidiReactor<Request, Response>*);
 
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 template <class CompletionHandler>
 class UnaryRequestCallback
 {
@@ -117,6 +118,7 @@ class UnaryRequestCallback
   private:
     Storage storage_;
 };
+#endif
 
 #define AGRPC_STORAGE_HAS_CORRECT_OFFSET(D, E, S) \
     static_assert(decltype(std::declval<D>().E)::Storage::OFFSET == offsetof(D, S) - offsetof(D, E))

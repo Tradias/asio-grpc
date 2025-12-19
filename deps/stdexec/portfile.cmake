@@ -12,7 +12,8 @@ vcpkg_from_github(
     HEAD_REF
     main
     PATCHES
-    fix-version.patch)
+    fix-version.patch
+    async-scope-windows.patch)
 
 vcpkg_from_github(
     OUT_SOURCE_PATH

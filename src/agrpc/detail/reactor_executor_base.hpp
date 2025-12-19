@@ -15,7 +15,9 @@
 #ifndef AGRPC_DETAIL_REACTOR_EXECUTOR_BASE_HPP
 #define AGRPC_DETAIL_REACTOR_EXECUTOR_BASE_HPP
 
+#include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/forward.hpp>
+#include <agrpc/detail/utility.hpp>
 
 #include <agrpc/detail/config.hpp>
 
@@ -60,6 +62,8 @@ class ReactorExecutorBase
 template <>
 class ReactorExecutorBase<void>
 {
+  protected:
+    [[nodiscard]] detail::Empty get_executor() const noexcept { return {}; }
 };
 
 struct ReactorExecutorType
@@ -70,6 +74,12 @@ struct ReactorExecutorType
 
 template <class Reactor>
 using ReactorExecutorTypeT = decltype(ReactorExecutorType::get(static_cast<Reactor*>(nullptr)));
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+using DefaultReactorExecutor = asio::any_io_executor;
+#else
+using DefaultReactorExecutor = void;
+#endif
 }
 
 AGRPC_NAMESPACE_END

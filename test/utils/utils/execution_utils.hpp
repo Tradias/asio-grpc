@@ -29,6 +29,20 @@ decltype(auto) with_inline_scheduler(Sender&& sender)
 {
     return unifex::with_query_value(std::forward<Sender>(sender), stdexec::get_scheduler, exec::inline_scheduler{});
 }
+
+using ::unifex::sync_wait;
+
+template <class Scope, class Sender, class Scheduler = exec::inline_scheduler>
+void scope_spawn_detached(Scope& scope, Sender&& sender, Scheduler&& scheduler = {})
+{
+    scope.detached_spawn(stdexec::on(std::forward<Scheduler>(scheduler), std::forward<Sender>(sender)));
+}
+
+template <class Scope>
+decltype(auto) scope_on_empty(Scope& scope)
+{
+    return scope.complete();
+}
 #else
 using ::stdexec::let_stopped;
 
@@ -48,6 +62,37 @@ template <class Sender>
 decltype(auto) with_inline_scheduler(Sender&& sender)
 {
     return stdexec::starts_on(exec::inline_scheduler{}, std::forward<Sender>(sender));
+}
+
+template <class Sender>
+decltype(auto) sync_wait(Sender&& sender)
+{
+    auto result = stdexec::sync_wait(std::forward<Sender>(sender));
+    if constexpr (std::tuple_size_v<typename decltype(result)::value_type> == 1)
+    {
+        using Opt = std::optional<std::tuple_element_t<0, typename decltype(result)::value_type>>;
+        if (result)
+        {
+            return Opt{std::get<0>(*std::move(result))};
+        }
+        return Opt{};
+    }
+    else
+    {
+        return result;
+    }
+}
+
+template <class Scope, class Sender, class Scheduler = exec::inline_scheduler>
+void scope_spawn_detached(Scope& scope, Sender&& sender, Scheduler&& scheduler = {})
+{
+    scope.spawn(stdexec::on(std::forward<Scheduler>(scheduler), std::forward<Sender>(sender)));
+}
+
+template <class Scope>
+decltype(auto) scope_on_empty(Scope& scope)
+{
+    return scope.on_empty();
 }
 #endif
 }

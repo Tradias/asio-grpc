@@ -141,6 +141,7 @@ class ReactorPtr
     ValueType* ptr_{};
 };
 
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 /**
  * @brief Create ReactorPtr using allocator
  *
@@ -159,6 +160,7 @@ template <class Reactor, class Allocator, class... Args,
     return detail::ReactorAccess::create<ReactorPtr<Reactor>>(allocator, std::move(executor),
                                                               static_cast<Args&&>(args)...);
 }
+#endif
 
 /**
  * @brief Create ReactorPtr using allocator (sender/receiver overload)
@@ -176,6 +178,7 @@ template <class Reactor, class Allocator, class... Args,
     return detail::ReactorAccess::create<ReactorPtr<Reactor>>(allocator, detail::Empty{}, static_cast<Args&&>(args)...);
 }
 
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
 /**
  * @brief Create ReactorPtr
  *
@@ -190,6 +193,7 @@ template <class Reactor, class... Args,
 {
     return agrpc::allocate_reactor<Reactor>(std::allocator<void>{}, std::move(executor), static_cast<Args&&>(args)...);
 }
+#endif
 
 /**
  * @brief Create ReactorPtr (sender/receiver overload)
@@ -203,7 +207,7 @@ template <class Reactor, class... Args,
           class = std::enable_if_t<std::is_same_v<void, detail::ReactorExecutorTypeT<Reactor>>>>
 [[nodiscard]] inline ReactorPtr<Reactor> make_reactor(Args&&... args)
 {
-    return agrpc::allocate_reactor<Reactor>(std::allocator<void>{}, detail::Empty{}, static_cast<Args&&>(args)...);
+    return agrpc::allocate_reactor<Reactor>(std::allocator<void>{}, static_cast<Args&&>(args)...);
 }
 
 AGRPC_NAMESPACE_END

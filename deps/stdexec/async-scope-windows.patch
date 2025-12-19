@@ -1,0 +1,22 @@
+diff --git a/include/exec/async_scope.hpp b/include/exec/async_scope.hpp
+index 447c95b6..96d96b0d 100644
+--- a/include/exec/async_scope.hpp
++++ b/include/exec/async_scope.hpp
+@@ -597,7 +597,7 @@ namespace exec {
+ 
+       __future_state(_Sender __sndr, _Env __env, const __impl* __scope)
+         : __future_state(
+-            connect,
++            stdexec::connect,
+             static_cast<_Sender&&>(__sndr),
+             static_cast<_Env&&>(__env),
+             __scope) {
+@@ -751,7 +751,7 @@ namespace exec {
+         }
+ 
+         __t(_Sender __sndr, _Env __env, const __impl* __scope)
+-          : __t(connect, static_cast<_Sender&&>(__sndr), static_cast<_Env&&>(__env), __scope) {
++          : __t(stdexec::connect, static_cast<_Sender&&>(__sndr), static_cast<_Env&&>(__env), __scope) {
+           // If the operation completes synchronously, then the following line will cause
+           // the destruction of *this, which is not a problem because we used a delegating
+           // constructor, so *this is considered fully constructed.
