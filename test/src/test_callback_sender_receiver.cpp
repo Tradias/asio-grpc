@@ -24,12 +24,12 @@
 
 #include <future>
 
-struct ServerCallbackTest : test::GrpcClientServerCallbackTest
+struct ServerCallbackStdexecTest : test::GrpcClientServerCallbackTest
 {
     using Request = test::msg::Request;
     using Response = test::msg::Response;
 
-    ServerCallbackTest() { test::set_default_deadline(client_context); }
+    ServerCallbackStdexecTest() { test::set_default_deadline(client_context); }
 
     auto make_unary_request()
     {
@@ -51,7 +51,7 @@ struct ServerCallbackTest : test::GrpcClientServerCallbackTest
     std::promise<void> server_done_promise;
 };
 
-TEST_CASE_FIXTURE(ServerCallbackTest, "stdexec Unary callback coroutine automatic cancellation")
+TEST_CASE_FIXTURE(ServerCallbackStdexecTest, "stdexec Unary callback coroutine automatic cancellation")
 {
     service.unary = [](grpc::CallbackServerContext*, const Request*, Response*) -> grpc::ServerUnaryReactor*
     {
@@ -65,7 +65,7 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "stdexec Unary callback coroutine automati
     CHECK_EQ(grpc::StatusCode::CANCELLED, status->error_code());
 }
 
-TEST_CASE_FIXTURE(ServerCallbackTest, "stdexec Unary callback coroutine TryCancel")
+TEST_CASE_FIXTURE(ServerCallbackStdexecTest, "stdexec Unary callback coroutine TryCancel")
 {
     bool finish_ok;
     exec::async_scope scope;
@@ -87,7 +87,7 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "stdexec Unary callback coroutine TryCance
     CHECK_FALSE(finish_ok);
 }
 
-TEST_CASE_FIXTURE(ServerCallbackTest, "stdexec Unary callback coroutine finish successfully")
+TEST_CASE_FIXTURE(ServerCallbackStdexecTest, "stdexec Unary callback coroutine finish successfully")
 {
     bool use_wait_for_finish{};
     SUBCASE("wait_for_finish") { use_wait_for_finish = true; }
@@ -121,7 +121,7 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "stdexec Unary callback coroutine finish s
     CHECK(finish_ok);
 }
 
-TEST_CASE_FIXTURE(ServerCallbackTest, "stdexec Client-streaming callback coroutine")
+TEST_CASE_FIXTURE(ServerCallbackStdexecTest, "stdexec Client-streaming callback coroutine")
 {
     exec::async_scope scope;
     service.client_streaming = [&](grpc::CallbackServerContext*, Response*) -> grpc::ServerReadReactor<Request>*
@@ -158,7 +158,7 @@ TEST_CASE_FIXTURE(ServerCallbackTest, "stdexec Client-streaming callback corouti
     test::sync_wait(test::scope_on_empty(scope));
 }
 
-TEST_CASE_FIXTURE(ServerCallbackTest, "stdexec Client-streaming callback coroutine cancel after write")
+TEST_CASE_FIXTURE(ServerCallbackStdexecTest, "stdexec Client-streaming callback coroutine cancel after write")
 {
     exec::async_scope scope;
     service.client_streaming = [&](grpc::CallbackServerContext*, Response*) -> grpc::ServerReadReactor<Request>*

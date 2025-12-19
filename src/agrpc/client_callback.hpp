@@ -23,6 +23,7 @@
 #include <agrpc/detail/reactor_client_context_base.hpp>
 #include <agrpc/detail/reactor_executor_base.hpp>
 #include <agrpc/detail/sender_create.hpp>
+#include <agrpc/detail/use_sender.hpp>
 #include <grpcpp/generic/generic_stub_callback.h>
 #include <grpcpp/support/client_callback.h>
 
