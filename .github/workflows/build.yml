@@ -90,6 +90,9 @@ jobs:
         vcpkgDirectory: '${{ runner.workspace }}/vcpkg'
         vcpkgGitCommitId: '${{ env.VCPKG_VERSION }}'
 
+    - name: Install mono
+      run: brew install mono
+
     - name: Add NuGet sources
       shell: pwsh
       run: |
