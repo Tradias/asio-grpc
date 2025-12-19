@@ -78,8 +78,8 @@ jobs:
 
   # region: macos
   macos-build:
-    name: 'MacOS/13/AppleClang'
-    runs-on: macos-13
+    name: 'MacOS/15/AppleClang'
+    runs-on: macos-15-intel
 
     steps:
     - uses: actions/checkout@v4
