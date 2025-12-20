@@ -32,7 +32,6 @@ class AllocatorBinder
 {
   public:
     using target_type = Target;
-    using executor_type = assoc::associated_executor_t<Target>;
     using allocator_type = Allocator;
 
     template <class... Args>
@@ -82,8 +81,6 @@ class AllocatorBinder
     constexpr target_type& get() noexcept { return impl_.first(); }
 
     constexpr const target_type& get() const noexcept { return impl_.first(); }
-
-    constexpr decltype(auto) get_executor() const noexcept { return assoc::get_associated_executor(get()); }
 
     constexpr Allocator get_allocator() const noexcept { return impl_.second(); }
 
@@ -218,6 +215,18 @@ struct agrpc::asio::associated_allocator<agrpc::detail::AllocatorBinder<Target, 
                                         const Allocator1& = Allocator1()) noexcept
     {
         return b.get_allocator();
+    }
+};
+
+template <class Target, class Allocator, class DefaultCandidate>
+struct agrpc::asio::associated_executor<agrpc::detail::AllocatorBinder<Target, Allocator>, DefaultCandidate>
+{
+    using type = asio::associated_executor_t<Target, DefaultCandidate>;
+
+    static decltype(auto) get(const agrpc::detail::AllocatorBinder<Target, Allocator>& b,
+                              const DefaultCandidate& c = DefaultCandidate()) noexcept
+    {
+        return asio::get_associated_executor(b.get(), c);
     }
 };
 
