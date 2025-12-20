@@ -56,6 +56,7 @@ target_compile_options(
               -Wno-deprecated-declarations
               -Wundef
               -pedantic-errors>
+              $<$<CXX_COMPILER_ID:AppleClang>:-Wno-nullability-extension>
               $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-self-move>
               $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,12>>:-Wno-self-move>)
 
