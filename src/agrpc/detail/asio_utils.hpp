@@ -42,7 +42,7 @@ struct AllocatorAssociator
 
     void operator()() { static_cast<Function&&>(function_)(static_cast<Handler&&>(handler_)); }
 
-    allocator_type get_allocator() const noexcept { return asio::get_associated_allocator(handler_); }
+    allocator_type get_allocator() const noexcept { return assoc::get_associated_allocator(handler_); }
 
     Handler handler_;
     Function function_;
@@ -78,7 +78,7 @@ void complete_immediately(CompletionHandler&& completion_handler, Function&& fun
                                            static_cast<Function&&>(f)(static_cast<decltype(ch)&&>(ch));
                                        }});
 #else
-    auto executor = asio::get_associated_executor(completion_handler, io_executor);
+    auto executor = assoc::get_associated_executor(completion_handler, io_executor);
     asio::post(std::move(executor), AllocatorAssociator{static_cast<CompletionHandler&&>(completion_handler),
                                                         [f = static_cast<Function&&>(function)](auto&& ch) mutable
                                                         {

@@ -45,7 +45,7 @@ class NoArgOperation : public detail::NoArgOperationBase
                                         }
                                         else
                                         {
-                                            return detail::get_allocator(self.handler_);
+                                            return assoc::get_associated_allocator(self.handler_);
                                         }
                                     }()};
         if AGRPC_LIKELY (!detail::is_shutdown(result))

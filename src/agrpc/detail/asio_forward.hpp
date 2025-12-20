@@ -33,7 +33,6 @@
 #include <asio/execution_context.hpp>
 #include <asio/post.hpp>
 #include <asio/query.hpp>
-#include <asio/system_executor.hpp>
 
 #ifdef ASIO_USE_TS_EXECUTOR_AS_DEFAULT
 #include <asio/executor_work_guard.hpp>
@@ -63,7 +62,6 @@
 #include <boost/asio/execution_context.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/asio/query.hpp>
-#include <boost/asio/system_executor.hpp>
 
 #ifdef BOOST_ASIO_USE_TS_EXECUTOR_AS_DEFAULT
 #include <boost/asio/executor_work_guard.hpp>

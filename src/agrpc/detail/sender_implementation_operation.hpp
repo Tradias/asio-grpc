@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/allocate_operation.hpp>
 #include <agrpc/detail/allocation_type.hpp>
+#include <agrpc/detail/association.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/operation_implementation.hpp>
 #include <agrpc/detail/operation_initiation.hpp>
@@ -33,11 +34,11 @@ namespace detail
 {
 template <class ImplementationT, class CompletionHandler>
 struct SenderImplementationOperation : public ImplementationT::BaseType,
-                                       private detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandler>>
+                                       private detail::WorkTracker<assoc::associated_executor_t<CompletionHandler>>
 {
     using Implementation = ImplementationT;
     using Base = typename ImplementationT::BaseType;
-    using WorkTracker = detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandler>>;
+    using WorkTracker = detail::WorkTracker<assoc::associated_executor_t<CompletionHandler>>;
     using StopFunction = typename ImplementationT::StopFunction;
 
     template <detail::AllocationType AllocType, int Id = 0>
@@ -68,7 +69,7 @@ struct SenderImplementationOperation : public ImplementationT::BaseType,
                                   agrpc::GrpcContext& grpc_context, const Initation& initiation,
                                   ImplementationT&& implementation)
         : Base(get_on_complete(allocation_type)),
-          WorkTracker(asio::get_associated_executor(completion_handler)),
+          WorkTracker(assoc::get_associated_executor(completion_handler)),
           impl_(static_cast<Ch&&>(completion_handler), static_cast<ImplementationT&&>(implementation))
     {
         grpc_context.work_started();
@@ -85,7 +86,7 @@ struct SenderImplementationOperation : public ImplementationT::BaseType,
         }
         else
         {
-            return asio::get_associated_allocator(completion_handler());
+            return assoc::get_associated_allocator(completion_handler());
         }
     }
 

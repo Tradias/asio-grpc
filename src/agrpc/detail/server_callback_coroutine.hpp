@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_SERVER_CALLBACK_COROUTINE_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/association.hpp>
 #include <agrpc/detail/reactor_ptr.hpp>
 #include <agrpc/detail/reactor_ptr_type.hpp>
 #include <agrpc/detail/ref_counted_reactor.hpp>
@@ -104,7 +105,7 @@ class ServerReactorPromiseType final : private detail::ServerReactorPromiseBase<
     template <class Service, class... Args>
     ServerReactorPromiseType(Service&& service, Args&&...)
     {
-        ReactorAccess::initialize_reactor(reactor(), asio::get_associated_executor(service), &deallocate);
+        ReactorAccess::initialize_reactor(reactor(), assoc::get_associated_executor(service), &deallocate);
     }
 
     auto* get_return_object() noexcept { return reactor().get(); }

@@ -255,6 +255,8 @@ void complete_immediately(agrpc::GrpcContext& grpc_context, agrpc::Waiter<Signat
         grpc_context);
 }
 
+inline auto inline_executor() { return asio::get_associated_executor(int{}); }
+
 #ifdef AGRPC_TEST_ASIO_HAS_CO_AWAIT
 void co_spawn(agrpc::GrpcContext& grpc_context, const std::function<asio::awaitable<void>()>& function);
 

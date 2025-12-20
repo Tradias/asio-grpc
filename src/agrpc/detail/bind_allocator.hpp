@@ -32,7 +32,7 @@ class AllocatorBinder
 {
   public:
     using target_type = Target;
-    using executor_type = detail::AssociatedExecutorT<Target>;
+    using executor_type = assoc::associated_executor_t<Target>;
     using allocator_type = Allocator;
 
     template <class... Args>
@@ -83,7 +83,7 @@ class AllocatorBinder
 
     constexpr const target_type& get() const noexcept { return impl_.first(); }
 
-    constexpr decltype(auto) get_executor() const noexcept { return detail::get_executor(get()); }
+    constexpr decltype(auto) get_executor() const noexcept { return assoc::get_associated_executor(get()); }
 
     constexpr Allocator get_allocator() const noexcept { return impl_.second(); }
 

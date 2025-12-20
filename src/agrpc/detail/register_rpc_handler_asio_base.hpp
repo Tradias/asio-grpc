@@ -37,8 +37,8 @@ template <class ServerRPC, class RPCHandler, class CompletionHandlerT>
 class RegisterRPCHandlerOperationAsioBase
     : public detail::RegisterRPCHandlerOperationBase<
           ServerRPC, RPCHandler,
-          exec::Env<detail::CancellationSlotT<CompletionHandlerT&>, detail::AssociatedAllocatorT<CompletionHandlerT>>>,
-      private detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandlerT>>
+          exec::Env<detail::CancellationSlotT<CompletionHandlerT&>, assoc::associated_allocator_t<CompletionHandlerT>>>,
+      private detail::WorkTracker<assoc::associated_executor_t<CompletionHandlerT>>
 {
   public:
     using CompletionHandler = CompletionHandlerT;
@@ -47,9 +47,9 @@ class RegisterRPCHandlerOperationAsioBase
   private:
     using Base = detail::RegisterRPCHandlerOperationBase<
         ServerRPC, RPCHandler,
-        exec::Env<detail::CancellationSlotT<CompletionHandlerT&>, detail::AssociatedAllocatorT<CompletionHandlerT>>>;
+        exec::Env<detail::CancellationSlotT<CompletionHandlerT&>, assoc::associated_allocator_t<CompletionHandlerT>>>;
     using CompletionBase = detail::RegisterRPCHandlerOperationComplete;
-    using WorkTracker = detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandlerT>>;
+    using WorkTracker = detail::WorkTracker<assoc::associated_executor_t<CompletionHandlerT>>;
 
     struct Decrementer
     {
@@ -67,22 +67,22 @@ class RegisterRPCHandlerOperationAsioBase
   public:
     using typename Base::ServerRPCExecutor;
     using typename Base::Service;
-    using Executor = detail::AssociatedExecutorT<CompletionHandlerT, ServerRPCExecutor>;
-    using Allocator = detail::AssociatedAllocatorT<CompletionHandlerT>;
+    using Executor = assoc::associated_executor_t<CompletionHandlerT, ServerRPCExecutor>;
+    using Allocator = assoc::associated_allocator_t<CompletionHandlerT>;
     using RefCountGuard = detail::ScopeGuard<Decrementer>;
 
     template <class Ch>
     RegisterRPCHandlerOperationAsioBase(const ServerRPCExecutor& executor, Service& service, RPCHandler&& rpc_handler,
                                         Ch&& completion_handler, CompletionBase::Complete on_complete)
         : Base(executor, service, static_cast<RPCHandler&&>(rpc_handler), on_complete),
-          WorkTracker(asio::get_associated_executor(completion_handler)),
+          WorkTracker(assoc::get_associated_executor(completion_handler)),
           completion_handler_(static_cast<Ch&&>(completion_handler))
     {
         this->grpc_context().work_started();
         this->stop_context_.emplace(detail::get_cancellation_slot(completion_handler_));
     }
 
-    decltype(auto) get_allocator() noexcept { return asio::get_associated_allocator(completion_handler_); }
+    decltype(auto) get_allocator() noexcept { return assoc::get_associated_allocator(completion_handler_); }
 
     CompletionHandlerT& completion_handler() noexcept { return completion_handler_; }
 
@@ -98,7 +98,7 @@ struct RegisterRPCHandlerInitiator
     void operator()(CompletionHandler&& completion_handler, const typename ServerRPC::executor_type& executor,
                     RPCHandler&& rpc_handler) const
     {
-        const auto allocator = asio::get_associated_allocator(completion_handler);
+        const auto allocator = assoc::get_associated_allocator(completion_handler);
         auto op = detail::allocate<
             Operation<ServerRPC, detail::RemoveCrefT<RPCHandler>, detail::RemoveCrefT<CompletionHandler>>>(
             allocator, executor, service_, static_cast<RPCHandler&&>(rpc_handler),

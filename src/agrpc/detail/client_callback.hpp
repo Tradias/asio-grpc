@@ -15,6 +15,7 @@
 #ifndef AGRPC_DETAIL_CLIENT_CALLBACK_HPP
 #define AGRPC_DETAIL_CLIENT_CALLBACK_HPP
 
+#include <agrpc/detail/association.hpp>
 #include <agrpc/detail/bind_allocator.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/manual_reset_event.hpp>
@@ -54,12 +55,12 @@ template <class CompletionHandler>
 class UnaryRequestCallback
 {
   private:
-    using WorkTracker = detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandler>>;
+    using WorkTracker = detail::WorkTracker<assoc::associated_executor_t<CompletionHandler>>;
 
     struct State : WorkTracker
     {
         explicit State(CompletionHandler&& handler)
-            : WorkTracker(asio::get_associated_executor(handler)), handler_(static_cast<CompletionHandler&&>(handler))
+            : WorkTracker(assoc::get_associated_executor(handler)), handler_(static_cast<CompletionHandler&&>(handler))
         {
         }
 
@@ -83,7 +84,7 @@ class UnaryRequestCallback
         }
         else
         {
-            auto allocator = asio::get_associated_allocator(handler);
+            auto allocator = assoc::get_associated_allocator(handler);
             return std::allocate_shared<State>(allocator, static_cast<CompletionHandler&&>(handler));
         }
     }
@@ -104,14 +105,14 @@ class UnaryRequestCallback
 
             void operator()() { std::move(handler_)(std::move(status_)); }
 
-            allocator_type get_allocator() const noexcept { return asio::get_associated_allocator(handler_); }
+            allocator_type get_allocator() const noexcept { return assoc::get_associated_allocator(handler_); }
 
             CompletionHandler handler_;
             grpc::Status status_;
         };
         auto state = std::move(*storage_);
         storage_.reset();
-        auto executor = asio::get_associated_executor(state.handler_);
+        auto executor = assoc::get_associated_executor(state.handler_);
         asio::dispatch(std::move(executor), DispatchCallback{std::move(state.handler_), std::move(status)});
     }
 

@@ -16,6 +16,7 @@
 #define AGRPC_DETAIL_REGISTER_YIELD_RPC_HANDLER_HPP
 
 #include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/association.hpp>
 #include <agrpc/detail/bind_allocator.hpp>
 #include <agrpc/detail/register_rpc_handler_asio_base.hpp>
 #include <agrpc/detail/rethrow_first_arg.hpp>
@@ -66,7 +67,7 @@ struct RegisterYieldRPCHandlerOperation
     void initiate()
     {
         this->increment_ref_count();
-        detail::spawn(asio::get_associated_executor(this->completion_handler(), this->get_executor()),
+        detail::spawn(assoc::get_associated_executor(this->completion_handler(), this->get_executor()),
                       [g = RefCountGuard{*this}](const auto& yield)
                       {
                           auto& self = static_cast<RegisterYieldRPCHandlerOperation&>(g.get().self_);

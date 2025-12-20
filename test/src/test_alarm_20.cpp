@@ -79,7 +79,7 @@ TEST_CASE_FIXTURE(test::GrpcContextTest,
                    {
                        agrpc::Alarm alarm{grpc_context};
                        ok = co_await alarm.wait(test::ten_milliseconds_from_now(),
-                                                asio::bind_executor(asio::system_executor{}, asio::use_awaitable));
+                                                asio::bind_executor(test::inline_executor(), asio::use_awaitable));
                        actual_thread_id = std::this_thread::get_id();
                        guard.reset();
                    });

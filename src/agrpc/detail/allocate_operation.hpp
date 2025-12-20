@@ -33,7 +33,7 @@ auto allocate_operation(Handler&& handler, Args&&... args)
 {
     using DecayedHandler = detail::RemoveCrefT<Handler>;
     using Op = OperationTemplate<DecayedHandler>;
-    using Allocator = detail::AssociatedAllocatorT<DecayedHandler>;
+    using Allocator = assoc::associated_allocator_t<DecayedHandler>;
     if constexpr (detail::IS_STD_ALLOCATOR<Allocator>)
     {
         if (GrpcContextImplementation::running_in_this_thread())
@@ -48,7 +48,7 @@ auto allocate_operation(Handler&& handler, Args&&... args)
     }
     else
     {
-        const auto allocator = detail::get_allocator(handler);
+        const auto allocator = assoc::get_associated_allocator(handler);
         return detail::allocate<Op>(allocator, detail::AllocationType::CUSTOM, static_cast<Handler&&>(handler),
                                     static_cast<Args&&>(args)...)
             .extract();

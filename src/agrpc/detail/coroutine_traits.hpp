@@ -20,6 +20,7 @@
 #ifdef AGRPC_ASIO_HAS_CO_AWAIT
 
 #include <agrpc/detail/asio_forward.hpp>
+#include <agrpc/detail/association.hpp>
 #include <agrpc/detail/co_spawn.hpp>
 #include <agrpc/detail/rethrow_first_arg.hpp>
 
@@ -47,7 +48,7 @@ struct CoroutineTraits<asio::awaitable<T, Executor>>
     static void co_spawn(const IoExecutor& io_executor, RPCHandler&, CompletionHandler& completion_handler,
                          Function&& function)
     {
-        asio::co_spawn(asio::get_associated_executor(completion_handler, io_executor),
+        asio::co_spawn(assoc::get_associated_executor(completion_handler, io_executor),
                        static_cast<Function&&>(function), detail::RethrowFirstArg{});
     }
 };

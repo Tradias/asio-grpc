@@ -31,11 +31,11 @@ namespace detail
 template <class... Args, class CompletionHandler>
 struct ManualResetEventOperation<void(Args...), CompletionHandler>
     : public ManualResetEventOperationBase<void(Args...)>,
-      private detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandler>>
+      private detail::WorkTracker<assoc::associated_executor_t<CompletionHandler>>
 {
     using Signature = void(Args...);
     using Base = ManualResetEventOperationBase<Signature>;
-    using WorkTracker = detail::WorkTracker<detail::AssociatedExecutorT<CompletionHandler>>;
+    using WorkTracker = detail::WorkTracker<assoc::associated_executor_t<CompletionHandler>>;
     using Event = ManualResetEventBase<Signature>;
 
     struct StopFunction
@@ -68,7 +68,7 @@ struct ManualResetEventOperation<void(Args...), CompletionHandler>
     template <class Ch>
     ManualResetEventOperation(Ch&& ch, Event& event)
         : Base{event, &complete_impl},
-          WorkTracker(asio::get_associated_executor(ch)),
+          WorkTracker(assoc::get_associated_executor(ch)),
           completion_handler_(static_cast<Ch&&>(ch))
     {
         emplace_stop_callback();
@@ -88,7 +88,7 @@ struct ManualResetEventOperation<void(Args...), CompletionHandler>
     template <class... TArgs>
     void complete(detail::ErrorCode&& ec, TArgs&&... args)
     {
-        detail::AllocationGuard ptr{*this, asio::get_associated_allocator(completion_handler_)};
+        detail::AllocationGuard ptr{*this, assoc::get_associated_allocator(completion_handler_)};
         detail::dispatch_complete(ptr, static_cast<detail::ErrorCode&&>(ec), static_cast<TArgs&&>(args)...);
     }
 

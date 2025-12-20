@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/asio_utils.hpp>
+#include <agrpc/detail/association.hpp>
 #include <agrpc/detail/manual_reset_event.hpp>
 
 #include <agrpc/detail/config.hpp>
@@ -69,7 +70,7 @@ decltype(auto) get_executor_from_io_object(ExecutorOrIoObject&& exec_or_io_objec
 #endif
     else
     {
-        return asio::get_associated_executor(exec_or_io_object);
+        return assoc::get_associated_executor(exec_or_io_object);
     }
 #else
     else

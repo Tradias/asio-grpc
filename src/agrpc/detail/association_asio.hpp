@@ -41,23 +41,19 @@ inline constexpr bool IS_STOP_EVER_POSSIBLE_V<UncancellableSlot> = false;
 template <class T>
 inline constexpr bool IS_EXECUTOR = asio::is_executor<T>::value || asio::execution::is_executor_v<T>;
 
-template <class T, class E = asio::system_executor>
-using AssociatedExecutorT = asio::associated_executor_t<T, E>;
-
-template <class T, class A = std::allocator<void>>
-using AssociatedAllocatorT = asio::associated_allocator_t<T, A>;
-
-template <class Object>
-decltype(auto) get_executor(const Object& object) noexcept
+namespace assoc
 {
-    return asio::get_associated_executor(object);
+using asio::associated_executor_t;
+
+using asio::associated_allocator_t;
+
+using asio::get_associated_executor;
+
+using asio::get_associated_allocator;
 }
 
-template <class Object>
-decltype(auto) get_allocator(const Object& object) noexcept
-{
-    return asio::get_associated_allocator(object);
-}
+template <class Executor>
+inline constexpr bool IS_INLINE_EXECUTOR = std::is_same_v<assoc::associated_executor_t<int>, Executor>;
 }  // namespace detail
 
 AGRPC_NAMESPACE_END
