@@ -20,7 +20,6 @@
 #include <agrpc/detail/functional.hpp>
 #include <agrpc/detail/manual_reset_event.hpp>
 #include <agrpc/detail/waiter.hpp>
-#include <agrpc/grpc_executor.hpp>
 
 #include <agrpc/detail/config.hpp>
 
