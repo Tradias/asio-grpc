@@ -24,6 +24,12 @@
 #include <boost/cobalt/op.hpp>
 #include <boost/cobalt/this_coro.hpp>
 
+#ifdef AGRPC_STANDALONE_ASIO
+#include <asio/system_executor.hpp>
+#else
+#include <boost/asio/system_executor.hpp>
+#endif
+
 #include <agrpc/detail/config.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -105,7 +111,8 @@ class ServerReactorPromiseType final : private detail::ServerReactorPromiseBase<
     template <class Service, class... Args>
     ServerReactorPromiseType(Service&& service, Args&&...)
     {
-        ReactorAccess::initialize_reactor(reactor(), assoc::get_associated_executor(service), &deallocate);
+        ReactorAccess::initialize_reactor(reactor(), assoc::get_associated_executor(service, asio::system_executor{}),
+                                          &deallocate);
     }
 
     auto* get_return_object() noexcept { return reactor().get(); }
