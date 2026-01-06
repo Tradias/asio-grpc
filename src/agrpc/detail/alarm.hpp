@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/grpc_sender.hpp>
+#include <agrpc/detail/movable_atomic.hpp>
 #include <agrpc/detail/sender_implementation.hpp>
 
 #include <agrpc/detail/asio_macros.hpp>
@@ -43,8 +44,6 @@ AlarmInitFunction(grpc::Alarm&, const Deadline&) -> AlarmInitFunction<Deadline>;
 
 struct AlarmCancellationFunction
 {
-    grpc::Alarm& alarm_;
-
     explicit AlarmCancellationFunction(grpc::Alarm& alarm) noexcept : alarm_(alarm) {}
 
     template <class Deadline>
@@ -64,7 +63,12 @@ struct AlarmCancellationFunction
         }
     }
 #endif
+
+    grpc::Alarm& alarm_;
 };
+
+template <class Executor>
+struct MoveAlarmCancellationFunction;
 
 template <class Executor>
 struct MoveAlarmSenderImplementation
@@ -74,17 +78,45 @@ struct MoveAlarmSenderImplementation
     using BaseType = detail::GrpcTagOperationBase;
     using Alarm = agrpc::BasicAlarm<Executor>;
     using Signature = void(bool, Alarm);
-    using StopFunction = detail::AlarmCancellationFunction;
+    using StopFunction = detail::MoveAlarmCancellationFunction<Executor>;
 
     template <class OnComplete>
     void complete(OnComplete on_complete, bool ok)
     {
+        done_.store(true);
         on_complete(ok, static_cast<Alarm&&>(alarm_));
     }
 
     auto& grpc_alarm() { return alarm_.alarm_; }
 
-    Alarm alarm_;
+    agrpc::BasicAlarm<Executor> alarm_;
+    MovableAtomic<bool> done_{};
+};
+
+template <class Executor>
+struct MoveAlarmCancellationFunction
+{
+    explicit MoveAlarmCancellationFunction(MoveAlarmSenderImplementation<Executor>& state_) noexcept : state_(state_) {}
+
+    void operator()() const
+    {
+        if (!state_.done_.exchange(true))
+        {
+            state_.alarm_.cancel();
+        }
+    }
+
+#ifdef AGRPC_ASIO_HAS_CANCELLATION_SLOT
+    void operator()(asio::cancellation_type type) const
+    {
+        if (static_cast<bool>(type & asio::cancellation_type::all))
+        {
+            operator()();
+        }
+    }
+#endif
+
+    MoveAlarmSenderImplementation<Executor>& state_;
 };
 
 template <class Executor>
@@ -96,9 +128,10 @@ struct SenderMoveAlarmSenderImplementation : MoveAlarmSenderImplementation<Execu
     template <class OnComplete>
     void complete(OnComplete on_complete, bool ok)
     {
+        this->state_.done_.store(true);
         if (ok)
         {
-            on_complete(static_cast<Alarm&&>(this->alarm_));
+            on_complete(static_cast<Alarm&&>(this->state_.alarm_));
         }
         else
         {
@@ -113,7 +146,7 @@ struct MoveAlarmSenderInitiation
     template <class Executor>
     static auto& stop_function_arg(MoveAlarmSenderImplementation<Executor>& impl) noexcept
     {
-        return impl.grpc_alarm();
+        return impl;
     }
 
     template <class Executor>
