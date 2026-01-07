@@ -96,13 +96,13 @@ struct MoveAlarmSenderImplementation
 template <class Executor>
 struct MoveAlarmCancellationFunction
 {
-    explicit MoveAlarmCancellationFunction(MoveAlarmSenderImplementation<Executor>& state_) noexcept : state_(state_) {}
+    explicit MoveAlarmCancellationFunction(MoveAlarmSenderImplementation<Executor>& impl_) noexcept : impl_(impl_) {}
 
     void operator()() const
     {
-        if (!state_.done_.exchange(true))
+        if (!impl_.done_.exchange(true))
         {
-            state_.alarm_.cancel();
+            impl_.alarm_.cancel();
         }
     }
 
@@ -116,22 +116,23 @@ struct MoveAlarmCancellationFunction
     }
 #endif
 
-    MoveAlarmSenderImplementation<Executor>& state_;
+    MoveAlarmSenderImplementation<Executor>& impl_;
 };
 
 template <class Executor>
 struct SenderMoveAlarmSenderImplementation : MoveAlarmSenderImplementation<Executor>
 {
+    using Base = MoveAlarmSenderImplementation<Executor>;
     using Alarm = agrpc::BasicAlarm<Executor>;
     using Signature = void(Alarm);
 
     template <class OnComplete>
     void complete(OnComplete on_complete, bool ok)
     {
-        this->state_.done_.store(true);
+        this->done_.store(true);
         if (ok)
         {
-            on_complete(static_cast<Alarm&&>(this->state_.alarm_));
+            on_complete(static_cast<Alarm&&>(this->alarm_));
         }
         else
         {
