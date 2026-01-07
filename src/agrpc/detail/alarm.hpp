@@ -96,7 +96,7 @@ struct MoveAlarmSenderImplementation
 template <class Executor>
 struct MoveAlarmCancellationFunction
 {
-    explicit MoveAlarmCancellationFunction(MoveAlarmSenderImplementation<Executor>& impl_) noexcept : impl_(impl_) {}
+    explicit MoveAlarmCancellationFunction(MoveAlarmSenderImplementation<Executor>& impl) noexcept : impl_(impl) {}
 
     void operator()() const
     {
