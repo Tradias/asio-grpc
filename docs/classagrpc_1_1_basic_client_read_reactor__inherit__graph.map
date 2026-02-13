@@ -1,0 +1,5 @@
+<map id="agrpc::BasicClientReadReactor&lt; Response, Executor &gt;" name="agrpc::BasicClientReadReactor&lt; Response, Executor &gt;">
+<area shape="rect" id="Node000001" title="(experimental) I/O object for client&#45;side, server&#45;streaming rpcs" alt="" coords="5,93,228,133"/>
+<area shape="rect" id="Node000002" href="$classagrpc_1_1detail_1_1_reactor_executor_base.html" title="Reactor&#39;s executor base." alt="" coords="8,5,225,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,59,119,93,114,93,114,59"/>
+</map>
