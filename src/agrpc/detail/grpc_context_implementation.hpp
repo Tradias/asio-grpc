@@ -139,8 +139,6 @@ struct GrpcContextImplementation
         detail::GrpcContextThreadContext& context, ::gpr_timespec deadline,
         detail::InvokeHandler invoke = detail::InvokeHandler::YES_);
 
-    [[nodiscard]] static bool running_in_this_thread() noexcept;
-
     [[nodiscard]] static bool running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept;
 
     [[nodiscard]] static bool move_local_queue_to_remote_work(detail::GrpcContextThreadContext& context) noexcept;

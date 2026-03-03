@@ -143,7 +143,7 @@ void submit_sender_implementation_operation(agrpc::GrpcContext& grpc_context, Co
     }
     detail::allocate_operation<
         detail::SenderImplementationOperationTemplate<detail::RemoveCrefT<Implementation>>::template Type>(
-        static_cast<CompletionHandler&&>(completion_handler), grpc_context, initiation,
+        grpc_context, static_cast<CompletionHandler&&>(completion_handler), grpc_context, initiation,
         static_cast<Implementation&&>(implementation));
 }
 }

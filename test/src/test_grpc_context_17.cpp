@@ -473,6 +473,20 @@ TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post with throwing completion ha
     CHECK_THROWS_AS(grpc_context.run(), test::Exception);
 }
 
+TEST_CASE_FIXTURE(test::GrpcContextTest, "Use GrpcContext within another GrpcContext")
+{
+    {
+        agrpc::GrpcContext grpc_context2;
+        test::post(grpc_context2,
+                   [&]
+                   {
+                       post([] {});
+                   });
+        grpc_context2.run();
+    }
+    grpc_context.run();
+}
+
 struct GrpcContextAndIoContextTest : test::GrpcContextTest, test::IoContextTest
 {
 };

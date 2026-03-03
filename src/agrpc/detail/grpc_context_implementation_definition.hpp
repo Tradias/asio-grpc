@@ -117,8 +117,6 @@ inline void GrpcContextImplementation::add_operation(agrpc::GrpcContext& grpc_co
     }
 }
 
-inline bool GrpcContextImplementation::running_in_this_thread() noexcept { return detail::thread_local_grpc_context; }
-
 inline bool GrpcContextImplementation::running_in_this_thread(const agrpc::GrpcContext& grpc_context) noexcept
 {
     const auto* context = detail::thread_local_grpc_context;
@@ -348,7 +346,7 @@ inline ::gpr_timespec gpr_timespec_from_now(std::chrono::nanoseconds duration) n
     return ::gpr_time_add(timespec, duration_timespec);
 }
 
-inline detail::GrpcContextLocalAllocator get_local_allocator() noexcept { return detail::GrpcContextLocalAllocator(); }
+inline detail::GrpcContextLocalAllocator get_local_allocator() noexcept { return {}; }
 
 inline detail::PoolResource& get_local_pool_resource() noexcept
 {

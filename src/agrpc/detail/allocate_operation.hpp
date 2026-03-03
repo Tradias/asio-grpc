@@ -29,16 +29,16 @@ AGRPC_NAMESPACE_BEGIN()
 namespace detail
 {
 template <template <class> class OperationTemplate, class Handler, class... Args>
-auto allocate_operation(Handler&& handler, Args&&... args)
+auto allocate_operation(agrpc::GrpcContext& grpc_context, Handler&& handler, Args&&... args)
 {
     using DecayedHandler = detail::RemoveCrefT<Handler>;
     using Op = OperationTemplate<DecayedHandler>;
     using Allocator = assoc::associated_allocator_t<DecayedHandler>;
     if constexpr (detail::IS_STD_ALLOCATOR<Allocator>)
     {
-        if (GrpcContextImplementation::running_in_this_thread())
+        if (GrpcContextImplementation::running_in_this_thread(grpc_context))
         {
-            return detail::allocate<Op>(detail::get_local_allocator(), detail::AllocationType::LOCAL,
+            return detail::allocate<Op>(grpc_context.get_allocator(), detail::AllocationType::LOCAL,
                                         static_cast<Handler&&>(handler), static_cast<Args&&>(args)...)
                 .extract();
         }

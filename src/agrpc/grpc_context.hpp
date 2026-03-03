@@ -268,7 +268,7 @@ class GrpcContext
      * @brief Get the associated allocator
      *
      * @attention The returned allocator may only be used for allocations/deallocations within the same thread(s) that
-     * calls run*()/poll*().
+     * calls run*()/poll*() and not within nested calls from other GrpcContexts.
      *
      * Thread-safe
      */
