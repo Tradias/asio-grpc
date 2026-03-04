@@ -76,3 +76,6 @@ ClangBuildAnalyzer.ini
 docs/
 test/cmake/superbuild/CMakeLists.txt
 test/cmake/subdirectory/CMakeLists.txt
+
+# clangd
+.cache/

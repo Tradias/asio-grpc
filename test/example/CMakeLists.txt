@@ -39,8 +39,9 @@ add_dependencies(
     asio-grpc-example-multi-threaded-server
     asio-grpc-example-multi-threaded-alternative-client
     asio-grpc-example-multi-threaded-alternative-server
-    asio-grpc-example-unifex-client
-    asio-grpc-example-unifex-server)
+    #asio-grpc-example-unifex-client
+    #asio-grpc-example-unifex-server
+    )
 
 set(ASIO_GRPC_TEMP_DIR "${CMAKE_CURRENT_BINARY_DIR}/temp")
 file(MAKE_DIRECTORY "${ASIO_GRPC_TEMP_DIR}")
@@ -66,8 +67,9 @@ target_compile_definitions(
         "ASIO_GRPC_EXAMPLE_MULTI_THREADED_SERVER=\"$<TARGET_FILE:asio-grpc-example-multi-threaded-server>\""
         "ASIO_GRPC_EXAMPLE_MULTI_THREADED_ALTERNATIVE_CLIENT=\"$<TARGET_FILE:asio-grpc-example-multi-threaded-alternative-client>\""
         "ASIO_GRPC_EXAMPLE_MULTI_THREADED_ALTERNATIVE_SERVER=\"$<TARGET_FILE:asio-grpc-example-multi-threaded-alternative-server>\""
-        "ASIO_GRPC_EXAMPLE_UNIFEX_CLIENT=\"$<TARGET_FILE:asio-grpc-example-unifex-client>\""
-        "ASIO_GRPC_EXAMPLE_UNIFEX_SERVER=\"$<TARGET_FILE:asio-grpc-example-unifex-server>\"")
+        #"ASIO_GRPC_EXAMPLE_UNIFEX_CLIENT=\"$<TARGET_FILE:asio-grpc-example-unifex-client>\""
+        #"ASIO_GRPC_EXAMPLE_UNIFEX_SERVER=\"$<TARGET_FILE:asio-grpc-example-unifex-server>\""
+        )
 
 if(ASIO_GRPC_DISCOVER_TESTS)
     doctest_discover_tests(asio-grpc-test-examples)
