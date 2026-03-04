@@ -256,6 +256,60 @@ target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-stdexec STDEXEC::stde
 </p>
 </details>
 
+<details><summary><b>CMake FetchContent</b></summary>
+<p>
+
+Fetch asio-grpc and other dependencies like gRPC:
+
+```cmake
+include(FetchContent)
+FetchContent_Declare(
+    asio-grpc
+    GIT_REPOSITORY https://github.com/Tradias/asio-grpc.git
+    GIT_TAG v3.6.1
+    SYSTEM)
+FetchContent_MakeAvailable(asio-grpc)
+```
+
+Link with gRPC:
+
+```cmake
+target_link_libraries(your_app PUBLIC gRPC::grpc++)
+```
+
+Finally chose the desired backend for asio-grpc:
+
+Using [Boost.Asio](https://www.boost.org/doc/libs/1_86_0/doc/html/boost_asio.html):
+
+```cmake
+find_package(Boost) # or FetchContent equivalent
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc Boost::headers)
+```
+
+Or using [standalone Asio](https://github.com/chriskohlhoff/asio):
+
+```cmake
+find_package(asio) # or FetchContent equivalent
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-standalone-asio asio::asio)
+```
+
+Or using [libunifex](https://github.com/facebookexperimental/libunifex):
+
+```cmake
+find_package(unifex) # or FetchContent equivalent
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-unifex unifex::unifex)
+```
+
+Or using [stdexec](https://github.com/NVIDIA/stdexec):
+
+```cmake
+find_package(stdexec) # or FetchContent equivalent
+target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc-stdexec STDEXEC::stdexec)
+```
+
+</p>
+</details>
+
 <details><summary><b>Raw source code</b></summary>
 <p>
 
