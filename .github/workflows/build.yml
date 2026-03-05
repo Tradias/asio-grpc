@@ -143,7 +143,9 @@ jobs:
         sudo update-alternatives --set c++ $(which g++-10)
 
     - name: Install protobuf, gRPC, doctest
-      run: sudo apt-get install libgrpc++-dev protobuf-compiler-grpc libprotobuf-dev doctest-dev libgtest-dev libgmock-dev
+      run: |
+        sudo apt-get update &&\
+        sudo apt-get install libgrpc++-dev protobuf-compiler-grpc libprotobuf-dev doctest-dev libgtest-dev libgmock-dev
 
     - uses: actions/checkout@v4
 
