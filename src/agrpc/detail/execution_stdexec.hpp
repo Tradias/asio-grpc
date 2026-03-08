@@ -18,6 +18,7 @@
 #include <agrpc/detail/utility.hpp>
 #include <exec/inline_scheduler.hpp>
 #include <stdexec/execution.hpp>
+#include <stdexec/concepts.hpp>
 
 #include <agrpc/detail/config.hpp>
 
@@ -49,6 +50,7 @@ template <class Env>
 using allocator_of_t = detail::RemoveCrefT<decltype(exec::get_allocator(std::declval<Env>()))>;
 
 using ::stdexec::get_scheduler;
+using ::stdexec::get_scheduler_t;
 
 using ::stdexec::scheduler;
 
@@ -93,12 +95,10 @@ struct Env
     using StopToken = StopTokenT;
     using Allocator = AllocatorT;
 
-    friend StopTokenT tag_invoke(::stdexec::tag_t<::stdexec::get_stop_token>, const Env& env) noexcept
-    {
-        return env.stop_token_;
+    StopTokenT query(::stdexec::get_stop_token_t) const noexcept { 
+        return stop_token_; 
     }
-
-    friend AllocatorT tag_invoke(get_allocator_t, const Env& env) noexcept { return env.allocator_; }
+    AllocatorT query(get_allocator_t)             const noexcept { return allocator_; }
 
     StopTokenT stop_token_;
     AllocatorT allocator_;
@@ -109,9 +109,8 @@ using env_ns::Env;
 
 using ::stdexec::env_of_t;
 using ::stdexec::get_env;
-
 using ::stdexec::tag_t;
-}  // namespace exec
+}  // namespace detail::exec
 
 AGRPC_NAMESPACE_END
 

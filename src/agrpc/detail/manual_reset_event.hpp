@@ -346,10 +346,6 @@ class ManualResetEventOperationState
         }
     }
 
-#ifdef AGRPC_STDEXEC
-    friend void tag_invoke(stdexec::start_t, ManualResetEventOperationState& o) noexcept { o.start(); }
-#endif
-
   private:
     friend detail::ManualResetEventSender<Signature, Storage>;
 
@@ -379,21 +375,16 @@ class ManualResetEventSender<void(Args...), Storage> : public detail::SenderOf<v
     using Event = BasicManualResetEvent<Signature, Storage>;
 
   public:
+#ifdef AGRPC_STDEXEC
+    using sender_concept = stdexec::sender_t;
+#endif
+
     template <class R>
     [[nodiscard]] auto connect(R&& receiver) && noexcept(detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<R>)
         -> ManualResetEventOperationState<Signature, Storage, detail::RemoveCrefT<R>>
     {
         return {static_cast<R&&>(receiver), event_};
     }
-
-#ifdef AGRPC_STDEXEC
-    template <class Receiver>
-    friend auto tag_invoke(stdexec::connect_t, ManualResetEventSender&& s, Receiver&& r) noexcept(
-        noexcept(static_cast<ManualResetEventSender&&>(s).connect(static_cast<Receiver&&>(r))))
-    {
-        return static_cast<ManualResetEventSender&&>(s).connect(static_cast<Receiver&&>(r));
-    }
-#endif
 
   private:
     friend Event;

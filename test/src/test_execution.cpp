@@ -297,7 +297,7 @@ TEST_CASE_FIXTURE(StdexecExecutionClientRPCTest<test::BidirectionalStreamingClie
         CHECK_EQ(grpc::StatusCode::OK, (co_await rpc.finish(agrpc::use_sender)).error_code());
     };
     register_and_perform_requests(
-        [&](ServerRPC& rpc) -> exec::task<void>
+        [&](ServerRPC& rpc) -> stdexec::task<void>
         {
             Response response;
             response.set_integer(1);

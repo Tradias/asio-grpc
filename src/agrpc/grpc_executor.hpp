@@ -18,6 +18,7 @@
 #include <agrpc/detail/asio_forward.hpp>
 #include <agrpc/detail/bind_allocator.hpp>
 #include <agrpc/detail/create_and_submit_no_arg_operation.hpp>
+#include <agrpc/detail/execution.hpp>
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/grpc_executor_base.hpp>
 #include <agrpc/detail/grpc_executor_options.hpp>
@@ -265,12 +266,10 @@ class BasicGrpcExecutor
     }
 
 #ifdef AGRPC_STDEXEC
-    friend auto tag_invoke(stdexec::schedule_t, const BasicGrpcExecutor& executor) noexcept
-    {
-        return executor.schedule();
-    }
+    // The executer fulfills the scheduler concept
+    using scheduler_concept = stdexec::scheduler_t;
 
-    friend constexpr auto tag_invoke(stdexec::get_forward_progress_guarantee_t, const BasicGrpcExecutor&) noexcept
+    constexpr auto query(stdexec::get_forward_progress_guarantee_t) const noexcept
     {
         return stdexec::forward_progress_guarantee::parallel;
     }

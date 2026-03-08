@@ -213,10 +213,10 @@ inline grpc::ServerCompletionQueue* GrpcContext::get_server_completion_queue() n
 #ifdef AGRPC_STDEXEC
 namespace detail
 {
-template <class Tag>
-agrpc::GrpcContext::executor_type tag_invoke(stdexec::get_completion_scheduler_t<Tag>, const BasicSenderEnv& e) noexcept
+template<typename CPO>
+agrpc::GrpcContext::executor_type BasicSenderEnv::query(stdexec::get_completion_scheduler_t<CPO>) const noexcept
 {
-    return e.grpc_context_.get_scheduler();
+    return grpc_context_.get_scheduler();
 }
 }
 #endif
