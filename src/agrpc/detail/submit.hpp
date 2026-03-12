@@ -29,9 +29,14 @@ struct SubmitToFunctionReceiver
 {
     struct Wrap
     {
+    #ifdef AGRPC_STDEXEC
+        using receiver_concept = exec::receiver_t;
+#endif
         using is_receiver = void;
 
         void set_done() noexcept { complete(); }
+
+        void set_stopped() noexcept { complete(); }
 
         template <class... Args>
         void set_value(Args&&... args) noexcept
@@ -44,22 +49,6 @@ struct SubmitToFunctionReceiver
         {
             complete(static_cast<E&&>(e));
         }
-
-#ifdef AGRPC_STDEXEC
-        friend void tag_invoke(stdexec::set_stopped_t, Wrap&& r) noexcept { r.complete(); }
-
-        template <class... Args>
-        friend void tag_invoke(stdexec::set_value_t, Wrap&& r, Args&&... args) noexcept
-        {
-            r.complete(static_cast<Args&&>(args)...);
-        }
-
-        template <class E>
-        friend void tag_invoke(stdexec::set_error_t, Wrap&& r, E&& e) noexcept
-        {
-            r.complete(static_cast<E&&>(e));
-        }
-#endif
 
         template <class... Args>
         void complete(Args&&... args)

@@ -30,6 +30,10 @@ namespace create_ns
 template <class Receiver, class Fn, class... ValueTypes>
 struct OperationState
 {
+#ifdef AGRPC_STDEXEC
+    using operation_state_concept = exec::operation_state_t;
+#endif
+
     OperationState(Receiver rec, Fn fn) : rec_(static_cast<Receiver&&>(rec)), fn_(static_cast<Fn&&>(fn)) {}
 
     template <class... Ts>
@@ -66,11 +70,7 @@ struct OperationState
         }
     }
 
-  private:
-#ifdef AGRPC_STDEXEC
-    friend void tag_invoke(stdexec::start_t, OperationState& s) noexcept { s.start(); }
-#endif
-
+    private:
     Receiver rec_;
     Fn fn_;
 };
@@ -79,11 +79,7 @@ struct OperationState
 struct InlineSchedulerEnv
 {
     template <class Tag>
-    friend constexpr exec::inline_scheduler tag_invoke(stdexec::get_completion_scheduler_t<Tag>,
-                                                       const InlineSchedulerEnv&) noexcept
-    {
-        return {};
-    }
+    constexpr exec::inline_scheduler query(stdexec::get_completion_scheduler_t<Tag>) const noexcept { return {}; }
 };
 #endif
 
@@ -91,6 +87,9 @@ template <class Fn, class... ValueTypes>
 class Sender : public detail::SenderOf<void(ValueTypes...)>
 {
   public:
+#ifdef AGRPC_STDEXEC
+    using sender_concept = exec::sender_t;
+#endif
     explicit Sender(Fn fn) : fn_(static_cast<Fn&&>(fn)) {}
 
     template <class Receiver>
@@ -99,17 +98,6 @@ class Sender : public detail::SenderOf<void(ValueTypes...)>
     {
         return {static_cast<Receiver&&>(receiver), static_cast<Fn&&>(fn_)};
     }
-
-#ifdef AGRPC_STDEXEC
-    template <class Receiver>
-    friend auto tag_invoke(stdexec::connect_t, Sender&& s,
-                           Receiver&& r) noexcept(noexcept(s.connect(static_cast<Receiver&&>(r))))
-    {
-        return static_cast<Sender&&>(s).connect(static_cast<Receiver&&>(r));
-    }
-
-    friend InlineSchedulerEnv tag_invoke(stdexec::get_env_t, const Sender&) noexcept { return {}; }
-#endif
 
   private:
     Fn fn_;

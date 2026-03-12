@@ -20,6 +20,7 @@
 #include <agrpc/alarm.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
+#include <agrpc/detail/execution.hpp>
 #include <agrpc/waiter.hpp>
 
 #include <functional>
@@ -58,22 +59,22 @@ template <class Derived>
 struct ReceiverBase
 {
     using is_receiver = void;
+#ifdef AGRPC_STDEXEC
+    using receiver_concept = agrpc::detail::exec::receiver_t;
+#endif
 
 #ifdef AGRPC_STDEXEC
-    friend constexpr void tag_invoke(stdexec::set_stopped_t, const ReceiverBase& r) noexcept
-    {
-        static_cast<const Derived&>(r).set_done();
-    }
+    constexpr void set_stopped() const noexcept { static_cast<const Derived&>(*this).set_done(); }
 
     template <class... T>
-    friend constexpr void tag_invoke(stdexec::set_value_t, const ReceiverBase& r, T&&... args) noexcept
+    constexpr void set_value(T&&... args) const noexcept
     {
-        static_cast<const Derived&>(r).set_value(std::forward<T>(args)...);
+        static_cast<const Derived&>(*this).set_value(std::forward<T>(args)...);
     }
 
-    friend void tag_invoke(stdexec::set_error_t, const ReceiverBase& r, std::exception_ptr e) noexcept
+    void set_error(std::exception_ptr e) const noexcept
     {
-        static_cast<const Derived&>(r).set_error(static_cast<std::exception_ptr&&>(e));
+        static_cast<const Derived&>(*this).set_error(static_cast<std::exception_ptr&&>(e));
     }
 #endif
 };
