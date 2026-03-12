@@ -275,7 +275,9 @@ struct ManualResetEventRunningOperationState<void(Args...), Receiver> : ManualRe
     using Signature = void(Args...);
     using Base = ManualResetEventOperationBase<Signature>;
     using Event = ManualResetEventBase<Signature>;
-
+#ifdef AGRPC_STDEXEC
+    using operation_state_concept = exec::operation_state_t;
+#endif
     struct StopFunction
     {
         void operator()() const
@@ -332,6 +334,9 @@ class ManualResetEventOperationState
     using Event = BasicManualResetEvent<Signature, Storage>;
 
   public:
+#ifdef AGRPC_STDEXEC
+    using operation_state_concept = exec::operation_state_t;
+#endif
     void start() noexcept
     {
         auto stop_token = exec::get_stop_token(exec::get_env(state_.receiver()));
@@ -345,10 +350,6 @@ class ManualResetEventOperationState
             complete();
         }
     }
-
-#ifdef AGRPC_STDEXEC
-    friend void tag_invoke(stdexec::start_t, ManualResetEventOperationState& o) noexcept { o.start(); }
-#endif
 
   private:
     friend detail::ManualResetEventSender<Signature, Storage>;
@@ -379,21 +380,16 @@ class ManualResetEventSender<void(Args...), Storage> : public detail::SenderOf<v
     using Event = BasicManualResetEvent<Signature, Storage>;
 
   public:
+#ifdef AGRPC_STDEXEC
+    using sender_concept = exec::sender_t;
+#endif
+
     template <class R>
     [[nodiscard]] auto connect(R&& receiver) && noexcept(detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<R>)
         -> ManualResetEventOperationState<Signature, Storage, detail::RemoveCrefT<R>>
     {
         return {static_cast<R&&>(receiver), event_};
     }
-
-#ifdef AGRPC_STDEXEC
-    template <class Receiver>
-    friend auto tag_invoke(stdexec::connect_t, ManualResetEventSender&& s, Receiver&& r) noexcept(
-        noexcept(static_cast<ManualResetEventSender&&>(s).connect(static_cast<Receiver&&>(r))))
-    {
-        return static_cast<ManualResetEventSender&&>(s).connect(static_cast<Receiver&&>(r));
-    }
-#endif
 
   private:
     friend Event;

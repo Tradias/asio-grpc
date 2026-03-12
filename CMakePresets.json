@@ -17,7 +17,9 @@
                 "VCPKG_INSTALL_OPTIONS": "--no-print-usage",
                 "CMAKE_INSTALL_PREFIX": "out",
                 "ASIO_GRPC_BUILD_TESTS": "TRUE",
-                "ASIO_GRPC_DISCOVER_TESTS": "TRUE"
+                "ASIO_GRPC_DISCOVER_TESTS": "TRUE",
+                "ASIO_GRPC_ENABLE_STDEXEC_TESTS": true,
+                "CMAKE_EXPORT_COMPILE_COMMANDS": true
             }
         }
     ],
