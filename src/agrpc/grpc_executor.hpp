@@ -59,6 +59,10 @@ class BasicGrpcExecutor
      */
     using allocator_type = Allocator;
 
+#ifdef AGRPC_STDEXEC
+    using scheduler_concept = stdexec::scheduler_t;
+#endif
+
     /**
      * @brief Default construct an executor
      *
@@ -265,9 +269,6 @@ class BasicGrpcExecutor
     }
 
 #ifdef AGRPC_STDEXEC
-    // The executer fulfills the scheduler concept
-    using scheduler_concept = stdexec::scheduler_t;
-
     constexpr auto query(stdexec::get_forward_progress_guarantee_t) const noexcept
     {
         return stdexec::forward_progress_guarantee::parallel;

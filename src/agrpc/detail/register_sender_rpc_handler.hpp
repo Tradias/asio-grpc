@@ -40,7 +40,8 @@ template <class Env>
 struct InlineSchedulerEnv
 {
     Env env_;
-    constexpr exec::inline_scheduler query(exec::tag_t<exec::get_scheduler>) const noexcept { return {}; }
+
+    static constexpr exec::inline_scheduler query(exec::tag_t<exec::get_scheduler>) noexcept { return {}; }
 
     template <class Tag, class... Args>
     auto query(Tag tag, Args&&... args) const noexcept(noexcept(tag(env_, static_cast<Args&&>(args)...)))
@@ -60,10 +61,6 @@ class [[nodiscard]] RPCHandlerSender : public detail::SenderOf<void()>
     using Service = detail::ServerRPCServiceT<ServerRPC>;
 
   public:
-#ifdef AGRPC_STDEXEC
-    using sender_concept = exec::sender_t;
-#endif
-
     RPCHandlerSender(agrpc::GrpcContext& grpc_context, Service& service, RPCHandler&& rpc_handler)
         : grpc_context_(grpc_context), service_(service), rpc_handler_(static_cast<RPCHandler&&>(rpc_handler))
     {
@@ -72,7 +69,6 @@ class [[nodiscard]] RPCHandlerSender : public detail::SenderOf<void()>
     template <class Receiver>
     auto connect(Receiver&& receiver) && noexcept(detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver> &&
                                                   std::is_nothrow_move_constructible_v<RPCHandler>);
-
 
   private:
     template <class, class, class>
@@ -172,14 +168,9 @@ struct RPCHandlerOperation
     struct StartReceiver
     {
         using is_receiver = void;
-#ifdef AGRPC_STDEXEC
         using receiver_concept = exec::receiver_t;
-#endif
+
         RPCHandlerOperation& rpc_handler_op_;
-
-        static constexpr void set_done() noexcept {}
-
-        void set_stopped() const noexcept {}
 
         void set_value(bool ok) const noexcept
         {
@@ -207,6 +198,10 @@ struct RPCHandlerOperation
         }
 
         void set_error(const std::exception_ptr&) const noexcept {}
+
+        static constexpr void set_done() noexcept {}
+
+        static constexpr void set_stopped() noexcept {}
     };
 
     using StartOperationState = detail::InplaceWithFunctionWrapper<
@@ -218,14 +213,11 @@ struct RPCHandlerOperation
     struct Receiver
     {
         using is_receiver = void;
-#ifdef AGRPC_STDEXEC
         using receiver_concept = exec::receiver_t;
-#endif
+
         RPCHandlerOperation& op_;
 
         void perform(std::exception_ptr* eptr) const noexcept { Action::perform(op_, eptr); }
-
-        void set_done() const noexcept { perform(nullptr); }
 
         template <class... T>
         void set_value(T&&...) const noexcept
@@ -234,11 +226,14 @@ struct RPCHandlerOperation
         }
 
         void set_error(std::exception_ptr eptr) const noexcept { perform(&eptr); }
+
+        void set_done() const noexcept { perform(nullptr); }
+
         void set_stopped() const noexcept { set_done(); }
 
         InlineSchedulerEnv<Env> get_env() const noexcept { return {op_.base().get_env()}; }
 
-#if defined(AGRPC_UNIFEX)
+#ifdef AGRPC_UNIFEX
         friend typename Env::StopToken tag_invoke(exec::tag_t<exec::get_stop_token>, const Receiver& r) noexcept
         {
             return exec::get_stop_token(r.op_.base().get_env());
@@ -366,9 +361,7 @@ class RPCHandlerSenderOperation
     friend RPCHandlerOperation;
 
   public:
-#ifdef AGRPC_STDEXEC
     using operation_state_concept = exec::operation_state_t;
-#endif
 
     void start() noexcept
     {
@@ -389,6 +382,7 @@ class RPCHandlerSenderOperation
             exec::set_error(static_cast<Receiver&&>(receiver_), static_cast<std::exception_ptr&&>(*ep));
         }
     }
+
   private:
     friend RPCHandlerSender;
 

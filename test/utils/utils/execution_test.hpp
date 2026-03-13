@@ -34,18 +34,29 @@ struct ExecutionTestMixin : Base
     void run(Sender&&... sender)
     {
         this->grpc_context.work_started();
-        stdexec::sync_wait(stdexec::when_all(
-            exec::finally(test::with_inline_scheduler(stdexec::when_all(std::forward<Sender>(sender)...)),
-                          stdexec::then(stdexec::just(),
-                                        [&]
+        std::exception_ptr eptr;
+        std::thread grpc_context_thread{[&]
+                                        {
+                                            try
+                                            {
+                                                this->grpc_context.run();
+                                            }
+                                            catch (...)
+                                            {
+                                                eptr = std::current_exception();
+                                            }
+                                        }};
+        agrpc::detail::ScopeGuard guard{[&]
                                         {
                                             this->grpc_context.work_finished();
-                                        })),
-            stdexec::then(stdexec::just(),
-                          [&]
-                          {
-                              this->grpc_context.run();
-                          })));
+                                            grpc_context_thread.join();
+                                        }};
+        stdexec::sync_wait(stdexec::when_all(std::forward<Sender>(sender)...));
+        guard.execute();
+        if (eptr)
+        {
+            std::rethrow_exception(eptr);
+        }
     }
 };
 
@@ -146,11 +157,8 @@ struct ExecutionRpcHandlerTest : test::ExecutionTestMixin<test::GrpcClientServer
     {
         using ServerRPC = test::UnaryServerRPC;
         return test::with_query_value(
-            agrpc::register_sender_rpc_handler<ServerRPC>(grpc_context, service,
-                                                          [&](ServerRPC& rpc, test::msg::Request& request)
-                                                          {
-                                                              return handle_unary_request_sender(rpc, request);
-                                                          }),
+            agrpc::register_sender_rpc_handler<ServerRPC>(
+                grpc_context, service, std::bind_front(&ExecutionRpcHandlerTest::handle_unary_request_sender, this)),
             stdexec::get_allocator, get_allocator());
     }
 

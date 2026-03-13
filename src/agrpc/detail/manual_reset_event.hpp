@@ -43,7 +43,7 @@ template <class Signature, template <class...> class Storage>
 class ManualResetEventSender;
 
 template <class Signature, class Receiver>
-struct ManualResetEventRunningOperationState;
+struct ManualResetEventRunningOperation;
 
 template <class Signature>
 class ManualResetEventBase;
@@ -77,7 +77,7 @@ class ManualResetEventBase<void(Args...)>
 
   private:
     template <class, class>
-    friend struct detail::ManualResetEventRunningOperationState;
+    friend struct detail::ManualResetEventRunningOperation;
 
     template <class, class>
     friend struct detail::ManualResetEventOperation;
@@ -270,14 +270,12 @@ class BasicManualResetEvent<void(Args...), StorageT> : private StorageT<Args...>
 };
 
 template <class... Args, class Receiver>
-struct ManualResetEventRunningOperationState<void(Args...), Receiver> : ManualResetEventOperationBase<void(Args...)>
+struct ManualResetEventRunningOperation<void(Args...), Receiver> : ManualResetEventOperationBase<void(Args...)>
 {
     using Signature = void(Args...);
     using Base = ManualResetEventOperationBase<Signature>;
     using Event = ManualResetEventBase<Signature>;
-#ifdef AGRPC_STDEXEC
-    using operation_state_concept = exec::operation_state_t;
-#endif
+
     struct StopFunction
     {
         void operator()() const
@@ -290,7 +288,7 @@ struct ManualResetEventRunningOperationState<void(Args...), Receiver> : ManualRe
             }
         }
 
-        ManualResetEventRunningOperationState& op_;
+        ManualResetEventRunningOperation& op_;
     };
 
     using StopToken = exec::stop_token_type_t<Receiver&>;
@@ -298,13 +296,13 @@ struct ManualResetEventRunningOperationState<void(Args...), Receiver> : ManualRe
 
     static void complete_impl(Base* base, Args... args)
     {
-        auto& self = *static_cast<ManualResetEventRunningOperationState*>(base);
+        auto& self = *static_cast<ManualResetEventRunningOperation*>(base);
         self.stop_callback().reset();
         self.complete(static_cast<Args&&>(args)...);
     }
 
     template <class R>
-    ManualResetEventRunningOperationState(R&& receiver, Event& event)
+    ManualResetEventRunningOperation(R&& receiver, Event& event)
         : Base{event, &complete_impl}, impl_(static_cast<R&&>(receiver))
     {
     }
@@ -334,9 +332,8 @@ class ManualResetEventOperationState
     using Event = BasicManualResetEvent<Signature, Storage>;
 
   public:
-#ifdef AGRPC_STDEXEC
     using operation_state_concept = exec::operation_state_t;
-#endif
+
     void start() noexcept
     {
         auto stop_token = exec::get_stop_token(exec::get_env(state_.receiver()));
@@ -369,7 +366,7 @@ class ManualResetEventOperationState
             static_cast<Event&&>(state_.event_).get_value());
     }
 
-    ManualResetEventRunningOperationState<Signature, Receiver> state_;
+    ManualResetEventRunningOperation<Signature, Receiver> state_;
 };
 
 template <class... Args, template <class...> class Storage>
@@ -380,10 +377,6 @@ class ManualResetEventSender<void(Args...), Storage> : public detail::SenderOf<v
     using Event = BasicManualResetEvent<Signature, Storage>;
 
   public:
-#ifdef AGRPC_STDEXEC
-    using sender_concept = exec::sender_t;
-#endif
-
     template <class R>
     [[nodiscard]] auto connect(R&& receiver) && noexcept(detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<R>)
         -> ManualResetEventOperationState<Signature, Storage, detail::RemoveCrefT<R>>

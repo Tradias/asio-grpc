@@ -1,0 +1,13 @@
+diff --git a/include/unifex/v1/async_scope.hpp b/include/unifex/v1/async_scope.hpp
+index 244d69d..dc950db 100644
+--- a/include/unifex/v1/async_scope.hpp
++++ b/include/unifex/v1/async_scope.hpp
+@@ -281,7 +281,7 @@ struct _attach_sender<Sender>::type final {
+       return blocking_kind::always_inline;
+     }
+     else {
+-      if (self.scope_) {
++      if (self.sender_.scope_) {
+         return unifex::blocking(self.sender_);
+       } else {
+         // we complete inline with done when there's no scope

@@ -46,6 +46,9 @@ cmake_dependent_option(ASIO_GRPC_TEST_CALLBACK_API_CPP20 "Enable tests for the g
 if(ASIO_GRPC_TEST_CALLBACK_API_CPP20)
     list(APPEND VCPKG_MANIFEST_FEATURES "callback-api")
 endif()
+if(ASIO_GRPC_ENABLE_STDEXEC_TESTS)
+    list(APPEND VCPKG_MANIFEST_FEATURES "stdexec")
+endif()
 
 project(
     asio-grpc

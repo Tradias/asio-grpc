@@ -20,7 +20,6 @@
 #include <agrpc/alarm.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
-#include <agrpc/detail/execution.hpp>
 #include <agrpc/waiter.hpp>
 
 #include <functional>
@@ -59,12 +58,9 @@ template <class Derived>
 struct ReceiverBase
 {
     using is_receiver = void;
-#ifdef AGRPC_STDEXEC
-    using receiver_concept = agrpc::detail::exec::receiver_t;
-#endif
 
 #ifdef AGRPC_STDEXEC
-    constexpr void set_stopped() const noexcept { static_cast<const Derived&>(*this).set_done(); }
+    using receiver_concept = stdexec::receiver_t;
 
     template <class... T>
     constexpr void set_value(T&&... args) const noexcept
@@ -76,6 +72,8 @@ struct ReceiverBase
     {
         static_cast<const Derived&>(*this).set_error(static_cast<std::exception_ptr&&>(e));
     }
+
+    constexpr void set_stopped() const noexcept { static_cast<const Derived&>(*this).set_done(); }
 #endif
 };
 

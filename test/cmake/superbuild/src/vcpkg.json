@@ -17,8 +17,7 @@
             ]
         },
         "libunifex",
-        "gtest",
-        "stdexec"
+        "gtest"
     ],
     "features": {
         "callback-api": {
@@ -26,7 +25,13 @@
             "dependencies": [
                 "boost-cobalt"
             ]
+        },
+        "stdexec": {
+            "description": "Enable stdexec",
+            "dependencies": [
+                "stdexec"
+            ]
         }
     },
-    "builtin-baseline": "ac7af7424cbaf9057cb246b620f455303dccd6ed"
+    "builtin-baseline": "a44707152fabbedcf1c17fe80d7bfb7d9370d8d5"
 }

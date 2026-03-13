@@ -546,8 +546,8 @@ TEST_CASE("stdexec Waiter with completion arg")
         return stdexec::just(42);
     };
     int value{};
-    agrpc::Waiter<void(int), exec::inline_scheduler> waiter;
-    stdexec::sync_wait(stdexec::when_all(waiter.initiate(initiate, exec::inline_scheduler()),
+    agrpc::Waiter<void(int), stdexec::inline_scheduler> waiter;
+    stdexec::sync_wait(stdexec::when_all(waiter.initiate(initiate, stdexec::inline_scheduler()),
                                          stdexec::then(waiter.wait(agrpc::use_sender),
                                                        [&](int v)
                                                        {
