@@ -30,9 +30,7 @@ namespace create_ns
 template <class Receiver, class Fn, class... ValueTypes>
 struct OperationState
 {
-#ifdef AGRPC_STDEXEC
     using operation_state_concept = exec::operation_state_t;
-#endif
 
     OperationState(Receiver rec, Fn fn) : rec_(static_cast<Receiver&&>(rec)), fn_(static_cast<Fn&&>(fn)) {}
 
@@ -70,7 +68,7 @@ struct OperationState
         }
     }
 
-    private:
+  private:
     Receiver rec_;
     Fn fn_;
 };
@@ -79,7 +77,10 @@ struct OperationState
 struct InlineSchedulerEnv
 {
     template <class Tag>
-    constexpr exec::inline_scheduler query(stdexec::get_completion_scheduler_t<Tag>) const noexcept { return {}; }
+    static constexpr exec::inline_scheduler query(stdexec::get_completion_scheduler_t<Tag>) noexcept
+    {
+        return {};
+    }
 };
 #endif
 
@@ -87,9 +88,6 @@ template <class Fn, class... ValueTypes>
 class Sender : public detail::SenderOf<void(ValueTypes...)>
 {
   public:
-#ifdef AGRPC_STDEXEC
-    using sender_concept = exec::sender_t;
-#endif
     explicit Sender(Fn fn) : fn_(static_cast<Fn&&>(fn)) {}
 
     template <class Receiver>
@@ -98,6 +96,10 @@ class Sender : public detail::SenderOf<void(ValueTypes...)>
     {
         return {static_cast<Receiver&&>(receiver), static_cast<Fn&&>(fn_)};
     }
+
+#ifdef AGRPC_STDEXEC
+    static InlineSchedulerEnv get_env() noexcept { return {}; }
+#endif
 
   private:
     Fn fn_;

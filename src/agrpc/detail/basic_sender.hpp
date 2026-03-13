@@ -43,7 +43,7 @@ struct BasicSenderEnv
     template <class Tag>
     agrpc::GrpcContext::executor_type query(stdexec::get_completion_scheduler_t<Tag>) const noexcept;
 
-    constexpr exec::inline_scheduler query(stdexec::get_completion_scheduler_t<stdexec::set_stopped_t>) const noexcept
+    static constexpr exec::inline_scheduler query(stdexec::get_completion_scheduler_t<stdexec::set_stopped_t>) noexcept
     {
         return {};
     }
@@ -56,10 +56,6 @@ template <class Initiation, class Implementation>
 class [[nodiscard]] BasicSender : public detail::SenderOf<typename Implementation::Signature>
 {
   public:
-#ifdef AGRPC_STDEXEC
-    using sender_concept = exec::sender_t;
-#endif
-
     template <class Receiver>
     [[nodiscard]] detail::BasicSenderOperationState<Initiation, Implementation, detail::RemoveCrefT<Receiver>> connect(
         Receiver&& receiver) && noexcept((detail::IS_NOTRHOW_DECAY_CONSTRUCTIBLE_V<Receiver> &&
@@ -78,6 +74,10 @@ class [[nodiscard]] BasicSender : public detail::SenderOf<typename Implementatio
     {
         return {static_cast<Receiver&&>(receiver), grpc_context_, initiation_, implementation_};
     }
+
+#ifdef AGRPC_STDEXEC
+    BasicSenderEnv get_env() const noexcept { return {grpc_context_}; }
+#endif
 
   private:
     friend detail::BasicSenderAccess;
@@ -210,9 +210,8 @@ template <class Initiation, class Implementation, class Receiver>
 class BasicSenderOperationState
 {
   public:
-#ifdef AGRPC_STDEXEC
     using operation_state_concept = exec::operation_state_t;
-#endif
+
     void start() noexcept
     {
         auto& op = operation();

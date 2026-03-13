@@ -178,7 +178,7 @@ namespace stdexec = ::unifex;
 namespace exec = ::unifex;
 #endif
 
-#if 0
+#ifdef AGRPC_STDEXEC
 #include <exec/async_scope.hpp>
 #include <exec/finally.hpp>
 #include <exec/inline_scheduler.hpp>

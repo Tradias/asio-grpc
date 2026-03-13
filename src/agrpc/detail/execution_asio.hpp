@@ -53,6 +53,13 @@ struct GetSchedulerFn
 
 inline constexpr GetSchedulerFn get_scheduler{};
 
+struct receiver_t
+{
+};
+struct operation_state_t
+{
+};
+
 template <class Sender>
 inline constexpr bool is_sender_v = true;
 

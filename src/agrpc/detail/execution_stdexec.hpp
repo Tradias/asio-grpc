@@ -52,16 +52,14 @@ using ::stdexec::get_scheduler;
 
 using ::stdexec::scheduler;
 
-using ::stdexec::scheduler_t;
-using ::stdexec::sender_t;
-using ::stdexec::receiver_t;
-using ::stdexec::operation_state_t;
-
 template <class, class = void>
 inline constexpr bool scheduler_provider = false;
 
 template <class T>
 inline constexpr bool scheduler_provider<T, decltype((void)exec::get_scheduler(std::declval<const T&>()))> = true;
+
+using ::stdexec::operation_state_t;
+using ::stdexec::receiver_t;
 
 template <class T>
 inline constexpr bool is_sender_v = ::stdexec::sender<T>;
@@ -101,9 +99,9 @@ struct Env
     // New stdexec CPOs prefer member-based customization. Provide member
     // accessors for `get_stop_token` and `get_allocator` so CPOs can call
     // `env.get_stop_token()` / `env.get_allocator()`.
-    StopTokenT query(::stdexec::get_stop_token_t) const noexcept {return stop_token_;}
+    StopTokenT query(::stdexec::get_stop_token_t) const noexcept { return stop_token_; }
 
-    AllocatorT query(::stdexec::get_allocator_t) const noexcept{ return allocator_; }
+    AllocatorT query(::stdexec::get_allocator_t) const noexcept { return allocator_; }
 
     StopTokenT stop_token_;
     AllocatorT allocator_;
