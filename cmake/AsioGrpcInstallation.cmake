@@ -34,6 +34,24 @@ install(
 
 install(TARGETS asio-grpc asio-grpc-standalone-asio asio-grpc-unifex asio-grpc-stdexec EXPORT ${PROJECT_NAME}Targets)
 
+# Install C++20 module targets when they were created (CMake 3.28+).
+# FILE_SET CXX_MODULES causes CMake to install the .cppm sources alongside the
+# headers so that consumers' build systems can compile the BMI themselves
+# (pre-compiled BMIs are compiler-version-specific and cannot be distributed).
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.28")
+    install(
+        TARGETS asio-grpc-module
+                asio-grpc-standalone-asio-module
+                asio-grpc-unifex-module
+                asio-grpc-stdexec-module
+                asio-grpc-health-check-module
+                asio-grpc-standalone-asio-health-check-module
+                asio-grpc-unifex-health-check-module
+                asio-grpc-stdexec-health-check-module
+        EXPORT ${PROJECT_NAME}Targets
+        FILE_SET CXX_MODULES DESTINATION include)
+endif()
+
 install(
     EXPORT ${PROJECT_NAME}Targets
     NAMESPACE ${PROJECT_NAME}::
@@ -44,3 +62,13 @@ install(
     TYPE INCLUDE
     FILES_MATCHING
     PATTERN "*.hpp")
+
+# Install .cppm sources for module-aware consumers (CMake 3.28+).
+# These are installed separately from FILE_SET so that the paths are
+# predictable for packaging tools (vcpkg, Conan) that pre-stage sources.
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.28")
+    install(
+        FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/asio_grpc.cppm"
+              "${CMAKE_CURRENT_SOURCE_DIR}/src/asio_grpc_health_check.cppm"
+        TYPE INCLUDE)
+endif()
