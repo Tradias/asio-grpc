@@ -16,7 +16,6 @@
 #define AGRPC_DETAIL_EXECUTION_STDEXEC_HPP
 
 #include <agrpc/detail/utility.hpp>
-#include <exec/inline_scheduler.hpp>
 #include <stdexec/execution.hpp>
 
 #include <agrpc/detail/config.hpp>
@@ -58,13 +57,16 @@ inline constexpr bool scheduler_provider = false;
 template <class T>
 inline constexpr bool scheduler_provider<T, decltype((void)exec::get_scheduler(std::declval<const T&>()))> = true;
 
+using ::stdexec::operation_state_t;
+using ::stdexec::receiver_t;
+
 template <class T>
 inline constexpr bool is_sender_v = ::stdexec::sender<T>;
 
-using ::exec::inline_scheduler;
 using ::stdexec::connect;
 using ::stdexec::connect_result_t;
 using ::stdexec::get_stop_token;
+using ::stdexec::inline_scheduler;
 using ::stdexec::then;
 
 template <class Receiver>
@@ -93,12 +95,12 @@ struct Env
     using StopToken = StopTokenT;
     using Allocator = AllocatorT;
 
-    friend StopTokenT tag_invoke(::stdexec::tag_t<::stdexec::get_stop_token>, const Env& env) noexcept
-    {
-        return env.stop_token_;
-    }
+    // New stdexec CPOs prefer member-based customization. Provide member
+    // accessors for `get_stop_token` and `get_allocator` so CPOs can call
+    // `env.get_stop_token()` / `env.get_allocator()`.
+    StopTokenT query(::stdexec::get_stop_token_t) const noexcept { return stop_token_; }
 
-    friend AllocatorT tag_invoke(get_allocator_t, const Env& env) noexcept { return env.allocator_; }
+    AllocatorT query(::stdexec::get_allocator_t) const noexcept { return allocator_; }
 
     StopTokenT stop_token_;
     AllocatorT allocator_;

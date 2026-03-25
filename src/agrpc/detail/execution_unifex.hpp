@@ -47,6 +47,13 @@ using ::unifex::scheduler_provider;
 template <class T>
 inline constexpr bool is_sender_v = ::unifex::sender<T>;
 
+struct receiver_t
+{
+};
+struct operation_state_t
+{
+};
+
 using ::unifex::connect;
 using ::unifex::connect_result_t;
 using ::unifex::get_stop_token;

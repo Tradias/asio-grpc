@@ -43,7 +43,7 @@ template <class Signature, template <class...> class Storage>
 class ManualResetEventSender;
 
 template <class Signature, class Receiver>
-struct ManualResetEventRunningOperationState;
+struct ManualResetEventRunningOperation;
 
 template <class Signature>
 class ManualResetEventBase;
@@ -77,7 +77,7 @@ class ManualResetEventBase<void(Args...)>
 
   private:
     template <class, class>
-    friend struct detail::ManualResetEventRunningOperationState;
+    friend struct detail::ManualResetEventRunningOperation;
 
     template <class, class>
     friend struct detail::ManualResetEventOperation;
@@ -270,7 +270,7 @@ class BasicManualResetEvent<void(Args...), StorageT> : private StorageT<Args...>
 };
 
 template <class... Args, class Receiver>
-struct ManualResetEventRunningOperationState<void(Args...), Receiver> : ManualResetEventOperationBase<void(Args...)>
+struct ManualResetEventRunningOperation<void(Args...), Receiver> : ManualResetEventOperationBase<void(Args...)>
 {
     using Signature = void(Args...);
     using Base = ManualResetEventOperationBase<Signature>;
@@ -288,7 +288,7 @@ struct ManualResetEventRunningOperationState<void(Args...), Receiver> : ManualRe
             }
         }
 
-        ManualResetEventRunningOperationState& op_;
+        ManualResetEventRunningOperation& op_;
     };
 
     using StopToken = exec::stop_token_type_t<Receiver&>;
@@ -296,13 +296,13 @@ struct ManualResetEventRunningOperationState<void(Args...), Receiver> : ManualRe
 
     static void complete_impl(Base* base, Args... args)
     {
-        auto& self = *static_cast<ManualResetEventRunningOperationState*>(base);
+        auto& self = *static_cast<ManualResetEventRunningOperation*>(base);
         self.stop_callback().reset();
         self.complete(static_cast<Args&&>(args)...);
     }
 
     template <class R>
-    ManualResetEventRunningOperationState(R&& receiver, Event& event)
+    ManualResetEventRunningOperation(R&& receiver, Event& event)
         : Base{event, &complete_impl}, impl_(static_cast<R&&>(receiver))
     {
     }
@@ -332,6 +332,8 @@ class ManualResetEventOperationState
     using Event = BasicManualResetEvent<Signature, Storage>;
 
   public:
+    using operation_state_concept = exec::operation_state_t;
+
     void start() noexcept
     {
         auto stop_token = exec::get_stop_token(exec::get_env(state_.receiver()));
@@ -345,10 +347,6 @@ class ManualResetEventOperationState
             complete();
         }
     }
-
-#ifdef AGRPC_STDEXEC
-    friend void tag_invoke(stdexec::start_t, ManualResetEventOperationState& o) noexcept { o.start(); }
-#endif
 
   private:
     friend detail::ManualResetEventSender<Signature, Storage>;
@@ -368,7 +366,7 @@ class ManualResetEventOperationState
             static_cast<Event&&>(state_.event_).get_value());
     }
 
-    ManualResetEventRunningOperationState<Signature, Receiver> state_;
+    ManualResetEventRunningOperation<Signature, Receiver> state_;
 };
 
 template <class... Args, template <class...> class Storage>
@@ -385,15 +383,6 @@ class ManualResetEventSender<void(Args...), Storage> : public detail::SenderOf<v
     {
         return {static_cast<R&&>(receiver), event_};
     }
-
-#ifdef AGRPC_STDEXEC
-    template <class Receiver>
-    friend auto tag_invoke(stdexec::connect_t, ManualResetEventSender&& s, Receiver&& r) noexcept(
-        noexcept(static_cast<ManualResetEventSender&&>(s).connect(static_cast<Receiver&&>(r))))
-    {
-        return static_cast<ManualResetEventSender&&>(s).connect(static_cast<Receiver&&>(r));
-    }
-#endif
 
   private:
     friend Event;

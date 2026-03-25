@@ -41,11 +41,9 @@ class BasicSenderOperationState;
 struct BasicSenderEnv
 {
     template <class Tag>
-    friend agrpc::GrpcContext::executor_type tag_invoke(stdexec::get_completion_scheduler_t<Tag>,
-                                                        const BasicSenderEnv& e) noexcept;
+    agrpc::GrpcContext::executor_type query(stdexec::get_completion_scheduler_t<Tag>) const noexcept;
 
-    friend constexpr exec::inline_scheduler tag_invoke(stdexec::get_completion_scheduler_t<stdexec::set_stopped_t>,
-                                                       const BasicSenderEnv&) noexcept
+    static constexpr exec::inline_scheduler query(stdexec::get_completion_scheduler_t<stdexec::set_stopped_t>) noexcept
     {
         return {};
     }
@@ -78,23 +76,7 @@ class [[nodiscard]] BasicSender : public detail::SenderOf<typename Implementatio
     }
 
 #ifdef AGRPC_STDEXEC
-    template <class Receiver>
-    friend detail::BasicSenderOperationState<Initiation, Implementation, detail::RemoveCrefT<Receiver>> tag_invoke(
-        stdexec::connect_t, BasicSender&& s,
-        Receiver&& r) noexcept(noexcept(static_cast<BasicSender&&>(s).connect(static_cast<Receiver&&>(r))))
-    {
-        return static_cast<BasicSender&&>(s).connect(static_cast<Receiver&&>(r));
-    }
-
-    template <class Receiver>
-    friend detail::BasicSenderOperationState<Initiation, Implementation, detail::RemoveCrefT<Receiver>> tag_invoke(
-        stdexec::connect_t, const BasicSender& s,
-        Receiver&& r) noexcept(noexcept(s.connect(static_cast<Receiver&&>(r))))
-    {
-        return s.connect(static_cast<Receiver&&>(r));
-    }
-
-    friend BasicSenderEnv tag_invoke(stdexec::get_env_t, const BasicSender& s) noexcept { return {s.grpc_context_}; }
+    BasicSenderEnv get_env() const noexcept { return {grpc_context_}; }
 #endif
 
   private:
@@ -228,6 +210,8 @@ template <class Initiation, class Implementation, class Receiver>
 class BasicSenderOperationState
 {
   public:
+    using operation_state_concept = exec::operation_state_t;
+
     void start() noexcept
     {
         auto& op = operation();
@@ -247,10 +231,6 @@ class BasicSenderOperationState
         op.restore_scratch_space();
         op.start(grpc_context, impl_.second(), std::move(stop_token));
     }
-
-#ifdef AGRPC_STDEXEC
-    friend void tag_invoke(stdexec::start_t, BasicSenderOperationState& s) noexcept { s.start(); }
-#endif
 
   private:
     friend detail::BasicSender<Initiation, Implementation>;

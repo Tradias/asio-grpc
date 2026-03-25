@@ -181,7 +181,6 @@ namespace exec = ::unifex;
 #ifdef AGRPC_STDEXEC
 #include <exec/async_scope.hpp>
 #include <exec/finally.hpp>
-#include <exec/inline_scheduler.hpp>
 #include <exec/single_thread_context.hpp>
 #include <exec/task.hpp>
 #include <stdexec/execution.hpp>

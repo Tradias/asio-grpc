@@ -44,6 +44,8 @@ struct SenderOf<void(Values...)>
     using is_sender = void;
 
 #ifdef AGRPC_STDEXEC
+    using sender_concept = stdexec::sender_t;
+
     using completion_signatures =
         stdexec::completion_signatures<stdexec::set_value_t(Values...), stdexec::set_error_t(std::exception_ptr),
                                        stdexec::set_stopped_t()>;
