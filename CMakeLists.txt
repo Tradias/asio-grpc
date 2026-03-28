@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.14...3.27)
+cmake_minimum_required(VERSION 3.14...4.3)
 
 include(CMakeDependentOption)
 
@@ -66,6 +66,7 @@ set(ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR
     "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
     CACHE STRING "Install directory for CMake config files")
 option(ASIO_GRPC_BUILD_EXAMPLES "Build examples" off)
+option(ASIO_GRPC_BUILD_MODULE "Build C++20 module" off)
 
 # more maintainer options
 option(ASIO_GRPC_TEST_COVERAGE "Compile tests with --coverage" off)

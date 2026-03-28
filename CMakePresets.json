@@ -16,6 +16,7 @@
                 "VCPKG_OVERLAY_PORTS": "${sourceDir}/deps",
                 "VCPKG_INSTALL_OPTIONS": "--no-print-usage",
                 "CMAKE_INSTALL_PREFIX": "out",
+                "CMAKE_CXX_SCAN_FOR_MODULES": "FALSE",
                 "ASIO_GRPC_BUILD_TESTS": "TRUE",
                 "ASIO_GRPC_DISCOVER_TESTS": "TRUE"
             }

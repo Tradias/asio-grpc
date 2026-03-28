@@ -52,55 +52,25 @@ if(ASIO_GRPC_BUILD_EXAMPLES)
     endif()
 endif()
 
-# asio-grpc C++20 module targets (opt-in, requires CMake 3.28+)
-#
-# Each module target compiles the same .cppm wrapper with the backend-specific
-# compile definitions it inherits from the corresponding INTERFACE target.
-# They are purely additive: nothing is changed in the existing targets.
-#
-# Consumers opt in by linking to one of:
-#   asio-grpc::asio-grpc-module
-#   asio-grpc::asio-grpc-standalone-asio-module
-#   asio-grpc::asio-grpc-unifex-module
-#   asio-grpc::asio-grpc-stdexec-module
-#   asio-grpc::asio-grpc-health-check-module          (Boost.Asio backend)
-#   asio-grpc::asio-grpc-standalone-asio-health-check-module
-#   asio-grpc::asio-grpc-unifex-health-check-module
-#   asio-grpc::asio-grpc-stdexec-health-check-module
-if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.28")
-    # Helper: create one non-INTERFACE library that compiles a .cppm file and
-    # inherits all compile definitions / include directories from _iface_target.
-    function(asio_grpc_create_module_target _name _iface_target _cppm_file _std)
-        add_library(${_name})
-        add_library(${PROJECT_NAME}::${_name} ALIAS ${_name})
-        target_compile_features(${_name} PUBLIC cxx_std_${_std})
-        target_link_libraries(${_name} PUBLIC ${_iface_target})
-        target_sources(
-            ${_name}
-            PUBLIC FILE_SET CXX_MODULES
-                   BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}"
-                   FILES "${_cppm_file}")
+if(ASIO_GRPC_BUILD_MODULE)
+    function(asio_grpc_create_module_target _asio_grpc_name _iface_target)
+        add_library(${_asio_grpc_name} OBJECT)
+        add_library(${PROJECT_NAME}::${_asio_grpc_name} ALIAS ${_asio_grpc_name})
+        set_target_properties(${_asio_grpc_name} PROPERTIES CXX_SCAN_FOR_MODULES on)
+
+        target_sources(${_asio_grpc_name} PUBLIC FILE_SET CXX_MODULES BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}" FILES
+                                                 "${CMAKE_CURRENT_SOURCE_DIR}/asio_grpc.cppm")
+        if(NOT ASIO_GRPC_BUILD_TESTS)
+            # Workaround: Do not build this module since its BMI won't be installed anyways. Does not work with Visual
+            # Studio generator at the moment.
+            set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/asio_grpc.cppm" PROPERTIES HEADER_FILE_ONLY on)
+        endif()
+
+        target_compile_features(${_asio_grpc_name} PUBLIC cxx_std_20)
+        target_link_libraries(${_asio_grpc_name} PRIVATE ${_iface_target})
     endfunction()
 
-    set(_asio_grpc_cppm "${CMAKE_CURRENT_SOURCE_DIR}/asio_grpc.cppm")
-    set(_asio_grpc_hc_cppm "${CMAKE_CURRENT_SOURCE_DIR}/asio_grpc_health_check.cppm")
-
-    asio_grpc_create_module_target(asio-grpc-module asio-grpc "${_asio_grpc_cppm}" 20)
-    asio_grpc_create_module_target(asio-grpc-standalone-asio-module asio-grpc-standalone-asio
-                                   "${_asio_grpc_cppm}" 20)
-    asio_grpc_create_module_target(asio-grpc-unifex-module asio-grpc-unifex "${_asio_grpc_cppm}" 20)
-    asio_grpc_create_module_target(asio-grpc-stdexec-module asio-grpc-stdexec "${_asio_grpc_cppm}" 20)
-
-    asio_grpc_create_module_target(asio-grpc-health-check-module asio-grpc "${_asio_grpc_hc_cppm}" 20)
-    asio_grpc_create_module_target(asio-grpc-standalone-asio-health-check-module asio-grpc-standalone-asio
-                                   "${_asio_grpc_hc_cppm}" 20)
-    asio_grpc_create_module_target(asio-grpc-unifex-health-check-module asio-grpc-unifex
-                                   "${_asio_grpc_hc_cppm}" 20)
-    asio_grpc_create_module_target(asio-grpc-stdexec-health-check-module asio-grpc-stdexec
-                                   "${_asio_grpc_hc_cppm}" 20)
-
-    unset(_asio_grpc_cppm)
-    unset(_asio_grpc_hc_cppm)
+    asio_grpc_create_module_target(asio-grpc-module asio-grpc::asio-grpc)
 endif()
 
 # asio-grpc sources

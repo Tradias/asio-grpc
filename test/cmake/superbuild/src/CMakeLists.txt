@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.14...4.3)
 
 project(asio-grpc-cmake-test LANGUAGES CXX)
 
@@ -39,7 +39,9 @@ target_compile_definitions(compile-options INTERFACE $<$<CXX_COMPILER_ID:MSVC>:_
 function(create_object_library _name)
     add_library(${_name} OBJECT)
 
-    target_sources(${_name} PRIVATE ${ARGN})
+    if(ARGN)
+        target_sources(${_name} PRIVATE ${ARGN})
+    endif()
 
     target_link_libraries(${_name} PRIVATE compile-options)
 endfunction()
@@ -95,9 +97,18 @@ target_include_directories(descriptor-option PRIVATE "${DESCRIPTOR_GENERATED_PRO
 target_compile_definitions(descriptor-option
                            PRIVATE "DESCRIPTOR_FILE=R\"(${DESCRIPTOR_GENERATED_PROTOS_OUT_DIR}/descriptor.desc)\"")
 
+# C++20 module
+create_object_library(cpp20-module)
+if(ASIO_GRPC_BUILD_MODULE)
+    target_sources(cpp20-module PRIVATE cpp20_module.cpp)
+    target_link_libraries(cpp20-module PRIVATE asio-grpc::asio-grpc-module)
+else()
+    target_sources(cpp20-module PRIVATE cpp20_module_empty.cpp)
+endif()
+
 # main
 add_executable(main)
 
 target_sources(main PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp")
 
-target_link_libraries(main PRIVATE target-option out-var-option descriptor-option compile-options)
+target_link_libraries(main PRIVATE target-option out-var-option descriptor-option cpp20-module compile-options)

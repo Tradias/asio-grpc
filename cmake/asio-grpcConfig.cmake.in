@@ -34,4 +34,13 @@ if(TARGET "gRPC::grpc++")
     set_target_properties(@PROJECT_NAME@::asio-grpc-standalone-asio PROPERTIES INTERFACE_LINK_LIBRARIES "gRPC::grpc++")
     set_target_properties(@PROJECT_NAME@::asio-grpc-unifex PROPERTIES INTERFACE_LINK_LIBRARIES "gRPC::grpc++")
     set_target_properties(@PROJECT_NAME@::asio-grpc-stdexec PROPERTIES INTERFACE_LINK_LIBRARIES "gRPC::grpc++")
+
+    if(TARGET asio-grpc::asio-grpc-module)
+        set_target_properties(@PROJECT_NAME@::asio-grpc-module PROPERTIES INTERFACE_LINK_LIBRARIES "gRPC::grpc++")
+        find_package(Boost QUIET)
+        if(TARGET "Boost::headers")
+            set_target_properties(@PROJECT_NAME@::asio-grpc-module PROPERTIES INTERFACE_LINK_LIBRARIES
+                                                                              "gRPC::grpc++;Boost::headers")
+        endif()
+    endif()
 endif()

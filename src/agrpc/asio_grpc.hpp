@@ -26,18 +26,22 @@
 #define AGRPC_AGRPC_ASIO_GRPC_HPP
 
 #include <agrpc/alarm.hpp>
+#include <agrpc/client_callback.hpp>
 #include <agrpc/client_rpc.hpp>
 #include <agrpc/default_server_rpc_traits.hpp>
 #include <agrpc/grpc_context.hpp>
 #include <agrpc/grpc_executor.hpp>
 #include <agrpc/notify_on_state_change.hpp>
+#include <agrpc/reactor_ptr.hpp>
 #include <agrpc/read.hpp>
 #include <agrpc/register_awaitable_rpc_handler.hpp>
 #include <agrpc/register_callback_rpc_handler.hpp>
 #include <agrpc/register_coroutine_rpc_handler.hpp>
 #include <agrpc/register_sender_rpc_handler.hpp>
+#include <agrpc/register_yield_rpc_handler.hpp>
 #include <agrpc/rpc_type.hpp>
 #include <agrpc/run.hpp>
+#include <agrpc/server_callback.hpp>
 #include <agrpc/server_rpc.hpp>
 #include <agrpc/test.hpp>
 #include <agrpc/use_sender.hpp>
