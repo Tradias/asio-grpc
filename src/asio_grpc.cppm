@@ -28,6 +28,9 @@ module;
 // specialised on, per [temp.spec.partial.general]/6 and [module.reach].
 
 #include <agrpc/asio_grpc.hpp>
+#include <agrpc/client_callback.hpp>
+#include <agrpc/reactor_ptr.hpp>
+#include <agrpc/server_callback.hpp>
 
 // ── Named module interface ────────────────────────────────────────────────────
 export module asio_grpc;
