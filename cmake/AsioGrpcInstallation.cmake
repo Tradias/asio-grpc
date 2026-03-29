@@ -34,6 +34,17 @@ install(
 
 install(TARGETS asio-grpc asio-grpc-standalone-asio asio-grpc-unifex asio-grpc-stdexec EXPORT ${PROJECT_NAME}Targets)
 
+# Install C++20 module targets when they were created (CMake 3.28+). FILE_SET CXX_MODULES causes CMake to install the
+# .cppm sources alongside the headers so that consumers' build systems can compile the BMI themselves (pre-compiled BMIs
+# are compiler-version-specific and cannot be distributed).
+if(ASIO_GRPC_BUILD_MODULE)
+    install(
+        TARGETS asio-grpc-module
+        EXPORT ${PROJECT_NAME}Targets
+        FILE_SET CXX_MODULES
+        DESTINATION "${ASIO_GRPC_CMAKE_CONFIG_INSTALL_DIR}/src")
+endif()
+
 install(
     EXPORT ${PROJECT_NAME}Targets
     NAMESPACE ${PROJECT_NAME}::

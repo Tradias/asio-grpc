@@ -61,7 +61,7 @@ jobs:
       uses: lukka/run-cmake@main
       with:
         configurePreset: 'default'
-        configurePresetAdditionalArgs: '["-GNinja", ${{ env.CMAKE_ARGS }}, "-DVCPKG_TARGET_TRIPLET=x64-windows-release", "-DVCPKG_HOST_TRIPLET=x64-windows-release", "-DCMAKE_COMPILE_WARNING_AS_ERROR=off"]'
+        configurePresetAdditionalArgs: '["-GNinja", ${{ env.CMAKE_ARGS }}, "-DVCPKG_TARGET_TRIPLET=x64-windows-release", "-DVCPKG_HOST_TRIPLET=x64-windows-release", "-DCMAKE_COMPILE_WARNING_AS_ERROR=off", "-DASIO_GRPC_BUILD_MODULE=on", "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL"]'
         buildPreset: 'default'
         buildPresetAdditionalArgs: '["--config", "Release"]'
         testPreset: 'default'

@@ -36,6 +36,7 @@
 #include <agrpc/register_callback_rpc_handler.hpp>
 #include <agrpc/register_coroutine_rpc_handler.hpp>
 #include <agrpc/register_sender_rpc_handler.hpp>
+#include <agrpc/register_yield_rpc_handler.hpp>
 #include <agrpc/rpc_type.hpp>
 #include <agrpc/run.hpp>
 #include <agrpc/server_rpc.hpp>

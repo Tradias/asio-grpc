@@ -52,6 +52,28 @@ if(ASIO_GRPC_BUILD_EXAMPLES)
     endif()
 endif()
 
+if(ASIO_GRPC_BUILD_MODULE)
+    function(asio_grpc_create_module_target _asio_grpc_name _iface_target)
+        add_library(${_asio_grpc_name} OBJECT)
+        add_library(${PROJECT_NAME}::${_asio_grpc_name} ALIAS ${_asio_grpc_name})
+        set_target_properties(${_asio_grpc_name} PROPERTIES CXX_SCAN_FOR_MODULES on)
+
+        target_sources(${_asio_grpc_name} PUBLIC FILE_SET CXX_MODULES BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}" FILES
+                                                 "${CMAKE_CURRENT_SOURCE_DIR}/asio_grpc.cppm")
+        if(NOT ASIO_GRPC_BUILD_TESTS AND NOT CMAKE_GENERATOR MATCHES "Visual Studio")
+            # Workaround: Do not build this module since its BMI won't be installed anyways.
+            # Note: HEADER_FILE_ONLY has no effect with the Visual Studio generator for CXX_MODULES
+            # file sets; the guard above skips it so VS builds compile the module normally.
+            set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/asio_grpc.cppm" PROPERTIES HEADER_FILE_ONLY on)
+        endif()
+
+        target_compile_features(${_asio_grpc_name} PUBLIC cxx_std_20)
+        target_link_libraries(${_asio_grpc_name} PRIVATE ${_iface_target})
+    endfunction()
+
+    asio_grpc_create_module_target(asio-grpc-module asio-grpc::asio-grpc)
+endif()
+
 # asio-grpc sources
 if(ASIO_GRPC_BUILD_TESTS AND ASIO_GRPC_ENABLE_CHECK_HEADER_SYNTAX_TARGET)
     add_library(asio-grpc-sources INTERFACE)

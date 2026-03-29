@@ -72,7 +72,13 @@ template <class... T>
 Tuple(T...) -> Tuple<T...>;
 
 template <class Tuple>
-inline constexpr auto DECAY_TUPLE_SIZE = std::tuple_size_v<detail::RemoveCrefT<Tuple>>;
+inline constexpr std::size_t TUPLE_SIZE_V{};
+
+template <class... T>
+inline constexpr std::size_t TUPLE_SIZE_V<Tuple<T...>> = sizeof...(T);
+
+template <class Tuple>
+inline constexpr auto DECAY_TUPLE_SIZE = detail::TUPLE_SIZE_V<detail::RemoveCrefT<Tuple>>;
 
 template <std::size_t I, class Tuple>
 decltype(auto) get(Tuple&& tuple) noexcept
@@ -135,11 +141,5 @@ auto prepend_to_tuple(Arg&& arg, Tuple&& t)
 }
 
 AGRPC_NAMESPACE_END
-
-template <class... T>
-struct std::tuple_size<agrpc::detail::Tuple<T...>>
-{
-    static constexpr auto value = sizeof...(T);
-};
 
 #endif  // AGRPC_DETAIL_TUPLE_HPP

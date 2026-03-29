@@ -29,6 +29,8 @@ struct UncancellableSlot
 {
 };
 
+struct UnstoppableToken;
+
 template <class CancellationSlot>
 inline constexpr bool IS_CANCELLATION_SLOT = !exec::stoppable_token<CancellationSlot>;
 
@@ -37,6 +39,9 @@ inline constexpr bool IS_STOP_EVER_POSSIBLE_V = !exec::unstoppable_token<T>;
 
 template <>
 inline constexpr bool IS_STOP_EVER_POSSIBLE_V<UncancellableSlot> = false;
+
+template <>
+inline constexpr bool IS_STOP_EVER_POSSIBLE_V<UnstoppableToken> = false;
 
 template <class T>
 inline constexpr bool IS_EXECUTOR = asio::is_executor<T>::value || asio::execution::is_executor_v<T>;

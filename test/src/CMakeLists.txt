@@ -90,6 +90,17 @@ if(ASIO_GRPC_ENABLE_CPP20_TESTS_AND_EXAMPLES)
             target_sources(asio-grpc-test-asio-stdexec-cpp20 PRIVATE "test_callback_sender_receiver.cpp")
         endif()
     endif()
+
+    if(ASIO_GRPC_BUILD_MODULE)
+        add_executable(asio-grpc-test-cpp20-module)
+        target_sources(asio-grpc-test-cpp20-module PRIVATE "test_module.cpp")
+        target_link_libraries(asio-grpc-test-cpp20-module PRIVATE "asio-grpc-test-main-cpp20"
+                                                                  "asio-grpc-test-protos-cpp20" "asio-grpc-module")
+        set_target_properties(asio-grpc-test-cpp20-module PROPERTIES CXX_SCAN_FOR_MODULES on)
+        if(ASIO_GRPC_DISCOVER_TESTS)
+            doctest_discover_tests(asio-grpc-test-cpp20-module)
+        endif()
+    endif()
 endif()
 
 unset(ASIO_GRPC_CPP17_TEST_SOURCE_FILES)

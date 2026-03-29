@@ -15,6 +15,10 @@
 #ifndef AGRPC_AGRPC_REGISTER_YIELD_RPC_HANDLER_HPP
 #define AGRPC_AGRPC_REGISTER_YIELD_RPC_HANDLER_HPP
 
+#include <agrpc/detail/config.hpp>
+
+#if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)
+
 #include <agrpc/detail/register_yield_rpc_handler.hpp>
 
 AGRPC_NAMESPACE_BEGIN()
@@ -84,6 +88,8 @@ auto register_yield_rpc_handler(agrpc::GrpcContext& grpc_context, detail::Server
 }
 
 AGRPC_NAMESPACE_END
+
+#endif
 
 #include <agrpc/detail/epilogue.hpp>
 

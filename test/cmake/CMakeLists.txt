@@ -14,7 +14,7 @@
 
 if("${CMAKE_GENERATOR}" STREQUAL "Ninja Multi-Config")
     if(WIN32)
-        set(ASIO_GRPC_CMAKE_INSTALL_TEST_GENERATOR "NMake Makefiles")
+        set(ASIO_GRPC_CMAKE_INSTALL_TEST_GENERATOR "Ninja")
     else()
         set(ASIO_GRPC_CMAKE_INSTALL_TEST_GENERATOR "Unix Makefiles")
     endif()
