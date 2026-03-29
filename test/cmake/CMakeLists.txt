@@ -34,8 +34,7 @@ function(add_cmake_test _name)
             "${ASIO_GRPC_CMAKE_INSTALL_TEST_CTEST_COMMAND}" "--build-and-test"
             "${ASIO_GRPC_CMAKE_INSTALL_TEST_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/${_name}" "--build-generator"
             "${ASIO_GRPC_CMAKE_INSTALL_TEST_GENERATOR}" "--build-project" "asio-grpc-cmake-test-${_name}"
-            "--build-config" "\$<CONFIG>" "--test-command"
-            "${CMAKE_CURRENT_BINARY_DIR}/${_name}/test-install/main${CMAKE_EXECUTABLE_SUFFIX}")
+            "--test-command" "${CMAKE_CURRENT_BINARY_DIR}/${_name}/test-install/main${CMAKE_EXECUTABLE_SUFFIX}")
 endfunction()
 
 add_cmake_test(superbuild)
