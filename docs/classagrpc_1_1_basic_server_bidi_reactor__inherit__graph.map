@@ -1,0 +1,5 @@
+<map id="agrpc::BasicServerBidiReactor&lt; Request, Response, Executor &gt;" name="agrpc::BasicServerBidiReactor&lt; Request, Response, Executor &gt;">
+<area shape="rect" id="Node000001" title="(experimental) I/O object for server&#45;side, bidi&#45;streaming rpcs" alt="" coords="5,93,245,133"/>
+<area shape="rect" id="Node000002" href="$classagrpc_1_1detail_1_1_reactor_executor_base.html" title="Reactor&#39;s executor base." alt="" coords="17,5,234,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="128,59,128,93,123,93,123,59"/>
+</map>
