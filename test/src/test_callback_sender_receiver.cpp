@@ -73,12 +73,12 @@ TEST_CASE_FIXTURE(ServerCallbackStdexecTest, "stdexec Unary callback coroutine T
     {
         auto ptr = agrpc::make_reactor<agrpc::BasicServerUnaryReactor<void>>();
         auto& rpc = *ptr;
-        context->TryCancel();
         test::scope_spawn_detached(scope, stdexec::then(rpc.wait_for_finish(agrpc::use_sender),
                                                         [&, ptr = std::move(ptr)](bool ok)
                                                         {
                                                             finish_ok = ok;
                                                         }));
+        context->TryCancel();
         return rpc.get();
     };
     auto [status, response] = make_unary_request();
