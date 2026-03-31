@@ -147,7 +147,7 @@ To use asio-grpc via [CPM.cmake](https://github.com/cpm-cmake/CPM.cmake), add it
 CPMAddPackage(
         NAME asio-grpc
         GITHUB_REPOSITORY Tradias/asio-grpc
-        VERSION 3.6.1
+        VERSION 3.7.0
 )
 
 target_link_libraries(your_app PUBLIC asio-grpc::asio-grpc)
@@ -266,7 +266,7 @@ include(FetchContent)
 FetchContent_Declare(
     asio-grpc
     GIT_REPOSITORY https://github.com/Tradias/asio-grpc.git
-    GIT_TAG v3.6.1
+    GIT_TAG v3.7.0
     SYSTEM)
 FetchContent_MakeAvailable(asio-grpc)
 ```
