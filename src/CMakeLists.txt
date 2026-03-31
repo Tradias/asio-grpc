@@ -60,10 +60,8 @@ if(ASIO_GRPC_BUILD_MODULE)
 
         target_sources(${_asio_grpc_name} PUBLIC FILE_SET CXX_MODULES BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}" FILES
                                                  "${CMAKE_CURRENT_SOURCE_DIR}/asio_grpc.cppm")
-        if(NOT ASIO_GRPC_BUILD_TESTS AND NOT CMAKE_GENERATOR MATCHES "Visual Studio")
+        if(NOT ASIO_GRPC_BUILD_TESTS)
             # Workaround: Do not build this module since its BMI won't be installed anyways.
-            # Note: HEADER_FILE_ONLY has no effect with the Visual Studio generator for CXX_MODULES
-            # file sets; the guard above skips it so VS builds compile the module normally.
             set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/asio_grpc.cppm" PROPERTIES HEADER_FILE_ONLY on)
         endif()
 
