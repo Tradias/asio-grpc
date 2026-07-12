@@ -20,8 +20,8 @@ permissions:
   checks: write
 
 env:
-  VCPKG_VERSION: 'a44707152fabbedcf1c17fe80d7bfb7d9370d8d5'
-  CMAKE_ARGS: '"-DCMAKE_BUILD_TYPE=Release", "-DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=off", "-DCMAKE_COMPILE_WARNING_AS_ERROR=on", "-DCMAKE_FIND_PACKAGE_PREFER_CONFIG=on", "-DTHREADS_PREFER_PTHREAD_FLAG=on", "-DCMAKE_UNITY_BUILD=on"'
+  VCPKG_VERSION: '504152f3f2a9fc3290c4214d05ff641be2c9b4c1'
+  CMAKE_ARGS: '"-DCMAKE_BUILD_TYPE=Release", "-DASIO_GRPC_ENABLE_PKGCONFIG_FALLBACK=off", "-DCMAKE_COMPILE_WARNING_AS_ERROR=on", "-DTHREADS_PREFER_PTHREAD_FLAG=on", "-DCMAKE_UNITY_BUILD=on"'
   CMAKE_BUILD_PARALLEL_LEVEL: 4
   USERNAME: Tradias
   FEED_URL: https://nuget.pkg.github.com/Tradias/index.json
@@ -270,7 +270,7 @@ jobs:
     - name: Download sonar-scanner
       uses: warchant/setup-sonar-scanner@v9
       with:
-        version: 7.3.0.5189
+        version: 8.5.0.16571
 
     - name: Run sonar-scanner
       env:

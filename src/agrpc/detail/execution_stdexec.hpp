@@ -112,7 +112,14 @@ using env_ns::Env;
 using ::stdexec::env_of_t;
 using ::stdexec::get_env;
 
-using ::stdexec::tag_t;
+namespace detail
+{
+template <class T>
+constexpr T tag_t_helper(const T&);
+}
+
+template <auto& CPO>
+using tag_t = decltype(detail::tag_t_helper(CPO));
 }  // namespace exec
 
 AGRPC_NAMESPACE_END
