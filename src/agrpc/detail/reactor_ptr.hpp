@@ -29,8 +29,25 @@ using ReactorDeallocateFn = void (*)(void*) noexcept;
 
 struct ReactorAccess
 {
+  private:
+    template <class Reactor, class... Args>
+    static auto is_constructible(int) -> decltype(Reactor{std::declval<Args>()...}, std::true_type{});
+
+    template <class Reactor, class... Args>
+    static auto is_constructible(long) -> std::false_type;
+
+  public:
+    template <class Reactor, class... Args>
+    static constexpr bool IS_CONSTRUCTIBLE = decltype(ReactorAccess::is_constructible<Reactor, Args...>(0))::value;
+
+    template <class Reactor>
+    static Reactor create()
+    {
+        return Reactor{};
+    }
+
     template <class Ptr, class Allocator, class... Args>
-    static auto create(Allocator allocator, Args&&... args)
+    static auto make_ptr(Allocator allocator, Args&&... args)
     {
         return Ptr{detail::allocate<ReactorPtrAllocation<typename Ptr::ValueType, Allocator>>(
                        allocator, allocator, static_cast<Args&&>(args)...)

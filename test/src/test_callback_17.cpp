@@ -23,6 +23,15 @@
 
 using ServerCallbackTest = test::ServerCallbackTest;
 
+TEST_CASE("Destruct unused reactor")
+{
+    struct R : agrpc::ServerUnaryReactorBase
+    {
+    };
+    CHECK_FALSE(std::is_constructible_v<agrpc::ServerUnaryReactorBase>);
+    CHECK_NOTHROW(R{});
+}
+
 TEST_CASE_FIXTURE(ServerCallbackTest, "Unary callback ptr automatic cancellation")
 {
     service.unary = [&](grpc::CallbackServerContext*, const Request*, Response*) -> grpc::ServerUnaryReactor*

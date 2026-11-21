@@ -17,6 +17,7 @@
 
 #include <agrpc/detail/forward.hpp>
 #include <agrpc/detail/reactor_ptr.hpp>
+#include <agrpc/detail/utility.hpp>
 #include <grpcpp/support/status.h>
 
 #include <atomic>
@@ -83,14 +84,30 @@ class RefCountedReactorBase : public Reactor
 template <class Reactor>
 class RefCountedServerReactor : public RefCountedReactorBase<Reactor>
 {
+  protected:
+    RefCountedServerReactor() = default;
+
   private:
+    friend detail::ReactorAccess;
+
+    template <class, class, bool>
+    friend class detail::CompressedPair;
+
     void OnDone() final { this->invoke_on_done(); }
 };
 
 template <class Reactor>
 class RefCountedClientReactor : public RefCountedReactorBase<Reactor>
 {
+  protected:
+    RefCountedClientReactor() = default;
+
   private:
+    friend detail::ReactorAccess;
+
+    template <class, class, bool>
+    friend class detail::CompressedPair;
+
     void OnDone(const grpc::Status& status) final { this->invoke_on_done(status); }
 };
 }

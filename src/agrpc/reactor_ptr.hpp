@@ -156,9 +156,9 @@ template <class Reactor, class Allocator, class... Args,
                                            Args&&... args)
 
 {
-    static_assert(std::is_constructible_v<detail::RefCountedReactorTypeT<Reactor>, Args...>);
-    return detail::ReactorAccess::create<ReactorPtr<Reactor>>(allocator, std::move(executor),
-                                                              static_cast<Args&&>(args)...);
+    static_assert(detail::ReactorAccess::IS_CONSTRUCTIBLE<detail::RefCountedReactorTypeT<Reactor>, Args...>);
+    return detail::ReactorAccess::make_ptr<ReactorPtr<Reactor>>(allocator, std::move(executor),
+                                                                static_cast<Args&&>(args)...);
 }
 #endif
 
@@ -174,8 +174,9 @@ template <class Reactor, class Allocator, class... Args,
           class = std::enable_if_t<std::is_same_v<void, detail::ReactorExecutorTypeT<Reactor>>>>
 [[nodiscard]] inline ReactorPtr<Reactor> allocate_reactor(Allocator allocator, Args&&... args)
 {
-    static_assert(std::is_constructible_v<detail::RefCountedReactorTypeT<Reactor>, Args...>);
-    return detail::ReactorAccess::create<ReactorPtr<Reactor>>(allocator, detail::Empty{}, static_cast<Args&&>(args)...);
+    static_assert(detail::ReactorAccess::IS_CONSTRUCTIBLE<detail::RefCountedReactorTypeT<Reactor>, Args...>);
+    return detail::ReactorAccess::make_ptr<ReactorPtr<Reactor>>(allocator, detail::Empty{},
+                                                                static_cast<Args&&>(args)...);
 }
 
 #if defined(AGRPC_STANDALONE_ASIO) || defined(AGRPC_BOOST_ASIO)

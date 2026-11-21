@@ -83,7 +83,7 @@ class ServerReactorPromiseBase
   private:
     union
     {
-        R reactor_{};
+        R reactor_{detail::ReactorAccess::create<R>()};
     };
 };
 
