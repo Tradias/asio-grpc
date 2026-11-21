@@ -34,7 +34,7 @@ jobs:
     runs-on: windows-2025
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install vcpkg
       uses: lukka/run-vcpkg@v11
@@ -82,7 +82,7 @@ jobs:
     runs-on: macos-15-intel
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install vcpkg
       uses: lukka/run-vcpkg@v11
@@ -147,7 +147,7 @@ jobs:
         sudo apt-get update &&\
         sudo apt-get install libgrpc++-dev protobuf-compiler-grpc libprotobuf-dev doctest-dev libgtest-dev libgmock-dev
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install vcpkg
       uses: lukka/run-vcpkg@v11
@@ -214,7 +214,7 @@ jobs:
 
     - run: pip install gcovr
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         # Disabling shallow clone is recommended for improving relevancy of sonarsource reporting
         fetch-depth: 0
@@ -262,10 +262,10 @@ jobs:
     - name: GCC Coverage
       run: cmake --build --preset default --target asio-grpc-test-coverage
 
-    - uses: actions/setup-java@v4
+    - uses: actions/setup-java@v6
       with:
         distribution: 'temurin'
-        java-version: '17'
+        java-version: '21'
 
     - name: Download sonar-scanner
       uses: warchant/setup-sonar-scanner@v9
@@ -297,7 +297,7 @@ jobs:
     - name: Install (old) cmake, libc++
       run: sudo apt-get install cmake libc++-13-dev libc++abi-13-dev
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install vcpkg
       uses: lukka/run-vcpkg@v11
@@ -355,7 +355,7 @@ jobs:
     - name: Install dot for doxygen, libc++ and mono
       run: sudo apt-get install graphviz libc++-18-dev mono-complete
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Install vcpkg
       uses: lukka/run-vcpkg@v11
