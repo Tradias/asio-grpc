@@ -28,11 +28,14 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief (experimental) I/O object for server-side, unary rpcs
+ * @brief (experimental) Reactor for server-side, unary rpcs
  *
  * Create an object of this type using `agrpc::make_reactor`/`agrpc::allocate_reactor` or
- * `server_callback_coroutine.hpp`. Note that `grpc::CallbackServerContext::DefaultReactor()` should be use instead
- * of this class whenever possible.
+ * `server_callback_coroutine.hpp`. Note that
+ * [grpc::CallbackServerContext::DefaultReactor()](https://grpc.github.io/grpc/cpp/classgrpc_1_1_callback_server_context.html#ada4e7a3e04ba1b9d385077f670bee3ca)
+ * should be use instead of this class whenever possible.
+ *
+ * @see ServerUnaryReactorBase
  *
  * Example:
  *
@@ -151,20 +154,37 @@ class BasicServerUnaryReactor : private grpc::ServerUnaryReactor, public detail:
 };
 
 /**
- * @brief (experimental) I/O object for server-side, unary rpcs (specialized on `asio::any_io_executor`)
+ * @brief (experimental) Reactor for server-side, unary rpcs (specialized on `asio::any_io_executor`)
+ *
+ * @since 3.5.0
  */
 using ServerUnaryReactor = BasicServerUnaryReactor<detail::DefaultReactorExecutor>;
 
+/**
+ * @brief (experimental) Reactor base class for server-side, unary rpcs
+ *
+ * Base class that can be inherited from to attach data to a BasicServerUnaryReactor that will be kept alive until the
+ * end of the rpc.
+ *
+ * @since 3.5.0
+ */
 template <class Executor>
 using BasicServerUnaryReactorBase = detail::RefCountedServerReactor<agrpc::BasicServerUnaryReactor<Executor>>;
 
+/**
+ * @brief (experimental) Reactor base class for server-side, unary rpcs (specialized on `asio::any_io_executor`)
+ *
+ * @since 3.5.0
+ */
 using ServerUnaryReactorBase = BasicServerUnaryReactorBase<detail::DefaultReactorExecutor>;
 
 /**
- * @brief (experimental) I/O object for server-side, client-streaming rpcs
+ * @brief (experimental) Reactor for server-side, client-streaming rpcs
  *
  * Create an object of this type using `agrpc::make_reactor`/`agrpc::allocate_reactor` or
  * `server_callback_coroutine.hpp`.
+ *
+ * @see ServerReadReactorBase
  *
  * Example:
  *
@@ -311,22 +331,40 @@ class BasicServerReadReactor : private grpc::ServerReadReactor<Request>, public 
 };
 
 /**
- * @brief (experimental) I/O object for server-side, client-streaming rpcs (specialized on `asio::any_io_executor`)
+ * @brief (experimental) Reactor for server-side, client-streaming rpcs (specialized on `asio::any_io_executor`)
+ *
+ * @since 3.5.0
  */
 template <class Request>
 using ServerReadReactor = BasicServerReadReactor<Request, detail::DefaultReactorExecutor>;
 
+/**
+ * @brief (experimental) Reactor base class for server-side, client-streaming rpcs
+ *
+ * Base class that can be inherited from to attach data to a BasicServerReadReactor that will be kept alive until the
+ * end of the rpc.
+ *
+ * @since 3.5.0
+ */
 template <class Request, class Executor>
 using BasicServerReadReactorBase = detail::RefCountedServerReactor<agrpc::BasicServerReadReactor<Request, Executor>>;
 
+/**
+ * @brief (experimental) Reactor base class for server-side, client-streaming rpcs (specialized on
+ * `asio::any_io_executor`)
+ *
+ * @since 3.5.0
+ */
 template <class Request>
 using ServerReadReactorBase = BasicServerReadReactorBase<Request, detail::DefaultReactorExecutor>;
 
 /**
- * @brief (experimental) I/O object for server-side, server-streaming rpcs
+ * @brief (experimental) Reactor for server-side, server-streaming rpcs
  *
  * Create an object of this type using `agrpc::make_reactor`/`agrpc::allocate_reactor` or
  * `server_callback_coroutine.hpp`.
+ *
+ * @see ServerWriteReactorBase
  *
  * Example:
  *
@@ -487,22 +525,40 @@ class BasicServerWriteReactor : private grpc::ServerWriteReactor<Response>, publ
 };
 
 /**
- * @brief (experimental) I/O object for server-side, server-streaming rpcs (specialized on `asio::any_io_executor`)
+ * @brief (experimental) Reactor for server-side, server-streaming rpcs (specialized on `asio::any_io_executor`)
+ *
+ * @since 3.5.0
  */
 template <class Response>
 using ServerWriteReactor = BasicServerWriteReactor<Response, detail::DefaultReactorExecutor>;
 
+/**
+ * @brief (experimental) Reactor base class for server-side, server-streaming rpcs
+ *
+ * Base class that can be inherited from to attach data to a BasicServerWriteReactor that will be kept alive until the
+ * end of the rpc.
+ *
+ * @since 3.5.0
+ */
 template <class Response, class Executor>
 using BasicServerWriteReactorBase = detail::RefCountedServerReactor<agrpc::BasicServerWriteReactor<Response, Executor>>;
 
+/**
+ * @brief (experimental) Reactor base class for server-side, server-streaming rpcs (specialized on
+ * `asio::any_io_executor`)
+ *
+ * @since 3.5.0
+ */
 template <class Response>
 using ServerWriteReactorBase = BasicServerWriteReactorBase<Response, detail::DefaultReactorExecutor>;
 
 /**
- * @brief (experimental) I/O object for server-side, bidi-streaming rpcs
+ * @brief (experimental) Reactor for server-side, bidi-streaming rpcs
  *
  * Create an object of this type using `agrpc::make_reactor`/`agrpc::allocate_reactor` or
  * `server_callback_coroutine.hpp`.
+ *
+ * @see ServerBidiReactorBase
  *
  * Example:
  *
@@ -692,15 +748,31 @@ class BasicServerBidiReactor : private grpc::ServerBidiReactor<Request, Response
 };
 
 /**
- * @brief (experimental) I/O object for server-side, bidi-streaming rpcs (specialized on `asio::any_io_executor`)
+ * @brief (experimental) Reactor for server-side, bidi-streaming rpcs (specialized on `asio::any_io_executor`)
+ *
+ * @since 3.5.0
  */
 template <class Request, class Response>
 using ServerBidiReactor = BasicServerBidiReactor<Request, Response, detail::DefaultReactorExecutor>;
 
+/**
+ * @brief (experimental) Reactor base class for server-side, bidi-streaming rpcs
+ *
+ * Base class that can be inherited from to attach data to a BasicServerBidiReactor that will be kept alive until the
+ * end of the rpc.
+ *
+ * @since 3.5.0
+ */
 template <class Request, class Response, class Executor>
 using BasicServerBidiReactorBase =
     detail::RefCountedServerReactor<agrpc::BasicServerBidiReactor<Request, Response, Executor>>;
 
+/**
+ * @brief (experimental) Reactor base class for server-side, bidi-streaming rpcs (specialized on
+ * `asio::any_io_executor`)
+ *
+ * @since 3.5.0
+ */
 template <class Request, class Response>
 using ServerBidiReactorBase = BasicServerBidiReactorBase<Request, Response, detail::DefaultReactorExecutor>;
 

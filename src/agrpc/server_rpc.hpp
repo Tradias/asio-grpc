@@ -219,7 +219,7 @@ class ServerRPC<RequestUnary, TraitsT, Executor>
  *
  * @snippet example.proto example-proto
  *
- * @tparam RequestUnary A pointer to the generated gRPC method.
+ * @tparam RequestClientStreaming A pointer to the generated gRPC method.
  * @tparam Traits A type used to customize this rpc. See `agrpc::DefaultServerRPCTraits`.
  * @tparam Executor The executor type, must be capable of referring to a GrpcContext.
  *
@@ -422,7 +422,7 @@ class ServerRPC<RequestClientStreaming, TraitsT, Executor>
  *
  * @snippet example.proto example-proto
  *
- * @tparam RequestUnary A pointer to the generated gRPC method.
+ * @tparam RequestServerStreaming A pointer to the generated gRPC method.
  * @tparam Traits A type used to customize this rpc. See `agrpc::DefaultServerRPCTraits`.
  * @tparam Executor The executor type, must be capable of referring to a GrpcContext.
  *
@@ -809,7 +809,7 @@ class ServerRPCBidiStreamingBase<ResponderT<ResponseT, RequestT>, TraitsT, Execu
  *
  * @snippet example.proto example-proto
  *
- * @tparam RequestUnary A pointer to the generated gRPC method.
+ * @tparam RequestBidiStreaming A pointer to the generated gRPC method.
  * @tparam Traits A type used to customize this rpc. See `agrpc::DefaultServerRPCTraits`.
  * @tparam Executor The executor type, must be capable of referring to a GrpcContext.
  *
@@ -918,7 +918,6 @@ class ServerRPC<RequestBidiStreaming, TraitsT, Executor> : public detail::Server
  *
  * @snippet example.proto example-proto
  *
- * @tparam RequestUnary A pointer to the generated gRPC method.
  * @tparam Traits A type used to customize this rpc. See `agrpc::DefaultServerRPCTraits`.
  * @tparam Executor The executor type, must be capable of referring to a GrpcContext.
  *

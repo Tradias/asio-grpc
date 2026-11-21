@@ -32,10 +32,12 @@
 AGRPC_NAMESPACE_BEGIN()
 
 /**
- * @brief (experimental) I/O object for client-side, unary rpcs
+ * @brief (experimental) Reactor for client-side, unary rpcs
  *
  * Create an object of this type using `agrpc::make_reactor`/`agrpc::allocate_reactor`. This class should only be used
  * if the unary rpc wants to receive initial metadata without waiting for the server's response message.
+ *
+ * @see ClientUnaryReactorBase
  *
  * Example:
  *
@@ -141,19 +143,34 @@ class BasicClientUnaryReactor : private grpc::ClientUnaryReactor,
 };
 
 /**
- * @brief (experimental) I/O object for client-side, unary rpcs (specialized on `asio::any_io_executor`)
+ * @brief (experimental) Reactor for client-side, unary rpcs (specialized on `asio::any_io_executor`)
  */
 using ClientUnaryReactor = BasicClientUnaryReactor<detail::DefaultReactorExecutor>;
 
+/**
+ * @brief (experimental) Reactor base class for client-side, unary rpcs
+ *
+ * Base class that can be inherited from to attach data to a BasicClientUnaryReactor that will be kept alive until the
+ * end of the rpc.
+ *
+ * @since 3.5.0
+ */
 template <class Executor>
 using BasicClientUnaryReactorBase = detail::RefCountedClientReactor<agrpc::BasicClientUnaryReactor<Executor>>;
 
+/**
+ * @brief (experimental) Reactor base class for client-side, unary rpcs (specialized on `asio::any_io_executor`)
+ *
+ * @since 3.5.0
+ */
 using ClientUnaryReactorBase = BasicClientUnaryReactorBase<detail::DefaultReactorExecutor>;
 
 /**
- * @brief (experimental) I/O object for client-side, client-streaming rpcs
+ * @brief (experimental) Reactor for client-side, client-streaming rpcs
  *
  * Create an object of this type using `agrpc::make_reactor`/`agrpc::allocate_reactor`.
+ *
+ * @see ClientWriteReactorBase
  *
  * Example:
  *
@@ -318,21 +335,37 @@ class BasicClientWriteReactor : private grpc::ClientWriteReactor<Request>,
 };
 
 /**
- * @brief (experimental) I/O object for client-side, client-streaming rpcs (specialized on `asio::any_io_executor`)
+ * @brief (experimental) Reactor for client-side, client-streaming rpcs (specialized on `asio::any_io_executor`)
  */
 template <class Request>
 using ClientWriteReactor = BasicClientWriteReactor<Request, detail::DefaultReactorExecutor>;
 
+/**
+ * @brief (experimental) Reactor base class for client-side, client-streaming rpcs
+ *
+ * Base class that can be inherited from to attach data to a BasicClientWriteReactor that will be kept alive until the
+ * end of the rpc.
+ *
+ * @since 3.5.0
+ */
 template <class Request, class Executor>
 using BasicClientWriteReactorBase = detail::RefCountedClientReactor<agrpc::BasicClientWriteReactor<Request, Executor>>;
 
+/**
+ * @brief (experimental) Reactor base class for client-side, client-streaming rpcs (specialized on
+ * `asio::any_io_executor`)
+ *
+ * @since 3.5.0
+ */
 template <class Request>
 using ClientWriteReactorBase = BasicClientWriteReactorBase<Request, detail::DefaultReactorExecutor>;
 
 /**
- * @brief (experimental) I/O object for client-side, server-streaming rpcs
+ * @brief (experimental) Reactor for client-side, server-streaming rpcs
  *
  * Create an object of this type using `agrpc::make_reactor`/`agrpc::allocate_reactor`.
+ *
+ * @see ClientReadReactorBase
  *
  * Example:
  *
@@ -465,21 +498,37 @@ class BasicClientReadReactor : private grpc::ClientReadReactor<Response>,
 };
 
 /**
- * @brief (experimental) I/O object for client-side, server-streaming rpcs (specialized on `asio::any_io_executor`)
+ * @brief (experimental) Reactor for client-side, server-streaming rpcs (specialized on `asio::any_io_executor`)
  */
 template <class Response>
 using ClientReadReactor = BasicClientReadReactor<Response, detail::DefaultReactorExecutor>;
 
+/**
+ * @brief (experimental) Reactor base class for client-side, server-streaming rpcs
+ *
+ * Base class that can be inherited from to attach data to a BasicClientReadReactor that will be kept alive until the
+ * end of the rpc.
+ *
+ * @since 3.5.0
+ */
 template <class Response, class Executor>
 using BasicClientReadReactorBase = detail::RefCountedClientReactor<agrpc::BasicClientReadReactor<Response, Executor>>;
 
+/**
+ * @brief (experimental) Reactor base class for client-side, server-streaming rpcs (specialized on
+ * `asio::any_io_executor`)
+ *
+ * @since 3.5.0
+ */
 template <class Response>
 using ClientReadReactorBase = BasicClientReadReactorBase<Response, detail::DefaultReactorExecutor>;
 
 /**
- * @brief (experimental) I/O object for client-side, bidi-streaming rpcs
+ * @brief (experimental) Reactor for client-side, bidi-streaming rpcs
  *
  * Create an object of this type using `agrpc::make_reactor`/`agrpc::allocate_reactor`.
+ *
+ * @see ClientBidiReactorBase
  *
  * Example:
  *
@@ -669,15 +718,29 @@ class BasicClientBidiReactor : private grpc::ClientBidiReactor<Request, Response
 };
 
 /**
- * @brief (experimental) I/O object for client-side, bidi-streaming rpcs (specialized on `asio::any_io_executor`)
+ * @brief (experimental) Reactor for client-side, bidi-streaming rpcs (specialized on `asio::any_io_executor`)
  */
 template <class Request, class Response>
 using ClientBidiReactor = BasicClientBidiReactor<Request, Response, detail::DefaultReactorExecutor>;
 
+/**
+ * @brief (experimental) Reactor base class for client-side, bidi-streaming rpcs
+ *
+ * Base class that can be inherited from to attach data to a BasicClientBidiReactor that will be kept alive until the
+ * end of the rpc.
+ *
+ * @since 3.5.0
+ */
 template <class Request, class Response, class Executor>
 using BasicClientBidiReactorBase =
     detail::RefCountedClientReactor<agrpc::BasicClientBidiReactor<Request, Response, Executor>>;
 
+/**
+ * @brief (experimental) Reactor base class for client-side, bidi-streaming rpcs (specialized on
+ * `asio::any_io_executor`)
+ *
+ * @since 3.5.0
+ */
 template <class Request, class Response>
 using ClientBidiReactorBase = BasicClientBidiReactorBase<Request, Response, detail::DefaultReactorExecutor>;
 

@@ -37,7 +37,7 @@ AGRPC_NAMESPACE_BEGIN()
  * `completion_handler` is created from `token`, `executor` the first argument passed to this function and `function`,
  * when invoked, starts waiting for the next rpc. Any arguments passed to `function` will be prepended to the call of
  * the rpc handler. The return type of `function` is `CoroutineTraits::ReturnType`, which must be a coroutine, and
- * `CoroutineTraits::completion_token` must produce an Asio compatible [completion
+ * `CoroutineTraits::completion_token(rpc_handler, completion_handler)` must produce an Asio compatible [completion
  * token](https://www.boost.org/doc/libs/1_86_0/doc/html/boost_asio/reference/asynchronous_operations.html#boost_asio.reference.asynchronous_operations.completion_tokens_and_handlers)
  * that, when used to initiate an asynchronous operation, returns an awaitable.
  *
