@@ -25,6 +25,8 @@
 #include <agrpc/client_rpc.hpp>
 #include <grpcpp/grpcpp.h>
 
+AGRPC_TEST_DOCTEST_SUITE
+
 template <class RPC>
 struct ClientRPCTest : test::ClientServerRPCTest<RPC>
 {

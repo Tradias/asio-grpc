@@ -26,6 +26,8 @@
 #include <optional>
 #include <thread>
 
+AGRPC_TEST_DOCTEST_SUITE
+
 TEST_CASE("stdexec asio-grpc fulfills std::execution concepts")
 {
     CHECK(stdexec::scheduler<agrpc::GrpcExecutor>);

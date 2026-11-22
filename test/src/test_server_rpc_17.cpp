@@ -1,4 +1,4 @@
-// Copyright 2022 Dennis Hezel
+// Copyright 2026 Dennis Hezel
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@
 #include <agrpc/read.hpp>
 #include <agrpc/server_rpc.hpp>
 #include <agrpc/waiter.hpp>
+
+AGRPC_TEST_DOCTEST_SUITE
 
 template <class ServerRPC>
 struct ServerRPCTest : test::ClientServerRPCTest<typename test::IntrospectRPC<ServerRPC>::ClientRPC, ServerRPC>

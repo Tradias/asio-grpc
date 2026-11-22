@@ -1,4 +1,4 @@
-// Copyright 2022 Dennis Hezel
+// Copyright 2026 Dennis Hezel
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@
 #include <agrpc/reactor_ptr.hpp>
 #include <agrpc/server_callback.hpp>
 #include <agrpc/server_callback_coroutine.hpp>
+
+AGRPC_TEST_DOCTEST_SUITE
 
 using ServerCallbackTest = test::ServerCallbackTest;
 

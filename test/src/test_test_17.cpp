@@ -18,6 +18,8 @@
 
 #include <agrpc/client_rpc.hpp>
 
+AGRPC_TEST_DOCTEST_SUITE
+
 TEST_CASE_FIXTURE(test::MockTest, "mock unary request")
 {
     test::set_up_unary_test(*this);

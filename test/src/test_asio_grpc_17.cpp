@@ -27,6 +27,8 @@
 #include <cstddef>
 #include <thread>
 
+AGRPC_TEST_DOCTEST_SUITE
+
 TEST_CASE("constexpr algorithm: search")
 {
     std::string_view text{"find this needle in the haystack"};

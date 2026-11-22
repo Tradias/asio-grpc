@@ -24,6 +24,8 @@
 
 #include <agrpc/asio_grpc.hpp>
 
+AGRPC_TEST_DOCTEST_SUITE
+
 TEST_CASE("unifex asio-grpc fulfills std::execution concepts")
 {
     CHECK(unifex::scheduler<agrpc::GrpcExecutor>);

@@ -1,4 +1,4 @@
-// Copyright 2022 Dennis Hezel
+// Copyright 2026 Dennis Hezel
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@
 #include <agrpc/server_callback.hpp>
 
 using ServerCallbackTest = test::ServerCallbackTest;
+
+AGRPC_TEST_DOCTEST_SUITE
 
 TEST_CASE("Destruct unused reactor")
 {

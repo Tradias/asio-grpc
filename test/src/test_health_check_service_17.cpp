@@ -28,6 +28,8 @@
 
 #include <thread>
 
+AGRPC_TEST_DOCTEST_SUITE
+
 namespace grpc_health = grpc::health::v1;
 
 template <bool UseAgrpc>

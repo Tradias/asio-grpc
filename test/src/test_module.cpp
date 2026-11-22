@@ -22,6 +22,8 @@
 
 import asio_grpc;
 
+AGRPC_TEST_DOCTEST_SUITE
+
 TEST_CASE("cpp 20 module")
 {
     using GrpcAwaitable = boost::asio::awaitable<void, agrpc::GrpcExecutor>;

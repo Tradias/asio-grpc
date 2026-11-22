@@ -23,6 +23,8 @@
 #include <optional>
 #include <thread>
 
+AGRPC_TEST_DOCTEST_SUITE
+
 struct RunTest : test::GrpcContextTest
 {
     asio::io_context io_context;

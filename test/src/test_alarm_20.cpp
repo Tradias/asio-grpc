@@ -23,6 +23,8 @@
 #include <memory_resource>
 #endif
 
+AGRPC_TEST_DOCTEST_SUITE
+
 #ifdef AGRPC_TEST_ASIO_HAS_CO_AWAIT
 TEST_CASE_FIXTURE(test::GrpcContextTest, "co_spawn two Alarms and await their ok using GrpcExecutor")
 {

@@ -33,6 +33,8 @@
 
 #include <thread>
 
+AGRPC_TEST_DOCTEST_SUITE
+
 TEST_CASE("GrpcExecutor fulfills Executor TS traits")
 {
     using Exec = agrpc::GrpcContext::executor_type;

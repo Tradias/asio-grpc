@@ -1,4 +1,4 @@
-// Copyright 2022 Dennis Hezel
+// Copyright 2026 Dennis Hezel
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -37,6 +37,8 @@
 #include <boost/cobalt/spawn.hpp>
 #include <boost/cobalt/task.hpp>
 #endif
+
+AGRPC_TEST_DOCTEST_SUITE
 
 #ifdef AGRPC_TEST_ASIO_HAS_CO_AWAIT
 template <class ServerRPC>

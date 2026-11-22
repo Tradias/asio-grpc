@@ -23,6 +23,8 @@
 
 #include <optional>
 
+AGRPC_TEST_DOCTEST_SUITE
+
 TEST_CASE_FIXTURE(test::GrpcContextTest, "AllocatorBinder constructor and member function")
 {
     test::TrackingAllocator<> default_allocator{};

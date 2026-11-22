@@ -20,6 +20,8 @@
 
 #include <agrpc/alarm.hpp>
 
+AGRPC_TEST_DOCTEST_SUITE
+
 TEST_CASE_FIXTURE(test::GrpcContextTest, "asio::post a apgrc::Alarm and use variadic-arg callback for its wait")
 {
     bool ok{false};

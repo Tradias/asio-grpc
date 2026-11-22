@@ -23,6 +23,8 @@
 #ifdef AGRPC_TEST_HAS_STD_PMR
 #include <memory_resource>
 
+AGRPC_TEST_DOCTEST_SUITE
+
 TEST_CASE(
     "AllocatorBinder can be constructed using allocator_traits<polymorphic_allocator>::construct with expected "
     "arguments")
