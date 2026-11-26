@@ -1,0 +1,11 @@
+<map id="agrpc::ServerRPC&lt; RequestBidiStreaming, TraitsT, Executor &gt;" name="agrpc::ServerRPC&lt; RequestBidiStreaming, TraitsT, Executor &gt;">
+<area shape="rect" id="Node000001" title="I/O object for server&#45;side, bidirectional&#45;streaming rpcs." alt="" coords="1160,13,1363,67"/>
+<area shape="rect" id="Node000002" href="$classagrpc_1_1detail_1_1_server_r_p_c_bidi_streaming_base_3_01_responder_t_3_01_response_t_00_01e31241fd3385b9725dea3c9b5469411b.html" title="ServerRPC bidirectional&#45;streaming base." alt="" coords="865,5,1112,75"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1126,37,1160,37,1160,43,1126,43"/>
+<area shape="rect" id="Node000003" href="$classagrpc_1_1detail_1_1_server_r_p_c_base.html" title=" " alt="" coords="585,13,817,67"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="831,37,865,37,865,43,831,43"/>
+<area shape="rect" id="Node000004" href="$classagrpc_1_1detail_1_1_server_r_p_c_notify_when_done_mixin.html" title=" " alt="" coords="247,5,537,75"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="551,37,585,37,585,43,551,43"/>
+<area shape="rect" id="Node000005" href="$classagrpc_1_1detail_1_1_r_p_c_executor_base.html" title="RPC&#39;s executor base." alt="" coords="5,20,199,60"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="212,37,246,37,246,43,212,43"/>
+</map>
