@@ -743,7 +743,7 @@ using ClientBidiReactorBase = BasicClientBidiReactorBase<Request, Response, deta
 /**
  * @brief (experimental) Perform a unary rpc
  *
- * Completion signature is `void(error_code, grpc::Status)`. Once this operation completes the response passed to
+ * Completion signature is `void(grpc::Status)`. Once this operation completes the response passed to
  * it will have been be populated if `grpc::Status::ok()` is true.
  *
  * Example:
