@@ -126,12 +126,11 @@ class BasicClientUnaryReactor : private grpc::ClientUnaryReactor,
         return data_.finish_.wait(static_cast<CompletionToken&&>(token), this->get_executor());
     }
 
-  protected:
-    BasicClientUnaryReactor() = default;
-
   private:
     template <class>
     friend class detail::RefCountedReactorBase;
+
+    BasicClientUnaryReactor() = default;
 
     static void on_user_done() {}
 
@@ -247,6 +246,10 @@ class BasicClientWriteReactor : private grpc::ClientWriteReactor<Request>,
     {
         data_.write_.reset();
         this->StartWrite(&request, options);
+        if (options.is_last_message())
+        {
+            remove_hold();
+        }
     }
 
     /**
@@ -258,8 +261,8 @@ class BasicClientWriteReactor : private grpc::ClientWriteReactor<Request>,
      */
     void initiate_writes_done()
     {
-        remove_hold();
         this->StartWritesDone();
+        remove_hold();
     }
 
     /**
@@ -306,12 +309,11 @@ class BasicClientWriteReactor : private grpc::ClientWriteReactor<Request>,
         return data_.finish_.wait(static_cast<CompletionToken&&>(token), this->get_executor());
     }
 
-  protected:
-    BasicClientWriteReactor() = default;
-
   private:
     template <class>
     friend class detail::RefCountedReactorBase;
+
+    BasicClientWriteReactor() = default;
 
     void on_user_done() { remove_hold(); }
 
@@ -471,12 +473,11 @@ class BasicClientReadReactor : private grpc::ClientReadReactor<Response>,
         return data_.finish_.wait(static_cast<CompletionToken&&>(token), this->get_executor());
     }
 
-  protected:
-    BasicClientReadReactor() = default;
-
   private:
     template <class>
     friend class detail::RefCountedReactorBase;
+
+    BasicClientReadReactor() = default;
 
     void on_user_done() { remove_hold(); }
 
@@ -638,11 +639,7 @@ class BasicClientBidiReactor : private grpc::ClientBidiReactor<Request, Response
      * `set_last_message()` is used since that already has the same implication. Note that calling this means that no
      * more calls to `initiate_write` or `initiate_writes_done` are allowed.
      */
-    void initiate_writes_done()
-    {
-        remove_hold();
-        this->StartWritesDone();
-    }
+    void initiate_writes_done() { this->StartWritesDone(); }
 
     /**
      * @brief Wait for write
@@ -687,12 +684,11 @@ class BasicClientBidiReactor : private grpc::ClientBidiReactor<Request, Response
         return data_.finish_.wait(static_cast<CompletionToken&&>(token), this->get_executor());
     }
 
-  protected:
-    BasicClientBidiReactor() = default;
-
   private:
     template <class>
     friend class detail::RefCountedReactorBase;
+
+    BasicClientBidiReactor() = default;
 
     void on_user_done() { remove_hold(); }
 

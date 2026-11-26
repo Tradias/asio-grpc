@@ -132,6 +132,8 @@ class BasicServerUnaryReactor : private grpc::ServerUnaryReactor, public detail:
     template <class>
     friend class detail::RefCountedReactorBase;
 
+    BasicServerUnaryReactor() = default;
+
     void on_user_done()
     {
         if (!data_.state_.is_finish_called())
@@ -306,6 +308,8 @@ class BasicServerReadReactor : private grpc::ServerReadReactor<Request>, public 
   private:
     template <class>
     friend class detail::RefCountedReactorBase;
+
+    BasicServerReadReactor() = default;
 
     void on_user_done()
     {
@@ -500,6 +504,8 @@ class BasicServerWriteReactor : private grpc::ServerWriteReactor<Response>, publ
   private:
     template <class>
     friend class detail::RefCountedReactorBase;
+
+    BasicServerWriteReactor() = default;
 
     void on_user_done()
     {
@@ -721,6 +727,8 @@ class BasicServerBidiReactor : private grpc::ServerBidiReactor<Request, Response
   private:
     template <class>
     friend class detail::RefCountedReactorBase;
+
+    BasicServerBidiReactor() = default;
 
     void on_user_done()
     {
